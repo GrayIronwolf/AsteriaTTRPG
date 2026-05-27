@@ -1,0 +1,6 @@
+[
+  {"id":"pinocco","name":"Pinocco","hp":120,"sp":60,"mp":30,"ac":15,"initiative":18},
+  {"id":"umbral-stalker","name":"Umbral Stalker","hp":120,"sp":45,"mp":40,"ac":16,"initiative":12},
+  {"id":"woodling-scout","name":"Woodling Scout","hp":45,"sp":30,"mp":10,"ac":13,"initiative":14},
+  {"id":"woodling-brute","name":"Woodling Brute","hp":85,"sp":55,"mp":15,"ac":14,"initiative":9}
+]

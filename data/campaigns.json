@@ -1,0 +1,4 @@
+[
+  {"id":"c1","name":"Shadows of Elarion","players":["kael","lyra","tharrnak","mako"],"status":"active"},
+  {"id":"c2","name":"Secrets of the Void","players":["mako","lyra"],"status":"paused"}
+]

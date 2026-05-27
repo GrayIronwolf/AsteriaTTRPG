@@ -1,10 +1,320 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Asteria RPG</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</title>
+  <link rel="stylesheet" href="css/styles.css" />
+<link rel="stylesheet" href="css/clean-compendium.css">
+<link rel="stylesheet" href="css/asteria-ui-theme-system.css">
+<script src="js/asteria-home-guard.js"></script>
 </head>
-<body>
-  <h1>Welcome to Asteria RPG</h1>
-  <p>Website is live!</p>
+<body data-role="guest">
+  <header class="topbar core-v2-topbar">
+    <div class="brand">
+      <img class="brand-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo">
+    </div>
+    <div class="top-actions">
+      <button id="loginToggle" class="primary small" type="button" onclick="setView('loginPage')">Login</button>
+      <button id="createAccountTop" class="primary small account-top-btn" type="button" onclick="setView('accountCreate')">Create Account</button>
+      <button id="settingsToggle" class="hamburger" title="Settings"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <aside class="sidebar public-sidebar">
+    <div class="side-section portal-buttons">
+      <button id="sidebarHomeButton" class="side-main" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
+      <div class="side-logo-block"><span>Asteria Compendiums</span></div>
+      <button class="side-main" data-view="workspace" data-workspace-section="Asteria Handbook">Asteria Handbook</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="World, Realms & Planes">World, Realms &amp; Planes</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="Races">Races</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="Classes">Classes</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="Items">Items</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="Creatures">Creatures</button>
+      <button class="side-main" data-view="workspace" data-workspace-section="Magic">Magic</button>
+    </div>
+    <div class="side-section app-buttons">
+      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="dashboard">Dashboard</button>
+      <button class="side-main auth-only locked" type="button" data-app-route="player-dashboard">Character Dashboard</button>
+      <button class="side-main auth-only locked" type="button" data-app-route="campaign-manager">Campaign Manager</button>
+      <button class="side-main auth-only locked" type="button" data-app-route="gm-dashboard">GM Dashboard</button>
+      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="campaigns">Campaigns</button>
+      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="characters">Characters</button>
+      <button class="side-main auth-only locked" data-workspace-action="create-campaign">Create Campaign</button>
+      <button class="side-main auth-only locked" data-workspace-action="create-character">Create Character</button>
+      <button class="side-main auth-only locked" data-workspace-action="settings">Settings</button>
+    </div>
+  </aside>
+
+  <aside id="settingsPanel" class="settings-panel">
+    <div class="settings-head"><h2>Settings</h2><button id="settingsClose">×</button></div>
+    <section id="asteriaThemeSettings" class="theme-settings-section">
+      <h3>UI Theme</h3>
+      <p>Choose a class theme or create your own accent colour.</p>
+      <label>Theme Preset
+        <select id="asteriaThemeSelect">
+          <option value="spellblade">Spellblade</option>
+          <option value="bloodhunter">Bloodhunter</option>
+          <option value="cleric">Cleric</option>
+          <option value="ranger">Ranger</option>
+          <option value="artificer">Artificer</option>
+          <option value="paladin">Paladin</option>
+          <option value="druid">Druid</option>
+          <option value="rogue">Rogue / Shadow</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <div class="theme-colour-row">
+        <label>RGB Colour Wheel
+          <input id="asteriaColourWheel" type="color" value="#1f7dff">
+        </label>
+        <div class="theme-preview-orb" id="asteriaThemePreviewOrb"></div>
+      </div>
+      <label>Glow Intensity
+        <input id="asteriaGlowSlider" type="range" min="0" max="100" value="36">
+      </label>
+      <label>Background Visibility
+        <input id="asteriaOverlaySlider" type="range" min="0" max="100" value="44">
+      </label>
+      <label>Panel Opacity
+        <input id="asteriaPanelOpacitySlider" type="range" min="62" max="92" value="78">
+      </label>
+      <div class="settings-row theme-actions">
+        <button id="asteriaThemeSave" type="button">Save Theme</button>
+        <button id="asteriaThemeReset" type="button" class="outline">Reset</button>
+      </div>
+      <div class="theme-live-preview"><span>Live Preview</span><button type="button">Button</button><i></i></div>
+    </section>
+
+    <section><h3>System</h3><p><b>Current Version:</b> ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
+    <section><h3>Access</h3><p id="accessSummary">Guest access. Log in to unlock your workspace dashboard.</p><button onclick="logout()" class="outline">Log Out</button></section>
+  </aside><div id="shade" class="shade"></div>
+
+  <main class="main">
+    <section id="home" class="view show">
+      <div class="public-home-grid">
+        <section class="home-hero card public-hero">
+          <img class="hero-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo">
+          <div>
+            <p class="eyebrow">Welcome to</p>
+            <h2>Asteria</h2>
+            <p>A dark fantasy tabletop RPG world of realms, races, classes, shattered zones, magic systems, items, monsters, and campaign tools.</p>
+            <p class="muted">Explore the public compendium before logging in, or sign in to open the character, campaign, GM, and player systems.</p>
+            <div class="hero-actions"><button class="primary" data-view="workspace" data-workspace-section="World, Realms & Planes">Explore the World</button><button class="outline" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button></div>
+          </div>
+        </section>
+        <section class="card world-map-preview">
+          <div class="section-head"><div><p class="eyebrow">Asteria World</p><h2>World Map</h2></div><button class="outline" data-view="workspace" data-workspace-section="World, Realms & Planes">Open World Workspace</button></div>
+          <div class="map-placeholder"><span>ASTERIA WORLD MAP</span><small>Image / interactive map panel placeholder</small></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="workspace" class="view workspace-view" aria-label="Asteria Workspace"></section>
+
+    <section id="loginPage" class="view"><div class="account-create-page card login-page-full">
+      <div class="section-head"><div><p class="eyebrow">Asteria Access</p><h2>Login</h2></div><button class="outline" onclick="setView('home')">Back Home</button></div>
+      <p class="muted">Login to open your dashboard, characters, campaigns, and campaign-based tools.</p>
+      <div id="loginPageHint" class="auth-hint">Enter your account details below.</div>
+      <div class="account-create-grid">
+        <section>
+          <h3>Login Details</h3>
+          <label>Username / Email<input id="loginPageUser" placeholder="Username or email" autocomplete="username"></label>
+          <label>Password<input id="loginPagePass" type="password" placeholder="Password" autocomplete="current-password"></label>
+        </section>
+        <section>
+          <h3>Account Options</h3>
+          <button class="primary wide" onclick="loginFromPage()">Login</button>
+          <button class="outline wide" type="button" onclick="asteriaTestLogin()">Test Login</button>
+          <button class="primary wide" onclick="setView('accountCreate')">Create Account</button>
+          <button class="outline wide" type="button" onclick="setView('forgotPassword')">Forgot Password</button>
+          <p class="muted smallnote">All accounts use one login. GM permissions are granted per campaign.</p>
+        </section>
+      </div>
+    </div></section>
+
+    <section id="forgotPassword" class="view"><div class="account-create-page card">
+      <div class="section-head"><div><p class="eyebrow">Asteria Access</p><h2>Forgot Password</h2></div><button class="outline" onclick="setView('loginPage')">Back to Login</button></div>
+      <p class="muted">Enter your account email to start the password reset flow.</p>
+      <label>Email<input id="forgotPasswordEmail" placeholder="you@example.com" autocomplete="email"></label>
+      <button class="primary" onclick="requestPasswordReset()">Send Reset Link</button>
+      <p class="muted smallnote">Firebase will email the reset link for this account.</p>
+    </div></section>
+
+    <section id="accountCreate" class="view"><div class="account-create-page card">
+      <div class="section-head"><div><p class="eyebrow">Asteria Account</p><h2>Create New Account</h2></div><button class="outline" onclick="backToLogin()">Back to Login</button></div>
+      <p class="muted">Create an account first. After logging in, you can create separate characters and campaigns.</p>
+      <div id="createAccountHint" class="auth-hint">Enter your account details below.</div>
+      <div class="account-create-grid">
+        <section>
+          <h3>Personal Details</h3>
+          <label>First Name<input id="createFirstName" placeholder="First name" autocomplete="given-name"></label>
+          <label>Last Name<input id="createLastName" placeholder="Last name" autocomplete="family-name"></label>
+          <label>Email Address<input id="createEmail" type="email" placeholder="you@email.com" autocomplete="email"></label>
+        </section>
+        <section>
+          <h3>Login Details</h3>
+          <label>Username<input id="createUsername" placeholder="Username" autocomplete="username"></label>
+          <label>Password<input id="createPassword" type="password" placeholder="Password" autocomplete="new-password"></label>
+          <p class="muted smallnote">Username is used to log in. Email is used for account recovery and password reset.</p>
+        </section>
+      </div>
+      <div class="auth-actions"><button class="primary" onclick="firebaseCreateAccountPage()">Create Account</button><button class="outline" onclick="backToLogin()">Cancel</button></div>
+    </div></section>
+
+
+    <section id="playerHome" class="view"><div class="player-home-grid"><section class="card player-home-hero"><p class="eyebrow">Player Account</p><h2 id="accountWelcome">Your Characters</h2><p class="muted">Create characters under your account, then open a character card to enter that character dashboard. The GM chooses which characters are active in a campaign from Campaign Settings.</p><button class="primary" onclick="toggleCharacterCreator()">+ Create Character</button></section><section id="characterCreator" class="card character-creator"><h3>Create Character</h3><div class="creator-grid"><label>Character Name<input id="newCharName" placeholder="New character name"></label><label>Race<input id="newCharRace" placeholder="Race"></label><label>Class<input id="newCharClass" placeholder="Class"></label><label>Age<input id="newCharAge" placeholder="Age"></label></div><p class="muted smallnote">New characters start at Level 0 with base HP/SP/MP 10 and empty characteristics.</p><button class="primary" onclick="createCharacterForAccount()">Create Character</button></section><section class="card"><div class="section-head"><h3>Character Select</h3><span class="pill">Account Characters</span></div><div id="accountCharacterCards" class="account-character-cards"></div></section></div></section>
+
+    <section id="campaigns" class="view"><div class="campaign-manager"><section class="card"><div class="section-head"><div><p class="eyebrow">GM System</p><h2>Campaign Manager</h2></div><button class="primary" onclick="createCampaign()">+ Add Campaign</button></div><p class="muted">Choose the active campaign, set party size, create player logins, and manage player access rules.</p><div id="campaignList" class="campaign-list"></div></section><section class="card"><h3>Campaign Settings</h3><label>Campaign Name<input id="campaignNameInput"></label><label>Party Size<input id="partySizeInput" type="number" min="1" max="8"></label><h4>Player Login Setup</h4><div id="loginSetup" class="login-setup"></div><h4>Access Rules</h4><div id="campaignAccess" class="checks"></div><button class="primary" onclick="saveCampaignSettings()">Save Campaign Settings</button><button class="danger" onclick="deleteCampaign()">Delete Selected Campaign</button></section></div></section>
+
+    <section id="player" class="view">
+      <div class="player-shell redesigned-player">
+        <aside class="card player-summary-panel">
+          <h3 class="visually-hidden">Player Summary</h3>
+          <div class="summary-header">
+            <div class="portrait large" id="pInitial">K</div>
+            <div class="identity-block">
+              <h2 id="pName">Kael</h2>
+              <p id="pRace"></p>
+              <p id="pClass"></p>
+              <p class="muted">Age: <span id="pAge">—</span></p>
+              <b id="pLevel"></b>
+            </div>
+          </div>
+          <div class="initiative-card"><span>Initiative</span><b id="pInitiativeBox">+0</b></div>
+          <section class="xp-card">
+            <div class="resource-title"><span>Experience</span><b id="pXpLine"></b></div>
+            <div class="bar xp"><i id="pXpBar"></i></div>
+            
+          </section>
+          <section class="resources">
+            <h4>Resource Bars</h4>
+            <div class="resource-block"><label>HP <span id="pHP"></span></label><div class="meter hp"><i id="pHpBar"></i></div><div class="resource-input-controls"><input id="pHPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('hp',-1)">−</button><button onclick="playerResourceDelta('hp',1)">+</button></div><details class="resource-breakdown"><summary>HP breakdown</summary><div id="pHPBreakdown"></div></details></div>
+            <div class="resource-block"><label>SP <span id="pSP"></span></label><div class="meter sp"><i id="pSpBar"></i></div><div class="resource-input-controls"><input id="pSPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('sp',-1)">−</button><button onclick="playerResourceDelta('sp',1)">+</button></div><details class="resource-breakdown"><summary>SP breakdown</summary><div id="pSPBreakdown"></div></details></div>
+            <div class="resource-block"><label>MP <span id="pMP"></span></label><div class="meter mp"><i id="pMpBar"></i></div><div class="resource-input-controls"><input id="pMPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('mp',-1)">−</button><button onclick="playerResourceDelta('mp',1)">+</button></div><details class="resource-breakdown"><summary>MP breakdown</summary><div id="pMPBreakdown"></div></details></div>
+            <button class="outline wide" onclick="recalculatePlayerResources()">Recalculate HP / SP / MP</button>
+          </section>
+          <section class="characteristics-compact"><h4>Characteristics</h4><div class="stats" id="pStats"></div></section>
+        </aside>
+        <section class="player-main-panel">
+          <div class="campaign-session-panel card" aria-label="Campaign session information">
+            <div class="campaign-copy"><span class="small-label">Campaign Name</span><h2 id="pCampaign">The Shattered Realms</h2><p id="pCampaignNote">Linked party campaign. Session notes, logs, and combat records are controlled by the GM.</p></div>
+            <div class="session-copy"><span class="small-label">Current Session</span><b id="pSessionNo">Session 12</b><p id="pSession">The Eclipse Gate</p><small>Started by GM • Logs saved when session ends</small></div>
+          </div>
+          <nav class="tabs card player-menu-panel">
+            <button class="tab active" data-tab="overview"><span class="tab-icon" aria-hidden="true">&#9776;</span>Dashboard</button><button class="tab" data-tab="characteristicsPane"><span class="tab-icon" aria-hidden="true">&#9673;</span>Character</button><button class="tab" data-tab="talents"><span class="tab-icon" aria-hidden="true">&#10022;</span>Class/Talent Tree</button><button class="tab" data-tab="skillsPane"><span class="tab-icon" aria-hidden="true">&#9679;</span>Skills</button><button class="tab" data-tab="spells"><span class="tab-icon" aria-hidden="true">&#9889;</span>Spells</button><button class="tab" data-tab="inventory"><span class="tab-icon" aria-hidden="true">&#9638;</span>Inventory</button><button class="tab" data-tab="questsPane"><span class="tab-icon" aria-hidden="true">&#9873;</span>Quest</button><button class="tab" data-tab="journal"><span class="tab-icon" aria-hidden="true">&#9998;</span>Journal</button><button class="tab" data-tab="partyPane"><span class="tab-icon" aria-hidden="true">&#9737;</span>Party</button>
+          </nav>
+          <section id="overview" class="tabpane show">
+            <div class="player-dashboard-grid">
+              <section class="card equipment-armor-panel web-inventory-summary"><div class="section-head mini"><h3>Equipment / Armor</h3><div class="ac-shield"><span>AC</span><b id="pArmorClassShield">17</b></div></div><div class="armor-layout web-equip-layout"><div class="equip-slots left" id="dashboardArmorLeft"></div><div class="armor-figure">♜</div><div class="equip-slots right" id="dashboardArmorRight"></div></div></section>
+              <section class="card equipped-weapons-panel web-inventory-summary"><h3>Equipped Weapons</h3><div id="dashboardWeapons" class="dashboard-weapons"></div></section>
+              <section class="card spell-panel-v1722"><div class="section-head mini"><h3>Active Spells</h3><span class="pill">Magic Access</span></div><div id="spellTabsV1722" class="spell-tabs-v1722"></div><div id="activeSpellListV1722" class="spell-list-v1722"></div></section>
+              <section class="card class-talents-panel talents-panel"><h3>Class Talents</h3><div id="classTalentsList" class="talent-list"><article><b>Keen Instinct</b><p>+10 to Perception and Awareness checks.</p></article><article><b>Nature's Bond</b><p>+15% damage with ranged attacks.</p></article></div></section>
+              <section class="card racial-traits-panel talents-panel"><h3>Racial Traits</h3><div id="racialTraitsList" class="talent-list"><article><b>Fleet Footed</b><p>Increases movement speed by 10%.</p></article></div></section>
+              <section class="card skills-panel"><h3>Skills</h3><div class="skill-row"><span>Archery</span><b>Rank 5</b><div class="mini-bar"><i style="width:65%"></i></div></div><div class="skill-row"><span>Stealth</span><b>Rank 4</b><div class="mini-bar"><i style="width:52%"></i></div></div><div class="skill-row"><span>Survival</span><b>Rank 3</b><div class="mini-bar"><i style="width:38%"></i></div></div><div class="skill-row"><span>Perception</span><b>Rank 4</b><div class="mini-bar"><i style="width:57%"></i></div></div></section>
+              <section class="card conditions-panel"><h3>Conditions</h3><div id="playerConditionsInline"><p class="muted smallnote">No active conditions.</p></div></section>
+              <section class="card quick-items-panel"><h3>Quick Items</h3><button onclick="useInventoryItem('minor-health-potion')">🧪 Health Potion <b>x4</b></button><button onclick="useInventoryItem('stamina-draught')">🟢 Stamina Potion <b>x2</b></button><button onclick="useInventoryItem('mana-vial')">🔵 Mana Potion <b>x3</b></button><button>🧴 Antidote <b>x1</b></button></section>
+              <section class="card quick-actions-panel"><h3>Quick Action</h3><div class="recovery-buttons"><button class="recovery short-rest" onclick="playerRecoveryAction('short')"><span></span><b>Short Rest</b></button><button class="recovery long-rest" onclick="playerRecoveryAction('long')"><span></span><b>Long Rest</b></button><button class="recovery recover" onclick="playerRecoveryAction('recover')"><span></span><b>Recovery</b></button></div></section>
+              <section class="card coin-pouch-panel"><div class="section-head mini"><h3>Coin Pouch</h3><span class="pill">Dashboard</span></div><div id="coinPanelRows" class="coin-panel-rows"></div><div id="coinCopperTotal" class="muted smallnote"></div></section>
+              <section id="combatLogPanel" class="card dashboard-combat-log"><div class="section-head mini"><h3>Action / Resource Log</h3><button onclick="clearCombatLog()">Clear</button></div><div id="combatLogRows" class="combat-log-rows"></div></section>
+            </div>
+          </section>
+          <section id="characteristicsPane" class="tabpane"><div class="character-tab-grid"><div class="card character-profile-panel"><div class="section-head mini"><h3>Character</h3><span class="pill">Identity</span></div><p><b id="characterTabRace">Race pending</b></p><p class="muted smallnote" id="characterTabClass">Class pending</p><p class="muted smallnote">Race notes, origin details, and character references will live here as the character sheet grows.</p></div><div class="card characteristics-manager"><div class="section-head"><div><h3>Characteristics</h3><p class="muted">Spend CP here. Stage changes with + / −, then press Apply to update linked systems such as HP, SP, and MP.</p></div><div class="cp-box">Available CP <b id="cpAvailable">0</b><small>Pending: <span id="cpPending">0</span></small></div></div><div class="large-stat-grid" id="pStatsLarge"></div><button class="primary wide" onclick="applyCharacteristicCP()">Apply Characteristic Changes</button></div><div id="characterTraitsDock"></div></div></section>
+          <section id="talents" class="tabpane"><div class="card talent-tree-page"><div class="section-head"><div><h3>Talent Trees</h3><p class="muted">Spend and track Talent Points here. Full tree building comes later in the v1 system sync phase.</p></div><div class="tp-box">Available TP <b id="tpAvailable">0</b></div></div><div class="placeholder-tree"><span>Class Talents</span><span>Pathway Branches</span><span>Profession Talents</span></div></div></section>
+          <section id="skillsPane" class="tabpane"><div id="skillsTabDock" class="player-tab-dock"></div></section>
+          <section id="inventory" class="tabpane"><div class="inventory-system-layout"><div class="card worn-items-panel"><div class="section-head mini"><h3>Worn / Equipped Items</h3><span class="pill">Character Slots</span></div><p class="muted smallnote">These are the items currently worn or equipped by this character. Click an item to open its information page.</p><div class="inventory-equipped-grid"><section><h4>Armor</h4><div id="inventoryArmorSlots" class="inventory-slot-list"></div></section><section><h4>Weapons</h4><div id="inventoryWeaponSlots" class="inventory-slot-list"></div></section><section><h4>Wearables</h4><div id="inventoryWearableSlots" class="inventory-slot-list"></div></section><section><h4>Quick Slots</h4><div id="inventoryQuickSlots" class="inventory-slot-list"></div></section></div></div><div class="card bag-system-panel"><div class="section-head mini"><h3>Bag System</h3><button class="primary small" onclick="createWebBag()">+ Create Bag</button></div><p class="muted smallnote">Bags live inside the Inventory menu only. Select a bag to open its grid. Each grid slot can hold item/s; click an item to open the item page.</p><div id="bagBoxList" class="bag-box-list"></div><div id="bagGridPanel" class="bag-grid-panel"></div></div></div></section>
+          <section id="spells" class="tabpane"><div id="spellsTabDock" class="player-tab-dock"></div><div class="card spell-action-panel"><h3>Spell Actions</h3><button onclick="castSpell()">Cast Test Spell</button><button onclick="openManualCheckPrompt('Spell Attack')">Enter Spell Attack Roll</button></div></section>
+          <section id="questsPane" class="tabpane"><div class="card"><h3>Quest Log</h3><div id="playerQuestList"></div></div></section>
+          <section id="journal" class="tabpane"><div class="card"><h3>Player Journal</h3><textarea placeholder="Player notes and story records..."></textarea></div></section>
+          <section id="partyPane" class="tabpane"><div class="party-dashboard-grid"><div id="partyLootDock"></div><div class="card"><h3>Shared Party Notes</h3><textarea placeholder="Shared party notes..."></textarea></div><div class="card party-guild-panel"><div class="section-head mini"><h3>Guild</h3><span class="pill">Later</span></div><p class="muted smallnote">Shared guild resources, party goals, and group permissions will connect here later.</p></div></div></section>
+        </section>
+      </div>
+    </section>
+
+    <section id="map" class="view"><div class="card"><div class="section-head"><div><p class="eyebrow">Asteria World</p><h2>Map System</h2></div></div><p class="muted">Placeholder for the v2 interactive maps system. This tab is now reserved in the top navigation.</p></div></section>
+    <section id="crafting" class="view"><div class="card"><div class="section-head"><div><p class="eyebrow">Asteria Systems</p><h2>Crafting System</h2></div></div><p class="muted">Placeholder for the v2 crafting system. Recipes, materials, item class, item quality, and crafting XP will connect here later.</p></div></section>
+    <section id="gm" class="view"><div class="gm-layout"><aside class="card roster"><h2>Party Stats</h2><p class="muted" id="partyCampaignLabel">Current campaign party.</p><div id="partyRoster"></div><p class="muted smallnote">Click to select. Double-click to open GM Player Dashboard.</p></aside><section class="gm-main"><div class="card gm-hero"><div><p class="eyebrow">GM Dashboard</p><h2 id="gmCampaignTitle">Campaign</h2><p>Campaign control, initiative, encounter tracking, conditions, and notes.</p></div><div class="gm-actions"><button class="primary" onclick="startSession()">Start Session</button><button class="danger" onclick="endSession()">End Session</button></div></div><div class="gm-panels"><section class="card active-encounter"><div class="section-head"><div><p class="eyebrow">Active Encounter</p><h2>Whispering Woods Ambush</h2></div><span class="pill">In Progress</span></div><div class="encounter-art"></div><div class="encounter-mini"><span>Round <b id="roundNo">3</b></span><span>Initiative <b id="initCount">0</b></span><span>Enemies <b id="enemyCount">0</b></span></div></section><section class="card gm-session-control"><div class="section-head"><div><p class="eyebrow">Live Session</p><h3>Session Control</h3></div><span class="pill" id="gmSessionState">Ready</span></div><div class="gm-fast-controls"><button class="primary" onclick="startSession()">Start</button><button onclick="pauseSession()">Pause</button><button class="danger" onclick="endSession()">End + Build Log</button></div><p class="muted smallnote">Session logs collect dice, combat, XP, resource changes, rewards, notes, and quest updates.</p></section><section class="card gm-view-toggle"><div class="section-head mini"><h3>GM / Player View</h3><span class="pill">Privacy Check</span></div><button onclick="setGMViewMode('gm')">GM View</button><button onclick="setGMViewMode('player')">Player View Preview</button><p id="gmViewModeNote" class="muted smallnote">GM View active. Hidden notes stay GM-only.</p></section><section class="card gm-dice-log-panel"><div class="section-head mini"><h3>Dice Log</h3><button onclick="clearRollHistory()">Clear</button></div><div id="gmRollHistory" class="roll-history compact"></div></section><section class="card gm-session-log-builder"><div class="section-head mini"><h3>Session Log Builder</h3><button onclick="v1712BuildSessionLog()">Build Log</button></div><textarea id="gmSessionLogOutput" placeholder="Session summary will build here..."></textarea></section><section class="card gm-xp-split xp-distribution-system-v1">
+  <div class="section-head">
+    <div><p class="eyebrow">Campaign Progression</p><h3>XP Distribution + Level Progression</h3></div>
+    <span class="pill">System v1</span>
+  </div>
+  <p class="muted">XP generated by encounters, creatures, quests, objectives, exploration, roleplay, and world events is distributed here. This extends the existing campaign/player data and does not duplicate XP logic.</p>
+  <div class="xp-system-grid">
+    <label>XP Source
+      <select id="xpSourceType" onchange="updateXPSplitPreview()">
+        <option>Encounter completion</option><option>Creature defeat</option><option>Quest completion</option><option>Objective completion</option><option>Exploration</option><option>Roleplay</option><option>World event</option><option>GM custom</option>
+      </select>
+    </label>
+    <label>Total XP
+      <input id="campaignXPAmount" type="number" min="0" value="1000" oninput="updateXPSplitPreview()">
+    </label>
+    <label>Distribution
+      <select id="xpDistributionMode" onchange="updateXPSplitPreview()">
+        <option value="equal">Equal Distribution</option><option value="weighted">Weighted by Level</option><option value="selected">Selected Characters Only</option><option value="manual">Manual Awards</option><option value="milestone">Milestone / No XP</option>
+      </select>
+    </label>
+    <label>Global Modifier %
+      <input id="xpGlobalModifier" type="number" value="0" step="5" oninput="updateXPSplitPreview()">
+    </label>
+  </div>
+  <div class="xp-system-grid two">
+    <label>Reason / Notes
+      <input id="xpAwardReason" placeholder="e.g. Cleared the Whispering Woods ambush">
+    </label>
+    <label>Visibility
+      <select id="xpVisibility"><option>Public</option><option>GM-only</option><option>Hidden until revealed</option></select>
+    </label>
+  </div>
+  <div class="xp-split-controls">
+    <button class="primary" onclick="distributeCampaignXP()">Apply XP Award</button>
+    <button onclick="previewXPAwardMarkdown()">Preview Log</button>
+    <button onclick="clearXPManualInputs()">Clear Manual XP</button>
+  </div>
+  <p class="muted smallnote" id="campaignXPSplitPreview">Split: 250 XP each.</p>
+  <div id="xpSplitPartyList" class="xp-split-list"></div>
+  <details class="xp-system-details" open>
+    <summary>XP Award Preview / Session Log Entry</summary>
+    <textarea id="xpAwardLogPreview" placeholder="XP distribution summary will appear here..."></textarea>
+  </details>
+</section><section class="card initiative"><div class="section-head"><h3>Initiative Tracker</h3><button onclick="sortInitiative()">Roll / Sort</button></div><div id="initiativeRows"></div><div class="addline"><input id="initName" placeholder="Enemy / player name"><input id="initRoll" type="number" placeholder="Roll"><button onclick="addInitiative()">Add</button></div><button class="primary" onclick="nextTurn()">Next Turn</button></section><section class="card encounter"><div class="section-head"><h3>Encounter Tracker</h3><button onclick="addEnemy()">+ Blank Enemy</button></div><p class="muted">Load enemies from the Creature Database or add them manually.</p><div class="addline"><select id="creatureSelect"></select><button class="primary" onclick="addEnemyFromCreature()">Add Enemy From Creature</button></div><div id="enemyRows"></div><div class="condition-help"><b>Condition rules:</b> Poisoned, Burning, and Bleeding tick HP damage on their turn. Stunned skips the turn.</div></section><section class="card"><h3>Campaign Notes</h3><textarea placeholder="Persistent campaign notes..."></textarea></section><section class="card"><h3>Encounter Notes</h3><textarea placeholder="Temporary notes for the current fight..."></textarea></section><section class="card gm-tools"><h3>GM Tools</h3><button>Quest Builder</button><button>Encounter Builder</button><button>Monster Creator</button><button>Item Creator</button><button onclick="openManualCheckPrompt('GM Check')">Enter Roll Score</button><button>Manage Library</button></section><section class="card gm-placeholder-panel"><h3>Quest Updates</h3><textarea id="gmQuestUpdates" placeholder="GM-only quest progress, hidden details, rewards, and next hooks..."></textarea></section><section class="card gm-placeholder-panel"><h3>Encounter Notes</h3><textarea id="gmEncounterUpdates" placeholder="Enemy tactics, secret DCs, rewards, and encounter results..."></textarea></section></div></section></div></section>
+
+    <section id="gmPlayer" class="view"><div class="gm-player card"><button onclick="setView('gm')">← Back to GM Dashboard</button><h2 id="gpName">Player</h2><p id="gpLine"></p><div class="gm-player-grid"><section><h3>Player Resources</h3><div class="resource-edit full"><b>HP</b><span id="gpHPTxt"></span><button onclick="adjustStat('hp',-5,true)">-5</button><button onclick="adjustStat('hp',-1,true)">-1</button><button onclick="adjustStat('hp',1,true)">+1</button><button onclick="adjustStat('hp',5,true)">+5</button></div><div class="meter hp"><i id="gpHpBar"></i></div><details class="resource-breakdown"><summary>HP breakdown</summary><div id="gpHPBreakdown"></div></details><div class="resource-edit full"><b>SP</b><span id="gpSPTxt"></span><button onclick="adjustStat('sp',-5,true)">-5</button><button onclick="adjustStat('sp',-1,true)">-1</button><button onclick="adjustStat('sp',1,true)">+1</button><button onclick="adjustStat('sp',5,true)">+5</button></div><div class="meter sp"><i id="gpSpBar"></i></div><details class="resource-breakdown"><summary>SP breakdown</summary><div id="gpSPBreakdown"></div></details><div class="resource-edit full"><b>MP</b><span id="gpMPTxt"></span><button onclick="adjustStat('mp',-5,true)">-5</button><button onclick="adjustStat('mp',-1,true)">-1</button><button onclick="adjustStat('mp',1,true)">+1</button><button onclick="adjustStat('mp',5,true)">+5</button></div><div class="meter mp"><i id="gpMpBar"></i></div><details class="resource-breakdown"><summary>MP breakdown</summary><div id="gpMPBreakdown"></div></details><div class="resource-edit full xp-edit"><b>XP</b><span id="gpXPTxt"></span><button onclick="adjustStat('xp',-100,true)">-100</button><button onclick="adjustStat('xp',-10,true)">-10</button><button onclick="adjustStat('xp',10,true)">+10</button><button onclick="adjustStat('xp',100,true)">+100</button></div><div class="custom-resource"><select id="gmResourceKey"><option value="hp">HP</option><option value="sp">SP</option><option value="mp">MP</option><option value="xp">XP</option></select><input id="gmResourceAmount" type="number" value="10" min="1"><button onclick="customGMResource(-1)">Minus</button><button onclick="customGMResource(1)">Plus</button></div><button class="outline wide" onclick="recalculateGMPlayerResources()">Recalculate HP / SP / MP Max</button></section><section><h3>Conditions</h3><div class="quick-conditions"><button onclick="quickAddCondition('Poisoned')">☠ Poisoned</button><button onclick="quickAddCondition('Burning')">🔥 Burning</button><button onclick="quickAddCondition('Bleeding')">🩸 Bleeding</button><button onclick="quickAddCondition('Stunned')">💫 Stunned</button></div><div id="conditionsList"></div><div class="addline"><select id="conditionName"><option>Poisoned</option><option>Burning</option><option>Bleeding</option><option>Stunned</option></select><input id="conditionRounds" type="number" placeholder="Rounds" value="3"><button onclick="addCondition()">Add</button></div><p class="muted smallnote">GM only: conditions are visible to players but edited here.</p></section><section><h3>GM Notes</h3><textarea placeholder="Private GM notes for this player..."></textarea></section></div></div></section>
+    <section id="quests" class="view"><div class="card"><div class="section-head"><div><p class="eyebrow">Campaign</p><h2>Quest Log</h2></div><button class="gm-only locked" onclick="addQuest()">+ Add Quest</button></div><p class="muted">Players can view active quests. GM can manage campaign quest information.</p><div id="questList"></div></div></section>
+    <section id="creature" class="view"><div class="creature-page card"><button onclick="setView('gm')">← Back</button><h2 id="creatureName">Creature</h2><p id="creatureMeta"></p><div class="creature-grid"><section><h3>Combat Stats</h3><p id="creatureStats"></p><button class="primary" onclick="addViewedCreatureToEncounter()">Add To Encounter</button></section><section><h3>Attacks</h3><div id="creatureAttacks"></div></section><section><h3>Lore / Notes</h3><p id="creatureNotes"></p></section></div></div></section>
+    <section id="devLog" class="view"><div class="card devlog-page">
+      <div class="section-head"><div><p class="eyebrow">Unified Workspace</p><h2>ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</h2></div><span class="pill">Firebase Auth</span></div>
+      <p class="muted">This build keeps the unified compendium and RPG systems intact while adding Firebase account login, persistent sessions, and a logged-in workspace dashboard for campaigns, characters, activity, and account settings.</p>
+      <div class="v17-grid">
+        <section><h3>Locked Foundation</h3><ul><li>v1.3.9.4 account and username login foundation retained.</li><li>Compendium content folders and manifest system retained.</li><li>Player dashboard, GM dashboard, inventory/bag UI, dice modal, and talent UI retained.</li></ul></section>
+        <section><h3>v1.7.1.3 Session Log Integration</h3><ul><li>Session Log System v1 is integrated into the existing GM Dashboard, not added as a duplicate page.</li><li>Added states: Not Started, Active, Paused, Ended, Archived.</li><li>Added Start, Pause, Resume, End, Generate Log, Edit Log, Archive Log, and Export Markdown controls.</li><li>Automatic log collection now respects session state and only stores session events while Active.</li><li>Public, GM-only, and Hidden until revealed visibility labels are supported for session events and markdown export.</li></ul></section>
+      </div>
+      <div id="v17SystemAudit" class="v17-audit"></div>
+    </div></section>
+  </main>
+  <div id="itemModal" class="item-modal"><div class="item-modal-card"><div class="section-head"><div><p class="eyebrow">Inventory Item</p><h2 id="itemModalName">Item</h2></div><button onclick="closeItemModal()">×</button></div><div id="itemModalBody"></div></div></div>
+  <div id="feedbackStack" class="feedback-stack"></div>
+  <div id="levelModal" class="level-modal"><div class="level-card"><button class="level-close" onclick="closeLevelModal()">×</button><p class="eyebrow">Asteria Progression</p><h2 id="levelModalTitle">Level Up!</h2><div id="levelModalBody"></div><button class="primary" onclick="setView('player');closeLevelModal()">Open Character</button></div></div>
+  <div id="toast" class="toast"></div>
+  <script src="js/content-manifest.js"></script>
+  <script src="js/wiki-index.js"></script>
+  <script src="js/asteria-state.js"></script>
+  <script src="js/asteria-view-hooks.js"></script>
+  <script src="js/asteria-progression.js"></script>
+  <script src="js/asteria-progression-ui.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/asteria-inventory-api.js"></script>
+  <script src="js/auth-bridge.js"></script>
+  <script type="module" src="js/firebase-auth.js"></script>
+<script src="js/data-sync.js"></script>
+  <script src="js/compendium-snapshot-v1.1.js"></script>
+<script src="js/clean-compendium.js"></script>
+<script src="js/race-compendium-data.js"></script>
+<script src="js/race-compendium.js"></script>
+<script src="js/class-compendium-data.js"></script>
+<script src="js/creature-compendium-data.js"></script>
+<script src="js/codex-compendium.js"></script>
+<script src="js/asteria-core-shell.js"></script>
+<script src="js/asteria-ui-theme-system.js"></script>
+<script src="js/asteria-home-fix.js"></script>
 </body>
 </html>

@@ -1,0 +1,15 @@
+{
+  "name": "Fighter",
+  "class_category": "Martial Classes",
+  "role": "Frontline Striker",
+  "primary_stat": "STR",
+  "secondary_stat": "END",
+  "combat_style": "Weapon Mastery",
+  "magic_type": "None",
+  "difficulty": "Easy",
+  "class_colour": "#b88445",
+  "symbol": "crossed-blades",
+  "playable": true,
+  "tags": ["martial", "weapon", "frontline"]
+}
+

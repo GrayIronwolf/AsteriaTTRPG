@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+<defs><filter id="g"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".8" filter="url(#g)">
+<rect x="22" y="22" width="1556" height="856"/><circle cx="800" cy="450" r="428"/><circle cx="800" cy="450" r="250" opacity=".55"/>
+<path d="M800 110 L1138 330 L1080 660 L800 820 L520 660 L462 330 Z"/>
+<path d="M800 110 L640 380 L800 450 L960 380 Z"/><path d="M462 330 L640 380 L520 660 M1138 330 L960 380 L1080 660"/>
+<path d="M640 380 L520 660 L800 450 L1080 660 L960 380"/><path d="M800 450 L800 820"/><path d="M640 380 L960 380"/><path d="M520 660 L1080 660"/>
+<path d="M22 450 H410 M1190 450 H1578" stroke-dasharray="9 9" opacity=".55"/><path d="M800 22 V110 M800 820 V878" stroke-dasharray="9 9" opacity=".55"/>
+<path d="M140 140 L520 660 M1460 140 L1080 660 M140 760 L640 380 M1460 760 L960 380" stroke-dasharray="9 9" opacity=".38"/>
+<g opacity=".68"><rect x="36" y="36" width="120" height="120"/><rect x="1444" y="36" width="120" height="120"/><rect x="36" y="744" width="120" height="120"/><rect x="1444" y="744" width="120" height="120"/>
+<circle cx="96" cy="96" r="48"/><circle cx="1504" cy="96" r="48"/><circle cx="96" cy="804" r="48"/><circle cx="1504" cy="804" r="48"/></g>
+</g></svg>

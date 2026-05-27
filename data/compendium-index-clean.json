@@ -1,0 +1,235 @@
+{
+  "version": "asteria-unified-workspace-compendium-system-v1",
+  "generatedAt": "2026-05-13T09:38:20.468Z",
+  "entries": [
+    {
+      "id": "ranger",
+      "title": "Ranger",
+      "section": "Classes",
+      "type": "Class",
+      "categoryPath": [
+        "Classes"
+      ],
+      "category": "Classes",
+      "rarity": "Common",
+      "rarityRank": 0,
+      "description": "Rangers are hunters, scouts, explorers, and survivalists trained to move through hostile wilderness. This is a clean test class page used to verify the public compendium system.",
+      "sourcePath": "content/Classes/Ranger.md",
+      "tags": [
+        "Class",
+        "Test"
+      ],
+      "metadata": {
+        "type": "Class",
+        "itemClass": "Common",
+        "visibility": "public",
+        "tags": [
+          "Class",
+          "Test"
+        ]
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [],
+      "traits": [],
+      "marketValue": "",
+      "damage": "",
+      "content": "---\ntype: Class\nitem_class: Common\nvisibility: public\ntags: [Class, Test]\n---\n\n# Ranger\n\nRangers are hunters, scouts, explorers, and survivalists trained to move through hostile wilderness.\n\n## Role\n\n- Exploration\n- Ranged combat\n- Tracking\n- Survival\n\n## Test Note\n\nThis is a clean test class page used to verify the public compendium system.\n",
+      "searchTerms": "ranger classes class classes ---\ntype: class\nitem_class: common\nvisibility: public\ntags: [class, test]\n---\n\n# ranger\n\nrangers are hunters, scouts, explorers, and survivalists trained to move through hostile wilderness.\n\n## role\n\n- exploration\n- ranged combat\n- tracking\n- survival\n\n## test note\n\nthis is a clean test class page used to verify the public compendium system.\n {\"type\":\"class\",\"itemclass\":\"common\",\"visibility\":\"public\",\"tags\":[\"class\",\"test\"]}"
+    },
+    {
+      "id": "iron-ingot",
+      "title": "Iron Ingot",
+      "section": "Items",
+      "type": "Ingot",
+      "categoryPath": [
+        "Items",
+        "Resources & Materials",
+        "Metal Ingots"
+      ],
+      "category": "Metal Ingots",
+      "rarity": "Common",
+      "rarityRank": 0,
+      "description": "A refined bar of iron produced from smelted iron ore. Iron Ingots are common crafting materials for basic weapons, armour, tools, and structures. Used in simple and advanced metalworking projects.",
+      "sourcePath": "content/Items/Resources & Materials/Metal Ingots/Iron Ingot.md",
+      "tags": [
+        "Item",
+        "Material",
+        "Ingot",
+        "Metal",
+        "Test"
+      ],
+      "metadata": {
+        "type": "Ingot",
+        "itemClass": "Common",
+        "materialType": "Metal",
+        "visibility": "public",
+        "tags": [
+          "Item",
+          "Material",
+          "Ingot",
+          "Metal",
+          "Test"
+        ],
+        "marketValue": "16 Marks"
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [],
+      "traits": [],
+      "marketValue": "16 Marks",
+      "damage": "",
+      "content": "---\ntype: Ingot\nitem_class: Common\nmaterial_type: Metal\nvisibility: public\ntags: [Item, Material, Ingot, Metal, Test]\nmarket_value: 16 Marks\n---\n\n# Iron Ingot\n\nA refined bar of iron produced from smelted iron ore.\n\n## Effect\n\nIron Ingots are common crafting materials for basic weapons, armour, tools, and structures.\n\n## Crafting Use\n\nUsed in simple and advanced metalworking projects.\n",
+      "searchTerms": "iron ingot items ingot items resources & materials metal ingots ---\ntype: ingot\nitem_class: common\nmaterial_type: metal\nvisibility: public\ntags: [item, material, ingot, metal, test]\nmarket_value: 16 marks\n---\n\n# iron ingot\n\na refined bar of iron produced from smelted iron ore.\n\n## effect\n\niron ingots are common crafting materials for basic weapons, armour, tools, and structures.\n\n## crafting use\n\nused in simple and advanced metalworking projects.\n {\"type\":\"ingot\",\"itemclass\":\"common\",\"materialtype\":\"metal\",\"visibility\":\"public\",\"tags\":[\"item\",\"material\",\"ingot\",\"metal\",\"test\"],\"marketvalue\":\"16 marks\"}"
+    },
+    {
+      "id": "iron-ore",
+      "title": "Iron Ore",
+      "section": "Items",
+      "type": "Ore",
+      "categoryPath": [
+        "Items",
+        "Resources & Materials",
+        "Metal Ores"
+      ],
+      "category": "Metal Ores",
+      "rarity": "Common",
+      "rarityRank": 0,
+      "description": "A common iron-bearing ore used as the foundation for basic smithing and metalworking. Iron Ore can be refined into Iron Ingots using a standard forge. Used for weapons, armour, tools, fittings, and simple metal goods.",
+      "sourcePath": "content/Items/Resources & Materials/Metal Ores/Iron Ore.md",
+      "tags": [
+        "Item",
+        "Material",
+        "Ore",
+        "Metal",
+        "Test"
+      ],
+      "metadata": {
+        "type": "Ore",
+        "itemClass": "Common",
+        "materialType": "Metal",
+        "visibility": "public",
+        "tags": [
+          "Item",
+          "Material",
+          "Ore",
+          "Metal",
+          "Test"
+        ],
+        "marketValue": "4 Marks"
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [],
+      "traits": [],
+      "marketValue": "4 Marks",
+      "damage": "",
+      "content": "---\ntype: Ore\nitem_class: Common\nmaterial_type: Metal\nvisibility: public\ntags: [Item, Material, Ore, Metal, Test]\nmarket_value: 4 Marks\n---\n\n# Iron Ore\n\nA common iron-bearing ore used as the foundation for basic smithing and metalworking.\n\n## Effect\n\nIron Ore can be refined into Iron Ingots using a standard forge.\n\n## Crafting Use\n\nUsed for weapons, armour, tools, fittings, and simple metal goods.\n",
+      "searchTerms": "iron ore items ore items resources & materials metal ores ---\ntype: ore\nitem_class: common\nmaterial_type: metal\nvisibility: public\ntags: [item, material, ore, metal, test]\nmarket_value: 4 marks\n---\n\n# iron ore\n\na common iron-bearing ore used as the foundation for basic smithing and metalworking.\n\n## effect\n\niron ore can be refined into iron ingots using a standard forge.\n\n## crafting use\n\nused for weapons, armour, tools, fittings, and simple metal goods.\n {\"type\":\"ore\",\"itemclass\":\"common\",\"materialtype\":\"metal\",\"visibility\":\"public\",\"tags\":[\"item\",\"material\",\"ore\",\"metal\",\"test\"],\"marketvalue\":\"4 marks\"}"
+    },
+    {
+      "id": "longsword",
+      "title": "Longsword",
+      "section": "Items",
+      "type": "Weapon",
+      "categoryPath": [
+        "Items",
+        "Weapons"
+      ],
+      "category": "Weapons",
+      "rarity": "Common",
+      "rarityRank": 0,
+      "description": "A standard one-handed blade used by soldiers, guards, adventurers, and trained duelists. This is a clean test weapon page used to verify item cards and page opening.",
+      "sourcePath": "content/Items/Weapons/Longsword.md",
+      "tags": [
+        "Item",
+        "Weapon",
+        "Sword",
+        "Test"
+      ],
+      "metadata": {
+        "type": "Weapon",
+        "itemClass": "Common",
+        "visibility": "public",
+        "tags": [
+          "Item",
+          "Weapon",
+          "Sword",
+          "Test"
+        ],
+        "damage": "1D10 Slashing",
+        "marketValue": "60 Marks"
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [],
+      "traits": [],
+      "marketValue": "60 Marks",
+      "damage": "1D10 Slashing",
+      "content": "---\ntype: Weapon\nitem_class: Common\nvisibility: public\ntags: [Item, Weapon, Sword, Test]\ndamage: 1D10 Slashing\nmarket_value: 60 Marks\n---\n\n# Longsword\n\nA standard one-handed blade used by soldiers, guards, adventurers, and trained duelists.\n\n## Weapon Data\n\n- Damage: 1D10 Slashing\n- Base Material: Metal\n- Ingot Requirement: 3 Ingots\n\n## Test Note\n\nThis is a clean test weapon page used to verify item cards and page opening.\n",
+      "searchTerms": "longsword items weapon items weapons ---\ntype: weapon\nitem_class: common\nvisibility: public\ntags: [item, weapon, sword, test]\ndamage: 1d10 slashing\nmarket_value: 60 marks\n---\n\n# longsword\n\na standard one-handed blade used by soldiers, guards, adventurers, and trained duelists.\n\n## weapon data\n\n- damage: 1d10 slashing\n- base material: metal\n- ingot requirement: 3 ingots\n\n## test note\n\nthis is a clean test weapon page used to verify item cards and page opening.\n {\"type\":\"weapon\",\"itemclass\":\"common\",\"visibility\":\"public\",\"tags\":[\"item\",\"weapon\",\"sword\",\"test\"],\"damage\":\"1d10 slashing\",\"marketvalue\":\"60 marks\"}"
+    },
+    {
+      "id": "undien",
+      "title": "Undien",
+      "section": "Races",
+      "type": "Race",
+      "categoryPath": [
+        "Races"
+      ],
+      "category": "Races",
+      "rarity": "",
+      "rarityRank": 0,
+      "description": "The Undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins. Undien are available as a playable race. They are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touche",
+      "sourcePath": "content/Races/Undien.md",
+      "tags": [
+        "Race",
+        "aquatic",
+        "riverfolk",
+        "water-touched"
+      ],
+      "metadata": {
+        "type": "Race",
+        "racecategory": "Humanoid",
+        "playable": true,
+        "size": "Medium",
+        "affinity": [
+          "Water",
+          "Spirit"
+        ],
+        "visibility": "public",
+        "tags": [
+          "Race",
+          "aquatic",
+          "riverfolk",
+          "water-touched"
+        ]
+      },
+      "playable": true,
+      "availability": "playable",
+      "raceCategory": "Humanoid",
+      "size": "Medium",
+      "affinity": [
+        "Water",
+        "Spirit"
+      ],
+      "traits": [
+        "Amphibious affinity",
+        "Water movement familiarity",
+        "Strong connection to aquatic cultures"
+      ],
+      "marketValue": "",
+      "damage": "",
+      "content": "---\ntype: Race\nraceCategory: Humanoid\nplayable: true\nsize: Medium\naffinity:\n  - Water\n  - Spirit\nvisibility: public\ntags:\n  - Race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# Undien\n\nThe Undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## Traits\n\n- Amphibious affinity\n- Water movement familiarity\n- Strong connection to aquatic cultures\n\n## Racial Skills\n\n- River Navigation\n- Breath Control\n- Drowned Ruin Lore\n\n## Character Creation Notes\n\nUndien are available as a playable race. They are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## Test Note\n\nThis is a clean test race page used to verify the public compendium system.\n",
+      "searchTerms": "undien races race races ---\ntype: race\nracecategory: humanoid\nplayable: true\nsize: medium\naffinity:\n  - water\n  - spirit\nvisibility: public\ntags:\n  - race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# undien\n\nthe undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## traits\n\n- amphibious affinity\n- water movement familiarity\n- strong connection to aquatic cultures\n\n## racial skills\n\n- river navigation\n- breath control\n- drowned ruin lore\n\n## character creation notes\n\nundien are available as a playable race. they are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## test note\n\nthis is a clean test race page used to verify the public compendium system.\n {\"type\":\"race\",\"racecategory\":\"humanoid\",\"playable\":true,\"size\":\"medium\",\"affinity\":[\"water\",\"spirit\"],\"visibility\":\"public\",\"tags\":[\"race\",\"aquatic\",\"riverfolk\",\"water-touched\"]}"
+    }
+  ]
+}

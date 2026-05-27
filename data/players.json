@@ -1,0 +1,6 @@
+[
+  {"id":"kael","name":"Kael","level":0,"hp":10,"sp":10,"mp":10,"xp":0,"campaign":"Shadows of Elarion"},
+  {"id":"lyra","name":"Lyra","level":0,"hp":10,"sp":10,"mp":10,"xp":0,"campaign":"Shadows of Elarion"},
+  {"id":"tharrnak","name":"Tharrnak Frostbjorn","level":8,"hp":132,"sp":82,"mp":96,"xp":6200,"campaign":"Shadows of Elarion"},
+  {"id":"mako","name":"Mako Valen Court","level":7,"hp":74,"sp":60,"mp":110,"xp":4800,"campaign":"Shadows of Elarion"}
+]

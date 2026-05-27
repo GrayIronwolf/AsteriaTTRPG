@@ -1,0 +1,521 @@
+{
+  "version": "v1.7.3.5.9",
+  "system": "Weapon Crafting + Ingot System",
+  "rules": {
+    "ingotRequirementRule": "Metal rarity does not increase ingot requirements. Higher-tier materials increase crafting difficulty, forge requirements, market value, and refinement requirements.",
+    "sizeCategories": [
+      {
+        "category": "Tiny Weapon",
+        "ingots": 1
+      },
+      {
+        "category": "Light Weapon",
+        "ingots": 2
+      },
+      {
+        "category": "Standard Weapon",
+        "ingots": 3
+      },
+      {
+        "category": "Heavy Weapon",
+        "ingots": 4
+      },
+      {
+        "category": "Massive Weapon",
+        "ingots": "5\u20136"
+      }
+    ],
+    "additionalComponents": [
+      "Wood",
+      "Leather",
+      "Cloth",
+      "Rope",
+      "Resin",
+      "Monster Bone",
+      "Monster Sinew",
+      "Essence Core",
+      "Soul Stone",
+      "Gemstones"
+    ],
+    "forgeRequirements": [
+      {
+        "forge": "Standard Forge",
+        "purpose": "Common & Uncommon materials"
+      },
+      {
+        "forge": "Reinforced Forge",
+        "purpose": "Unusual & Rare materials"
+      },
+      {
+        "forge": "Celestial Forge",
+        "purpose": "Divine metals"
+      },
+      {
+        "forge": "Infernal Forge",
+        "purpose": "Infernal metals"
+      },
+      {
+        "forge": "Astral Forge",
+        "purpose": "Cosmic and mana metals"
+      },
+      {
+        "forge": "Gloomforge",
+        "purpose": "Void-aligned materials"
+      },
+      {
+        "forge": "Primordial Forge",
+        "purpose": "Relic materials"
+      }
+    ]
+  },
+  "weapons": [
+    {
+      "category": "Blunt Weapons",
+      "name": "Club",
+      "damage": "1D4 Bludgeoning",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Great Club",
+      "damage": "1D8 Bludgeoning",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Mace",
+      "damage": "1D6 Bludgeoning",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Morning Star",
+      "damage": "1D6 Bludgeoning or 1D6 Piercing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Quarterstaff",
+      "damage": "1D6 Bludgeoning",
+      "size": "Light",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Picked Hammer",
+      "damage": "1D4 Bludgeoning or 1D4 Piercing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Sling",
+      "damage": "1D4 Bludgeoning",
+      "size": "Tiny",
+      "ingots": 0,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Flail",
+      "damage": "1D8 Bludgeoning",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Maul",
+      "damage": "2D6 Bludgeoning",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Warhammer",
+      "damage": "1D8 Bludgeoning",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Bo Staff",
+      "damage": "1D4 Bludgeoning",
+      "size": "Light",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Stave",
+      "damage": "1D6 Bludgeoning",
+      "size": "Light",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Blunt Weapons",
+      "name": "Tonfa",
+      "damage": "1D4 Bludgeoning",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Javelin",
+      "damage": "1D6 Piercing or 1D4 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Short Spear",
+      "damage": "1D6 Piercing or 1D4 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Long Spear",
+      "damage": "1D8 Piercing or 1D4 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Pike",
+      "damage": "1D10 Piercing or 1D4 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Voulge",
+      "damage": "1D6 Piercing or 1D10 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Fauchard",
+      "damage": "1D6 Piercing or 1D10 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Partisan",
+      "damage": "1D8 Piercing or 1D8 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Spetum",
+      "damage": "2D6 Piercing or 1D6 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Lance",
+      "damage": "1D12 Piercing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Poleaxe",
+      "damage": "1D4 Piercing or 1D8 Slashing or 1D4 Bludgeoning",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Glaive",
+      "damage": "1D8 Piercing or 1D10 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Halberd",
+      "damage": "1D8 Piercing or 1D10 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Ranseur",
+      "damage": "1D10 Piercing or 1D6 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Trident",
+      "damage": "3D4 Piercing or 1D4 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Naginata",
+      "damage": "1D8 Piercing or 1D10 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Spears & Polearms",
+      "name": "Scythe",
+      "damage": "3D6 Piercing or 3D8 Slashing",
+      "size": "Massive",
+      "ingots": 5,
+      "complexity": "Masterwork"
+    },
+    {
+      "category": "Ammunition",
+      "name": "Arrows (Bundle)",
+      "damage": "1D6 Piercing",
+      "size": "Ammunition",
+      "ingots": 0.25,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Ammunition",
+      "name": "Bolts (Bundle)",
+      "damage": "1D6 Piercing",
+      "size": "Ammunition",
+      "ingots": 0.25,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Bows",
+      "name": "Short Bow",
+      "damage": "1D4 Force",
+      "size": "Light",
+      "ingots": 0.5,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Bows",
+      "name": "Hunting Bow",
+      "damage": "1D6 Force",
+      "size": "Light",
+      "ingots": 1,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Bows",
+      "name": "Recurve Bow",
+      "damage": "1D8 Force",
+      "size": "Standard",
+      "ingots": 1,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Bows",
+      "name": "Long Bow",
+      "damage": "1D10 Force",
+      "size": "Standard",
+      "ingots": 2,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Crossbows",
+      "name": "Hand Crossbow",
+      "damage": "1D6 Force",
+      "size": "Light",
+      "ingots": 1,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Crossbows",
+      "name": "Arbalest Crossbow",
+      "damage": "1D8 Force",
+      "size": "Standard",
+      "ingots": 2,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Crossbows",
+      "name": "Recurve Crossbow",
+      "damage": "1D10 Force",
+      "size": "Standard",
+      "ingots": 2,
+      "complexity": "Masterwork"
+    },
+    {
+      "category": "Crossbows",
+      "name": "Heavy Crossbow",
+      "damage": "2D8 Force",
+      "size": "Heavy",
+      "ingots": 3,
+      "complexity": "Masterwork"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Throwing Knives",
+      "damage": "1D4 Piercing or 1D4 Slashing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Hunting Knife",
+      "damage": "1D4 Piercing or 1D4 Slashing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Daggers",
+      "damage": "1D4 Piercing or 1D4 Slashing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Short Sword",
+      "damage": "1D6 Piercing or 1D6 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Rapier",
+      "damage": "1D8 Piercing or 1D4 Slashing",
+      "size": "Standard",
+      "ingots": 2,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Bastard Sword",
+      "damage": "1D8 Piercing or 1D8 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Long Sword",
+      "damage": "1D10 Piercing or 1D10 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Sickle",
+      "damage": "1D4 Piercing or 1D6 Slashing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Scimitar",
+      "damage": "1D6 Piercing or 1D6 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Hook Sword",
+      "damage": "1D6 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Swords & Daggers",
+      "name": "Great Sword",
+      "damage": "2D8 Piercing or 2D8 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Axes",
+      "name": "Handaxe",
+      "damage": "1D4 Slashing",
+      "size": "Tiny",
+      "ingots": 1,
+      "complexity": "Basic"
+    },
+    {
+      "category": "Axes",
+      "name": "Hatchet",
+      "damage": "1D6 Slashing",
+      "size": "Light",
+      "ingots": 2,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Axes",
+      "name": "Short Axe",
+      "damage": "1D8 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Standard"
+    },
+    {
+      "category": "Axes",
+      "name": "Long Handle Axe",
+      "damage": "1D10 Slashing",
+      "size": "Standard",
+      "ingots": 3,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Axes",
+      "name": "Battle Axe - Single Head",
+      "damage": "1D12 Slashing",
+      "size": "Heavy",
+      "ingots": 4,
+      "complexity": "Advanced"
+    },
+    {
+      "category": "Axes",
+      "name": "Battle Axe - Double Head",
+      "damage": "2D8 Slashing",
+      "size": "Heavy",
+      "ingots": 5,
+      "complexity": "Advanced"
+    }
+  ]
+}

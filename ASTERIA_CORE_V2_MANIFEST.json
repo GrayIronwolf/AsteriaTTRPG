@@ -1,0 +1,6 @@
+{
+  "version": "Asteria Website Core v2.0",
+  "base_used": "asteria-ui-theme-systems-bgfit-fix-full.zip",
+  "purpose": "Stable public compendium and website shell foundation",
+  "next_recommended_build": "Asteria Auth v1.0"
+}

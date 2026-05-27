@@ -1,0 +1,11 @@
+{
+  "version": "v1.7.4.2",
+  "collection": "compendiumPages",
+  "purpose": "Admin-created editable content pages",
+  "lockedOutOfScope": [
+    "core formulas",
+    "XP logic",
+    "website code",
+    "database rules"
+  ]
+}
