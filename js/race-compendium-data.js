@@ -129,7 +129,16 @@
       ]),
       category('Demi Races', [
         race('Aasimar'), race('Demi-Demon'), race('Demi-God'), race('Dhampir'), race('Drakan'), race('Goliath'), race('Half Elf'), race('Half Orc'), race('Hobgoblin'), race('Tiefling'),
-        category('Undien Races', [race('Undien')])
+        category('Undien Races', [
+          race('Undien'),
+          race('Abyssborn Undien'),
+          race('Deepborn Undien'),
+          race('Drownedborn Undien'),
+          race('Flowborn Undien'),
+          race('Frostborn Undien'),
+          race('Tempestborn Undien'),
+          race('Tideborn Undien')
+        ])
       ]),
       category('Demonic Races'),
       category('Dragon Races'),
