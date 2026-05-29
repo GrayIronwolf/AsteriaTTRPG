@@ -30,7 +30,7 @@ The Undien are water-touched people adapted to rivers, coasts, deep lakes, and a
 - Breath Control
 - Drowned Ruin Lore
 
-## Character Creation Notes
+## Character Forge Notes
 
 Undien are available as a playable race. They are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.
 

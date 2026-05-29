@@ -1,5 +1,5 @@
 /* =========================================================
-   Asteria Character Creation System v1.1
+   Asteria Character Forge Snapshot System v1.1
    Compendium Linking + Snapshot Logic
    Integrated for website build v1.7.2.4
    ---------------------------------------------------------
@@ -7,7 +7,7 @@
    use locked snapshots after approval.
    ========================================================= */
 (function(){
-  const VERSION_LABEL = 'v1.7.2.4 • Character Creation v1.1 Linked Snapshots';
+  const VERSION_LABEL = 'v1.7.2.4 • Character Forge v1.1 Linked Snapshots';
   const SOURCE_DATE = '2026-05-05';
 
   const SOURCE = {
@@ -73,7 +73,7 @@
       approvedBy: status==='approved' ? (window.session?.user||'GM') : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      sourceSystem:'Character Creation System v1.1 — Compendium Linking + Snapshot Logic',
+      sourceSystem:'Character Forge Snapshot System v1.1 — Compendium Linking + Snapshot Logic',
       race: versionRef(race),
       class: versionRef(klass),
       selectedTalents: talents.map(versionRef),
@@ -114,7 +114,7 @@
     const draft=Object.assign({name:'',age:'',raceId:'human',classId:'ranger',characteristics:{}}, getDraft());
     const race=byId(SOURCE.races,draft.raceId); const klass=byId(SOURCE.classes,draft.classId); const snap=buildSnapshot(draft,'draft');
     host.innerHTML=`
-      <div class="linked-creator-head"><div><h3>Create Character</h3><p class="muted smallnote">Character Creation v1.1 reads Race, Class, Talent, and Item data from the Compendium source, then saves a locked snapshot when approved.</p></div><span class="comp-linked">Compendium Source of Truth</span></div>
+      <div class="linked-creator-head"><div><h3>Character Forge</h3><p class="muted smallnote">Character Forge v1.1 reads Race, Class, Talent, and Item data from the Compendium source, then saves a locked snapshot when approved.</p></div><span class="comp-linked">Compendium Source of Truth</span></div>
       <div class="creator-grid enhanced">
         <label>Character Name<input id="newCharName" value="${esc(draft.name)}" oninput="ccV11Draft('name',this.value)" placeholder="New character name"></label>
         <label>Age<input id="newCharAge" value="${esc(draft.age)}" oninput="ccV11Draft('age',this.value)" placeholder="Age"></label>

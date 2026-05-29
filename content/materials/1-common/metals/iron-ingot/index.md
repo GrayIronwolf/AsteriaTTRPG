@@ -3,7 +3,7 @@ title: Iron Ingot
 slug: iron-ingot
 kingdom: Material
 item_class: Common
-category: Metal
+category: Ingot
 subcategory: Ferrous
 material_family: Iron
 source_items:
@@ -35,7 +35,7 @@ crafting_uses:
 alchemy_uses:
   - Grounding Compounds
 culinary_uses: []
-image: iron-ingot.png
+image: Iron Ingot.png
 tags:
   - materials
   - common

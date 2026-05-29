@@ -66,7 +66,7 @@
     'World, Realms & Planes': ['Lore Sheet','Regions','Timeline','Images'],
     Races: ['Race Sheet','Racial Traits','Lore','Images'],
     Classes: ['Class Sheet','Talent Tree','Lore','Images'],
-    Items: ['Item Sheet','Crafting','Lore','Sources'],
+    Items: [],
     Magic: ['Magic Sheet','Effects','Lore','Sources'],
     Creatures: ['Creature Sheet','Abilities','Lore','Images'],
     Factions: ['Faction Sheet','Relationships','Lore','Images']
@@ -76,15 +76,15 @@
     { id:'campaigns', label:'Campaigns', title:'Campaign Workspace', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
     { id:'characters', label:'Characters', title:'Character Workspace', intro:'Characters owned by this account, ready to link into campaigns.' },
     { id:'createCampaign', label:'Create Campaign', title:'Create Campaign', intro:'Create a campaign and automatically become GM for that campaign.' },
-    { id:'createCharacter', label:'Create Character', title:'Create Character', intro:'Create a character under the signed-in account.' },
+    { id:'createCharacter', label:'Character Forge', title:'Character Forge', intro:'Forge a character under the signed-in account.' },
     { id:'settings', label:'Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' }
   ];
   const authWorkspaceTabs = {
     dashboard: ['Overview','Campaigns','Characters','Activity'],
     campaigns: ['Campaigns','Invite Links','Linked Characters','Activity'],
-    characters: ['Characters','Create Character','Link Existing','Activity'],
+    characters: ['Characters','Character Forge','Link Existing','Activity'],
     createCampaign: ['Campaign Form','Invite Link','GM Role','Activity'],
-    createCharacter: ['Character Form','Starting Sheet','Inventory','Activity'],
+    createCharacter: ['Forge Flow','Starting Sheet','Inventory','Activity'],
     settings: ['Account','Sync','Theme','Activity']
   };
 
@@ -130,11 +130,6 @@
         leaf('Consumables', { section:'Items', path:'Consumable' }),
         leaf('Containers', { section:'Items', path:'Container' }),
         leaf('Jewelry', { section:'Items', path:'Jewelry' }),
-        branch('Content Collections', [
-          leaf('Flora', { section:'Items', wikiCollection:'flora' }),
-          leaf('Minerals', { section:'Items', wikiCollection:'minerals' }),
-          leaf('Materials', { section:'Items', wikiCollection:'materials' })
-        ]),
         branch('Resources & Materials', [
           leaf('Animal Parts', { section:'Items', path:'Animal Parts' }),
           leaf('Beast Parts', { section:'Items', path:'Beast Parts' }),
@@ -220,6 +215,25 @@
     return String(value || '').toLowerCase();
   }
 
+  function isDeprecatedLooseResourcePath(value) {
+    const normalized = lower(value).replace(/\\/g, '/').replace(/&/g, 'and');
+    return [
+      'content/items/resources and materials/ores/',
+      'content/items/resources and materials/ingots/',
+      'content/items/resources and materials/metal ores/',
+      'content/items/resources and materials/metal ingots/'
+    ].some(fragment => normalized.includes(fragment));
+  }
+
+  function isDeprecatedLooseResourceEntry(entry) {
+    return entry && entry.section === 'Items' && isDeprecatedLooseResourcePath(entry.sourcePath || entry.source || '');
+  }
+
+  function isCollectionIndexPath(value) {
+    const normalized = lower(value).replace(/\\/g, '/');
+    return /(^|\/)(flora|minerals|materials)\/index\.md$/.test(normalized);
+  }
+
   function escapeHtml(value) {
     return String(value || '').replace(/[&<>"]/g, character => ({
       '&':'&amp;',
@@ -296,7 +310,7 @@
     const source = lower([category, metadata.type, metadata.category].join(' '));
     if (source.includes('race')) return 'Races';
     if (source.includes('class') || source.includes('talent tree') || source.includes('pathway')) return 'Classes';
-    if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('consumable')) return 'Items';
+    if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('mineral') || source.includes('ore') || source.includes('ingot') || source.includes('consumable')) return 'Items';
     if (source.includes('spell') || source.includes('magic') || source.includes('enchantment') || source.includes('soul stone') || source.includes('rune') || source.includes('element')) return 'Magic';
     if (source.includes('creature') || source.includes('beast') || source.includes('monster') || source.includes('animal') || source.includes('construct')) return 'Creatures';
     if (source.includes('faction') || source.includes('guild') || source.includes('organisation') || source.includes('organization') || source.includes('npc')) return 'Factions';
@@ -373,8 +387,11 @@
   function loadFromManifest() {
     const pages = window.ASTERIA_CONTENT?.pages || [];
     return pages
+      .filter(page => !isDeprecatedLooseResourcePath(page?.source || ''))
+      .filter(page => !isCollectionIndexPath(page?.source || ''))
       .filter(page => page && page.content && publicSections.includes(sectionFromCategory(page.category, parseFrontmatter(page.content))))
-      .map(pageToEntry);
+      .map(pageToEntry)
+      .filter(entry => !isDeprecatedLooseResourceEntry(entry));
   }
 
   function allWikiIndexes() {
@@ -386,16 +403,17 @@
   function wikiItemToEntry(index, item) {
     const collectionId = item.collection || index.id;
     const collectionTitle = index.title || collectionId;
-    const wikiCategory = item.categoryLabel || item.category || 'Entries';
+    const placement = itemPlacement(index, item);
+    const wikiCategory = placement.category;
     const itemClass = item.item_class || '';
 
     return {
       id: `wiki-${collectionId}-${item.slug || slugify(item.title)}`,
       title: item.title,
       section: 'Items',
-      type: index.singular || item.category || 'Wiki Item',
-      categoryPath: ['Items', 'Content Collections', collectionTitle, wikiCategory],
-      category: wikiCategory,
+      type: placement.type,
+      categoryPath: placement.categoryPath,
+      category: placement.category,
       rarity: itemClass || 'Common',
       rarityRank: Math.max(0, Number(item.rarityOrder || 1) - 1),
       description: descriptionFromBody(item.body || ''),
@@ -420,16 +438,77 @@
     };
   }
 
+  function itemPlacement(index, item) {
+    const collectionId = lower(item.collection || index.id);
+    const categorySlug = lower(item.categorySlug || item.category || item.categoryLabel);
+    const categoryName = lower(item.category || item.categoryLabel || item.metadata?.category);
+    const title = lower(item.title);
+    const metadata = item.metadata || {};
+    const text = lower([
+      item.title,
+      item.category,
+      item.categoryLabel,
+      categorySlug,
+      metadata.category,
+      metadata.subcategory,
+      metadata.material_family,
+      arrayValue(item.tags).join(' '),
+      arrayValue(metadata.tags).join(' ')
+    ].join(' '));
+
+    if (collectionId === 'minerals' && (categorySlug === 'ores' || categoryName === 'ore' || title.includes(' ore'))) {
+      return { type:'Ore', category:'Metal Ores', categoryPath:['Items','Resources & Materials','Metal','Metal Ores'] };
+    }
+    if (collectionId === 'materials' && (title.includes('ingot') || categoryName === 'ingot' || text.includes(' ingot'))) {
+      return { type:'Ingot', category:'Metal Ingots', categoryPath:['Items','Resources & Materials','Metal','Metal Ingots'] };
+    }
+    if (collectionId === 'materials' && (categorySlug === 'metals' || text.includes('metal'))) {
+      return { type:'Material', category:'Metal', categoryPath:['Items','Resources & Materials','Metal'] };
+    }
+    if (collectionId === 'flora') {
+      return { type:item.category || index.singular || 'Flora Item', category:'Herbalist & Plants', categoryPath:['Items','Resources & Materials','Herbalist & Plants'] };
+    }
+    if (collectionId === 'minerals') {
+      return { type:item.category || index.singular || 'Mineral', category:'Gems, Stone & Cores', categoryPath:['Items','Resources & Materials','Gems, Stone & Cores'] };
+    }
+    if (collectionId === 'materials' && (categorySlug === 'fibres' || categorySlug === 'woods')) {
+      return { type:item.category || index.singular || 'Material', category:'Cloths & Fibre', categoryPath:['Items','Resources & Materials','Cloths & Fibre'] };
+    }
+    if (collectionId === 'materials' && categorySlug === 'leathers') {
+      return { type:item.category || index.singular || 'Material', category:'Leather Work', categoryPath:['Items','Resources & Materials','Leather Work'] };
+    }
+    return { type:index.singular || item.category || 'Item', category:item.categoryLabel || item.category || 'Resources & Materials', categoryPath:['Items','Resources & Materials'] };
+  }
+
   function loadFromWikiIndexes() {
     return Object.values(allWikiIndexes()).flatMap(index =>
       (index.items || []).map(item => wikiItemToEntry(index, item))
     );
   }
 
+  function entryMergeKey(entry) {
+    if (entry.section === 'Items') return `${entry.section}:${slugify(entry.title)}:${itemMergeType(entry)}`;
+    return entry.id || `${entry.section}:${entry.title}:${entry.sourcePath}`;
+  }
+
+  function itemMergeType(entry) {
+    const text = lower([
+      entry.type,
+      entry.category,
+      (entry.categoryPath || []).join(' '),
+      entry.title,
+      entry.sourcePath,
+      JSON.stringify(entry.metadata || {})
+    ].join(' '));
+    if (/\bore\b|ores/.test(text)) return 'ore';
+    if (/\bingot\b|ingots/.test(text)) return 'ingot';
+    return slugify(entry.type || entry.category || 'item');
+  }
+
   function mergeEntries(baseEntries, wikiEntries) {
     const seen = new Set();
-    return [...baseEntries, ...wikiEntries].filter(entry => {
-      const key = entry.id || `${entry.section}:${entry.title}:${entry.sourcePath}`;
+    return [...wikiEntries, ...baseEntries].filter(entry => {
+      const key = entryMergeKey(entry);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -442,12 +521,12 @@
       const response = await fetch('data/compendium-index-clean.json', { cache:'no-store' });
       if (response.ok) {
         const data = await response.json();
-        if (data && Array.isArray(data.entries)) entries = data.entries;
+        if (data && Array.isArray(data.entries)) entries = data.entries.filter(entry => !isDeprecatedLooseResourceEntry(entry));
       }
     } catch(error) {
       console.warn('Asteria compendium JSON failed; using content manifest fallback.', error);
     }
-    entries = mergeEntries(entries, loadFromWikiIndexes());
+    entries = mergeEntries(entries, loadFromWikiIndexes()).filter(entry => !isDeprecatedLooseResourceEntry(entry));
   }
 
   function hideOldViews() {
@@ -585,11 +664,15 @@
   }
 
   function firstTab(section = currentSection) {
-    return tabsForSection(section)[0];
+    return tabsForSection(section)[0] || 'Item Page';
   }
 
   function ensureActiveTab(section = currentSection) {
     const tabs = tabsForSection(section);
+    if (!tabs.length) {
+      activeWorkspaceTab = firstTab(section);
+      return;
+    }
     if (!tabs.includes(activeWorkspaceTab)) activeWorkspaceTab = tabs[0];
   }
 
@@ -597,7 +680,13 @@
     const tabs = shell().querySelector('#workspace-tabs');
     if (!tabs) return;
     ensureActiveTab();
-    tabs.innerHTML = tabsForSection().map(tab => `
+    const sectionTabs = tabsForSection();
+    tabs.classList.toggle('is-empty', !sectionTabs.length);
+    if (!sectionTabs.length) {
+      tabs.innerHTML = '';
+      return;
+    }
+    tabs.innerHTML = sectionTabs.map(tab => `
       <button type="button" class="${tab === activeWorkspaceTab ? 'active' : ''}" data-workspace-tab="${escapeHtml(tab)}">
         ${escapeHtml(tab)}
       </button>
@@ -751,6 +840,7 @@
     const grid = element.querySelector('#clean-grid');
     const status = element.querySelector('#clean-status');
     const count = element.querySelector('#clean-count');
+    grid.classList.toggle('clean-item-grid', currentSection === 'Items');
     if (stack.length > 1 && !active) {
       const node = stack[stack.length - 1];
       status.textContent = `${node.label} / Choose a category`;
@@ -760,7 +850,8 @@
     }
     const result = entries.filter(activeMatches).filter(filterMatches).sort(sortEntries);
 
-    status.textContent = active ? `${active.label} / ${activeWorkspaceTab}` : `All ${currentSection} / ${activeWorkspaceTab}`;
+    const statusSuffix = tabsForSection().length ? ` / ${activeWorkspaceTab}` : '';
+    status.textContent = active ? `${active.label}${statusSuffix}` : `All ${currentSection}${statusSuffix}`;
     count.textContent = `${result.length} entries`;
     grid.innerHTML = indexTabContext(result.length);
 
@@ -781,6 +872,7 @@
       Timeline: 'Timeline mode keeps world cards in the same display and opens timeline sections.'
     };
     if (!count) return `<div class="clean-empty"><h3>No entries found</h3><p>No public pages match this category or filter yet.</p></div>`;
+    if (!tabsForSection().length) return '';
     return activeWorkspaceTab === firstTab()
       ? ''
       : `<div class="workspace-tab-context"><b>${escapeHtml(activeWorkspaceTab)}</b><span>${escapeHtml(copy[activeWorkspaceTab] || 'This workspace tab changes how each entry opens while preserving one shared card and note system.')}</span></div>`;
@@ -815,16 +907,15 @@
   }
 
   function itemCardBody(entry) {
+    const imageMarkup = entry.imagePath
+      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.closest('.clean-item-card-image')?.classList.add('is-missing'); this.remove();">`
+      : `<span aria-hidden="true">${escapeHtml((entry.title || 'I').charAt(0))}</span>`;
+
     return `
       <span class="clean-tag clean-rarity-tag">${escapeHtml(statusLabel(entry))}</span>
-      <h3>${escapeHtml(entry.title)}</h3>
-      <p>${escapeHtml(entry.description)}</p>
-      <div class="clean-meta">
-        <b>Type:</b> ${escapeHtml(entry.type || 'Item')}
-        ${entry.wikiCollection ? `<br><b>Collection:</b> ${escapeHtml(entry.wikiCollectionTitle || entry.wikiCollection)}` : ''}
-        ${entry.wikiCategory ? `<br><b>Category:</b> ${escapeHtml(entry.wikiCategory)}` : ''}
-        ${entry.marketValue ? `<br><b>Value:</b> ${escapeHtml(entry.marketValue)}` : ''}
-        ${entry.damage ? `<br><b>Damage:</b> ${escapeHtml(entry.damage)}` : ''}
+      <div class="clean-item-card-image">${imageMarkup}</div>
+      <div class="clean-item-card-content">
+        <h3>${escapeHtml(entry.title)}</h3>
       </div>
     `;
   }
@@ -1123,17 +1214,14 @@
   function renderCreateCharacterForm(grid) {
     grid.innerHTML += `
       <article class="clean-page workspace-viewer workspace-form-page" data-viewer="universal-workspace-viewer">
-        <header class="clean-page-head"><span class="clean-tag">Character</span><div><p class="eyebrow">Character Creation</p><h2>Create Character</h2><p>This creates a character under the signed-in Firebase account.</p></div></header>
-        <div class="workspace-form-grid">
-          <label>Character Name<input id="workspaceCharacterName" placeholder="Character name"></label>
-          <label>Race<input id="workspaceCharacterRace" placeholder="Race"></label>
-          <label>Class<input id="workspaceCharacterClass" placeholder="Class"></label>
-          <label>Age<input id="workspaceCharacterAge" placeholder="Age"></label>
-        </div>
-        <button class="primary" id="workspaceCreateCharacterBtn" type="button">Create Character</button>
+        <header class="clean-page-head"><span class="clean-tag">Character</span><div><p class="eyebrow">Character Forge</p><h2>Character Forge</h2><p>Character Forge is the single official character creation workflow for Asteria.</p></div></header>
+        <p class="muted">The old quick form has been retired so races, classes, skills, origins, and items all come from the compendium databases.</p>
+        <button class="primary" id="workspaceOpenCharacterForgeBtn" type="button">Open Character Forge</button>
       </article>
     `;
-    byId('workspaceCreateCharacterBtn')?.addEventListener('click', createWorkspaceCharacter);
+    byId('workspaceOpenCharacterForgeBtn')?.addEventListener('click', () => {
+      if (window.AsteriaGameplay?.openCharacterForge) window.AsteriaGameplay.openCharacterForge();
+    });
   }
 
   function renderSettingsPanel(grid) {
@@ -1283,6 +1371,10 @@
   }
 
   function createWorkspaceCharacter() {
+    if (window.AsteriaGameplay?.openCharacterForge) {
+      window.AsteriaGameplay.openCharacterForge();
+      return;
+    }
     if (!requireAccountWorkspace()) return;
     const record = ensureAccountRecord();
     const name = String(byId('workspaceCharacterName')?.value || '').trim() || 'New Character';
@@ -1638,7 +1730,7 @@
   function sectionsForTab(entry, tab) {
     const map = {
       Races: {
-        'Race Sheet': ['Overview','Physical Traits','Character Creation Notes'],
+        'Race Sheet': ['Overview','Physical Traits','Character Forge Notes'],
         'Racial Traits': ['Racial Traits','Traits','Racial Skills','Affinities','Magical Affinities'],
         Lore: ['Lore','Culture','Regions','Relationships','Related Items'],
         Images: ['Appearance','Images']
@@ -1758,7 +1850,7 @@
             ${entry.section === 'Races' ? `<p>${escapeHtml(entry.raceCategory || 'Unknown')} &bull; ${escapeHtml(entry.size || 'Unknown')}</p>` : ''}
           </div>
         </header>
-        <div class="workspace-note-tab-label">${escapeHtml(activeWorkspaceTab)}</div>
+        ${tabsForSection(entry.section).length ? `<div class="workspace-note-tab-label">${escapeHtml(activeWorkspaceTab)}</div>` : ''}
         ${(entry.imagePath && (showOverview || activeWorkspaceTab === 'Images')) ? `<div class="clean-page-image"><img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.parentElement.remove();"></div>` : ''}
         ${showOverview ? pageMetadata(entry) : ''}
         ${showOverview || ['Sources','Relationships','Crafting'].includes(activeWorkspaceTab) ? relationshipPanel(entry, content) : ''}
@@ -1878,7 +1970,12 @@
     const index = allWikiIndexes()[collectionId];
     if (!index) return false;
 
-      openSection('Items', { path:`Items/Content Collections/${index.title || collectionId}` });
+    const routePath = collectionId === 'minerals'
+      ? 'Items/Resources & Materials/Metal/Metal Ores'
+      : collectionId === 'materials'
+        ? 'Items/Resources & Materials/Metal/Metal Ingots'
+        : 'Items/Resources & Materials/Herbalist & Plants';
+    openSection('Items', { path:routePath });
     const rarity = itemClasses.find(itemClass => slugify(itemClass) === slugify(segments[1] || ''));
     const category = rarity ? segments[2] : segments[1];
     setFilterValue('clean-rarity', rarity || '');
@@ -1909,7 +2006,10 @@
           event.preventDefault();
           event.stopImmediatePropagation();
           if (workspaceAction === 'create-campaign') openDashboard('createCampaign');
-          if (workspaceAction === 'create-character') openDashboard('createCharacter');
+          if (workspaceAction === 'create-character') {
+            if (window.AsteriaGameplay?.openCharacterForge) window.AsteriaGameplay.openCharacterForge();
+            else openDashboard('createCharacter');
+          }
           if (workspaceAction === 'settings') openDashboard('settings');
         }, true);
         return;

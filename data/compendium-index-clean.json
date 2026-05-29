@@ -1,6 +1,6 @@
 {
   "version": "asteria-unified-workspace-compendium-system-v1",
-  "generatedAt": "2026-05-13T09:38:20.468Z",
+  "generatedAt": "2026-05-29T14:54:31.677Z",
   "entries": [
     {
       "id": "ranger",
@@ -37,7 +37,183 @@
       "marketValue": "",
       "damage": "",
       "content": "---\ntype: Class\nitem_class: Common\nvisibility: public\ntags: [Class, Test]\n---\n\n# Ranger\n\nRangers are hunters, scouts, explorers, and survivalists trained to move through hostile wilderness.\n\n## Role\n\n- Exploration\n- Ranged combat\n- Tracking\n- Survival\n\n## Test Note\n\nThis is a clean test class page used to verify the public compendium system.\n",
+      "imagePath": "",
       "searchTerms": "ranger classes class classes ---\ntype: class\nitem_class: common\nvisibility: public\ntags: [class, test]\n---\n\n# ranger\n\nrangers are hunters, scouts, explorers, and survivalists trained to move through hostile wilderness.\n\n## role\n\n- exploration\n- ranged combat\n- tracking\n- survival\n\n## test note\n\nthis is a clean test class page used to verify the public compendium system.\n {\"type\":\"class\",\"itemclass\":\"common\",\"visibility\":\"public\",\"tags\":[\"class\",\"test\"]}"
+    },
+    {
+      "id": "antimony-ingot",
+      "title": "Antimony Ingot",
+      "section": "Items",
+      "type": "Ingot",
+      "categoryPath": [
+        "Items",
+        "Resources & Materials",
+        "Metal",
+        "Metal Ingots"
+      ],
+      "category": "Metal Ingots",
+      "rarity": "Uncommon",
+      "rarityRank": 1,
+      "description": "Antimony Ingot is an uncommon processed material used for specialised alloy work, alchemical vessels, and crafting projects that need hard but brittle reinforcement. An Antimony Ingot appears as a dark silver-purple bar with a gla",
+      "sourcePath": "content/materials/2-uncommon/metals/antimony-ingot/index.md",
+      "tags": [
+        "materials",
+        "uncommon",
+        "ingot",
+        "metal",
+        "antimony",
+        "crafting"
+      ],
+      "metadata": {
+        "title": "Antimony Ingot",
+        "slug": "antimony-ingot",
+        "kingdom": "Material",
+        "itemClass": "Uncommon",
+        "category": "Ingot",
+        "subcategory": "Metalloid",
+        "materialFamily": "Antimony",
+        "sourceItems": [
+          "Antimony Ore"
+        ],
+        "habitats": [
+          "Forges",
+          "Alchemical Foundries",
+          "Mining Towns"
+        ],
+        "climate": "Any",
+        "regions": [],
+        "processing": [
+          "Smelting",
+          "Casting",
+          "Alloy Blending"
+        ],
+        "craftingGrade": "Specialised",
+        "durability": "Brittle",
+        "refinementSource": "4 Antimony Ore to 1 Antimony Ingot",
+        "manaDensity": "Low",
+        "toxicity": "Moderate",
+        "marketValue": "22 Marks",
+        "affinities": [
+          "Earth",
+          "Shadow"
+        ],
+        "craftingUses": [
+          "Alloy Hardening",
+          "Reinforced Tool Edges",
+          "Alchemical Vessels"
+        ],
+        "alchemyUses": [
+          "Stabilising Powders",
+          "Binding Salts"
+        ],
+        "culinaryUses": [],
+        "image": "Antimony Ingot.png",
+        "tags": [
+          "materials",
+          "uncommon",
+          "ingot",
+          "metal",
+          "antimony",
+          "crafting"
+        ]
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [
+        "Earth",
+        "Shadow"
+      ],
+      "traits": [],
+      "marketValue": "22 Marks",
+      "damage": "",
+      "content": "---\ntitle: Antimony Ingot\nslug: antimony-ingot\nkingdom: Material\nitem_class: Uncommon\ncategory: Ingot\nsubcategory: Metalloid\nmaterial_family: Antimony\nsource_items:\n  - Antimony Ore\nhabitats:\n  - Forges\n  - Alchemical Foundries\n  - Mining Towns\nclimate: Any\nregions: []\nprocessing:\n  - Smelting\n  - Casting\n  - Alloy Blending\ncrafting_grade: Specialised\ndurability: Brittle\nrefinement_source: 4 Antimony Ore to 1 Antimony Ingot\nmana_density: Low\ntoxicity: Moderate\nmarket_value: 22 Marks\naffinities:\n  - Earth\n  - Shadow\ncrafting_uses:\n  - Alloy Hardening\n  - Reinforced Tool Edges\n  - Alchemical Vessels\nalchemy_uses:\n  - Stabilising Powders\n  - Binding Salts\nculinary_uses: []\nimage: Antimony Ingot.png\ntags:\n  - materials\n  - uncommon\n  - ingot\n  - metal\n  - antimony\n  - crafting\n---\n\n# Antimony Ingot\n\n## Overview\nAntimony Ingot is an uncommon processed material used for specialised alloy work, alchemical vessels, and crafting projects that need hard but brittle reinforcement.\n\n## Appearance\nAn Antimony Ingot appears as a dark silver-purple bar with a glassy metallic sheen, sharp edge highlights, and fine fractured patterns across its surface.\n\n## Source & Processing\nAntimony Ingots are made by smelting Antimony Ore under controlled conditions, then casting the refined material into standard bars for trade or workshop use.\n\n## Crafting Grade\nAntimony Ingot is a specialised grade material. It is useful for hardening and stabilising, but careless use can make finished work brittle.\n\n## Uses\nAntimony Ingots are used in alloy hardening, reinforced tool edges, ritual fixtures, alchemical vessels, and experimental smithing.\n\n## Alchemy Uses\nShavings or powder from Antimony Ingots can be used in binding salts, purging reagents, and stabilising compounds.\n\n## Crafting Uses\nAntimony Ingots are best used as a secondary metal in alloys rather than as a primary weapon or armor base.\n\n## Culinary Uses\nAntimony Ingot has no culinary use and should not be handled as food-safe material.\n\n## Magical Affinities\nAntimony holds faint Earth and Shadow affinities, making it useful where a darker or stabilising mineral resonance is required.\n\n## Market Value\nAntimony Ingots are moderately valuable and usually traded through smithing guilds, alchemists, and mining settlements with specialist furnaces.\n\n## Related Items\n- Antimony Ore\n- Alloy Smithing\n- Alchemy Tools\n- Mining Profession\n",
+      "imagePath": "content/materials/2-uncommon/metals/antimony-ingot/Antimony Ingot.png",
+      "searchTerms": "antimony ingot items ingot items resources & materials metal metal ingots ---\ntitle: antimony ingot\nslug: antimony-ingot\nkingdom: material\nitem_class: uncommon\ncategory: ingot\nsubcategory: metalloid\nmaterial_family: antimony\nsource_items:\n  - antimony ore\nhabitats:\n  - forges\n  - alchemical foundries\n  - mining towns\nclimate: any\nregions: []\nprocessing:\n  - smelting\n  - casting\n  - alloy blending\ncrafting_grade: specialised\ndurability: brittle\nrefinement_source: 4 antimony ore to 1 antimony ingot\nmana_density: low\ntoxicity: moderate\nmarket_value: 22 marks\naffinities:\n  - earth\n  - shadow\ncrafting_uses:\n  - alloy hardening\n  - reinforced tool edges\n  - alchemical vessels\nalchemy_uses:\n  - stabilising powders\n  - binding salts\nculinary_uses: []\nimage: antimony ingot.png\ntags:\n  - materials\n  - uncommon\n  - ingot\n  - metal\n  - antimony\n  - crafting\n---\n\n# antimony ingot\n\n## overview\nantimony ingot is an uncommon processed material used for specialised alloy work, alchemical vessels, and crafting projects that need hard but brittle reinforcement.\n\n## appearance\nan antimony ingot appears as a dark silver-purple bar with a glassy metallic sheen, sharp edge highlights, and fine fractured patterns across its surface.\n\n## source & processing\nantimony ingots are made by smelting antimony ore under controlled conditions, then casting the refined material into standard bars for trade or workshop use.\n\n## crafting grade\nantimony ingot is a specialised grade material. it is useful for hardening and stabilising, but careless use can make finished work brittle.\n\n## uses\nantimony ingots are used in alloy hardening, reinforced tool edges, ritual fixtures, alchemical vessels, and experimental smithing.\n\n## alchemy uses\nshavings or powder from antimony ingots can be used in binding salts, purging reagents, and stabilising compounds.\n\n## crafting uses\nantimony ingots are best used as a secondary metal in alloys rather than as a primary weapon or armor base.\n\n## culinary uses\nantimony ingot has no culinary use and should not be handled as food-safe material.\n\n## magical affinities\nantimony holds faint earth and shadow affinities, making it useful where a darker or stabilising mineral resonance is required.\n\n## market value\nantimony ingots are moderately valuable and usually traded through smithing guilds, alchemists, and mining settlements with specialist furnaces.\n\n## related items\n- antimony ore\n- alloy smithing\n- alchemy tools\n- mining profession\n {\"title\":\"antimony ingot\",\"slug\":\"antimony-ingot\",\"kingdom\":\"material\",\"itemclass\":\"uncommon\",\"category\":\"ingot\",\"subcategory\":\"metalloid\",\"materialfamily\":\"antimony\",\"sourceitems\":[\"antimony ore\"],\"habitats\":[\"forges\",\"alchemical foundries\",\"mining towns\"],\"climate\":\"any\",\"regions\":[],\"processing\":[\"smelting\",\"casting\",\"alloy blending\"],\"craftinggrade\":\"specialised\",\"durability\":\"brittle\",\"refinementsource\":\"4 antimony ore to 1 antimony ingot\",\"manadensity\":\"low\",\"toxicity\":\"moderate\",\"marketvalue\":\"22 marks\",\"affinities\":[\"earth\",\"shadow\"],\"craftinguses\":[\"alloy hardening\",\"reinforced tool edges\",\"alchemical vessels\"],\"alchemyuses\":[\"stabilising powders\",\"binding salts\"],\"culinaryuses\":[],\"image\":\"antimony ingot.png\",\"tags\":[\"materials\",\"uncommon\",\"ingot\",\"metal\",\"antimony\",\"crafting\"]}"
+    },
+    {
+      "id": "antimony-ore",
+      "title": "Antimony Ore",
+      "section": "Items",
+      "type": "Ore",
+      "categoryPath": [
+        "Items",
+        "Resources & Materials",
+        "Metal",
+        "Metal Ores"
+      ],
+      "category": "Metal Ores",
+      "rarity": "Uncommon",
+      "rarityRank": 1,
+      "description": "Antimony Ore is an uncommon mineral resource used by smiths and alchemists for hardening alloys, stabilising volatile mixtures, and producing specialised metalwork. Antimony Ore forms dark metallic crystal clusters with purple-blu",
+      "sourcePath": "content/minerals/2-uncommon/ores/antimony-ore/index.md",
+      "tags": [
+        "minerals",
+        "uncommon",
+        "ore",
+        "metal",
+        "antimony",
+        "crafting"
+      ],
+      "metadata": {
+        "title": "Antimony Ore",
+        "slug": "antimony-ore",
+        "kingdom": "Mineral",
+        "itemClass": "Uncommon",
+        "category": "Ore",
+        "subcategory": "Metalloid",
+        "habitats": [
+          "Hills",
+          "Mountains",
+          "Deep Mines"
+        ],
+        "climate": "Any",
+        "regions": [],
+        "depositType": "Vein",
+        "hardness": "Medium",
+        "refinementYield": "4 Ore to 1 Ingot",
+        "manaDensity": "Low",
+        "toxicity": "Moderate",
+        "marketValue": "9 Marks",
+        "affinities": [
+          "Earth",
+          "Shadow"
+        ],
+        "craftingUses": [
+          "Antimony Ingots",
+          "Alloy Hardening",
+          "Alchemical Catalysts"
+        ],
+        "alchemyUses": [
+          "Purging Reagents",
+          "Stabilising Powders"
+        ],
+        "culinaryUses": [],
+        "image": "Antimony Ore.png",
+        "tags": [
+          "minerals",
+          "uncommon",
+          "ore",
+          "metal",
+          "antimony",
+          "crafting"
+        ]
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [
+        "Earth",
+        "Shadow"
+      ],
+      "traits": [],
+      "marketValue": "9 Marks",
+      "damage": "",
+      "content": "---\ntitle: Antimony Ore\nslug: antimony-ore\nkingdom: Mineral\nitem_class: Uncommon\ncategory: Ore\nsubcategory: Metalloid\nhabitats:\n  - Hills\n  - Mountains\n  - Deep Mines\nclimate: Any\nregions: []\ndeposit_type: Vein\nhardness: Medium\nrefinement_yield: 4 Ore to 1 Ingot\nmana_density: Low\ntoxicity: Moderate\nmarket_value: 9 Marks\naffinities:\n  - Earth\n  - Shadow\ncrafting_uses:\n  - Antimony Ingots\n  - Alloy Hardening\n  - Alchemical Catalysts\nalchemy_uses:\n  - Purging Reagents\n  - Stabilising Powders\nculinary_uses: []\nimage: Antimony Ore.png\ntags:\n  - minerals\n  - uncommon\n  - ore\n  - metal\n  - antimony\n  - crafting\n---\n\n# Antimony Ore\n\n## Overview\nAntimony Ore is an uncommon mineral resource used by smiths and alchemists for hardening alloys, stabilising volatile mixtures, and producing specialised metalwork.\n\n## Appearance\nAntimony Ore forms dark metallic crystal clusters with purple-blue highlights and sharp fractured faces. Rich samples can look almost glassy under lamplight.\n\n## Deposit & Habitat\nAntimony Ore is usually found in narrow mineral veins, deep mine pockets, old volcanic seams, and shadow-touched stone layers.\n\n## Mining\nMiners extract Antimony Ore carefully because brittle crystals can fracture during rough handling. Good samples are sorted away from waste stone before smelting.\n\n## Refinement\nAntimony Ore is smelted into Antimony Ingots or blended into harder alloy batches. Poor ventilation can make processing hazardous.\n\n## Uses\nAntimony Ore is valued for alloy work, alchemical powders, stabilising compounds, and specialised crafting where brittle hardness is useful.\n\n## Crafting Uses\nAntimony Ore refines into Antimony Ingots and can be used in alloy hardening, tool reinforcement, and controlled experimental smithing.\n\n## Alchemy Uses\nPowdered Antimony Ore may be used in purging reagents, binding salts, and stabilising preparations that need a sharp mineral anchor.\n\n## Magical Affinities\nAntimony carries faint Earth and Shadow affinities. It is usually quiet but can hold darker resonance better than common iron.\n\n## Market Value\nAntimony Ore has moderate value and is most available near specialised mining settlements or alchemical trade routes.\n\n## Related Items\n- Antimony Ingot\n- Alloy Smithing\n- Mining Profession\n- Forge Tools\n",
+      "imagePath": "content/minerals/2-uncommon/ores/antimony-ore/Antimony Ore.png",
+      "searchTerms": "antimony ore items ore items resources & materials metal metal ores ---\ntitle: antimony ore\nslug: antimony-ore\nkingdom: mineral\nitem_class: uncommon\ncategory: ore\nsubcategory: metalloid\nhabitats:\n  - hills\n  - mountains\n  - deep mines\nclimate: any\nregions: []\ndeposit_type: vein\nhardness: medium\nrefinement_yield: 4 ore to 1 ingot\nmana_density: low\ntoxicity: moderate\nmarket_value: 9 marks\naffinities:\n  - earth\n  - shadow\ncrafting_uses:\n  - antimony ingots\n  - alloy hardening\n  - alchemical catalysts\nalchemy_uses:\n  - purging reagents\n  - stabilising powders\nculinary_uses: []\nimage: antimony ore.png\ntags:\n  - minerals\n  - uncommon\n  - ore\n  - metal\n  - antimony\n  - crafting\n---\n\n# antimony ore\n\n## overview\nantimony ore is an uncommon mineral resource used by smiths and alchemists for hardening alloys, stabilising volatile mixtures, and producing specialised metalwork.\n\n## appearance\nantimony ore forms dark metallic crystal clusters with purple-blue highlights and sharp fractured faces. rich samples can look almost glassy under lamplight.\n\n## deposit & habitat\nantimony ore is usually found in narrow mineral veins, deep mine pockets, old volcanic seams, and shadow-touched stone layers.\n\n## mining\nminers extract antimony ore carefully because brittle crystals can fracture during rough handling. good samples are sorted away from waste stone before smelting.\n\n## refinement\nantimony ore is smelted into antimony ingots or blended into harder alloy batches. poor ventilation can make processing hazardous.\n\n## uses\nantimony ore is valued for alloy work, alchemical powders, stabilising compounds, and specialised crafting where brittle hardness is useful.\n\n## crafting uses\nantimony ore refines into antimony ingots and can be used in alloy hardening, tool reinforcement, and controlled experimental smithing.\n\n## alchemy uses\npowdered antimony ore may be used in purging reagents, binding salts, and stabilising preparations that need a sharp mineral anchor.\n\n## magical affinities\nantimony carries faint earth and shadow affinities. it is usually quiet but can hold darker resonance better than common iron.\n\n## market value\nantimony ore has moderate value and is most available near specialised mining settlements or alchemical trade routes.\n\n## related items\n- antimony ingot\n- alloy smithing\n- mining profession\n- forge tools\n {\"title\":\"antimony ore\",\"slug\":\"antimony-ore\",\"kingdom\":\"mineral\",\"itemclass\":\"uncommon\",\"category\":\"ore\",\"subcategory\":\"metalloid\",\"habitats\":[\"hills\",\"mountains\",\"deep mines\"],\"climate\":\"any\",\"regions\":[],\"deposittype\":\"vein\",\"hardness\":\"medium\",\"refinementyield\":\"4 ore to 1 ingot\",\"manadensity\":\"low\",\"toxicity\":\"moderate\",\"marketvalue\":\"9 marks\",\"affinities\":[\"earth\",\"shadow\"],\"craftinguses\":[\"antimony ingots\",\"alloy hardening\",\"alchemical catalysts\"],\"alchemyuses\":[\"purging reagents\",\"stabilising powders\"],\"culinaryuses\":[],\"image\":\"antimony ore.png\",\"tags\":[\"minerals\",\"uncommon\",\"ore\",\"metal\",\"antimony\",\"crafting\"]}"
     },
     {
       "id": "iron-ingot",
@@ -47,44 +223,86 @@
       "categoryPath": [
         "Items",
         "Resources & Materials",
+        "Metal",
         "Metal Ingots"
       ],
       "category": "Metal Ingots",
       "rarity": "Common",
       "rarityRank": 0,
-      "description": "A refined bar of iron produced from smelted iron ore. Iron Ingots are common crafting materials for basic weapons, armour, tools, and structures. Used in simple and advanced metalworking projects.",
-      "sourcePath": "content/Items/Resources & Materials/Metal Ingots/Iron Ingot.md",
+      "description": "Iron Ingot is a common processed metal material used throughout Asteria for basic smithing, structural fittings, weapons, armor, tools, and settlement repairs. An Iron Ingot is a dark silver-grey bar with a dull metallic finish, f",
+      "sourcePath": "content/materials/1-common/metals/iron-ingot/index.md",
       "tags": [
-        "Item",
-        "Material",
-        "Ingot",
-        "Metal",
-        "Test"
+        "materials",
+        "common",
+        "metal",
+        "iron",
+        "crafting"
       ],
       "metadata": {
-        "type": "Ingot",
+        "title": "Iron Ingot",
+        "slug": "iron-ingot",
+        "kingdom": "Material",
         "itemClass": "Common",
-        "materialType": "Metal",
-        "visibility": "public",
-        "tags": [
-          "Item",
-          "Material",
-          "Ingot",
-          "Metal",
-          "Test"
+        "category": "Ingot",
+        "subcategory": "Ferrous",
+        "materialFamily": "Iron",
+        "sourceItems": [
+          "Iron Ore"
         ],
-        "marketValue": "16 Marks"
+        "habitats": [
+          "Forges",
+          "Smithies",
+          "Mining Towns"
+        ],
+        "climate": "Any",
+        "regions": [],
+        "processing": [
+          "Smelting",
+          "Casting",
+          "Quenching"
+        ],
+        "craftingGrade": "Basic",
+        "durability": "Moderate",
+        "refinementSource": "4 Iron Ore to 1 Iron Ingot",
+        "manaDensity": "Very Low",
+        "toxicity": "None",
+        "marketValue": "10 Marks",
+        "affinities": [
+          "Earth"
+        ],
+        "craftingUses": [
+          "Basic Weapons",
+          "Basic Armor",
+          "Tools",
+          "Chains",
+          "Hinges"
+        ],
+        "alchemyUses": [
+          "Grounding Compounds"
+        ],
+        "culinaryUses": [],
+        "image": "Iron Ingot.png",
+        "tags": [
+          "materials",
+          "common",
+          "metal",
+          "iron",
+          "crafting"
+        ]
       },
       "playable": false,
       "availability": "",
       "raceCategory": "",
       "size": "",
-      "affinity": [],
+      "affinity": [
+        "Earth"
+      ],
       "traits": [],
-      "marketValue": "16 Marks",
+      "marketValue": "10 Marks",
       "damage": "",
-      "content": "---\ntype: Ingot\nitem_class: Common\nmaterial_type: Metal\nvisibility: public\ntags: [Item, Material, Ingot, Metal, Test]\nmarket_value: 16 Marks\n---\n\n# Iron Ingot\n\nA refined bar of iron produced from smelted iron ore.\n\n## Effect\n\nIron Ingots are common crafting materials for basic weapons, armour, tools, and structures.\n\n## Crafting Use\n\nUsed in simple and advanced metalworking projects.\n",
-      "searchTerms": "iron ingot items ingot items resources & materials metal ingots ---\ntype: ingot\nitem_class: common\nmaterial_type: metal\nvisibility: public\ntags: [item, material, ingot, metal, test]\nmarket_value: 16 marks\n---\n\n# iron ingot\n\na refined bar of iron produced from smelted iron ore.\n\n## effect\n\niron ingots are common crafting materials for basic weapons, armour, tools, and structures.\n\n## crafting use\n\nused in simple and advanced metalworking projects.\n {\"type\":\"ingot\",\"itemclass\":\"common\",\"materialtype\":\"metal\",\"visibility\":\"public\",\"tags\":[\"item\",\"material\",\"ingot\",\"metal\",\"test\"],\"marketvalue\":\"16 marks\"}"
+      "content": "---\ntitle: Iron Ingot\nslug: iron-ingot\nkingdom: Material\nitem_class: Common\ncategory: Ingot\nsubcategory: Ferrous\nmaterial_family: Iron\nsource_items:\n  - Iron Ore\nhabitats:\n  - Forges\n  - Smithies\n  - Mining Towns\nclimate: Any\nregions: []\nprocessing:\n  - Smelting\n  - Casting\n  - Quenching\ncrafting_grade: Basic\ndurability: Moderate\nrefinement_source: 4 Iron Ore to 1 Iron Ingot\nmana_density: Very Low\ntoxicity: None\nmarket_value: 10 Marks\naffinities:\n  - Earth\ncrafting_uses:\n  - Basic Weapons\n  - Basic Armor\n  - Tools\n  - Chains\n  - Hinges\nalchemy_uses:\n  - Grounding Compounds\nculinary_uses: []\nimage: Iron Ingot.png\ntags:\n  - materials\n  - common\n  - metal\n  - iron\n  - crafting\n---\n\n# Iron Ingot\n\n## Overview\nIron Ingot is a common processed metal material used throughout Asteria for basic smithing, structural fittings, weapons, armor, tools, and settlement repairs.\n\n## Appearance\nAn Iron Ingot is a dark silver-grey bar with a dull metallic finish, forge scale along its edges, and occasional blackened hammer marks or casting seams.\n\n## Source & Processing\nIron Ingots are usually made by smelting Iron Ore in a forge or bloomery, removing impurities, and casting the workable metal into standardized bars.\n\n## Crafting Grade\nIron Ingot is a basic grade material. It is reliable, widely available, and easy for most trained smiths to shape, but it lacks the superior edge retention or arcane receptivity of rarer metals.\n\n## Uses\nIron Ingots are used for practical construction, reinforcement, common tools, chains, nails, hinges, buckles, cookware, and the internal fittings of many crafted objects.\n\n## Alchemy Uses\nPowdered or shaved iron may be used in grounding compounds, warding circles, magnetic experiments, and low-grade Earth-aspected preparations.\n\n## Crafting Uses\nIron Ingots are core inputs for basic weapons, basic armor, shields, traps, tool heads, wagon fittings, door hardware, and forge repairs.\n\n## Culinary Uses\nIron Ingot has no culinary use.\n\n## Magical Affinities\nIron carries a faint Earth affinity. It is stable, grounding, and resistant to volatile magical resonance, making it useful in mundane equipment and simple warded fixtures.\n\n## Market Value\nIron Ingots are inexpensive near mines and smithing towns, but their value rises in remote settlements, war camps, and regions with poor access to metal deposits.\n\n## Related Items\n- Iron Ore\n- Basic Smithing\n- Forge Tools\n- Mining Profession\n- Weapons & Ammunition\n- Armour & Protection\n",
+      "imagePath": "content/materials/1-common/metals/iron-ingot/Iron Ingot.png",
+      "searchTerms": "iron ingot items ingot items resources & materials metal metal ingots ---\ntitle: iron ingot\nslug: iron-ingot\nkingdom: material\nitem_class: common\ncategory: ingot\nsubcategory: ferrous\nmaterial_family: iron\nsource_items:\n  - iron ore\nhabitats:\n  - forges\n  - smithies\n  - mining towns\nclimate: any\nregions: []\nprocessing:\n  - smelting\n  - casting\n  - quenching\ncrafting_grade: basic\ndurability: moderate\nrefinement_source: 4 iron ore to 1 iron ingot\nmana_density: very low\ntoxicity: none\nmarket_value: 10 marks\naffinities:\n  - earth\ncrafting_uses:\n  - basic weapons\n  - basic armor\n  - tools\n  - chains\n  - hinges\nalchemy_uses:\n  - grounding compounds\nculinary_uses: []\nimage: iron ingot.png\ntags:\n  - materials\n  - common\n  - metal\n  - iron\n  - crafting\n---\n\n# iron ingot\n\n## overview\niron ingot is a common processed metal material used throughout asteria for basic smithing, structural fittings, weapons, armor, tools, and settlement repairs.\n\n## appearance\nan iron ingot is a dark silver-grey bar with a dull metallic finish, forge scale along its edges, and occasional blackened hammer marks or casting seams.\n\n## source & processing\niron ingots are usually made by smelting iron ore in a forge or bloomery, removing impurities, and casting the workable metal into standardized bars.\n\n## crafting grade\niron ingot is a basic grade material. it is reliable, widely available, and easy for most trained smiths to shape, but it lacks the superior edge retention or arcane receptivity of rarer metals.\n\n## uses\niron ingots are used for practical construction, reinforcement, common tools, chains, nails, hinges, buckles, cookware, and the internal fittings of many crafted objects.\n\n## alchemy uses\npowdered or shaved iron may be used in grounding compounds, warding circles, magnetic experiments, and low-grade earth-aspected preparations.\n\n## crafting uses\niron ingots are core inputs for basic weapons, basic armor, shields, traps, tool heads, wagon fittings, door hardware, and forge repairs.\n\n## culinary uses\niron ingot has no culinary use.\n\n## magical affinities\niron carries a faint earth affinity. it is stable, grounding, and resistant to volatile magical resonance, making it useful in mundane equipment and simple warded fixtures.\n\n## market value\niron ingots are inexpensive near mines and smithing towns, but their value rises in remote settlements, war camps, and regions with poor access to metal deposits.\n\n## related items\n- iron ore\n- basic smithing\n- forge tools\n- mining profession\n- weapons & ammunition\n- armour & protection\n {\"title\":\"iron ingot\",\"slug\":\"iron-ingot\",\"kingdom\":\"material\",\"itemclass\":\"common\",\"category\":\"ingot\",\"subcategory\":\"ferrous\",\"materialfamily\":\"iron\",\"sourceitems\":[\"iron ore\"],\"habitats\":[\"forges\",\"smithies\",\"mining towns\"],\"climate\":\"any\",\"regions\":[],\"processing\":[\"smelting\",\"casting\",\"quenching\"],\"craftinggrade\":\"basic\",\"durability\":\"moderate\",\"refinementsource\":\"4 iron ore to 1 iron ingot\",\"manadensity\":\"very low\",\"toxicity\":\"none\",\"marketvalue\":\"10 marks\",\"affinities\":[\"earth\"],\"craftinguses\":[\"basic weapons\",\"basic armor\",\"tools\",\"chains\",\"hinges\"],\"alchemyuses\":[\"grounding compounds\"],\"culinaryuses\":[],\"image\":\"iron ingot.png\",\"tags\":[\"materials\",\"common\",\"metal\",\"iron\",\"crafting\"]}"
     },
     {
       "id": "iron-ore",
@@ -94,44 +312,74 @@
       "categoryPath": [
         "Items",
         "Resources & Materials",
+        "Metal",
         "Metal Ores"
       ],
       "category": "Metal Ores",
       "rarity": "Common",
       "rarityRank": 0,
-      "description": "A common iron-bearing ore used as the foundation for basic smithing and metalworking. Iron Ore can be refined into Iron Ingots using a standard forge. Used for weapons, armour, tools, fittings, and simple metal goods.",
-      "sourcePath": "content/Items/Resources & Materials/Metal Ores/Iron Ore.md",
+      "description": "Iron Ore is a common mineral resource used as the foundation for basic smithing, tools, fittings, structures, and low-tier martial equipment. Iron Ore appears as dark grey, reddish-brown, or black stone with metallic flecks and ru",
+      "sourcePath": "content/minerals/1-common/ores/iron-ore/index.md",
       "tags": [
-        "Item",
-        "Material",
-        "Ore",
-        "Metal",
-        "Test"
+        "minerals",
+        "common",
+        "ore",
+        "metal",
+        "crafting"
       ],
       "metadata": {
-        "type": "Ore",
+        "title": "Iron Ore",
+        "slug": "iron-ore",
+        "kingdom": "Mineral",
         "itemClass": "Common",
-        "materialType": "Metal",
-        "visibility": "public",
-        "tags": [
-          "Item",
-          "Material",
-          "Ore",
-          "Metal",
-          "Test"
+        "category": "Ore",
+        "subcategory": "Ferrous",
+        "habitats": [
+          "Hills",
+          "Mountains",
+          "Mines"
         ],
-        "marketValue": "4 Marks"
+        "climate": "Any",
+        "regions": [],
+        "depositType": "Vein",
+        "hardness": "Medium",
+        "refinementYield": "4 Ore to 1 Ingot",
+        "manaDensity": "Very Low",
+        "toxicity": "Low",
+        "growthDifficulty": "",
+        "marketValue": "4 Marks",
+        "affinities": [
+          "Earth"
+        ],
+        "craftingUses": [
+          "Iron Ingots",
+          "Basic Smithing",
+          "Tools"
+        ],
+        "alchemyUses": [],
+        "culinaryUses": [],
+        "image": "Iron Ore.png",
+        "tags": [
+          "minerals",
+          "common",
+          "ore",
+          "metal",
+          "crafting"
+        ]
       },
       "playable": false,
       "availability": "",
       "raceCategory": "",
       "size": "",
-      "affinity": [],
+      "affinity": [
+        "Earth"
+      ],
       "traits": [],
       "marketValue": "4 Marks",
       "damage": "",
-      "content": "---\ntype: Ore\nitem_class: Common\nmaterial_type: Metal\nvisibility: public\ntags: [Item, Material, Ore, Metal, Test]\nmarket_value: 4 Marks\n---\n\n# Iron Ore\n\nA common iron-bearing ore used as the foundation for basic smithing and metalworking.\n\n## Effect\n\nIron Ore can be refined into Iron Ingots using a standard forge.\n\n## Crafting Use\n\nUsed for weapons, armour, tools, fittings, and simple metal goods.\n",
-      "searchTerms": "iron ore items ore items resources & materials metal ores ---\ntype: ore\nitem_class: common\nmaterial_type: metal\nvisibility: public\ntags: [item, material, ore, metal, test]\nmarket_value: 4 marks\n---\n\n# iron ore\n\na common iron-bearing ore used as the foundation for basic smithing and metalworking.\n\n## effect\n\niron ore can be refined into iron ingots using a standard forge.\n\n## crafting use\n\nused for weapons, armour, tools, fittings, and simple metal goods.\n {\"type\":\"ore\",\"itemclass\":\"common\",\"materialtype\":\"metal\",\"visibility\":\"public\",\"tags\":[\"item\",\"material\",\"ore\",\"metal\",\"test\"],\"marketvalue\":\"4 marks\"}"
+      "content": "---\ntitle: Iron Ore\nslug: iron-ore\nkingdom: Mineral\nitem_class: Common\ncategory: Ore\nsubcategory: Ferrous\nhabitats:\n  - Hills\n  - Mountains\n  - Mines\nclimate: Any\nregions: []\ndeposit_type: Vein\nhardness: Medium\nrefinement_yield: 4 Ore to 1 Ingot\nmana_density: Very Low\ntoxicity: Low\ngrowth_difficulty:\nmarket_value: 4 Marks\naffinities:\n  - Earth\ncrafting_uses:\n  - Iron Ingots\n  - Basic Smithing\n  - Tools\nalchemy_uses: []\nculinary_uses: []\nimage: Iron Ore.png\ntags:\n  - minerals\n  - common\n  - ore\n  - metal\n  - crafting\n---\n\n# Iron Ore\n\n## Overview\nIron Ore is a common mineral resource used as the foundation for basic smithing, tools, fittings, structures, and low-tier martial equipment.\n\n## Appearance\nIron Ore appears as dark grey, reddish-brown, or black stone with metallic flecks and rust-coloured staining. Freshly broken pieces may show a dull metallic shimmer beneath rough outer rock.\n\n## Deposit & Habitat\nIron Ore is usually found in hills, mountain seams, exposed cliff faces, and established mines. It may also appear in old battlefield earth, collapsed tunnels, and riverbeds below eroded ore-rich slopes.\n\n## Mining\nMiners extract Iron Ore with picks, wedges, and basic mining tools. The ore is common enough that most mining settlements know how to identify and sort usable pieces from waste stone.\n\n## Refinement\nIron Ore is smelted in a forge or bloomery. A standard working ratio is four units of ore for one Iron Ingot, though local purity and forge quality can improve or reduce the final yield.\n\n## Uses\nIron Ore is primarily valuable because it becomes Iron Ingots. It can also be used as ballast, crude pigment, construction fill, or a low-grade trade resource in mining regions.\n\n## Crafting Uses\nIron Ore refines into Iron Ingots for basic weapons, armor, tools, hinges, nails, bindings, chains, and structural fittings.\n\n## Alchemy Uses\nIron Ore has limited alchemical use on its own. Powdered ore may be used in grounding compounds, magnetic experiments, or earth-aspected reagent tests.\n\n## Magical Affinities\nIron Ore carries a faint Earth affinity. In most cases its magical profile is stable and quiet, making it useful as a mundane base material rather than a high-power arcane reagent.\n\n## Market Value\nIron Ore has low market value but high practical demand. It is inexpensive near mines and more valuable in isolated settlements without local metal deposits.\n\n## Related Items\n- Iron Ingot\n- Basic Smithing\n- Mining Profession\n- Forge Tools\n",
+      "imagePath": "content/minerals/1-common/ores/iron-ore/Iron Ore.png",
+      "searchTerms": "iron ore items ore items resources & materials metal metal ores ---\ntitle: iron ore\nslug: iron-ore\nkingdom: mineral\nitem_class: common\ncategory: ore\nsubcategory: ferrous\nhabitats:\n  - hills\n  - mountains\n  - mines\nclimate: any\nregions: []\ndeposit_type: vein\nhardness: medium\nrefinement_yield: 4 ore to 1 ingot\nmana_density: very low\ntoxicity: low\ngrowth_difficulty:\nmarket_value: 4 marks\naffinities:\n  - earth\ncrafting_uses:\n  - iron ingots\n  - basic smithing\n  - tools\nalchemy_uses: []\nculinary_uses: []\nimage: iron ore.png\ntags:\n  - minerals\n  - common\n  - ore\n  - metal\n  - crafting\n---\n\n# iron ore\n\n## overview\niron ore is a common mineral resource used as the foundation for basic smithing, tools, fittings, structures, and low-tier martial equipment.\n\n## appearance\niron ore appears as dark grey, reddish-brown, or black stone with metallic flecks and rust-coloured staining. freshly broken pieces may show a dull metallic shimmer beneath rough outer rock.\n\n## deposit & habitat\niron ore is usually found in hills, mountain seams, exposed cliff faces, and established mines. it may also appear in old battlefield earth, collapsed tunnels, and riverbeds below eroded ore-rich slopes.\n\n## mining\nminers extract iron ore with picks, wedges, and basic mining tools. the ore is common enough that most mining settlements know how to identify and sort usable pieces from waste stone.\n\n## refinement\niron ore is smelted in a forge or bloomery. a standard working ratio is four units of ore for one iron ingot, though local purity and forge quality can improve or reduce the final yield.\n\n## uses\niron ore is primarily valuable because it becomes iron ingots. it can also be used as ballast, crude pigment, construction fill, or a low-grade trade resource in mining regions.\n\n## crafting uses\niron ore refines into iron ingots for basic weapons, armor, tools, hinges, nails, bindings, chains, and structural fittings.\n\n## alchemy uses\niron ore has limited alchemical use on its own. powdered ore may be used in grounding compounds, magnetic experiments, or earth-aspected reagent tests.\n\n## magical affinities\niron ore carries a faint earth affinity. in most cases its magical profile is stable and quiet, making it useful as a mundane base material rather than a high-power arcane reagent.\n\n## market value\niron ore has low market value but high practical demand. it is inexpensive near mines and more valuable in isolated settlements without local metal deposits.\n\n## related items\n- iron ingot\n- basic smithing\n- mining profession\n- forge tools\n {\"title\":\"iron ore\",\"slug\":\"iron-ore\",\"kingdom\":\"mineral\",\"itemclass\":\"common\",\"category\":\"ore\",\"subcategory\":\"ferrous\",\"habitats\":[\"hills\",\"mountains\",\"mines\"],\"climate\":\"any\",\"regions\":[],\"deposittype\":\"vein\",\"hardness\":\"medium\",\"refinementyield\":\"4 ore to 1 ingot\",\"manadensity\":\"very low\",\"toxicity\":\"low\",\"growthdifficulty\":\"\",\"marketvalue\":\"4 marks\",\"affinities\":[\"earth\"],\"craftinguses\":[\"iron ingots\",\"basic smithing\",\"tools\"],\"alchemyuses\":[],\"culinaryuses\":[],\"image\":\"iron ore.png\",\"tags\":[\"minerals\",\"common\",\"ore\",\"metal\",\"crafting\"]}"
     },
     {
       "id": "longsword",
@@ -175,7 +423,79 @@
       "marketValue": "60 Marks",
       "damage": "1D10 Slashing",
       "content": "---\ntype: Weapon\nitem_class: Common\nvisibility: public\ntags: [Item, Weapon, Sword, Test]\ndamage: 1D10 Slashing\nmarket_value: 60 Marks\n---\n\n# Longsword\n\nA standard one-handed blade used by soldiers, guards, adventurers, and trained duelists.\n\n## Weapon Data\n\n- Damage: 1D10 Slashing\n- Base Material: Metal\n- Ingot Requirement: 3 Ingots\n\n## Test Note\n\nThis is a clean test weapon page used to verify item cards and page opening.\n",
+      "imagePath": "",
       "searchTerms": "longsword items weapon items weapons ---\ntype: weapon\nitem_class: common\nvisibility: public\ntags: [item, weapon, sword, test]\ndamage: 1d10 slashing\nmarket_value: 60 marks\n---\n\n# longsword\n\na standard one-handed blade used by soldiers, guards, adventurers, and trained duelists.\n\n## weapon data\n\n- damage: 1d10 slashing\n- base material: metal\n- ingot requirement: 3 ingots\n\n## test note\n\nthis is a clean test weapon page used to verify item cards and page opening.\n {\"type\":\"weapon\",\"itemclass\":\"common\",\"visibility\":\"public\",\"tags\":[\"item\",\"weapon\",\"sword\",\"test\"],\"damage\":\"1d10 slashing\",\"marketvalue\":\"60 marks\"}"
+    },
+    {
+      "id": "rose",
+      "title": "Rose",
+      "section": "Items",
+      "type": "Flower",
+      "categoryPath": [
+        "Items",
+        "Resources & Materials",
+        "Herbalist & Plants"
+      ],
+      "category": "Herbalist & Plants",
+      "rarity": "Common",
+      "rarityRank": 0,
+      "description": "Roses are common flowering plants found in tended gardens, old courtyards, hedgerows, and temperate plains near settled roads. In Asteria, they are valued as a simple fragrant ingredient and a low-grade life-aspected reagent. A ro",
+      "sourcePath": "content/flora/1-common/flowers/rose/index.md",
+      "tags": [
+        "flora",
+        "common",
+        "flower"
+      ],
+      "metadata": {
+        "title": "Rose",
+        "slug": "rose",
+        "kingdom": "Flora",
+        "itemClass": "Common",
+        "category": "Flower",
+        "subcategory": "",
+        "habitats": [
+          "Plains",
+          "Gardens"
+        ],
+        "climate": "Temperate",
+        "regions": [],
+        "harvestSeason": [
+          "Spring",
+          "Summer"
+        ],
+        "manaDensity": "Very Low",
+        "toxicity": "None",
+        "growthDifficulty": "Easy",
+        "marketValue": "Low",
+        "affinities": [
+          "Life"
+        ],
+        "craftingUses": [
+          "Perfume",
+          "Minor Healing Potions"
+        ],
+        "alchemyUses": [],
+        "culinaryUses": [],
+        "image": "rose.png",
+        "tags": [
+          "flora",
+          "common",
+          "flower"
+        ]
+      },
+      "playable": false,
+      "availability": "",
+      "raceCategory": "",
+      "size": "",
+      "affinity": [
+        "Life"
+      ],
+      "traits": [],
+      "marketValue": "Low",
+      "damage": "",
+      "content": "---\ntitle: Rose\nslug: rose\nkingdom: Flora\nitem_class: Common\ncategory: Flower\nsubcategory:\nhabitats:\n  - Plains\n  - Gardens\nclimate: Temperate\nregions: []\nharvest_season:\n  - Spring\n  - Summer\nmana_density: Very Low\ntoxicity: None\ngrowth_difficulty: Easy\nmarket_value: Low\naffinities:\n  - Life\ncrafting_uses:\n  - Perfume\n  - Minor Healing Potions\nalchemy_uses: []\nculinary_uses: []\nimage: rose.png\ntags:\n  - flora\n  - common\n  - flower\n---\n\n# Rose\n\n## Overview\nRoses are common flowering plants found in tended gardens, old courtyards, hedgerows, and temperate plains near settled roads. In Asteria, they are valued as a simple fragrant ingredient and a low-grade life-aspected reagent.\n\n## Appearance\nA rose grows as a thorned green stem with layered petals ranging from pale blush to deep crimson. Healthy plants carry a clean floral scent, glossy leaves, and sharp hooked thorns that can catch cloth or skin.\n\n## Habitat\nRoses prefer temperate soil, steady sunlight, and places where water does not stagnate. They grow naturally in plains and hedges, but the finest blooms are usually cultivated in gardens, temple grounds, estates, and healer courtyards.\n\n## Harvesting\nFlowers are clipped just below the bloom to preserve the petals and oil. Thorns make careless gathering uncomfortable, but the plant is otherwise easy to harvest. Spring and summer blooms are most abundant, with small yields possible in sheltered gardens.\n\n## Uses\nRose petals are used for perfume, ceremonial offerings, scented oils, poultices, and basic trade bundles. Dried petals are easy to transport and are often sold by herbalists and village markets.\n\n## Alchemy Uses\nRose petals can soften the scent of harsh brews and serve as a minor stabilizer in gentle restorative mixtures. They are too weak for major healing on their own, but they are useful in early potion practice.\n\n## Crafting Uses\nRoses can be processed into perfume, pressed dyes, incense blends, decorative garlands, and minor healing potion additives. Thorns may be used as small natural pins or ritual markers.\n\n## Culinary Uses\nPetals may be candied, steeped into mild tea, or used sparingly in sweet syrups where the plant has been grown away from toxins or grave soil.\n\n## Magical Affinities\nRoses carry a faint Life affinity linked to renewal, beauty, memory, and gentle restoration. Certain regional variants may develop stronger affinities when grown near shrines, leyline gardens, or enchanted groves.\n\n## Market Value\nRoses are low-value and widely available in settled regions. Fresh blooms are cheapest near gardens and towns, while preserved petals and oils carry slightly higher value for crafters and alchemists.\n\n## Related Items\n- Minor Healing Potions\n- Perfume\n- Garden Biomes\n- Herbalist Profession\n",
+      "imagePath": "content/flora/1-common/flowers/rose/rose.png",
+      "searchTerms": "rose items flower items resources & materials herbalist & plants ---\ntitle: rose\nslug: rose\nkingdom: flora\nitem_class: common\ncategory: flower\nsubcategory:\nhabitats:\n  - plains\n  - gardens\nclimate: temperate\nregions: []\nharvest_season:\n  - spring\n  - summer\nmana_density: very low\ntoxicity: none\ngrowth_difficulty: easy\nmarket_value: low\naffinities:\n  - life\ncrafting_uses:\n  - perfume\n  - minor healing potions\nalchemy_uses: []\nculinary_uses: []\nimage: rose.png\ntags:\n  - flora\n  - common\n  - flower\n---\n\n# rose\n\n## overview\nroses are common flowering plants found in tended gardens, old courtyards, hedgerows, and temperate plains near settled roads. in asteria, they are valued as a simple fragrant ingredient and a low-grade life-aspected reagent.\n\n## appearance\na rose grows as a thorned green stem with layered petals ranging from pale blush to deep crimson. healthy plants carry a clean floral scent, glossy leaves, and sharp hooked thorns that can catch cloth or skin.\n\n## habitat\nroses prefer temperate soil, steady sunlight, and places where water does not stagnate. they grow naturally in plains and hedges, but the finest blooms are usually cultivated in gardens, temple grounds, estates, and healer courtyards.\n\n## harvesting\nflowers are clipped just below the bloom to preserve the petals and oil. thorns make careless gathering uncomfortable, but the plant is otherwise easy to harvest. spring and summer blooms are most abundant, with small yields possible in sheltered gardens.\n\n## uses\nrose petals are used for perfume, ceremonial offerings, scented oils, poultices, and basic trade bundles. dried petals are easy to transport and are often sold by herbalists and village markets.\n\n## alchemy uses\nrose petals can soften the scent of harsh brews and serve as a minor stabilizer in gentle restorative mixtures. they are too weak for major healing on their own, but they are useful in early potion practice.\n\n## crafting uses\nroses can be processed into perfume, pressed dyes, incense blends, decorative garlands, and minor healing potion additives. thorns may be used as small natural pins or ritual markers.\n\n## culinary uses\npetals may be candied, steeped into mild tea, or used sparingly in sweet syrups where the plant has been grown away from toxins or grave soil.\n\n## magical affinities\nroses carry a faint life affinity linked to renewal, beauty, memory, and gentle restoration. certain regional variants may develop stronger affinities when grown near shrines, leyline gardens, or enchanted groves.\n\n## market value\nroses are low-value and widely available in settled regions. fresh blooms are cheapest near gardens and towns, while preserved petals and oils carry slightly higher value for crafters and alchemists.\n\n## related items\n- minor healing potions\n- perfume\n- garden biomes\n- herbalist profession\n {\"title\":\"rose\",\"slug\":\"rose\",\"kingdom\":\"flora\",\"itemclass\":\"common\",\"category\":\"flower\",\"subcategory\":\"\",\"habitats\":[\"plains\",\"gardens\"],\"climate\":\"temperate\",\"regions\":[],\"harvestseason\":[\"spring\",\"summer\"],\"manadensity\":\"very low\",\"toxicity\":\"none\",\"growthdifficulty\":\"easy\",\"marketvalue\":\"low\",\"affinities\":[\"life\"],\"craftinguses\":[\"perfume\",\"minor healing potions\"],\"alchemyuses\":[],\"culinaryuses\":[],\"image\":\"rose.png\",\"tags\":[\"flora\",\"common\",\"flower\"]}"
     },
     {
       "id": "undien",
@@ -228,8 +548,9 @@
       ],
       "marketValue": "",
       "damage": "",
-      "content": "---\ntype: Race\nraceCategory: Humanoid\nplayable: true\nsize: Medium\naffinity:\n  - Water\n  - Spirit\nvisibility: public\ntags:\n  - Race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# Undien\n\nThe Undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## Traits\n\n- Amphibious affinity\n- Water movement familiarity\n- Strong connection to aquatic cultures\n\n## Racial Skills\n\n- River Navigation\n- Breath Control\n- Drowned Ruin Lore\n\n## Character Creation Notes\n\nUndien are available as a playable race. They are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## Test Note\n\nThis is a clean test race page used to verify the public compendium system.\n",
-      "searchTerms": "undien races race races ---\ntype: race\nracecategory: humanoid\nplayable: true\nsize: medium\naffinity:\n  - water\n  - spirit\nvisibility: public\ntags:\n  - race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# undien\n\nthe undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## traits\n\n- amphibious affinity\n- water movement familiarity\n- strong connection to aquatic cultures\n\n## racial skills\n\n- river navigation\n- breath control\n- drowned ruin lore\n\n## character creation notes\n\nundien are available as a playable race. they are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## test note\n\nthis is a clean test race page used to verify the public compendium system.\n {\"type\":\"race\",\"racecategory\":\"humanoid\",\"playable\":true,\"size\":\"medium\",\"affinity\":[\"water\",\"spirit\"],\"visibility\":\"public\",\"tags\":[\"race\",\"aquatic\",\"riverfolk\",\"water-touched\"]}"
+      "content": "---\ntype: Race\nraceCategory: Humanoid\nplayable: true\nsize: Medium\naffinity:\n  - Water\n  - Spirit\nvisibility: public\ntags:\n  - Race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# Undien\n\nThe Undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## Traits\n\n- Amphibious affinity\n- Water movement familiarity\n- Strong connection to aquatic cultures\n\n## Racial Skills\n\n- River Navigation\n- Breath Control\n- Drowned Ruin Lore\n\n## Character Forge Notes\n\nUndien are available as a playable race. They are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## Test Note\n\nThis is a clean test race page used to verify the public compendium system.\n",
+      "imagePath": "",
+      "searchTerms": "undien races race races ---\ntype: race\nracecategory: humanoid\nplayable: true\nsize: medium\naffinity:\n  - water\n  - spirit\nvisibility: public\ntags:\n  - race\n  - aquatic\n  - riverfolk\n  - water-touched\n---\n\n# undien\n\nthe undien are water-touched people adapted to rivers, coasts, deep lakes, and ancient drowned ruins.\n\n## traits\n\n- amphibious affinity\n- water movement familiarity\n- strong connection to aquatic cultures\n\n## racial skills\n\n- river navigation\n- breath control\n- drowned ruin lore\n\n## character forge notes\n\nundien are available as a playable race. they are best suited to campaigns with rivers, coastlines, drowned ruins, spirit-touched waters, or maritime cultures.\n\n## test note\n\nthis is a clean test race page used to verify the public compendium system.\n {\"type\":\"race\",\"racecategory\":\"humanoid\",\"playable\":true,\"size\":\"medium\",\"affinity\":[\"water\",\"spirit\"],\"visibility\":\"public\",\"tags\":[\"race\",\"aquatic\",\"riverfolk\",\"water-touched\"]}"
     }
   ]
 }

@@ -28,7 +28,10 @@ const includedRoots = new Set([
   'Elements',
   'Soul Stones',
   'Runes',
-  'Magic Items'
+  'Magic Items',
+  'flora',
+  'minerals',
+  'materials'
 ]);
 
 function slugify(value) {
@@ -46,6 +49,21 @@ function normalizeKey(value) {
 
 function toWebPath(filePath) {
   return filePath.split(path.sep).join('/');
+}
+
+function isDeprecatedLooseResourcePath(relativePath) {
+  const normalized = toWebPath(relativePath).toLowerCase().replace(/&/g, 'and');
+  return [
+    'items/resources and materials/ores/',
+    'items/resources and materials/ingots/',
+    'items/resources and materials/metal ores/',
+    'items/resources and materials/metal ingots/'
+  ].some(fragment => normalized.includes(fragment));
+}
+
+function isCollectionIndexPath(relativePath) {
+  const normalized = toWebPath(relativePath).toLowerCase();
+  return /(^|\/)(flora|minerals|materials)\/index\.md$/.test(normalized);
 }
 
 function parseScalar(value) {
@@ -108,7 +126,7 @@ function sectionFromCategory(category, metadata = {}) {
   const source = [category, metadata.type, metadata.category].join(' ').toLowerCase();
   if (source.includes('race')) return 'Races';
   if (source.includes('class') || source.includes('talent tree') || source.includes('pathway')) return 'Classes';
-  if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('consumable')) return 'Items';
+  if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('mineral') || source.includes('ore') || source.includes('ingot') || source.includes('consumable')) return 'Items';
   if (source.includes('spell') || source.includes('magic') || source.includes('enchantment') || source.includes('element') || source.includes('soul stone') || source.includes('rune')) return 'Magic';
   if (source.includes('world') || source.includes('realm') || source.includes('plane') || source.includes('continent') || source.includes('kingdom') || source.includes('pantheon') || source.includes('timeline')) return 'World, Realms & Planes';
   return 'Asteria Handbook';
@@ -143,8 +161,52 @@ function sectionListItems(body, headingPattern) {
   return values.slice(0, 4);
 }
 
+function structuredItemPlacement(parts, metadata = {}, title = '') {
+  const collection = slugify(parts[0]);
+  if (!['flora', 'minerals', 'materials'].includes(collection)) return null;
+  if (parts.length < 5 || path.basename(parts[parts.length - 1]).toLowerCase() !== 'index.md') {
+    return { skip: true };
+  }
+
+  const categoryFolder = slugify(parts[2] || '');
+  const category = slugify(metadata.category || '');
+  const text = [title, categoryFolder, category, metadata.subcategory, metadata.materialFamily, metadata.material_family].join(' ').toLowerCase();
+
+  if (collection === 'minerals' && (categoryFolder === 'ores' || category === 'ore' || slugify(title).endsWith('ore'))) {
+    return { section: 'Items', type: 'Ore', category: 'Metal Ores', categoryPath: ['Items','Resources & Materials','Metal','Metal Ores'] };
+  }
+  if (collection === 'materials' && (category === 'ingot' || text.includes('ingot'))) {
+    return { section: 'Items', type: 'Ingot', category: 'Metal Ingots', categoryPath: ['Items','Resources & Materials','Metal','Metal Ingots'] };
+  }
+  if (collection === 'materials' && (categoryFolder === 'metals' || text.includes('metal'))) {
+    return { section: 'Items', type: 'Material', category: 'Metal', categoryPath: ['Items','Resources & Materials','Metal'] };
+  }
+  if (collection === 'flora') {
+    return { section: 'Items', type: metadata.category || 'Flora Item', category: 'Herbalist & Plants', categoryPath: ['Items','Resources & Materials','Herbalist & Plants'] };
+  }
+  if (collection === 'minerals') {
+    return { section: 'Items', type: metadata.category || 'Mineral', category: 'Gems, Stone & Cores', categoryPath: ['Items','Resources & Materials','Gems, Stone & Cores'] };
+  }
+  if (collection === 'materials' && ['fibres', 'woods'].includes(categoryFolder)) {
+    return { section: 'Items', type: metadata.category || 'Material', category: 'Cloths & Fibre', categoryPath: ['Items','Resources & Materials','Cloths & Fibre'] };
+  }
+  if (collection === 'materials' && categoryFolder === 'leathers') {
+    return { section: 'Items', type: metadata.category || 'Material', category: 'Leather Work', categoryPath: ['Items','Resources & Materials','Leather Work'] };
+  }
+  return { section: 'Items', type: metadata.category || 'Item', category: 'Resources & Materials', categoryPath: ['Items','Resources & Materials'] };
+}
+
+function imagePathFor(file, metadata) {
+  const image = metadata.image || metadata.icon || metadata.artwork || '';
+  if (!image) return '';
+  const imageFile = path.join(path.dirname(file), image);
+  return fs.existsSync(imageFile) ? `content/${toWebPath(path.relative(contentRoot, imageFile))}` : '';
+}
+
 function entryFromFile(file) {
   const rel = path.relative(contentRoot, file);
+  if (isDeprecatedLooseResourcePath(rel)) return null;
+  if (isCollectionIndexPath(rel)) return null;
   const parts = rel.split(path.sep);
   const top = parts[0];
   if (!includedRoots.has(top)) return null;
@@ -155,13 +217,15 @@ function entryFromFile(file) {
   if (String(metadata.visibility || 'public').toLowerCase().includes('gm')) return null;
 
   const body = stripFrontmatter(content);
-  const categoryPath = parts.slice(0, -1);
-  const section = sectionFromCategory(categoryPath.join('/'), metadata);
-  const type = metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
+  const title = titleFromBody(file, body);
+  const structuredPlacement = structuredItemPlacement(parts, metadata, title);
+  if (structuredPlacement?.skip) return null;
+  const categoryPath = structuredPlacement?.categoryPath || parts.slice(0, -1);
+  const section = structuredPlacement?.section || sectionFromCategory(categoryPath.join('/'), metadata);
+  const type = structuredPlacement?.type || metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
   const itemClass = metadata.itemClass || metadata.item_class || metadata.rarity || '';
   const raceCategory = metadata.raceCategory || metadata.racecategory || (section === 'Races' ? 'Humanoid' : '');
   const playable = metadata.playable === true || String(metadata.availability || '').toLowerCase() === 'playable';
-  const title = titleFromBody(file, body);
 
   return {
     id: slugify(title),
@@ -169,7 +233,7 @@ function entryFromFile(file) {
     section,
     type,
     categoryPath,
-    category: categoryPath[categoryPath.length - 1] || section,
+    category: structuredPlacement?.category || categoryPath[categoryPath.length - 1] || section,
     rarity: itemClass || (section === 'Items' ? 'Common' : ''),
     rarityRank: Math.max(0, itemClasses.findIndex(item => item.toLowerCase() === String(itemClass).toLowerCase())),
     description: descriptionFromBody(content),
@@ -185,6 +249,7 @@ function entryFromFile(file) {
     marketValue: metadata.marketValue || metadata.market_value || '',
     damage: metadata.damage || '',
     content,
+    imagePath: imagePathFor(file, metadata),
     searchTerms: [title, section, type, categoryPath.join(' '), content, JSON.stringify(metadata)].join(' ').toLowerCase()
   };
 }

@@ -505,8 +505,12 @@ function openAccountCharacter(id){
   if(!chars[id]) return toast('Character not found.');
   session.character=id; selected=id; loadPlayer(id); saveAsteriaState(); setView('player'); toast('Opened '+chars[id].name+'.');
 }
-function toggleCharacterCreator(){ $('characterCreator')?.classList.toggle('show'); }
+function toggleCharacterCreator(){
+  if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();
+  $('characterCreator')?.classList.toggle('show');
+}
 function createCharacterForAccount(){
+  if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();
   const account=session.account||session.user;
   if(!accountUsers[account]) return toast('Log in to a player account first.');
   const name=($('newCharName')?.value||'New Character').trim();
@@ -968,7 +972,7 @@ document.addEventListener('DOMContentLoaded',()=>{Object.keys(chars||{}).forEach
    - Built from confirmed-correct v1.3.3 inventory baseline
    - Adds character creation integration and combat final pass without legacy inventory code
    ========================= */
-const ASTERIA_CLEAN_VERSION='v1.3.7 CLEAN • Correct v1.3.3 Base + Character Creation + Combat Polish';
+const ASTERIA_CLEAN_VERSION='v1.3.7 CLEAN • Correct v1.3.3 Base + Character Forge + Combat Polish';
 function cleanTierBonus(v){v=Number(v)||0; if(v>=80)return 4; if(v>=60)return 3; if(v>=40)return 2; if(v>=20)return 1; return 0;}
 if(typeof tierBonus!=='function') var tierBonus=cleanTierBonus;
 const ASTERIA_SIZE_DICE_CLEAN={
@@ -994,12 +998,7 @@ function cleanRaceSize(race){return ASTERIA_RACE_SIZES_CLEAN[String(race||'').tr
 function cleanClassKey(v){const raw=String(v||'').toLowerCase();return Object.keys(ASTERIA_CLASS_PRESETS_CLEAN).find(k=>raw.includes(k))||'ranger';}
 function renderCharacterCreatorClean(){
   const host=$('characterCreator'); if(!host)return;
-  const n=$('newCharName')?.value||'', r=$('newCharRace')?.value||'', a=$('newCharAge')?.value||'';
-  host.innerHTML=`<h3>Create Character</h3><p class="muted smallnote">Creates a Level 0 character using Asteria characteristic rolls. HP/SP/MP = 10 + CON/END/WIS.</p><div class="creator-grid enhanced"><label>Character Name<input id="newCharName" placeholder="New character name" value="${escapeAttr(n)}"></label><label>Race<input id="newCharRace" placeholder="Race" value="${escapeAttr(r)}" oninput="syncCleanCreatorSize()"></label><label>Size<select id="newCharSize">${Object.entries(ASTERIA_SIZE_DICE_CLEAN).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}</select></label><label>Class<select id="newCharClass">${Object.entries(ASTERIA_CLASS_PRESETS_CLEAN).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}</select></label><label>Age<input id="newCharAge" placeholder="Age" value="${escapeAttr(a)}"></label></div><div class="creator-actions"><button onclick="rollCleanCreatorCharacteristics()">Roll Characteristics</button><button onclick="resetCleanCreatorCharacteristics()">Reset Rolls</button></div><section class="creator-stat-panel"><div class="section-head mini"><h4>Characteristics</h4><span class="pill">Size Dice</span></div><div id="creatorStatsGrid" class="creator-stats-grid"></div></section><section class="creator-preview-panel"><h4>Resource Preview</h4><p id="creatorResourcePreview" class="muted"></p><h4>Starting Kit</h4><ul id="creatorInventoryPreview"></ul></section><button class="primary" onclick="createCharacterForAccountClean()">Create Character</button>`;
-  $('newCharSize').value=cleanRaceSize(r); $('newCharClass').value=cleanClassKey($('newCharClass')?.value||'ranger');
-  $('newCharSize').addEventListener('change',()=>{saveCleanCreatorRolls({});renderCleanCreatorStats();});
-  $('newCharClass').addEventListener('change',renderCleanCreatorInventory);
-  renderCleanCreatorStats(); renderCleanCreatorInventory();
+  host.innerHTML=`<h3>Character Forge</h3><p class="muted smallnote">The old quick creator has been retired. Open the guided Character Forge to build from compendium races, classes, skills, origins, and items.</p><button class="primary" onclick="toggleCharacterCreator()">Open Character Forge</button>`;
 }
 function syncCleanCreatorSize(){if($('newCharSize')){$('newCharSize').value=cleanRaceSize($('newCharRace')?.value||'');saveCleanCreatorRolls({});renderCleanCreatorStats();}}
 function renderCleanCreatorStats(){const host=$('creatorStatsGrid'); if(!host)return; const size=$('newCharSize')?.value||'medium', dice=ASTERIA_SIZE_DICE_CLEAN[size].dice, rolls=cleanCreatorRolls(); host.innerHTML=Object.keys(statLabels).map(k=>`<label class="creator-stat"><span>${statLabels[k]}</span><small>${dice[k]}</small><input type="number" min="0" value="${rolls[k]??0}" onchange="manualCleanCreatorStat('${k}',this.value)"></label>`).join(''); renderCleanCreatorResourcePreview();}
@@ -1009,6 +1008,7 @@ function resetCleanCreatorCharacteristics(){saveCleanCreatorRolls({}); renderCle
 function renderCleanCreatorResourcePreview(){const r=cleanCreatorRolls(); const hp=RESOURCE_BASE+(r.constitution||0), sp=RESOURCE_BASE+(r.endurance||0), mp=RESOURCE_BASE+(r.wisdom||0); if($('creatorResourcePreview'))$('creatorResourcePreview').innerHTML=`HP <b>${hp}</b> = 10 + CON ${r.constitution||0}<br>SP <b>${sp}</b> = 10 + END ${r.endurance||0}<br>MP <b>${mp}</b> = 10 + WIS ${r.wisdom||0}`;}
 function renderCleanCreatorInventory(){const key=$('newCharClass')?.value||'ranger', p=ASTERIA_CLASS_PRESETS_CLEAN[key]||ASTERIA_CLASS_PRESETS_CLEAN.ranger, defs=asteriaV133ItemDefaults?.()||{}; if($('creatorInventoryPreview'))$('creatorInventoryPreview').innerHTML=(p.items||[]).map(id=>`<li>${defs[id]?.name||id}</li>`).join('');}
 function createCharacterForAccountClean(){
+  if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();
   const account=session.account||session.user; if(!accountUsers[account])return toast('Log in to a player account first.');
   let rolls=cleanCreatorRolls(); if(!Object.keys(rolls).length){rollCleanCreatorCharacteristics(); rolls=cleanCreatorRolls();}
   const name=($('newCharName')?.value||'New Character').trim(), id=normaliseId(name), race=($('newCharRace')?.value||'Unselected').trim(), classKey=$('newCharClass')?.value||'ranger', p=ASTERIA_CLASS_PRESETS_CLEAN[classKey]||ASTERIA_CLASS_PRESETS_CLEAN.ranger;
@@ -1018,7 +1018,7 @@ function createCharacterForAccountClean(){
   accountUsers[account].characters=accountUsers[account].characters||[]; if(!accountUsers[account].characters.includes(id))accountUsers[account].characters.push(id);
   session.character=id; selected=id; saveAccountState(); saveAsteriaState(); saveCleanCreatorRolls({}); renderPlayerHome(); toast('Character created: '+name); openAccountCharacter(id);
 }
-toggleCharacterCreator=function(){const el=$('characterCreator'); if(!el)return; if(!el.dataset.cleanCreator){renderCharacterCreatorClean(); el.dataset.cleanCreator='true';} el.classList.toggle('show'); if(el.classList.contains('show'))renderCharacterCreatorClean();};
+toggleCharacterCreator=function(){if(window.AsteriaGameplay?.openCharacterForge)return window.AsteriaGameplay.openCharacterForge(); const el=$('characterCreator'); if(!el)return; if(!el.dataset.cleanCreator){renderCharacterCreatorClean(); el.dataset.cleanCreator='true';} el.classList.toggle('show'); if(el.classList.contains('show'))renderCharacterCreatorClean();};
 
 let asteriaCleanSelectedTargetIndex=0;
 function cleanCurrentTarget(){if(!enemies.length)return null; if(asteriaCleanSelectedTargetIndex<0||asteriaCleanSelectedTargetIndex>=enemies.length)asteriaCleanSelectedTargetIndex=0; return enemies[asteriaCleanSelectedTargetIndex];}

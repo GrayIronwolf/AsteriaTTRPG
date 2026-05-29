@@ -2,7 +2,7 @@
 
 The website now uses generated content indexes as data for the unified Asteria Compendium. Flora, Minerals, and Materials are not separate public wiki systems anymore; they are Compendium Entries rendered through the same shared card and page viewer used by Items, Races, Classes, World, Magic, and the Handbook.
 
-## Current Collection
+## Current Content Sources
 
 - Flora: `content/flora`
 - Minerals: `content/minerals`
@@ -20,10 +20,10 @@ The website now uses generated content indexes as data for the unified Asteria C
 
 1. Markdown files live under `content/<collection>`.
 2. Collection rules live in `scripts/wiki-engine-config.js`.
-3. `scripts/generate-wiki-index.js` scans configured collections.
-4. The generator writes `js/wiki-index.js`.
+3. `scripts/generate-wiki-index.js` scans configured collections. The file name is legacy; the public UI is the compendium.
+4. The generator writes `js/wiki-index.js` as a data index only.
 5. `js/clean-compendium.js` imports the generated indexes and converts every item into a Compendium Entry.
-6. The unified compendium renderer handles index views, rarity/category filters, individual pages, metadata, images, and relationship links.
+6. The unified compendium renderer places entries into normal Item categories such as `Resources & Materials > Metal > Metal Ores` and handles index views, rarity/category filters, individual pages, metadata, images, and relationship links.
 
 ## Commands
 
@@ -50,7 +50,7 @@ The static server sends collection routes such as `/flora/common/flowers/rose` b
 3. Add category folders for that collection.
 4. Add item folders with `index.md`, an image file, and optional `variants/`.
 5. Run `node scripts/generate-wiki-index.js`.
-6. Add a sidebar or workspace shortcut that calls `openCompendiumPath('Items/Content Collections/<Collection Name>')`.
+6. Map the collection into a normal compendium category in `js/clean-compendium.js` if the default Resources & Materials placement is not specific enough.
 
 Keep item data in markdown frontmatter. Do not hardcode individual item pages in JavaScript.
 

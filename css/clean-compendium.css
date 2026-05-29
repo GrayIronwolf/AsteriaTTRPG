@@ -59,6 +59,10 @@
   padding: 0 0 14px;
 }
 
+.workspace-tabs.is-empty {
+  display: none;
+}
+
 .workspace-tabs button {
   min-height: 42px;
   border: 1px solid rgba(255,255,255,.1);
@@ -270,6 +274,13 @@
   gap: 14px;
 }
 
+.clean-grid.clean-item-grid {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 198px));
+  justify-content: start;
+  align-items: start;
+  gap: 12px;
+}
+
 .workspace-tab-context {
   grid-column: 1 / -1;
   display: flex;
@@ -326,6 +337,85 @@
   color: rgba(255,239,211,.78);
   line-height: 1.42;
   margin: 10px 0;
+}
+
+.clean-item-card {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  position: relative;
+  min-height: 178px;
+  align-content: start;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.clean-item-card-image {
+  display: inline-grid;
+  place-self: center;
+  place-items: center;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 24%, transparent);
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 35%, rgba(31,125,255,.13), rgba(0,0,0,.44));
+  overflow: hidden;
+}
+
+.clean-item-card-image img {
+  width: auto;
+  height: auto;
+  max-width: min(132px, 100%);
+  max-height: 118px;
+  object-fit: contain;
+  display: block;
+}
+
+.clean-item-card-image span {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 28%, transparent);
+  border-radius: 50%;
+  color: rgba(255,239,211,.46);
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.clean-item-card-image.is-missing::after {
+  content: "";
+  width: 58px;
+  height: 58px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 28%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,239,211,.08), rgba(0,0,0,.18));
+}
+
+.clean-item-card-content {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.clean-item-card .clean-rarity-tag {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  right: 8px;
+  max-width: calc(100% - 16px);
+  padding: 3px 7px;
+  font-size: .62rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,.35);
+}
+
+.clean-item-card h3 {
+  margin: 4px 0 0;
+  text-align: center;
+  line-height: 1.2;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .clean-card-subtitle {

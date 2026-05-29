@@ -41,7 +41,7 @@
       <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="campaigns">Campaigns</button>
       <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="characters">Characters</button>
       <button class="side-main auth-only locked" data-workspace-action="create-campaign">Create Campaign</button>
-      <button class="side-main auth-only locked" data-workspace-action="create-character">Create Character</button>
+      <button class="side-main auth-only locked" data-workspace-action="create-character">Character Forge</button>
       <button class="side-main auth-only locked" data-workspace-action="settings">Settings</button>
     </div>
   </aside>
@@ -163,7 +163,7 @@
     </div></section>
 
 
-    <section id="playerHome" class="view"><div class="player-home-grid"><section class="card player-home-hero"><p class="eyebrow">Player Account</p><h2 id="accountWelcome">Your Characters</h2><p class="muted">Create characters under your account, then open a character card to enter that character dashboard. The GM chooses which characters are active in a campaign from Campaign Settings.</p><button class="primary" onclick="toggleCharacterCreator()">+ Create Character</button></section><section id="characterCreator" class="card character-creator"><h3>Create Character</h3><div class="creator-grid"><label>Character Name<input id="newCharName" placeholder="New character name"></label><label>Race<input id="newCharRace" placeholder="Race"></label><label>Class<input id="newCharClass" placeholder="Class"></label><label>Age<input id="newCharAge" placeholder="Age"></label></div><p class="muted smallnote">New characters start at Level 0 with base HP/SP/MP 10 and empty characteristics.</p><button class="primary" onclick="createCharacterForAccount()">Create Character</button></section><section class="card"><div class="section-head"><h3>Character Select</h3><span class="pill">Account Characters</span></div><div id="accountCharacterCards" class="account-character-cards"></div></section></div></section>
+    <section id="playerHome" class="view"><div class="player-home-grid"><section class="card player-home-hero"><p class="eyebrow">Player Account</p><h2 id="accountWelcome">Your Characters</h2><p class="muted">Forge characters under your account, then open a character card to enter that character dashboard. The GM chooses which characters are active in a campaign from Campaign Settings.</p><button class="primary" onclick="toggleCharacterCreator()">+ Character Forge</button></section><section id="characterCreator" class="card character-creator"><h3>Character Forge</h3><p class="muted smallnote">Character Forge is the only official character creation workflow. It opens the full guided Forge with compendium races, classes, skills, origins, and items.</p><button class="primary" onclick="toggleCharacterCreator()">Open Character Forge</button></section><section class="card"><div class="section-head"><h3>Character Select</h3><span class="pill">Account Characters</span></div><div id="accountCharacterCards" class="account-character-cards"></div></section></div></section>
 
     <section id="campaigns" class="view"><div class="campaign-manager"><section class="card"><div class="section-head"><div><p class="eyebrow">GM System</p><h2>Campaign Manager</h2></div><button class="primary" onclick="createCampaign()">+ Add Campaign</button></div><p class="muted">Choose the active campaign, set party size, create player logins, and manage player access rules.</p><div id="campaignList" class="campaign-list"></div></section><section class="card"><h3>Campaign Settings</h3><label>Campaign Name<input id="campaignNameInput"></label><label>Party Size<input id="partySizeInput" type="number" min="1" max="8"></label><h4>Player Login Setup</h4><div id="loginSetup" class="login-setup"></div><h4>Access Rules</h4><div id="campaignAccess" class="checks"></div><button class="primary" onclick="saveCampaignSettings()">Save Campaign Settings</button><button class="danger" onclick="deleteCampaign()">Delete Selected Campaign</button></section></div></section>
 
@@ -297,6 +297,7 @@
   <div id="toast" class="toast"></div>
   <script src="js/content-manifest.js"></script>
   <script src="js/wiki-index.js"></script>
+  <script src="js/universal-compendium-index.js"></script>
   <script src="js/asteria-state.js"></script>
   <script src="js/asteria-view-hooks.js"></script>
   <script src="js/asteria-progression.js"></script>
@@ -313,6 +314,9 @@
 <script src="js/class-compendium-data.js"></script>
 <script src="js/creature-compendium-data.js"></script>
 <script src="js/codex-compendium.js"></script>
+<script src="js/universal-compendium-engine.js"></script>
+<script src="js/asteria-gameplay-systems.js"></script>
+<script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-core-shell.js"></script>
 <script src="js/asteria-ui-theme-system.js"></script>
 <script src="js/asteria-home-fix.js"></script>

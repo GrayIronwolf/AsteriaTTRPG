@@ -26,7 +26,7 @@ crafting_uses:
   - Tools
 alchemy_uses: []
 culinary_uses: []
-image: iron-ore.png
+image: Iron Ore.png
 tags:
   - minerals
   - common

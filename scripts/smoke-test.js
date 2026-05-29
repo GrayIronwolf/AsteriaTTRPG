@@ -110,6 +110,8 @@ const firebaseAuthJs = fs.readFileSync(path.join(root, 'js/firebase-auth.js'), '
 const authBridgeJs = fs.readFileSync(path.join(root, 'js/auth-bridge.js'), 'utf8');
 const dataSyncJs = fs.readFileSync(path.join(root, 'js/data-sync.js'), 'utf8');
 const snapshotJs = fs.readFileSync(path.join(root, 'js/compendium-snapshot-v1.1.js'), 'utf8');
+const gameplayJs = fs.readFileSync(path.join(root, 'js/asteria-gameplay-systems.js'), 'utf8');
+const worldJs = fs.readFileSync(path.join(root, 'js/asteria-world-systems.js'), 'utf8');
 const homeGuardJs = fs.readFileSync(path.join(root, 'js/asteria-home-guard.js'), 'utf8');
 const homeFixJs = fs.readFileSync(path.join(root, 'js/asteria-home-fix.js'), 'utf8');
 const themeSystemJs = fs.readFileSync(path.join(root, 'js/asteria-ui-theme-system.js'), 'utf8');
@@ -118,6 +120,7 @@ const stylesCss = fs.readFileSync(path.join(root, 'css/styles.css'), 'utf8');
 const cleanCompendiumCss = fs.readFileSync(path.join(root, 'css/clean-compendium.css'), 'utf8');
 const homeHtml = html.slice(html.indexOf('<section id="home"'), html.indexOf('<section id="loginPage"'));
 const gmDashboardBlock = appJs.slice(appJs.indexOf('Asteria GM Dashboard v1'), appJs.indexOf('/* v1.7.3.2 Public Website Layout Helpers */'));
+const contentManifestJs = fs.readFileSync(path.join(root, 'js/content-manifest.js'), 'utf8');
 check('Legacy global binder removed from app.js', !appJs.includes('bindAsteriaGlobal'));
 check('Stacked setView replacements removed from app.js', !/setView\s*=\s*function|window\.setView\s*=\s*function/.test(appJs));
 const renderGMAssignments = (appJs.match(/(?:^|\n)renderGM\s*=\s*function/g) || []).length;
@@ -142,6 +145,27 @@ check('Progression UI module exposes AsteriaProgressionUI', progressionUiJs.incl
 check('Progression UI module owns CP rendering', !/function renderCharacteristicCP/.test(appJs) && progressionUiJs.includes('function renderCharacteristicCP'));
 check('Progression UI module owns base talent data', !/const asteriaClassTalentTrees/.test(appJs) && progressionUiJs.includes('var asteriaClassTalentTrees'));
 check('Progression UI module owns talent spending helpers', !/function applyTalentRanks/.test(appJs) && progressionUiJs.includes('function applyTalentRanks'));
+check('Phase 3 gameplay script is loaded', jsFiles.includes('js/asteria-gameplay-systems.js'));
+check('Phase 3A exposes gameplay API', gameplayJs.includes('window.AsteriaGameplay') && gameplayJs.includes('openCharacterForge') && gameplayJs.includes('openCharacterCreator') && gameplayJs.includes('openEncounterBuilder'));
+check('Phase 3 uses universal compendium data', gameplayJs.includes('AsteriaUniversalCompendium') && gameplayJs.includes("databaseEntries('race')") && gameplayJs.includes("databaseEntries('creature')"));
+check('Phase 3 keeps creation talent rules locked', gameplayJs.includes('Players do not freely choose talents') && gameplayJs.includes('startingTalentsForClass'));
+check('Phase 3 keeps profession slots campaign-earned', gameplayJs.includes('No Profession Learned') && gameplayJs.includes('assignProfession'));
+check('Phase 3A presents Character Forge', gameplayJs.includes("label:'Character Forge'") && gameplayJs.includes('Character Forge') && !gameplayJs.includes("label:'Character Creator'"));
+check('Character Forge uses final 9-tab flow with Magic', ["'Race'","'Class'","'Appearance'","'Origin'","'Characteristics'","'Magic'","'Skills'","'Equipment'","'Review'"].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_TABS') && gameplayJs.includes('MAGIC_TYPE_GROUPS') && !gameplayJs.includes("'Save Character'\\n  ];"));
+const forgeStandaloneBranch = gameplayJs.indexOf("if(activeSystem === 'characterCreator')");
+const genericGameplayMenu = gameplayJs.indexOf('<h3>Gameplay Systems</h3>');
+check('Character Forge renders as standalone page', forgeStandaloneBranch >= 0 && gameplayJs.includes("root.classList.add('phase3-forge-shell')") && genericGameplayMenu > forgeStandaloneBranch);
+check('Character Forge uses compendium category panels for race and class', gameplayJs.includes('renderForgeCategoryPanel') && gameplayJs.includes('clean-drilldown-cat') && gameplayJs.includes('AsteriaRaceCompendium.entries') && gameplayJs.includes('AsteriaCodexCompendium.classEntries'));
+check('Character Forge uses dashboard characteristic keys', gameplayJs.includes("const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS") && ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_STAT_LABELS'));
+check('Character Forge is data-driven', ["databaseEntries('race')", "databaseEntries('class')", "entriesForSelect('skill'", "entriesForSelect('origin'", "databaseEntries('item')"].every(token => gameplayJs.includes(token)));
+check('Character Forge stores final schema', ['family_tree','backstory','characterSchema','created','updated','appearance','origin','characteristics','equipment'].every(token => gameplayJs.includes(token)));
+check('Gameplay systems do not inject extra sidebar shortcuts', !gameplayJs.includes('data-phase3-sidebar') && !gameplayJs.includes('data-phase3-side="characterCreator"'));
+check('Phase 4 world script is loaded', jsFiles.includes('js/asteria-world-systems.js'));
+check('Phase 4 exposes world API', worldJs.includes('window.AsteriaWorld') && worldJs.includes('openWorldState') && worldJs.includes('openWorldMap'));
+check('Phase 4 uses universal compendium data', worldJs.includes('AsteriaUniversalCompendium') && worldJs.includes("databaseEntries('location')") && worldJs.includes("databaseEntries('faction')"));
+check('Phase 4 tracks campaign world persistence', worldJs.includes('campaigns:{}') && worldJs.includes('persistence:{') && worldJs.includes('worldChanges'));
+check('Phase 4 supports GM visibility controls', worldJs.includes('playerSafeMode') && worldJs.includes('gm-only') && worldJs.includes('isGMMode'));
+check('World systems do not inject extra sidebar shortcuts', !worldJs.includes('data-phase4-sidebar') && !worldJs.includes('phase4-sidebar-group'));
 check('Home view has no account option panel', !/Account Options|test-logins|offline-logins/i.test(homeHtml));
 check('Top-right account buttons remain', html.includes('id="loginToggle"') && html.includes('id="createAccountTop"'));
 check('Home guard loads before app scripts', jsFiles.includes('js/asteria-home-guard.js') && jsFiles.indexOf('js/asteria-home-guard.js') < jsFiles.indexOf('js/app.js'));
@@ -181,7 +205,7 @@ check('Item rarity system remains in clean compendium', cleanCompendiumJs.includ
 check('Workspace layout uses standard panels', cleanCompendiumCss.includes('.workspace-header') && cleanCompendiumCss.includes('.workspace-category-panel') && cleanCompendiumCss.includes('.workspace-filter-area') && cleanCompendiumCss.includes('.workspace-tabs') && cleanCompendiumCss.includes('.workspace-display-window'));
 check('Category panel uses click-through navigation, not dropdown folders', cleanCompendiumJs.includes('clean-drilldown-cat') && !cleanCompendiumJs.includes("document.createElement('details')"));
 check('Top tab menu is section-specific', cleanCompendiumJs.includes('workspaceTabs') && cleanCompendiumJs.includes('Race Sheet') && cleanCompendiumJs.includes('Talent Tree') && cleanCompendiumJs.includes('Crafting'));
-check('Workspace attaches generated content collections', cleanCompendiumJs.includes('Content Collections') && cleanCompendiumJs.includes("wikiCollection:'flora'") && cleanCompendiumJs.includes('loadFromWikiIndexes'));
+check('Workspace maps generated collections into item categories', cleanCompendiumJs.includes('itemPlacement') && cleanCompendiumJs.includes('loadFromWikiIndexes') && cleanCompendiumJs.includes('Resources & Materials') && cleanCompendiumJs.includes('Metal Ores') && cleanCompendiumJs.includes('Metal Ingots'));
 check('Compendium page viewer supports wiki item images', cleanCompendiumJs.includes('imagePath') && cleanCompendiumCss.includes('.clean-page-image'));
 check('Clean compendium generator exists', fs.existsSync(path.join(root, 'scripts/generate-clean-compendium-index.js')));
 check('Old public hub pages removed', ['handbookHub','worldHub','racesHub','classesHub','itemsHub','magicHub'].every(id => !ids.includes(id)));
@@ -232,10 +256,10 @@ const floraRose = path.join(root, 'content/flora/1-common/flowers/rose/index.md'
 const floraImage = path.join(root, 'content/flora/1-common/flowers/rose/rose.png');
 const mineralsReadme = path.join(root, 'content/minerals/README.md');
 const mineralsIronOre = path.join(root, 'content/minerals/1-common/ores/iron-ore/index.md');
-const mineralsImage = path.join(root, 'content/minerals/1-common/ores/iron-ore/iron-ore.png');
+const mineralsImage = path.join(root, 'content/minerals/1-common/ores/iron-ore/Iron Ore.png');
 const materialsReadme = path.join(root, 'content/materials/README.md');
 const materialsIronIngot = path.join(root, 'content/materials/1-common/metals/iron-ingot/index.md');
-const materialsImage = path.join(root, 'content/materials/1-common/metals/iron-ingot/iron-ingot.png');
+const materialsImage = path.join(root, 'content/materials/1-common/metals/iron-ingot/Iron Ingot.png');
 const wikiIndexJs = fs.readFileSync(path.join(root, 'js/wiki-index.js'), 'utf8');
 const floraIndexJs = fs.readFileSync(path.join(root, 'js/flora-index.js'), 'utf8');
 const localServerJs = fs.readFileSync(path.join(root, 'scripts/local-static-server.js'), 'utf8');
@@ -262,6 +286,13 @@ check('Combined wiki index exposes collections', wikiIndexJs.includes('window.AS
 check('Flora generated index exposes global', floraIndexJs.includes('window.ASTERIA_FLORA_INDEX') && floraIndexJs.includes('/flora/common/flowers/rose'));
 check('Minerals generated index exposes global through shared index', wikiIndexJs.includes('window.ASTERIA_MINERALS_INDEX') && wikiIndexJs.includes('Iron Ore'));
 check('Materials generated index exposes global through shared index', wikiIndexJs.includes('window.ASTERIA_MATERIALS_INDEX') && wikiIndexJs.includes('Iron Ingot'));
+check('Legacy loose ore and ingot content files are removed', !fs.existsSync(path.join(root, 'content/Items/Resources & Materials/Metal Ores/Iron Ore.md')) && !fs.existsSync(path.join(root, 'content/Items/Resources & Materials/Metal Ingots/Iron Ingot.md')));
+check('Legacy loose ore and ingot manifest entries are excluded', !/Items\/Resources & Materials\/(?:Ores|Ingots|Metal Ores|Metal Ingots)\//.test(contentManifestJs));
+check('Collection overview indexes do not become item cards', !contentManifestJs.includes('minerals/index.md') && !contentManifestJs.includes('materials/index.md') && !contentManifestJs.includes('flora/index.md') && !JSON.stringify(cleanCompendiumIndex).includes('Minerals Index') && !JSON.stringify(cleanCompendiumIndex).includes('Materials Index'));
+check('Clean item index excludes legacy loose ore and ingot sources', !JSON.stringify(cleanCompendiumIndex).includes('content/Items/Resources & Materials/Metal Ores/') && !JSON.stringify(cleanCompendiumIndex).includes('content/Items/Resources & Materials/Metal Ingots/'));
+check('Structured ore and ingot cards use canonical image paths', wikiIndexJs.includes('content/minerals/2-uncommon/ores/antimony-ore/Antimony Ore.png') && wikiIndexJs.includes('content/materials/2-uncommon/metals/antimony-ingot/Antimony Ingot.png') && wikiIndexJs.includes('content/minerals/1-common/ores/iron-ore/Iron Ore.png') && wikiIndexJs.includes('content/materials/1-common/metals/iron-ingot/Iron Ingot.png'));
+check('Item workspace tabs are hidden for item index', cleanCompendiumJs.includes('Items: []') && cleanCompendiumCss.includes('.workspace-tabs.is-empty'));
+check('Item cards use compact item-only grid', cleanCompendiumJs.includes('clean-item-grid') && cleanCompendiumCss.includes('.clean-grid.clean-item-grid') && cleanCompendiumCss.includes('minmax(170px, 198px)'));
 check('Old standalone wiki renderer is not loaded', !jsFiles.includes('js/asteria-wiki.js') && !html.includes('id="floraWiki"') && !html.includes('floraWikiMount'));
 check('Old wiki relationship styles are removed from global CSS', !stylesCss.includes('.wiki-relation-link') && !stylesCss.includes('.wiki-relationship-panel'));
 check('Unified compendium exposes relationship links', cleanCompendiumJs.includes('resolveReference') && cleanCompendiumJs.includes('relationshipPanel') && cleanCompendiumCss.includes('.clean-relationship-panel') && cleanCompendiumCss.includes('.clean-relation-link'));
@@ -269,7 +300,7 @@ check('Unified compendium page viewer renders metadata', cleanCompendiumJs.inclu
 check('Unified cards support selection and double-click open', cleanCompendiumJs.includes('element.onclick') && cleanCompendiumJs.includes('element.ondblclick'));
 check('Universal viewer supports tabbed note sections', cleanCompendiumJs.includes('contentForWorkspaceTab') && cleanCompendiumJs.includes('workspace-note-tab-label') && cleanCompendiumJs.includes('data-viewer="universal-workspace-viewer"'));
 check('Unified compendium supports collection app routes', cleanCompendiumJs.includes('openRouteFromLocation') && cleanCompendiumJs.includes('entryForRoute') && cleanCompendiumJs.includes('hashchange'));
-check('Generated collection paths use workspace content collections', cleanCompendiumJs.includes('Items/Content Collections/') && !cleanCompendiumJs.includes('Items/Wiki Collections/'));
+check('Generated collection paths use normal item categories', !cleanCompendiumJs.includes('Items/Content Collections/') && !cleanCompendiumJs.includes('Items/Wiki Collections/') && cleanCompendiumJs.includes('Items/Resources & Materials/Metal/Metal Ores'));
 check('Local static server supports compendium app routes', localServerJs.includes('compendiumAppRoutes') && localServerJs.includes('flora') && localServerJs.includes('materials') && localServerJs.includes('artifacts') && localServerJs.includes('sendIndex'));
 
 const progressionContext = {
@@ -301,6 +332,8 @@ jsFiles.forEach(file => {
   'scripts/generate-wiki-index.js',
   'scripts/generate-flora-index.js',
   'scripts/generate-clean-compendium-index.js',
+  'scripts/generate-content-manifest.js',
+  'scripts/generate-universal-compendium-index.js',
   'scripts/wiki-engine-config.js',
   'scripts/local-static-server.js'
 ].forEach(file => {
