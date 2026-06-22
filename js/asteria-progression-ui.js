@@ -13,6 +13,20 @@ function cpPendingTotal(id){
   return Object.values(ensureCPDraft(id)).reduce((total, value) => total + Math.max(0, Number(value || 0)), 0);
 }
 
+function renderCompactCharacteristics(id, draft = ensureCPDraft(id)){
+  const c = chars[id];
+  const host = document.getElementById('pStats');
+  if(!c || !host) return;
+
+  host.innerHTML = statOrder.map(key => {
+    const value = Number(c.characteristics?.[key] || 0);
+    const add = Number(draft[key] || 0);
+    const finalValue = value + add;
+    const label = statLabels[key] || key.slice(0, 3).toUpperCase();
+    return `<div class="${add ? 'pending-stat' : ''}"><span>${label}</span><b>${finalValue}</b><small>${tierOf(finalValue)}${add ? ` (+${add})` : ''}</small></div>`;
+  }).join('');
+}
+
 function renderCharacteristicCP(id = currentPlayerId()){
   const c = chars[id];
   const host = document.getElementById('pStatsLarge');
@@ -31,6 +45,7 @@ function renderCharacteristicCP(id = currentPlayerId()){
     const label = key[0].toUpperCase() + key.slice(1);
     return `<div class="stat-card cp-stat"><small>${tierOf(finalValue)}</small><span>${statLabels[key] || label}</span><br><b>${value}</b><p class="muted">${label}</p><div class="cp-stepper"><button onclick="stageCharacteristic('${key}',-1)">-</button><input value="${add}" readonly><button onclick="stageCharacteristic('${key}',1)">+</button></div><em>After apply: ${finalValue}</em></div>`;
   }).join('');
+  renderCompactCharacteristics(id, draft);
 }
 
 function stageCharacteristic(stat, delta){
@@ -65,6 +80,7 @@ function applyCharacteristicCP(){
   recalcResourceMax(c, true);
   syncAfterResourceChange(id);
   renderCharacteristicCP(id);
+  renderCompactCharacteristics(id);
   toast(`Applied ${pending} CP to characteristics.`);
   if(typeof addCombatLog === 'function') addCombatLog(`${c.name} applied ${pending} CP to characteristics.`, 'important');
 }
@@ -214,7 +230,7 @@ function renderTalentTreeUI(id = currentPlayerId()){
 
   const tree = asteriaClassTalentTrees[c.talentClass] || asteriaClassTalentTrees.ranger;
   const cost = stagedTalentCost(id);
-  host.innerHTML = `<div class="section-head"><div><h3>Class Talent Trees</h3><p class="muted">Class talents are purchased with TP. Tier IV / capstone talents should be GM approved.</p></div><div class="tp-box">Available TP <b id="tpAvailable">${c.tp || 0}</b><small>Staged cost: ${cost}</small></div></div><div class="talent-toolbar"><label>Class Tree <select id="talentClassSelect" onchange="changeTalentClass()">${Object.entries(asteriaClassTalentTrees).map(([key, value]) => `<option value="${key}" ${key === c.talentClass ? 'selected' : ''}>${value.label}</option>`).join('')}</select></label><button class="primary" onclick="applyTalentRanks()">Apply Talent Changes</button></div><div class="class-tree-grid">${tree.tiers.map(tier => renderTalentTier(id, tier)).join('')}</div>`;
+  host.innerHTML = `<div class="section-head"><div><h3>Class Talent Tree</h3><p class="muted">Class talents are purchased with TP. Tier IV / capstone talents should be GM approved.</p></div><div class="tp-box">Available TP <b id="tpAvailable">${c.tp || 0}</b><small>Staged cost: ${cost}</small></div></div><div class="talent-toolbar"><label>Class Tree <select id="talentClassSelect" onchange="changeTalentClass()">${Object.entries(asteriaClassTalentTrees).map(([key, value]) => `<option value="${key}" ${key === c.talentClass ? 'selected' : ''}>${value.label}</option>`).join('')}</select></label><button class="primary" onclick="applyTalentRanks()">Apply Talent Changes</button></div><div class="class-tree-grid">${tree.tiers.map(tier => renderTalentTier(id, tier)).join('')}</div>`;
 }
 
 function renderTalentTier(id, tier){
@@ -292,6 +308,7 @@ window.AsteriaProgressionUI = {
   statOrder,
   ensureCPDraft,
   cpPendingTotal,
+  renderCompactCharacteristics,
   renderCharacteristicCP,
   stageCharacteristic,
   applyCharacteristicCP,

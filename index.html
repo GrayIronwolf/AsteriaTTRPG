@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 <link rel="stylesheet" href="css/clean-compendium.css">
 <link rel="stylesheet" href="css/asteria-ui-theme-system.css">
+<link rel="stylesheet" href="css/border-glow.css">
 <script src="js/asteria-home-guard.js"></script>
 </head>
 <body data-role="guest">
@@ -14,6 +15,10 @@
     <div class="brand">
       <img class="brand-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo">
     </div>
+    <nav class="top-workspace-menu auth-only locked" aria-label="Account workspace">
+      <button id="characterForgeTop" class="primary small top-menu-btn" type="button" onclick="window.AsteriaGameplay?.openCharacterForgeHub?.()">Character Forge</button>
+      <button id="campaignsTop" class="primary small top-menu-btn" type="button" onclick="window.AsteriaWorkspace?.openCampaignHub?.()">Campaigns</button>
+    </nav>
     <div class="top-actions">
       <button id="loginToggle" class="primary small" type="button" onclick="setView('loginPage')">Login</button>
       <button id="createAccountTop" class="primary small account-top-btn" type="button" onclick="setView('accountCreate')">Create Account</button>
@@ -35,13 +40,6 @@
     </div>
     <div class="side-section app-buttons">
       <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="dashboard">Dashboard</button>
-      <button class="side-main auth-only locked" type="button" data-app-route="player-dashboard">Character Dashboard</button>
-      <button class="side-main auth-only locked" type="button" data-app-route="campaign-manager">Campaign Manager</button>
-      <button class="side-main auth-only locked" type="button" data-app-route="gm-dashboard">GM Dashboard</button>
-      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="campaigns">Campaigns</button>
-      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="characters">Characters</button>
-      <button class="side-main auth-only locked" data-workspace-action="create-campaign">Create Campaign</button>
-      <button class="side-main auth-only locked" data-workspace-action="create-character">Character Forge</button>
       <button class="side-main auth-only locked" data-workspace-action="settings">Settings</button>
     </div>
   </aside>
@@ -69,6 +67,12 @@
           <input id="asteriaColourWheel" type="color" value="#1f7dff">
         </label>
         <div class="theme-preview-orb" id="asteriaThemePreviewOrb"></div>
+      </div>
+      <div class="theme-colour-row">
+        <label>Text Colour
+          <input id="asteriaTextColourWheel" type="color" value="#f7ead1">
+        </label>
+        <div class="theme-preview-orb theme-preview-text" id="asteriaTextPreviewOrb">T</div>
       </div>
       <label>Glow Intensity
         <input id="asteriaGlowSlider" type="range" min="0" max="100" value="36">
@@ -220,7 +224,7 @@
             </div>
           </section>
           <section id="characteristicsPane" class="tabpane"><div class="character-tab-grid"><div class="card character-profile-panel"><div class="section-head mini"><h3>Character</h3><span class="pill">Identity</span></div><p><b id="characterTabRace">Race pending</b></p><p class="muted smallnote" id="characterTabClass">Class pending</p><p class="muted smallnote">Race notes, origin details, and character references will live here as the character sheet grows.</p></div><div class="card characteristics-manager"><div class="section-head"><div><h3>Characteristics</h3><p class="muted">Spend CP here. Stage changes with + / −, then press Apply to update linked systems such as HP, SP, and MP.</p></div><div class="cp-box">Available CP <b id="cpAvailable">0</b><small>Pending: <span id="cpPending">0</span></small></div></div><div class="large-stat-grid" id="pStatsLarge"></div><button class="primary wide" onclick="applyCharacteristicCP()">Apply Characteristic Changes</button></div><div id="characterTraitsDock"></div></div></section>
-          <section id="talents" class="tabpane"><div class="card talent-tree-page"><div class="section-head"><div><h3>Talent Trees</h3><p class="muted">Spend and track Talent Points here. Full tree building comes later in the v1 system sync phase.</p></div><div class="tp-box">Available TP <b id="tpAvailable">0</b></div></div><div class="placeholder-tree"><span>Class Talents</span><span>Pathway Branches</span><span>Profession Talents</span></div></div></section>
+          <section id="talents" class="tabpane"><div class="card talent-tree-page"><div class="section-head"><div><h3>Talent Tree</h3><p class="muted">Spend and track Talent Points here. Pathways appear as branches inside the class tree.</p></div><div class="tp-box">Available TP <b id="tpAvailable">0</b></div></div><div class="placeholder-tree"><span>Class Talents</span><span>Pathway Branches</span><span>Profession Talents</span></div></div></section>
           <section id="skillsPane" class="tabpane"><div id="skillsTabDock" class="player-tab-dock"></div></section>
           <section id="inventory" class="tabpane"><div class="inventory-system-layout"><div class="card worn-items-panel"><div class="section-head mini"><h3>Worn / Equipped Items</h3><span class="pill">Character Slots</span></div><p class="muted smallnote">These are the items currently worn or equipped by this character. Click an item to open its information page.</p><div class="inventory-equipped-grid"><section><h4>Armor</h4><div id="inventoryArmorSlots" class="inventory-slot-list"></div></section><section><h4>Weapons</h4><div id="inventoryWeaponSlots" class="inventory-slot-list"></div></section><section><h4>Wearables</h4><div id="inventoryWearableSlots" class="inventory-slot-list"></div></section><section><h4>Quick Slots</h4><div id="inventoryQuickSlots" class="inventory-slot-list"></div></section></div></div><div class="card bag-system-panel"><div class="section-head mini"><h3>Bag System</h3><button class="primary small" onclick="createWebBag()">+ Create Bag</button></div><p class="muted smallnote">Bags live inside the Inventory menu only. Select a bag to open its grid. Each grid slot can hold item/s; click an item to open the item page.</p><div id="bagBoxList" class="bag-box-list"></div><div id="bagGridPanel" class="bag-grid-panel"></div></div></div></section>
           <section id="spells" class="tabpane"><div id="spellsTabDock" class="player-tab-dock"></div><div class="card spell-action-panel"><h3>Spell Actions</h3><button onclick="castSpell()">Cast Test Spell</button><button onclick="openManualCheckPrompt('Spell Attack')">Enter Spell Attack Roll</button></div></section>
@@ -312,6 +316,7 @@
 <script src="js/race-compendium-data.js"></script>
 <script src="js/race-compendium.js"></script>
 <script src="js/class-compendium-data.js"></script>
+<script src="js/artificer-talent-texts.js"></script>
 <script src="js/creature-compendium-data.js"></script>
 <script src="js/codex-compendium.js"></script>
 <script src="js/universal-compendium-engine.js"></script>
@@ -319,6 +324,7 @@
 <script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-core-shell.js"></script>
 <script src="js/asteria-ui-theme-system.js"></script>
+<script src="js/border-glow.js"></script>
 <script src="js/asteria-home-fix.js"></script>
 </body>
 </html>

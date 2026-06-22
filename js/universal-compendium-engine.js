@@ -149,7 +149,7 @@
 
   const tabTemplates = Object.assign({
     race:['Overview','Racial Sheet','Lore','Culture','Historical Figures','Settlements','Relations','Traits & Biology','Gallery','GM Notes'],
-    class:['Overview','Class Information','Mechanics','Progression','Talent Trees','Pathways','Equipment','Lore','Gallery','GM Notes'],
+    class:['Overview','Talent Tree','Lore','Gallery','GM Notes'],
     creature:['Overview','Stat Sheet','Lore','Habitat','Behaviour','Combat','Loot & Drops','Soul Information','Variants','Encounter Use','Gallery','GM Notes'],
     item:['Overview','Properties','Crafting','Lore','Sources','Gallery','GM Notes'],
     spell:['Overview','Casting','Scaling','Lore','Sources','GM Notes'],
@@ -674,8 +674,23 @@
     if(activeTab === 'GM Notes' && !isGMMode()) return '<section class="codex-gm-notes locked"><h3>GM Notes</h3><p>Hidden from player view.</p></section>';
     if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="codex-gallery-slot">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div></section>`;
     if(activeTab === 'Related') return `<section class="codex-info-panel"><h3>Related Content</h3>${related(entry).map(item => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>`).join('') || '<p>Information coming soon.</p>'}</section>`;
+    if(entry.domain === 'class' && activeTab === 'Overview'){
+      const content = sectionBundle(entry, ['Overview','Class Information','Class Features']);
+      return `<section class="codex-info-panel markdown-body"><h3>Overview</h3>${markdownToHtml(content || 'Information coming soon.')}</section>`;
+    }
+    if(entry.domain === 'class' && activeTab === 'Talent Tree'){
+      const content = sectionBundle(entry, ['Talent Tree','Talent Trees','Talents','Pathways','Class Talents']);
+      return `<section class="codex-info-panel markdown-body"><h3>Talent Tree</h3>${markdownToHtml(content || 'Talent branches, pathways, ranks, and unlock requirements will appear here.')}</section>`;
+    }
     const content = entry.sections?.[activeTab] || entry.sections?.Overview || entry.body || entry.content || entry.summary;
     return `<section class="codex-info-panel markdown-body"><h3>${escapeHtml(activeTab)}</h3>${markdownToHtml(content || 'Information coming soon.')}</section>`;
+  }
+
+  function sectionBundle(entry, names){
+    return names
+      .map(name => entry.sections?.[name])
+      .filter(Boolean)
+      .join('\n\n');
   }
 
   function detail(entry){

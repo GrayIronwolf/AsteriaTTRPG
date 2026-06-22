@@ -13,11 +13,11 @@
       singular:'Class',
       title:'Class Compendium',
       eyebrow:'Asteria Codex',
-      intro:'Browse Asteria classes, progression paths, talent trees, equipment hooks, and lore.',
+      intro:'Browse Asteria classes, talent trees, pathways, and lore.',
       data:CLASS_DATA,
       entryType:'class',
       shellClass:'codex-class-compendium',
-      tabs:['Overview','Class Information','Mechanics','Progression','Talent Trees','Pathways','Equipment','Lore','Gallery','GM Notes']
+      tabs:['Overview','Talent Tree','Lore','Gallery','GM Notes']
     },
     Creatures:{
       section:'Creatures',
@@ -39,6 +39,8 @@
   let originalWorkspaceEntries = null;
   let originalOpenEntryBySlug = null;
   let categoryClickTimer = null;
+  let talentClickTimer = null;
+  let lastTalentClick = { name:'', time:0 };
 
   function byId(id){ return document.getElementById(id); }
   function qsa(selector, root=document){ return Array.from(root.querySelectorAll(selector)); }
@@ -74,7 +76,10 @@
       drillPath:[],
       selectedEntry:null,
       activeTab:CONFIGS[section].tabs[0],
-      selectedTalent:null
+      selectedTalent:null,
+      selectedTalentName:'',
+      rankModalTalent:null,
+      rankModalRank:1
     };
     prepare(section);
     return state[section];
@@ -134,6 +139,8 @@
         gmOnly:Boolean(node.gmOnly),
         starting_equipment:array(node.starting_equipment),
         recommended_professions:array(node.recommended_professions),
+        overview:node.overview || '',
+        lore:node.lore || '',
         talents:array(node.talents)
       };
     }
@@ -229,6 +236,8 @@
     s.selectedEntry = null;
     s.activeTab = CONFIGS[section].tabs[0];
     s.selectedTalent = null;
+    s.rankModalTalent = null;
+    s.rankModalRank = 1;
     render(section);
     syncNav(section);
     window.scrollTo?.({ top:0, left:0, behavior:'auto' });
@@ -396,7 +405,7 @@
     });
   }
   function searchTerms(entry){
-    if(entry.section === 'Classes') return [entry.title, entry.path.join(' '), entry.role, entry.primary_stat, entry.secondary_stat, entry.combat_style, entry.magic_type, entry.difficulty, entry.tags.join(' '), entry.talents.map(t => t.name).join(' ')];
+    if(entry.section === 'Classes') return [entry.title, entry.path.join(' '), entry.role, entry.primary_stat, entry.secondary_stat, entry.combat_style, entry.magic_type, entry.difficulty, entry.overview, entry.lore, entry.tags.join(' '), entry.talents.map(t => [t.name, t.scaling, t.synergy, array(t.rankDetails).join(' ')].join(' ')).join(' ')];
     return [entry.title, entry.path.join(' '), entry.creature_type, entry.threat_tier, entry.level_range, entry.size, entry.biome, entry.habitat, entry.hostility, entry.soul_tier, entry.encounter_role, entry.loot_tags.join(' '), entry.attacks.join(' '), entry.tags.join(' ')];
   }
   function tierNumber(value){
@@ -450,7 +459,8 @@
           </div>
         </header>
         ${CompendiumTabs(section)}
-        <section class="codex-tab-window">${s.selectedTalent ? TalentDetail(entry, s.selectedTalent) : tabContent(section, entry)}</section>
+        <section class="codex-tab-window">${tabContent(section, entry)}</section>
+        ${s.rankModalTalent ? TalentModal(entry, s.rankModalTalent) : ''}
       </article>
     `;
   }
@@ -467,8 +477,18 @@
     const list = array(items);
     return `<section class="codex-info-panel"><h3>${escapeHtml(title)}</h3>${list.length ? `<ul>${list.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>Information coming soon.</p>'}</section>`;
   }
+  function pathPanel(title, items){
+    const list = array(items);
+    return `<section class="codex-info-panel codex-overview-list"><h3>${escapeHtml(title)}</h3>${list.length ? `<ul>${list.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>Information coming soon.</p>'}</section>`;
+  }
   function placeholderPanels(names){
     return `<div class="codex-placeholder-grid">${names.map(name => `<section class="codex-info-panel"><h3>${escapeHtml(name)}</h3><p>Information coming soon.</p></section>`).join('')}</div>`;
+  }
+  function renderMarkdown(markdown){
+    const content = String(markdown || '').trim();
+    if(!content) return '<p>Information coming soon.</p>';
+    if(typeof window.mdToHtml === 'function') return window.mdToHtml(content);
+    return content.split(/\n{2,}/).map(block => `<p>${escapeHtml(block)}</p>`).join('');
   }
   function LoreVisibilityBlock(){
     const gm = isGMMode();
@@ -489,27 +509,183 @@
   }
   function classTabContent(entry){
     const s = ensureState('Classes');
-    if(s.activeTab === 'Overview') return `<div class="codex-overview-grid"><section class="codex-info-panel"><h3>Overview</h3><p>${escapeHtml(entry.role)}. Full class description coming soon.</p>${keyValueGrid([['Category',entry.primaryCategory],['Role',entry.role],['Difficulty',entry.difficulty],['Playable',entry.playable ? 'Yes' : 'No']])}</section>${LoreVisibilityBlock()}</div>`;
-    if(s.activeTab === 'Class Information') return `<section class="codex-info-panel"><h3>Class Information</h3>${keyValueGrid([['Class Name',entry.title],['Class Category',entry.primaryCategory],['Primary Stat',entry.primary_stat],['Secondary Stat',entry.secondary_stat],['Role',entry.role],['Combat Style',entry.combat_style],['Magic Type',entry.magic_type],['Difficulty',entry.difficulty],['Recommended Professions',entry.recommended_professions.join(', ') || 'Information coming soon']])}</section>`;
-    if(s.activeTab === 'Mechanics') return placeholderPanels(['Core Mechanics','Resource Use','Action Flow','Scaling Rules','Synergy Notes']);
-    if(s.activeTab === 'Progression') return placeholderPanels(['Level 0','Early Progression','Mid Progression','Advanced Progression','Capstone']);
-    if(s.activeTab === 'Talent Trees') return TalentTree(entry);
-    if(s.activeTab === 'Pathways') return placeholderPanels(['Pathway Options','Specialisations','Advanced Branches']);
-    if(s.activeTab === 'Equipment') return listPanel('Starting Equipment', entry.starting_equipment);
-    if(s.activeTab === 'Lore') return `${placeholderPanels(['Origins','Training Traditions','Role in Asteria','Known Orders'])}${LoreVisibilityBlock()}`;
+    if(s.activeTab === 'Overview') return `
+      <div class="codex-overview-grid codex-class-overview-grid">
+        <section class="codex-info-panel codex-class-overview-main">
+          <h3>Overview</h3>
+          <div class="markdown-body">${renderMarkdown(entry.overview || `${entry.role}. Full class description coming soon.`)}</div>
+          ${keyValueGrid([
+            ['Class Name',entry.title],
+            ['Class Category',entry.primaryCategory],
+            ['Primary Stat',entry.primary_stat],
+            ['Secondary Stat',entry.secondary_stat],
+            ['Role',entry.role],
+            ['Combat Style',entry.combat_style],
+            ['Magic Type',entry.magic_type],
+            ['Difficulty',entry.difficulty],
+            ['Playable',entry.playable ? 'Yes' : 'No'],
+            ['Recommended Professions',entry.recommended_professions.join(', ') || 'Information coming soon'],
+            ['Starting Equipment',entry.starting_equipment.join(', ') || 'Information coming soon']
+          ])}
+        </section>
+      </div>`;
+    if(s.activeTab === 'Talent Tree') return TalentTree(entry);
+    if(s.activeTab === 'Lore') return entry.lore
+      ? `<section class="codex-info-panel markdown-body"><h3>Lore</h3>${renderMarkdown(entry.lore)}</section>${LoreVisibilityBlock()}`
+      : `${placeholderPanels(['Origins','Training Traditions','Role in Asteria','Known Orders'])}${LoreVisibilityBlock()}`;
     if(s.activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="codex-gallery-slot"><span>${escapeHtml(entry.symbol)}</span></div><p>Class symbol, armour references, talent art, and pathway images can be added here.</p></section>`;
     if(s.activeTab === 'GM Notes') return GMNotesBlock();
     return '<p>Information coming soon.</p>';
   }
   function TalentTree(entry){
+    const s = ensureState('Classes');
     const tiers = ['Tier 1','Tier 2','Tier 3','Tier 4','Tier 5'];
-    return `<section class="codex-talent-tree"><h3>Talent Tree</h3><p>Talent cards are ready to connect into the existing Asteria Talent System.</p>${tiers.map(tier => {
+    const hasTalents = tiers.some(tier => entry.talents.some(talent => talent.tier === tier));
+    const selected = entry.talents.find(talent => talent.name === s.selectedTalentName) || entry.talents[0] || null;
+    return `<section class="codex-talent-tree codex-class-talent-tree"><div class="codex-talent-head"><div><h3>Talent Tree</h3><p>Single-click a talent card to inspect it. Double-click a talent card to open its floating rank page.</p></div><span>${escapeHtml(entry.talents.length)} talents</span></div><div class="codex-talent-map">${tiers.map(tier => {
       const talents = entry.talents.filter(talent => talent.tier === tier);
-      return `<div class="codex-talent-tier"><h4>${escapeHtml(tier)}</h4><div>${talents.length ? talents.map(talent => `<button type="button" class="codex-talent-card" data-talent-name="${escapeHtml(talent.name)}"><b>${escapeHtml(talent.name)}</b><span>Ranks ${escapeHtml(talent.ranks)}</span></button>`).join('') : '<p>Information coming soon.</p>'}</div></div>`;
-    }).join('')}</section>`;
+      return `<div class="codex-talent-tier"><h4>${escapeHtml(tier)}</h4><div>${talents.length ? talents.map(talent => {
+        const isSelected = s.selectedTalentName === talent.name;
+        return `<button type="button" class="codex-talent-card ${isSelected ? 'selected' : ''}" data-talent-name="${escapeHtml(talent.name)}" title="Double-click to open ${escapeHtml(talent.name)} rank pages"><span class="codex-talent-card-top"><em>${escapeHtml(talentPathwayLabel(talent))}</em><i>${escapeHtml(talent.tier)}</i></span><b>${escapeHtml(talent.name)}</b><span class="codex-talent-card-ranks">Ranks 1-5</span><small>${escapeHtml(talent.prerequisite || 'No prerequisite')}</small><strong>Double-click to open</strong></button>`;
+      }).join('') : '<p>Information coming soon.</p>'}</div></div>`;
+    }).join('')}</div>${selected ? `<aside class="codex-talent-preview"><p class="eyebrow">Selected Talent</p><h4>${escapeHtml(selected.name)}</h4><p>${escapeHtml(selected.scaling || selected.synergy || 'Information coming soon.')}</p><small>Double-click the talent card to open rank details.</small></aside>` : ''}${hasTalents ? '<p class="codex-talent-help">Player rank purchases happen from the Character Dashboard Class/Talent Tree tab using TP. The compendium page remains the reference view.</p>' : ''}</section>`;
   }
   function TalentDetail(entry, talent){
-    return `<section class="codex-talent-detail"><button type="button" id="codexBackToTalents">Back to Talent Tree</button><p class="eyebrow">${escapeHtml(entry.title)} Talent</p><h3>${escapeHtml(talent.name)}</h3>${keyValueGrid([['Tier',talent.tier],['Ranks',talent.ranks],['Prerequisites',talent.prerequisite],['Cost',talent.cost],['Cooldown',talent.cooldown],['Scaling',talent.scaling],['Synergy Notes',talent.synergy],['GM Notes',isGMMode() ? talent.gmNotes : 'Hidden from player view']])}</section>`;
+    const max = Math.max(5, Number(talent.ranks || 5));
+    const current = currentTalentRank(talent.name);
+    const rows = Array.from({ length:max }, (_, index) => {
+      const rank = index + 1;
+      const state = current >= rank ? 'Unlocked' : (rank === current + 1 ? 'Next Unlock' : 'Locked');
+      return `<tr class="${state === 'Unlocked' ? 'unlocked' : state === 'Next Unlock' ? 'next' : ''}"><td>Rank ${rank}</td><td>${escapeHtml(state)}</td><td>${escapeHtml(rankCost(rank))} TP</td><td>${escapeHtml(rankText(talent, rank))}</td></tr>`;
+    }).join('');
+    return `<section class="codex-talent-detail"><button type="button" id="codexBackToTalents">Back to Talent Tree</button><p class="eyebrow">${escapeHtml(entry.title)} Talent</p><h3>${escapeHtml(talent.name)}</h3>${keyValueGrid([['Tier',talent.tier],['Max Ranks',talent.ranks],['Prerequisites',talent.prerequisite],['Base Cost',talent.cost],['Cooldown',talent.cooldown],['Scaling',talent.scaling],['Synergy Notes',talent.synergy],['GM Notes',isGMMode() ? talent.gmNotes : 'Hidden from player view']])}<div class="codex-rank-table"><h4>Available Ranks</h4><table><thead><tr><th>Rank</th><th>Status</th><th>Cost</th><th>Unlock Detail</th></tr></thead><tbody>${rows}</tbody></table></div><div class="codex-talent-actions"><button type="button" class="primary" data-open-player-talents>Open Character Talent Tree</button><p>Spend TP and unlock ranks from the Character Dashboard. This page shows the reference data and available rank path.</p></div></section>`;
+  }
+
+  function TalentModal(entry, talent){
+    const s = ensureState('Classes');
+    const max = Math.max(5, Number(talent.ranks || 5));
+    const current = currentTalentRank(talent.name);
+    const activeRank = Math.max(1, Math.min(max, Number(s.rankModalRank || 1)));
+    const state = current >= activeRank ? 'Unlocked' : (activeRank === current + 1 ? 'Next Unlock' : 'Locked');
+    return `
+      <div class="codex-talent-modal-backdrop" data-talent-modal-close>
+        <section class="codex-talent-modal" role="dialog" aria-modal="true" aria-labelledby="codexTalentModalTitle">
+          <header class="codex-talent-modal-head">
+            <div>
+              <p class="eyebrow">${escapeHtml(entry.title)} Talent</p>
+              <h3 id="codexTalentModalTitle">${escapeHtml(talent.name)}</h3>
+              <span>${escapeHtml(talent.tier)} - ${escapeHtml(max)} ranks</span>
+            </div>
+            <button type="button" class="codex-talent-modal-close" data-talent-modal-close aria-label="Close talent details">X</button>
+          </header>
+          <nav class="codex-talent-rank-tabs" aria-label="Talent ranks">
+            ${Array.from({ length:max }, (_, index) => {
+              const rank = index + 1;
+              return `<button type="button" class="${rank === activeRank ? 'active' : ''}" data-talent-rank="${rank}" aria-selected="${rank === activeRank ? 'true' : 'false'}">Rank ${escapeHtml(rank)}</button>`;
+            }).join('')}
+          </nav>
+          <div class="codex-talent-modal-body">
+            <aside class="codex-talent-modal-meta">
+              ${keyValueGrid([
+                ['Rank Status',state],
+                ['Rank Cost',`${rankCost(activeRank)} TP`],
+                ['Prerequisites',talent.prerequisite],
+                ['Base Cost',talent.cost],
+                ['Cooldown',talent.cooldown],
+                ['Scaling',talent.scaling],
+                ['Synergy Notes',talent.synergy],
+                ['GM Notes',isGMMode() ? talent.gmNotes : 'Hidden from player view']
+              ])}
+              <button type="button" class="primary" data-open-player-talents>Open Character Talent Tree</button>
+            </aside>
+            <article class="codex-talent-rank-text markdown-body">
+              <h4>Rank ${escapeHtml(activeRank)}</h4>
+              ${renderMarkdown(talentRankMarkdown(entry, talent, activeRank))}
+            </article>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function talentPathwayLabel(talent){
+    const text = lower([talent.name, talent.synergy, talent.prerequisite].join(' '));
+    if(text.includes('pathway') || text.includes('path') || text.includes('oath') || text.includes('pact')) return 'Pathway';
+    if(text.includes('master') || text.includes('capstone') || text.includes('avatar')) return 'Capstone';
+    return talent.tier || 'Talent';
+  }
+
+  function currentTalentRank(name){
+    const id = typeof window.currentPlayerId === 'function' ? window.currentPlayerId() : (window.session?.character || window.selected || '');
+    const character = id && window.chars ? window.chars[id] : null;
+    return Number(character?.talents?.[name]?.rank || 0);
+  }
+
+  function rankCost(rank){
+    if(typeof window.AsteriaProgressionUI?.talentRankCost === 'function') return window.AsteriaProgressionUI.talentRankCost(rank);
+    return Math.max(1, Number(rank) || 1) * 3;
+  }
+
+  function rankText(talent, rank){
+    const detail = array(talent.rankDetails)[rank - 1];
+    if(detail) return detail;
+    const scaling = String(talent.scaling || '').trim();
+    if(scaling && scaling !== 'Improves by rank') return `${scaling} - rank ${rank}`;
+    return `Unlocks rank ${rank} of ${talent.name}.`;
+  }
+
+  function compactTalentKey(value){
+    return String(value || '').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
+  }
+
+  function talentTextBundle(entry, talent){
+    const classes = window.ASTERIA_CLASS_TALENT_TEXTS?.classes || {};
+    const classBundle = classes[entry.title] || classes[entry.name] || classes[compactTalentKey(entry.title)] || null;
+    const talents = classBundle?.talents || {};
+    return talents[compactTalentKey(talent.name)] || null;
+  }
+
+  function talentRankMarkdown(entry, talent, rank){
+    const bundle = talentTextBundle(entry, talent);
+    const content = bundle?.ranks?.[String(rank)] || bundle?.ranks?.[rank] || array(talent.rankDetails)[rank - 1] || fallbackTalentRankPage(entry, talent, rank);
+    return String(content || '')
+      .replace(/^\s*#\s*\n+/, '')
+      .replace(/\n\s*---\s*\n/g, '\n\n')
+      .trim();
+  }
+
+  function fallbackTalentRankPage(entry, talent, rank){
+    return [
+      `## ${talent.name} - Rank ${rank}`,
+      `${talent.name} is a ${entry.title} talent within ${talent.tier}.`,
+      '## Unlock Detail',
+      rankText(talent, rank),
+      '## Scaling',
+      talent.scaling || 'Improves by rank.',
+      '## Prerequisites',
+      talent.prerequisite || 'None',
+      '## Synergy Notes',
+      talent.synergy || 'Information coming soon.',
+      '## Player Use',
+      'Talent ranks are unlocked from the Character Dashboard Class/Talent Tree using Talent Points. The compendium page is the reference page for what each rank provides.'
+    ].join('\n\n');
+  }
+
+  function rankRoman(rank){
+    return ['I','II','III','IV','V'][Number(rank) - 1] || String(rank);
+  }
+
+  function openCharacterTalentTree(){
+    if(typeof window.openPlayerDashboard === 'function'){
+      window.openPlayerDashboard();
+    }else if(typeof window.setView === 'function'){
+      window.setView('player');
+    }
+    setTimeout(() => {
+      const tab = document.querySelector('.tab[data-tab="talents"]');
+      tab?.click();
+      document.getElementById('talents')?.scrollIntoView({ block:'start', behavior:'smooth' });
+    }, 80);
   }
 
   function creatureTabContent(entry){
@@ -610,8 +786,8 @@
       });
     });
     qsa('#codex-compendium-shell input,#codex-compendium-shell select').forEach(control => {
-      control.addEventListener('input', () => { s.selectedEntry = null; renderDisplayOnly(section); });
-      control.addEventListener('change', () => { s.selectedEntry = null; renderDisplayOnly(section); });
+      control.addEventListener('input', () => { s.selectedEntry = null; s.rankModalTalent = null; renderDisplayOnly(section); });
+      control.addEventListener('change', () => { s.selectedEntry = null; s.rankModalTalent = null; renderDisplayOnly(section); });
     });
     qsa('[data-codex-breadcrumb]').forEach(button => {
       button.addEventListener('click', () => {
@@ -619,31 +795,108 @@
         s.activePath = index <= 0 ? [] : s.activePath.slice(0, index);
         s.drillPath = s.activePath.slice();
         s.selectedEntry = null;
+        s.rankModalTalent = null;
         render(section);
       });
     });
     byId('codexBackToCards')?.addEventListener('click', () => {
       s.selectedEntry = null;
       s.selectedTalent = null;
+      s.rankModalTalent = null;
+      s.rankModalRank = 1;
       render(section);
     });
     qsa('[data-codex-tab]').forEach(button => {
       button.addEventListener('click', () => {
         s.activeTab = button.dataset.codexTab || CONFIGS[section].tabs[0];
         s.selectedTalent = null;
+        s.rankModalTalent = null;
+        s.rankModalRank = 1;
         renderDisplayOnly(section);
       });
     });
+    const selectTalentPreview = button => {
+      const entry = s.selectedEntry;
+      const talentName = button?.dataset?.talentName || '';
+      const talent = entry?.talents?.find(item => item.name === talentName) || null;
+      if(!talent) return false;
+      s.selectedTalentName = talentName;
+      const root = byId('codex-compendium-shell') || document;
+      qsa('[data-talent-name]', root).forEach(card => {
+        card.classList.toggle('selected', card.dataset.talentName === talentName);
+      });
+      const preview = root.querySelector('.codex-talent-preview');
+      if(preview){
+        preview.innerHTML = `<p class="eyebrow">Selected Talent</p><h4>${escapeHtml(talent.name)}</h4><p>${escapeHtml(talent.scaling || talent.synergy || 'Information coming soon.')}</p><small>Double-click the talent card to open rank details.</small>`;
+      }
+      return true;
+    };
+    const openTalentRankModal = button => {
+      clearTimeout(talentClickTimer);
+      const entry = s.selectedEntry;
+      const talentName = button?.dataset?.talentName || '';
+      const talent = entry?.talents?.find(item => item.name === talentName) || null;
+      if(!talent) return false;
+      lastTalentClick = { name:'', time:0 };
+      s.selectedTalentName = talentName;
+      s.selectedTalent = null;
+      s.rankModalTalent = talent;
+      s.rankModalRank = 1;
+      s.activeTab = 'Talent Tree';
+      renderDisplayOnly(section);
+      return true;
+    };
     qsa('[data-talent-name]').forEach(button => {
-      button.addEventListener('click', () => {
-        const entry = s.selectedEntry;
-        s.selectedTalent = entry?.talents?.find(talent => talent.name === button.dataset.talentName) || null;
-        renderDisplayOnly(section);
+      button.addEventListener('click', event => {
+        clearTimeout(talentClickTimer);
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        const talentName = button.dataset.talentName || '';
+        const isFastSecondClick = lastTalentClick.name === talentName && now - lastTalentClick.time <= 700;
+        if(event.detail >= 2 || isFastSecondClick){
+          event.preventDefault();
+          event.stopPropagation();
+          openTalentRankModal(button);
+          return;
+        }
+        lastTalentClick = { name:talentName, time:now };
+        talentClickTimer = setTimeout(() => {
+          selectTalentPreview(button);
+        }, 220);
+      });
+      button.addEventListener('dblclick', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        clearTimeout(talentClickTimer);
+        openTalentRankModal(button);
       });
     });
     byId('codexBackToTalents')?.addEventListener('click', () => {
       s.selectedTalent = null;
+      s.activeTab = 'Talent Tree';
       renderDisplayOnly(section);
+    });
+    qsa('[data-talent-rank]').forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        s.rankModalRank = Number(button.dataset.talentRank || 1);
+        renderDisplayOnly(section);
+      });
+    });
+    qsa('.codex-talent-modal').forEach(modal => {
+      modal.addEventListener('click', event => event.stopPropagation());
+    });
+    qsa('[data-talent-modal-close]').forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        s.rankModalTalent = null;
+        s.rankModalRank = 1;
+        renderDisplayOnly(section);
+      });
+    });
+    qsa('[data-open-player-talents]').forEach(button => {
+      button.addEventListener('click', openCharacterTalentTree);
     });
     qsa('.codex-add-encounter').forEach(button => {
       button.addEventListener('click', () => {
@@ -662,6 +915,8 @@
     const s = ensureState(section);
     s.selectedEntry = entry;
     s.selectedTalent = null;
+    s.rankModalTalent = null;
+    s.rankModalRank = 1;
     s.activePath = entry.path.slice();
     s.drillPath = entry.path.slice(0, -1);
     s.activeTab = CONFIGS[section].tabs[0];

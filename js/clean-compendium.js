@@ -55,7 +55,7 @@
     'Asteria Handbook': 'Rules, systems, skills, talents, professions, and table references as workspace notes.',
     'World, Realms & Planes': 'Lore, realms, planes, timelines, pantheons, kingdoms, and locations as workspace entries.',
     Races: 'Lineages and creature peoples with playable status stored as metadata, not navigation.',
-    Classes: 'Class pages, talents, trees, pathways, roles, and progression references.',
+    Classes: 'Class pages, talent trees, pathways, roles, and lore references.',
     Items: 'Items, flora, minerals, materials, equipment, crafting resources, and magic objects.',
     Magic: 'Spells, enchantments, elements, runes, soul stones, and magic system notes.',
     Creatures: 'Creature records are reserved for the same workspace structure when the bestiary data is promoted.',
@@ -65,7 +65,7 @@
     'Asteria Handbook': ['Rule Sheet','Systems','Tables','Sources'],
     'World, Realms & Planes': ['Lore Sheet','Regions','Timeline','Images'],
     Races: ['Race Sheet','Racial Traits','Lore','Images'],
-    Classes: ['Class Sheet','Talent Tree','Lore','Images'],
+    Classes: ['Overview','Talent Tree','Lore','Images'],
     Items: [],
     Magic: ['Magic Sheet','Effects','Lore','Sources'],
     Creatures: ['Creature Sheet','Abilities','Lore','Images'],
@@ -74,17 +74,11 @@
   const authWorkspaceModes = [
     { id:'dashboard', label:'Dashboard', title:'User Workspace Dashboard', intro:'Your account workspace for campaigns, characters, notifications, and active party tools.' },
     { id:'campaigns', label:'Campaigns', title:'Campaign Workspace', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
-    { id:'characters', label:'Characters', title:'Character Workspace', intro:'Characters owned by this account, ready to link into campaigns.' },
-    { id:'createCampaign', label:'Create Campaign', title:'Create Campaign', intro:'Create a campaign and automatically become GM for that campaign.' },
-    { id:'createCharacter', label:'Character Forge', title:'Character Forge', intro:'Forge a character under the signed-in account.' },
     { id:'settings', label:'Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' }
   ];
   const authWorkspaceTabs = {
     dashboard: ['Overview','Campaigns','Characters','Activity'],
-    campaigns: ['Campaigns','Invite Links','Linked Characters','Activity'],
-    characters: ['Characters','Character Forge','Link Existing','Activity'],
-    createCampaign: ['Campaign Form','Invite Link','GM Role','Activity'],
-    createCharacter: ['Forge Flow','Starting Sheet','Inventory','Activity'],
+    campaigns: ['Campaign Gallery','Invite Links','Linked Characters','Activity'],
     settings: ['Account','Sync','Theme','Activity']
   };
 
@@ -119,8 +113,7 @@
       children: [
         leaf('Class Pages', { section:'Classes', type:'Class' }),
         leaf('Class Talents', { section:'Classes', path:'Class Talent' }),
-        leaf('Talent Trees', { section:'Classes', path:'Talent Tree' }),
-        leaf('Pathways', { section:'Classes', path:'Pathway' })
+        leaf('Talent Tree', { section:'Classes', path:'Talent Tree' })
       ]
     },
     Items: {
@@ -969,7 +962,7 @@
 
   function accountKey() {
     const s = sessionInfo();
-    return s.uid || s.account || s.user || 'firebase-user';
+    return s.uid || s.account || s.user || s.email || 'local-player';
   }
 
   function ensureAccountRecord() {
@@ -986,9 +979,12 @@
     const record = ensureAccountRecord();
     const ids = [
       ...(record.characters || []),
-      ...arrayValue(s.profile?.characters),
-      ...(s.character ? [s.character] : [])
+      ...arrayValue(s.profile?.characters)
     ];
+    Object.entries(window.chars || {}).forEach(([id, character]) => {
+      if ([character?.ownerUid, character?.accountId, character?.uid, character?.ownerAccount].includes(accountKey())) ids.push(id);
+    });
+    if (s.character && ids.includes(s.character)) ids.push(s.character);
     return Array.from(new Set(ids)).filter(id => window.chars?.[id]);
   }
 
@@ -1044,9 +1040,6 @@
     const labels = {
       dashboard:'Search dashboard...',
       campaigns:'Search campaigns...',
-      characters:'Search characters...',
-      createCampaign:'Campaign setup...',
-      createCharacter:'Character setup...',
       settings:'Search settings...'
     };
     box.innerHTML = `
@@ -1107,9 +1100,7 @@
     });
     qsa('[data-workspace-action]').forEach(link => {
       const action = link.dataset.workspaceAction;
-      const match = (action === 'create-campaign' && currentDashboardMode === 'createCampaign') ||
-        (action === 'create-character' && currentDashboardMode === 'createCharacter') ||
-        (action === 'settings' && currentDashboardMode === 'settings');
+      const match = action === 'settings' && currentDashboardMode === 'settings';
       link.classList.toggle('active', match);
     });
   }
@@ -1124,6 +1115,34 @@
       ${subtitle ? `<div class="clean-card-subtitle">${escapeHtml(subtitle)}</div>` : ''}
       <p>${escapeHtml(body || '')}</p>
       ${meta ? `<div class="clean-meta">${meta}</div>` : ''}
+    `;
+    element.onclick = () => {
+      if (create) {
+        action?.();
+        return;
+      }
+      qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
+      element.classList.add('selected');
+    };
+    element.ondblclick = () => action?.();
+    element.onkeydown = event => { if (event.key === 'Enter') action?.(); };
+    return element;
+  }
+
+  function galleryCard({ tag, title, subtitle, body, image, initial, action, create = false }) {
+    const element = document.createElement('article');
+    element.className = `clean-card workspace-dashboard-card workspace-gallery-card${create ? ' workspace-gallery-create' : ''}`;
+    element.tabIndex = 0;
+    element.innerHTML = `
+      <div class="workspace-gallery-art">
+        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}">` : `<span>${escapeHtml(initial || String(title || '?').charAt(0).toUpperCase() || '?')}</span>`}
+      </div>
+      <div class="workspace-gallery-copy">
+        <span class="clean-tag">${escapeHtml(tag || 'Workspace')}</span>
+        <h3>${escapeHtml(title)}</h3>
+        ${subtitle ? `<div class="clean-card-subtitle">${escapeHtml(subtitle)}</div>` : ''}
+        <p>${escapeHtml(body || '')}</p>
+      </div>
     `;
     element.onclick = () => {
       qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
@@ -1153,7 +1172,7 @@
     const activePartyCount = campaigns.reduce((total, campaign) => total + arrayValue(campaign.party).length, 0);
     const cards = [
       { tag:'Campaigns', title:'Current Campaigns', subtitle:`${campaigns.length} linked`, body:'Campaigns you created or joined with this account.', action:() => openDashboard('campaigns') },
-      { tag:'Characters', title:'Available Characters', subtitle:`${characters.length} owned`, body:'Characters attached to this Firebase account.', action:() => openDashboard('characters') },
+      { tag:'Characters', title:'Available Characters', subtitle:`${characters.length} owned`, body:'Characters attached to this account. Open the Character Forge gallery to manage them.', action:() => window.AsteriaGameplay?.openCharacterForgeHub?.() },
       { tag:'Notifications', title:'Notifications', subtitle:'Placeholder', body:'Campaign invites, GM messages, session alerts, and character approvals will appear here.', action:() => renderPlaceholderPage('Notifications', 'No notifications have been added yet.') },
       { tag:'Party', title:'Active Party', subtitle:`${activePartyCount} linked`, body:'Active party roster, session presence, and party status tools will appear here later.', action:() => renderPlaceholderPage('Active Party', 'Active party tools will connect to campaign sessions later.') }
     ];
@@ -1162,20 +1181,26 @@
 
   function renderCampaignCards(grid) {
     const list = sortCards(filterCards(accountCampaigns(), campaign => [campaign.name, campaignRole(campaign), campaign.description].join(' ')), campaign => campaign.name || campaign.id, campaignRole);
-    if (!list.length) {
-      grid.innerHTML += `<div class="clean-empty"><h3>No campaigns yet</h3><p>Create a campaign to become GM for that campaign, then share its invite link with players.</p></div>`;
-      return;
-    }
     list.forEach(campaign => {
-      grid.appendChild(workspaceCard({
+      grid.appendChild(galleryCard({
         tag:campaignRole(campaign),
         title:campaign.name || 'Untitled Campaign',
-        subtitle:`Campaign ID: ${campaign.id}`,
-        body:campaign.description || 'Campaign workspace with invite links and linked characters.',
-        meta:`<b>Party:</b> ${arrayValue(campaign.party).length} characters<br><b>Invite:</b> ${escapeHtml(campaign.inviteCode || 'Not generated')}`,
-        action:() => renderCampaignDetail(campaign)
+        subtitle:`${arrayValue(campaign.party).length} linked character${arrayValue(campaign.party).length === 1 ? '' : 's'}`,
+        body:campaign.description || 'Double-click to open the GM Dashboard for this campaign.',
+        image:campaign.image || campaign.art || campaign.banner || '',
+        initial:'C',
+        action:() => openCampaignGMDashboard(campaign)
       }));
     });
+    grid.appendChild(galleryCard({
+      tag:'New Campaign',
+      title:'Forge New Campaign',
+      subtitle:'Create a campaign and become GM',
+      body:'Start a new campaign workspace, generate its invite link, and link characters after creation.',
+      initial:'+',
+      create:true,
+      action:openCreateCampaignForm
+    }));
   }
 
   function renderCharacterCards(grid) {
@@ -1194,6 +1219,33 @@
         action:() => renderCharacterDetail(character)
       }));
     });
+  }
+
+  function openCreateCampaignForm() {
+    const grid = byId('clean-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    renderCreateCampaignForm(grid);
+  }
+
+  function campaignIndex(campaign) {
+    return (window.campaigns || []).findIndex((item, index) => campaignId(item, index) === campaign.id);
+  }
+
+  function openCampaignGMDashboard(campaign) {
+    const index = campaignIndex(campaign);
+    if (index < 0) return;
+    if (campaignRole(campaign) !== 'GM') {
+      renderCampaignDetail(campaign);
+      window.toast?.('This campaign is linked to your account as a player. GM Dashboard opens for campaigns you created.');
+      return;
+    }
+    window.activeCampaign = index;
+    hideOldViews();
+    window.renderCampaigns?.();
+    window.renderGM?.();
+    window.setView?.('gm');
+    window.toast?.(`Opened ${campaign.name || 'campaign'} GM Dashboard.`);
   }
 
   function renderCreateCampaignForm(grid) {
@@ -1367,7 +1419,6 @@
     window.AsteriaFirebase?.saveCampaign?.(id, campaign);
     window.toast?.(`Campaign created: ${name}`);
     openDashboard('campaigns');
-    renderCampaignDetail(campaign);
   }
 
   function createWorkspaceCharacter() {
@@ -1452,9 +1503,6 @@
     grid.innerHTML = activeWorkspaceTab === authFirstTab() ? '' : `<div class="workspace-tab-context"><b>${escapeHtml(activeWorkspaceTab)}</b><span>${escapeHtml('This tab uses the same workspace display window and swaps the account data shown inside it.')}</span></div>`;
     if (currentDashboardMode === 'dashboard') renderOverviewCards(grid);
     if (currentDashboardMode === 'campaigns') renderCampaignCards(grid);
-    if (currentDashboardMode === 'characters') renderCharacterCards(grid);
-    if (currentDashboardMode === 'createCampaign') renderCreateCampaignForm(grid);
-    if (currentDashboardMode === 'createCharacter') renderCreateCharacterForm(grid);
     if (currentDashboardMode === 'settings') renderSettingsPanel(grid);
     status.textContent = `${authMode().label} / ${activeWorkspaceTab}`;
     count.textContent = currentDashboardMode === 'campaigns'
@@ -1466,6 +1514,11 @@
 
   function openDashboard(mode = 'dashboard') {
     if (!requireAccountWorkspace()) return false;
+    if (['characters', 'createCharacter', 'characterForge'].includes(mode)) {
+      window.AsteriaGameplay?.openCharacterForgeHub?.();
+      return true;
+    }
+    if (mode === 'createCampaign') mode = 'campaigns';
     hideOldViews();
     currentDashboardMode = authWorkspaceModes.some(item => item.id === mode) ? mode : 'dashboard';
     currentSection = 'Dashboard';
@@ -1736,8 +1789,8 @@
         Images: ['Appearance','Images']
       },
       Classes: {
-        'Class Sheet': ['Overview','Class Features','Progression'],
-        'Talent Tree': ['Talent Tree','Talents','Pathways','Class Talents'],
+        Overview: ['Overview','Class Information','Class Features'],
+        'Talent Tree': ['Talent Tree','Talent Trees','Talents','Pathways','Class Talents'],
         Lore: ['Lore','Culture','Roleplay'],
         Images: ['Appearance','Images']
       },
@@ -2005,10 +2058,14 @@
         element.addEventListener('click', event => {
           event.preventDefault();
           event.stopImmediatePropagation();
-          if (workspaceAction === 'create-campaign') openDashboard('createCampaign');
+          if (workspaceAction === 'create-campaign') {
+            openDashboard('campaigns');
+            openCreateCampaignForm();
+          }
           if (workspaceAction === 'create-character') {
-            if (window.AsteriaGameplay?.openCharacterForge) window.AsteriaGameplay.openCharacterForge();
-            else openDashboard('createCharacter');
+            if (window.AsteriaGameplay?.openCharacterForgeHub) window.AsteriaGameplay.openCharacterForgeHub();
+            else if (window.AsteriaGameplay?.openCharacterForge) window.AsteriaGameplay.openCharacterForge();
+            else openDashboard('dashboard');
           }
           if (workspaceAction === 'settings') openDashboard('settings');
         }, true);
@@ -2113,6 +2170,7 @@
       ...(window.AsteriaWorkspace || {}),
       openSection,
       openDashboard,
+      openCampaignHub:() => openDashboard('campaigns'),
       openDashboardMode: openDashboard,
       createCampaign: createWorkspaceCampaign,
       createCharacter: createWorkspaceCharacter,

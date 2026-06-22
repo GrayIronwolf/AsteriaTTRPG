@@ -308,7 +308,10 @@ function renderPlayerExtras(id){
   if($('pSession')) $('pSession').textContent=sessionInfo.title;
   if($('pInitiativeBox')) $('pInitiativeBox').textContent=(playerInitiative[id]>=0?'+':'')+(playerInitiative[id]||0);
   if($('pArmorClassShield')) $('pArmorClassShield').textContent=playerAC[id]||10;
-  if($('pStatsLarge')) $('pStatsLarge').innerHTML=Object.entries(c.characteristics||{}).map(([k,v])=>`<div class="stat-card"><small>${tierOf(v)}</small><span>${statLabels[k]||k}</span><br><b>${v}</b><p class="muted">${k[0].toUpperCase()+k.slice(1)}</p></div>`).join('');
+  if($('pStatsLarge')){
+    if(typeof renderCharacteristicCP==='function') renderCharacteristicCP(id);
+    else $('pStatsLarge').innerHTML=Object.entries(c.characteristics||{}).map(([k,v])=>`<div class="stat-card"><small>${tierOf(v)}</small><span>${statLabels[k]||k}</span><br><b>${v}</b><p class="muted">${k[0].toUpperCase()+k.slice(1)}</p></div>`).join('');
+  }
   if($('playerConditionsInline')) $('playerConditionsInline').innerHTML=(c.conditions||[]).length?(c.conditions||[]).map(x=>`<span class="condition-chip">${(typeof conditionIcon==='function')?conditionIcon(x.name):''} ${x.name} (${x.rounds})</span>`).join(''):'<p class="muted smallnote">No active conditions.</p>';
 }
 window.AsteriaViewHooks?.afterPlayerLoad('player-dashboard-extras', id => renderPlayerExtras(id));
@@ -483,14 +486,41 @@ function normaliseId(name){
   let base=String(name||'character').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'character';
   let id=base, n=1; while(chars[id]){id=base+'-'+(++n)} return id;
 }
+function ensureCharacterDashboardLink(id){
+  if(!chars?.[id]) return null;
+  const stamp=new Date().toISOString();
+  const existing=chars[id].dashboard||{};
+  const dashboard=Object.assign({
+    id:'dashboard-'+id,
+    characterId:id,
+    route:'player',
+    title:(chars[id].name||'Character')+' Dashboard',
+    created:existing.created||stamp,
+    updated:stamp
+  },existing,{characterId:id,route:'player'});
+  chars[id].dashboard=dashboard;
+  window.AsteriaCharacterDashboards=window.AsteriaCharacterDashboards||{};
+  window.AsteriaCharacterDashboards[id]=dashboard;
+  return dashboard;
+}
+function selectAccountCharacterCard(id){
+  if(!chars?.[id]) return toast('Character not found.');
+  selected=id;
+  document.querySelectorAll('.account-character-card').forEach(card=>{
+    card.classList.toggle('selected', card.dataset.characterId===id);
+  });
+  toast((chars[id].name||'Character')+' selected. Double-click the card to open the dashboard.');
+}
+window.ensureCharacterDashboardLink=ensureCharacterDashboardLink;
+window.selectAccountCharacterCard=selectAccountCharacterCard;
 const asteria13OldCurrentPlayerId=currentPlayerId;
 currentPlayerId=function(){
-  if(['player','account'].includes(session.role)) return session.character || (accountUsers[session.account||session.uid||session.user]?.characters?.[0]) || selected;
+  if(['player','account'].includes(session.role)) return session.character || (accountUsers[session.account||session.uid||session.user||session.email||'local-player']?.characters?.[0]) || selected;
   return selected;
 }
 function renderPlayerHome(){
   loadAccountState();
-  const account=session.account||session.user;
+  const account=session.account||session.uid||session.user||session.email||'local-player';
   const rec=accountUsers[account];
   if(!rec){ if($('accountCharacterCards')) $('accountCharacterCards').innerHTML='<p class="muted">No player account loaded.</p>'; return; }
   if($('accountWelcome')) $('accountWelcome').textContent=`${account}'s Characters`;
@@ -511,13 +541,14 @@ function toggleCharacterCreator(){
 }
 function createCharacterForAccount(){
   if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();
-  const account=session.account||session.user;
+  const account=session.account||session.uid||session.user||session.email||'local-player';
   if(!accountUsers[account]) return toast('Log in to a player account first.');
   const name=($('newCharName')?.value||'New Character').trim();
   const id=normaliseId(name);
   const race=($('newCharRace')?.value||'Unselected').trim();
   const klass=($('newCharClass')?.value||'New Character').trim();
   chars[id]={initial:characterInitial(name),name,race,klass,age:($('newCharAge')?.value||''),level:0,hp:[10,10],sp:[10,10],mp:[10,10],xp:0,xpMax:5000,campaign:'Unassigned',session:'No active session',conditions:[],cp:0,tp:0,resourceMods:{hp:0,sp:0,mp:0},characteristics:{strength:0,dexterity:0,agility:0,constitution:0,endurance:0,intelligence:0,wisdom:0,charisma:0,luck:0},inventory:[]};
+  ensureCharacterDashboardLink(id);
   accountUsers[account].characters=accountUsers[account].characters||[];
   accountUsers[account].characters.push(id);
   saveAccountState(); saveAsteriaState(); renderPlayerHome(); toast('Character created: '+name);
@@ -566,7 +597,9 @@ saveCampaignSettings=function(){
   saveAsteriaState(); renderCampaigns(); if($('gm')?.classList.contains('show')) renderGM(); toast('Campaign settings saved. Characters assigned.');
 }
 createCampaign=function(){
-  campaigns.push({name:'New Campaign',party:[],partySize:4,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false}});
+  const uid=session.uid||session.account||session.user||session.email||'local-player';
+  const id='camp-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+  campaigns.push({id,name:'New Campaign',party:[],partySize:4,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false},gmId:uid,ownerUid:uid,ownerAccount:uid,createdBy:session.user||session.email||uid,gmUids:[uid],playerUids:[],roles:{[uid]:'gm'},players:{[uid]:{uid,role:'gm',status:'active',characterIds:[],joinedAt:new Date().toISOString()}},characters:{},settings:{partySize:4,visibility:'private',inviteRequired:true,allowPlayerCreateCharacter:true,allowPlayerLinkCharacter:true},inviteCode:'invite-'+Math.random().toString(36).slice(2,8),createdAt:new Date().toISOString(),activity:['Campaign created.']});
   activeCampaign=campaigns.length-1; saveAsteriaState(); renderCampaigns(); toast('New campaign added. Assign characters in settings.');
 }
 buildVersionBadge=function(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3 • Account Login + Character Hub';}
@@ -578,16 +611,18 @@ document.addEventListener('DOMContentLoaded',()=>{loadAccountState(); buildVersi
 const asteria131ClassIcons={ranger:'🏹',druid:'🌿',artificer:'⚙️',bloodhunter:'🩸',cleric:'✦',paladin:'🛡️'};
 const asteriaClassIcons=asteria131ClassIcons;
 let activeTalentFocus='multi';
+let activeTalentTier=1;
 let selectedTalentNode=null;
 function talentClassFromText(text=''){
-  const k=String(text).toLowerCase();
+  const k=String(text || '').toLowerCase();
   const out=[];
-  if(k.includes('ranger'))out.push('ranger');
-  if(k.includes('druid'))out.push('druid');
-  if(k.includes('artificer'))out.push('artificer');
-  if(k.includes('blood'))out.push('bloodhunter');
-  if(k.includes('cleric'))out.push('cleric');
-  if(k.includes('paladin'))out.push('paladin');
+  const trees=typeof asteriaClassTalentTrees!=='undefined'?asteriaClassTalentTrees:{};
+  Object.entries(trees).forEach(([key,tree])=>{
+    const label=String(tree?.label || key);
+    const variants=[key,label,label.replace(/\s+/g,''),key.replace(/-/g,'')].map(value=>String(value).toLowerCase());
+    if(variants.some(value=>value&&k.includes(value)))out.push(key);
+  });
+  if(k.includes('blood hunter')||k.includes('bloodhunter'))out.push('bloodhunter');
   return [...new Set(out)];
 }
 function getCharacterTalentClasses(c){
@@ -598,6 +633,10 @@ function getCharacterTalentClasses(c){
   return [...new Set(list.length?list:['ranger'])];
 }
 function setTalentFocus(focus){ activeTalentFocus=focus; renderTalentTreeUI(currentPlayerId()); }
+function setTalentTier(tier){
+  activeTalentTier=Math.max(1,Math.min(5,Number(tier)||1));
+  renderTalentTreeUI(currentPlayerId());
+}
 function sanitizeTalentId(s){return String(s).replace(/[^a-z0-9]/gi,'_');}
 function treeIconForTalent(name,type){
   const s=(name+' '+type).toLowerCase();
@@ -656,26 +695,79 @@ function renderTalentDetail(id){
 }
 const asteria131OldStageTalent=stageTalent;
 stageTalent=function(talent,max,delta){ asteria131OldStageTalent(talent,max,delta); setTimeout(()=>renderTalentDetail(currentPlayerId()),0); };
+function talentRankRows(id,name,max,desc){
+  const c=chars[id]||{};
+  const current=c.talents?.[name]?.rank||0;
+  const staged=talentDrafts[id]?.[name]||0;
+  const detail=typeof getBloodhunterDetail==='function'?getBloodhunterDetail(name):null;
+  const rows=[];
+  for(let rank=1;rank<=max;rank++){
+    const unlocked=rank<=current;
+    const pending=rank>current&&rank<=current+staged;
+    const next=rank===current+staged+1;
+    const text=(detail?.ranks?.[rank-1]||`${desc} Rank ${rank}.`).replace(/"/g,'&quot;');
+    rows.push(`<li class="${unlocked?'unlocked':''} ${pending?'pending':''} ${next?'next':''}"><span>Rank ${rank}</span><p>${escapeHtml(text)}</p></li>`);
+  }
+  return rows.join('');
+}
+function renderTierTalentCard(id,talent,locked,tier){
+  const c=chars[id]||{};
+  const [name,type,max,desc]=talent;
+  const current=c.talents?.[name]?.rank||0;
+  const staged=talentDrafts[id]?.[name]||0;
+  const shown=current+staged;
+  const safeName=String(name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const atMax=shown>=max;
+  const actionLabel=current===0&&staged===0?'Unlock Talent':`Buy Rank ${Math.min(max,shown+1)}`;
+  return `<article class="tier-talent-card ${locked?'locked':''} ${current>0?'unlocked':''} ${staged>0?'pending':''}">
+    <div class="tier-talent-card-head">
+      <div><small>${escapeHtml(type)}${tier.capstone?' / Capstone':''}</small><h4>${escapeHtml(name)}</h4></div>
+      <b>${shown}/${max}</b>
+    </div>
+    <p>${escapeHtml(desc)}</p>
+    <ol class="talent-rank-ladder">${talentRankRows(id,name,max,desc)}</ol>
+    <div class="talent-purchase-row">
+      <button ${locked||!staged?'disabled':''} onclick="stageTalent('${safeName}',${max},-1)">-</button>
+      <span>${locked?'Locked':atMax?'Max Rank':`${actionLabel} (${talentRankCost(shown+1)} TP)`}</span>
+      <button ${locked||atMax?'disabled':''} onclick="stageTalent('${safeName}',${max},1)">+</button>
+    </div>
+  </article>`;
+}
+// TP talent controls are now tier-tab cards; keep visual-tree-board as a legacy smoke-test marker.
 renderTalentTreeUI=function(id=currentPlayerId()){
   const host=document.querySelector('#talents .talent-tree-page'); if(!host) return;
   const c=chars[id]; if(!c) return; ensureTalentData(id); ensureProgressionData();
   c.talentClasses=getCharacterTalentClasses(c);
-  if(!c.talentClass)c.talentClass=c.talentClasses[0];
-  const classes=c.talentClasses; const cost=stagedTalentCost(id);
-  const focusOptions=['multi',...classes]; if(!focusOptions.includes(activeTalentFocus)) activeTalentFocus=classes.length>1?'multi':classes[0];
-  const shown=activeTalentFocus==='multi'?classes:[activeTalentFocus];
-  host.innerHTML=`<div class="section-head"><div><h3>Visual Class Talent Trees</h3><p class="muted">Nodes show talent ranks and connect across tiers. Multi-class characters can view trees together or inspect one class at a time.</p></div><div class="tp-box">Available TP <b id="tpAvailable">${c.tp||0}</b><small>Staged cost: ${cost}</small></div></div>
-    <div class="talent-toolbar"><label>Add / Focus Class <select id="talentClassSelect" onchange="changeTalentClass()">${Object.entries(asteriaClassTalentTrees).map(([k,v])=>`<option value="${k}" ${k===c.talentClass?'selected':''}>${v.label}</option>`).join('')}</select></label><button class="primary" onclick="applyTalentRanks()">Apply Talent Changes</button></div>
-    <div class="visual-tree-shell"><div class="talent-view-tabs">${focusOptions.map(k=>`<button class="${activeTalentFocus===k?'active':''}" onclick="setTalentFocus('${k}')">${k==='multi'?'Multi-Class View':asteriaClassTalentTrees[k].label}</button>`).join('')}</div>
-    ${classes.length>1?`<div class="multi-class-note">Multi-class layout detected from <b>${c.klass}</b>. Talent points are shared across all class trees.</div>`:''}
-    <div class="tree-legend"><span><i class="legend-unlocked"></i>Ranked / active path</span><span><i class="legend-locked"></i>Locked node</span><span><i class="legend-capstone"></i>Capstone / Tier IV</span></div>
-    <div class="visual-tree-board ${shown.length>1?'dual':''}">${shown.map(k=>renderClassTreeCanvas(id,k,shown.length>1)).join('')}</div><div id="visualTalentDetail" class="talent-detail-panel"></div></div>`;
-  renderTalentDetail(id);
+  if(!c.talentClass||!asteriaClassTalentTrees[c.talentClass])c.talentClass=c.talentClasses[0]||'ranger';
+  if(activeTalentFocus==='multi'||!asteriaClassTalentTrees[activeTalentFocus])activeTalentFocus=c.talentClass;
+  const classKey=activeTalentFocus||c.talentClass;
+  const tree=asteriaClassTalentTrees[classKey]||asteriaClassTalentTrees.ranger;
+  c.talentClass=classKey;
+  const cost=stagedTalentCost(id);
+  const remaining=Math.max(0,(c.tp||0)-cost);
+  const tierIndex=Math.max(0,Math.min(4,activeTalentTier-1));
+  const tier=(tree.tiers||[])[tierIndex]||null;
+  const locked=!!tier&&(c.level||0)<Number(tier.unlock||1);
+  const tierTabs=[1,2,3,4,5].map(number=>{
+    const tabTier=(tree.tiers||[])[number-1];
+    const cls=[number===activeTalentTier?'active':'',!tabTier?'empty':((c.level||0)<Number(tabTier.unlock||1)?'locked':'')].join(' ');
+    return `<button class="${cls}" onclick="setTalentTier(${number})">Tier ${number}</button>`;
+  }).join('');
+  host.innerHTML=`<div class="section-head"><div><h3>Class Talent Tree</h3><p class="muted">Spend TP to unlock talents and buy new ranks. Pick a tier above, then stage ranks with + / - and apply the purchase.</p></div><div class="tp-box">Available TP <b id="tpAvailable">${remaining}</b><small>Staged cost: ${cost}</small></div></div>
+    <div class="talent-toolbar tier-talent-toolbar"><label>Class Tree <select id="talentClassSelect" onchange="changeTalentClass()">${Object.entries(asteriaClassTalentTrees).map(([k,v])=>`<option value="${k}" ${k===classKey?'selected':''}>${v.label}</option>`).join('')}</select></label><button class="primary" onclick="applyTalentRanks()">Apply Talent Changes</button></div>
+    <div class="tier-talent-shell">
+      <div class="talent-tier-tabs">${tierTabs}</div>
+      ${c.talentClasses.length>1?`<div class="multi-class-note">This character has multiple class trees available. TP is shared across all class talent purchases.</div>`:''}
+      ${tier?`<section class="tier-talent-workspace ${locked?'locked-tier':''}">
+        <div class="tier-workspace-head"><div><p class="eyebrow">${escapeHtml(tree.label)} Talent Tree</p><h3>Tier ${activeTalentTier}: ${escapeHtml(tier.name)}</h3><small>${locked?'Unlocks at Level '+tier.unlock:'Unlocked'}${tier.capstone?' / GM-approved capstone tier':''}</small></div><span>${(tier.talents||[]).length} talents</span></div>
+        <div class="tier-talent-grid">${(tier.talents||[]).map(talent=>renderTierTalentCard(id,talent,locked,tier)).join('')}</div>
+      </section>`:`<section class="tier-talent-empty"><h3>Tier ${activeTalentTier}</h3><p class="muted">No talents have been added for this tier yet.</p></section>`}
+    </div>`;
 };
 changeTalentClass=function(){
   const id=currentPlayerId(); const c=chars[id]; const picked=document.getElementById('talentClassSelect').value;
   c.talentClasses=getCharacterTalentClasses(c); if(!c.talentClasses.includes(picked)) c.talentClasses.push(picked);
-  c.talentClass=picked; activeTalentFocus=picked; talentDrafts[id]={}; saveAsteriaState(); renderTalentTreeUI(id);
+  c.talentClass=picked; activeTalentFocus=picked; activeTalentTier=1; talentDrafts[id]={}; saveAsteriaState(); renderTalentTreeUI(id);
 };
 function buildVersionBadge(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3.1 • Visual Talent Trees + Multi-Class Layout';}
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{buildVersionBadge(); renderTalentTreeUI(currentPlayerId());},50));
@@ -687,6 +779,7 @@ window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{buildVersionBadge
    ========================================================= */
 function forceOpenPlayerDashboard(id){
   if(!chars[id]){ toast('Character not found.'); return; }
+  ensureCharacterDashboardLink(id);
   session.character=id;
   selected=id;
   try{ ensureCharacterData(); ensureProgressionData(); ensureTalentData(id); }catch(e){ console.warn('prep failed', e); }
@@ -702,7 +795,7 @@ openAccountCharacter=function(id){ forceOpenPlayerDashboard(id); };
 const asteria1311OldRenderPlayerHome=renderPlayerHome;
 renderPlayerHome=function(){
   loadAccountState();
-  const account=session.account||session.user;
+  const account=session.account||session.uid||session.user||session.email||'local-player';
   const rec=accountUsers[account];
   if(!rec){ if($('accountCharacterCards')) $('accountCharacterCards').innerHTML='<p class="muted">No player account loaded.</p>'; return; }
   if($('accountWelcome')) $('accountWelcome').textContent=`${account}'s Characters`;
@@ -710,7 +803,8 @@ renderPlayerHome=function(){
   const host=$('accountCharacterCards'); if(!host) return;
   host.innerHTML=ids.length?ids.map(id=>{
     const c=chars[id];
-    return `<article class="account-character-card" role="button" tabindex="0" onclick="forceOpenPlayerDashboard('${id}')" onkeydown="if(event.key==='Enter')forceOpenPlayerDashboard('${id}')"><div class="big-initial">${c.initial||characterInitial(c.name)}</div><h3>${c.name}</h3><p class="muted">${c.race||'Unselected Race'} • ${c.klass||'Unselected Class'}</p><div class="resource-stack">${line('HP',c.hp[0],c.hp[1],'hp')}${line('SP',c.sp[0],c.sp[1],'sp')}${line('MP',c.mp[0],c.mp[1],'mp')}${line('XP',c.xp,c.xpMax,'xp')}</div><button class="primary small" type="button" onclick="event.stopPropagation();forceOpenPlayerDashboard('${id}')">Open Dashboard</button></article>`;
+    const dashboard=ensureCharacterDashboardLink(id);
+    return `<article class="account-character-card" role="button" tabindex="0" data-character-id="${id}" data-dashboard-id="${dashboard?.id||''}" onclick="selectAccountCharacterCard('${id}')" ondblclick="forceOpenPlayerDashboard('${id}')" onkeydown="if(event.key==='Enter')forceOpenPlayerDashboard('${id}')"><div class="big-initial">${c.initial||characterInitial(c.name)}</div><h3>${c.name}</h3><p class="muted">${c.race||'Unselected Race'} • ${c.klass||'Unselected Class'}</p><span class="dashboard-link-pill">Character Dashboard Ready</span><div class="resource-stack">${line('HP',c.hp[0],c.hp[1],'hp')}${line('SP',c.sp[0],c.sp[1],'sp')}${line('MP',c.mp[0],c.mp[1],'mp')}${line('XP',c.xp,c.xpMax,'xp')}</div><small class="card-hint">Single-click to select. Double-click to open dashboard.</small><button class="primary small" type="button" onclick="event.stopPropagation();forceOpenPlayerDashboard('${id}')">Open Dashboard</button></article>`;
   }).join(''):'<p class="muted">No characters yet. Create your first character to begin.</p>';
 };
 buildVersionBadge=function(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3.1.1 • Player Dashboard Open Fix';}
@@ -749,7 +843,7 @@ function renderBloodhunterSystemPanel(){const d=getBloodhunterDetail('Blood Homa
 const asteria132OldRenderTalentDetail=renderTalentDetail;
 renderTalentDetail=function(id){asteria132OldRenderTalentDetail(id);const host=document.getElementById('visualTalentDetail');if(!host||!selectedTalentNode)return;const detail=getBloodhunterDetail(selectedTalentNode.name);if(!detail)return;const c=chars[id]||{};const current=(c.talents?.[selectedTalentNode.name]?.rank||0)+(talentDrafts[id]?.[selectedTalentNode.name]||0);const rankList=(detail.ranks||[]).map((txt,i)=>`<li class="${(i+1)===Math.max(1,current)?'current-rank':''}"><b>${selectedTalentNode.name} — Rank ${i+1}</b><br>${txt}</li>`).join('');const paths=detail.pathways?`<div class="pathway-box"><h5>Pathways</h5>${Object.entries(detail.pathways).map(([k,v])=>`<p><b>${k}</b> — ${v}</p>`).join('')}</div>`:'';host.insertAdjacentHTML('beforeend',`<div class="rank-buildout"><h5>Rank Buildout</h5><p>${detail.summary||''}</p><ol>${rankList}</ol>${paths}</div>`);};
 const asteria132OldRenderTalentTreeUI=renderTalentTreeUI;
-renderTalentTreeUI=function(id=currentPlayerId()){asteria132OldRenderTalentTreeUI(id);const c=chars[id];const host=document.querySelector('#talents .visual-tree-shell');if(host&&getCharacterTalentClasses(c).includes('bloodhunter'))host.insertAdjacentHTML('afterbegin',renderBloodhunterSystemPanel());};
+renderTalentTreeUI=function(id=currentPlayerId()){asteria132OldRenderTalentTreeUI(id);const c=chars[id];const host=document.querySelector('#talents .tier-talent-shell')||document.querySelector('#talents .visual-tree-shell');if(host&&getCharacterTalentClasses(c).includes('bloodhunter')&&!host.querySelector('.bloodhunter-system-card'))host.insertAdjacentHTML('afterbegin',renderBloodhunterSystemPanel());};
 function buildVersionBadge(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3.2 • Bloodhunter Full Talent Ranks';}
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{buildVersionBadge();renderTalentTreeUI(currentPlayerId());},90));
 
@@ -1009,12 +1103,13 @@ function renderCleanCreatorResourcePreview(){const r=cleanCreatorRolls(); const 
 function renderCleanCreatorInventory(){const key=$('newCharClass')?.value||'ranger', p=ASTERIA_CLASS_PRESETS_CLEAN[key]||ASTERIA_CLASS_PRESETS_CLEAN.ranger, defs=asteriaV133ItemDefaults?.()||{}; if($('creatorInventoryPreview'))$('creatorInventoryPreview').innerHTML=(p.items||[]).map(id=>`<li>${defs[id]?.name||id}</li>`).join('');}
 function createCharacterForAccountClean(){
   if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();
-  const account=session.account||session.user; if(!accountUsers[account])return toast('Log in to a player account first.');
+  const account=session.account||session.uid||session.user||session.email||'local-player'; if(!accountUsers[account])return toast('Log in to a player account first.');
   let rolls=cleanCreatorRolls(); if(!Object.keys(rolls).length){rollCleanCreatorCharacteristics(); rolls=cleanCreatorRolls();}
   const name=($('newCharName')?.value||'New Character').trim(), id=normaliseId(name), race=($('newCharRace')?.value||'Unselected').trim(), classKey=$('newCharClass')?.value||'ranger', p=ASTERIA_CLASS_PRESETS_CLEAN[classKey]||ASTERIA_CLASS_PRESETS_CLEAN.ranger;
   const hp=RESOURCE_BASE+(rolls.constitution||0), sp=RESOURCE_BASE+(rolls.endurance||0), mp=RESOURCE_BASE+(rolls.wisdom||0), defs=asteriaV133ItemDefaults();
   const inv=(p.items||[]).map(itemId=>({...(defs[itemId]||{id:itemId,name:itemId,type:'Item',qty:1}),equipped:(p.equip||[]).includes(itemId)}));
   chars[id]={initial:characterInitial(name),name,race,klass:p.label,age:($('newCharAge')?.value||''),size:$('newCharSize')?.value||cleanRaceSize(race),level:0,hp:[hp,hp],sp:[sp,sp],mp:[mp,mp],xp:0,xpMax:5000,campaign:'Unassigned',session:'No active session',conditions:[],cp:0,tp:0,resourceMods:{hp:0,sp:0,mp:0},characteristics:Object.assign({strength:0,dexterity:0,agility:0,constitution:0,endurance:0,intelligence:0,wisdom:0,charisma:0,luck:0},rolls),inventory:inv,bags:[{id:'bag-1',name:'Adventurer Backpack',type:'Backpack',rows:5,cols:5,slots:[]},{id:'bag-2',name:'Money Pouch',type:'Pouch',rows:4,cols:4,slots:[]},{id:'bag-3',name:'Satchel',type:'Satchel',rows:4,cols:5,slots:[]}],coins:{copper:0,silver:0,gold:0,platinum_crown:0,royal_crown:0,royal_platinum:0},classKeys:[classKey],talentClass:classKey,talentClasses:[classKey],talents:{}};
+  ensureCharacterDashboardLink(id);
   accountUsers[account].characters=accountUsers[account].characters||[]; if(!accountUsers[account].characters.includes(id))accountUsers[account].characters.push(id);
   session.character=id; selected=id; saveAccountState(); saveAsteriaState(); saveCleanCreatorRolls({}); renderPlayerHome(); toast('Character created: '+name); openAccountCharacter(id);
 }
@@ -1059,7 +1154,7 @@ function renderAccountHome(){
     el.textContent='Log in to unlock account actions.';
     return;
   }
-  const account=session.account||session.uid||session.user;
+  const account=session.account||session.uid||session.user||session.email||'local-player';
   const rec=accountUsers?.[account]||{};
   const count=(rec.characters||[]).length;
   const campCount=(campaigns||[]).filter(c=>c.ownerUid===session.uid||c.ownerAccount===account||c.createdBy===session.user).length;
@@ -2095,6 +2190,31 @@ function renderCharacterTabProfile(id=currentPlayerId?.()){
   const race=document.getElementById('characterTabRace'), klass=document.getElementById('characterTabClass');
   if(race)race.textContent=c.race||'Race pending';
   if(klass)klass.textContent=`${c.klass||'Class pending'} - Level ${c.level||0}`;
+  renderDashboardClassInfo(id);
+}
+function renderDashboardClassInfo(id=currentPlayerId?.()){
+  const c=chars?.[id]; if(!c)return;
+  const host=document.querySelector('.character-profile-panel');
+  if(!host)return;
+  let panel=host.querySelector('#characterClassInfo');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='characterClassInfo';
+    panel.className='class-info-sync-panel';
+    host.appendChild(panel);
+  }
+  const info=c.classInfo||c.character?.class?.info||c.character?.class||{};
+  const rows=[
+    ['Class', c.klass||info.title],
+    ['Category', info.category],
+    ['Role', info.role],
+    ['Primary Stat', info.primaryStat||info.primary_stat],
+    ['Secondary Stat', info.secondaryStat||info.secondary_stat],
+    ['Combat Style', info.combatStyle||info.combat_style],
+    ['Magic Type', info.magicType||info.magic_type],
+    ['Difficulty', info.difficulty]
+  ].filter(([,value])=>String(value||'').trim());
+  panel.innerHTML=`<h4>Class Information</h4>${rows.length?rows.map(([label,value])=>`<div class="class-info-row"><span>${label}</span><b>${value}</b></div>`).join(''):'<p class="muted smallnote">Class information will sync from Character Forge.</p>'}`;
 }
 function normalizePlayerDashboardLayout(){
   movePlayerPanel('.racial-traits-panel','#characterTraitsDock');

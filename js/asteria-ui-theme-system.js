@@ -1,15 +1,16 @@
 (function(){
   const STORAGE_KEY = "asteria-ui-theme-v1";
+  const DEFAULT_TEXT = "#f7ead1";
   const themes = {
-    bloodhunter:{accent:"#b51f2e",glow:.34,overlay:.44,panel:.78},
-    cleric:{accent:"#f3d36b",glow:.30,overlay:.40,panel:.78},
-    ranger:{accent:"#2f9b55",glow:.28,overlay:.40,panel:.78},
-    spellblade:{accent:"#1f7dff",glow:.36,overlay:.44,panel:.78},
-    artificer:{accent:"#d1843a",glow:.30,overlay:.40,panel:.78},
-    paladin:{accent:"#d8d3bd",glow:.28,overlay:.38,panel:.80},
-    druid:{accent:"#17a879",glow:.30,overlay:.40,panel:.78},
-    rogue:{accent:"#7b4dff",glow:.34,overlay:.42,panel:.78},
-    custom:{accent:"#1f7dff",glow:.36,overlay:.44,panel:.78}
+    bloodhunter:{accent:"#b51f2e",text:DEFAULT_TEXT,glow:.34,overlay:.44,panel:.78},
+    cleric:{accent:"#f3d36b",text:DEFAULT_TEXT,glow:.30,overlay:.40,panel:.78},
+    ranger:{accent:"#2f9b55",text:DEFAULT_TEXT,glow:.28,overlay:.40,panel:.78},
+    spellblade:{accent:"#1f7dff",text:DEFAULT_TEXT,glow:.36,overlay:.44,panel:.78},
+    artificer:{accent:"#d1843a",text:DEFAULT_TEXT,glow:.30,overlay:.40,panel:.78},
+    paladin:{accent:"#d8d3bd",text:DEFAULT_TEXT,glow:.28,overlay:.38,panel:.80},
+    druid:{accent:"#17a879",text:DEFAULT_TEXT,glow:.30,overlay:.40,panel:.78},
+    rogue:{accent:"#7b4dff",text:DEFAULT_TEXT,glow:.34,overlay:.42,panel:.78},
+    custom:{accent:"#1f7dff",text:DEFAULT_TEXT,glow:.36,overlay:.44,panel:.78}
   };
 
   function clamp(value, min=0, max=1){
@@ -35,12 +36,14 @@
   function sync(settings){
     const theme = document.getElementById("asteriaThemeSelect");
     const colour = document.getElementById("asteriaColourWheel");
+    const text = document.getElementById("asteriaTextColourWheel");
     const glow = document.getElementById("asteriaGlowSlider");
     const overlay = document.getElementById("asteriaOverlaySlider");
     const panel = document.getElementById("asteriaPanelOpacitySlider");
 
     if(theme) theme.value = settings.theme || "spellblade";
     if(colour) colour.value = settings.accent || "#1f7dff";
+    if(text) text.value = settings.text || DEFAULT_TEXT;
     if(glow) glow.value = Math.round((settings.glow ?? .36) * 100);
     if(overlay) overlay.value = Math.round((settings.overlay ?? .44) * 100);
     if(panel) panel.value = Math.round((settings.panel ?? .78) * 100);
@@ -52,6 +55,7 @@
     return {
       theme:key,
       accent:settings.accent || preset.accent,
+      text:settings.text || preset.text || DEFAULT_TEXT,
       glow:clamp(typeof settings.glow === "number" ? settings.glow : preset.glow),
       overlay:clamp(typeof settings.overlay === "number" ? settings.overlay : preset.overlay),
       panel:clamp(typeof settings.panel === "number" ? settings.panel : preset.panel, .62, .92)
@@ -61,6 +65,7 @@
   function applyTheme(settings, persist=false){
     const next = normalise(settings);
     const rgb = hexToRgb(next.accent);
+    const textRgb = hexToRgb(next.text);
     const inverseVisibility = 1 - next.overlay;
     const topVeil = clamp(.12 + inverseVisibility * .28, .12, .46);
     const bottomVeil = clamp(.34 + inverseVisibility * .34, .34, .76);
@@ -70,6 +75,12 @@
     setVar("--asteria-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
     setVar("--asteria-accent-soft", rgba(next.accent, .22));
     setVar("--asteria-accent-faint", rgba(next.accent, .10));
+    setVar("--asteria-text", next.text);
+    setVar("--asteria-text-rgb", `${textRgb.r}, ${textRgb.g}, ${textRgb.b}`);
+    setVar("--text", next.text);
+    setVar("--text-primary", next.text);
+    setVar("--text-secondary", next.text);
+    setVar("--muted", next.text);
     setVar("--asteria-glow", rgba(next.accent, next.glow));
     setVar("--asteria-glow-strong", rgba(next.accent, Math.min(.72, next.glow + .20)));
     setVar("--asteria-glow-intensity", String(next.glow));
@@ -94,6 +105,7 @@
     return normalise({
       theme,
       accent:document.getElementById("asteriaColourWheel")?.value || preset.accent,
+      text:document.getElementById("asteriaTextColourWheel")?.value || preset.text || DEFAULT_TEXT,
       glow:Number(document.getElementById("asteriaGlowSlider")?.value ?? Math.round(preset.glow * 100)) / 100,
       overlay:Number(document.getElementById("asteriaOverlaySlider")?.value ?? Math.round(preset.overlay * 100)) / 100,
       panel:Number(document.getElementById("asteriaPanelOpacitySlider")?.value ?? Math.round((preset.panel || .78) * 100)) / 100
@@ -103,6 +115,7 @@
   function bind(){
     const theme = document.getElementById("asteriaThemeSelect");
     const colour = document.getElementById("asteriaColourWheel");
+    const text = document.getElementById("asteriaTextColourWheel");
     const glow = document.getElementById("asteriaGlowSlider");
     const overlay = document.getElementById("asteriaOverlaySlider");
     const panel = document.getElementById("asteriaPanelOpacitySlider");
@@ -114,7 +127,7 @@
       theme.addEventListener("change", () => {
         const preset = themes[theme.value] || themes.spellblade;
         const live = current();
-        applyTheme({theme:theme.value,accent:preset.accent,glow:preset.glow,overlay:preset.overlay,panel:live.panel}, true);
+        applyTheme({theme:theme.value,accent:preset.accent,text:live.text,glow:preset.glow,overlay:preset.overlay,panel:live.panel}, true);
       });
     }
     if(colour && !colour.dataset.bound){
@@ -129,6 +142,19 @@
         const live = current();
         live.theme = "custom";
         live.accent = colour.value;
+        applyTheme(live, true);
+      });
+    }
+    if(text && !text.dataset.bound){
+      text.dataset.bound = "1";
+      text.addEventListener("input", () => {
+        const live = current();
+        live.text = text.value;
+        applyTheme(live, false);
+      });
+      text.addEventListener("change", () => {
+        const live = current();
+        live.text = text.value;
         applyTheme(live, true);
       });
     }

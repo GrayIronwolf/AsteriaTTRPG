@@ -6,6 +6,8 @@
   --asteria-accent-rgb: 31, 125, 255;
   --asteria-accent-soft: rgba(31,125,255,.22);
   --asteria-accent-faint: rgba(31,125,255,.10);
+  --asteria-text: #f7ead1;
+  --asteria-text-rgb: 247,234,209;
   --asteria-glow: rgba(31,125,255,.36);
   --asteria-glow-strong: rgba(31,125,255,.54);
   --panel-bg: rgba(4,14,16,.78);
@@ -19,6 +21,14 @@
   --asteria-bg-top-veil: .28;
   --asteria-bg-bottom-veil: .53;
   --asteria-panel-opacity: .78;
+}
+
+.theme-preview-text {
+  display: grid;
+  place-items: center;
+  color: var(--text) !important;
+  font-weight: 900;
+  background: rgba(2,8,9,.92);
 }
 
 .hp,.hp-bar,[data-resource="hp"] { --asteria-accent:#8f1f2e; }
@@ -255,5 +265,299 @@ body::before {
   body::before {
     -webkit-mask-size:cover !important;
     mask-size:cover !important;
+  }
+}
+
+/* ==================================================
+   Asteria Graphics Pass v1
+   Visual-only polish for background, panels, controls,
+   compendium cards, and workspace surfaces.
+================================================== */
+
+:root {
+  --asteria-metal-1: rgba(12, 24, 27, .86);
+  --asteria-metal-2: rgba(2, 8, 10, .9);
+  --asteria-gold-line: rgba(212, 162, 74, .34);
+  --asteria-blue-line: rgba(var(--asteria-accent-rgb), .34);
+  --asteria-surface-glass: rgba(4, 14, 16, var(--asteria-panel-opacity, .78));
+  --asteria-card-shadow: 0 18px 42px rgba(0,0,0,.46), inset 0 0 0 1px rgba(255,255,255,.035);
+  --asteria-card-shadow-hover: 0 22px 46px rgba(0,0,0,.5), 0 0 calc(12px + 16px * var(--asteria-glow-intensity)) rgba(var(--asteria-accent-rgb), .18), inset 0 0 0 1px rgba(255,255,255,.055);
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.38)),
+    repeating-linear-gradient(112deg, rgba(255,255,255,.024) 0 1px, transparent 1px 18px),
+    linear-gradient(rgba(1,7,8,var(--asteria-bg-top-veil)), rgba(1,7,8,var(--asteria-bg-bottom-veil))),
+    url("../assets/themes/asteria-iron-d20-background.png") center center / cover fixed,
+    linear-gradient(145deg,#061113 0,#020506 100%) !important;
+}
+
+body::before {
+  opacity: calc(var(--asteria-overlay-opacity) + .08);
+  filter:
+    drop-shadow(0 0 calc(7px + 12px * var(--asteria-glow-intensity)) var(--asteria-glow))
+    drop-shadow(0 0 1px rgba(255,255,255,.22));
+}
+
+body::after {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.46), transparent 18%, transparent 82%, rgba(0,0,0,.48)),
+    linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.24) 58%, rgba(0,0,0,.48)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgba(var(--asteria-accent-rgb),.026) 0 1px, transparent 1px 92px) !important;
+}
+
+.topbar.core-v2-topbar,
+.topbar {
+  background:
+    linear-gradient(180deg, rgba(7,12,13,.76), rgba(0,0,0,.58)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 28px) !important;
+  border-bottom-color: color-mix(in srgb, var(--asteria-accent) 28%, #d4a24a 28%, transparent) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.42), inset 0 -1px 0 rgba(255,255,255,.045) !important;
+}
+
+.sidebar,
+.clean-nav,
+.codex-sidebar,
+.phase3-nav,
+.phase4-nav {
+  background:
+    linear-gradient(180deg, rgba(8,18,20,.82), rgba(0,4,6,.88)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 1px, transparent 1px 18px) !important;
+  box-shadow: inset -1px 0 0 rgba(var(--asteria-accent-rgb),.14), 10px 0 28px rgba(0,0,0,.24) !important;
+}
+
+.card,
+.panel,
+.settings-panel,
+.login-panel,
+.asteria-workspace-shell,
+.clean-compendium-shell,
+.clean-display,
+.codex-sidebar,
+.codex-main-display,
+.phase3-header,
+.phase3-layout,
+.phase3-card,
+.phase3-preview-card,
+.phase4-header,
+.phase4-layout,
+.phase4-card,
+.phase4-map-card,
+#gm .gm-dashboard-hero-v1 {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--asteria-surface-glass) 88%, rgba(255,255,255,.05) 12%), rgba(1,8,10,.84)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.026) 0 1px, transparent 1px 22px) !important;
+  border-color: color-mix(in srgb, var(--asteria-accent) 33%, #d4a24a 18%, transparent) !important;
+  box-shadow: var(--asteria-card-shadow) !important;
+}
+
+.card h2,
+.card h3,
+.clean-header h1,
+.clean-page-head h2,
+.codex-detail-head h2,
+.phase3-header h1,
+.phase4-header h1 {
+  text-shadow: 0 2px 10px rgba(0,0,0,.5), 0 0 12px rgba(212,162,74,.08);
+}
+
+button,
+.toplink,
+.side-main,
+.clean-nav button.cat,
+.codex-tree-category,
+.codex-tree-entry,
+.workspace-tabs button,
+.phase3-tabs button,
+.phase3-stepper button,
+.phase4-tabs button {
+  background:
+    linear-gradient(180deg, rgba(12,24,27,.72), rgba(2,8,10,.76)) !important;
+  border-color: rgba(212,162,74,.22) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+
+button:hover,
+.toplink:hover,
+.side-main:hover,
+.clean-nav button.cat:hover,
+.codex-tree-category:hover,
+.codex-tree-entry:hover,
+.workspace-tabs button:hover,
+.phase3-tabs button:hover,
+.phase4-tabs button:hover {
+  transform: translateY(-1px);
+}
+
+button:focus-visible,
+.toplink:focus-visible,
+.side-main:focus-visible,
+.clean-card:focus-visible,
+.codex-card:focus-visible,
+.phase3-pick-card:focus-visible {
+  outline: 2px solid var(--asteria-accent) !important;
+  outline-offset: 2px !important;
+}
+
+.clean-card,
+.codex-card,
+.phase3-pick-card,
+.phase4-card,
+.workspace-dashboard-card,
+.weapon-card,
+.inventory-item,
+.equipped-item,
+.bag-box,
+.coin-row,
+.dashboard-skill-card,
+.unlocked-talent-card {
+  background:
+    linear-gradient(180deg, rgba(9,22,24,.84), rgba(2,8,10,.9)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.022) 0 1px, transparent 1px 18px) !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,255,255,.035) !important;
+}
+
+.clean-card:hover,
+.clean-card.selected,
+.codex-card:hover,
+.codex-card:focus,
+.phase3-pick-card:hover,
+.phase3-pick-card.selected,
+.workspace-dashboard-card:hover {
+  box-shadow: var(--asteria-card-shadow-hover) !important;
+}
+
+.clean-card-art,
+.clean-page-image,
+.codex-card-art,
+.codex-detail-art,
+.codex-class-symbol,
+.phase3-pick-art,
+.phase3-detail-head img,
+.phase3-detail-head > span,
+.phase3-review-portrait,
+.armor-figure {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.46)),
+    repeating-linear-gradient(135deg, rgba(var(--asteria-accent-rgb),.06) 0 1px, transparent 1px 18px),
+    linear-gradient(145deg, rgba(13,26,29,.86), rgba(0,4,7,.92)) !important;
+  border-color: color-mix(in srgb, var(--asteria-accent) 32%, #d4a24a 16%, transparent) !important;
+  box-shadow: inset 0 0 26px rgba(0,0,0,.38), inset 0 0 0 1px rgba(255,255,255,.045) !important;
+}
+
+.clean-card-art img,
+.clean-page-image img,
+.codex-card-art img,
+.codex-detail-art img,
+.phase3-pick-art img,
+.phase3-review-portrait img {
+  filter: contrast(1.06) saturate(1.03) drop-shadow(0 12px 18px rgba(0,0,0,.46));
+}
+
+input,
+select,
+textarea {
+  background:
+    linear-gradient(180deg, rgba(0,7,9,.86), rgba(1,12,14,.74)) !important;
+  border-color: color-mix(in srgb, var(--asteria-accent) 32%, #d4a24a 12%, transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), inset 0 0 18px rgba(0,0,0,.24) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--asteria-accent) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(var(--asteria-accent-rgb),.18), inset 0 0 18px rgba(0,0,0,.24) !important;
+}
+
+button.primary,
+.primary,
+#loginToggle,
+#createAccountTop,
+.account-top-btn {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--asteria-accent) 86%, white 14%), color-mix(in srgb, var(--asteria-accent) 64%, black 36%)) !important;
+  border-color: color-mix(in srgb, var(--asteria-accent) 72%, white 28%) !important;
+  color: #001014 !important;
+  box-shadow: 0 0 calc(7px + 9px * var(--asteria-glow-intensity)) rgba(var(--asteria-accent-rgb), .22), inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+
+.toplink.active,
+.side-main.active,
+.clean-nav button.cat.active,
+.codex-tree-category.active,
+.workspace-tabs button.active,
+.phase3-tabs button.active,
+.phase4-tabs button.active {
+  background:
+    linear-gradient(180deg, rgba(var(--asteria-accent-rgb),.18), rgba(0,8,10,.74)) !important;
+  border-color: var(--asteria-accent) !important;
+  color: #fff8d6 !important;
+}
+
+body,
+body .view,
+body .card,
+body .panel,
+body .settings-panel,
+body .clean-compendium-shell,
+body .clean-display,
+body .clean-nav,
+body .asteria-workspace-shell,
+body .phase3-shell,
+body .phase4-shell,
+body p,
+body span,
+body small,
+body label,
+body li,
+body dt,
+body dd,
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body button,
+body input,
+body select,
+body textarea {
+  color: var(--text) !important;
+}
+
+@media (max-width: 900px) {
+  body {
+    background-size:
+      auto,
+      auto,
+      auto,
+      100vw auto,
+      cover !important;
+    background-position:
+      center top,
+      center top,
+      center top,
+      center top,
+      center center !important;
+  }
+
+  body::before {
+    -webkit-mask-size: 100vw auto !important;
+    mask-size: 100vw auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
   }
 }

@@ -118,7 +118,7 @@ const workspaceSections = {
 
 const tabTemplates = {
   race: ['Overview','Racial Sheet','Lore','Culture','Historical Figures','Settlements','Relations','Traits & Biology','Gallery','GM Notes'],
-  class: ['Overview','Class Information','Mechanics','Progression','Talent Trees','Pathways','Equipment','Lore','Gallery','GM Notes'],
+  class: ['Overview','Talent Tree','Lore','Gallery','GM Notes'],
   creature: ['Overview','Stat Sheet','Lore','Habitat','Behaviour','Combat','Loot & Drops','Soul Information','Variants','Encounter Use','Gallery','GM Notes'],
   item: ['Overview','Properties','Crafting','Lore','Sources','Gallery','GM Notes'],
   spell: ['Overview','Casting','Scaling','Lore','Sources','GM Notes'],

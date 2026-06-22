@@ -81,6 +81,7 @@
   let state = loadState();
   let activeSystem = 'characterCreator';
   let activeTab = '';
+  let forgeMode = 'hub';
   let forgeDetailEntry = null;
   let originalOpenDashboard = null;
   let originalWorkspaceEntries = null;
@@ -99,6 +100,27 @@
   function isGMMode(){
     const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
     return document.body?.dataset?.role === 'gm' || session.role === 'gm' || byId('gm')?.classList.contains('show');
+  }
+  function currentAccountKeys(){
+    const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+    const keys = [session.uid, session.account, session.user, session.email].filter(Boolean);
+    return Array.from(new Set(keys.length ? keys : ['local-player']));
+  }
+  function accountCharacterIds(){
+    window.loadAccountState?.();
+    const keys = currentAccountKeys();
+    const ids = new Set();
+    keys.forEach(key => array(window.accountUsers?.[key]?.characters).forEach(id => {
+      if(window.chars?.[id]) ids.add(id);
+    }));
+    Object.entries(window.chars || {}).forEach(([id, character]) => {
+      if(keys.includes(character?.ownerUid) || keys.includes(character?.accountId) || keys.includes(character?.uid)) ids.add(id);
+    });
+    if(window.session?.character && window.chars?.[window.session.character]) {
+      const character = window.chars[window.session.character];
+      if(ids.has(window.session.character) || keys.includes(character?.ownerUid) || keys.includes(character?.accountId) || keys.includes(character?.uid)) ids.add(window.session.character);
+    }
+    return Array.from(ids);
   }
   function activeCampaign(){
     const index = Number(window.activeCampaign || 0);
@@ -347,6 +369,35 @@
     return entryBySlug('class', draft.classSlug)?.title || draft.classSlug || '';
   }
 
+  function classKeyFromEntry(entry, fallbackTitle = ''){
+    const trees = window.asteriaClassTalentTrees || window.AsteriaProgressionUI?.asteriaClassTalentTrees || {};
+    const raw = [entry?.slug, entry?.metadata?.slug, entry?.title, entry?.name, fallbackTitle].filter(Boolean);
+    const candidates = [];
+    raw.forEach(value => {
+      const key = slug(value);
+      if(key){
+        candidates.push(key);
+        candidates.push(key.replace(/-/g, ''));
+      }
+    });
+    return candidates.find(key => trees[key]) || candidates[0] || '';
+  }
+
+  function classInfoFromEntry(entry, title = '', key = ''){
+    return {
+      slug:entry?.slug || slug(title),
+      key,
+      title:title || entry?.title || '',
+      category:metadataValue(entry, ['classCategory','class_category','category']) || entry?.category || array(entry?.categoryPath)[0] || '',
+      role:metadataValue(entry, ['role']) || '',
+      primaryStat:metadataValue(entry, ['primaryStat','primary_stat']) || '',
+      secondaryStat:metadataValue(entry, ['secondaryStat','secondary_stat']) || '',
+      combatStyle:metadataValue(entry, ['combatStyle','combat_style']) || '',
+      magicType:metadataValue(entry, ['magicType','magic_type']) || '',
+      difficulty:metadataValue(entry, ['difficulty']) || ''
+    };
+  }
+
   function raceNameFromDraft(draft){
     return entryBySlug('race', draft.raceSlug)?.title || draft.raceSlug || '';
   }
@@ -460,17 +511,19 @@
   function render(){
     const system = systemConfig();
     if(!activeTab || !system.tabs.includes(activeTab)) activeTab = system.tabs[0];
-    if(activeSystem === 'characterCreator') draft().activeTab = activeTab;
+    if(activeSystem === 'characterCreator' && forgeMode !== 'hub') draft().activeTab = activeTab;
     const root = shell();
     if(activeSystem === 'characterCreator'){
       if(!FORGE_TABS.includes(activeTab)) activeTab = draft().activeTab || FORGE_TABS[0];
-      draft().activeTab = activeTab;
+      if(forgeMode !== 'hub') draft().activeTab = activeTab;
       root.classList.add('phase3-forge-shell');
-      root.innerHTML = renderCharacterCreator();
+      root.classList.toggle('phase3-forge-hub-shell', forgeMode === 'hub');
+      root.innerHTML = forgeMode === 'hub' ? renderCharacterForgeHub() : renderCharacterCreator();
       bind();
       return;
     }
     root.classList.remove('phase3-forge-shell');
+    root.classList.remove('phase3-forge-hub-shell');
     root.innerHTML = `
       <header class="phase3-header">
         <div>
@@ -569,6 +622,77 @@
 
   function renderStepPills(){
     return `<div class="phase3-stepper">${FORGE_TABS.map((step, index) => `<button type="button" class="${step === activeTab ? 'active' : ''} ${forgeTabComplete(step) ? 'done' : ''}" data-phase3-step="${index}"><b>${index + 1}</b><span>${esc(step)}</span></button>`).join('')}</div>`;
+  }
+
+  function characterImage(character){
+    const schema = character?.character || {};
+    const candidates = [
+      character?.portrait,
+      character?.image,
+      character?.avatar,
+      character?.appearance?.portrait,
+      schema?.appearance?.portrait,
+      schema?.image,
+      schema?.race?.metadata?.imagePath,
+      schema?.race?.metadata?.image
+    ].filter(Boolean);
+    return candidates[0] || '';
+  }
+
+  function characterCampaignName(character){
+    return character?.campaign || character?.character?.campaign?.name || activeCampaign()?.name || 'Unassigned Campaign';
+  }
+
+  function renderCharacterForgeCard(id){
+    const character = window.chars?.[id];
+    if(!character) return '';
+    const dashboard = window.ensureCharacterDashboardLink?.(id) || character.dashboard || {};
+    const image = characterImage(character);
+    const title = character.name || 'Unnamed Character';
+    return `
+      <article class="forge-character-card" tabindex="0" role="button" data-forge-character-id="${esc(id)}" data-dashboard-id="${esc(dashboard.id || '')}">
+        <div class="forge-character-image">
+          ${image ? `<img src="${esc(image)}" alt="${esc(title)} portrait">` : `<span>${esc(character.initial || title.charAt(0).toUpperCase() || '?')}</span>`}
+        </div>
+        <div class="forge-character-card-body">
+          <p class="eyebrow">${esc(characterCampaignName(character))}</p>
+          <h3>${esc(title)}</h3>
+          <p>${esc(character.race || 'Unselected Race')} / ${esc(character.klass || 'Unselected Class')}</p>
+          <small>Double-click to open Character Dashboard</small>
+        </div>
+        <button class="forge-card-delete" type="button" data-forge-delete-character="${esc(id)}" aria-label="Delete ${esc(title)}">Delete</button>
+      </article>
+    `;
+  }
+
+  function renderCharacterForgeHub(){
+    const ids = accountCharacterIds();
+    return `
+      <section class="character-forge-hub">
+        <article class="phase3-card phase3-forge-intro character-forge-hub-head">
+          <div class="phase3-panel-head">
+            <div>
+              <p class="eyebrow">Character Forge</p>
+              <h2>Your Characters</h2>
+              <p>Select a character card, or double-click it to open that character's dashboard. Forge New Character starts a fresh guided build.</p>
+            </div>
+            <span>${ids.length} character${ids.length === 1 ? '' : 's'}</span>
+          </div>
+        </article>
+        <section class="forge-character-gallery" aria-label="Character Forge character gallery">
+          ${ids.map(renderCharacterForgeCard).join('')}
+          <article class="forge-character-card forge-new-character-card" tabindex="0" role="button" data-forge-new-character>
+            <div class="forge-character-image forge-new-symbol"><span>+</span></div>
+            <div class="forge-character-card-body">
+              <p class="eyebrow">New Build</p>
+              <h3>Forge New Character</h3>
+              <p>Start the guided Race, Class, Appearance, Origin, Characteristics, Magic, Skills, Equipment, and Review flow.</p>
+              <small>Click to begin</small>
+            </div>
+          </article>
+        </section>
+      </section>
+    `;
   }
 
   function renderCharacterCreator(){
@@ -1399,6 +1523,20 @@
   function handleClick(event){
     const target = event.target.closest('button,article,label');
     if(!target) return;
+    if(target.dataset.forgeDeleteCharacter){
+      deleteForgedCharacter(target.dataset.forgeDeleteCharacter);
+      return;
+    }
+    if(target.dataset.forgeNewCharacter !== undefined){
+      startNewCharacterForge();
+      return;
+    }
+    if(target.dataset.forgeCharacterId){
+      qsa('.forge-character-card').forEach(card => card.classList.toggle('selected', card.dataset.forgeCharacterId === target.dataset.forgeCharacterId));
+      window.selected = target.dataset.forgeCharacterId;
+      window.toast?.('Character selected. Double-click the card to open the dashboard.');
+      return;
+    }
     if(target.dataset.phase3ForgeCategory){
       const domain = target.dataset.phase3ForgeCategory;
       draft().forgeCategories[domain] = decodePath(target.dataset.phase3ForgePath);
@@ -1470,6 +1608,14 @@
   }
 
   function handleDoubleClick(event){
+    if(event.target.closest('[data-forge-delete-character]')) return;
+    const characterCard = event.target.closest('[data-forge-character-id]');
+    if(characterCard){
+      event.preventDefault();
+      event.stopPropagation();
+      openCharacterDashboardFromForge(characterCard.dataset.forgeCharacterId);
+      return;
+    }
     const category = event.target.closest('[data-phase3-forge-category][data-phase3-forge-path]');
     if(category){
       event.preventDefault();
@@ -1594,9 +1740,20 @@
     const originEntry = entryBySlug('origin', d.originSlug) || FALLBACK_BACKGROUNDS.find(bg => bg.slug === d.originSlug || bg.slug === d.backgroundSlug);
     const race = raceEntry?.title || raceNameFromDraft(d) || 'Unselected';
     const klass = classEntry?.title || classNameFromDraft(d) || 'Unselected';
-    const talents = startingTalentsForClass(klass).map(entry => entry.title);
+    const startingTalentNames = startingTalentsForClass(klass).map(entry => entry.title);
+    const talentClassKey = classKeyFromEntry(classEntry, klass);
+    const talentClasses = talentClassKey ? [talentClassKey] : [];
+    const classInfo = classInfoFromEntry(classEntry, klass, talentClassKey);
     const characteristics = normalizedCharacteristics(d.characteristics);
     const created = now();
+    const dashboard = {
+      id:'dashboard-'+id,
+      characterId:id,
+      route:'player',
+      title:name+' Dashboard',
+      created,
+      updated:created
+    };
     const selectedPack = EQUIPMENT_PACKS.find(pack => pack.slug === d.equipmentPackSlug);
     const inventory = d.equipment.map(slugValue => ({ id:slugValue, name:entryBySlug('item', slugValue)?.title || titleCase(slugValue) }));
     const characterSchema = {
@@ -1610,7 +1767,9 @@
       class:{
         slug:d.classSlug,
         title:klass,
-        metadata:classEntry?.metadata || {}
+        key:talentClassKey,
+        metadata:classEntry?.metadata || {},
+        info:classInfo
       },
       appearance:Object.assign({}, d.appearance),
       origin:{
@@ -1627,6 +1786,7 @@
       },
       family_tree:Object.assign({}, d.family_tree),
       backstory:Object.assign({}, d.origin),
+      dashboard,
       created,
       updated:created
     };
@@ -1637,6 +1797,8 @@
       name,
       race,
       klass,
+      classSlug:d.classSlug,
+      classInfo,
       age:d.details.age || '',
       pronouns:d.details.pronouns || '',
       origin:d.originSlug || d.backgroundSlug || '',
@@ -1653,7 +1815,10 @@
       session:'No active session',
       characteristics,
       skills:Object.fromEntries(d.skills.map(skill => [skill, 1])),
-      talents,
+      talents:Object.fromEntries(startingTalentNames.map(name => [name, { rank:1, source:'Character Forge' }])),
+      classTalents:startingTalentNames.slice(),
+      talentClass:talentClassKey,
+      talentClasses,
       spells:[],
       magicTypes:d.magicTypes.slice(),
       inventory,
@@ -1662,22 +1827,34 @@
       appearance:Object.assign({}, d.appearance),
       family_tree:Object.assign({}, d.family_tree),
       backstory:Object.assign({}, d.origin),
+      dashboard,
       character:characterSchema,
       professionSlots:['No Profession Learned','No Profession Learned','No Profession Learned']
     };
+    window.AsteriaCharacterDashboards = window.AsteriaCharacterDashboards || {};
+    window.AsteriaCharacterDashboards[id] = window.ensureCharacterDashboardLink?.(id) || dashboard;
+    characterSchema.dashboard = window.chars[id].dashboard || dashboard;
     const accountKey = currentUserKey();
     window.accountUsers = window.accountUsers || {};
     window.accountUsers[accountKey] = window.accountUsers[accountKey] || { characters:[] };
     window.accountUsers[accountKey].characters = Array.from(new Set([...(window.accountUsers[accountKey].characters || []), id]));
     window.session = window.session || {};
+    if(!window.session.account && !window.session.uid && !window.session.user) window.session.account = accountKey;
     window.session.character = id;
     window.selected = id;
-    state.characters[id] = { id, createdAt:created, character:characterSchema, build:d };
+    window.saveAccountState?.();
+    state.characters[id] = { id, createdAt:created, dashboard:characterSchema.dashboard, character:characterSchema, build:d };
     state.drafts.characterCreator = defaultState().drafts.characterCreator;
     saveState('phase3a-character-forged');
     window.AsteriaFirebase?.saveCharacter?.(id, window.chars[id]);
+    window.ensureProgressionData?.();
+    window.ensureTalentData?.(id);
+    window.renderPlayerHome?.();
+    window.renderUnlockedTalentSummary?.(id);
+    window.renderTalentTreeUI?.(id);
+    if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
     window.toast?.(`Character saved: ${name}`);
-    openSystem('characterSheet');
+    openCharacterForgeHub();
   }
 
   function normalizedCharacteristics(characteristics){
@@ -1807,8 +1984,82 @@
     render();
   }
 
-  function openSystem(id = 'characterCreator'){
+  function deleteForgedCharacter(id){
+    const character = window.chars?.[id];
+    if(!character) {
+      window.toast?.('Character not found.');
+      return false;
+    }
+    const name = character.name || 'this character';
+    if(!window.confirm?.(`Delete ${name}? This removes the local character card and dashboard link.`)) return false;
+    const keys = currentAccountKeys();
+    window.accountUsers = window.accountUsers || {};
+    Object.values(window.accountUsers).forEach(record => {
+      if(record?.characters) record.characters = record.characters.filter(characterId => characterId !== id);
+    });
+    (window.campaigns || []).forEach(campaign => {
+      campaign.party = array(campaign.party).filter(characterId => characterId !== id);
+      if(campaign.characters) delete campaign.characters[id];
+      if(campaign.playerCharacterLinks) delete campaign.playerCharacterLinks[id];
+      Object.values(campaign.players || {}).forEach(player => {
+        if(player?.characterIds) player.characterIds = player.characterIds.filter(characterId => characterId !== id);
+      });
+    });
+    if(window.AsteriaCharacterDashboards) delete window.AsteriaCharacterDashboards[id];
+    delete window.chars[id];
+    delete state.characters[id];
+    if(window.session?.character === id) window.session.character = accountCharacterIds().find(characterId => window.chars?.[characterId]) || null;
+    if(window.selected === id) window.selected = window.session?.character || Object.keys(window.chars || {})[0] || null;
+    window.saveAccountState?.();
+    window.saveAsteriaState?.();
+    saveState('character-forge-delete');
+    window.toast?.(`${name} deleted.`);
+    openCharacterForgeHub();
+    return true;
+  }
+
+  function openCharacterDashboardFromForge(id){
+    if(!window.chars?.[id]) {
+      window.toast?.('Character not found.');
+      return false;
+    }
+    window.ensureCharacterDashboardLink?.(id);
+    window.session = window.session || {};
+    window.session.character = id;
+    window.selected = id;
+    if(typeof window.forceOpenPlayerDashboard === 'function') return window.forceOpenPlayerDashboard(id);
+    document.querySelectorAll('.view').forEach(view => view.classList.remove('show'));
+    byId('workspace')?.classList.remove('show');
+    byId('player')?.classList.add('show');
+    window.loadPlayer?.(id);
+    window.saveAsteriaState?.();
+    return true;
+  }
+
+  function openCharacterForgeHub(){
+    activeSystem = 'characterCreator';
+    forgeMode = 'hub';
+    activeTab = draft().activeTab || 'Race';
+    render();
+    window.scrollTo?.({ top:0, left:0, behavior:'auto' });
+    return true;
+  }
+
+  function startNewCharacterForge(){
+    state.drafts.characterCreator = defaultState().drafts.characterCreator;
+    activeSystem = 'characterCreator';
+    forgeMode = 'create';
+    activeTab = 'Race';
+    draft().activeTab = activeTab;
+    saveState('character-forge-new-draft');
+    render();
+    window.scrollTo?.({ top:0, left:0, behavior:'auto' });
+    return true;
+  }
+
+  function openSystem(id = 'characterCreator', mode = ''){
     activeSystem = SYSTEMS.some(system => system.id === id) ? id : 'characterCreator';
+    forgeMode = activeSystem === 'characterCreator' ? (mode === 'create' ? 'create' : 'hub') : 'system';
     activeTab = systemConfig(activeSystem).tabs[0];
     render();
     window.scrollTo?.({ top:0, left:0, behavior:'auto' });
@@ -1866,8 +2117,8 @@
       save:saveState,
       entries:gameplayEntries,
       openSystem,
-      openCharacterForge:() => openSystem('characterCreator'),
-      openCharacterCreator:() => openSystem('characterCreator'),
+      openCharacterForge:openCharacterForgeHub,
+      openCharacterCreator:startNewCharacterForge,
       openCharacterSheet:() => openSystem('characterSheet'),
       openEncounterBuilder:() => openSystem('encounterBuilder'),
       openLootGenerator:() => openSystem('lootGenerator'),
@@ -1875,10 +2126,14 @@
       appearanceOptionsForRace,
       recalcEncounter,
       generateLoot,
-      saveCharacterFromDraft
+      saveCharacterFromDraft,
+      openCharacterForgeHub,
+      startNewCharacterForge,
+      openCharacterDashboard:openCharacterDashboardFromForge
     };
     function routedDashboard(mode, ...args){
-      if(mode === 'createCharacter') return openSystem('characterCreator');
+      if(mode === 'createCharacter') return startNewCharacterForge();
+      if(mode === 'characters') return openCharacterForgeHub();
       if(mode === 'characterSheet') return openSystem('characterSheet');
       return originalOpenDashboard?.(mode, ...args);
     }
@@ -1890,14 +2145,14 @@
     window.AsteriaWorkspace = Object.assign({}, window.AsteriaWorkspace || {}, {
       gameplay:api,
       openGameplaySystem:openSystem,
-      openCharacterForge:api.openCharacterForge,
+      openCharacterForge:api.openCharacterForgeHub,
       openCharacterCreator:api.openCharacterCreator,
       openEncounterBuilder:api.openEncounterBuilder,
       openLootGenerator:api.openLootGenerator,
       openDashboard:routedDashboard,
       entries:entriesWithGameplay
     });
-    window.toggleCharacterCreator = function(){ return openSystem('characterCreator'); };
+    window.toggleCharacterCreator = function(){ return openCharacterForgeHub(); };
   }
 
   function boot(){

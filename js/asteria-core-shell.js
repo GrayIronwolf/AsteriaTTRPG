@@ -16,7 +16,7 @@
   }
   function accountKey(){
     const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
-    return session.uid || session.account || session.user || '';
+    return session.uid || session.account || session.user || session.email || '';
   }
   function firstOwnedCharacter(){
     const key = accountKey();
@@ -158,6 +158,17 @@
     window.setView?.('campaigns');
   }
 
+  function openCampaignHub(){
+    if(!isAccountSignedIn()){
+      window.setView?.('loginPage');
+      toast('Please log in first.');
+      return;
+    }
+    window.AsteriaWorkspace?.openCampaignHub?.() ||
+      window.AsteriaWorkspace?.openDashboard?.('campaigns') ||
+      openCampaignManager();
+  }
+
   function publishPublicAPIs(){
     const homeRoute = window.asteriaHardHome || goHome;
     window.goHome = homeRoute;
@@ -177,6 +188,7 @@
       openPlayerDashboard,
       openGMDashboard,
       openCampaignManager,
+      openCampaignHub,
       current(){
         return document.querySelector('.view.show')?.id || null;
       }
@@ -246,6 +258,33 @@
         ev.stopImmediatePropagation();
         if(window.AsteriaAuthBridge?.isLoggedIn?.()) window.logout?.();
         else window.setView?.('accountCreate');
+      }, true);
+    }
+
+    const forge = byId('characterForgeTop');
+    if(forge && !forge.dataset.shellBound){
+      forge.dataset.shellBound = '1';
+      forge.addEventListener('click', ev => {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        if(!isAccountSignedIn()){
+          window.setView?.('loginPage');
+          toast('Please log in first.');
+          return;
+        }
+        window.AsteriaGameplay?.openCharacterForgeHub?.() ||
+          window.AsteriaWorkspace?.openCharacterForge?.() ||
+          window.AsteriaWorkspace?.openDashboard?.('characters');
+      }, true);
+    }
+
+    const campaigns = byId('campaignsTop');
+    if(campaigns && !campaigns.dataset.shellBound){
+      campaigns.dataset.shellBound = '1';
+      campaigns.addEventListener('click', ev => {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        openCampaignHub();
       }, true);
     }
 

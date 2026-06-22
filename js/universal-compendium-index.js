@@ -2,7 +2,7 @@
 (function(){
   window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX = {
   "version": "asteria-phase-2-content-database-expansion",
-  "generatedAt": "2026-05-29T14:54:31.719Z",
+  "generatedAt": "2026-05-31T15:01:46.590Z",
   "domains": {
     "race": "Race Compendium",
     "class": "Class Compendium",
@@ -66,12 +66,7 @@
       "routeBase": "/compendium/class",
       "tabs": [
         "Overview",
-        "Class Information",
-        "Mechanics",
-        "Progression",
-        "Talent Trees",
-        "Pathways",
-        "Equipment",
+        "Talent Tree",
         "Lore",
         "Gallery",
         "GM Notes"
@@ -686,12 +681,7 @@
     ],
     "class": [
       "Overview",
-      "Class Information",
-      "Mechanics",
-      "Progression",
-      "Talent Trees",
-      "Pathways",
-      "Equipment",
+      "Talent Tree",
       "Lore",
       "Gallery",
       "GM Notes"
@@ -827,12 +817,7 @@
       },
       "tabs": [
         "Overview",
-        "Class Information",
-        "Mechanics",
-        "Progression",
-        "Talent Trees",
-        "Pathways",
-        "Equipment",
+        "Talent Tree",
         "Lore",
         "Gallery",
         "GM Notes"
@@ -894,12 +879,7 @@
       },
       "tabs": [
         "Overview",
-        "Class Information",
-        "Mechanics",
-        "Progression",
-        "Talent Trees",
-        "Pathways",
-        "Equipment",
+        "Talent Tree",
         "Lore",
         "Gallery",
         "GM Notes"
