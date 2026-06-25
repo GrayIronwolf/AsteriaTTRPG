@@ -9,10 +9,59 @@
   const FORGE_TABS = ['Race','Class','Appearance','Origin','Characteristics','Magic','Skills','Equipment','Review'];
   const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS;
   const FORGE_STAT_LABELS = { strength:'STR', dexterity:'DEX', agility:'AGI', constitution:'CON', endurance:'END', intelligence:'INT', wisdom:'WIS', charisma:'CHA', luck:'LCK' };
-  const MAGIC_TYPE_GROUPS = [
-    { label:'Basic Elements', types:['Air Magic','Dark Magic','Death Magic','Earth Magic','Fire Magic','Life Magic','Light Magic','Water Magic'] },
-    { label:'Higher Elements', types:['Abyssal Magic','Blood Magic','Celestial Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Infernal Magic','Space Magic','Spirit Magic','Time Magic'] }
+  const CHARACTERISTIC_TIER_RULES = [
+    { label:'Tier 0', min:0, max:19, bonus:0 },
+    { label:'Tier I', min:20, max:39, bonus:1 },
+    { label:'Tier II', min:40, max:59, bonus:2 },
+    { label:'Tier III', min:60, max:79, bonus:3 },
+    { label:'Tier IV', min:80, max:99, bonus:4 },
+    { label:'Tier V', min:100, max:100, bonus:5, openEnded:true }
   ];
+  const CHARACTERISTIC_KEY_ALIASES = {
+    str:'strength', strength:'strength',
+    dex:'dexterity', dexterity:'dexterity',
+    agi:'agility', agility:'agility',
+    con:'constitution', constitution:'constitution',
+    end:'endurance', endurance:'endurance',
+    int:'intelligence', intelligence:'intelligence',
+    wis:'wisdom', wisdom:'wisdom',
+    cha:'charisma', charisma:'charisma',
+    lck:'luck', luck:'luck'
+  };
+  const CARD_COLOUR_OPTIONS = ['#26d9ff','#9b5cff','#d94cff','#2fe68a','#d4a24a','#ef4444'];
+  const MAX_CHARACTER_CLASSES = 2;
+  const MAGIC_TYPE_GROUPS = [
+    { label:'Basic Elements', types:['Air Magic','Earth Magic','Water Magic','Fire Magic','Life Magic','Death Magic','Light Magic','Dark Magic'] },
+    { label:'Higher Elements', types:['Celestial Magic','Infernal Magic','Blood Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Space Magic','Spirit Magic','Time Magic','Abyssal Magic'] }
+  ];
+  function magicLibrary(){
+    return window.ASTERIA_MAGIC_LIBRARY || null;
+  }
+  function magicGroups(){
+    const library = magicLibrary();
+    if(library?.groups?.length){
+      return library.groups.map(group => ({
+        label:group.label,
+        elements:group.elements.map(element => ({ ...element, type:element.name }))
+      }));
+    }
+    return MAGIC_TYPE_GROUPS.map(group => ({
+      label:group.label,
+      elements:group.types.map(type => ({
+        type,
+        name:type,
+        label:type.replace(/\s+Magic$/i, ''),
+        slug:slug(type),
+        color:'var(--asteria-accent,#26d9ff)',
+        desc:'Magic information coming soon.'
+      }))
+    }));
+  }
+  function magicInfoByName(name){
+    const library = magicLibrary();
+    const key = library?.slugFor?.(name);
+    return (key && library.bySlug?.[key]) || magicGroups().flatMap(group => group.elements).find(element => element.name === name || element.type === name) || { name, label:String(name || '').replace(/\s+Magic$/i, ''), color:'#26d9ff', desc:'Magic information coming soon.' };
+  }
   const CREATOR_STEPS = FORGE_TABS;
   const SYSTEMS = [
     { id:'characterCreator', label:'Character Forge', tag:'Player', tabs:FORGE_TABS },
@@ -140,11 +189,15 @@
       drafts:{
         characterCreator:{
           activeTab:'Race',
+          editCharacterId:'',
+          lockedClassSlug:'',
           raceSlug:'',
           classSlug:'',
+          extraClassSlugs:[],
           originSlug:'',
           backgroundSlug:'',
           equipmentPackSlug:'',
+          cardColour:CARD_COLOUR_OPTIONS[0],
           attributes:Object.fromEntries(ATTRIBUTE_KEYS.map(key => [key, 10])),
           characteristics:Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])),
           magicTypes:[],
@@ -284,6 +337,123 @@
     });
   }
 
+  function characteristicKey(value){
+    return CHARACTERISTIC_KEY_ALIASES[String(value || '').trim().toLowerCase().replace(/[^a-z]/g, '')] || '';
+  }
+
+  function normalizeCharacteristicMap(source, fallback = 0){
+    const out = Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, fallback]));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = characteristicKey(key);
+      if(normalized) out[normalized] = Number(value || 0);
+    });
+    return out;
+  }
+
+  function tierInfoForValue(value){
+    const numeric = Number(value || 0);
+    return CHARACTERISTIC_TIER_RULES.find(rule => numeric >= rule.min && (rule.openEnded || numeric <= rule.max)) || CHARACTERISTIC_TIER_RULES[0];
+  }
+
+  function tierCapFromValue(value){
+    if(value && typeof value === 'object'){
+      const maxScore = Number(value.maxScore ?? value.max ?? value.score ?? 100);
+      return { label:value.label || tierInfoForValue(maxScore).label, maxScore:Number.isFinite(maxScore) ? maxScore : 100 };
+    }
+    if(typeof value === 'number') return { label:tierInfoForValue(value).label, maxScore:value };
+    const text = String(value || '').trim();
+    const lowerText = text.toLowerCase();
+    if(!text) return { label:'Tier V (100+)', maxScore:100 };
+    const numeric = Number(text.match(/\d+/)?.[0]);
+    if(Number.isFinite(numeric) && numeric > 5) return { label:tierInfoForValue(numeric).label, maxScore:numeric };
+    if(lowerText.includes('tier v') || lowerText === 'v' || lowerText.includes('t5')) return { label:'Tier V (100+)', maxScore:100 };
+    if(lowerText.includes('tier iv') || lowerText === 'iv' || lowerText.includes('t4')) return { label:'Tier IV (80-99)', maxScore:99 };
+    if(lowerText.includes('tier iii') || lowerText === 'iii' || lowerText.includes('t3')) return { label:'Tier III (60-79)', maxScore:79 };
+    if(lowerText.includes('tier ii') || lowerText === 'ii' || lowerText.includes('t2')) return { label:'Tier II (40-59)', maxScore:59 };
+    if(lowerText.includes('tier i') || lowerText === 'i' || lowerText.includes('t1')) return { label:'Tier I (20-39)', maxScore:39 };
+    if(lowerText.includes('tier 0') || lowerText.includes('t0')) return { label:'Tier 0 (0-19)', maxScore:19 };
+    return { label:text, maxScore:100 };
+  }
+
+  function normalizeCharacteristicCaps(source){
+    const out = Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, tierCapFromValue('Tier V')]));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = characteristicKey(key);
+      if(normalized) out[normalized] = tierCapFromValue(value);
+    });
+    return out;
+  }
+
+  function normalizeCharacteristicTextMap(source){
+    const out = Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 'Manual']));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = characteristicKey(key);
+      if(normalized) out[normalized] = String(value || 'Manual');
+    });
+    return out;
+  }
+
+  function raceCharacteristicRulesFor(entry){
+    const metadata = entry?.metadata || {};
+    const rollModifiers = metadata.rollModifiers || metadata.roll_modifiers || metadata.characteristicModifiers || metadata.characteristic_modifiers || entry?.rollModifiers || entry?.characteristicModifiers || {};
+    const tierCaps = metadata.tierCaps || metadata.tier_caps || metadata.characteristicTierCaps || metadata.characteristic_tier_caps || entry?.tierCaps || entry?.characteristicTierCaps || {};
+    const statRolls = metadata.statRolls || metadata.stat_rolls || metadata.characteristicStatRolls || metadata.characteristic_stat_rolls || entry?.statRolls || entry?.characteristicStatRolls || {};
+    return {
+      race:entry?.title || entry?.name || 'Unselected Race',
+      rollFormula:metadata.characteristicRolls || metadata.characteristic_rolls || entry?.characteristicRolls || entry?.characteristic_rolls || 'Manual roll, then apply race +/- modifiers',
+      modifiers:normalizeCharacteristicMap(rollModifiers, 0),
+      statRolls:normalizeCharacteristicTextMap(statRolls),
+      tierCaps:normalizeCharacteristicCaps(tierCaps)
+    };
+  }
+
+  function raceInfoPayloadForEntry(entry){
+    const metadata = entry?.metadata || {};
+    const pick = (...keys) => {
+      for(const key of keys){
+        const value = metadata[key] ?? entry?.[key];
+        if(value !== undefined && value !== null && value !== '') return value;
+      }
+      return '';
+    };
+    return {
+      title:entry?.title || entry?.name || '',
+      featuresMarkdown:pick('racialFeaturesMarkdown','racial_features_markdown'),
+      traitsMarkdown:pick('racialTraitsMarkdown','racial_traits_markdown'),
+      movementMarkdown:pick('racialMovementMarkdown','racial_movement_markdown'),
+      bonusesMarkdown:pick('racialBonusesMarkdown','racial_bonuses_markdown','racialDrawbacksMarkdown','racial_drawbacks_markdown'),
+      loreMarkdown:pick('loreMarkdown','lore_markdown'),
+      overviewMarkdown:pick('overviewMarkdown','overview_markdown'),
+      traits:array(pick('racialTraits','racial_traits')),
+      characteristicRows:array(pick('characteristicRows','characteristic_rows')),
+      statRolls:pick('statRolls','stat_rolls','characteristicStatRolls','characteristic_stat_rolls') || {},
+      rollModifiers:pick('rollModifiers','roll_modifiers','characteristicModifiers','characteristic_modifiers') || {},
+      tierCaps:pick('tierCaps','tier_caps','characteristicTierCaps','characteristic_tier_caps') || {},
+      movement:pick('movement'),
+      senses:pick('senses'),
+      languages:pick('languages'),
+      magicAffinity:pick('magicAffinity','magic_affinity')
+    };
+  }
+
+  function finalForgeCharacteristics(d = draft()){
+    const base = normalizedCharacteristics(d.characteristics);
+    const rules = raceCharacteristicRulesFor(entryBySlug('race', d.raceSlug));
+    return Object.fromEntries(FORGE_CHARACTERISTICS.map(key => {
+      const cap = Number(rules.tierCaps[key]?.maxScore ?? 100);
+      const modified = Number(base[key] || 0) + Number(rules.modifiers[key] || 0);
+      return [key, Math.max(0, Math.min(cap, modified))];
+    }));
+  }
+
+  function signed(value){
+    const numeric = Number(value || 0);
+    return numeric > 0 ? `+${numeric}` : String(numeric);
+  }
+
   function compendiumEntriesForDomain(domain){
     if(domain === 'race'){
       const list = typeof window.AsteriaRaceCompendium?.entries === 'function' ? window.AsteriaRaceCompendium.entries() : [];
@@ -308,14 +478,7 @@
     if(domain === 'race'){
       let entries = compendiumEntriesForDomain('race').filter(isPublicPlayerEntry);
       if(!entries.length) entries = universal;
-      const playableKeys = playableSlugSet('race');
-      if(playableKeys.size){
-        entries = entries.filter(entry => playableKeys.has(entry.slug) || playableKeys.has(slug(entry.title || entry.name)));
-      }else{
-        const explicitPlayable = entries.filter(isPlayableEntry);
-        entries = explicitPlayable.length ? explicitPlayable : entries;
-      }
-      return entries.sort((a,b) => String(a.title).localeCompare(String(b.title)));
+      return entries.map(entry => Object.assign({}, entry, { playable:true, availability:'playable' })).sort((a,b) => String(a.title).localeCompare(String(b.title)));
     }
     if(domain === 'class'){
       let entries = compendiumEntriesForDomain('class').filter(isPublicPlayerEntry);
@@ -363,6 +526,35 @@
     const key = slug(slugValue);
     const source = domain === 'race' || domain === 'class' ? forgeDatabaseEntries(domain) : databaseEntries(domain);
     return source.find(entry => entry.slug === key || slug(entry.title || entry.name) === key) || null;
+  }
+
+  function classEntryFromValue(value){
+    const key = slug(value);
+    if(!key) return null;
+    return forgeDatabaseEntries('class').find(entry => entry.slug === key || slug(entry.title || entry.name) === key) || null;
+  }
+
+  function classSlugFromValue(value){
+    return classEntryFromValue(value)?.slug || slug(value);
+  }
+
+  function classSlugsFromDraft(d){
+    const primary = classSlugFromValue(d.classSlug || d.lockedClassSlug);
+    const extra = array(d.extraClassSlugs).map(classSlugFromValue).filter(Boolean).filter(value => value !== primary);
+    return Array.from(new Set([primary, ...extra].filter(Boolean))).slice(0, MAX_CHARACTER_CLASSES);
+  }
+
+  function classEntriesFromDraft(d){
+    return classSlugsFromDraft(d).map(slugValue => entryBySlug('class', slugValue)).filter(Boolean);
+  }
+
+  function classDisplayNameFromDraft(d){
+    const names = classEntriesFromDraft(d).map(entry => entry.title);
+    return names.length ? names.join(' / ') : classNameFromDraft(d);
+  }
+
+  function safeCardColour(value){
+    return CARD_COLOUR_OPTIONS.includes(String(value || '')) ? String(value) : CARD_COLOUR_OPTIONS[0];
   }
 
   function classNameFromDraft(draft){
@@ -611,6 +803,10 @@
     d.forgeSearch = Object.assign({ race:'', class:'' }, d.forgeSearch || {});
     d.skills = array(d.skills);
     d.equipment = array(d.equipment);
+    d.extraClassSlugs = array(d.extraClassSlugs).slice(0, Math.max(0, MAX_CHARACTER_CLASSES - 1));
+    d.editCharacterId = d.editCharacterId || '';
+    d.lockedClassSlug = d.lockedClassSlug || '';
+    d.cardColour = safeCardColour(d.cardColour);
     d.appearance = d.appearance || {};
     d.origin = Object.assign(defaultState().drafts.characterCreator.origin, d.origin || {});
     d.family_tree = Object.assign(defaultState().drafts.characterCreator.family_tree, d.family_tree || {});
@@ -649,8 +845,9 @@
     const dashboard = window.ensureCharacterDashboardLink?.(id) || character.dashboard || {};
     const image = characterImage(character);
     const title = character.name || 'Unnamed Character';
+    const colour = safeCardColour(character.cardColour || character.cardColor || character.character?.cardColour);
     return `
-      <article class="forge-character-card" tabindex="0" role="button" data-forge-character-id="${esc(id)}" data-dashboard-id="${esc(dashboard.id || '')}">
+      <article class="forge-character-card" tabindex="0" role="button" style="--character-card-colour:${esc(colour)}" data-forge-character-id="${esc(id)}" data-dashboard-id="${esc(dashboard.id || '')}">
         <div class="forge-character-image">
           ${image ? `<img src="${esc(image)}" alt="${esc(title)} portrait">` : `<span>${esc(character.initial || title.charAt(0).toUpperCase() || '?')}</span>`}
         </div>
@@ -658,9 +855,16 @@
           <p class="eyebrow">${esc(characterCampaignName(character))}</p>
           <h3>${esc(title)}</h3>
           <p>${esc(character.race || 'Unselected Race')} / ${esc(character.klass || 'Unselected Class')}</p>
+          <p class="forge-class-lock">Primary class locked / ${esc(array(character.classSlugs || character.talentClasses || [character.talentClass]).filter(Boolean).length || 1)}/${MAX_CHARACTER_CLASSES} classes</p>
           <small>Double-click to open Character Dashboard</small>
         </div>
-        <button class="forge-card-delete" type="button" data-forge-delete-character="${esc(id)}" aria-label="Delete ${esc(title)}">Delete</button>
+        <div class="forge-card-actions" aria-label="${esc(title)} actions">
+          <button class="forge-card-edit" type="button" data-forge-edit-character="${esc(id)}" aria-label="Edit ${esc(title)}">Edit</button>
+          <button class="forge-card-delete" type="button" data-forge-delete-character="${esc(id)}" aria-label="Delete ${esc(title)}">Delete</button>
+        </div>
+        <div class="forge-card-colours" aria-label="Character card colour">
+          ${CARD_COLOUR_OPTIONS.map(option => `<button type="button" class="${option === colour ? 'active' : ''}" style="--swatch:${esc(option)}" data-forge-card-colour="${esc(option)}" data-forge-character-colour-id="${esc(id)}" aria-label="Set card colour"></button>`).join('')}
+        </div>
       </article>
     `;
   }
@@ -868,13 +1072,17 @@
 
   function renderForgeEntryCard(domain, entry, selectedSlug, actionName){
     const image = entryImage(entry, domain);
-    const selected = entry.slug === selectedSlug;
+    const d = draft();
+    const extraClassSlugs = array(d.extraClassSlugs).map(classSlugFromValue);
+    const selected = entry.slug === selectedSlug || (domain === 'class' && extraClassSlugs.includes(entry.slug));
     if(domain === 'class'){
       const accent = entry.class_colour || entry.metadata?.class_colour || '#1f7dff';
+      const locked = d.lockedClassSlug && entry.slug === classSlugFromValue(d.lockedClassSlug);
+      const secondary = extraClassSlugs.includes(entry.slug);
       return `
-        <article class="phase3-pick-card phase3-forge-entry-card phase3-forge-class-card ${selected ? 'selected' : ''}" style="--class-accent:${esc(accent)}" data-${actionName}="${esc(entry.slug)}" data-phase3-entry-domain="${esc(domain)}" data-phase3-entry-slug="${esc(entry.slug)}">
+        <article class="phase3-pick-card phase3-forge-entry-card phase3-forge-class-card ${selected ? 'selected' : ''} ${locked ? 'locked-primary-class' : ''}" style="--class-accent:${esc(accent)}" data-${actionName}="${esc(entry.slug)}" data-phase3-entry-domain="${esc(domain)}" data-phase3-entry-slug="${esc(entry.slug)}">
           <div class="phase3-class-symbol">${esc(entry.symbol || entry.metadata?.symbol || String(entry.title || 'C').charAt(0).toUpperCase())}</div>
-          <span>${esc(entryCategory(entry, 'Class'))}</span>
+          <span>${esc(locked ? 'Primary Locked' : secondary ? 'Secondary Class' : entryCategory(entry, 'Class'))}</span>
           <h3>${esc(entry.title)}</h3>
           <p>${esc([entry.role, entry.difficulty].filter(Boolean).join(' • ') || entry.summary || 'Information coming soon.')}</p>
         </article>
@@ -892,7 +1100,7 @@
 
   function renderForgeTab(tab){
     const d = draft();
-    if(tab === 'Race') return renderForgeChoice('race', d.raceSlug, 'phase3-race', 'Choose Race', 'Only playable, player-visible races are shown here. The category panel uses the Race Compendium structure.');
+    if(tab === 'Race') return renderForgeChoice('race', d.raceSlug, 'phase3-race', 'Choose Race', 'All public race entries are available for Character Forge. Campaign-specific race limits will be controlled later in Campaign Forge.');
     if(tab === 'Class') return renderForgeChoice('class', d.classSlug, 'phase3-class', 'Choose Class', 'Playable classes are pulled from the Class Compendium. Talents are previewed only and are not chosen freely.');
     if(tab === 'Appearance') return renderAppearanceBuilder(d.raceSlug, true);
     if(tab === 'Origin') return renderOriginBuilder();
@@ -903,19 +1111,51 @@
     return renderCharacterReview(true);
   }
 
+  function renderSelectedRaceInfo(entry){
+    if(!entry) return '';
+    const info = raceInfoPayloadForEntry(entry);
+    const traits = array(info.traits).slice(0, 6);
+    const rows = [
+      ['Movement', info.movement || info.movementMarkdown],
+      ['Senses', info.senses],
+      ['Languages', info.languages],
+      ['Magic Affinity', info.magicAffinity]
+    ].filter(([, value]) => String(value || '').trim());
+    return `
+      <article class="phase3-race-link-panel">
+        <div>
+          <h3>${esc(entry.title || entry.name)} Race Link</h3>
+          <p>Racial features, traits, and characteristic rules will transfer into the saved Character Dashboard.</p>
+        </div>
+        ${rows.length ? `<dl>${rows.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(String(value).split(/\r?\n/)[0])}</dd></div>`).join('')}</dl>` : ''}
+        ${traits.length ? `<div class="phase3-race-trait-chips">${traits.map(trait => `<span>${esc(trait.name || trait)}</span>`).join('')}</div>` : ''}
+      </article>
+    `;
+  }
+
   function renderForgeChoice(domain, selectedSlug, actionName, title, intro){
+    const d = draft();
     const selected = selectedSlug ? entryBySlug(domain, selectedSlug) : null;
     const entries = forgeDatabaseEntries(domain);
+    const classLockNotice = domain === 'class' && d.editCharacterId && d.lockedClassSlug ? `
+      <article class="phase3-class-lock-notice">
+        <h3>Primary Class Locked</h3>
+        <p>${esc(entryBySlug('class', d.lockedClassSlug)?.title || 'Primary class')} is locked for this forged character. You may add or swap one secondary class, up to ${MAX_CHARACTER_CLASSES} classes total.</p>
+      </article>
+    ` : '';
+    const selectLabel = domain === 'class' && d.editCharacterId ? 'Confirm Classes' : `Select ${title.replace(/^Choose\s+/, '')}`;
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head">
           <div><h2>${esc(title)}</h2><p>${esc(intro)}</p></div>
-          ${selected ? `<button type="button" class="primary" data-phase3-forge-next>Select ${esc(title.replace(/^Choose\s+/, ''))}</button>` : ''}
+          ${selected ? `<button type="button" class="primary" data-phase3-forge-next>${esc(selectLabel)}</button>` : ''}
         </div>
+        ${classLockNotice}
         <div class="phase3-forge-search-row">
           <label>Search<input data-phase3-forge-search="${esc(domain)}" value="${esc(draft().forgeSearch?.[domain] || '')}" placeholder="Search ${esc(domain === 'race' ? 'races' : 'classes')}..."></label>
-          ${selected ? `<span>Selected: ${esc(selected.title)}</span>` : '<span>No selection yet</span>'}
+          ${selected ? `<span>Selected: ${esc(domain === 'class' ? classDisplayNameFromDraft(d) : selected.title)}</span>` : '<span>No selection yet</span>'}
         </div>
+        ${domain === 'race' && selected ? renderSelectedRaceInfo(selected) : ''}
         <div class="phase3-forge-compendium">
           ${renderForgeCategoryPanel(domain, entries)}
           ${renderForgeCompendiumCards(domain, entries, selectedSlug, actionName)}
@@ -964,19 +1204,33 @@
 
   function renderCharacteristics(){
     const d = draft();
+    const raceEntry = entryBySlug('race', d.raceSlug);
+    const rules = raceCharacteristicRulesFor(raceEntry);
+    const base = normalizedCharacteristics(d.characteristics);
+    const finalValues = finalForgeCharacteristics(d);
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head">
-          <div><h2>Characteristics</h2><p>Enter rolled values using the same nine-stat characteristic structure as the Character Dashboard.</p></div>
-          <span>Dice roller reserved</span>
+          <div><h2>Characteristics</h2><p>Enter rolled values using the same nine-stat characteristic structure as the Character Dashboard. Race +/- and tier caps are applied automatically.</p></div>
+          <span>${esc(raceEntry?.title || 'Choose Race')}</span>
         </div>
+        <div class="phase3-rule-strip">
+          ${CHARACTERISTIC_TIER_RULES.map(rule => `<span><b>${esc(rule.label)}</b>${esc(rule.openEnded ? '100+' : `${rule.min}-${rule.max}`)} • +${esc(rule.bonus)}</span>`).join('')}
+        </div>
+        <article class="phase3-race-rule-card">
+          <h3>${esc(rules.race)} Characteristic Rules</h3>
+          <p><b>Rolls:</b> ${esc(rules.rollFormula)}</p>
+          <p>Manual input stays available. The Forge shows the rolled score, race modifier, final score, and current tier.</p>
+        </article>
         <div class="phase3-characteristic-grid">
           ${FORGE_CHARACTERISTICS.map(key => `
             <label class="phase3-characteristic-card">
               <span>${esc(FORGE_STAT_LABELS[key] || key.slice(0,3).toUpperCase())}</span>
-              <input type="number" min="0" max="30" value="${Number(d.characteristics[key] ?? 10)}" data-phase3-characteristic="${esc(key)}">
-              <b>${esc(forgeTierOf(d.characteristics[key] ?? 10))}</b>
+              <input type="number" min="0" max="${Number(rules.tierCaps[key]?.maxScore ?? 100)}" value="${Number(base[key] ?? 10)}" data-phase3-characteristic="${esc(key)}">
+              <b>${esc(tierInfoForValue(finalValues[key]).label)} +${esc(tierInfoForValue(finalValues[key]).bonus)}</b>
               <small>${esc(titleCase(key))}</small>
+              <em>Roll ${esc(rules.statRolls[key] || 'Manual')} / Race ${esc(signed(rules.modifiers[key]))}</em>
+              <strong>Final ${esc(finalValues[key])} / Cap ${esc(rules.tierCaps[key]?.label || 'Tier V')}</strong>
             </label>
           `).join('')}
         </div>
@@ -986,21 +1240,13 @@
 
   function forgeTierOf(value){
     if(typeof window.tierOf === 'function') return window.tierOf(Number(value || 0));
-    const numeric = Number(value || 0);
-    if(numeric >= 90) return 'T9';
-    if(numeric >= 80) return 'T8';
-    if(numeric >= 70) return 'T7';
-    if(numeric >= 60) return 'T6';
-    if(numeric >= 50) return 'T5';
-    if(numeric >= 40) return 'T4';
-    if(numeric >= 30) return 'T3';
-    if(numeric >= 20) return 'T2';
-    return 'T1';
+    return tierInfoForValue(value).label;
   }
 
   function renderMagicSelection(){
     const d = draft();
     const selected = new Set(d.magicTypes);
+    const groups = magicGroups();
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head">
@@ -1008,20 +1254,26 @@
           <span>${esc(d.magicTypes.length ? `${d.magicTypes.length} selected` : 'Choose magic type')}</span>
         </div>
         <div class="phase3-magic-layout">
-          <article class="phase3-magic-none ${selected.has('No Magic') ? 'selected' : ''}" data-phase3-magic="No Magic">
+          <article class="phase3-magic-none phase3-magic-card ${selected.has('No Magic') ? 'selected' : ''}" data-phase3-magic="No Magic" style="--magic-color:#7a7f8c">
             <span>None</span>
             <h3>No Magic</h3>
             <p>Use this for martial or non-magical characters.</p>
           </article>
-          ${MAGIC_TYPE_GROUPS.map(group => `
+          ${groups.map(group => `
             <section class="phase3-magic-group">
               <h3>${esc(group.label)}</h3>
               <div class="phase3-magic-grid">
-                ${group.types.map(type => `
-                  <button type="button" class="${selected.has(type) ? 'selected' : ''}" data-phase3-magic="${esc(type)}">
-                    <span></span>${esc(type)}
-                  </button>
-                `).join('')}
+                ${group.elements.map(element => {
+                  const info = magicInfoByName(element.name || element.type);
+                  const type = info.name || element.type;
+                  return `
+                  <article class="phase3-magic-card ${selected.has(type) ? 'selected' : ''}" role="button" tabindex="0" data-phase3-magic="${esc(type)}" style="--magic-color:${esc(info.color || info.cssColor || '#26d9ff')}">
+                    <span>${esc(info.label || type.replace(/\s+Magic$/i, ''))}</span>
+                    <h4>${esc(type)}</h4>
+                    <p>${esc(info.desc || 'Magic information coming soon.')}</p>
+                  </article>
+                `;
+                }).join('')}
               </div>
             </section>
           `).join('')}
@@ -1141,6 +1393,7 @@
     const equipment = d.equipment.map(slugValue => entryBySlug('item', slugValue)?.title || slugValue);
     const originEntry = entryBySlug('origin', d.originSlug) || FALLBACK_BACKGROUNDS.find(bg => bg.slug === d.originSlug || bg.slug === d.backgroundSlug);
     const raceEntry = entryBySlug('race', d.raceSlug);
+    const finalCharacteristics = finalForgeCharacteristics(d);
     const portrait = entryImage(raceEntry, 'race');
     return `
       <section class="phase3-review-grid">
@@ -1161,7 +1414,7 @@
             <div><dt>Magic</dt><dd>${esc(d.magicTypes.join(', ') || 'Unselected')}</dd></div>
             <div><dt>Skills</dt><dd>${esc(d.skills.join(', ') || 'None selected')}</dd></div>
             <div><dt>Equipment</dt><dd>${esc(equipment.join(', ') || 'None selected')}</dd></div>
-            <div><dt>Characteristics</dt><dd>${esc(FORGE_CHARACTERISTICS.map(key => `${FORGE_STAT_LABELS[key]} ${d.characteristics[key] ?? 0}`).join(', '))}</dd></div>
+            <div><dt>Characteristics</dt><dd>${esc(FORGE_CHARACTERISTICS.map(key => `${FORGE_STAT_LABELS[key]} ${finalCharacteristics[key] ?? 0}`).join(', '))}</dd></div>
             <div><dt>Backstory</dt><dd>${esc(d.origin.backstory || d.origin.history || 'No backstory entered yet.')}</dd></div>
           </dl>
           <div class="phase3-actions inline">
@@ -1527,6 +1780,14 @@
       deleteForgedCharacter(target.dataset.forgeDeleteCharacter);
       return;
     }
+    if(target.dataset.forgeEditCharacter){
+      editForgedCharacter(target.dataset.forgeEditCharacter);
+      return;
+    }
+    if(target.dataset.forgeCardColour && target.dataset.forgeCharacterColourId){
+      setCharacterCardColour(target.dataset.forgeCharacterColourId, target.dataset.forgeCardColour);
+      return;
+    }
     if(target.dataset.forgeNewCharacter !== undefined){
       startNewCharacterForge();
       return;
@@ -1573,12 +1834,13 @@
       render();
       return;
     }
-    if(target.dataset.phase3Magic) {
-      toggleMagicType(target.dataset.phase3Magic);
+    const magicCard = target.closest?.('[data-phase3-magic]');
+    if(magicCard) {
+      toggleMagicType(magicCard.dataset.phase3Magic);
       return;
     }
     if(target.dataset.phase3Race){ draft().raceSlug = target.dataset.phase3Race; saveState('creator-race'); render(); }
-    if(target.dataset.phase3Class){ draft().classSlug = target.dataset.phase3Class; saveState('creator-class'); render(); }
+    if(target.dataset.phase3Class){ chooseForgeClass(target.dataset.phase3Class); }
     if(target.dataset.phase3Background){ draft().backgroundSlug = target.dataset.phase3Background; draft().originSlug = target.dataset.phase3Background; saveState('creator-background'); render(); }
     if(target.dataset.phase3Origin){ draft().originSlug = target.dataset.phase3Origin; draft().backgroundSlug = target.dataset.phase3Origin; saveState('creator-origin'); render(); }
     if(target.dataset.phase3Pack){ selectEquipmentPack(target.dataset.phase3Pack); }
@@ -1608,7 +1870,7 @@
   }
 
   function handleDoubleClick(event){
-    if(event.target.closest('[data-forge-delete-character]')) return;
+    if(event.target.closest('[data-forge-delete-character],[data-forge-edit-character],[data-forge-card-colour]')) return;
     const characterCard = event.target.closest('[data-forge-character-id]');
     if(characterCard){
       event.preventDefault();
@@ -1734,25 +1996,39 @@
       return;
     }
     const name = String(d.details.name || '').trim() || 'New Character';
-    const id = uniqueCharacterId(name);
+    const editingId = d.editCharacterId && window.chars?.[d.editCharacterId] ? d.editCharacterId : '';
+    const existingCharacter = editingId ? window.chars[editingId] : null;
+    const id = editingId || uniqueCharacterId(name);
     const raceEntry = entryBySlug('race', d.raceSlug);
-    const classEntry = entryBySlug('class', d.classSlug);
+    const classSlugs = classSlugsFromDraft(d);
+    const classEntries = classSlugs.map(slugValue => entryBySlug('class', slugValue)).filter(Boolean);
+    const classEntry = classEntries[0] || entryBySlug('class', d.classSlug);
     const originEntry = entryBySlug('origin', d.originSlug) || FALLBACK_BACKGROUNDS.find(bg => bg.slug === d.originSlug || bg.slug === d.backgroundSlug);
     const race = raceEntry?.title || raceNameFromDraft(d) || 'Unselected';
-    const klass = classEntry?.title || classNameFromDraft(d) || 'Unselected';
-    const startingTalentNames = startingTalentsForClass(klass).map(entry => entry.title);
+    const klass = classDisplayNameFromDraft(d) || classEntry?.title || classNameFromDraft(d) || 'Unselected';
+    const startingTalentNames = Array.from(new Set(classEntries.flatMap(entry => startingTalentsForClass(entry.title).map(talent => talent.title))));
     const talentClassKey = classKeyFromEntry(classEntry, klass);
-    const talentClasses = talentClassKey ? [talentClassKey] : [];
-    const classInfo = classInfoFromEntry(classEntry, klass, talentClassKey);
-    const characteristics = normalizedCharacteristics(d.characteristics);
-    const created = now();
+    const talentClasses = classEntries.map(entry => classKeyFromEntry(entry, entry.title)).filter(Boolean).slice(0, MAX_CHARACTER_CLASSES);
+    const classInfo = Object.assign(classInfoFromEntry(classEntry, classEntry?.title || klass, talentClassKey), {
+      lockedPrimary:true,
+      maxClasses:MAX_CHARACTER_CLASSES,
+      classes:classEntries.map(entry => classInfoFromEntry(entry, entry.title, classKeyFromEntry(entry, entry.title)))
+    });
+    const characteristicRules = raceCharacteristicRulesFor(raceEntry);
+    const racialInfo = raceInfoPayloadForEntry(raceEntry);
+    const characteristics = finalForgeCharacteristics(d);
+    const created = existingCharacter?.created || existingCharacter?.character?.created || now();
+    const updated = now();
+    const hpMax = 10 + Number(characteristics.constitution || 0);
+    const spMax = 10 + Number(characteristics.endurance || 0);
+    const mpMax = 10 + Number(characteristics.wisdom || 0);
     const dashboard = {
-      id:'dashboard-'+id,
+      id:existingCharacter?.dashboard?.id || existingCharacter?.character?.dashboard?.id || 'dashboard-'+id,
       characterId:id,
       route:'player',
       title:name+' Dashboard',
       created,
-      updated:created
+      updated
     };
     const selectedPack = EQUIPMENT_PACKS.find(pack => pack.slug === d.equipmentPackSlug);
     const inventory = d.equipment.map(slugValue => ({ id:slugValue, name:entryBySlug('item', slugValue)?.title || titleCase(slugValue) }));
@@ -1762,15 +2038,26 @@
       race:{
         slug:d.raceSlug,
         title:race,
-        metadata:raceEntry?.metadata || {}
+        metadata:raceEntry?.metadata || {},
+        info:racialInfo,
+        traits:racialInfo.traits,
+        featuresMarkdown:racialInfo.featuresMarkdown,
+        traitsMarkdown:racialInfo.traitsMarkdown,
+        movementMarkdown:racialInfo.movementMarkdown,
+        bonusesMarkdown:racialInfo.bonusesMarkdown
       },
       class:{
-        slug:d.classSlug,
+        slug:classSlugs[0] || d.classSlug,
         title:klass,
         key:talentClassKey,
         metadata:classEntry?.metadata || {},
         info:classInfo
       },
+      classSlugs,
+      primaryClassSlug:classSlugs[0] || d.classSlug,
+      secondaryClassSlugs:classSlugs.slice(1),
+      classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true },
+      cardColour:safeCardColour(d.cardColour),
       appearance:Object.assign({}, d.appearance),
       origin:{
         slug:d.originSlug || d.backgroundSlug || '',
@@ -1778,6 +2065,8 @@
         data:Object.assign({}, d.origin)
       },
       characteristics:Object.assign({}, characteristics),
+      characteristic_rules:characteristicRules,
+      racial_info:racialInfo,
       magic:{ types:d.magicTypes.slice() },
       skills:d.skills.slice(),
       equipment:{
@@ -1788,7 +2077,7 @@
       backstory:Object.assign({}, d.origin),
       dashboard,
       created,
-      updated:created
+      updated
     };
     window.chars = window.chars || {};
     window.chars[id] = {
@@ -1797,36 +2086,53 @@
       name,
       race,
       klass,
-      classSlug:d.classSlug,
+      classSlug:classSlugs[0] || d.classSlug,
+      classSlugs,
+      primaryClassSlug:classSlugs[0] || d.classSlug,
+      secondaryClassSlugs:classSlugs.slice(1),
+      classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true },
       classInfo,
       age:d.details.age || '',
       pronouns:d.details.pronouns || '',
       origin:d.originSlug || d.backgroundSlug || '',
       originTitle:originEntry?.title || '',
       originNotes:d.origin.notes || d.origin.backstory || '',
-      ownerUid:currentUserKey(),
-      level:0,
-      hp:[10 + Number(d.characteristics.constitution || 0), 10 + Number(d.characteristics.constitution || 0)],
-      sp:[10 + Number(d.characteristics.endurance || 0), 10 + Number(d.characteristics.endurance || 0)],
-      mp:[10 + Number(d.characteristics.wisdom || 0), 10 + Number(d.characteristics.wisdom || 0)],
-      xp:0,
-      xpMax:5000,
-      campaign:'Unassigned',
-      session:'No active session',
+      ownerUid:existingCharacter?.ownerUid || currentUserKey(),
+      level:Number(existingCharacter?.level ?? 0),
+      hp:existingCharacter?.hp ? [Math.min(Number(existingCharacter.hp[0] || 0), hpMax), hpMax] : [hpMax, hpMax],
+      sp:existingCharacter?.sp ? [Math.min(Number(existingCharacter.sp[0] || 0), spMax), spMax] : [spMax, spMax],
+      mp:existingCharacter?.mp ? [Math.min(Number(existingCharacter.mp[0] || 0), mpMax), mpMax] : [mpMax, mpMax],
+      xp:Number(existingCharacter?.xp ?? 0),
+      xpMax:Number(existingCharacter?.xpMax ?? 5000),
+      cp:Number(existingCharacter?.cp ?? 0),
+      tp:Number(existingCharacter?.tp ?? 0),
+      campaign:existingCharacter?.campaign || 'Unassigned',
+      session:existingCharacter?.session || 'No active session',
+      resourceMods:Object.assign({ hp:0, sp:0, mp:0 }, existingCharacter?.resourceMods || {}),
       characteristics,
-      skills:Object.fromEntries(d.skills.map(skill => [skill, 1])),
-      talents:Object.fromEntries(startingTalentNames.map(name => [name, { rank:1, source:'Character Forge' }])),
+      characteristicRules,
+      raceInfo:racialInfo,
+      racialFeatures:racialInfo.featuresMarkdown,
+      racialTraits:racialInfo.traits,
+      racialTraitsMarkdown:racialInfo.traitsMarkdown,
+      racialMovement:racialInfo.movementMarkdown || racialInfo.movement,
+      racialBonuses:racialInfo.bonusesMarkdown,
+      skills:Object.fromEntries(d.skills.map(skill => [skill, Number(existingCharacter?.skills?.[skill] || 1)])),
+      talents:Object.assign({}, existingCharacter?.talents || {}, Object.fromEntries(startingTalentNames.map(name => [name, { rank:1, source:'Character Forge' }]))),
       classTalents:startingTalentNames.slice(),
       talentClass:talentClassKey,
       talentClasses,
-      spells:[],
+      spells:array(existingCharacter?.spells),
       magicTypes:d.magicTypes.slice(),
       inventory,
-      conditions:[],
-      professions:[],
+      bags:array(existingCharacter?.bags),
+      coins:Object.assign({}, existingCharacter?.coins || {}),
+      conditions:array(existingCharacter?.conditions),
+      professions:array(existingCharacter?.professions),
       appearance:Object.assign({}, d.appearance),
       family_tree:Object.assign({}, d.family_tree),
       backstory:Object.assign({}, d.origin),
+      cardColour:safeCardColour(d.cardColour),
       dashboard,
       character:characterSchema,
       professionSlots:['No Profession Learned','No Profession Learned','No Profession Learned']
@@ -1845,15 +2151,16 @@
     window.saveAccountState?.();
     state.characters[id] = { id, createdAt:created, dashboard:characterSchema.dashboard, character:characterSchema, build:d };
     state.drafts.characterCreator = defaultState().drafts.characterCreator;
-    saveState('phase3a-character-forged');
+    saveState(editingId ? 'phase3a-character-updated' : 'phase3a-character-forged');
     window.AsteriaFirebase?.saveCharacter?.(id, window.chars[id]);
+    const joinedCampaign = window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
     window.ensureProgressionData?.();
     window.ensureTalentData?.(id);
     window.renderPlayerHome?.();
     window.renderUnlockedTalentSummary?.(id);
     window.renderTalentTreeUI?.(id);
     if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
-    window.toast?.(`Character saved: ${name}`);
+    window.toast?.(`${editingId ? 'Character updated' : 'Character saved'}: ${name}${joinedCampaign?.name ? ` linked to ${joinedCampaign.name}` : ''}`);
     openCharacterForgeHub();
   }
 
@@ -1982,6 +2289,88 @@
     });
     saveState('guild-contract-added');
     render();
+  }
+
+  function chooseForgeClass(slugValue){
+    const d = draft();
+    const picked = classSlugFromValue(slugValue);
+    if(d.editCharacterId && d.lockedClassSlug){
+      const locked = classSlugFromValue(d.lockedClassSlug);
+      if(picked === locked){
+        window.toast?.('Primary class is locked for this character.');
+        return;
+      }
+      d.extraClassSlugs = array(d.extraClassSlugs).filter(value => classSlugFromValue(value) !== locked);
+      if(d.extraClassSlugs.includes(picked)){
+        d.extraClassSlugs = d.extraClassSlugs.filter(value => value !== picked);
+      }else{
+        d.extraClassSlugs = [picked].slice(0, MAX_CHARACTER_CLASSES - 1);
+      }
+      saveState('creator-secondary-class');
+      render();
+      return;
+    }
+    d.classSlug = picked;
+    d.lockedClassSlug = '';
+    d.extraClassSlugs = [];
+    saveState('creator-class');
+    render();
+  }
+
+  function setCharacterCardColour(id, colour){
+    const character = window.chars?.[id];
+    if(!character) return false;
+    character.cardColour = safeCardColour(colour);
+    if(character.character) character.character.cardColour = character.cardColour;
+    window.saveAccountState?.();
+    window.saveAsteriaState?.();
+    saveState('character-card-colour');
+    render();
+    return true;
+  }
+
+  function editForgedCharacter(id){
+    const character = window.chars?.[id];
+    if(!character){
+      window.toast?.('Character not found.');
+      return false;
+    }
+    const schema = character.character || {};
+    const primaryClassSlug = classSlugFromValue(character.primaryClassSlug || schema.class?.slug || character.classSlug || character.talentClass || character.klass);
+    const savedClassSlugs = array(character.classSlugs || schema.classSlugs || character.secondaryClassSlugs)
+      .map(classSlugFromValue)
+      .filter(Boolean);
+    const secondaryClassSlugs = savedClassSlugs.filter(value => value !== primaryClassSlug).slice(0, MAX_CHARACTER_CLASSES - 1);
+    const skillKeys = Array.isArray(character.skills) ? character.skills : Object.keys(character.skills || {});
+    const equipmentItems = array(schema.equipment?.items || character.inventory).map(item => item?.id || item?.slug || slug(item?.name || item?.title || item)).filter(Boolean);
+    state.drafts.characterCreator = Object.assign(defaultState().drafts.characterCreator, {
+      activeTab:'Race',
+      editCharacterId:id,
+      lockedClassSlug:primaryClassSlug,
+      raceSlug:schema.race?.slug || slug(character.race),
+      classSlug:primaryClassSlug,
+      extraClassSlugs:secondaryClassSlugs,
+      originSlug:schema.origin?.slug || character.origin || '',
+      backgroundSlug:schema.origin?.slug || character.origin || '',
+      equipmentPackSlug:schema.equipment?.pack?.slug || '',
+      cardColour:safeCardColour(character.cardColour || schema.cardColour),
+      characteristics:Object.assign(Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])), character.characteristics || schema.characteristics || {}),
+      magicTypes:array(character.magicTypes || schema.magic?.types),
+      skills:skillKeys.slice(0, 4),
+      equipment:equipmentItems,
+      appearance:Object.assign({}, character.appearance || schema.appearance || {}),
+      origin:Object.assign(defaultState().drafts.characterCreator.origin, schema.origin?.data || character.backstory || {}),
+      family_tree:Object.assign(defaultState().drafts.characterCreator.family_tree, character.family_tree || schema.family_tree || {}),
+      details:{ name:character.name || '', age:character.age || '', pronouns:character.pronouns || '' }
+    });
+    activeSystem = 'characterCreator';
+    forgeMode = 'create';
+    activeTab = 'Race';
+    saveState('character-forge-edit');
+    render();
+    window.scrollTo?.({ top:0, left:0, behavior:'auto' });
+    window.toast?.(`Editing ${character.name || 'character'}. Primary class is locked.`);
+    return true;
   }
 
   function deleteForgedCharacter(id){

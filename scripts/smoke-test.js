@@ -43,6 +43,7 @@ jsFiles.forEach(file => {
   'js/asteria-view-hooks.js',
   'js/asteria-progression.js',
   'js/asteria-progression-ui.js',
+  'js/asteria-magic-data.js',
   'js/app.js',
   'js/asteria-inventory-api.js',
   'js/asteria-core-shell.js'
@@ -98,7 +99,7 @@ check('No duplicate IDs', duplicateIds.length === 0, duplicateIds.map(([id, coun
 });
 
 const mojibakePattern = /[\u00e2\u00c3\u00f0\ufffd]/;
-['index.html', 'js/wiki-index.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/clean-compendium.js'].forEach(file => {
+['index.html', 'js/wiki-index.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/asteria-magic-data.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/clean-compendium.js'].forEach(file => {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   check(`No mojibake markers: ${file}`, !mojibakePattern.test(text));
 });
@@ -107,10 +108,14 @@ const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 const coreShellJs = fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8');
 const cleanCompendiumJs = fs.readFileSync(path.join(root, 'js/clean-compendium.js'), 'utf8');
 const codexCompendiumJs = fs.readFileSync(path.join(root, 'js/codex-compendium.js'), 'utf8');
+const raceCompendiumJs = fs.readFileSync(path.join(root, 'js/race-compendium.js'), 'utf8');
+const raceCompendiumDataJs = fs.readFileSync(path.join(root, 'js/race-compendium-data.js'), 'utf8');
+const raceInfoDataJs = fs.readFileSync(path.join(root, 'js/race-info-data.js'), 'utf8');
 const firebaseAuthJs = fs.readFileSync(path.join(root, 'js/firebase-auth.js'), 'utf8');
 const authBridgeJs = fs.readFileSync(path.join(root, 'js/auth-bridge.js'), 'utf8');
 const dataSyncJs = fs.readFileSync(path.join(root, 'js/data-sync.js'), 'utf8');
 const snapshotJs = fs.readFileSync(path.join(root, 'js/compendium-snapshot-v1.1.js'), 'utf8');
+const magicDataJs = fs.readFileSync(path.join(root, 'js/asteria-magic-data.js'), 'utf8');
 const gameplayJs = fs.readFileSync(path.join(root, 'js/asteria-gameplay-systems.js'), 'utf8');
 const worldJs = fs.readFileSync(path.join(root, 'js/asteria-world-systems.js'), 'utf8');
 const homeGuardJs = fs.readFileSync(path.join(root, 'js/asteria-home-guard.js'), 'utf8');
@@ -153,13 +158,33 @@ check('Phase 3 keeps creation talent rules locked', gameplayJs.includes('Players
 check('Phase 3 keeps profession slots campaign-earned', gameplayJs.includes('No Profession Learned') && gameplayJs.includes('assignProfession'));
 check('Phase 3A presents Character Forge', gameplayJs.includes("label:'Character Forge'") && gameplayJs.includes('Character Forge') && !gameplayJs.includes("label:'Character Creator'"));
 check('Character Forge uses final 9-tab flow with Magic', ["'Race'","'Class'","'Appearance'","'Origin'","'Characteristics'","'Magic'","'Skills'","'Equipment'","'Review'"].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_TABS') && gameplayJs.includes('MAGIC_TYPE_GROUPS') && !gameplayJs.includes("'Save Character'\\n  ];"));
+check('Shared magic data loads before dashboard and forge scripts', jsFiles.includes('js/asteria-magic-data.js') && jsFiles.indexOf('js/asteria-magic-data.js') < jsFiles.indexOf('js/app.js') && jsFiles.indexOf('js/asteria-magic-data.js') < jsFiles.indexOf('js/asteria-gameplay-systems.js'));
+check('Shared magic data includes requested element groups', ['Air Magic','Earth Magic','Water Magic','Fire Magic','Life Magic','Death Magic','Light Magic','Dark Magic','Celestial Magic','Infernal Magic','Blood Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Space Magic','Spirit Magic','Time Magic','Abyssal Magic'].every(name => magicDataJs.includes(name)) && magicDataJs.includes('Basic Elements') && magicDataJs.includes('Higher Elements'));
+check('Shared magic data matches Laws of Magic colour labels', ['Pale Blue','Green','Red','Blue','Yellow','Purple','White','Black','Luminous Gold','Crimson Red','Deep Red','Ashen Grey','Dark Emerald','Rose Pink','Wine Red','Midnight Blue','Silver White','Bronze Gold','Obsidian Blue'].every(name => magicDataJs.includes(name)) && ['#9fdcff','#2f8b4a','#d12e23','#1e7fff','#ffd84d','#5b2c89','#fff7de','#08080d','#ffd86b','#a30f16','#7b0000','#8c8b86','#00543d','#ff8fc7','#7b1635','#061a48','#dfefff','#b98b35','#020713'].every(hex => magicDataJs.includes(hex)));
+check('Character Forge magic selection uses colour card gallery', gameplayJs.includes('magicGroups()') && gameplayJs.includes('phase3-magic-card') && gameplayJs.includes('--magic-color') && stylesCss.includes('.phase3-magic-card'));
+check('Player active spells sync from forged magic choices', appJs.includes('c?.magicTypes||c?.character?.magic?.types||c?.magic?.types') && appJs.includes('v1722MagicSlug') && appJs.includes('No active spells assigned to the selected magic types.') && !appJs.includes("access=['light','water','blood','fate','eldritch']"));
+check('Spell cards open shared foreground popup', appJs.includes('function v1722OpenSpell(name)') && appJs.includes("eyebrow:'Spell'") && appJs.includes('openAsteriaInfoModal({'));
 const forgeStandaloneBranch = gameplayJs.indexOf("if(activeSystem === 'characterCreator')");
 const genericGameplayMenu = gameplayJs.indexOf('<h3>Gameplay Systems</h3>');
 check('Character Forge renders as standalone page', forgeStandaloneBranch >= 0 && gameplayJs.includes("root.classList.add('phase3-forge-shell')") && genericGameplayMenu > forgeStandaloneBranch);
 check('Character Forge uses compendium category panels for race and class', gameplayJs.includes('renderForgeCategoryPanel') && gameplayJs.includes('clean-drilldown-cat') && gameplayJs.includes('AsteriaRaceCompendium.entries') && gameplayJs.includes('AsteriaCodexCompendium.classEntries'));
 check('Character Forge uses dashboard characteristic keys', gameplayJs.includes("const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS") && ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_STAT_LABELS'));
+check('Character Forge treats public races as playable by campaign-default', gameplayJs.includes('Campaign-specific race limits will be controlled later in Campaign Forge') && gameplayJs.includes("{ playable:true, availability:'playable' }") && !gameplayJs.includes('Only playable, player-visible races are shown here'));
+check('Character Forge applies race characteristic rules', ['CHARACTERISTIC_TIER_RULES','raceCharacteristicRulesFor','finalForgeCharacteristics','characteristic_rules'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('Race +/- and tier caps are applied automatically'));
+check('Character Forge stores racial info for dashboards', ['raceInfoPayloadForEntry','racial_info','racialTraits','racialFeatures','racialMovement'].every(token => gameplayJs.includes(token)));
+check('Character Forge supports editing existing characters', ['editForgedCharacter','editCharacterId','lockedClassSlug','phase3a-character-updated','Primary Class Locked'].every(token => gameplayJs.includes(token)));
+check('Character Forge supports character card colours', ['CARD_COLOUR_OPTIONS','data-forge-card-colour','setCharacterCardColour','--character-card-colour'].every(token => gameplayJs.includes(token) || stylesCss.includes(token)));
+check('Character Forge stores max-two class locks', gameplayJs.includes('MAX_CHARACTER_CLASSES = 2') && gameplayJs.includes('classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true }') && gameplayJs.includes('secondaryClassSlugs'));
 check('Character Forge is data-driven', ["databaseEntries('race')", "databaseEntries('class')", "entriesForSelect('skill'", "entriesForSelect('origin'", "databaseEntries('item')"].every(token => gameplayJs.includes(token)));
 check('Character Forge stores final schema', ['family_tree','backstory','characterSchema','created','updated','appearance','origin','characteristics','equipment'].every(token => gameplayJs.includes(token)));
+check('Player dashboard uses Characteristic Tier structure', progressionUiJs.includes('characteristicTierRules') && progressionUiJs.includes('characteristicTierInfo') && progressionUiJs.includes('characteristicCapFor') && appJs.includes("return v>=100?'Tier V'"));
+check('Player dashboard reflects class lock and max classes', appJs.includes('Primary class locked') && appJs.includes('Class Slots') && appJs.includes('Class limit reached') && appJs.includes('slice(0,max)'));
+check('Player dashboard syncs racial info from forged character', ['renderDashboardRacialInfo','v1722RaceInfoForCharacter','characterRacialInfo','racialTraitsList','Racial Characteristics'].every(token => appJs.includes(token)));
+check('Racial trait cards open shared popup on race page and dashboard', raceCompendiumJs.includes('openRaceTraitModal') && raceCompendiumJs.includes('data-race-trait-index') && appJs.includes('openDashboardRacialTrait') && appJs.includes('data-dashboard-racial-trait') && stylesCss.includes('.asteria-info-modal'));
+check('Race pages expose characteristic roll and cap panels', ['RaceCharacteristicRulesPanel','Characteristic Rolls & Tier Caps','RACE_TIER_RULES','playable:true'].every(token => raceCompendiumJs.includes(token)));
+check('Race info data loads before race renderer', jsFiles.includes('js/race-info-data.js') && jsFiles.indexOf('js/race-info-data.js') > jsFiles.indexOf('js/race-compendium-data.js') && jsFiles.indexOf('js/race-info-data.js') < jsFiles.indexOf('js/race-compendium.js'));
+check('Race pages merge generated racial information', ['ASTERIA_RACE_INFO_DATA','racialFeaturesMarkdown','racialTraitsMarkdown','statRolls','RaceTraitCards','RaceSheetContent'].every(token => raceCompendiumJs.includes(token)) && ['Cavern Sprite','Pixie','Polaris Ursa','Abyssborn Undien'].every(name => raceInfoDataJs.includes(`"${name}"`)));
+check('Generated race info carries rules and traits', ['racialTraits','rollModifiers','statRolls','tierCaps','racialFeaturesMarkdown'].every(token => raceInfoDataJs.includes(`"${token}"`)));
 check('Gameplay systems do not inject extra sidebar shortcuts', !gameplayJs.includes('data-phase3-sidebar') && !gameplayJs.includes('data-phase3-side="characterCreator"'));
 check('Phase 4 world script is loaded', jsFiles.includes('js/asteria-world-systems.js'));
 check('Phase 4 exposes world API', worldJs.includes('window.AsteriaWorld') && worldJs.includes('openWorldState') && worldJs.includes('openWorldMap'));
@@ -219,8 +244,11 @@ check('Public sidebar targets workspace sections', ['Asteria Handbook','World, R
 check('Auth dashboard version is active', html.includes('ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1'));
 check('Login page has one account type only', !html.includes('loginPageRole') && !html.includes('GM Account') && !html.includes('Administrator</option>'));
 check('Logged-in sidebar keeps only dashboard/settings actions', ['data-workspace-mode="dashboard"', 'data-workspace-action="settings"'].every(token => html.includes(token)) && ['data-workspace-mode="campaigns"', 'data-workspace-action="create-campaign"', 'data-workspace-mode="characters"', 'data-workspace-action="create-character"', 'data-app-route="player-dashboard"', 'data-app-route="campaign-manager"', 'data-app-route="gm-dashboard"'].every(token => !html.includes(token)));
-check('Top bar owns Character Forge and Campaign navigation', ['id="characterForgeTop"', 'id="campaignsTop"', 'openCharacterForgeHub', 'openCampaignHub'].every(token => html.includes(token) || coreShellJs.includes(token)));
+check('Top bar owns Character Forge and Campaign Forge navigation', ['id="characterForgeTop"', 'id="campaignsTop"', 'Character Forge', 'Campaign Forge', 'openCharacterForgeHub', 'openCampaignHub'].every(token => html.includes(token) || coreShellJs.includes(token)) && stylesCss.includes('.top-workspace-menu .top-menu-btn'));
 check('Campaign gallery opens GM dashboards', cleanCompendiumJs.includes('openCampaignGMDashboard') && cleanCompendiumJs.includes('Forge New Campaign') && cleanCompendiumJs.includes('openCampaignHub'));
+check('Campaign creation generates and displays 12-digit UCN', html.includes('campaignUCNDisplay') && appJs.includes('appUniqueCampaignCode') && appJs.includes('ensureAppCampaignUCN') && appJs.includes('campaign.ucn=code') && appJs.includes('campaign.inviteCode=code'));
+check('GM Campaign Manager shows UCN panel', appJs.includes('gmCampaignManagerUCNPanel') && appJs.includes('Unique Campaign Number') && stylesCss.includes('.gm-campaign-ucn-panel'));
+check('Shared popups use centered blurred foreground layer', stylesCss.includes('Unified foreground popup layer') && stylesCss.includes('.item-modal') && stylesCss.includes('.codex-talent-modal-backdrop') && stylesCss.includes('z-index:8200') && stylesCss.includes('backdrop-filter:blur(5px)'));
 check('GM dashboard render tolerates missing top counters', appJs.includes('setTextSafe') && appJs.includes("setTextSafe('topPlayers'") && !appJs.includes("$('topPlayers').textContent=c.party.length;$('topEncounters')"));
 check('GM dashboard uses simplified six-tab menu', gmDashboardBlock.includes('Asteria GM Dashboard v1') && ['GM Main','Quests','GM Notes','Economy','Crafting','Campaign Manager'].every(label => gmDashboardBlock.includes(`label:'${label}'`)) && ['Actions','Encounter Builder','Rewards','Materials','Enchantments'].every(label => !gmDashboardBlock.includes(`label:'${label}'`)));
 check('GM dashboard keeps one sync panel', appJs.includes('gmSyncStatusPanel') && appJs.includes("v170RenderSyncPanel=function(){document.getElementById('v170SyncPanel')?.remove();renderGMSyncPanel();}") && stylesCss.includes('.gm-sync-card'));
@@ -253,9 +281,15 @@ check('Workspace exposes auth dashboard APIs', cleanCompendiumJs.includes('openD
 check('Workspace campaign creation stores GM permissions', cleanCompendiumJs.includes('gmId:uid') && cleanCompendiumJs.includes("roles:{ [uid]:'gm' }") && cleanCompendiumJs.includes('gmUids:[uid]') && cleanCompendiumJs.includes('inviteLink'));
 check('Workspace campaign structure supports future systems', ['players:{', 'characters:{}', 'chat:{ messages:[] }', 'guildBank:{', 'settings:{'].every(token => cleanCompendiumJs.includes(token)));
 check('Workspace character linking exists', cleanCompendiumJs.includes('linkCharacterToCampaign') && cleanCompendiumJs.includes('playerCharacterLinks') && cleanCompendiumJs.includes('campaign.characters[characterId]'));
+check('Campaign Forge supports 12 digit UCN invites', ['uniqueCampaignCode','campaignInviteUrl','campaign-invite=','workspaceJoinCampaignCode','Join Campaign','joinCampaignByUCN','createCampaignInvite'].every(token => cleanCompendiumJs.includes(token)) && cleanCompendiumJs.includes('randomDigits(12)'));
+check('Campaign join can link existing or newly forged characters', ['renderJoinCharacterChooser','setPendingCampaignJoin','consumePendingCampaignJoin','workspaceJoinForgeCharacterBtn'].every(token => cleanCompendiumJs.includes(token)) && gameplayJs.includes('consumePendingCampaignJoin?.(id)'));
 check('Dashboard includes required logged-in panels', ['Current Campaigns', 'Available Characters', 'Notifications', 'Active Party'].every(token => cleanCompendiumJs.includes(token)));
 check('Data sync uses auth dashboard version', dataSyncJs.includes('asteria-auth-workspace-dashboard-system-v1'));
 check('Firebase setup instructions exist', fs.existsSync(path.join(root, 'FIREBASE-SETUP.md')));
+check('Pixie race is split into elemental race entries', ['Air Pixie','Earth Pixie','Fire Pixie','Water Pixie','Life Pixie','Death Pixie','Light Pixie','Dark Pixie'].every(name => raceCompendiumDataJs.includes(name)) && !raceCompendiumDataJs.includes("race('Pixie'"));
+check('Pixie races carry primary and opposite magic affinities', raceCompendiumDataJs.includes('affinityProfile') && raceCompendiumDataJs.includes('primaryPercent:100') && raceCompendiumDataJs.includes('oppositePercent:0') && raceCompendiumJs.includes('affinityProfile:node.affinityProfile'));
+const raceGenderImageSlugs = ['abyssborn-undien','drownedborn-undien','flowborn-undien','frostborn-undien','polaris-ursa','tempestborn-undien','tideborn-undien','air-pixie','dark-pixie','death-pixie','earth-pixie','fire-pixie','life-pixie','light-pixie','water-pixie'];
+check('Race cards use matched male/female image assets', raceCompendiumDataJs.includes('raceWithGenderImages') && raceGenderImageSlugs.every(slug => (raceCompendiumDataJs.includes(`'${slug}'`) || raceCompendiumDataJs.includes('assetSlug')) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-female-adult.png`)) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-male-adult.png`))));
 
 const floraReadme = path.join(root, 'content/flora/README.md');
 const floraRose = path.join(root, 'content/flora/1-common/flowers/rose/index.md');
@@ -304,6 +338,8 @@ check('Old wiki relationship styles are removed from global CSS', !stylesCss.inc
 check('Unified compendium exposes relationship links', cleanCompendiumJs.includes('resolveReference') && cleanCompendiumJs.includes('relationshipPanel') && cleanCompendiumCss.includes('.clean-relationship-panel') && cleanCompendiumCss.includes('.clean-relation-link'));
 check('Unified compendium page viewer renders metadata', cleanCompendiumJs.includes('pageMetadata') && cleanCompendiumCss.includes('.clean-page-meta'));
 check('Unified cards support selection and double-click open', cleanCompendiumJs.includes('element.onclick') && cleanCompendiumJs.includes('element.ondblclick'));
+check('Item cards double-click into shared item popup', cleanCompendiumJs.includes('openItemPopup') && cleanCompendiumJs.includes("entry.section === 'Items' ? openItemPopup(entry) : openPage(entry)") && cleanCompendiumJs.includes('Item Compendium') && stylesCss.includes('.asteria-info-modal'));
+check('Magic elements category renders split card panels', cleanCompendiumJs.includes('isMagicElementsView') && cleanCompendiumJs.includes('renderMagicElementPanels') && cleanCompendiumJs.includes('clean-magic-element-card') && cleanCompendiumCss.includes('.clean-magic-elements-panel'));
 check('Universal viewer supports tabbed note sections', cleanCompendiumJs.includes('contentForWorkspaceTab') && cleanCompendiumJs.includes('workspace-note-tab-label') && cleanCompendiumJs.includes('data-viewer="universal-workspace-viewer"'));
 check('Unified compendium supports collection app routes', cleanCompendiumJs.includes('openRouteFromLocation') && cleanCompendiumJs.includes('entryForRoute') && cleanCompendiumJs.includes('hashchange'));
 check('Generated collection paths use normal item categories', !cleanCompendiumJs.includes('Items/Content Collections/') && !cleanCompendiumJs.includes('Items/Wiki Collections/') && cleanCompendiumJs.includes('Items/Resources & Materials/Metal/Metal Ores'));

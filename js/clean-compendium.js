@@ -73,7 +73,7 @@
   };
   const authWorkspaceModes = [
     { id:'dashboard', label:'Dashboard', title:'User Workspace Dashboard', intro:'Your account workspace for campaigns, characters, notifications, and active party tools.' },
-    { id:'campaigns', label:'Campaigns', title:'Campaign Workspace', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
+    { id:'campaigns', label:'Campaign Forge', title:'Campaign Forge', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
     { id:'settings', label:'Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' }
   ];
   const authWorkspaceTabs = {
@@ -347,8 +347,8 @@
     const type = metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
     const itemClass = metadata.itemClass || metadata.item_class || metadata.rarity || '';
     const raceCategory = metadata.raceCategory || metadata.racecategory || (section === 'Races' ? 'Humanoid' : '');
-    const playable = metadata.playable === true || lower(metadata.availability) === 'playable';
-    const availability = section === 'Races' ? (playable ? 'playable' : 'non-playable') : '';
+    const playable = section === 'Races' ? true : (metadata.playable === true || lower(metadata.availability) === 'playable');
+    const availability = section === 'Races' ? 'playable' : '';
     const body = stripFrontmatter(page.content || '');
 
     return {
@@ -841,6 +841,14 @@
       grid.innerHTML = `<div class="clean-empty"><h3>Choose a category</h3><p>Select one of the categories on the left to show its entries.</p></div>`;
       return;
     }
+    if (isMagicElementsView()) {
+      status.textContent = `Elements${tabsForSection().length ? ` / ${activeWorkspaceTab}` : ''}`;
+      count.textContent = `${magicElementEntries().length} elements`;
+      grid.classList.remove('clean-item-grid');
+      grid.innerHTML = renderMagicElementPanels();
+      bindMagicElementPanels(grid);
+      return;
+    }
     const result = entries.filter(activeMatches).filter(filterMatches).sort(sortEntries);
 
     const statusSuffix = tabsForSection().length ? ` / ${activeWorkspaceTab}` : '';
@@ -932,11 +940,118 @@
       qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
       element.classList.add('selected');
     };
-    element.ondblclick = () => openPage(entry);
+    element.ondblclick = () => entry.section === 'Items' ? openItemPopup(entry) : openPage(entry);
     element.onkeydown = event => {
-      if (event.key === 'Enter') openPage(entry);
+      if (event.key === 'Enter') entry.section === 'Items' ? openItemPopup(entry) : openPage(entry);
     };
     return element;
+  }
+
+  async function openItemPopup(entry) {
+    let content = entry.content || '';
+    if (entry.sourcePath) {
+      try {
+        const response = await fetch(entry.sourcePath);
+        if (response.ok) content = await response.text();
+      } catch(error) {
+        content = entry.content || '';
+      }
+    }
+    if (!content) content = `# ${entry.title}\n\n${entry.description || ''}`;
+    const body = stripPublicHiddenSections(stripFrontmatter(content)) || entry.description || 'Information coming soon.';
+    const metadata = pageMetadata(entry);
+    const meta = `
+      <span class="item-chip">${escapeHtml(statusLabel(entry))}</span>
+      ${entry.type ? `<span class="item-chip">${escapeHtml(entry.type)}</span>` : ''}
+      ${entry.wikiCategory || entry.category ? `<span class="item-chip">${escapeHtml(entry.wikiCategory || entry.category)}</span>` : ''}
+    `;
+    if (typeof window.openAsteriaInfoModal === 'function') {
+      window.openAsteriaInfoModal({
+        eyebrow:'Item Compendium',
+        title:entry.title,
+        subtitle:entry.description || '',
+        image:entry.imagePath || '',
+        meta,
+        body:`${metadata}<div class="markdown-body clean-page-body">${linkKnownReferences(markdownToHtml(body), entry)}</div>`
+      });
+      return;
+    }
+    openPage(entry);
+  }
+
+  function isMagicElementsView() {
+    return currentSection === 'Magic' && active && (lower(active.label) === 'elements' || lower(active.query?.path) === 'element');
+  }
+
+  function magicElementEntries() {
+    const library = window.ASTERIA_MAGIC_LIBRARY;
+    if (library?.groups?.length) return library.groups.flatMap(group => group.elements.map(element => ({ ...element, group:group.label })));
+    const basic = ['Air Magic','Earth Magic','Water Magic','Fire Magic','Life Magic','Death Magic','Light Magic','Dark Magic'];
+    const higher = ['Celestial Magic','Infernal Magic','Blood Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Space Magic','Spirit Magic','Time Magic','Abyssal Magic'];
+    return [
+      ...basic.map(name => ({ name, label:name.replace(/\s+Magic$/i, ''), slug:slugify(name), group:'Basic Elements', color:'#19d9ff', desc:'Magic information coming soon.', spells:[] })),
+      ...higher.map(name => ({ name, label:name.replace(/\s+Magic$/i, ''), slug:slugify(name), group:'Higher Elements', color:'#9b5cff', desc:'Magic information coming soon.', spells:[] }))
+    ];
+  }
+
+  function renderMagicElementPanels() {
+    const groups = ['Basic Elements','Higher Elements'].map(label => ({
+      label,
+      elements:magicElementEntries().filter(element => element.group === label)
+    }));
+    return `
+      <div class="clean-magic-elements-wrap">
+        ${groups.map(group => `
+          <section class="clean-magic-elements-panel">
+            <div class="clean-magic-elements-head">
+              <h3>${escapeHtml(group.label)}</h3>
+              <span>${group.elements.length} types</span>
+            </div>
+            <div class="clean-magic-element-grid">
+              ${group.elements.map(element => `
+                <article class="clean-magic-element-card" role="button" tabindex="0" data-magic-element="${escapeHtml(element.slug)}" style="--magic-color:${escapeHtml(element.color || element.cssColor || '#19d9ff')}">
+                  <span>${escapeHtml(element.label || element.name)}</span>
+                  <h4>${escapeHtml(element.name)}</h4>
+                  <p>${escapeHtml(element.desc || 'Magic information coming soon.')}</p>
+                </article>
+              `).join('')}
+            </div>
+          </section>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function bindMagicElementPanels(root) {
+    qsa('[data-magic-element]', root).forEach(card => {
+      const open = () => openMagicElementPopup(card.dataset.magicElement);
+      card.addEventListener('dblclick', open);
+      card.addEventListener('keydown', event => { if (event.key === 'Enter') open(); });
+      card.addEventListener('click', () => {
+        qsa('.clean-magic-element-card', root).forEach(item => item.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+    });
+  }
+
+  function openMagicElementPopup(elementSlug) {
+    const element = magicElementEntries().find(item => item.slug === elementSlug);
+    if (!element) return;
+    const spells = arrayValue(element.spells).map(spell => Array.isArray(spell) ? `${spell[0]} - ${spell[1] || 'Cost pending'}` : String(spell));
+    const body = `
+      <p>${escapeHtml(element.desc || 'Magic information coming soon.')}</p>
+      <h3>Sample Spells</h3>
+      ${spells.length ? `<ul>${spells.map(spell => `<li>${escapeHtml(spell)}</li>`).join('')}</ul>` : '<p>Spell links will appear here when the spell database is connected.</p>'}
+    `;
+    if (typeof window.openAsteriaInfoModal === 'function') {
+      window.openAsteriaInfoModal({
+        eyebrow:element.group || 'Magic Element',
+        title:element.name,
+        subtitle:'Magic Compendium Element',
+        meta:`<span class="item-chip">${escapeHtml(element.group || 'Magic')}</span>`,
+        body
+      });
+    }
   }
 
   function authMode(mode = currentDashboardMode) {
@@ -997,9 +1112,44 @@
     return `${prefix}${Date.now().toString(36)}-${part}`;
   }
 
-  function inviteLink(campaign) {
+  function randomDigits(length = 12) {
+    return Array.from({ length }, () => Math.floor(Math.random() * 10)).join('');
+  }
+
+  function campaignCode(value) {
+    return String(value || '').replace(/\D/g, '').slice(0, 12);
+  }
+
+  function uniqueCampaignCode() {
+    const used = new Set((window.campaigns || [])
+      .map(campaign => campaignCode(campaign?.ucn || campaign?.uniqueCampaignCode || campaign?.inviteCode))
+      .filter(Boolean));
+    let code = '';
+    do {
+      code = randomDigits(12);
+    } while (used.has(code));
+    return code;
+  }
+
+  function campaignInviteUrl(campaign) {
     const base = String(window.location?.href || '').split('#')[0] || 'index.html';
-    return campaign.inviteLink || `${base}#/join/${campaign.id}/${campaign.inviteCode || ''}`;
+    const code = campaignCode(campaign?.ucn || campaign?.uniqueCampaignCode || campaign?.inviteCode);
+    return `${base}#campaign-invite=${encodeURIComponent(code)}`;
+  }
+
+  function ensureCampaignInviteFields(campaign) {
+    if (!campaign) return campaign;
+    const code = campaignCode(campaign.ucn || campaign.uniqueCampaignCode || campaign.inviteCode) || uniqueCampaignCode();
+    campaign.ucn = code;
+    campaign.uniqueCampaignCode = code;
+    campaign.inviteCode = code;
+    campaign.inviteLink = campaignInviteUrl(campaign);
+    campaign.invites = Array.isArray(campaign.invites) ? campaign.invites : [];
+    return campaign;
+  }
+
+  function inviteLink(campaign) {
+    return ensureCampaignInviteFields(campaign)?.inviteLink || '';
   }
 
   function campaignId(campaign, index = 0) {
@@ -1019,7 +1169,7 @@
 
   function accountCampaigns() {
     return (window.campaigns || [])
-      .map((campaign, index) => Object.assign(campaign, { id:campaignId(campaign, index) }))
+      .map((campaign, index) => ensureCampaignInviteFields(Object.assign(campaign, { id:campaignId(campaign, index) })))
       .filter(campaign => campaignRole(campaign));
   }
 
@@ -1182,6 +1332,7 @@
   function renderCampaignCards(grid) {
     const list = sortCards(filterCards(accountCampaigns(), campaign => [campaign.name, campaignRole(campaign), campaign.description].join(' ')), campaign => campaign.name || campaign.id, campaignRole);
     list.forEach(campaign => {
+      ensureCampaignInviteFields(campaign);
       grid.appendChild(galleryCard({
         tag:campaignRole(campaign),
         title:campaign.name || 'Untitled Campaign',
@@ -1201,6 +1352,40 @@
       create:true,
       action:openCreateCampaignForm
     }));
+    grid.appendChild(renderJoinCampaignCard());
+  }
+
+  function renderJoinCampaignCard() {
+    const element = document.createElement('article');
+    element.className = 'clean-card workspace-dashboard-card workspace-gallery-card workspace-campaign-join-card';
+    element.innerHTML = `
+      <div class="workspace-gallery-art workspace-join-art"><span>#</span></div>
+      <div class="workspace-gallery-copy">
+        <span class="clean-tag">Join Campaign</span>
+        <h3>Join Campaign</h3>
+        <p>Enter the 12 digit UCN from your GM invite, then link an existing character or forge a new one.</p>
+        <label class="workspace-join-code-label">Unique Campaign Number<input id="workspaceJoinCampaignCode" inputmode="numeric" maxlength="14" placeholder="000000000000"></label>
+        <button class="primary" type="button" id="workspaceJoinCampaignBtn">Join Campaign</button>
+        <div id="workspaceJoinCampaignResult" class="workspace-join-result" aria-live="polite"></div>
+        <div id="workspaceJoinCharacterChooser" class="workspace-join-character-chooser"></div>
+      </div>
+    `;
+    element.addEventListener('click', event => {
+      if (event.target.closest('input,button,select')) event.stopPropagation();
+    });
+    element.querySelector('#workspaceJoinCampaignBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      joinCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
+    });
+    const pendingInviteCode = takeCampaignInviteCode();
+    if (pendingInviteCode) {
+      const input = element.querySelector('#workspaceJoinCampaignCode');
+      if (input) input.value = pendingInviteCode;
+      const result = element.querySelector('#workspaceJoinCampaignResult');
+      if (result) result.innerHTML = '<span class="ok">Invite loaded. Click Join Campaign to accept it.</span>';
+    }
+    return element;
   }
 
   function renderCharacterCards(grid) {
@@ -1251,13 +1436,13 @@
   function renderCreateCampaignForm(grid) {
     grid.innerHTML += `
       <article class="clean-page workspace-viewer workspace-form-page" data-viewer="universal-workspace-viewer">
-        <header class="clean-page-head"><span class="clean-tag">GM</span><div><p class="eyebrow">Campaign Creation</p><h2>Create Campaign</h2><p>Creating a campaign grants this account GM permissions for that campaign only.</p></div></header>
+        <header class="clean-page-head"><span class="clean-tag">GM</span><div><p class="eyebrow">Campaign Forge</p><h2>Forge Campaign</h2><p>Creating a campaign grants this account GM permissions for that campaign only.</p></div></header>
         <div class="workspace-form-grid">
           <label>Campaign Name<input id="workspaceCampaignName" placeholder="Campaign name"></label>
           <label>Party Size<input id="workspaceCampaignPartySize" type="number" min="1" max="12" value="4"></label>
           <label>Description<textarea id="workspaceCampaignDescription" placeholder="Short campaign premise"></textarea></label>
         </div>
-        <button class="primary" id="workspaceCreateCampaignBtn" type="button">Create Campaign</button>
+        <button class="primary" id="workspaceCreateCampaignBtn" type="button">Forge Campaign</button>
       </article>
     `;
     byId('workspaceCreateCampaignBtn')?.addEventListener('click', createWorkspaceCampaign);
@@ -1309,17 +1494,32 @@
     const grid = byId('clean-grid');
     const characters = ownedCharacters();
     if (!grid) return;
+    ensureCampaignInviteFields(campaign);
+    const role = campaignRole(campaign);
+    const invites = arrayValue(campaign.invites);
     grid.innerHTML = `
       <article class="clean-page workspace-viewer" data-viewer="universal-workspace-viewer">
         <button class="clean-back clean-return" type="button" id="workspace-campaign-return">Back to campaigns</button>
-        <header class="clean-page-head"><span class="clean-tag">${escapeHtml(campaignRole(campaign))}</span><div><p class="eyebrow">Campaign Workspace</p><h2>${escapeHtml(campaign.name || 'Untitled Campaign')}</h2><p>${escapeHtml(campaign.description || 'Campaign workspace.')}</p></div></header>
+        <header class="clean-page-head"><span class="clean-tag">${escapeHtml(role)}</span><div><p class="eyebrow">Campaign Forge</p><h2>${escapeHtml(campaign.name || 'Untitled Campaign')}</h2><p>${escapeHtml(campaign.description || 'Campaign workspace.')}</p></div></header>
         <dl class="clean-page-meta">
           <div><dt>Campaign ID</dt><dd>${escapeHtml(campaign.id)}</dd></div>
-          <div><dt>Invite Code</dt><dd>${escapeHtml(campaign.inviteCode || 'Not generated')}</dd></div>
+          <div><dt>UCN</dt><dd>${escapeHtml(campaign.ucn || 'Not generated')}</dd></div>
           <div><dt>Invite Link</dt><dd>${escapeHtml(inviteLink(campaign))}</dd></div>
           <div><dt>GM ID</dt><dd>${escapeHtml(campaign.gmId || campaign.ownerUid || 'Not set')}</dd></div>
           <div><dt>Party Characters</dt><dd>${arrayValue(campaign.party).length}</dd></div>
         </dl>
+        ${role === 'GM' ? `
+          <section class="workspace-link-panel campaign-invite-tools">
+            <h3>Campaign Invites</h3>
+            <p class="muted">Static build note: this creates an email-ready invite record and link. Actual email sending will connect through Firebase later.</p>
+            <label>Player Email<input id="workspaceInviteEmail" type="email" placeholder="player@example.com"></label>
+            <button class="primary" type="button" id="workspaceCreateInviteBtn">Create Invite</button>
+            <div class="campaign-code-pill"><b>UCN</b><span>${escapeHtml(campaign.ucn)}</span></div>
+            <div class="workspace-invite-list">
+              ${invites.length ? invites.map(invite => `<div><b>${escapeHtml(invite.email || 'Invite')}</b><span>${escapeHtml(invite.status || 'created')}</span><small>${escapeHtml(invite.link || inviteLink(campaign))}</small></div>`).join('') : '<p class="muted">No invite records yet.</p>'}
+            </div>
+          </section>
+        ` : ''}
         <section class="workspace-link-panel">
           <h3>Link Existing Character</h3>
           <p class="muted">Players can link a character they own to this campaign. A full approval flow can be added later.</p>
@@ -1329,6 +1529,7 @@
       </article>
     `;
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
+    byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
   }
 
@@ -1351,6 +1552,182 @@
     byId('workspace-character-return').onclick = () => openDashboard('characters');
   }
 
+  function campaignByCode(codeValue) {
+    const code = campaignCode(codeValue);
+    if (!code) return null;
+    return (window.campaigns || [])
+      .map((campaign, index) => ensureCampaignInviteFields(Object.assign(campaign, { id:campaignId(campaign, index) })))
+      .find(campaign => campaign.ucn === code || campaign.uniqueCampaignCode === code || campaign.inviteCode === code) || null;
+  }
+
+  function joinResult(message, tone = '') {
+    const result = byId('workspaceJoinCampaignResult');
+    if (result) result.innerHTML = `<span class="${escapeHtml(tone)}">${escapeHtml(message)}</span>`;
+  }
+
+  function rememberCampaignInviteCode(codeValue) {
+    const code = campaignCode(codeValue);
+    if (!code) return '';
+    window.AsteriaPendingInviteCode = code;
+    try { localStorage.setItem('asteriaPendingInviteCode', code); } catch {}
+    return code;
+  }
+
+  function takeCampaignInviteCode() {
+    const code = campaignCode(window.AsteriaPendingInviteCode || (() => {
+      try { return localStorage.getItem('asteriaPendingInviteCode') || ''; } catch { return ''; }
+    })());
+    if (code) {
+      window.AsteriaPendingInviteCode = '';
+      try { localStorage.removeItem('asteriaPendingInviteCode'); } catch {}
+    }
+    return code;
+  }
+
+  function addCampaignPlayer(campaign) {
+    const uid = accountKey();
+    const role = campaignRole(campaign) === 'GM' ? 'gm' : 'player';
+    campaign.players = Object.assign({}, campaign.players || {});
+    campaign.roles = Object.assign({}, campaign.roles || {});
+    campaign.playerUids = Array.from(new Set([...(campaign.playerUids || []), uid]));
+    if (role !== 'gm' && campaign.roles[uid] !== 'gm') campaign.roles[uid] = 'player';
+    campaign.players[uid] = Object.assign({
+      uid,
+      role,
+      status:'active',
+      characterIds:[],
+      joinedAt:new Date().toISOString()
+    }, campaign.players[uid] || {});
+    campaign.players[uid].role = campaign.players[uid].role === 'gm' ? 'gm' : role;
+    campaign.players[uid].status = 'active';
+    return campaign.players[uid];
+  }
+
+  function renderJoinCharacterChooser(campaign) {
+    const host = byId('workspaceJoinCharacterChooser');
+    if (!host || !campaign) return;
+    const characters = ownedCharacters();
+    host.innerHTML = `
+      <div class="workspace-join-choice">
+        <b>${escapeHtml(campaign.name || 'Campaign found')}</b>
+        <small>UCN ${escapeHtml(campaign.ucn)}</small>
+      </div>
+      ${characters.length ? `
+        <label>Choose Character<select id="workspaceJoinCharacterSelect">
+          ${characters.map(character => `<option value="${escapeHtml(character.id)}">${escapeHtml(character.name || character.id)}${character.campaign && character.campaign !== 'Unassigned' ? ` - ${escapeHtml(character.campaign)}` : ''}</option>`).join('')}
+        </select></label>
+        <button class="primary" type="button" id="workspaceJoinCharacterBtn">Link Selected Character</button>
+      ` : '<p class="muted">No forged characters are attached to this account yet.</p>'}
+      <button type="button" id="workspaceJoinForgeCharacterBtn">Forge New Character For This Campaign</button>
+    `;
+    byId('workspaceJoinCharacterBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      linkCharacterToCampaign(campaign.id, byId('workspaceJoinCharacterSelect')?.value || '');
+    });
+    byId('workspaceJoinForgeCharacterBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      setPendingCampaignJoin(campaign);
+      if (window.AsteriaGameplay?.startNewCharacterForge) window.AsteriaGameplay.startNewCharacterForge();
+      else if (window.AsteriaGameplay?.openCharacterCreator) window.AsteriaGameplay.openCharacterCreator();
+      else window.AsteriaGameplay?.openCharacterForge?.();
+    });
+  }
+
+  function joinCampaignByUCN(codeValue) {
+    if (!requireAccountWorkspace()) return null;
+    const code = campaignCode(codeValue);
+    if (code.length !== 12) {
+      joinResult('Enter the 12 digit Unique Campaign Number from your GM.', 'warn');
+      return null;
+    }
+    const campaign = campaignByCode(code);
+    if (!campaign) {
+      joinResult('No campaign was found for that UCN.', 'warn');
+      return null;
+    }
+    ensureCampaignInviteFields(campaign);
+    const player = addCampaignPlayer(campaign);
+    const email = sessionInfo().email || '';
+    campaign.invites = arrayValue(campaign.invites).map(invite => {
+      if (invite.code === campaign.ucn && (!invite.email || !email || lower(invite.email) === lower(email))) {
+        return Object.assign({}, invite, { status:'accepted', acceptedBy:accountKey(), acceptedAt:new Date().toISOString() });
+      }
+      return invite;
+    });
+    campaign.activity = arrayValue(campaign.activity);
+    campaign.activity.push(`${sessionInfo().user || sessionInfo().email || 'Player'} joined with UCN.`);
+    persistWorkspaceChange('campaign-ucn-joined');
+    window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    joinResult(`Joined ${campaign.name || 'campaign'}. Choose a character to link.`, 'ok');
+    renderJoinCharacterChooser(campaign);
+    return player;
+  }
+
+  function setPendingCampaignJoin(campaign) {
+    ensureCampaignInviteFields(campaign);
+    const pending = {
+      campaignId:campaign.id,
+      ucn:campaign.ucn,
+      campaignName:campaign.name || 'Untitled Campaign',
+      createdAt:new Date().toISOString()
+    };
+    window.AsteriaPendingCampaignJoin = pending;
+    try { localStorage.setItem('asteriaPendingCampaignJoin', JSON.stringify(pending)); } catch {}
+    window.toast?.(`Forge a character for ${pending.campaignName}. It will link when saved.`);
+    return pending;
+  }
+
+  function readPendingCampaignJoin() {
+    if (window.AsteriaPendingCampaignJoin?.campaignId) return window.AsteriaPendingCampaignJoin;
+    try { return JSON.parse(localStorage.getItem('asteriaPendingCampaignJoin') || '{}'); } catch { return {}; }
+  }
+
+  function clearPendingCampaignJoin() {
+    window.AsteriaPendingCampaignJoin = null;
+    try { localStorage.removeItem('asteriaPendingCampaignJoin'); } catch {}
+  }
+
+  function consumePendingCampaignJoin(characterId) {
+    const pending = readPendingCampaignJoin();
+    if (!pending?.campaignId || !characterId) return null;
+    const campaign = findCampaign(pending.campaignId);
+    if (!campaign) {
+      clearPendingCampaignJoin();
+      return null;
+    }
+    addCampaignPlayer(campaign);
+    const linkedCampaign = linkCharacterToCampaign(pending.campaignId, characterId, { silent:true, skipRender:true });
+    clearPendingCampaignJoin();
+    return linkedCampaign;
+  }
+
+  function createCampaignInvite(campaignIdValue) {
+    const campaign = findCampaign(campaignIdValue);
+    if (!campaign || campaignRole(campaign) !== 'GM') return null;
+    ensureCampaignInviteFields(campaign);
+    const email = String(byId('workspaceInviteEmail')?.value || '').trim();
+    if (!email) {
+      window.toast?.('Add the player email first.');
+      return null;
+    }
+    const invite = {
+      id:randomToken('invite-'),
+      email,
+      code:campaign.ucn,
+      link:inviteLink(campaign),
+      status:'created-email-ready',
+      invitedBy:accountKey(),
+      createdAt:new Date().toISOString()
+    };
+    campaign.invites = arrayValue(campaign.invites).concat(invite);
+    campaign.activity = arrayValue(campaign.activity).concat(`Invite created for ${email}.`);
+    persistWorkspaceChange('campaign-invite-created');
+    window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    window.toast?.(`Invite ready for ${email}.`);
+    renderCampaignDetail(campaign);
+    return invite;
+  }
+
   function findCampaign(id) {
     return (window.campaigns || []).find(campaign => campaign.id === id);
   }
@@ -1368,7 +1745,7 @@
     const partySize = Math.max(1, Math.min(12, Number(byId('workspaceCampaignPartySize')?.value || 4)));
     const uid = accountKey();
     const id = randomToken('camp-');
-    const inviteCode = randomToken('invite-');
+    const inviteCode = uniqueCampaignCode();
     const campaign = {
       id,
       name,
@@ -1406,12 +1783,15 @@
         allowPlayerCreateCharacter:true,
         allowPlayerLinkCharacter:true
       },
+      ucn:inviteCode,
+      uniqueCampaignCode:inviteCode,
       inviteCode,
       inviteLink:'',
+      invites:[],
       createdAt:new Date().toISOString(),
       activity:[`Campaign created by ${sessionInfo().user || sessionInfo().email || 'account'}.`]
     };
-    campaign.inviteLink = inviteLink(campaign);
+    ensureCampaignInviteFields(campaign);
     window.campaigns = window.campaigns || [];
     window.campaigns.push(campaign);
     window.activeCampaign = window.campaigns.length - 1;
@@ -1469,12 +1849,16 @@
     renderCharacterDetail(Object.assign({ id }, window.chars[id]));
   }
 
-  function linkCharacterToCampaign(campaignIdValue) {
+  function linkCharacterToCampaign(campaignIdValue, characterIdValue = '', options = {}) {
     const campaign = findCampaign(campaignIdValue);
-    const characterId = byId('workspaceLinkCharacter')?.value;
+    const characterId = characterIdValue || byId('workspaceLinkCharacter')?.value;
     if (!campaign || !characterId || !window.chars?.[characterId]) return;
+    ensureCampaignInviteFields(campaign);
     const uid = accountKey();
     campaign.party = Array.from(new Set([...(campaign.party || []), characterId]));
+    campaign.playerUids = Array.from(new Set([...(campaign.playerUids || []), uid]));
+    campaign.roles = Object.assign({}, campaign.roles || {});
+    if (campaign.roles[uid] !== 'gm') campaign.roles[uid] = 'player';
     campaign.players = Object.assign({}, campaign.players || {});
     campaign.players[uid] = campaign.players[uid] || { uid, role:campaignRole(campaign) === 'GM' ? 'gm' : 'player', status:'active', characterIds:[], joinedAt:new Date().toISOString() };
     campaign.players[uid].characterIds = Array.from(new Set([...(campaign.players[uid].characterIds || []), characterId]));
@@ -1487,12 +1871,14 @@
       linkedAt:new Date().toISOString()
     };
     campaign.playerCharacterLinks = Object.assign({}, campaign.playerCharacterLinks || {}, { [characterId]:accountKey() });
+    campaign.activity = arrayValue(campaign.activity).concat(`${window.chars[characterId].name || characterId} linked to campaign.`);
     window.chars[characterId].campaign = campaign.name;
     persistWorkspaceChange('workspace-character-linked');
     window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
     window.AsteriaFirebase?.saveCharacter?.(characterId, window.chars[characterId]);
-    window.toast?.(`${window.chars[characterId].name} linked to ${campaign.name}.`);
-    renderCampaignDetail(campaign);
+    if (!options.silent) window.toast?.(`${window.chars[characterId].name} linked to ${campaign.name}.`);
+    if (!options.skipRender) renderCampaignDetail(campaign);
+    return campaign;
   }
 
   function renderAuthDisplay() {
@@ -2011,6 +2397,14 @@
     const route = routeFromLocation();
     if (!route) return false;
 
+    const campaignInvite = route.match(/^campaign-invite=(\d{12})$/) || route.match(/^join\/(?:[^/]+\/)?(\d{12})$/) || route.match(/^join\/[^/]+\/invite\/(\d{12})$/);
+    if (campaignInvite) {
+      rememberCampaignInviteCode(campaignInvite[1]);
+      openDashboard('campaigns');
+      byId('workspaceJoinCampaignCode')?.scrollIntoView?.({ block:'center', behavior:'smooth' });
+      return true;
+    }
+
     const entry = entryForRoute(route);
     if (entry) {
       openSection(entry.section, { path:(entry.categoryPath || []).join('/') });
@@ -2174,6 +2568,11 @@
       openDashboardMode: openDashboard,
       createCampaign: createWorkspaceCampaign,
       createCharacter: createWorkspaceCharacter,
+      createCampaignInvite,
+      joinCampaignByUCN,
+      linkCharacterToCampaign,
+      consumePendingCampaignJoin,
+      setPendingCampaignJoin,
       openPath,
       openEntry,
       openEntryBySlug,

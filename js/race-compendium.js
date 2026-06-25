@@ -4,8 +4,30 @@
   'use strict';
 
   const DATA = window.ASTERIA_RACE_COMPENDIUM_DATA || { categories:[] };
+  const RACE_INFO = window.ASTERIA_RACE_INFO_DATA || {};
   const TABS = ['Overview','Racial Sheet','Lore','Culture','Historical Figures','Settlements','Relations','Traits & Biology','Gallery'];
   const STAT_FIELDS = ['Population','Average Lifespan','Height Range','Average Weight','Homeland','Dominant Climate','Essence Affinity','Common Professions','Magic Affinity','Technology Level','Threat Level','Languages','Related Factions','Related Locations'];
+  const RACE_CHARACTERISTICS = ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'];
+  const RACE_STAT_LABELS = { strength:'STR', dexterity:'DEX', agility:'AGI', constitution:'CON', endurance:'END', intelligence:'INT', wisdom:'WIS', charisma:'CHA', luck:'LCK' };
+  const RACE_TIER_RULES = [
+    { label:'Tier 0', range:'0-19', bonus:'+0' },
+    { label:'Tier I', range:'20-39', bonus:'+1' },
+    { label:'Tier II', range:'40-59', bonus:'+2' },
+    { label:'Tier III', range:'60-79', bonus:'+3' },
+    { label:'Tier IV', range:'80-99', bonus:'+4' },
+    { label:'Tier V', range:'100+', bonus:'+5' }
+  ];
+  const RACE_CHARACTERISTIC_ALIASES = {
+    str:'strength', strength:'strength',
+    dex:'dexterity', dexterity:'dexterity',
+    agi:'agility', agility:'agility',
+    con:'constitution', constitution:'constitution',
+    end:'endurance', endurance:'endurance',
+    int:'intelligence', intelligence:'intelligence',
+    wis:'wisdom', wisdom:'wisdom',
+    cha:'charisma', charisma:'charisma',
+    lck:'luck', luck:'luck'
+  };
 
   let categories = [];
   let races = [];
@@ -25,6 +47,9 @@
   }
   function slug(value){
     return String(value || '').trim().toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'entry';
+  }
+  function displayName(value){
+    return String(value || '').trim().toLowerCase().replace(/\b[a-z]/g, char => char.toUpperCase());
   }
   function pathId(path){ return path.map(slug).join('/'); }
   function array(value){ return Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []); }
@@ -62,6 +87,25 @@
       ...(race.stats || {})
     };
   }
+  function raceInfoFor(name){
+    const text = String(name || '').trim();
+    return RACE_INFO[text] || RACE_INFO[displayName(text)] || (/ pixie$/i.test(text) ? RACE_INFO.Pixie : null) || {};
+  }
+  function firstMarkdownParagraph(value){
+    const body = String(value || '')
+      .replace(/!\[\[[^\]]+\]\]/g, '')
+      .replace(/^---+$/gm, '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\*\*/g, '')
+      .replace(/^>\s*/gm, '')
+      .trim();
+    return body.split(/\r?\n{2,}/).map(block => block.replace(/\r?\n/g, ' ').trim()).find(block => block.length > 50 && !/^Race Name:/i.test(block)) || '';
+  }
+  function rollSummary(statRolls){
+    const rolls = statRolls || {};
+    const pieces = RACE_CHARACTERISTICS.map(key => rolls[key] ? `${RACE_STAT_LABELS[key]} ${rolls[key]}` : '').filter(Boolean);
+    return pieces.length ? pieces.join(', ') : 'Manual roll, then apply race +/- modifiers';
+  }
   function prepare(){
     categories = [];
     races = [];
@@ -69,6 +113,7 @@
       return array(nodes).map(node => {
         if(isRaceNode(node)){
           const racePath = path.slice();
+          const info = raceInfoFor(node.name);
           const item = {
             type:'race',
             id:slug(`${racePath.join(' ')} ${node.name}`),
@@ -79,20 +124,42 @@
             primaryCategory:racePath[0] || 'Races',
             secondaryCategory:racePath[1] || '',
             tertiaryCategory:racePath[2] || '',
-            size:node.size || inferSize(racePath[0] || ''),
+            size:node.size || info.size || info.stats?.Size || inferSize(racePath[0] || ''),
             image:node.image || '',
             images:node.images || {},
-            tags:array(node.tags),
-            homeland:node.homeland || '',
+            tags:[...new Set(array(info.tags).concat(array(node.tags)))],
+            homeland:node.homeland || info.homeland || info.stats?.Homeland || '',
             region:node.region || '',
             biome:node.biome || '',
-            essenceAffinity:node.essenceAffinity || '',
-            magicAffinity:node.magicAffinity || '',
+            essenceAffinity:node.essenceAffinity || info.essenceAffinity || '',
+            magicAffinity:node.magicAffinity || info.magicAffinity || info.stats?.['Magic Affinity'] || '',
+            affinityProfile:node.affinityProfile || {},
             loreStatus:node.loreStatus || 'Common Knowledge',
+            playable:true,
+            availability:'playable',
+            summary:node.summary || info.summary || firstMarkdownParagraph(info.overviewMarkdown || info.loreMarkdown) || '',
+            movement:node.movement || info.movement || info.stats?.Movement || '',
+            senses:node.senses || info.senses || info.stats?.Senses || '',
+            languages:node.languages || info.languages || info.stats?.Languages || '',
+            characteristicRolls:node.characteristicRolls || node.characteristic_rolls || info.characteristicRolls || rollSummary(info.statRolls),
+            rollModifiers:node.rollModifiers || node.roll_modifiers || node.characteristicModifiers || node.characteristic_modifiers || info.rollModifiers || {},
+            statRolls:node.statRolls || node.stat_rolls || node.characteristicStatRolls || node.characteristic_stat_rolls || info.statRolls || {},
+            tierCaps:node.tierCaps || node.tier_caps || node.characteristicTierCaps || node.characteristic_tier_caps || info.tierCaps || {},
+            characteristicRows:array(node.characteristicRows || node.characteristic_rows || info.characteristicRows),
+            racialFeaturesMarkdown:node.racialFeaturesMarkdown || node.racial_features_markdown || info.racialFeaturesMarkdown || '',
+            racialCharacteristicsMarkdown:node.racialCharacteristicsMarkdown || node.racial_characteristics_markdown || info.racialCharacteristicsMarkdown || '',
+            racialTraitsMarkdown:node.racialTraitsMarkdown || node.racial_traits_markdown || info.racialTraitsMarkdown || '',
+            racialTraits:array(node.racialTraits || node.racial_traits || info.racialTraits),
+            racialMovementMarkdown:node.racialMovementMarkdown || node.racial_movement_markdown || info.racialMovementMarkdown || '',
+            racialBonusesMarkdown:node.racialBonusesMarkdown || node.racial_bonuses_markdown || info.racialBonusesMarkdown || '',
+            racialDrawbacksMarkdown:node.racialDrawbacksMarkdown || node.racial_drawbacks_markdown || info.racialDrawbacksMarkdown || '',
+            loreMarkdown:node.loreMarkdown || node.lore_markdown || info.loreMarkdown || '',
+            overviewMarkdown:node.overviewMarkdown || node.overview_markdown || info.overviewMarkdown || '',
+            mottosMarkdown:node.mottosMarkdown || node.mottos_markdown || info.mottosMarkdown || '',
             gmOnly:Boolean(node.gmOnly),
-            stats:node.stats || {},
+            stats:Object.assign({}, info.stats || {}, node.stats || {}),
             relations:array(node.relations),
-            sourcePath:node.sourcePath || ''
+            sourcePath:node.sourcePath || info.sourcePath || ''
           };
           races.push(item);
           return item;
@@ -306,7 +373,8 @@
   }
   function RaceStatsPanel(race){
     const stats = defaultStats(race);
-    return `<section class="race-stats-panel"><h3>Race Statistics</h3><div>${STAT_FIELDS.map(field => `<p><span>${escapeHtml(field)}</span><b>${escapeHtml(stats[field] || 'Information coming soon')}</b></p>`).join('')}</div></section>`;
+    const fields = STAT_FIELDS.concat(Object.keys(stats).filter(field => !STAT_FIELDS.includes(field)));
+    return `<section class="race-stats-panel"><h3>Race Statistics</h3><div>${fields.map(field => `<p><span>${escapeHtml(field)}</span><b>${escapeHtml(stats[field] || 'Information coming soon')}</b></p>`).join('')}</div></section>`;
   }
   function LoreUnlockBlock(race){
     const gm = isGMMode();
@@ -316,6 +384,70 @@
       const gmOnly = level === 'GM Only';
       return `<article class="${locked ? 'locked' : ''} ${gmOnly ? 'gm-only-lore' : ''}"><span>${escapeHtml(level)}</span><p>${locked ? 'Locked lore. Visible in GM mode or when discovered.' : 'Information coming soon.'}</p></article>`;
     }).join('')}</section>`;
+  }
+  function raceCharacteristicKey(value){
+    return RACE_CHARACTERISTIC_ALIASES[String(value || '').trim().toLowerCase().replace(/[^a-z]/g, '')] || '';
+  }
+  function normalizeRaceRuleMap(source, fallback = 0){
+    const out = Object.fromEntries(RACE_CHARACTERISTICS.map(key => [key, fallback]));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = raceCharacteristicKey(key);
+      if(normalized) out[normalized] = Number(value || 0);
+    });
+    return out;
+  }
+  function normalizeRaceTextMap(source){
+    const out = Object.fromEntries(RACE_CHARACTERISTICS.map(key => [key, 'Manual']));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = raceCharacteristicKey(key);
+      if(normalized) out[normalized] = String(value || 'Manual');
+    });
+    return out;
+  }
+  function raceTierCapLabel(value){
+    if(value && typeof value === 'object') return value.label || value.name || 'Tier V (100+)';
+    const text = String(value || '').trim();
+    if(!text) return 'Tier V (100+)';
+    const lowerText = text.toLowerCase();
+    if(lowerText.includes('tier v') || lowerText === 'v' || lowerText.includes('t5')) return 'Tier V (100+)';
+    if(lowerText.includes('tier iv') || lowerText === 'iv' || lowerText.includes('t4')) return 'Tier IV (80-99)';
+    if(lowerText.includes('tier iii') || lowerText === 'iii' || lowerText.includes('t3')) return 'Tier III (60-79)';
+    if(lowerText.includes('tier ii') || lowerText === 'ii' || lowerText.includes('t2')) return 'Tier II (40-59)';
+    if(lowerText.includes('tier i') || lowerText === 'i' || lowerText.includes('t1')) return 'Tier I (20-39)';
+    if(lowerText.includes('tier 0') || lowerText.includes('t0')) return 'Tier 0 (0-19)';
+    return text;
+  }
+  function normalizeRaceTierCaps(source){
+    const out = Object.fromEntries(RACE_CHARACTERISTICS.map(key => [key, 'Tier V (100+)']));
+    if(!source || typeof source !== 'object') return out;
+    Object.entries(source).forEach(([key, value]) => {
+      const normalized = raceCharacteristicKey(key);
+      if(normalized) out[normalized] = raceTierCapLabel(value);
+    });
+    return out;
+  }
+  function signed(value){
+    const numeric = Number(value || 0);
+    return numeric > 0 ? `+${numeric}` : String(numeric);
+  }
+  function RaceCharacteristicRulesPanel(race){
+    const modifiers = normalizeRaceRuleMap(race.rollModifiers || race.characteristicModifiers, 0);
+    const statRolls = normalizeRaceTextMap(race.statRolls || race.characteristicStatRolls);
+    const caps = normalizeRaceTierCaps(race.tierCaps || race.characteristicTierCaps);
+    return `
+      <section class="race-characteristic-rules-panel">
+        <h3>Characteristic Rolls & Tier Caps</h3>
+        <p><b>Rolls:</b> ${escapeHtml(race.characteristicRolls || 'Manual roll, then apply race +/- modifiers')}</p>
+        <div class="race-tier-reference">
+          ${RACE_TIER_RULES.map(rule => `<span><b>${escapeHtml(rule.label)}</b>${escapeHtml(rule.range)} • ${escapeHtml(rule.bonus)}</span>`).join('')}
+        </div>
+        <div class="race-characteristic-rules-grid">
+          ${RACE_CHARACTERISTICS.map(key => `<article><span>${escapeHtml(RACE_STAT_LABELS[key])}</span><b>${escapeHtml(signed(modifiers[key]))}</b><small>${escapeHtml(statRolls[key])} / ${escapeHtml(caps[key])}</small></article>`).join('')}
+        </div>
+      </section>
+    `;
   }
   function GMNotesBlock(race){
     if(isGMMode()) return `<section class="gm-notes-block"><h3>GM-only Notes</h3><p>Secret origins, hidden weaknesses, true history, campaign hooks, hidden factions, and forbidden lore can be added here.</p></section>`;
@@ -328,17 +460,97 @@
   function placeholderSections(names){
     return `<div class="race-placeholder-sections">${names.map(name => `<article><h3>${escapeHtml(name)}</h3><p>Information coming soon.</p></article>`).join('')}</div>`;
   }
+  function markdownHtml(markdown){
+    const body = String(markdown || '').replace(/!\[\[[^\]]+\]\]/g, '').trim();
+    if(!body) return '';
+    if(typeof window.mdToHtml === 'function') return window.mdToHtml(body);
+    return body.split(/\r?\n{2,}/).map(block => {
+      const lines = block.split(/\r?\n/).filter(Boolean);
+      const heading = block.match(/^(#{1,4})\s+(.+)$/);
+      if(heading){
+        const level = Math.min(6, heading[1].length + 2);
+        return `<h${level}>${escapeHtml(heading[2])}</h${level}>`;
+      }
+      if(lines.every(line => /^[-*]\s+/.test(line.trim()))){
+        return `<ul>${lines.map(line => `<li>${escapeHtml(line.replace(/^[-*]\s+/, ''))}</li>`).join('')}</ul>`;
+      }
+      if(block.trim().startsWith('|')){
+        return `<pre>${escapeHtml(block)}</pre>`;
+      }
+      return `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+  }
+  function plainMarkdown(markdown){
+    return String(markdown || '')
+      .replace(/!\[\[[^\]]+\]\]/g, '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\*\*/g, '')
+      .replace(/^[-*]\s+/gm, '')
+      .replace(/^---+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+  function markdownPanel(title, markdown, className = ''){
+    const html = markdownHtml(markdown);
+    if(!html) return '';
+    return `<section class="race-info-section ${className}"><h3>${escapeHtml(title)}</h3><div class="race-markdown-body">${html}</div></section>`;
+  }
+  function RaceTraitCards(race){
+    const traits = array(race.racialTraits);
+    if(!traits.length && !race.racialTraitsMarkdown) return '';
+    if(!traits.length) return markdownPanel('Racial Traits', race.racialTraitsMarkdown, 'span-2');
+    return `
+      <section class="race-info-section span-2">
+        <h3>Racial Traits</h3>
+        <div class="race-trait-card-grid">
+          ${traits.map((trait, index) => `<article class="race-trait-card" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.text || trait.description || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
+        </div>
+      </section>
+    `;
+  }
+  function openRaceTraitModal(index){
+    if(!selectedRace) return;
+    const trait = array(selectedRace.racialTraits)[index];
+    if(!trait) return;
+    if(typeof window.openAsteriaInfoModal === 'function'){
+      window.openAsteriaInfoModal({
+        eyebrow:`${selectedRace.name} Trait`,
+        title:trait.name || 'Racial Trait',
+        subtitle:'Race Compendium',
+        body:markdownHtml(trait.text || trait.description || 'Information coming soon.'),
+        image:raceImage(selectedRace),
+        meta:`<span class="item-chip">${escapeHtml(selectedRace.primaryCategory || 'Race')}</span><span class="item-chip">${escapeHtml(selectedRace.size || 'Varies')}</span>`
+      });
+    }
+  }
+  function bindRaceTraitCards(root=document){
+    qsa('[data-race-trait-index]', root).forEach(card => {
+      const open = () => openRaceTraitModal(Number(card.dataset.raceTraitIndex || 0));
+      card.addEventListener('dblclick', open);
+      card.addEventListener('keydown', event => { if(event.key === 'Enter') open(); });
+    });
+  }
+  function RaceSheetContent(race){
+    const sections = [
+      RaceCharacteristicRulesPanel(race),
+      markdownPanel('Racial Features', race.racialFeaturesMarkdown, 'span-2'),
+      RaceTraitCards(race),
+      markdownPanel('Racial Movement', race.racialMovementMarkdown),
+      markdownPanel('Bonuses / Drawbacks', race.racialBonusesMarkdown || race.racialDrawbacksMarkdown)
+    ].filter(Boolean).join('');
+    return sections || placeholderSections(['Gameplay Traits','Racial Abilities','Movement','Size','Languages','Resistances','Weaknesses','Starting Features']);
+  }
   function tabContent(race){
     if(activeTab === 'Overview'){
-      return `<div class="race-overview-grid"><section class="race-summary-panel"><h3>Overview</h3><p>${escapeHtml(race.summary || 'Information coming soon.')}</p><div class="race-quick-reference"><p><span>Primary Category</span><b>${escapeHtml(race.primaryCategory)}</b></p><p><span>Secondary Category</span><b>${escapeHtml(race.secondaryCategory || 'None')}</b></p><p><span>Size</span><b>${escapeHtml(race.size)}</b></p><p><span>Lore Status</span><b>${escapeHtml(race.loreStatus)}</b></p></div></section>${RaceStatsPanel(race)}${LoreUnlockBlock(race)}</div>`;
+      return `<div class="race-overview-grid"><section class="race-summary-panel"><h3>Overview</h3><p>${escapeHtml(race.summary || 'Information coming soon.')}</p><div class="race-quick-reference"><p><span>Primary Category</span><b>${escapeHtml(race.primaryCategory)}</b></p><p><span>Secondary Category</span><b>${escapeHtml(race.secondaryCategory || 'None')}</b></p><p><span>Size</span><b>${escapeHtml(race.size)}</b></p><p><span>Movement</span><b>${escapeHtml(race.movement || 'Information coming soon')}</b></p><p><span>Magic Affinity</span><b>${escapeHtml(race.magicAffinity || 'Information coming soon')}</b></p><p><span>Lore Status</span><b>${escapeHtml(race.loreStatus)}</b></p></div></section>${RaceStatsPanel(race)}${RaceCharacteristicRulesPanel(race)}${RaceTraitCards(race)}${LoreUnlockBlock(race)}</div>`;
     }
-    if(activeTab === 'Racial Sheet') return placeholderSections(['Gameplay Traits','Racial Abilities','Movement','Size','Languages','Resistances','Weaknesses','Starting Features']);
-    if(activeTab === 'Lore') return `${placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${LoreUnlockBlock(race)}${GMNotesBlock(race)}`;
+    if(activeTab === 'Racial Sheet') return `<div class="race-overview-grid">${RaceSheetContent(race)}</div>`;
+    if(activeTab === 'Lore') return `<div class="race-overview-grid">${markdownPanel('Lore', race.loreMarkdown || race.overviewMarkdown, 'span-2') || placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${markdownPanel('Mottos', race.mottosMarkdown)}${LoreUnlockBlock(race)}${GMNotesBlock(race)}</div>`;
     if(activeTab === 'Culture') return placeholderSections(['Traditions','Society','Religion','Clothing','Food','Architecture','Combat Styles','Rituals']);
     if(activeTab === 'Historical Figures') return placeholderSections(['Heroes','Villains','Rulers','Prophets','Legendary Members']);
     if(activeTab === 'Settlements') return placeholderSections(['Homelands','Cities','Villages','Ruins','Territories']);
     if(activeTab === 'Relations') return RelationshipMatrix(race);
-    if(activeTab === 'Traits & Biology') return placeholderSections(['Physical Traits','Lifespan','Height Range','Reproduction','Bloodlines','Mutations','Magical Traits','Biological Quirks']);
+    if(activeTab === 'Traits & Biology') return `<div class="race-overview-grid">${markdownPanel('Physical Traits', race.racialFeaturesMarkdown, 'span-2')}${RaceTraitCards(race)}${markdownPanel('Movement & Biology', race.racialMovementMarkdown)}${markdownPanel('Limitations', race.racialBonusesMarkdown || race.racialDrawbacksMarkdown)}</div>` || placeholderSections(['Physical Traits','Lifespan','Height Range','Reproduction','Bloodlines','Mutations','Magical Traits','Biological Quirks']);
     if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div><p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p></section>`;
     return '<p>Information coming soon.</p>';
   }
@@ -465,6 +677,7 @@
     qsa('[data-race-tab]').forEach(button => {
       button.addEventListener('click', () => { activeTab = button.dataset.raceTab || TABS[0]; render(); });
     });
+    bindRaceTraitCards();
   }
   function renderCardsOnly(){
     const display = document.querySelector('.race-main-display');

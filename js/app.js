@@ -12,7 +12,7 @@ function ensureCharacterData(){
     recalcResourceMax(c, false);
   });
 }
-function tierOf(v){return v>=80?'T5':v>=60?'T4':v>=40?'T3':v>=20?'T2':'T1'}
+function tierOf(v){v=Number(v||0);return v>=100?'Tier V':v>=80?'Tier IV':v>=60?'Tier III':v>=40?'Tier II':v>=20?'Tier I':'Tier 0'}
 function calcMax(c,key){const stat=resourceLinks[key]; return RESOURCE_BASE + (c.characteristics?.[stat]||0) + (c.resourceMods?.[key]||0)}
 function recalcResourceMax(c, clamp=true){['hp','sp','mp'].forEach(key=>{ const oldCur=c[key]?.[0]??RESOURCE_BASE; const max=calcMax(c,key); c[key]=[clamp?Math.min(oldCur,max):oldCur,max]; }); }
 function resourceBreakdownHtml(c,key){const stat=resourceLinks[key], statLabel=statLabels[stat]||stat.toUpperCase(), statVal=c.characteristics?.[stat]||0, other=c.resourceMods?.[key]||0; return '<div class="break-row"><span>Base</span><b>'+RESOURCE_BASE+'</b></div><div class="break-row"><span>'+statLabel+'</span><b>+'+statVal+'</b></div><div class="break-row"><span>Other modifiers</span><b>+'+other+'</b></div><div class="break-row total"><span>Max '+key.toUpperCase()+'</span><b>'+calcMax(c,key)+'</b></div>'; }
@@ -30,6 +30,66 @@ function $(id){return document.getElementById(id)}
 function setTextSafe(id,value){const el=$(id); if(el) el.textContent=value}
 function pct(a,b){return Math.max(0,Math.min(100,(a/b)*100))}
 function toast(msg){const t=$('toast'); if(!t) return; t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3400)}
+function openAsteriaInfoModal({ eyebrow='Asteria Entry', title='Information', subtitle='', body='', image='', meta='' } = {}){
+  let modal=document.getElementById('asteriaInfoModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='asteriaInfoModal';
+    modal.className='asteria-info-modal-backdrop';
+    modal.innerHTML='<article class="asteria-info-modal" role="dialog" aria-modal="true"><button type="button" class="asteria-info-modal-close" aria-label="Close">X</button><div class="asteria-info-modal-head"><div class="asteria-info-modal-image"></div><div><p class="eyebrow"></p><h2></h2><p class="asteria-info-modal-subtitle"></p></div></div><div class="asteria-info-modal-meta"></div><div class="asteria-info-modal-body"></div></article>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', event => { if(event.target === modal || event.target.closest('.asteria-info-modal-close')) closeAsteriaInfoModal(); });
+  }
+  modal.querySelector('.eyebrow').textContent=eyebrow;
+  modal.querySelector('h2').textContent=title;
+  modal.querySelector('.asteria-info-modal-subtitle').textContent=subtitle || '';
+  modal.querySelector('.asteria-info-modal-meta').innerHTML=meta || '';
+  modal.querySelector('.asteria-info-modal-body').innerHTML=body || '<p>Information coming soon.</p>';
+  const art=modal.querySelector('.asteria-info-modal-image');
+  art.innerHTML=image ? `<img src="${String(image).replace(/"/g,'&quot;')}" alt="${String(title).replace(/"/g,'&quot;')}" onerror="this.parentElement.textContent='${String(title).charAt(0).replace(/'/g,'&#39;') || 'A'}';">` : `<span>${String(title).charAt(0) || 'A'}</span>`;
+  modal.classList.add('show');
+}
+function closeAsteriaInfoModal(){document.getElementById('asteriaInfoModal')?.classList.remove('show')}
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAsteriaInfoModal();});
+window.openAsteriaInfoModal=openAsteriaInfoModal;
+window.closeAsteriaInfoModal=closeAsteriaInfoModal;
+function appCampaignCode(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  return digits.length===12?digits:'';
+}
+function appUniqueCampaignCode(){
+  const existing=new Set((campaigns||[]).map(c=>appCampaignCode(c?.ucn||c?.uniqueCampaignCode||c?.inviteCode)).filter(Boolean));
+  let code='';
+  do{
+    code=Array.from({length:12},()=>Math.floor(Math.random()*10)).join('');
+  }while(existing.has(code));
+  return code;
+}
+function appCampaignInviteUrl(campaign){
+  const code=appCampaignCode(campaign?.ucn||campaign?.uniqueCampaignCode||campaign?.inviteCode)||ensureAppCampaignUCN(campaign);
+  const base=String(window.location?.href||'index.html').split('#')[0]||'index.html';
+  return `${base}#campaign-invite=${encodeURIComponent(code)}`;
+}
+function ensureAppCampaignUCN(campaign){
+  if(!campaign) return '';
+  const code=appCampaignCode(campaign.ucn||campaign.uniqueCampaignCode||campaign.inviteCode)||appUniqueCampaignCode();
+  campaign.ucn=code;
+  campaign.uniqueCampaignCode=code;
+  campaign.inviteCode=code;
+  campaign.inviteLink=campaign.inviteLink&&String(campaign.inviteLink).includes(code)?campaign.inviteLink:appCampaignInviteUrl(campaign);
+  campaign.invites=Array.isArray(campaign.invites)?campaign.invites:[];
+  return code;
+}
+function ensureAllCampaignUCNs(){
+  (campaigns||[]).forEach(ensureAppCampaignUCN);
+}
+function renderCampaignUCNDisplay(campaign){
+  const el=$('campaignUCNDisplay');
+  if(!el) return;
+  if(!campaign){el.innerHTML='';return;}
+  const code=ensureAppCampaignUCN(campaign);
+  el.innerHTML=`<div class="campaign-code-pill"><b>UCN</b><span>${escapeHtml(code)}</span></div><small>Players can use this 12-digit code to join this campaign.</small>`;
+}
 function updateRoleLocks(){const role=session?.role||'guest';document.querySelectorAll('.player-only,.gm-only,.auth-only').forEach(x=>x.classList.add('locked'));if(['player','account','gm'].includes(role))document.querySelectorAll('.player-only,.auth-only').forEach(x=>x.classList.remove('locked'));if(role==='gm')document.querySelectorAll('.gm-only').forEach(x=>x.classList.remove('locked'))}
 function setView(id){
   if(id === 'home' && window.AsteriaRouter?.home && !window.__asteriaRoutingHome){
@@ -71,11 +131,11 @@ function openSettings(){$('settingsPanel').classList.add('open');$('shade').clas
 
 function loadPlayer(id){const c=chars[id];if(!c)return;window.AsteriaViewHooks?.runBeforePlayerLoad(id,{character:c});recalcResourceMax(c,true);$('pInitial').textContent=c.initial;$('pName').textContent=c.name;$('pRace').textContent=c.race;$('pClass').textContent=c.klass;$('pLevel').textContent='Level '+c.level;$('pHP').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('pSP').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('pMP').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('pHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('pSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('pMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';$('pXpBar').style.width=pct(c.xp,c.xpMax)+'%';$('pXpLine').textContent=`${c.xp.toLocaleString()} / ${c.xpMax.toLocaleString()} XP`;$('pCampaign').textContent=campaigns[activeCampaign].name;$('pSession').textContent=c.session;if($('pStats'))$('pStats').innerHTML=Object.entries(c.characteristics).map(([k,v])=>`<div><span>${statLabels[k]||k.slice(0,3).toUpperCase()}</span><b>${v}</b><small>${tierOf(v)}</small></div>`).join('');renderBreakdowns('p',c);if($('playerQuestList'))$('playerQuestList').innerHTML=quests.map(q=>`<div class="quest-row"><div><b>${q.name}</b><small>${q.detail}</small></div><span>${q.status}</span></div>`).join('');window.AsteriaViewHooks?.runPlayerLoad(id,{character:c});}
 
-function renderCampaigns(){if(!$('campaignList'))return;$('campaignList').innerHTML='';campaigns.forEach((c,i)=>{let b=document.createElement('button');b.className='campaign-card'+(i===activeCampaign?' active':'');b.innerHTML=`<b>${c.name}</b><small>Party ${c.party.length}/${c.partySize}</small>`;b.onclick=()=>selectCampaign(i);$('campaignList').appendChild(b)});selectCampaign(activeCampaign,false)}
-function selectCampaign(i,go=true){activeCampaign=i;let c=campaigns[i];$('campaignNameInput').value=c.name;$('partySizeInput').value=c.partySize;$('loginSetup').innerHTML='<p class="muted">Campaign access now uses Firebase accounts and invite links.</p>';$('campaignAccess').innerHTML=Object.keys(c.access).map(k=>`<label><input type="checkbox" ${c.access[k]?'checked':''}> ${k}</label>`).join('');if(go)toast('Active campaign set to '+c.name)}
-function createCampaign(){campaigns.push({name:'New Campaign',party:['kael'],partySize:1,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false}});activeCampaign=campaigns.length-1;renderCampaigns();toast('New campaign added.')}
+function renderCampaigns(){if(!$('campaignList'))return;ensureAllCampaignUCNs();$('campaignList').innerHTML='';campaigns.forEach((c,i)=>{let b=document.createElement('button');b.className='campaign-card'+(i===activeCampaign?' active':'');b.innerHTML=`<b>${c.name}</b><small>Party ${c.party.length}/${c.partySize}</small><small>UCN ${ensureAppCampaignUCN(c)}</small>`;b.onclick=()=>selectCampaign(i);$('campaignList').appendChild(b)});selectCampaign(activeCampaign,false)}
+function selectCampaign(i,go=true){activeCampaign=i;let c=campaigns[i];ensureAppCampaignUCN(c);$('campaignNameInput').value=c.name;$('partySizeInput').value=c.partySize;renderCampaignUCNDisplay(c);$('loginSetup').innerHTML='<p class="muted">Campaign access now uses Firebase accounts and invite links.</p>';$('campaignAccess').innerHTML=Object.keys(c.access).map(k=>`<label><input type="checkbox" ${c.access[k]?'checked':''}> ${k}</label>`).join('');if(go)toast('Active campaign set to '+c.name)}
+function createCampaign(){const c={name:'New Campaign',party:['kael'],partySize:1,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false}};ensureAppCampaignUCN(c);campaigns.push(c);activeCampaign=campaigns.length-1;renderCampaigns();toast('New campaign added.')}
 function deleteCampaign(){if(campaigns.length<=1){toast('At least one campaign is required.');return}campaigns.splice(activeCampaign,1);activeCampaign=0;renderCampaigns();toast('Campaign deleted.')}
-function saveCampaignSettings(){campaigns[activeCampaign].name=$('campaignNameInput').value||'Untitled Campaign';campaigns[activeCampaign].partySize=+$('partySizeInput').value||campaigns[activeCampaign].party.length;renderCampaigns();toast('Campaign settings saved.')}
+function saveCampaignSettings(){campaigns[activeCampaign].name=$('campaignNameInput').value||'Untitled Campaign';campaigns[activeCampaign].partySize=+$('partySizeInput').value||campaigns[activeCampaign].party.length;ensureAppCampaignUCN(campaigns[activeCampaign]);renderCampaigns();toast('Campaign settings saved.')}
 function line(label,val,max,cls){return `<div class="resource-line"><b>${label}</b><div class="mini-meter ${cls}"><i style="width:${pct(val,max)}%"></i></div><span>${val}/${max}</span></div>`}
 function renderGM(){const c=campaigns[activeCampaign];setTextSafe('gmCampaignTitle',c.name);setTextSafe('partyCampaignLabel',c.name+' party.');setTextSafe('topPlayers',c.party.length);setTextSafe('topEncounters',enemies.length);setTextSafe('topCreatures',Object.keys(creatures).length);if($('partyRoster'))$('partyRoster').innerHTML='';c.party.forEach(id=>{const ch=chars[id];let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small><div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,ch.xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});renderInitiative();renderEnemies();renderCreatureSelect()}
 function renderInitiative(){$('initCount').textContent=initiative.length;$('initiativeRows').innerHTML=initiative.map((x,i)=>`<div class="init-row ${i===turnIndex?'active':''}"><b>${i+1}. ${x.name}</b><input type="number" value="${x.roll}" onchange="initiative[${i}].roll=+this.value"><button onclick="initiative.splice(${i},1);renderInitiative()">×</button></div>`).join('')}
@@ -421,6 +481,7 @@ const ASTERIA_STATE_KEY='asteria-v1-2-12-state';
 function cloneAsteria(obj){return JSON.parse(JSON.stringify(obj));}
 function saveAsteriaState(){
   try{
+    ensureAllCampaignUCNs();
     localStorage.setItem(ASTERIA_STATE_KEY, JSON.stringify({chars, campaigns, activeCampaign, enemies, initiative, savedAt:Date.now()}));
     localStorage.setItem('asteria-sync-ping', String(Date.now()));
   }catch(e){console.warn('Save failed',e);}
@@ -428,13 +489,14 @@ function saveAsteriaState(){
 function loadAsteriaState(){
   try{
     const raw=localStorage.getItem(ASTERIA_STATE_KEY);
-    if(!raw) return;
+    if(!raw){ensureAllCampaignUCNs(); return;}
     const state=JSON.parse(raw);
     if(state.chars) Object.keys(state.chars).forEach(id=>{ chars[id]=Object.assign(chars[id]||{}, state.chars[id]); });
     if(Array.isArray(state.campaigns)) campaigns=state.campaigns;
     if(typeof state.activeCampaign==='number') activeCampaign=state.activeCampaign;
     if(Array.isArray(state.enemies)) enemies=state.enemies;
     if(Array.isArray(state.initiative)) initiative=state.initiative;
+    ensureAllCampaignUCNs();
   }catch(e){console.warn('Load failed',e);}
 }
 function refreshSyncedViews(){
@@ -574,8 +636,10 @@ function ownerOfCharacter(id){
 const asteria13OldSelectCampaign=selectCampaign;
 selectCampaign=function(i,go=true){
   activeCampaign=i; const c=campaigns[i];
+  ensureAppCampaignUCN(c);
   if($('campaignNameInput')) $('campaignNameInput').value=c.name;
   if($('partySizeInput')) $('partySizeInput').value=c.partySize;
+  renderCampaignUCNDisplay(c);
   if($('loginSetup')) $('loginSetup').innerHTML='<p class="muted">Campaign members are invited with campaign links. Account passwords are managed by Firebase.</p>';
   if($('campaignAccess')) $('campaignAccess').innerHTML=Object.keys(c.access||{}).map(k=>`<label><input type="checkbox" ${c.access[k]?'checked':''}> ${k}</label>`).join('');
   let picker=document.getElementById('campaignCharacterPicker');
@@ -590,6 +654,7 @@ selectCampaign=function(i,go=true){
 }
 saveCampaignSettings=function(){
   const c=campaigns[activeCampaign];
+  ensureAppCampaignUCN(c);
   c.name=$('campaignNameInput')?.value||'Untitled Campaign';
   const picked=[...document.querySelectorAll('#campaignCharacterPicker input:checked')].map(x=>x.value);
   c.party=picked; c.partySize=+$('partySizeInput')?.value||picked.length||1;
@@ -599,7 +664,9 @@ saveCampaignSettings=function(){
 createCampaign=function(){
   const uid=session.uid||session.account||session.user||session.email||'local-player';
   const id='camp-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
-  campaigns.push({id,name:'New Campaign',party:[],partySize:4,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false},gmId:uid,ownerUid:uid,ownerAccount:uid,createdBy:session.user||session.email||uid,gmUids:[uid],playerUids:[],roles:{[uid]:'gm'},players:{[uid]:{uid,role:'gm',status:'active',characterIds:[],joinedAt:new Date().toISOString()}},characters:{},settings:{partySize:4,visibility:'private',inviteRequired:true,allowPlayerCreateCharacter:true,allowPlayerLinkCharacter:true},inviteCode:'invite-'+Math.random().toString(36).slice(2,8),createdAt:new Date().toISOString(),activity:['Campaign created.']});
+  const campaign={id,name:'New Campaign',party:[],partySize:4,access:{dashboard:true,inventory:true,spells:true,journal:true,quests:true,notes:false},gmId:uid,ownerUid:uid,ownerAccount:uid,createdBy:session.user||session.email||uid,gmUids:[uid],playerUids:[],roles:{[uid]:'gm'},players:{[uid]:{uid,role:'gm',status:'active',characterIds:[],joinedAt:new Date().toISOString()}},characters:{},settings:{partySize:4,visibility:'private',inviteRequired:true,allowPlayerCreateCharacter:true,allowPlayerLinkCharacter:true},createdAt:new Date().toISOString(),activity:['Campaign created.']};
+  ensureAppCampaignUCN(campaign);
+  campaigns.push(campaign);
   activeCampaign=campaigns.length-1; saveAsteriaState(); renderCampaigns(); toast('New campaign added. Assign characters in settings.');
 }
 buildVersionBadge=function(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3 • Account Login + Character Hub';}
@@ -626,11 +693,12 @@ function talentClassFromText(text=''){
   return [...new Set(out)];
 }
 function getCharacterTalentClasses(c){
+  const max=Number(c?.classLimit?.max||2);
   const fromClass=talentClassFromText(c?.klass||'');
-  const saved=c?.talentClasses||[];
+  const saved=[...(c?.classSlugs||[]),...(c?.talentClasses||[])];
   const single=c?.talentClass?[c.talentClass]:[];
   const list=[...saved,...fromClass,...single].filter(Boolean).filter(k=>asteriaClassTalentTrees[k]);
-  return [...new Set(list.length?list:['ranger'])];
+  return [...new Set(list.length?list:['ranger'])].slice(0,max);
 }
 function setTalentFocus(focus){ activeTalentFocus=focus; renderTalentTreeUI(currentPlayerId()); }
 function setTalentTier(tier){
@@ -766,7 +834,12 @@ renderTalentTreeUI=function(id=currentPlayerId()){
 };
 changeTalentClass=function(){
   const id=currentPlayerId(); const c=chars[id]; const picked=document.getElementById('talentClassSelect').value;
-  c.talentClasses=getCharacterTalentClasses(c); if(!c.talentClasses.includes(picked)) c.talentClasses.push(picked);
+  const max=Number(c.classLimit?.max||2);
+  c.talentClasses=getCharacterTalentClasses(c);
+  if(!c.talentClasses.includes(picked)){
+    if(c.talentClasses.length>=max){toast?.(`Class limit reached (${max}). Edit the character in Character Forge to change secondary class.`);return;}
+    c.talentClasses.push(picked);
+  }
   c.talentClass=picked; activeTalentFocus=picked; activeTalentTier=1; talentDrafts[id]={}; saveAsteriaState(); renderTalentTreeUI(id);
 };
 function buildVersionBadge(){const b=document.querySelector('.version-badge');if(b)b.textContent='v1.3.1 • Visual Talent Trees + Multi-Class Layout';}
@@ -2072,29 +2145,57 @@ const ASTERIA_MAGIC_TYPES_V1722={
   abyssal:{label:'Abyssal',cls:'magic-abyssal',desc:'Obsidian Blue',spells:[['Deep Call','8 MP','Abyssal Magic']]}
 };
 let asteriaSpellTabV1722=localStorage.getItem('asteriaSpellTabV1722')||'all';
+function v1722MagicSlug(value){
+  const library=window.ASTERIA_MAGIC_LIBRARY;
+  return library?.slugFor?.(value) || String(value||'').toLowerCase().replace(/\s+magic/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function v1722MagicDef(key){
+  const libraryDef=window.ASTERIA_MAGIC_LIBRARY?.bySlug?.[key] || {};
+  const fallback=ASTERIA_MAGIC_TYPES_V1722[key] || {};
+  return {...fallback,...libraryDef,cls:libraryDef.cls||fallback.cls||`magic-${key}`,spells:(libraryDef.spells&&libraryDef.spells.length?libraryDef.spells:fallback.spells)||[]};
+}
 function v1722CurrentMagicAccess(){
   const c=(typeof v1721Actor==='function'?v1721Actor():null)||(chars&&chars[currentPlayerId?.()]);
-  let access=c?.magicAccess||c?.spellTypes||c?.magics;
-  if(typeof access==='string') access=access.split(',').map(x=>x.trim().toLowerCase());
-  if(!Array.isArray(access)||!access.length) access=['light','water','blood','fate','eldritch'];
-  return access.map(x=>String(x).toLowerCase().replace(/ magic/g,'')).filter(x=>ASTERIA_MAGIC_TYPES_V1722[x]);
+  const forgedAccess=c?.magicTypes||c?.character?.magic?.types||c?.magic?.types;
+  let access=forgedAccess || c?.magicAccess || c?.spellTypes || c?.magics || [];
+  if(typeof access==='string') access=access.split(',').map(x=>x.trim());
+  if(!Array.isArray(access)) access=[];
+  if(access.some(value=>String(value).toLowerCase()==='no magic')) return [];
+  return [...new Set(access.map(v1722MagicSlug).filter(key=>v1722MagicDef(key).label || v1722MagicDef(key).name))];
 }
 function v1722SpellCards(){
   const access=v1722CurrentMagicAccess();
   const types=asteriaSpellTabV1722==='all'?access:access.filter(x=>x===asteriaSpellTabV1722);
-  return types.flatMap(key=>(ASTERIA_MAGIC_TYPES_V1722[key].spells||[]).map(s=>({key,type:ASTERIA_MAGIC_TYPES_V1722[key],name:s[0],cost:s[1],school:s[2]})));
+  return types.flatMap(key=>{
+    const type=v1722MagicDef(key);
+    return (type.spells||[]).map(s=>({key,type,name:s[0],cost:s[1],school:s[2]}));
+  });
 }
 function v1722RenderSpellPanel(){
   const tabs=document.getElementById('spellTabsV1722'), list=document.getElementById('activeSpellListV1722');
   if(!tabs||!list)return;
   const access=v1722CurrentMagicAccess();
   if(asteriaSpellTabV1722!=='all'&&!access.includes(asteriaSpellTabV1722))asteriaSpellTabV1722='all';
-  tabs.innerHTML=`<button class="spell-tab-v1722 ${asteriaSpellTabV1722==='all'?'active':''}" onclick="v1722SetSpellTab('all')">All</button>`+access.map(k=>`<button class="spell-tab-v1722 ${asteriaSpellTabV1722===k?'active':''}" onclick="v1722SetSpellTab('${k}')">${ASTERIA_MAGIC_TYPES_V1722[k].label}</button>`).join('');
+  tabs.innerHTML=access.length?`<button class="spell-tab-v1722 ${asteriaSpellTabV1722==='all'?'active':''}" onclick="v1722SetSpellTab('all')">All</button>`+access.map(k=>`<button class="spell-tab-v1722 ${asteriaSpellTabV1722===k?'active':''}" style="--spell-colour:${v1722MagicDef(k).color||v1722MagicDef(k).cssColor||'var(--asteria-accent)'}" onclick="v1722SetSpellTab('${k}')">${v1722MagicDef(k).label}</button>`).join(''):'';
   const cards=v1722SpellCards();
-  list.innerHTML=cards.map(sp=>`<article class="spell-card-v1722 ${sp.type.cls}" onclick="v1722OpenSpell('${sp.name.replace(/'/g,"\\'")}')"><h4>${sp.name}</h4><p><b>${sp.school}</b></p><p>Cost: ${sp.cost}</p><small>${sp.type.desc}</small></article>`).join('')||'<p class="muted">No active spells assigned.</p>';
+  list.innerHTML=cards.map(sp=>`<article class="spell-card-v1722 ${sp.type.cls}" style="--spell-colour:${sp.type.color||sp.type.cssColor||'var(--asteria-accent)'}" onclick="v1722OpenSpell('${sp.name.replace(/'/g,"\\'")}')"><h4>${sp.name}</h4><p><b>${sp.school}</b></p><p>Cost: ${sp.cost}</p><small>${sp.type.desc}</small></article>`).join('')||'<p class="muted">No active spells assigned to the selected magic types.</p>';
 }
 function v1722SetSpellTab(tab){asteriaSpellTabV1722=tab;localStorage.setItem('asteriaSpellTabV1722',tab);v1722RenderSpellPanel();}
-function v1722OpenSpell(name){toast?.(`${name}: spell detail page hook ready.`);}
+function v1722OpenSpell(name){
+  const spell=v1722SpellCards().find(item=>item.name===name);
+  if(!spell){
+    toast?.(`${name}: spell detail page hook ready.`);
+    return;
+  }
+  const type=spell.type||{};
+  openAsteriaInfoModal({
+    eyebrow:'Spell',
+    title:spell.name,
+    subtitle:`${spell.school} • Cost ${spell.cost}`,
+    meta:`<span class="clean-rarity-tag" style="border-color:${type.color||type.cssColor||'var(--asteria-accent)'};color:${type.color||type.cssColor||'var(--asteria-accent)'}">${escapeHtml(type.colourName||type.desc||type.label||'Magic')}</span>`,
+    body:`<div class="clean-page-meta"><div><span>Magic Type</span><b>${escapeHtml(type.name||spell.school)}</b></div><div><span>Cost</span><b>${escapeHtml(spell.cost)}</b></div><div><span>Colour</span><b>${escapeHtml(type.colourName||type.desc||'Unknown')}</b></div></div><p>${escapeHtml(type.description||type.desc||'Spell details will be expanded from the Magic Compendium.')}</p>`
+  });
+}
 function v1722SlotIcon(slot){const icons={Head:'&#9682;',Shoulders:'&#9672;',Chest:'&#9818;',Hands:'&#10022;',Back:'&#9698;',Torso:'&#9673;',Waist:'&#9711;',Feet:'&#9699;'};return icons[slot]||'&#9638;';}
 function v1722Slot(slot,item){return `<button class="inventory-slot-button ${item?'filled':''}" onclick="${item?`openItemPage('${item.id}')`:`toast('Empty slot: ${slot}')`}"><span class="slot-glyph">${v1722SlotIcon(slot)}</span><span class="slot-label">${slot}</span><b>${item?item.name:'Empty'}</b></button>`;}
 function v1722EquippedByConfig(c,cfg){
@@ -2179,7 +2280,7 @@ function playerRecoveryAction(kind){
 function v1722SplitTalents(){
   const classList=document.getElementById('classTalentsList'), racialList=document.getElementById('racialTraitsList');
   if(classList&&typeof renderUnlockedTalentSummary==='function')renderUnlockedTalentSummary(currentPlayerId?.());
-  if(racialList&&!racialList.dataset.v1722){racialList.dataset.v1722='true';racialList.innerHTML=`<article><b>Fleet Footed</b><p>Increases movement speed by 10%.</p></article><article><b>Pixie Soul Bond</b><p>Racial soul-link trait reference. Full rule page hook ready.</p></article>`;}
+  if(racialList)renderDashboardRacialInfo(currentPlayerId?.());
 }
 function movePlayerPanel(selector,targetSelector){
   const panel=document.querySelector(selector), target=document.querySelector(targetSelector);
@@ -2189,8 +2290,98 @@ function renderCharacterTabProfile(id=currentPlayerId?.()){
   const c=chars?.[id]; if(!c)return;
   const race=document.getElementById('characterTabRace'), klass=document.getElementById('characterTabClass');
   if(race)race.textContent=c.race||'Race pending';
-  if(klass)klass.textContent=`${c.klass||'Class pending'} - Level ${c.level||0}`;
+  if(klass)klass.textContent=`${c.klass||'Class pending'} - Level ${c.level||0} - Primary class locked`;
+  renderDashboardRacialInfo(id);
   renderDashboardClassInfo(id);
+}
+function v1722RaceDataKey(value){
+  return String(value||'').trim().toLowerCase().replace(/\b[a-z]/g,ch=>ch.toUpperCase());
+}
+function v1722RaceInfoForCharacter(c){
+  const raceName=c?.race||c?.character?.race?.title||'';
+  const generated=window.ASTERIA_RACE_INFO_DATA?.[raceName]||window.ASTERIA_RACE_INFO_DATA?.[v1722RaceDataKey(raceName)]||(/ pixie$/i.test(raceName)?window.ASTERIA_RACE_INFO_DATA?.Pixie:null)||{};
+  const saved=c?.raceInfo||c?.character?.racial_info||c?.character?.race?.info||{};
+  return Object.assign({}, generated, saved, {
+    traits:(saved.traits&&saved.traits.length?saved.traits:generated.racialTraits)||c?.racialTraits||[],
+    featuresMarkdown:saved.featuresMarkdown||generated.racialFeaturesMarkdown||c?.racialFeatures||'',
+    traitsMarkdown:saved.traitsMarkdown||generated.racialTraitsMarkdown||c?.racialTraitsMarkdown||'',
+    movementMarkdown:saved.movementMarkdown||generated.racialMovementMarkdown||c?.racialMovement||'',
+    bonusesMarkdown:saved.bonusesMarkdown||generated.racialBonusesMarkdown||c?.racialBonuses||'',
+    statRolls:saved.statRolls||generated.statRolls||c?.characteristicRules?.statRolls||{},
+    tierCaps:saved.tierCaps||generated.tierCaps||{},
+    rollModifiers:saved.rollModifiers||generated.rollModifiers||c?.characteristicRules?.modifiers||{}
+  });
+}
+function v1722PlainMarkdown(value){
+  return String(value||'')
+    .replace(/!\[\[[^\]]+\]\]/g,'')
+    .replace(/^#{1,6}\s+/gm,'')
+    .replace(/\*\*/g,'')
+    .replace(/^[-*]\s+/gm,'')
+    .replace(/^---+$/gm,'')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+}
+function v1722TraitBodyHtml(value){
+  const text=String(value||'Information coming soon.').trim();
+  return typeof mdToHtml==='function' ? mdToHtml(text) : `<p>${escapeHtml(text)}</p>`;
+}
+function openDashboardRacialTrait(index, characterId=currentPlayerId?.()){
+  const c=chars?.[characterId]; if(!c)return;
+  const info=v1722RaceInfoForCharacter(c);
+  const traits=Array.isArray(info.traits)?info.traits:[];
+  const trait=traits[index];
+  if(!trait)return;
+  openAsteriaInfoModal({
+    eyebrow:`${c.race || 'Race'} Trait`,
+    title:trait.name || 'Racial Trait',
+    subtitle:'Double-click racial trait card',
+    body:v1722TraitBodyHtml(trait.text || trait.description || 'Information coming soon.'),
+    meta:`<span class="item-chip">${escapeHtml(c.race || 'Race')}</span>`
+  });
+}
+function renderDashboardRacialInfo(id=currentPlayerId?.()){
+  const c=chars?.[id]; if(!c)return;
+  const info=v1722RaceInfoForCharacter(c);
+  const racialList=document.getElementById('racialTraitsList');
+  const traits=Array.isArray(info.traits)?info.traits:[];
+  if(racialList){
+    racialList.innerHTML=traits.length
+      ? traits.slice(0,8).map((trait,index)=>`<article class="dashboard-racial-trait-card" role="button" tabindex="0" data-dashboard-racial-trait="${index}"><b>${trait.name||trait}</b><p>${v1722PlainMarkdown(trait.text||trait.description||'Information coming soon.').slice(0,220)}</p><small>Double-click to open trait</small></article>`).join('')
+      : `<article><b>${c.race||'Race'} Traits</b><p>${v1722PlainMarkdown(info.traitsMarkdown||info.featuresMarkdown||'Racial traits will sync from Character Forge when available.').slice(0,260)}</p></article>`;
+    racialList.querySelectorAll('[data-dashboard-racial-trait]').forEach(card=>{
+      const open=()=>openDashboardRacialTrait(Number(card.dataset.dashboardRacialTrait||0), id);
+      card.addEventListener('dblclick', open);
+      card.addEventListener('keydown', event=>{if(event.key==='Enter')open();});
+    });
+  }
+  const host=document.querySelector('.character-profile-panel');
+  if(!host)return;
+  let panel=host.querySelector('#characterRacialInfo');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='characterRacialInfo';
+    panel.className='class-info-sync-panel racial-info-sync-panel';
+    host.appendChild(panel);
+  }
+  const rules=c.characteristicRules||c.character?.characteristic_rules||{};
+  const modifiers=info.rollModifiers||rules.modifiers||{};
+  const caps=info.tierCaps||{};
+  const rolls=info.statRolls||rules.statRolls||{};
+  const rows=[
+    ['Movement', info.movement||v1722PlainMarkdown(info.movementMarkdown).split('\n')[0]],
+    ['Senses', info.senses],
+    ['Languages', info.languages],
+    ['Magic Affinity', info.magicAffinity],
+    ['Features', v1722PlainMarkdown(info.featuresMarkdown).split('\n').filter(Boolean).slice(0,2).join(' / ')]
+  ].filter(([,value])=>String(value||'').trim());
+  const statRows=['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'].map(key=>{
+    const label={strength:'STR',dexterity:'DEX',agility:'AGI',constitution:'CON',endurance:'END',intelligence:'INT',wisdom:'WIS',charisma:'CHA',luck:'LCK'}[key];
+    const mod=Number(modifiers[key]||0);
+    const signed=mod>0?`+${mod}`:String(mod);
+    return `<div class="class-info-row"><span>${label}</span><b>${rolls[key]||'Manual'} / ${signed} / ${caps[key]||rules.tierCaps?.[key]?.label||'Tier V'}</b></div>`;
+  }).join('');
+  panel.innerHTML=`<h4>Racial Information</h4>${rows.map(([label,value])=>`<div class="class-info-row"><span>${label}</span><b>${value}</b></div>`).join('') || '<p class="muted smallnote">Racial information will sync from Character Forge.</p>'}<h4>Racial Characteristics</h4>${statRows}`;
 }
 function renderDashboardClassInfo(id=currentPlayerId?.()){
   const c=chars?.[id]; if(!c)return;
@@ -2204,8 +2395,13 @@ function renderDashboardClassInfo(id=currentPlayerId?.()){
     host.appendChild(panel);
   }
   const info=c.classInfo||c.character?.class?.info||c.character?.class||{};
+  const classLimit=c.classLimit||c.character?.classLimit||{max:2,primaryLocked:true};
+  const classNames=(c.classInfo?.classes||c.character?.class?.info?.classes||[]).map(entry=>entry.title).filter(Boolean);
+  const displayClasses=classNames.length?classNames:(c.klass?String(c.klass).split('/').map(x=>x.trim()).filter(Boolean):[]);
   const rows=[
-    ['Class', c.klass||info.title],
+    ['Classes', displayClasses.join(' / ') || c.klass||info.title],
+    ['Class Slots', `${displayClasses.length || getCharacterTalentClasses(c).length}/${classLimit.max||2}`],
+    ['Primary Class', classLimit.primaryLocked?'Locked':'Unlocked'],
     ['Category', info.category],
     ['Role', info.role],
     ['Primary Stat', info.primaryStat||info.primary_stat],
@@ -3076,6 +3272,21 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     if(!panel) return;
     panel.innerHTML=`<b>Sync Status: Local browser sync active</b><small>Last checkpoint: ${lastSyncText()}</small><button onclick="asteriaGMSaveCheckpoint()">Save Sync Checkpoint</button><button onclick="asteriaGMExportSession()">Export Session</button>`;
   }
+  function renderGMCampaignUCNPanel(){
+    const gmPanels=document.querySelector('#gm .gm-panels');
+    if(!gmPanels) return;
+    let panel=document.getElementById('gmCampaignManagerUCNPanel');
+    if(!panel){
+      panel=document.createElement('section');
+      panel.id='gmCampaignManagerUCNPanel';
+      panel.className='card gm-campaign-ucn-panel';
+      panel.dataset.gmSystem='campaign-manager';
+      gmPanels.prepend(panel);
+    }
+    const campaign=campaigns?.[activeCampaign];
+    const code=ensureAppCampaignUCN(campaign);
+    panel.innerHTML=`<div class="section-head"><div><p class="eyebrow">Campaign Manager</p><h3>Unique Campaign Number</h3></div><span class="pill">UCN</span></div><div class="campaign-code-pill"><b>UCN</b><span>${escapeHtml(code)}</span></div><p class="muted smallnote">Give this 12-digit code to players so they can join this campaign from Campaign Forge.</p><div class="campaign-invite-line"><span>${escapeHtml(campaign?.inviteLink||'Invite link will generate when the campaign is saved.')}</span></div>`;
+  }
   function ensureGMHero(){
     const hero=document.querySelector('#gm .gm-hero');
     if(!hero) return;
@@ -3124,6 +3335,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     document.getElementById('v170SyncPanel')?.remove();
     ensureGMHero();
     ensureGMMenu();
+    renderGMCampaignUCNPanel();
     classifyGMPanels();
     applyGMSystemPanel?.();
     renderGMSyncPanel();

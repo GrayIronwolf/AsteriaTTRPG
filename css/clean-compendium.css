@@ -425,6 +425,91 @@
   font-size: .72rem;
 }
 
+.clean-magic-elements-wrap {
+  display: grid;
+  gap: 18px;
+}
+
+.clean-magic-elements-panel {
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 28%, transparent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(8,18,20,.84), rgba(0,0,0,.46));
+  padding: 16px;
+}
+
+.clean-magic-elements-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(212,162,74,.18);
+  padding-bottom: 10px;
+}
+
+.clean-magic-elements-head h3 {
+  margin: 0;
+  color: #fff4d6;
+}
+
+.clean-magic-elements-head span {
+  color: #90dfff;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .72rem;
+}
+
+.clean-magic-element-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.clean-magic-element-card {
+  min-height: 150px;
+  border: 1px solid color-mix(in srgb, var(--magic-color, var(--asteria-accent, #19d9ff)) 42%, transparent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--magic-color, var(--asteria-accent, #19d9ff)) 28%, rgba(0,0,0,.82)), rgba(0,8,10,.78));
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: inset 0 0 34px rgba(0,0,0,.32);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.clean-magic-element-card:hover,
+.clean-magic-element-card:focus-visible,
+.clean-magic-element-card.selected {
+  transform: translateY(-1px);
+  border-color: var(--magic-color, var(--asteria-accent, #19d9ff));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--magic-color, var(--asteria-accent, #19d9ff)) 24%, transparent), inset 0 0 34px rgba(0,0,0,.36);
+  outline: none;
+}
+
+.clean-magic-element-card span {
+  display: inline-flex;
+  width: max-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.36);
+  color: #fff4d6;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .68rem;
+}
+
+.clean-magic-element-card h4 {
+  margin: 12px 0 8px;
+  color: #fff4d6;
+}
+
+.clean-magic-element-card p {
+  margin: 0;
+  color: rgba(255,239,211,.78);
+  line-height: 1.42;
+}
+
 .clean-tag {
   display: inline-flex;
   width: max-content;
@@ -502,6 +587,118 @@
 .workspace-link-panel h3 {
   margin: 0;
   color: #ffe6b2;
+}
+
+.workspace-campaign-join-card {
+  border-style: dashed;
+}
+
+.workspace-join-art span {
+  color: var(--asteria-accent, #26d9ff);
+}
+
+.workspace-join-code-label,
+.workspace-join-character-chooser label,
+.campaign-invite-tools label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.workspace-join-code-label input,
+.workspace-join-character-chooser select,
+.campaign-invite-tools input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 30%, transparent);
+  border-radius: 8px;
+  background: rgba(0,0,0,.38);
+  color: var(--text);
+  padding: 9px 10px;
+}
+
+.workspace-join-result {
+  min-height: 22px;
+  font-size: .86rem;
+  color: rgba(255,239,211,.84);
+}
+
+.workspace-join-result .ok {
+  color: #9fffd0;
+}
+
+.workspace-join-result .warn {
+  color: #ffd18c;
+}
+
+.workspace-join-character-chooser {
+  display: grid;
+  gap: 9px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.workspace-join-choice {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  background: rgba(255,255,255,.035);
+  padding: 8px 10px;
+}
+
+.workspace-join-choice small,
+.workspace-invite-list small {
+  color: rgba(223,245,255,.72);
+}
+
+.campaign-code-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 34%, transparent);
+  border-radius: 999px;
+  background: rgba(31,125,255,.10);
+  padding: 6px 10px;
+}
+
+.campaign-code-pill b {
+  color: #ffe6b2;
+  letter-spacing: .08em;
+}
+
+.campaign-code-pill span {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: #dff5ff;
+}
+
+.workspace-invite-list {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-invite-list div {
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  background: rgba(255,255,255,.03);
+  padding: 8px 10px;
+}
+
+.workspace-invite-list span {
+  color: #9fffd0;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
 
 .clean-chip-row,

@@ -3,6 +3,14 @@
 
 var cpDrafts = {};
 var statOrder = ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'];
+var characteristicTierRules = [
+  { label:'Tier 0', min:0, max:19, bonus:0 },
+  { label:'Tier I', min:20, max:39, bonus:1 },
+  { label:'Tier II', min:40, max:59, bonus:2 },
+  { label:'Tier III', min:60, max:79, bonus:3 },
+  { label:'Tier IV', min:80, max:99, bonus:4 },
+  { label:'Tier V', min:100, max:100, bonus:5, openEnded:true }
+];
 
 function ensureCPDraft(id){
   cpDrafts[id] = cpDrafts[id] || Object.fromEntries(statOrder.map(key => [key, 0]));
@@ -13,6 +21,18 @@ function cpPendingTotal(id){
   return Object.values(ensureCPDraft(id)).reduce((total, value) => total + Math.max(0, Number(value || 0)), 0);
 }
 
+function characteristicTierInfo(value){
+  const numeric = Number(value || 0);
+  return characteristicTierRules.find(rule => numeric >= rule.min && (rule.openEnded || numeric <= rule.max)) || characteristicTierRules[0];
+}
+
+function characteristicCapFor(c, key){
+  const rules = c?.characteristicRules || c?.characteristic_rules || c?.character?.characteristic_rules || {};
+  const cap = rules?.tierCaps?.[key] || rules?.tier_caps?.[key];
+  const max = Number(cap?.maxScore ?? cap?.max ?? cap?.score ?? 100);
+  return Number.isFinite(max) ? max : 100;
+}
+
 function renderCompactCharacteristics(id, draft = ensureCPDraft(id)){
   const c = chars[id];
   const host = document.getElementById('pStats');
@@ -21,9 +41,10 @@ function renderCompactCharacteristics(id, draft = ensureCPDraft(id)){
   host.innerHTML = statOrder.map(key => {
     const value = Number(c.characteristics?.[key] || 0);
     const add = Number(draft[key] || 0);
-    const finalValue = value + add;
+    const finalValue = Math.min(characteristicCapFor(c,key), value + add);
     const label = statLabels[key] || key.slice(0, 3).toUpperCase();
-    return `<div class="${add ? 'pending-stat' : ''}"><span>${label}</span><b>${finalValue}</b><small>${tierOf(finalValue)}${add ? ` (+${add})` : ''}</small></div>`;
+    const tier = characteristicTierInfo(finalValue);
+    return `<div class="${add ? 'pending-stat' : ''}"><span>${label}</span><b>${finalValue}</b><small>${tier.label} +${tier.bonus}${add ? ` (+${add})` : ''}</small></div>`;
   }).join('');
 }
 
@@ -41,9 +62,11 @@ function renderCharacteristicCP(id = currentPlayerId()){
   host.innerHTML = statOrder.map(key => {
     const value = c.characteristics?.[key] || 0;
     const add = draft[key] || 0;
-    const finalValue = value + add;
+    const cap = characteristicCapFor(c,key);
+    const finalValue = Math.min(cap, value + add);
+    const tier = characteristicTierInfo(finalValue);
     const label = key[0].toUpperCase() + key.slice(1);
-    return `<div class="stat-card cp-stat"><small>${tierOf(finalValue)}</small><span>${statLabels[key] || label}</span><br><b>${value}</b><p class="muted">${label}</p><div class="cp-stepper"><button onclick="stageCharacteristic('${key}',-1)">-</button><input value="${add}" readonly><button onclick="stageCharacteristic('${key}',1)">+</button></div><em>After apply: ${finalValue}</em></div>`;
+    return `<div class="stat-card cp-stat"><small>${tier.label} +${tier.bonus}</small><span>${statLabels[key] || label}</span><br><b>${value}</b><p class="muted">${label}</p><div class="cp-stepper"><button onclick="stageCharacteristic('${key}',-1)">-</button><input value="${add}" readonly><button onclick="stageCharacteristic('${key}',1)">+</button></div><em>After apply: ${finalValue} / Cap ${cap}</em></div>`;
   }).join('');
   renderCompactCharacteristics(id, draft);
 }
@@ -57,6 +80,7 @@ function stageCharacteristic(stat, delta){
   const draft = ensureCPDraft(id);
   const pending = cpPendingTotal(id);
   if(delta > 0 && pending >= (c.cp || 0)) return toast('No CP remaining.');
+  if(delta > 0 && Number(c.characteristics?.[stat] || 0) + Number(draft[stat] || 0) >= characteristicCapFor(c,stat)) return toast('Characteristic cap reached.');
   draft[stat] = Math.max(0, (draft[stat] || 0) + delta);
   renderCharacteristicCP(id);
 }
@@ -73,7 +97,7 @@ function applyCharacteristicCP(){
   if(pending > (c.cp || 0)) return toast('Not enough CP.');
 
   Object.entries(draft).forEach(([key, value]) => {
-    c.characteristics[key] = (c.characteristics[key] || 0) + Number(value || 0);
+    c.characteristics[key] = Math.min(characteristicCapFor(c,key), (c.characteristics[key] || 0) + Number(value || 0));
     draft[key] = 0;
   });
   c.cp -= pending;

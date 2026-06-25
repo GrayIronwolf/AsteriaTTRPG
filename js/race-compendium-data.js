@@ -10,6 +10,35 @@
     return Object.assign({ type:'race', name }, extra || {});
   }
 
+  function raceWithGenderImages(name, assetSlug, extra){
+    const female = `assets/races/${assetSlug}/${assetSlug}-female-adult.png`;
+    const male = `assets/races/${assetSlug}/${assetSlug}-male-adult.png`;
+    return race(name, Object.assign({
+      image:female,
+      images:{ female, male }
+    }, extra || {}));
+  }
+
+  function pixieRace(name, primaryMagic, oppositeMagic){
+    const assetSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return raceWithGenderImages(name, assetSlug, {
+      size:'Small',
+      essenceAffinity:primaryMagic.replace(/\s+Magic$/i, ''),
+      magicAffinity:`${primaryMagic} 100%; ${oppositeMagic} 0%`,
+      affinityProfile:{
+        primary:primaryMagic,
+        primaryPercent:100,
+        opposite:oppositeMagic,
+        oppositePercent:0
+      },
+      tags:['pixie','fae', primaryMagic.toLowerCase().replace(/\s+/g, '-')],
+      stats:{
+        'Essence Affinity':primaryMagic.replace(/\s+Magic$/i, ''),
+        'Magic Affinity':`${primaryMagic} 100%; ${oppositeMagic} 0%`
+      }
+    });
+  }
+
   window.ASTERIA_RACE_COMPENDIUM_DATA = {
     version:'asteria-race-compendium-v1',
     source:'Race Iamges screenshots provided 2026-05-23',
@@ -117,7 +146,7 @@
           race('Chamaris'), race('Gekaris'), race('Naga'), race('Sauriss'), race('Sobekai'), race('Tortle'), race('Vorakai')
         ]),
         category('Ursa Races', [
-          race('Ailura Ursa'), race('Arctura Ursa'), race('Polaris Ursa'), race('Solara Ursa'), race('Terra Ursa')
+          race('Ailura Ursa'), race('Arctura Ursa'), raceWithGenderImages('Polaris Ursa', 'polaris-ursa'), race('Solara Ursa'), race('Terra Ursa')
         ]),
         category('Xenarthra Races', [
           race('Cingudun'), race('Folodun'), race('Myrmodun')
@@ -131,19 +160,28 @@
         race('Aasimar'), race('Demi-Demon'), race('Demi-God'), race('Dhampir'), race('Drakan'), race('Goliath'), race('Half Elf'), race('Half Orc'), race('Hobgoblin'), race('Tiefling'),
         category('Undien Races', [
           race('Undien'),
-          race('Abyssborn Undien'),
+          raceWithGenderImages('Abyssborn Undien', 'abyssborn-undien'),
           race('Deepborn Undien'),
-          race('Drownedborn Undien'),
-          race('Flowborn Undien'),
-          race('Frostborn Undien'),
-          race('Tempestborn Undien'),
-          race('Tideborn Undien')
+          raceWithGenderImages('Drownedborn Undien', 'drownedborn-undien'),
+          raceWithGenderImages('Flowborn Undien', 'flowborn-undien'),
+          raceWithGenderImages('Frostborn Undien', 'frostborn-undien'),
+          raceWithGenderImages('Tempestborn Undien', 'tempestborn-undien'),
+          raceWithGenderImages('Tideborn Undien', 'tideborn-undien')
         ])
       ]),
       category('Demonic Races'),
       category('Dragon Races'),
       category('Fae Races', [
-        race('Brownie'), race('Fairy'), race('Leprechaun'), race('Pixie'), race('Pux')
+        race('Brownie'), race('Fairy'), race('Leprechaun'),
+        pixieRace('Air Pixie', 'Air Magic', 'Earth Magic'),
+        pixieRace('Earth Pixie', 'Earth Magic', 'Air Magic'),
+        pixieRace('Fire Pixie', 'Fire Magic', 'Water Magic'),
+        pixieRace('Water Pixie', 'Water Magic', 'Fire Magic'),
+        pixieRace('Life Pixie', 'Life Magic', 'Death Magic'),
+        pixieRace('Death Pixie', 'Death Magic', 'Life Magic'),
+        pixieRace('Light Pixie', 'Light Magic', 'Dark Magic'),
+        pixieRace('Dark Pixie', 'Dark Magic', 'Light Magic'),
+        race('Pux')
       ]),
       category('Hybrid Races', [
         race('Bugbear'), race('Centaur'), race('Harpy'), race('Lamia'), race('Mermaid/Merman'), race('Satyr')
