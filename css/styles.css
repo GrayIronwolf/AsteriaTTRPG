@@ -1648,6 +1648,10 @@ body{display:block!important;visibility:visible!important;opacity:1!important;ov
   cursor:pointer;
   transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
 }
+.race-trait-card-grid .race-trait-card.is-placeholder{
+  border-style:dashed;
+  opacity:.84;
+}
 .race-trait-card-grid .race-trait-card:hover,
 .race-trait-card-grid .race-trait-card:focus-visible{
   transform:translateY(-1px);

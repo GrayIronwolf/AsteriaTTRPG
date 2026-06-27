@@ -18,7 +18,9 @@ const includedRoots = new Set([
   'Kingdoms',
   'Timeline',
   'Races',
+  'races',
   'Classes',
+  'classes',
   'Class Talents',
   'Talent Trees',
   'Pathways',
@@ -220,11 +222,24 @@ function entryFromFile(file) {
   const title = titleFromBody(file, body);
   const structuredPlacement = structuredItemPlacement(parts, metadata, title);
   if (structuredPlacement?.skip) return null;
-  const categoryPath = structuredPlacement?.categoryPath || parts.slice(0, -1);
+  let categoryPath = structuredPlacement?.categoryPath || parts.slice(0, -1);
   const section = structuredPlacement?.section || sectionFromCategory(categoryPath.join('/'), metadata);
   const type = structuredPlacement?.type || metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
   const itemClass = metadata.itemClass || metadata.item_class || metadata.rarity || '';
   const raceCategory = metadata.raceCategory || metadata.racecategory || (section === 'Races' ? 'Humanoid' : '');
+  if (section === 'Races') {
+    categoryPath = ['Races', raceCategory, metadata.secondaryCategory, metadata.tertiaryCategory].filter(Boolean);
+  }
+  const classCategory = metadata.classCategory || metadata.classcategory || metadata.class_category || metadata.category || '';
+  const className = metadata.className || metadata.classname || metadata.class_name || '';
+  const typeText = String(metadata.type || type || '').toLowerCase();
+  if (section === 'Classes') {
+    if (typeText.includes('talent')) {
+      categoryPath = ['Classes', classCategory || 'Class Talents', className || 'Talent Tree', metadata.talentTier || metadata.talenttier || metadata.talent_tier || 'Talent Tree'].filter(Boolean);
+    } else {
+      categoryPath = ['Classes', classCategory || 'Classes'].filter(Boolean);
+    }
+  }
   const playable = metadata.playable === true || String(metadata.availability || '').toLowerCase() === 'playable';
 
   return {

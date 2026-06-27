@@ -108,6 +108,7 @@ const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 const coreShellJs = fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8');
 const cleanCompendiumJs = fs.readFileSync(path.join(root, 'js/clean-compendium.js'), 'utf8');
 const codexCompendiumJs = fs.readFileSync(path.join(root, 'js/codex-compendium.js'), 'utf8');
+const classCompendiumDataJs = fs.readFileSync(path.join(root, 'js/class-compendium-data.js'), 'utf8');
 const raceCompendiumJs = fs.readFileSync(path.join(root, 'js/race-compendium.js'), 'utf8');
 const raceCompendiumDataJs = fs.readFileSync(path.join(root, 'js/race-compendium-data.js'), 'utf8');
 const raceInfoDataJs = fs.readFileSync(path.join(root, 'js/race-info-data.js'), 'utf8');
@@ -181,10 +182,44 @@ check('Player dashboard uses Characteristic Tier structure', progressionUiJs.inc
 check('Player dashboard reflects class lock and max classes', appJs.includes('Primary class locked') && appJs.includes('Class Slots') && appJs.includes('Class limit reached') && appJs.includes('slice(0,max)'));
 check('Player dashboard syncs racial info from forged character', ['renderDashboardRacialInfo','v1722RaceInfoForCharacter','characterRacialInfo','racialTraitsList','Racial Characteristics'].every(token => appJs.includes(token)));
 check('Racial trait cards open shared popup on race page and dashboard', raceCompendiumJs.includes('openRaceTraitModal') && raceCompendiumJs.includes('data-race-trait-index') && appJs.includes('openDashboardRacialTrait') && appJs.includes('data-dashboard-racial-trait') && stylesCss.includes('.asteria-info-modal'));
-check('Race pages expose characteristic roll and cap panels', ['RaceCharacteristicRulesPanel','Characteristic Rolls & Tier Caps','RACE_TIER_RULES','playable:true'].every(token => raceCompendiumJs.includes(token)));
+const raceContentRoot = path.join(root, 'content/races');
+const raceContentDirs = fs.readdirSync(raceContentRoot, { withFileTypes:true }).filter(entry => entry.isDirectory());
+const cavernRaceFile = fs.readFileSync(path.join(raceContentRoot, 'cavern-sprite/index.md'), 'utf8');
+const raceManifestContext = { window:{} };
+vm.createContext(raceManifestContext);
+vm.runInContext(raceCompendiumDataJs, raceManifestContext);
+const raceManifest = raceManifestContext.window.ASTERIA_RACE_COMPENDIUM_DATA;
+const raceManifestEntries = [];
+(function walkRaceManifest(nodes){
+  (nodes || []).forEach(node => {
+    if (node.type === 'race') raceManifestEntries.push(node);
+    else walkRaceManifest(node.children || []);
+  });
+})(raceManifest.categories || []);
+check('Race pages expose characteristic roll and cap panels', ['RaceCharacteristicRulesPanel','Characteristic Rolls & Tier Caps','RACE_TIER_RULES','playable:node.playable !== false'].every(token => raceCompendiumJs.includes(token)));
 check('Race info data loads before race renderer', jsFiles.includes('js/race-info-data.js') && jsFiles.indexOf('js/race-info-data.js') > jsFiles.indexOf('js/race-compendium-data.js') && jsFiles.indexOf('js/race-info-data.js') < jsFiles.indexOf('js/race-compendium.js'));
-check('Race pages merge generated racial information', ['ASTERIA_RACE_INFO_DATA','racialFeaturesMarkdown','racialTraitsMarkdown','statRolls','RaceTraitCards','RaceSheetContent'].every(token => raceCompendiumJs.includes(token)) && ['Cavern Sprite','Pixie','Polaris Ursa','Abyssborn Undien'].every(name => raceInfoDataJs.includes(`"${name}"`)));
+check('Race content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-race-content.js')) && raceContentDirs.length === 201 && raceContentDirs.every(entry => fs.existsSync(path.join(raceContentRoot, entry.name, 'index.md'))));
+check('Race manifest is generated from content/races', raceManifest.source === 'content/races' && raceManifest.entryCount === 201 && raceManifestEntries.length === 201 && raceManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/races/')));
+check('Removed race entries are not active', !fs.existsSync(path.join(raceContentRoot, 'undien/index.md')) && !fs.existsSync(path.join(raceContentRoot, 'deepborn-undien/index.md')) && !raceManifestEntries.some(entry => ['Undien','Deepborn Undien'].includes(entry.name)));
+check('Race pages merge markdown racial information', ['racialFeaturesMarkdown','racialTraitsMarkdown','statRolls','RaceTraitCards','RaceSheetContent'].every(token => raceCompendiumJs.includes(token)) && ['title: "Cavern Sprite"','## Racial Features','## Racial Characteristics','## Racial Traits'].every(token => cavernRaceFile.includes(token)));
 check('Generated race info carries rules and traits', ['racialTraits','rollModifiers','statRolls','tierCaps','racialFeaturesMarkdown'].every(token => raceInfoDataJs.includes(`"${token}"`)));
+const classContentRoot = path.join(root, 'content/classes');
+const classContentDirs = fs.readdirSync(classContentRoot, { withFileTypes:true }).filter(entry => entry.isDirectory());
+const classManifestContext = { window:{} };
+vm.createContext(classManifestContext);
+vm.runInContext(classCompendiumDataJs, classManifestContext);
+const classManifest = classManifestContext.window.ASTERIA_CLASS_COMPENDIUM_DATA;
+const classManifestEntries = [];
+(function walkClassManifest(nodes){
+  (nodes || []).forEach(node => {
+    if (node.type === 'class') classManifestEntries.push(node);
+    else walkClassManifest(node.children || []);
+  });
+})(classManifest.categories || []);
+check('Race pages always expose five racial trait card slots', raceCompendiumJs.includes('traitSetForRace') && raceCompendiumJs.includes('while(slots.length < 5)') && raceCompendiumJs.includes('is-placeholder'));
+check('Class content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-class-content.js')) && classContentDirs.length >= 30 && classContentDirs.every(entry => fs.existsSync(path.join(classContentRoot, entry.name, 'index.md'))));
+check('Class talents use per-tier content folders', fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-1/artificer-discipline/index.md')) && fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-5/arcane-exchange/index.md')));
+check('Class manifest is generated from content/classes', classManifest.source === 'content/classes' && classManifest.entryCount >= 30 && classManifestEntries.length >= 30 && classManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/classes/')));
 check('Gameplay systems do not inject extra sidebar shortcuts', !gameplayJs.includes('data-phase3-sidebar') && !gameplayJs.includes('data-phase3-side="characterCreator"'));
 check('Phase 4 world script is loaded', jsFiles.includes('js/asteria-world-systems.js'));
 check('Phase 4 exposes world API', worldJs.includes('window.AsteriaWorld') && worldJs.includes('openWorldState') && worldJs.includes('openWorldMap'));
@@ -219,13 +254,13 @@ check('Shell exposes router API', fs.readFileSync(path.join(root, 'js/asteria-co
 check('Shell exposes account API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaAccounts'));
 
 const cleanCompendiumIndex = JSON.parse(fs.readFileSync(path.join(root, 'data/compendium-index-clean.json'), 'utf8'));
-const raceEntry = cleanCompendiumIndex.entries.find(entry => entry.section === 'Races' && entry.title === 'Undien');
+const raceEntry = cleanCompendiumIndex.entries.find(entry => entry.section === 'Races' && entry.title === 'Cavern Sprite');
 check('Unified workspace compendium index exists', cleanCompendiumIndex.version === 'asteria-unified-workspace-compendium-system-v1' && cleanCompendiumIndex.entries.length >= 5);
 check('Workspace exposes shared APIs', cleanCompendiumJs.includes('window.openCompendiumSection') && cleanCompendiumJs.includes('window.openCompendiumPath') && cleanCompendiumJs.includes('window.AsteriaWorkspace'));
 check('Workspace routes compendium sections through one renderer', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Creatures','Factions'].every(section => cleanCompendiumJs.includes(section)));
 check('Race navigation removes old playable folders', !html.includes("Races/Playable Races") && !html.includes("Races/Non-Playable Races") && !cleanCompendiumJs.includes('Playable Races') && !cleanCompendiumJs.includes('Non-Playable Races'));
 check('Race navigation uses lore/type categories', ['Beastkin','Celestial','Demonic','Dragon','Fae','Humanoid','Hybrid','Spirit Races','Undead','Demi-Races'].every(label => cleanCompendiumJs.includes(label)));
-check('Race playable status is metadata', Boolean(raceEntry) && raceEntry.playable === true && raceEntry.availability === 'playable' && raceEntry.raceCategory === 'Humanoid' && raceEntry.size === 'Medium');
+check('Race playable status is metadata', Boolean(raceEntry) && raceEntry.playable === true && raceEntry.availability === 'playable' && raceEntry.raceCategory === 'Small Races' && raceEntry.size === 'Unknown');
 check('Race cards use playable status bubble', cleanCompendiumJs.includes('PLAYABLE') && cleanCompendiumJs.includes('NON-PLAYABLE') && cleanCompendiumCss.includes('.clean-race-status'));
 check('Item rarity system remains in clean compendium', cleanCompendiumJs.includes('clean-rarity-tag') && cleanCompendiumCss.includes('.clean-rarity-common') && cleanCompendiumIndex.entries.some(entry => entry.section === 'Items' && entry.rarity === 'Common'));
 check('Workspace layout uses standard panels', cleanCompendiumCss.includes('.workspace-header') && cleanCompendiumCss.includes('.workspace-category-panel') && cleanCompendiumCss.includes('.workspace-filter-area') && cleanCompendiumCss.includes('.workspace-tabs') && cleanCompendiumCss.includes('.workspace-display-window'));
@@ -287,9 +322,9 @@ check('Dashboard includes required logged-in panels', ['Current Campaigns', 'Ava
 check('Data sync uses auth dashboard version', dataSyncJs.includes('asteria-auth-workspace-dashboard-system-v1'));
 check('Firebase setup instructions exist', fs.existsSync(path.join(root, 'FIREBASE-SETUP.md')));
 check('Pixie race is split into elemental race entries', ['Air Pixie','Earth Pixie','Fire Pixie','Water Pixie','Life Pixie','Death Pixie','Light Pixie','Dark Pixie'].every(name => raceCompendiumDataJs.includes(name)) && !raceCompendiumDataJs.includes("race('Pixie'"));
-check('Pixie races carry primary and opposite magic affinities', raceCompendiumDataJs.includes('affinityProfile') && raceCompendiumDataJs.includes('primaryPercent:100') && raceCompendiumDataJs.includes('oppositePercent:0') && raceCompendiumJs.includes('affinityProfile:node.affinityProfile'));
+check('Pixie races carry primary and opposite magic affinities', raceCompendiumDataJs.includes('affinityProfile') && raceCompendiumDataJs.includes('"primaryPercent": 100') && raceCompendiumDataJs.includes('"oppositePercent": 0') && raceCompendiumJs.includes('affinityProfile:node.affinityProfile'));
 const raceGenderImageSlugs = ['abyssborn-undien','drownedborn-undien','flowborn-undien','frostborn-undien','polaris-ursa','tempestborn-undien','tideborn-undien','air-pixie','dark-pixie','death-pixie','earth-pixie','fire-pixie','life-pixie','light-pixie','water-pixie'];
-check('Race cards use matched male/female image assets', raceCompendiumDataJs.includes('raceWithGenderImages') && raceGenderImageSlugs.every(slug => (raceCompendiumDataJs.includes(`'${slug}'`) || raceCompendiumDataJs.includes('assetSlug')) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-female-adult.png`)) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-male-adult.png`))));
+check('Race cards use matched male/female image assets', raceGenderImageSlugs.every(slug => raceCompendiumDataJs.includes(`content/races/${slug}/index.md`) && raceCompendiumDataJs.includes(`assets/races/${slug}/${slug}-female-adult.png`) && raceCompendiumDataJs.includes(`assets/races/${slug}/${slug}-male-adult.png`) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-female-adult.png`)) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-male-adult.png`))));
 
 const floraReadme = path.join(root, 'content/flora/README.md');
 const floraRose = path.join(root, 'content/flora/1-common/flowers/rose/index.md');
@@ -373,6 +408,8 @@ jsFiles.forEach(file => {
 [
   'scripts/generate-wiki-index.js',
   'scripts/generate-flora-index.js',
+  'scripts/generate-race-content.js',
+  'scripts/generate-class-content.js',
   'scripts/generate-clean-compendium-index.js',
   'scripts/generate-content-manifest.js',
   'scripts/generate-universal-compendium-index.js',

@@ -10,7 +10,6 @@ const supportedRoots = [
   'content',
   'classes',
   'creatures',
-  'races',
   'items',
   'spells',
   'talents',
@@ -418,6 +417,16 @@ function categoryPartsFor(filePath, domain, rootName, metadata = {}) {
 
   const contentParts = withoutFile.slice(1);
   if (['flora','minerals','materials'].includes(contentParts[0])) return itemCategoryPartsFor(contentParts, metadata);
+  if (contentParts[0] === 'classes') {
+    if (domain === 'talent') {
+      return [
+        metadata.classCategory || metadata.class_category || 'Classes',
+        metadata.className || metadata.class_name || 'Talent Tree',
+        metadata.talentTier || metadata.talent_tier || 'Talent Tree'
+      ].filter(Boolean);
+    }
+    return [metadata.classCategory || metadata.class_category || 'Classes'].filter(Boolean);
+  }
   if (contentParts.length && domainAliases[slugify(contentParts[0])]) return contentParts.slice(1, -1).map(titleCase);
   return contentParts.slice(0, -1).map(titleCase);
 }

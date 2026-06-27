@@ -121,11 +121,11 @@
             name:node.name,
             path:racePath,
             pathId:pathId(racePath),
-            primaryCategory:racePath[0] || 'Races',
-            secondaryCategory:racePath[1] || '',
-            tertiaryCategory:racePath[2] || '',
+            primaryCategory:node.raceCategory || racePath[0] || 'Races',
+            secondaryCategory:node.secondaryCategory || racePath[1] || '',
+            tertiaryCategory:node.tertiaryCategory || racePath[2] || '',
             size:node.size || info.size || info.stats?.Size || inferSize(racePath[0] || ''),
-            image:node.image || '',
+            image:node.image || node.images?.female || node.images?.male || '',
             images:node.images || {},
             tags:[...new Set(array(info.tags).concat(array(node.tags)))],
             homeland:node.homeland || info.homeland || info.stats?.Homeland || '',
@@ -135,8 +135,9 @@
             magicAffinity:node.magicAffinity || info.magicAffinity || info.stats?.['Magic Affinity'] || '',
             affinityProfile:node.affinityProfile || {},
             loreStatus:node.loreStatus || 'Common Knowledge',
-            playable:true,
-            availability:'playable',
+            playable:node.playable !== false,
+            availability:node.availability || (node.playable === false ? 'non-playable' : 'playable'),
+            visibility:node.visibility || 'public',
             summary:node.summary || info.summary || firstMarkdownParagraph(info.overviewMarkdown || info.loreMarkdown) || '',
             movement:node.movement || info.movement || info.stats?.Movement || '',
             senses:node.senses || info.senses || info.stats?.Senses || '',
@@ -155,6 +156,12 @@
             racialDrawbacksMarkdown:node.racialDrawbacksMarkdown || node.racial_drawbacks_markdown || info.racialDrawbacksMarkdown || '',
             loreMarkdown:node.loreMarkdown || node.lore_markdown || info.loreMarkdown || '',
             overviewMarkdown:node.overviewMarkdown || node.overview_markdown || info.overviewMarkdown || '',
+            cultureMarkdown:node.cultureMarkdown || node.culture_markdown || '',
+            historicalFiguresMarkdown:node.historicalFiguresMarkdown || node.historical_figures_markdown || '',
+            settlementsMarkdown:node.settlementsMarkdown || node.settlements_markdown || '',
+            relationsMarkdown:node.relationsMarkdown || node.relations_markdown || '',
+            galleryMarkdown:node.galleryMarkdown || node.gallery_markdown || '',
+            gmNotesMarkdown:node.gmNotesMarkdown || node.gm_notes_markdown || '',
             mottosMarkdown:node.mottosMarkdown || node.mottos_markdown || info.mottosMarkdown || '',
             gmOnly:Boolean(node.gmOnly),
             stats:Object.assign({}, info.stats || {}, node.stats || {}),
@@ -495,22 +502,38 @@
     if(!html) return '';
     return `<section class="race-info-section ${className}"><h3>${escapeHtml(title)}</h3><div class="race-markdown-body">${html}</div></section>`;
   }
+  function traitSetForRace(race){
+    const realTraits = array(race?.racialTraits).map((trait, index) => ({
+      name:trait.name || `Racial Trait ${index + 1}`,
+      text:trait.text || trait.description || 'Information coming soon.',
+      isPlaceholder:false
+    }));
+    const slots = realTraits.slice(0, 5);
+    while(slots.length < 5){
+      const number = slots.length + 1;
+      slots.push({
+        name:`Racial Trait ${number}`,
+        text:'Information coming soon.',
+        isPlaceholder:true
+      });
+    }
+    return slots;
+  }
   function RaceTraitCards(race){
-    const traits = array(race.racialTraits);
-    if(!traits.length && !race.racialTraitsMarkdown) return '';
-    if(!traits.length) return markdownPanel('Racial Traits', race.racialTraitsMarkdown, 'span-2');
+    const traits = traitSetForRace(race);
     return `
       <section class="race-info-section span-2">
         <h3>Racial Traits</h3>
+        <p class="smallnote">Each race has five racial trait slots. Double-click a card to open its trait page.</p>
         <div class="race-trait-card-grid">
-          ${traits.map((trait, index) => `<article class="race-trait-card" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.text || trait.description || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
+          ${traits.map((trait, index) => `<article class="race-trait-card ${trait.isPlaceholder ? 'is-placeholder' : ''}" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.text || trait.description || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
         </div>
       </section>
     `;
   }
   function openRaceTraitModal(index){
     if(!selectedRace) return;
-    const trait = array(selectedRace.racialTraits)[index];
+    const trait = traitSetForRace(selectedRace)[index];
     if(!trait) return;
     if(typeof window.openAsteriaInfoModal === 'function'){
       window.openAsteriaInfoModal({
@@ -546,12 +569,12 @@
     }
     if(activeTab === 'Racial Sheet') return `<div class="race-overview-grid">${RaceSheetContent(race)}</div>`;
     if(activeTab === 'Lore') return `<div class="race-overview-grid">${markdownPanel('Lore', race.loreMarkdown || race.overviewMarkdown, 'span-2') || placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${markdownPanel('Mottos', race.mottosMarkdown)}${LoreUnlockBlock(race)}${GMNotesBlock(race)}</div>`;
-    if(activeTab === 'Culture') return placeholderSections(['Traditions','Society','Religion','Clothing','Food','Architecture','Combat Styles','Rituals']);
-    if(activeTab === 'Historical Figures') return placeholderSections(['Heroes','Villains','Rulers','Prophets','Legendary Members']);
-    if(activeTab === 'Settlements') return placeholderSections(['Homelands','Cities','Villages','Ruins','Territories']);
-    if(activeTab === 'Relations') return RelationshipMatrix(race);
+    if(activeTab === 'Culture') return markdownPanel('Culture', race.cultureMarkdown, 'span-2') || placeholderSections(['Traditions','Society','Religion','Clothing','Food','Architecture','Combat Styles','Rituals']);
+    if(activeTab === 'Historical Figures') return markdownPanel('Historical Figures', race.historicalFiguresMarkdown, 'span-2') || placeholderSections(['Heroes','Villains','Rulers','Prophets','Legendary Members']);
+    if(activeTab === 'Settlements') return markdownPanel('Settlements', race.settlementsMarkdown, 'span-2') || placeholderSections(['Homelands','Cities','Villages','Ruins','Territories']);
+    if(activeTab === 'Relations') return race.relationsMarkdown ? markdownPanel('Relations', race.relationsMarkdown, 'span-2') : RelationshipMatrix(race);
     if(activeTab === 'Traits & Biology') return `<div class="race-overview-grid">${markdownPanel('Physical Traits', race.racialFeaturesMarkdown, 'span-2')}${RaceTraitCards(race)}${markdownPanel('Movement & Biology', race.racialMovementMarkdown)}${markdownPanel('Limitations', race.racialBonusesMarkdown || race.racialDrawbacksMarkdown)}</div>` || placeholderSections(['Physical Traits','Lifespan','Height Range','Reproduction','Bloodlines','Mutations','Magical Traits','Biological Quirks']);
-    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div><p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p></section>`;
+    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>${race.galleryMarkdown ? markdownToHtml(race.galleryMarkdown) : '<p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p>'}</section>`;
     return '<p>Information coming soon.</p>';
   }
   function RaceTabs(race){

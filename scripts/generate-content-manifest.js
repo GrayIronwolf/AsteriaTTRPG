@@ -32,6 +32,24 @@ function isCollectionIndexPath(relativePath) {
   return /(^|\/)(flora|minerals|materials)\/index\.md$/.test(normalized);
 }
 
+function parseFrontmatter(markdown) {
+  const match = String(markdown || '').match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  const metadata = {};
+  if (!match) return metadata;
+  match[1].split(/\r?\n/).forEach(line => {
+    const pair = line.match(/^([A-Za-z0-9_ -]+):(?:\s*(.*))?$/);
+    if (!pair) return;
+    metadata[pair[1].trim()] = String(pair[2] || '').trim().replace(/^["']|["']$/g, '');
+  });
+  return metadata;
+}
+
+function pageTitle(file, markdown) {
+  const metadata = parseFrontmatter(markdown);
+  const heading = String(markdown || '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').match(/^#\s+(.+)$/m);
+  return metadata.title || heading?.[1]?.trim() || path.basename(file, '.md');
+}
+
 function walk(dir, output = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const next = path.join(dir, entry.name);
@@ -51,17 +69,19 @@ function walk(dir, output = []) {
 const used = {};
 const pages = walk(CONTENT).sort().map(file => {
   const rel = toWebPath(path.relative(CONTENT, file));
-  const stem = path.basename(file, '.md');
-  let slug = slugify(stem);
+  const content = fs.readFileSync(file, 'utf8');
+  const metadata = parseFrontmatter(content);
+  const title = pageTitle(file, content);
+  let slug = slugify(metadata.slug || title);
   if (used[slug]) slug = `${slug}-${++used[slug]}`;
   else used[slug] = 1;
 
   return {
     slug,
-    title: stem,
+    title,
     category: path.dirname(rel) === '.' ? 'Uncategorised' : path.dirname(rel).split(/[\\/]/).join('/'),
     source: rel,
-    content: fs.readFileSync(file, 'utf8')
+    content
   };
 });
 

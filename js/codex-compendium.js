@@ -134,6 +134,8 @@
         class_colour:node.class_colour || '#1f7dff',
         symbol:node.symbol || initials(node.name),
         playable:node.playable !== false,
+        sourcePath:node.sourcePath || '',
+        sourceFolder:node.sourceFolder || '',
         tags:array(node.tags),
         loreStatus:node.loreStatus || 'Common Knowledge',
         gmOnly:Boolean(node.gmOnly),
