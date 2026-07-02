@@ -5,18 +5,12 @@
 
   const DATA = window.ASTERIA_RACE_COMPENDIUM_DATA || { categories:[] };
   const RACE_INFO = window.ASTERIA_RACE_INFO_DATA || {};
-  const TABS = ['Overview','Racial Sheet','Lore','Culture','Historical Figures','Settlements','Relations','Traits & Biology','Gallery'];
-  const STAT_FIELDS = ['Population','Average Lifespan','Height Range','Average Weight','Homeland','Dominant Climate','Essence Affinity','Common Professions','Magic Affinity','Technology Level','Threat Level','Languages','Related Factions','Related Locations'];
+  const TABS = ['Overview','Racial Sheet','Lore','Gallery'];
+  const STAT_FIELDS = ['Population','Average Lifespan','Homeland','Common Professions','Magic Affinity','Languages','Lore Status'];
   const RACE_CHARACTERISTICS = ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'];
   const RACE_STAT_LABELS = { strength:'STR', dexterity:'DEX', agility:'AGI', constitution:'CON', endurance:'END', intelligence:'INT', wisdom:'WIS', charisma:'CHA', luck:'LCK' };
-  const RACE_TIER_RULES = [
-    { label:'Tier 0', range:'0-19', bonus:'+0' },
-    { label:'Tier I', range:'20-39', bonus:'+1' },
-    { label:'Tier II', range:'40-59', bonus:'+2' },
-    { label:'Tier III', range:'60-79', bonus:'+3' },
-    { label:'Tier IV', range:'80-99', bonus:'+4' },
-    { label:'Tier V', range:'100+', bonus:'+5' }
-  ];
+  const RACE_STAT_NAMES = { strength:'Strength', dexterity:'Dexterity', agility:'Agility', constitution:'Constitution', endurance:'Endurance', intelligence:'Intelligence', wisdom:'Wisdom', charisma:'Charisma', luck:'Luck' };
+  const RACE_TIER_RULES = [];
   const RACE_CHARACTERISTIC_ALIASES = {
     str:'strength', strength:'strength',
     dex:'dexterity', dexterity:'dexterity',
@@ -79,11 +73,8 @@
       'Essence Affinity':race.essenceAffinity || 'Information coming soon',
       'Common Professions':'Information coming soon',
       'Magic Affinity':race.magicAffinity || 'Information coming soon',
-      'Technology Level':'Information coming soon',
-      'Threat Level':race.threatLevel || 'Information coming soon',
       Languages:'Information coming soon',
-      'Related Factions':'Information coming soon',
-      'Related Locations':'Information coming soon',
+      'Lore Status':race.loreStatus || 'Common Knowledge',
       ...(race.stats || {})
     };
   }
@@ -380,7 +371,7 @@
   }
   function RaceStatsPanel(race){
     const stats = defaultStats(race);
-    const fields = STAT_FIELDS.concat(Object.keys(stats).filter(field => !STAT_FIELDS.includes(field)));
+    const fields = STAT_FIELDS;
     return `<section class="race-stats-panel"><h3>Race Statistics</h3><div>${fields.map(field => `<p><span>${escapeHtml(field)}</span><b>${escapeHtml(stats[field] || 'Information coming soon')}</b></p>`).join('')}</div></section>`;
   }
   function LoreUnlockBlock(race){
@@ -446,12 +437,10 @@
     return `
       <section class="race-characteristic-rules-panel">
         <h3>Characteristic Rolls & Tier Caps</h3>
-        <p><b>Rolls:</b> ${escapeHtml(race.characteristicRolls || 'Manual roll, then apply race +/- modifiers')}</p>
-        <div class="race-tier-reference">
           ${RACE_TIER_RULES.map(rule => `<span><b>${escapeHtml(rule.label)}</b>${escapeHtml(rule.range)} • ${escapeHtml(rule.bonus)}</span>`).join('')}
         </div>
         <div class="race-characteristic-rules-grid">
-          ${RACE_CHARACTERISTICS.map(key => `<article><span>${escapeHtml(RACE_STAT_LABELS[key])}</span><b>${escapeHtml(signed(modifiers[key]))}</b><small>${escapeHtml(statRolls[key])} / ${escapeHtml(caps[key])}</small></article>`).join('')}
+          ${RACE_CHARACTERISTICS.map(key => `<article><h4>${escapeHtml(RACE_STAT_NAMES[key])}</h4><b>${escapeHtml(statRolls[key])}</b><em>${escapeHtml(signed(modifiers[key]))} result modifier</em><small>${escapeHtml(caps[key])}</small></article>`).join('')}
         </div>
       </section>
     `;
@@ -501,6 +490,72 @@
     const html = markdownHtml(markdown);
     if(!html) return '';
     return `<section class="race-info-section ${className}"><h3>${escapeHtml(title)}</h3><div class="race-markdown-body">${html}</div></section>`;
+  }
+  function overviewValue(race, labels){
+    const stats = defaultStats(race);
+    for(const label of array(labels)){
+      if(stats[label]) return stats[label];
+    }
+    const source = String(race.overviewMarkdown || '');
+    for(const label of array(labels)){
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const match = source.match(new RegExp(`\\*\\*${escaped}:\\*\\*\\s*([^\\n]+)`, 'i')) || source.match(new RegExp(`${escaped}:\\s*([^\\n]+)`, 'i'));
+      if(match) return match[1].replace(/\s{2,}/g, ' ').trim();
+    }
+    return '';
+  }
+  function categoryBubbles(race){
+    return [race.primaryCategory, race.secondaryCategory, race.tertiaryCategory]
+      .filter(Boolean)
+      .map(value => `<span>${escapeHtml(value)}</span>`)
+      .join('');
+  }
+  function RaceOverviewArt(race){
+    return `
+      <section class="race-overview-art-panel">
+        <div class="race-overview-art">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
+        ${genderControls(race)}
+      </section>
+    `;
+  }
+  function RaceOverviewPanel(race){
+    const quickRows = [
+      ['Size', race.size || 'Information coming soon'],
+      ['Movement', race.movement || overviewValue(race, ['Movement']) || 'Information coming soon'],
+      ['Passive Perception', overviewValue(race, ['Passive Perception','Senses']) || race.senses || 'Information coming soon'],
+      ['Racial Alignment', overviewValue(race, ['Racial Alignment','Alignment Tendencies']) || 'Information coming soon'],
+      ['Magic Affinity', race.magicAffinity || overviewValue(race, ['Magic Affinity']) || 'Information coming soon']
+    ];
+    return `<section class="race-summary-panel"><h3>Overview</h3><p>${escapeHtml(race.summary || 'Information coming soon.')}</p><div class="race-quick-reference">${quickRows.map(([label, value]) => `<p><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></p>`).join('')}</div></section>`;
+  }
+  function raceFeatureHtml(markdown){
+    const text = String(markdown || '').replace(/!\[\[[^\]]+\]\]/g, '').trim();
+    if(!text) return '';
+    const cards = [];
+    let current = null;
+    text.split(/\r?\n/).forEach(line => {
+      const raw = line.replace(/\s+$/g, '');
+      if(!raw || /^---+$/.test(raw.trim())) return;
+      const heading = raw.match(/^-\s+(.+?):\s*$/);
+      if(heading && !/^\s/.test(raw)){
+        if(current) cards.push(current);
+        current = { title:heading[1].trim(), items:[] };
+        return;
+      }
+      const item = raw.match(/^\s*-\s+(.+)$/);
+      if(item){
+        if(!current) current = { title:'Features', items:[] };
+        current.items.push(item[1].trim());
+      }
+    });
+    if(current) cards.push(current);
+    if(!cards.length) return markdownHtml(markdown);
+    return `<div class="race-feature-list">${cards.map(card => `<article><h4>${escapeHtml(card.title)}</h4><ul>${card.items.length ? card.items.map(item => `<li>${escapeHtml(item)}</li>`).join('') : '<li>Information coming soon.</li>'}</ul></article>`).join('')}</div>`;
+  }
+  function RaceFeaturePanel(race){
+    const html = raceFeatureHtml(race.racialFeaturesMarkdown);
+    if(!html) return '';
+    return `<section class="race-info-section span-2 race-feature-panel"><h3>Racial Features</h3>${html}</section>`;
   }
   function traitSetForRace(race){
     const realTraits = array(race?.racialTraits).map((trait, index) => ({
@@ -556,7 +611,7 @@
   function RaceSheetContent(race){
     const sections = [
       RaceCharacteristicRulesPanel(race),
-      markdownPanel('Racial Features', race.racialFeaturesMarkdown, 'span-2'),
+      RaceFeaturePanel(race),
       RaceTraitCards(race),
       markdownPanel('Racial Movement', race.racialMovementMarkdown),
       markdownPanel('Bonuses / Drawbacks', race.racialBonusesMarkdown || race.racialDrawbacksMarkdown)
@@ -565,16 +620,11 @@
   }
   function tabContent(race){
     if(activeTab === 'Overview'){
-      return `<div class="race-overview-grid"><section class="race-summary-panel"><h3>Overview</h3><p>${escapeHtml(race.summary || 'Information coming soon.')}</p><div class="race-quick-reference"><p><span>Primary Category</span><b>${escapeHtml(race.primaryCategory)}</b></p><p><span>Secondary Category</span><b>${escapeHtml(race.secondaryCategory || 'None')}</b></p><p><span>Size</span><b>${escapeHtml(race.size)}</b></p><p><span>Movement</span><b>${escapeHtml(race.movement || 'Information coming soon')}</b></p><p><span>Magic Affinity</span><b>${escapeHtml(race.magicAffinity || 'Information coming soon')}</b></p><p><span>Lore Status</span><b>${escapeHtml(race.loreStatus)}</b></p></div></section>${RaceStatsPanel(race)}${RaceCharacteristicRulesPanel(race)}${RaceTraitCards(race)}${LoreUnlockBlock(race)}</div>`;
+      return `<div class="race-overview-layout">${RaceOverviewArt(race)}<div class="race-overview-stack">${RaceOverviewPanel(race)}${RaceTraitCards(race)}</div></div>`;
     }
     if(activeTab === 'Racial Sheet') return `<div class="race-overview-grid">${RaceSheetContent(race)}</div>`;
-    if(activeTab === 'Lore') return `<div class="race-overview-grid">${markdownPanel('Lore', race.loreMarkdown || race.overviewMarkdown, 'span-2') || placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${markdownPanel('Mottos', race.mottosMarkdown)}${LoreUnlockBlock(race)}${GMNotesBlock(race)}</div>`;
-    if(activeTab === 'Culture') return markdownPanel('Culture', race.cultureMarkdown, 'span-2') || placeholderSections(['Traditions','Society','Religion','Clothing','Food','Architecture','Combat Styles','Rituals']);
-    if(activeTab === 'Historical Figures') return markdownPanel('Historical Figures', race.historicalFiguresMarkdown, 'span-2') || placeholderSections(['Heroes','Villains','Rulers','Prophets','Legendary Members']);
-    if(activeTab === 'Settlements') return markdownPanel('Settlements', race.settlementsMarkdown, 'span-2') || placeholderSections(['Homelands','Cities','Villages','Ruins','Territories']);
-    if(activeTab === 'Relations') return race.relationsMarkdown ? markdownPanel('Relations', race.relationsMarkdown, 'span-2') : RelationshipMatrix(race);
-    if(activeTab === 'Traits & Biology') return `<div class="race-overview-grid">${markdownPanel('Physical Traits', race.racialFeaturesMarkdown, 'span-2')}${RaceTraitCards(race)}${markdownPanel('Movement & Biology', race.racialMovementMarkdown)}${markdownPanel('Limitations', race.racialBonusesMarkdown || race.racialDrawbacksMarkdown)}</div>` || placeholderSections(['Physical Traits','Lifespan','Height Range','Reproduction','Bloodlines','Mutations','Magical Traits','Biological Quirks']);
-    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>${race.galleryMarkdown ? markdownToHtml(race.galleryMarkdown) : '<p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p>'}</section>`;
+    if(activeTab === 'Lore') return `<div class="race-overview-grid">${RaceStatsPanel(race)}${markdownPanel('Lore', race.loreMarkdown || race.overviewMarkdown, 'span-2') || placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${markdownPanel('Culture', race.cultureMarkdown, 'span-2') || ''}${markdownPanel('Historical Figures', race.historicalFiguresMarkdown, 'span-2') || ''}${markdownPanel('Settlements', race.settlementsMarkdown, 'span-2') || ''}${markdownPanel('Mottos', race.mottosMarkdown)}${GMNotesBlock(race)}</div>`;
+    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>${race.galleryMarkdown ? markdownHtml(race.galleryMarkdown) : '<p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p>'}</section>`;
     return '<p>Information coming soon.</p>';
   }
   function RaceTabs(race){
@@ -583,14 +633,10 @@
   function RaceDetailPage(race){
     return `
       <article class="race-detail-page">
-        <button type="button" id="raceBackToGrid" class="clean-back race-return">Back to race cards</button>
         <header class="race-detail-head">
-          <div class="race-detail-art">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
           <div>
-            <p class="eyebrow">Race Entry</p>
             <h2>${escapeHtml(race.name)}</h2>
-            ${genderControls(race)}
-            <div class="race-detail-breadcrumb">${breadcrumbHtml(race)}</div>
+            <div class="race-category-bubbles">${categoryBubbles(race)}</div>
           </div>
         </header>
         ${RaceTabs(race)}
@@ -603,11 +649,8 @@
     return `
       <section class="race-compendium-header">
         <div>
-          <p class="eyebrow">Asteria Compendium</p>
           <h1>Race Compendium</h1>
-          <p>Categories organise navigation only. Every race is an independent entry with its own card and page.</p>
         </div>
-        <div class="race-breadcrumbs">${breadcrumbHtml(selectedRace)}</div>
       </section>
       ${SearchAndFilters()}
       <section class="race-compendium-body">
@@ -696,7 +739,6 @@
         render();
       });
     });
-    byId('raceBackToGrid')?.addEventListener('click', () => { selectedRace = null; activeTab = TABS[0]; render(); });
     qsa('[data-race-tab]').forEach(button => {
       button.addEventListener('click', () => { activeTab = button.dataset.raceTab || TABS[0]; render(); });
     });

@@ -10,29 +10,33 @@
   function updateTopButtons(){
     const login = document.getElementById('loginToggle');
     const create = document.getElementById('createAccountTop');
-    if(!login || !create) return;
+    if(!login) return;
     if(isLoggedIn()){
       login.textContent = 'Dashboard';
       login.onclick = event => {
         event?.preventDefault?.();
         window.AsteriaWorkspace?.openDashboard?.('dashboard');
       };
-      create.textContent = 'Log Out';
-      create.onclick = event => {
-        event?.preventDefault?.();
-        window.logout?.();
-      };
+      if(create){
+        create.textContent = 'Log Out';
+        create.onclick = event => {
+          event?.preventDefault?.();
+          window.logout?.();
+        };
+      }
     } else {
       login.textContent = 'Login';
       login.onclick = event => {
         event?.preventDefault?.();
         window.setView?.('loginPage');
       };
-      create.textContent = 'Create Account';
-      create.onclick = event => {
-        event?.preventDefault?.();
-        window.setView?.('accountCreate');
-      };
+      if(create){
+        create.textContent = 'Create Account';
+        create.onclick = event => {
+          event?.preventDefault?.();
+          window.setView?.('accountCreate');
+        };
+      }
     }
   }
   function ensureAccountCache(accountKey, profile, firebaseUser){

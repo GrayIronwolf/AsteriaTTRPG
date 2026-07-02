@@ -907,7 +907,7 @@
       <section class="phase3-creator">
         <article class="phase3-card phase3-forge-intro">
           <div class="phase3-panel-head">
-            <div><p class="eyebrow">Guided Journey</p><h2>Character Forge</h2><p>Build a playable Asteria character from compendium races, classes, skills, origins, and items.</p></div>
+            <div><p class="eyebrow">Guided Journey</p><h2>Character Forge</h2></div>
             <span>${completed}/${FORGE_TABS.length} complete</span>
           </div>
         </article>
@@ -1207,30 +1207,26 @@
     const raceEntry = entryBySlug('race', d.raceSlug);
     const rules = raceCharacteristicRulesFor(raceEntry);
     const base = normalizedCharacteristics(d.characteristics);
-    const finalValues = finalForgeCharacteristics(d);
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head">
-          <div><h2>Characteristics</h2><p>Enter rolled values using the same nine-stat characteristic structure as the Character Dashboard. Race +/- and tier caps are applied automatically.</p></div>
+          <div><h2>Characteristics</h2></div>
           <span>${esc(raceEntry?.title || 'Choose Race')}</span>
-        </div>
-        <div class="phase3-rule-strip">
-          ${CHARACTERISTIC_TIER_RULES.map(rule => `<span><b>${esc(rule.label)}</b>${esc(rule.openEnded ? '100+' : `${rule.min}-${rule.max}`)} • +${esc(rule.bonus)}</span>`).join('')}
         </div>
         <article class="phase3-race-rule-card">
           <h3>${esc(rules.race)} Characteristic Rules</h3>
-          <p><b>Rolls:</b> ${esc(rules.rollFormula)}</p>
-          <p>Manual input stays available. The Forge shows the rolled score, race modifier, final score, and current tier.</p>
+          <p>Manual input stays available. Race modifiers and tier caps are applied when the character is saved.</p>
         </article>
         <div class="phase3-characteristic-grid">
           ${FORGE_CHARACTERISTICS.map(key => `
             <label class="phase3-characteristic-card">
-              <span>${esc(FORGE_STAT_LABELS[key] || key.slice(0,3).toUpperCase())}</span>
+              <span class="phase3-characteristic-title">${esc(titleCase(key))}</span>
               <input type="number" min="0" max="${Number(rules.tierCaps[key]?.maxScore ?? 100)}" value="${Number(base[key] ?? 10)}" data-phase3-characteristic="${esc(key)}">
-              <b>${esc(tierInfoForValue(finalValues[key]).label)} +${esc(tierInfoForValue(finalValues[key]).bonus)}</b>
-              <small>${esc(titleCase(key))}</small>
-              <em>Roll ${esc(rules.statRolls[key] || 'Manual')} / Race ${esc(signed(rules.modifiers[key]))}</em>
-              <strong>Final ${esc(finalValues[key])} / Cap ${esc(rules.tierCaps[key]?.label || 'Tier V')}</strong>
+              <dl class="phase3-characteristic-lines">
+                <div><dt>Stat Roll</dt><dd>${esc(rules.statRolls[key] || 'Manual')}</dd></div>
+                <div><dt>Racial Modifier</dt><dd>${esc(signed(rules.modifiers[key]))}</dd></div>
+                <div><dt>Characteristic Tier Cap</dt><dd>${esc(rules.tierCaps[key]?.label || 'Tier V')}</dd></div>
+              </dl>
             </label>
           `).join('')}
         </div>

@@ -62,12 +62,12 @@
     Factions: 'Faction records are reserved for the same workspace structure when organisation data is promoted.'
   };
   const workspaceTabs = {
-    'Asteria Handbook': ['Rule Sheet','Systems','Tables','Sources'],
-    'World, Realms & Planes': ['Lore Sheet','Regions','Timeline','Images'],
+    'Asteria Handbook': [],
+    'World, Realms & Planes': [],
     Races: ['Race Sheet','Racial Traits','Lore','Images'],
     Classes: ['Overview','Talent Tree','Lore','Images'],
     Items: [],
-    Magic: ['Magic Sheet','Effects','Lore','Sources'],
+    Magic: [],
     Creatures: ['Creature Sheet','Abilities','Lore','Images'],
     Factions: ['Faction Sheet','Relationships','Lore','Images']
   };
@@ -510,16 +510,22 @@
 
   async function load() {
     entries = loadFromManifest();
+    let loadedCleanIndex = false;
     try {
       const response = await fetch('data/compendium-index-clean.json', { cache:'no-store' });
       if (response.ok) {
         const data = await response.json();
-        if (data && Array.isArray(data.entries)) entries = data.entries.filter(entry => !isDeprecatedLooseResourceEntry(entry));
+        if (data && Array.isArray(data.entries)) {
+          entries = data.entries.filter(entry => !isDeprecatedLooseResourceEntry(entry));
+          loadedCleanIndex = true;
+        }
       }
     } catch(error) {
       console.warn('Asteria compendium JSON failed; using content manifest fallback.', error);
     }
-    entries = mergeEntries(entries, loadFromWikiIndexes()).filter(entry => !isDeprecatedLooseResourceEntry(entry));
+    if (!loadedCleanIndex) {
+      entries = mergeEntries(entries, loadFromWikiIndexes()).filter(entry => !isDeprecatedLooseResourceEntry(entry));
+    }
   }
 
   function hideOldViews() {
@@ -569,12 +575,10 @@
     element.innerHTML = `
       <section class="clean-header workspace-header">
         <div class="clean-title-block">
-          <div class="eyebrow">Asteria Workspace</div>
           <h1 id="clean-title">Items</h1>
-          <p id="clean-intro">Browse Asteria through one persistent RPG workspace.</p>
         </div>
-        <div id="clean-filters" class="clean-filters workspace-filter-area"></div>
       </section>
+      <div id="clean-filters" class="clean-filters workspace-filter-area"></div>
       <nav id="workspace-tabs" class="workspace-tabs clean-tabs" aria-label="Workspace sections"></nav>
       <section class="clean-body workspace-body">
         <aside class="clean-nav workspace-category-panel">
@@ -709,7 +713,6 @@
     const buttons = element.querySelector('.clean-buttons');
 
     element.querySelector('#clean-title').textContent = currentSection;
-    element.querySelector('#clean-intro').textContent = sectionIntros[currentSection] || `Browse ${currentSection.toLowerCase()} with shared categories, filters, cards, and full page viewing.`;
     element.querySelector('#clean-nav-title').textContent = node.label || 'Categories';
     element.querySelector('.clean-breadcrumb').textContent = stack.map(item => item.label).join(' / ');
 

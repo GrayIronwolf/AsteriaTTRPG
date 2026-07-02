@@ -23,6 +23,8 @@
 }
 
 .border-glow-card.side-main,
+.border-glow-card.top-menu-btn,
+.border-glow-card#loginToggle,
 .border-glow-card.border-glow-control,
 .border-glow-card.codex-tree-category,
 .border-glow-card.codex-tree-entry,
@@ -50,6 +52,7 @@
 }
 
 .border-glow-card.codex-talent-card,
+.border-glow-card.clean-magic-element-card,
 .border-glow-card.dashboard-skill-card,
 .border-glow-card.weapon-card,
 .border-glow-card.spell-card-v1722,

@@ -12,7 +12,7 @@
       section:'Classes',
       singular:'Class',
       title:'Class Compendium',
-      eyebrow:'Asteria Codex',
+      eyebrow:'',
       intro:'Browse Asteria classes, talent trees, pathways, and lore.',
       data:CLASS_DATA,
       entryType:'class',
@@ -23,7 +23,7 @@
       section:'Creatures',
       singular:'Creature',
       title:'Creature Compendium',
-      eyebrow:'Asteria Bestiary',
+      eyebrow:'',
       intro:'Browse creatures for lore, stat sheets, loot, souls, variants, and encounter planning.',
       data:CREATURE_DATA,
       entryType:'creature',
@@ -451,13 +451,10 @@
     const s = ensureState(section);
     return `
       <article class="codex-detail-page ${section === 'Classes' ? 'codex-class-detail' : 'codex-creature-detail'}">
-        <button type="button" id="codexBackToCards" class="clean-back codex-return">Back to cards</button>
-        <header class="codex-detail-head">
-          ${section === 'Classes' ? `<div class="codex-detail-symbol" style="--class-accent:${escapeHtml(entry.class_colour)}">${escapeHtml(entry.symbol)}</div>` : `<div class="codex-detail-art">${entry.image ? `<img src="${escapeHtml(entry.image)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>`}
+        <header class="codex-detail-head ${section === 'Classes' ? 'codex-class-detail-head' : ''}">
           <div>
-            <p class="eyebrow">${escapeHtml(CONFIGS[section].singular)} Entry</p>
             <h2>${escapeHtml(entry.title)}</h2>
-            <div class="codex-detail-breadcrumb">${breadcrumb(entry.path, entry)}</div>
+            <div class="codex-detail-bubbles">${detailBubbles(section, entry)}</div>
           </div>
         </header>
         ${CompendiumTabs(section)}
@@ -465,6 +462,15 @@
         ${s.rankModalTalent ? TalentModal(entry, s.rankModalTalent) : ''}
       </article>
     `;
+  }
+
+  function detailBubbles(section, entry){
+    const values = section === 'Classes'
+      ? [entry.primaryCategory, entry.category, entry.role, entry.magic_type]
+      : [entry.primaryCategory, entry.creature_type, entry.threat_tier, entry.size];
+    return unique(values.map(value => String(value || '').trim()).filter(Boolean))
+      .map(value => `<span>${escapeHtml(value)}</span>`)
+      .join('');
   }
 
   function CompendiumTabs(section){
@@ -512,23 +518,20 @@
   function classTabContent(entry){
     const s = ensureState('Classes');
     if(s.activeTab === 'Overview') return `
-      <div class="codex-overview-grid codex-class-overview-grid">
+      <div class="codex-class-overview-layout">
+        <section class="codex-info-panel codex-class-art-panel">
+          <div class="codex-detail-symbol codex-class-overview-symbol" style="--class-accent:${escapeHtml(entry.class_colour)}">${escapeHtml(entry.symbol)}</div>
+          <div class="codex-class-magic-potential">
+            <h3>Elemental Magical Learning Potential</h3>
+            <p>Elements Must Learn</p>
+            <div class="codex-detail-bubbles">
+              <span>${escapeHtml(entry.magic_type || 'Information coming soon')}</span>
+            </div>
+          </div>
+        </section>
         <section class="codex-info-panel codex-class-overview-main">
           <h3>Overview</h3>
           <div class="markdown-body">${renderMarkdown(entry.overview || `${entry.role}. Full class description coming soon.`)}</div>
-          ${keyValueGrid([
-            ['Class Name',entry.title],
-            ['Class Category',entry.primaryCategory],
-            ['Primary Stat',entry.primary_stat],
-            ['Secondary Stat',entry.secondary_stat],
-            ['Role',entry.role],
-            ['Combat Style',entry.combat_style],
-            ['Magic Type',entry.magic_type],
-            ['Difficulty',entry.difficulty],
-            ['Playable',entry.playable ? 'Yes' : 'No'],
-            ['Recommended Professions',entry.recommended_professions.join(', ') || 'Information coming soon'],
-            ['Starting Equipment',entry.starting_equipment.join(', ') || 'Information coming soon']
-          ])}
         </section>
       </div>`;
     if(s.activeTab === 'Talent Tree') return TalentTree(entry);
@@ -713,11 +716,9 @@
     return `
       <section class="codex-compendium-header">
         <div>
-          <p class="eyebrow">${escapeHtml(config.eyebrow)}</p>
+          ${config.eyebrow ? `<p class="eyebrow">${escapeHtml(config.eyebrow)}</p>` : ''}
           <h1>${escapeHtml(config.title)}</h1>
-          <p>${escapeHtml(config.intro)}</p>
         </div>
-        <div class="codex-breadcrumbs">${breadcrumb(s.activePath, s.selectedEntry)}</div>
       </section>
       ${SearchAndFilters(section)}
       <section class="codex-compendium-body">
