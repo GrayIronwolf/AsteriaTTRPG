@@ -2157,9 +2157,14 @@ function v1722MagicDef(key){
 function v1722CurrentMagicAccess(){
   const c=(typeof v1721Actor==='function'?v1721Actor():null)||(chars&&chars[currentPlayerId?.()]);
   const forgedAccess=c?.magicTypes||c?.character?.magic?.types||c?.magic?.types;
+  const gmGrantedAccess=c?.gmGrantedMagicTypes||c?.character?.magic?.gmGrantedTypes||c?.magic?.gmGrantedTypes||[];
   let access=forgedAccess || c?.magicAccess || c?.spellTypes || c?.magics || [];
   if(typeof access==='string') access=access.split(',').map(x=>x.trim());
+  let gmAccess=gmGrantedAccess;
+  if(typeof gmAccess==='string') gmAccess=gmAccess.split(',').map(x=>x.trim());
   if(!Array.isArray(access)) access=[];
+  if(!Array.isArray(gmAccess)) gmAccess=[];
+  access=access.concat(gmAccess);
   if(access.some(value=>String(value).toLowerCase()==='no magic')) return [];
   return [...new Set(access.map(v1722MagicSlug).filter(key=>v1722MagicDef(key).label || v1722MagicDef(key).name))];
 }

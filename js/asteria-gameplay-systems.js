@@ -6,7 +6,7 @@
   const VERSION = 'asteria-character-forge-final';
   const STORE_KEY = 'asteria.phase3.gameplay.v1';
   const ATTRIBUTE_KEYS = ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'];
-  const FORGE_TABS = ['Race','Class','Appearance','Origin','Characteristics','Magic','Skills','Equipment','Review'];
+  const FORGE_TABS = ['Race','Class','Appearance','Origin','Characteristics','Magic','Skills','Affinity Rolls','Equipment','Review'];
   const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS;
   const FORGE_STAT_LABELS = { strength:'STR', dexterity:'DEX', agility:'AGI', constitution:'CON', endurance:'END', intelligence:'INT', wisdom:'WIS', charisma:'CHA', luck:'LCK' };
   const CHARACTERISTIC_TIER_RULES = [
@@ -34,6 +34,32 @@
     { label:'Basic Elements', types:['Air Magic','Earth Magic','Water Magic','Fire Magic','Life Magic','Death Magic','Light Magic','Dark Magic'] },
     { label:'Higher Elements', types:['Celestial Magic','Infernal Magic','Blood Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Space Magic','Spirit Magic','Time Magic','Abyssal Magic'] }
   ];
+  const CLASS_MAGIC_CATEGORY_SLOTS = {
+    'rogue-classes':1,
+    'religious-classes':2,
+    'ranger-classes':1,
+    'martial-classes':1,
+    'magical-classes':4,
+    'dark-classes':2
+  };
+  const CLASS_MAGIC_REQUIRED = {
+    druid:['Earth Magic'],
+    bloodhunter:['Blood Magic'],
+    primal:['Chaos Magic'],
+    reaper:['Death Magic']
+  };
+  const CLASS_MAGIC_NOTES = {
+    cleric:'One magical element slot must be patron-linked.',
+    creed:'One magical element slot must be patron-linked.',
+    inquisitor:'One magical element slot must be patron-linked.',
+    paladin:'One magical element slot must be patron-linked.',
+    sentinel:'One magical element slot must be patron-linked.',
+    mancer:'Choose one selected element for affinity advantage. Other selected elements are treated as disadvantage.',
+    druid:'Druid requires Earth Magic.',
+    bloodhunter:'Blood Magic is required.',
+    primal:'Chaos Magic is required.',
+    reaper:'Death Magic is required.'
+  };
   function magicLibrary(){
     return window.ASTERIA_MAGIC_LIBRARY || null;
   }
@@ -126,6 +152,15 @@
     }
   ];
   const SKILL_RANKS = ['Novice','Initiate','Apprentice','Journeyman','Adept','Master','Grandmaster'];
+  const AFFINITY_RANKS = [
+    { label:'Novice', min:1, max:9, range:'01-09', modifier:-2 },
+    { label:'Initiate', min:10, max:24, range:'10-24', modifier:-1 },
+    { label:'Apprentice', min:25, max:44, range:'25-44', modifier:0 },
+    { label:'Journeyman', min:45, max:69, range:'45-69', modifier:1 },
+    { label:'Adept', min:70, max:84, range:'70-84', modifier:2 },
+    { label:'Master', min:85, max:97, range:'85-97', modifier:3 },
+    { label:'Grandmaster', min:98, max:100, range:'98-100', modifier:4 }
+  ];
 
   let state = loadState();
   let activeSystem = 'characterCreator';
@@ -193,6 +228,7 @@
           lockedClassSlug:'',
           raceSlug:'',
           classSlug:'',
+          classMode:'single',
           extraClassSlugs:[],
           originSlug:'',
           backgroundSlug:'',
@@ -201,6 +237,9 @@
           attributes:Object.fromEntries(ATTRIBUTE_KEYS.map(key => [key, 10])),
           characteristics:Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])),
           magicTypes:[],
+          patronMagicType:'',
+          mancerAdvantageMagicType:'',
+          affinityRolls:{ magic:{}, skills:{} },
           forgeCategories:{ race:[], class:[] },
           forgeDrill:{ race:[], class:[] },
           forgeSearch:{ race:'', class:'' },
@@ -540,7 +579,7 @@
 
   function classSlugsFromDraft(d){
     const primary = classSlugFromValue(d.classSlug || d.lockedClassSlug);
-    const extra = array(d.extraClassSlugs).map(classSlugFromValue).filter(Boolean).filter(value => value !== primary);
+    const extra = d.classMode === 'multi' ? array(d.extraClassSlugs).map(classSlugFromValue).filter(Boolean).filter(value => value !== primary) : [];
     return Array.from(new Set([primary, ...extra].filter(Boolean))).slice(0, MAX_CHARACTER_CLASSES);
   }
 
@@ -588,6 +627,92 @@
       magicType:metadataValue(entry, ['magicType','magic_type']) || '',
       difficulty:metadataValue(entry, ['difficulty']) || ''
     };
+  }
+
+  function classMagicCategoryKey(entry){
+    return slug(metadataValue(entry, ['classCategory','class_category','category']) || entry?.category || array(entry?.categoryPath)[0] || '');
+  }
+
+  function classMagicBaseSlots(entry){
+    return CLASS_MAGIC_CATEGORY_SLOTS[classMagicCategoryKey(entry)] || 1;
+  }
+
+  function classMagicRulesForDraft(d = draft()){
+    const entries = classEntriesFromDraft(d);
+    const rules = {
+      slots:0,
+      required:[],
+      notes:[],
+      classes:[],
+      hasPatronRequirement:false,
+      hasMancer:false
+    };
+    entries.forEach((entry, index) => {
+      const key = slug(entry?.title || entry?.name);
+      const categoryKey = classMagicCategoryKey(entry);
+      const baseSlots = classMagicBaseSlots(entry);
+      const secondaryBonus = categoryKey === 'magical-classes' ? 2 : 1;
+      const appliedSlots = index === 0 ? baseSlots : secondaryBonus;
+      const required = array(CLASS_MAGIC_REQUIRED[key]);
+      const note = CLASS_MAGIC_NOTES[key] || (categoryKey === 'religious-classes' ? 'One magical element slot must be patron-linked.' : '');
+      if(categoryKey === 'religious-classes') rules.hasPatronRequirement = true;
+      if(key === 'mancer') rules.hasMancer = true;
+      rules.slots += appliedSlots;
+      rules.required.push(...required);
+      if(note) rules.notes.push(`${entry.title}: ${note}`);
+      rules.classes.push({
+        title:entry.title || entry.name || 'Class',
+        category:entryCategory(entry, 'Class'),
+        baseSlots,
+        appliedSlots,
+        role:index === 0 ? 'Primary' : 'Secondary',
+        required,
+        note
+      });
+    });
+    rules.required = Array.from(new Set(rules.required));
+    rules.notes = Array.from(new Set(rules.notes));
+    return rules;
+  }
+
+  function enforceMagicRules(d = draft()){
+    d.classMode = d.classMode === 'multi' ? 'multi' : 'single';
+    if(d.classMode !== 'multi') d.extraClassSlugs = [];
+    const rules = classMagicRulesForDraft(d);
+    const requiredSlugs = new Set(rules.required.map(slug));
+    let selected = Array.from(new Set(array(d.magicTypes).filter(Boolean)));
+    if(rules.slots > 0) selected = selected.filter(name => String(name).toLowerCase() !== 'no magic');
+    rules.required.forEach(name => {
+      if(!selected.some(item => slug(item) === slug(name))) selected.unshift(name);
+    });
+    if(rules.slots > 0 && selected.length > rules.slots){
+      const required = selected.filter(name => requiredSlugs.has(slug(name)));
+      const optional = selected.filter(name => !requiredSlugs.has(slug(name)));
+      selected = Array.from(new Set(required.concat(optional))).slice(0, Math.max(rules.slots, required.length));
+    }
+    d.magicTypes = selected;
+    if(!rules.hasPatronRequirement || !d.magicTypes.some(name => slug(name) === slug(d.patronMagicType))) d.patronMagicType = '';
+    if(!rules.hasMancer || !d.magicTypes.some(name => slug(name) === slug(d.mancerAdvantageMagicType))) d.mancerAdvantageMagicType = '';
+    return rules;
+  }
+
+  function magicSelectionIssues(d = draft()){
+    const rules = classMagicRulesForDraft(d);
+    const selected = array(d.magicTypes).filter(name => String(name).toLowerCase() !== 'no magic');
+    const issues = [];
+    if(!rules.classes.length) return ['Choose a class before selecting magic.'];
+    if(selected.length < rules.slots) issues.push(`Choose ${rules.slots} magical element${rules.slots === 1 ? '' : 's'} for the selected class setup.`);
+    if(selected.length > rules.slots) issues.push(`Too many magical elements selected. This class setup allows ${rules.slots}.`);
+    rules.required.forEach(name => {
+      if(!selected.some(item => slug(item) === slug(name))) issues.push(`${name} is required by class rules.`);
+    });
+    if(rules.hasPatronRequirement && !d.patronMagicType) issues.push('Choose which selected element is linked to the patron.');
+    if(rules.hasMancer && !d.mancerAdvantageMagicType) issues.push('Choose the Mancer affinity advantage element.');
+    return issues;
+  }
+
+  function magicTypeIsRequired(name, d = draft()){
+    return classMagicRulesForDraft(d).required.some(required => slug(required) === slug(name));
   }
 
   function raceNameFromDraft(draft){
@@ -652,6 +777,89 @@
       ...array(selectedClass?.metadata?.skills || selectedClass?.metadata?.recommendedSkills || selectedClass?.metadata?.recommended_skills),
       ...array(background?.skills)
     ].filter(Boolean)));
+  }
+
+  function affinityRankForValue(value){
+    const numeric = Number(value);
+    if(!Number.isFinite(numeric) || numeric < 1) return { label:'Unrolled', range:'-', modifier:0 };
+    const score = Math.max(1, Math.min(100, Math.round(numeric)));
+    return AFFINITY_RANKS.find(rank => score >= rank.min && score <= rank.max) || AFFINITY_RANKS[0];
+  }
+
+  function cleanAffinityValue(value){
+    if(value === '' || value === null || value === undefined) return '';
+    const numeric = Math.round(Number(value));
+    if(!Number.isFinite(numeric)) return '';
+    return Math.max(1, Math.min(100, numeric));
+  }
+
+  function selectedAffinityItems(d){
+    const skills = entriesForSelect('skill', FALLBACK_SKILLS);
+    const magicItems = array(d?.magicTypes)
+      .filter(name => name && String(name).toLowerCase() !== 'no magic')
+      .map(name => {
+        const info = magicInfoByName(name);
+        const title = info.name || name;
+        return {
+          kind:'magic',
+          key:slug(title),
+          title,
+          type:'Magic Element',
+          colour:info.color || info.cssColor || '#26d9ff'
+        };
+      });
+    const skillItems = array(d?.skills).map(name => {
+      const entry = skills.find(skill => slug(skill.title || skill.name) === slug(name) || (skill.title || skill.name) === name);
+      return {
+        kind:'skills',
+        key:slug(name),
+        title:name,
+        type:entry?.category || 'Skill',
+        colour:'var(--asteria-accent,#26d9ff)'
+      };
+    });
+    return magicItems.concat(skillItems);
+  }
+
+  function normaliseAffinityRecord(raw, item){
+    const value = cleanAffinityValue(raw?.value ?? raw?.roll ?? '');
+    const rank = affinityRankForValue(value);
+    return {
+      key:item.key,
+      kind:item.kind,
+      title:item.title,
+      type:item.type,
+      value,
+      locked:Boolean(raw?.locked && value !== ''),
+      rank:rank.label,
+      affinityRange:rank.range,
+      rankModifier:rank.modifier
+    };
+  }
+
+  function normalizeAffinityRolls(raw = {}, d = draft()){
+    const source = raw || {};
+    const output = { magic:{}, skills:{} };
+    selectedAffinityItems(d).forEach(item => {
+      const bucket = source[item.kind] || {};
+      const found = bucket[item.key] || bucket[slug(item.title)] || source[item.key] || {};
+      output[item.kind][item.key] = normaliseAffinityRecord(found, item);
+    });
+    return output;
+  }
+
+  function finalAffinityRolls(d = draft()){
+    return normalizeAffinityRolls(d.affinityRolls, d);
+  }
+
+  function affinityRollsComplete(d = draft()){
+    const items = selectedAffinityItems(d);
+    if(!items.length) return false;
+    const rolls = normalizeAffinityRolls(d.affinityRolls, d);
+    return items.every(item => {
+      const record = rolls[item.kind]?.[item.key];
+      return record && record.value !== '' && record.locked;
+    });
   }
 
   function talentsForClass(classTitle){
@@ -752,12 +960,13 @@
   function forgeTabComplete(tab){
     const d = draft();
     if(tab === 'Race') return Boolean(d.raceSlug);
-    if(tab === 'Class') return Boolean(d.classSlug);
+    if(tab === 'Class') return d.classMode === 'multi' ? classSlugsFromDraft(d).length === MAX_CHARACTER_CLASSES : Boolean(d.classSlug);
     if(tab === 'Appearance') return Boolean(Object.keys(d.appearance || {}).length);
     if(tab === 'Origin') return Boolean(d.originSlug || Object.values(d.origin || {}).some(Boolean) || Object.values(d.family_tree || {}).some(Boolean));
     if(tab === 'Characteristics') return FORGE_CHARACTERISTICS.every(key => d.characteristics?.[key] !== '' && d.characteristics?.[key] !== undefined);
-    if(tab === 'Magic') return d.magicTypes.length > 0;
+    if(tab === 'Magic') return !magicSelectionIssues(d).length;
     if(tab === 'Skills') return d.skills.length === 4;
+    if(tab === 'Affinity Rolls') return affinityRollsComplete(d);
     if(tab === 'Equipment') return Boolean(d.equipmentPackSlug || d.equipment.length);
     return false;
   }
@@ -802,6 +1011,11 @@
     d.forgeDrill.class = array(d.forgeDrill.class);
     d.forgeSearch = Object.assign({ race:'', class:'' }, d.forgeSearch || {});
     d.skills = array(d.skills);
+    d.classMode = d.classMode === 'multi' ? 'multi' : 'single';
+    d.patronMagicType = d.patronMagicType || '';
+    d.mancerAdvantageMagicType = d.mancerAdvantageMagicType || '';
+    enforceMagicRules(d);
+    d.affinityRolls = normalizeAffinityRolls(d.affinityRolls || {}, d);
     d.equipment = array(d.equipment);
     d.extraClassSlugs = array(d.extraClassSlugs).slice(0, Math.max(0, MAX_CHARACTER_CLASSES - 1));
     d.editCharacterId = d.editCharacterId || '';
@@ -890,7 +1104,7 @@
             <div class="forge-character-card-body">
               <p class="eyebrow">New Build</p>
               <h3>Forge New Character</h3>
-              <p>Start the guided Race, Class, Appearance, Origin, Characteristics, Magic, Skills, Equipment, and Review flow.</p>
+              <p>Start the guided Race, Class, Appearance, Origin, Characteristics, Magic, Skills, Affinity Rolls, Equipment, and Review flow.</p>
               <small>Click to begin</small>
             </div>
           </article>
@@ -1078,11 +1292,12 @@
     if(domain === 'class'){
       const accent = entry.class_colour || entry.metadata?.class_colour || '#1f7dff';
       const locked = d.lockedClassSlug && entry.slug === classSlugFromValue(d.lockedClassSlug);
+      const primary = entry.slug === classSlugFromValue(d.classSlug || d.lockedClassSlug);
       const secondary = extraClassSlugs.includes(entry.slug);
       return `
         <article class="phase3-pick-card phase3-forge-entry-card phase3-forge-class-card ${selected ? 'selected' : ''} ${locked ? 'locked-primary-class' : ''}" style="--class-accent:${esc(accent)}" data-${actionName}="${esc(entry.slug)}" data-phase3-entry-domain="${esc(domain)}" data-phase3-entry-slug="${esc(entry.slug)}">
           <div class="phase3-class-symbol">${esc(entry.symbol || entry.metadata?.symbol || String(entry.title || 'C').charAt(0).toUpperCase())}</div>
-          <span>${esc(locked ? 'Primary Locked' : secondary ? 'Secondary Class' : entryCategory(entry, 'Class'))}</span>
+          <span>${esc(locked ? 'Primary Locked' : primary ? 'Primary Class' : secondary ? 'Secondary Class' : entryCategory(entry, 'Class'))}</span>
           <h3>${esc(entry.title)}</h3>
           <p>${esc([entry.role, entry.difficulty].filter(Boolean).join(' • ') || entry.summary || 'Information coming soon.')}</p>
         </article>
@@ -1107,6 +1322,7 @@
     if(tab === 'Characteristics') return renderCharacteristics();
     if(tab === 'Magic') return renderMagicSelection();
     if(tab === 'Skills') return renderStartingSkills();
+    if(tab === 'Affinity Rolls') return renderAffinityRolls();
     if(tab === 'Equipment') return renderStartingEquipment();
     return renderCharacterReview(true);
   }
@@ -1133,6 +1349,30 @@
     `;
   }
 
+  function renderClassModeControls(){
+    const d = draft();
+    const rules = classMagicRulesForDraft(d);
+    return `
+      <article class="phase3-class-mode-panel">
+        <div class="phase3-class-mode-actions">
+          <button type="button" class="${d.classMode !== 'multi' ? 'active' : ''}" data-phase3-class-mode="single">Single Class</button>
+          <button type="button" class="${d.classMode === 'multi' ? 'active' : ''}" data-phase3-class-mode="multi">Multi-Class</button>
+        </div>
+        <div class="phase3-class-magic-summary">
+          <b>${rules.slots || 0} magical element slot${rules.slots === 1 ? '' : 's'}</b>
+          <span>${d.classMode === 'multi' ? 'Primary class slots + secondary class bonus.' : 'Single class uses primary class slots only.'}</span>
+        </div>
+        ${rules.classes.length ? `<div class="phase3-class-rule-grid">${rules.classes.map(item => `
+          <div>
+            <strong>${esc(item.role)}: ${esc(item.title)}</strong>
+            <span>${esc(item.category)} / ${item.appliedSlots} slot${item.appliedSlots === 1 ? '' : 's'}</span>
+            ${item.required.length ? `<em>Required: ${esc(item.required.join(', '))}</em>` : ''}
+          </div>
+        `).join('')}</div>` : '<p class="muted smallnote">Choose a class to calculate magical element slots.</p>'}
+      </article>
+    `;
+  }
+
   function renderForgeChoice(domain, selectedSlug, actionName, title, intro){
     const d = draft();
     const selected = selectedSlug ? entryBySlug(domain, selectedSlug) : null;
@@ -1151,6 +1391,7 @@
           ${selected ? `<button type="button" class="primary" data-phase3-forge-next>${esc(selectLabel)}</button>` : ''}
         </div>
         ${classLockNotice}
+        ${domain === 'class' ? renderClassModeControls() : ''}
         <div class="phase3-forge-search-row">
           <label>Search<input data-phase3-forge-search="${esc(domain)}" value="${esc(draft().forgeSearch?.[domain] || '')}" placeholder="Search ${esc(domain === 'race' ? 'races' : 'classes')}..."></label>
           ${selected ? `<span>Selected: ${esc(domain === 'class' ? classDisplayNameFromDraft(d) : selected.title)}</span>` : '<span>No selection yet</span>'}
@@ -1239,22 +1480,46 @@
     return tierInfoForValue(value).label;
   }
 
+  function renderMagicRuleControls(rules, d){
+    const selected = array(d.magicTypes).filter(name => String(name).toLowerCase() !== 'no magic');
+    const options = selected.map(name => `<option value="${esc(name)}" ${slug(d.patronMagicType) === slug(name) ? 'selected' : ''}>${esc(name)}</option>`).join('');
+    const mancerOptions = selected.map(name => `<option value="${esc(name)}" ${slug(d.mancerAdvantageMagicType) === slug(name) ? 'selected' : ''}>${esc(name)}</option>`).join('');
+    return `
+      <article class="phase3-magic-rule-panel">
+        <div class="phase3-class-rule-grid">
+          ${rules.classes.map(item => `
+            <div>
+              <strong>${esc(item.role)}: ${esc(item.title)}</strong>
+              <span>${esc(item.category)} / ${item.appliedSlots} magic slot${item.appliedSlots === 1 ? '' : 's'}</span>
+              ${item.required.length ? `<em>Required: ${esc(item.required.join(', '))}</em>` : ''}
+            </div>
+          `).join('') || '<div><strong>No class selected</strong><span>Choose a class to unlock magic slots.</span></div>'}
+        </div>
+        ${rules.notes.length ? `<ul class="phase3-magic-rule-notes">${rules.notes.map(note => `<li>${esc(note)}</li>`).join('')}</ul>` : ''}
+        <div class="phase3-magic-special-grid">
+          ${rules.hasPatronRequirement ? `<label>Patron-linked Element<select data-phase3-patron-magic><option value="">Choose selected element...</option>${options}</select></label>` : ''}
+          ${rules.hasMancer ? `<label>Mancer Advantage Element<select data-phase3-mancer-advantage><option value="">Choose selected element...</option>${mancerOptions}</select></label>` : ''}
+        </div>
+      </article>
+    `;
+  }
+
   function renderMagicSelection(){
     const d = draft();
+    const rules = classMagicRulesForDraft(d);
     const selected = new Set(d.magicTypes);
+    const selectedCount = array(d.magicTypes).filter(name => String(name).toLowerCase() !== 'no magic').length;
     const groups = magicGroups();
+    const issues = magicSelectionIssues(d);
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head">
           <div><h2>Magic</h2><p>Select the character's magic type access. This is stored on the character profile for later spell and class systems.</p></div>
-          <span>${esc(d.magicTypes.length ? `${d.magicTypes.length} selected` : 'Choose magic type')}</span>
+          <span>${esc(rules.slots ? `${selectedCount}/${rules.slots} slots` : 'Choose class first')}</span>
         </div>
+        ${renderMagicRuleControls(rules, d)}
+        ${issues.length ? `<div class="phase3-rule-warning">${issues.map(esc).join(' ')}</div>` : ''}
         <div class="phase3-magic-layout">
-          <article class="phase3-magic-none phase3-magic-card ${selected.has('No Magic') ? 'selected' : ''}" data-phase3-magic="No Magic" style="--magic-color:#7a7f8c">
-            <span>None</span>
-            <h3>No Magic</h3>
-            <p>Use this for martial or non-magical characters.</p>
-          </article>
           ${groups.map(group => `
             <section class="phase3-magic-group">
               <h3>${esc(group.label)}</h3>
@@ -1262,9 +1527,12 @@
                 ${group.elements.map(element => {
                   const info = magicInfoByName(element.name || element.type);
                   const type = info.name || element.type;
+                  const picked = selected.has(type);
+                  const required = magicTypeIsRequired(type, d);
+                  const disabled = !picked && (rules.slots <= 0 || selectedCount >= rules.slots);
                   return `
-                  <article class="phase3-magic-card ${selected.has(type) ? 'selected' : ''}" role="button" tabindex="0" data-phase3-magic="${esc(type)}" style="--magic-color:${esc(info.color || info.cssColor || '#26d9ff')}">
-                    <span>${esc(info.label || type.replace(/\s+Magic$/i, ''))}</span>
+                  <article class="phase3-magic-card ${picked ? 'selected' : ''} ${required ? 'locked' : ''} ${disabled ? 'disabled' : ''}" role="button" tabindex="0" data-phase3-magic="${esc(type)}" style="--magic-color:${esc(info.color || info.cssColor || '#26d9ff')}">
+                    <span>${esc(required ? 'Required' : (info.label || type.replace(/\s+Magic$/i, '')))}</span>
                     <h4>${esc(type)}</h4>
                     <p>${esc(info.desc || 'Magic information coming soon.')}</p>
                   </article>
@@ -1295,6 +1563,65 @@
           }).join('')}
         </div>
         <p class="muted smallnote">Selected: ${d.skills.length}/4. Exactly 4 skills are required before saving.</p>
+      </section>
+    `;
+  }
+
+  function renderAffinityRollCard(item, record){
+    return `
+      <article class="phase3-affinity-card ${record.locked ? 'locked' : ''}" style="--affinity-color:${esc(item.colour || 'var(--asteria-accent,#26d9ff)')}" data-phase3-affinity-card="${esc(item.kind)}:${esc(item.key)}">
+        <span class="phase3-affinity-type">${esc(item.type)}</span>
+        <h3>${esc(item.title)}</h3>
+        <input type="number" min="1" max="100" inputmode="numeric" value="${esc(record.value)}" ${record.locked ? 'disabled' : ''} data-phase3-affinity-kind="${esc(item.kind)}" data-phase3-affinity-key="${esc(item.key)}" data-phase3-affinity-value>
+        <button type="button" class="${record.locked ? '' : 'primary'}" data-phase3-affinity-kind="${esc(item.kind)}" data-phase3-affinity-lock="${esc(item.key)}">${record.locked ? 'Unlock Roll' : 'Confirm / Lock'}</button>
+        <b class="phase3-affinity-rank">${esc(record.rank)}</b>
+        <dl class="phase3-affinity-lines">
+          <div><dt>Skill Rank Cap</dt><dd>${esc(record.rank)}</dd></div>
+          <div><dt>Affinity Range</dt><dd>${esc(record.affinityRange)}</dd></div>
+          <div><dt>Rank Modifier</dt><dd>${esc(signed(record.rankModifier))}</dd></div>
+        </dl>
+      </article>
+    `;
+  }
+
+  function renderAffinityRollGroup(title, items, rolls){
+    return `
+      <section class="phase3-affinity-group">
+        <h3>${esc(title)}</h3>
+        <div class="phase3-affinity-grid">
+          ${items.length ? items.map(item => renderAffinityRollCard(item, rolls[item.kind]?.[item.key] || normaliseAffinityRecord({}, item))).join('') : '<p class="muted smallnote">No selections yet.</p>'}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderAffinityRolls(){
+    const d = draft();
+    const items = selectedAffinityItems(d);
+    const rolls = normalizeAffinityRolls(d.affinityRolls, d);
+    const magicItems = items.filter(item => item.kind === 'magic');
+    const skillItems = items.filter(item => item.kind === 'skills');
+    return `
+      <section class="phase3-card phase3-affinity-rolls">
+        <div class="phase3-panel-head">
+          <div>
+            <h2>Affinity Rolls</h2>
+            <p>Enter each D100 affinity roll for selected magic elements and starting skills, then lock the result.</p>
+          </div>
+          <span>${items.filter(item => rolls[item.kind]?.[item.key]?.locked).length}/${items.length} locked</span>
+        </div>
+        ${!items.length ? '<article class="phase3-race-rule-card"><h3>Choose Magic and Skills First</h3><p>Affinity roll cards appear here after magic access and starting skills are selected.</p></article>' : ''}
+        ${renderAffinityRollGroup('Magic Elements', magicItems, rolls)}
+        ${renderAffinityRollGroup('Starting Skills', skillItems, rolls)}
+        <article class="phase3-affinity-reference">
+          <h3>Rank Reference</h3>
+          <table>
+            <thead><tr><th>Skill Rank Cap</th><th>Affinity Range</th><th>Rank Modifier</th></tr></thead>
+            <tbody>
+              ${AFFINITY_RANKS.map(rank => `<tr><td>${esc(rank.label)}</td><td>${esc(rank.range)}</td><td>${esc(signed(rank.modifier))}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </article>
       </section>
     `;
   }
@@ -1390,6 +1717,11 @@
     const originEntry = entryBySlug('origin', d.originSlug) || FALLBACK_BACKGROUNDS.find(bg => bg.slug === d.originSlug || bg.slug === d.backgroundSlug);
     const raceEntry = entryBySlug('race', d.raceSlug);
     const finalCharacteristics = finalForgeCharacteristics(d);
+    const affinityRolls = finalAffinityRolls(d);
+    const magicRules = classMagicRulesForDraft(d);
+    const affinitySummary = Object.values(affinityRolls.magic || {})
+      .concat(Object.values(affinityRolls.skills || {}))
+      .map(record => `${record.title}: ${record.rank}${record.value !== '' ? ` (${record.value})` : ''}`);
     const portrait = entryImage(raceEntry, 'race');
     return `
       <section class="phase3-review-grid">
@@ -1408,7 +1740,9 @@
             <div><dt>Origin</dt><dd>${esc(originEntry?.title || 'Unselected')}</dd></div>
             <div><dt>Appearance</dt><dd>${esc([d.appearance.body_type, d.appearance.hair_style, d.appearance.eye_colour].filter(Boolean).join(', ') || 'Not customised')}</dd></div>
             <div><dt>Magic</dt><dd>${esc(d.magicTypes.join(', ') || 'Unselected')}</dd></div>
+            <div><dt>Magic Rules</dt><dd>${esc(`${d.classMode === 'multi' ? 'Multi-Class' : 'Single Class'} / ${magicRules.slots} slot${magicRules.slots === 1 ? '' : 's'}${d.patronMagicType ? ` / Patron: ${d.patronMagicType}` : ''}${d.mancerAdvantageMagicType ? ` / Mancer Advantage: ${d.mancerAdvantageMagicType}` : ''}`)}</dd></div>
             <div><dt>Skills</dt><dd>${esc(d.skills.join(', ') || 'None selected')}</dd></div>
+            <div><dt>Affinity Rolls</dt><dd>${esc(affinitySummary.join(', ') || 'Not locked yet')}</dd></div>
             <div><dt>Equipment</dt><dd>${esc(equipment.join(', ') || 'None selected')}</dd></div>
             <div><dt>Characteristics</dt><dd>${esc(FORGE_CHARACTERISTICS.map(key => `${FORGE_STAT_LABELS[key]} ${finalCharacteristics[key] ?? 0}`).join(', '))}</dd></div>
             <div><dt>Backstory</dt><dd>${esc(d.origin.backstory || d.origin.history || 'No backstory entered yet.')}</dd></div>
@@ -1751,11 +2085,34 @@
       render();
       return;
     }
+    if(target.dataset.phase3AffinityValue !== undefined){
+      const d = draft();
+      const kind = target.dataset.phase3AffinityKind;
+      const key = target.dataset.phase3AffinityKey;
+      const item = selectedAffinityItems(d).find(entry => entry.kind === kind && entry.key === key);
+      if(item){
+        const record = normaliseAffinityRecord({ ...(d.affinityRolls?.[kind]?.[key] || {}), value:target.value, locked:false }, item);
+        d.affinityRolls = d.affinityRolls || { magic:{}, skills:{} };
+        d.affinityRolls[kind] = d.affinityRolls[kind] || {};
+        d.affinityRolls[kind][key] = record;
+        const card = target.closest('[data-phase3-affinity-card]');
+        const rank = card?.querySelector('.phase3-affinity-rank');
+        const lines = card?.querySelector('.phase3-affinity-lines');
+        if(rank) rank.textContent = record.rank;
+        if(lines) {
+          lines.innerHTML = `<div><dt>Skill Rank Cap</dt><dd>${esc(record.rank)}</dd></div><div><dt>Affinity Range</dt><dd>${esc(record.affinityRange)}</dd></div><div><dt>Rank Modifier</dt><dd>${esc(signed(record.rankModifier))}</dd></div>`;
+        }
+      }
+      saveState('forge-affinity-roll');
+      return;
+    }
     if(target.dataset.phase3Attribute) draft().attributes[target.dataset.phase3Attribute] = Number(target.value || 0);
     if(target.dataset.phase3Characteristic) draft().characteristics[target.dataset.phase3Characteristic] = Number(target.value || 0);
     if(target.dataset.phase3Detail) draft().details[target.dataset.phase3Detail] = target.value;
     if(target.dataset.phase3OriginField) draft().origin[target.dataset.phase3OriginField] = target.value;
     if(target.dataset.phase3Family) draft().family_tree[target.dataset.phase3Family] = target.value;
+    if(target.dataset.phase3PatronMagic !== undefined) draft().patronMagicType = target.value;
+    if(target.dataset.phase3MancerAdvantage !== undefined) draft().mancerAdvantageMagicType = target.value;
     if(target.dataset.phase3Appearance) {
       draft().appearance = draft().appearance || {};
       draft().appearance[target.dataset.phase3Appearance] = target.value;
@@ -1786,6 +2143,14 @@
     }
     if(target.dataset.forgeNewCharacter !== undefined){
       startNewCharacterForge();
+      return;
+    }
+    if(target.dataset.phase3ClassMode){
+      setForgeClassMode(target.dataset.phase3ClassMode);
+      return;
+    }
+    if(target.dataset.phase3AffinityLock !== undefined){
+      lockAffinityRoll(target.dataset.phase3AffinityKind, target.dataset.phase3AffinityLock);
       return;
     }
     if(target.dataset.forgeCharacterId){
@@ -1925,15 +2290,51 @@
     render();
   }
 
+  function lockAffinityRoll(kind, key){
+    const d = draft();
+    const item = selectedAffinityItems(d).find(entry => entry.kind === kind && entry.key === key);
+    if(!item) return;
+    const existing = d.affinityRolls?.[kind]?.[key] || {};
+    const value = cleanAffinityValue(existing.value);
+    if(value === ''){
+      window.toast?.('Enter a D100 affinity roll before locking.');
+      return;
+    }
+    const record = normaliseAffinityRecord({ ...existing, value, locked:!existing.locked }, item);
+    d.affinityRolls = d.affinityRolls || { magic:{}, skills:{} };
+    d.affinityRolls[kind] = d.affinityRolls[kind] || {};
+    d.affinityRolls[kind][key] = record;
+    saveState(record.locked ? 'forge-affinity-locked' : 'forge-affinity-unlocked');
+    render();
+  }
+
   function toggleMagicType(name){
     const d = draft();
+    const rules = classMagicRulesForDraft(d);
+    if(rules.slots <= 0){
+      window.toast?.('Choose a class before selecting magical elements.');
+      return;
+    }
     if(name === 'No Magic'){
-      d.magicTypes = ['No Magic'];
+      window.toast?.('Class rules require magical element slot selection.');
+      return;
     }else if(d.magicTypes.includes(name)){
+      if(magicTypeIsRequired(name, d)){
+        window.toast?.(`${name} is required by class rules.`);
+        return;
+      }
       d.magicTypes = d.magicTypes.filter(item => item !== name);
+      if(slug(d.patronMagicType) === slug(name)) d.patronMagicType = '';
+      if(slug(d.mancerAdvantageMagicType) === slug(name)) d.mancerAdvantageMagicType = '';
     }else{
+      const selectedCount = array(d.magicTypes).filter(item => String(item).toLowerCase() !== 'no magic').length;
+      if(selectedCount >= rules.slots){
+        window.toast?.(`This class setup allows ${rules.slots} magical element slot${rules.slots === 1 ? '' : 's'}.`);
+        return;
+      }
       d.magicTypes = d.magicTypes.filter(item => item !== 'No Magic').concat(name);
     }
+    enforceMagicRules(d);
     saveState('creator-magic');
     render();
   }
@@ -1984,10 +2385,32 @@
       render();
       return;
     }
+    if(d.classMode === 'multi' && classSlugsFromDraft(d).length < MAX_CHARACTER_CLASSES){
+      activeTab = 'Class';
+      saveState('forge-secondary-class-required');
+      window.toast?.('Choose a secondary class or switch back to Single Class.');
+      render();
+      return;
+    }
+    const magicIssues = magicSelectionIssues(d);
+    if(magicIssues.length){
+      activeTab = 'Magic';
+      saveState('forge-magic-required');
+      window.toast?.(magicIssues[0]);
+      render();
+      return;
+    }
     if(d.skills.length !== 4){
       activeTab = 'Skills';
       saveState('forge-skills-required');
       window.toast?.('Choose exactly 4 starting skills before saving.');
+      render();
+      return;
+    }
+    if(!affinityRollsComplete(d)){
+      activeTab = 'Affinity Rolls';
+      saveState('forge-affinity-required');
+      window.toast?.('Enter and lock affinity rolls for selected magic and skills before saving.');
       render();
       return;
     }
@@ -2013,6 +2436,13 @@
     const characteristicRules = raceCharacteristicRulesFor(raceEntry);
     const racialInfo = raceInfoPayloadForEntry(raceEntry);
     const characteristics = finalForgeCharacteristics(d);
+    const affinityRolls = finalAffinityRolls(d);
+    const magicRules = classMagicRulesForDraft(d);
+    const existingGmGrantedMagic = array(existingCharacter?.gmGrantedMagicTypes || existingCharacter?.character?.magic?.gmGrantedTypes);
+    const mancerAffinity = magicRules.hasMancer ? {
+      advantage:d.mancerAdvantageMagicType,
+      disadvantage:d.magicTypes.filter(name => slug(name) !== slug(d.mancerAdvantageMagicType))
+    } : null;
     const created = existingCharacter?.created || existingCharacter?.character?.created || now();
     const updated = now();
     const hpMax = 10 + Number(characteristics.constitution || 0);
@@ -2052,6 +2482,7 @@
       classSlugs,
       primaryClassSlug:classSlugs[0] || d.classSlug,
       secondaryClassSlugs:classSlugs.slice(1),
+      classMode:d.classMode,
       classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true },
       cardColour:safeCardColour(d.cardColour),
       appearance:Object.assign({}, d.appearance),
@@ -2063,8 +2494,18 @@
       characteristics:Object.assign({}, characteristics),
       characteristic_rules:characteristicRules,
       racial_info:racialInfo,
-      magic:{ types:d.magicTypes.slice() },
+      magic:{
+        types:d.magicTypes.slice(),
+        gmGrantedTypes:existingGmGrantedMagic.slice(),
+        rules:magicRules,
+        patronLinkedType:d.patronMagicType || '',
+        mancerAffinity,
+        affinities:affinityRolls.magic
+      },
       skills:d.skills.slice(),
+      affinityRolls,
+      magicAffinities:affinityRolls.magic,
+      skillAffinities:affinityRolls.skills,
       equipment:{
         pack:selectedPack ? { slug:selectedPack.slug, title:selectedPack.title } : null,
         items:inventory.slice()
@@ -2086,6 +2527,7 @@
       classSlugs,
       primaryClassSlug:classSlugs[0] || d.classSlug,
       secondaryClassSlugs:classSlugs.slice(1),
+      classMode:d.classMode,
       classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true },
       classInfo,
       age:d.details.age || '',
@@ -2114,12 +2556,19 @@
       racialMovement:racialInfo.movementMarkdown || racialInfo.movement,
       racialBonuses:racialInfo.bonusesMarkdown,
       skills:Object.fromEntries(d.skills.map(skill => [skill, Number(existingCharacter?.skills?.[skill] || 1)])),
+      affinityRolls,
+      magicAffinities:affinityRolls.magic,
+      skillAffinities:affinityRolls.skills,
       talents:Object.assign({}, existingCharacter?.talents || {}, Object.fromEntries(startingTalentNames.map(name => [name, { rank:1, source:'Character Forge' }]))),
       classTalents:startingTalentNames.slice(),
       talentClass:talentClassKey,
       talentClasses,
       spells:array(existingCharacter?.spells),
       magicTypes:d.magicTypes.slice(),
+      gmGrantedMagicTypes:existingGmGrantedMagic.slice(),
+      magicRules,
+      patronMagicType:d.patronMagicType || '',
+      mancerAffinity,
       inventory,
       bags:array(existingCharacter?.bags),
       coins:Object.assign({}, existingCharacter?.coins || {}),
@@ -2287,6 +2736,15 @@
     render();
   }
 
+  function setForgeClassMode(mode){
+    const d = draft();
+    d.classMode = mode === 'multi' ? 'multi' : 'single';
+    if(d.classMode !== 'multi') d.extraClassSlugs = [];
+    enforceMagicRules(d);
+    saveState('creator-class-mode');
+    render();
+  }
+
   function chooseForgeClass(slugValue){
     const d = draft();
     const picked = classSlugFromValue(slugValue);
@@ -2296,12 +2754,33 @@
         window.toast?.('Primary class is locked for this character.');
         return;
       }
+      if(d.classMode !== 'multi'){
+        window.toast?.('Choose Multi-Class to add a secondary class.');
+        return;
+      }
       d.extraClassSlugs = array(d.extraClassSlugs).filter(value => classSlugFromValue(value) !== locked);
       if(d.extraClassSlugs.includes(picked)){
         d.extraClassSlugs = d.extraClassSlugs.filter(value => value !== picked);
       }else{
         d.extraClassSlugs = [picked].slice(0, MAX_CHARACTER_CLASSES - 1);
       }
+      enforceMagicRules(d);
+      saveState('creator-secondary-class');
+      render();
+      return;
+    }
+    if(d.classMode === 'multi' && d.classSlug){
+      const primary = classSlugFromValue(d.classSlug);
+      if(picked === primary){
+        window.toast?.('Primary class selected. Choose a different card for secondary class.');
+        return;
+      }
+      if(d.extraClassSlugs.includes(picked)){
+        d.extraClassSlugs = d.extraClassSlugs.filter(value => value !== picked);
+      }else{
+        d.extraClassSlugs = [picked].slice(0, MAX_CHARACTER_CLASSES - 1);
+      }
+      enforceMagicRules(d);
       saveState('creator-secondary-class');
       render();
       return;
@@ -2309,6 +2788,7 @@
     d.classSlug = picked;
     d.lockedClassSlug = '';
     d.extraClassSlugs = [];
+    enforceMagicRules(d);
     saveState('creator-class');
     render();
   }
@@ -2345,6 +2825,7 @@
       lockedClassSlug:primaryClassSlug,
       raceSlug:schema.race?.slug || slug(character.race),
       classSlug:primaryClassSlug,
+      classMode:secondaryClassSlugs.length ? 'multi' : (schema.classMode || character.classMode || 'single'),
       extraClassSlugs:secondaryClassSlugs,
       originSlug:schema.origin?.slug || character.origin || '',
       backgroundSlug:schema.origin?.slug || character.origin || '',
@@ -2352,7 +2833,10 @@
       cardColour:safeCardColour(character.cardColour || schema.cardColour),
       characteristics:Object.assign(Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])), character.characteristics || schema.characteristics || {}),
       magicTypes:array(character.magicTypes || schema.magic?.types),
+      patronMagicType:character.patronMagicType || schema.magic?.patronLinkedType || '',
+      mancerAdvantageMagicType:character.mancerAffinity?.advantage || schema.magic?.mancerAffinity?.advantage || '',
       skills:skillKeys.slice(0, 4),
+      affinityRolls:Object.assign({ magic:{}, skills:{} }, character.affinityRolls || schema.affinityRolls || { magic:character.magicAffinities || schema.magicAffinities || schema.magic?.affinities || {}, skills:character.skillAffinities || schema.skillAffinities || {} }),
       equipment:equipmentItems,
       appearance:Object.assign({}, character.appearance || schema.appearance || {}),
       origin:Object.assign(defaultState().drafts.characterCreator.origin, schema.origin?.data || character.backstory || {}),
@@ -2419,6 +2903,73 @@
     window.loadPlayer?.(id);
     window.saveAsteriaState?.();
     return true;
+  }
+
+  function allMagicTypeNames(){
+    return magicGroups().flatMap(group => group.elements).map(element => magicInfoByName(element.name || element.type).name || element.name || element.type).filter(Boolean);
+  }
+
+  function grantCharacterMagicType(id, type){
+    const character = window.chars?.[id];
+    const magicType = magicInfoByName(type).name || type;
+    if(!character || !magicType) return false;
+    const base = array(character.magicTypes || character.character?.magic?.types);
+    const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes);
+    if(base.some(name => slug(name) === slug(magicType))){
+      window.toast?.(`${magicType} is already class-selected for ${character.name}.`);
+      return false;
+    }
+    if(!grants.some(name => slug(name) === slug(magicType))) grants.push(magicType);
+    character.gmGrantedMagicTypes = grants;
+    character.character = character.character || {};
+    character.character.magic = Object.assign({}, character.character.magic || {}, { gmGrantedTypes:grants.slice() });
+    window.saveAccountState?.();
+    window.saveAsteriaState?.();
+    window.AsteriaFirebase?.saveCharacter?.(id, character);
+    saveState('gm-magic-grant');
+    window.toast?.(`${magicType} granted to ${character.name}.`);
+    if(document.getElementById('gmPlayer')?.classList.contains('show')) window.renderGMPlayer?.();
+    if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
+    return true;
+  }
+
+  function revokeCharacterMagicType(id, type){
+    const character = window.chars?.[id];
+    if(!character || !type) return false;
+    const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes).filter(name => slug(name) !== slug(type));
+    character.gmGrantedMagicTypes = grants;
+    if(character.character?.magic) character.character.magic.gmGrantedTypes = grants.slice();
+    window.saveAccountState?.();
+    window.saveAsteriaState?.();
+    window.AsteriaFirebase?.saveCharacter?.(id, character);
+    saveState('gm-magic-revoke');
+    window.toast?.(`${type} removed from GM-granted magic.`);
+    if(document.getElementById('gmPlayer')?.classList.contains('show')) window.renderGMPlayer?.();
+    if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
+    return true;
+  }
+
+  function installGMMagicGrantPanel(id = selectedCharacterId()){
+    const character = window.chars?.[id];
+    const host = document.querySelector('#gmPlayer .gm-player-grid') || document.querySelector('#gmPlayer');
+    if(!host || !character) return;
+    byId('phase3GMMagicGrantPanel')?.remove();
+    const base = array(character.magicTypes || character.character?.magic?.types);
+    const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes);
+    const available = allMagicTypeNames().filter(name => !base.concat(grants).some(existing => slug(existing) === slug(name)));
+    const panel = document.createElement('section');
+    panel.id = 'phase3GMMagicGrantPanel';
+    panel.className = 'card phase3-gm-magic-grant-panel';
+    panel.innerHTML = `
+      <div class="section-head mini"><div><p class="eyebrow">GM Magic Access</p><h3>Grant Additional Elements</h3></div><span class="pill">GM override</span></div>
+      <p class="muted smallnote">Class-selected elements stay locked. GM grants sit above Character Forge slot limits.</p>
+      <div class="phase3-gm-magic-row"><label>Element<select id="phase3GMMagicGrantSelect">${available.map(name => `<option>${esc(name)}</option>`).join('')}</select></label><button type="button" class="primary" data-phase3-gm-grant-magic="${esc(id)}" ${available.length ? '' : 'disabled'}>Grant Element</button></div>
+      <div class="phase3-gm-magic-list"><b>Class Magic</b><span>${esc(base.join(', ') || 'None')}</span></div>
+      <div class="phase3-gm-magic-list"><b>GM Granted</b>${grants.length ? grants.map(name => `<button type="button" data-phase3-gm-revoke-magic="${esc(name)}" data-phase3-gm-revoke-id="${esc(id)}">${esc(name)} x</button>`).join('') : '<span>None</span>'}</div>
+    `;
+    host.appendChild(panel);
+    panel.querySelector('[data-phase3-gm-grant-magic]')?.addEventListener('click', () => grantCharacterMagicType(id, byId('phase3GMMagicGrantSelect')?.value));
+    qsa('[data-phase3-gm-revoke-magic]', panel).forEach(button => button.addEventListener('click', () => revokeCharacterMagicType(button.dataset.phase3GmRevokeId, button.dataset.phase3GmRevokeMagic)));
   }
 
   function openCharacterForgeHub(){
@@ -2514,7 +3065,10 @@
       saveCharacterFromDraft,
       openCharacterForgeHub,
       startNewCharacterForge,
-      openCharacterDashboard:openCharacterDashboardFromForge
+      openCharacterDashboard:openCharacterDashboardFromForge,
+      grantCharacterMagicType,
+      revokeCharacterMagicType,
+      classMagicRulesForDraft
     };
     function routedDashboard(mode, ...args){
       if(mode === 'createCharacter') return startNewCharacterForge();
@@ -2538,13 +3092,17 @@
       entries:entriesWithGameplay
     });
     window.toggleCharacterCreator = function(){ return openCharacterForgeHub(); };
+    window.AsteriaGameplayGrantMagic = grantCharacterMagicType;
+    window.AsteriaGameplayRevokeMagic = revokeCharacterMagicType;
   }
 
   function boot(){
     publish();
     installNav();
     window.AsteriaViewHooks?.afterGMRender?.('phase3-gm-toolkit', installGMPanel);
+    window.AsteriaViewHooks?.afterGMPlayerRender?.('phase3-gm-magic-grants', id => installGMMagicGrantPanel(id));
     if(byId('gm')?.classList.contains('show')) installGMPanel();
+    if(byId('gmPlayer')?.classList.contains('show')) installGMMagicGrantPanel();
   }
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();
