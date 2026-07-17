@@ -307,30 +307,67 @@ A proverb symbolizing the eternal bond between the Polaris Ursa of Altarin and N
 
 ## Racial Traits
 ### Frostborn Resilience
-- Resistant to cold damage  
-- Immune to:
-  - Natural frostbite  
-  - Hypothermia  
+
+#### Description
+Generations surviving Altarin's frozen wilderness have made Polaris Ursa naturally resistant to extreme cold, allowing them to thrive where lesser races quickly succumb to winter's relentless embrace.
+
+#### Effects
+- Resistant to **Cold Damage**.
+- Immune to **natural frostbite**.
+- Immune to **natural hypothermia**.
+- Non-magical environmental cold cannot inflict movement or survival penalties.
+
+---
 
 ### Ice Strider
-- No movement penalties on:
-  - Snow  
-  - Ice  
-- Cannot slip on frozen terrain  
+
+#### Description
+Polaris Ursa move confidently across frozen landscapes, their powerful build and instinctive balance allowing effortless travel over snow and ice without losing speed or secure footing.
+
+#### Effects
+- Ignore movement penalties caused by **natural snow**.
+- Ignore movement penalties caused by **natural ice**.
+- Cannot slip or fall due to naturally frozen terrain.
+- Natural snow and ice are not treated as difficult terrain.
+
+---
 
 ### Polar Endurance
-- Advantage on saving throws against:
-  - Exhaustion  
-  - Starvation  
-  - Extreme cold  
+
+#### Description
+Life beneath endless winters has forged exceptional endurance, enabling Polaris Ursa to withstand exhaustion, hunger, and relentless environmental hardship long after others would collapse from fatigue.
+
+#### Effects
+- Gain Advantage on saving throws against **Exhaustion**.
+- Gain Advantage on saving throws against **Starvation**.
+- Gain Advantage on saving throws caused by **extreme cold**.
+- Increase the time before suffering environmental fatigue in frozen climates.
+
+---
 
 ### Mighty Swimmer
-- Swim speed: 15m  
-- Can hold breath for up to 20 minutes  
 
-### Guardian’s Fury
-- When an ally within 3m is attacked:
-  - Gain advantage on next melee attack against attacker  
+#### Description
+Despite their immense size, Polaris Ursa are powerful swimmers capable of crossing icy waters with remarkable endurance while holding their breath far longer than most humanoids.
+
+#### Effects
+- Gain a **Swimming Speed of 15 metres**.
+- Can hold their breath for **20 minutes**.
+- Ignore penalties for swimming in naturally freezing water.
+- Gain Advantage on Athletics checks made while swimming.
+
+---
+
+### Guardian's Fury
+
+#### Description
+The Polaris Ursa possess an instinctive protective nature, erupting into fierce determination whenever companions are threatened, striking back with overwhelming strength to defend those under their care.
+
+#### Effects
+- When an ally within **3 metres** is damaged by an enemy, this trait activates.
+- Gain Advantage on your next melee attack against the triggering enemy before the end of your next turn.
+- This effect may trigger **once per round**.
+- Counts as a protective racial ability and may benefit from abilities that enhance guardian or protector effects.
 
 ---
 

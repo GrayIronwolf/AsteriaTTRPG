@@ -227,7 +227,7 @@ const classManifestEntries = [];
     else walkClassManifest(node.children || []);
   });
 })(classManifest.categories || []);
-check('Race pages always expose five racial trait card slots', raceCompendiumJs.includes('traitSetForRace') && raceCompendiumJs.includes('while(slots.length < 5)') && raceCompendiumJs.includes('is-placeholder'));
+check('Race pages support data-driven racial trait card slots', raceCompendiumJs.includes('traitSlotCount') && raceCompendiumJs.includes('while(slots.length < slotCount)') && raceCompendiumJs.includes('is-placeholder'));
 check('Class content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-class-content.js')) && classContentDirs.length >= 30 && classContentDirs.every(entry => fs.existsSync(path.join(classContentRoot, entry.name, 'index.md'))));
 check('Class talents use per-tier content folders', fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-1/artificer-discipline/index.md')) && fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-5/arcane-exchange/index.md')));
 check('Class manifest is generated from content/classes', classManifest.source === 'content/classes' && classManifest.entryCount >= 30 && classManifestEntries.length >= 30 && classManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/classes/')));

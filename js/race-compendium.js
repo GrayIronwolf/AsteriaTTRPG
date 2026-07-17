@@ -127,6 +127,7 @@
             affinityProfile:node.affinityProfile || {},
             loreStatus:node.loreStatus || 'Common Knowledge',
             playable:node.playable !== false,
+            traitSlots:Math.max(1, Math.min(5, Number(node.traitSlots || info.traitSlots || 5))),
             availability:node.availability || (node.playable === false ? 'non-playable' : 'playable'),
             visibility:node.visibility || 'public',
             summary:node.summary || info.summary || firstMarkdownParagraph(info.overviewMarkdown || info.loreMarkdown) || '',
@@ -557,14 +558,18 @@
     if(!html) return '';
     return `<section class="race-info-section span-2 race-feature-panel"><h3>Racial Features</h3>${html}</section>`;
   }
+  function traitSlotCount(race){
+    return Math.max(1, Math.min(5, Number(race?.traitSlots || 5)));
+  }
   function traitSetForRace(race){
+    const slotCount = traitSlotCount(race);
     const realTraits = array(race?.racialTraits).map((trait, index) => ({
       name:trait.name || `Racial Trait ${index + 1}`,
       text:trait.text || trait.description || 'Information coming soon.',
       isPlaceholder:false
     }));
-    const slots = realTraits.slice(0, 5);
-    while(slots.length < 5){
+    const slots = realTraits.slice(0, slotCount);
+    while(slots.length < slotCount){
       const number = slots.length + 1;
       slots.push({
         name:`Racial Trait ${number}`,
@@ -576,10 +581,11 @@
   }
   function RaceTraitCards(race){
     const traits = traitSetForRace(race);
+    const slotCount = traitSlotCount(race);
     return `
       <section class="race-info-section span-2">
         <h3>Racial Traits</h3>
-        <p class="smallnote">Each race has five racial trait slots. Double-click a card to open its trait page.</p>
+        <p class="smallnote">This race has ${slotCount} racial trait ${slotCount === 1 ? 'slot' : 'slots'}. Double-click a card to open its trait page.</p>
         <div class="race-trait-card-grid">
           ${traits.map((trait, index) => `<article class="race-trait-card ${trait.isPlaceholder ? 'is-placeholder' : ''}" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.text || trait.description || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
         </div>

@@ -111,39 +111,69 @@ sourceOrder: 27
 ---
 
 ## Racial Traits
-### Racial Bond – Split Soul
-Sprite are born with **half a soul**.
+### Racial Bond - Split Soul
 
-- The other half manifests as a **Pixie**
-- Pixie and Sprite can sense one another across great distances
-- When within close proximity, magic flows more smoothly
+#### Description
+Sprites are born with only half a soul. The missing half exists as a Pixie, creating an unbreakable spiritual bond that transcends distance and strengthens both when united.
 
-If the bond is damaged or severed, the Pixie and/or Sprite becomes **Unstable**, suffering narrative and mechanical consequences.
+#### Effects
+- Every Sprite is spiritually bonded to a single Pixie.
+- Sprite and Pixie always know the general direction of one another.
+- The bond functions regardless of distance or plane unless magically severed.
+- When within close proximity, both gain improved magical harmony, reducing interference between magical abilities.
+- If the bond is damaged or severed, both creatures become **Unstable**, suffering narrative and mechanical consequences determined by the GM.
+
+---
 
 ### Dark Vision
-- Can see clearly in darkness up to 30m  
-- No penalties in low-light environments  
+
+#### Description
+Generations beneath the earth have granted Cavern Sprites exceptional eyesight, allowing them to perceive clearly within darkness where most races would become completely blind.
+
+#### Effects
+- Can see clearly in darkness up to **30 metres**.
+- Suffers no vision penalties in low-light environments.
+- Distinguishes shapes, movement, and terrain in complete darkness.
+- Magical darkness still blocks vision unless otherwise stated.
+
+---
 
 ### Light Footing
-- Ignore movement penalties in:
-  - Loose stone  
-  - Uneven cave terrain  
-- Reduced noise when moving over rock/stone
+
+#### Description
+Cavern Sprites move effortlessly across uneven stone, instinctively placing each step with remarkable precision and allowing silent movement through caves and treacherous underground terrain.
+
+#### Effects
+- Ignore movement penalties caused by loose stone.
+- Ignore movement penalties caused by uneven cave terrain.
+- Reduce noise made while moving across rock and stone surfaces.
+- Gain Advantage on checks to maintain footing on natural cave terrain.
+
+---
 
 ### Cavern Adaptation
-- Advantage on checks related to:
-  - Navigating caves  
-  - Detecting structural instability  
-  - Finding hidden paths  
 
-### Shadow Affinity
-- Increased effectiveness when:
-  - In darkness  
-  - Out of direct light  
+#### Description
+Life beneath the mountains has honed Cavern Sprites into expert navigators, enabling them to instinctively understand underground environments and recognise subtle changes within the surrounding stone.
+
+#### Effects
+- Gain Advantage on checks related to navigating caves.
+- Gain Advantage when detecting unstable cave structures.
+- Gain Advantage when locating hidden tunnels, passages, and natural caverns.
+- Can recognise common underground hazards with a successful appropriate skill check.
+
+---
 
 ### Imbued Strike (Adapted)
-- Can infuse attacks or actions with dark/earth energy  
-- Adds minor magical effect (scales later with system)
+
+#### Description
+Cavern Sprites naturally channel ambient subterranean mana through their bodies, allowing simple attacks and actions to carry traces of elemental power linked to their homeland.
+
+#### Effects
+- May imbue attacks or actions with **Earth** or **Dark** elemental energy.
+- Grants a minor magical effect appropriate to the chosen element.
+- Does not increase base damage unless specified by another ability.
+- Scales through future racial abilities, talents, and progression systems.
 
 ---
 

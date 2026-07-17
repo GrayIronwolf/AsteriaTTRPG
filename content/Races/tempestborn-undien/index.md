@@ -113,55 +113,66 @@ sourceOrder: 182
 ---
 
 ## Racial Traits
-### Storm Sense
+### Water Spirit Heritage
 
 #### Description
-Tempestborn possess an innate awareness of atmospheric conditions and storm currents. The winds themselves whisper warnings to them.
+Every Undien carries a fragment of a Water Spirit's soul, granting an unbreakable connection to Water Magic. This spiritual bond forms the foundation of every Undien lineage from birth.
 
-#### Gameplay Effect
-- Gain +2 Perception during storms, rainfall, or high winds.
-- Can sense approaching storms up to 24 hours in advance.
-- Detect major weather changes several hours before they occur.
-- Gain advantage on Survival checks involving weather prediction.
+#### Effects
+- Gain **100% Water Magic Affinity**.
+- Water is permanently one of your natural elemental affinities.
+- This affinity cannot be removed or replaced by any normal means.
 
 ---
 
-### Child of the Tempest
+### Amphibious
 
 #### Description
-Storm mana flows naturally through the body of a Tempestborn, empowering their lightning and wind abilities.
+The essence of a Water Spirit allows every Undien to live effortlessly between land and sea, breathing naturally in both environments without restriction or discomfort throughout their lifetime.
 
-#### Gameplay Effect
-- Lightning and Storm spells cost 10% less Mana.
-- Gain +1 to Lightning and Storm spell rolls.
-- Resistant to Lightning damage.
-- Gain advantage on rolls against natural weather hazards.
+#### Effects
+- Can breathe underwater indefinitely.
+- Can breathe air normally.
+- Cannot drown through natural causes.
+
+---
+
+### Storm Sense
+
+#### Description
+Tempestborn instinctively perceive atmospheric changes before they occur. Their connection to the skies allows them to sense storms, shifting winds, and dangerous weather long before others notice.
+
+#### Effects
+- Gain Advantage on Survival checks involving weather prediction.
+- Can sense approaching storms up to 24 hours in advance.
+- Always know the current wind direction and approximate wind strength.
+- Gain Advantage on Perception checks during storms, heavy rain, or high winds.
+
+---
+
+### Stormforged Constitution
+
+#### Description
+Born beneath relentless storms, Tempestborn have bodies adapted to rain, humidity, and violent weather. Their storm-blessed constitution protects them from illnesses and hardships carried by the elements.
+
+#### Effects
+- Gain immunity to natural illnesses caused by wet, cold, or humid environments.
+- Gain immunity to diseases contracted through contaminated water.
+- Gain Advantage on checks to resist weather-related exhaustion.
+- Ignore environmental penalties caused by heavy rain, thunderstorms, strong winds, and severe storms.
 
 ---
 
 ### Lightning Reflexes
 
 #### Description
-The speed of the storm is reflected in every movement a Tempestborn makes.
+Storm energy races through every Tempestborn, granting extraordinary speed and lightning-fast reactions. Their movements are sudden, precise, and as unpredictable as the storms from which they were born.
 
-#### Gameplay Effect
-- Gain +2 Initiative.
-- Gain +1 Agility.
-- Gain advantage on reaction-based checks.
-- Reduce fall damage by 50%.
-
----
-
-### Breath of the Storm
-
-#### Description
-Like all Undien, Tempestborn are equally at home above and below the water. Their storm-touched nature allows them to move effortlessly through rain, wind, and sea.
-
-#### Gameplay Effect
-- Can breathe underwater indefinitely.
-- Ignore underwater combat penalties.
-- Swim speed is doubled.
-- Ignore movement penalties caused by heavy rain, strong winds, or rough seas.
+#### Effects
+- Gain **+2 Initiative**.
+- Gain **+1 Agility**.
+- Gain Advantage on reaction-based Agility checks.
+- Reduce fall damage by **50%**.
 
 ---
 

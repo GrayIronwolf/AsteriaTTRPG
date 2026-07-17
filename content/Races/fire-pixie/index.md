@@ -6,6 +6,7 @@ raceCategory: "Fae Races"
 secondaryCategory: 
 tertiaryCategory: 
 playable: true
+traitSlots: 4
 size: "Small"
 movement: "6m (Walking) - 18m (Flying)"
 languages:
@@ -290,31 +291,56 @@ Values:
 
 ## Racial Traits
 ### Magical Affinity (Innate)
-- Born with **100 Affinity** in one elemental type  
-- Cannot be changed or reduced  
-- Reduced backlash from aligned magic  
 
-### Racial Bond – Split Soul
-Pixies are born with **half a soul**.
+#### Description
+Every Pixie is born with a perfect bond to a single element. This magical affinity defines their soul, shapes their appearance, and can never naturally be altered or diminished.
 
-- The other half manifests as a **Sprite**
-- Pixie and Sprite can sense one another across great distances
-- When within close proximity, magic flows more smoothly
+#### Effects
+- Born with **100% Affinity** in one chosen magical element.
+- This affinity cannot be naturally changed, reduced, or replaced.
+- Gain reduced magical backlash when casting spells of the aligned element.
+- Wing colour, eye colour, hair accents, and mana aura naturally reflect the chosen element.
 
-If the bond is damaged or severed, the Pixie and/or Sprite becomes **Unstable**, suffering narrative and mechanical consequences.
+---
 
-### Elemental Embodiment
-- Emotions influence environment slightly  
-- Enhances nearby aligned magic  
-- Discomfort when exposed to opposing elements  
+### Racial Bond: Split Soul
 
-### Fae Perception
-- Detect:
-  - Illusions  
-  - Glamours  
-  - Magical distortions  
-- Strong intuition for hidden intent  
-- Struggles with rigid systems or logic  
+#### Description
+A Pixie's soul is incomplete at birth, with its missing half manifesting as a Sprite. Together they form a single spiritual existence connected beyond distance and ordinary magic.
+
+#### Effects
+- Every Pixie possesses a spiritually linked **Sprite**.
+- Pixie and Sprite always know the general direction of one another.
+- The bond functions across any distance on the same plane.
+- While close together, magical energy flows more efficiently between the pair.
+- If the bond is damaged, suppressed, or severed, both become **Soul Unstable**, suffering narrative and mechanical consequences determined by the GM.
+
+---
+
+### Fey Perception
+
+#### Description
+Pixies instinctively perceive the subtle currents of Fey magic, allowing them to notice illusions, enchantments, and magical disturbances that often escape ordinary senses.
+
+#### Effects
+- Naturally detect magical illusions and glamours.
+- Sense nearby magical distortions and unstable mana.
+- Gain heightened intuition toward hidden magical intent.
+- Gain bonuses when identifying Fey magic or magical anomalies.
+
+---
+
+### Fey Wings
+
+#### Description
+Pixie wings are living extensions of their soul, formed from condensed mana rather than flesh. They provide effortless flight and continually regenerate while their soul remains whole.
+
+#### Effects
+- Gain a natural Flight Speed.
+- Can hover without requiring forward movement.
+- Descend safely while conscious, greatly reducing falling damage.
+- Wings naturally regenerate if damaged.
+- Wing appearance permanently reflects the Pixie's elemental affinity.
 
 ---
 
