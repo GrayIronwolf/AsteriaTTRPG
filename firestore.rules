@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsUserData(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isCampaignOwner(data) {
+      return signedIn() && data.ownerUid == request.auth.uid;
+    }
+
+    function isCampaignMember(data) {
+      return signedIn() && (
+        data.ownerUid == request.auth.uid ||
+        (data.keys().hasAll(['gmUids']) && request.auth.uid in data.gmUids) ||
+        (data.keys().hasAll(['playerUids']) && request.auth.uid in data.playerUids)
+      );
+    }
+
+    function hasActiveInvite(data, campaignId) {
+      return signedIn() &&
+        data.keys().hasAll(['ucn']) &&
+        exists(/databases/$(database)/documents/campaignInvites/$(data.ucn)) &&
+        get(/databases/$(database)/documents/campaignInvites/$(data.ucn)).data.status == 'active' &&
+        get(/databases/$(database)/documents/campaignInvites/$(data.ucn)).data.campaignId == campaignId;
+    }
+
+    function joinsCampaignAsSelf(campaignId) {
+      return signedIn() &&
+        hasActiveInvite(resource.data, campaignId) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.ucn == resource.data.ucn &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'playerUids', 'roles', 'players', 'activity', 'updatedAt'
+        ]) &&
+        request.resource.data.playerUids.hasAll(resource.data.playerUids) &&
+        request.resource.data.playerUids.size() <= resource.data.playerUids.size() + 1 &&
+        request.auth.uid in request.resource.data.playerUids &&
+        request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
+        request.resource.data.players.diff(resource.data.players).affectedKeys().hasOnly([request.auth.uid]) &&
+        request.resource.data.roles[request.auth.uid] == 'player' &&
+        request.resource.data.players[request.auth.uid].uid == request.auth.uid &&
+        request.resource.data.players[request.auth.uid].role == 'player';
+    }
+
+    function linksOwnedCharacter() {
+      let characterId = request.resource.data.lastLinkedCharacterId;
+      return isCampaignMember(resource.data) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'party', 'players', 'characters', 'playerCharacterLinks',
+          'activity', 'lastLinkedCharacterId', 'updatedAt'
+        ]) &&
+        request.resource.data.party.hasAll(resource.data.party) &&
+        request.resource.data.party.size() <= resource.data.party.size() + 1 &&
+        characterId in request.resource.data.party &&
+        request.resource.data.players.diff(resource.data.players).affectedKeys().hasOnly([request.auth.uid]) &&
+        characterId in request.resource.data.players[request.auth.uid].characterIds &&
+        request.resource.data.characters.diff(resource.data.characters).affectedKeys().hasOnly([characterId]) &&
+        request.resource.data.characters[characterId].ownerUid == request.auth.uid &&
+        request.resource.data.playerCharacterLinks.diff(resource.data.playerCharacterLinks).affectedKeys().hasOnly([characterId]) &&
+        request.resource.data.playerCharacterLinks[characterId] == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if ownsUserData(uid);
+
+      match /{document=**} {
+        allow read, write: if ownsUserData(uid);
+      }
+    }
+
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid && request.resource.data.uid == resource.data.uid;
+      allow delete: if false;
+    }
+
+    match /campaignInvites/{ucn} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if isCampaignMember(resource.data) || hasActiveInvite(resource.data, campaignId);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || joinsCampaignAsSelf(campaignId) || linksOwnedCharacter();
+      allow delete: if isCampaignOwner(resource.data);
+    }
+  }
+}

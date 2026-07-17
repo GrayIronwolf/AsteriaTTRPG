@@ -1,105 +1,64 @@
 # Asteria Firebase Setup
 
-This build uses one Firebase Authentication account for every user. GM and Player permissions are not separate account types; campaign permissions are stored on each campaign.
+Asteria uses one Firebase Authentication account per user. GM and Player are campaign roles, not separate account types.
 
-## 1. Enable Authentication
+## Required Firebase Features
 
-1. Open Firebase Console.
-2. Select the Asteria project.
-3. Go to Authentication.
-4. Enable Email/Password sign-in.
-5. Add the deployed website domain to Authentication > Settings > Authorized domains.
+1. In Firebase Console, select the `asteria-ttrpg` project.
+2. Under Authentication, enable Email/Password sign-in.
+3. Under Authentication > Settings > Authorized domains, add the deployed website domain and local test domains you use.
+4. Create a Cloud Firestore database if the project does not already have one.
+5. Publish the included `firestore.rules` before testing cross-account UCN joins.
 
-## 2. Firestore Collections
+The Test Login is browser-only. It cannot create or join campaigns across separate accounts or devices. Use two real Firebase accounts for UCN testing.
 
-The website writes these records:
+## Publish Firestore Rules
 
-- `users/{uid}` account profile and character list.
-- `users/{uid}/characters/{characterId}` owned character records.
-- `users/{uid}/campaigns/{campaignId}` campaigns created by that user.
-- `campaigns/{campaignId}` shared campaign records for future invite/join workflows.
-- `usernames/{usernameLower}` username-to-email lookup records.
+### Firebase Console
 
-## 3. Campaign Permissions
+1. Open Firestore Database > Rules.
+2. Replace the current rules with the contents of `firestore.rules`.
+3. Click Publish.
 
-Creating a campaign stores the shared campaign document as `campaigns/{campaignId}` and includes:
+### Firebase CLI
 
-- `gmId`
-- `ownerUid`
-- `gmUids: [uid]`
-- `roles: { uid: "gm" }`
-- `players`
-- `characters`
-- `chat`
-- `guildBank`
-- `settings`
-- `inviteCode`
-- `inviteLink`
+From the website folder:
 
-A user can be GM for one campaign and a player in another using the same account.
-
-The campaign object is shaped for this future structure:
-
-```txt
-campaigns/
-  campaignId/
-    gmId
-    players
-    characters
-    chat
-    guildBank
-    settings
+```powershell
+firebase login
+firebase use asteria-ttrpg
+firebase deploy --only firestore:rules
 ```
 
-## 4. Suggested Firestore Rules Starter
+The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` already point the CLI at the Asteria project. No custom Firestore index is needed because UCNs are direct document IDs.
 
-Review before production, but this is a useful local starting point:
+## Campaign Collections
 
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
+- `campaigns/{campaignId}` stores the shared campaign.
+- `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
+- `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
+- `users/{uid}/characters/{characterId}` stores an owned character.
+- `users/{uid}/settings/appState` stores account workspace state.
+- `usernames/{usernameLower}` supports username login lookup.
 
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
+When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
 
-    match /users/{uid} {
-      allow read, write: if isOwner(uid);
+## Testing UCN Join
 
-      match /characters/{characterId} {
-        allow read, write: if isOwner(uid);
-      }
+1. Sign in with a real Firebase account and create a campaign.
+2. Wait for the cloud-save confirmation, then copy the 12-digit UCN.
+3. Sign out and sign in with a different real Firebase account.
+4. Open Campaign Forge, enter the UCN, and choose Join Campaign.
+5. Link an existing character or forge a new character for that campaign.
 
-      match /campaigns/{campaignId} {
-        allow read, write: if isOwner(uid);
-      }
+Campaigns created before this update gain their UCN lookup record the next time their GM signs in and the campaign is saved. Opening Campaign Forge and making any saved campaign change will trigger that migration.
 
-      match /settings/{docId} {
-        allow read, write: if isOwner(uid);
-      }
-    }
+## Security Model
 
-    match /usernames/{username} {
-      allow read: if true;
-      allow create: if signedIn();
-      allow update, delete: if false;
-    }
+- Users can read and write only their own account data.
+- Campaign owners can update or delete their shared campaign.
+- Authenticated users with an active UCN can add only themselves as a player.
+- Campaign members can link only characters owned by their own account.
+- A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.
 
-    match /campaigns/{campaignId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if signedIn() &&
-        (resource.data.ownerUid == request.auth.uid ||
-         request.auth.uid in resource.data.gmUids);
-    }
-  }
-}
-```
-
-## 5. Website Config
-
-Firebase config lives in `js/firebase-auth.js`. If you create a new Firebase project later, replace the `firebaseConfig` object there and keep the rest of the auth module intact.
+Firebase config remains in `js/firebase-auth.js`. Replace that object only if Asteria moves to a different Firebase project.

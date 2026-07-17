@@ -113,6 +113,8 @@ const raceCompendiumJs = fs.readFileSync(path.join(root, 'js/race-compendium.js'
 const raceCompendiumDataJs = fs.readFileSync(path.join(root, 'js/race-compendium-data.js'), 'utf8');
 const raceInfoDataJs = fs.readFileSync(path.join(root, 'js/race-info-data.js'), 'utf8');
 const firebaseAuthJs = fs.readFileSync(path.join(root, 'js/firebase-auth.js'), 'utf8');
+const firestoreRulesPath = path.join(root, 'firestore.rules');
+const firestoreRules = fs.existsSync(firestoreRulesPath) ? fs.readFileSync(firestoreRulesPath, 'utf8') : '';
 const authBridgeJs = fs.readFileSync(path.join(root, 'js/auth-bridge.js'), 'utf8');
 const dataSyncJs = fs.readFileSync(path.join(root, 'js/data-sync.js'), 'utf8');
 const snapshotJs = fs.readFileSync(path.join(root, 'js/compendium-snapshot-v1.1.js'), 'utf8');
@@ -332,6 +334,11 @@ check('Workspace campaign creation stores GM permissions', cleanCompendiumJs.inc
 check('Workspace campaign structure supports future systems', ['players:{', 'characters:{}', 'chat:{ messages:[] }', 'guildBank:{', 'settings:{'].every(token => cleanCompendiumJs.includes(token)));
 check('Workspace character linking exists', cleanCompendiumJs.includes('linkCharacterToCampaign') && cleanCompendiumJs.includes('playerCharacterLinks') && cleanCompendiumJs.includes('campaign.characters[characterId]'));
 check('Campaign Forge supports 12 digit UCN invites', ['uniqueCampaignCode','campaignInviteUrl','campaign-invite=','workspaceJoinCampaignCode','Join Campaign','joinCampaignByUCN','createCampaignInvite'].every(token => cleanCompendiumJs.includes(token)) && cleanCompendiumJs.includes('randomDigits(12)'));
+check('Campaign Forge tolerates removed title descriptions', cleanCompendiumJs.includes("const intro = element.querySelector('#clean-intro')") && !cleanCompendiumJs.includes("querySelector('#clean-intro').textContent"));
+check('UCN join uses shared Firebase invite records', ['campaignInvites', 'joinCampaignByUCN', 'runTransaction', 'loadCampaigns'].every(token => firebaseAuthJs.includes(token)) && cleanCompendiumJs.includes("joinResult('Finding campaign...'") && dataSyncJs.includes('mergeCloudCampaigns'));
+const firebaseCampaignSaveBlock = firebaseAuthJs.slice(firebaseAuthJs.indexOf('saveCampaign: async function'), firebaseAuthJs.indexOf('findCampaignByUCN: async function'));
+check('Campaign save preserves GM ownership', firebaseCampaignSaveBlock.includes('const ownerUid = campaignOwner(clean)') && firebaseCampaignSaveBlock.includes("if(ownerUid === currentUser.uid)") && !firebaseCampaignSaveBlock.includes('ownerUid: currentUser.uid'));
+check('Deployable Firestore campaign rules exist', Boolean(firestoreRules) && ['campaignInvites', 'joinsCampaignAsSelf', 'linksOwnedCharacter', "allow list: if false"].every(token => firestoreRules.includes(token)) && fs.existsSync(path.join(root, 'firebase.json')) && fs.existsSync(path.join(root, 'firestore.indexes.json')));
 check('Campaign join can link existing or newly forged characters', ['renderJoinCharacterChooser','setPendingCampaignJoin','consumePendingCampaignJoin','workspaceJoinForgeCharacterBtn'].every(token => cleanCompendiumJs.includes(token)) && gameplayJs.includes('consumePendingCampaignJoin?.(id)'));
 check('Dashboard includes required logged-in panels', ['Current Campaigns', 'Available Characters', 'Notifications', 'Active Party'].every(token => cleanCompendiumJs.includes(token)));
 check('Data sync uses auth dashboard version', dataSyncJs.includes('asteria-auth-workspace-dashboard-system-v1'));

@@ -1288,7 +1288,8 @@
     const buttons = element.querySelector('.clean-buttons');
     const config = authMode();
     element.querySelector('#clean-title').textContent = config.title;
-    element.querySelector('#clean-intro').textContent = config.intro;
+    const intro = element.querySelector('#clean-intro');
+    if (intro) intro.textContent = config.intro;
     element.querySelector('#clean-nav-title').textContent = 'Account Workspace';
     element.querySelector('.clean-breadcrumb').textContent = `Signed-in Workspace / ${config.label}`;
     const back = element.querySelector('.clean-back');
@@ -1436,10 +1437,10 @@
     element.addEventListener('click', event => {
       if (event.target.closest('input,button,select')) event.stopPropagation();
     });
-    element.querySelector('#workspaceJoinCampaignBtn')?.addEventListener('click', event => {
+    element.querySelector('#workspaceJoinCampaignBtn')?.addEventListener('click', async event => {
       event.preventDefault();
       event.stopPropagation();
-      joinCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
+      await joinCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
     });
     const pendingInviteCode = takeCampaignInviteCode();
     if (pendingInviteCode) {
@@ -1623,6 +1624,15 @@
       .find(campaign => campaign.ucn === code || campaign.uniqueCampaignCode === code || campaign.inviteCode === code) || null;
   }
 
+  function storeAccountCampaign(campaign) {
+    if (!campaign?.id) return null;
+    window.campaigns = Array.isArray(window.campaigns) ? window.campaigns : [];
+    const index = window.campaigns.findIndex(item => item?.id === campaign.id);
+    if (index >= 0) window.campaigns[index] = Object.assign({}, window.campaigns[index], campaign);
+    else window.campaigns.push(campaign);
+    return index >= 0 ? window.campaigns[index] : campaign;
+  }
+
   function joinResult(message, tone = '') {
     const result = byId('workspaceJoinCampaignResult');
     if (result) result.innerHTML = `<span class="${escapeHtml(tone)}">${escapeHtml(message)}</span>`;
@@ -1696,16 +1706,41 @@
     });
   }
 
-  function joinCampaignByUCN(codeValue) {
+  async function joinCampaignByUCN(codeValue) {
     if (!requireAccountWorkspace()) return null;
     const code = campaignCode(codeValue);
     if (code.length !== 12) {
       joinResult('Enter the 12 digit Unique Campaign Number from your GM.', 'warn');
       return null;
     }
-    const campaign = campaignByCode(code);
+    const joinButton = byId('workspaceJoinCampaignBtn');
+    let campaign = campaignByCode(code);
+    let joinedInCloud = false;
+    const firebaseReady = Boolean(window.AsteriaFirebase?.isReady?.());
+    if (firebaseReady && (!campaign || campaignRole(campaign) !== 'GM')) {
+      if (joinButton) joinButton.disabled = true;
+      joinResult('Finding campaign...', 'info');
+      try {
+        const sharedCampaign = await window.AsteriaFirebase.joinCampaignByUCN(code);
+        if (sharedCampaign) {
+          campaign = storeAccountCampaign(sharedCampaign);
+          joinedInCloud = true;
+        }
+      } catch (error) {
+        console.warn('UCN campaign join failed.', error);
+        const permissionProblem = error?.code === 'permission-denied' || /permission/i.test(String(error?.message || ''));
+        joinResult(permissionProblem
+          ? 'Firebase blocked this join. Publish the included Firestore rules, then try again.'
+          : 'The campaign service could not complete the join. Please try again.', 'warn');
+        return null;
+      } finally {
+        if (joinButton) joinButton.disabled = false;
+      }
+    }
     if (!campaign) {
-      joinResult('No campaign was found for that UCN.', 'warn');
+      joinResult(firebaseReady
+        ? 'No campaign was found for that UCN.'
+        : 'Cross-account UCN joining requires a real Firebase login. Test Login only sees campaigns in this browser.', 'warn');
       return null;
     }
     ensureCampaignInviteFields(campaign);
@@ -1718,9 +1753,9 @@
       return invite;
     });
     campaign.activity = arrayValue(campaign.activity);
-    campaign.activity.push(`${sessionInfo().user || sessionInfo().email || 'Player'} joined with UCN.`);
+    if (!joinedInCloud) campaign.activity.push(`${sessionInfo().user || sessionInfo().email || 'Player'} joined with UCN.`);
     persistWorkspaceChange('campaign-ucn-joined');
-    window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    if (!joinedInCloud) window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
     joinResult(`Joined ${campaign.name || 'campaign'}. Choose a character to link.`, 'ok');
     renderJoinCharacterChooser(campaign);
     return player;
@@ -1833,6 +1868,7 @@
         }
       },
       characters:{},
+      playerCharacterLinks:{},
       chat:{ messages:[] },
       guildBank:{
         coins:{ copper:0, silver:0, gold:0, platinum_crown:0, royal_crown:0, royal_platinum:0 },
@@ -1912,7 +1948,7 @@
     renderCharacterDetail(Object.assign({ id }, window.chars[id]));
   }
 
-  function linkCharacterToCampaign(campaignIdValue, characterIdValue = '', options = {}) {
+  async function linkCharacterToCampaign(campaignIdValue, characterIdValue = '', options = {}) {
     const campaign = findCampaign(campaignIdValue);
     const characterId = characterIdValue || byId('workspaceLinkCharacter')?.value;
     if (!campaign || !characterId || !window.chars?.[characterId]) return;
@@ -1937,7 +1973,17 @@
     campaign.activity = arrayValue(campaign.activity).concat(`${window.chars[characterId].name || characterId} linked to campaign.`);
     window.chars[characterId].campaign = campaign.name;
     persistWorkspaceChange('workspace-character-linked');
-    window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    if (window.AsteriaFirebase?.isReady?.() && window.AsteriaFirebase?.linkCharacterToCampaign) {
+      try {
+        const sharedCampaign = await window.AsteriaFirebase.linkCharacterToCampaign(campaign.id, Object.assign({ id:characterId }, window.chars[characterId]));
+        if (sharedCampaign) storeAccountCampaign(sharedCampaign);
+      } catch (error) {
+        console.warn('Could not link character to the shared campaign.', error);
+        window.toast?.('Character saved locally, but Firebase could not link it to the shared campaign.');
+      }
+    } else {
+      window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    }
     window.AsteriaFirebase?.saveCharacter?.(characterId, window.chars[characterId]);
     if (!options.silent) window.toast?.(`${window.chars[characterId].name} linked to ${campaign.name}.`);
     if (!options.skipRender) renderCampaignDetail(campaign);

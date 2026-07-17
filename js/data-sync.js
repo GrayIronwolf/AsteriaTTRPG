@@ -98,6 +98,16 @@
       window.refreshSyncedViews?.();
     }catch(e){ console.warn('Cloud state merge failed', e); }
   }
+  function mergeCloudCampaigns(campaigns){
+    if(!Array.isArray(campaigns) || !campaigns.length) return;
+    const merged = new Map((window.campaigns || []).filter(Boolean).map(campaign=>[campaign.id, campaign]));
+    campaigns.forEach(campaign=>{
+      if(!campaign?.id) return;
+      merged.set(campaign.id, Object.assign({}, merged.get(campaign.id) || {}, campaign));
+    });
+    window.campaigns = Array.from(merged.values());
+    window.saveAsteriaState?.();
+  }
   async function loadCloudData(reason='login'){
     const user = window.AsteriaFirebase?.getUser?.();
     if(!user || cloudLoadedForUid === user.uid) return;
@@ -105,8 +115,10 @@
     setSyncStatus('Cloud sync: loading account data...', 'info');
     try{
       await window.AsteriaFirebase?.loadCharacters?.();
+      const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
       const state = await window.AsteriaFirebase?.loadState?.();
       mergeCloudState(state);
+      mergeCloudCampaigns(campaigns);
       localMeta({ uid:user.uid, lastLoad:Date.now(), reason });
       setSyncStatus('Cloud sync: connected', 'success');
       toast('Asteria cloud data loaded.');
@@ -123,6 +135,11 @@
       const owned = exportOwnedCharacters();
       for(const [id, character] of Object.entries(owned)){
         await window.AsteriaFirebase.saveCharacter(id, character);
+      }
+      const user = window.AsteriaFirebase?.getUser?.();
+      for(const campaign of (window.campaigns || [])){
+        if(!campaign?.id || !user || (campaign.ownerUid !== user.uid && campaign.gmId !== user.uid && !(campaign.gmUids || []).includes(user.uid))) continue;
+        await window.AsteriaFirebase.saveCampaign(campaign.id, campaign);
       }
       await window.AsteriaFirebase.saveState(exportCloudState());
       localMeta({ lastSave:Date.now(), reason, characterCount:Object.keys(owned).length });

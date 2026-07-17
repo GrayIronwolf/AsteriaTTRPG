@@ -5,7 +5,7 @@
    ========================= */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -37,6 +37,18 @@ function localProfileStore(){ try{return JSON.parse(localStorage.getItem('asteri
 function saveLocalProfile(uid, profile){ try{ const map=localProfileStore(); map[uid]=profile; localStorage.setItem('asteriaFirebaseProfiles', JSON.stringify(map)); }catch(e){} }
 function getLocalProfile(uid){ return localProfileStore()[uid] || null; }
 function setText(id, text){ const el=$(id); if(el) el.textContent=text; }
+function cleanData(value){ return JSON.parse(JSON.stringify(value)); }
+function campaignCode(value){ return String(value || '').replace(/\D/g, '').slice(0, 12); }
+function campaignOwner(campaign){
+  const clean = campaign || {};
+  const uid = currentUser?.uid || '';
+  const claimedOwner = clean.ownerUid || clean.gmId || '';
+  const currentUserOwnsCampaign = !claimedOwner || claimedOwner === uid || clean.ownerAccount === uid || (clean.gmUids || []).includes(uid);
+  return currentUserOwnsCampaign ? uid : claimedOwner;
+}
+function campaignDisplayName(){
+  return currentProfile?.username || currentProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Asteria Player';
+}
 
 function friendlyFirebaseError(err, context='login'){
   const code = err?.code || '';
@@ -362,11 +374,137 @@ window.AsteriaFirebase = {
   saveCampaign: async function(id, campaign){
     if(!db || !currentUser || !id || !campaign) return false;
     try{
-      const clean = JSON.parse(JSON.stringify(campaign));
-      await setDoc(doc(db, 'users', currentUser.uid, 'campaigns', id), Object.assign({}, clean, { id, ownerUid: currentUser.uid, updatedAt: serverTimestamp() }), { merge:true });
-      await setDoc(doc(db, 'campaigns', id), Object.assign({}, clean, { id, ownerUid: currentUser.uid, updatedAt: serverTimestamp() }), { merge:true });
+      const clean = cleanData(campaign);
+      const ownerUid = campaignOwner(clean);
+      clean.playerCharacterLinks = clean.playerCharacterLinks || {};
+      const accountCopy = Object.assign({}, clean, { id, ownerUid, updatedAt: serverTimestamp() });
+      await setDoc(doc(db, 'users', currentUser.uid, 'campaigns', id), accountCopy, { merge:true });
+      if(ownerUid === currentUser.uid){
+        await setDoc(doc(db, 'campaigns', id), accountCopy, { merge:true });
+        const ucn = campaignCode(clean.ucn || clean.uniqueCampaignCode || clean.inviteCode);
+        if(ucn.length === 12){
+          await setDoc(doc(db, 'campaignInvites', ucn), {
+            ucn,
+            campaignId:id,
+            campaignName:clean.name || 'Untitled Campaign',
+            ownerUid,
+            status:'active',
+            updatedAt:serverTimestamp()
+          }, { merge:true });
+        }
+      }
       return true;
     }catch(err){ console.warn('Could not save campaign to Firestore.', err); return false; }
+  },
+  findCampaignByUCN: async function(codeValue){
+    if(!db || !currentUser) throw new Error('firebase-auth-required');
+    const ucn = campaignCode(codeValue);
+    if(ucn.length !== 12) return null;
+    const inviteSnap = await getDoc(doc(db, 'campaignInvites', ucn));
+    if(!inviteSnap.exists() || inviteSnap.data()?.status !== 'active') return null;
+    const campaignId = String(inviteSnap.data()?.campaignId || '');
+    if(!campaignId) return null;
+    const campaignSnap = await getDoc(doc(db, 'campaigns', campaignId));
+    if(!campaignSnap.exists()) return null;
+    return Object.assign({}, campaignSnap.data(), { id:campaignId, ucn });
+  },
+  joinCampaignByUCN: async function(codeValue){
+    if(!db || !currentUser) throw new Error('firebase-auth-required');
+    const ucn = campaignCode(codeValue);
+    if(ucn.length !== 12) return null;
+    const uid = currentUser.uid;
+    return runTransaction(db, async transaction => {
+      const inviteRef = doc(db, 'campaignInvites', ucn);
+      const inviteSnap = await transaction.get(inviteRef);
+      if(!inviteSnap.exists() || inviteSnap.data()?.status !== 'active') return null;
+      const campaignId = String(inviteSnap.data()?.campaignId || '');
+      if(!campaignId) return null;
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignSnap = await transaction.get(campaignRef);
+      if(!campaignSnap.exists()) return null;
+
+      const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId, ucn });
+      const ownerUid = campaign.ownerUid || inviteSnap.data()?.ownerUid || '';
+      const isOwner = ownerUid === uid;
+      const roles = Object.assign({}, campaign.roles || {});
+      const players = Object.assign({}, campaign.players || {});
+      const playerUids = Array.from(new Set([...(campaign.playerUids || []), ...(isOwner ? [] : [uid])]));
+      const previousPlayer = players[uid] || {};
+      const role = isOwner || roles[uid] === 'gm' ? 'gm' : 'player';
+      roles[uid] = role;
+      players[uid] = Object.assign({
+        uid,
+        displayName:campaignDisplayName(),
+        role,
+        status:'active',
+        characterIds:[],
+        joinedAt:new Date().toISOString()
+      }, previousPlayer, { uid, role, status:'active' });
+      players[uid].characterIds = Array.isArray(players[uid].characterIds) ? players[uid].characterIds : [];
+      const activity = Array.isArray(campaign.activity) ? campaign.activity.slice() : [];
+      if(!isOwner && !campaign.playerUids?.includes(uid)) activity.push(`${campaignDisplayName()} joined with UCN.`);
+      const merged = Object.assign({}, campaign, { ownerUid, playerUids, roles, players, activity });
+
+      transaction.update(campaignRef, { playerUids, roles, players, activity, updatedAt:serverTimestamp() });
+      transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, merged, { updatedAt:serverTimestamp() }), { merge:true });
+      return merged;
+    });
+  },
+  linkCharacterToCampaign: async function(campaignId, character){
+    if(!db || !currentUser || !campaignId || !character?.id) return null;
+    const uid = currentUser.uid;
+    const characterId = String(character.id);
+    return runTransaction(db, async transaction => {
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignSnap = await transaction.get(campaignRef);
+      if(!campaignSnap.exists()) return null;
+      const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
+      const roles = Object.assign({}, campaign.roles || {});
+      const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
+      if(!isMember) throw new Error('campaign-membership-required');
+
+      const players = Object.assign({}, campaign.players || {});
+      const previousPlayer = players[uid] || { uid, role:campaign.ownerUid === uid ? 'gm' : 'player', status:'active', characterIds:[], joinedAt:new Date().toISOString() };
+      players[uid] = Object.assign({}, previousPlayer, {
+        uid,
+        status:'active',
+        characterIds:Array.from(new Set([...(previousPlayer.characterIds || []), characterId]))
+      });
+      const party = Array.from(new Set([...(campaign.party || []), characterId]));
+      const characters = Object.assign({}, campaign.characters || {}, {
+        [characterId]:{
+          id:characterId,
+          ownerUid:uid,
+          name:character.name || characterId,
+          race:character.race || '',
+          klass:character.klass || '',
+          status:'linked',
+          linkedAt:new Date().toISOString()
+        }
+      });
+      const playerCharacterLinks = Object.assign({}, campaign.playerCharacterLinks || {}, { [characterId]:uid });
+      const activity = Array.isArray(campaign.activity) ? campaign.activity.slice() : [];
+      if(!campaign.party?.includes(characterId)) activity.push(`${character.name || characterId} linked to campaign.`);
+      const merged = Object.assign({}, campaign, { party, players, characters, playerCharacterLinks, activity, lastLinkedCharacterId:characterId });
+      transaction.update(campaignRef, {
+        party,
+        players,
+        characters,
+        playerCharacterLinks,
+        activity,
+        lastLinkedCharacterId:characterId,
+        updatedAt:serverTimestamp()
+      });
+      transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, merged, { updatedAt:serverTimestamp() }), { merge:true });
+      return merged;
+    });
+  },
+  loadCampaigns: async function(){
+    if(!db || !currentUser) return [];
+    try{
+      const snap = await getDocs(collection(db, 'users', currentUser.uid, 'campaigns'));
+      return snap.docs.map(item => Object.assign({}, item.data(), { id:item.id }));
+    }catch(err){ console.warn('Could not load campaigns from Firestore.', err); return []; }
   },
   loadCharacters: async function(){
     if(currentUser) await loadCharacters(currentUser);
