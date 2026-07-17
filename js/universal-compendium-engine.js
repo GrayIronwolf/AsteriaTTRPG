@@ -5,7 +5,7 @@
 
   const INDEX = window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX || { entries:[], domains:{}, databases:{}, tabTemplates:{}, filterFields:{} };
   const LORE_LEVELS = ['Common Knowledge','Discovered Lore','Rare Lore','Forbidden Lore','GM Only'];
-  const UNIVERSAL_ROUTE_SECTIONS = new Set(['Talents','Talent Compendium','Professions','Profession Compendium','Skills','Skill Compendium','Locations','Location Compendium','Religions','Religion & Gods Compendium','Gods','Factions','Faction Compendium','Lore','Lore Compendium']);
+  const UNIVERSAL_ROUTE_SECTIONS = new Set(['Talents','Talent Compendium','Professions','Profession Compendium','Skills','Skill Compendium','Locations','Location Compendium','Theology','Theology Compendium','Religions','Religion & Gods Compendium','Gods','Factions','Faction Compendium','Lore','Lore Compendium']);
 
   let cachedEntries = null;
   let activeDomain = 'item';
@@ -62,7 +62,7 @@
     profession:'profession', professions:'profession',
     skill:'skill', skills:'skill',
     location:'location', locations:'location', world:'location', worlds:'location', realms:'location', planes:'location',
-    religion:'religion', religions:'religion', god:'religion', gods:'religion', pantheon:'religion',
+    religion:'religion', religions:'religion', theology:'religion', theologies:'religion', god:'religion', gods:'religion', deity:'religion', deities:'religion', pantheon:'religion', court:'religion', courts:'religion',
     faction:'faction', factions:'faction', guild:'faction', guilds:'faction', organization:'faction', organizations:'faction',
     lore:'lore', history:'lore', histories:'lore', timeline:'lore', timelines:'lore', legend:'lore',
     handbook:'handbook', rules:'handbook'
@@ -78,7 +78,7 @@
     profession:'Profession Compendium',
     skill:'Skill Compendium',
     location:'Location Compendium',
-    religion:'Religion & Gods Compendium',
+    religion:'Theology Compendium',
     faction:'Faction Compendium',
     lore:'Lore Compendium',
     handbook:'Asteria Handbook'
@@ -157,7 +157,7 @@
     profession:['Overview','Progression','Tools','Recipes','Lore','GM Notes'],
     skill:['Overview','Ranks','Checks','Training','Lore','GM Notes'],
     location:['Overview','Map Notes','Regions','Factions','Lore','Encounters','GM Notes'],
-    religion:['Overview','Doctrine','Gods','Followers','Rituals','Lore','GM Notes'],
+    religion:['Overview','Domains','Worship','Lore','Followers','Rituals','GM Notes'],
     faction:['Overview','Influence','Members','Relations','Holdings','History','Hooks','GM Notes'],
     lore:['Overview','Chronicle','People','Places','Artifacts','Related','GM Notes'],
     handbook:['Overview','Rules','Examples','Related','GM Notes']
@@ -175,7 +175,7 @@
     if(key.includes('profession')) return 'profession';
     if(key.includes('skill')) return 'skill';
     if(key.includes('location') || key.includes('world') || key.includes('realm') || key.includes('plane')) return 'location';
-    if(key.includes('religion') || key.includes('god') || key.includes('pantheon')) return 'religion';
+    if(key.includes('religion') || key.includes('theology') || key.includes('deity') || key.includes('god') || key.includes('pantheon') || key.includes('court')) return 'religion';
     if(key.includes('faction') || key.includes('guild') || key.includes('organization') || key.includes('organisation')) return 'faction';
     if(key.includes('lore') || key.includes('history') || key.includes('timeline') || key.includes('legend')) return 'lore';
     return 'handbook';
@@ -351,7 +351,7 @@
       profession:'Asteria Handbook',
       skill:'Asteria Handbook',
       location:'World, Realms & Planes',
-      religion:'World, Realms & Planes',
+      religion:'Theology',
       faction:'Factions',
       lore:'Asteria Handbook',
       handbook:'Asteria Handbook'

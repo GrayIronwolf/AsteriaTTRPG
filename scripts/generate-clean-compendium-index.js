@@ -31,6 +31,8 @@ const includedRoots = new Set([
   'Soul Stones',
   'Runes',
   'Magic Items',
+  'theology',
+  'Theology',
   'flora',
   'minerals',
   'materials'
@@ -125,9 +127,21 @@ function walk(dir, output = []) {
 }
 
 function sectionFromCategory(category, metadata = {}) {
-  const source = [category, metadata.type, metadata.category].join(' ').toLowerCase();
+  const source = [
+    category,
+    metadata.type,
+    metadata.category,
+    metadata.pantheon,
+    metadata.court,
+    metadata.deity,
+    metadata.god,
+    metadata.goddess,
+    metadata.divineDomain,
+    metadata.divine_domain
+  ].join(' ').toLowerCase();
   if (source.includes('race')) return 'Races';
   if (source.includes('class') || source.includes('talent tree') || source.includes('pathway')) return 'Classes';
+  if (source.includes('theology') || source.includes('deity') || source.includes('god') || source.includes('goddess') || source.includes('pantheon') || source.includes('court') || source.includes('divine domain')) return 'Theology';
   if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('mineral') || source.includes('ore') || source.includes('ingot') || source.includes('consumable')) return 'Items';
   if (source.includes('spell') || source.includes('magic') || source.includes('enchantment') || source.includes('element') || source.includes('soul stone') || source.includes('rune')) return 'Magic';
   if (source.includes('world') || source.includes('realm') || source.includes('plane') || source.includes('continent') || source.includes('kingdom') || source.includes('pantheon') || source.includes('timeline')) return 'World, Realms & Planes';
@@ -239,6 +253,9 @@ function entryFromFile(file) {
     } else {
       categoryPath = ['Classes', classCategory || 'Classes'].filter(Boolean);
     }
+  }
+  if (section === 'Theology') {
+    categoryPath = ['Theology', metadata.pantheon || metadata.category || 'Theology'].filter(Boolean);
   }
   const playable = metadata.playable === true || String(metadata.availability || '').toLowerCase() === 'playable';
 

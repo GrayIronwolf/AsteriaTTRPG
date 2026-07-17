@@ -6,7 +6,7 @@
   const VERSION = 'asteria-character-forge-final';
   const STORE_KEY = 'asteria.phase3.gameplay.v1';
   const ATTRIBUTE_KEYS = ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'];
-  const FORGE_TABS = ['Race','Class','Appearance','Origin','Characteristics','Magic','Skills','Affinity Rolls','Equipment','Review'];
+  const FORGE_TABS = ['Race','Class','Patron','Appearance','Origin','Characteristics','Magic','Skills','Affinity Rolls','Equipment','Review'];
   const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS;
   const FORGE_STAT_LABELS = { strength:'STR', dexterity:'DEX', agility:'AGI', constitution:'CON', endurance:'END', intelligence:'INT', wisdom:'WIS', charisma:'CHA', luck:'LCK' };
   const CHARACTERISTIC_TIER_RULES = [
@@ -230,6 +230,8 @@
           classSlug:'',
           classMode:'single',
           extraClassSlugs:[],
+          activePatronClassSlug:'',
+          patronCategory:'',
           originSlug:'',
           backgroundSlug:'',
           equipmentPackSlug:'',
@@ -238,11 +240,12 @@
           characteristics:Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])),
           magicTypes:[],
           patronMagicType:'',
+          classPatrons:{},
           mancerAdvantageMagicType:'',
           affinityRolls:{ magic:{}, skills:{} },
           forgeCategories:{ race:[], class:[] },
           forgeDrill:{ race:[], class:[] },
-          forgeSearch:{ race:'', class:'' },
+          forgeSearch:{ race:'', class:'', patron:'' },
           skills:[],
           equipment:[],
           appearance:{},
@@ -553,8 +556,12 @@
       .join('');
   }
 
-  function tabIndex(tab = activeTab){
-    return Math.max(0, FORGE_TABS.indexOf(tab));
+  function forgeTabsForDraft(d = state.drafts?.characterCreator || {}){
+    return religiousClassSelections(d).length ? FORGE_TABS.slice() : FORGE_TABS.filter(tab => tab !== 'Patron');
+  }
+
+  function tabIndex(tab = activeTab, d = state.drafts?.characterCreator || {}){
+    return Math.max(0, forgeTabsForDraft(d).indexOf(tab));
   }
 
   function firstEntry(domain){
@@ -593,7 +600,8 @@
   }
 
   function safeCardColour(value){
-    return CARD_COLOUR_OPTIONS.includes(String(value || '')) ? String(value) : CARD_COLOUR_OPTIONS[0];
+    const colour = String(value || '').trim();
+    return /^#[0-9a-f]{6}$/i.test(colour) ? colour.toLowerCase() : CARD_COLOUR_OPTIONS[0];
   }
 
   function classNameFromDraft(draft){
@@ -635,6 +643,103 @@
 
   function classMagicBaseSlots(entry){
     return CLASS_MAGIC_CATEGORY_SLOTS[classMagicCategoryKey(entry)] || 1;
+  }
+
+  function isReligiousClassEntry(entry){
+    return classMagicCategoryKey(entry) === 'religious-classes';
+  }
+
+  function patronDatabaseEntries(){
+    return databaseEntries('religion')
+      .filter(entry => String(entry?.sourcePath || '').replace(/\\/g, '/').toLowerCase().startsWith('content/theology/'))
+      .filter(isPublicPlayerEntry)
+      .sort((a, b) => String(a.title || a.name).localeCompare(String(b.title || b.name)));
+  }
+
+  function patronCategory(entry){
+    return metadataValue(entry, ['pantheon','court','category']) || entry?.category || 'Theology';
+  }
+
+  function patronCategories(){
+    const preferred = ['Primordials','Pantheon of Elements','Aetherion Pantheon','The Outsiders','The Nethyros Pantheon','Dark Court','Light Court','Veilborn Court','The Shadow Court'];
+    const available = new Set(patronDatabaseEntries().map(patronCategory).filter(Boolean));
+    return preferred.filter(category => available.has(category)).concat([...available].filter(category => !preferred.includes(category)).sort());
+  }
+
+  function classPatronKey(entry){
+    return classSlugFromValue(entry?.slug || entry?.title || entry?.name);
+  }
+
+  function religiousClassSelections(d = draft()){
+    return classSlugsFromDraft(d)
+      .map((slugValue, index) => {
+        const entry = entryBySlug('class', slugValue);
+        if(!entry || !isReligiousClassEntry(entry)) return null;
+        return {
+        entry,
+        slug:classPatronKey(entry),
+        title:entry.title || entry.name || 'Religious Class',
+        role:index === 0 ? 'Primary' : 'Secondary'
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function syncReligiousClassPatrons(d = draft()){
+    d.classPatrons = d.classPatrons && typeof d.classPatrons === 'object' && !Array.isArray(d.classPatrons) ? d.classPatrons : {};
+    const allowed = new Set(religiousClassSelections(d).map(item => item.slug));
+    Object.keys(d.classPatrons).forEach(key => {
+      if(!allowed.has(key)) delete d.classPatrons[key];
+    });
+    return d.classPatrons;
+  }
+
+  function patronEntryBySlug(slugValue){
+    const key = slug(slugValue);
+    if(!key) return null;
+    return patronDatabaseEntries().find(entry => entry.slug === key || slug(entry.title || entry.name) === key) || null;
+  }
+
+  function patronTitleLine(entry){
+    if(!entry) return '';
+    return metadataValue(entry, ['deityTitle','deity_title','divineDomain','divine_domain','domain']) || entry.category || '';
+  }
+
+  function classPatronRecordsForDraft(d = draft()){
+    const patrons = syncReligiousClassPatrons(d);
+    return religiousClassSelections(d).map(item => {
+      const patronSlug = patrons[item.slug] || '';
+      const patronEntry = patronEntryBySlug(patronSlug);
+      return {
+        classSlug:item.slug,
+        className:item.title,
+        classRole:item.role,
+        patronSlug:patronEntry?.slug || patronSlug,
+        patronName:patronEntry?.title || patronEntry?.name || patronSlug,
+        patronDomain:patronTitleLine(patronEntry)
+      };
+    }).filter(record => record.patronSlug || record.patronName);
+  }
+
+  function classPatronMapFrom(value){
+    if(value && typeof value === 'object' && !Array.isArray(value)) return Object.assign({}, value);
+    if(Array.isArray(value)) {
+      return Object.fromEntries(value
+        .map(record => [record.classSlug || record.class || record.className, record.patronSlug || record.patron || record.patronName])
+        .filter(([key, patron]) => key && patron)
+        .map(([key, patron]) => [classSlugFromValue(key), slug(patron) || patron]));
+    }
+    return {};
+  }
+
+  function religiousPatronIssues(d = draft()){
+    const religious = religiousClassSelections(d);
+    if(!religious.length) return [];
+    if(!patronDatabaseEntries().length) return ['Theology patrons are not loaded yet.'];
+    const patrons = syncReligiousClassPatrons(d);
+    return religious
+      .filter(item => !patrons[item.slug])
+      .map(item => `Choose a patron for ${item.title}.`);
   }
 
   function classMagicRulesForDraft(d = draft()){
@@ -691,6 +796,7 @@
       selected = Array.from(new Set(required.concat(optional))).slice(0, Math.max(rules.slots, required.length));
     }
     d.magicTypes = selected;
+    syncReligiousClassPatrons(d);
     if(!rules.hasPatronRequirement || !d.magicTypes.some(name => slug(name) === slug(d.patronMagicType))) d.patronMagicType = '';
     if(!rules.hasMancer || !d.magicTypes.some(name => slug(name) === slug(d.mancerAdvantageMagicType))) d.mancerAdvantageMagicType = '';
     return rules;
@@ -914,8 +1020,10 @@
     if(activeSystem === 'characterCreator' && forgeMode !== 'hub') draft().activeTab = activeTab;
     const root = shell();
     if(activeSystem === 'characterCreator'){
-      if(!FORGE_TABS.includes(activeTab)) activeTab = draft().activeTab || FORGE_TABS[0];
-      if(forgeMode !== 'hub') draft().activeTab = activeTab;
+      const d = draft();
+      const visibleTabs = forgeTabsForDraft(d);
+      if(!visibleTabs.includes(activeTab)) activeTab = visibleTabs.includes(d.activeTab) ? d.activeTab : visibleTabs[0];
+      if(forgeMode !== 'hub') d.activeTab = activeTab;
       root.classList.add('phase3-forge-shell');
       root.classList.toggle('phase3-forge-hub-shell', forgeMode === 'hub');
       root.innerHTML = forgeMode === 'hub' ? renderCharacterForgeHub() : renderCharacterCreator();
@@ -961,6 +1069,7 @@
     const d = draft();
     if(tab === 'Race') return Boolean(d.raceSlug);
     if(tab === 'Class') return d.classMode === 'multi' ? classSlugsFromDraft(d).length === MAX_CHARACTER_CLASSES : Boolean(d.classSlug);
+    if(tab === 'Patron') return !religiousPatronIssues(d).length;
     if(tab === 'Appearance') return Boolean(Object.keys(d.appearance || {}).length);
     if(tab === 'Origin') return Boolean(d.originSlug || Object.values(d.origin || {}).some(Boolean) || Object.values(d.family_tree || {}).some(Boolean));
     if(tab === 'Characteristics') return FORGE_CHARACTERISTICS.every(key => d.characteristics?.[key] !== '' && d.characteristics?.[key] !== undefined);
@@ -1009,9 +1118,11 @@
     d.forgeDrill = Object.assign({ race:[], class:[] }, d.forgeDrill || {});
     d.forgeDrill.race = array(d.forgeDrill.race);
     d.forgeDrill.class = array(d.forgeDrill.class);
-    d.forgeSearch = Object.assign({ race:'', class:'' }, d.forgeSearch || {});
+    d.forgeSearch = Object.assign({ race:'', class:'', patron:'' }, d.forgeSearch || {});
     d.skills = array(d.skills);
     d.classMode = d.classMode === 'multi' ? 'multi' : 'single';
+    d.activePatronClassSlug = d.activePatronClassSlug || '';
+    d.patronCategory = d.patronCategory || '';
     d.patronMagicType = d.patronMagicType || '';
     d.mancerAdvantageMagicType = d.mancerAdvantageMagicType || '';
     enforceMagicRules(d);
@@ -1025,13 +1136,18 @@
     d.origin = Object.assign(defaultState().drafts.characterCreator.origin, d.origin || {});
     d.family_tree = Object.assign(defaultState().drafts.characterCreator.family_tree, d.family_tree || {});
     d.details = Object.assign({ name:'', age:'', pronouns:'' }, d.details || {});
-    if(!FORGE_TABS.includes(d.activeTab)) d.activeTab = FORGE_TABS[Math.max(0, Math.min(FORGE_TABS.length - 1, Number(d.step || 0)))];
-    d.step = tabIndex(d.activeTab);
+    const religious = religiousClassSelections(d);
+    const religiousSlugs = new Set(religious.map(item => item.slug));
+    if(!religiousSlugs.has(d.activePatronClassSlug)) d.activePatronClassSlug = religious[0]?.slug || '';
+    const visibleTabs = forgeTabsForDraft(d);
+    if(!visibleTabs.includes(d.activeTab)) d.activeTab = visibleTabs[Math.max(0, Math.min(visibleTabs.length - 1, Number(d.step || 0)))] || visibleTabs[0];
+    d.step = tabIndex(d.activeTab, d);
     return d;
   }
 
   function renderStepPills(){
-    return `<div class="phase3-stepper">${FORGE_TABS.map((step, index) => `<button type="button" class="${step === activeTab ? 'active' : ''} ${forgeTabComplete(step) ? 'done' : ''}" data-phase3-step="${index}"><b>${index + 1}</b><span>${esc(step)}</span></button>`).join('')}</div>`;
+    const tabs = forgeTabsForDraft(draft());
+    return `<div class="phase3-stepper">${tabs.map((step, index) => `<button type="button" class="${step === activeTab ? 'active' : ''} ${forgeTabComplete(step) ? 'done' : ''}" data-phase3-step="${index}"><b>${index + 1}</b><span>${esc(step)}</span></button>`).join('')}</div>`;
   }
 
   function characterImage(character){
@@ -1075,12 +1191,73 @@
         <div class="forge-card-actions" aria-label="${esc(title)} actions">
           <button class="forge-card-edit" type="button" data-forge-edit-character="${esc(id)}" aria-label="Edit ${esc(title)}">Edit</button>
           <button class="forge-card-delete" type="button" data-forge-delete-character="${esc(id)}" aria-label="Delete ${esc(title)}">Delete</button>
-        </div>
-        <div class="forge-card-colours" aria-label="Character card colour">
-          ${CARD_COLOUR_OPTIONS.map(option => `<button type="button" class="${option === colour ? 'active' : ''}" style="--swatch:${esc(option)}" data-forge-card-colour="${esc(option)}" data-forge-character-colour-id="${esc(id)}" aria-label="Set card colour"></button>`).join('')}
+          <button class="forge-card-colour-settings" type="button" data-forge-card-colour-settings="${esc(id)}" aria-label="Change ${esc(title)} card colour" title="Change card colour"><span></span><span></span><span></span></button>
         </div>
       </article>
     `;
+  }
+
+  function openCharacterCardColourSettings(id){
+    const character = window.chars?.[id];
+    if(!character){
+      window.toast?.('Character not found.');
+      return false;
+    }
+    if(typeof window.openAsteriaInfoModal !== 'function'){
+      window.toast?.('Colour settings are unavailable.');
+      return false;
+    }
+    const title = character.name || 'Unnamed Character';
+    const campaign = characterCampaignName(character);
+    const colour = safeCardColour(character.cardColour || character.cardColor || character.character?.cardColour);
+    window.openAsteriaInfoModal({
+      eyebrow:'Character Card Settings',
+      title:'Card Colour',
+      subtitle:`Choose the border and glow colour for ${title}.`,
+      body:`
+        <section class="forge-colour-settings" data-forge-colour-settings-id="${esc(id)}" style="--preview-colour:${esc(colour)}">
+          <div class="forge-colour-preview" aria-live="polite">
+            <span>${esc(character.initial || title.charAt(0).toUpperCase() || '?')}</span>
+            <div><strong>${esc(title)}</strong><small>${esc(campaign)}</small></div>
+          </div>
+          <label class="forge-colour-wheel-label">
+            <span>Card colour</span>
+            <input type="color" value="${esc(colour)}" data-forge-colour-picker aria-label="Choose character card colour">
+          </label>
+          <div class="forge-colour-presets" aria-label="Asteria colour presets">
+            ${CARD_COLOUR_OPTIONS.map(option => `<button type="button" class="${option === colour ? 'active' : ''}" style="--swatch:${esc(option)}" data-forge-colour-preset="${esc(option)}" aria-label="Use ${esc(option)}"></button>`).join('')}
+          </div>
+          <div class="modal-action-row forge-colour-actions">
+            <button type="button" class="primary" data-forge-colour-save>Save Colour</button>
+            <button type="button" class="outline" data-forge-colour-reset>Reset</button>
+          </div>
+        </section>
+      `
+    });
+
+    const modal = document.getElementById('asteriaInfoModal');
+    const settings = modal?.querySelector(`[data-forge-colour-settings-id="${CSS.escape(String(id))}"]`);
+    const picker = settings?.querySelector('[data-forge-colour-picker]');
+    const preview = settings?.querySelector('.forge-colour-preview');
+    const presets = Array.from(settings?.querySelectorAll('[data-forge-colour-preset]') || []);
+    const updatePreview = nextColour => {
+      const selected = safeCardColour(nextColour);
+      if(picker) picker.value = selected;
+      settings?.style.setProperty('--preview-colour', selected);
+      preview?.style.setProperty('--preview-colour', selected);
+      presets.forEach(button => button.classList.toggle('active', button.dataset.forgeColourPreset === selected));
+    };
+    picker?.addEventListener('input', () => updatePreview(picker.value));
+    presets.forEach(button => button.addEventListener('click', () => updatePreview(button.dataset.forgeColourPreset)));
+    settings?.querySelector('[data-forge-colour-save]')?.addEventListener('click', () => {
+      setCharacterCardColour(id, picker?.value || colour);
+      window.closeAsteriaInfoModal?.();
+    });
+    settings?.querySelector('[data-forge-colour-reset]')?.addEventListener('click', () => {
+      setCharacterCardColour(id, CARD_COLOUR_OPTIONS[0]);
+      window.closeAsteriaInfoModal?.();
+    });
+    return true;
   }
 
   function renderCharacterForgeHub(){
@@ -1115,14 +1292,15 @@
 
   function renderCharacterCreator(){
     const d = draft();
-    const current = tabIndex(activeTab);
-    const completed = FORGE_TABS.filter(forgeTabComplete).length;
+    const tabs = forgeTabsForDraft(d);
+    const current = tabIndex(activeTab, d);
+    const completed = tabs.filter(forgeTabComplete).length;
     return `
       <section class="phase3-creator">
         <article class="phase3-card phase3-forge-intro">
           <div class="phase3-panel-head">
             <div><p class="eyebrow">Guided Journey</p><h2>Character Forge</h2></div>
-            <span>${completed}/${FORGE_TABS.length} complete</span>
+            <span>${completed}/${tabs.length} complete</span>
           </div>
         </article>
         ${renderStepPills()}
@@ -1131,7 +1309,7 @@
         </div>
         <footer class="phase3-actions">
           <button type="button" data-phase3-forge-prev ${current <= 0 ? 'disabled' : ''}>Back</button>
-          <button type="button" class="primary" data-phase3-forge-next ${current >= FORGE_TABS.length - 1 ? 'disabled' : ''}>Next</button>
+          <button type="button" class="primary" data-phase3-forge-next ${current >= tabs.length - 1 ? 'disabled' : ''}>Next</button>
           <button type="button" class="primary" data-phase3-save-character>${activeTab === 'Review' ? 'Create Character' : 'Save Character'}</button>
         </footer>
         ${forgeDetailEntry ? renderForgeDetailViewer(forgeDetailEntry) : ''}
@@ -1317,6 +1495,7 @@
     const d = draft();
     if(tab === 'Race') return renderForgeChoice('race', d.raceSlug, 'phase3-race', 'Choose Race', 'All public race entries are available for Character Forge. Campaign-specific race limits will be controlled later in Campaign Forge.');
     if(tab === 'Class') return renderForgeChoice('class', d.classSlug, 'phase3-class', 'Choose Class', 'Playable classes are pulled from the Class Compendium. Talents are previewed only and are not chosen freely.');
+    if(tab === 'Patron') return renderPatronSelection();
     if(tab === 'Appearance') return renderAppearanceBuilder(d.raceSlug, true);
     if(tab === 'Origin') return renderOriginBuilder();
     if(tab === 'Characteristics') return renderCharacteristics();
@@ -1400,6 +1579,65 @@
         <div class="phase3-forge-compendium">
           ${renderForgeCategoryPanel(domain, entries)}
           ${renderForgeCompendiumCards(domain, entries, selectedSlug, actionName)}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderPatronSelection(){
+    const d = draft();
+    const religious = religiousClassSelections(d);
+    const patrons = patronDatabaseEntries();
+    if(!religious.length) return '<section class="phase3-card"><h2>Patron</h2><p>This step appears when a Religious Class is selected.</p></section>';
+
+    const classPatrons = syncReligiousClassPatrons(d);
+    const activeClass = religious.find(item => item.slug === d.activePatronClassSlug) || religious[0];
+    d.activePatronClassSlug = activeClass.slug;
+    const selectedPatron = classPatrons[activeClass.slug] || '';
+    const query = String(d.forgeSearch?.patron || '').trim().toLowerCase();
+    const category = d.patronCategory || '';
+    const filtered = patrons.filter(entry => {
+      if(category && patronCategory(entry) !== category) return false;
+      if(!query) return true;
+      return [entry.title, entry.name, patronCategory(entry), patronTitleLine(entry), entry.summary, array(entry.tags).join(' ')]
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    });
+    const selectedEntry = patronEntryBySlug(selectedPatron);
+
+    return `
+      <section class="phase3-card phase3-patron-page">
+        <div class="phase3-panel-head">
+          <div><h2>Patron</h2><p>Choose one Theology Compendium patron for each selected Religious Class.</p></div>
+          <span>${religious.filter(item => classPatrons[item.slug]).length}/${religious.length} chosen</span>
+        </div>
+        <nav class="phase3-patron-class-tabs" aria-label="Religious classes requiring patrons">
+          ${religious.map(item => `<button type="button" class="${item.slug === activeClass.slug ? 'active' : ''} ${classPatrons[item.slug] ? 'complete' : ''}" data-phase3-patron-class="${esc(item.slug)}">${esc(item.role)} ${esc(item.title)}${classPatrons[item.slug] ? ' - Chosen' : ''}</button>`).join('')}
+        </nav>
+        <div class="phase3-patron-selection-status">
+          <div><span>Choosing for</span><strong>${esc(activeClass.role)} ${esc(activeClass.title)}</strong></div>
+          <div><span>Selected patron</span><strong>${esc(selectedEntry?.title || selectedEntry?.name || 'None selected')}</strong></div>
+        </div>
+        <div class="phase3-patron-filters">
+          <label>Search<input data-phase3-patron-search value="${esc(d.forgeSearch?.patron || '')}" placeholder="Search gods, goddesses, domains..."></label>
+          <label>Pantheon or Court<select data-phase3-patron-category><option value="">All Theology Categories</option>${patronCategories().map(item => `<option value="${esc(item)}" ${category === item ? 'selected' : ''}>${esc(item)}</option>`).join('')}</select></label>
+        </div>
+        <div class="phase3-patron-card-status"><span>${esc(category || 'All Theology Entries')}</span><b>${filtered.length} patrons</b></div>
+        <div class="phase3-patron-card-grid">
+          ${filtered.map(entry => {
+            const value = entry.slug || slug(entry.title || entry.name);
+            const image = entryImage(entry, 'religion');
+            const selected = slug(selectedPatron) === slug(value);
+            return `
+              <article class="phase3-pick-card phase3-patron-card ${selected ? 'selected' : ''}" tabindex="0" role="button" data-phase3-class-patron-card="${esc(value)}" data-phase3-entry-domain="religion" data-phase3-entry-slug="${esc(value)}">
+                <span class="phase3-patron-category">${esc(patronCategory(entry))}</span>
+                ${image ? `<div class="phase3-patron-art"><img src="${esc(image)}" alt="${esc(entry.title || entry.name)}"></div>` : `<div class="phase3-patron-art phase3-patron-symbol">${esc(String(entry.title || entry.name || '?').charAt(0).toUpperCase())}</div>`}
+                <h3>${esc(entry.title || entry.name)}</h3>
+                <p>${esc(patronTitleLine(entry) || 'Divine information coming soon.')}</p>
+              </article>
+            `;
+          }).join('') || '<div class="phase3-forge-empty"><h3>No patrons found</h3><p>Try another search or Theology category.</p></div>'}
         </div>
       </section>
     `;
@@ -1719,6 +1957,8 @@
     const finalCharacteristics = finalForgeCharacteristics(d);
     const affinityRolls = finalAffinityRolls(d);
     const magicRules = classMagicRulesForDraft(d);
+    const classPatrons = classPatronRecordsForDraft(d);
+    const patronSummary = classPatrons.map(record => `${record.className}: ${record.patronName}${record.patronDomain ? ` (${record.patronDomain})` : ''}`);
     const affinitySummary = Object.values(affinityRolls.magic || {})
       .concat(Object.values(affinityRolls.skills || {}))
       .map(record => `${record.title}: ${record.rank}${record.value !== '' ? ` (${record.value})` : ''}`);
@@ -1741,6 +1981,7 @@
             <div><dt>Appearance</dt><dd>${esc([d.appearance.body_type, d.appearance.hair_style, d.appearance.eye_colour].filter(Boolean).join(', ') || 'Not customised')}</dd></div>
             <div><dt>Magic</dt><dd>${esc(d.magicTypes.join(', ') || 'Unselected')}</dd></div>
             <div><dt>Magic Rules</dt><dd>${esc(`${d.classMode === 'multi' ? 'Multi-Class' : 'Single Class'} / ${magicRules.slots} slot${magicRules.slots === 1 ? '' : 's'}${d.patronMagicType ? ` / Patron: ${d.patronMagicType}` : ''}${d.mancerAdvantageMagicType ? ` / Mancer Advantage: ${d.mancerAdvantageMagicType}` : ''}`)}</dd></div>
+            ${classPatrons.length ? `<div><dt>Religious Patrons</dt><dd>${esc(patronSummary.join(', '))}</dd></div>` : ''}
             <div><dt>Skills</dt><dd>${esc(d.skills.join(', ') || 'None selected')}</dd></div>
             <div><dt>Affinity Rolls</dt><dd>${esc(affinitySummary.join(', ') || 'Not locked yet')}</dd></div>
             <div><dt>Equipment</dt><dd>${esc(equipment.join(', ') || 'None selected')}</dd></div>
@@ -1835,7 +2076,7 @@
           <div class="phase3-panel-head"><div><p class="eyebrow">Character Sheet</p><h2>${esc(character.name || 'Unnamed Character')}</h2></div><span>${esc(character.race || 'Race')} / ${esc(character.klass || 'Class')}</span></div>
           <dl class="phase3-review-list">
             <div><dt>Level</dt><dd>${esc(character.level || 0)}</dd></div>
-            <div><dt>XP</dt><dd>${esc(character.xp || 0)} / ${esc(character.xpMax || 5000)}</dd></div>
+            <div><dt>XP</dt><dd>${esc(window.AsteriaProgression?.progressSummary?.(character)?.label || `${character.xp || 0} / ${character.xpMax || 1000} XP`)}</dd></div>
             <div><dt>HP</dt><dd>${esc(character.hp?.[0] ?? 10)} / ${esc(character.hp?.[1] ?? 10)}</dd></div>
             <div><dt>SP</dt><dd>${esc(character.sp?.[0] ?? 10)} / ${esc(character.sp?.[1] ?? 10)}</dd></div>
             <div><dt>MP</dt><dd>${esc(character.mp?.[0] ?? 10)} / ${esc(character.mp?.[1] ?? 10)}</dd></div>
@@ -2065,7 +2306,8 @@
     qsa('[data-phase3-step]', root).forEach(button => {
       button.addEventListener('click', () => {
         const index = Number(button.dataset.phase3Step || 0);
-        activeTab = FORGE_TABS[Math.max(0, Math.min(FORGE_TABS.length - 1, index))];
+        const tabs = forgeTabsForDraft(draft());
+        activeTab = tabs[Math.max(0, Math.min(tabs.length - 1, index))];
         draft().activeTab = activeTab;
         draft().step = tabIndex(activeTab);
         saveState('creator-step');
@@ -2079,6 +2321,18 @@
 
   function handleInput(event){
     const target = event.target;
+    if(target.dataset.phase3PatronSearch !== undefined){
+      draft().forgeSearch.patron = target.value;
+      saveState('forge-patron-search');
+      render();
+      return;
+    }
+    if(target.dataset.phase3PatronCategory !== undefined){
+      draft().patronCategory = target.value;
+      saveState('forge-patron-category');
+      render();
+      return;
+    }
     if(target.dataset.phase3ForgeSearch){
       draft().forgeSearch[target.dataset.phase3ForgeSearch] = target.value;
       saveState('forge-search');
@@ -2137,6 +2391,10 @@
       editForgedCharacter(target.dataset.forgeEditCharacter);
       return;
     }
+    if(target.dataset.forgeCardColourSettings){
+      openCharacterCardColourSettings(target.dataset.forgeCardColourSettings);
+      return;
+    }
     if(target.dataset.forgeCardColour && target.dataset.forgeCharacterColourId){
       setCharacterCardColour(target.dataset.forgeCharacterColourId, target.dataset.forgeCardColour);
       return;
@@ -2151,6 +2409,23 @@
     }
     if(target.dataset.phase3AffinityLock !== undefined){
       lockAffinityRoll(target.dataset.phase3AffinityKind, target.dataset.phase3AffinityLock);
+      return;
+    }
+    if(target.dataset.phase3PatronClass){
+      draft().activePatronClassSlug = target.dataset.phase3PatronClass;
+      saveState('forge-patron-class');
+      render();
+      return;
+    }
+    if(target.dataset.phase3ClassPatronCard){
+      const d = draft();
+      const religious = religiousClassSelections(d);
+      const activeClass = religious.find(item => item.slug === d.activePatronClassSlug) || religious[0];
+      if(!activeClass) return;
+      d.classPatrons = d.classPatrons && typeof d.classPatrons === 'object' && !Array.isArray(d.classPatrons) ? d.classPatrons : {};
+      d.classPatrons[activeClass.slug] = target.dataset.phase3ClassPatronCard;
+      saveState('forge-class-patron');
+      render();
       return;
     }
     if(target.dataset.forgeCharacterId){
@@ -2231,7 +2506,7 @@
   }
 
   function handleDoubleClick(event){
-    if(event.target.closest('[data-forge-delete-character],[data-forge-edit-character],[data-forge-card-colour]')) return;
+    if(event.target.closest('[data-forge-delete-character],[data-forge-edit-character],[data-forge-card-colour],[data-forge-card-colour-settings]')) return;
     const characterCard = event.target.closest('[data-forge-character-id]');
     if(characterCard){
       event.preventDefault();
@@ -2263,8 +2538,10 @@
   }
 
   function goForgeTab(delta){
-    const next = Math.max(0, Math.min(FORGE_TABS.length - 1, tabIndex(activeTab) + delta));
-    activeTab = FORGE_TABS[next];
+    const d = draft();
+    const tabs = forgeTabsForDraft(d);
+    const next = Math.max(0, Math.min(tabs.length - 1, tabIndex(activeTab, d) + delta));
+    activeTab = tabs[next];
     draft().activeTab = activeTab;
     draft().step = next;
     saveState(delta > 0 ? 'forge-next' : 'forge-prev');
@@ -2392,6 +2669,14 @@
       render();
       return;
     }
+    const patronIssues = religiousPatronIssues(d);
+    if(patronIssues.length){
+      activeTab = 'Patron';
+      saveState('forge-patron-required');
+      window.toast?.(patronIssues[0]);
+      render();
+      return;
+    }
     const magicIssues = magicSelectionIssues(d);
     if(magicIssues.length){
       activeTab = 'Magic';
@@ -2438,6 +2723,7 @@
     const characteristics = finalForgeCharacteristics(d);
     const affinityRolls = finalAffinityRolls(d);
     const magicRules = classMagicRulesForDraft(d);
+    const classPatrons = classPatronRecordsForDraft(d);
     const existingGmGrantedMagic = array(existingCharacter?.gmGrantedMagicTypes || existingCharacter?.character?.magic?.gmGrantedTypes);
     const mancerAffinity = magicRules.hasMancer ? {
       advantage:d.mancerAdvantageMagicType,
@@ -2445,9 +2731,10 @@
     } : null;
     const created = existingCharacter?.created || existingCharacter?.character?.created || now();
     const updated = now();
-    const hpMax = 10 + Number(characteristics.constitution || 0);
-    const spMax = 10 + Number(characteristics.endurance || 0);
-    const mpMax = 10 + Number(characteristics.wisdom || 0);
+    const resourceMax = window.asteriaResourceMaxFromCharacteristic || ((value, modifier = 0) => 10 + (Number(value) || 0) * 10 + (Number(modifier) || 0));
+    const hpMax = resourceMax(characteristics.constitution, existingCharacter?.resourceMods?.hp);
+    const spMax = resourceMax(characteristics.endurance, existingCharacter?.resourceMods?.sp);
+    const mpMax = resourceMax(characteristics.wisdom, existingCharacter?.resourceMods?.mp);
     const dashboard = {
       id:existingCharacter?.dashboard?.id || existingCharacter?.character?.dashboard?.id || 'dashboard-'+id,
       characterId:id,
@@ -2477,7 +2764,8 @@
         title:klass,
         key:talentClassKey,
         metadata:classEntry?.metadata || {},
-        info:classInfo
+        info:classInfo,
+        patrons:classPatrons
       },
       classSlugs,
       primaryClassSlug:classSlugs[0] || d.classSlug,
@@ -2494,11 +2782,15 @@
       characteristics:Object.assign({}, characteristics),
       characteristic_rules:characteristicRules,
       racial_info:racialInfo,
+      classPatrons,
+      religiousPatrons:classPatrons,
       magic:{
         types:d.magicTypes.slice(),
         gmGrantedTypes:existingGmGrantedMagic.slice(),
         rules:magicRules,
         patronLinkedType:d.patronMagicType || '',
+        classPatrons,
+        patrons:classPatrons,
         mancerAffinity,
         affinities:affinityRolls.magic
       },
@@ -2541,7 +2833,7 @@
       sp:existingCharacter?.sp ? [Math.min(Number(existingCharacter.sp[0] || 0), spMax), spMax] : [spMax, spMax],
       mp:existingCharacter?.mp ? [Math.min(Number(existingCharacter.mp[0] || 0), mpMax), mpMax] : [mpMax, mpMax],
       xp:Number(existingCharacter?.xp ?? 0),
-      xpMax:Number(existingCharacter?.xpMax ?? 5000),
+      xpMax:window.AsteriaProgression?.xpToNextLevel?.(Number(existingCharacter?.level ?? 0)) || Number(existingCharacter?.xpMax ?? 1000),
       cp:Number(existingCharacter?.cp ?? 0),
       tp:Number(existingCharacter?.tp ?? 0),
       campaign:existingCharacter?.campaign || 'Unassigned',
@@ -2568,6 +2860,8 @@
       gmGrantedMagicTypes:existingGmGrantedMagic.slice(),
       magicRules,
       patronMagicType:d.patronMagicType || '',
+      classPatrons,
+      religiousPatrons:classPatrons,
       mancerAffinity,
       inventory,
       bags:array(existingCharacter?.bags),
@@ -2819,6 +3113,7 @@
     const secondaryClassSlugs = savedClassSlugs.filter(value => value !== primaryClassSlug).slice(0, MAX_CHARACTER_CLASSES - 1);
     const skillKeys = Array.isArray(character.skills) ? character.skills : Object.keys(character.skills || {});
     const equipmentItems = array(schema.equipment?.items || character.inventory).map(item => item?.id || item?.slug || slug(item?.name || item?.title || item)).filter(Boolean);
+    const savedClassPatrons = classPatronMapFrom(character.classPatrons || character.religiousPatrons || schema.classPatrons || schema.religiousPatrons || schema.magic?.classPatrons || schema.magic?.patrons || schema.class?.patrons);
     state.drafts.characterCreator = Object.assign(defaultState().drafts.characterCreator, {
       activeTab:'Race',
       editCharacterId:id,
@@ -2834,6 +3129,7 @@
       characteristics:Object.assign(Object.fromEntries(FORGE_CHARACTERISTICS.map(key => [key, 10])), character.characteristics || schema.characteristics || {}),
       magicTypes:array(character.magicTypes || schema.magic?.types),
       patronMagicType:character.patronMagicType || schema.magic?.patronLinkedType || '',
+      classPatrons:savedClassPatrons,
       mancerAdvantageMagicType:character.mancerAffinity?.advantage || schema.magic?.mancerAffinity?.advantage || '',
       skills:skillKeys.slice(0, 4),
       affinityRolls:Object.assign({ magic:{}, skills:{} }, character.affinityRolls || schema.affinityRolls || { magic:character.magicAffinities || schema.magicAffinities || schema.magic?.affinities || {}, skills:character.skillAffinities || schema.skillAffinities || {} }),
@@ -3047,7 +3343,7 @@
     originalWorkspaceEntries = originalWorkspaceEntries || window.AsteriaWorkspace?.entries;
     const api = {
       version:VERSION,
-      forgeTabs:() => FORGE_TABS.slice(),
+      forgeTabs:() => forgeTabsForDraft(draft()).slice(),
       systems:() => SYSTEMS.map(system => Object.assign({}, system)),
       state:() => JSON.parse(JSON.stringify(state)),
       save:saveState,

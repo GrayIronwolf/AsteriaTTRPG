@@ -17,6 +17,7 @@ const supportedRoots = [
   'skills',
   'origins',
   'locations',
+  'theology',
   'religions',
   'gods',
   'factions',
@@ -60,10 +61,16 @@ const domainAliases = {
   planes: 'location',
   religion: 'religion',
   religions: 'religion',
+  theology: 'religion',
+  theologies: 'religion',
   god: 'religion',
   gods: 'religion',
+  deity: 'religion',
+  deities: 'religion',
   pantheon: 'religion',
   pantheons: 'religion',
+  court: 'religion',
+  courts: 'religion',
   faction: 'faction',
   factions: 'faction',
   guild: 'faction',
@@ -92,7 +99,7 @@ const domainLabels = {
   skill: 'Skill Compendium',
   origin: 'Origin Compendium',
   location: 'Location Compendium',
-  religion: 'Religion & Gods Compendium',
+  religion: 'Theology Compendium',
   faction: 'Faction Compendium',
   lore: 'Lore Compendium',
   handbook: 'Asteria Handbook'
@@ -109,7 +116,7 @@ const workspaceSections = {
   skill: 'Asteria Handbook',
   origin: 'Asteria Handbook',
   location: 'World, Realms & Planes',
-  religion: 'World, Realms & Planes',
+  religion: 'Theology',
   faction: 'Factions',
   lore: 'Asteria Handbook',
   handbook: 'Asteria Handbook'
@@ -126,7 +133,7 @@ const tabTemplates = {
   skill: ['Overview','Ranks','Checks','Training','Lore','GM Notes'],
   origin: ['Overview','Background','Family','Story Hooks','Lore','GM Notes'],
   location: ['Overview','Map Notes','Regions','Factions','Lore','Encounters','GM Notes'],
-  religion: ['Overview','Doctrine','Gods','Followers','Rituals','Lore','GM Notes'],
+  religion: ['Overview','Domains','Worship','Lore','Followers','Rituals','GM Notes'],
   faction: ['Overview','Influence','Members','Relations','Holdings','History','Hooks','GM Notes'],
   lore: ['Overview','Chronicle','People','Places','Artifacts','Related','GM Notes'],
   handbook: ['Overview','Rules','Examples','Related','GM Notes']
@@ -426,6 +433,9 @@ function categoryPartsFor(filePath, domain, rootName, metadata = {}) {
       ].filter(Boolean);
     }
     return [metadata.classCategory || metadata.class_category || 'Classes'].filter(Boolean);
+  }
+  if (contentParts[0] === 'theology') {
+    return [metadata.pantheon || metadata.category || 'Theology'].filter(Boolean);
   }
   if (contentParts.length && domainAliases[slugify(contentParts[0])]) return contentParts.slice(1, -1).map(titleCase);
   return contentParts.slice(0, -1).map(titleCase);

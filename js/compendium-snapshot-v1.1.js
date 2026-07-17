@@ -65,7 +65,8 @@
     const items = SOURCE.items.filter(it=>itemIds.some(n=>String(it.name).toLowerCase()===String(n).toLowerCase() || it.id===n));
     const characteristics = Object.assign({strength:0,dexterity:0,agility:0,constitution:0,endurance:0,intelligence:0,wisdom:0,charisma:0,luck:0}, draft.characteristics||{});
     Object.entries(race.modifiers||{}).forEach(([k,v])=>{ characteristics[k]=(Number(characteristics[k])||0)+Number(v||0); });
-    const hp=10+(Number(characteristics.constitution)||0), sp=10+(Number(characteristics.endurance)||0), mp=10+(Number(characteristics.wisdom)||0);
+    const resourceMax = window.asteriaResourceMaxFromCharacteristic || ((value, modifier = 0) => 10 + (Number(value) || 0) * 10 + (Number(modifier) || 0));
+    const hp=resourceMax(characteristics.constitution), sp=resourceMax(characteristics.endurance), mp=resourceMax(characteristics.wisdom);
     return {
       schema:'asteria-character-snapshot-v1.1',
       status,
@@ -97,7 +98,7 @@
       initial:(window.characterInitial?window.characterInitial(name):name[0]||'C'), name,
       race:snapshot.race.name, klass:snapshot.class.name, age:draft.age||'', size:byId(SOURCE.races,draft.raceId).size,
       level:0, hp:[snapshot.resourceCalculations.hp.max,snapshot.resourceCalculations.hp.max], sp:[snapshot.resourceCalculations.sp.max,snapshot.resourceCalculations.sp.max], mp:[snapshot.resourceCalculations.mp.max,snapshot.resourceCalculations.mp.max],
-      xp:0,xpMax:5000,campaign:'Unassigned',session:'No active session',conditions:[],cp:0,tp:0,resourceMods:{hp:0,sp:0,mp:0},
+      xp:0,xpMax:(window.AsteriaProgression?.xpToNextLevel?.(0) || 1000),campaign:'Unassigned',session:'No active session',conditions:[],cp:0,tp:0,resourceMods:{hp:0,sp:0,mp:0},
       characteristics:snapshot.characteristics, inventory:inv, classTalents:(snapshot.selectedTalents||[]).map(x=>x.name), racialTraits:(snapshot.abilitiesGranted||[]).filter(Boolean),
       snapshot, snapshotStatus:snapshot.status, compendiumUpdateAvailable:false
     };

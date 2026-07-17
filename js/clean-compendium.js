@@ -16,8 +16,19 @@
     'Titan-Class / Extra Large Humanoid',
     'Demi-Races'
   ];
+  const theologyCategories = [
+    'Primordials',
+    'Pantheon of Elements',
+    'Aetherion Pantheon',
+    'The Outsiders',
+    'The Nethyros Pantheon',
+    'Dark Court',
+    'Light Court',
+    'Veilborn Court',
+    'The Shadow Court'
+  ];
   const sizes = ['Small','Medium','Large','Extra Large','Titan-Class'];
-  const publicSections = ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Creatures','Factions'];
+  const publicSections = ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Theology','Creatures','Factions'];
   const relationshipMetadataKeys = [
     'source_items',
     'sourceItems',
@@ -48,6 +59,7 @@
     classesHub: 'Classes',
     itemsHub: 'Items',
     magicHub: 'Magic',
+    theologyHub: 'Theology',
     creaturesHub: 'Creatures',
     factionsHub: 'Factions'
   };
@@ -58,6 +70,7 @@
     Classes: 'Class pages, talent trees, pathways, roles, and lore references.',
     Items: 'Items, flora, minerals, materials, equipment, crafting resources, and magic objects.',
     Magic: 'Spells, enchantments, elements, runes, soul stones, and magic system notes.',
+    Theology: 'Gods, goddesses, pantheons, courts, primordials, outsiders, divine domains, and worship notes.',
     Creatures: 'Creature records are reserved for the same workspace structure when the bestiary data is promoted.',
     Factions: 'Faction records are reserved for the same workspace structure when organisation data is promoted.'
   };
@@ -68,6 +81,7 @@
     Classes: ['Overview','Talent Tree','Lore','Images'],
     Items: [],
     Magic: [],
+    Theology: [],
     Creatures: ['Creature Sheet','Abilities','Lore','Images'],
     Factions: ['Faction Sheet','Relationships','Lore','Images']
   };
@@ -151,6 +165,10 @@
         leaf('Runes', { section:'Magic', path:'Rune' }),
         leaf('Magic Systems', { section:'Magic', type:'Magic' })
       ]
+    },
+    Theology: {
+      label: 'Theology Categories',
+      children: theologyCategories.map(category => leaf(category, { section:'Theology', pantheon:category, path:category }))
     },
     Creatures: {
       label: 'Creature Categories',
@@ -300,9 +318,21 @@
   }
 
   function sectionFromCategory(category, metadata = {}) {
-    const source = lower([category, metadata.type, metadata.category].join(' '));
+    const source = lower([
+      category,
+      metadata.type,
+      metadata.category,
+      metadata.pantheon,
+      metadata.court,
+      metadata.deity,
+      metadata.god,
+      metadata.goddess,
+      metadata.divineDomain,
+      metadata.divine_domain
+    ].join(' '));
     if (source.includes('race')) return 'Races';
     if (source.includes('class') || source.includes('talent tree') || source.includes('pathway')) return 'Classes';
+    if (source.includes('theology') || source.includes('deity') || source.includes('god') || source.includes('goddess') || source.includes('pantheon') || source.includes('court') || source.includes('divine domain')) return 'Theology';
     if (source.includes('item') || source.includes('weapon') || source.includes('armour') || source.includes('armor') || source.includes('material') || source.includes('mineral') || source.includes('ore') || source.includes('ingot') || source.includes('consumable')) return 'Items';
     if (source.includes('spell') || source.includes('magic') || source.includes('enchantment') || source.includes('soul stone') || source.includes('rune') || source.includes('element')) return 'Magic';
     if (source.includes('creature') || source.includes('beast') || source.includes('monster') || source.includes('animal') || source.includes('construct')) return 'Creatures';
@@ -343,7 +373,10 @@
   function pageToEntry(page) {
     const metadata = parseFrontmatter(page.content || '');
     const section = sectionFromCategory(page.category || '', metadata);
-    const categoryPath = String(page.category || '').split('/').filter(Boolean);
+    let categoryPath = String(page.category || '').split('/').filter(Boolean);
+    if (section === 'Theology') {
+      categoryPath = ['Theology', metadata.pantheon || metadata.category || 'Theology'].filter(Boolean);
+    }
     const type = metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
     const itemClass = metadata.itemClass || metadata.item_class || metadata.rarity || '';
     const raceCategory = metadata.raceCategory || metadata.racecategory || (section === 'Races' ? 'Humanoid' : '');
@@ -885,12 +918,14 @@
   function statusLabel(entry) {
     if (entry.section === 'Races') return entry.playable ? 'PLAYABLE' : 'NON-PLAYABLE';
     if (entry.section === 'Items') return entry.rarity || entry.type || 'Item';
+    if (entry.section === 'Theology') return entry.metadata?.pantheon || entry.category || 'Theology';
     return entry.type || entry.category || entry.section;
   }
 
   function cardClass(entry) {
     if (entry.section === 'Races') return `clean-card clean-race-card clean-race-${entry.playable ? 'playable' : 'non-playable'}`;
     if (entry.section === 'Items') return `clean-card clean-item-card clean-rarity-${slugify(entry.rarity || 'common')}`;
+    if (entry.section === 'Theology') return `clean-card clean-theology-card clean-section-theology`;
     return `clean-card clean-generic-card clean-section-${slugify(entry.section)}`;
   }
 
@@ -924,6 +959,31 @@
     `;
   }
 
+  function initialsForTitle(title) {
+    return String(title || 'T')
+      .replace(/[^A-Za-z0-9 ]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase() || 'T';
+  }
+
+  function theologyCardBody(entry) {
+    const metadata = entry.metadata || {};
+    const domain = metadata.deityTitle || metadata.deity_title || metadata.divineDomain || metadata.divine_domain || metadata.domain || entry.category || 'Divine Domain';
+    const imageMarkup = entry.imagePath
+      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.closest('.clean-theology-card-image')?.classList.add('is-missing'); this.remove();">`
+      : `<span aria-hidden="true">${escapeHtml(initialsForTitle(entry.title))}</span>`;
+
+    return `
+      <h3>${escapeHtml(entry.title)}</h3>
+      <div class="clean-theology-card-image">${imageMarkup}</div>
+      <div class="clean-theology-card-domain">${escapeHtml(domain || 'Information coming soon')}</div>
+    `;
+  }
+
   function genericCardBody(entry) {
     return `
       <span class="clean-tag">${escapeHtml(statusLabel(entry))}</span>
@@ -938,7 +998,7 @@
     const element = document.createElement('article');
     element.className = cardClass(entry);
     element.tabIndex = 0;
-    element.innerHTML = entry.section === 'Races' ? raceCardBody(entry) : entry.section === 'Items' ? itemCardBody(entry) : genericCardBody(entry);
+    element.innerHTML = entry.section === 'Races' ? raceCardBody(entry) : entry.section === 'Items' ? itemCardBody(entry) : entry.section === 'Theology' ? theologyCardBody(entry) : genericCardBody(entry);
     element.onclick = () => {
       qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
       element.classList.add('selected');
@@ -1831,7 +1891,7 @@
       sp:[10,10],
       mp:[10,10],
       xp:0,
-      xpMax:5000,
+      xpMax:window.AsteriaProgression?.xpToNextLevel?.(0) || 1000,
       campaign:'Unassigned',
       session:'No active session',
       conditions:[],
@@ -2195,6 +2255,12 @@
         Lore: ['Lore','Magical Affinities','Related Items'],
         Sources: ['Sources','Related Items']
       },
+      Theology: {
+        Overview: ['Overview','Titles','Domains','Symbols','Worship'],
+        Lore: ['Lore','Mythology','History','Teachings','Followers'],
+        Images: ['Gallery','Images','Symbols'],
+        'GM Notes': ['GM Notes','Hidden Lore','Campaign Hooks']
+      },
       'Asteria Handbook': {
         'Rule Sheet': ['Overview','Rules','Core Rules'],
         Systems: ['System','Systems','Mechanics'],
@@ -2320,6 +2386,7 @@
     if (value.includes('race')) return 'Races';
     if (value.includes('class') || value.includes('talent tree') || value.includes('pathway')) return 'Classes';
     if (value.startsWith('items') || value.includes('items/') || value.includes('weapon') || value.includes('armour') || value.includes('armor') || value.includes('material') || value.includes('consumable')) return 'Items';
+    if (value.includes('theology') || value.includes('deity') || value.includes('god') || value.includes('goddess') || value.includes('pantheon') || value.includes('court')) return 'Theology';
     if (value.includes('spell') || value.includes('magic') || value.includes('enchantment') || value.includes('element') || value.includes('soul stone') || value.includes('rune')) return 'Magic';
     if (value.includes('creature') || value.includes('beast') || value.includes('monster') || value.includes('animal') || value.includes('construct')) return 'Creatures';
     if (value.includes('faction') || value.includes('guild') || value.includes('organisation') || value.includes('organization') || value.includes('npc')) return 'Factions';

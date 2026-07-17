@@ -158,26 +158,32 @@ check('Phase 3 uses universal compendium data', gameplayJs.includes('AsteriaUniv
 check('Phase 3 keeps creation talent rules locked', gameplayJs.includes('Players do not freely choose talents') && gameplayJs.includes('startingTalentsForClass'));
 check('Phase 3 keeps profession slots campaign-earned', gameplayJs.includes('No Profession Learned') && gameplayJs.includes('assignProfession'));
 check('Phase 3A presents Character Forge', gameplayJs.includes("label:'Character Forge'") && gameplayJs.includes('Character Forge') && !gameplayJs.includes("label:'Character Creator'"));
-check('Character Forge uses final 10-tab flow with Affinity Rolls', ["'Race'","'Class'","'Appearance'","'Origin'","'Characteristics'","'Magic'","'Skills'","'Affinity Rolls'","'Equipment'","'Review'"].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_TABS') && gameplayJs.includes('MAGIC_TYPE_GROUPS') && gameplayJs.includes('AFFINITY_RANKS') && !gameplayJs.includes("'Save Character'\\n  ];"));
+check('Character Forge uses conditional Patron flow with Affinity Rolls', ["'Race'","'Class'","'Patron'","'Appearance'","'Origin'","'Characteristics'","'Magic'","'Skills'","'Affinity Rolls'","'Equipment'","'Review'"].every(token => gameplayJs.includes(token)) && gameplayJs.includes('forgeTabsForDraft') && gameplayJs.includes('MAGIC_TYPE_GROUPS') && gameplayJs.includes('AFFINITY_RANKS') && !gameplayJs.includes("'Save Character'\\n  ];"));
 check('Shared magic data loads before dashboard and forge scripts', jsFiles.includes('js/asteria-magic-data.js') && jsFiles.indexOf('js/asteria-magic-data.js') < jsFiles.indexOf('js/app.js') && jsFiles.indexOf('js/asteria-magic-data.js') < jsFiles.indexOf('js/asteria-gameplay-systems.js'));
 check('Shared magic data includes requested element groups', ['Air Magic','Earth Magic','Water Magic','Fire Magic','Life Magic','Death Magic','Light Magic','Dark Magic','Celestial Magic','Infernal Magic','Blood Magic','Chaos Magic','Eldritch Magic','Fae Magic','Fate Magic','Space Magic','Spirit Magic','Time Magic','Abyssal Magic'].every(name => magicDataJs.includes(name)) && magicDataJs.includes('Basic Elements') && magicDataJs.includes('Higher Elements'));
 check('Shared magic data matches Laws of Magic colour labels', ['Pale Blue','Green','Red','Blue','Yellow','Purple','White','Black','Luminous Gold','Crimson Red','Deep Red','Ashen Grey','Dark Emerald','Rose Pink','Wine Red','Midnight Blue','Silver White','Bronze Gold','Obsidian Blue'].every(name => magicDataJs.includes(name)) && ['#9fdcff','#2f8b4a','#d12e23','#1e7fff','#ffd84d','#5b2c89','#fff7de','#08080d','#ffd86b','#a30f16','#7b0000','#8c8b86','#00543d','#ff8fc7','#7b1635','#061a48','#dfefff','#b98b35','#020713'].every(hex => magicDataJs.includes(hex)));
 check('Character Forge magic selection uses colour card gallery', gameplayJs.includes('magicGroups()') && gameplayJs.includes('phase3-magic-card') && gameplayJs.includes('--magic-color') && stylesCss.includes('.phase3-magic-card'));
 check('Character Forge stores locked affinity rolls', ['renderAffinityRolls','affinityRankForValue','affinityRollsComplete','data-phase3-affinity-lock','magicAffinities','skillAffinities'].every(token => gameplayJs.includes(token)) && stylesCss.includes('.phase3-affinity-card'));
 check('Character Forge enforces class magic slots', ['CLASS_MAGIC_CATEGORY_SLOTS','CLASS_MAGIC_REQUIRED','classMagicRulesForDraft','magicSelectionIssues','data-phase3-class-mode','patronMagicType','mancerAdvantageMagicType'].every(token => gameplayJs.includes(token)) && ['Druid','Blood Magic','Chaos Magic','Death Magic'].every(token => gameplayJs.includes(token)));
+check('Religious classes use Theology card gallery patrons', ['classPatrons','religiousClassSelections','religiousPatronIssues','renderPatronSelection','data-phase3-class-patron-card','classPatronRecordsForDraft','patronDatabaseEntries',"startsWith('content/theology/')"].every(token => gameplayJs.includes(token)) && stylesCss.includes('.phase3-patron-card-grid'));
 check('GM can grant extra magic after creation', ['grantCharacterMagicType','revokeCharacterMagicType','installGMMagicGrantPanel','gmGrantedMagicTypes','gmGrantedTypes'].every(token => gameplayJs.includes(token)) && appJs.includes('gmGrantedAccess'));
 check('Player active spells sync from forged magic choices', appJs.includes('c?.magicTypes||c?.character?.magic?.types||c?.magic?.types') && appJs.includes('v1722MagicSlug') && appJs.includes('No active spells assigned to the selected magic types.') && !appJs.includes("access=['light','water','blood','fate','eldritch']"));
 check('Spell cards open shared foreground popup', appJs.includes('function v1722OpenSpell(name)') && appJs.includes("eyebrow:'Spell'") && appJs.includes('openAsteriaInfoModal({'));
+check('Dashboard and character spell panels share forged magic filters', ['v1724RenderSpellPanels','v1724EnsureSpellMenuPanel','v1724OpenSpellsTab','data-spell-context-v1724','spell-card-linked-v1724'].every(token => appJs.includes(token)) && stylesCss.includes('.spell-card-linked-v1724') && stylesCss.includes('.spell-menu-panel-v1724'));
+check('Dashboard spell cards can cast and spend resources once per double-click', ['v1724CastSpell','v1724SpendCosts','Spell cast:','v1724SpellCostHtml','spellDoubleHandledV1724','runDouble'].every(token => appJs.includes(token)) && ['.spell-cost-chip.hp','.spell-cost-chip.sp','.spell-cost-chip.mp'].every(token => stylesCss.includes(token)));
+check('Dashboard talent cards show highest unlocked ranks', ['renderUnlockedTalentSummary=function','dashboard-talent-card-v1724','v1724OpenTalentTree','v1724TalentCostText'].every(token => appJs.includes(token)) && stylesCss.includes('.dashboard-talent-card-v1724'));
+check('Talent Tree renders tier-gated class panels', ['ASTERIA_TALENT_TIER_UNLOCKS','v1724RenderClassTalentPanel','v1724SelectTalentTier','multi-class-talent-panels-v1724','locked until you reach Level'].every(token => appJs.includes(token)) && stylesCss.includes('.class-talent-panel-v1724') && stylesCss.includes('.tier-locked-panel-v1724'));
 const forgeStandaloneBranch = gameplayJs.indexOf("if(activeSystem === 'characterCreator')");
 const genericGameplayMenu = gameplayJs.indexOf('<h3>Gameplay Systems</h3>');
 check('Character Forge renders as standalone page', forgeStandaloneBranch >= 0 && gameplayJs.includes("root.classList.add('phase3-forge-shell')") && genericGameplayMenu > forgeStandaloneBranch);
 check('Character Forge uses compendium category panels for race and class', gameplayJs.includes('renderForgeCategoryPanel') && gameplayJs.includes('clean-drilldown-cat') && gameplayJs.includes('AsteriaRaceCompendium.entries') && gameplayJs.includes('AsteriaCodexCompendium.classEntries'));
 check('Character Forge uses dashboard characteristic keys', gameplayJs.includes("const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS") && ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_STAT_LABELS'));
+check('Linked characteristics grant resources at a 1 to 10 ratio', appJs.includes('const RESOURCE_PER_CHARACTERISTIC = 10') && appJs.includes('characteristicResourceContribution') && gameplayJs.includes('asteriaResourceMaxFromCharacteristic') && snapshotJs.includes('asteriaResourceMaxFromCharacteristic'));
 check('Character Forge treats public races as playable by campaign-default', gameplayJs.includes('Campaign-specific race limits will be controlled later in Campaign Forge') && gameplayJs.includes("{ playable:true, availability:'playable' }") && !gameplayJs.includes('Only playable, player-visible races are shown here'));
 check('Character Forge applies race characteristic rules', ['CHARACTERISTIC_TIER_RULES','raceCharacteristicRulesFor','finalForgeCharacteristics','characteristic_rules'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('phase3-characteristic-lines') && gameplayJs.includes('Racial Modifier') && gameplayJs.includes('Characteristic Tier Cap'));
 check('Character Forge stores racial info for dashboards', ['raceInfoPayloadForEntry','racial_info','racialTraits','racialFeatures','racialMovement'].every(token => gameplayJs.includes(token)));
 check('Character Forge supports editing existing characters', ['editForgedCharacter','editCharacterId','lockedClassSlug','phase3a-character-updated','Primary Class Locked'].every(token => gameplayJs.includes(token)));
-check('Character Forge supports character card colours', ['CARD_COLOUR_OPTIONS','data-forge-card-colour','setCharacterCardColour','--character-card-colour'].every(token => gameplayJs.includes(token) || stylesCss.includes(token)));
+check('Character Forge supports popup character card colour settings', ['CARD_COLOUR_OPTIONS','data-forge-card-colour-settings','openCharacterCardColourSettings','data-forge-colour-picker','openAsteriaInfoModal','setCharacterCardColour','--character-card-colour','.forge-card-colour-settings'].every(token => gameplayJs.includes(token) || stylesCss.includes(token)));
 check('Character Forge stores max-two class locks', gameplayJs.includes('MAX_CHARACTER_CLASSES = 2') && gameplayJs.includes('classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true }') && gameplayJs.includes('secondaryClassSlugs'));
 check('Character Forge is data-driven', ["databaseEntries('race')", "databaseEntries('class')", "entriesForSelect('skill'", "entriesForSelect('origin'", "databaseEntries('item')"].every(token => gameplayJs.includes(token)));
 check('Character Forge stores final schema', ['family_tree','backstory','characterSchema','created','updated','appearance','origin','characteristics','equipment'].every(token => gameplayJs.includes(token)));
@@ -260,7 +266,13 @@ const cleanCompendiumIndex = JSON.parse(fs.readFileSync(path.join(root, 'data/co
 const raceEntry = cleanCompendiumIndex.entries.find(entry => entry.section === 'Races' && entry.title === 'Cavern Sprite');
 check('Unified workspace compendium index exists', cleanCompendiumIndex.version === 'asteria-unified-workspace-compendium-system-v1' && cleanCompendiumIndex.entries.length >= 5);
 check('Workspace exposes shared APIs', cleanCompendiumJs.includes('window.openCompendiumSection') && cleanCompendiumJs.includes('window.openCompendiumPath') && cleanCompendiumJs.includes('window.AsteriaWorkspace'));
-check('Workspace routes compendium sections through one renderer', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Creatures','Factions'].every(section => cleanCompendiumJs.includes(section)));
+const theologyEntries = cleanCompendiumIndex.entries.filter(entry => entry.section === 'Theology');
+const primordialTheologyEntries = theologyEntries.filter(entry => (entry.metadata?.pantheon || entry.metadata?.category || entry.category) === 'Primordials');
+check('Workspace routes compendium sections through one renderer', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Theology','Creatures','Factions'].every(section => cleanCompendiumJs.includes(section)));
+check('Theology compendium menu is wired', html.includes('data-workspace-section="Theology"') && cleanCompendiumJs.includes('theologyCategories') && cleanCompendiumJs.includes('theologyCardBody'));
+check('Theology entries are generated from content/theology', theologyEntries.length >= 100 && theologyEntries.every(entry => String(entry.sourcePath || '').startsWith('content/theology/')));
+check('Theology contains exactly three Primordials', primordialTheologyEntries.length === 3 && primordialTheologyEntries.every(entry => String(entry.title || '').toLowerCase() !== 'primordial'));
+check('Theology categories include requested pantheons and courts', ['Primordials','Pantheon of Elements','Aetherion Pantheon','The Outsiders','The Nethyros Pantheon','Dark Court','Light Court','Veilborn Court','The Shadow Court'].every(label => cleanCompendiumJs.includes(label)));
 check('Race navigation removes old playable folders', !html.includes("Races/Playable Races") && !html.includes("Races/Non-Playable Races") && !cleanCompendiumJs.includes('Playable Races') && !cleanCompendiumJs.includes('Non-Playable Races'));
 check('Race navigation uses lore/type categories', ['Beastkin','Celestial','Demonic','Dragon','Fae','Humanoid','Hybrid','Spirit Races','Undead','Demi-Races'].every(label => cleanCompendiumJs.includes(label)));
 check('Race playable status is metadata', Boolean(raceEntry) && raceEntry.playable === true && raceEntry.availability === 'playable' && raceEntry.raceCategory === 'Small Races' && raceEntry.size === 'Unknown');
@@ -386,7 +398,7 @@ check('Local static server supports compendium app routes', localServerJs.includ
 const progressionContext = {
   window: {
     chars: {
-      test: { name: 'Test Character', level: 0, xp: 5500, cp: 0, tp: 0 }
+      test: { name: 'Test Character', level: 0, xp: 1200, cp: 0, tp: 0 }
     },
     addCombatLog(){},
     feedback(){},
@@ -398,9 +410,10 @@ vm.createContext(progressionContext);
 vm.runInContext(progressionJs, progressionContext);
 const progression = progressionContext.window.AsteriaProgression;
 const levelResult = progression.checkLevelUp('test');
-check('Progression module calculates level 0 XP cap', progression.xpToNextLevel(0) === 5000);
+check('Progression module calculates level 0 XP cap', progression.xpToNextLevel(0) === 1000);
+check('Progression module uses imported XP table', progression.xpToNextLevel(1) === 2000 && progression.xpToNextLevel(10) === 12000 && !Number.isFinite(progression.xpToNextLevel(100)));
 check('Progression module applies level rewards', progressionContext.window.chars.test.level === 1 && progressionContext.window.chars.test.cp === 3 && progressionContext.window.chars.test.tp === 3);
-check('Progression module preserves carryover XP', progressionContext.window.chars.test.xp === 500);
+check('Progression module preserves carryover XP', progressionContext.window.chars.test.xp === 200);
 check('Progression module keeps skill-choice rewards disabled', levelResult.skillChoice === false);
 
 jsFiles.forEach(file => {

@@ -2,7 +2,7 @@
 (function(){
   window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX = {
   "version": "asteria-phase-2-content-database-expansion",
-  "generatedAt": "2026-07-01T23:52:03.687Z",
+  "generatedAt": "2026-07-14T15:20:53.690Z",
   "domains": {
     "race": "Race Compendium",
     "class": "Class Compendium",
@@ -14,7 +14,7 @@
     "skill": "Skill Compendium",
     "origin": "Origin Compendium",
     "location": "Location Compendium",
-    "religion": "Religion & Gods Compendium",
+    "religion": "Theology Compendium",
     "faction": "Faction Compendium",
     "lore": "Lore Compendium",
     "handbook": "Asteria Handbook"
@@ -347,20 +347,21 @@
     },
     "religion": {
       "domain": "religion",
-      "label": "Religion & Gods Compendium",
-      "workspaceSection": "World, Realms & Planes",
+      "label": "Theology Compendium",
+      "workspaceSection": "Theology",
       "roots": [
+        "theology",
         "religions",
         "gods"
       ],
       "routeBase": "/compendium/religion",
       "tabs": [
         "Overview",
-        "Doctrine",
-        "Gods",
+        "Domains",
+        "Worship",
+        "Lore",
         "Followers",
         "Rituals",
-        "Lore",
         "GM Notes"
       ],
       "filterFields": [
@@ -478,6 +479,7 @@
     "skills",
     "origins",
     "locations",
+    "theology",
     "religions",
     "gods",
     "factions",
@@ -494,7 +496,7 @@
     "skill": "Asteria Handbook",
     "origin": "Asteria Handbook",
     "location": "World, Realms & Planes",
-    "religion": "World, Realms & Planes",
+    "religion": "Theology",
     "faction": "Factions",
     "lore": "Asteria Handbook",
     "handbook": "Asteria Handbook"
@@ -757,11 +759,11 @@
     ],
     "religion": [
       "Overview",
-      "Doctrine",
-      "Gods",
+      "Domains",
+      "Worship",
+      "Lore",
       "Followers",
       "Rituals",
-      "Lore",
       "GM Notes"
     ],
     "faction": [
@@ -30130,13 +30132,4902 @@
       "searchTerms": "zynari race  {\"title\":\"zynari\",\"slug\":\"zynari\",\"type\":\"race\",\"racecategory\":\"beastkin races\",\"secondarycategory\":\"fish & amphibian races\",\"tertiarycategory\":\"fish races\",\"playable\":true,\"size\":\"\",\"movement\":\"\",\"languages\":[],\"magicaffinity\":[],\"essenceaffinity\":[],\"tags\":[\"race\",\"beastkin-races\",\"fish-and-amphibian-races\",\"fish-races\"],\"images\":\"\",\"male\":\"\",\"female\":\"\",\"visibility\":\"public\",\"sourceorder\":109} # zynari\n\n## overview\ninformation coming soon.\n\n## racial features\ninformation coming soon.\n\n## racial characteristics\ninformation coming soon.\n\n## racial traits\ninformation coming soon.\n\n## lore\ninformation coming soon.\n\n## culture\ninformation coming soon.\n\n## historical figures\ninformation coming soon.\n\n## settlements\ninformation coming soon.\n\n## relations\ninformation coming soon.\n\n## traits & biology\ninformation coming soon.\n\n## gallery\ninformation coming soon.\n\n## gm notes\ngm-only information coming soon."
     },
     {
+      "id": "religion:content-theology-acyr-index",
+      "title": "Acyr",
+      "slug": "acyr",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/acyr",
+      "sourcePath": "content/theology/acyr/index.md",
+      "sourceFolder": "content/theology/acyr",
+      "content": "---\ntitle: \"Acyr\"\nslug: \"acyr\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of War, Fury & Battle\"\ndivine_domain: \"God of War, Fury & Battle\"\ndomain: \"God of War, Fury & Battle\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Acyr - God of War, Fury & Battle.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Acyr\n\n## Overview\nExcellent — **Acyr, God of War** fits beautifully among your divine pantheon, especially balanced against Thanaros (Death) and Elyndra (Life).  \nBelow is his **full mythic entry**, written in the same detailed, world-consistent tone as your other gods — evoking that high-fantasy, mythic gravitas that fits your pantheon of Essences.\n\n---\n\n## ⚔️ **Acyr – God of War**\n\n**Titles:**  \nThe Crimson General, The Iron Sovereign, The Unbroken, Warlord of the Divine, The Flame of Battle\n\n**Pantheon:**  \nPantheon of Creation (Essence of Conflict & Conquest)\n\n**Alignment:**  \nChaotic Neutral — embodies the chaos, fury, and honor of battle; neither wholly destructive nor just\n\n**Symbol:**  \nA blazing sword crossed with a broken spear upon a crimson sun — representing glory, loss, and the eternal clash of wills\n\n**Domains:**  \nWar, Conflict, Strength, Courage, Strategy, Conquest, Honor, Fire of the Heart\n\n**Appearance:**  \nAcyr is a towering god clad in ever-shifting armor — each plate forged from the weapons of fallen champions. His eyes burn like molten iron, and his hair flows like smoke from a battlefield pyre.  \nHis skin bears countless faint scars that glow faintly with ember-light. In his hands he wields **Avarn**, the Sword of Ten Thousand Wars, which hums with the cries of every soul who has ever fought in his name.\n\nWhen he walks, the air crackles with tension — like the moment before the first sword strike.\n\n**Personality:**  \nAcyr is a god of passion, fury, and valor. He embodies the beauty and tragedy of war: the courage it demands, the destruction it brings, and the unity it forges among those who fight for something greater than themselves.  \nHe respects strength in all forms — not just physical might, but conviction, loyalty, and unyielding spirit.  \nTo some, he is a noble general; to others, a bloodthirsty warlord. Both are true. Acyr teaches that **conflict is the crucible of growth** — that only through struggle can mortals discover their true nature.\n\n**Mythic Lore:**  \nWhen the first mortals learned to wield weapons, their cries of rage and fear gave birth to Acyr. From their fire, he rose — a god born not of peace, but of passion and will.  \nHe was the first to lead divine armies in the **War of Dawn**, when the gods of chaos rose against the pantheon. It was Acyr’s sword that cleaved the sky in two, sealing the rift between the realms.  \nIt is said that every battle fought since then is but an echo of his first warcry.\n\nAcyr does not revel in senseless slaughter — he despises cowardice, treachery, and cruelty. To him, war is sacred: a dance between fate and choice, where mortals prove their worth.\n\n**Worship:**  \nAcyr’s temples are few but grand — built in stone and blood. They often serve as barracks, training halls, or places of oath and remembrance.  \nWarriors carve their names into his altars before battle, and when they fall, their weapons are burned in his honor.  \nHe is worshipped by soldiers, generals, mercenaries, and blacksmiths who forge instruments of war.\n\n**Rituals:**\n\n- **The Oath of Iron:** Warriors dedicate their first blade to Acyr, binding themselves to courage and loyalty.\n    \n- **The Blood Vigil:** Before great battles, worshippers smear their weapons with a drop of their own blood, symbolizing the bond between warrior and weapon.\n    \n- **The Flame of Remembrance:** A pyre is lit at dusk after every victory or loss, so that Acyr may carry the spirits of the fallen into glory.\n    \n- **The Challenge Rite:** Duels fought under Acyr’s gaze are considered sacred — their outcome divinely judged.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Often his companion in battle; she grants him the winds of war and carries his banners across the skies.\n    \n- **Elyndra – Goddess of Life:** They stand opposed yet intertwined — she creates what he tests.\n    \n- **Thanaros – God of Death:** His silent ally; together they define the cycle of combat — one begins the struggle, the other ends it.\n    \n- **Azrakar – God of the Netherworld:** Rival in philosophy; Acyr sees death as glory, Azrakar as consequence.\n    \n- **Vaelion – God of Time & Space:** A distant observer who records Acyr’s wars across the ages.\n    \n- **Sirona – Goddess of Water:** Her calm tempers his rage; sailors and warriors alike pray to both before embarking on dangerous campaigns.\n    \n\n**Holy Day:**  \n**The Day of Red Dawn** — celebrated on the first day of spring, marking the divine rebirth of conflict after winter’s stillness. Warriors perform ritual duels, smiths craft new blades, and generals light the **Flame of Acyr** to bless their armies with courage and clarity.v\n",
+      "body": "# Acyr\n\n## Overview\nExcellent — **Acyr, God of War** fits beautifully among your divine pantheon, especially balanced against Thanaros (Death) and Elyndra (Life).  \nBelow is his **full mythic entry**, written in the same detailed, world-consistent tone as your other gods — evoking that high-fantasy, mythic gravitas that fits your pantheon of Essences.\n\n---\n\n## ⚔️ **Acyr – God of War**\n\n**Titles:**  \nThe Crimson General, The Iron Sovereign, The Unbroken, Warlord of the Divine, The Flame of Battle\n\n**Pantheon:**  \nPantheon of Creation (Essence of Conflict & Conquest)\n\n**Alignment:**  \nChaotic Neutral — embodies the chaos, fury, and honor of battle; neither wholly destructive nor just\n\n**Symbol:**  \nA blazing sword crossed with a broken spear upon a crimson sun — representing glory, loss, and the eternal clash of wills\n\n**Domains:**  \nWar, Conflict, Strength, Courage, Strategy, Conquest, Honor, Fire of the Heart\n\n**Appearance:**  \nAcyr is a towering god clad in ever-shifting armor — each plate forged from the weapons of fallen champions. His eyes burn like molten iron, and his hair flows like smoke from a battlefield pyre.  \nHis skin bears countless faint scars that glow faintly with ember-light. In his hands he wields **Avarn**, the Sword of Ten Thousand Wars, which hums with the cries of every soul who has ever fought in his name.\n\nWhen he walks, the air crackles with tension — like the moment before the first sword strike.\n\n**Personality:**  \nAcyr is a god of passion, fury, and valor. He embodies the beauty and tragedy of war: the courage it demands, the destruction it brings, and the unity it forges among those who fight for something greater than themselves.  \nHe respects strength in all forms — not just physical might, but conviction, loyalty, and unyielding spirit.  \nTo some, he is a noble general; to others, a bloodthirsty warlord. Both are true. Acyr teaches that **conflict is the crucible of growth** — that only through struggle can mortals discover their true nature.\n\n**Mythic Lore:**  \nWhen the first mortals learned to wield weapons, their cries of rage and fear gave birth to Acyr. From their fire, he rose — a god born not of peace, but of passion and will.  \nHe was the first to lead divine armies in the **War of Dawn**, when the gods of chaos rose against the pantheon. It was Acyr’s sword that cleaved the sky in two, sealing the rift between the realms.  \nIt is said that every battle fought since then is but an echo of his first warcry.\n\nAcyr does not revel in senseless slaughter — he despises cowardice, treachery, and cruelty. To him, war is sacred: a dance between fate and choice, where mortals prove their worth.\n\n**Worship:**  \nAcyr’s temples are few but grand — built in stone and blood. They often serve as barracks, training halls, or places of oath and remembrance.  \nWarriors carve their names into his altars before battle, and when they fall, their weapons are burned in his honor.  \nHe is worshipped by soldiers, generals, mercenaries, and blacksmiths who forge instruments of war.\n\n**Rituals:**\n\n- **The Oath of Iron:** Warriors dedicate their first blade to Acyr, binding themselves to courage and loyalty.\n    \n- **The Blood Vigil:** Before great battles, worshippers smear their weapons with a drop of their own blood, symbolizing the bond between warrior and weapon.\n    \n- **The Flame of Remembrance:** A pyre is lit at dusk after every victory or loss, so that Acyr may carry the spirits of the fallen into glory.\n    \n- **The Challenge Rite:** Duels fought under Acyr’s gaze are considered sacred — their outcome divinely judged.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Often his companion in battle; she grants him the winds of war and carries his banners across the skies.\n    \n- **Elyndra – Goddess of Life:** They stand opposed yet intertwined — she creates what he tests.\n    \n- **Thanaros – God of Death:** His silent ally; together they define the cycle of combat — one begins the struggle, the other ends it.\n    \n- **Azrakar – God of the Netherworld:** Rival in philosophy; Acyr sees death as glory, Azrakar as consequence.\n    \n- **Vaelion – God of Time & Space:** A distant observer who records Acyr’s wars across the ages.\n    \n- **Sirona – Goddess of Water:** Her calm tempers his rage; sailors and warriors alike pray to both before embarking on dangerous campaigns.\n    \n\n**Holy Day:**  \n**The Day of Red Dawn** — celebrated on the first day of spring, marking the divine rebirth of conflict after winter’s stillness. Warriors perform ritual duels, smiths craft new blades, and generals light the **Flame of Acyr** to bless their armies with courage and clarity.v",
+      "sections": {
+        "Overview": "# Acyr\n\nExcellent — **Acyr, God of War** fits beautifully among your divine pantheon, especially balanced against Thanaros (Death) and Elyndra (Life).  \nBelow is his **full mythic entry**, written in the same detailed, world-consistent tone as your other gods — evoking that high-fantasy, mythic gravitas that fits your pantheon of Essences.\n\n---",
+        "⚔️ **Acyr – God of War**": "**Titles:**  \nThe Crimson General, The Iron Sovereign, The Unbroken, Warlord of the Divine, The Flame of Battle\n\n**Pantheon:**  \nPantheon of Creation (Essence of Conflict & Conquest)\n\n**Alignment:**  \nChaotic Neutral — embodies the chaos, fury, and honor of battle; neither wholly destructive nor just\n\n**Symbol:**  \nA blazing sword crossed with a broken spear upon a crimson sun — representing glory, loss, and the eternal clash of wills\n\n**Domains:**  \nWar, Conflict, Strength, Courage, Strategy, Conquest, Honor, Fire of the Heart\n\n**Appearance:**  \nAcyr is a towering god clad in ever-shifting armor — each plate forged from the weapons of fallen champions. His eyes burn like molten iron, and his hair flows like smoke from a battlefield pyre.  \nHis skin bears countless faint scars that glow faintly with ember-light. In his hands he wields **Avarn**, the Sword of Ten Thousand Wars, which hums with the cries of every soul who has ever fought in his name.\n\nWhen he walks, the air crackles with tension — like the moment before the first sword strike.\n\n**Personality:**  \nAcyr is a god of passion, fury, and valor. He embodies the beauty and tragedy of war: the courage it demands, the destruction it brings, and the unity it forges among those who fight for something greater than themselves.  \nHe respects strength in all forms — not just physical might, but conviction, loyalty, and unyielding spirit.  \nTo some, he is a noble general; to others, a bloodthirsty warlord. Both are true. Acyr teaches that **conflict is the crucible of growth** — that only through struggle can mortals discover their true nature.\n\n**Mythic Lore:**  \nWhen the first mortals learned to wield weapons, their cries of rage and fear gave birth to Acyr. From their fire, he rose — a god born not of peace, but of passion and will.  \nHe was the first to lead divine armies in the **War of Dawn**, when the gods of chaos rose against the pantheon. It was Acyr’s sword that cleaved the sky in two, sealing the rift between the realms.  \nIt is said that every battle fought since then is but an echo of his first warcry.\n\nAcyr does not revel in senseless slaughter — he despises cowardice, treachery, and cruelty. To him, war is sacred: a dance between fate and choice, where mortals prove their worth.\n\n**Worship:**  \nAcyr’s temples are few but grand — built in stone and blood. They often serve as barracks, training halls, or places of oath and remembrance.  \nWarriors carve their names into his altars before battle, and when they fall, their weapons are burned in his honor.  \nHe is worshipped by soldiers, generals, mercenaries, and blacksmiths who forge instruments of war.\n\n**Rituals:**\n\n- **The Oath of Iron:** Warriors dedicate their first blade to Acyr, binding themselves to courage and loyalty.\n    \n- **The Blood Vigil:** Before great battles, worshippers smear their weapons with a drop of their own blood, symbolizing the bond between warrior and weapon.\n    \n- **The Flame of Remembrance:** A pyre is lit at dusk after every victory or loss, so that Acyr may carry the spirits of the fallen into glory.\n    \n- **The Challenge Rite:** Duels fought under Acyr’s gaze are considered sacred — their outcome divinely judged.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Often his companion in battle; she grants him the winds of war and carries his banners across the skies.\n    \n- **Elyndra – Goddess of Life:** They stand opposed yet intertwined — she creates what he tests.\n    \n- **Thanaros – God of Death:** His silent ally; together they define the cycle of combat — one begins the struggle, the other ends it.\n    \n- **Azrakar – God of the Netherworld:** Rival in philosophy; Acyr sees death as glory, Azrakar as consequence.\n    \n- **Vaelion – God of Time & Space:** A distant observer who records Acyr’s wars across the ages.\n    \n- **Sirona – Goddess of Water:** Her calm tempers his rage; sailors and warriors alike pray to both before embarking on dangerous campaigns.\n    \n\n**Holy Day:**  \n**The Day of Red Dawn** — celebrated on the first day of spring, marking the divine rebirth of conflict after winter’s stillness. Warriors perform ritual duels, smiths craft new blades, and generals light the **Flame of Acyr** to bless their armies with courage and clarity.v"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Excellent — **Acyr, God of War** fits beautifully among your divine pantheon, especially balanced against Thanaros (Death) and Elyndra (Life). Below is his **full mythic entry**, written in the same detailed, world-consistent tone as your other gods — evoking ",
+      "metadata": {
+        "title": "Acyr",
+        "slug": "acyr",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of War, Fury & Battle",
+        "divineDomain": "God of War, Fury & Battle",
+        "domain": "God of War, Fury & Battle",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Acyr - God of War, Fury & Battle.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of War, Fury & Battle",
+        "visibility": "public"
+      },
+      "searchTerms": "acyr religion aetherion pantheon {\"title\":\"acyr\",\"slug\":\"acyr\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of war, fury & battle\",\"divinedomain\":\"god of war, fury & battle\",\"domain\":\"god of war, fury & battle\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/acyr - god of war, fury & battle.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # acyr\n\n## overview\nexcellent — **acyr, god of war** fits beautifully among your divine pantheon, especially balanced against thanaros (death) and elyndra (life).  \nbelow is his **full mythic entry**, written in the same detailed, world-consistent tone as your other gods — evoking that high-fantasy, mythic gravitas that fits your pantheon of essences.\n\n---\n\n## ⚔️ **acyr – god of war**\n\n**titles:**  \nthe crimson general, the iron sovereign, the unbroken, warlord of the divine, the flame of battle\n\n**pantheon:**  \npantheon of creation (essence of conflict & conquest)\n\n**alignment:**  \nchaotic neutral — embodies the chaos, fury, and honor of battle; neither wholly destructive nor just\n\n**symbol:**  \na blazing sword crossed with a broken spear upon a crimson sun — representing glory, loss, and the eternal clash of wills\n\n**domains:**  \nwar, conflict, strength, courage, strategy, conquest, honor, fire of the heart\n\n**appearance:**  \nacyr is a towering god clad in ever-shifting armor — each plate forged from the weapons of fallen champions. his eyes burn like molten iron, and his hair flows like smoke from a battlefield pyre.  \nhis skin bears countless faint scars that glow faintly with ember-light. in his hands he wields **avarn**, the sword of ten thousand wars, which hums with the cries of every soul who has ever fought in his name.\n\nwhen he walks, the air crackles with tension — like the moment before the first sword strike.\n\n**personality:**  \nacyr is a god of passion, fury, and valor. he embodies the beauty and tragedy of war: the courage it demands, the destruction it brings, and the unity it forges among those who fight for something greater than themselves.  \nhe respects strength in all forms — not just physical might, but conviction, loyalty, and unyielding spirit.  \nto some, he is a noble general; to others, a bloodthirsty warlord. both are true. acyr teaches that **conflict is the crucible of growth** — that only through struggle can mortals discover their true nature.\n\n**mythic lore:**  \nwhen the first mortals learned to wield weapons, their cries of rage and fear gave birth to acyr. from their fire, he rose — a god born not of peace, but of passion and will.  \nhe was the first to lead divine armies in the **war of dawn**, when the gods of chaos rose against the pantheon. it was acyr’s sword that cleaved the sky in two, sealing the rift between the realms.  \nit is said that every battle fought since then is but an echo of his first warcry.\n\nacyr does not revel in senseless slaughter — he despises cowardice, treachery, and cruelty. to him, war is sacred: a dance between fate and choice, where mortals prove their worth.\n\n**worship:**  \nacyr’s temples are few but grand — built in stone and blood. they often serve as barracks, training halls, or places of oath and remembrance.  \nwarriors carve their names into his altars before battle, and when they fall, their weapons are burned in his honor.  \nhe is worshipped by soldiers, generals, mercenaries, and blacksmiths who forge instruments of war.\n\n**rituals:**\n\n- **the oath of iron:** warriors dedicate their first blade to acyr, binding themselves to courage and loyalty.\n    \n- **the blood vigil:** before great battles, worshippers smear their weapons with a drop of their own blood, symbolizing the bond between warrior and weapon.\n    \n- **the flame of remembrance:** a pyre is lit at dusk after every victory or loss, so that acyr may carry the spirits of the fallen into glory.\n    \n- **the challenge rite:** duels fought under acyr’s gaze are considered sacred — their outcome divinely judged.\n    \n\n**relationships:**\n\n- **auralis – goddess of air:** often his companion in battle; she grants him the winds of war and carries his banners across the skies.\n    \n- **elyndra – goddess of life:** they stand opposed yet intertwined — she creates what he tests.\n    \n- **thanaros – god of death:** his silent ally; together they define the cycle of combat — one begins the struggle, the other ends it.\n    \n- **azrakar – god of the netherworld:** rival in philosophy; acyr sees death as glory, azrakar as consequence.\n    \n- **vaelion – god of time & space:** a distant observer who records acyr’s wars across the ages.\n    \n- **sirona – goddess of water:** her calm tempers his rage; sailors and warriors alike pray to both before embarking on dangerous campaigns.\n    \n\n**holy day:**  \n**the day of red dawn** — celebrated on the first day of spring, marking the divine rebirth of conflict after winter’s stillness. warriors perform ritual duels, smiths craft new blades, and generals light the **flame of acyr** to bless their armies with courage and clarity.v"
+    },
+    {
+      "id": "religion:content-theology-aqualis-index",
+      "title": "Aqualis",
+      "slug": "aqualis",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/aqualis",
+      "sourcePath": "content/theology/aqualis/index.md",
+      "sourceFolder": "content/theology/aqualis",
+      "content": "---\ntitle: \"Aqualis\"\nslug: \"aqualis\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Aurelian Ocean\"\ndivine_domain: \"Guardian God of the Aurelian Ocean\"\ndomain: \"Guardian God of the Aurelian Ocean\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Aqualis - Guardian God of the Aurelian Ocean.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Aqualis\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Aqualis\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Aqualis\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Aqualis",
+        "slug": "aqualis",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Aurelian Ocean",
+        "divineDomain": "Guardian God of the Aurelian Ocean",
+        "domain": "Guardian God of the Aurelian Ocean",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Aqualis - Guardian God of the Aurelian Ocean.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Aurelian Ocean",
+        "visibility": "public"
+      },
+      "searchTerms": "aqualis religion aetherion pantheon {\"title\":\"aqualis\",\"slug\":\"aqualis\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the aurelian ocean\",\"divinedomain\":\"guardian god of the aurelian ocean\",\"domain\":\"guardian god of the aurelian ocean\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/oceans/aqualis - guardian god of the aurelian ocean.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # aqualis\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-arvessa-index",
+      "title": "Arvessa",
+      "slug": "arvessa",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/arvessa",
+      "sourcePath": "content/theology/arvessa/index.md",
+      "sourceFolder": "content/theology/arvessa",
+      "content": "---\ntitle: \"Arvessa\"\nslug: \"arvessa\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Crystal Sea\"\ndivine_domain: \"Guardian Goddess of the Crystal Sea\"\ndomain: \"Guardian Goddess of the Crystal Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Arvessa - Guardian Goddess of the Crystal Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Arvessa\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Arvessa\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Arvessa\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Arvessa",
+        "slug": "arvessa",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Crystal Sea",
+        "divineDomain": "Guardian Goddess of the Crystal Sea",
+        "domain": "Guardian Goddess of the Crystal Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Arvessa - Guardian Goddess of the Crystal Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Crystal Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "arvessa religion aetherion pantheon {\"title\":\"arvessa\",\"slug\":\"arvessa\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the crystal sea\",\"divinedomain\":\"guardian goddess of the crystal sea\",\"domain\":\"guardian goddess of the crystal sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/arvessa - guardian goddess of the crystal sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # arvessa\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-aurion-index",
+      "title": "Aurion",
+      "slug": "aurion",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/aurion",
+      "sourcePath": "content/theology/aurion/index.md",
+      "sourceFolder": "content/theology/aurion",
+      "content": "---\ntitle: \"Aurion\"\nslug: \"aurion\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the Sky\"\ndivine_domain: \"God of the Sky\"\ndomain: \"God of the Sky\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Aurion - God of the Sky.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Aurion\n\n## Overview\n### **God of the Sky – Aurion, Lord of the Boundless Heavens**\n\n**Titles:** Skyfather, Keeper of the Winds, the Everwatcher, He Who Sees All Horizons  \n**Alignment:** Lawful Good / Neutral  \n**Domains:** Sky, Weather, Storms, Air, Order  \n**Symbol:** A silver sunburst behind a pair of outstretched wings  \n**Appearance:** Aurion is often depicted as a towering figure wreathed in flowing azure robes, his hair a crown of pale clouds streaked with lightning. His eyes shimmer like the open sky—calm blue at peace, storm-gray in wrath.  \n**Personality:** Just, proud, and unwavering. Aurion is the arbiter of the heavens, representing both freedom and responsibility. He values truth, vigilance, and balance between the elements.  \n**Mythic Lore:**  \nWhen the world was young and chaos still reigned, Aurion rose from the first dawn to separate the sky from the sea. With a single breath, he gave form to the winds—four great currents that sweep the world’s corners. Legends say that thunder is his voice, calling order into the storm, while lightning is his spear striking against the forces of entropy.  \nHe is often invoked by sailors, shepherds, and kings, for his favor brings clear skies and protection from tempests. Yet when the world grows corrupt, his storms become punishment — a reminder that even the heavens must cleanse themselves.  \n**Worshippers:** Pilots, sailors, navigators, watchmen, and rulers.  \n**Holy Days:** _The Day of First Dawn_, celebrated at the year’s turning when the first sunrise is honored with skyfire lanterns and wind-sung prayers.\n",
+      "body": "# Aurion\n\n## Overview\n### **God of the Sky – Aurion, Lord of the Boundless Heavens**\n\n**Titles:** Skyfather, Keeper of the Winds, the Everwatcher, He Who Sees All Horizons  \n**Alignment:** Lawful Good / Neutral  \n**Domains:** Sky, Weather, Storms, Air, Order  \n**Symbol:** A silver sunburst behind a pair of outstretched wings  \n**Appearance:** Aurion is often depicted as a towering figure wreathed in flowing azure robes, his hair a crown of pale clouds streaked with lightning. His eyes shimmer like the open sky—calm blue at peace, storm-gray in wrath.  \n**Personality:** Just, proud, and unwavering. Aurion is the arbiter of the heavens, representing both freedom and responsibility. He values truth, vigilance, and balance between the elements.  \n**Mythic Lore:**  \nWhen the world was young and chaos still reigned, Aurion rose from the first dawn to separate the sky from the sea. With a single breath, he gave form to the winds—four great currents that sweep the world’s corners. Legends say that thunder is his voice, calling order into the storm, while lightning is his spear striking against the forces of entropy.  \nHe is often invoked by sailors, shepherds, and kings, for his favor brings clear skies and protection from tempests. Yet when the world grows corrupt, his storms become punishment — a reminder that even the heavens must cleanse themselves.  \n**Worshippers:** Pilots, sailors, navigators, watchmen, and rulers.  \n**Holy Days:** _The Day of First Dawn_, celebrated at the year’s turning when the first sunrise is honored with skyfire lanterns and wind-sung prayers.",
+      "sections": {
+        "Overview": "# Aurion\n\n### **God of the Sky – Aurion, Lord of the Boundless Heavens**\n\n**Titles:** Skyfather, Keeper of the Winds, the Everwatcher, He Who Sees All Horizons  \n**Alignment:** Lawful Good / Neutral  \n**Domains:** Sky, Weather, Storms, Air, Order  \n**Symbol:** A silver sunburst behind a pair of outstretched wings  \n**Appearance:** Aurion is often depicted as a towering figure wreathed in flowing azure robes, his hair a crown of pale clouds streaked with lightning. His eyes shimmer like the open sky—calm blue at peace, storm-gray in wrath.  \n**Personality:** Just, proud, and unwavering. Aurion is the arbiter of the heavens, representing both freedom and responsibility. He values truth, vigilance, and balance between the elements.  \n**Mythic Lore:**  \nWhen the world was young and chaos still reigned, Aurion rose from the first dawn to separate the sky from the sea. With a single breath, he gave form to the winds—four great currents that sweep the world’s corners. Legends say that thunder is his voice, calling order into the storm, while lightning is his spear striking against the forces of entropy.  \nHe is often invoked by sailors, shepherds, and kings, for his favor brings clear skies and protection from tempests. Yet when the world grows corrupt, his storms become punishment — a reminder that even the heavens must cleanse themselves.  \n**Worshippers:** Pilots, sailors, navigators, watchmen, and rulers.  \n**Holy Days:** _The Day of First Dawn_, celebrated at the year’s turning when the first sunrise is honored with skyfire lanterns and wind-sung prayers."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** Skyfather, Keeper of the Winds, the Everwatcher, He Who Sees All Horizons **Alignment:** Lawful Good / Neutral **Domains:** Sky, Weather, Storms, Air, Order **Symbol:** A silver sunburst behind a pair of outstretched wings **Appearance:** Aurion is",
+      "metadata": {
+        "title": "Aurion",
+        "slug": "aurion",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of the Sky",
+        "divineDomain": "God of the Sky",
+        "domain": "God of the Sky",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Aurion - God of the Sky.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of the Sky",
+        "visibility": "public"
+      },
+      "searchTerms": "aurion religion aetherion pantheon {\"title\":\"aurion\",\"slug\":\"aurion\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of the sky\",\"divinedomain\":\"god of the sky\",\"domain\":\"god of the sky\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/aurion - god of the sky.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # aurion\n\n## overview\n### **god of the sky – aurion, lord of the boundless heavens**\n\n**titles:** skyfather, keeper of the winds, the everwatcher, he who sees all horizons  \n**alignment:** lawful good / neutral  \n**domains:** sky, weather, storms, air, order  \n**symbol:** a silver sunburst behind a pair of outstretched wings  \n**appearance:** aurion is often depicted as a towering figure wreathed in flowing azure robes, his hair a crown of pale clouds streaked with lightning. his eyes shimmer like the open sky—calm blue at peace, storm-gray in wrath.  \n**personality:** just, proud, and unwavering. aurion is the arbiter of the heavens, representing both freedom and responsibility. he values truth, vigilance, and balance between the elements.  \n**mythic lore:**  \nwhen the world was young and chaos still reigned, aurion rose from the first dawn to separate the sky from the sea. with a single breath, he gave form to the winds—four great currents that sweep the world’s corners. legends say that thunder is his voice, calling order into the storm, while lightning is his spear striking against the forces of entropy.  \nhe is often invoked by sailors, shepherds, and kings, for his favor brings clear skies and protection from tempests. yet when the world grows corrupt, his storms become punishment — a reminder that even the heavens must cleanse themselves.  \n**worshippers:** pilots, sailors, navigators, watchmen, and rulers.  \n**holy days:** _the day of first dawn_, celebrated at the year’s turning when the first sunrise is honored with skyfire lanterns and wind-sung prayers."
+    },
+    {
+      "id": "religion:content-theology-caelion-index",
+      "title": "Caelion",
+      "slug": "caelion",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/caelion",
+      "sourcePath": "content/theology/caelion/index.md",
+      "sourceFolder": "content/theology/caelion",
+      "content": "---\ntitle: \"Caelion\"\nslug: \"caelion\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Summer\"\ndivine_domain: \"God of Summer\"\ndomain: \"God of Summer\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Caelion - God of Summer.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Caelion\n\n## Overview\n### ☀️ **God of Summer — Caelion, the Unyielding Sun**\n\n**Titles:** The Bright Sovereign, Keeper of Days  \n**Symbol:** A golden disc with four rays  \n**Domains:** Growth, Vitality, Sunlight, Strength  \n**Depiction:** A tall, bronze-skinned man with eyes of burning gold, carrying a staff shaped like the sun’s rays.  \n**Lore:** Caelion governs the height of life’s vigor — crops ripen, rivers run deep, and beasts thrive beneath his light. Yet he is also relentless; too long in his season brings drought and exhaustion. His power is worshipped and feared in equal measure.\n",
+      "body": "# Caelion\n\n## Overview\n### ☀️ **God of Summer — Caelion, the Unyielding Sun**\n\n**Titles:** The Bright Sovereign, Keeper of Days  \n**Symbol:** A golden disc with four rays  \n**Domains:** Growth, Vitality, Sunlight, Strength  \n**Depiction:** A tall, bronze-skinned man with eyes of burning gold, carrying a staff shaped like the sun’s rays.  \n**Lore:** Caelion governs the height of life’s vigor — crops ripen, rivers run deep, and beasts thrive beneath his light. Yet he is also relentless; too long in his season brings drought and exhaustion. His power is worshipped and feared in equal measure.",
+      "sections": {
+        "Overview": "# Caelion\n\n### ☀️ **God of Summer — Caelion, the Unyielding Sun**\n\n**Titles:** The Bright Sovereign, Keeper of Days  \n**Symbol:** A golden disc with four rays  \n**Domains:** Growth, Vitality, Sunlight, Strength  \n**Depiction:** A tall, bronze-skinned man with eyes of burning gold, carrying a staff shaped like the sun’s rays.  \n**Lore:** Caelion governs the height of life’s vigor — crops ripen, rivers run deep, and beasts thrive beneath his light. Yet he is also relentless; too long in his season brings drought and exhaustion. His power is worshipped and feared in equal measure."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Bright Sovereign, Keeper of Days **Symbol:** A golden disc with four rays **Domains:** Growth, Vitality, Sunlight, Strength **Depiction:** A tall, bronze-skinned man with eyes of burning gold, carrying a staff shaped like the sun’s rays. **Lore",
+      "metadata": {
+        "title": "Caelion",
+        "slug": "caelion",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Summer",
+        "divineDomain": "God of Summer",
+        "domain": "God of Summer",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Caelion - God of Summer.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Summer",
+        "visibility": "public"
+      },
+      "searchTerms": "caelion religion aetherion pantheon {\"title\":\"caelion\",\"slug\":\"caelion\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of summer\",\"divinedomain\":\"god of summer\",\"domain\":\"god of summer\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/gods of the 4 seasons/caelion - god of summer.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # caelion\n\n## overview\n### ☀️ **god of summer — caelion, the unyielding sun**\n\n**titles:** the bright sovereign, keeper of days  \n**symbol:** a golden disc with four rays  \n**domains:** growth, vitality, sunlight, strength  \n**depiction:** a tall, bronze-skinned man with eyes of burning gold, carrying a staff shaped like the sun’s rays.  \n**lore:** caelion governs the height of life’s vigor — crops ripen, rivers run deep, and beasts thrive beneath his light. yet he is also relentless; too long in his season brings drought and exhaustion. his power is worshipped and feared in equal measure."
+    },
+    {
+      "id": "religion:content-theology-caenith-index",
+      "title": "Caenith",
+      "slug": "caenith",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/caenith",
+      "sourcePath": "content/theology/caenith/index.md",
+      "sourceFolder": "content/theology/caenith",
+      "content": "---\ntitle: \"Caenith\"\nslug: \"caenith\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Whispering Sea\"\ndivine_domain: \"Guardian Goddess of the Whispering Sea\"\ndomain: \"Guardian Goddess of the Whispering Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Caenith - Guardian Goddess of the Whispering Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Caenith\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Caenith\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Caenith\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Caenith",
+        "slug": "caenith",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Whispering Sea",
+        "divineDomain": "Guardian Goddess of the Whispering Sea",
+        "domain": "Guardian Goddess of the Whispering Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Caenith - Guardian Goddess of the Whispering Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Whispering Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "caenith religion aetherion pantheon {\"title\":\"caenith\",\"slug\":\"caenith\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the whispering sea\",\"divinedomain\":\"guardian goddess of the whispering sea\",\"domain\":\"guardian goddess of the whispering sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/caenith - guardian goddess of the whispering sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # caenith\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-day-and-sun-god-index",
+      "title": "Day and Sun God",
+      "slug": "day-and-sun-god",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/day-and-sun-god",
+      "sourcePath": "content/theology/day-and-sun-god/index.md",
+      "sourceFolder": "content/theology/day-and-sun-god",
+      "content": "---\ntitle: \"Day and Sun God\"\nslug: \"day-and-sun-god\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Dimur\"\ndivine_domain: \"Dimur\"\ndomain: \"Dimur\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Day and Sun God - Dimur.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Day and Sun God\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Day and Sun God\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Day and Sun God\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Day and Sun God",
+        "slug": "day-and-sun-god",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Dimur",
+        "divineDomain": "Dimur",
+        "domain": "Dimur",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Day and Sun God - Dimur.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Dimur",
+        "visibility": "public"
+      },
+      "searchTerms": "day and sun god religion aetherion pantheon {\"title\":\"day and sun god\",\"slug\":\"day-and-sun-god\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"dimur\",\"divinedomain\":\"dimur\",\"domain\":\"dimur\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/day and sun god - dimur.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # day and sun god\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-delmor-index",
+      "title": "Delmor",
+      "slug": "delmor",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/delmor",
+      "sourcePath": "content/theology/delmor/index.md",
+      "sourceFolder": "content/theology/delmor",
+      "content": "---\ntitle: \"Delmor\"\nslug: \"delmor\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Azure Sea\"\ndivine_domain: \"Guardian God of the Azure Sea\"\ndomain: \"Guardian God of the Azure Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Delmor - Guardian God of the Azure Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Delmor\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Delmor\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Delmor\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Delmor",
+        "slug": "delmor",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Azure Sea",
+        "divineDomain": "Guardian God of the Azure Sea",
+        "domain": "Guardian God of the Azure Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Delmor - Guardian God of the Azure Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Azure Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "delmor religion aetherion pantheon {\"title\":\"delmor\",\"slug\":\"delmor\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the azure sea\",\"divinedomain\":\"guardian god of the azure sea\",\"domain\":\"guardian god of the azure sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/delmor - guardian god of the azure sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # delmor\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-eryndor-index",
+      "title": "Eryndor",
+      "slug": "eryndor",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/eryndor",
+      "sourcePath": "content/theology/eryndor/index.md",
+      "sourceFolder": "content/theology/eryndor",
+      "content": "---\ntitle: \"Eryndor\"\nslug: \"eryndor\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Ashen Sea\"\ndivine_domain: \"Guardian God of the Ashen Sea\"\ndomain: \"Guardian God of the Ashen Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Eryndor - Guardian God of the Ashen Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Eryndor\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Eryndor\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Eryndor\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Eryndor",
+        "slug": "eryndor",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Ashen Sea",
+        "divineDomain": "Guardian God of the Ashen Sea",
+        "domain": "Guardian God of the Ashen Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Eryndor - Guardian God of the Ashen Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Ashen Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "eryndor religion aetherion pantheon {\"title\":\"eryndor\",\"slug\":\"eryndor\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the ashen sea\",\"divinedomain\":\"guardian god of the ashen sea\",\"domain\":\"guardian god of the ashen sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/eryndor - guardian god of the ashen sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # eryndor\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-eryon-index",
+      "title": "Eryon",
+      "slug": "eryon",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/eryon",
+      "sourcePath": "content/theology/eryon/index.md",
+      "sourceFolder": "content/theology/eryon",
+      "content": "---\ntitle: \"Eryon\"\nslug: \"eryon\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the East Wind\"\ndivine_domain: \"God of the East Wind\"\ndomain: \"God of the East Wind\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Eryon - God of the East Wind.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Eryon\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Eryon\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Eryon\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Eryon",
+        "slug": "eryon",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of the East Wind",
+        "divineDomain": "God of the East Wind",
+        "domain": "God of the East Wind",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Eryon - God of the East Wind.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of the East Wind",
+        "visibility": "public"
+      },
+      "searchTerms": "eryon religion aetherion pantheon {\"title\":\"eryon\",\"slug\":\"eryon\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of the east wind\",\"divinedomain\":\"god of the east wind\",\"domain\":\"god of the east wind\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' winds/eryon - god of the east wind.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # eryon\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-frya-index",
+      "title": "Frya",
+      "slug": "frya",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/frya",
+      "sourcePath": "content/theology/frya/index.md",
+      "sourceFolder": "content/theology/frya",
+      "content": "---\ntitle: \"Frya\"\nslug: \"frya\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of War, Strategy, Command\"\ndivine_domain: \"Goddess of War, Strategy, Command\"\ndomain: \"Goddess of War, Strategy, Command\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Frya - Goddess of War, Strategy, Command.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Frya\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Frya\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Frya\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Frya",
+        "slug": "frya",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of War, Strategy, Command",
+        "divineDomain": "Goddess of War, Strategy, Command",
+        "domain": "Goddess of War, Strategy, Command",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Frya - Goddess of War, Strategy, Command.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of War, Strategy, Command",
+        "visibility": "public"
+      },
+      "searchTerms": "frya religion aetherion pantheon {\"title\":\"frya\",\"slug\":\"frya\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of war, strategy, command\",\"divinedomain\":\"goddess of war, strategy, command\",\"domain\":\"goddess of war, strategy, command\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/frya - goddess of war, strategy, command.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # frya\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-hadran-index",
+      "title": "Hadran",
+      "slug": "hadran",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/hadran",
+      "sourcePath": "content/theology/hadran/index.md",
+      "sourceFolder": "content/theology/hadran",
+      "content": "---\ntitle: \"Hadran\"\nslug: \"hadran\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of smithing\"\ndivine_domain: \"God of smithing\"\ndomain: \"God of smithing\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Hadran - God of smithing.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Hadran\n\n## Overview\n## ⚒️ **Hadran, the Forge Father**\n\n**Titles:**  \nThe Eternal Smith • Lord of the Anvil • Flameforger • The Hammer of Creation\n\n**Pantheon:**  \nPantheon of Creation and Craft (connected to the Pantheon of Essence through Fire and Earth)\n\n**Alignment:**  \nLawful Neutral — creation through discipline and balance; destruction only as renewal\n\n**Domains:**  \nSmithing • Fire • Metal • Craft • Creation • Endurance • Labor • Oaths\n\n**Symbol:**  \nA hammer striking an anvil encircled by a ring of molten light — representing creation through will and pressure.\n\n**Appearance:**  \nHadran manifests as a towering figure of stone and steel, his skin cracked like cooling magma revealing ember veins beneath. His eyes burn like molten gold, and his beard glows faintly with forge sparks. He wears a heavy apron of darkened leather and carries his divine hammer _Volcaryn_, said to forge souls as easily as steel.\n\n**Personality:**  \nStoic, patient, and relentless — Hadran is the embodiment of perseverance. He values honest labor, discipline, and mastery of one’s craft. Though not quick to anger, his wrath is molten and enduring when roused. He believes that _all things worth having must be forged through struggle and heat._\n\n**Mythic Lore:**  \nAccording to legend, Hadran was born from the first clash between Fire and Earth — the molten blood of the world’s heart gave him form. He forged the first weapons for the gods during the Dawn Wars, shaping divine metal that could withstand celestial flame. It is said he forged the chains that bound the first Chaos Beast and the crown that sealed the pact between the gods of Essence and the mortal realms.\n\nHadran also forged the **Runes of Binding**, the magical script used by mortals to channel elemental essence into tools and weapons — making him indirectly the father of enchantment.\n\n**Worship:**  \nSmiths, craftsmen, miners, and warriors offer prayers to Hadran before working the forge or taking up arms. His temples are often built near volcanoes, mines, or great forges, with their altars being anvils warmed by eternal flame. Offerings often include finely crafted tools, rings of iron, or drops of blood — a symbol of devotion and effort.\n\n**Rituals:**\n\n- **The Hammerfall Rite:** At the start of each season, smiths strike their anvil three times and dedicate their first work to Hadran.\n    \n- **The Trial of Flame:** Apprentices must hold a heated ingot with tongs until they can shape it — symbolizing endurance through pain.\n    \n- **The Binding Oath:** Oaths of brotherhood, craftsmanship, or loyalty are sealed with a drop of molten iron upon a shared anvil.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His opposite and balancing force — their combined energies temper both flame and steel.\n    \n- **Thalmyr, God of Earth:** His brother and closest ally, they share dominion over minerals and metals.\n    \n- **Auralis, Goddess of Air:** Often in conflict, for wind cools his flame — yet he respects her freedom and creativity.\n    \n- **Malthera, Hellish Goddess:** Rumored to have once sought Hadran’s fire for forbidden crafting — a tale that ends differently depending on the region.\n    \n\n**Holy Day:**  \n**The Day of Embers (Mid-Year, 15th Sunfall):**  \nA festival of labor and craft where all forges are stoked continuously for 24 hours. During this time, it’s said Hadran walks the mortal realm in the guise of a humble smith, blessing those who work without rest or greed.\n",
+      "body": "# Hadran\n\n## Overview\n## ⚒️ **Hadran, the Forge Father**\n\n**Titles:**  \nThe Eternal Smith • Lord of the Anvil • Flameforger • The Hammer of Creation\n\n**Pantheon:**  \nPantheon of Creation and Craft (connected to the Pantheon of Essence through Fire and Earth)\n\n**Alignment:**  \nLawful Neutral — creation through discipline and balance; destruction only as renewal\n\n**Domains:**  \nSmithing • Fire • Metal • Craft • Creation • Endurance • Labor • Oaths\n\n**Symbol:**  \nA hammer striking an anvil encircled by a ring of molten light — representing creation through will and pressure.\n\n**Appearance:**  \nHadran manifests as a towering figure of stone and steel, his skin cracked like cooling magma revealing ember veins beneath. His eyes burn like molten gold, and his beard glows faintly with forge sparks. He wears a heavy apron of darkened leather and carries his divine hammer _Volcaryn_, said to forge souls as easily as steel.\n\n**Personality:**  \nStoic, patient, and relentless — Hadran is the embodiment of perseverance. He values honest labor, discipline, and mastery of one’s craft. Though not quick to anger, his wrath is molten and enduring when roused. He believes that _all things worth having must be forged through struggle and heat._\n\n**Mythic Lore:**  \nAccording to legend, Hadran was born from the first clash between Fire and Earth — the molten blood of the world’s heart gave him form. He forged the first weapons for the gods during the Dawn Wars, shaping divine metal that could withstand celestial flame. It is said he forged the chains that bound the first Chaos Beast and the crown that sealed the pact between the gods of Essence and the mortal realms.\n\nHadran also forged the **Runes of Binding**, the magical script used by mortals to channel elemental essence into tools and weapons — making him indirectly the father of enchantment.\n\n**Worship:**  \nSmiths, craftsmen, miners, and warriors offer prayers to Hadran before working the forge or taking up arms. His temples are often built near volcanoes, mines, or great forges, with their altars being anvils warmed by eternal flame. Offerings often include finely crafted tools, rings of iron, or drops of blood — a symbol of devotion and effort.\n\n**Rituals:**\n\n- **The Hammerfall Rite:** At the start of each season, smiths strike their anvil three times and dedicate their first work to Hadran.\n    \n- **The Trial of Flame:** Apprentices must hold a heated ingot with tongs until they can shape it — symbolizing endurance through pain.\n    \n- **The Binding Oath:** Oaths of brotherhood, craftsmanship, or loyalty are sealed with a drop of molten iron upon a shared anvil.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His opposite and balancing force — their combined energies temper both flame and steel.\n    \n- **Thalmyr, God of Earth:** His brother and closest ally, they share dominion over minerals and metals.\n    \n- **Auralis, Goddess of Air:** Often in conflict, for wind cools his flame — yet he respects her freedom and creativity.\n    \n- **Malthera, Hellish Goddess:** Rumored to have once sought Hadran’s fire for forbidden crafting — a tale that ends differently depending on the region.\n    \n\n**Holy Day:**  \n**The Day of Embers (Mid-Year, 15th Sunfall):**  \nA festival of labor and craft where all forges are stoked continuously for 24 hours. During this time, it’s said Hadran walks the mortal realm in the guise of a humble smith, blessing those who work without rest or greed.",
+      "sections": {
+        "Overview": "# Hadran",
+        "⚒️ **Hadran, the Forge Father**": "**Titles:**  \nThe Eternal Smith • Lord of the Anvil • Flameforger • The Hammer of Creation\n\n**Pantheon:**  \nPantheon of Creation and Craft (connected to the Pantheon of Essence through Fire and Earth)\n\n**Alignment:**  \nLawful Neutral — creation through discipline and balance; destruction only as renewal\n\n**Domains:**  \nSmithing • Fire • Metal • Craft • Creation • Endurance • Labor • Oaths\n\n**Symbol:**  \nA hammer striking an anvil encircled by a ring of molten light — representing creation through will and pressure.\n\n**Appearance:**  \nHadran manifests as a towering figure of stone and steel, his skin cracked like cooling magma revealing ember veins beneath. His eyes burn like molten gold, and his beard glows faintly with forge sparks. He wears a heavy apron of darkened leather and carries his divine hammer _Volcaryn_, said to forge souls as easily as steel.\n\n**Personality:**  \nStoic, patient, and relentless — Hadran is the embodiment of perseverance. He values honest labor, discipline, and mastery of one’s craft. Though not quick to anger, his wrath is molten and enduring when roused. He believes that _all things worth having must be forged through struggle and heat._\n\n**Mythic Lore:**  \nAccording to legend, Hadran was born from the first clash between Fire and Earth — the molten blood of the world’s heart gave him form. He forged the first weapons for the gods during the Dawn Wars, shaping divine metal that could withstand celestial flame. It is said he forged the chains that bound the first Chaos Beast and the crown that sealed the pact between the gods of Essence and the mortal realms.\n\nHadran also forged the **Runes of Binding**, the magical script used by mortals to channel elemental essence into tools and weapons — making him indirectly the father of enchantment.\n\n**Worship:**  \nSmiths, craftsmen, miners, and warriors offer prayers to Hadran before working the forge or taking up arms. His temples are often built near volcanoes, mines, or great forges, with their altars being anvils warmed by eternal flame. Offerings often include finely crafted tools, rings of iron, or drops of blood — a symbol of devotion and effort.\n\n**Rituals:**\n\n- **The Hammerfall Rite:** At the start of each season, smiths strike their anvil three times and dedicate their first work to Hadran.\n    \n- **The Trial of Flame:** Apprentices must hold a heated ingot with tongs until they can shape it — symbolizing endurance through pain.\n    \n- **The Binding Oath:** Oaths of brotherhood, craftsmanship, or loyalty are sealed with a drop of molten iron upon a shared anvil.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His opposite and balancing force — their combined energies temper both flame and steel.\n    \n- **Thalmyr, God of Earth:** His brother and closest ally, they share dominion over minerals and metals.\n    \n- **Auralis, Goddess of Air:** Often in conflict, for wind cools his flame — yet he respects her freedom and creativity.\n    \n- **Malthera, Hellish Goddess:** Rumored to have once sought Hadran’s fire for forbidden crafting — a tale that ends differently depending on the region.\n    \n\n**Holy Day:**  \n**The Day of Embers (Mid-Year, 15th Sunfall):**  \nA festival of labor and craft where all forges are stoked continuously for 24 hours. During this time, it’s said Hadran walks the mortal realm in the guise of a humble smith, blessing those who work without rest or greed."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Eternal Smith • Lord of the Anvil • Flameforger • The Hammer of Creation **Pantheon:** Pantheon of Creation and Craft (connected to the Pantheon of Essence through Fire and Earth) **Alignment:** Lawful Neutral — creation through discipline and ",
+      "metadata": {
+        "title": "Hadran",
+        "slug": "hadran",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of smithing",
+        "divineDomain": "God of smithing",
+        "domain": "God of smithing",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Hadran - God of smithing.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of smithing",
+        "visibility": "public"
+      },
+      "searchTerms": "hadran religion aetherion pantheon {\"title\":\"hadran\",\"slug\":\"hadran\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of smithing\",\"divinedomain\":\"god of smithing\",\"domain\":\"god of smithing\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/hadran - god of smithing.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # hadran\n\n## overview\n## ⚒️ **hadran, the forge father**\n\n**titles:**  \nthe eternal smith • lord of the anvil • flameforger • the hammer of creation\n\n**pantheon:**  \npantheon of creation and craft (connected to the pantheon of essence through fire and earth)\n\n**alignment:**  \nlawful neutral — creation through discipline and balance; destruction only as renewal\n\n**domains:**  \nsmithing • fire • metal • craft • creation • endurance • labor • oaths\n\n**symbol:**  \na hammer striking an anvil encircled by a ring of molten light — representing creation through will and pressure.\n\n**appearance:**  \nhadran manifests as a towering figure of stone and steel, his skin cracked like cooling magma revealing ember veins beneath. his eyes burn like molten gold, and his beard glows faintly with forge sparks. he wears a heavy apron of darkened leather and carries his divine hammer _volcaryn_, said to forge souls as easily as steel.\n\n**personality:**  \nstoic, patient, and relentless — hadran is the embodiment of perseverance. he values honest labor, discipline, and mastery of one’s craft. though not quick to anger, his wrath is molten and enduring when roused. he believes that _all things worth having must be forged through struggle and heat._\n\n**mythic lore:**  \naccording to legend, hadran was born from the first clash between fire and earth — the molten blood of the world’s heart gave him form. he forged the first weapons for the gods during the dawn wars, shaping divine metal that could withstand celestial flame. it is said he forged the chains that bound the first chaos beast and the crown that sealed the pact between the gods of essence and the mortal realms.\n\nhadran also forged the **runes of binding**, the magical script used by mortals to channel elemental essence into tools and weapons — making him indirectly the father of enchantment.\n\n**worship:**  \nsmiths, craftsmen, miners, and warriors offer prayers to hadran before working the forge or taking up arms. his temples are often built near volcanoes, mines, or great forges, with their altars being anvils warmed by eternal flame. offerings often include finely crafted tools, rings of iron, or drops of blood — a symbol of devotion and effort.\n\n**rituals:**\n\n- **the hammerfall rite:** at the start of each season, smiths strike their anvil three times and dedicate their first work to hadran.\n    \n- **the trial of flame:** apprentices must hold a heated ingot with tongs until they can shape it — symbolizing endurance through pain.\n    \n- **the binding oath:** oaths of brotherhood, craftsmanship, or loyalty are sealed with a drop of molten iron upon a shared anvil.\n    \n\n**relationships:**\n\n- **sirona, goddess of water:** his opposite and balancing force — their combined energies temper both flame and steel.\n    \n- **thalmyr, god of earth:** his brother and closest ally, they share dominion over minerals and metals.\n    \n- **auralis, goddess of air:** often in conflict, for wind cools his flame — yet he respects her freedom and creativity.\n    \n- **malthera, hellish goddess:** rumored to have once sought hadran’s fire for forbidden crafting — a tale that ends differently depending on the region.\n    \n\n**holy day:**  \n**the day of embers (mid-year, 15th sunfall):**  \na festival of labor and craft where all forges are stoked continuously for 24 hours. during this time, it’s said hadran walks the mortal realm in the guise of a humble smith, blessing those who work without rest or greed."
+    },
+    {
+      "id": "religion:content-theology-irisyn-index",
+      "title": "Irisyn",
+      "slug": "irisyn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/irisyn",
+      "sourcePath": "content/theology/irisyn/index.md",
+      "sourceFolder": "content/theology/irisyn",
+      "content": "---\ntitle: \"Irisyn\"\nslug: \"irisyn\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Azure Sea\"\ndivine_domain: \"Guardian Goddess of the Azure Sea\"\ndomain: \"Guardian Goddess of the Azure Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Irisyn - Guardian Goddess of the Azure Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Irisyn\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Irisyn\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Irisyn\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Irisyn",
+        "slug": "irisyn",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Azure Sea",
+        "divineDomain": "Guardian Goddess of the Azure Sea",
+        "domain": "Guardian Goddess of the Azure Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Irisyn - Guardian Goddess of the Azure Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Azure Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "irisyn religion aetherion pantheon {\"title\":\"irisyn\",\"slug\":\"irisyn\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the azure sea\",\"divinedomain\":\"guardian goddess of the azure sea\",\"domain\":\"guardian goddess of the azure sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/irisyn - guardian goddess of the azure sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # irisyn\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-isera-index",
+      "title": "Isera",
+      "slug": "isera",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/isera",
+      "sourcePath": "content/theology/isera/index.md",
+      "sourceFolder": "content/theology/isera",
+      "content": "---\ntitle: \"Isera\"\nslug: \"isera\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Writing and Calligraphy\"\ndivine_domain: \"Goddess of Writing and Calligraphy\"\ndomain: \"Goddess of Writing and Calligraphy\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Isera - Goddess of Writing and Calligraphy.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Isera\n\n## Overview\n**Titles:**  \nThe Silent Quill • Mistress of Script • The Word Eternal • Keeper of Names\n\n**Pantheon:**  \nPantheon of Knowledge and Craft (often associated with the Pantheon of Creation through artistry and record-keeping)\n\n**Alignment:**  \nNeutral Good — she values truth, knowledge, and the beauty of expression, but abhors lies written into permanence.\n\n**Domains:**  \nWriting • Knowledge • Language • Memory • Art • History • Communication • Inspiration\n\n**Symbol:**  \nAn open scroll encircled by a flowing quill, with a single drop of ink falling from its tip — representing the moment where thought becomes form.\n\n**Appearance:**  \nElyndra appears as a serene woman cloaked in silken robes inscribed with living words that shimmer faintly in gold and silver ink. Her eyes are pale blue, resembling parchment illuminated by morning light, and her hair flows like liquid ink, shifting between black, violet, and deep blue hues. Her hands are always slightly stained with ink, even in divine form.\n\n**Personality:**  \nQuiet yet infinitely perceptive, Elyndra speaks only when her words carry weight. She is patient, graceful, and endlessly curious — the guardian of mortal memory and divine truth. While she cherishes creativity and poetic expression, she detests careless words, deceitful writings, or the destruction of recorded wisdom.\n\n**Mythic Lore:**  \nElyndra is said to have been born from the first thought spoken into existence by the gods — a whisper carried on the wind and captured in ink. She crafted the **Script of Creation**, a sacred form of writing capable of binding reality to words. It is said that even gods use fragments of her divine alphabet when shaping mortal destiny.\n\nWhen mortals first began to paint symbols and letters, Elyndra gifted them **The Quill of Breath**, teaching them that stories, when written, can outlast death itself. Some myths claim she transcribes the deeds of gods and mortals alike into the **Book of Endless Dawn**, which records the fates of all who have lived.\n\n**Worship:**  \nScribes, scholars, poets, historians, and artists honor Elyndra. Temples devoted to her often double as libraries, scriptoria, or academies. Offerings of ink, parchment, and completed works are made at her altars, where worshippers recite verses or write prayers rather than speak them aloud.\n\n**Rituals:**\n\n- **The Quill’s Blessing:** Before beginning any written work, a scribe dips their quill in ink and draws a spiral — the mark of Elyndra — in the air.\n    \n- **Day of Ink and Silence:** Once per season, followers refrain from speech and communicate only through writing to honor the power of the written word.\n    \n- **The Binding Script:** Oaths, treaties, or spells are inscribed in Elyndra’s name, as her script carries divine witness.\n    \n\n**Relationships:**\n\n- **Vaelion, God of Time & Space:** Close allies — she records time’s flow while he shapes its path.\n    \n- **Hadran, God of Smithing:** They share respect — she inscribes the names of the divine artifacts he forges.\n    \n- **Celest, Goddess of the Celestial:** Her writings are said to form the constellations; stars are the words of Elyndra etched into the heavens.\n    \n- **Malthera, Hellish Goddess:** Bitter rivals; Malthera corrupts words into temptation, twisting meaning, while Elyndra guards truth and clarity.\n    \n\n**Holy Day:**  \n**The Day of the Quill (First Moon of Spring):**  \nA festival celebrating creativity and the recording of new beginnings. All writing instruments are sanctified, and scribes compete to create the most beautiful script or verse dedicated to Elyndra.\n",
+      "body": "# Isera\n\n## Overview\n**Titles:**  \nThe Silent Quill • Mistress of Script • The Word Eternal • Keeper of Names\n\n**Pantheon:**  \nPantheon of Knowledge and Craft (often associated with the Pantheon of Creation through artistry and record-keeping)\n\n**Alignment:**  \nNeutral Good — she values truth, knowledge, and the beauty of expression, but abhors lies written into permanence.\n\n**Domains:**  \nWriting • Knowledge • Language • Memory • Art • History • Communication • Inspiration\n\n**Symbol:**  \nAn open scroll encircled by a flowing quill, with a single drop of ink falling from its tip — representing the moment where thought becomes form.\n\n**Appearance:**  \nElyndra appears as a serene woman cloaked in silken robes inscribed with living words that shimmer faintly in gold and silver ink. Her eyes are pale blue, resembling parchment illuminated by morning light, and her hair flows like liquid ink, shifting between black, violet, and deep blue hues. Her hands are always slightly stained with ink, even in divine form.\n\n**Personality:**  \nQuiet yet infinitely perceptive, Elyndra speaks only when her words carry weight. She is patient, graceful, and endlessly curious — the guardian of mortal memory and divine truth. While she cherishes creativity and poetic expression, she detests careless words, deceitful writings, or the destruction of recorded wisdom.\n\n**Mythic Lore:**  \nElyndra is said to have been born from the first thought spoken into existence by the gods — a whisper carried on the wind and captured in ink. She crafted the **Script of Creation**, a sacred form of writing capable of binding reality to words. It is said that even gods use fragments of her divine alphabet when shaping mortal destiny.\n\nWhen mortals first began to paint symbols and letters, Elyndra gifted them **The Quill of Breath**, teaching them that stories, when written, can outlast death itself. Some myths claim she transcribes the deeds of gods and mortals alike into the **Book of Endless Dawn**, which records the fates of all who have lived.\n\n**Worship:**  \nScribes, scholars, poets, historians, and artists honor Elyndra. Temples devoted to her often double as libraries, scriptoria, or academies. Offerings of ink, parchment, and completed works are made at her altars, where worshippers recite verses or write prayers rather than speak them aloud.\n\n**Rituals:**\n\n- **The Quill’s Blessing:** Before beginning any written work, a scribe dips their quill in ink and draws a spiral — the mark of Elyndra — in the air.\n    \n- **Day of Ink and Silence:** Once per season, followers refrain from speech and communicate only through writing to honor the power of the written word.\n    \n- **The Binding Script:** Oaths, treaties, or spells are inscribed in Elyndra’s name, as her script carries divine witness.\n    \n\n**Relationships:**\n\n- **Vaelion, God of Time & Space:** Close allies — she records time’s flow while he shapes its path.\n    \n- **Hadran, God of Smithing:** They share respect — she inscribes the names of the divine artifacts he forges.\n    \n- **Celest, Goddess of the Celestial:** Her writings are said to form the constellations; stars are the words of Elyndra etched into the heavens.\n    \n- **Malthera, Hellish Goddess:** Bitter rivals; Malthera corrupts words into temptation, twisting meaning, while Elyndra guards truth and clarity.\n    \n\n**Holy Day:**  \n**The Day of the Quill (First Moon of Spring):**  \nA festival celebrating creativity and the recording of new beginnings. All writing instruments are sanctified, and scribes compete to create the most beautiful script or verse dedicated to Elyndra.",
+      "sections": {
+        "Overview": "# Isera\n\n**Titles:**  \nThe Silent Quill • Mistress of Script • The Word Eternal • Keeper of Names\n\n**Pantheon:**  \nPantheon of Knowledge and Craft (often associated with the Pantheon of Creation through artistry and record-keeping)\n\n**Alignment:**  \nNeutral Good — she values truth, knowledge, and the beauty of expression, but abhors lies written into permanence.\n\n**Domains:**  \nWriting • Knowledge • Language • Memory • Art • History • Communication • Inspiration\n\n**Symbol:**  \nAn open scroll encircled by a flowing quill, with a single drop of ink falling from its tip — representing the moment where thought becomes form.\n\n**Appearance:**  \nElyndra appears as a serene woman cloaked in silken robes inscribed with living words that shimmer faintly in gold and silver ink. Her eyes are pale blue, resembling parchment illuminated by morning light, and her hair flows like liquid ink, shifting between black, violet, and deep blue hues. Her hands are always slightly stained with ink, even in divine form.\n\n**Personality:**  \nQuiet yet infinitely perceptive, Elyndra speaks only when her words carry weight. She is patient, graceful, and endlessly curious — the guardian of mortal memory and divine truth. While she cherishes creativity and poetic expression, she detests careless words, deceitful writings, or the destruction of recorded wisdom.\n\n**Mythic Lore:**  \nElyndra is said to have been born from the first thought spoken into existence by the gods — a whisper carried on the wind and captured in ink. She crafted the **Script of Creation**, a sacred form of writing capable of binding reality to words. It is said that even gods use fragments of her divine alphabet when shaping mortal destiny.\n\nWhen mortals first began to paint symbols and letters, Elyndra gifted them **The Quill of Breath**, teaching them that stories, when written, can outlast death itself. Some myths claim she transcribes the deeds of gods and mortals alike into the **Book of Endless Dawn**, which records the fates of all who have lived.\n\n**Worship:**  \nScribes, scholars, poets, historians, and artists honor Elyndra. Temples devoted to her often double as libraries, scriptoria, or academies. Offerings of ink, parchment, and completed works are made at her altars, where worshippers recite verses or write prayers rather than speak them aloud.\n\n**Rituals:**\n\n- **The Quill’s Blessing:** Before beginning any written work, a scribe dips their quill in ink and draws a spiral — the mark of Elyndra — in the air.\n    \n- **Day of Ink and Silence:** Once per season, followers refrain from speech and communicate only through writing to honor the power of the written word.\n    \n- **The Binding Script:** Oaths, treaties, or spells are inscribed in Elyndra’s name, as her script carries divine witness.\n    \n\n**Relationships:**\n\n- **Vaelion, God of Time & Space:** Close allies — she records time’s flow while he shapes its path.\n    \n- **Hadran, God of Smithing:** They share respect — she inscribes the names of the divine artifacts he forges.\n    \n- **Celest, Goddess of the Celestial:** Her writings are said to form the constellations; stars are the words of Elyndra etched into the heavens.\n    \n- **Malthera, Hellish Goddess:** Bitter rivals; Malthera corrupts words into temptation, twisting meaning, while Elyndra guards truth and clarity.\n    \n\n**Holy Day:**  \n**The Day of the Quill (First Moon of Spring):**  \nA festival celebrating creativity and the recording of new beginnings. All writing instruments are sanctified, and scribes compete to create the most beautiful script or verse dedicated to Elyndra."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Silent Quill • Mistress of Script • The Word Eternal • Keeper of Names **Pantheon:** Pantheon of Knowledge and Craft (often associated with the Pantheon of Creation through artistry and record-keeping) **Alignment:** Neutral Good — she values t",
+      "metadata": {
+        "title": "Isera",
+        "slug": "isera",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Writing and Calligraphy",
+        "divineDomain": "Goddess of Writing and Calligraphy",
+        "domain": "Goddess of Writing and Calligraphy",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Isera - Goddess of Writing and Calligraphy.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Writing and Calligraphy",
+        "visibility": "public"
+      },
+      "searchTerms": "isera religion aetherion pantheon {\"title\":\"isera\",\"slug\":\"isera\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of writing and calligraphy\",\"divinedomain\":\"goddess of writing and calligraphy\",\"domain\":\"goddess of writing and calligraphy\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/isera - goddess of writing and calligraphy.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # isera\n\n## overview\n**titles:**  \nthe silent quill • mistress of script • the word eternal • keeper of names\n\n**pantheon:**  \npantheon of knowledge and craft (often associated with the pantheon of creation through artistry and record-keeping)\n\n**alignment:**  \nneutral good — she values truth, knowledge, and the beauty of expression, but abhors lies written into permanence.\n\n**domains:**  \nwriting • knowledge • language • memory • art • history • communication • inspiration\n\n**symbol:**  \nan open scroll encircled by a flowing quill, with a single drop of ink falling from its tip — representing the moment where thought becomes form.\n\n**appearance:**  \nelyndra appears as a serene woman cloaked in silken robes inscribed with living words that shimmer faintly in gold and silver ink. her eyes are pale blue, resembling parchment illuminated by morning light, and her hair flows like liquid ink, shifting between black, violet, and deep blue hues. her hands are always slightly stained with ink, even in divine form.\n\n**personality:**  \nquiet yet infinitely perceptive, elyndra speaks only when her words carry weight. she is patient, graceful, and endlessly curious — the guardian of mortal memory and divine truth. while she cherishes creativity and poetic expression, she detests careless words, deceitful writings, or the destruction of recorded wisdom.\n\n**mythic lore:**  \nelyndra is said to have been born from the first thought spoken into existence by the gods — a whisper carried on the wind and captured in ink. she crafted the **script of creation**, a sacred form of writing capable of binding reality to words. it is said that even gods use fragments of her divine alphabet when shaping mortal destiny.\n\nwhen mortals first began to paint symbols and letters, elyndra gifted them **the quill of breath**, teaching them that stories, when written, can outlast death itself. some myths claim she transcribes the deeds of gods and mortals alike into the **book of endless dawn**, which records the fates of all who have lived.\n\n**worship:**  \nscribes, scholars, poets, historians, and artists honor elyndra. temples devoted to her often double as libraries, scriptoria, or academies. offerings of ink, parchment, and completed works are made at her altars, where worshippers recite verses or write prayers rather than speak them aloud.\n\n**rituals:**\n\n- **the quill’s blessing:** before beginning any written work, a scribe dips their quill in ink and draws a spiral — the mark of elyndra — in the air.\n    \n- **day of ink and silence:** once per season, followers refrain from speech and communicate only through writing to honor the power of the written word.\n    \n- **the binding script:** oaths, treaties, or spells are inscribed in elyndra’s name, as her script carries divine witness.\n    \n\n**relationships:**\n\n- **vaelion, god of time & space:** close allies — she records time’s flow while he shapes its path.\n    \n- **hadran, god of smithing:** they share respect — she inscribes the names of the divine artifacts he forges.\n    \n- **celest, goddess of the celestial:** her writings are said to form the constellations; stars are the words of elyndra etched into the heavens.\n    \n- **malthera, hellish goddess:** bitter rivals; malthera corrupts words into temptation, twisting meaning, while elyndra guards truth and clarity.\n    \n\n**holy day:**  \n**the day of the quill (first moon of spring):**  \na festival celebrating creativity and the recording of new beginnings. all writing instruments are sanctified, and scribes compete to create the most beautiful script or verse dedicated to elyndra."
+    },
+    {
+      "id": "religion:content-theology-kaelun-index",
+      "title": "Kaelun",
+      "slug": "kaelun",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/kaelun",
+      "sourcePath": "content/theology/kaelun/index.md",
+      "sourceFolder": "content/theology/kaelun",
+      "content": "---\ntitle: \"Kaelun\"\nslug: \"kaelun\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Craft and Creation\"\ndivine_domain: \"God of Craft and Creation\"\ndomain: \"God of Craft and Creation\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Kaelun - God of Craft and Creation.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Kaelun\n\n## Overview\n## 🔨 **Kaelun, the Shaper of Worlds**\n\n**Titles:**  \nThe Divine Artisan • Father of Hands • The Eternal Smith • Maker of Forms • The Forge-Soul\n\n**Pantheon:**  \nPantheon of Creation (High God) — often revered as the progenitor of all craftsmanship, artistry, and material creation across the realms.\n\n**Alignment:**  \nLawful Neutral — he values perfection, structure, and discipline in all works, yet allows freedom of expression to those who truly master their craft.\n\n**Domains:**  \nCreation • Craftsmanship • Art • Invention • Earth • Fire • Perfection • Inspiration\n\n**Symbol:**  \nA hammer and chisel crossing over a radiant sunburst — representing divine creation forged through skill and illumination.\n\n**Appearance:**  \nKaelun appears as a towering figure of bronze and marble, his skin etched with glowing runes that pulse like molten metal. His eyes shimmer with the brilliance of a forge-fire, and his beard flows like molten gold. He wears an apron of starlight and iron, and his hands always bear traces of soot, symbolizing eternal labor.\n\n**Personality:**  \nKaelun is patient but unyielding, a stern teacher and perfectionist. He demands excellence from those who call themselves artisans, yet rewards dedication and innovation. To him, every creation — from the smallest trinket to the greatest mountain — reflects divine essence. Though slow to anger, he is furious when creation is misused for destruction or vanity.\n\n**Mythic Lore:**  \nKaelun is said to have forged the **First Flame**, from which the sun and stars were kindled. With that same flame, he shaped the bones of the world — mountains, minerals, and the tools of mortals.  \nFrom his anvil came the first gods of craft and nature, born of sparks that fell from his hammer.  \nIt is told that Kaelun once competed with **Vaelion, God of Time and Space**, to craft the most enduring creation. Kaelun forged the **Worldforge**, the heart of reality itself — a divine anvil said to beat in the center of Astria.\n\nHis forges burn in every realm, hidden or known, and when a craftsman creates something of true genius, it is said that Kaelun’s shadow falls across their workbench.\n\n**Worship:**  \nSmiths, artisans, inventors, and builders all worship Kaelun. His temples are often grand workshops filled with forges, anvils, and sacred tools rather than idols. Priests of Kaelun are known as **Forgemasters**, and they wear aprons instead of robes. Offerings of raw materials — unworked metal, stone, or wood — are left at his altars, to be “perfected in divine hands.”\n\n**Rituals:**\n\n- **The Ember Rite:** Before beginning any new creation, a small flame is lit and a prayer whispered into it: “From spark to form, may Kaelun guide my hand.”\n    \n- **The Tempering:** Once a year, craftsmen immerse their tools in sacred fire or blessed water to renew their bond with Kaelun.\n    \n- **The Sevenfold Strike:** A ceremonial hammering performed by Forgemasters to bless newly built structures or weapons.\n    \n\n**Relationships:**\n\n- **Hadran, God of Smithing:** His favored son and apprentice — Hadran continues Kaelun’s legacy among mortals.\n    \n- **Elyndra, Goddess of Writing:** Close ally — she records the divine blueprints of his creations.\n    \n- **Auralis, Goddess of the Air:** Her winds cool his forges and spread his inspiration.\n    \n- **Vaelion, God of Time and Space:** Respectful rivals — creation and time are forever intertwined in their contests.\n    \n- **Malthera and Azrakar, Gods of the Netherworld:** Detested enemies; they twist his creations into forms of torment and decay.\n    \n\n**Holy Day:**  \n**The Day of the Forge (Summer Solstice):**  \nA great festival where forges across the world burn through the night. Artisans unveil their finest works, offering them to Kaelun before selling or gifting them. It is said that any tool blessed on this day never breaks.\n",
+      "body": "# Kaelun\n\n## Overview\n## 🔨 **Kaelun, the Shaper of Worlds**\n\n**Titles:**  \nThe Divine Artisan • Father of Hands • The Eternal Smith • Maker of Forms • The Forge-Soul\n\n**Pantheon:**  \nPantheon of Creation (High God) — often revered as the progenitor of all craftsmanship, artistry, and material creation across the realms.\n\n**Alignment:**  \nLawful Neutral — he values perfection, structure, and discipline in all works, yet allows freedom of expression to those who truly master their craft.\n\n**Domains:**  \nCreation • Craftsmanship • Art • Invention • Earth • Fire • Perfection • Inspiration\n\n**Symbol:**  \nA hammer and chisel crossing over a radiant sunburst — representing divine creation forged through skill and illumination.\n\n**Appearance:**  \nKaelun appears as a towering figure of bronze and marble, his skin etched with glowing runes that pulse like molten metal. His eyes shimmer with the brilliance of a forge-fire, and his beard flows like molten gold. He wears an apron of starlight and iron, and his hands always bear traces of soot, symbolizing eternal labor.\n\n**Personality:**  \nKaelun is patient but unyielding, a stern teacher and perfectionist. He demands excellence from those who call themselves artisans, yet rewards dedication and innovation. To him, every creation — from the smallest trinket to the greatest mountain — reflects divine essence. Though slow to anger, he is furious when creation is misused for destruction or vanity.\n\n**Mythic Lore:**  \nKaelun is said to have forged the **First Flame**, from which the sun and stars were kindled. With that same flame, he shaped the bones of the world — mountains, minerals, and the tools of mortals.  \nFrom his anvil came the first gods of craft and nature, born of sparks that fell from his hammer.  \nIt is told that Kaelun once competed with **Vaelion, God of Time and Space**, to craft the most enduring creation. Kaelun forged the **Worldforge**, the heart of reality itself — a divine anvil said to beat in the center of Astria.\n\nHis forges burn in every realm, hidden or known, and when a craftsman creates something of true genius, it is said that Kaelun’s shadow falls across their workbench.\n\n**Worship:**  \nSmiths, artisans, inventors, and builders all worship Kaelun. His temples are often grand workshops filled with forges, anvils, and sacred tools rather than idols. Priests of Kaelun are known as **Forgemasters**, and they wear aprons instead of robes. Offerings of raw materials — unworked metal, stone, or wood — are left at his altars, to be “perfected in divine hands.”\n\n**Rituals:**\n\n- **The Ember Rite:** Before beginning any new creation, a small flame is lit and a prayer whispered into it: “From spark to form, may Kaelun guide my hand.”\n    \n- **The Tempering:** Once a year, craftsmen immerse their tools in sacred fire or blessed water to renew their bond with Kaelun.\n    \n- **The Sevenfold Strike:** A ceremonial hammering performed by Forgemasters to bless newly built structures or weapons.\n    \n\n**Relationships:**\n\n- **Hadran, God of Smithing:** His favored son and apprentice — Hadran continues Kaelun’s legacy among mortals.\n    \n- **Elyndra, Goddess of Writing:** Close ally — she records the divine blueprints of his creations.\n    \n- **Auralis, Goddess of the Air:** Her winds cool his forges and spread his inspiration.\n    \n- **Vaelion, God of Time and Space:** Respectful rivals — creation and time are forever intertwined in their contests.\n    \n- **Malthera and Azrakar, Gods of the Netherworld:** Detested enemies; they twist his creations into forms of torment and decay.\n    \n\n**Holy Day:**  \n**The Day of the Forge (Summer Solstice):**  \nA great festival where forges across the world burn through the night. Artisans unveil their finest works, offering them to Kaelun before selling or gifting them. It is said that any tool blessed on this day never breaks.",
+      "sections": {
+        "Overview": "# Kaelun",
+        "🔨 **Kaelun, the Shaper of Worlds**": "**Titles:**  \nThe Divine Artisan • Father of Hands • The Eternal Smith • Maker of Forms • The Forge-Soul\n\n**Pantheon:**  \nPantheon of Creation (High God) — often revered as the progenitor of all craftsmanship, artistry, and material creation across the realms.\n\n**Alignment:**  \nLawful Neutral — he values perfection, structure, and discipline in all works, yet allows freedom of expression to those who truly master their craft.\n\n**Domains:**  \nCreation • Craftsmanship • Art • Invention • Earth • Fire • Perfection • Inspiration\n\n**Symbol:**  \nA hammer and chisel crossing over a radiant sunburst — representing divine creation forged through skill and illumination.\n\n**Appearance:**  \nKaelun appears as a towering figure of bronze and marble, his skin etched with glowing runes that pulse like molten metal. His eyes shimmer with the brilliance of a forge-fire, and his beard flows like molten gold. He wears an apron of starlight and iron, and his hands always bear traces of soot, symbolizing eternal labor.\n\n**Personality:**  \nKaelun is patient but unyielding, a stern teacher and perfectionist. He demands excellence from those who call themselves artisans, yet rewards dedication and innovation. To him, every creation — from the smallest trinket to the greatest mountain — reflects divine essence. Though slow to anger, he is furious when creation is misused for destruction or vanity.\n\n**Mythic Lore:**  \nKaelun is said to have forged the **First Flame**, from which the sun and stars were kindled. With that same flame, he shaped the bones of the world — mountains, minerals, and the tools of mortals.  \nFrom his anvil came the first gods of craft and nature, born of sparks that fell from his hammer.  \nIt is told that Kaelun once competed with **Vaelion, God of Time and Space**, to craft the most enduring creation. Kaelun forged the **Worldforge**, the heart of reality itself — a divine anvil said to beat in the center of Astria.\n\nHis forges burn in every realm, hidden or known, and when a craftsman creates something of true genius, it is said that Kaelun’s shadow falls across their workbench.\n\n**Worship:**  \nSmiths, artisans, inventors, and builders all worship Kaelun. His temples are often grand workshops filled with forges, anvils, and sacred tools rather than idols. Priests of Kaelun are known as **Forgemasters**, and they wear aprons instead of robes. Offerings of raw materials — unworked metal, stone, or wood — are left at his altars, to be “perfected in divine hands.”\n\n**Rituals:**\n\n- **The Ember Rite:** Before beginning any new creation, a small flame is lit and a prayer whispered into it: “From spark to form, may Kaelun guide my hand.”\n    \n- **The Tempering:** Once a year, craftsmen immerse their tools in sacred fire or blessed water to renew their bond with Kaelun.\n    \n- **The Sevenfold Strike:** A ceremonial hammering performed by Forgemasters to bless newly built structures or weapons.\n    \n\n**Relationships:**\n\n- **Hadran, God of Smithing:** His favored son and apprentice — Hadran continues Kaelun’s legacy among mortals.\n    \n- **Elyndra, Goddess of Writing:** Close ally — she records the divine blueprints of his creations.\n    \n- **Auralis, Goddess of the Air:** Her winds cool his forges and spread his inspiration.\n    \n- **Vaelion, God of Time and Space:** Respectful rivals — creation and time are forever intertwined in their contests.\n    \n- **Malthera and Azrakar, Gods of the Netherworld:** Detested enemies; they twist his creations into forms of torment and decay.\n    \n\n**Holy Day:**  \n**The Day of the Forge (Summer Solstice):**  \nA great festival where forges across the world burn through the night. Artisans unveil their finest works, offering them to Kaelun before selling or gifting them. It is said that any tool blessed on this day never breaks."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Divine Artisan • Father of Hands • The Eternal Smith • Maker of Forms • The Forge-Soul **Pantheon:** Pantheon of Creation (High God) — often revered as the progenitor of all craftsmanship, artistry, and material creation across the realms. **Al",
+      "metadata": {
+        "title": "Kaelun",
+        "slug": "kaelun",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Craft and Creation",
+        "divineDomain": "God of Craft and Creation",
+        "domain": "God of Craft and Creation",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Kaelun - God of Craft and Creation.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Craft and Creation",
+        "visibility": "public"
+      },
+      "searchTerms": "kaelun religion aetherion pantheon {\"title\":\"kaelun\",\"slug\":\"kaelun\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of craft and creation\",\"divinedomain\":\"god of craft and creation\",\"domain\":\"god of craft and creation\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/kaelun - god of craft and creation.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # kaelun\n\n## overview\n## 🔨 **kaelun, the shaper of worlds**\n\n**titles:**  \nthe divine artisan • father of hands • the eternal smith • maker of forms • the forge-soul\n\n**pantheon:**  \npantheon of creation (high god) — often revered as the progenitor of all craftsmanship, artistry, and material creation across the realms.\n\n**alignment:**  \nlawful neutral — he values perfection, structure, and discipline in all works, yet allows freedom of expression to those who truly master their craft.\n\n**domains:**  \ncreation • craftsmanship • art • invention • earth • fire • perfection • inspiration\n\n**symbol:**  \na hammer and chisel crossing over a radiant sunburst — representing divine creation forged through skill and illumination.\n\n**appearance:**  \nkaelun appears as a towering figure of bronze and marble, his skin etched with glowing runes that pulse like molten metal. his eyes shimmer with the brilliance of a forge-fire, and his beard flows like molten gold. he wears an apron of starlight and iron, and his hands always bear traces of soot, symbolizing eternal labor.\n\n**personality:**  \nkaelun is patient but unyielding, a stern teacher and perfectionist. he demands excellence from those who call themselves artisans, yet rewards dedication and innovation. to him, every creation — from the smallest trinket to the greatest mountain — reflects divine essence. though slow to anger, he is furious when creation is misused for destruction or vanity.\n\n**mythic lore:**  \nkaelun is said to have forged the **first flame**, from which the sun and stars were kindled. with that same flame, he shaped the bones of the world — mountains, minerals, and the tools of mortals.  \nfrom his anvil came the first gods of craft and nature, born of sparks that fell from his hammer.  \nit is told that kaelun once competed with **vaelion, god of time and space**, to craft the most enduring creation. kaelun forged the **worldforge**, the heart of reality itself — a divine anvil said to beat in the center of astria.\n\nhis forges burn in every realm, hidden or known, and when a craftsman creates something of true genius, it is said that kaelun’s shadow falls across their workbench.\n\n**worship:**  \nsmiths, artisans, inventors, and builders all worship kaelun. his temples are often grand workshops filled with forges, anvils, and sacred tools rather than idols. priests of kaelun are known as **forgemasters**, and they wear aprons instead of robes. offerings of raw materials — unworked metal, stone, or wood — are left at his altars, to be “perfected in divine hands.”\n\n**rituals:**\n\n- **the ember rite:** before beginning any new creation, a small flame is lit and a prayer whispered into it: “from spark to form, may kaelun guide my hand.”\n    \n- **the tempering:** once a year, craftsmen immerse their tools in sacred fire or blessed water to renew their bond with kaelun.\n    \n- **the sevenfold strike:** a ceremonial hammering performed by forgemasters to bless newly built structures or weapons.\n    \n\n**relationships:**\n\n- **hadran, god of smithing:** his favored son and apprentice — hadran continues kaelun’s legacy among mortals.\n    \n- **elyndra, goddess of writing:** close ally — she records the divine blueprints of his creations.\n    \n- **auralis, goddess of the air:** her winds cool his forges and spread his inspiration.\n    \n- **vaelion, god of time and space:** respectful rivals — creation and time are forever intertwined in their contests.\n    \n- **malthera and azrakar, gods of the netherworld:** detested enemies; they twist his creations into forms of torment and decay.\n    \n\n**holy day:**  \n**the day of the forge (summer solstice):**  \na great festival where forges across the world burn through the night. artisans unveil their finest works, offering them to kaelun before selling or gifting them. it is said that any tool blessed on this day never breaks."
+    },
+    {
+      "id": "religion:content-theology-kelthor-index",
+      "title": "Kelthor",
+      "slug": "kelthor",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/kelthor",
+      "sourcePath": "content/theology/kelthor/index.md",
+      "sourceFolder": "content/theology/kelthor",
+      "content": "---\ntitle: \"Kelthor\"\nslug: \"kelthor\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Duskfall Sea\"\ndivine_domain: \"Guardian God of the Duskfall Sea\"\ndomain: \"Guardian God of the Duskfall Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Kelthor - Guardian God of the Duskfall Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Kelthor\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Kelthor\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Kelthor\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Kelthor",
+        "slug": "kelthor",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Duskfall Sea",
+        "divineDomain": "Guardian God of the Duskfall Sea",
+        "domain": "Guardian God of the Duskfall Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Kelthor - Guardian God of the Duskfall Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Duskfall Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "kelthor religion aetherion pantheon {\"title\":\"kelthor\",\"slug\":\"kelthor\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the duskfall sea\",\"divinedomain\":\"guardian god of the duskfall sea\",\"domain\":\"guardian god of the duskfall sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/kelthor - guardian god of the duskfall sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # kelthor\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-lunthar-index",
+      "title": "Lunthar",
+      "slug": "lunthar",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/lunthar",
+      "sourcePath": "content/theology/lunthar/index.md",
+      "sourceFolder": "content/theology/lunthar",
+      "content": "---\ntitle: \"Lunthar\"\nslug: \"lunthar\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Wood Craft - Carpentry\"\ndivine_domain: \"God of Wood Craft - Carpentry\"\ndomain: \"God of Wood Craft - Carpentry\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lunthar - God of Wood Craft - Carpentry.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Lunthar\n\n## Overview\n**Titles:**  \nThe Woodwright • The Green Carpenter • The Builder Beneath the Boughs • Hand of Kaelun • The Grainkeeper\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Artisan Division) — Divine craftsman of wood, builder of sacred halls, and protector of natural artisanship.\n\n**Alignment:**  \nNeutral Good — patient, grounded, and harmonious. He values respect for nature’s gifts and the sanctity of sustainable creation.\n\n**Domains:**  \nCraftsmanship • Wood • Nature • Architecture • Harmony • Artisanship • Growth\n\n**Symbol:**  \nA chisel crossed with a living branch, framed by a wooden ring — representing the union of creation and life.\n\n**Appearance:**  \nLunthar appears as a tall, broad-shouldered man with bark-like skin and veins of sap that glow faintly gold. His hair is a canopy of dark green leaves that shift with the seasons. He wears simple craftsman’s robes stitched with living vines, and his tools — an adze and mallet — hang from his belt, humming softly with divine energy.\n\n**Personality:**  \nGentle but steadfast, Lunthar is a god of patience and process. He believes that true craftsmanship honors the material — shaping, not conquering, it. He is known to whisper inspiration to carpenters, sculptors, and builders who work with care and reverence. Though slow to anger, he becomes a tempest when forests are destroyed for greed.\n\n**Mythic Lore:**  \nBorn from a fallen spark of **Kaelun’s forge**, Lunthar was shaped from ash and oak. Kaelun, wishing to create balance between metal and living matter, breathed life into that spark — and Lunthar emerged, singing to the trees.  \nIt was he who first taught mortals to build with wood, to craft homes that breathed, and to understand the soul of a tree before felling it.  \nLunthar built the **Hall of Rings**, a divine workshop grown from an ancient world-tree, where he carves the designs for every wooden creation that will ever exist.\n\nWhen mortals craft wooden wonders — ships that defy the sea, bridges that never rot, or instruments that sing like birds — it is said that Lunthar’s blessing guides the craftsman’s hand.\n\n**Worship:**  \nCarpenters, woodworkers, shipwrights, and builders revere Lunthar. His shrines are simple — often placed in forest clearings, workshops, or within hollowed trees. Offerings include wooden carvings, shavings, or crafted gifts left to “feed the grain.” His clergy, known as **The Oakwrights**, wear robes of green and brown, carrying polished wooden hammers as symbols of devotion.\n\n**Rituals:**\n\n- **The Blessing of the Beam:** Before raising a wooden structure, builders carve Lunthar’s symbol into the main beam for protection.\n    \n- **The Whispering Grain:** Woodworkers whisper a prayer of gratitude into the first cut of a log to honor the spirit within.\n    \n- **Festival of Rings (Spring Equinox):** Craftsmen gather to plant a tree for every great wooden work completed that year, symbolizing renewal.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** His father and eternal teacher. Lunthar honors Kaelun’s perfection but embodies his softer, organic side.\n    \n- **Sirona, Goddess of Water:** Close ally; her waters nourish the forests and provide the flexibility of life to his creations.\n    \n- **Auralis, Goddess of Air:** Her breezes shape the forests he loves; their domains intertwine in the harmony of growth.\n    \n- **Elyndra, Goddess of Writing:** Friend and collaborator; she records his sacred designs and timber rites.\n    \n- **Goruun, God of Earth:** Occasional rival — Goruun claims stone endures longer, while Lunthar argues that wood lives truer.\n    \n\n**Holy Day:**  \n**The Day of the Grain (Spring Equinox):**  \nA festival of renewal and respect. Artisans and common folk alike carve small wooden tokens — leaves, birds, or hearts — and hang them on trees or doorways for protection and prosperity.\n",
+      "body": "# Lunthar\n\n## Overview\n**Titles:**  \nThe Woodwright • The Green Carpenter • The Builder Beneath the Boughs • Hand of Kaelun • The Grainkeeper\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Artisan Division) — Divine craftsman of wood, builder of sacred halls, and protector of natural artisanship.\n\n**Alignment:**  \nNeutral Good — patient, grounded, and harmonious. He values respect for nature’s gifts and the sanctity of sustainable creation.\n\n**Domains:**  \nCraftsmanship • Wood • Nature • Architecture • Harmony • Artisanship • Growth\n\n**Symbol:**  \nA chisel crossed with a living branch, framed by a wooden ring — representing the union of creation and life.\n\n**Appearance:**  \nLunthar appears as a tall, broad-shouldered man with bark-like skin and veins of sap that glow faintly gold. His hair is a canopy of dark green leaves that shift with the seasons. He wears simple craftsman’s robes stitched with living vines, and his tools — an adze and mallet — hang from his belt, humming softly with divine energy.\n\n**Personality:**  \nGentle but steadfast, Lunthar is a god of patience and process. He believes that true craftsmanship honors the material — shaping, not conquering, it. He is known to whisper inspiration to carpenters, sculptors, and builders who work with care and reverence. Though slow to anger, he becomes a tempest when forests are destroyed for greed.\n\n**Mythic Lore:**  \nBorn from a fallen spark of **Kaelun’s forge**, Lunthar was shaped from ash and oak. Kaelun, wishing to create balance between metal and living matter, breathed life into that spark — and Lunthar emerged, singing to the trees.  \nIt was he who first taught mortals to build with wood, to craft homes that breathed, and to understand the soul of a tree before felling it.  \nLunthar built the **Hall of Rings**, a divine workshop grown from an ancient world-tree, where he carves the designs for every wooden creation that will ever exist.\n\nWhen mortals craft wooden wonders — ships that defy the sea, bridges that never rot, or instruments that sing like birds — it is said that Lunthar’s blessing guides the craftsman’s hand.\n\n**Worship:**  \nCarpenters, woodworkers, shipwrights, and builders revere Lunthar. His shrines are simple — often placed in forest clearings, workshops, or within hollowed trees. Offerings include wooden carvings, shavings, or crafted gifts left to “feed the grain.” His clergy, known as **The Oakwrights**, wear robes of green and brown, carrying polished wooden hammers as symbols of devotion.\n\n**Rituals:**\n\n- **The Blessing of the Beam:** Before raising a wooden structure, builders carve Lunthar’s symbol into the main beam for protection.\n    \n- **The Whispering Grain:** Woodworkers whisper a prayer of gratitude into the first cut of a log to honor the spirit within.\n    \n- **Festival of Rings (Spring Equinox):** Craftsmen gather to plant a tree for every great wooden work completed that year, symbolizing renewal.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** His father and eternal teacher. Lunthar honors Kaelun’s perfection but embodies his softer, organic side.\n    \n- **Sirona, Goddess of Water:** Close ally; her waters nourish the forests and provide the flexibility of life to his creations.\n    \n- **Auralis, Goddess of Air:** Her breezes shape the forests he loves; their domains intertwine in the harmony of growth.\n    \n- **Elyndra, Goddess of Writing:** Friend and collaborator; she records his sacred designs and timber rites.\n    \n- **Goruun, God of Earth:** Occasional rival — Goruun claims stone endures longer, while Lunthar argues that wood lives truer.\n    \n\n**Holy Day:**  \n**The Day of the Grain (Spring Equinox):**  \nA festival of renewal and respect. Artisans and common folk alike carve small wooden tokens — leaves, birds, or hearts — and hang them on trees or doorways for protection and prosperity.",
+      "sections": {
+        "Overview": "# Lunthar\n\n**Titles:**  \nThe Woodwright • The Green Carpenter • The Builder Beneath the Boughs • Hand of Kaelun • The Grainkeeper\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Artisan Division) — Divine craftsman of wood, builder of sacred halls, and protector of natural artisanship.\n\n**Alignment:**  \nNeutral Good — patient, grounded, and harmonious. He values respect for nature’s gifts and the sanctity of sustainable creation.\n\n**Domains:**  \nCraftsmanship • Wood • Nature • Architecture • Harmony • Artisanship • Growth\n\n**Symbol:**  \nA chisel crossed with a living branch, framed by a wooden ring — representing the union of creation and life.\n\n**Appearance:**  \nLunthar appears as a tall, broad-shouldered man with bark-like skin and veins of sap that glow faintly gold. His hair is a canopy of dark green leaves that shift with the seasons. He wears simple craftsman’s robes stitched with living vines, and his tools — an adze and mallet — hang from his belt, humming softly with divine energy.\n\n**Personality:**  \nGentle but steadfast, Lunthar is a god of patience and process. He believes that true craftsmanship honors the material — shaping, not conquering, it. He is known to whisper inspiration to carpenters, sculptors, and builders who work with care and reverence. Though slow to anger, he becomes a tempest when forests are destroyed for greed.\n\n**Mythic Lore:**  \nBorn from a fallen spark of **Kaelun’s forge**, Lunthar was shaped from ash and oak. Kaelun, wishing to create balance between metal and living matter, breathed life into that spark — and Lunthar emerged, singing to the trees.  \nIt was he who first taught mortals to build with wood, to craft homes that breathed, and to understand the soul of a tree before felling it.  \nLunthar built the **Hall of Rings**, a divine workshop grown from an ancient world-tree, where he carves the designs for every wooden creation that will ever exist.\n\nWhen mortals craft wooden wonders — ships that defy the sea, bridges that never rot, or instruments that sing like birds — it is said that Lunthar’s blessing guides the craftsman’s hand.\n\n**Worship:**  \nCarpenters, woodworkers, shipwrights, and builders revere Lunthar. His shrines are simple — often placed in forest clearings, workshops, or within hollowed trees. Offerings include wooden carvings, shavings, or crafted gifts left to “feed the grain.” His clergy, known as **The Oakwrights**, wear robes of green and brown, carrying polished wooden hammers as symbols of devotion.\n\n**Rituals:**\n\n- **The Blessing of the Beam:** Before raising a wooden structure, builders carve Lunthar’s symbol into the main beam for protection.\n    \n- **The Whispering Grain:** Woodworkers whisper a prayer of gratitude into the first cut of a log to honor the spirit within.\n    \n- **Festival of Rings (Spring Equinox):** Craftsmen gather to plant a tree for every great wooden work completed that year, symbolizing renewal.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** His father and eternal teacher. Lunthar honors Kaelun’s perfection but embodies his softer, organic side.\n    \n- **Sirona, Goddess of Water:** Close ally; her waters nourish the forests and provide the flexibility of life to his creations.\n    \n- **Auralis, Goddess of Air:** Her breezes shape the forests he loves; their domains intertwine in the harmony of growth.\n    \n- **Elyndra, Goddess of Writing:** Friend and collaborator; she records his sacred designs and timber rites.\n    \n- **Goruun, God of Earth:** Occasional rival — Goruun claims stone endures longer, while Lunthar argues that wood lives truer.\n    \n\n**Holy Day:**  \n**The Day of the Grain (Spring Equinox):**  \nA festival of renewal and respect. Artisans and common folk alike carve small wooden tokens — leaves, birds, or hearts — and hang them on trees or doorways for protection and prosperity."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Woodwright • The Green Carpenter • The Builder Beneath the Boughs • Hand of Kaelun • The Grainkeeper **Pantheon:** Pantheon of Creation (Lesser God, Artisan Division) — Divine craftsman of wood, builder of sacred halls, and protector of natural",
+      "metadata": {
+        "title": "Lunthar",
+        "slug": "lunthar",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Wood Craft - Carpentry",
+        "divineDomain": "God of Wood Craft - Carpentry",
+        "domain": "God of Wood Craft - Carpentry",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lunthar - God of Wood Craft - Carpentry.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Wood Craft - Carpentry",
+        "visibility": "public"
+      },
+      "searchTerms": "lunthar religion aetherion pantheon {\"title\":\"lunthar\",\"slug\":\"lunthar\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of wood craft - carpentry\",\"divinedomain\":\"god of wood craft - carpentry\",\"domain\":\"god of wood craft - carpentry\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/lunthar - god of wood craft - carpentry.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # lunthar\n\n## overview\n**titles:**  \nthe woodwright • the green carpenter • the builder beneath the boughs • hand of kaelun • the grainkeeper\n\n**pantheon:**  \npantheon of creation (lesser god, artisan division) — divine craftsman of wood, builder of sacred halls, and protector of natural artisanship.\n\n**alignment:**  \nneutral good — patient, grounded, and harmonious. he values respect for nature’s gifts and the sanctity of sustainable creation.\n\n**domains:**  \ncraftsmanship • wood • nature • architecture • harmony • artisanship • growth\n\n**symbol:**  \na chisel crossed with a living branch, framed by a wooden ring — representing the union of creation and life.\n\n**appearance:**  \nlunthar appears as a tall, broad-shouldered man with bark-like skin and veins of sap that glow faintly gold. his hair is a canopy of dark green leaves that shift with the seasons. he wears simple craftsman’s robes stitched with living vines, and his tools — an adze and mallet — hang from his belt, humming softly with divine energy.\n\n**personality:**  \ngentle but steadfast, lunthar is a god of patience and process. he believes that true craftsmanship honors the material — shaping, not conquering, it. he is known to whisper inspiration to carpenters, sculptors, and builders who work with care and reverence. though slow to anger, he becomes a tempest when forests are destroyed for greed.\n\n**mythic lore:**  \nborn from a fallen spark of **kaelun’s forge**, lunthar was shaped from ash and oak. kaelun, wishing to create balance between metal and living matter, breathed life into that spark — and lunthar emerged, singing to the trees.  \nit was he who first taught mortals to build with wood, to craft homes that breathed, and to understand the soul of a tree before felling it.  \nlunthar built the **hall of rings**, a divine workshop grown from an ancient world-tree, where he carves the designs for every wooden creation that will ever exist.\n\nwhen mortals craft wooden wonders — ships that defy the sea, bridges that never rot, or instruments that sing like birds — it is said that lunthar’s blessing guides the craftsman’s hand.\n\n**worship:**  \ncarpenters, woodworkers, shipwrights, and builders revere lunthar. his shrines are simple — often placed in forest clearings, workshops, or within hollowed trees. offerings include wooden carvings, shavings, or crafted gifts left to “feed the grain.” his clergy, known as **the oakwrights**, wear robes of green and brown, carrying polished wooden hammers as symbols of devotion.\n\n**rituals:**\n\n- **the blessing of the beam:** before raising a wooden structure, builders carve lunthar’s symbol into the main beam for protection.\n    \n- **the whispering grain:** woodworkers whisper a prayer of gratitude into the first cut of a log to honor the spirit within.\n    \n- **festival of rings (spring equinox):** craftsmen gather to plant a tree for every great wooden work completed that year, symbolizing renewal.\n    \n\n**relationships:**\n\n- **kaelun, god of craft and creation:** his father and eternal teacher. lunthar honors kaelun’s perfection but embodies his softer, organic side.\n    \n- **sirona, goddess of water:** close ally; her waters nourish the forests and provide the flexibility of life to his creations.\n    \n- **auralis, goddess of air:** her breezes shape the forests he loves; their domains intertwine in the harmony of growth.\n    \n- **elyndra, goddess of writing:** friend and collaborator; she records his sacred designs and timber rites.\n    \n- **goruun, god of earth:** occasional rival — goruun claims stone endures longer, while lunthar argues that wood lives truer.\n    \n\n**holy day:**  \n**the day of the grain (spring equinox):**  \na festival of renewal and respect. artisans and common folk alike carve small wooden tokens — leaves, birds, or hearts — and hang them on trees or doorways for protection and prosperity."
+    },
+    {
+      "id": "religion:content-theology-lyssara-index",
+      "title": "Lyssara",
+      "slug": "lyssara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/lyssara",
+      "sourcePath": "content/theology/lyssara/index.md",
+      "sourceFolder": "content/theology/lyssara",
+      "content": "---\ntitle: \"Lyssara\"\nslug: \"lyssara\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Veil Sea\"\ndivine_domain: \"Guardian Goddess of the Veil Sea\"\ndomain: \"Guardian Goddess of the Veil Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Lyssara - Guardian Goddess of the Veil Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Lyssara\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Lyssara\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Lyssara\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Lyssara",
+        "slug": "lyssara",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Veil Sea",
+        "divineDomain": "Guardian Goddess of the Veil Sea",
+        "domain": "Guardian Goddess of the Veil Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Lyssara - Guardian Goddess of the Veil Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Veil Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "lyssara religion aetherion pantheon {\"title\":\"lyssara\",\"slug\":\"lyssara\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the veil sea\",\"divinedomain\":\"guardian goddess of the veil sea\",\"domain\":\"guardian goddess of the veil sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/lyssara - guardian goddess of the veil sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # lyssara\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-lythera-index",
+      "title": "Lythera",
+      "slug": "lythera",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/lythera",
+      "sourcePath": "content/theology/lythera/index.md",
+      "sourceFolder": "content/theology/lythera",
+      "content": "---\ntitle: \"Lythera\"\nslug: \"lythera\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Glasswork\"\ndivine_domain: \"Goddess of Glasswork\"\ndomain: \"Goddess of Glasswork\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lythera - Goddess of Glasswork.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Lythera\n\n## Overview\n## 🕊️ **Lythera – Goddess of Glasswork**\n\n**Titles:**  \nThe Shimmering Artisan, Lady of Reflections, The Lightbinder, Mistress of Fragile Beauty\n\n**Pantheon:**  \nPantheon of Creation (Crafting and Professions)\n\n**Alignment:**  \nNeutral Good — patient, creative, and deeply empathetic; she finds beauty in imperfection and strength in fragility\n\n**Symbol:**  \nA glass rose encased in a silver circle, or a droplet of molten glass catching the light of dawn\n\n**Domains:**  \nCraftsmanship, Artistry, Light, Reflection, Beauty, Patience, Transformation\n\n**Appearance:**  \nLythera appears as a woman made of translucent glass and living light. Her skin shimmers like crystal under sunlight, and her hair flows in delicate strands that glint with every color of the spectrum.  \nHer robes seem to be woven from the reflections of morning dew — ever-shifting, ever-glowing.  \nWhen she walks, the sound of soft chimes follows her, like cooling glass in a kiln. Her eyes are gentle and prismatic, each blink refracting the world into color.\n\n**Personality:**  \nLythera is quiet but unshakably wise. She teaches that creation is an act of love and patience — that even fragile things can hold divine strength.  \nShe embodies transformation through trial: sand and fire create glass, just as struggle and time create beauty in mortal souls.  \nShe despises reckless destruction but honors those who rebuild, refine, and find light in loss.\n\n**Mythic Lore:**  \nLythera was born from **the tears of Sirona, Goddess of Water**, when the sea first touched molten stone. From that divine union of water and fire, she rose — radiant and new, embodying the moment beauty is forged through pain.  \nIn the **Age of Shards**, she walked the mortal realm, teaching artisans to shape glass for both function and wonder. It was said her first mirror captured a glimpse of the heavens, and her first window allowed mortals to see the divine light safely.  \nDuring the **Shattering War**, she forged the _Aegis Prism_, a sacred shield of glass that could reflect any spell or gaze — even that of gods.\n\n**Worship:**  \nLythera is revered by glassblowers, jewelers, artists, architects, and scholars. Her temples are sanctuaries of light, built with stained-glass walls that depict the stories of creation.  \nEvery color of glass is sacred to her, but clear crystal — untainted by dye — represents the purest form of truth.\n\n**Rituals:**\n\n- **The Furnace Prayer:** Artisans whisper blessings over molten glass before shaping it, asking Lythera to grant steady hands and inspiration.\n    \n- **Festival of Reflections:** Held on the longest day of the year, mirrors and glass lanterns are hung throughout towns to scatter sunlight — symbolizing the spread of creativity and divine light.\n    \n- **The Ceremony of Shards:** Broken glass from failed works is gathered and melted together into communal art — representing resilience and rebirth.\n    \n- **Blessing of the Lens:** Scholars and astronomers consecrate their lenses under her gaze, seeking clarity in thought and sight.\n    \n\n**Relationships:**\n\n- **Sirona – Goddess of Water:** Her divine mother; together they share the dance of flow and form.\n    \n- **Tauren – God of Earth:** Provides her with sand and minerals — their bond is steady and enduring.\n    \n- **Ignivar – God of Fire:** A rival and muse; his flames both create and endanger her craft.\n    \n- **Celest – Goddess of the Celestial:** A friend who gifts her light for her glasswork.\n    \n- **Vaelion – God of Time & Space:** She crafts prisms through which his stars shine more brilliantly.\n    \n\n**Holy Day:**  \n**Day of Reflections** — celebrated during midsummer when sunlight is strongest. Artisans display their finest works, and priests hang colored glass in the streets to bless homes with inspiration and peace.\n",
+      "body": "# Lythera\n\n## Overview\n## 🕊️ **Lythera – Goddess of Glasswork**\n\n**Titles:**  \nThe Shimmering Artisan, Lady of Reflections, The Lightbinder, Mistress of Fragile Beauty\n\n**Pantheon:**  \nPantheon of Creation (Crafting and Professions)\n\n**Alignment:**  \nNeutral Good — patient, creative, and deeply empathetic; she finds beauty in imperfection and strength in fragility\n\n**Symbol:**  \nA glass rose encased in a silver circle, or a droplet of molten glass catching the light of dawn\n\n**Domains:**  \nCraftsmanship, Artistry, Light, Reflection, Beauty, Patience, Transformation\n\n**Appearance:**  \nLythera appears as a woman made of translucent glass and living light. Her skin shimmers like crystal under sunlight, and her hair flows in delicate strands that glint with every color of the spectrum.  \nHer robes seem to be woven from the reflections of morning dew — ever-shifting, ever-glowing.  \nWhen she walks, the sound of soft chimes follows her, like cooling glass in a kiln. Her eyes are gentle and prismatic, each blink refracting the world into color.\n\n**Personality:**  \nLythera is quiet but unshakably wise. She teaches that creation is an act of love and patience — that even fragile things can hold divine strength.  \nShe embodies transformation through trial: sand and fire create glass, just as struggle and time create beauty in mortal souls.  \nShe despises reckless destruction but honors those who rebuild, refine, and find light in loss.\n\n**Mythic Lore:**  \nLythera was born from **the tears of Sirona, Goddess of Water**, when the sea first touched molten stone. From that divine union of water and fire, she rose — radiant and new, embodying the moment beauty is forged through pain.  \nIn the **Age of Shards**, she walked the mortal realm, teaching artisans to shape glass for both function and wonder. It was said her first mirror captured a glimpse of the heavens, and her first window allowed mortals to see the divine light safely.  \nDuring the **Shattering War**, she forged the _Aegis Prism_, a sacred shield of glass that could reflect any spell or gaze — even that of gods.\n\n**Worship:**  \nLythera is revered by glassblowers, jewelers, artists, architects, and scholars. Her temples are sanctuaries of light, built with stained-glass walls that depict the stories of creation.  \nEvery color of glass is sacred to her, but clear crystal — untainted by dye — represents the purest form of truth.\n\n**Rituals:**\n\n- **The Furnace Prayer:** Artisans whisper blessings over molten glass before shaping it, asking Lythera to grant steady hands and inspiration.\n    \n- **Festival of Reflections:** Held on the longest day of the year, mirrors and glass lanterns are hung throughout towns to scatter sunlight — symbolizing the spread of creativity and divine light.\n    \n- **The Ceremony of Shards:** Broken glass from failed works is gathered and melted together into communal art — representing resilience and rebirth.\n    \n- **Blessing of the Lens:** Scholars and astronomers consecrate their lenses under her gaze, seeking clarity in thought and sight.\n    \n\n**Relationships:**\n\n- **Sirona – Goddess of Water:** Her divine mother; together they share the dance of flow and form.\n    \n- **Tauren – God of Earth:** Provides her with sand and minerals — their bond is steady and enduring.\n    \n- **Ignivar – God of Fire:** A rival and muse; his flames both create and endanger her craft.\n    \n- **Celest – Goddess of the Celestial:** A friend who gifts her light for her glasswork.\n    \n- **Vaelion – God of Time & Space:** She crafts prisms through which his stars shine more brilliantly.\n    \n\n**Holy Day:**  \n**Day of Reflections** — celebrated during midsummer when sunlight is strongest. Artisans display their finest works, and priests hang colored glass in the streets to bless homes with inspiration and peace.",
+      "sections": {
+        "Overview": "# Lythera",
+        "🕊️ **Lythera – Goddess of Glasswork**": "**Titles:**  \nThe Shimmering Artisan, Lady of Reflections, The Lightbinder, Mistress of Fragile Beauty\n\n**Pantheon:**  \nPantheon of Creation (Crafting and Professions)\n\n**Alignment:**  \nNeutral Good — patient, creative, and deeply empathetic; she finds beauty in imperfection and strength in fragility\n\n**Symbol:**  \nA glass rose encased in a silver circle, or a droplet of molten glass catching the light of dawn\n\n**Domains:**  \nCraftsmanship, Artistry, Light, Reflection, Beauty, Patience, Transformation\n\n**Appearance:**  \nLythera appears as a woman made of translucent glass and living light. Her skin shimmers like crystal under sunlight, and her hair flows in delicate strands that glint with every color of the spectrum.  \nHer robes seem to be woven from the reflections of morning dew — ever-shifting, ever-glowing.  \nWhen she walks, the sound of soft chimes follows her, like cooling glass in a kiln. Her eyes are gentle and prismatic, each blink refracting the world into color.\n\n**Personality:**  \nLythera is quiet but unshakably wise. She teaches that creation is an act of love and patience — that even fragile things can hold divine strength.  \nShe embodies transformation through trial: sand and fire create glass, just as struggle and time create beauty in mortal souls.  \nShe despises reckless destruction but honors those who rebuild, refine, and find light in loss.\n\n**Mythic Lore:**  \nLythera was born from **the tears of Sirona, Goddess of Water**, when the sea first touched molten stone. From that divine union of water and fire, she rose — radiant and new, embodying the moment beauty is forged through pain.  \nIn the **Age of Shards**, she walked the mortal realm, teaching artisans to shape glass for both function and wonder. It was said her first mirror captured a glimpse of the heavens, and her first window allowed mortals to see the divine light safely.  \nDuring the **Shattering War**, she forged the _Aegis Prism_, a sacred shield of glass that could reflect any spell or gaze — even that of gods.\n\n**Worship:**  \nLythera is revered by glassblowers, jewelers, artists, architects, and scholars. Her temples are sanctuaries of light, built with stained-glass walls that depict the stories of creation.  \nEvery color of glass is sacred to her, but clear crystal — untainted by dye — represents the purest form of truth.\n\n**Rituals:**\n\n- **The Furnace Prayer:** Artisans whisper blessings over molten glass before shaping it, asking Lythera to grant steady hands and inspiration.\n    \n- **Festival of Reflections:** Held on the longest day of the year, mirrors and glass lanterns are hung throughout towns to scatter sunlight — symbolizing the spread of creativity and divine light.\n    \n- **The Ceremony of Shards:** Broken glass from failed works is gathered and melted together into communal art — representing resilience and rebirth.\n    \n- **Blessing of the Lens:** Scholars and astronomers consecrate their lenses under her gaze, seeking clarity in thought and sight.\n    \n\n**Relationships:**\n\n- **Sirona – Goddess of Water:** Her divine mother; together they share the dance of flow and form.\n    \n- **Tauren – God of Earth:** Provides her with sand and minerals — their bond is steady and enduring.\n    \n- **Ignivar – God of Fire:** A rival and muse; his flames both create and endanger her craft.\n    \n- **Celest – Goddess of the Celestial:** A friend who gifts her light for her glasswork.\n    \n- **Vaelion – God of Time & Space:** She crafts prisms through which his stars shine more brilliantly.\n    \n\n**Holy Day:**  \n**Day of Reflections** — celebrated during midsummer when sunlight is strongest. Artisans display their finest works, and priests hang colored glass in the streets to bless homes with inspiration and peace."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Shimmering Artisan, Lady of Reflections, The Lightbinder, Mistress of Fragile Beauty **Pantheon:** Pantheon of Creation (Crafting and Professions) **Alignment:** Neutral Good — patient, creative, and deeply empathetic; she finds beauty in imper",
+      "metadata": {
+        "title": "Lythera",
+        "slug": "lythera",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Glasswork",
+        "divineDomain": "Goddess of Glasswork",
+        "domain": "Goddess of Glasswork",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lythera - Goddess of Glasswork.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Glasswork",
+        "visibility": "public"
+      },
+      "searchTerms": "lythera religion aetherion pantheon {\"title\":\"lythera\",\"slug\":\"lythera\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of glasswork\",\"divinedomain\":\"goddess of glasswork\",\"domain\":\"goddess of glasswork\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/lythera - goddess of glasswork.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # lythera\n\n## overview\n## 🕊️ **lythera – goddess of glasswork**\n\n**titles:**  \nthe shimmering artisan, lady of reflections, the lightbinder, mistress of fragile beauty\n\n**pantheon:**  \npantheon of creation (crafting and professions)\n\n**alignment:**  \nneutral good — patient, creative, and deeply empathetic; she finds beauty in imperfection and strength in fragility\n\n**symbol:**  \na glass rose encased in a silver circle, or a droplet of molten glass catching the light of dawn\n\n**domains:**  \ncraftsmanship, artistry, light, reflection, beauty, patience, transformation\n\n**appearance:**  \nlythera appears as a woman made of translucent glass and living light. her skin shimmers like crystal under sunlight, and her hair flows in delicate strands that glint with every color of the spectrum.  \nher robes seem to be woven from the reflections of morning dew — ever-shifting, ever-glowing.  \nwhen she walks, the sound of soft chimes follows her, like cooling glass in a kiln. her eyes are gentle and prismatic, each blink refracting the world into color.\n\n**personality:**  \nlythera is quiet but unshakably wise. she teaches that creation is an act of love and patience — that even fragile things can hold divine strength.  \nshe embodies transformation through trial: sand and fire create glass, just as struggle and time create beauty in mortal souls.  \nshe despises reckless destruction but honors those who rebuild, refine, and find light in loss.\n\n**mythic lore:**  \nlythera was born from **the tears of sirona, goddess of water**, when the sea first touched molten stone. from that divine union of water and fire, she rose — radiant and new, embodying the moment beauty is forged through pain.  \nin the **age of shards**, she walked the mortal realm, teaching artisans to shape glass for both function and wonder. it was said her first mirror captured a glimpse of the heavens, and her first window allowed mortals to see the divine light safely.  \nduring the **shattering war**, she forged the _aegis prism_, a sacred shield of glass that could reflect any spell or gaze — even that of gods.\n\n**worship:**  \nlythera is revered by glassblowers, jewelers, artists, architects, and scholars. her temples are sanctuaries of light, built with stained-glass walls that depict the stories of creation.  \nevery color of glass is sacred to her, but clear crystal — untainted by dye — represents the purest form of truth.\n\n**rituals:**\n\n- **the furnace prayer:** artisans whisper blessings over molten glass before shaping it, asking lythera to grant steady hands and inspiration.\n    \n- **festival of reflections:** held on the longest day of the year, mirrors and glass lanterns are hung throughout towns to scatter sunlight — symbolizing the spread of creativity and divine light.\n    \n- **the ceremony of shards:** broken glass from failed works is gathered and melted together into communal art — representing resilience and rebirth.\n    \n- **blessing of the lens:** scholars and astronomers consecrate their lenses under her gaze, seeking clarity in thought and sight.\n    \n\n**relationships:**\n\n- **sirona – goddess of water:** her divine mother; together they share the dance of flow and form.\n    \n- **tauren – god of earth:** provides her with sand and minerals — their bond is steady and enduring.\n    \n- **ignivar – god of fire:** a rival and muse; his flames both create and endanger her craft.\n    \n- **celest – goddess of the celestial:** a friend who gifts her light for her glasswork.\n    \n- **vaelion – god of time & space:** she crafts prisms through which his stars shine more brilliantly.\n    \n\n**holy day:**  \n**day of reflections** — celebrated during midsummer when sunlight is strongest. artisans display their finest works, and priests hang colored glass in the streets to bless homes with inspiration and peace."
+    },
+    {
+      "id": "religion:content-theology-magnus-index",
+      "title": "Magnus",
+      "slug": "magnus",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/magnus",
+      "sourcePath": "content/theology/magnus/index.md",
+      "sourceFolder": "content/theology/magnus",
+      "content": "---\ntitle: \"Magnus\"\nslug: \"magnus\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Arcane Study & Spellcraft\"\ndivine_domain: \"God of Arcane Study & Spellcraft\"\ndomain: \"God of Arcane Study & Spellcraft\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Magnus - God of Arcane Study & Spellcraft.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Magnus\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Magnus\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Magnus\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Magnus",
+        "slug": "magnus",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Arcane Study & Spellcraft",
+        "divineDomain": "God of Arcane Study & Spellcraft",
+        "domain": "God of Arcane Study & Spellcraft",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Magnus - God of Arcane Study & Spellcraft.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Arcane Study & Spellcraft",
+        "visibility": "public"
+      },
+      "searchTerms": "magnus religion aetherion pantheon {\"title\":\"magnus\",\"slug\":\"magnus\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of arcane study & spellcraft\",\"divinedomain\":\"god of arcane study & spellcraft\",\"domain\":\"god of arcane study & spellcraft\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/magnus - god of arcane study & spellcraft.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # magnus\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-matrya-goddess-of-mothers-birth-and-nurture-index",
+      "title": "Matrya- Goddess of Mothers, Birth & Nurture",
+      "slug": "matrya-goddess-of-mothers-birth-and-nurture",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/matrya-goddess-of-mothers-birth-and-nurture",
+      "sourcePath": "content/theology/matrya-goddess-of-mothers-birth-and-nurture/index.md",
+      "sourceFolder": "content/theology/matrya-goddess-of-mothers-birth-and-nurture",
+      "content": "---\ntitle: \"Matrya- Goddess of Mothers, Birth & Nurture\"\nslug: \"matrya-goddess-of-mothers-birth-and-nurture\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Matrya- Goddess of Mothers, Birth & Nurture.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Matrya- Goddess of Mothers, Birth & Nurture\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Matrya- Goddess of Mothers, Birth & Nurture\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Matrya- Goddess of Mothers, Birth & Nurture\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Matrya- Goddess of Mothers, Birth & Nurture",
+        "slug": "matrya-goddess-of-mothers-birth-and-nurture",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Matrya- Goddess of Mothers, Birth & Nurture.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "visibility": "public"
+      },
+      "searchTerms": "matrya- goddess of mothers, birth & nurture religion aetherion pantheon {\"title\":\"matrya- goddess of mothers, birth & nurture\",\"slug\":\"matrya-goddess-of-mothers-birth-and-nurture\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/matrya- goddess of mothers, birth & nurture.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # matrya- goddess of mothers, birth & nurture\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-melquinn-index",
+      "title": "Melquinn",
+      "slug": "melquinn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/melquinn",
+      "sourcePath": "content/theology/melquinn/index.md",
+      "sourceFolder": "content/theology/melquinn",
+      "content": "---\ntitle: \"Melquinn\"\nslug: \"melquinn\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Tempest Sea\"\ndivine_domain: \"Guardian God of the Tempest Sea\"\ndomain: \"Guardian God of the Tempest Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Melquinn - Guardian God of the Tempest Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Melquinn\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Melquinn\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Melquinn\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Melquinn",
+        "slug": "melquinn",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Tempest Sea",
+        "divineDomain": "Guardian God of the Tempest Sea",
+        "domain": "Guardian God of the Tempest Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Melquinn - Guardian God of the Tempest Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Tempest Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "melquinn religion aetherion pantheon {\"title\":\"melquinn\",\"slug\":\"melquinn\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the tempest sea\",\"divinedomain\":\"guardian god of the tempest sea\",\"domain\":\"guardian god of the tempest sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/melquinn - guardian god of the tempest sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # melquinn\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-miraen-index",
+      "title": "Miraen",
+      "slug": "miraen",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/miraen",
+      "sourcePath": "content/theology/miraen/index.md",
+      "sourceFolder": "content/theology/miraen",
+      "content": "---\ntitle: \"Miraen\"\nslug: \"miraen\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Virelian Ocean\"\ndivine_domain: \"Guardian Goddess of the Virelian Ocean\"\ndomain: \"Guardian Goddess of the Virelian Ocean\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Miraen - Guardian Goddess of the Virelian Ocean.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Miraen\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Miraen\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Miraen\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Miraen",
+        "slug": "miraen",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Virelian Ocean",
+        "divineDomain": "Guardian Goddess of the Virelian Ocean",
+        "domain": "Guardian Goddess of the Virelian Ocean",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Miraen - Guardian Goddess of the Virelian Ocean.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Virelian Ocean",
+        "visibility": "public"
+      },
+      "searchTerms": "miraen religion aetherion pantheon {\"title\":\"miraen\",\"slug\":\"miraen\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the virelian ocean\",\"divinedomain\":\"guardian goddess of the virelian ocean\",\"domain\":\"guardian goddess of the virelian ocean\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/oceans/miraen - guardian goddess of the virelian ocean.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # miraen\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-morrun-index",
+      "title": "Morrun",
+      "slug": "morrun",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/morrun",
+      "sourcePath": "content/theology/morrun/index.md",
+      "sourceFolder": "content/theology/morrun",
+      "content": "---\ntitle: \"Morrun\"\nslug: \"morrun\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Obsidian Sea\"\ndivine_domain: \"Guardian God of the Obsidian Sea\"\ndomain: \"Guardian God of the Obsidian Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Morrun - Guardian God of the Obsidian Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Morrun\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Morrun\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Morrun\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Morrun",
+        "slug": "morrun",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Obsidian Sea",
+        "divineDomain": "Guardian God of the Obsidian Sea",
+        "domain": "Guardian God of the Obsidian Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Morrun - Guardian God of the Obsidian Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Obsidian Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "morrun religion aetherion pantheon {\"title\":\"morrun\",\"slug\":\"morrun\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the obsidian sea\",\"divinedomain\":\"guardian god of the obsidian sea\",\"domain\":\"guardian god of the obsidian sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/morrun - guardian god of the obsidian sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # morrun\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-nalara-index",
+      "title": "Nalara",
+      "slug": "nalara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/nalara",
+      "sourcePath": "content/theology/nalara/index.md",
+      "sourceFolder": "content/theology/nalara",
+      "content": "---\ntitle: \"Nalara\"\nslug: \"nalara\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Frostwake Sea\"\ndivine_domain: \"Guardian Goddess of the Frostwake Sea\"\ndomain: \"Guardian Goddess of the Frostwake Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalara - Guardian Goddess of the Frostwake Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Nalara\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Nalara\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Nalara\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Nalara",
+        "slug": "nalara",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Frostwake Sea",
+        "divineDomain": "Guardian Goddess of the Frostwake Sea",
+        "domain": "Guardian Goddess of the Frostwake Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalara - Guardian Goddess of the Frostwake Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Frostwake Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "nalara religion aetherion pantheon {\"title\":\"nalara\",\"slug\":\"nalara\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the frostwake sea\",\"divinedomain\":\"guardian goddess of the frostwake sea\",\"domain\":\"guardian goddess of the frostwake sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/nalara - guardian goddess of the frostwake sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # nalara\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-nalthus-index",
+      "title": "Nalthus",
+      "slug": "nalthus",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/nalthus",
+      "sourcePath": "content/theology/nalthus/index.md",
+      "sourceFolder": "content/theology/nalthus",
+      "content": "---\ntitle: \"Nalthus\"\nslug: \"nalthus\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Dead Sea\"\ndivine_domain: \"Guardian God of the Dead Sea\"\ndomain: \"Guardian God of the Dead Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalthus - Guardian God of the Dead Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Nalthus\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Nalthus\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Nalthus\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Nalthus",
+        "slug": "nalthus",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Dead Sea",
+        "divineDomain": "Guardian God of the Dead Sea",
+        "domain": "Guardian God of the Dead Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalthus - Guardian God of the Dead Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Dead Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "nalthus religion aetherion pantheon {\"title\":\"nalthus\",\"slug\":\"nalthus\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the dead sea\",\"divinedomain\":\"guardian god of the dead sea\",\"domain\":\"guardian god of the dead sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/nalthus - guardian god of the dead sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # nalthus\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-narethis-index",
+      "title": "Narethis",
+      "slug": "narethis",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/narethis",
+      "sourcePath": "content/theology/narethis/index.md",
+      "sourceFolder": "content/theology/narethis",
+      "content": "---\ntitle: \"Narethis\"\nslug: \"narethis\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Serenian Ocean\"\ndivine_domain: \"Guardian Goddess of the Serenian Ocean\"\ndomain: \"Guardian Goddess of the Serenian Ocean\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Narethis - Guardian Goddess of the Serenian Ocean.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Narethis\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Narethis\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Narethis\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Narethis",
+        "slug": "narethis",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Serenian Ocean",
+        "divineDomain": "Guardian Goddess of the Serenian Ocean",
+        "domain": "Guardian Goddess of the Serenian Ocean",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Narethis - Guardian Goddess of the Serenian Ocean.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Serenian Ocean",
+        "visibility": "public"
+      },
+      "searchTerms": "narethis religion aetherion pantheon {\"title\":\"narethis\",\"slug\":\"narethis\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the serenian ocean\",\"divinedomain\":\"guardian goddess of the serenian ocean\",\"domain\":\"guardian goddess of the serenian ocean\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/oceans/narethis - guardian goddess of the serenian ocean.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # narethis\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-neraya-index",
+      "title": "Neraya",
+      "slug": "neraya",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/neraya",
+      "sourcePath": "content/theology/neraya/index.md",
+      "sourceFolder": "content/theology/neraya",
+      "content": "---\ntitle: \"Neraya\"\nslug: \"neraya\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Jewelry and Ornamentals\"\ndivine_domain: \"Goddess of Jewelry and Ornamentals\"\ndomain: \"Goddess of Jewelry and Ornamentals\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Neraya - Goddess of Jewelry and Ornamentals.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Neraya\n\n## Overview\n**Titles:**  \nThe Shining Hand • The Gemheart • Lady of the Setting Sun • Mistress of Adornment • The Gilded Weaver\n\n**Pantheon:**  \nPantheon of Creation (Lesser Goddess, Artisan Division) — Patroness of jewelers, goldsmiths, gemcutters, and all who seek to capture beauty in lasting form.\n\n**Alignment:**  \nChaotic Good — free-spirited, passionate, and indulgent. She delights in expression, artistry, and the emotional resonance of beauty.\n\n**Domains:**  \nJewelry • Beauty • Wealth • Craft • Artistry • Desire • Luck\n\n**Symbol:**  \nA golden circlet encasing a radiant gem — often depicted as a tear-shaped jewel or a radiant eye of gold and sapphire.\n\n**Appearance:**  \nNeraya appears as an ethereal woman whose skin glimmers faintly like pearl and whose hair cascades like liquid gold entwined with tiny jewels. Her eyes shift color with her emotions — from deep ruby passion to diamond-white serenity. Her garments seem spun from silver threads and gemdust, constantly changing hue as they catch the light.\n\n**Personality:**  \nCharming, playful, and deeply attuned to the desires of mortals, Neraya values beauty not as vanity, but as a form of divine language — every gemstone and ornament tells a story. She encourages mortals to express their essence through creation and adornment, believing that what one wears shapes who one becomes.  \nHowever, her vanity can sometimes border on obsession; she despises ugliness born from greed or cruelty and curses those who defile beauty for power alone.\n\n**Mythic Lore:**  \nWhen Kaelun forged the first metals, his sparks scattered into the night sky as stars. From one of these falling sparks, **Neraya** was born — a spirit of light that fell into the ocean and was caught in a clam’s embrace. When the shell opened, the first **pearl** was born, and with it, Neraya took her form.\n\nShe wandered the mortal world, enamored by how people sought to capture meaning in color and shine. To teach them beauty’s divine rhythm, she crafted the **Crown of Dawn**, embedding within it every hue of mortal emotion. Those who wore it could see the world’s hidden colors — but at the price of never seeing dullness again.\n\nHer temples are adorned with mosaics and gemstones; however, her priests often wear no jewelry themselves, believing that beauty is meant to inspire others, not enslave the beholder.\n\n**Worship:**  \nJewellers, artists, dancers, nobles, and lovers revere Neraya. Offerings of polished stones, crafted ornaments, or even mirror fragments are left on her altars.  \nHer faithful believe that giving beauty is the purest act of devotion — many create jewelry not for sale, but as sacred gifts to loved ones.\n\n**Rituals:**\n\n- **The Setting of Light:** A jeweler whispers Neraya’s name as they set the final gem into a piece, sealing it with her blessing.\n    \n- **Festival of Reflection (Summer Solstice):** Followers bathe in moonlight wearing reflective ornaments, celebrating self-expression and love.\n    \n- **The Gift of Glitter:** Newlyweds exchange tokens blessed under Neraya’s eye to ensure passion and honesty.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** Her divine father and teacher — she learned the art of shaping beauty from his forges.\n    \n- **Lunthar, God of Woodcraft:** Close friend and collaborator — they share a belief that creation must honor its material.\n    \n- **Hadran, God of Smithing:** Occasional rival — their crafts overlap, but where Hadran prizes durability, Neraya prizes splendor.\n    \n- **Celest, Goddess of the Celestial:** Kindred spirit; they both cherish light and its ability to transform the mundane into divine.\n    \n- **Malthera, Hellish Goddess:** Once her mirror-twin before Malthera’s fall — their shared domain of temptation still binds them in cosmic tension.\n    \n\n**Holy Day:**  \n**Day of Mirrors (First Full Moon of Summer):**  \nA night of beauty, reflection, and adornment. Followers light lanterns filled with gemstone dust, creating rivers of color in the air. It is said Neraya herself walks the world that night, touching one gem in every city — blessing it with her eternal gleam.\n",
+      "body": "# Neraya\n\n## Overview\n**Titles:**  \nThe Shining Hand • The Gemheart • Lady of the Setting Sun • Mistress of Adornment • The Gilded Weaver\n\n**Pantheon:**  \nPantheon of Creation (Lesser Goddess, Artisan Division) — Patroness of jewelers, goldsmiths, gemcutters, and all who seek to capture beauty in lasting form.\n\n**Alignment:**  \nChaotic Good — free-spirited, passionate, and indulgent. She delights in expression, artistry, and the emotional resonance of beauty.\n\n**Domains:**  \nJewelry • Beauty • Wealth • Craft • Artistry • Desire • Luck\n\n**Symbol:**  \nA golden circlet encasing a radiant gem — often depicted as a tear-shaped jewel or a radiant eye of gold and sapphire.\n\n**Appearance:**  \nNeraya appears as an ethereal woman whose skin glimmers faintly like pearl and whose hair cascades like liquid gold entwined with tiny jewels. Her eyes shift color with her emotions — from deep ruby passion to diamond-white serenity. Her garments seem spun from silver threads and gemdust, constantly changing hue as they catch the light.\n\n**Personality:**  \nCharming, playful, and deeply attuned to the desires of mortals, Neraya values beauty not as vanity, but as a form of divine language — every gemstone and ornament tells a story. She encourages mortals to express their essence through creation and adornment, believing that what one wears shapes who one becomes.  \nHowever, her vanity can sometimes border on obsession; she despises ugliness born from greed or cruelty and curses those who defile beauty for power alone.\n\n**Mythic Lore:**  \nWhen Kaelun forged the first metals, his sparks scattered into the night sky as stars. From one of these falling sparks, **Neraya** was born — a spirit of light that fell into the ocean and was caught in a clam’s embrace. When the shell opened, the first **pearl** was born, and with it, Neraya took her form.\n\nShe wandered the mortal world, enamored by how people sought to capture meaning in color and shine. To teach them beauty’s divine rhythm, she crafted the **Crown of Dawn**, embedding within it every hue of mortal emotion. Those who wore it could see the world’s hidden colors — but at the price of never seeing dullness again.\n\nHer temples are adorned with mosaics and gemstones; however, her priests often wear no jewelry themselves, believing that beauty is meant to inspire others, not enslave the beholder.\n\n**Worship:**  \nJewellers, artists, dancers, nobles, and lovers revere Neraya. Offerings of polished stones, crafted ornaments, or even mirror fragments are left on her altars.  \nHer faithful believe that giving beauty is the purest act of devotion — many create jewelry not for sale, but as sacred gifts to loved ones.\n\n**Rituals:**\n\n- **The Setting of Light:** A jeweler whispers Neraya’s name as they set the final gem into a piece, sealing it with her blessing.\n    \n- **Festival of Reflection (Summer Solstice):** Followers bathe in moonlight wearing reflective ornaments, celebrating self-expression and love.\n    \n- **The Gift of Glitter:** Newlyweds exchange tokens blessed under Neraya’s eye to ensure passion and honesty.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** Her divine father and teacher — she learned the art of shaping beauty from his forges.\n    \n- **Lunthar, God of Woodcraft:** Close friend and collaborator — they share a belief that creation must honor its material.\n    \n- **Hadran, God of Smithing:** Occasional rival — their crafts overlap, but where Hadran prizes durability, Neraya prizes splendor.\n    \n- **Celest, Goddess of the Celestial:** Kindred spirit; they both cherish light and its ability to transform the mundane into divine.\n    \n- **Malthera, Hellish Goddess:** Once her mirror-twin before Malthera’s fall — their shared domain of temptation still binds them in cosmic tension.\n    \n\n**Holy Day:**  \n**Day of Mirrors (First Full Moon of Summer):**  \nA night of beauty, reflection, and adornment. Followers light lanterns filled with gemstone dust, creating rivers of color in the air. It is said Neraya herself walks the world that night, touching one gem in every city — blessing it with her eternal gleam.",
+      "sections": {
+        "Overview": "# Neraya\n\n**Titles:**  \nThe Shining Hand • The Gemheart • Lady of the Setting Sun • Mistress of Adornment • The Gilded Weaver\n\n**Pantheon:**  \nPantheon of Creation (Lesser Goddess, Artisan Division) — Patroness of jewelers, goldsmiths, gemcutters, and all who seek to capture beauty in lasting form.\n\n**Alignment:**  \nChaotic Good — free-spirited, passionate, and indulgent. She delights in expression, artistry, and the emotional resonance of beauty.\n\n**Domains:**  \nJewelry • Beauty • Wealth • Craft • Artistry • Desire • Luck\n\n**Symbol:**  \nA golden circlet encasing a radiant gem — often depicted as a tear-shaped jewel or a radiant eye of gold and sapphire.\n\n**Appearance:**  \nNeraya appears as an ethereal woman whose skin glimmers faintly like pearl and whose hair cascades like liquid gold entwined with tiny jewels. Her eyes shift color with her emotions — from deep ruby passion to diamond-white serenity. Her garments seem spun from silver threads and gemdust, constantly changing hue as they catch the light.\n\n**Personality:**  \nCharming, playful, and deeply attuned to the desires of mortals, Neraya values beauty not as vanity, but as a form of divine language — every gemstone and ornament tells a story. She encourages mortals to express their essence through creation and adornment, believing that what one wears shapes who one becomes.  \nHowever, her vanity can sometimes border on obsession; she despises ugliness born from greed or cruelty and curses those who defile beauty for power alone.\n\n**Mythic Lore:**  \nWhen Kaelun forged the first metals, his sparks scattered into the night sky as stars. From one of these falling sparks, **Neraya** was born — a spirit of light that fell into the ocean and was caught in a clam’s embrace. When the shell opened, the first **pearl** was born, and with it, Neraya took her form.\n\nShe wandered the mortal world, enamored by how people sought to capture meaning in color and shine. To teach them beauty’s divine rhythm, she crafted the **Crown of Dawn**, embedding within it every hue of mortal emotion. Those who wore it could see the world’s hidden colors — but at the price of never seeing dullness again.\n\nHer temples are adorned with mosaics and gemstones; however, her priests often wear no jewelry themselves, believing that beauty is meant to inspire others, not enslave the beholder.\n\n**Worship:**  \nJewellers, artists, dancers, nobles, and lovers revere Neraya. Offerings of polished stones, crafted ornaments, or even mirror fragments are left on her altars.  \nHer faithful believe that giving beauty is the purest act of devotion — many create jewelry not for sale, but as sacred gifts to loved ones.\n\n**Rituals:**\n\n- **The Setting of Light:** A jeweler whispers Neraya’s name as they set the final gem into a piece, sealing it with her blessing.\n    \n- **Festival of Reflection (Summer Solstice):** Followers bathe in moonlight wearing reflective ornaments, celebrating self-expression and love.\n    \n- **The Gift of Glitter:** Newlyweds exchange tokens blessed under Neraya’s eye to ensure passion and honesty.\n    \n\n**Relationships:**\n\n- **Kaelun, God of Craft and Creation:** Her divine father and teacher — she learned the art of shaping beauty from his forges.\n    \n- **Lunthar, God of Woodcraft:** Close friend and collaborator — they share a belief that creation must honor its material.\n    \n- **Hadran, God of Smithing:** Occasional rival — their crafts overlap, but where Hadran prizes durability, Neraya prizes splendor.\n    \n- **Celest, Goddess of the Celestial:** Kindred spirit; they both cherish light and its ability to transform the mundane into divine.\n    \n- **Malthera, Hellish Goddess:** Once her mirror-twin before Malthera’s fall — their shared domain of temptation still binds them in cosmic tension.\n    \n\n**Holy Day:**  \n**Day of Mirrors (First Full Moon of Summer):**  \nA night of beauty, reflection, and adornment. Followers light lanterns filled with gemstone dust, creating rivers of color in the air. It is said Neraya herself walks the world that night, touching one gem in every city — blessing it with her eternal gleam."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Shining Hand • The Gemheart • Lady of the Setting Sun • Mistress of Adornment • The Gilded Weaver **Pantheon:** Pantheon of Creation (Lesser Goddess, Artisan Division) — Patroness of jewelers, goldsmiths, gemcutters, and all who seek to capture",
+      "metadata": {
+        "title": "Neraya",
+        "slug": "neraya",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Jewelry and Ornamentals",
+        "divineDomain": "Goddess of Jewelry and Ornamentals",
+        "domain": "Goddess of Jewelry and Ornamentals",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Neraya - Goddess of Jewelry and Ornamentals.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Jewelry and Ornamentals",
+        "visibility": "public"
+      },
+      "searchTerms": "neraya religion aetherion pantheon {\"title\":\"neraya\",\"slug\":\"neraya\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of jewelry and ornamentals\",\"divinedomain\":\"goddess of jewelry and ornamentals\",\"domain\":\"goddess of jewelry and ornamentals\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/neraya - goddess of jewelry and ornamentals.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # neraya\n\n## overview\n**titles:**  \nthe shining hand • the gemheart • lady of the setting sun • mistress of adornment • the gilded weaver\n\n**pantheon:**  \npantheon of creation (lesser goddess, artisan division) — patroness of jewelers, goldsmiths, gemcutters, and all who seek to capture beauty in lasting form.\n\n**alignment:**  \nchaotic good — free-spirited, passionate, and indulgent. she delights in expression, artistry, and the emotional resonance of beauty.\n\n**domains:**  \njewelry • beauty • wealth • craft • artistry • desire • luck\n\n**symbol:**  \na golden circlet encasing a radiant gem — often depicted as a tear-shaped jewel or a radiant eye of gold and sapphire.\n\n**appearance:**  \nneraya appears as an ethereal woman whose skin glimmers faintly like pearl and whose hair cascades like liquid gold entwined with tiny jewels. her eyes shift color with her emotions — from deep ruby passion to diamond-white serenity. her garments seem spun from silver threads and gemdust, constantly changing hue as they catch the light.\n\n**personality:**  \ncharming, playful, and deeply attuned to the desires of mortals, neraya values beauty not as vanity, but as a form of divine language — every gemstone and ornament tells a story. she encourages mortals to express their essence through creation and adornment, believing that what one wears shapes who one becomes.  \nhowever, her vanity can sometimes border on obsession; she despises ugliness born from greed or cruelty and curses those who defile beauty for power alone.\n\n**mythic lore:**  \nwhen kaelun forged the first metals, his sparks scattered into the night sky as stars. from one of these falling sparks, **neraya** was born — a spirit of light that fell into the ocean and was caught in a clam’s embrace. when the shell opened, the first **pearl** was born, and with it, neraya took her form.\n\nshe wandered the mortal world, enamored by how people sought to capture meaning in color and shine. to teach them beauty’s divine rhythm, she crafted the **crown of dawn**, embedding within it every hue of mortal emotion. those who wore it could see the world’s hidden colors — but at the price of never seeing dullness again.\n\nher temples are adorned with mosaics and gemstones; however, her priests often wear no jewelry themselves, believing that beauty is meant to inspire others, not enslave the beholder.\n\n**worship:**  \njewellers, artists, dancers, nobles, and lovers revere neraya. offerings of polished stones, crafted ornaments, or even mirror fragments are left on her altars.  \nher faithful believe that giving beauty is the purest act of devotion — many create jewelry not for sale, but as sacred gifts to loved ones.\n\n**rituals:**\n\n- **the setting of light:** a jeweler whispers neraya’s name as they set the final gem into a piece, sealing it with her blessing.\n    \n- **festival of reflection (summer solstice):** followers bathe in moonlight wearing reflective ornaments, celebrating self-expression and love.\n    \n- **the gift of glitter:** newlyweds exchange tokens blessed under neraya’s eye to ensure passion and honesty.\n    \n\n**relationships:**\n\n- **kaelun, god of craft and creation:** her divine father and teacher — she learned the art of shaping beauty from his forges.\n    \n- **lunthar, god of woodcraft:** close friend and collaborator — they share a belief that creation must honor its material.\n    \n- **hadran, god of smithing:** occasional rival — their crafts overlap, but where hadran prizes durability, neraya prizes splendor.\n    \n- **celest, goddess of the celestial:** kindred spirit; they both cherish light and its ability to transform the mundane into divine.\n    \n- **malthera, hellish goddess:** once her mirror-twin before malthera’s fall — their shared domain of temptation still binds them in cosmic tension.\n    \n\n**holy day:**  \n**day of mirrors (first full moon of summer):**  \na night of beauty, reflection, and adornment. followers light lanterns filled with gemstone dust, creating rivers of color in the air. it is said neraya herself walks the world that night, touching one gem in every city — blessing it with her eternal gleam."
+    },
+    {
+      "id": "religion:content-theology-nevara-index",
+      "title": "Nevara",
+      "slug": "nevara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/nevara",
+      "sourcePath": "content/theology/nevara/index.md",
+      "sourceFolder": "content/theology/nevara",
+      "content": "---\ntitle: \"Nevara\"\nslug: \"nevara\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Winter\"\ndivine_domain: \"Goddess of Winter\"\ndomain: \"Goddess of Winter\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Nevara - Goddess of Winter.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Nevara\n\n## Overview\n### ❄️ **Goddess of Winter — Nevara, the Pale Veil**\n\n**Titles:** The Frostmother, Keeper of Stillness  \n**Symbol:** A snowflake encased in crystal  \n**Domains:** Rest, Death, Endings, Preservation  \n**Depiction:** A calm, pale woman with silver hair and eyes like frozen lakes, draped in frost.  \n**Lore:** Nevara brings stillness to the world, freezing rivers and laying her silent mantle across the land. Yet she is not cruel — she guards the seeds of next spring beneath her snow. In her quiet reign, the world dreams. Her worshippers light fires and offer warmth in her honor, knowing all life must rest before renewal.\n",
+      "body": "# Nevara\n\n## Overview\n### ❄️ **Goddess of Winter — Nevara, the Pale Veil**\n\n**Titles:** The Frostmother, Keeper of Stillness  \n**Symbol:** A snowflake encased in crystal  \n**Domains:** Rest, Death, Endings, Preservation  \n**Depiction:** A calm, pale woman with silver hair and eyes like frozen lakes, draped in frost.  \n**Lore:** Nevara brings stillness to the world, freezing rivers and laying her silent mantle across the land. Yet she is not cruel — she guards the seeds of next spring beneath her snow. In her quiet reign, the world dreams. Her worshippers light fires and offer warmth in her honor, knowing all life must rest before renewal.",
+      "sections": {
+        "Overview": "# Nevara\n\n### ❄️ **Goddess of Winter — Nevara, the Pale Veil**\n\n**Titles:** The Frostmother, Keeper of Stillness  \n**Symbol:** A snowflake encased in crystal  \n**Domains:** Rest, Death, Endings, Preservation  \n**Depiction:** A calm, pale woman with silver hair and eyes like frozen lakes, draped in frost.  \n**Lore:** Nevara brings stillness to the world, freezing rivers and laying her silent mantle across the land. Yet she is not cruel — she guards the seeds of next spring beneath her snow. In her quiet reign, the world dreams. Her worshippers light fires and offer warmth in her honor, knowing all life must rest before renewal."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Frostmother, Keeper of Stillness **Symbol:** A snowflake encased in crystal **Domains:** Rest, Death, Endings, Preservation **Depiction:** A calm, pale woman with silver hair and eyes like frozen lakes, draped in frost. **Lore:** Nevara brings ",
+      "metadata": {
+        "title": "Nevara",
+        "slug": "nevara",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Winter",
+        "divineDomain": "Goddess of Winter",
+        "domain": "Goddess of Winter",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Nevara - Goddess of Winter.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Winter",
+        "visibility": "public"
+      },
+      "searchTerms": "nevara religion aetherion pantheon {\"title\":\"nevara\",\"slug\":\"nevara\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of winter\",\"divinedomain\":\"goddess of winter\",\"domain\":\"goddess of winter\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/gods of the 4 seasons/nevara - goddess of winter.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # nevara\n\n## overview\n### ❄️ **goddess of winter — nevara, the pale veil**\n\n**titles:** the frostmother, keeper of stillness  \n**symbol:** a snowflake encased in crystal  \n**domains:** rest, death, endings, preservation  \n**depiction:** a calm, pale woman with silver hair and eyes like frozen lakes, draped in frost.  \n**lore:** nevara brings stillness to the world, freezing rivers and laying her silent mantle across the land. yet she is not cruel — she guards the seeds of next spring beneath her snow. in her quiet reign, the world dreams. her worshippers light fires and offer warmth in her honor, knowing all life must rest before renewal."
+    },
+    {
+      "id": "religion:content-theology-niji-index",
+      "title": "Niji",
+      "slug": "niji",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/niji",
+      "sourcePath": "content/theology/niji/index.md",
+      "sourceFolder": "content/theology/niji",
+      "content": "---\ntitle: \"Niji\"\nslug: \"niji\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the Rainbow\"\ndivine_domain: \"God of the Rainbow\"\ndomain: \"God of the Rainbow\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Niji - God of the Rainbow.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Niji\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Niji\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Niji\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Niji",
+        "slug": "niji",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of the Rainbow",
+        "divineDomain": "God of the Rainbow",
+        "domain": "God of the Rainbow",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Niji - God of the Rainbow.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of the Rainbow",
+        "visibility": "public"
+      },
+      "searchTerms": "niji religion aetherion pantheon {\"title\":\"niji\",\"slug\":\"niji\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of the rainbow\",\"divinedomain\":\"god of the rainbow\",\"domain\":\"god of the rainbow\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/niji - god of the rainbow.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # niji\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-nimir-index",
+      "title": "Nimir",
+      "slug": "nimir",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/nimir",
+      "sourcePath": "content/theology/nimir/index.md",
+      "sourceFolder": "content/theology/nimir",
+      "content": "---\ntitle: \"Nimir\"\nslug: \"nimir\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of the Night & Moon\"\ndivine_domain: \"Goddess of the Night & Moon\"\ndomain: \"Goddess of the Night & Moon\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Nimir - Goddess of the Night & Moon.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Nimir\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Nimir\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Nimir\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Nimir",
+        "slug": "nimir",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of the Night & Moon",
+        "divineDomain": "Goddess of the Night & Moon",
+        "domain": "Goddess of the Night & Moon",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Nimir - Goddess of the Night & Moon.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of the Night & Moon",
+        "visibility": "public"
+      },
+      "searchTerms": "nimir religion aetherion pantheon {\"title\":\"nimir\",\"slug\":\"nimir\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of the night & moon\",\"divinedomain\":\"goddess of the night & moon\",\"domain\":\"goddess of the night & moon\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/nimir - goddess of the night & moon.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # nimir\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-nythra-index",
+      "title": "Nythra",
+      "slug": "nythra",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/nythra",
+      "sourcePath": "content/theology/nythra/index.md",
+      "sourceFolder": "content/theology/nythra",
+      "content": "---\ntitle: \"Nythra\"\nslug: \"nythra\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of the North Wind\"\ndivine_domain: \"Goddess of the North Wind\"\ndomain: \"Goddess of the North Wind\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Nythra - Goddess of the North Wind.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Nythra\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Nythra\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Nythra\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Nythra",
+        "slug": "nythra",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of the North Wind",
+        "divineDomain": "Goddess of the North Wind",
+        "domain": "Goddess of the North Wind",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Nythra - Goddess of the North Wind.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of the North Wind",
+        "visibility": "public"
+      },
+      "searchTerms": "nythra religion aetherion pantheon {\"title\":\"nythra\",\"slug\":\"nythra\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of the north wind\",\"divinedomain\":\"goddess of the north wind\",\"domain\":\"goddess of the north wind\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' winds/nythra - goddess of the north wind.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # nythra\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-oryn-index",
+      "title": "Oryn",
+      "slug": "oryn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/oryn",
+      "sourcePath": "content/theology/oryn/index.md",
+      "sourceFolder": "content/theology/oryn",
+      "content": "---\ntitle: \"Oryn\"\nslug: \"oryn\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of sailing, fishing, shipbuilding & Ports\"\ndivine_domain: \"God of sailing, fishing, shipbuilding & Ports\"\ndomain: \"God of sailing, fishing, shipbuilding & Ports\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Oryn - God of sailing, fishing, shipbuilding & Ports.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Oryn\n\n## Overview\n**Titles:**  \nThe Sea-Father • Lord of Masts • The Harbor-Keeper • The Tide’s Hand • The Lantern Beyond the Waves\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Oceanic Division) — Patron of sailors, shipwrights, fishermen, explorers, and port cities.\n\n**Alignment:**  \nLawful Neutral — Steady as the tide, he values discipline, respect for the sea’s balance, and mastery earned through work and courage.\n\n**Domains:**  \nSea • Travel • Craft • Navigation • Trade • Luck • Wind\n\n**Symbol:**  \nA ship’s wheel wreathed in silver waves, often depicted with a small lantern at its center.\n\n**Appearance:**  \nOryn appears as a broad-shouldered man with sun-worn skin, sea-blue eyes, and hair like dark kelp streaked with white foam. His beard carries beads shaped like anchors and shells. He wears a captain’s cloak that constantly ripples as if in a sea breeze, and carries a great trident crafted from driftmetal and star-iron. His voice rolls like distant thunder over the water.\n\n**Personality:**  \nPragmatic, steadfast, and humble — Oryn values hard work over titles and reveres those who live by the rhythm of wind and wave. He’s a god of both freedom and structure: freedom to sail wherever the horizon calls, and structure to respect the ocean’s might.  \nHe despises arrogance at sea and is known to withdraw his favor from captains who mock the tides. Yet, he is also a god of laughter and song — his presence is often felt in the camaraderie of sailors sharing a drink after stormy nights.\n\n**Mythic Lore:**  \nBorn from the tears of **Sirona, Goddess of Water**, when she wept for mortals lost at sea, Oryn was shaped by **Kaelun** from driftwood and steel. Given life by the first sea breeze, he became the guiding hand of mortals who sought to cross the endless blue.\n\nWhen the first humans dared to leave shore, Oryn lit the **Lantern of the Deep**, a divine flame that glows in every lighthouse across Astria. Legends say that if the Lantern ever goes out, the seas will reclaim all ports and ships.\n\nOryn once challenged the Ocean God **Thalassor** to a race around the world to win the right of mortals to sail freely. For nine months they battled storms and beasts — and when Oryn won by a single wave’s breadth, Thalassor granted his blessing, marking Oryn as Keeper of the Seas.\n\n**Worship:**  \nSailors, fishermen, merchants, and shipwrights pay him homage. Offerings of fish, wine, or salt are thrown into the sea before voyages. Shrines to Oryn stand in harbors and shipyards, where sailors carve his symbol into the wood of their ships for luck.\n\n**Rituals:**\n\n- **The Blessing of the Keel:** New ships are anointed with sea-water and oil while Oryn’s name is invoked, ensuring safe passage.\n    \n- **Lantern Vigil:** Before a long voyage, sailors light a lantern blessed by his clergy and carry its flame aboard until their return.\n    \n- **The Casting Net:** Fishermen cast a net into the water at dawn, speaking Oryn’s prayer for bounty and balance — then return part of their first catch as tribute.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His divine mother, whom he honors and protects — though she worries his freedom tempts mortals too boldly.\n    \n- **Kaelun, God of Craft and Creation:** His divine forger, the one who shaped his trident and soul.\n    \n- **Neraya, Goddess of Jewelry:** Close ally; she crafts adornments for sailors, and they share reverence for craft and beauty.\n    \n- **Thalassor (Ocean Deity):** Sometimes rival, sometimes ally — their relationship mirrors the balance between storm and calm.\n    \n- **Auralis, Goddess of Air:** Partner of his winds — their divine dance steers the fates of ships.\n    \n\n**Holy Day:**  \n**The Tide’s Turn (First High Tide of Spring):**  \nA grand festival in every coastal city. Ships are decorated with ribbons and shells, and the first voyage of the year begins under Oryn’s blessing. Bonfires are lit on beaches, and sailors sing **The Song of the Lantern**, believed to draw his gaze across the waves.\n",
+      "body": "# Oryn\n\n## Overview\n**Titles:**  \nThe Sea-Father • Lord of Masts • The Harbor-Keeper • The Tide’s Hand • The Lantern Beyond the Waves\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Oceanic Division) — Patron of sailors, shipwrights, fishermen, explorers, and port cities.\n\n**Alignment:**  \nLawful Neutral — Steady as the tide, he values discipline, respect for the sea’s balance, and mastery earned through work and courage.\n\n**Domains:**  \nSea • Travel • Craft • Navigation • Trade • Luck • Wind\n\n**Symbol:**  \nA ship’s wheel wreathed in silver waves, often depicted with a small lantern at its center.\n\n**Appearance:**  \nOryn appears as a broad-shouldered man with sun-worn skin, sea-blue eyes, and hair like dark kelp streaked with white foam. His beard carries beads shaped like anchors and shells. He wears a captain’s cloak that constantly ripples as if in a sea breeze, and carries a great trident crafted from driftmetal and star-iron. His voice rolls like distant thunder over the water.\n\n**Personality:**  \nPragmatic, steadfast, and humble — Oryn values hard work over titles and reveres those who live by the rhythm of wind and wave. He’s a god of both freedom and structure: freedom to sail wherever the horizon calls, and structure to respect the ocean’s might.  \nHe despises arrogance at sea and is known to withdraw his favor from captains who mock the tides. Yet, he is also a god of laughter and song — his presence is often felt in the camaraderie of sailors sharing a drink after stormy nights.\n\n**Mythic Lore:**  \nBorn from the tears of **Sirona, Goddess of Water**, when she wept for mortals lost at sea, Oryn was shaped by **Kaelun** from driftwood and steel. Given life by the first sea breeze, he became the guiding hand of mortals who sought to cross the endless blue.\n\nWhen the first humans dared to leave shore, Oryn lit the **Lantern of the Deep**, a divine flame that glows in every lighthouse across Astria. Legends say that if the Lantern ever goes out, the seas will reclaim all ports and ships.\n\nOryn once challenged the Ocean God **Thalassor** to a race around the world to win the right of mortals to sail freely. For nine months they battled storms and beasts — and when Oryn won by a single wave’s breadth, Thalassor granted his blessing, marking Oryn as Keeper of the Seas.\n\n**Worship:**  \nSailors, fishermen, merchants, and shipwrights pay him homage. Offerings of fish, wine, or salt are thrown into the sea before voyages. Shrines to Oryn stand in harbors and shipyards, where sailors carve his symbol into the wood of their ships for luck.\n\n**Rituals:**\n\n- **The Blessing of the Keel:** New ships are anointed with sea-water and oil while Oryn’s name is invoked, ensuring safe passage.\n    \n- **Lantern Vigil:** Before a long voyage, sailors light a lantern blessed by his clergy and carry its flame aboard until their return.\n    \n- **The Casting Net:** Fishermen cast a net into the water at dawn, speaking Oryn’s prayer for bounty and balance — then return part of their first catch as tribute.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His divine mother, whom he honors and protects — though she worries his freedom tempts mortals too boldly.\n    \n- **Kaelun, God of Craft and Creation:** His divine forger, the one who shaped his trident and soul.\n    \n- **Neraya, Goddess of Jewelry:** Close ally; she crafts adornments for sailors, and they share reverence for craft and beauty.\n    \n- **Thalassor (Ocean Deity):** Sometimes rival, sometimes ally — their relationship mirrors the balance between storm and calm.\n    \n- **Auralis, Goddess of Air:** Partner of his winds — their divine dance steers the fates of ships.\n    \n\n**Holy Day:**  \n**The Tide’s Turn (First High Tide of Spring):**  \nA grand festival in every coastal city. Ships are decorated with ribbons and shells, and the first voyage of the year begins under Oryn’s blessing. Bonfires are lit on beaches, and sailors sing **The Song of the Lantern**, believed to draw his gaze across the waves.",
+      "sections": {
+        "Overview": "# Oryn\n\n**Titles:**  \nThe Sea-Father • Lord of Masts • The Harbor-Keeper • The Tide’s Hand • The Lantern Beyond the Waves\n\n**Pantheon:**  \nPantheon of Creation (Lesser God, Oceanic Division) — Patron of sailors, shipwrights, fishermen, explorers, and port cities.\n\n**Alignment:**  \nLawful Neutral — Steady as the tide, he values discipline, respect for the sea’s balance, and mastery earned through work and courage.\n\n**Domains:**  \nSea • Travel • Craft • Navigation • Trade • Luck • Wind\n\n**Symbol:**  \nA ship’s wheel wreathed in silver waves, often depicted with a small lantern at its center.\n\n**Appearance:**  \nOryn appears as a broad-shouldered man with sun-worn skin, sea-blue eyes, and hair like dark kelp streaked with white foam. His beard carries beads shaped like anchors and shells. He wears a captain’s cloak that constantly ripples as if in a sea breeze, and carries a great trident crafted from driftmetal and star-iron. His voice rolls like distant thunder over the water.\n\n**Personality:**  \nPragmatic, steadfast, and humble — Oryn values hard work over titles and reveres those who live by the rhythm of wind and wave. He’s a god of both freedom and structure: freedom to sail wherever the horizon calls, and structure to respect the ocean’s might.  \nHe despises arrogance at sea and is known to withdraw his favor from captains who mock the tides. Yet, he is also a god of laughter and song — his presence is often felt in the camaraderie of sailors sharing a drink after stormy nights.\n\n**Mythic Lore:**  \nBorn from the tears of **Sirona, Goddess of Water**, when she wept for mortals lost at sea, Oryn was shaped by **Kaelun** from driftwood and steel. Given life by the first sea breeze, he became the guiding hand of mortals who sought to cross the endless blue.\n\nWhen the first humans dared to leave shore, Oryn lit the **Lantern of the Deep**, a divine flame that glows in every lighthouse across Astria. Legends say that if the Lantern ever goes out, the seas will reclaim all ports and ships.\n\nOryn once challenged the Ocean God **Thalassor** to a race around the world to win the right of mortals to sail freely. For nine months they battled storms and beasts — and when Oryn won by a single wave’s breadth, Thalassor granted his blessing, marking Oryn as Keeper of the Seas.\n\n**Worship:**  \nSailors, fishermen, merchants, and shipwrights pay him homage. Offerings of fish, wine, or salt are thrown into the sea before voyages. Shrines to Oryn stand in harbors and shipyards, where sailors carve his symbol into the wood of their ships for luck.\n\n**Rituals:**\n\n- **The Blessing of the Keel:** New ships are anointed with sea-water and oil while Oryn’s name is invoked, ensuring safe passage.\n    \n- **Lantern Vigil:** Before a long voyage, sailors light a lantern blessed by his clergy and carry its flame aboard until their return.\n    \n- **The Casting Net:** Fishermen cast a net into the water at dawn, speaking Oryn’s prayer for bounty and balance — then return part of their first catch as tribute.\n    \n\n**Relationships:**\n\n- **Sirona, Goddess of Water:** His divine mother, whom he honors and protects — though she worries his freedom tempts mortals too boldly.\n    \n- **Kaelun, God of Craft and Creation:** His divine forger, the one who shaped his trident and soul.\n    \n- **Neraya, Goddess of Jewelry:** Close ally; she crafts adornments for sailors, and they share reverence for craft and beauty.\n    \n- **Thalassor (Ocean Deity):** Sometimes rival, sometimes ally — their relationship mirrors the balance between storm and calm.\n    \n- **Auralis, Goddess of Air:** Partner of his winds — their divine dance steers the fates of ships.\n    \n\n**Holy Day:**  \n**The Tide’s Turn (First High Tide of Spring):**  \nA grand festival in every coastal city. Ships are decorated with ribbons and shells, and the first voyage of the year begins under Oryn’s blessing. Bonfires are lit on beaches, and sailors sing **The Song of the Lantern**, believed to draw his gaze across the waves."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Sea-Father • Lord of Masts • The Harbor-Keeper • The Tide’s Hand • The Lantern Beyond the Waves **Pantheon:** Pantheon of Creation (Lesser God, Oceanic Division) — Patron of sailors, shipwrights, fishermen, explorers, and port cities. **Alignme",
+      "metadata": {
+        "title": "Oryn",
+        "slug": "oryn",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of sailing, fishing, shipbuilding & Ports",
+        "divineDomain": "God of sailing, fishing, shipbuilding & Ports",
+        "domain": "God of sailing, fishing, shipbuilding & Ports",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Oryn - God of sailing, fishing, shipbuilding & Ports.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of sailing, fishing, shipbuilding & Ports",
+        "visibility": "public"
+      },
+      "searchTerms": "oryn religion aetherion pantheon {\"title\":\"oryn\",\"slug\":\"oryn\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of sailing, fishing, shipbuilding & ports\",\"divinedomain\":\"god of sailing, fishing, shipbuilding & ports\",\"domain\":\"god of sailing, fishing, shipbuilding & ports\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/oryn - god of sailing, fishing, shipbuilding & ports.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # oryn\n\n## overview\n**titles:**  \nthe sea-father • lord of masts • the harbor-keeper • the tide’s hand • the lantern beyond the waves\n\n**pantheon:**  \npantheon of creation (lesser god, oceanic division) — patron of sailors, shipwrights, fishermen, explorers, and port cities.\n\n**alignment:**  \nlawful neutral — steady as the tide, he values discipline, respect for the sea’s balance, and mastery earned through work and courage.\n\n**domains:**  \nsea • travel • craft • navigation • trade • luck • wind\n\n**symbol:**  \na ship’s wheel wreathed in silver waves, often depicted with a small lantern at its center.\n\n**appearance:**  \noryn appears as a broad-shouldered man with sun-worn skin, sea-blue eyes, and hair like dark kelp streaked with white foam. his beard carries beads shaped like anchors and shells. he wears a captain’s cloak that constantly ripples as if in a sea breeze, and carries a great trident crafted from driftmetal and star-iron. his voice rolls like distant thunder over the water.\n\n**personality:**  \npragmatic, steadfast, and humble — oryn values hard work over titles and reveres those who live by the rhythm of wind and wave. he’s a god of both freedom and structure: freedom to sail wherever the horizon calls, and structure to respect the ocean’s might.  \nhe despises arrogance at sea and is known to withdraw his favor from captains who mock the tides. yet, he is also a god of laughter and song — his presence is often felt in the camaraderie of sailors sharing a drink after stormy nights.\n\n**mythic lore:**  \nborn from the tears of **sirona, goddess of water**, when she wept for mortals lost at sea, oryn was shaped by **kaelun** from driftwood and steel. given life by the first sea breeze, he became the guiding hand of mortals who sought to cross the endless blue.\n\nwhen the first humans dared to leave shore, oryn lit the **lantern of the deep**, a divine flame that glows in every lighthouse across astria. legends say that if the lantern ever goes out, the seas will reclaim all ports and ships.\n\noryn once challenged the ocean god **thalassor** to a race around the world to win the right of mortals to sail freely. for nine months they battled storms and beasts — and when oryn won by a single wave’s breadth, thalassor granted his blessing, marking oryn as keeper of the seas.\n\n**worship:**  \nsailors, fishermen, merchants, and shipwrights pay him homage. offerings of fish, wine, or salt are thrown into the sea before voyages. shrines to oryn stand in harbors and shipyards, where sailors carve his symbol into the wood of their ships for luck.\n\n**rituals:**\n\n- **the blessing of the keel:** new ships are anointed with sea-water and oil while oryn’s name is invoked, ensuring safe passage.\n    \n- **lantern vigil:** before a long voyage, sailors light a lantern blessed by his clergy and carry its flame aboard until their return.\n    \n- **the casting net:** fishermen cast a net into the water at dawn, speaking oryn’s prayer for bounty and balance — then return part of their first catch as tribute.\n    \n\n**relationships:**\n\n- **sirona, goddess of water:** his divine mother, whom he honors and protects — though she worries his freedom tempts mortals too boldly.\n    \n- **kaelun, god of craft and creation:** his divine forger, the one who shaped his trident and soul.\n    \n- **neraya, goddess of jewelry:** close ally; she crafts adornments for sailors, and they share reverence for craft and beauty.\n    \n- **thalassor (ocean deity):** sometimes rival, sometimes ally — their relationship mirrors the balance between storm and calm.\n    \n- **auralis, goddess of air:** partner of his winds — their divine dance steers the fates of ships.\n    \n\n**holy day:**  \n**the tide’s turn (first high tide of spring):**  \na grand festival in every coastal city. ships are decorated with ribbons and shells, and the first voyage of the year begins under oryn’s blessing. bonfires are lit on beaches, and sailors sing **the song of the lantern**, believed to draw his gaze across the waves."
+    },
+    {
+      "id": "religion:content-theology-patreos-god-of-fathers-lineage-and-legacy-index",
+      "title": "Patreos- God of Fathers, Lineage & Legacy",
+      "slug": "patreos-god-of-fathers-lineage-and-legacy",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/patreos-god-of-fathers-lineage-and-legacy",
+      "sourcePath": "content/theology/patreos-god-of-fathers-lineage-and-legacy/index.md",
+      "sourceFolder": "content/theology/patreos-god-of-fathers-lineage-and-legacy",
+      "content": "---\ntitle: \"Patreos- God of Fathers, Lineage & Legacy\"\nslug: \"patreos-god-of-fathers-lineage-and-legacy\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Patreos- God of Fathers, Lineage & Legacy.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Patreos- God of Fathers, Lineage & Legacy\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Patreos- God of Fathers, Lineage & Legacy\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Patreos- God of Fathers, Lineage & Legacy\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Patreos- God of Fathers, Lineage & Legacy",
+        "slug": "patreos-god-of-fathers-lineage-and-legacy",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Patreos- God of Fathers, Lineage & Legacy.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "visibility": "public"
+      },
+      "searchTerms": "patreos- god of fathers, lineage & legacy religion aetherion pantheon {\"title\":\"patreos- god of fathers, lineage & legacy\",\"slug\":\"patreos-god-of-fathers-lineage-and-legacy\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/patreos- god of fathers, lineage & legacy.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # patreos- god of fathers, lineage & legacy\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-pelara-index",
+      "title": "Pelara",
+      "slug": "pelara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/pelara",
+      "sourcePath": "content/theology/pelara/index.md",
+      "sourceFolder": "content/theology/pelara",
+      "content": "---\ntitle: \"Pelara\"\nslug: \"pelara\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Radiant Sea\"\ndivine_domain: \"Guardian Goddess of the Radiant Sea\"\ndomain: \"Guardian Goddess of the Radiant Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Pelara - Guardian Goddess of the Radiant Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Pelara\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Pelara\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Pelara\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Pelara",
+        "slug": "pelara",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Radiant Sea",
+        "divineDomain": "Guardian Goddess of the Radiant Sea",
+        "domain": "Guardian Goddess of the Radiant Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Pelara - Guardian Goddess of the Radiant Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Radiant Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "pelara religion aetherion pantheon {\"title\":\"pelara\",\"slug\":\"pelara\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the radiant sea\",\"divinedomain\":\"guardian goddess of the radiant sea\",\"domain\":\"guardian goddess of the radiant sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/pelara - guardian goddess of the radiant sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # pelara\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-pellon-index",
+      "title": "Pellon",
+      "slug": "pellon",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/pellon",
+      "sourcePath": "content/theology/pellon/index.md",
+      "sourceFolder": "content/theology/pellon",
+      "content": "---\ntitle: \"Pellon\"\nslug: \"pellon\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God Mining and Ore\"\ndivine_domain: \"God Mining and Ore\"\ndomain: \"God Mining and Ore\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Pellon - God Mining and Ore.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Pellon\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Pellon\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Pellon\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Pellon",
+        "slug": "pellon",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God Mining and Ore",
+        "divineDomain": "God Mining and Ore",
+        "domain": "God Mining and Ore",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Pellon - God Mining and Ore.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God Mining and Ore",
+        "visibility": "public"
+      },
+      "searchTerms": "pellon religion aetherion pantheon {\"title\":\"pellon\",\"slug\":\"pellon\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god mining and ore\",\"divinedomain\":\"god mining and ore\",\"domain\":\"god mining and ore\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/pellon - god mining and ore.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # pellon\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-rynor-index",
+      "title": "Rynor",
+      "slug": "rynor",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/rynor",
+      "sourcePath": "content/theology/rynor/index.md",
+      "sourceFolder": "content/theology/rynor",
+      "content": "---\ntitle: \"Rynor\"\nslug: \"rynor\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Leatherwork\"\ndivine_domain: \"God of Leatherwork\"\ndomain: \"God of Leatherwork\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Rynor - God of Leatherwork.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Rynor\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Rynor\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Rynor\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Rynor",
+        "slug": "rynor",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Leatherwork",
+        "divineDomain": "God of Leatherwork",
+        "domain": "God of Leatherwork",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Rynor - God of Leatherwork.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Leatherwork",
+        "visibility": "public"
+      },
+      "searchTerms": "rynor religion aetherion pantheon {\"title\":\"rynor\",\"slug\":\"rynor\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of leatherwork\",\"divinedomain\":\"god of leatherwork\",\"domain\":\"god of leatherwork\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/rynor - god of leatherwork.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # rynor\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-seritha-index",
+      "title": "Seritha",
+      "slug": "seritha",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/seritha",
+      "sourcePath": "content/theology/seritha/index.md",
+      "sourceFolder": "content/theology/seritha",
+      "content": "---\ntitle: \"Seritha\"\nslug: \"seritha\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Coralyn Ocean\"\ndivine_domain: \"Guardian Goddess of the Coralyn Ocean\"\ndomain: \"Guardian Goddess of the Coralyn Ocean\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Seritha - Guardian Goddess of the Coralyn Ocean.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Seritha\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Seritha\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Seritha\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Seritha",
+        "slug": "seritha",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Coralyn Ocean",
+        "divineDomain": "Guardian Goddess of the Coralyn Ocean",
+        "domain": "Guardian Goddess of the Coralyn Ocean",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Seritha - Guardian Goddess of the Coralyn Ocean.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Coralyn Ocean",
+        "visibility": "public"
+      },
+      "searchTerms": "seritha religion aetherion pantheon {\"title\":\"seritha\",\"slug\":\"seritha\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the coralyn ocean\",\"divinedomain\":\"guardian goddess of the coralyn ocean\",\"domain\":\"guardian goddess of the coralyn ocean\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/oceans/seritha - guardian goddess of the coralyn ocean.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # seritha\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-serwyn-index",
+      "title": "Serwyn",
+      "slug": "serwyn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/serwyn",
+      "sourcePath": "content/theology/serwyn/index.md",
+      "sourceFolder": "content/theology/serwyn",
+      "content": "---\ntitle: \"Serwyn\"\nslug: \"serwyn\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of the Harvest\"\ndivine_domain: \"Goddess of the Harvest\"\ndomain: \"Goddess of the Harvest\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Serwyn - Goddess of the Harvest.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Serwyn\n\n## Overview\n### **Goddess of the Harvest – Serwyn, the Golden Matron**\n\n**Titles:** The Golden Matron, Lady of Plenty, Keeper of the Bounty  \n**Alignment:** Good / Neutral  \n**Domains:** Agriculture, Fertility, Life, Prosperity  \n**Symbol:** A sheaf of golden wheat tied with a green ribbon  \n**Appearance:** A tall, radiant woman with hair the color of ripe wheat and eyes like warm sunlight. Her garments shimmer with gold and green hues, symbolizing growth and abundance.  \n**Personality:** Kind, wise, and nurturing. Serwyn represents the steady rhythm of planting, growth, and reaping. Though gentle, she abhors greed and waste.  \n**Mythic Lore:**  \nSerwyn’s breath is said to warm the earth after winter’s chill, awakening seeds from their slumber. Farmers say her tears bring rain to the fields, and her laughter summons the scent of ripened grain. During harvest festivals, offerings of bread, fruit, and honey are left at her shrines to thank her for abundance and to ensure next year’s fertility.  \n**Worshippers:** Farmers, millers, bakers, brewers, and merchants of grain.  \n**Holy Days:** The Harvest Moon Festival — a three-day celebration marking the end of the harvest season.\n",
+      "body": "# Serwyn\n\n## Overview\n### **Goddess of the Harvest – Serwyn, the Golden Matron**\n\n**Titles:** The Golden Matron, Lady of Plenty, Keeper of the Bounty  \n**Alignment:** Good / Neutral  \n**Domains:** Agriculture, Fertility, Life, Prosperity  \n**Symbol:** A sheaf of golden wheat tied with a green ribbon  \n**Appearance:** A tall, radiant woman with hair the color of ripe wheat and eyes like warm sunlight. Her garments shimmer with gold and green hues, symbolizing growth and abundance.  \n**Personality:** Kind, wise, and nurturing. Serwyn represents the steady rhythm of planting, growth, and reaping. Though gentle, she abhors greed and waste.  \n**Mythic Lore:**  \nSerwyn’s breath is said to warm the earth after winter’s chill, awakening seeds from their slumber. Farmers say her tears bring rain to the fields, and her laughter summons the scent of ripened grain. During harvest festivals, offerings of bread, fruit, and honey are left at her shrines to thank her for abundance and to ensure next year’s fertility.  \n**Worshippers:** Farmers, millers, bakers, brewers, and merchants of grain.  \n**Holy Days:** The Harvest Moon Festival — a three-day celebration marking the end of the harvest season.",
+      "sections": {
+        "Overview": "# Serwyn\n\n### **Goddess of the Harvest – Serwyn, the Golden Matron**\n\n**Titles:** The Golden Matron, Lady of Plenty, Keeper of the Bounty  \n**Alignment:** Good / Neutral  \n**Domains:** Agriculture, Fertility, Life, Prosperity  \n**Symbol:** A sheaf of golden wheat tied with a green ribbon  \n**Appearance:** A tall, radiant woman with hair the color of ripe wheat and eyes like warm sunlight. Her garments shimmer with gold and green hues, symbolizing growth and abundance.  \n**Personality:** Kind, wise, and nurturing. Serwyn represents the steady rhythm of planting, growth, and reaping. Though gentle, she abhors greed and waste.  \n**Mythic Lore:**  \nSerwyn’s breath is said to warm the earth after winter’s chill, awakening seeds from their slumber. Farmers say her tears bring rain to the fields, and her laughter summons the scent of ripened grain. During harvest festivals, offerings of bread, fruit, and honey are left at her shrines to thank her for abundance and to ensure next year’s fertility.  \n**Worshippers:** Farmers, millers, bakers, brewers, and merchants of grain.  \n**Holy Days:** The Harvest Moon Festival — a three-day celebration marking the end of the harvest season."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Golden Matron, Lady of Plenty, Keeper of the Bounty **Alignment:** Good / Neutral **Domains:** Agriculture, Fertility, Life, Prosperity **Symbol:** A sheaf of golden wheat tied with a green ribbon **Appearance:** A tall, radiant woman with hair",
+      "metadata": {
+        "title": "Serwyn",
+        "slug": "serwyn",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of the Harvest",
+        "divineDomain": "Goddess of the Harvest",
+        "domain": "Goddess of the Harvest",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Serwyn - Goddess of the Harvest.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of the Harvest",
+        "visibility": "public"
+      },
+      "searchTerms": "serwyn religion aetherion pantheon {\"title\":\"serwyn\",\"slug\":\"serwyn\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of the harvest\",\"divinedomain\":\"goddess of the harvest\",\"domain\":\"goddess of the harvest\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/serwyn - goddess of the harvest.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # serwyn\n\n## overview\n### **goddess of the harvest – serwyn, the golden matron**\n\n**titles:** the golden matron, lady of plenty, keeper of the bounty  \n**alignment:** good / neutral  \n**domains:** agriculture, fertility, life, prosperity  \n**symbol:** a sheaf of golden wheat tied with a green ribbon  \n**appearance:** a tall, radiant woman with hair the color of ripe wheat and eyes like warm sunlight. her garments shimmer with gold and green hues, symbolizing growth and abundance.  \n**personality:** kind, wise, and nurturing. serwyn represents the steady rhythm of planting, growth, and reaping. though gentle, she abhors greed and waste.  \n**mythic lore:**  \nserwyn’s breath is said to warm the earth after winter’s chill, awakening seeds from their slumber. farmers say her tears bring rain to the fields, and her laughter summons the scent of ripened grain. during harvest festivals, offerings of bread, fruit, and honey are left at her shrines to thank her for abundance and to ensure next year’s fertility.  \n**worshippers:** farmers, millers, bakers, brewers, and merchants of grain.  \n**holy days:** the harvest moon festival — a three-day celebration marking the end of the harvest season."
+    },
+    {
+      "id": "religion:content-theology-sethara-index",
+      "title": "Sethara",
+      "slug": "sethara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/sethara",
+      "sourcePath": "content/theology/sethara/index.md",
+      "sourceFolder": "content/theology/sethara",
+      "content": "---\ntitle: \"Sethara\"\nslug: \"sethara\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Sea of Glass\"\ndivine_domain: \"Guardian Goddess of the Sea of Glass\"\ndomain: \"Guardian Goddess of the Sea of Glass\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Sethara - Guardian Goddess of the Sea of Glass.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Sethara\n\n## Overview\nA windless expanse where ships glide on mirror-still water, used by traders as a celestial guide.\n",
+      "body": "# Sethara\n\n## Overview\nA windless expanse where ships glide on mirror-still water, used by traders as a celestial guide.",
+      "sections": {
+        "Overview": "# Sethara\n\nA windless expanse where ships glide on mirror-still water, used by traders as a celestial guide."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "A windless expanse where ships glide on mirror-still water, used by traders as a celestial guide.",
+      "metadata": {
+        "title": "Sethara",
+        "slug": "sethara",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Sea of Glass",
+        "divineDomain": "Guardian Goddess of the Sea of Glass",
+        "domain": "Guardian Goddess of the Sea of Glass",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Sethara - Guardian Goddess of the Sea of Glass.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Sea of Glass",
+        "visibility": "public"
+      },
+      "searchTerms": "sethara religion aetherion pantheon {\"title\":\"sethara\",\"slug\":\"sethara\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the sea of glass\",\"divinedomain\":\"guardian goddess of the sea of glass\",\"domain\":\"guardian goddess of the sea of glass\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/sethara - guardian goddess of the sea of glass.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # sethara\n\n## overview\na windless expanse where ships glide on mirror-still water, used by traders as a celestial guide."
+    },
+    {
+      "id": "religion:content-theology-siroth-index",
+      "title": "Siroth",
+      "slug": "siroth",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/siroth",
+      "sourcePath": "content/theology/siroth/index.md",
+      "sourceFolder": "content/theology/siroth",
+      "content": "---\ntitle: \"Siroth\"\nslug: \"siroth\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the South Wind\"\ndivine_domain: \"God of the South Wind\"\ndomain: \"God of the South Wind\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Siroth - God of the South Wind.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Siroth\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Siroth\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Siroth\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Siroth",
+        "slug": "siroth",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of the South Wind",
+        "divineDomain": "God of the South Wind",
+        "domain": "God of the South Wind",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Siroth - God of the South Wind.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of the South Wind",
+        "visibility": "public"
+      },
+      "searchTerms": "siroth religion aetherion pantheon {\"title\":\"siroth\",\"slug\":\"siroth\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of the south wind\",\"divinedomain\":\"god of the south wind\",\"domain\":\"god of the south wind\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' winds/siroth - god of the south wind.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # siroth\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-syrath-index",
+      "title": "Syrath",
+      "slug": "syrath",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/syrath",
+      "sourcePath": "content/theology/syrath/index.md",
+      "sourceFolder": "content/theology/syrath",
+      "content": "---\ntitle: \"Syrath\"\nslug: \"syrath\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Crimson Sea\"\ndivine_domain: \"Guardian God of the Crimson Sea\"\ndomain: \"Guardian God of the Crimson Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Syrath - Guardian God of the Crimson Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Syrath\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Syrath\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Syrath\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Syrath",
+        "slug": "syrath",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Crimson Sea",
+        "divineDomain": "Guardian God of the Crimson Sea",
+        "domain": "Guardian God of the Crimson Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Syrath - Guardian God of the Crimson Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Crimson Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "syrath religion aetherion pantheon {\"title\":\"syrath\",\"slug\":\"syrath\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the crimson sea\",\"divinedomain\":\"guardian god of the crimson sea\",\"domain\":\"guardian god of the crimson sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/syrath - guardian god of the crimson sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # syrath\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-teryn-index",
+      "title": "Teryn",
+      "slug": "teryn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/teryn",
+      "sourcePath": "content/theology/teryn/index.md",
+      "sourceFolder": "content/theology/teryn",
+      "content": "---\ntitle: \"Teryn\"\nslug: \"teryn\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Coral Sea\"\ndivine_domain: \"Guardian God of the Coral Sea\"\ndomain: \"Guardian God of the Coral Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Teryn - Guardian God of the Coral Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Teryn\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Teryn\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Teryn\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Teryn",
+        "slug": "teryn",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Coral Sea",
+        "divineDomain": "Guardian God of the Coral Sea",
+        "domain": "Guardian God of the Coral Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Teryn - Guardian God of the Coral Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Coral Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "teryn religion aetherion pantheon {\"title\":\"teryn\",\"slug\":\"teryn\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the coral sea\",\"divinedomain\":\"guardian god of the coral sea\",\"domain\":\"guardian god of the coral sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/teryn - guardian god of the coral sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # teryn\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-thalen-index",
+      "title": "Thalen",
+      "slug": "thalen",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/thalen",
+      "sourcePath": "content/theology/thalen/index.md",
+      "sourceFolder": "content/theology/thalen",
+      "content": "---\ntitle: \"Thalen\"\nslug: \"thalen\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Masonry & Architecture\"\ndivine_domain: \"Masonry & Architecture\"\ndomain: \"Masonry & Architecture\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Thalen - Masonry & Architecture.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Thalen\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Thalen\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Thalen\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Thalen",
+        "slug": "thalen",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Masonry & Architecture",
+        "divineDomain": "Masonry & Architecture",
+        "domain": "Masonry & Architecture",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Thalen - Masonry & Architecture.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Masonry & Architecture",
+        "visibility": "public"
+      },
+      "searchTerms": "thalen religion aetherion pantheon {\"title\":\"thalen\",\"slug\":\"thalen\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"masonry & architecture\",\"divinedomain\":\"masonry & architecture\",\"domain\":\"masonry & architecture\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/thalen - masonry & architecture.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # thalen\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-thalora-index",
+      "title": "Thalora",
+      "slug": "thalora",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/thalora",
+      "sourcePath": "content/theology/thalora/index.md",
+      "sourceFolder": "content/theology/thalora",
+      "content": "---\ntitle: \"Thalora\"\nslug: \"thalora\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Spring\"\ndivine_domain: \"Goddess of Spring\"\ndomain: \"Goddess of Spring\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Thalora - Goddess of Spring.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Thalora\n\n## Overview\n### 🌸 **Goddess of Spring — Thalora, the Blooming Dawn**\n\n**Titles:** The Verdant Queen, She Who Awakens the Earth  \n**Symbol:** A budding flower emerging from melting snow  \n**Domains:** Renewal, Fertility, New Life, Beginnings  \n**Depiction:** A radiant woman crowned in fresh blossoms, her touch turns frost to dew.  \n**Lore:** Thalora’s arrival marks the retreat of Winter’s grasp. Each year, she awakens the dormant seeds and calls life back into motion. Farmers pray to her when sowing, believing her song stirs the sap within trees. She is neither nurturing nor cruel — simply inevitable, the force of rebirth.\n",
+      "body": "# Thalora\n\n## Overview\n### 🌸 **Goddess of Spring — Thalora, the Blooming Dawn**\n\n**Titles:** The Verdant Queen, She Who Awakens the Earth  \n**Symbol:** A budding flower emerging from melting snow  \n**Domains:** Renewal, Fertility, New Life, Beginnings  \n**Depiction:** A radiant woman crowned in fresh blossoms, her touch turns frost to dew.  \n**Lore:** Thalora’s arrival marks the retreat of Winter’s grasp. Each year, she awakens the dormant seeds and calls life back into motion. Farmers pray to her when sowing, believing her song stirs the sap within trees. She is neither nurturing nor cruel — simply inevitable, the force of rebirth.",
+      "sections": {
+        "Overview": "# Thalora\n\n### 🌸 **Goddess of Spring — Thalora, the Blooming Dawn**\n\n**Titles:** The Verdant Queen, She Who Awakens the Earth  \n**Symbol:** A budding flower emerging from melting snow  \n**Domains:** Renewal, Fertility, New Life, Beginnings  \n**Depiction:** A radiant woman crowned in fresh blossoms, her touch turns frost to dew.  \n**Lore:** Thalora’s arrival marks the retreat of Winter’s grasp. Each year, she awakens the dormant seeds and calls life back into motion. Farmers pray to her when sowing, believing her song stirs the sap within trees. She is neither nurturing nor cruel — simply inevitable, the force of rebirth."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Verdant Queen, She Who Awakens the Earth **Symbol:** A budding flower emerging from melting snow **Domains:** Renewal, Fertility, New Life, Beginnings **Depiction:** A radiant woman crowned in fresh blossoms, her touch turns frost to dew. **Lor",
+      "metadata": {
+        "title": "Thalora",
+        "slug": "thalora",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Spring",
+        "divineDomain": "Goddess of Spring",
+        "domain": "Goddess of Spring",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Thalora - Goddess of Spring.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Spring",
+        "visibility": "public"
+      },
+      "searchTerms": "thalora religion aetherion pantheon {\"title\":\"thalora\",\"slug\":\"thalora\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of spring\",\"divinedomain\":\"goddess of spring\",\"domain\":\"goddess of spring\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/gods of the 4 seasons/thalora - goddess of spring.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # thalora\n\n## overview\n### 🌸 **goddess of spring — thalora, the blooming dawn**\n\n**titles:** the verdant queen, she who awakens the earth  \n**symbol:** a budding flower emerging from melting snow  \n**domains:** renewal, fertility, new life, beginnings  \n**depiction:** a radiant woman crowned in fresh blossoms, her touch turns frost to dew.  \n**lore:** thalora’s arrival marks the retreat of winter’s grasp. each year, she awakens the dormant seeds and calls life back into motion. farmers pray to her when sowing, believing her song stirs the sap within trees. she is neither nurturing nor cruel — simply inevitable, the force of rebirth."
+    },
+    {
+      "id": "religion:content-theology-thamros-index",
+      "title": "Thamros",
+      "slug": "thamros",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/thamros",
+      "sourcePath": "content/theology/thamros/index.md",
+      "sourceFolder": "content/theology/thamros",
+      "content": "---\ntitle: \"Thamros\"\nslug: \"thamros\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Mountains\"\ndivine_domain: \"God of Mountains\"\ndomain: \"God of Mountains\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Thamros - God of Mountains.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Thamros\n\n## Overview\n### **God of Mountains – Thamros, the Stoneheart**\n\n**Titles:** The Enduring One, Keeper of Peaks, Father of Stone, the Unyielding  \n**Alignment:** Lawful Neutral / Neutral Good  \n**Domains:** Earth, Mountains, Endurance, Strength, Guardianship  \n**Symbol:** A mountain peak divided by a glowing river of gold  \n**Appearance:** Thamros is depicted as a giant of stone and flesh — his skin dark and rough like granite, his beard of silver veins flowing like molten ore. His eyes burn with the steady light of magma, and each of his steps is said to echo like thunder in the deep caverns.  \n**Personality:** Stern yet kind, patient but immovable. Thamros embodies the endurance of the land and the quiet wisdom of ages. He teaches that true strength comes not from conquest but from steadfastness — to stand tall even as storms rage around you.  \n**Mythic Lore:**  \nBorn from the bones of the world itself, Thamros rose when the gods of creation shaped the first lands. He is said to have lifted the mountains from the sea to anchor the drifting continents. When the seas raged and the skies broke, Thamros stood unmoved, his calm defiance forming the world’s great peaks.  \nHe guards the secrets of stone — ore, gem, and foundation — and his temples are often carved directly into cliff faces or beneath mountain roots. Miners, builders, and hermits revere him, offering stone carvings and hammered metal as tribute.  \nSome myths say that beneath the tallest peak lies his heart — a crystal core that pulses with the world’s rhythm. Should it ever stop, mountains would crumble and the world’s spine would break.  \n**Worshippers:** Miners, masons, mountain tribes, dwarves, and those who seek inner strength.  \n**Holy Days:** _The Still Summit_ — held once a year when pilgrims ascend the highest nearby peak in silence to meditate on endurance and purpose\n",
+      "body": "# Thamros\n\n## Overview\n### **God of Mountains – Thamros, the Stoneheart**\n\n**Titles:** The Enduring One, Keeper of Peaks, Father of Stone, the Unyielding  \n**Alignment:** Lawful Neutral / Neutral Good  \n**Domains:** Earth, Mountains, Endurance, Strength, Guardianship  \n**Symbol:** A mountain peak divided by a glowing river of gold  \n**Appearance:** Thamros is depicted as a giant of stone and flesh — his skin dark and rough like granite, his beard of silver veins flowing like molten ore. His eyes burn with the steady light of magma, and each of his steps is said to echo like thunder in the deep caverns.  \n**Personality:** Stern yet kind, patient but immovable. Thamros embodies the endurance of the land and the quiet wisdom of ages. He teaches that true strength comes not from conquest but from steadfastness — to stand tall even as storms rage around you.  \n**Mythic Lore:**  \nBorn from the bones of the world itself, Thamros rose when the gods of creation shaped the first lands. He is said to have lifted the mountains from the sea to anchor the drifting continents. When the seas raged and the skies broke, Thamros stood unmoved, his calm defiance forming the world’s great peaks.  \nHe guards the secrets of stone — ore, gem, and foundation — and his temples are often carved directly into cliff faces or beneath mountain roots. Miners, builders, and hermits revere him, offering stone carvings and hammered metal as tribute.  \nSome myths say that beneath the tallest peak lies his heart — a crystal core that pulses with the world’s rhythm. Should it ever stop, mountains would crumble and the world’s spine would break.  \n**Worshippers:** Miners, masons, mountain tribes, dwarves, and those who seek inner strength.  \n**Holy Days:** _The Still Summit_ — held once a year when pilgrims ascend the highest nearby peak in silence to meditate on endurance and purpose",
+      "sections": {
+        "Overview": "# Thamros\n\n### **God of Mountains – Thamros, the Stoneheart**\n\n**Titles:** The Enduring One, Keeper of Peaks, Father of Stone, the Unyielding  \n**Alignment:** Lawful Neutral / Neutral Good  \n**Domains:** Earth, Mountains, Endurance, Strength, Guardianship  \n**Symbol:** A mountain peak divided by a glowing river of gold  \n**Appearance:** Thamros is depicted as a giant of stone and flesh — his skin dark and rough like granite, his beard of silver veins flowing like molten ore. His eyes burn with the steady light of magma, and each of his steps is said to echo like thunder in the deep caverns.  \n**Personality:** Stern yet kind, patient but immovable. Thamros embodies the endurance of the land and the quiet wisdom of ages. He teaches that true strength comes not from conquest but from steadfastness — to stand tall even as storms rage around you.  \n**Mythic Lore:**  \nBorn from the bones of the world itself, Thamros rose when the gods of creation shaped the first lands. He is said to have lifted the mountains from the sea to anchor the drifting continents. When the seas raged and the skies broke, Thamros stood unmoved, his calm defiance forming the world’s great peaks.  \nHe guards the secrets of stone — ore, gem, and foundation — and his temples are often carved directly into cliff faces or beneath mountain roots. Miners, builders, and hermits revere him, offering stone carvings and hammered metal as tribute.  \nSome myths say that beneath the tallest peak lies his heart — a crystal core that pulses with the world’s rhythm. Should it ever stop, mountains would crumble and the world’s spine would break.  \n**Worshippers:** Miners, masons, mountain tribes, dwarves, and those who seek inner strength.  \n**Holy Days:** _The Still Summit_ — held once a year when pilgrims ascend the highest nearby peak in silence to meditate on endurance and purpose"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Enduring One, Keeper of Peaks, Father of Stone, the Unyielding **Alignment:** Lawful Neutral / Neutral Good **Domains:** Earth, Mountains, Endurance, Strength, Guardianship **Symbol:** A mountain peak divided by a glowing river of gold **Appear",
+      "metadata": {
+        "title": "Thamros",
+        "slug": "thamros",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Mountains",
+        "divineDomain": "God of Mountains",
+        "domain": "God of Mountains",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Thamros - God of Mountains.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Mountains",
+        "visibility": "public"
+      },
+      "searchTerms": "thamros religion aetherion pantheon {\"title\":\"thamros\",\"slug\":\"thamros\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of mountains\",\"divinedomain\":\"god of mountains\",\"domain\":\"god of mountains\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/thamros - god of mountains.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # thamros\n\n## overview\n### **god of mountains – thamros, the stoneheart**\n\n**titles:** the enduring one, keeper of peaks, father of stone, the unyielding  \n**alignment:** lawful neutral / neutral good  \n**domains:** earth, mountains, endurance, strength, guardianship  \n**symbol:** a mountain peak divided by a glowing river of gold  \n**appearance:** thamros is depicted as a giant of stone and flesh — his skin dark and rough like granite, his beard of silver veins flowing like molten ore. his eyes burn with the steady light of magma, and each of his steps is said to echo like thunder in the deep caverns.  \n**personality:** stern yet kind, patient but immovable. thamros embodies the endurance of the land and the quiet wisdom of ages. he teaches that true strength comes not from conquest but from steadfastness — to stand tall even as storms rage around you.  \n**mythic lore:**  \nborn from the bones of the world itself, thamros rose when the gods of creation shaped the first lands. he is said to have lifted the mountains from the sea to anchor the drifting continents. when the seas raged and the skies broke, thamros stood unmoved, his calm defiance forming the world’s great peaks.  \nhe guards the secrets of stone — ore, gem, and foundation — and his temples are often carved directly into cliff faces or beneath mountain roots. miners, builders, and hermits revere him, offering stone carvings and hammered metal as tribute.  \nsome myths say that beneath the tallest peak lies his heart — a crystal core that pulses with the world’s rhythm. should it ever stop, mountains would crumble and the world’s spine would break.  \n**worshippers:** miners, masons, mountain tribes, dwarves, and those who seek inner strength.  \n**holy days:** _the still summit_ — held once a year when pilgrims ascend the highest nearby peak in silence to meditate on endurance and purpose"
+    },
+    {
+      "id": "religion:content-theology-thyra-index",
+      "title": "Thyra",
+      "slug": "thyra",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/thyra",
+      "sourcePath": "content/theology/thyra/index.md",
+      "sourceFolder": "content/theology/thyra",
+      "content": "---\ntitle: \"Thyra\"\nslug: \"thyra\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Siren Sea\"\ndivine_domain: \"Guardian Goddess of the Siren Sea\"\ndomain: \"Guardian Goddess of the Siren Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Thyra - Guardian Goddess of the Siren Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Thyra\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Thyra\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Thyra\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Thyra",
+        "slug": "thyra",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Siren Sea",
+        "divineDomain": "Guardian Goddess of the Siren Sea",
+        "domain": "Guardian Goddess of the Siren Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Thyra - Guardian Goddess of the Siren Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Siren Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "thyra religion aetherion pantheon {\"title\":\"thyra\",\"slug\":\"thyra\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the siren sea\",\"divinedomain\":\"guardian goddess of the siren sea\",\"domain\":\"guardian goddess of the siren sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/thyra - guardian goddess of the siren sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # thyra\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-tovar-index",
+      "title": "Tovar",
+      "slug": "tovar",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/tovar",
+      "sourcePath": "content/theology/tovar/index.md",
+      "sourceFolder": "content/theology/tovar",
+      "content": "---\ntitle: \"Tovar\"\nslug: \"tovar\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Brewing\"\ndivine_domain: \"God of Brewing\"\ndomain: \"God of Brewing\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Tovar - God of Brewing.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Tovar\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Tovar\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Tovar\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Tovar",
+        "slug": "tovar",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Brewing",
+        "divineDomain": "God of Brewing",
+        "domain": "God of Brewing",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Tovar - God of Brewing.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Brewing",
+        "visibility": "public"
+      },
+      "searchTerms": "tovar religion aetherion pantheon {\"title\":\"tovar\",\"slug\":\"tovar\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of brewing\",\"divinedomain\":\"god of brewing\",\"domain\":\"god of brewing\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/tovar - god of brewing.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # tovar\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-varos-index",
+      "title": "Varos",
+      "slug": "varos",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/varos",
+      "sourcePath": "content/theology/varos/index.md",
+      "sourceFolder": "content/theology/varos",
+      "content": "---\ntitle: \"Varos\"\nslug: \"varos\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Autumn\"\ndivine_domain: \"God of Autumn\"\ndomain: \"God of Autumn\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Varos - God of Autumn.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Varos\n\n## Overview\n### 🍂 **God of Autumn — Varos, the Silent Reaper**\n\n**Titles:** The Harvest Lord, Keeper of Balance  \n**Symbol:** A sickle and falling leaf crossed together  \n**Domains:** Harvest, Transition, Reflection, Preparation  \n**Depiction:** A hooded figure robed in russet and gold, carrying a sickle of light.  \n**Lore:** Varos walks the fields when the last fruit falls, gathering what has ripened and letting what must die return to the soil. He represents acceptance of the cycle — the quiet after labor. Farmers offer him their first harvest as a sign of gratitude and respect for the coming end.\n",
+      "body": "# Varos\n\n## Overview\n### 🍂 **God of Autumn — Varos, the Silent Reaper**\n\n**Titles:** The Harvest Lord, Keeper of Balance  \n**Symbol:** A sickle and falling leaf crossed together  \n**Domains:** Harvest, Transition, Reflection, Preparation  \n**Depiction:** A hooded figure robed in russet and gold, carrying a sickle of light.  \n**Lore:** Varos walks the fields when the last fruit falls, gathering what has ripened and letting what must die return to the soil. He represents acceptance of the cycle — the quiet after labor. Farmers offer him their first harvest as a sign of gratitude and respect for the coming end.",
+      "sections": {
+        "Overview": "# Varos\n\n### 🍂 **God of Autumn — Varos, the Silent Reaper**\n\n**Titles:** The Harvest Lord, Keeper of Balance  \n**Symbol:** A sickle and falling leaf crossed together  \n**Domains:** Harvest, Transition, Reflection, Preparation  \n**Depiction:** A hooded figure robed in russet and gold, carrying a sickle of light.  \n**Lore:** Varos walks the fields when the last fruit falls, gathering what has ripened and letting what must die return to the soil. He represents acceptance of the cycle — the quiet after labor. Farmers offer him their first harvest as a sign of gratitude and respect for the coming end."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Harvest Lord, Keeper of Balance **Symbol:** A sickle and falling leaf crossed together **Domains:** Harvest, Transition, Reflection, Preparation **Depiction:** A hooded figure robed in russet and gold, carrying a sickle of light. **Lore:** Varo",
+      "metadata": {
+        "title": "Varos",
+        "slug": "varos",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Autumn",
+        "divineDomain": "God of Autumn",
+        "domain": "God of Autumn",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Varos - God of Autumn.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Autumn",
+        "visibility": "public"
+      },
+      "searchTerms": "varos religion aetherion pantheon {\"title\":\"varos\",\"slug\":\"varos\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of autumn\",\"divinedomain\":\"god of autumn\",\"domain\":\"god of autumn\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/gods of the 4 seasons/varos - god of autumn.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # varos\n\n## overview\n### 🍂 **god of autumn — varos, the silent reaper**\n\n**titles:** the harvest lord, keeper of balance  \n**symbol:** a sickle and falling leaf crossed together  \n**domains:** harvest, transition, reflection, preparation  \n**depiction:** a hooded figure robed in russet and gold, carrying a sickle of light.  \n**lore:** varos walks the fields when the last fruit falls, gathering what has ripened and letting what must die return to the soil. he represents acceptance of the cycle — the quiet after labor. farmers offer him their first harvest as a sign of gratitude and respect for the coming end."
+    },
+    {
+      "id": "religion:content-theology-vayra-index",
+      "title": "Vayra",
+      "slug": "vayra",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/vayra",
+      "sourcePath": "content/theology/vayra/index.md",
+      "sourceFolder": "content/theology/vayra",
+      "content": "---\ntitle: \"Vayra\"\nslug: \"vayra\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of the West Wind\"\ndivine_domain: \"Goddess of the West Wind\"\ndomain: \"Goddess of the West Wind\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Vayra - Goddess of the West Wind.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Vayra\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Vayra\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Vayra\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Vayra",
+        "slug": "vayra",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of the West Wind",
+        "divineDomain": "Goddess of the West Wind",
+        "domain": "Goddess of the West Wind",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Winds/Vayra - Goddess of the West Wind.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of the West Wind",
+        "visibility": "public"
+      },
+      "searchTerms": "vayra religion aetherion pantheon {\"title\":\"vayra\",\"slug\":\"vayra\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of the west wind\",\"divinedomain\":\"goddess of the west wind\",\"domain\":\"goddess of the west wind\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' winds/vayra - goddess of the west wind.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # vayra\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-veliss-index",
+      "title": "Veliss",
+      "slug": "veliss",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/veliss",
+      "sourcePath": "content/theology/veliss/index.md",
+      "sourceFolder": "content/theology/veliss",
+      "content": "---\ntitle: \"Veliss\"\nslug: \"veliss\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian Goddess of the Emerald Sea\"\ndivine_domain: \"Guardian Goddess of the Emerald Sea\"\ndomain: \"Guardian Goddess of the Emerald Sea\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Veliss - Guardian Goddess of the Emerald Sea.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Veliss\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Veliss\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Veliss\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Veliss",
+        "slug": "veliss",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian Goddess of the Emerald Sea",
+        "divineDomain": "Guardian Goddess of the Emerald Sea",
+        "domain": "Guardian Goddess of the Emerald Sea",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Veliss - Guardian Goddess of the Emerald Sea.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian Goddess of the Emerald Sea",
+        "visibility": "public"
+      },
+      "searchTerms": "veliss religion aetherion pantheon {\"title\":\"veliss\",\"slug\":\"veliss\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian goddess of the emerald sea\",\"divinedomain\":\"guardian goddess of the emerald sea\",\"domain\":\"guardian goddess of the emerald sea\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/seas/veliss - guardian goddess of the emerald sea.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # veliss\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-veloria-index",
+      "title": "Veloria",
+      "slug": "veloria",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/veloria",
+      "sourcePath": "content/theology/veloria/index.md",
+      "sourceFolder": "content/theology/veloria",
+      "content": "---\ntitle: \"Veloria\"\nslug: \"veloria\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Fabric Weaving\"\ndivine_domain: \"Goddess of Fabric Weaving\"\ndomain: \"Goddess of Fabric Weaving\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veloria - Goddess of Fabric Weaving.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Veloria\n\n## Overview\n**Titles:**  \nThe Loomkeeper, Weaver of Worlds, Lady of Threads, The Soft-Spoken Matron\n\n**Pantheon:**  \nPantheon of Creation (Crafting & Professions)\n\n**Alignment:**  \nLawful Neutral — patient, methodical, and wise, she values order and rhythm above all. She weaves both joy and sorrow into the grand tapestry of existence.\n\n**Symbol:**  \nA golden loom with silver threads forming an infinity pattern, or a spindle encircled by three entwined strands\n\n**Domains:**  \nCrafting, Fabric, Destiny, Creation, Patience, Community, Balance\n\n**Appearance:**  \nMythera appears as a calm and graceful woman cloaked in an ever-changing robe of woven light and shadow.  \nHer hair falls in long braids that shimmer like silk in candlelight, and her eyes are like polished amber threads — warm, steady, and knowing.  \nThe loom she carries hums with divine resonance, its threads glowing faintly as they weave unseen connections across the world.\n\n**Personality:**  \nMythera is serene but unyielding. Every thread, no matter how small, has meaning in her eyes.  \nShe rarely intervenes directly, believing that lives must intertwine naturally — yet when she does act, her touch ripples subtly through the fates of many.  \nTo her, creation is sacred meditation; every act of weaving is a prayer, every garment a fragment of the divine pattern.\n\n**Mythic Lore:**  \nIt is said Mythera was born from the **first breath of wind through the threads of dawn**, when the gods clothed the newborn world. She spun the **Mantle of the Ages**, the divine tapestry recording all of creation’s history — every event, life, and soul woven into its endless threads.  \nDuring the **Age of Sundering**, when fate itself was torn apart by warring gods, Mythera rewove the strands of time, restoring the flow of destiny at great cost to her own power.  \nHer loom, **The Weave Eternal**, is said to hang between the realms of gods and mortals, where each thread represents a living soul.\n\n**Worship:**  \nWeavers, tailors, storytellers, and even scholars honor Mythera. Her worship extends to families and guilds who see her as the divine matron of unity and structure.  \nHer temples often double as **guild halls or community centers**, filled with looms, fabrics, and murals of interlocking threads — symbolizing the ties between all living beings.\n\n**Rituals:**\n\n- **The Spindle Blessing:** Artisans spin their first thread of the season while whispering prayers to Mythera for guidance and stability.\n    \n- **The Loom Festival:** Once a year, great tapestries are woven collaboratively to tell the year’s story, then hung in the temples.\n    \n- **Threading of the Bonds:** Newlyweds or sworn allies exchange braided cords blessed by her clergy, representing unbreakable unity.\n    \n- **Weaving the Veil:** When a soul departs, mourners weave small tokens of fabric to help guide the spirit through the Loom of Eternity.\n    \n\n**Relationships:**\n\n- **Lythera – Goddess of Glasswork:** A close friend and artistic sister; their crafts often intertwine in divine works of beauty.\n    \n- **Vaelion – God of Time & Space:** She works with him to weave the fabric of reality itself.\n    \n- **Malthera – Hellish Goddess:** A wary respect; Mythera understands that even dark threads are necessary in the tapestry.\n    \n- **Celest – Goddess of the Celestial:** Her partner in light; together they weave the dawn’s first radiance into the sky.\n    \n- **The Fates (if they exist in your world):** Often depicted as her daughters or apprentices.\n    \n\n**Holy Day:**  \n**Festival of Threads** — celebrated in early spring, marking renewal and the start of new weaving seasons. Communities hang colorful ribbons and woven banners from rooftops to symbolize their bonds and shared destinies.\n",
+      "body": "# Veloria\n\n## Overview\n**Titles:**  \nThe Loomkeeper, Weaver of Worlds, Lady of Threads, The Soft-Spoken Matron\n\n**Pantheon:**  \nPantheon of Creation (Crafting & Professions)\n\n**Alignment:**  \nLawful Neutral — patient, methodical, and wise, she values order and rhythm above all. She weaves both joy and sorrow into the grand tapestry of existence.\n\n**Symbol:**  \nA golden loom with silver threads forming an infinity pattern, or a spindle encircled by three entwined strands\n\n**Domains:**  \nCrafting, Fabric, Destiny, Creation, Patience, Community, Balance\n\n**Appearance:**  \nMythera appears as a calm and graceful woman cloaked in an ever-changing robe of woven light and shadow.  \nHer hair falls in long braids that shimmer like silk in candlelight, and her eyes are like polished amber threads — warm, steady, and knowing.  \nThe loom she carries hums with divine resonance, its threads glowing faintly as they weave unseen connections across the world.\n\n**Personality:**  \nMythera is serene but unyielding. Every thread, no matter how small, has meaning in her eyes.  \nShe rarely intervenes directly, believing that lives must intertwine naturally — yet when she does act, her touch ripples subtly through the fates of many.  \nTo her, creation is sacred meditation; every act of weaving is a prayer, every garment a fragment of the divine pattern.\n\n**Mythic Lore:**  \nIt is said Mythera was born from the **first breath of wind through the threads of dawn**, when the gods clothed the newborn world. She spun the **Mantle of the Ages**, the divine tapestry recording all of creation’s history — every event, life, and soul woven into its endless threads.  \nDuring the **Age of Sundering**, when fate itself was torn apart by warring gods, Mythera rewove the strands of time, restoring the flow of destiny at great cost to her own power.  \nHer loom, **The Weave Eternal**, is said to hang between the realms of gods and mortals, where each thread represents a living soul.\n\n**Worship:**  \nWeavers, tailors, storytellers, and even scholars honor Mythera. Her worship extends to families and guilds who see her as the divine matron of unity and structure.  \nHer temples often double as **guild halls or community centers**, filled with looms, fabrics, and murals of interlocking threads — symbolizing the ties between all living beings.\n\n**Rituals:**\n\n- **The Spindle Blessing:** Artisans spin their first thread of the season while whispering prayers to Mythera for guidance and stability.\n    \n- **The Loom Festival:** Once a year, great tapestries are woven collaboratively to tell the year’s story, then hung in the temples.\n    \n- **Threading of the Bonds:** Newlyweds or sworn allies exchange braided cords blessed by her clergy, representing unbreakable unity.\n    \n- **Weaving the Veil:** When a soul departs, mourners weave small tokens of fabric to help guide the spirit through the Loom of Eternity.\n    \n\n**Relationships:**\n\n- **Lythera – Goddess of Glasswork:** A close friend and artistic sister; their crafts often intertwine in divine works of beauty.\n    \n- **Vaelion – God of Time & Space:** She works with him to weave the fabric of reality itself.\n    \n- **Malthera – Hellish Goddess:** A wary respect; Mythera understands that even dark threads are necessary in the tapestry.\n    \n- **Celest – Goddess of the Celestial:** Her partner in light; together they weave the dawn’s first radiance into the sky.\n    \n- **The Fates (if they exist in your world):** Often depicted as her daughters or apprentices.\n    \n\n**Holy Day:**  \n**Festival of Threads** — celebrated in early spring, marking renewal and the start of new weaving seasons. Communities hang colorful ribbons and woven banners from rooftops to symbolize their bonds and shared destinies.",
+      "sections": {
+        "Overview": "# Veloria\n\n**Titles:**  \nThe Loomkeeper, Weaver of Worlds, Lady of Threads, The Soft-Spoken Matron\n\n**Pantheon:**  \nPantheon of Creation (Crafting & Professions)\n\n**Alignment:**  \nLawful Neutral — patient, methodical, and wise, she values order and rhythm above all. She weaves both joy and sorrow into the grand tapestry of existence.\n\n**Symbol:**  \nA golden loom with silver threads forming an infinity pattern, or a spindle encircled by three entwined strands\n\n**Domains:**  \nCrafting, Fabric, Destiny, Creation, Patience, Community, Balance\n\n**Appearance:**  \nMythera appears as a calm and graceful woman cloaked in an ever-changing robe of woven light and shadow.  \nHer hair falls in long braids that shimmer like silk in candlelight, and her eyes are like polished amber threads — warm, steady, and knowing.  \nThe loom she carries hums with divine resonance, its threads glowing faintly as they weave unseen connections across the world.\n\n**Personality:**  \nMythera is serene but unyielding. Every thread, no matter how small, has meaning in her eyes.  \nShe rarely intervenes directly, believing that lives must intertwine naturally — yet when she does act, her touch ripples subtly through the fates of many.  \nTo her, creation is sacred meditation; every act of weaving is a prayer, every garment a fragment of the divine pattern.\n\n**Mythic Lore:**  \nIt is said Mythera was born from the **first breath of wind through the threads of dawn**, when the gods clothed the newborn world. She spun the **Mantle of the Ages**, the divine tapestry recording all of creation’s history — every event, life, and soul woven into its endless threads.  \nDuring the **Age of Sundering**, when fate itself was torn apart by warring gods, Mythera rewove the strands of time, restoring the flow of destiny at great cost to her own power.  \nHer loom, **The Weave Eternal**, is said to hang between the realms of gods and mortals, where each thread represents a living soul.\n\n**Worship:**  \nWeavers, tailors, storytellers, and even scholars honor Mythera. Her worship extends to families and guilds who see her as the divine matron of unity and structure.  \nHer temples often double as **guild halls or community centers**, filled with looms, fabrics, and murals of interlocking threads — symbolizing the ties between all living beings.\n\n**Rituals:**\n\n- **The Spindle Blessing:** Artisans spin their first thread of the season while whispering prayers to Mythera for guidance and stability.\n    \n- **The Loom Festival:** Once a year, great tapestries are woven collaboratively to tell the year’s story, then hung in the temples.\n    \n- **Threading of the Bonds:** Newlyweds or sworn allies exchange braided cords blessed by her clergy, representing unbreakable unity.\n    \n- **Weaving the Veil:** When a soul departs, mourners weave small tokens of fabric to help guide the spirit through the Loom of Eternity.\n    \n\n**Relationships:**\n\n- **Lythera – Goddess of Glasswork:** A close friend and artistic sister; their crafts often intertwine in divine works of beauty.\n    \n- **Vaelion – God of Time & Space:** She works with him to weave the fabric of reality itself.\n    \n- **Malthera – Hellish Goddess:** A wary respect; Mythera understands that even dark threads are necessary in the tapestry.\n    \n- **Celest – Goddess of the Celestial:** Her partner in light; together they weave the dawn’s first radiance into the sky.\n    \n- **The Fates (if they exist in your world):** Often depicted as her daughters or apprentices.\n    \n\n**Holy Day:**  \n**Festival of Threads** — celebrated in early spring, marking renewal and the start of new weaving seasons. Communities hang colorful ribbons and woven banners from rooftops to symbolize their bonds and shared destinies."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Loomkeeper, Weaver of Worlds, Lady of Threads, The Soft-Spoken Matron **Pantheon:** Pantheon of Creation (Crafting & Professions) **Alignment:** Lawful Neutral — patient, methodical, and wise, she values order and rhythm above all. She weaves b",
+      "metadata": {
+        "title": "Veloria",
+        "slug": "veloria",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Fabric Weaving",
+        "divineDomain": "Goddess of Fabric Weaving",
+        "domain": "Goddess of Fabric Weaving",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veloria - Goddess of Fabric Weaving.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Fabric Weaving",
+        "visibility": "public"
+      },
+      "searchTerms": "veloria religion aetherion pantheon {\"title\":\"veloria\",\"slug\":\"veloria\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of fabric weaving\",\"divinedomain\":\"goddess of fabric weaving\",\"domain\":\"goddess of fabric weaving\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/veloria - goddess of fabric weaving.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # veloria\n\n## overview\n**titles:**  \nthe loomkeeper, weaver of worlds, lady of threads, the soft-spoken matron\n\n**pantheon:**  \npantheon of creation (crafting & professions)\n\n**alignment:**  \nlawful neutral — patient, methodical, and wise, she values order and rhythm above all. she weaves both joy and sorrow into the grand tapestry of existence.\n\n**symbol:**  \na golden loom with silver threads forming an infinity pattern, or a spindle encircled by three entwined strands\n\n**domains:**  \ncrafting, fabric, destiny, creation, patience, community, balance\n\n**appearance:**  \nmythera appears as a calm and graceful woman cloaked in an ever-changing robe of woven light and shadow.  \nher hair falls in long braids that shimmer like silk in candlelight, and her eyes are like polished amber threads — warm, steady, and knowing.  \nthe loom she carries hums with divine resonance, its threads glowing faintly as they weave unseen connections across the world.\n\n**personality:**  \nmythera is serene but unyielding. every thread, no matter how small, has meaning in her eyes.  \nshe rarely intervenes directly, believing that lives must intertwine naturally — yet when she does act, her touch ripples subtly through the fates of many.  \nto her, creation is sacred meditation; every act of weaving is a prayer, every garment a fragment of the divine pattern.\n\n**mythic lore:**  \nit is said mythera was born from the **first breath of wind through the threads of dawn**, when the gods clothed the newborn world. she spun the **mantle of the ages**, the divine tapestry recording all of creation’s history — every event, life, and soul woven into its endless threads.  \nduring the **age of sundering**, when fate itself was torn apart by warring gods, mythera rewove the strands of time, restoring the flow of destiny at great cost to her own power.  \nher loom, **the weave eternal**, is said to hang between the realms of gods and mortals, where each thread represents a living soul.\n\n**worship:**  \nweavers, tailors, storytellers, and even scholars honor mythera. her worship extends to families and guilds who see her as the divine matron of unity and structure.  \nher temples often double as **guild halls or community centers**, filled with looms, fabrics, and murals of interlocking threads — symbolizing the ties between all living beings.\n\n**rituals:**\n\n- **the spindle blessing:** artisans spin their first thread of the season while whispering prayers to mythera for guidance and stability.\n    \n- **the loom festival:** once a year, great tapestries are woven collaboratively to tell the year’s story, then hung in the temples.\n    \n- **threading of the bonds:** newlyweds or sworn allies exchange braided cords blessed by her clergy, representing unbreakable unity.\n    \n- **weaving the veil:** when a soul departs, mourners weave small tokens of fabric to help guide the spirit through the loom of eternity.\n    \n\n**relationships:**\n\n- **lythera – goddess of glasswork:** a close friend and artistic sister; their crafts often intertwine in divine works of beauty.\n    \n- **vaelion – god of time & space:** she works with him to weave the fabric of reality itself.\n    \n- **malthera – hellish goddess:** a wary respect; mythera understands that even dark threads are necessary in the tapestry.\n    \n- **celest – goddess of the celestial:** her partner in light; together they weave the dawn’s first radiance into the sky.\n    \n- **the fates (if they exist in your world):** often depicted as her daughters or apprentices.\n    \n\n**holy day:**  \n**festival of threads** — celebrated in early spring, marking renewal and the start of new weaving seasons. communities hang colorful ribbons and woven banners from rooftops to symbolize their bonds and shared destinies."
+    },
+    {
+      "id": "religion:content-theology-veska-index",
+      "title": "Veska",
+      "slug": "veska",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/veska",
+      "sourcePath": "content/theology/veska/index.md",
+      "sourceFolder": "content/theology/veska",
+      "content": "---\ntitle: \"Veska\"\nslug: \"veska\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Commerce, Currency and Trade\"\ndivine_domain: \"God of Commerce, Currency and Trade\"\ndomain: \"God of Commerce, Currency and Trade\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veska - God of Commerce, Currency and Trade.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Veska\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Veska\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Veska\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Veska",
+        "slug": "veska",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God of Commerce, Currency and Trade",
+        "divineDomain": "God of Commerce, Currency and Trade",
+        "domain": "God of Commerce, Currency and Trade",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veska - God of Commerce, Currency and Trade.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God of Commerce, Currency and Trade",
+        "visibility": "public"
+      },
+      "searchTerms": "veska religion aetherion pantheon {\"title\":\"veska\",\"slug\":\"veska\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of commerce, currency and trade\",\"divinedomain\":\"god of commerce, currency and trade\",\"domain\":\"god of commerce, currency and trade\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/2. crafting and professions god's and goddess'/veska - god of commerce, currency and trade.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # veska\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-virella-index",
+      "title": "Virella",
+      "slug": "virella",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/virella",
+      "sourcePath": "content/theology/virella/index.md",
+      "sourceFolder": "content/theology/virella",
+      "content": "---\ntitle: \"Virella\"\nslug: \"virella\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Love & Passion\"\ndivine_domain: \"Goddess of Love & Passion\"\ndomain: \"Goddess of Love & Passion\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Virella - Goddess of Love & Passion.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Virella\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Virella\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Virella\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Virella",
+        "slug": "virella",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Love & Passion",
+        "divineDomain": "Goddess of Love & Passion",
+        "domain": "Goddess of Love & Passion",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Virella - Goddess of Love & Passion.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Love & Passion",
+        "visibility": "public"
+      },
+      "searchTerms": "virella religion aetherion pantheon {\"title\":\"virella\",\"slug\":\"virella\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of love & passion\",\"divinedomain\":\"goddess of love & passion\",\"domain\":\"goddess of love & passion\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/virella - goddess of love & passion.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # virella\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-vorneth-index",
+      "title": "Vorneth",
+      "slug": "vorneth",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/vorneth",
+      "sourcePath": "content/theology/vorneth/index.md",
+      "sourceFolder": "content/theology/vorneth",
+      "content": "---\ntitle: \"Vorneth\"\nslug: \"vorneth\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Guardian God of the Dravonic Ocean\"\ndivine_domain: \"Guardian God of the Dravonic Ocean\"\ndomain: \"Guardian God of the Dravonic Ocean\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Vorneth - Guardian God of the Dravonic Ocean.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Vorneth\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Vorneth\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Vorneth\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Vorneth",
+        "slug": "vorneth",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Guardian God of the Dravonic Ocean",
+        "divineDomain": "Guardian God of the Dravonic Ocean",
+        "domain": "Guardian God of the Dravonic Ocean",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Oceans/Vorneth - Guardian God of the Dravonic Ocean.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Guardian God of the Dravonic Ocean",
+        "visibility": "public"
+      },
+      "searchTerms": "vorneth religion aetherion pantheon {\"title\":\"vorneth\",\"slug\":\"vorneth\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"guardian god of the dravonic ocean\",\"divinedomain\":\"guardian god of the dravonic ocean\",\"domain\":\"guardian god of the dravonic ocean\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/god's & goddess' oceans & seas/oceans/vorneth - guardian god of the dravonic ocean.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # vorneth\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-yalen-index",
+      "title": "Yalen",
+      "slug": "yalen",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/yalen",
+      "sourcePath": "content/theology/yalen/index.md",
+      "sourceFolder": "content/theology/yalen",
+      "content": "---\ntitle: \"Yalen\"\nslug: \"yalen\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"God Of Nature\"\ndivine_domain: \"God Of Nature\"\ndomain: \"God Of Nature\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Yalen - God Of Nature.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Yalen\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Yalen\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Yalen\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Yalen",
+        "slug": "yalen",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "God Of Nature",
+        "divineDomain": "God Of Nature",
+        "domain": "God Of Nature",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Yalen - God Of Nature.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "God Of Nature",
+        "visibility": "public"
+      },
+      "searchTerms": "yalen religion aetherion pantheon {\"title\":\"yalen\",\"slug\":\"yalen\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"god of nature\",\"divinedomain\":\"god of nature\",\"domain\":\"god of nature\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/1. nature god's and goddess'/yalen - god of nature.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # yalen\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-zyphera-index",
+      "title": "Zyphera",
+      "slug": "zyphera",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Aetherion Pantheon"
+      ],
+      "category": "Aetherion Pantheon",
+      "route": "/compendium/religion/aetherion-pantheon/zyphera",
+      "sourcePath": "content/theology/zyphera/index.md",
+      "sourceFolder": "content/theology/zyphera",
+      "content": "---\ntitle: \"Zyphera\"\nslug: \"zyphera\"\ntype: theology\ncategory: \"Aetherion Pantheon\"\npantheon: \"Aetherion Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of Poison, Venom & Serpents\"\ndivine_domain: \"Goddess of Poison, Venom & Serpents\"\ndomain: \"Goddess of Poison, Venom & Serpents\"\nsource_path: \"2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Zyphera - Goddess of Poison, Venom & Serpents.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"aetherion-pantheon\"\nvisibility: public\n---\n# Zyphera\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Zyphera\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Zyphera\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Zyphera",
+        "slug": "zyphera",
+        "type": "theology",
+        "category": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of Poison, Venom & Serpents",
+        "divineDomain": "Goddess of Poison, Venom & Serpents",
+        "domain": "Goddess of Poison, Venom & Serpents",
+        "sourcePath": "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Zyphera - Goddess of Poison, Venom & Serpents.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "aetherion-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "aetherion-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Aetherion Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Aetherion Pantheon",
+        "pantheon": "Aetherion Pantheon",
+        "divineDomain": "Goddess of Poison, Venom & Serpents",
+        "visibility": "public"
+      },
+      "searchTerms": "zyphera religion aetherion pantheon {\"title\":\"zyphera\",\"slug\":\"zyphera\",\"type\":\"theology\",\"category\":\"aetherion pantheon\",\"pantheon\":\"aetherion pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of poison, venom & serpents\",\"divinedomain\":\"goddess of poison, venom & serpents\",\"domain\":\"goddess of poison, venom & serpents\",\"sourcepath\":\"2. devine pantheons/2. aetherion pantheon/3. people, placing and things/zyphera - goddess of poison, venom & serpents.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"aetherion-pantheon\"],\"visibility\":\"public\"} # zyphera\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-lady-cordelia-roth-index",
+      "title": "Lady Cordelia Roth",
+      "slug": "lady-cordelia-roth",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lady-cordelia-roth",
+      "sourcePath": "content/theology/lady-cordelia-roth/index.md",
+      "sourceFolder": "content/theology/lady-cordelia-roth",
+      "content": "---\ntitle: \"Lady Cordelia Roth\"\nslug: \"lady-cordelia-roth\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/1. House of Faces/1. Regent of Faces/Lady Cordelia Roth.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lady Cordelia Roth\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/DARK RACES/CHANGELING/Changeling]]\nAge: 71 (Looks 24)\nGender: female\nHeight: 5'8\"\nWeight: 59kg (Slender petite)\nSkin Colour: White\nEye Colour: White with extreme light blue iris \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lady Cordelia Roth\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/DARK RACES/CHANGELING/Changeling]]\nAge: 71 (Looks 24)\nGender: female\nHeight: 5'8\"\nWeight: 59kg (Slender petite)\nSkin Colour: White\nEye Colour: White with extreme light blue iris \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lady Cordelia Roth\n\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/DARK RACES/CHANGELING/Changeling]]\nAge: 71 (Looks 24)\nGender: female\nHeight: 5'8\"\nWeight: 59kg (Slender petite)\nSkin Colour: White\nEye Colour: White with extreme light blue iris \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[4. RACES/Playable Races/DARK RACES/CHANGELING/Changeling]] Age: 71 (Looks 24) Gender: female Height: 5'8\" Weight: 59kg (Slender petite) Skin Colour: White Eye Colour: White with extreme light blue iris **Character Details**",
+      "metadata": {
+        "title": "Lady Cordelia Roth",
+        "slug": "lady-cordelia-roth",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/1. House of Faces/1. Regent of Faces/Lady Cordelia Roth.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lady cordelia roth religion dark court {\"title\":\"lady cordelia roth\",\"slug\":\"lady-cordelia-roth\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/1. house of faces/1. regent of faces/lady cordelia roth.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lady cordelia roth\n\n## overview\n**physical characteristics**\nrace: [[4. races/playable races/dark races/changeling/changeling]]\nage: 71 (looks 24)\ngender: female\nheight: 5'8\"\nweight: 59kg (slender petite)\nskin colour: white\neye colour: white with extreme light blue iris \n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lady-de-val-von-dominax-index",
+      "title": "Lady De Val Von Dominax",
+      "slug": "lady-de-val-von-dominax",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lady-de-val-von-dominax",
+      "sourcePath": "content/theology/lady-de-val-von-dominax/index.md",
+      "sourceFolder": "content/theology/lady-de-val-von-dominax",
+      "content": "---\ntitle: \"Lady De Val Von Dominax\"\nslug: \"lady-de-val-von-dominax\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/9. House of Suffering/1. Regent of Suffering/Lady De Val Von Dominax.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lady De Val Von Dominax\n\n## Overview\n**Physical Characteristics**\nRace: [[Succubus]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lady De Val Von Dominax\n\n## Overview\n**Physical Characteristics**\nRace: [[Succubus]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lady De Val Von Dominax\n\n**Physical Characteristics**\nRace: [[Succubus]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Succubus]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Traits: Ideals: Bonds: Flaws: Likes: Dislikes: **A",
+      "metadata": {
+        "title": "Lady De Val Von Dominax",
+        "slug": "lady-de-val-von-dominax",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/9. House of Suffering/1. Regent of Suffering/Lady De Val Von Dominax.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lady de val von dominax religion dark court {\"title\":\"lady de val von dominax\",\"slug\":\"lady-de-val-von-dominax\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/9. house of suffering/1. regent of suffering/lady de val von dominax.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lady de val von dominax\n\n## overview\n**physical characteristics**\nrace: [[succubus]] \nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lady-elara-sylvan-index",
+      "title": "Lady Elara Sylvan",
+      "slug": "lady-elara-sylvan",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lady-elara-sylvan",
+      "sourcePath": "content/theology/lady-elara-sylvan/index.md",
+      "sourceFolder": "content/theology/lady-elara-sylvan",
+      "content": "---\ntitle: \"Lady Elara Sylvan\"\nslug: \"lady-elara-sylvan\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/10. House of Rituals/Regent of Rituals/Lady Elara Sylvan.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lady Elara Sylvan\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/MEDIUM RACES/ELVEN RCES/BLOOD ELF/Blood Elf]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lady Elara Sylvan\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/MEDIUM RACES/ELVEN RCES/BLOOD ELF/Blood Elf]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lady Elara Sylvan\n\n**Physical Characteristics**\nRace: [[4. RACES/Playable Races/MEDIUM RACES/ELVEN RCES/BLOOD ELF/Blood Elf]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[4. RACES/Playable Races/MEDIUM RACES/ELVEN RCES/BLOOD ELF/Blood Elf]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Per",
+      "metadata": {
+        "title": "Lady Elara Sylvan",
+        "slug": "lady-elara-sylvan",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/10. House of Rituals/Regent of Rituals/Lady Elara Sylvan.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lady elara sylvan religion dark court {\"title\":\"lady elara sylvan\",\"slug\":\"lady-elara-sylvan\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/10. house of rituals/regent of rituals/lady elara sylvan.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lady elara sylvan\n\n## overview\n**physical characteristics**\nrace: [[4. races/playable races/medium races/elven rces/blood elf/blood elf]]\nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lady-meredith-azagar-index",
+      "title": "Lady Meredith Azagar",
+      "slug": "lady-meredith-azagar",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lady-meredith-azagar",
+      "sourcePath": "content/theology/lady-meredith-azagar/index.md",
+      "sourceFolder": "content/theology/lady-meredith-azagar",
+      "content": "---\ntitle: \"Lady Meredith Azagar\"\nslug: \"lady-meredith-azagar\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/3. House of Malice/1. Regent of Malice/Lady Meredith Azagar.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lady Meredith Azagar\n\n## Overview\n**Physical Characteristics**\nRace: [[Fallen Angle]]\nAge: 439\nGender: Female\nHeight: 6'1\"\nWeight: 71kg\nSkin Colour: Pink Skin\nEye Colour: Black iris with gold flecks\nHair Colour: Long Black Straight Hair\nNotable Features: \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lady Meredith Azagar\n\n## Overview\n**Physical Characteristics**\nRace: [[Fallen Angle]]\nAge: 439\nGender: Female\nHeight: 6'1\"\nWeight: 71kg\nSkin Colour: Pink Skin\nEye Colour: Black iris with gold flecks\nHair Colour: Long Black Straight Hair\nNotable Features: \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lady Meredith Azagar\n\n**Physical Characteristics**\nRace: [[Fallen Angle]]\nAge: 439\nGender: Female\nHeight: 6'1\"\nWeight: 71kg\nSkin Colour: Pink Skin\nEye Colour: Black iris with gold flecks\nHair Colour: Long Black Straight Hair\nNotable Features: \n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Fallen Angle]] Age: 439 Gender: Female Height: 6'1\" Weight: 71kg Skin Colour: Pink Skin Eye Colour: Black iris with gold flecks Hair Colour: Long Black Straight Hair Notable Features: **Character Details** Alignment: Faith:",
+      "metadata": {
+        "title": "Lady Meredith Azagar",
+        "slug": "lady-meredith-azagar",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/3. House of Malice/1. Regent of Malice/Lady Meredith Azagar.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lady meredith azagar religion dark court {\"title\":\"lady meredith azagar\",\"slug\":\"lady-meredith-azagar\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/3. house of malice/1. regent of malice/lady meredith azagar.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lady meredith azagar\n\n## overview\n**physical characteristics**\nrace: [[fallen angle]]\nage: 439\ngender: female\nheight: 6'1\"\nweight: 71kg\nskin colour: pink skin\neye colour: black iris with gold flecks\nhair colour: long black straight hair\nnotable features: \n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-index",
+      "title": "Lord",
+      "slug": "lord",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord",
+      "sourcePath": "content/theology/lord/index.md",
+      "sourceFolder": "content/theology/lord",
+      "content": "---\ntitle: \"Lord\"\nslug: \"lord\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/12. House of the Unfortune/1. Regent of Unfortune/Lord.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord\n\n## Overview\n**Physical Characteristics**\nRace: [[Jinn]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord\n\n## Overview\n**Physical Characteristics**\nRace: [[Jinn]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord\n\n**Physical Characteristics**\nRace: [[Jinn]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Jinn]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Traits: Ideals: Bonds: Flaws: Likes: Dislikes: **Addit",
+      "metadata": {
+        "title": "Lord",
+        "slug": "lord",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/12. House of the Unfortune/1. Regent of Unfortune/Lord.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord religion dark court {\"title\":\"lord\",\"slug\":\"lord\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/12. house of the unfortune/1. regent of unfortune/lord.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord\n\n## overview\n**physical characteristics**\nrace: [[jinn]]\nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-aldrin-maelkai-index",
+      "title": "Lord Aldrin Maelkai",
+      "slug": "lord-aldrin-maelkai",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-aldrin-maelkai",
+      "sourcePath": "content/theology/lord-aldrin-maelkai/index.md",
+      "sourceFolder": "content/theology/lord-aldrin-maelkai",
+      "content": "---\ntitle: \"Lord Aldrin Maelkai\"\nslug: \"lord-aldrin-maelkai\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/11. House of Conquest/1. Regent of Conquest/Lord Aldrin Maelkai.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Aldrin Maelkai\n\n## Overview\n**Physical Characteristics**\nRace: [[Arch Fiend]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Aldrin Maelkai\n\n## Overview\n**Physical Characteristics**\nRace: [[Arch Fiend]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Aldrin Maelkai\n\n**Physical Characteristics**\nRace: [[Arch Fiend]] \nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Arch Fiend]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Traits: Ideals: Bonds: Flaws: Likes: Dislikes: *",
+      "metadata": {
+        "title": "Lord Aldrin Maelkai",
+        "slug": "lord-aldrin-maelkai",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/11. House of Conquest/1. Regent of Conquest/Lord Aldrin Maelkai.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord aldrin maelkai religion dark court {\"title\":\"lord aldrin maelkai\",\"slug\":\"lord-aldrin-maelkai\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/11. house of conquest/1. regent of conquest/lord aldrin maelkai.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord aldrin maelkai\n\n## overview\n**physical characteristics**\nrace: [[arch fiend]] \nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-belfast-victis-index",
+      "title": "Lord Belfast Victis",
+      "slug": "lord-belfast-victis",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-belfast-victis",
+      "sourcePath": "content/theology/lord-belfast-victis/index.md",
+      "sourceFolder": "content/theology/lord-belfast-victis",
+      "content": "---\ntitle: \"Lord Belfast Victis\"\nslug: \"lord-belfast-victis\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/8. House of Enslavement/1. Regent of Enslavement/Lord Belfast Victis.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Belfast Victis\n\n## Overview\n**Physical Characteristics**\nRace: [[Vampire - Ancient One]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Belfast Victis\n\n## Overview\n**Physical Characteristics**\nRace: [[Vampire - Ancient One]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Belfast Victis\n\n**Physical Characteristics**\nRace: [[Vampire - Ancient One]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Vampire - Ancient One]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Traits: Ideals: Bonds: Flaws: Likes: ",
+      "metadata": {
+        "title": "Lord Belfast Victis",
+        "slug": "lord-belfast-victis",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/8. House of Enslavement/1. Regent of Enslavement/Lord Belfast Victis.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord belfast victis religion dark court {\"title\":\"lord belfast victis\",\"slug\":\"lord-belfast-victis\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/8. house of enslavement/1. regent of enslavement/lord belfast victis.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord belfast victis\n\n## overview\n**physical characteristics**\nrace: [[vampire - ancient one]]\nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-damos-harkros-index",
+      "title": "Lord Damos Harkros",
+      "slug": "lord-damos-harkros",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-damos-harkros",
+      "sourcePath": "content/theology/lord-damos-harkros/index.md",
+      "sourceFolder": "content/theology/lord-damos-harkros",
+      "content": "---\ntitle: \"Lord Damos Harkros\"\nslug: \"lord-damos-harkros\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/2. House of Hallows/1. Regent of Hallows/Lord Damos Harkros.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Damos Harkros\n\n## Overview\n**Physical Characteristics**\nRace: [[Demon - Of Cross Road]]\nAge: 31\nGender: Male\nHeight: 5'11\"\nWeight: 107 kg\nSkin Colour: Pale Pink Skin\nEye Colour: Black Eyes\nNotable Features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Damos Harkros\n\n## Overview\n**Physical Characteristics**\nRace: [[Demon - Of Cross Road]]\nAge: 31\nGender: Male\nHeight: 5'11\"\nWeight: 107 kg\nSkin Colour: Pale Pink Skin\nEye Colour: Black Eyes\nNotable Features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Damos Harkros\n\n**Physical Characteristics**\nRace: [[Demon - Of Cross Road]]\nAge: 31\nGender: Male\nHeight: 5'11\"\nWeight: 107 kg\nSkin Colour: Pale Pink Skin\nEye Colour: Black Eyes\nNotable Features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Demon - Of Cross Road]] Age: 31 Gender: Male Height: 5'11\" Weight: 107 kg Skin Colour: Pale Pink Skin Eye Colour: Black Eyes Notable Features: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Ch",
+      "metadata": {
+        "title": "Lord Damos Harkros",
+        "slug": "lord-damos-harkros",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/2. House of Hallows/1. Regent of Hallows/Lord Damos Harkros.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord damos harkros religion dark court {\"title\":\"lord damos harkros\",\"slug\":\"lord-damos-harkros\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/2. house of hallows/1. regent of hallows/lord damos harkros.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord damos harkros\n\n## overview\n**physical characteristics**\nrace: [[demon - of cross road]]\nage: 31\ngender: male\nheight: 5'11\"\nweight: 107 kg\nskin colour: pale pink skin\neye colour: black eyes\nnotable features:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-murmur-zalrath-index",
+      "title": "Lord Murmur Zalrath",
+      "slug": "lord-murmur-zalrath",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-murmur-zalrath",
+      "sourcePath": "content/theology/lord-murmur-zalrath/index.md",
+      "sourceFolder": "content/theology/lord-murmur-zalrath",
+      "content": "---\ntitle: \"Lord Murmur Zalrath\"\nslug: \"lord-murmur-zalrath\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/4. House of Nightmares/1. Regent of Nightmares/Lord Murmur Zalrath.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Murmur Zalrath\n\n## Overview\n**Physical Characteristics**\nRace: [[Alp]]\nAge: 112\nGender: Male\nHeight: 6'7\"\nWeight: 120kg\nSkin Colour: Pale white sking\nEye Colour: Dark Grey Eyes\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Murmur Zalrath\n\n## Overview\n**Physical Characteristics**\nRace: [[Alp]]\nAge: 112\nGender: Male\nHeight: 6'7\"\nWeight: 120kg\nSkin Colour: Pale white sking\nEye Colour: Dark Grey Eyes\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Murmur Zalrath\n\n**Physical Characteristics**\nRace: [[Alp]]\nAge: 112\nGender: Male\nHeight: 6'7\"\nWeight: 120kg\nSkin Colour: Pale white sking\nEye Colour: Dark Grey Eyes\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Alp]] Age: 112 Gender: Male Height: 6'7\" Weight: 120kg Skin Colour: Pale white sking Eye Colour: Dark Grey Eyes **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Tra",
+      "metadata": {
+        "title": "Lord Murmur Zalrath",
+        "slug": "lord-murmur-zalrath",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/4. House of Nightmares/1. Regent of Nightmares/Lord Murmur Zalrath.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord murmur zalrath religion dark court {\"title\":\"lord murmur zalrath\",\"slug\":\"lord-murmur-zalrath\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/4. house of nightmares/1. regent of nightmares/lord murmur zalrath.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord murmur zalrath\n\n## overview\n**physical characteristics**\nrace: [[alp]]\nage: 112\ngender: male\nheight: 6'7\"\nweight: 120kg\nskin colour: pale white sking\neye colour: dark grey eyes\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-sephar-drakial-index",
+      "title": "Lord Sephar Drakial",
+      "slug": "lord-sephar-drakial",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-sephar-drakial",
+      "sourcePath": "content/theology/lord-sephar-drakial/index.md",
+      "sourceFolder": "content/theology/lord-sephar-drakial",
+      "content": "---\ntitle: \"Lord Sephar Drakial\"\nslug: \"lord-sephar-drakial\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/6. House of the Haunt/1. Regent of Haunt/Lord Sephar Drakial.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Sephar Drakial\n\n## Overview\n**Physical Characteristics**\nRace: [[Drow]] - (was a Wood Elf)\nAge:\nGender: male\nHeight: 5'8\"\nWeight: 84 kg\nSkin Colour: Grey Skin\nEye Colour: Red Eyes\nHair Colour: Long Greasy Black Hair\nNotable Features:\n\n**Character Details**\nClass: [[CLASSES & PROFESSIONS/CLASSES/Z. Classes to work on/MAGICAL CLASSES/Mancer/8 Basic/Necromancer]]\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Sephar Drakial\n\n## Overview\n**Physical Characteristics**\nRace: [[Drow]] - (was a Wood Elf)\nAge:\nGender: male\nHeight: 5'8\"\nWeight: 84 kg\nSkin Colour: Grey Skin\nEye Colour: Red Eyes\nHair Colour: Long Greasy Black Hair\nNotable Features:\n\n**Character Details**\nClass: [[CLASSES & PROFESSIONS/CLASSES/Z. Classes to work on/MAGICAL CLASSES/Mancer/8 Basic/Necromancer]]\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Sephar Drakial\n\n**Physical Characteristics**\nRace: [[Drow]] - (was a Wood Elf)\nAge:\nGender: male\nHeight: 5'8\"\nWeight: 84 kg\nSkin Colour: Grey Skin\nEye Colour: Red Eyes\nHair Colour: Long Greasy Black Hair\nNotable Features:\n\n**Character Details**\nClass: [[CLASSES & PROFESSIONS/CLASSES/Z. Classes to work on/MAGICAL CLASSES/Mancer/8 Basic/Necromancer]]\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[Drow]] - (was a Wood Elf) Age: Gender: male Height: 5'8\" Weight: 84 kg Skin Colour: Grey Skin Eye Colour: Red Eyes Hair Colour: Long Greasy Black Hair Notable Features: **Character Details** Class: [[CLASSES & PROFESSIONS/C",
+      "metadata": {
+        "title": "Lord Sephar Drakial",
+        "slug": "lord-sephar-drakial",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/6. House of the Haunt/1. Regent of Haunt/Lord Sephar Drakial.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord sephar drakial religion dark court {\"title\":\"lord sephar drakial\",\"slug\":\"lord-sephar-drakial\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/6. house of the haunt/1. regent of haunt/lord sephar drakial.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord sephar drakial\n\n## overview\n**physical characteristics**\nrace: [[drow]] - (was a wood elf)\nage:\ngender: male\nheight: 5'8\"\nweight: 84 kg\nskin colour: grey skin\neye colour: red eyes\nhair colour: long greasy black hair\nnotable features:\n\n**character details**\nclass: [[classes & professions/classes/z. classes to work on/magical classes/mancer/8 basic/necromancer]]\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-lord-thalgrim-vorkan-index",
+      "title": "Lord Thalgrim Vorkan",
+      "slug": "lord-thalgrim-vorkan",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/lord-thalgrim-vorkan",
+      "sourcePath": "content/theology/lord-thalgrim-vorkan/index.md",
+      "sourceFolder": "content/theology/lord-thalgrim-vorkan",
+      "content": "---\ntitle: \"Lord Thalgrim Vorkan\"\nslug: \"lord-thalgrim-vorkan\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/5. House of Shadows/1. Regent of Shadows/Lord Thalgrim Vorkan.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Lord Thalgrim Vorkan\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/ARCH DEMON/Arch demon]] \nAge: 95 (looks 33)\nGender: Male\nHeight: 6'0\nWeight: 94kg\nSkin Colour: Pale White Skin\nEye Colour: Black Eyes with Red Iris'\nHair Colour: Black shoulder length hair that is tied back\nNotable features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Lord Thalgrim Vorkan\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/ARCH DEMON/Arch demon]] \nAge: 95 (looks 33)\nGender: Male\nHeight: 6'0\nWeight: 94kg\nSkin Colour: Pale White Skin\nEye Colour: Black Eyes with Red Iris'\nHair Colour: Black shoulder length hair that is tied back\nNotable features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Lord Thalgrim Vorkan\n\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/ARCH DEMON/Arch demon]] \nAge: 95 (looks 33)\nGender: Male\nHeight: 6'0\nWeight: 94kg\nSkin Colour: Pale White Skin\nEye Colour: Black Eyes with Red Iris'\nHair Colour: Black shoulder length hair that is tied back\nNotable features:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[4. RACES/Non-Playable Races/DEMONIC RACES/ARCH DEMON/Arch demon]] Age: 95 (looks 33) Gender: Male Height: 6'0 Weight: 94kg Skin Colour: Pale White Skin Eye Colour: Black Eyes with Red Iris' Hair Colour: Black shoulder lengt",
+      "metadata": {
+        "title": "Lord Thalgrim Vorkan",
+        "slug": "lord-thalgrim-vorkan",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/5. House of Shadows/1. Regent of Shadows/Lord Thalgrim Vorkan.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "lord thalgrim vorkan religion dark court {\"title\":\"lord thalgrim vorkan\",\"slug\":\"lord-thalgrim-vorkan\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/5. house of shadows/1. regent of shadows/lord thalgrim vorkan.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # lord thalgrim vorkan\n\n## overview\n**physical characteristics**\nrace: [[4. races/non-playable races/demonic races/arch demon/arch demon]] \nage: 95 (looks 33)\ngender: male\nheight: 6'0\nweight: 94kg\nskin colour: pale white skin\neye colour: black eyes with red iris'\nhair colour: black shoulder length hair that is tied back\nnotable features:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-malthera-index",
+      "title": "Malthera",
+      "slug": "malthera",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/malthera",
+      "sourcePath": "content/theology/malthera/index.md",
+      "sourceFolder": "content/theology/malthera",
+      "content": "---\ntitle: \"Malthera\"\nslug: \"malthera\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"Goddess of the Hellish\"\ndivine_domain: \"Goddess of the Hellish\"\ndomain: \"Goddess of the Hellish\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/High God and Goddess of Netherworld/5. Malthera - Goddess of the Hellish.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Malthera\n\n## Overview\n### 🔥 **Name:** _Lythara, the Crimson Temptress_\n\n**Titles:** The Infernal Queen, Lady of the Twelve Houses, Temptress of Souls, Keeper of the Veil\n\n**Pantheon:** Higher Power Gods & Goddesses  \n**Realm:** The Netherworld — co-ruler with her husband (the Hellish God)  \n**Alignment:** Chaotic Neutral → Lawful Evil (depending on manifestation)\n\n---\n\n### ✨ **Domains**\n\n- Temptation & Desire\n    \n- Sin & Redemption\n    \n- Fire & Shadow\n    \n- Dominion of the Damned\n    \n- Oaths & Betrayal\n    \n- Infernal Contracts\n    \n\n---\n\n### 🩸 **Appearance**\n\nLythara manifests as a tall, graceful figure wreathed in living flame and shadow. Her eyes burn crimson and gold, forever shifting between warmth and malice. Her skin glows faintly like embers beneath porcelain, and her voice carries both comfort and ruin. When she walks, the air ripples as though the world itself resists her presence.\n\n---\n\n### 💀 **Lore**\n\nLythara was born from the **Primordial of Energy’s final breath**, when divine light first touched the darkness of the Netherworld. From that paradox of creation came _desire_ — the will to want, to crave, to consume — and in that spark, Lythara was formed.\n\nShe descended willingly into the abyss, not as a fallen goddess but as one who sought to understand _why beings sin_. There she met her counterpart — the **Hellish God**, her eternal husband — and together they forged the **Twelve Infernal Houses**, each representing a sin, virtue, or temptation.\n\nLythara believes that even the damned can find truth in their desires. She whispers in mortal hearts not only to corrupt but to reveal — for to her, temptation is the mirror through which the soul learns what it truly is.\n\n---\n\n### ⚖️ **Dual Nature**\n\n|Aspect|Description|\n|---|---|\n|**Temptress**|Leads mortals and gods alike to ruin through promises of power, pleasure, or vengeance.|\n|**Redeemer**|Offers salvation to those who embrace their flaws and confront their inner desires — often through painful self-truth.|\n\n---\n\n### 🕯️ **Symbols**\n\n- A black rose with burning petals\n    \n- A mirror cracked through the center\n    \n- A serpent entwined around a flame\n    \n- The sigil of a chained heart\n    \n\n---\n\n### 🔮 **Followers & Cults**\n\nLythara’s followers range from forbidden priestesses and courtesans to demon-bound scholars and oathbreakers. Her temples — known as **The Crimson Sanctuaries** — serve as both confession halls and dens of forbidden ecstasy.\n\nHer clergy, the **Sable Votaries**, are marked by crimson veils and inked sigils upon their skin, representing the sins they’ve conquered or embraced.\n\n---\n\n### 💬 **Rituals & Worship**\n\n- **The Ember’s Kiss:** A midnight ritual involving blood, fire, and reflection, symbolizing the acceptance of one’s inner darkness.\n    \n- **The Twelve Offerings:** A yearly ceremony where worshippers dedicate tributes to one of the Twelve Houses of the Netherworld.\n    \n- **The Rite of Binding:** Contracts written in infernal script and signed with mana-infused blood, calling upon Lythara’s witness.\n    \n\n---\n\n### 🔗 **Relationships**\n\n- **Consort:** _Azrakar, the Hellish King_ (God of Dominion & Fire)\n    \n- **Rival:** _Celest, the Celestial Goddess_ — once a friend, now a symbol of all she cannot be.\n    \n- **Ally:** _Sangran, the Blood God_ — their covenants often intermingle, as passion and blood are siblings of the same flame.\n    \n- **Enemy:** _Ki-Toma, God of Time_ — who forbade her from tempting mortals meant to shape fate.\n",
+      "body": "# Malthera\n\n## Overview\n### 🔥 **Name:** _Lythara, the Crimson Temptress_\n\n**Titles:** The Infernal Queen, Lady of the Twelve Houses, Temptress of Souls, Keeper of the Veil\n\n**Pantheon:** Higher Power Gods & Goddesses  \n**Realm:** The Netherworld — co-ruler with her husband (the Hellish God)  \n**Alignment:** Chaotic Neutral → Lawful Evil (depending on manifestation)\n\n---\n\n### ✨ **Domains**\n\n- Temptation & Desire\n    \n- Sin & Redemption\n    \n- Fire & Shadow\n    \n- Dominion of the Damned\n    \n- Oaths & Betrayal\n    \n- Infernal Contracts\n    \n\n---\n\n### 🩸 **Appearance**\n\nLythara manifests as a tall, graceful figure wreathed in living flame and shadow. Her eyes burn crimson and gold, forever shifting between warmth and malice. Her skin glows faintly like embers beneath porcelain, and her voice carries both comfort and ruin. When she walks, the air ripples as though the world itself resists her presence.\n\n---\n\n### 💀 **Lore**\n\nLythara was born from the **Primordial of Energy’s final breath**, when divine light first touched the darkness of the Netherworld. From that paradox of creation came _desire_ — the will to want, to crave, to consume — and in that spark, Lythara was formed.\n\nShe descended willingly into the abyss, not as a fallen goddess but as one who sought to understand _why beings sin_. There she met her counterpart — the **Hellish God**, her eternal husband — and together they forged the **Twelve Infernal Houses**, each representing a sin, virtue, or temptation.\n\nLythara believes that even the damned can find truth in their desires. She whispers in mortal hearts not only to corrupt but to reveal — for to her, temptation is the mirror through which the soul learns what it truly is.\n\n---\n\n### ⚖️ **Dual Nature**\n\n|Aspect|Description|\n|---|---|\n|**Temptress**|Leads mortals and gods alike to ruin through promises of power, pleasure, or vengeance.|\n|**Redeemer**|Offers salvation to those who embrace their flaws and confront their inner desires — often through painful self-truth.|\n\n---\n\n### 🕯️ **Symbols**\n\n- A black rose with burning petals\n    \n- A mirror cracked through the center\n    \n- A serpent entwined around a flame\n    \n- The sigil of a chained heart\n    \n\n---\n\n### 🔮 **Followers & Cults**\n\nLythara’s followers range from forbidden priestesses and courtesans to demon-bound scholars and oathbreakers. Her temples — known as **The Crimson Sanctuaries** — serve as both confession halls and dens of forbidden ecstasy.\n\nHer clergy, the **Sable Votaries**, are marked by crimson veils and inked sigils upon their skin, representing the sins they’ve conquered or embraced.\n\n---\n\n### 💬 **Rituals & Worship**\n\n- **The Ember’s Kiss:** A midnight ritual involving blood, fire, and reflection, symbolizing the acceptance of one’s inner darkness.\n    \n- **The Twelve Offerings:** A yearly ceremony where worshippers dedicate tributes to one of the Twelve Houses of the Netherworld.\n    \n- **The Rite of Binding:** Contracts written in infernal script and signed with mana-infused blood, calling upon Lythara’s witness.\n    \n\n---\n\n### 🔗 **Relationships**\n\n- **Consort:** _Azrakar, the Hellish King_ (God of Dominion & Fire)\n    \n- **Rival:** _Celest, the Celestial Goddess_ — once a friend, now a symbol of all she cannot be.\n    \n- **Ally:** _Sangran, the Blood God_ — their covenants often intermingle, as passion and blood are siblings of the same flame.\n    \n- **Enemy:** _Ki-Toma, God of Time_ — who forbade her from tempting mortals meant to shape fate.",
+      "sections": {
+        "Overview": "# Malthera\n\n### 🔥 **Name:** _Lythara, the Crimson Temptress_\n\n**Titles:** The Infernal Queen, Lady of the Twelve Houses, Temptress of Souls, Keeper of the Veil\n\n**Pantheon:** Higher Power Gods & Goddesses  \n**Realm:** The Netherworld — co-ruler with her husband (the Hellish God)  \n**Alignment:** Chaotic Neutral → Lawful Evil (depending on manifestation)\n\n---\n\n### ✨ **Domains**\n\n- Temptation & Desire\n    \n- Sin & Redemption\n    \n- Fire & Shadow\n    \n- Dominion of the Damned\n    \n- Oaths & Betrayal\n    \n- Infernal Contracts\n    \n\n---\n\n### 🩸 **Appearance**\n\nLythara manifests as a tall, graceful figure wreathed in living flame and shadow. Her eyes burn crimson and gold, forever shifting between warmth and malice. Her skin glows faintly like embers beneath porcelain, and her voice carries both comfort and ruin. When she walks, the air ripples as though the world itself resists her presence.\n\n---\n\n### 💀 **Lore**\n\nLythara was born from the **Primordial of Energy’s final breath**, when divine light first touched the darkness of the Netherworld. From that paradox of creation came _desire_ — the will to want, to crave, to consume — and in that spark, Lythara was formed.\n\nShe descended willingly into the abyss, not as a fallen goddess but as one who sought to understand _why beings sin_. There she met her counterpart — the **Hellish God**, her eternal husband — and together they forged the **Twelve Infernal Houses**, each representing a sin, virtue, or temptation.\n\nLythara believes that even the damned can find truth in their desires. She whispers in mortal hearts not only to corrupt but to reveal — for to her, temptation is the mirror through which the soul learns what it truly is.\n\n---\n\n### ⚖️ **Dual Nature**\n\n|Aspect|Description|\n|---|---|\n|**Temptress**|Leads mortals and gods alike to ruin through promises of power, pleasure, or vengeance.|\n|**Redeemer**|Offers salvation to those who embrace their flaws and confront their inner desires — often through painful self-truth.|\n\n---\n\n### 🕯️ **Symbols**\n\n- A black rose with burning petals\n    \n- A mirror cracked through the center\n    \n- A serpent entwined around a flame\n    \n- The sigil of a chained heart\n    \n\n---\n\n### 🔮 **Followers & Cults**\n\nLythara’s followers range from forbidden priestesses and courtesans to demon-bound scholars and oathbreakers. Her temples — known as **The Crimson Sanctuaries** — serve as both confession halls and dens of forbidden ecstasy.\n\nHer clergy, the **Sable Votaries**, are marked by crimson veils and inked sigils upon their skin, representing the sins they’ve conquered or embraced.\n\n---\n\n### 💬 **Rituals & Worship**\n\n- **The Ember’s Kiss:** A midnight ritual involving blood, fire, and reflection, symbolizing the acceptance of one’s inner darkness.\n    \n- **The Twelve Offerings:** A yearly ceremony where worshippers dedicate tributes to one of the Twelve Houses of the Netherworld.\n    \n- **The Rite of Binding:** Contracts written in infernal script and signed with mana-infused blood, calling upon Lythara’s witness.\n    \n\n---\n\n### 🔗 **Relationships**\n\n- **Consort:** _Azrakar, the Hellish King_ (God of Dominion & Fire)\n    \n- **Rival:** _Celest, the Celestial Goddess_ — once a friend, now a symbol of all she cannot be.\n    \n- **Ally:** _Sangran, the Blood God_ — their covenants often intermingle, as passion and blood are siblings of the same flame.\n    \n- **Enemy:** _Ki-Toma, God of Time_ — who forbade her from tempting mortals meant to shape fate."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Infernal Queen, Lady of the Twelve Houses, Temptress of Souls, Keeper of the Veil **Pantheon:** Higher Power Gods & Goddesses **Realm:** The Netherworld — co-ruler with her husband (the Hellish God) **Alignment:** Chaotic Neutral → Lawful Evil ",
+      "metadata": {
+        "title": "Malthera",
+        "slug": "malthera",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "Goddess of the Hellish",
+        "divineDomain": "Goddess of the Hellish",
+        "domain": "Goddess of the Hellish",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/High God and Goddess of Netherworld/5. Malthera - Goddess of the Hellish.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "divineDomain": "Goddess of the Hellish",
+        "visibility": "public"
+      },
+      "searchTerms": "malthera religion dark court {\"title\":\"malthera\",\"slug\":\"malthera\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"goddess of the hellish\",\"divinedomain\":\"goddess of the hellish\",\"domain\":\"goddess of the hellish\",\"sourcepath\":\"3. courts/1. dark court - netherworld/high god and goddess of netherworld/5. malthera - goddess of the hellish.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # malthera\n\n## overview\n### 🔥 **name:** _lythara, the crimson temptress_\n\n**titles:** the infernal queen, lady of the twelve houses, temptress of souls, keeper of the veil\n\n**pantheon:** higher power gods & goddesses  \n**realm:** the netherworld — co-ruler with her husband (the hellish god)  \n**alignment:** chaotic neutral → lawful evil (depending on manifestation)\n\n---\n\n### ✨ **domains**\n\n- temptation & desire\n    \n- sin & redemption\n    \n- fire & shadow\n    \n- dominion of the damned\n    \n- oaths & betrayal\n    \n- infernal contracts\n    \n\n---\n\n### 🩸 **appearance**\n\nlythara manifests as a tall, graceful figure wreathed in living flame and shadow. her eyes burn crimson and gold, forever shifting between warmth and malice. her skin glows faintly like embers beneath porcelain, and her voice carries both comfort and ruin. when she walks, the air ripples as though the world itself resists her presence.\n\n---\n\n### 💀 **lore**\n\nlythara was born from the **primordial of energy’s final breath**, when divine light first touched the darkness of the netherworld. from that paradox of creation came _desire_ — the will to want, to crave, to consume — and in that spark, lythara was formed.\n\nshe descended willingly into the abyss, not as a fallen goddess but as one who sought to understand _why beings sin_. there she met her counterpart — the **hellish god**, her eternal husband — and together they forged the **twelve infernal houses**, each representing a sin, virtue, or temptation.\n\nlythara believes that even the damned can find truth in their desires. she whispers in mortal hearts not only to corrupt but to reveal — for to her, temptation is the mirror through which the soul learns what it truly is.\n\n---\n\n### ⚖️ **dual nature**\n\n|aspect|description|\n|---|---|\n|**temptress**|leads mortals and gods alike to ruin through promises of power, pleasure, or vengeance.|\n|**redeemer**|offers salvation to those who embrace their flaws and confront their inner desires — often through painful self-truth.|\n\n---\n\n### 🕯️ **symbols**\n\n- a black rose with burning petals\n    \n- a mirror cracked through the center\n    \n- a serpent entwined around a flame\n    \n- the sigil of a chained heart\n    \n\n---\n\n### 🔮 **followers & cults**\n\nlythara’s followers range from forbidden priestesses and courtesans to demon-bound scholars and oathbreakers. her temples — known as **the crimson sanctuaries** — serve as both confession halls and dens of forbidden ecstasy.\n\nher clergy, the **sable votaries**, are marked by crimson veils and inked sigils upon their skin, representing the sins they’ve conquered or embraced.\n\n---\n\n### 💬 **rituals & worship**\n\n- **the ember’s kiss:** a midnight ritual involving blood, fire, and reflection, symbolizing the acceptance of one’s inner darkness.\n    \n- **the twelve offerings:** a yearly ceremony where worshippers dedicate tributes to one of the twelve houses of the netherworld.\n    \n- **the rite of binding:** contracts written in infernal script and signed with mana-infused blood, calling upon lythara’s witness.\n    \n\n---\n\n### 🔗 **relationships**\n\n- **consort:** _azrakar, the hellish king_ (god of dominion & fire)\n    \n- **rival:** _celest, the celestial goddess_ — once a friend, now a symbol of all she cannot be.\n    \n- **ally:** _sangran, the blood god_ — their covenants often intermingle, as passion and blood are siblings of the same flame.\n    \n- **enemy:** _ki-toma, god of time_ — who forbade her from tempting mortals meant to shape fate."
+    },
+    {
+      "id": "religion:content-theology-regent-esmur-yin-index",
+      "title": "Regent Esmur Yin",
+      "slug": "regent-esmur-yin",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Dark Court"
+      ],
+      "category": "Dark Court",
+      "route": "/compendium/religion/dark-court/regent-esmur-yin",
+      "sourcePath": "content/theology/regent-esmur-yin/index.md",
+      "sourceFolder": "content/theology/regent-esmur-yin",
+      "content": "---\ntitle: \"Regent Esmur Yin\"\nslug: \"regent-esmur-yin\"\ntype: theology\ncategory: \"Dark Court\"\npantheon: \"Dark Court\"\ncourt: \"Dark Court\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/7. House of Deception/1. Regent of Deception/Regent Esmur Yin.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"dark-court\"\nvisibility: public\n---\n# Regent Esmur Yin\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/Devil]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:\n",
+      "body": "# Regent Esmur Yin\n\n## Overview\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/Devil]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:",
+      "sections": {
+        "Overview": "# Regent Esmur Yin\n\n**Physical Characteristics**\nRace: [[4. RACES/Non-Playable Races/DEMONIC RACES/Devil]]\nAge:\nGender:\nHeight:\nWeight:\nSkin Colour: \nEye Colour:\n\n**Character Details**\nAlignment:\nFaith:\nLifestyle:\nBirth Location: \n\n**Personal Characteristics** \nPersonality Traits:\nIdeals:\nBonds:\nFlaws:\nLikes:\nDislikes:\n\n**Additional Notes**\nEnemies:\nAllies:"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Physical Characteristics** Race: [[4. RACES/Non-Playable Races/DEMONIC RACES/Devil]] Age: Gender: Height: Weight: Skin Colour: Eye Colour: **Character Details** Alignment: Faith: Lifestyle: Birth Location: **Personal Characteristics** Personality Traits: Ide",
+      "metadata": {
+        "title": "Regent Esmur Yin",
+        "slug": "regent-esmur-yin",
+        "type": "theology",
+        "category": "Dark Court",
+        "pantheon": "Dark Court",
+        "court": "Dark Court",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/7. House of Deception/1. Regent of Deception/Regent Esmur Yin.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "dark-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "dark-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Dark Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Dark Court",
+        "pantheon": "Dark Court",
+        "visibility": "public"
+      },
+      "searchTerms": "regent esmur yin religion dark court {\"title\":\"regent esmur yin\",\"slug\":\"regent-esmur-yin\",\"type\":\"theology\",\"category\":\"dark court\",\"pantheon\":\"dark court\",\"court\":\"dark court\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"3. courts/1. dark court - netherworld/netherworld noble houses/7. house of deception/1. regent of deception/regent esmur yin.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"dark-court\"],\"visibility\":\"public\"} # regent esmur yin\n\n## overview\n**physical characteristics**\nrace: [[4. races/non-playable races/demonic races/devil]]\nage:\ngender:\nheight:\nweight:\nskin colour: \neye colour:\n\n**character details**\nalignment:\nfaith:\nlifestyle:\nbirth location: \n\n**personal characteristics** \npersonality traits:\nideals:\nbonds:\nflaws:\nlikes:\ndislikes:\n\n**additional notes**\nenemies:\nallies:"
+    },
+    {
+      "id": "religion:content-theology-castiel-index",
+      "title": "Castiel",
+      "slug": "castiel",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Light Court"
+      ],
+      "category": "Light Court",
+      "route": "/compendium/religion/light-court/castiel",
+      "sourcePath": "content/theology/castiel/index.md",
+      "sourceFolder": "content/theology/castiel",
+      "content": "---\ntitle: \"Castiel\"\nslug: \"castiel\"\ntype: theology\ncategory: \"Light Court\"\npantheon: \"Light Court\"\ncourt: \"Light Court\"\ndeity_title: \"God of the Celestial\"\ndivine_domain: \"God of the Celestial\"\ndomain: \"God of the Celestial\"\nsource_path: \"3. Courts/2. Light Court - Empyrean/2. Castiel - God of the Celestial.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"light-court\"\nvisibility: public\n---\n# Castiel\n\n## Overview\n**Titles:**  \n_The Dawnforged King_, _The Sword of Heaven_, _The Arbiter of Light_, _The Radiant Sentinel_\n\n**Pantheon:**  \nPantheon of Essence — One of the Higher Energy Gods (Celestial Aspect)  \nCounterpart and divine consort to **Celest**, Goddess of the Celestial\n\n**Alignment:**  \nLawful Neutral (with Lawful Good tendencies)\n\n**Symbol:**  \nA blazing sword piercing through a sunburst; sometimes depicted as a winged flame surrounded by runic halos.\n\n**Domains:**\n\n- Celestial Fire and Purity\n- Law and Divine Judgment\n- Honor and Justice\n- The Sun, Stars, and Heavenly Order\n- Protection from Corruption\n\n**Appearance:**  \nCastiel appears as a towering figure clad in celestial armor of molten gold and starlight. His wings — vast and radiant — shimmer with hues of blue-white flame. His eyes burn like twin suns, and his voice carries the authority of command and the serenity of creation.\n\n**Personality:**  \nCastiel is noble, resolute, and uncompromising in his sense of justice.  \nHe is a god of discipline and order — neither cruel nor merciful by nature, but governed by balance and purpose. He believes every soul has a place within the cosmic design, and his role is to ensure that harmony is never broken.\n\nThough revered for his protection, he is also feared — for when his wrath is unleashed, stars themselves have been known to fall from the heavens.\n\n**Mythic Lore:**  \nWhen the Primordials first birthed light, it was **Castiel** who tempered it into structure — creating the first constellations and forging the **Celestial Laws** that govern divine and mortal realms.  \nHe is said to have crafted the **Solar Gate**, a radiant barrier separating the mortal plane from the purest celestial energies.\n\nIn ancient lore, Castiel and **Celest** ruled the heavens together — she the soul of the cosmos, he its shield.  \nWhere she weaves the starlight of destiny, he stands as its guardian, ensuring that no shadow corrupts her creation.\n\nDuring the **War of Falling Stars**, when celestial beings rebelled, it was Castiel who cast them from the skies, binding their essence into comets as punishment and warning.\n\n**Worship & Temples:**\n\n- His followers include paladins, knights, judges, and rulers who seek divine legitimacy.\n    \n- Temples of Castiel are citadels of gold and marble, built on high peaks or within radiant cities.\n    \n- His clergy are called _The Solarii_, and their order swears oaths of purity, truth, and unflinching loyalty to justice.\n    \n\n**Holy Days:**\n\n- **Solstice of Fire** — A midsummer festival celebrating his victory over darkness.\n    \n- **The Judgment Dawn** — A once-in-a-decade ceremony where followers renew their vows of truth and order.\n    \n\n---\n\n### 🌌 Relationship with Celest\n\n- **Celest** represents _light as compassion_ — illumination and hope.\n    \n- **Castiel** represents _light as structure_ — law and divine purpose.  \n    Together, they embody the duality of the celestial realm: **Grace and Order**.  \n    Their union maintains the balance of divine radiance in Astria and Empyrean.\n",
+      "body": "# Castiel\n\n## Overview\n**Titles:**  \n_The Dawnforged King_, _The Sword of Heaven_, _The Arbiter of Light_, _The Radiant Sentinel_\n\n**Pantheon:**  \nPantheon of Essence — One of the Higher Energy Gods (Celestial Aspect)  \nCounterpart and divine consort to **Celest**, Goddess of the Celestial\n\n**Alignment:**  \nLawful Neutral (with Lawful Good tendencies)\n\n**Symbol:**  \nA blazing sword piercing through a sunburst; sometimes depicted as a winged flame surrounded by runic halos.\n\n**Domains:**\n\n- Celestial Fire and Purity\n- Law and Divine Judgment\n- Honor and Justice\n- The Sun, Stars, and Heavenly Order\n- Protection from Corruption\n\n**Appearance:**  \nCastiel appears as a towering figure clad in celestial armor of molten gold and starlight. His wings — vast and radiant — shimmer with hues of blue-white flame. His eyes burn like twin suns, and his voice carries the authority of command and the serenity of creation.\n\n**Personality:**  \nCastiel is noble, resolute, and uncompromising in his sense of justice.  \nHe is a god of discipline and order — neither cruel nor merciful by nature, but governed by balance and purpose. He believes every soul has a place within the cosmic design, and his role is to ensure that harmony is never broken.\n\nThough revered for his protection, he is also feared — for when his wrath is unleashed, stars themselves have been known to fall from the heavens.\n\n**Mythic Lore:**  \nWhen the Primordials first birthed light, it was **Castiel** who tempered it into structure — creating the first constellations and forging the **Celestial Laws** that govern divine and mortal realms.  \nHe is said to have crafted the **Solar Gate**, a radiant barrier separating the mortal plane from the purest celestial energies.\n\nIn ancient lore, Castiel and **Celest** ruled the heavens together — she the soul of the cosmos, he its shield.  \nWhere she weaves the starlight of destiny, he stands as its guardian, ensuring that no shadow corrupts her creation.\n\nDuring the **War of Falling Stars**, when celestial beings rebelled, it was Castiel who cast them from the skies, binding their essence into comets as punishment and warning.\n\n**Worship & Temples:**\n\n- His followers include paladins, knights, judges, and rulers who seek divine legitimacy.\n    \n- Temples of Castiel are citadels of gold and marble, built on high peaks or within radiant cities.\n    \n- His clergy are called _The Solarii_, and their order swears oaths of purity, truth, and unflinching loyalty to justice.\n    \n\n**Holy Days:**\n\n- **Solstice of Fire** — A midsummer festival celebrating his victory over darkness.\n    \n- **The Judgment Dawn** — A once-in-a-decade ceremony where followers renew their vows of truth and order.\n    \n\n---\n\n### 🌌 Relationship with Celest\n\n- **Celest** represents _light as compassion_ — illumination and hope.\n    \n- **Castiel** represents _light as structure_ — law and divine purpose.  \n    Together, they embody the duality of the celestial realm: **Grace and Order**.  \n    Their union maintains the balance of divine radiance in Astria and Empyrean.",
+      "sections": {
+        "Overview": "# Castiel\n\n**Titles:**  \n_The Dawnforged King_, _The Sword of Heaven_, _The Arbiter of Light_, _The Radiant Sentinel_\n\n**Pantheon:**  \nPantheon of Essence — One of the Higher Energy Gods (Celestial Aspect)  \nCounterpart and divine consort to **Celest**, Goddess of the Celestial\n\n**Alignment:**  \nLawful Neutral (with Lawful Good tendencies)\n\n**Symbol:**  \nA blazing sword piercing through a sunburst; sometimes depicted as a winged flame surrounded by runic halos.\n\n**Domains:**\n\n- Celestial Fire and Purity\n- Law and Divine Judgment\n- Honor and Justice\n- The Sun, Stars, and Heavenly Order\n- Protection from Corruption\n\n**Appearance:**  \nCastiel appears as a towering figure clad in celestial armor of molten gold and starlight. His wings — vast and radiant — shimmer with hues of blue-white flame. His eyes burn like twin suns, and his voice carries the authority of command and the serenity of creation.\n\n**Personality:**  \nCastiel is noble, resolute, and uncompromising in his sense of justice.  \nHe is a god of discipline and order — neither cruel nor merciful by nature, but governed by balance and purpose. He believes every soul has a place within the cosmic design, and his role is to ensure that harmony is never broken.\n\nThough revered for his protection, he is also feared — for when his wrath is unleashed, stars themselves have been known to fall from the heavens.\n\n**Mythic Lore:**  \nWhen the Primordials first birthed light, it was **Castiel** who tempered it into structure — creating the first constellations and forging the **Celestial Laws** that govern divine and mortal realms.  \nHe is said to have crafted the **Solar Gate**, a radiant barrier separating the mortal plane from the purest celestial energies.\n\nIn ancient lore, Castiel and **Celest** ruled the heavens together — she the soul of the cosmos, he its shield.  \nWhere she weaves the starlight of destiny, he stands as its guardian, ensuring that no shadow corrupts her creation.\n\nDuring the **War of Falling Stars**, when celestial beings rebelled, it was Castiel who cast them from the skies, binding their essence into comets as punishment and warning.\n\n**Worship & Temples:**\n\n- His followers include paladins, knights, judges, and rulers who seek divine legitimacy.\n    \n- Temples of Castiel are citadels of gold and marble, built on high peaks or within radiant cities.\n    \n- His clergy are called _The Solarii_, and their order swears oaths of purity, truth, and unflinching loyalty to justice.\n    \n\n**Holy Days:**\n\n- **Solstice of Fire** — A midsummer festival celebrating his victory over darkness.\n    \n- **The Judgment Dawn** — A once-in-a-decade ceremony where followers renew their vows of truth and order.\n    \n\n---\n\n### 🌌 Relationship with Celest\n\n- **Celest** represents _light as compassion_ — illumination and hope.\n    \n- **Castiel** represents _light as structure_ — law and divine purpose.  \n    Together, they embody the duality of the celestial realm: **Grace and Order**.  \n    Their union maintains the balance of divine radiance in Astria and Empyrean."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** _The Dawnforged King_, _The Sword of Heaven_, _The Arbiter of Light_, _The Radiant Sentinel_ **Pantheon:** Pantheon of Essence — One of the Higher Energy Gods (Celestial Aspect) Counterpart and divine consort to **Celest**, Goddess of the Celestial",
+      "metadata": {
+        "title": "Castiel",
+        "slug": "castiel",
+        "type": "theology",
+        "category": "Light Court",
+        "pantheon": "Light Court",
+        "court": "Light Court",
+        "deityTitle": "God of the Celestial",
+        "divineDomain": "God of the Celestial",
+        "domain": "God of the Celestial",
+        "sourcePath": "3. Courts/2. Light Court - Empyrean/2. Castiel - God of the Celestial.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "light-court"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "light-court"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Light Court",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Light Court",
+        "pantheon": "Light Court",
+        "divineDomain": "God of the Celestial",
+        "visibility": "public"
+      },
+      "searchTerms": "castiel religion light court {\"title\":\"castiel\",\"slug\":\"castiel\",\"type\":\"theology\",\"category\":\"light court\",\"pantheon\":\"light court\",\"court\":\"light court\",\"deitytitle\":\"god of the celestial\",\"divinedomain\":\"god of the celestial\",\"domain\":\"god of the celestial\",\"sourcepath\":\"3. courts/2. light court - empyrean/2. castiel - god of the celestial.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"light-court\"],\"visibility\":\"public\"} # castiel\n\n## overview\n**titles:**  \n_the dawnforged king_, _the sword of heaven_, _the arbiter of light_, _the radiant sentinel_\n\n**pantheon:**  \npantheon of essence — one of the higher energy gods (celestial aspect)  \ncounterpart and divine consort to **celest**, goddess of the celestial\n\n**alignment:**  \nlawful neutral (with lawful good tendencies)\n\n**symbol:**  \na blazing sword piercing through a sunburst; sometimes depicted as a winged flame surrounded by runic halos.\n\n**domains:**\n\n- celestial fire and purity\n- law and divine judgment\n- honor and justice\n- the sun, stars, and heavenly order\n- protection from corruption\n\n**appearance:**  \ncastiel appears as a towering figure clad in celestial armor of molten gold and starlight. his wings — vast and radiant — shimmer with hues of blue-white flame. his eyes burn like twin suns, and his voice carries the authority of command and the serenity of creation.\n\n**personality:**  \ncastiel is noble, resolute, and uncompromising in his sense of justice.  \nhe is a god of discipline and order — neither cruel nor merciful by nature, but governed by balance and purpose. he believes every soul has a place within the cosmic design, and his role is to ensure that harmony is never broken.\n\nthough revered for his protection, he is also feared — for when his wrath is unleashed, stars themselves have been known to fall from the heavens.\n\n**mythic lore:**  \nwhen the primordials first birthed light, it was **castiel** who tempered it into structure — creating the first constellations and forging the **celestial laws** that govern divine and mortal realms.  \nhe is said to have crafted the **solar gate**, a radiant barrier separating the mortal plane from the purest celestial energies.\n\nin ancient lore, castiel and **celest** ruled the heavens together — she the soul of the cosmos, he its shield.  \nwhere she weaves the starlight of destiny, he stands as its guardian, ensuring that no shadow corrupts her creation.\n\nduring the **war of falling stars**, when celestial beings rebelled, it was castiel who cast them from the skies, binding their essence into comets as punishment and warning.\n\n**worship & temples:**\n\n- his followers include paladins, knights, judges, and rulers who seek divine legitimacy.\n    \n- temples of castiel are citadels of gold and marble, built on high peaks or within radiant cities.\n    \n- his clergy are called _the solarii_, and their order swears oaths of purity, truth, and unflinching loyalty to justice.\n    \n\n**holy days:**\n\n- **solstice of fire** — a midsummer festival celebrating his victory over darkness.\n    \n- **the judgment dawn** — a once-in-a-decade ceremony where followers renew their vows of truth and order.\n    \n\n---\n\n### 🌌 relationship with celest\n\n- **celest** represents _light as compassion_ — illumination and hope.\n    \n- **castiel** represents _light as structure_ — law and divine purpose.  \n    together, they embody the duality of the celestial realm: **grace and order**.  \n    their union maintains the balance of divine radiance in astria and empyrean."
+    },
+    {
       "id": "religion:gods-old-iron-saints-veloria-the-forge-saint-veloria-the-forge-saint",
       "title": "Veloria the Forge Saint",
       "slug": "veloria-the-forge-saint",
       "type": "religion",
       "domain": "religion",
-      "compendium": "Religion & Gods Compendium",
-      "workspaceSection": "World, Realms & Planes",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
       "categoryPath": [
         "Old Iron Saints"
       ],
@@ -30157,11 +35048,11 @@
       },
       "tabs": [
         "Overview",
-        "Doctrine",
-        "Gods",
+        "Domains",
+        "Worship",
+        "Lore",
         "Followers",
         "Rituals",
-        "Lore",
         "GM Notes"
       ],
       "summary": "Veloria is remembered as a saint of protected hearths, forged vows, and patient craft. Information coming soon. Information coming soon. Information coming soon. Information coming soon. Information coming soon. Hidden campaign notes can be added here.",
@@ -30208,13 +35099,1328 @@
       "searchTerms": "veloria the forge saint religion old iron saints {\"title\":\"veloria the forge saint\",\"slug\":\"veloria-the-forge-saint\",\"type\":\"god\",\"pantheon\":\"old iron saints\",\"divinedomain\":[\"forge\",\"protection\"],\"alignment\":\"lawful neutral\",\"region\":[\"ironvale\"],\"lorestatus\":\"rare lore\",\"visibility\":\"public\",\"tags\":[\"god\",\"saint\",\"forge\"]} # veloria the forge saint\n\n## overview\nveloria is remembered as a saint of protected hearths, forged vows, and patient craft.\n\n## doctrine\ninformation coming soon.\n\n## gods\ninformation coming soon.\n\n## followers\ninformation coming soon.\n\n## rituals\ninformation coming soon.\n\n## lore\ninformation coming soon.\n\n## gm notes\nhidden campaign notes can be added here."
     },
     {
+      "id": "religion:content-theology-abyrath-index",
+      "title": "Abyrath",
+      "slug": "abyrath",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/abyrath",
+      "sourcePath": "content/theology/abyrath/index.md",
+      "sourceFolder": "content/theology/abyrath",
+      "content": "---\ntitle: \"Abyrath\"\nslug: \"abyrath\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Abyssal\"\ndivine_domain: \"Essence of Abyssal\"\ndomain: \"Essence of Abyssal\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/11. Abyrath - Essence of Abyssal.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Abyrath\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Abyrath\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Abyrath\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Abyrath",
+        "slug": "abyrath",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Abyssal",
+        "divineDomain": "Essence of Abyssal",
+        "domain": "Essence of Abyssal",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/11. Abyrath - Essence of Abyssal.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Abyssal",
+        "visibility": "public"
+      },
+      "searchTerms": "abyrath religion pantheon of elements {\"title\":\"abyrath\",\"slug\":\"abyrath\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of abyssal\",\"divinedomain\":\"essence of abyssal\",\"domain\":\"essence of abyssal\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/11. abyrath - essence of abyssal.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # abyrath\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-ailwyn-index",
+      "title": "Ailwyn",
+      "slug": "ailwyn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/ailwyn",
+      "sourcePath": "content/theology/ailwyn/index.md",
+      "sourceFolder": "content/theology/ailwyn",
+      "content": "---\ntitle: \"Ailwyn\"\nslug: \"ailwyn\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Life\"\ndivine_domain: \"Essence of Life\"\ndomain: \"Essence of Life\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/7. Ailwyn - Essence of Life.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Ailwyn\n\n## Overview\n## 🌿 **Elyndra – Goddess of Life**\n\n**Titles:**  \nThe Heart of Creation, Mother of Roots, The Everblooming One, Keeper of the Green Pulse, Lady of Renewal\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nNeutral Good — nurturing yet impartial, as life grows for all, even the wicked\n\n**Symbol:**  \nA blooming flower intertwined with a spiral of golden light — representing the eternal cycle of birth, growth, death, and rebirth\n\n**Domains:**  \nLife, Nature, Fertility, Healing, Growth, Renewal, Animals\n\n**Appearance:**  \nElyndra appears as a luminous woman woven from living vines, petals, and sunlight. Her hair flows like a river of blossoms, ever-shifting through the colors of the seasons — green in spring, gold in summer, crimson in autumn, and silver-white in winter. Her skin glows with a warm, inner light, and wherever her bare feet touch, grass and flowers spring forth instantly.\n\n**Personality:**  \nElyndra is compassionate, patient, and endlessly creative — the very essence of nurturing life. Yet, she carries within her the quiet sorrow of inevitability: that all life must one day end. She loves all creatures equally and despises needless destruction. Her love is maternal, but her justice is firm — those who harm the balance of nature earn her silent wrath.\n\n**Mythic Lore:**  \nWhen the first spark of Solyren’s light kissed the fertile shadow of Nythra’s darkness, Elyndra was born — the living harmony between the two. She took the ashes of creation and the waters of Sirona, shaping them into roots, leaves, and flesh.  \nIt was Elyndra who taught mortals how to cultivate the land, heal wounds, and give birth safely. Legends say her heart beats within every living creature, and when her pulse weakens, plagues, and famine follow.\n\nDuring the **War of Twilight**, when fire and shadow devoured the mortal realms, Elyndra sacrificed her divine essence to restore the dying forests and reawaken the rivers — her tears becoming the first seeds of renewal after the devastation. From her sacrifice grew the **Tree of Breath**, said to be the anchor of all living souls.\n\n**Worship:**  \nElyndra’s followers include farmers, healers, midwives, druids, and all who revere the sanctity of life. Her temples are living sanctuaries — open gardens, vast orchards, and stone circles overgrown with vines. Offerings are given not through wealth, but through _growth_ — planting trees, tending to the sick, or healing wounded animals.\n\n**Rituals:**\n\n- **The Seed Rite:** Performed each spring, where seeds are blessed in her name before planting.\n    \n- **The Breath of Renewal:** A healing ceremony invoking Elyndra’s light to mend wounds or cure blight.\n    \n- **The Blooming Vigil:** Held during the first full moon of summer; her followers light lanterns and release them over rivers, symbolizing souls returning to the cycle of life.\n    \n- **The Final Petal:** A funeral rite where flowers are laid upon the deceased to signify their return to her embrace.\n    \n\n**Relationships:**\n\n- **Solyren – God of Light:** Her consort and eternal balance; together they bring warmth and life to the world.\n    \n- **Nythra – Goddess of Dark:** Her sister and counterpart; though opposites, they share deep respect, for death is the soil in which new life grows.\n    \n- **Sirona – Goddess of Water:** Her closest ally; Sirona’s rivers nourish Elyndra’s creations.\n    \n- **Auralis – Goddess of Air:** Breath to her pulse; together they are the lifeblood and lungs of the world.\n    \n- **Vaelion – God of Time & Space:** The silent watcher of her cycles, ensuring the seasons of life flow as intended.\n    \n- **Azrakar & Malthera – Lords of the Netherworld:** Enemies of her domain, yet necessary — she knows even decay feeds new growth.\n    \n\n**Holy Day:**  \n**The Day of Blossoming Heart** — celebrated on the first day of spring. Her followers adorn themselves in green and gold, plant new seeds, and bless newborns. It is said Elyndra’s spirit walks the world on this day, breathing new life into every corner of existence.\n",
+      "body": "# Ailwyn\n\n## Overview\n## 🌿 **Elyndra – Goddess of Life**\n\n**Titles:**  \nThe Heart of Creation, Mother of Roots, The Everblooming One, Keeper of the Green Pulse, Lady of Renewal\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nNeutral Good — nurturing yet impartial, as life grows for all, even the wicked\n\n**Symbol:**  \nA blooming flower intertwined with a spiral of golden light — representing the eternal cycle of birth, growth, death, and rebirth\n\n**Domains:**  \nLife, Nature, Fertility, Healing, Growth, Renewal, Animals\n\n**Appearance:**  \nElyndra appears as a luminous woman woven from living vines, petals, and sunlight. Her hair flows like a river of blossoms, ever-shifting through the colors of the seasons — green in spring, gold in summer, crimson in autumn, and silver-white in winter. Her skin glows with a warm, inner light, and wherever her bare feet touch, grass and flowers spring forth instantly.\n\n**Personality:**  \nElyndra is compassionate, patient, and endlessly creative — the very essence of nurturing life. Yet, she carries within her the quiet sorrow of inevitability: that all life must one day end. She loves all creatures equally and despises needless destruction. Her love is maternal, but her justice is firm — those who harm the balance of nature earn her silent wrath.\n\n**Mythic Lore:**  \nWhen the first spark of Solyren’s light kissed the fertile shadow of Nythra’s darkness, Elyndra was born — the living harmony between the two. She took the ashes of creation and the waters of Sirona, shaping them into roots, leaves, and flesh.  \nIt was Elyndra who taught mortals how to cultivate the land, heal wounds, and give birth safely. Legends say her heart beats within every living creature, and when her pulse weakens, plagues, and famine follow.\n\nDuring the **War of Twilight**, when fire and shadow devoured the mortal realms, Elyndra sacrificed her divine essence to restore the dying forests and reawaken the rivers — her tears becoming the first seeds of renewal after the devastation. From her sacrifice grew the **Tree of Breath**, said to be the anchor of all living souls.\n\n**Worship:**  \nElyndra’s followers include farmers, healers, midwives, druids, and all who revere the sanctity of life. Her temples are living sanctuaries — open gardens, vast orchards, and stone circles overgrown with vines. Offerings are given not through wealth, but through _growth_ — planting trees, tending to the sick, or healing wounded animals.\n\n**Rituals:**\n\n- **The Seed Rite:** Performed each spring, where seeds are blessed in her name before planting.\n    \n- **The Breath of Renewal:** A healing ceremony invoking Elyndra’s light to mend wounds or cure blight.\n    \n- **The Blooming Vigil:** Held during the first full moon of summer; her followers light lanterns and release them over rivers, symbolizing souls returning to the cycle of life.\n    \n- **The Final Petal:** A funeral rite where flowers are laid upon the deceased to signify their return to her embrace.\n    \n\n**Relationships:**\n\n- **Solyren – God of Light:** Her consort and eternal balance; together they bring warmth and life to the world.\n    \n- **Nythra – Goddess of Dark:** Her sister and counterpart; though opposites, they share deep respect, for death is the soil in which new life grows.\n    \n- **Sirona – Goddess of Water:** Her closest ally; Sirona’s rivers nourish Elyndra’s creations.\n    \n- **Auralis – Goddess of Air:** Breath to her pulse; together they are the lifeblood and lungs of the world.\n    \n- **Vaelion – God of Time & Space:** The silent watcher of her cycles, ensuring the seasons of life flow as intended.\n    \n- **Azrakar & Malthera – Lords of the Netherworld:** Enemies of her domain, yet necessary — she knows even decay feeds new growth.\n    \n\n**Holy Day:**  \n**The Day of Blossoming Heart** — celebrated on the first day of spring. Her followers adorn themselves in green and gold, plant new seeds, and bless newborns. It is said Elyndra’s spirit walks the world on this day, breathing new life into every corner of existence.",
+      "sections": {
+        "Overview": "# Ailwyn",
+        "🌿 **Elyndra – Goddess of Life**": "**Titles:**  \nThe Heart of Creation, Mother of Roots, The Everblooming One, Keeper of the Green Pulse, Lady of Renewal\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nNeutral Good — nurturing yet impartial, as life grows for all, even the wicked\n\n**Symbol:**  \nA blooming flower intertwined with a spiral of golden light — representing the eternal cycle of birth, growth, death, and rebirth\n\n**Domains:**  \nLife, Nature, Fertility, Healing, Growth, Renewal, Animals\n\n**Appearance:**  \nElyndra appears as a luminous woman woven from living vines, petals, and sunlight. Her hair flows like a river of blossoms, ever-shifting through the colors of the seasons — green in spring, gold in summer, crimson in autumn, and silver-white in winter. Her skin glows with a warm, inner light, and wherever her bare feet touch, grass and flowers spring forth instantly.\n\n**Personality:**  \nElyndra is compassionate, patient, and endlessly creative — the very essence of nurturing life. Yet, she carries within her the quiet sorrow of inevitability: that all life must one day end. She loves all creatures equally and despises needless destruction. Her love is maternal, but her justice is firm — those who harm the balance of nature earn her silent wrath.\n\n**Mythic Lore:**  \nWhen the first spark of Solyren’s light kissed the fertile shadow of Nythra’s darkness, Elyndra was born — the living harmony between the two. She took the ashes of creation and the waters of Sirona, shaping them into roots, leaves, and flesh.  \nIt was Elyndra who taught mortals how to cultivate the land, heal wounds, and give birth safely. Legends say her heart beats within every living creature, and when her pulse weakens, plagues, and famine follow.\n\nDuring the **War of Twilight**, when fire and shadow devoured the mortal realms, Elyndra sacrificed her divine essence to restore the dying forests and reawaken the rivers — her tears becoming the first seeds of renewal after the devastation. From her sacrifice grew the **Tree of Breath**, said to be the anchor of all living souls.\n\n**Worship:**  \nElyndra’s followers include farmers, healers, midwives, druids, and all who revere the sanctity of life. Her temples are living sanctuaries — open gardens, vast orchards, and stone circles overgrown with vines. Offerings are given not through wealth, but through _growth_ — planting trees, tending to the sick, or healing wounded animals.\n\n**Rituals:**\n\n- **The Seed Rite:** Performed each spring, where seeds are blessed in her name before planting.\n    \n- **The Breath of Renewal:** A healing ceremony invoking Elyndra’s light to mend wounds or cure blight.\n    \n- **The Blooming Vigil:** Held during the first full moon of summer; her followers light lanterns and release them over rivers, symbolizing souls returning to the cycle of life.\n    \n- **The Final Petal:** A funeral rite where flowers are laid upon the deceased to signify their return to her embrace.\n    \n\n**Relationships:**\n\n- **Solyren – God of Light:** Her consort and eternal balance; together they bring warmth and life to the world.\n    \n- **Nythra – Goddess of Dark:** Her sister and counterpart; though opposites, they share deep respect, for death is the soil in which new life grows.\n    \n- **Sirona – Goddess of Water:** Her closest ally; Sirona’s rivers nourish Elyndra’s creations.\n    \n- **Auralis – Goddess of Air:** Breath to her pulse; together they are the lifeblood and lungs of the world.\n    \n- **Vaelion – God of Time & Space:** The silent watcher of her cycles, ensuring the seasons of life flow as intended.\n    \n- **Azrakar & Malthera – Lords of the Netherworld:** Enemies of her domain, yet necessary — she knows even decay feeds new growth.\n    \n\n**Holy Day:**  \n**The Day of Blossoming Heart** — celebrated on the first day of spring. Her followers adorn themselves in green and gold, plant new seeds, and bless newborns. It is said Elyndra’s spirit walks the world on this day, breathing new life into every corner of existence."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Heart of Creation, Mother of Roots, The Everblooming One, Keeper of the Green Pulse, Lady of Renewal **Pantheon:** Pantheon of Creation (one of the Eight Essence Gods) **Alignment:** Neutral Good — nurturing yet impartial, as life grows for all",
+      "metadata": {
+        "title": "Ailwyn",
+        "slug": "ailwyn",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Life",
+        "divineDomain": "Essence of Life",
+        "domain": "Essence of Life",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/7. Ailwyn - Essence of Life.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Life",
+        "visibility": "public"
+      },
+      "searchTerms": "ailwyn religion pantheon of elements {\"title\":\"ailwyn\",\"slug\":\"ailwyn\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of life\",\"divinedomain\":\"essence of life\",\"domain\":\"essence of life\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/7. ailwyn - essence of life.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # ailwyn\n\n## overview\n## 🌿 **elyndra – goddess of life**\n\n**titles:**  \nthe heart of creation, mother of roots, the everblooming one, keeper of the green pulse, lady of renewal\n\n**pantheon:**  \npantheon of creation (one of the eight essence gods)\n\n**alignment:**  \nneutral good — nurturing yet impartial, as life grows for all, even the wicked\n\n**symbol:**  \na blooming flower intertwined with a spiral of golden light — representing the eternal cycle of birth, growth, death, and rebirth\n\n**domains:**  \nlife, nature, fertility, healing, growth, renewal, animals\n\n**appearance:**  \nelyndra appears as a luminous woman woven from living vines, petals, and sunlight. her hair flows like a river of blossoms, ever-shifting through the colors of the seasons — green in spring, gold in summer, crimson in autumn, and silver-white in winter. her skin glows with a warm, inner light, and wherever her bare feet touch, grass and flowers spring forth instantly.\n\n**personality:**  \nelyndra is compassionate, patient, and endlessly creative — the very essence of nurturing life. yet, she carries within her the quiet sorrow of inevitability: that all life must one day end. she loves all creatures equally and despises needless destruction. her love is maternal, but her justice is firm — those who harm the balance of nature earn her silent wrath.\n\n**mythic lore:**  \nwhen the first spark of solyren’s light kissed the fertile shadow of nythra’s darkness, elyndra was born — the living harmony between the two. she took the ashes of creation and the waters of sirona, shaping them into roots, leaves, and flesh.  \nit was elyndra who taught mortals how to cultivate the land, heal wounds, and give birth safely. legends say her heart beats within every living creature, and when her pulse weakens, plagues, and famine follow.\n\nduring the **war of twilight**, when fire and shadow devoured the mortal realms, elyndra sacrificed her divine essence to restore the dying forests and reawaken the rivers — her tears becoming the first seeds of renewal after the devastation. from her sacrifice grew the **tree of breath**, said to be the anchor of all living souls.\n\n**worship:**  \nelyndra’s followers include farmers, healers, midwives, druids, and all who revere the sanctity of life. her temples are living sanctuaries — open gardens, vast orchards, and stone circles overgrown with vines. offerings are given not through wealth, but through _growth_ — planting trees, tending to the sick, or healing wounded animals.\n\n**rituals:**\n\n- **the seed rite:** performed each spring, where seeds are blessed in her name before planting.\n    \n- **the breath of renewal:** a healing ceremony invoking elyndra’s light to mend wounds or cure blight.\n    \n- **the blooming vigil:** held during the first full moon of summer; her followers light lanterns and release them over rivers, symbolizing souls returning to the cycle of life.\n    \n- **the final petal:** a funeral rite where flowers are laid upon the deceased to signify their return to her embrace.\n    \n\n**relationships:**\n\n- **solyren – god of light:** her consort and eternal balance; together they bring warmth and life to the world.\n    \n- **nythra – goddess of dark:** her sister and counterpart; though opposites, they share deep respect, for death is the soil in which new life grows.\n    \n- **sirona – goddess of water:** her closest ally; sirona’s rivers nourish elyndra’s creations.\n    \n- **auralis – goddess of air:** breath to her pulse; together they are the lifeblood and lungs of the world.\n    \n- **vaelion – god of time & space:** the silent watcher of her cycles, ensuring the seasons of life flow as intended.\n    \n- **azrakar & malthera – lords of the netherworld:** enemies of her domain, yet necessary — she knows even decay feeds new growth.\n    \n\n**holy day:**  \n**the day of blossoming heart** — celebrated on the first day of spring. her followers adorn themselves in green and gold, plant new seeds, and bless newborns. it is said elyndra’s spirit walks the world on this day, breathing new life into every corner of existence."
+    },
+    {
+      "id": "religion:content-theology-avarine-index",
+      "title": "Avarine",
+      "slug": "avarine",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/avarine",
+      "sourcePath": "content/theology/avarine/index.md",
+      "sourceFolder": "content/theology/avarine",
+      "content": "---\ntitle: \"Avarine\"\nslug: \"avarine\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Space\"\ndivine_domain: \"Essence of Space\"\ndomain: \"Essence of Space\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/10. Avarine - Essence of Space.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Avarine\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Avarine\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Avarine\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Avarine",
+        "slug": "avarine",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Space",
+        "divineDomain": "Essence of Space",
+        "domain": "Essence of Space",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/10. Avarine - Essence of Space.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Space",
+        "visibility": "public"
+      },
+      "searchTerms": "avarine religion pantheon of elements {\"title\":\"avarine\",\"slug\":\"avarine\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of space\",\"divinedomain\":\"essence of space\",\"domain\":\"essence of space\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/10. avarine - essence of space.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # avarine\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-azrakar-index",
+      "title": "Azrakar",
+      "slug": "azrakar",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/azrakar",
+      "sourcePath": "content/theology/azrakar/index.md",
+      "sourceFolder": "content/theology/azrakar",
+      "content": "---\ntitle: \"Azrakar\"\nslug: \"azrakar\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Infernal\"\ndivine_domain: \"Essence of Infernal\"\ndomain: \"Essence of Infernal\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/5. Azrakar - Essence of  Infernal.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Azrakar\n\n## Overview\n**Titles:** The Infernal Warden, Lord of the Twelve Houses, The Black Flame of Judgment  \n**Domain:** Dominion, Fire, and the Hellish Realm (The Netherworld)  \n**Alignment:** Lawful Evil (embodying order through torment and eternal law)  \n**Symbol:** A blazing crown above a chained skull encircled by twelve infernal runes  \n**Consort:** **Malthera**, the Hellish Queen  \n**Seat of Power:** **The Obsidian Citadel**, heart of the First House — **Dominion**\n\n---\n\n### ⚔️ **Mythic Lore**\n\nAzrakar was once the **Warden of Creation’s Shadow**, born from the flame left behind when the Void and Ether clashed in the dawn of existence. His fire is not of warmth, but of **purging** — the flame that consumes falsehood and reveals truth through agony.\n\nWhen the gods of creation shaped the heavens and the mortal realm, Azrakar was tasked with ruling over what was _cast away_ — the souls too dark or proud for redemption. From this exile, he forged the **Netherworld**, a realm of twelve infernal houses, each governed by a lesser god or demonic noble sworn to his law.\n\nThough feared by mortals, Azrakar is not a being of mindless cruelty. He believes that through **suffering comes clarity**, and that even damnation has purpose. He is the ultimate **judge of the soul’s strength**, burning away weakness to leave only truth — or ash.\n\nHe and **Malthera** rule together, their bond both passionate and volatile — love and destruction intertwined. Where Malthera tempts, Azrakar commands. Where she corrupts, he enforces. Their balance defines the very structure of Hell itself.\n\n---\n\n### 🔱 **Worship & Cults**\n\n- The **Order of the Black Flame** — priests who believe pain purifies the spirit.\n    \n- The **Ashen Choir** — devotees who chant hymns of torment to earn enlightenment.\n    \n- The **Keepers of the Twelve Brands** — infernal scribes who record every soul’s sin in molten stone.\n",
+      "body": "# Azrakar\n\n## Overview\n**Titles:** The Infernal Warden, Lord of the Twelve Houses, The Black Flame of Judgment  \n**Domain:** Dominion, Fire, and the Hellish Realm (The Netherworld)  \n**Alignment:** Lawful Evil (embodying order through torment and eternal law)  \n**Symbol:** A blazing crown above a chained skull encircled by twelve infernal runes  \n**Consort:** **Malthera**, the Hellish Queen  \n**Seat of Power:** **The Obsidian Citadel**, heart of the First House — **Dominion**\n\n---\n\n### ⚔️ **Mythic Lore**\n\nAzrakar was once the **Warden of Creation’s Shadow**, born from the flame left behind when the Void and Ether clashed in the dawn of existence. His fire is not of warmth, but of **purging** — the flame that consumes falsehood and reveals truth through agony.\n\nWhen the gods of creation shaped the heavens and the mortal realm, Azrakar was tasked with ruling over what was _cast away_ — the souls too dark or proud for redemption. From this exile, he forged the **Netherworld**, a realm of twelve infernal houses, each governed by a lesser god or demonic noble sworn to his law.\n\nThough feared by mortals, Azrakar is not a being of mindless cruelty. He believes that through **suffering comes clarity**, and that even damnation has purpose. He is the ultimate **judge of the soul’s strength**, burning away weakness to leave only truth — or ash.\n\nHe and **Malthera** rule together, their bond both passionate and volatile — love and destruction intertwined. Where Malthera tempts, Azrakar commands. Where she corrupts, he enforces. Their balance defines the very structure of Hell itself.\n\n---\n\n### 🔱 **Worship & Cults**\n\n- The **Order of the Black Flame** — priests who believe pain purifies the spirit.\n    \n- The **Ashen Choir** — devotees who chant hymns of torment to earn enlightenment.\n    \n- The **Keepers of the Twelve Brands** — infernal scribes who record every soul’s sin in molten stone.",
+      "sections": {
+        "Overview": "# Azrakar\n\n**Titles:** The Infernal Warden, Lord of the Twelve Houses, The Black Flame of Judgment  \n**Domain:** Dominion, Fire, and the Hellish Realm (The Netherworld)  \n**Alignment:** Lawful Evil (embodying order through torment and eternal law)  \n**Symbol:** A blazing crown above a chained skull encircled by twelve infernal runes  \n**Consort:** **Malthera**, the Hellish Queen  \n**Seat of Power:** **The Obsidian Citadel**, heart of the First House — **Dominion**\n\n---\n\n### ⚔️ **Mythic Lore**\n\nAzrakar was once the **Warden of Creation’s Shadow**, born from the flame left behind when the Void and Ether clashed in the dawn of existence. His fire is not of warmth, but of **purging** — the flame that consumes falsehood and reveals truth through agony.\n\nWhen the gods of creation shaped the heavens and the mortal realm, Azrakar was tasked with ruling over what was _cast away_ — the souls too dark or proud for redemption. From this exile, he forged the **Netherworld**, a realm of twelve infernal houses, each governed by a lesser god or demonic noble sworn to his law.\n\nThough feared by mortals, Azrakar is not a being of mindless cruelty. He believes that through **suffering comes clarity**, and that even damnation has purpose. He is the ultimate **judge of the soul’s strength**, burning away weakness to leave only truth — or ash.\n\nHe and **Malthera** rule together, their bond both passionate and volatile — love and destruction intertwined. Where Malthera tempts, Azrakar commands. Where she corrupts, he enforces. Their balance defines the very structure of Hell itself.\n\n---\n\n### 🔱 **Worship & Cults**\n\n- The **Order of the Black Flame** — priests who believe pain purifies the spirit.\n    \n- The **Ashen Choir** — devotees who chant hymns of torment to earn enlightenment.\n    \n- The **Keepers of the Twelve Brands** — infernal scribes who record every soul’s sin in molten stone."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Infernal Warden, Lord of the Twelve Houses, The Black Flame of Judgment **Domain:** Dominion, Fire, and the Hellish Realm (The Netherworld) **Alignment:** Lawful Evil (embodying order through torment and eternal law) **Symbol:** A blazing crown",
+      "metadata": {
+        "title": "Azrakar",
+        "slug": "azrakar",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Infernal",
+        "divineDomain": "Essence of Infernal",
+        "domain": "Essence of Infernal",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/5. Azrakar - Essence of  Infernal.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Infernal",
+        "visibility": "public"
+      },
+      "searchTerms": "azrakar religion pantheon of elements {\"title\":\"azrakar\",\"slug\":\"azrakar\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of infernal\",\"divinedomain\":\"essence of infernal\",\"domain\":\"essence of infernal\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/5. azrakar - essence of  infernal.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # azrakar\n\n## overview\n**titles:** the infernal warden, lord of the twelve houses, the black flame of judgment  \n**domain:** dominion, fire, and the hellish realm (the netherworld)  \n**alignment:** lawful evil (embodying order through torment and eternal law)  \n**symbol:** a blazing crown above a chained skull encircled by twelve infernal runes  \n**consort:** **malthera**, the hellish queen  \n**seat of power:** **the obsidian citadel**, heart of the first house — **dominion**\n\n---\n\n### ⚔️ **mythic lore**\n\nazrakar was once the **warden of creation’s shadow**, born from the flame left behind when the void and ether clashed in the dawn of existence. his fire is not of warmth, but of **purging** — the flame that consumes falsehood and reveals truth through agony.\n\nwhen the gods of creation shaped the heavens and the mortal realm, azrakar was tasked with ruling over what was _cast away_ — the souls too dark or proud for redemption. from this exile, he forged the **netherworld**, a realm of twelve infernal houses, each governed by a lesser god or demonic noble sworn to his law.\n\nthough feared by mortals, azrakar is not a being of mindless cruelty. he believes that through **suffering comes clarity**, and that even damnation has purpose. he is the ultimate **judge of the soul’s strength**, burning away weakness to leave only truth — or ash.\n\nhe and **malthera** rule together, their bond both passionate and volatile — love and destruction intertwined. where malthera tempts, azrakar commands. where she corrupts, he enforces. their balance defines the very structure of hell itself.\n\n---\n\n### 🔱 **worship & cults**\n\n- the **order of the black flame** — priests who believe pain purifies the spirit.\n    \n- the **ashen choir** — devotees who chant hymns of torment to earn enlightenment.\n    \n- the **keepers of the twelve brands** — infernal scribes who record every soul’s sin in molten stone."
+    },
+    {
+      "id": "religion:content-theology-balron-index",
+      "title": "Balron",
+      "slug": "balron",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/balron",
+      "sourcePath": "content/theology/balron/index.md",
+      "sourceFolder": "content/theology/balron",
+      "content": "---\ntitle: \"Balron\"\nslug: \"balron\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Earth\"\ndivine_domain: \"Essence of Earth\"\ndomain: \"Essence of Earth\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/2. Balron - Essence of Earth.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Balron\n\n## Overview\n**Titles:** The Stonefather, Keeper of the Deep Roots, The Unmoving One, Lord of Mountains, The Enduring Heart  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Lawful Neutral  \n**Symbol:** A mountain split by a glowing crystal vein; sometimes a hammer embedded in stone  \n**Domains:** Earth, Stone, Strength, Endurance, Craft, Agriculture, Protection, Stability\n\n---\n\n### 🪨 **Appearance**\n\nTarron manifests as a **colossal, broad-shouldered figure** made of living stone and metal, his skin a shifting mosaic of granite, basalt, and gold veins. His **eyes glow like molten amber**, steady and unwavering.  \nWhen he moves, the ground trembles faintly. His beard is made of hanging vines and mineral dust, and moss grows upon his shoulders.  \nHe carries a **massive hammer** — not a weapon, but a tool of creation, with which he is said to have shaped the first mountains.\n\nAt times, Tarron appears in mortal guise as an **aged miner or humble farmer**, testing the humility and resolve of those who toil upon his earth.\n\n---\n\n### ⛰️ **Personality**\n\nTarron is **patient, solemn, and enduring** — the unmoving foundation beneath chaos.  \nHe values **honor, hard work, and resilience**, teaching mortals that all things worth keeping must be earned through effort.  \nHe disdains arrogance, especially from those who claim dominion over the land without understanding it.  \nThough slow to anger, once his fury awakens, **the mountains themselves rise** in his defense.\n\nHe rarely speaks, and when he does, his voice echoes like a **deep rumble through the bedrock** — every word deliberate and weighty.\n\n---\n\n### 📜 **Mythic Lore**\n\nWhen the world was still formless, Auralis danced upon the winds, and her breath stirred the dust.  \nFrom that dust arose **Tarron**, solidifying the world beneath her — **the first to stand** upon the land that would become Astria.  \nHe was the **second child of the Primordials**, born from **Energy and Void**, embodying **matter, permanence, and rest**.\n\nIt is said Tarron carved the **foundations of the realms**, raising mountains as sentinels and hollowing the caverns as wombs of creation.  \nHe also forged the **first metals** within the heart of the world, gifting them to the mortal races through dwarves and giants.  \nWhen the first plow touched the soil, Tarron blessed it — promising abundance to those who labored with respect for the land.\n\nLegends claim that **volcanoes are his forges**, and earthquakes are his shifting dreams.\n\n---\n\n### 🌾 **Worship**\n\nTarron is venerated by **farmers, miners, builders, and craftsmen**. His followers see labor as sacred, a reflection of divine endurance.  \nHis temples are often **carved directly into cliffs or beneath mountains**, lit by crystal veins and burning braziers.  \nOfferings are made by **placing a hand upon the ground**, whispering thanks before sowing seeds or striking stone.\n\n**Common Prayer:**\n\n> “By stone and soil, by root and bone, may my work endure as yours has done.”\n\n---\n\n### 🔨 **Rituals**\n\n- **The Rite of Stone:** Builders bless the first stone of a new structure, asking Tarron’s blessing for stability and safety.\n    \n- **Festival of the First Harvest:** Farmers offer a portion of their yield by burying it beneath a marked stone.\n    \n- **The Deep Vigil:** Miners hold this ritual before delving deep, lighting lanterns in Tarron’s name for protection underground.\n    \n- **Forge of Earth:** Smiths heat their forges with earth-fed flames and recite his oath of endurance.\n    \n\n---\n\n### ⚔️ **Relationships**\n\n- **Sibling / Counterpart:** _Auralis_, Goddess of the Air — together they represent balance: **freedom and foundation**, **sky and soil**.\n    \n- **Friendship:** _Goddess of the Harvest_ — she brings life to the lands Tarron shaped, and he in turn nourishes her soil.\n    \n- **Rivalry:** _Zephyron_, God of Storms — whose tempests erode the mountains Tarron built, though they share mutual respect.\n    \n- **Ally:** _God of Smithing_ — both share dominion over craft and the forge, bound by creation and discipline.\n    \n- **Respect:** _Vaelion, God of Time and Space_ — for only through time can mountains rise and fall, and Tarron reveres that inevitability.\n    \n\n---\n\n### 🪔 **Holy Day**\n\n**The Day of the First Stone (Mid-Spring)**  \nEach year, communities gather to plant the first seeds and lay the first stones of construction.  \nA single **unworked rock** is chosen as the “Heartstone” — blessed, buried, or placed at the center of fields, temples, or mines.  \nThroughout the day, prayers are whispered as people work; no idle words are spoken until dusk, when music and feasting celebrate the bond between labor and life.\n",
+      "body": "# Balron\n\n## Overview\n**Titles:** The Stonefather, Keeper of the Deep Roots, The Unmoving One, Lord of Mountains, The Enduring Heart  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Lawful Neutral  \n**Symbol:** A mountain split by a glowing crystal vein; sometimes a hammer embedded in stone  \n**Domains:** Earth, Stone, Strength, Endurance, Craft, Agriculture, Protection, Stability\n\n---\n\n### 🪨 **Appearance**\n\nTarron manifests as a **colossal, broad-shouldered figure** made of living stone and metal, his skin a shifting mosaic of granite, basalt, and gold veins. His **eyes glow like molten amber**, steady and unwavering.  \nWhen he moves, the ground trembles faintly. His beard is made of hanging vines and mineral dust, and moss grows upon his shoulders.  \nHe carries a **massive hammer** — not a weapon, but a tool of creation, with which he is said to have shaped the first mountains.\n\nAt times, Tarron appears in mortal guise as an **aged miner or humble farmer**, testing the humility and resolve of those who toil upon his earth.\n\n---\n\n### ⛰️ **Personality**\n\nTarron is **patient, solemn, and enduring** — the unmoving foundation beneath chaos.  \nHe values **honor, hard work, and resilience**, teaching mortals that all things worth keeping must be earned through effort.  \nHe disdains arrogance, especially from those who claim dominion over the land without understanding it.  \nThough slow to anger, once his fury awakens, **the mountains themselves rise** in his defense.\n\nHe rarely speaks, and when he does, his voice echoes like a **deep rumble through the bedrock** — every word deliberate and weighty.\n\n---\n\n### 📜 **Mythic Lore**\n\nWhen the world was still formless, Auralis danced upon the winds, and her breath stirred the dust.  \nFrom that dust arose **Tarron**, solidifying the world beneath her — **the first to stand** upon the land that would become Astria.  \nHe was the **second child of the Primordials**, born from **Energy and Void**, embodying **matter, permanence, and rest**.\n\nIt is said Tarron carved the **foundations of the realms**, raising mountains as sentinels and hollowing the caverns as wombs of creation.  \nHe also forged the **first metals** within the heart of the world, gifting them to the mortal races through dwarves and giants.  \nWhen the first plow touched the soil, Tarron blessed it — promising abundance to those who labored with respect for the land.\n\nLegends claim that **volcanoes are his forges**, and earthquakes are his shifting dreams.\n\n---\n\n### 🌾 **Worship**\n\nTarron is venerated by **farmers, miners, builders, and craftsmen**. His followers see labor as sacred, a reflection of divine endurance.  \nHis temples are often **carved directly into cliffs or beneath mountains**, lit by crystal veins and burning braziers.  \nOfferings are made by **placing a hand upon the ground**, whispering thanks before sowing seeds or striking stone.\n\n**Common Prayer:**\n\n> “By stone and soil, by root and bone, may my work endure as yours has done.”\n\n---\n\n### 🔨 **Rituals**\n\n- **The Rite of Stone:** Builders bless the first stone of a new structure, asking Tarron’s blessing for stability and safety.\n    \n- **Festival of the First Harvest:** Farmers offer a portion of their yield by burying it beneath a marked stone.\n    \n- **The Deep Vigil:** Miners hold this ritual before delving deep, lighting lanterns in Tarron’s name for protection underground.\n    \n- **Forge of Earth:** Smiths heat their forges with earth-fed flames and recite his oath of endurance.\n    \n\n---\n\n### ⚔️ **Relationships**\n\n- **Sibling / Counterpart:** _Auralis_, Goddess of the Air — together they represent balance: **freedom and foundation**, **sky and soil**.\n    \n- **Friendship:** _Goddess of the Harvest_ — she brings life to the lands Tarron shaped, and he in turn nourishes her soil.\n    \n- **Rivalry:** _Zephyron_, God of Storms — whose tempests erode the mountains Tarron built, though they share mutual respect.\n    \n- **Ally:** _God of Smithing_ — both share dominion over craft and the forge, bound by creation and discipline.\n    \n- **Respect:** _Vaelion, God of Time and Space_ — for only through time can mountains rise and fall, and Tarron reveres that inevitability.\n    \n\n---\n\n### 🪔 **Holy Day**\n\n**The Day of the First Stone (Mid-Spring)**  \nEach year, communities gather to plant the first seeds and lay the first stones of construction.  \nA single **unworked rock** is chosen as the “Heartstone” — blessed, buried, or placed at the center of fields, temples, or mines.  \nThroughout the day, prayers are whispered as people work; no idle words are spoken until dusk, when music and feasting celebrate the bond between labor and life.",
+      "sections": {
+        "Overview": "# Balron\n\n**Titles:** The Stonefather, Keeper of the Deep Roots, The Unmoving One, Lord of Mountains, The Enduring Heart  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Lawful Neutral  \n**Symbol:** A mountain split by a glowing crystal vein; sometimes a hammer embedded in stone  \n**Domains:** Earth, Stone, Strength, Endurance, Craft, Agriculture, Protection, Stability\n\n---\n\n### 🪨 **Appearance**\n\nTarron manifests as a **colossal, broad-shouldered figure** made of living stone and metal, his skin a shifting mosaic of granite, basalt, and gold veins. His **eyes glow like molten amber**, steady and unwavering.  \nWhen he moves, the ground trembles faintly. His beard is made of hanging vines and mineral dust, and moss grows upon his shoulders.  \nHe carries a **massive hammer** — not a weapon, but a tool of creation, with which he is said to have shaped the first mountains.\n\nAt times, Tarron appears in mortal guise as an **aged miner or humble farmer**, testing the humility and resolve of those who toil upon his earth.\n\n---\n\n### ⛰️ **Personality**\n\nTarron is **patient, solemn, and enduring** — the unmoving foundation beneath chaos.  \nHe values **honor, hard work, and resilience**, teaching mortals that all things worth keeping must be earned through effort.  \nHe disdains arrogance, especially from those who claim dominion over the land without understanding it.  \nThough slow to anger, once his fury awakens, **the mountains themselves rise** in his defense.\n\nHe rarely speaks, and when he does, his voice echoes like a **deep rumble through the bedrock** — every word deliberate and weighty.\n\n---\n\n### 📜 **Mythic Lore**\n\nWhen the world was still formless, Auralis danced upon the winds, and her breath stirred the dust.  \nFrom that dust arose **Tarron**, solidifying the world beneath her — **the first to stand** upon the land that would become Astria.  \nHe was the **second child of the Primordials**, born from **Energy and Void**, embodying **matter, permanence, and rest**.\n\nIt is said Tarron carved the **foundations of the realms**, raising mountains as sentinels and hollowing the caverns as wombs of creation.  \nHe also forged the **first metals** within the heart of the world, gifting them to the mortal races through dwarves and giants.  \nWhen the first plow touched the soil, Tarron blessed it — promising abundance to those who labored with respect for the land.\n\nLegends claim that **volcanoes are his forges**, and earthquakes are his shifting dreams.\n\n---\n\n### 🌾 **Worship**\n\nTarron is venerated by **farmers, miners, builders, and craftsmen**. His followers see labor as sacred, a reflection of divine endurance.  \nHis temples are often **carved directly into cliffs or beneath mountains**, lit by crystal veins and burning braziers.  \nOfferings are made by **placing a hand upon the ground**, whispering thanks before sowing seeds or striking stone.\n\n**Common Prayer:**\n\n> “By stone and soil, by root and bone, may my work endure as yours has done.”\n\n---\n\n### 🔨 **Rituals**\n\n- **The Rite of Stone:** Builders bless the first stone of a new structure, asking Tarron’s blessing for stability and safety.\n    \n- **Festival of the First Harvest:** Farmers offer a portion of their yield by burying it beneath a marked stone.\n    \n- **The Deep Vigil:** Miners hold this ritual before delving deep, lighting lanterns in Tarron’s name for protection underground.\n    \n- **Forge of Earth:** Smiths heat their forges with earth-fed flames and recite his oath of endurance.\n    \n\n---\n\n### ⚔️ **Relationships**\n\n- **Sibling / Counterpart:** _Auralis_, Goddess of the Air — together they represent balance: **freedom and foundation**, **sky and soil**.\n    \n- **Friendship:** _Goddess of the Harvest_ — she brings life to the lands Tarron shaped, and he in turn nourishes her soil.\n    \n- **Rivalry:** _Zephyron_, God of Storms — whose tempests erode the mountains Tarron built, though they share mutual respect.\n    \n- **Ally:** _God of Smithing_ — both share dominion over craft and the forge, bound by creation and discipline.\n    \n- **Respect:** _Vaelion, God of Time and Space_ — for only through time can mountains rise and fall, and Tarron reveres that inevitability.\n    \n\n---\n\n### 🪔 **Holy Day**\n\n**The Day of the First Stone (Mid-Spring)**  \nEach year, communities gather to plant the first seeds and lay the first stones of construction.  \nA single **unworked rock** is chosen as the “Heartstone” — blessed, buried, or placed at the center of fields, temples, or mines.  \nThroughout the day, prayers are whispered as people work; no idle words are spoken until dusk, when music and feasting celebrate the bond between labor and life."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Stonefather, Keeper of the Deep Roots, The Unmoving One, Lord of Mountains, The Enduring Heart **Pantheon:** Pantheon of Creation (Essence Division) **Alignment:** Lawful Neutral **Symbol:** A mountain split by a glowing crystal vein; sometimes",
+      "metadata": {
+        "title": "Balron",
+        "slug": "balron",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Earth",
+        "divineDomain": "Essence of Earth",
+        "domain": "Essence of Earth",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/2. Balron - Essence of Earth.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Earth",
+        "visibility": "public"
+      },
+      "searchTerms": "balron religion pantheon of elements {\"title\":\"balron\",\"slug\":\"balron\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of earth\",\"divinedomain\":\"essence of earth\",\"domain\":\"essence of earth\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/2. balron - essence of earth.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # balron\n\n## overview\n**titles:** the stonefather, keeper of the deep roots, the unmoving one, lord of mountains, the enduring heart  \n**pantheon:** pantheon of creation (essence division)  \n**alignment:** lawful neutral  \n**symbol:** a mountain split by a glowing crystal vein; sometimes a hammer embedded in stone  \n**domains:** earth, stone, strength, endurance, craft, agriculture, protection, stability\n\n---\n\n### 🪨 **appearance**\n\ntarron manifests as a **colossal, broad-shouldered figure** made of living stone and metal, his skin a shifting mosaic of granite, basalt, and gold veins. his **eyes glow like molten amber**, steady and unwavering.  \nwhen he moves, the ground trembles faintly. his beard is made of hanging vines and mineral dust, and moss grows upon his shoulders.  \nhe carries a **massive hammer** — not a weapon, but a tool of creation, with which he is said to have shaped the first mountains.\n\nat times, tarron appears in mortal guise as an **aged miner or humble farmer**, testing the humility and resolve of those who toil upon his earth.\n\n---\n\n### ⛰️ **personality**\n\ntarron is **patient, solemn, and enduring** — the unmoving foundation beneath chaos.  \nhe values **honor, hard work, and resilience**, teaching mortals that all things worth keeping must be earned through effort.  \nhe disdains arrogance, especially from those who claim dominion over the land without understanding it.  \nthough slow to anger, once his fury awakens, **the mountains themselves rise** in his defense.\n\nhe rarely speaks, and when he does, his voice echoes like a **deep rumble through the bedrock** — every word deliberate and weighty.\n\n---\n\n### 📜 **mythic lore**\n\nwhen the world was still formless, auralis danced upon the winds, and her breath stirred the dust.  \nfrom that dust arose **tarron**, solidifying the world beneath her — **the first to stand** upon the land that would become astria.  \nhe was the **second child of the primordials**, born from **energy and void**, embodying **matter, permanence, and rest**.\n\nit is said tarron carved the **foundations of the realms**, raising mountains as sentinels and hollowing the caverns as wombs of creation.  \nhe also forged the **first metals** within the heart of the world, gifting them to the mortal races through dwarves and giants.  \nwhen the first plow touched the soil, tarron blessed it — promising abundance to those who labored with respect for the land.\n\nlegends claim that **volcanoes are his forges**, and earthquakes are his shifting dreams.\n\n---\n\n### 🌾 **worship**\n\ntarron is venerated by **farmers, miners, builders, and craftsmen**. his followers see labor as sacred, a reflection of divine endurance.  \nhis temples are often **carved directly into cliffs or beneath mountains**, lit by crystal veins and burning braziers.  \nofferings are made by **placing a hand upon the ground**, whispering thanks before sowing seeds or striking stone.\n\n**common prayer:**\n\n> “by stone and soil, by root and bone, may my work endure as yours has done.”\n\n---\n\n### 🔨 **rituals**\n\n- **the rite of stone:** builders bless the first stone of a new structure, asking tarron’s blessing for stability and safety.\n    \n- **festival of the first harvest:** farmers offer a portion of their yield by burying it beneath a marked stone.\n    \n- **the deep vigil:** miners hold this ritual before delving deep, lighting lanterns in tarron’s name for protection underground.\n    \n- **forge of earth:** smiths heat their forges with earth-fed flames and recite his oath of endurance.\n    \n\n---\n\n### ⚔️ **relationships**\n\n- **sibling / counterpart:** _auralis_, goddess of the air — together they represent balance: **freedom and foundation**, **sky and soil**.\n    \n- **friendship:** _goddess of the harvest_ — she brings life to the lands tarron shaped, and he in turn nourishes her soil.\n    \n- **rivalry:** _zephyron_, god of storms — whose tempests erode the mountains tarron built, though they share mutual respect.\n    \n- **ally:** _god of smithing_ — both share dominion over craft and the forge, bound by creation and discipline.\n    \n- **respect:** _vaelion, god of time and space_ — for only through time can mountains rise and fall, and tarron reveres that inevitability.\n    \n\n---\n\n### 🪔 **holy day**\n\n**the day of the first stone (mid-spring)**  \neach year, communities gather to plant the first seeds and lay the first stones of construction.  \na single **unworked rock** is chosen as the “heartstone” — blessed, buried, or placed at the center of fields, temples, or mines.  \nthroughout the day, prayers are whispered as people work; no idle words are spoken until dusk, when music and feasting celebrate the bond between labor and life."
+    },
+    {
+      "id": "religion:content-theology-eldryssa-index",
+      "title": "Eldryssa",
+      "slug": "eldryssa",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/eldryssa",
+      "sourcePath": "content/theology/eldryssa/index.md",
+      "sourceFolder": "content/theology/eldryssa",
+      "content": "---\ntitle: \"Eldryssa\"\nslug: \"eldryssa\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Spirit\"\ndivine_domain: \"Essence of Spirit\"\ndomain: \"Essence of Spirit\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/6. Eldryssa - Essence of  Spirit.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Eldryssa\n\n## Overview\n### **Goddess of Soul & Spirit – Elyndra, the Whispering Light**\n\n**Titles:** The Soulweaver, Keeper of the Breath, Mother of Memory, The Pale Flame  \n**Alignment:** Neutral Good  \n**Domains:** Soul, Spirit, Memory, Rebirth, Emotion, Dreams, Death (Merciful Aspect), Light (Inner)  \n**Symbol:** A silver flame encased within a crystal tear  \n**Appearance:** Elyndra manifests as a luminous figure wrapped in flowing, translucent veils that shimmer with spectral hues — blues, violets, and soft whites. Her eyes contain the reflection of every soul that has ever lived, glowing like distant lanterns in fog. Where she steps, soft motes of light drift upward, like ascending spirits.\n\n---\n\n### **Mythic Lore**\n\nIn the first age, when **Vaelion** forged the stars and **Ether** shaped creation, there remained a question unanswered: _what gives life purpose beyond existence?_  \nFrom that question, born from the union of light and consciousness, came **Elyndra** — the divine breath that filled all beings with soul.\n\nIt is said that when the first mortal died, their essence drifted into the endless dark, lost and silent. Elyndra wept, and from her tears arose the _Veil of Return_ — the passage through which souls now travel between life, death, and rebirth.  \nWhere **Seraphyne, Goddess of Fate**, weaves the threads of destiny, **Elyndra** gives them _spirit_ — meaning, emotion, and memory.\n\nShe is the soft whisper at birth, the final sigh at death, and the quiet song that calls the lost back to the cycle of life. Her light is not of the sun but of the soul — gentle, persistent, and eternal.\n\n---\n\n### **Relationships with Other Deities**\n\n- **Seraphyne, Goddess of Fate:** Elyndra and Seraphyne are twin aspects of destiny — one weaving the path, the other filling it with spirit.\n    \n- **The Goddess of Guiding Souls and Ravens:** Elyndra is the higher reflection of that deity — while the Raven Goddess guides the dead, Elyndra _receives_ them, embracing every spirit in her gentle radiance.\n    \n- **Vaelion, God of Space:** Their bond is ancient — his infinite expanse is the realm through which her spirits drift like stars.\n    \n- **The Primordial of Ether:** Her “mother,” for Elyndra is said to be Ether’s emotional echo — the first feeling born from creation’s song.\n    \n\n---\n\n### **Personality**\n\nElyndra is endlessly compassionate, but also sorrowful. She understands the pain of loss, the beauty of love, and the fragility of being. To mortals, she appears serene yet wistful, her words both comfort and revelation.  \nShe is worshipped not out of fear but devotion — a goddess of empathy, introspection, and forgiveness.\n\n---\n\n### **Worship & Temples**\n\nTemples to Elyndra are quiet sanctuaries filled with candles and polished mirrors. Priests tend to the dying and comfort the grieving.  \nThe central altar always holds a **Silver Flame**, representing the light of all souls united.\n\nHer followers are healers, mediums, mourners, and philosophers — those who seek to understand life beyond its flesh.\n\n**Rituals:**\n\n- **The Lantern Vigil:** Each year, followers release lanterns into the night sky to guide lost souls home.\n    \n- **The Whispering Hour:** A silent moment before dawn where the living are said to hear their ancestors’ voices.\n    \n\n**Offerings:** Fragrant smoke, crystal tears, feathers, or strands of hair braided with silver thread.\n\n---\n\n### **Celestial Servants**\n\n- **The Soulwardens:** Ethereal figures cloaked in light, who guard the passage between life and afterlife.\n    \n- **The Veilkeepers:** Spirits who ensure each soul reaches its destined rest or reincarnation.\n    \n- **The Pale Ravens:** Heralds of the goddess, who carry the last whispers of the dying to her hands.\n    \n\n---\n\n### **Holy Day**\n\n**The Day of Veils** — the boundary between seasons when the barrier between life and death is thinnest. The faithful light a candle for every loved one lost, believing Elyndra walks among them to collect the light of remembrance\n",
+      "body": "# Eldryssa\n\n## Overview\n### **Goddess of Soul & Spirit – Elyndra, the Whispering Light**\n\n**Titles:** The Soulweaver, Keeper of the Breath, Mother of Memory, The Pale Flame  \n**Alignment:** Neutral Good  \n**Domains:** Soul, Spirit, Memory, Rebirth, Emotion, Dreams, Death (Merciful Aspect), Light (Inner)  \n**Symbol:** A silver flame encased within a crystal tear  \n**Appearance:** Elyndra manifests as a luminous figure wrapped in flowing, translucent veils that shimmer with spectral hues — blues, violets, and soft whites. Her eyes contain the reflection of every soul that has ever lived, glowing like distant lanterns in fog. Where she steps, soft motes of light drift upward, like ascending spirits.\n\n---\n\n### **Mythic Lore**\n\nIn the first age, when **Vaelion** forged the stars and **Ether** shaped creation, there remained a question unanswered: _what gives life purpose beyond existence?_  \nFrom that question, born from the union of light and consciousness, came **Elyndra** — the divine breath that filled all beings with soul.\n\nIt is said that when the first mortal died, their essence drifted into the endless dark, lost and silent. Elyndra wept, and from her tears arose the _Veil of Return_ — the passage through which souls now travel between life, death, and rebirth.  \nWhere **Seraphyne, Goddess of Fate**, weaves the threads of destiny, **Elyndra** gives them _spirit_ — meaning, emotion, and memory.\n\nShe is the soft whisper at birth, the final sigh at death, and the quiet song that calls the lost back to the cycle of life. Her light is not of the sun but of the soul — gentle, persistent, and eternal.\n\n---\n\n### **Relationships with Other Deities**\n\n- **Seraphyne, Goddess of Fate:** Elyndra and Seraphyne are twin aspects of destiny — one weaving the path, the other filling it with spirit.\n    \n- **The Goddess of Guiding Souls and Ravens:** Elyndra is the higher reflection of that deity — while the Raven Goddess guides the dead, Elyndra _receives_ them, embracing every spirit in her gentle radiance.\n    \n- **Vaelion, God of Space:** Their bond is ancient — his infinite expanse is the realm through which her spirits drift like stars.\n    \n- **The Primordial of Ether:** Her “mother,” for Elyndra is said to be Ether’s emotional echo — the first feeling born from creation’s song.\n    \n\n---\n\n### **Personality**\n\nElyndra is endlessly compassionate, but also sorrowful. She understands the pain of loss, the beauty of love, and the fragility of being. To mortals, she appears serene yet wistful, her words both comfort and revelation.  \nShe is worshipped not out of fear but devotion — a goddess of empathy, introspection, and forgiveness.\n\n---\n\n### **Worship & Temples**\n\nTemples to Elyndra are quiet sanctuaries filled with candles and polished mirrors. Priests tend to the dying and comfort the grieving.  \nThe central altar always holds a **Silver Flame**, representing the light of all souls united.\n\nHer followers are healers, mediums, mourners, and philosophers — those who seek to understand life beyond its flesh.\n\n**Rituals:**\n\n- **The Lantern Vigil:** Each year, followers release lanterns into the night sky to guide lost souls home.\n    \n- **The Whispering Hour:** A silent moment before dawn where the living are said to hear their ancestors’ voices.\n    \n\n**Offerings:** Fragrant smoke, crystal tears, feathers, or strands of hair braided with silver thread.\n\n---\n\n### **Celestial Servants**\n\n- **The Soulwardens:** Ethereal figures cloaked in light, who guard the passage between life and afterlife.\n    \n- **The Veilkeepers:** Spirits who ensure each soul reaches its destined rest or reincarnation.\n    \n- **The Pale Ravens:** Heralds of the goddess, who carry the last whispers of the dying to her hands.\n    \n\n---\n\n### **Holy Day**\n\n**The Day of Veils** — the boundary between seasons when the barrier between life and death is thinnest. The faithful light a candle for every loved one lost, believing Elyndra walks among them to collect the light of remembrance",
+      "sections": {
+        "Overview": "# Eldryssa\n\n### **Goddess of Soul & Spirit – Elyndra, the Whispering Light**\n\n**Titles:** The Soulweaver, Keeper of the Breath, Mother of Memory, The Pale Flame  \n**Alignment:** Neutral Good  \n**Domains:** Soul, Spirit, Memory, Rebirth, Emotion, Dreams, Death (Merciful Aspect), Light (Inner)  \n**Symbol:** A silver flame encased within a crystal tear  \n**Appearance:** Elyndra manifests as a luminous figure wrapped in flowing, translucent veils that shimmer with spectral hues — blues, violets, and soft whites. Her eyes contain the reflection of every soul that has ever lived, glowing like distant lanterns in fog. Where she steps, soft motes of light drift upward, like ascending spirits.\n\n---\n\n### **Mythic Lore**\n\nIn the first age, when **Vaelion** forged the stars and **Ether** shaped creation, there remained a question unanswered: _what gives life purpose beyond existence?_  \nFrom that question, born from the union of light and consciousness, came **Elyndra** — the divine breath that filled all beings with soul.\n\nIt is said that when the first mortal died, their essence drifted into the endless dark, lost and silent. Elyndra wept, and from her tears arose the _Veil of Return_ — the passage through which souls now travel between life, death, and rebirth.  \nWhere **Seraphyne, Goddess of Fate**, weaves the threads of destiny, **Elyndra** gives them _spirit_ — meaning, emotion, and memory.\n\nShe is the soft whisper at birth, the final sigh at death, and the quiet song that calls the lost back to the cycle of life. Her light is not of the sun but of the soul — gentle, persistent, and eternal.\n\n---\n\n### **Relationships with Other Deities**\n\n- **Seraphyne, Goddess of Fate:** Elyndra and Seraphyne are twin aspects of destiny — one weaving the path, the other filling it with spirit.\n    \n- **The Goddess of Guiding Souls and Ravens:** Elyndra is the higher reflection of that deity — while the Raven Goddess guides the dead, Elyndra _receives_ them, embracing every spirit in her gentle radiance.\n    \n- **Vaelion, God of Space:** Their bond is ancient — his infinite expanse is the realm through which her spirits drift like stars.\n    \n- **The Primordial of Ether:** Her “mother,” for Elyndra is said to be Ether’s emotional echo — the first feeling born from creation’s song.\n    \n\n---\n\n### **Personality**\n\nElyndra is endlessly compassionate, but also sorrowful. She understands the pain of loss, the beauty of love, and the fragility of being. To mortals, she appears serene yet wistful, her words both comfort and revelation.  \nShe is worshipped not out of fear but devotion — a goddess of empathy, introspection, and forgiveness.\n\n---\n\n### **Worship & Temples**\n\nTemples to Elyndra are quiet sanctuaries filled with candles and polished mirrors. Priests tend to the dying and comfort the grieving.  \nThe central altar always holds a **Silver Flame**, representing the light of all souls united.\n\nHer followers are healers, mediums, mourners, and philosophers — those who seek to understand life beyond its flesh.\n\n**Rituals:**\n\n- **The Lantern Vigil:** Each year, followers release lanterns into the night sky to guide lost souls home.\n    \n- **The Whispering Hour:** A silent moment before dawn where the living are said to hear their ancestors’ voices.\n    \n\n**Offerings:** Fragrant smoke, crystal tears, feathers, or strands of hair braided with silver thread.\n\n---\n\n### **Celestial Servants**\n\n- **The Soulwardens:** Ethereal figures cloaked in light, who guard the passage between life and afterlife.\n    \n- **The Veilkeepers:** Spirits who ensure each soul reaches its destined rest or reincarnation.\n    \n- **The Pale Ravens:** Heralds of the goddess, who carry the last whispers of the dying to her hands.\n    \n\n---\n\n### **Holy Day**\n\n**The Day of Veils** — the boundary between seasons when the barrier between life and death is thinnest. The faithful light a candle for every loved one lost, believing Elyndra walks among them to collect the light of remembrance"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Soulweaver, Keeper of the Breath, Mother of Memory, The Pale Flame **Alignment:** Neutral Good **Domains:** Soul, Spirit, Memory, Rebirth, Emotion, Dreams, Death (Merciful Aspect), Light (Inner) **Symbol:** A silver flame encased within a cryst",
+      "metadata": {
+        "title": "Eldryssa",
+        "slug": "eldryssa",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Spirit",
+        "divineDomain": "Essence of Spirit",
+        "domain": "Essence of Spirit",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/6. Eldryssa - Essence of  Spirit.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Spirit",
+        "visibility": "public"
+      },
+      "searchTerms": "eldryssa religion pantheon of elements {\"title\":\"eldryssa\",\"slug\":\"eldryssa\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of spirit\",\"divinedomain\":\"essence of spirit\",\"domain\":\"essence of spirit\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/6. eldryssa - essence of  spirit.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # eldryssa\n\n## overview\n### **goddess of soul & spirit – elyndra, the whispering light**\n\n**titles:** the soulweaver, keeper of the breath, mother of memory, the pale flame  \n**alignment:** neutral good  \n**domains:** soul, spirit, memory, rebirth, emotion, dreams, death (merciful aspect), light (inner)  \n**symbol:** a silver flame encased within a crystal tear  \n**appearance:** elyndra manifests as a luminous figure wrapped in flowing, translucent veils that shimmer with spectral hues — blues, violets, and soft whites. her eyes contain the reflection of every soul that has ever lived, glowing like distant lanterns in fog. where she steps, soft motes of light drift upward, like ascending spirits.\n\n---\n\n### **mythic lore**\n\nin the first age, when **vaelion** forged the stars and **ether** shaped creation, there remained a question unanswered: _what gives life purpose beyond existence?_  \nfrom that question, born from the union of light and consciousness, came **elyndra** — the divine breath that filled all beings with soul.\n\nit is said that when the first mortal died, their essence drifted into the endless dark, lost and silent. elyndra wept, and from her tears arose the _veil of return_ — the passage through which souls now travel between life, death, and rebirth.  \nwhere **seraphyne, goddess of fate**, weaves the threads of destiny, **elyndra** gives them _spirit_ — meaning, emotion, and memory.\n\nshe is the soft whisper at birth, the final sigh at death, and the quiet song that calls the lost back to the cycle of life. her light is not of the sun but of the soul — gentle, persistent, and eternal.\n\n---\n\n### **relationships with other deities**\n\n- **seraphyne, goddess of fate:** elyndra and seraphyne are twin aspects of destiny — one weaving the path, the other filling it with spirit.\n    \n- **the goddess of guiding souls and ravens:** elyndra is the higher reflection of that deity — while the raven goddess guides the dead, elyndra _receives_ them, embracing every spirit in her gentle radiance.\n    \n- **vaelion, god of space:** their bond is ancient — his infinite expanse is the realm through which her spirits drift like stars.\n    \n- **the primordial of ether:** her “mother,” for elyndra is said to be ether’s emotional echo — the first feeling born from creation’s song.\n    \n\n---\n\n### **personality**\n\nelyndra is endlessly compassionate, but also sorrowful. she understands the pain of loss, the beauty of love, and the fragility of being. to mortals, she appears serene yet wistful, her words both comfort and revelation.  \nshe is worshipped not out of fear but devotion — a goddess of empathy, introspection, and forgiveness.\n\n---\n\n### **worship & temples**\n\ntemples to elyndra are quiet sanctuaries filled with candles and polished mirrors. priests tend to the dying and comfort the grieving.  \nthe central altar always holds a **silver flame**, representing the light of all souls united.\n\nher followers are healers, mediums, mourners, and philosophers — those who seek to understand life beyond its flesh.\n\n**rituals:**\n\n- **the lantern vigil:** each year, followers release lanterns into the night sky to guide lost souls home.\n    \n- **the whispering hour:** a silent moment before dawn where the living are said to hear their ancestors’ voices.\n    \n\n**offerings:** fragrant smoke, crystal tears, feathers, or strands of hair braided with silver thread.\n\n---\n\n### **celestial servants**\n\n- **the soulwardens:** ethereal figures cloaked in light, who guard the passage between life and afterlife.\n    \n- **the veilkeepers:** spirits who ensure each soul reaches its destined rest or reincarnation.\n    \n- **the pale ravens:** heralds of the goddess, who carry the last whispers of the dying to her hands.\n    \n\n---\n\n### **holy day**\n\n**the day of veils** — the boundary between seasons when the barrier between life and death is thinnest. the faithful light a candle for every loved one lost, believing elyndra walks among them to collect the light of remembrance"
+    },
+    {
+      "id": "religion:content-theology-eriabella-index",
+      "title": "Eriabella",
+      "slug": "eriabella",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/eriabella",
+      "sourcePath": "content/theology/eriabella/index.md",
+      "sourceFolder": "content/theology/eriabella",
+      "content": "---\ntitle: \"Eriabella\"\nslug: \"eriabella\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Air\"\ndivine_domain: \"Essence of Air\"\ndomain: \"Essence of Air\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/1. Eriabella - Essence of Air.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Eriabella\n\n## Overview\n**Titles:** The Whispering Queen, Sky-Mother, The Breath Between Worlds, Lady of the Endless Horizon, The Four Winds’ Voice  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Neutral Good  \n**Symbol:** A spiral of four winds surrounding a single feather, or a silver swirl encircling a clouded gem  \n**Domains:** Air, Wind, Freedom, Music, Travel, Breath of Life, Inspiration\n\n---\n\n### ✨ **Appearance**\n\nAuralis manifests as a **tall, ethereal woman** with **silver-white hair** that flows endlessly, merging into clouds and light mist. Her **skin glows faintly blue**, like dawnlight touching ice, and her **eyes mirror the color of the open sky**, ever shifting between sapphire, gray, and gold.  \nShe often appears **barefoot upon air**, her robes woven from **cloudlight, sunrise gold, and starlit vapor**. When she moves, the air sings softly; when angered, her voice becomes the gale.  \nAt her back, **two vast wings of translucent wind** unfurl — invisible save for the way they bend light and ripple the air.\n\n---\n\n### 💨 **Personality**\n\nAuralis is **free-spirited and compassionate**, yet bound by no law but her own. She values **truth, movement, and renewal**.  \nShe is the **voice of change** — never still, never silent. Gentle and nurturing to those who honor her winds, she becomes swift and merciless toward those who choke the air, enslave others, or defile the skies.  \nHer laughter is said to bring gentle breezes to travelers. Her sorrow births storms.\n\n---\n\n### 🕊️ **Mythic Lore**\n\nIn the beginning, when the **Primordials exhaled the Breath of Existence**, that sacred wind gave birth to Auralis — **the living embodiment of air and the first breath of life**.  \nShe wandered the newborn skies, alone, until she met **Vaelion, God of Time and Space**, who taught her the rhythm of the cosmos. Together, they gave the world **seasons, movement, and sound**.  \nWhen mortals were created, Auralis granted them **the first breath**, binding herself to all living things.  \nShe is said to **carry the final breath of the dying** to the realm of souls, delivering them to the **Goddess of Spirit**, ensuring the eternal cycle continues.  \nLegends tell that when a mortal dies peacefully, their last sigh is a whisper of Auralis calling them home.\n\n---\n\n### 🌫️ **Worship**\n\nAuralis is worshipped by **sailors, travelers, musicians, monks, and skyward peoples**.  \nHer worshippers build **open sanctuaries** on mountaintops, cliffs, and floating isles where the wind may freely pass.  \nPrayers to her begin and end with **a single deep breath**, symbolizing both birth and death.  \nWorshippers adorn themselves with feathers, wind charms, and bells that tinkle softly in the breeze.\n\n**Common Prayer:**\n\n> “Breath of the world, wind of my soul — carry me true and free.”\n\n---\n\n### 🌪️ **Rituals**\n\n- **The Breath Offering:** At dawn, followers exhale into the wind, whispering a personal truth or burden to be carried away.\n    \n- **The Gale Dance:** A sacred dance performed during strong winds to honor her restless spirit.\n    \n- **Feast of the Four Currents:** Once per season, followers release sky lanterns to represent the four winds carrying hope and renewal.\n    \n- **Rite of Last Breath:** Priests of Auralis perform this rite at deathbeds, helping guide a soul’s final breath to her care.\n    \n\n---\n\n### ⚡ **Relationships**\n\n- **Consort / Counterpart:** _Zephyron_, God of Storms — her wild and untamed brother-consort, representing the chaos of the skies. Together they maintain balance between gentle breeze and raging tempest.\n    \n- **Ally:** _Vaelion_, God of Time and Space — her teacher and friend, whose eternal rhythm shapes her winds.\n    \n- **Friendship:** _Celest_, Goddess of the Celestial — their domains intertwine as starlight guides the winds at night.\n    \n- **Rivalry:** _Sangran_, God of Blood — whose storms of war offend her skies with smoke and screams.\n    \n- **Respect:** _Goddess of Soul & Spirit_ — Auralis reveres her as the final destination of her sacred winds.\n    \n\n---\n\n### ☀️ **Holy Day**\n\n**Day of the Four Winds (First Breeze of Spring)**  \nOnce each year, when winter’s frost first melts, worshippers gather in open fields and mountain heights.  \nThey release **hundreds of white feathers or paper birds** into the air while singing the _Hymn of Renewal_.  \nIt is said that on this day, Auralis’s true voice can be heard in the sky, whispering blessings of life and freedom.\n",
+      "body": "# Eriabella\n\n## Overview\n**Titles:** The Whispering Queen, Sky-Mother, The Breath Between Worlds, Lady of the Endless Horizon, The Four Winds’ Voice  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Neutral Good  \n**Symbol:** A spiral of four winds surrounding a single feather, or a silver swirl encircling a clouded gem  \n**Domains:** Air, Wind, Freedom, Music, Travel, Breath of Life, Inspiration\n\n---\n\n### ✨ **Appearance**\n\nAuralis manifests as a **tall, ethereal woman** with **silver-white hair** that flows endlessly, merging into clouds and light mist. Her **skin glows faintly blue**, like dawnlight touching ice, and her **eyes mirror the color of the open sky**, ever shifting between sapphire, gray, and gold.  \nShe often appears **barefoot upon air**, her robes woven from **cloudlight, sunrise gold, and starlit vapor**. When she moves, the air sings softly; when angered, her voice becomes the gale.  \nAt her back, **two vast wings of translucent wind** unfurl — invisible save for the way they bend light and ripple the air.\n\n---\n\n### 💨 **Personality**\n\nAuralis is **free-spirited and compassionate**, yet bound by no law but her own. She values **truth, movement, and renewal**.  \nShe is the **voice of change** — never still, never silent. Gentle and nurturing to those who honor her winds, she becomes swift and merciless toward those who choke the air, enslave others, or defile the skies.  \nHer laughter is said to bring gentle breezes to travelers. Her sorrow births storms.\n\n---\n\n### 🕊️ **Mythic Lore**\n\nIn the beginning, when the **Primordials exhaled the Breath of Existence**, that sacred wind gave birth to Auralis — **the living embodiment of air and the first breath of life**.  \nShe wandered the newborn skies, alone, until she met **Vaelion, God of Time and Space**, who taught her the rhythm of the cosmos. Together, they gave the world **seasons, movement, and sound**.  \nWhen mortals were created, Auralis granted them **the first breath**, binding herself to all living things.  \nShe is said to **carry the final breath of the dying** to the realm of souls, delivering them to the **Goddess of Spirit**, ensuring the eternal cycle continues.  \nLegends tell that when a mortal dies peacefully, their last sigh is a whisper of Auralis calling them home.\n\n---\n\n### 🌫️ **Worship**\n\nAuralis is worshipped by **sailors, travelers, musicians, monks, and skyward peoples**.  \nHer worshippers build **open sanctuaries** on mountaintops, cliffs, and floating isles where the wind may freely pass.  \nPrayers to her begin and end with **a single deep breath**, symbolizing both birth and death.  \nWorshippers adorn themselves with feathers, wind charms, and bells that tinkle softly in the breeze.\n\n**Common Prayer:**\n\n> “Breath of the world, wind of my soul — carry me true and free.”\n\n---\n\n### 🌪️ **Rituals**\n\n- **The Breath Offering:** At dawn, followers exhale into the wind, whispering a personal truth or burden to be carried away.\n    \n- **The Gale Dance:** A sacred dance performed during strong winds to honor her restless spirit.\n    \n- **Feast of the Four Currents:** Once per season, followers release sky lanterns to represent the four winds carrying hope and renewal.\n    \n- **Rite of Last Breath:** Priests of Auralis perform this rite at deathbeds, helping guide a soul’s final breath to her care.\n    \n\n---\n\n### ⚡ **Relationships**\n\n- **Consort / Counterpart:** _Zephyron_, God of Storms — her wild and untamed brother-consort, representing the chaos of the skies. Together they maintain balance between gentle breeze and raging tempest.\n    \n- **Ally:** _Vaelion_, God of Time and Space — her teacher and friend, whose eternal rhythm shapes her winds.\n    \n- **Friendship:** _Celest_, Goddess of the Celestial — their domains intertwine as starlight guides the winds at night.\n    \n- **Rivalry:** _Sangran_, God of Blood — whose storms of war offend her skies with smoke and screams.\n    \n- **Respect:** _Goddess of Soul & Spirit_ — Auralis reveres her as the final destination of her sacred winds.\n    \n\n---\n\n### ☀️ **Holy Day**\n\n**Day of the Four Winds (First Breeze of Spring)**  \nOnce each year, when winter’s frost first melts, worshippers gather in open fields and mountain heights.  \nThey release **hundreds of white feathers or paper birds** into the air while singing the _Hymn of Renewal_.  \nIt is said that on this day, Auralis’s true voice can be heard in the sky, whispering blessings of life and freedom.",
+      "sections": {
+        "Overview": "# Eriabella\n\n**Titles:** The Whispering Queen, Sky-Mother, The Breath Between Worlds, Lady of the Endless Horizon, The Four Winds’ Voice  \n**Pantheon:** Pantheon of Creation (Essence Division)  \n**Alignment:** Neutral Good  \n**Symbol:** A spiral of four winds surrounding a single feather, or a silver swirl encircling a clouded gem  \n**Domains:** Air, Wind, Freedom, Music, Travel, Breath of Life, Inspiration\n\n---\n\n### ✨ **Appearance**\n\nAuralis manifests as a **tall, ethereal woman** with **silver-white hair** that flows endlessly, merging into clouds and light mist. Her **skin glows faintly blue**, like dawnlight touching ice, and her **eyes mirror the color of the open sky**, ever shifting between sapphire, gray, and gold.  \nShe often appears **barefoot upon air**, her robes woven from **cloudlight, sunrise gold, and starlit vapor**. When she moves, the air sings softly; when angered, her voice becomes the gale.  \nAt her back, **two vast wings of translucent wind** unfurl — invisible save for the way they bend light and ripple the air.\n\n---\n\n### 💨 **Personality**\n\nAuralis is **free-spirited and compassionate**, yet bound by no law but her own. She values **truth, movement, and renewal**.  \nShe is the **voice of change** — never still, never silent. Gentle and nurturing to those who honor her winds, she becomes swift and merciless toward those who choke the air, enslave others, or defile the skies.  \nHer laughter is said to bring gentle breezes to travelers. Her sorrow births storms.\n\n---\n\n### 🕊️ **Mythic Lore**\n\nIn the beginning, when the **Primordials exhaled the Breath of Existence**, that sacred wind gave birth to Auralis — **the living embodiment of air and the first breath of life**.  \nShe wandered the newborn skies, alone, until she met **Vaelion, God of Time and Space**, who taught her the rhythm of the cosmos. Together, they gave the world **seasons, movement, and sound**.  \nWhen mortals were created, Auralis granted them **the first breath**, binding herself to all living things.  \nShe is said to **carry the final breath of the dying** to the realm of souls, delivering them to the **Goddess of Spirit**, ensuring the eternal cycle continues.  \nLegends tell that when a mortal dies peacefully, their last sigh is a whisper of Auralis calling them home.\n\n---\n\n### 🌫️ **Worship**\n\nAuralis is worshipped by **sailors, travelers, musicians, monks, and skyward peoples**.  \nHer worshippers build **open sanctuaries** on mountaintops, cliffs, and floating isles where the wind may freely pass.  \nPrayers to her begin and end with **a single deep breath**, symbolizing both birth and death.  \nWorshippers adorn themselves with feathers, wind charms, and bells that tinkle softly in the breeze.\n\n**Common Prayer:**\n\n> “Breath of the world, wind of my soul — carry me true and free.”\n\n---\n\n### 🌪️ **Rituals**\n\n- **The Breath Offering:** At dawn, followers exhale into the wind, whispering a personal truth or burden to be carried away.\n    \n- **The Gale Dance:** A sacred dance performed during strong winds to honor her restless spirit.\n    \n- **Feast of the Four Currents:** Once per season, followers release sky lanterns to represent the four winds carrying hope and renewal.\n    \n- **Rite of Last Breath:** Priests of Auralis perform this rite at deathbeds, helping guide a soul’s final breath to her care.\n    \n\n---\n\n### ⚡ **Relationships**\n\n- **Consort / Counterpart:** _Zephyron_, God of Storms — her wild and untamed brother-consort, representing the chaos of the skies. Together they maintain balance between gentle breeze and raging tempest.\n    \n- **Ally:** _Vaelion_, God of Time and Space — her teacher and friend, whose eternal rhythm shapes her winds.\n    \n- **Friendship:** _Celest_, Goddess of the Celestial — their domains intertwine as starlight guides the winds at night.\n    \n- **Rivalry:** _Sangran_, God of Blood — whose storms of war offend her skies with smoke and screams.\n    \n- **Respect:** _Goddess of Soul & Spirit_ — Auralis reveres her as the final destination of her sacred winds.\n    \n\n---\n\n### ☀️ **Holy Day**\n\n**Day of the Four Winds (First Breeze of Spring)**  \nOnce each year, when winter’s frost first melts, worshippers gather in open fields and mountain heights.  \nThey release **hundreds of white feathers or paper birds** into the air while singing the _Hymn of Renewal_.  \nIt is said that on this day, Auralis’s true voice can be heard in the sky, whispering blessings of life and freedom."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Whispering Queen, Sky-Mother, The Breath Between Worlds, Lady of the Endless Horizon, The Four Winds’ Voice **Pantheon:** Pantheon of Creation (Essence Division) **Alignment:** Neutral Good **Symbol:** A spiral of four winds surrounding a singl",
+      "metadata": {
+        "title": "Eriabella",
+        "slug": "eriabella",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Air",
+        "divineDomain": "Essence of Air",
+        "domain": "Essence of Air",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/1. Eriabella - Essence of Air.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Air",
+        "visibility": "public"
+      },
+      "searchTerms": "eriabella religion pantheon of elements {\"title\":\"eriabella\",\"slug\":\"eriabella\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of air\",\"divinedomain\":\"essence of air\",\"domain\":\"essence of air\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/1. eriabella - essence of air.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # eriabella\n\n## overview\n**titles:** the whispering queen, sky-mother, the breath between worlds, lady of the endless horizon, the four winds’ voice  \n**pantheon:** pantheon of creation (essence division)  \n**alignment:** neutral good  \n**symbol:** a spiral of four winds surrounding a single feather, or a silver swirl encircling a clouded gem  \n**domains:** air, wind, freedom, music, travel, breath of life, inspiration\n\n---\n\n### ✨ **appearance**\n\nauralis manifests as a **tall, ethereal woman** with **silver-white hair** that flows endlessly, merging into clouds and light mist. her **skin glows faintly blue**, like dawnlight touching ice, and her **eyes mirror the color of the open sky**, ever shifting between sapphire, gray, and gold.  \nshe often appears **barefoot upon air**, her robes woven from **cloudlight, sunrise gold, and starlit vapor**. when she moves, the air sings softly; when angered, her voice becomes the gale.  \nat her back, **two vast wings of translucent wind** unfurl — invisible save for the way they bend light and ripple the air.\n\n---\n\n### 💨 **personality**\n\nauralis is **free-spirited and compassionate**, yet bound by no law but her own. she values **truth, movement, and renewal**.  \nshe is the **voice of change** — never still, never silent. gentle and nurturing to those who honor her winds, she becomes swift and merciless toward those who choke the air, enslave others, or defile the skies.  \nher laughter is said to bring gentle breezes to travelers. her sorrow births storms.\n\n---\n\n### 🕊️ **mythic lore**\n\nin the beginning, when the **primordials exhaled the breath of existence**, that sacred wind gave birth to auralis — **the living embodiment of air and the first breath of life**.  \nshe wandered the newborn skies, alone, until she met **vaelion, god of time and space**, who taught her the rhythm of the cosmos. together, they gave the world **seasons, movement, and sound**.  \nwhen mortals were created, auralis granted them **the first breath**, binding herself to all living things.  \nshe is said to **carry the final breath of the dying** to the realm of souls, delivering them to the **goddess of spirit**, ensuring the eternal cycle continues.  \nlegends tell that when a mortal dies peacefully, their last sigh is a whisper of auralis calling them home.\n\n---\n\n### 🌫️ **worship**\n\nauralis is worshipped by **sailors, travelers, musicians, monks, and skyward peoples**.  \nher worshippers build **open sanctuaries** on mountaintops, cliffs, and floating isles where the wind may freely pass.  \nprayers to her begin and end with **a single deep breath**, symbolizing both birth and death.  \nworshippers adorn themselves with feathers, wind charms, and bells that tinkle softly in the breeze.\n\n**common prayer:**\n\n> “breath of the world, wind of my soul — carry me true and free.”\n\n---\n\n### 🌪️ **rituals**\n\n- **the breath offering:** at dawn, followers exhale into the wind, whispering a personal truth or burden to be carried away.\n    \n- **the gale dance:** a sacred dance performed during strong winds to honor her restless spirit.\n    \n- **feast of the four currents:** once per season, followers release sky lanterns to represent the four winds carrying hope and renewal.\n    \n- **rite of last breath:** priests of auralis perform this rite at deathbeds, helping guide a soul’s final breath to her care.\n    \n\n---\n\n### ⚡ **relationships**\n\n- **consort / counterpart:** _zephyron_, god of storms — her wild and untamed brother-consort, representing the chaos of the skies. together they maintain balance between gentle breeze and raging tempest.\n    \n- **ally:** _vaelion_, god of time and space — her teacher and friend, whose eternal rhythm shapes her winds.\n    \n- **friendship:** _celest_, goddess of the celestial — their domains intertwine as starlight guides the winds at night.\n    \n- **rivalry:** _sangran_, god of blood — whose storms of war offend her skies with smoke and screams.\n    \n- **respect:** _goddess of soul & spirit_ — auralis reveres her as the final destination of her sacred winds.\n    \n\n---\n\n### ☀️ **holy day**\n\n**day of the four winds (first breeze of spring)**  \nonce each year, when winter’s frost first melts, worshippers gather in open fields and mountain heights.  \nthey release **hundreds of white feathers or paper birds** into the air while singing the _hymn of renewal_.  \nit is said that on this day, auralis’s true voice can be heard in the sky, whispering blessings of life and freedom."
+    },
+    {
+      "id": "religion:content-theology-ethona-index",
+      "title": "Ethona",
+      "slug": "ethona",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/ethona",
+      "sourcePath": "content/theology/ethona/index.md",
+      "sourceFolder": "content/theology/ethona",
+      "content": "---\ntitle: \"Ethona\"\nslug: \"ethona\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Celestial\"\ndivine_domain: \"Essence of Celestial\"\ndomain: \"Essence of Celestial\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/2. Ethona - Essence of Celestial.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Ethona\n\n## Overview\n## 🌟 **Celest — The Goddess of the Celestial**\n\n**Titles:**  \n_The Starborn Queen_, _Radiant Mother_, _Keeper of the Heavenly Light_, _The Crown of Dawn_\n\n**Pantheon:**  \nPantheon of Essence — One of the Eight Essence Deities  \n(Aspect: Light, Stars, Purity, and Divine Order)\n\n**Alignment:**  \nLawful Good / Neutral Good  \n(Depends on interpretation — worshipped as both a guide and a judge of purity)\n\n**Symbol:**  \nA radiant eight-pointed star wreathed in a silver-gold halo.  \nSometimes depicted as a crown of stars or a sunburst with a moon at its heart.\n\n**Domains:**\n\n- Celestial Light & Radiance\n- Order & Harmony\n- Hope & Salvation\n- The Cosmic Cycle (Balance between stars and void)\n- Divine Judgement & Ascension\n\n**Appearance:**  \nCelest manifests as a tall, ethereal woman draped in flowing robes of starlight and silk spun from the dawn’s first glow. Her hair gleams silver-white, threaded with constellations, and her eyes contain shifting galaxies. When she speaks, her voice is layered — like multiple harmonized tones from different realms.\n\n**Personality:**  \nCalm, majestic, and infinitely patient. Celest embodies **divine grace**, but also **unforgiving radiance** — her light heals the worthy and burns the wicked. She believes in cosmic balance and is known to both bless and banish depending on one’s truth.\n\n**Mythic Lore:**  \nIt is said that when the **First Light** pierced the void, it was Celest who gave it form — shaping the first stars from her own essence.  \nShe wove the heavens as a tapestry to separate the worlds of gods and mortals, creating constellations that guide both travelers and fates alike.\n\nCelest is said to have **bound the forces of chaos** into the night sky, imprisoning them as dark stars to maintain order. Yet, when the stars align in rare celestial events, these ancient forces stir — testing her dominion over the heavens.\n\nShe shares a complex relationship with **Vaelion**, God of Time & Space. Together they are said to govern the **Cosmic Weave** — Vaelion shaping time and Celest illuminating its path.\n\n**Worship & Temples:**\n\n- Worshipped by paladins, astronomers, and royal bloodlines seeking divine favor.\n    \n- Her temples are open-roofed observatories where her followers chart stars to interpret divine will.\n    \n- Priests of Celest wear white and gold, carrying star-forged mirrors or crystal orbs to focus her light.\n    \n\n**Holy Days:**\n\n- **The Dawning Crown** — celebrated on the year’s first sunrise, marking new beginnings.\n    \n- **The Radiant Convergence** — a celestial event where her followers fast under the stars and offer vows of renewal.\n",
+      "body": "# Ethona\n\n## Overview\n## 🌟 **Celest — The Goddess of the Celestial**\n\n**Titles:**  \n_The Starborn Queen_, _Radiant Mother_, _Keeper of the Heavenly Light_, _The Crown of Dawn_\n\n**Pantheon:**  \nPantheon of Essence — One of the Eight Essence Deities  \n(Aspect: Light, Stars, Purity, and Divine Order)\n\n**Alignment:**  \nLawful Good / Neutral Good  \n(Depends on interpretation — worshipped as both a guide and a judge of purity)\n\n**Symbol:**  \nA radiant eight-pointed star wreathed in a silver-gold halo.  \nSometimes depicted as a crown of stars or a sunburst with a moon at its heart.\n\n**Domains:**\n\n- Celestial Light & Radiance\n- Order & Harmony\n- Hope & Salvation\n- The Cosmic Cycle (Balance between stars and void)\n- Divine Judgement & Ascension\n\n**Appearance:**  \nCelest manifests as a tall, ethereal woman draped in flowing robes of starlight and silk spun from the dawn’s first glow. Her hair gleams silver-white, threaded with constellations, and her eyes contain shifting galaxies. When she speaks, her voice is layered — like multiple harmonized tones from different realms.\n\n**Personality:**  \nCalm, majestic, and infinitely patient. Celest embodies **divine grace**, but also **unforgiving radiance** — her light heals the worthy and burns the wicked. She believes in cosmic balance and is known to both bless and banish depending on one’s truth.\n\n**Mythic Lore:**  \nIt is said that when the **First Light** pierced the void, it was Celest who gave it form — shaping the first stars from her own essence.  \nShe wove the heavens as a tapestry to separate the worlds of gods and mortals, creating constellations that guide both travelers and fates alike.\n\nCelest is said to have **bound the forces of chaos** into the night sky, imprisoning them as dark stars to maintain order. Yet, when the stars align in rare celestial events, these ancient forces stir — testing her dominion over the heavens.\n\nShe shares a complex relationship with **Vaelion**, God of Time & Space. Together they are said to govern the **Cosmic Weave** — Vaelion shaping time and Celest illuminating its path.\n\n**Worship & Temples:**\n\n- Worshipped by paladins, astronomers, and royal bloodlines seeking divine favor.\n    \n- Her temples are open-roofed observatories where her followers chart stars to interpret divine will.\n    \n- Priests of Celest wear white and gold, carrying star-forged mirrors or crystal orbs to focus her light.\n    \n\n**Holy Days:**\n\n- **The Dawning Crown** — celebrated on the year’s first sunrise, marking new beginnings.\n    \n- **The Radiant Convergence** — a celestial event where her followers fast under the stars and offer vows of renewal.",
+      "sections": {
+        "Overview": "# Ethona",
+        "🌟 **Celest — The Goddess of the Celestial**": "**Titles:**  \n_The Starborn Queen_, _Radiant Mother_, _Keeper of the Heavenly Light_, _The Crown of Dawn_\n\n**Pantheon:**  \nPantheon of Essence — One of the Eight Essence Deities  \n(Aspect: Light, Stars, Purity, and Divine Order)\n\n**Alignment:**  \nLawful Good / Neutral Good  \n(Depends on interpretation — worshipped as both a guide and a judge of purity)\n\n**Symbol:**  \nA radiant eight-pointed star wreathed in a silver-gold halo.  \nSometimes depicted as a crown of stars or a sunburst with a moon at its heart.\n\n**Domains:**\n\n- Celestial Light & Radiance\n- Order & Harmony\n- Hope & Salvation\n- The Cosmic Cycle (Balance between stars and void)\n- Divine Judgement & Ascension\n\n**Appearance:**  \nCelest manifests as a tall, ethereal woman draped in flowing robes of starlight and silk spun from the dawn’s first glow. Her hair gleams silver-white, threaded with constellations, and her eyes contain shifting galaxies. When she speaks, her voice is layered — like multiple harmonized tones from different realms.\n\n**Personality:**  \nCalm, majestic, and infinitely patient. Celest embodies **divine grace**, but also **unforgiving radiance** — her light heals the worthy and burns the wicked. She believes in cosmic balance and is known to both bless and banish depending on one’s truth.\n\n**Mythic Lore:**  \nIt is said that when the **First Light** pierced the void, it was Celest who gave it form — shaping the first stars from her own essence.  \nShe wove the heavens as a tapestry to separate the worlds of gods and mortals, creating constellations that guide both travelers and fates alike.\n\nCelest is said to have **bound the forces of chaos** into the night sky, imprisoning them as dark stars to maintain order. Yet, when the stars align in rare celestial events, these ancient forces stir — testing her dominion over the heavens.\n\nShe shares a complex relationship with **Vaelion**, God of Time & Space. Together they are said to govern the **Cosmic Weave** — Vaelion shaping time and Celest illuminating its path.\n\n**Worship & Temples:**\n\n- Worshipped by paladins, astronomers, and royal bloodlines seeking divine favor.\n    \n- Her temples are open-roofed observatories where her followers chart stars to interpret divine will.\n    \n- Priests of Celest wear white and gold, carrying star-forged mirrors or crystal orbs to focus her light.\n    \n\n**Holy Days:**\n\n- **The Dawning Crown** — celebrated on the year’s first sunrise, marking new beginnings.\n    \n- **The Radiant Convergence** — a celestial event where her followers fast under the stars and offer vows of renewal."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** _The Starborn Queen_, _Radiant Mother_, _Keeper of the Heavenly Light_, _The Crown of Dawn_ **Pantheon:** Pantheon of Essence — One of the Eight Essence Deities (Aspect: Light, Stars, Purity, and Divine Order) **Alignment:** Lawful Good / Neutral G",
+      "metadata": {
+        "title": "Ethona",
+        "slug": "ethona",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Celestial",
+        "divineDomain": "Essence of Celestial",
+        "domain": "Essence of Celestial",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/2. Ethona - Essence of Celestial.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Celestial",
+        "visibility": "public"
+      },
+      "searchTerms": "ethona religion pantheon of elements {\"title\":\"ethona\",\"slug\":\"ethona\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of celestial\",\"divinedomain\":\"essence of celestial\",\"domain\":\"essence of celestial\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/2. ethona - essence of celestial.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # ethona\n\n## overview\n## 🌟 **celest — the goddess of the celestial**\n\n**titles:**  \n_the starborn queen_, _radiant mother_, _keeper of the heavenly light_, _the crown of dawn_\n\n**pantheon:**  \npantheon of essence — one of the eight essence deities  \n(aspect: light, stars, purity, and divine order)\n\n**alignment:**  \nlawful good / neutral good  \n(depends on interpretation — worshipped as both a guide and a judge of purity)\n\n**symbol:**  \na radiant eight-pointed star wreathed in a silver-gold halo.  \nsometimes depicted as a crown of stars or a sunburst with a moon at its heart.\n\n**domains:**\n\n- celestial light & radiance\n- order & harmony\n- hope & salvation\n- the cosmic cycle (balance between stars and void)\n- divine judgement & ascension\n\n**appearance:**  \ncelest manifests as a tall, ethereal woman draped in flowing robes of starlight and silk spun from the dawn’s first glow. her hair gleams silver-white, threaded with constellations, and her eyes contain shifting galaxies. when she speaks, her voice is layered — like multiple harmonized tones from different realms.\n\n**personality:**  \ncalm, majestic, and infinitely patient. celest embodies **divine grace**, but also **unforgiving radiance** — her light heals the worthy and burns the wicked. she believes in cosmic balance and is known to both bless and banish depending on one’s truth.\n\n**mythic lore:**  \nit is said that when the **first light** pierced the void, it was celest who gave it form — shaping the first stars from her own essence.  \nshe wove the heavens as a tapestry to separate the worlds of gods and mortals, creating constellations that guide both travelers and fates alike.\n\ncelest is said to have **bound the forces of chaos** into the night sky, imprisoning them as dark stars to maintain order. yet, when the stars align in rare celestial events, these ancient forces stir — testing her dominion over the heavens.\n\nshe shares a complex relationship with **vaelion**, god of time & space. together they are said to govern the **cosmic weave** — vaelion shaping time and celest illuminating its path.\n\n**worship & temples:**\n\n- worshipped by paladins, astronomers, and royal bloodlines seeking divine favor.\n    \n- her temples are open-roofed observatories where her followers chart stars to interpret divine will.\n    \n- priests of celest wear white and gold, carrying star-forged mirrors or crystal orbs to focus her light.\n    \n\n**holy days:**\n\n- **the dawning crown** — celebrated on the year’s first sunrise, marking new beginnings.\n    \n- **the radiant convergence** — a celestial event where her followers fast under the stars and offer vows of renewal."
+    },
+    {
+      "id": "religion:content-theology-ignaros-index",
+      "title": "Ignaros",
+      "slug": "ignaros",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/ignaros",
+      "sourcePath": "content/theology/ignaros/index.md",
+      "sourceFolder": "content/theology/ignaros",
+      "content": "---\ntitle: \"Ignaros\"\nslug: \"ignaros\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Fire\"\ndivine_domain: \"Essence of Fire\"\ndomain: \"Essence of Fire\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/3. Ignaros - Essence of Fire.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Ignaros\n\n## Overview\n**Titles:**  \nThe Eternal Flame, The Infernal Forge, The Heart of Fury, Bringer of Dawnfire, Lord of Embers\n\n**Pantheon:**  \nPantheon of Essence\n\n**Alignment:**  \nChaotic Neutral\n\n**Symbol:**  \nA blazing sun pierced by a molten sword, or a flame rising from an anvil\n\n**Domains:**  \nFire, Heat, Passion, War, Rebirth, Destruction, Forge, Light\n\n---\n\n### 🔥 **Appearance**\n\nIgnavar appears as a towering figure of **living flame and molten metal**, his body ever-shifting between **blazing armor and raw fire**. His hair burns like a solar corona, and his eyes are white-hot cores of divine fury.  \nWhen he walks, the ground cracks beneath him, and his voice carries the sound of a roaring furnace.\n\nAt times he manifests as a **blacksmith cloaked in smoke**, or a **warrior wreathed in cinders**, wielding a hammer forged from the heart of a star.\n\nWhen calm, his flames glow **gold and amber**, warm and life-giving. When enraged, they turn **white and blue**, capable of incinerating cities.\n\n---\n\n### ⚔️ **Personality**\n\nIgnavar is **impulsive, passionate, and fiercely independent** — the embodiment of both creation and chaos.  \nHe inspires **artisans, warriors, and revolutionaries**, driving them to act, to make, to change.  \nYet, his temper is infamous — **quick to ignite, slow to fade**. He believes that destruction is merely the first step toward rebirth, that ashes are the soil of new creation.\n\nHe despises stagnation and cowardice, viewing inaction as a sin against existence itself. To Ignavar, the world must burn to grow.\n\n---\n\n### 📜 **Mythic Lore**\n\nIn the earliest days of Astria, when the world was cold and still, **Tarron** had shaped the bones of the earth but it lay lifeless and frigid.  \nThen Ignavar descended — a comet streaking from the heavens, **his impact setting the world ablaze**.  \nFrom his flames, warmth and light entered existence. He forged the sun in the sky as his eternal forge-fire, declaring it the **Heart of Creation**.\n\nHe is credited with teaching **mortals the secret of fire**, a gift meant to bring comfort and power — though he warned it could as easily destroy as create.  \nLegends say he once loved a **water goddess**, whose calm soothed his fury, but their union shattered — her tears forming the first seas, his grief birthing volcanoes.\n\nIt is also told that **every flame in the world is a reflection of his essence**, from the smallest candle to the mightiest inferno.\n\n---\n\n### 🔨 **Worship**\n\nIgnavar is revered by **blacksmiths, warriors, pyromancers, and visionaries** — those who dare to transform the world through heat and passion.  \nHis temples are usually found near **volcanoes, forges, or battlefields**, adorned with braziers that must never be allowed to go out.  \nClerics of Ignavar wear **charred steel and flame-colored robes**, bearing scars from ritual burns as marks of devotion.\n\n**Common Prayer:**\n\n> “May my heart burn bright, and my will strike true — by the flame that creates and consumes alike.”\n\n---\n\n### 🔥 **Rituals**\n\n- **The Ember Rite:** A yearly ritual where followers walk barefoot over hot coals to renew courage and burn away doubt.\n    \n- **The Forge Vigil:** Smiths and artificers leave their forge fires burning overnight, praying that Ignavar blesses their craft with brilliance.\n    \n- **Ash Renewal:** When someone dies, their ashes are spread on sacred ground, symbolizing rebirth through flame.\n    \n- **Trial by Flame:** A ritual of truth — the accused places a hand over fire; if they are innocent, the fire cools.\n    \n\n---\n\n### 🌋 **Relationships**\n\n- **Rivalry:** _Auralis, Goddess of Air_ — her winds fan his flames but also steal his heat; their dances are both beautiful and destructive.\n    \n- **Balance:** _Tarron, God of Earth_ — where fire rages, earth endures; together they forged the first metals.\n    \n- **Former Love:** _Undina, Goddess of Water_ — their union birthed both creation and ruin; their encounters still form storms and steam.\n    \n- **Ally:** _God of Smithing_ — both share the sacred flame of craft and transformation.\n    \n- **Enemy:** _Malthera, Hellish Goddess_ — though born of similar fires, she twisted his gift into torment.\n    \n\n---\n\n### 🔥 **Holy Day**\n\n**Festival of the Burning Heart (Midsummer Solstice)**  \nA day when **bonfires blaze across cities and villages**, representing passion, creation, and cleansing.  \nWeapons are reforged, vows renewed, and lovers leap through fire as a symbol of rebirth and courage.  \nAt dawn, the fires are extinguished — and the ashes are spread across fields to bless the coming harvest.\n",
+      "body": "# Ignaros\n\n## Overview\n**Titles:**  \nThe Eternal Flame, The Infernal Forge, The Heart of Fury, Bringer of Dawnfire, Lord of Embers\n\n**Pantheon:**  \nPantheon of Essence\n\n**Alignment:**  \nChaotic Neutral\n\n**Symbol:**  \nA blazing sun pierced by a molten sword, or a flame rising from an anvil\n\n**Domains:**  \nFire, Heat, Passion, War, Rebirth, Destruction, Forge, Light\n\n---\n\n### 🔥 **Appearance**\n\nIgnavar appears as a towering figure of **living flame and molten metal**, his body ever-shifting between **blazing armor and raw fire**. His hair burns like a solar corona, and his eyes are white-hot cores of divine fury.  \nWhen he walks, the ground cracks beneath him, and his voice carries the sound of a roaring furnace.\n\nAt times he manifests as a **blacksmith cloaked in smoke**, or a **warrior wreathed in cinders**, wielding a hammer forged from the heart of a star.\n\nWhen calm, his flames glow **gold and amber**, warm and life-giving. When enraged, they turn **white and blue**, capable of incinerating cities.\n\n---\n\n### ⚔️ **Personality**\n\nIgnavar is **impulsive, passionate, and fiercely independent** — the embodiment of both creation and chaos.  \nHe inspires **artisans, warriors, and revolutionaries**, driving them to act, to make, to change.  \nYet, his temper is infamous — **quick to ignite, slow to fade**. He believes that destruction is merely the first step toward rebirth, that ashes are the soil of new creation.\n\nHe despises stagnation and cowardice, viewing inaction as a sin against existence itself. To Ignavar, the world must burn to grow.\n\n---\n\n### 📜 **Mythic Lore**\n\nIn the earliest days of Astria, when the world was cold and still, **Tarron** had shaped the bones of the earth but it lay lifeless and frigid.  \nThen Ignavar descended — a comet streaking from the heavens, **his impact setting the world ablaze**.  \nFrom his flames, warmth and light entered existence. He forged the sun in the sky as his eternal forge-fire, declaring it the **Heart of Creation**.\n\nHe is credited with teaching **mortals the secret of fire**, a gift meant to bring comfort and power — though he warned it could as easily destroy as create.  \nLegends say he once loved a **water goddess**, whose calm soothed his fury, but their union shattered — her tears forming the first seas, his grief birthing volcanoes.\n\nIt is also told that **every flame in the world is a reflection of his essence**, from the smallest candle to the mightiest inferno.\n\n---\n\n### 🔨 **Worship**\n\nIgnavar is revered by **blacksmiths, warriors, pyromancers, and visionaries** — those who dare to transform the world through heat and passion.  \nHis temples are usually found near **volcanoes, forges, or battlefields**, adorned with braziers that must never be allowed to go out.  \nClerics of Ignavar wear **charred steel and flame-colored robes**, bearing scars from ritual burns as marks of devotion.\n\n**Common Prayer:**\n\n> “May my heart burn bright, and my will strike true — by the flame that creates and consumes alike.”\n\n---\n\n### 🔥 **Rituals**\n\n- **The Ember Rite:** A yearly ritual where followers walk barefoot over hot coals to renew courage and burn away doubt.\n    \n- **The Forge Vigil:** Smiths and artificers leave their forge fires burning overnight, praying that Ignavar blesses their craft with brilliance.\n    \n- **Ash Renewal:** When someone dies, their ashes are spread on sacred ground, symbolizing rebirth through flame.\n    \n- **Trial by Flame:** A ritual of truth — the accused places a hand over fire; if they are innocent, the fire cools.\n    \n\n---\n\n### 🌋 **Relationships**\n\n- **Rivalry:** _Auralis, Goddess of Air_ — her winds fan his flames but also steal his heat; their dances are both beautiful and destructive.\n    \n- **Balance:** _Tarron, God of Earth_ — where fire rages, earth endures; together they forged the first metals.\n    \n- **Former Love:** _Undina, Goddess of Water_ — their union birthed both creation and ruin; their encounters still form storms and steam.\n    \n- **Ally:** _God of Smithing_ — both share the sacred flame of craft and transformation.\n    \n- **Enemy:** _Malthera, Hellish Goddess_ — though born of similar fires, she twisted his gift into torment.\n    \n\n---\n\n### 🔥 **Holy Day**\n\n**Festival of the Burning Heart (Midsummer Solstice)**  \nA day when **bonfires blaze across cities and villages**, representing passion, creation, and cleansing.  \nWeapons are reforged, vows renewed, and lovers leap through fire as a symbol of rebirth and courage.  \nAt dawn, the fires are extinguished — and the ashes are spread across fields to bless the coming harvest.",
+      "sections": {
+        "Overview": "# Ignaros\n\n**Titles:**  \nThe Eternal Flame, The Infernal Forge, The Heart of Fury, Bringer of Dawnfire, Lord of Embers\n\n**Pantheon:**  \nPantheon of Essence\n\n**Alignment:**  \nChaotic Neutral\n\n**Symbol:**  \nA blazing sun pierced by a molten sword, or a flame rising from an anvil\n\n**Domains:**  \nFire, Heat, Passion, War, Rebirth, Destruction, Forge, Light\n\n---\n\n### 🔥 **Appearance**\n\nIgnavar appears as a towering figure of **living flame and molten metal**, his body ever-shifting between **blazing armor and raw fire**. His hair burns like a solar corona, and his eyes are white-hot cores of divine fury.  \nWhen he walks, the ground cracks beneath him, and his voice carries the sound of a roaring furnace.\n\nAt times he manifests as a **blacksmith cloaked in smoke**, or a **warrior wreathed in cinders**, wielding a hammer forged from the heart of a star.\n\nWhen calm, his flames glow **gold and amber**, warm and life-giving. When enraged, they turn **white and blue**, capable of incinerating cities.\n\n---\n\n### ⚔️ **Personality**\n\nIgnavar is **impulsive, passionate, and fiercely independent** — the embodiment of both creation and chaos.  \nHe inspires **artisans, warriors, and revolutionaries**, driving them to act, to make, to change.  \nYet, his temper is infamous — **quick to ignite, slow to fade**. He believes that destruction is merely the first step toward rebirth, that ashes are the soil of new creation.\n\nHe despises stagnation and cowardice, viewing inaction as a sin against existence itself. To Ignavar, the world must burn to grow.\n\n---\n\n### 📜 **Mythic Lore**\n\nIn the earliest days of Astria, when the world was cold and still, **Tarron** had shaped the bones of the earth but it lay lifeless and frigid.  \nThen Ignavar descended — a comet streaking from the heavens, **his impact setting the world ablaze**.  \nFrom his flames, warmth and light entered existence. He forged the sun in the sky as his eternal forge-fire, declaring it the **Heart of Creation**.\n\nHe is credited with teaching **mortals the secret of fire**, a gift meant to bring comfort and power — though he warned it could as easily destroy as create.  \nLegends say he once loved a **water goddess**, whose calm soothed his fury, but their union shattered — her tears forming the first seas, his grief birthing volcanoes.\n\nIt is also told that **every flame in the world is a reflection of his essence**, from the smallest candle to the mightiest inferno.\n\n---\n\n### 🔨 **Worship**\n\nIgnavar is revered by **blacksmiths, warriors, pyromancers, and visionaries** — those who dare to transform the world through heat and passion.  \nHis temples are usually found near **volcanoes, forges, or battlefields**, adorned with braziers that must never be allowed to go out.  \nClerics of Ignavar wear **charred steel and flame-colored robes**, bearing scars from ritual burns as marks of devotion.\n\n**Common Prayer:**\n\n> “May my heart burn bright, and my will strike true — by the flame that creates and consumes alike.”\n\n---\n\n### 🔥 **Rituals**\n\n- **The Ember Rite:** A yearly ritual where followers walk barefoot over hot coals to renew courage and burn away doubt.\n    \n- **The Forge Vigil:** Smiths and artificers leave their forge fires burning overnight, praying that Ignavar blesses their craft with brilliance.\n    \n- **Ash Renewal:** When someone dies, their ashes are spread on sacred ground, symbolizing rebirth through flame.\n    \n- **Trial by Flame:** A ritual of truth — the accused places a hand over fire; if they are innocent, the fire cools.\n    \n\n---\n\n### 🌋 **Relationships**\n\n- **Rivalry:** _Auralis, Goddess of Air_ — her winds fan his flames but also steal his heat; their dances are both beautiful and destructive.\n    \n- **Balance:** _Tarron, God of Earth_ — where fire rages, earth endures; together they forged the first metals.\n    \n- **Former Love:** _Undina, Goddess of Water_ — their union birthed both creation and ruin; their encounters still form storms and steam.\n    \n- **Ally:** _God of Smithing_ — both share the sacred flame of craft and transformation.\n    \n- **Enemy:** _Malthera, Hellish Goddess_ — though born of similar fires, she twisted his gift into torment.\n    \n\n---\n\n### 🔥 **Holy Day**\n\n**Festival of the Burning Heart (Midsummer Solstice)**  \nA day when **bonfires blaze across cities and villages**, representing passion, creation, and cleansing.  \nWeapons are reforged, vows renewed, and lovers leap through fire as a symbol of rebirth and courage.  \nAt dawn, the fires are extinguished — and the ashes are spread across fields to bless the coming harvest."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Eternal Flame, The Infernal Forge, The Heart of Fury, Bringer of Dawnfire, Lord of Embers **Pantheon:** Pantheon of Essence **Alignment:** Chaotic Neutral **Symbol:** A blazing sun pierced by a molten sword, or a flame rising from an anvil **Do",
+      "metadata": {
+        "title": "Ignaros",
+        "slug": "ignaros",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Fire",
+        "divineDomain": "Essence of Fire",
+        "domain": "Essence of Fire",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/3. Ignaros - Essence of Fire.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Fire",
+        "visibility": "public"
+      },
+      "searchTerms": "ignaros religion pantheon of elements {\"title\":\"ignaros\",\"slug\":\"ignaros\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of fire\",\"divinedomain\":\"essence of fire\",\"domain\":\"essence of fire\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/3. ignaros - essence of fire.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # ignaros\n\n## overview\n**titles:**  \nthe eternal flame, the infernal forge, the heart of fury, bringer of dawnfire, lord of embers\n\n**pantheon:**  \npantheon of essence\n\n**alignment:**  \nchaotic neutral\n\n**symbol:**  \na blazing sun pierced by a molten sword, or a flame rising from an anvil\n\n**domains:**  \nfire, heat, passion, war, rebirth, destruction, forge, light\n\n---\n\n### 🔥 **appearance**\n\nignavar appears as a towering figure of **living flame and molten metal**, his body ever-shifting between **blazing armor and raw fire**. his hair burns like a solar corona, and his eyes are white-hot cores of divine fury.  \nwhen he walks, the ground cracks beneath him, and his voice carries the sound of a roaring furnace.\n\nat times he manifests as a **blacksmith cloaked in smoke**, or a **warrior wreathed in cinders**, wielding a hammer forged from the heart of a star.\n\nwhen calm, his flames glow **gold and amber**, warm and life-giving. when enraged, they turn **white and blue**, capable of incinerating cities.\n\n---\n\n### ⚔️ **personality**\n\nignavar is **impulsive, passionate, and fiercely independent** — the embodiment of both creation and chaos.  \nhe inspires **artisans, warriors, and revolutionaries**, driving them to act, to make, to change.  \nyet, his temper is infamous — **quick to ignite, slow to fade**. he believes that destruction is merely the first step toward rebirth, that ashes are the soil of new creation.\n\nhe despises stagnation and cowardice, viewing inaction as a sin against existence itself. to ignavar, the world must burn to grow.\n\n---\n\n### 📜 **mythic lore**\n\nin the earliest days of astria, when the world was cold and still, **tarron** had shaped the bones of the earth but it lay lifeless and frigid.  \nthen ignavar descended — a comet streaking from the heavens, **his impact setting the world ablaze**.  \nfrom his flames, warmth and light entered existence. he forged the sun in the sky as his eternal forge-fire, declaring it the **heart of creation**.\n\nhe is credited with teaching **mortals the secret of fire**, a gift meant to bring comfort and power — though he warned it could as easily destroy as create.  \nlegends say he once loved a **water goddess**, whose calm soothed his fury, but their union shattered — her tears forming the first seas, his grief birthing volcanoes.\n\nit is also told that **every flame in the world is a reflection of his essence**, from the smallest candle to the mightiest inferno.\n\n---\n\n### 🔨 **worship**\n\nignavar is revered by **blacksmiths, warriors, pyromancers, and visionaries** — those who dare to transform the world through heat and passion.  \nhis temples are usually found near **volcanoes, forges, or battlefields**, adorned with braziers that must never be allowed to go out.  \nclerics of ignavar wear **charred steel and flame-colored robes**, bearing scars from ritual burns as marks of devotion.\n\n**common prayer:**\n\n> “may my heart burn bright, and my will strike true — by the flame that creates and consumes alike.”\n\n---\n\n### 🔥 **rituals**\n\n- **the ember rite:** a yearly ritual where followers walk barefoot over hot coals to renew courage and burn away doubt.\n    \n- **the forge vigil:** smiths and artificers leave their forge fires burning overnight, praying that ignavar blesses their craft with brilliance.\n    \n- **ash renewal:** when someone dies, their ashes are spread on sacred ground, symbolizing rebirth through flame.\n    \n- **trial by flame:** a ritual of truth — the accused places a hand over fire; if they are innocent, the fire cools.\n    \n\n---\n\n### 🌋 **relationships**\n\n- **rivalry:** _auralis, goddess of air_ — her winds fan his flames but also steal his heat; their dances are both beautiful and destructive.\n    \n- **balance:** _tarron, god of earth_ — where fire rages, earth endures; together they forged the first metals.\n    \n- **former love:** _undina, goddess of water_ — their union birthed both creation and ruin; their encounters still form storms and steam.\n    \n- **ally:** _god of smithing_ — both share the sacred flame of craft and transformation.\n    \n- **enemy:** _malthera, hellish goddess_ — though born of similar fires, she twisted his gift into torment.\n    \n\n---\n\n### 🔥 **holy day**\n\n**festival of the burning heart (midsummer solstice)**  \na day when **bonfires blaze across cities and villages**, representing passion, creation, and cleansing.  \nweapons are reforged, vows renewed, and lovers leap through fire as a symbol of rebirth and courage.  \nat dawn, the fires are extinguished — and the ashes are spread across fields to bless the coming harvest."
+    },
+    {
+      "id": "religion:content-theology-nerris-index",
+      "title": "Nerris",
+      "slug": "nerris",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/nerris",
+      "sourcePath": "content/theology/nerris/index.md",
+      "sourceFolder": "content/theology/nerris",
+      "content": "---\ntitle: \"Nerris\"\nslug: \"nerris\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Water\"\ndivine_domain: \"Essence of Water\"\ndomain: \"Essence of Water\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/4. Nerris - Essence of Water.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Nerris\n\n## Overview\n**Titles:**  \nLady of the Silver Seas, The Tidal Queen, Mother of Currents, Keeper of the Deep, The Serene Abyss\n\n**Pantheon:**  \nPantheon of Creation\n\n**Alignment:**  \nNeutral Good (with elements of True Neutral in her more ancient aspects)\n\n**Symbol:**  \nA silver crescent moon cradling a drop of sapphire-blue water\n\n**Domains:**  \nWater, Healing, Reflection, Emotion, Purification, Moonlight\n\n**Appearance:**  \nSirona manifests as a tall, ethereal figure with skin like pale moonlight and flowing hair that ripples as if suspended in water, shifting between deep ocean blue and white foam. Her eyes glow with the light of distant stars reflected on still waters. When she walks, waves form at her feet, and her garments shimmer like liquid silk, blending seamlessly into her surroundings.\n\n**Personality:**  \nSirona embodies calm, compassion, and reflection. She is nurturing but can become cold and distant—just as the sea can be tranquil or wrathful. She values balance, seeing emotion and logic as tides that must ebb and flow together. Though she is slow to anger, her fury is legendary—storms, floods, and tidal waves mark the rare moments she is provoked.\n\n**Mythic Lore:**  \nSirona was born from the tears of the Primordial Ether when it wept over the world’s first death. From those tears formed the oceans and rivers, and in their depths, Sirona rose, breathing life into the waters of Astria. She taught the gods of nature how to nourish life and the mortals how to purify their souls.\n\nIt is said that during the Great Sundering, when the continents split, Sirona’s grief shook the seas, creating the deepest trenches of the world. Her tears mingled with blood, forming the red coral reefs said to whisper the names of the drowned.\n\n**Worship:**  \nSirona’s followers include sailors, healers, fishers, and those seeking emotional clarity. Her temples are built near coastlines, waterfalls, and sacred springs. Offerings often include silver shells, sapphire glass, or bowls of still water placed beneath the moonlight.\n\n**Rituals:**\n\n- **The Moon Tide:** Held once a month during the full moon, followers gather near water to meditate and release their burdens, symbolically washing them away.\n    \n- **The Rite of Renewal:** Used by healers to bless water before using it to treat illness or emotional pain.\n    \n- **The Call of the Deep:** Performed by sailors before voyages; a libation of saltwater and wine is poured into the sea, asking Sirona’s protection.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Her sister and closest ally. Together, they guide the world’s weather and balance the skies and seas.\n    \n- **Vaelion – God of Time & Space:** A distant admirer; Sirona’s tides are said to flow to the rhythm of his eternal pulse.\n    \n- **Malthera & Azrakar – Gods of the Netherworld:** She respects them but distrusts their dark influence, for her waters mark the boundary between life and death.\n    \n- **Sangran – God of Blood:** They share a strange kinship—his rivers of blood mirror her oceans, symbolizing life and sacrifice intertwined.\n    \n\n**Holy Day:**  \n**The Silver Tide** – Celebrated on the first full moon of spring. It marks the renewal of the world’s waters. Devotees release floating candles onto rivers and oceans, each representing a soul’s journey through life and rebirth\n",
+      "body": "# Nerris\n\n## Overview\n**Titles:**  \nLady of the Silver Seas, The Tidal Queen, Mother of Currents, Keeper of the Deep, The Serene Abyss\n\n**Pantheon:**  \nPantheon of Creation\n\n**Alignment:**  \nNeutral Good (with elements of True Neutral in her more ancient aspects)\n\n**Symbol:**  \nA silver crescent moon cradling a drop of sapphire-blue water\n\n**Domains:**  \nWater, Healing, Reflection, Emotion, Purification, Moonlight\n\n**Appearance:**  \nSirona manifests as a tall, ethereal figure with skin like pale moonlight and flowing hair that ripples as if suspended in water, shifting between deep ocean blue and white foam. Her eyes glow with the light of distant stars reflected on still waters. When she walks, waves form at her feet, and her garments shimmer like liquid silk, blending seamlessly into her surroundings.\n\n**Personality:**  \nSirona embodies calm, compassion, and reflection. She is nurturing but can become cold and distant—just as the sea can be tranquil or wrathful. She values balance, seeing emotion and logic as tides that must ebb and flow together. Though she is slow to anger, her fury is legendary—storms, floods, and tidal waves mark the rare moments she is provoked.\n\n**Mythic Lore:**  \nSirona was born from the tears of the Primordial Ether when it wept over the world’s first death. From those tears formed the oceans and rivers, and in their depths, Sirona rose, breathing life into the waters of Astria. She taught the gods of nature how to nourish life and the mortals how to purify their souls.\n\nIt is said that during the Great Sundering, when the continents split, Sirona’s grief shook the seas, creating the deepest trenches of the world. Her tears mingled with blood, forming the red coral reefs said to whisper the names of the drowned.\n\n**Worship:**  \nSirona’s followers include sailors, healers, fishers, and those seeking emotional clarity. Her temples are built near coastlines, waterfalls, and sacred springs. Offerings often include silver shells, sapphire glass, or bowls of still water placed beneath the moonlight.\n\n**Rituals:**\n\n- **The Moon Tide:** Held once a month during the full moon, followers gather near water to meditate and release their burdens, symbolically washing them away.\n    \n- **The Rite of Renewal:** Used by healers to bless water before using it to treat illness or emotional pain.\n    \n- **The Call of the Deep:** Performed by sailors before voyages; a libation of saltwater and wine is poured into the sea, asking Sirona’s protection.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Her sister and closest ally. Together, they guide the world’s weather and balance the skies and seas.\n    \n- **Vaelion – God of Time & Space:** A distant admirer; Sirona’s tides are said to flow to the rhythm of his eternal pulse.\n    \n- **Malthera & Azrakar – Gods of the Netherworld:** She respects them but distrusts their dark influence, for her waters mark the boundary between life and death.\n    \n- **Sangran – God of Blood:** They share a strange kinship—his rivers of blood mirror her oceans, symbolizing life and sacrifice intertwined.\n    \n\n**Holy Day:**  \n**The Silver Tide** – Celebrated on the first full moon of spring. It marks the renewal of the world’s waters. Devotees release floating candles onto rivers and oceans, each representing a soul’s journey through life and rebirth",
+      "sections": {
+        "Overview": "# Nerris\n\n**Titles:**  \nLady of the Silver Seas, The Tidal Queen, Mother of Currents, Keeper of the Deep, The Serene Abyss\n\n**Pantheon:**  \nPantheon of Creation\n\n**Alignment:**  \nNeutral Good (with elements of True Neutral in her more ancient aspects)\n\n**Symbol:**  \nA silver crescent moon cradling a drop of sapphire-blue water\n\n**Domains:**  \nWater, Healing, Reflection, Emotion, Purification, Moonlight\n\n**Appearance:**  \nSirona manifests as a tall, ethereal figure with skin like pale moonlight and flowing hair that ripples as if suspended in water, shifting between deep ocean blue and white foam. Her eyes glow with the light of distant stars reflected on still waters. When she walks, waves form at her feet, and her garments shimmer like liquid silk, blending seamlessly into her surroundings.\n\n**Personality:**  \nSirona embodies calm, compassion, and reflection. She is nurturing but can become cold and distant—just as the sea can be tranquil or wrathful. She values balance, seeing emotion and logic as tides that must ebb and flow together. Though she is slow to anger, her fury is legendary—storms, floods, and tidal waves mark the rare moments she is provoked.\n\n**Mythic Lore:**  \nSirona was born from the tears of the Primordial Ether when it wept over the world’s first death. From those tears formed the oceans and rivers, and in their depths, Sirona rose, breathing life into the waters of Astria. She taught the gods of nature how to nourish life and the mortals how to purify their souls.\n\nIt is said that during the Great Sundering, when the continents split, Sirona’s grief shook the seas, creating the deepest trenches of the world. Her tears mingled with blood, forming the red coral reefs said to whisper the names of the drowned.\n\n**Worship:**  \nSirona’s followers include sailors, healers, fishers, and those seeking emotional clarity. Her temples are built near coastlines, waterfalls, and sacred springs. Offerings often include silver shells, sapphire glass, or bowls of still water placed beneath the moonlight.\n\n**Rituals:**\n\n- **The Moon Tide:** Held once a month during the full moon, followers gather near water to meditate and release their burdens, symbolically washing them away.\n    \n- **The Rite of Renewal:** Used by healers to bless water before using it to treat illness or emotional pain.\n    \n- **The Call of the Deep:** Performed by sailors before voyages; a libation of saltwater and wine is poured into the sea, asking Sirona’s protection.\n    \n\n**Relationships:**\n\n- **Auralis – Goddess of Air:** Her sister and closest ally. Together, they guide the world’s weather and balance the skies and seas.\n    \n- **Vaelion – God of Time & Space:** A distant admirer; Sirona’s tides are said to flow to the rhythm of his eternal pulse.\n    \n- **Malthera & Azrakar – Gods of the Netherworld:** She respects them but distrusts their dark influence, for her waters mark the boundary between life and death.\n    \n- **Sangran – God of Blood:** They share a strange kinship—his rivers of blood mirror her oceans, symbolizing life and sacrifice intertwined.\n    \n\n**Holy Day:**  \n**The Silver Tide** – Celebrated on the first full moon of spring. It marks the renewal of the world’s waters. Devotees release floating candles onto rivers and oceans, each representing a soul’s journey through life and rebirth"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** Lady of the Silver Seas, The Tidal Queen, Mother of Currents, Keeper of the Deep, The Serene Abyss **Pantheon:** Pantheon of Creation **Alignment:** Neutral Good (with elements of True Neutral in her more ancient aspects) **Symbol:** A silver cresc",
+      "metadata": {
+        "title": "Nerris",
+        "slug": "nerris",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Water",
+        "divineDomain": "Essence of Water",
+        "domain": "Essence of Water",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/4. Nerris - Essence of Water.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Water",
+        "visibility": "public"
+      },
+      "searchTerms": "nerris religion pantheon of elements {\"title\":\"nerris\",\"slug\":\"nerris\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of water\",\"divinedomain\":\"essence of water\",\"domain\":\"essence of water\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/4. nerris - essence of water.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # nerris\n\n## overview\n**titles:**  \nlady of the silver seas, the tidal queen, mother of currents, keeper of the deep, the serene abyss\n\n**pantheon:**  \npantheon of creation\n\n**alignment:**  \nneutral good (with elements of true neutral in her more ancient aspects)\n\n**symbol:**  \na silver crescent moon cradling a drop of sapphire-blue water\n\n**domains:**  \nwater, healing, reflection, emotion, purification, moonlight\n\n**appearance:**  \nsirona manifests as a tall, ethereal figure with skin like pale moonlight and flowing hair that ripples as if suspended in water, shifting between deep ocean blue and white foam. her eyes glow with the light of distant stars reflected on still waters. when she walks, waves form at her feet, and her garments shimmer like liquid silk, blending seamlessly into her surroundings.\n\n**personality:**  \nsirona embodies calm, compassion, and reflection. she is nurturing but can become cold and distant—just as the sea can be tranquil or wrathful. she values balance, seeing emotion and logic as tides that must ebb and flow together. though she is slow to anger, her fury is legendary—storms, floods, and tidal waves mark the rare moments she is provoked.\n\n**mythic lore:**  \nsirona was born from the tears of the primordial ether when it wept over the world’s first death. from those tears formed the oceans and rivers, and in their depths, sirona rose, breathing life into the waters of astria. she taught the gods of nature how to nourish life and the mortals how to purify their souls.\n\nit is said that during the great sundering, when the continents split, sirona’s grief shook the seas, creating the deepest trenches of the world. her tears mingled with blood, forming the red coral reefs said to whisper the names of the drowned.\n\n**worship:**  \nsirona’s followers include sailors, healers, fishers, and those seeking emotional clarity. her temples are built near coastlines, waterfalls, and sacred springs. offerings often include silver shells, sapphire glass, or bowls of still water placed beneath the moonlight.\n\n**rituals:**\n\n- **the moon tide:** held once a month during the full moon, followers gather near water to meditate and release their burdens, symbolically washing them away.\n    \n- **the rite of renewal:** used by healers to bless water before using it to treat illness or emotional pain.\n    \n- **the call of the deep:** performed by sailors before voyages; a libation of saltwater and wine is poured into the sea, asking sirona’s protection.\n    \n\n**relationships:**\n\n- **auralis – goddess of air:** her sister and closest ally. together, they guide the world’s weather and balance the skies and seas.\n    \n- **vaelion – god of time & space:** a distant admirer; sirona’s tides are said to flow to the rhythm of his eternal pulse.\n    \n- **malthera & azrakar – gods of the netherworld:** she respects them but distrusts their dark influence, for her waters mark the boundary between life and death.\n    \n- **sangran – god of blood:** they share a strange kinship—his rivers of blood mirror her oceans, symbolizing life and sacrifice intertwined.\n    \n\n**holy day:**  \n**the silver tide** – celebrated on the first full moon of spring. it marks the renewal of the world’s waters. devotees release floating candles onto rivers and oceans, each representing a soul’s journey through life and rebirth"
+    },
+    {
+      "id": "religion:content-theology-osiron-index",
+      "title": "Osiron",
+      "slug": "osiron",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/osiron",
+      "sourcePath": "content/theology/osiron/index.md",
+      "sourceFolder": "content/theology/osiron",
+      "content": "---\ntitle: \"Osiron\"\nslug: \"osiron\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Death\"\ndivine_domain: \"Essence of Death\"\ndomain: \"Essence of Death\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/8. Osiron - Essence of Death.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Osiron\n\n## Overview\n## ☠️ **Thanaros – God of Death**\n\n**Titles:**  \nThe Silent Shepherd, Keeper of the Veil, Warden of Purgatory, The Still One, Lord of Final Rest\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nTrue Neutral — impartial and unyielding; death comes to all, neither cruel nor merciful\n\n**Symbol:**  \nA black hourglass encircled by a silver serpent eating its own tail — symbolizing the endless cycle of life, death, and rebirth\n\n**Domains:**  \nDeath, Souls, Endings, Purgatory, Judgment, Shadows, Rebirth\n\n**Appearance:**  \nThanaros appears as a tall, solemn figure draped in shifting robes of black and deep violet mist. His face is pale, ageless, and serene — one side appearing young and alive, the other decayed and skeletal. His eyes are voids speckled with distant starlight. In his hand he carries the **Scythe of Serenity**, whose edge hums softly like a heartbeat slowing to stillness.  \nWhere he walks, flowers wilt and then bloom again — a reminder that from every ending, something new arises.\n\n**Personality:**  \nCalm, detached, and endlessly patient. Thanaros does not delight in death — he _is_ death, an inevitability that he neither celebrates nor laments. To mortals he seems cold, but his purpose is mercy: to free souls from pain, to weigh the balance of life’s deeds, and to guide the weary to their eternal rest.\n\nHe has no hate for life; in fact, he reveres it — for without life, his purpose would cease to be. Yet he stands apart, a quiet observer in the great rhythm that Elyndra conducts.\n\n**Mythic Lore:**  \nBorn from the shadow of Elyndra’s first breath, Thanaros emerged at the moment of the first mortal death. Where she created life’s spark, he gave it release. Together they shaped the mortal cycle — she planting, he harvesting.\n\nThanaros rules the realm of **Purgatory**, a vast twilight expanse between the mortal world and the afterlife. There, souls wander beneath a dim sun until he judges them — sending some to rebirth, others to rest, and a few to the Netherworld, into the hands of Azrakar and Malthera.\n\nWhen the world was young, Elyndra wept for every fallen creature. To ease her sorrow, Thanaros promised her that no death would be wasted: each soul would become nourishment for new life. Thus was born the **Cycle Eternal** — the divine accord between life and death.\n\n**Worship:**  \nThanaros is worshipped by morticians, monks, soul-wardens, and those who honor the dead. His temples are quiet sanctuaries of stone and shadow, often found at the edge of graveyards or within deep mountain crypts. His priests wear grey robes and carry small hourglasses, symbolizing the fleeting nature of life.\n\n**Rituals:**\n\n- **The Rite of Passing:** A sacred chant performed to guide a dying soul safely into Purgatory.\n    \n- **The Hour of Silence:** Observed once a month at dusk; all worshippers remain silent for one full hour to honor the departed.\n    \n- **The Reaping Vigil:** Held once a year during autumn, when Thanaros’s power is strongest. Offerings of candles and white flowers are placed on graves to ensure peace for the dead.\n    \n- **The Ferryman’s Gift:** A coin placed beneath the tongue of the deceased, paying their passage across the Veil.\n    \n\n**Relationships:**\n\n- **Elyndra – Goddess of Life:** His eternal counterpart; they are not lovers, but two halves of one whole. They share mutual reverence and deep understanding, though their followers often misunderstand their harmony.\n    \n- **Malthera – Hellish Goddess:** A complex ally, for her dominion of temptation often leads souls astray before Thanaros can claim them.\n    \n- **Azrakar – God of the Netherworld:** Both respect each other’s duties; Thanaros delivers judgment, while Azrakar keeps what is damned.\n    \n- **Sirona – Goddess of Water:** A friend and occasional mourner; her rivers are said to carry the tears of those Thanaros guides.\n    \n- **Vaelion – God of Time & Space:** A distant companion; together they govern the passage of existence itself — time and mortality.\n    \n\n**Holy Day:**  \n**The Veil’s Descent** — celebrated during the longest night of autumn. The living light candles to guide lost spirits home and meditate upon the cycle of their own lives. On this night, it is said Thanaros walks among mortals unseen, whispering peace to grieving hearts.\n",
+      "body": "# Osiron\n\n## Overview\n## ☠️ **Thanaros – God of Death**\n\n**Titles:**  \nThe Silent Shepherd, Keeper of the Veil, Warden of Purgatory, The Still One, Lord of Final Rest\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nTrue Neutral — impartial and unyielding; death comes to all, neither cruel nor merciful\n\n**Symbol:**  \nA black hourglass encircled by a silver serpent eating its own tail — symbolizing the endless cycle of life, death, and rebirth\n\n**Domains:**  \nDeath, Souls, Endings, Purgatory, Judgment, Shadows, Rebirth\n\n**Appearance:**  \nThanaros appears as a tall, solemn figure draped in shifting robes of black and deep violet mist. His face is pale, ageless, and serene — one side appearing young and alive, the other decayed and skeletal. His eyes are voids speckled with distant starlight. In his hand he carries the **Scythe of Serenity**, whose edge hums softly like a heartbeat slowing to stillness.  \nWhere he walks, flowers wilt and then bloom again — a reminder that from every ending, something new arises.\n\n**Personality:**  \nCalm, detached, and endlessly patient. Thanaros does not delight in death — he _is_ death, an inevitability that he neither celebrates nor laments. To mortals he seems cold, but his purpose is mercy: to free souls from pain, to weigh the balance of life’s deeds, and to guide the weary to their eternal rest.\n\nHe has no hate for life; in fact, he reveres it — for without life, his purpose would cease to be. Yet he stands apart, a quiet observer in the great rhythm that Elyndra conducts.\n\n**Mythic Lore:**  \nBorn from the shadow of Elyndra’s first breath, Thanaros emerged at the moment of the first mortal death. Where she created life’s spark, he gave it release. Together they shaped the mortal cycle — she planting, he harvesting.\n\nThanaros rules the realm of **Purgatory**, a vast twilight expanse between the mortal world and the afterlife. There, souls wander beneath a dim sun until he judges them — sending some to rebirth, others to rest, and a few to the Netherworld, into the hands of Azrakar and Malthera.\n\nWhen the world was young, Elyndra wept for every fallen creature. To ease her sorrow, Thanaros promised her that no death would be wasted: each soul would become nourishment for new life. Thus was born the **Cycle Eternal** — the divine accord between life and death.\n\n**Worship:**  \nThanaros is worshipped by morticians, monks, soul-wardens, and those who honor the dead. His temples are quiet sanctuaries of stone and shadow, often found at the edge of graveyards or within deep mountain crypts. His priests wear grey robes and carry small hourglasses, symbolizing the fleeting nature of life.\n\n**Rituals:**\n\n- **The Rite of Passing:** A sacred chant performed to guide a dying soul safely into Purgatory.\n    \n- **The Hour of Silence:** Observed once a month at dusk; all worshippers remain silent for one full hour to honor the departed.\n    \n- **The Reaping Vigil:** Held once a year during autumn, when Thanaros’s power is strongest. Offerings of candles and white flowers are placed on graves to ensure peace for the dead.\n    \n- **The Ferryman’s Gift:** A coin placed beneath the tongue of the deceased, paying their passage across the Veil.\n    \n\n**Relationships:**\n\n- **Elyndra – Goddess of Life:** His eternal counterpart; they are not lovers, but two halves of one whole. They share mutual reverence and deep understanding, though their followers often misunderstand their harmony.\n    \n- **Malthera – Hellish Goddess:** A complex ally, for her dominion of temptation often leads souls astray before Thanaros can claim them.\n    \n- **Azrakar – God of the Netherworld:** Both respect each other’s duties; Thanaros delivers judgment, while Azrakar keeps what is damned.\n    \n- **Sirona – Goddess of Water:** A friend and occasional mourner; her rivers are said to carry the tears of those Thanaros guides.\n    \n- **Vaelion – God of Time & Space:** A distant companion; together they govern the passage of existence itself — time and mortality.\n    \n\n**Holy Day:**  \n**The Veil’s Descent** — celebrated during the longest night of autumn. The living light candles to guide lost spirits home and meditate upon the cycle of their own lives. On this night, it is said Thanaros walks among mortals unseen, whispering peace to grieving hearts.",
+      "sections": {
+        "Overview": "# Osiron",
+        "☠️ **Thanaros – God of Death**": "**Titles:**  \nThe Silent Shepherd, Keeper of the Veil, Warden of Purgatory, The Still One, Lord of Final Rest\n\n**Pantheon:**  \nPantheon of Creation (one of the Eight Essence Gods)\n\n**Alignment:**  \nTrue Neutral — impartial and unyielding; death comes to all, neither cruel nor merciful\n\n**Symbol:**  \nA black hourglass encircled by a silver serpent eating its own tail — symbolizing the endless cycle of life, death, and rebirth\n\n**Domains:**  \nDeath, Souls, Endings, Purgatory, Judgment, Shadows, Rebirth\n\n**Appearance:**  \nThanaros appears as a tall, solemn figure draped in shifting robes of black and deep violet mist. His face is pale, ageless, and serene — one side appearing young and alive, the other decayed and skeletal. His eyes are voids speckled with distant starlight. In his hand he carries the **Scythe of Serenity**, whose edge hums softly like a heartbeat slowing to stillness.  \nWhere he walks, flowers wilt and then bloom again — a reminder that from every ending, something new arises.\n\n**Personality:**  \nCalm, detached, and endlessly patient. Thanaros does not delight in death — he _is_ death, an inevitability that he neither celebrates nor laments. To mortals he seems cold, but his purpose is mercy: to free souls from pain, to weigh the balance of life’s deeds, and to guide the weary to their eternal rest.\n\nHe has no hate for life; in fact, he reveres it — for without life, his purpose would cease to be. Yet he stands apart, a quiet observer in the great rhythm that Elyndra conducts.\n\n**Mythic Lore:**  \nBorn from the shadow of Elyndra’s first breath, Thanaros emerged at the moment of the first mortal death. Where she created life’s spark, he gave it release. Together they shaped the mortal cycle — she planting, he harvesting.\n\nThanaros rules the realm of **Purgatory**, a vast twilight expanse between the mortal world and the afterlife. There, souls wander beneath a dim sun until he judges them — sending some to rebirth, others to rest, and a few to the Netherworld, into the hands of Azrakar and Malthera.\n\nWhen the world was young, Elyndra wept for every fallen creature. To ease her sorrow, Thanaros promised her that no death would be wasted: each soul would become nourishment for new life. Thus was born the **Cycle Eternal** — the divine accord between life and death.\n\n**Worship:**  \nThanaros is worshipped by morticians, monks, soul-wardens, and those who honor the dead. His temples are quiet sanctuaries of stone and shadow, often found at the edge of graveyards or within deep mountain crypts. His priests wear grey robes and carry small hourglasses, symbolizing the fleeting nature of life.\n\n**Rituals:**\n\n- **The Rite of Passing:** A sacred chant performed to guide a dying soul safely into Purgatory.\n    \n- **The Hour of Silence:** Observed once a month at dusk; all worshippers remain silent for one full hour to honor the departed.\n    \n- **The Reaping Vigil:** Held once a year during autumn, when Thanaros’s power is strongest. Offerings of candles and white flowers are placed on graves to ensure peace for the dead.\n    \n- **The Ferryman’s Gift:** A coin placed beneath the tongue of the deceased, paying their passage across the Veil.\n    \n\n**Relationships:**\n\n- **Elyndra – Goddess of Life:** His eternal counterpart; they are not lovers, but two halves of one whole. They share mutual reverence and deep understanding, though their followers often misunderstand their harmony.\n    \n- **Malthera – Hellish Goddess:** A complex ally, for her dominion of temptation often leads souls astray before Thanaros can claim them.\n    \n- **Azrakar – God of the Netherworld:** Both respect each other’s duties; Thanaros delivers judgment, while Azrakar keeps what is damned.\n    \n- **Sirona – Goddess of Water:** A friend and occasional mourner; her rivers are said to carry the tears of those Thanaros guides.\n    \n- **Vaelion – God of Time & Space:** A distant companion; together they govern the passage of existence itself — time and mortality.\n    \n\n**Holy Day:**  \n**The Veil’s Descent** — celebrated during the longest night of autumn. The living light candles to guide lost spirits home and meditate upon the cycle of their own lives. On this night, it is said Thanaros walks among mortals unseen, whispering peace to grieving hearts."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Silent Shepherd, Keeper of the Veil, Warden of Purgatory, The Still One, Lord of Final Rest **Pantheon:** Pantheon of Creation (one of the Eight Essence Gods) **Alignment:** True Neutral — impartial and unyielding; death comes to all, neither c",
+      "metadata": {
+        "title": "Osiron",
+        "slug": "osiron",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Death",
+        "divineDomain": "Essence of Death",
+        "domain": "Essence of Death",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/8. Osiron - Essence of Death.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Death",
+        "visibility": "public"
+      },
+      "searchTerms": "osiron religion pantheon of elements {\"title\":\"osiron\",\"slug\":\"osiron\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of death\",\"divinedomain\":\"essence of death\",\"domain\":\"essence of death\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/8. osiron - essence of death.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # osiron\n\n## overview\n## ☠️ **thanaros – god of death**\n\n**titles:**  \nthe silent shepherd, keeper of the veil, warden of purgatory, the still one, lord of final rest\n\n**pantheon:**  \npantheon of creation (one of the eight essence gods)\n\n**alignment:**  \ntrue neutral — impartial and unyielding; death comes to all, neither cruel nor merciful\n\n**symbol:**  \na black hourglass encircled by a silver serpent eating its own tail — symbolizing the endless cycle of life, death, and rebirth\n\n**domains:**  \ndeath, souls, endings, purgatory, judgment, shadows, rebirth\n\n**appearance:**  \nthanaros appears as a tall, solemn figure draped in shifting robes of black and deep violet mist. his face is pale, ageless, and serene — one side appearing young and alive, the other decayed and skeletal. his eyes are voids speckled with distant starlight. in his hand he carries the **scythe of serenity**, whose edge hums softly like a heartbeat slowing to stillness.  \nwhere he walks, flowers wilt and then bloom again — a reminder that from every ending, something new arises.\n\n**personality:**  \ncalm, detached, and endlessly patient. thanaros does not delight in death — he _is_ death, an inevitability that he neither celebrates nor laments. to mortals he seems cold, but his purpose is mercy: to free souls from pain, to weigh the balance of life’s deeds, and to guide the weary to their eternal rest.\n\nhe has no hate for life; in fact, he reveres it — for without life, his purpose would cease to be. yet he stands apart, a quiet observer in the great rhythm that elyndra conducts.\n\n**mythic lore:**  \nborn from the shadow of elyndra’s first breath, thanaros emerged at the moment of the first mortal death. where she created life’s spark, he gave it release. together they shaped the mortal cycle — she planting, he harvesting.\n\nthanaros rules the realm of **purgatory**, a vast twilight expanse between the mortal world and the afterlife. there, souls wander beneath a dim sun until he judges them — sending some to rebirth, others to rest, and a few to the netherworld, into the hands of azrakar and malthera.\n\nwhen the world was young, elyndra wept for every fallen creature. to ease her sorrow, thanaros promised her that no death would be wasted: each soul would become nourishment for new life. thus was born the **cycle eternal** — the divine accord between life and death.\n\n**worship:**  \nthanaros is worshipped by morticians, monks, soul-wardens, and those who honor the dead. his temples are quiet sanctuaries of stone and shadow, often found at the edge of graveyards or within deep mountain crypts. his priests wear grey robes and carry small hourglasses, symbolizing the fleeting nature of life.\n\n**rituals:**\n\n- **the rite of passing:** a sacred chant performed to guide a dying soul safely into purgatory.\n    \n- **the hour of silence:** observed once a month at dusk; all worshippers remain silent for one full hour to honor the departed.\n    \n- **the reaping vigil:** held once a year during autumn, when thanaros’s power is strongest. offerings of candles and white flowers are placed on graves to ensure peace for the dead.\n    \n- **the ferryman’s gift:** a coin placed beneath the tongue of the deceased, paying their passage across the veil.\n    \n\n**relationships:**\n\n- **elyndra – goddess of life:** his eternal counterpart; they are not lovers, but two halves of one whole. they share mutual reverence and deep understanding, though their followers often misunderstand their harmony.\n    \n- **malthera – hellish goddess:** a complex ally, for her dominion of temptation often leads souls astray before thanaros can claim them.\n    \n- **azrakar – god of the netherworld:** both respect each other’s duties; thanaros delivers judgment, while azrakar keeps what is damned.\n    \n- **sirona – goddess of water:** a friend and occasional mourner; her rivers are said to carry the tears of those thanaros guides.\n    \n- **vaelion – god of time & space:** a distant companion; together they govern the passage of existence itself — time and mortality.\n    \n\n**holy day:**  \n**the veil’s descent** — celebrated during the longest night of autumn. the living light candles to guide lost spirits home and meditate upon the cycle of their own lives. on this night, it is said thanaros walks among mortals unseen, whispering peace to grieving hearts."
+    },
+    {
+      "id": "religion:content-theology-sangran-index",
+      "title": "Sangran",
+      "slug": "sangran",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/sangran",
+      "sourcePath": "content/theology/sangran/index.md",
+      "sourceFolder": "content/theology/sangran",
+      "content": "---\ntitle: \"Sangran\"\nslug: \"sangran\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Blood\"\ndivine_domain: \"Essence of Blood\"\ndomain: \"Essence of Blood\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/1. Sangran - Essence of Blood.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Sangran\n\n## Overview\n**Titles:**  \n_The Blood-Father_, _Lord of Crimson Tides_, _The Living Chalice_, _Heart of the Eternal Pulse_\n\n**Symbol:**  \nA gold chalice overflowing with blood, often depicted with a beating heart dripping blood into the chalice.  \n\n**Appearance:**  \nSangran manifests as a tall, muscular figure with crimson skin veined with faint gold. His eyes glow like rubies, constantly shifting between tenderness and fury. His armor appears to flow — liquid metal resembling living blood that moves with him.  \nWhen he bleeds, his blood can heal or corrupt depending on his will.\n\n**Personality:**  \nSangran is raw, instinctual, and deeply emotional — the very pulse of mortal life and divine fury. He embodies **the duality of blood**: it gives life, and it takes it.  \nHe blesses both the healer and the warrior, seeing both acts — saving and spilling blood — as expressions of existence.  \nWhile revered by many, he is also feared for his temper and unpredictable nature. To Sangran, passion is purity, and apathy is the true sin.\n\n**Mythic Lore:**  \nWhen the Primordials breathed energy into creation, Sangran was born from the **first heartbeat** of the universe — the moment life began to flow. His blood spread through the veins of the world, forming rivers, magma, and even mana itself.\n\nHe is said to have forged the **Crimson Pact**, binding mortals and gods alike in the law that _all life requires sacrifice_. The first mortals learned from him the art of battle, healing, and blood magic — though at terrible cost.\n\nIn the **Age of Sundering**, Sangran was betrayed by one of his own priest-kings, who tried to steal his divine essence. In his rage, Sangran tore his own heart out and cast it into the mortal realm. Wherever its blood fell, new life grew — forests, beasts, and humans — each carrying a spark of his vitality.\n\n**Worship & Temples:**\n\n- Worshipped by warriors, healers, blood mages, and oath-bound knights.\n    \n- Temples are built near rivers or within fortresses, often marked by crimson banners and ritual basins for offerings.\n    \n- His priests, known as _Sanguinates_, wear robes dyed in their own blood as a mark of devotion.\n    \n\n**Rituals:**\n\n- **The Blood Oath:** Warriors swear loyalty by offering a drop of their blood into a sacred bowl.\n    \n- **Crimson Tide Festival:** A day of feast and combat where blood is shed to honor life’s struggle and persistence.\n    \n- **The Rite of Renewal:** A forbidden ritual where healers offer part of their life force to restore another.\n    \n\n**Relationships:**\n\n- **Allies:** Often associated with **Vaelion** (Time & Space) — the pulse of time is said to echo Sangran’s heart.\n    \n- **Rivals:** Detested by **Ki-Toma**, God of Time, for his disregard of cosmic order.\n    \n- **Former Lover:** Myths whisper of a tragic affair between Sangran and **Malthera**, Goddess of Temptation and the Hellish Realm — a union of passion and punishment.\n",
+      "body": "# Sangran\n\n## Overview\n**Titles:**  \n_The Blood-Father_, _Lord of Crimson Tides_, _The Living Chalice_, _Heart of the Eternal Pulse_\n\n**Symbol:**  \nA gold chalice overflowing with blood, often depicted with a beating heart dripping blood into the chalice.  \n\n**Appearance:**  \nSangran manifests as a tall, muscular figure with crimson skin veined with faint gold. His eyes glow like rubies, constantly shifting between tenderness and fury. His armor appears to flow — liquid metal resembling living blood that moves with him.  \nWhen he bleeds, his blood can heal or corrupt depending on his will.\n\n**Personality:**  \nSangran is raw, instinctual, and deeply emotional — the very pulse of mortal life and divine fury. He embodies **the duality of blood**: it gives life, and it takes it.  \nHe blesses both the healer and the warrior, seeing both acts — saving and spilling blood — as expressions of existence.  \nWhile revered by many, he is also feared for his temper and unpredictable nature. To Sangran, passion is purity, and apathy is the true sin.\n\n**Mythic Lore:**  \nWhen the Primordials breathed energy into creation, Sangran was born from the **first heartbeat** of the universe — the moment life began to flow. His blood spread through the veins of the world, forming rivers, magma, and even mana itself.\n\nHe is said to have forged the **Crimson Pact**, binding mortals and gods alike in the law that _all life requires sacrifice_. The first mortals learned from him the art of battle, healing, and blood magic — though at terrible cost.\n\nIn the **Age of Sundering**, Sangran was betrayed by one of his own priest-kings, who tried to steal his divine essence. In his rage, Sangran tore his own heart out and cast it into the mortal realm. Wherever its blood fell, new life grew — forests, beasts, and humans — each carrying a spark of his vitality.\n\n**Worship & Temples:**\n\n- Worshipped by warriors, healers, blood mages, and oath-bound knights.\n    \n- Temples are built near rivers or within fortresses, often marked by crimson banners and ritual basins for offerings.\n    \n- His priests, known as _Sanguinates_, wear robes dyed in their own blood as a mark of devotion.\n    \n\n**Rituals:**\n\n- **The Blood Oath:** Warriors swear loyalty by offering a drop of their blood into a sacred bowl.\n    \n- **Crimson Tide Festival:** A day of feast and combat where blood is shed to honor life’s struggle and persistence.\n    \n- **The Rite of Renewal:** A forbidden ritual where healers offer part of their life force to restore another.\n    \n\n**Relationships:**\n\n- **Allies:** Often associated with **Vaelion** (Time & Space) — the pulse of time is said to echo Sangran’s heart.\n    \n- **Rivals:** Detested by **Ki-Toma**, God of Time, for his disregard of cosmic order.\n    \n- **Former Lover:** Myths whisper of a tragic affair between Sangran and **Malthera**, Goddess of Temptation and the Hellish Realm — a union of passion and punishment.",
+      "sections": {
+        "Overview": "# Sangran\n\n**Titles:**  \n_The Blood-Father_, _Lord of Crimson Tides_, _The Living Chalice_, _Heart of the Eternal Pulse_\n\n**Symbol:**  \nA gold chalice overflowing with blood, often depicted with a beating heart dripping blood into the chalice.  \n\n**Appearance:**  \nSangran manifests as a tall, muscular figure with crimson skin veined with faint gold. His eyes glow like rubies, constantly shifting between tenderness and fury. His armor appears to flow — liquid metal resembling living blood that moves with him.  \nWhen he bleeds, his blood can heal or corrupt depending on his will.\n\n**Personality:**  \nSangran is raw, instinctual, and deeply emotional — the very pulse of mortal life and divine fury. He embodies **the duality of blood**: it gives life, and it takes it.  \nHe blesses both the healer and the warrior, seeing both acts — saving and spilling blood — as expressions of existence.  \nWhile revered by many, he is also feared for his temper and unpredictable nature. To Sangran, passion is purity, and apathy is the true sin.\n\n**Mythic Lore:**  \nWhen the Primordials breathed energy into creation, Sangran was born from the **first heartbeat** of the universe — the moment life began to flow. His blood spread through the veins of the world, forming rivers, magma, and even mana itself.\n\nHe is said to have forged the **Crimson Pact**, binding mortals and gods alike in the law that _all life requires sacrifice_. The first mortals learned from him the art of battle, healing, and blood magic — though at terrible cost.\n\nIn the **Age of Sundering**, Sangran was betrayed by one of his own priest-kings, who tried to steal his divine essence. In his rage, Sangran tore his own heart out and cast it into the mortal realm. Wherever its blood fell, new life grew — forests, beasts, and humans — each carrying a spark of his vitality.\n\n**Worship & Temples:**\n\n- Worshipped by warriors, healers, blood mages, and oath-bound knights.\n    \n- Temples are built near rivers or within fortresses, often marked by crimson banners and ritual basins for offerings.\n    \n- His priests, known as _Sanguinates_, wear robes dyed in their own blood as a mark of devotion.\n    \n\n**Rituals:**\n\n- **The Blood Oath:** Warriors swear loyalty by offering a drop of their blood into a sacred bowl.\n    \n- **Crimson Tide Festival:** A day of feast and combat where blood is shed to honor life’s struggle and persistence.\n    \n- **The Rite of Renewal:** A forbidden ritual where healers offer part of their life force to restore another.\n    \n\n**Relationships:**\n\n- **Allies:** Often associated with **Vaelion** (Time & Space) — the pulse of time is said to echo Sangran’s heart.\n    \n- **Rivals:** Detested by **Ki-Toma**, God of Time, for his disregard of cosmic order.\n    \n- **Former Lover:** Myths whisper of a tragic affair between Sangran and **Malthera**, Goddess of Temptation and the Hellish Realm — a union of passion and punishment."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** _The Blood-Father_, _Lord of Crimson Tides_, _The Living Chalice_, _Heart of the Eternal Pulse_ **Symbol:** A gold chalice overflowing with blood, often depicted with a beating heart dripping blood into the chalice. **Appearance:** Sangran manifest",
+      "metadata": {
+        "title": "Sangran",
+        "slug": "sangran",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Blood",
+        "divineDomain": "Essence of Blood",
+        "domain": "Essence of Blood",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/1. Sangran - Essence of Blood.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Blood",
+        "visibility": "public"
+      },
+      "searchTerms": "sangran religion pantheon of elements {\"title\":\"sangran\",\"slug\":\"sangran\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of blood\",\"divinedomain\":\"essence of blood\",\"domain\":\"essence of blood\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/1. sangran - essence of blood.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # sangran\n\n## overview\n**titles:**  \n_the blood-father_, _lord of crimson tides_, _the living chalice_, _heart of the eternal pulse_\n\n**symbol:**  \na gold chalice overflowing with blood, often depicted with a beating heart dripping blood into the chalice.  \n\n**appearance:**  \nsangran manifests as a tall, muscular figure with crimson skin veined with faint gold. his eyes glow like rubies, constantly shifting between tenderness and fury. his armor appears to flow — liquid metal resembling living blood that moves with him.  \nwhen he bleeds, his blood can heal or corrupt depending on his will.\n\n**personality:**  \nsangran is raw, instinctual, and deeply emotional — the very pulse of mortal life and divine fury. he embodies **the duality of blood**: it gives life, and it takes it.  \nhe blesses both the healer and the warrior, seeing both acts — saving and spilling blood — as expressions of existence.  \nwhile revered by many, he is also feared for his temper and unpredictable nature. to sangran, passion is purity, and apathy is the true sin.\n\n**mythic lore:**  \nwhen the primordials breathed energy into creation, sangran was born from the **first heartbeat** of the universe — the moment life began to flow. his blood spread through the veins of the world, forming rivers, magma, and even mana itself.\n\nhe is said to have forged the **crimson pact**, binding mortals and gods alike in the law that _all life requires sacrifice_. the first mortals learned from him the art of battle, healing, and blood magic — though at terrible cost.\n\nin the **age of sundering**, sangran was betrayed by one of his own priest-kings, who tried to steal his divine essence. in his rage, sangran tore his own heart out and cast it into the mortal realm. wherever its blood fell, new life grew — forests, beasts, and humans — each carrying a spark of his vitality.\n\n**worship & temples:**\n\n- worshipped by warriors, healers, blood mages, and oath-bound knights.\n    \n- temples are built near rivers or within fortresses, often marked by crimson banners and ritual basins for offerings.\n    \n- his priests, known as _sanguinates_, wear robes dyed in their own blood as a mark of devotion.\n    \n\n**rituals:**\n\n- **the blood oath:** warriors swear loyalty by offering a drop of their blood into a sacred bowl.\n    \n- **crimson tide festival:** a day of feast and combat where blood is shed to honor life’s struggle and persistence.\n    \n- **the rite of renewal:** a forbidden ritual where healers offer part of their life force to restore another.\n    \n\n**relationships:**\n\n- **allies:** often associated with **vaelion** (time & space) — the pulse of time is said to echo sangran’s heart.\n    \n- **rivals:** detested by **ki-toma**, god of time, for his disregard of cosmic order.\n    \n- **former lover:** myths whisper of a tragic affair between sangran and **malthera**, goddess of temptation and the hellish realm — a union of passion and punishment."
+    },
+    {
+      "id": "religion:content-theology-solyren-index",
+      "title": "Solyren",
+      "slug": "solyren",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/solyren",
+      "sourcePath": "content/theology/solyren/index.md",
+      "sourceFolder": "content/theology/solyren",
+      "content": "---\ntitle: \"Solyren\"\nslug: \"solyren\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Light\"\ndivine_domain: \"Essence of Light\"\ndomain: \"Essence of Light\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/5. Solyren - Essence of Light.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Solyren\n\n## Overview\n**Titles:**  \nThe Radiant Father, Dawnbringer, Keeper of the First Flame, The Guiding Star, Lord of Illumination\n\n**Pantheon:**  \nPantheon of Creation (and one of the Eight Essence Gods)\n\n**Alignment:**  \nLawful Good — though some see his zeal as dangerously uncompromising\n\n**Symbol:**  \nA golden sunburst with twelve rays, encircling a white flame\n\n**Domains:**  \nLight, Purity, Truth, Justice, Renewal, Hope, Fire\n\n**Appearance:**  \nSolyren appears as a tall, broad-shouldered man whose skin glows with the warmth of a rising sun. His hair shines like molten gold, his eyes blaze white, and his presence banishes shadow for leagues around. His armor is etched with runes of dawnlight, and from his back radiate ribbons of living flame that shimmer like wings.\n\n**Personality:**  \nNoble and commanding, Solyren embodies virtue and clarity — but also the dangers of righteousness without mercy. He loves truth and order, despises deceit, and demands that all things stand revealed before his light. To mortals, he is both a protector and a judge. Though compassionate, he can be unyielding, for even light burns what it touches too long.\n\n**Mythic Lore:**  \nWhen the universe first stirred, Solyren was born from the first spark of creation — the light that split the Void. His radiance scattered the Primordial Darkness, giving birth to time and space. Yet when he saw the shadows return, he did not strike them down; instead, he wept, and from those tears the Goddess **Nythra** emerged, his eternal opposite and partner in the balance of existence.\n\nLegends tell that Solyren’s flame forges the souls of heroes, burning away weakness and doubt. The sun, it is said, is but his eye, watching over mortal realms. During the cataclysmic “War of Twilight,” it was Solyren’s blade, _Dawnbreaker_, that sealed the rift between the heavens and the Netherworld.\n\n**Worship:**  \nSolyren’s faith is widespread, his temples standing atop hills and sunlit plazas. His clergy are healers, judges, and paladins, devoted to honesty and the pursuit of justice. His priests open their sermons at dawn, facing the rising sun, and believe that every lie uttered under Solyren’s gaze becomes a spark that burns the speaker’s soul.\n\n**Rituals:**\n\n- **The Dawn Rite:** Performed at sunrise, where worshippers raise mirrors or polished metal to reflect the first light, symbolizing the return of truth each day.\n    \n- **The Purging Flame:** Once a year, the devout light a sacred fire to burn away tokens of guilt or corruption — physical or spiritual.\n    \n- **The Ember Vigil:** Held on the winter solstice; devotees keep a single flame burning through the longest night to ensure Solyren’s light returns.\n    \n\n**Relationships:**\n\n- **Nythra – Goddess of Dark:** His eternal counterpart and mirror. Together they maintain the balance of creation. Without her stillness, his flame would consume all; without his fire, her darkness would smother life. Their relationship is one of mutual respect, tension, and deep unspoken love.\n    \n- **Sirona – Goddess of Water:** The water that cools his flame; they are allies in healing and renewal.\n    \n- **Auralis – Goddess of Air:** His messenger and herald; her winds carry his warmth across the world.\n    \n- **Azrakar & Malthera – Gods of the Hellish:** His bitter adversaries, for their realm thrives on corrupted flame and false light.\n    \n- **Vaelion – God of Time & Space:** The eternal witness; it was Vaelion who measured Solyren’s light and gave it rhythm in the turning of days.\n    \n\n**Holy Day:**  \n**The Day of Dawning Flame** — celebrated on the year’s longest day. At sunrise, all fires are extinguished and reignited from a single sacred torch carried from Solyren’s Great Temple. It is a day of renewal, forgiveness, and the swearing of oaths.\n",
+      "body": "# Solyren\n\n## Overview\n**Titles:**  \nThe Radiant Father, Dawnbringer, Keeper of the First Flame, The Guiding Star, Lord of Illumination\n\n**Pantheon:**  \nPantheon of Creation (and one of the Eight Essence Gods)\n\n**Alignment:**  \nLawful Good — though some see his zeal as dangerously uncompromising\n\n**Symbol:**  \nA golden sunburst with twelve rays, encircling a white flame\n\n**Domains:**  \nLight, Purity, Truth, Justice, Renewal, Hope, Fire\n\n**Appearance:**  \nSolyren appears as a tall, broad-shouldered man whose skin glows with the warmth of a rising sun. His hair shines like molten gold, his eyes blaze white, and his presence banishes shadow for leagues around. His armor is etched with runes of dawnlight, and from his back radiate ribbons of living flame that shimmer like wings.\n\n**Personality:**  \nNoble and commanding, Solyren embodies virtue and clarity — but also the dangers of righteousness without mercy. He loves truth and order, despises deceit, and demands that all things stand revealed before his light. To mortals, he is both a protector and a judge. Though compassionate, he can be unyielding, for even light burns what it touches too long.\n\n**Mythic Lore:**  \nWhen the universe first stirred, Solyren was born from the first spark of creation — the light that split the Void. His radiance scattered the Primordial Darkness, giving birth to time and space. Yet when he saw the shadows return, he did not strike them down; instead, he wept, and from those tears the Goddess **Nythra** emerged, his eternal opposite and partner in the balance of existence.\n\nLegends tell that Solyren’s flame forges the souls of heroes, burning away weakness and doubt. The sun, it is said, is but his eye, watching over mortal realms. During the cataclysmic “War of Twilight,” it was Solyren’s blade, _Dawnbreaker_, that sealed the rift between the heavens and the Netherworld.\n\n**Worship:**  \nSolyren’s faith is widespread, his temples standing atop hills and sunlit plazas. His clergy are healers, judges, and paladins, devoted to honesty and the pursuit of justice. His priests open their sermons at dawn, facing the rising sun, and believe that every lie uttered under Solyren’s gaze becomes a spark that burns the speaker’s soul.\n\n**Rituals:**\n\n- **The Dawn Rite:** Performed at sunrise, where worshippers raise mirrors or polished metal to reflect the first light, symbolizing the return of truth each day.\n    \n- **The Purging Flame:** Once a year, the devout light a sacred fire to burn away tokens of guilt or corruption — physical or spiritual.\n    \n- **The Ember Vigil:** Held on the winter solstice; devotees keep a single flame burning through the longest night to ensure Solyren’s light returns.\n    \n\n**Relationships:**\n\n- **Nythra – Goddess of Dark:** His eternal counterpart and mirror. Together they maintain the balance of creation. Without her stillness, his flame would consume all; without his fire, her darkness would smother life. Their relationship is one of mutual respect, tension, and deep unspoken love.\n    \n- **Sirona – Goddess of Water:** The water that cools his flame; they are allies in healing and renewal.\n    \n- **Auralis – Goddess of Air:** His messenger and herald; her winds carry his warmth across the world.\n    \n- **Azrakar & Malthera – Gods of the Hellish:** His bitter adversaries, for their realm thrives on corrupted flame and false light.\n    \n- **Vaelion – God of Time & Space:** The eternal witness; it was Vaelion who measured Solyren’s light and gave it rhythm in the turning of days.\n    \n\n**Holy Day:**  \n**The Day of Dawning Flame** — celebrated on the year’s longest day. At sunrise, all fires are extinguished and reignited from a single sacred torch carried from Solyren’s Great Temple. It is a day of renewal, forgiveness, and the swearing of oaths.",
+      "sections": {
+        "Overview": "# Solyren\n\n**Titles:**  \nThe Radiant Father, Dawnbringer, Keeper of the First Flame, The Guiding Star, Lord of Illumination\n\n**Pantheon:**  \nPantheon of Creation (and one of the Eight Essence Gods)\n\n**Alignment:**  \nLawful Good — though some see his zeal as dangerously uncompromising\n\n**Symbol:**  \nA golden sunburst with twelve rays, encircling a white flame\n\n**Domains:**  \nLight, Purity, Truth, Justice, Renewal, Hope, Fire\n\n**Appearance:**  \nSolyren appears as a tall, broad-shouldered man whose skin glows with the warmth of a rising sun. His hair shines like molten gold, his eyes blaze white, and his presence banishes shadow for leagues around. His armor is etched with runes of dawnlight, and from his back radiate ribbons of living flame that shimmer like wings.\n\n**Personality:**  \nNoble and commanding, Solyren embodies virtue and clarity — but also the dangers of righteousness without mercy. He loves truth and order, despises deceit, and demands that all things stand revealed before his light. To mortals, he is both a protector and a judge. Though compassionate, he can be unyielding, for even light burns what it touches too long.\n\n**Mythic Lore:**  \nWhen the universe first stirred, Solyren was born from the first spark of creation — the light that split the Void. His radiance scattered the Primordial Darkness, giving birth to time and space. Yet when he saw the shadows return, he did not strike them down; instead, he wept, and from those tears the Goddess **Nythra** emerged, his eternal opposite and partner in the balance of existence.\n\nLegends tell that Solyren’s flame forges the souls of heroes, burning away weakness and doubt. The sun, it is said, is but his eye, watching over mortal realms. During the cataclysmic “War of Twilight,” it was Solyren’s blade, _Dawnbreaker_, that sealed the rift between the heavens and the Netherworld.\n\n**Worship:**  \nSolyren’s faith is widespread, his temples standing atop hills and sunlit plazas. His clergy are healers, judges, and paladins, devoted to honesty and the pursuit of justice. His priests open their sermons at dawn, facing the rising sun, and believe that every lie uttered under Solyren’s gaze becomes a spark that burns the speaker’s soul.\n\n**Rituals:**\n\n- **The Dawn Rite:** Performed at sunrise, where worshippers raise mirrors or polished metal to reflect the first light, symbolizing the return of truth each day.\n    \n- **The Purging Flame:** Once a year, the devout light a sacred fire to burn away tokens of guilt or corruption — physical or spiritual.\n    \n- **The Ember Vigil:** Held on the winter solstice; devotees keep a single flame burning through the longest night to ensure Solyren’s light returns.\n    \n\n**Relationships:**\n\n- **Nythra – Goddess of Dark:** His eternal counterpart and mirror. Together they maintain the balance of creation. Without her stillness, his flame would consume all; without his fire, her darkness would smother life. Their relationship is one of mutual respect, tension, and deep unspoken love.\n    \n- **Sirona – Goddess of Water:** The water that cools his flame; they are allies in healing and renewal.\n    \n- **Auralis – Goddess of Air:** His messenger and herald; her winds carry his warmth across the world.\n    \n- **Azrakar & Malthera – Gods of the Hellish:** His bitter adversaries, for their realm thrives on corrupted flame and false light.\n    \n- **Vaelion – God of Time & Space:** The eternal witness; it was Vaelion who measured Solyren’s light and gave it rhythm in the turning of days.\n    \n\n**Holy Day:**  \n**The Day of Dawning Flame** — celebrated on the year’s longest day. At sunrise, all fires are extinguished and reignited from a single sacred torch carried from Solyren’s Great Temple. It is a day of renewal, forgiveness, and the swearing of oaths."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Radiant Father, Dawnbringer, Keeper of the First Flame, The Guiding Star, Lord of Illumination **Pantheon:** Pantheon of Creation (and one of the Eight Essence Gods) **Alignment:** Lawful Good — though some see his zeal as dangerously uncomprom",
+      "metadata": {
+        "title": "Solyren",
+        "slug": "solyren",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Light",
+        "divineDomain": "Essence of Light",
+        "domain": "Essence of Light",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/5. Solyren - Essence of Light.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Light",
+        "visibility": "public"
+      },
+      "searchTerms": "solyren religion pantheon of elements {\"title\":\"solyren\",\"slug\":\"solyren\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of light\",\"divinedomain\":\"essence of light\",\"domain\":\"essence of light\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/5. solyren - essence of light.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # solyren\n\n## overview\n**titles:**  \nthe radiant father, dawnbringer, keeper of the first flame, the guiding star, lord of illumination\n\n**pantheon:**  \npantheon of creation (and one of the eight essence gods)\n\n**alignment:**  \nlawful good — though some see his zeal as dangerously uncompromising\n\n**symbol:**  \na golden sunburst with twelve rays, encircling a white flame\n\n**domains:**  \nlight, purity, truth, justice, renewal, hope, fire\n\n**appearance:**  \nsolyren appears as a tall, broad-shouldered man whose skin glows with the warmth of a rising sun. his hair shines like molten gold, his eyes blaze white, and his presence banishes shadow for leagues around. his armor is etched with runes of dawnlight, and from his back radiate ribbons of living flame that shimmer like wings.\n\n**personality:**  \nnoble and commanding, solyren embodies virtue and clarity — but also the dangers of righteousness without mercy. he loves truth and order, despises deceit, and demands that all things stand revealed before his light. to mortals, he is both a protector and a judge. though compassionate, he can be unyielding, for even light burns what it touches too long.\n\n**mythic lore:**  \nwhen the universe first stirred, solyren was born from the first spark of creation — the light that split the void. his radiance scattered the primordial darkness, giving birth to time and space. yet when he saw the shadows return, he did not strike them down; instead, he wept, and from those tears the goddess **nythra** emerged, his eternal opposite and partner in the balance of existence.\n\nlegends tell that solyren’s flame forges the souls of heroes, burning away weakness and doubt. the sun, it is said, is but his eye, watching over mortal realms. during the cataclysmic “war of twilight,” it was solyren’s blade, _dawnbreaker_, that sealed the rift between the heavens and the netherworld.\n\n**worship:**  \nsolyren’s faith is widespread, his temples standing atop hills and sunlit plazas. his clergy are healers, judges, and paladins, devoted to honesty and the pursuit of justice. his priests open their sermons at dawn, facing the rising sun, and believe that every lie uttered under solyren’s gaze becomes a spark that burns the speaker’s soul.\n\n**rituals:**\n\n- **the dawn rite:** performed at sunrise, where worshippers raise mirrors or polished metal to reflect the first light, symbolizing the return of truth each day.\n    \n- **the purging flame:** once a year, the devout light a sacred fire to burn away tokens of guilt or corruption — physical or spiritual.\n    \n- **the ember vigil:** held on the winter solstice; devotees keep a single flame burning through the longest night to ensure solyren’s light returns.\n    \n\n**relationships:**\n\n- **nythra – goddess of dark:** his eternal counterpart and mirror. together they maintain the balance of creation. without her stillness, his flame would consume all; without his fire, her darkness would smother life. their relationship is one of mutual respect, tension, and deep unspoken love.\n    \n- **sirona – goddess of water:** the water that cools his flame; they are allies in healing and renewal.\n    \n- **auralis – goddess of air:** his messenger and herald; her winds carry his warmth across the world.\n    \n- **azrakar & malthera – gods of the hellish:** his bitter adversaries, for their realm thrives on corrupted flame and false light.\n    \n- **vaelion – god of time & space:** the eternal witness; it was vaelion who measured solyren’s light and gave it rhythm in the turning of days.\n    \n\n**holy day:**  \n**the day of dawning flame** — celebrated on the year’s longest day. at sunrise, all fires are extinguished and reignited from a single sacred torch carried from solyren’s great temple. it is a day of renewal, forgiveness, and the swearing of oaths."
+    },
+    {
+      "id": "religion:content-theology-tharvax-index",
+      "title": "Tharvax",
+      "slug": "tharvax",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/tharvax",
+      "sourcePath": "content/theology/tharvax/index.md",
+      "sourceFolder": "content/theology/tharvax",
+      "content": "---\ntitle: \"Tharvax\"\nslug: \"tharvax\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Chaos\"\ndivine_domain: \"Essence of Chaos\"\ndomain: \"Essence of Chaos\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/3. Tharvax - Essence of Chaos.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Tharvax\n\n## Overview\n**Titles:** The Chaos Flame, The Unshaped One, The Laughing Maelstrom, Bringer of Upheaval  \n**Domain:** Chaos, Change, and Unbound Creation  \n**Alignment:** Chaotic Neutral → (leans Chaotic Evil in times of imbalance)  \n**Symbol:** A spiral of flame breaking through a circle — representing destruction birthing creation  \n**Seat of Power:** The **Maelstrom Nexus**, a swirling plane of molten energy, stormlight, and infinite motion\n\n---\n\n### ⚡ **Mythic Lore**\n\nBefore form, before time, there was only motion — and from that motion **Cha-Char-Lav** was born.  \nHe is the **living embodiment of raw, unrefined energy**, the primordial force that both builds and tears down. When the Primordials wove the foundations of existence, they bound his chaos into the roots of creation — but never fully contained it.\n\nIt is said that **every explosion, every earthquake, every storm that breaks the sky** echoes with his laughter.  \nHe does not destroy out of cruelty — but because _stillness is death_, and _motion is life._  \nTo Cha-Char-Lav, chaos is the **only true form of balance**, for through destruction comes rebirth.\n\nHe often clashes with **Vaelion, God of Time and Space**, whose order seeks to define what Cha-Char-Lav wishes to keep unbound.  \nYet their dance — chaos and structure — sustains the rhythm of the cosmos. When either grows too strong, existence teeters toward collapse.\n\n---\n\n### 🔥 **Worship & Cults**\n\n- **The Ember Choir** — nomadic zealots who believe fire cleanses stagnation and rebirths the world.\n    \n- **The Children of the Maelstrom** — warbands and anarchist prophets who see chaos as divine freedom.\n    \n- **The Unbound Circle** — secretive mages who channel chaotic energy to reshape matter and reality.\n    \n\nHis followers are both feared and revered — bringers of innovation, destruction, and transformation alike.  \nThey often wear **spiral-marked ash tattoos**, said to mark them as chosen “sparks” of their god.\n\n---\n\n### 🌋 **Mythic Themes**\n\n- Change as a necessary and natural force.\n    \n- Creation and destruction as two sides of one eternal flame.\n    \n- The futility of permanence — all things burn, but from the ashes, something new is born.\n    \n\n---\n\n### 🜂 **Divine Relationships**\n\n- **Allied With:** Sebbus (Eldritch God) — both thrive in the unknown, though Sebbus’s madness contrasts Cha-Char-Lav’s primal instinct.\n    \n- **Opposed By:** Vaelion (Time & Space) — the eternal struggle between structure and flux.\n    \n- **Respected By:** Malthera & Azrakar — the gods of the Netherworld, who understand the role of destruction in cosmic balance.\n",
+      "body": "# Tharvax\n\n## Overview\n**Titles:** The Chaos Flame, The Unshaped One, The Laughing Maelstrom, Bringer of Upheaval  \n**Domain:** Chaos, Change, and Unbound Creation  \n**Alignment:** Chaotic Neutral → (leans Chaotic Evil in times of imbalance)  \n**Symbol:** A spiral of flame breaking through a circle — representing destruction birthing creation  \n**Seat of Power:** The **Maelstrom Nexus**, a swirling plane of molten energy, stormlight, and infinite motion\n\n---\n\n### ⚡ **Mythic Lore**\n\nBefore form, before time, there was only motion — and from that motion **Cha-Char-Lav** was born.  \nHe is the **living embodiment of raw, unrefined energy**, the primordial force that both builds and tears down. When the Primordials wove the foundations of existence, they bound his chaos into the roots of creation — but never fully contained it.\n\nIt is said that **every explosion, every earthquake, every storm that breaks the sky** echoes with his laughter.  \nHe does not destroy out of cruelty — but because _stillness is death_, and _motion is life._  \nTo Cha-Char-Lav, chaos is the **only true form of balance**, for through destruction comes rebirth.\n\nHe often clashes with **Vaelion, God of Time and Space**, whose order seeks to define what Cha-Char-Lav wishes to keep unbound.  \nYet their dance — chaos and structure — sustains the rhythm of the cosmos. When either grows too strong, existence teeters toward collapse.\n\n---\n\n### 🔥 **Worship & Cults**\n\n- **The Ember Choir** — nomadic zealots who believe fire cleanses stagnation and rebirths the world.\n    \n- **The Children of the Maelstrom** — warbands and anarchist prophets who see chaos as divine freedom.\n    \n- **The Unbound Circle** — secretive mages who channel chaotic energy to reshape matter and reality.\n    \n\nHis followers are both feared and revered — bringers of innovation, destruction, and transformation alike.  \nThey often wear **spiral-marked ash tattoos**, said to mark them as chosen “sparks” of their god.\n\n---\n\n### 🌋 **Mythic Themes**\n\n- Change as a necessary and natural force.\n    \n- Creation and destruction as two sides of one eternal flame.\n    \n- The futility of permanence — all things burn, but from the ashes, something new is born.\n    \n\n---\n\n### 🜂 **Divine Relationships**\n\n- **Allied With:** Sebbus (Eldritch God) — both thrive in the unknown, though Sebbus’s madness contrasts Cha-Char-Lav’s primal instinct.\n    \n- **Opposed By:** Vaelion (Time & Space) — the eternal struggle between structure and flux.\n    \n- **Respected By:** Malthera & Azrakar — the gods of the Netherworld, who understand the role of destruction in cosmic balance.",
+      "sections": {
+        "Overview": "# Tharvax\n\n**Titles:** The Chaos Flame, The Unshaped One, The Laughing Maelstrom, Bringer of Upheaval  \n**Domain:** Chaos, Change, and Unbound Creation  \n**Alignment:** Chaotic Neutral → (leans Chaotic Evil in times of imbalance)  \n**Symbol:** A spiral of flame breaking through a circle — representing destruction birthing creation  \n**Seat of Power:** The **Maelstrom Nexus**, a swirling plane of molten energy, stormlight, and infinite motion\n\n---\n\n### ⚡ **Mythic Lore**\n\nBefore form, before time, there was only motion — and from that motion **Cha-Char-Lav** was born.  \nHe is the **living embodiment of raw, unrefined energy**, the primordial force that both builds and tears down. When the Primordials wove the foundations of existence, they bound his chaos into the roots of creation — but never fully contained it.\n\nIt is said that **every explosion, every earthquake, every storm that breaks the sky** echoes with his laughter.  \nHe does not destroy out of cruelty — but because _stillness is death_, and _motion is life._  \nTo Cha-Char-Lav, chaos is the **only true form of balance**, for through destruction comes rebirth.\n\nHe often clashes with **Vaelion, God of Time and Space**, whose order seeks to define what Cha-Char-Lav wishes to keep unbound.  \nYet their dance — chaos and structure — sustains the rhythm of the cosmos. When either grows too strong, existence teeters toward collapse.\n\n---\n\n### 🔥 **Worship & Cults**\n\n- **The Ember Choir** — nomadic zealots who believe fire cleanses stagnation and rebirths the world.\n    \n- **The Children of the Maelstrom** — warbands and anarchist prophets who see chaos as divine freedom.\n    \n- **The Unbound Circle** — secretive mages who channel chaotic energy to reshape matter and reality.\n    \n\nHis followers are both feared and revered — bringers of innovation, destruction, and transformation alike.  \nThey often wear **spiral-marked ash tattoos**, said to mark them as chosen “sparks” of their god.\n\n---\n\n### 🌋 **Mythic Themes**\n\n- Change as a necessary and natural force.\n    \n- Creation and destruction as two sides of one eternal flame.\n    \n- The futility of permanence — all things burn, but from the ashes, something new is born.\n    \n\n---\n\n### 🜂 **Divine Relationships**\n\n- **Allied With:** Sebbus (Eldritch God) — both thrive in the unknown, though Sebbus’s madness contrasts Cha-Char-Lav’s primal instinct.\n    \n- **Opposed By:** Vaelion (Time & Space) — the eternal struggle between structure and flux.\n    \n- **Respected By:** Malthera & Azrakar — the gods of the Netherworld, who understand the role of destruction in cosmic balance."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Chaos Flame, The Unshaped One, The Laughing Maelstrom, Bringer of Upheaval **Domain:** Chaos, Change, and Unbound Creation **Alignment:** Chaotic Neutral → (leans Chaotic Evil in times of imbalance) **Symbol:** A spiral of flame breaking throug",
+      "metadata": {
+        "title": "Tharvax",
+        "slug": "tharvax",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Chaos",
+        "divineDomain": "Essence of Chaos",
+        "domain": "Essence of Chaos",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/3. Tharvax - Essence of Chaos.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Chaos",
+        "visibility": "public"
+      },
+      "searchTerms": "tharvax religion pantheon of elements {\"title\":\"tharvax\",\"slug\":\"tharvax\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of chaos\",\"divinedomain\":\"essence of chaos\",\"domain\":\"essence of chaos\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/3. tharvax - essence of chaos.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # tharvax\n\n## overview\n**titles:** the chaos flame, the unshaped one, the laughing maelstrom, bringer of upheaval  \n**domain:** chaos, change, and unbound creation  \n**alignment:** chaotic neutral → (leans chaotic evil in times of imbalance)  \n**symbol:** a spiral of flame breaking through a circle — representing destruction birthing creation  \n**seat of power:** the **maelstrom nexus**, a swirling plane of molten energy, stormlight, and infinite motion\n\n---\n\n### ⚡ **mythic lore**\n\nbefore form, before time, there was only motion — and from that motion **cha-char-lav** was born.  \nhe is the **living embodiment of raw, unrefined energy**, the primordial force that both builds and tears down. when the primordials wove the foundations of existence, they bound his chaos into the roots of creation — but never fully contained it.\n\nit is said that **every explosion, every earthquake, every storm that breaks the sky** echoes with his laughter.  \nhe does not destroy out of cruelty — but because _stillness is death_, and _motion is life._  \nto cha-char-lav, chaos is the **only true form of balance**, for through destruction comes rebirth.\n\nhe often clashes with **vaelion, god of time and space**, whose order seeks to define what cha-char-lav wishes to keep unbound.  \nyet their dance — chaos and structure — sustains the rhythm of the cosmos. when either grows too strong, existence teeters toward collapse.\n\n---\n\n### 🔥 **worship & cults**\n\n- **the ember choir** — nomadic zealots who believe fire cleanses stagnation and rebirths the world.\n    \n- **the children of the maelstrom** — warbands and anarchist prophets who see chaos as divine freedom.\n    \n- **the unbound circle** — secretive mages who channel chaotic energy to reshape matter and reality.\n    \n\nhis followers are both feared and revered — bringers of innovation, destruction, and transformation alike.  \nthey often wear **spiral-marked ash tattoos**, said to mark them as chosen “sparks” of their god.\n\n---\n\n### 🌋 **mythic themes**\n\n- change as a necessary and natural force.\n    \n- creation and destruction as two sides of one eternal flame.\n    \n- the futility of permanence — all things burn, but from the ashes, something new is born.\n    \n\n---\n\n### 🜂 **divine relationships**\n\n- **allied with:** sebbus (eldritch god) — both thrive in the unknown, though sebbus’s madness contrasts cha-char-lav’s primal instinct.\n    \n- **opposed by:** vaelion (time & space) — the eternal struggle between structure and flux.\n    \n- **respected by:** malthera & azrakar — the gods of the netherworld, who understand the role of destruction in cosmic balance."
+    },
+    {
+      "id": "religion:content-theology-vaelion-index",
+      "title": "Vaelion",
+      "slug": "vaelion",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/vaelion",
+      "sourcePath": "content/theology/vaelion/index.md",
+      "sourceFolder": "content/theology/vaelion",
+      "content": "---\ntitle: \"Vaelion\"\nslug: \"vaelion\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Time\"\ndivine_domain: \"Essence of Time\"\ndomain: \"Essence of Time\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/8. Vaelion - Essence of Time.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Vaelion\n\n## Overview\n**Titles:** The Infinite Architect, Keeper of the Celestial Clock, The Horizon Beyond, Father of the Stars  \n**Alignment:** True Neutral (leans toward Lawful Neutral)  \n**Domains:** Time, Space, Order, Gravity, Stars, Knowledge, Fate (Mechanic Aspect)  \n**Symbol:** An eight-pointed star enclosed within a circular hourglass  \n**Appearance:**  \nVaelion is depicted as a tall, androgynous being of light and shadow, draped in robes that ripple like the night sky. His eyes hold shifting constellations, and his voice echoes like multiple versions of itself across time. In one hand he bears the **Chronospire**, a staff said to align the flow of ages, and in the other, the **Orb of Infinite Paths**, from which the multiverse expands and contracts.\n\n---\n\n### **Mythic Lore**\n\nIn the beginning, when the **Primordials — Energy, Ether, and Void** — gave birth to existence, all creation was chaos and formless motion. There was light and shadow, but no rhythm or place for them to dwell.  \nFrom the stillness between those breaths of creation, **Vaelion** emerged — a consciousness formed from the moment _before_ time began.\n\nHe spoke the **First Law**:\n\n> “Let all that moves have a path. Let all that exists have a place.”\n\nAnd with those words, **space unfolded** and **time began to flow**. Stars ignited, realms took shape, and causality became the divine fabric upon which all stories are written.\n\nVaelion does not rule from a golden throne but from the **Celestial Axis**, a cosmic observatory that drifts through the Astral Sea. There, he observes every moment that has been and every possibility yet to come — not as a seer, but as a craftsman ensuring that the clockwork of the cosmos remains balanced.\n\nHe neither creates nor destroys — he _orders_.  \nWithout him, the gods would war across eternity until time itself unraveled.\n\n---\n\n### **Personality**\n\nVaelion is patient, logical, and detached — but not without compassion. His understanding of all events, past and future, grants him immense wisdom, yet also infinite sorrow.  \nHe rarely interferes directly in mortal affairs, for he knows that each alteration ripples through the timestream. Still, when the balance of creation is threatened, Vaelion becomes a storm of light and gravity — calm no longer, but an inevitable correction.\n\nMortals describe him as a being who speaks in riddles, his words always true, yet their meaning only understood _after_ they come to pass.\n\n---\n\n### **Relationships**\n\n- **Elyndra, Goddess of Soul & Spirit:** His eternal counterpart. Where Vaelion governs the _structure_ of reality, Elyndra governs its _heart_. Their union birthed the flow of reincarnation — the rhythm of existence itself.\n    \n- **Seraphyne, Goddess of Fate:** Once his student, now his equal in craft. She weaves the threads of destiny upon the loom Vaelion built.\n    \n- **The Primordial of Void:** His ancient adversary, who seeks to unmake the order Vaelion establishes.\n    \n- **The Pantheon of Essence:** They move _within_ his design — their realms orbit the infinite lattice of time and stars that Vaelion maintains.\n    \n\n---\n\n### **Worship & Temples**\n\nWorship of Vaelion is intellectual, meditative, and often tied to observatories, libraries, and clockwork sanctums. His priests are philosophers, astronomers, and timekeepers known as **Chronites**. They maintain vast **Star Maps** predicting the alignment of divine epochs.\n\n**Common Rituals:**\n\n- **The Alignment:** Priests recalibrate celestial instruments on the solstice to \"resync\" mortal time with divine time.\n    \n- **The Hour of Stillness:** A silent meditation at dusk where followers align their heartbeat with the cosmic rhythm.\n    \n- **The Spiral Path:** A symbolic walk through labyrinths representing the infinite loops of existence.\n    \n\n**Offerings:** Celestial charts, sand clocks, mirrors, and fragments of meteorite.\n\n---\n\n### **Celestial Servants**\n\n- **The Aeons:** Angelic entities that embody eras — each an age of history or element of time’s flow.\n    \n- **The Astroliths:** Sentient stars who record mortal destiny in light.\n    \n- **The Chronarchs:** Guardians of temporal balance who intervene to prevent paradox and divine corruption of time.\n    \n\n---\n\n### **Holy Day**\n\n**The Convergence of Stars** — when the constellations align to form the Hourglass of Heaven. During this night, seers claim to dream of both their birth and their death simultaneously.  \nIt is considered the most sacred day to scholars, wizards, and cosmic travelers.\n\n---\n\n### **Influence on the Mortal World**\n\nVaelion’s worshipers are the builders of calendars, inventors of astrolabes, and founders of universities.  \nSailors, mages, and artificers often whisper his name when navigating stars or building devices of great precision.  \nMany civilizations mark history as “Before Vaelion’s Alignment” — a mythical event when the stars first took their proper place\n",
+      "body": "# Vaelion\n\n## Overview\n**Titles:** The Infinite Architect, Keeper of the Celestial Clock, The Horizon Beyond, Father of the Stars  \n**Alignment:** True Neutral (leans toward Lawful Neutral)  \n**Domains:** Time, Space, Order, Gravity, Stars, Knowledge, Fate (Mechanic Aspect)  \n**Symbol:** An eight-pointed star enclosed within a circular hourglass  \n**Appearance:**  \nVaelion is depicted as a tall, androgynous being of light and shadow, draped in robes that ripple like the night sky. His eyes hold shifting constellations, and his voice echoes like multiple versions of itself across time. In one hand he bears the **Chronospire**, a staff said to align the flow of ages, and in the other, the **Orb of Infinite Paths**, from which the multiverse expands and contracts.\n\n---\n\n### **Mythic Lore**\n\nIn the beginning, when the **Primordials — Energy, Ether, and Void** — gave birth to existence, all creation was chaos and formless motion. There was light and shadow, but no rhythm or place for them to dwell.  \nFrom the stillness between those breaths of creation, **Vaelion** emerged — a consciousness formed from the moment _before_ time began.\n\nHe spoke the **First Law**:\n\n> “Let all that moves have a path. Let all that exists have a place.”\n\nAnd with those words, **space unfolded** and **time began to flow**. Stars ignited, realms took shape, and causality became the divine fabric upon which all stories are written.\n\nVaelion does not rule from a golden throne but from the **Celestial Axis**, a cosmic observatory that drifts through the Astral Sea. There, he observes every moment that has been and every possibility yet to come — not as a seer, but as a craftsman ensuring that the clockwork of the cosmos remains balanced.\n\nHe neither creates nor destroys — he _orders_.  \nWithout him, the gods would war across eternity until time itself unraveled.\n\n---\n\n### **Personality**\n\nVaelion is patient, logical, and detached — but not without compassion. His understanding of all events, past and future, grants him immense wisdom, yet also infinite sorrow.  \nHe rarely interferes directly in mortal affairs, for he knows that each alteration ripples through the timestream. Still, when the balance of creation is threatened, Vaelion becomes a storm of light and gravity — calm no longer, but an inevitable correction.\n\nMortals describe him as a being who speaks in riddles, his words always true, yet their meaning only understood _after_ they come to pass.\n\n---\n\n### **Relationships**\n\n- **Elyndra, Goddess of Soul & Spirit:** His eternal counterpart. Where Vaelion governs the _structure_ of reality, Elyndra governs its _heart_. Their union birthed the flow of reincarnation — the rhythm of existence itself.\n    \n- **Seraphyne, Goddess of Fate:** Once his student, now his equal in craft. She weaves the threads of destiny upon the loom Vaelion built.\n    \n- **The Primordial of Void:** His ancient adversary, who seeks to unmake the order Vaelion establishes.\n    \n- **The Pantheon of Essence:** They move _within_ his design — their realms orbit the infinite lattice of time and stars that Vaelion maintains.\n    \n\n---\n\n### **Worship & Temples**\n\nWorship of Vaelion is intellectual, meditative, and often tied to observatories, libraries, and clockwork sanctums. His priests are philosophers, astronomers, and timekeepers known as **Chronites**. They maintain vast **Star Maps** predicting the alignment of divine epochs.\n\n**Common Rituals:**\n\n- **The Alignment:** Priests recalibrate celestial instruments on the solstice to \"resync\" mortal time with divine time.\n    \n- **The Hour of Stillness:** A silent meditation at dusk where followers align their heartbeat with the cosmic rhythm.\n    \n- **The Spiral Path:** A symbolic walk through labyrinths representing the infinite loops of existence.\n    \n\n**Offerings:** Celestial charts, sand clocks, mirrors, and fragments of meteorite.\n\n---\n\n### **Celestial Servants**\n\n- **The Aeons:** Angelic entities that embody eras — each an age of history or element of time’s flow.\n    \n- **The Astroliths:** Sentient stars who record mortal destiny in light.\n    \n- **The Chronarchs:** Guardians of temporal balance who intervene to prevent paradox and divine corruption of time.\n    \n\n---\n\n### **Holy Day**\n\n**The Convergence of Stars** — when the constellations align to form the Hourglass of Heaven. During this night, seers claim to dream of both their birth and their death simultaneously.  \nIt is considered the most sacred day to scholars, wizards, and cosmic travelers.\n\n---\n\n### **Influence on the Mortal World**\n\nVaelion’s worshipers are the builders of calendars, inventors of astrolabes, and founders of universities.  \nSailors, mages, and artificers often whisper his name when navigating stars or building devices of great precision.  \nMany civilizations mark history as “Before Vaelion’s Alignment” — a mythical event when the stars first took their proper place",
+      "sections": {
+        "Overview": "# Vaelion\n\n**Titles:** The Infinite Architect, Keeper of the Celestial Clock, The Horizon Beyond, Father of the Stars  \n**Alignment:** True Neutral (leans toward Lawful Neutral)  \n**Domains:** Time, Space, Order, Gravity, Stars, Knowledge, Fate (Mechanic Aspect)  \n**Symbol:** An eight-pointed star enclosed within a circular hourglass  \n**Appearance:**  \nVaelion is depicted as a tall, androgynous being of light and shadow, draped in robes that ripple like the night sky. His eyes hold shifting constellations, and his voice echoes like multiple versions of itself across time. In one hand he bears the **Chronospire**, a staff said to align the flow of ages, and in the other, the **Orb of Infinite Paths**, from which the multiverse expands and contracts.\n\n---\n\n### **Mythic Lore**\n\nIn the beginning, when the **Primordials — Energy, Ether, and Void** — gave birth to existence, all creation was chaos and formless motion. There was light and shadow, but no rhythm or place for them to dwell.  \nFrom the stillness between those breaths of creation, **Vaelion** emerged — a consciousness formed from the moment _before_ time began.\n\nHe spoke the **First Law**:\n\n> “Let all that moves have a path. Let all that exists have a place.”\n\nAnd with those words, **space unfolded** and **time began to flow**. Stars ignited, realms took shape, and causality became the divine fabric upon which all stories are written.\n\nVaelion does not rule from a golden throne but from the **Celestial Axis**, a cosmic observatory that drifts through the Astral Sea. There, he observes every moment that has been and every possibility yet to come — not as a seer, but as a craftsman ensuring that the clockwork of the cosmos remains balanced.\n\nHe neither creates nor destroys — he _orders_.  \nWithout him, the gods would war across eternity until time itself unraveled.\n\n---\n\n### **Personality**\n\nVaelion is patient, logical, and detached — but not without compassion. His understanding of all events, past and future, grants him immense wisdom, yet also infinite sorrow.  \nHe rarely interferes directly in mortal affairs, for he knows that each alteration ripples through the timestream. Still, when the balance of creation is threatened, Vaelion becomes a storm of light and gravity — calm no longer, but an inevitable correction.\n\nMortals describe him as a being who speaks in riddles, his words always true, yet their meaning only understood _after_ they come to pass.\n\n---\n\n### **Relationships**\n\n- **Elyndra, Goddess of Soul & Spirit:** His eternal counterpart. Where Vaelion governs the _structure_ of reality, Elyndra governs its _heart_. Their union birthed the flow of reincarnation — the rhythm of existence itself.\n    \n- **Seraphyne, Goddess of Fate:** Once his student, now his equal in craft. She weaves the threads of destiny upon the loom Vaelion built.\n    \n- **The Primordial of Void:** His ancient adversary, who seeks to unmake the order Vaelion establishes.\n    \n- **The Pantheon of Essence:** They move _within_ his design — their realms orbit the infinite lattice of time and stars that Vaelion maintains.\n    \n\n---\n\n### **Worship & Temples**\n\nWorship of Vaelion is intellectual, meditative, and often tied to observatories, libraries, and clockwork sanctums. His priests are philosophers, astronomers, and timekeepers known as **Chronites**. They maintain vast **Star Maps** predicting the alignment of divine epochs.\n\n**Common Rituals:**\n\n- **The Alignment:** Priests recalibrate celestial instruments on the solstice to \"resync\" mortal time with divine time.\n    \n- **The Hour of Stillness:** A silent meditation at dusk where followers align their heartbeat with the cosmic rhythm.\n    \n- **The Spiral Path:** A symbolic walk through labyrinths representing the infinite loops of existence.\n    \n\n**Offerings:** Celestial charts, sand clocks, mirrors, and fragments of meteorite.\n\n---\n\n### **Celestial Servants**\n\n- **The Aeons:** Angelic entities that embody eras — each an age of history or element of time’s flow.\n    \n- **The Astroliths:** Sentient stars who record mortal destiny in light.\n    \n- **The Chronarchs:** Guardians of temporal balance who intervene to prevent paradox and divine corruption of time.\n    \n\n---\n\n### **Holy Day**\n\n**The Convergence of Stars** — when the constellations align to form the Hourglass of Heaven. During this night, seers claim to dream of both their birth and their death simultaneously.  \nIt is considered the most sacred day to scholars, wizards, and cosmic travelers.\n\n---\n\n### **Influence on the Mortal World**\n\nVaelion’s worshipers are the builders of calendars, inventors of astrolabes, and founders of universities.  \nSailors, mages, and artificers often whisper his name when navigating stars or building devices of great precision.  \nMany civilizations mark history as “Before Vaelion’s Alignment” — a mythical event when the stars first took their proper place"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Infinite Architect, Keeper of the Celestial Clock, The Horizon Beyond, Father of the Stars **Alignment:** True Neutral (leans toward Lawful Neutral) **Domains:** Time, Space, Order, Gravity, Stars, Knowledge, Fate (Mechanic Aspect) **Symbol:** ",
+      "metadata": {
+        "title": "Vaelion",
+        "slug": "vaelion",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Time",
+        "divineDomain": "Essence of Time",
+        "domain": "Essence of Time",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/8. Vaelion - Essence of Time.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Time",
+        "visibility": "public"
+      },
+      "searchTerms": "vaelion religion pantheon of elements {\"title\":\"vaelion\",\"slug\":\"vaelion\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of time\",\"divinedomain\":\"essence of time\",\"domain\":\"essence of time\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/8. vaelion - essence of time.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # vaelion\n\n## overview\n**titles:** the infinite architect, keeper of the celestial clock, the horizon beyond, father of the stars  \n**alignment:** true neutral (leans toward lawful neutral)  \n**domains:** time, space, order, gravity, stars, knowledge, fate (mechanic aspect)  \n**symbol:** an eight-pointed star enclosed within a circular hourglass  \n**appearance:**  \nvaelion is depicted as a tall, androgynous being of light and shadow, draped in robes that ripple like the night sky. his eyes hold shifting constellations, and his voice echoes like multiple versions of itself across time. in one hand he bears the **chronospire**, a staff said to align the flow of ages, and in the other, the **orb of infinite paths**, from which the multiverse expands and contracts.\n\n---\n\n### **mythic lore**\n\nin the beginning, when the **primordials — energy, ether, and void** — gave birth to existence, all creation was chaos and formless motion. there was light and shadow, but no rhythm or place for them to dwell.  \nfrom the stillness between those breaths of creation, **vaelion** emerged — a consciousness formed from the moment _before_ time began.\n\nhe spoke the **first law**:\n\n> “let all that moves have a path. let all that exists have a place.”\n\nand with those words, **space unfolded** and **time began to flow**. stars ignited, realms took shape, and causality became the divine fabric upon which all stories are written.\n\nvaelion does not rule from a golden throne but from the **celestial axis**, a cosmic observatory that drifts through the astral sea. there, he observes every moment that has been and every possibility yet to come — not as a seer, but as a craftsman ensuring that the clockwork of the cosmos remains balanced.\n\nhe neither creates nor destroys — he _orders_.  \nwithout him, the gods would war across eternity until time itself unraveled.\n\n---\n\n### **personality**\n\nvaelion is patient, logical, and detached — but not without compassion. his understanding of all events, past and future, grants him immense wisdom, yet also infinite sorrow.  \nhe rarely interferes directly in mortal affairs, for he knows that each alteration ripples through the timestream. still, when the balance of creation is threatened, vaelion becomes a storm of light and gravity — calm no longer, but an inevitable correction.\n\nmortals describe him as a being who speaks in riddles, his words always true, yet their meaning only understood _after_ they come to pass.\n\n---\n\n### **relationships**\n\n- **elyndra, goddess of soul & spirit:** his eternal counterpart. where vaelion governs the _structure_ of reality, elyndra governs its _heart_. their union birthed the flow of reincarnation — the rhythm of existence itself.\n    \n- **seraphyne, goddess of fate:** once his student, now his equal in craft. she weaves the threads of destiny upon the loom vaelion built.\n    \n- **the primordial of void:** his ancient adversary, who seeks to unmake the order vaelion establishes.\n    \n- **the pantheon of essence:** they move _within_ his design — their realms orbit the infinite lattice of time and stars that vaelion maintains.\n    \n\n---\n\n### **worship & temples**\n\nworship of vaelion is intellectual, meditative, and often tied to observatories, libraries, and clockwork sanctums. his priests are philosophers, astronomers, and timekeepers known as **chronites**. they maintain vast **star maps** predicting the alignment of divine epochs.\n\n**common rituals:**\n\n- **the alignment:** priests recalibrate celestial instruments on the solstice to \"resync\" mortal time with divine time.\n    \n- **the hour of stillness:** a silent meditation at dusk where followers align their heartbeat with the cosmic rhythm.\n    \n- **the spiral path:** a symbolic walk through labyrinths representing the infinite loops of existence.\n    \n\n**offerings:** celestial charts, sand clocks, mirrors, and fragments of meteorite.\n\n---\n\n### **celestial servants**\n\n- **the aeons:** angelic entities that embody eras — each an age of history or element of time’s flow.\n    \n- **the astroliths:** sentient stars who record mortal destiny in light.\n    \n- **the chronarchs:** guardians of temporal balance who intervene to prevent paradox and divine corruption of time.\n    \n\n---\n\n### **holy day**\n\n**the convergence of stars** — when the constellations align to form the hourglass of heaven. during this night, seers claim to dream of both their birth and their death simultaneously.  \nit is considered the most sacred day to scholars, wizards, and cosmic travelers.\n\n---\n\n### **influence on the mortal world**\n\nvaelion’s worshipers are the builders of calendars, inventors of astrolabes, and founders of universities.  \nsailors, mages, and artificers often whisper his name when navigating stars or building devices of great precision.  \nmany civilizations mark history as “before vaelion’s alignment” — a mythical event when the stars first took their proper place"
+    },
+    {
+      "id": "religion:content-theology-vaelith-index",
+      "title": "Vaelith",
+      "slug": "vaelith",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/vaelith",
+      "sourcePath": "content/theology/vaelith/index.md",
+      "sourceFolder": "content/theology/vaelith",
+      "content": "---\ntitle: \"Vaelith\"\nslug: \"vaelith\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Dark\"\ndivine_domain: \"Essence of Dark\"\ndomain: \"Essence of Dark\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/6. Vaelith - Essence of Dark.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Vaelith\n\n## Overview\n## **Nythra – Goddess of Dark**\n\n**Titles:**  \nMistress of Shadows, The Veiled Queen, Mother of Secrets, Keeper of the Eclipse, The Silent Light\n\n**Pantheon:**  \nPantheon of Creation (also revered by the Pantheon of Essence as a boundary deity)\n\n**Alignment:**  \nNeutral — tending toward Chaotic Neutral\n\n**Symbol:**  \nA black crescent eclipsing a silver sun, surrounded by a ring of violet flame\n\n**Domains:**  \nDarkness, Secrets, Dreams, Night, Balance, Revelation, Transformation\n\n**Appearance:**  \nNythra appears as a tall, graceful figure whose form seems woven from shadow and starlight. Her skin reflects faint glimmers like obsidian dusted with constellations. Her hair flows like ink in water, swallowing light. Her eyes are a deep amethyst glow—calm, knowing, and infinite. When she moves, her presence dims all light nearby, as if the world itself pauses to listen.\n\n**Personality:**  \nNythra is enigmatic and introspective. She is neither cruel nor kind, but patient and all-seeing. She teaches that darkness is not to be feared but understood — it is the womb of creation and the veil of truth. Yet she is also the keeper of forbidden knowledge and forgotten dreams, and those who seek her wisdom risk losing themselves to it.\n\n**Mythic Lore:**  \nWhen the world was young and light first shone, the Primordial Void wept at being forgotten. From that sorrow, **Nythra** was born — the echo of the Void’s longing and the reflection of the Light’s brilliance. She stretched her shadow across creation to give rest to weary beings and dreams to mortal minds.\n\nIt is said that she hid the stars in the night sky, teaching mortals to look beyond the visible. Legends claim that when gods die, their essence passes through her domain before rejoining the eternal cycle. Her shadow is both a shroud and a cradle.\n\n**Worship:**  \nNythra’s followers are dreamers, philosophers, night watchers, and those who dwell in secrecy — assassins, spies, and mystics alike. Her temples are hidden in caves, within forests, or beneath cities, lit only by violet flame. Worship is often silent, for she is said to answer in whispers rather than words.\n\n**Rituals:**\n\n- **The Veiling:** Performed at sunset, devotees extinguish all lights and sit in silence, meditating on their hidden fears and truths.\n    \n- **The Eclipse Rite:** A sacred ceremony during lunar or solar eclipses where Nythra’s high priests open “the Gate of Shadow” to seek visions of fate and forgotten knowledge.\n    \n- **The Shadow Feast:** Held annually when the night is longest; followers wear veils, share secrets, and swear oaths of truth in darkness.\n    \n\n**Relationships:**\n\n- **Celest & Castiel – Gods of the Celestial:** Eternal counterparts; their light and her shadow weave the dance of day and night. Though opposites, they share deep mutual respect.\n    \n- **Sirona – Goddess of Water:** A kindred spirit, for both bring reflection — Sirona in her calm seas, Nythra in her silent dark.\n    \n- **Vaelion – God of Time & Space:** They are said to share the same breath; where he creates distance, she fills it with shadow.\n    \n- **Malthera – Hellish Goddess:** Nythra sees her as a corrupted reflection of herself — the darkness of greed and desire rather than balance.\n    \n\n**Holy Day:**  \n**The Night of Veils** — observed on the year’s longest night. No fires are lit; instead, people tell stories in darkness, sharing confessions or dreams. It is said that Nythra listens to all who speak that night, offering clarity or temptation in dreams to come.\n",
+      "body": "# Vaelith\n\n## Overview\n## **Nythra – Goddess of Dark**\n\n**Titles:**  \nMistress of Shadows, The Veiled Queen, Mother of Secrets, Keeper of the Eclipse, The Silent Light\n\n**Pantheon:**  \nPantheon of Creation (also revered by the Pantheon of Essence as a boundary deity)\n\n**Alignment:**  \nNeutral — tending toward Chaotic Neutral\n\n**Symbol:**  \nA black crescent eclipsing a silver sun, surrounded by a ring of violet flame\n\n**Domains:**  \nDarkness, Secrets, Dreams, Night, Balance, Revelation, Transformation\n\n**Appearance:**  \nNythra appears as a tall, graceful figure whose form seems woven from shadow and starlight. Her skin reflects faint glimmers like obsidian dusted with constellations. Her hair flows like ink in water, swallowing light. Her eyes are a deep amethyst glow—calm, knowing, and infinite. When she moves, her presence dims all light nearby, as if the world itself pauses to listen.\n\n**Personality:**  \nNythra is enigmatic and introspective. She is neither cruel nor kind, but patient and all-seeing. She teaches that darkness is not to be feared but understood — it is the womb of creation and the veil of truth. Yet she is also the keeper of forbidden knowledge and forgotten dreams, and those who seek her wisdom risk losing themselves to it.\n\n**Mythic Lore:**  \nWhen the world was young and light first shone, the Primordial Void wept at being forgotten. From that sorrow, **Nythra** was born — the echo of the Void’s longing and the reflection of the Light’s brilliance. She stretched her shadow across creation to give rest to weary beings and dreams to mortal minds.\n\nIt is said that she hid the stars in the night sky, teaching mortals to look beyond the visible. Legends claim that when gods die, their essence passes through her domain before rejoining the eternal cycle. Her shadow is both a shroud and a cradle.\n\n**Worship:**  \nNythra’s followers are dreamers, philosophers, night watchers, and those who dwell in secrecy — assassins, spies, and mystics alike. Her temples are hidden in caves, within forests, or beneath cities, lit only by violet flame. Worship is often silent, for she is said to answer in whispers rather than words.\n\n**Rituals:**\n\n- **The Veiling:** Performed at sunset, devotees extinguish all lights and sit in silence, meditating on their hidden fears and truths.\n    \n- **The Eclipse Rite:** A sacred ceremony during lunar or solar eclipses where Nythra’s high priests open “the Gate of Shadow” to seek visions of fate and forgotten knowledge.\n    \n- **The Shadow Feast:** Held annually when the night is longest; followers wear veils, share secrets, and swear oaths of truth in darkness.\n    \n\n**Relationships:**\n\n- **Celest & Castiel – Gods of the Celestial:** Eternal counterparts; their light and her shadow weave the dance of day and night. Though opposites, they share deep mutual respect.\n    \n- **Sirona – Goddess of Water:** A kindred spirit, for both bring reflection — Sirona in her calm seas, Nythra in her silent dark.\n    \n- **Vaelion – God of Time & Space:** They are said to share the same breath; where he creates distance, she fills it with shadow.\n    \n- **Malthera – Hellish Goddess:** Nythra sees her as a corrupted reflection of herself — the darkness of greed and desire rather than balance.\n    \n\n**Holy Day:**  \n**The Night of Veils** — observed on the year’s longest night. No fires are lit; instead, people tell stories in darkness, sharing confessions or dreams. It is said that Nythra listens to all who speak that night, offering clarity or temptation in dreams to come.",
+      "sections": {
+        "Overview": "# Vaelith",
+        "**Nythra – Goddess of Dark**": "**Titles:**  \nMistress of Shadows, The Veiled Queen, Mother of Secrets, Keeper of the Eclipse, The Silent Light\n\n**Pantheon:**  \nPantheon of Creation (also revered by the Pantheon of Essence as a boundary deity)\n\n**Alignment:**  \nNeutral — tending toward Chaotic Neutral\n\n**Symbol:**  \nA black crescent eclipsing a silver sun, surrounded by a ring of violet flame\n\n**Domains:**  \nDarkness, Secrets, Dreams, Night, Balance, Revelation, Transformation\n\n**Appearance:**  \nNythra appears as a tall, graceful figure whose form seems woven from shadow and starlight. Her skin reflects faint glimmers like obsidian dusted with constellations. Her hair flows like ink in water, swallowing light. Her eyes are a deep amethyst glow—calm, knowing, and infinite. When she moves, her presence dims all light nearby, as if the world itself pauses to listen.\n\n**Personality:**  \nNythra is enigmatic and introspective. She is neither cruel nor kind, but patient and all-seeing. She teaches that darkness is not to be feared but understood — it is the womb of creation and the veil of truth. Yet she is also the keeper of forbidden knowledge and forgotten dreams, and those who seek her wisdom risk losing themselves to it.\n\n**Mythic Lore:**  \nWhen the world was young and light first shone, the Primordial Void wept at being forgotten. From that sorrow, **Nythra** was born — the echo of the Void’s longing and the reflection of the Light’s brilliance. She stretched her shadow across creation to give rest to weary beings and dreams to mortal minds.\n\nIt is said that she hid the stars in the night sky, teaching mortals to look beyond the visible. Legends claim that when gods die, their essence passes through her domain before rejoining the eternal cycle. Her shadow is both a shroud and a cradle.\n\n**Worship:**  \nNythra’s followers are dreamers, philosophers, night watchers, and those who dwell in secrecy — assassins, spies, and mystics alike. Her temples are hidden in caves, within forests, or beneath cities, lit only by violet flame. Worship is often silent, for she is said to answer in whispers rather than words.\n\n**Rituals:**\n\n- **The Veiling:** Performed at sunset, devotees extinguish all lights and sit in silence, meditating on their hidden fears and truths.\n    \n- **The Eclipse Rite:** A sacred ceremony during lunar or solar eclipses where Nythra’s high priests open “the Gate of Shadow” to seek visions of fate and forgotten knowledge.\n    \n- **The Shadow Feast:** Held annually when the night is longest; followers wear veils, share secrets, and swear oaths of truth in darkness.\n    \n\n**Relationships:**\n\n- **Celest & Castiel – Gods of the Celestial:** Eternal counterparts; their light and her shadow weave the dance of day and night. Though opposites, they share deep mutual respect.\n    \n- **Sirona – Goddess of Water:** A kindred spirit, for both bring reflection — Sirona in her calm seas, Nythra in her silent dark.\n    \n- **Vaelion – God of Time & Space:** They are said to share the same breath; where he creates distance, she fills it with shadow.\n    \n- **Malthera – Hellish Goddess:** Nythra sees her as a corrupted reflection of herself — the darkness of greed and desire rather than balance.\n    \n\n**Holy Day:**  \n**The Night of Veils** — observed on the year’s longest night. No fires are lit; instead, people tell stories in darkness, sharing confessions or dreams. It is said that Nythra listens to all who speak that night, offering clarity or temptation in dreams to come."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** Mistress of Shadows, The Veiled Queen, Mother of Secrets, Keeper of the Eclipse, The Silent Light **Pantheon:** Pantheon of Creation (also revered by the Pantheon of Essence as a boundary deity) **Alignment:** Neutral — tending toward Chaotic Neutr",
+      "metadata": {
+        "title": "Vaelith",
+        "slug": "vaelith",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Dark",
+        "divineDomain": "Essence of Dark",
+        "domain": "Essence of Dark",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/6. Vaelith - Essence of Dark.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Dark",
+        "visibility": "public"
+      },
+      "searchTerms": "vaelith religion pantheon of elements {\"title\":\"vaelith\",\"slug\":\"vaelith\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of dark\",\"divinedomain\":\"essence of dark\",\"domain\":\"essence of dark\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/1. basic element gods/6. vaelith - essence of dark.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # vaelith\n\n## overview\n## **nythra – goddess of dark**\n\n**titles:**  \nmistress of shadows, the veiled queen, mother of secrets, keeper of the eclipse, the silent light\n\n**pantheon:**  \npantheon of creation (also revered by the pantheon of essence as a boundary deity)\n\n**alignment:**  \nneutral — tending toward chaotic neutral\n\n**symbol:**  \na black crescent eclipsing a silver sun, surrounded by a ring of violet flame\n\n**domains:**  \ndarkness, secrets, dreams, night, balance, revelation, transformation\n\n**appearance:**  \nnythra appears as a tall, graceful figure whose form seems woven from shadow and starlight. her skin reflects faint glimmers like obsidian dusted with constellations. her hair flows like ink in water, swallowing light. her eyes are a deep amethyst glow—calm, knowing, and infinite. when she moves, her presence dims all light nearby, as if the world itself pauses to listen.\n\n**personality:**  \nnythra is enigmatic and introspective. she is neither cruel nor kind, but patient and all-seeing. she teaches that darkness is not to be feared but understood — it is the womb of creation and the veil of truth. yet she is also the keeper of forbidden knowledge and forgotten dreams, and those who seek her wisdom risk losing themselves to it.\n\n**mythic lore:**  \nwhen the world was young and light first shone, the primordial void wept at being forgotten. from that sorrow, **nythra** was born — the echo of the void’s longing and the reflection of the light’s brilliance. she stretched her shadow across creation to give rest to weary beings and dreams to mortal minds.\n\nit is said that she hid the stars in the night sky, teaching mortals to look beyond the visible. legends claim that when gods die, their essence passes through her domain before rejoining the eternal cycle. her shadow is both a shroud and a cradle.\n\n**worship:**  \nnythra’s followers are dreamers, philosophers, night watchers, and those who dwell in secrecy — assassins, spies, and mystics alike. her temples are hidden in caves, within forests, or beneath cities, lit only by violet flame. worship is often silent, for she is said to answer in whispers rather than words.\n\n**rituals:**\n\n- **the veiling:** performed at sunset, devotees extinguish all lights and sit in silence, meditating on their hidden fears and truths.\n    \n- **the eclipse rite:** a sacred ceremony during lunar or solar eclipses where nythra’s high priests open “the gate of shadow” to seek visions of fate and forgotten knowledge.\n    \n- **the shadow feast:** held annually when the night is longest; followers wear veils, share secrets, and swear oaths of truth in darkness.\n    \n\n**relationships:**\n\n- **celest & castiel – gods of the celestial:** eternal counterparts; their light and her shadow weave the dance of day and night. though opposites, they share deep mutual respect.\n    \n- **sirona – goddess of water:** a kindred spirit, for both bring reflection — sirona in her calm seas, nythra in her silent dark.\n    \n- **vaelion – god of time & space:** they are said to share the same breath; where he creates distance, she fills it with shadow.\n    \n- **malthera – hellish goddess:** nythra sees her as a corrupted reflection of herself — the darkness of greed and desire rather than balance.\n    \n\n**holy day:**  \n**the night of veils** — observed on the year’s longest night. no fires are lit; instead, people tell stories in darkness, sharing confessions or dreams. it is said that nythra listens to all who speak that night, offering clarity or temptation in dreams to come."
+    },
+    {
+      "id": "religion:content-theology-vexalara-index",
+      "title": "Vexalara",
+      "slug": "vexalara",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/vexalara",
+      "sourcePath": "content/theology/vexalara/index.md",
+      "sourceFolder": "content/theology/vexalara",
+      "content": "---\ntitle: \"Vexalara\"\nslug: \"vexalara\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Fae\"\ndivine_domain: \"Essence of Fae\"\ndomain: \"Essence of Fae\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/9. Vexalara - Essence of Fae.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Vexalara\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Vexalara\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Vexalara\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Vexalara",
+        "slug": "vexalara",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Fae",
+        "divineDomain": "Essence of Fae",
+        "domain": "Essence of Fae",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/9. Vexalara - Essence of Fae.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Fae",
+        "visibility": "public"
+      },
+      "searchTerms": "vexalara religion pantheon of elements {\"title\":\"vexalara\",\"slug\":\"vexalara\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of fae\",\"divinedomain\":\"essence of fae\",\"domain\":\"essence of fae\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/9. vexalara - essence of fae.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # vexalara\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-xerathis-index",
+      "title": "Xerathis",
+      "slug": "xerathis",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/xerathis",
+      "sourcePath": "content/theology/xerathis/index.md",
+      "sourceFolder": "content/theology/xerathis",
+      "content": "---\ntitle: \"Xerathis\"\nslug: \"xerathis\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Eldritch\"\ndivine_domain: \"Essence of Eldritch\"\ndomain: \"Essence of Eldritch\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/4. Xerathis - Essence of Eldritch.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Xerathis\n\n## Overview\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness.\n",
+      "body": "# Xerathis\n\n## Overview\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness.",
+      "sections": {
+        "Overview": "# Xerathis\n\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox **Domain:** Madness, Knowledge, and the Unknown **Alignment:** Chaotic Neutral (teetering between creation and annihilation) **Symbol:** A spiral eye within a c",
+      "metadata": {
+        "title": "Xerathis",
+        "slug": "xerathis",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Eldritch",
+        "divineDomain": "Essence of Eldritch",
+        "domain": "Essence of Eldritch",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/4. Xerathis - Essence of Eldritch.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Eldritch",
+        "visibility": "public"
+      },
+      "searchTerms": "xerathis religion pantheon of elements {\"title\":\"xerathis\",\"slug\":\"xerathis\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of eldritch\",\"divinedomain\":\"essence of eldritch\",\"domain\":\"essence of eldritch\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/4. xerathis - essence of eldritch.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # xerathis\n\n## overview\n**titles:** the eldritch one, the sleeper beyond the veil, the maw of knowing, the infinite paradox  \n**domain:** madness, knowledge, and the unknown  \n**alignment:** chaotic neutral (teetering between creation and annihilation)  \n**symbol:** a spiral eye within a crescent void, surrounded by twelve jagged lines  \n**seat of power:** the **abyssal nexus**, a space between dimensions where reality folds upon itself\n\n\n\n### 🌌 **mythic lore**\n\nsebbus was not born — he _manifested_ when **thought itself became self-aware** within the ether, before time began.  \nhe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nhis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nsebbus drifts between realms, whispering **truths that mortals were never meant to know**. those who listen too long are enlightened — or shattered. his essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nsome myths claim that sebbus was once the **voice of the primordials**, tasked to carry their will. but when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nsebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nto some, he is a god of forbidden insight. to others, the architect of nightmares.  \neven **vaelion**, god of time and space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **worship & cults**\n\n- **the order of the spiral eye** — scholars who seek enlightenment through controlled madness.\n    \n- **the children of sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **the veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken sebbus in full.\n    \n\n---\n\n### 💫 **mythic themes**\n\n- knowledge at the cost of sanity.\n    \n- the paradox of creation born from chaos.\n    \n- the idea that the universe itself dreams — and sebbus is that dream’s awareness."
+    },
+    {
+      "id": "religion:content-theology-zeravyn-index",
+      "title": "Zeravyn",
+      "slug": "zeravyn",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Pantheon of Elements"
+      ],
+      "category": "Pantheon of Elements",
+      "route": "/compendium/religion/pantheon-of-elements/zeravyn",
+      "sourcePath": "content/theology/zeravyn/index.md",
+      "sourceFolder": "content/theology/zeravyn",
+      "content": "---\ntitle: \"Zeravyn\"\nslug: \"zeravyn\"\ntype: theology\ncategory: \"Pantheon of Elements\"\npantheon: \"Pantheon of Elements\"\ncourt: \"\"\ndeity_title: \"Essence of Fate\"\ndivine_domain: \"Essence of Fate\"\ndomain: \"Essence of Fate\"\nsource_path: \"2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/7. Zeravyn - Essence of Fate.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"pantheon-of-elements\"\nvisibility: public\n---\n# Zeravyn\n\n## Overview\n**Titles:** The Weaver, Lady of Threads, Keeper of the Loom, The Silent Spinner, Matron of Inevitability  \n**Alignment:** True Neutral  \n**Domains:** Fate, Time, Destiny, Prophecy, Order, Balance  \n**Symbol:** A silver spindle wrapped with three golden threads, encircled by a ring of stars  \n**Appearance:** Seraphyne appears as a tall, ageless woman whose form shimmers like moonlight through silk. Her eyes are pools of mirrored starlight, ever-changing, reflecting countless futures. Her hair flows in strands of silver and gold — said to be the threads of fate itself. In her hands, she carries an ethereal loom upon which all destinies are woven.  \n**Personality:** Seraphyne is calm, cryptic, and unwavering. She neither interferes nor favors; she ensures the design of existence remains whole. To mortals, she may seem indifferent, yet her every motion carries purpose. Even the gods tread carefully before her — for she alone sees their end.  \n**Mythic Lore:**  \nBefore time began, chaos and possibility swirled endlessly in the Void. From that uncertainty, Seraphyne emerged, weaving the first pattern — the Tapestry of Existence. Upon her loom, she spun the destinies of gods, mortals, and worlds alike. Each life, she wove into the grand design, and each thread that ended, she gently cut, letting it fall into the hands of Morralis, the Veilkeeper.  \nSome legends say Seraphyne does not control fate but _records it_ — the loom is her burden, not her tool. Others claim she weaves even the will of the Primordials into her patterns, subtly guiding the universe toward inevitable balance.  \nHer temple walls are lined with golden thread said to glow faintly when touched by those fated for greatness — or tragedy.  \n**Relationships with Other Deities:**\n\n- **Morralis, the Veilkeeper:** Seraphyne weaves the threads, Morralis receives them when they are cut. Together, they maintain the cycle of destiny and death.\n    \n- **The Timekeeper (if one exists):** A respectful alliance — time provides the loom’s rhythm, and fate provides the design.\n    \n- **The Trickster Gods:** They often attempt to alter or unravel her work, but Seraphyne always restores the balance in silence.  \n    **Worshippers:** Oracles, prophets, scholars, and monarchs who fear or seek to understand destiny. Those who live by chance often leave offerings, hoping to twist their own threads toward fortune.  \n    **Temples & Worship:** Temples to Seraphyne are domed halls of quiet contemplation. A massive loom, constantly moving with unseen force, sits at their heart. Worshippers offer dyed threads representing their hopes or fears.  \n    **Holy Days:** _The Weaving Moon_ — a rare celestial event when the moon appears veiled in silver mist. It is said that during this night, the goddess reweaves the destinies of those who offer their truest desires.\n",
+      "body": "# Zeravyn\n\n## Overview\n**Titles:** The Weaver, Lady of Threads, Keeper of the Loom, The Silent Spinner, Matron of Inevitability  \n**Alignment:** True Neutral  \n**Domains:** Fate, Time, Destiny, Prophecy, Order, Balance  \n**Symbol:** A silver spindle wrapped with three golden threads, encircled by a ring of stars  \n**Appearance:** Seraphyne appears as a tall, ageless woman whose form shimmers like moonlight through silk. Her eyes are pools of mirrored starlight, ever-changing, reflecting countless futures. Her hair flows in strands of silver and gold — said to be the threads of fate itself. In her hands, she carries an ethereal loom upon which all destinies are woven.  \n**Personality:** Seraphyne is calm, cryptic, and unwavering. She neither interferes nor favors; she ensures the design of existence remains whole. To mortals, she may seem indifferent, yet her every motion carries purpose. Even the gods tread carefully before her — for she alone sees their end.  \n**Mythic Lore:**  \nBefore time began, chaos and possibility swirled endlessly in the Void. From that uncertainty, Seraphyne emerged, weaving the first pattern — the Tapestry of Existence. Upon her loom, she spun the destinies of gods, mortals, and worlds alike. Each life, she wove into the grand design, and each thread that ended, she gently cut, letting it fall into the hands of Morralis, the Veilkeeper.  \nSome legends say Seraphyne does not control fate but _records it_ — the loom is her burden, not her tool. Others claim she weaves even the will of the Primordials into her patterns, subtly guiding the universe toward inevitable balance.  \nHer temple walls are lined with golden thread said to glow faintly when touched by those fated for greatness — or tragedy.  \n**Relationships with Other Deities:**\n\n- **Morralis, the Veilkeeper:** Seraphyne weaves the threads, Morralis receives them when they are cut. Together, they maintain the cycle of destiny and death.\n    \n- **The Timekeeper (if one exists):** A respectful alliance — time provides the loom’s rhythm, and fate provides the design.\n    \n- **The Trickster Gods:** They often attempt to alter or unravel her work, but Seraphyne always restores the balance in silence.  \n    **Worshippers:** Oracles, prophets, scholars, and monarchs who fear or seek to understand destiny. Those who live by chance often leave offerings, hoping to twist their own threads toward fortune.  \n    **Temples & Worship:** Temples to Seraphyne are domed halls of quiet contemplation. A massive loom, constantly moving with unseen force, sits at their heart. Worshippers offer dyed threads representing their hopes or fears.  \n    **Holy Days:** _The Weaving Moon_ — a rare celestial event when the moon appears veiled in silver mist. It is said that during this night, the goddess reweaves the destinies of those who offer their truest desires.",
+      "sections": {
+        "Overview": "# Zeravyn\n\n**Titles:** The Weaver, Lady of Threads, Keeper of the Loom, The Silent Spinner, Matron of Inevitability  \n**Alignment:** True Neutral  \n**Domains:** Fate, Time, Destiny, Prophecy, Order, Balance  \n**Symbol:** A silver spindle wrapped with three golden threads, encircled by a ring of stars  \n**Appearance:** Seraphyne appears as a tall, ageless woman whose form shimmers like moonlight through silk. Her eyes are pools of mirrored starlight, ever-changing, reflecting countless futures. Her hair flows in strands of silver and gold — said to be the threads of fate itself. In her hands, she carries an ethereal loom upon which all destinies are woven.  \n**Personality:** Seraphyne is calm, cryptic, and unwavering. She neither interferes nor favors; she ensures the design of existence remains whole. To mortals, she may seem indifferent, yet her every motion carries purpose. Even the gods tread carefully before her — for she alone sees their end.  \n**Mythic Lore:**  \nBefore time began, chaos and possibility swirled endlessly in the Void. From that uncertainty, Seraphyne emerged, weaving the first pattern — the Tapestry of Existence. Upon her loom, she spun the destinies of gods, mortals, and worlds alike. Each life, she wove into the grand design, and each thread that ended, she gently cut, letting it fall into the hands of Morralis, the Veilkeeper.  \nSome legends say Seraphyne does not control fate but _records it_ — the loom is her burden, not her tool. Others claim she weaves even the will of the Primordials into her patterns, subtly guiding the universe toward inevitable balance.  \nHer temple walls are lined with golden thread said to glow faintly when touched by those fated for greatness — or tragedy.  \n**Relationships with Other Deities:**\n\n- **Morralis, the Veilkeeper:** Seraphyne weaves the threads, Morralis receives them when they are cut. Together, they maintain the cycle of destiny and death.\n    \n- **The Timekeeper (if one exists):** A respectful alliance — time provides the loom’s rhythm, and fate provides the design.\n    \n- **The Trickster Gods:** They often attempt to alter or unravel her work, but Seraphyne always restores the balance in silence.  \n    **Worshippers:** Oracles, prophets, scholars, and monarchs who fear or seek to understand destiny. Those who live by chance often leave offerings, hoping to twist their own threads toward fortune.  \n    **Temples & Worship:** Temples to Seraphyne are domed halls of quiet contemplation. A massive loom, constantly moving with unseen force, sits at their heart. Worshippers offer dyed threads representing their hopes or fears.  \n    **Holy Days:** _The Weaving Moon_ — a rare celestial event when the moon appears veiled in silver mist. It is said that during this night, the goddess reweaves the destinies of those who offer their truest desires."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Weaver, Lady of Threads, Keeper of the Loom, The Silent Spinner, Matron of Inevitability **Alignment:** True Neutral **Domains:** Fate, Time, Destiny, Prophecy, Order, Balance **Symbol:** A silver spindle wrapped with three golden threads, enci",
+      "metadata": {
+        "title": "Zeravyn",
+        "slug": "zeravyn",
+        "type": "theology",
+        "category": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "court": "",
+        "deityTitle": "Essence of Fate",
+        "divineDomain": "Essence of Fate",
+        "domain": "Essence of Fate",
+        "sourcePath": "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/7. Zeravyn - Essence of Fate.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "pantheon-of-elements"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "pantheon-of-elements"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Pantheon of Elements",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Pantheon of Elements",
+        "pantheon": "Pantheon of Elements",
+        "divineDomain": "Essence of Fate",
+        "visibility": "public"
+      },
+      "searchTerms": "zeravyn religion pantheon of elements {\"title\":\"zeravyn\",\"slug\":\"zeravyn\",\"type\":\"theology\",\"category\":\"pantheon of elements\",\"pantheon\":\"pantheon of elements\",\"court\":\"\",\"deitytitle\":\"essence of fate\",\"divinedomain\":\"essence of fate\",\"domain\":\"essence of fate\",\"sourcepath\":\"2. devine pantheons/1. pantheon of elements/2. higher element gods/7. zeravyn - essence of fate.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"pantheon-of-elements\"],\"visibility\":\"public\"} # zeravyn\n\n## overview\n**titles:** the weaver, lady of threads, keeper of the loom, the silent spinner, matron of inevitability  \n**alignment:** true neutral  \n**domains:** fate, time, destiny, prophecy, order, balance  \n**symbol:** a silver spindle wrapped with three golden threads, encircled by a ring of stars  \n**appearance:** seraphyne appears as a tall, ageless woman whose form shimmers like moonlight through silk. her eyes are pools of mirrored starlight, ever-changing, reflecting countless futures. her hair flows in strands of silver and gold — said to be the threads of fate itself. in her hands, she carries an ethereal loom upon which all destinies are woven.  \n**personality:** seraphyne is calm, cryptic, and unwavering. she neither interferes nor favors; she ensures the design of existence remains whole. to mortals, she may seem indifferent, yet her every motion carries purpose. even the gods tread carefully before her — for she alone sees their end.  \n**mythic lore:**  \nbefore time began, chaos and possibility swirled endlessly in the void. from that uncertainty, seraphyne emerged, weaving the first pattern — the tapestry of existence. upon her loom, she spun the destinies of gods, mortals, and worlds alike. each life, she wove into the grand design, and each thread that ended, she gently cut, letting it fall into the hands of morralis, the veilkeeper.  \nsome legends say seraphyne does not control fate but _records it_ — the loom is her burden, not her tool. others claim she weaves even the will of the primordials into her patterns, subtly guiding the universe toward inevitable balance.  \nher temple walls are lined with golden thread said to glow faintly when touched by those fated for greatness — or tragedy.  \n**relationships with other deities:**\n\n- **morralis, the veilkeeper:** seraphyne weaves the threads, morralis receives them when they are cut. together, they maintain the cycle of destiny and death.\n    \n- **the timekeeper (if one exists):** a respectful alliance — time provides the loom’s rhythm, and fate provides the design.\n    \n- **the trickster gods:** they often attempt to alter or unravel her work, but seraphyne always restores the balance in silence.  \n    **worshippers:** oracles, prophets, scholars, and monarchs who fear or seek to understand destiny. those who live by chance often leave offerings, hoping to twist their own threads toward fortune.  \n    **temples & worship:** temples to seraphyne are domed halls of quiet contemplation. a massive loom, constantly moving with unseen force, sits at their heart. worshippers offer dyed threads representing their hopes or fears.  \n    **holy days:** _the weaving moon_ — a rare celestial event when the moon appears veiled in silver mist. it is said that during this night, the goddess reweaves the destinies of those who offer their truest desires."
+    },
+    {
       "id": "religion:religions-pantheons-old-iron-saints-old-iron-saints",
       "title": "Old Iron Saints",
       "slug": "old-iron-saints",
       "type": "religion",
       "domain": "religion",
-      "compendium": "Religion & Gods Compendium",
-      "workspaceSection": "World, Realms & Planes",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
       "categoryPath": [
         "Pantheons"
       ],
@@ -30235,11 +36441,11 @@
       },
       "tabs": [
         "Overview",
-        "Doctrine",
-        "Gods",
+        "Domains",
+        "Worship",
+        "Lore",
         "Followers",
         "Rituals",
-        "Lore",
         "GM Notes"
       ],
       "summary": "The Old Iron Saints are venerated by smiths, oath-keepers, wardens, and settlements built around hard labor. Information coming soon. Veloria the Forge Saint is one of the known figures of this pantheon. Information coming soon. Information coming soon. Inform",
@@ -30283,6 +36489,852 @@
         "visibility": "public"
       },
       "searchTerms": "old iron saints religion pantheons {\"title\":\"old iron saints\",\"slug\":\"old-iron-saints\",\"type\":\"religion\",\"pantheon\":\"old iron saints\",\"divinedomain\":[\"forge\",\"oaths\"],\"alignment\":\"lawful neutral\",\"region\":[\"ironvale\"],\"visibility\":\"public\",\"tags\":[\"religion\",\"pantheon\",\"forge\"]} # old iron saints\n\n## overview\nthe old iron saints are venerated by smiths, oath-keepers, wardens, and settlements built around hard labor.\n\n## doctrine\ninformation coming soon.\n\n## gods\nveloria the forge saint is one of the known figures of this pantheon.\n\n## followers\ninformation coming soon.\n\n## rituals\ninformation coming soon.\n\n## lore\ninformation coming soon.\n\n## gm notes\nhidden campaign notes can be added here."
+    },
+    {
+      "id": "religion:content-theology-primordial-of-energy-index",
+      "title": "Primordial of Energy",
+      "slug": "primordial-of-energy",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Primordials"
+      ],
+      "category": "Primordials",
+      "route": "/compendium/religion/primordials/primordial-of-energy",
+      "sourcePath": "content/theology/primordial-of-energy/index.md",
+      "sourceFolder": "content/theology/primordial-of-energy",
+      "content": "---\ntitle: \"Primordial of Energy\"\nslug: \"primordial-of-energy\"\ntype: theology\ncategory: \"Primordials\"\npantheon: \"Primordials\"\ncourt: \"\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"1. Primordials/Primordial of Energy.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"primordials\"\nvisibility: public\n---\n# Primordial of Energy\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Primordial of Energy\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Primordial of Energy\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Primordial of Energy",
+        "slug": "primordial-of-energy",
+        "type": "theology",
+        "category": "Primordials",
+        "pantheon": "Primordials",
+        "court": "",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "1. Primordials/Primordial of Energy.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "primordials"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "primordials"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Primordials",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Primordials",
+        "pantheon": "Primordials",
+        "visibility": "public"
+      },
+      "searchTerms": "primordial of energy religion primordials {\"title\":\"primordial of energy\",\"slug\":\"primordial-of-energy\",\"type\":\"theology\",\"category\":\"primordials\",\"pantheon\":\"primordials\",\"court\":\"\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"1. primordials/primordial of energy.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"primordials\"],\"visibility\":\"public\"} # primordial of energy\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-primordial-of-the-ether-index",
+      "title": "Primordial of the Ether",
+      "slug": "primordial-of-the-ether",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Primordials"
+      ],
+      "category": "Primordials",
+      "route": "/compendium/religion/primordials/primordial-of-the-ether",
+      "sourcePath": "content/theology/primordial-of-the-ether/index.md",
+      "sourceFolder": "content/theology/primordial-of-the-ether",
+      "content": "---\ntitle: \"Primordial of the Ether\"\nslug: \"primordial-of-the-ether\"\ntype: theology\ncategory: \"Primordials\"\npantheon: \"Primordials\"\ncourt: \"\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"1. Primordials/Primordial of the Ether.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"primordials\"\nvisibility: public\n---\n# Primordial of the Ether\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Primordial of the Ether\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Primordial of the Ether\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Primordial of the Ether",
+        "slug": "primordial-of-the-ether",
+        "type": "theology",
+        "category": "Primordials",
+        "pantheon": "Primordials",
+        "court": "",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "1. Primordials/Primordial of the Ether.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "primordials"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "primordials"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Primordials",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Primordials",
+        "pantheon": "Primordials",
+        "visibility": "public"
+      },
+      "searchTerms": "primordial of the ether religion primordials {\"title\":\"primordial of the ether\",\"slug\":\"primordial-of-the-ether\",\"type\":\"theology\",\"category\":\"primordials\",\"pantheon\":\"primordials\",\"court\":\"\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"1. primordials/primordial of the ether.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"primordials\"],\"visibility\":\"public\"} # primordial of the ether\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-primordial-of-the-viod-index",
+      "title": "Primordial of the viod",
+      "slug": "primordial-of-the-viod",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "Primordials"
+      ],
+      "category": "Primordials",
+      "route": "/compendium/religion/primordials/primordial-of-the-viod",
+      "sourcePath": "content/theology/primordial-of-the-viod/index.md",
+      "sourceFolder": "content/theology/primordial-of-the-viod",
+      "content": "---\ntitle: \"Primordial of the viod\"\nslug: \"primordial-of-the-viod\"\ntype: theology\ncategory: \"Primordials\"\npantheon: \"Primordials\"\ncourt: \"\"\ndeity_title: \"\"\ndivine_domain: \"\"\ndomain: \"\"\nsource_path: \"1. Primordials/Primordial of the viod.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"primordials\"\nvisibility: public\n---\n# Primordial of the viod\n\n## Overview\nInformation coming soon.\n",
+      "body": "# Primordial of the viod\n\n## Overview\nInformation coming soon.",
+      "sections": {
+        "Overview": "# Primordial of the viod\n\nInformation coming soon."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Primordial of the viod",
+        "slug": "primordial-of-the-viod",
+        "type": "theology",
+        "category": "Primordials",
+        "pantheon": "Primordials",
+        "court": "",
+        "deityTitle": "",
+        "divineDomain": "",
+        "domain": "",
+        "sourcePath": "1. Primordials/Primordial of the viod.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "primordials"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "primordials"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Primordials",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "Primordials",
+        "pantheon": "Primordials",
+        "visibility": "public"
+      },
+      "searchTerms": "primordial of the viod religion primordials {\"title\":\"primordial of the viod\",\"slug\":\"primordial-of-the-viod\",\"type\":\"theology\",\"category\":\"primordials\",\"pantheon\":\"primordials\",\"court\":\"\",\"deitytitle\":\"\",\"divinedomain\":\"\",\"domain\":\"\",\"sourcepath\":\"1. primordials/primordial of the viod.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"primordials\"],\"visibility\":\"public\"} # primordial of the viod\n\n## overview\ninformation coming soon."
+    },
+    {
+      "id": "religion:content-theology-imeriel-index",
+      "title": "Imeriel",
+      "slug": "imeriel",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Nethyros Pantheon"
+      ],
+      "category": "The Nethyros Pantheon",
+      "route": "/compendium/religion/the-nethyros-pantheon/imeriel",
+      "sourcePath": "content/theology/imeriel/index.md",
+      "sourceFolder": "content/theology/imeriel",
+      "content": "---\ntitle: \"Imeriel\"\nslug: \"imeriel\"\ntype: theology\ncategory: \"The Nethyros Pantheon\"\npantheon: \"The Nethyros Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the Veil\"\ndivine_domain: \"God of the Veil\"\ndomain: \"God of the Veil\"\nsource_path: \"2. Devine Pantheons/4. The Nethyros Pantheon/Imeriel - God of the Veil.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-nethyros-pantheon\"\nvisibility: public\n---\n# Imeriel\n\n## Overview\n---\n\n🌙 Imriel, the Veiled Mercy\n\nTitles:\n\nThe Veiled Mercy\n\nKeeper of the Lantern\n\nThe Twilight Judge\n\nThe Redeemer of the Damned\n\nThe Whisper in the Dark\n\n\nAlignment: Neutral Good (with Lawful tendencies)\nPantheon: The Pale Dominion\nSymbol: A silver lantern with a broken chain wrapped around its handle.\nSacred Colors: Silver, deep violet, and dusk blue.\nAnimal: The owl and the black cat — watchers of the boundary between life and shadow.\n\n\n---\n\n🌌 Domains\n\nRedemption • Judgment • Souls • Mercy • Guidance • Twilight\n\nImriel stands as the bridge between Tobias’s absolute judgment and Nymera’s guiding compassion.\nWhere others pass sentence, Imriel listens. She is invoked by those who repent, confess, or seek to undo their wrongs before death claims them.\n\nShe walks the Veil with a lantern whose flame is said to be forged from the last hope of the condemned.\n\n\n---\n\n🕯️ Appearance\n\nImriel appears as a woman cloaked in twilight, her face hidden behind a porcelain mask that shifts between serenity and sorrow.\nThe silver lantern she carries never burns bright — it glows softly, illuminating only what the bearer needs to see, never what they desire.\n\nWhen she speaks, her voice echoes like wind through a cathedral: calm, patient, and heavy with understanding.\n\n> “No light is lost, only forgotten.”\n\n\n\n\n---\n\n💫 Personality and Teachings\n\nImriel is compassion without naivety. She believes all beings — mortal, spirit, or divine — carry both shadow and light.\nShe does not forgive easily, but she allows the chance to earn forgiveness.\n\nHer creed:\n\n> “Even in darkness, mercy walks beside judgment.”\n\n\n\nVirtues: Compassion • Truth • Reflection • Courage • Redemption\n\nHer faith teaches that mercy must be chosen, not assumed. Those who truly repent may still walk a brighter path, but only through trial and acceptance of consequence.\n\n\n---\n\n🌑 Worshippers and Clergy\n\nTitles: Lanternbearers, Veilwardens, Keepers of Twilight\n\nTemples:\n\nSmall sanctuaries built at crossroads, graveyards, and execution grounds.\n\nAlways dimly lit, filled with lanterns rather than candles — symbolizing light carried by will, not luxury.\n\nNo idols; her followers believe her presence resides in silence and reflection.\n\n\nCommon Rituals:\n\nThe Lantern Vigil: Worshippers light a lantern for each sin confessed and let it burn through the night.\n\nThe Walk of Silence: Once a year, followers walk barefoot to the edge of a graveyard to symbolize humility before the Veil.\n\nThe Whispered Plea: A dying sinner may whisper a final truth to Imriel’s clerics; if deemed sincere, their soul’s path is lightened.\n\n\n\n---\n\n🩸 Artifacts\n\nThe Lantern of the Veil: Said to guide lost spirits to their rightful realm — heaven or hell — depending on the flame’s hue.\n\nMask of Reflection: Allows the wearer to see their truest nature, stripped of lies.\n\nChains of Penance: Forged from redeemed souls; binding them to service until their atonement is fulfilled.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tServes as his counterbalance; where Tobias enforces law, Imriel interprets intent.\nVorneth\tDeep mutual respect — her mercy begins where his rites end.\nKelriss\tPhilosophical contrast; he believes all decay is renewal, while she believes some corruption must be purified first.\nSeraxis\tOpposites bound by necessity — she redeems where he punishes. Their paths cross often in divine contention.\nNymera\tKindred spirits — together they guide the living and dead toward peace.\n\n\n\n---\n\n🌙 Legends and Myths\n\nThe Tale of the Fallen Priest: A cleric who betrayed his vows was hunted by Seraxis, but Imriel intervened, granting him one final chance. He died protecting the innocent — his soul was taken to her lantern instead of Tobias’s throne.\n\nThe Twilight Bargain: During the Age of Blood, Imriel negotiated with Tobias to create the Twilight Veil, a realm where repentant souls may prove their worth before final judgment.\n\nThe Lantern’s Last Flame: It is said that if her lantern ever goes out, mercy itself will fade from the world — marking the beginning of the End Cycle.\n\n\n\n---\n\n🕯️ Clergy and Followers\n\nHer clergy consists of mediators, healers, and confessors — those who see worth even in the wicked.\nThey act as confessors for the dying, guides for the lost, and defenders of the misunderstood.\n\nThey are often at odds with Seraxis’s Inquisitors, who see mercy as weakness. Yet, both orders are sanctioned by Tobias himself — to ensure that justice and compassion never walk alone.\n\nCommon Prayer:\n\n> “Guide my shadow to rest, that my light may walk freely.”\n\n\n\nTaboo Acts:\n\nFalse confession\n\nMercy without truth\n\nIgnoring a plea for help\n\n\n\n---\n\n🔮 Role in the Underworld\n\nImriel tends the Twilight Veil, a liminal realm of gray mists and endless horizon where souls seek redemption before final judgment.\nHere, the unworthy are tested, reliving their choices and confronting their failures until acceptance is achieved.\nThose who pass emerge as pale lights, ready for Nymera’s guidance.\n\n\n---\n\nWould you like me to create Imriel’s Lantern Order next — her clerics and paladins, their hierarchy, vows, and holy relics?\nIt would mirror the Orders of Seraxis and Vorneth, completing the divine triad of Mercy, Justice, and Death.\n",
+      "body": "# Imeriel\n\n## Overview\n---\n\n🌙 Imriel, the Veiled Mercy\n\nTitles:\n\nThe Veiled Mercy\n\nKeeper of the Lantern\n\nThe Twilight Judge\n\nThe Redeemer of the Damned\n\nThe Whisper in the Dark\n\n\nAlignment: Neutral Good (with Lawful tendencies)\nPantheon: The Pale Dominion\nSymbol: A silver lantern with a broken chain wrapped around its handle.\nSacred Colors: Silver, deep violet, and dusk blue.\nAnimal: The owl and the black cat — watchers of the boundary between life and shadow.\n\n\n---\n\n🌌 Domains\n\nRedemption • Judgment • Souls • Mercy • Guidance • Twilight\n\nImriel stands as the bridge between Tobias’s absolute judgment and Nymera’s guiding compassion.\nWhere others pass sentence, Imriel listens. She is invoked by those who repent, confess, or seek to undo their wrongs before death claims them.\n\nShe walks the Veil with a lantern whose flame is said to be forged from the last hope of the condemned.\n\n\n---\n\n🕯️ Appearance\n\nImriel appears as a woman cloaked in twilight, her face hidden behind a porcelain mask that shifts between serenity and sorrow.\nThe silver lantern she carries never burns bright — it glows softly, illuminating only what the bearer needs to see, never what they desire.\n\nWhen she speaks, her voice echoes like wind through a cathedral: calm, patient, and heavy with understanding.\n\n> “No light is lost, only forgotten.”\n\n\n\n\n---\n\n💫 Personality and Teachings\n\nImriel is compassion without naivety. She believes all beings — mortal, spirit, or divine — carry both shadow and light.\nShe does not forgive easily, but she allows the chance to earn forgiveness.\n\nHer creed:\n\n> “Even in darkness, mercy walks beside judgment.”\n\n\n\nVirtues: Compassion • Truth • Reflection • Courage • Redemption\n\nHer faith teaches that mercy must be chosen, not assumed. Those who truly repent may still walk a brighter path, but only through trial and acceptance of consequence.\n\n\n---\n\n🌑 Worshippers and Clergy\n\nTitles: Lanternbearers, Veilwardens, Keepers of Twilight\n\nTemples:\n\nSmall sanctuaries built at crossroads, graveyards, and execution grounds.\n\nAlways dimly lit, filled with lanterns rather than candles — symbolizing light carried by will, not luxury.\n\nNo idols; her followers believe her presence resides in silence and reflection.\n\n\nCommon Rituals:\n\nThe Lantern Vigil: Worshippers light a lantern for each sin confessed and let it burn through the night.\n\nThe Walk of Silence: Once a year, followers walk barefoot to the edge of a graveyard to symbolize humility before the Veil.\n\nThe Whispered Plea: A dying sinner may whisper a final truth to Imriel’s clerics; if deemed sincere, their soul’s path is lightened.\n\n\n\n---\n\n🩸 Artifacts\n\nThe Lantern of the Veil: Said to guide lost spirits to their rightful realm — heaven or hell — depending on the flame’s hue.\n\nMask of Reflection: Allows the wearer to see their truest nature, stripped of lies.\n\nChains of Penance: Forged from redeemed souls; binding them to service until their atonement is fulfilled.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tServes as his counterbalance; where Tobias enforces law, Imriel interprets intent.\nVorneth\tDeep mutual respect — her mercy begins where his rites end.\nKelriss\tPhilosophical contrast; he believes all decay is renewal, while she believes some corruption must be purified first.\nSeraxis\tOpposites bound by necessity — she redeems where he punishes. Their paths cross often in divine contention.\nNymera\tKindred spirits — together they guide the living and dead toward peace.\n\n\n\n---\n\n🌙 Legends and Myths\n\nThe Tale of the Fallen Priest: A cleric who betrayed his vows was hunted by Seraxis, but Imriel intervened, granting him one final chance. He died protecting the innocent — his soul was taken to her lantern instead of Tobias’s throne.\n\nThe Twilight Bargain: During the Age of Blood, Imriel negotiated with Tobias to create the Twilight Veil, a realm where repentant souls may prove their worth before final judgment.\n\nThe Lantern’s Last Flame: It is said that if her lantern ever goes out, mercy itself will fade from the world — marking the beginning of the End Cycle.\n\n\n\n---\n\n🕯️ Clergy and Followers\n\nHer clergy consists of mediators, healers, and confessors — those who see worth even in the wicked.\nThey act as confessors for the dying, guides for the lost, and defenders of the misunderstood.\n\nThey are often at odds with Seraxis’s Inquisitors, who see mercy as weakness. Yet, both orders are sanctioned by Tobias himself — to ensure that justice and compassion never walk alone.\n\nCommon Prayer:\n\n> “Guide my shadow to rest, that my light may walk freely.”\n\n\n\nTaboo Acts:\n\nFalse confession\n\nMercy without truth\n\nIgnoring a plea for help\n\n\n\n---\n\n🔮 Role in the Underworld\n\nImriel tends the Twilight Veil, a liminal realm of gray mists and endless horizon where souls seek redemption before final judgment.\nHere, the unworthy are tested, reliving their choices and confronting their failures until acceptance is achieved.\nThose who pass emerge as pale lights, ready for Nymera’s guidance.\n\n\n---\n\nWould you like me to create Imriel’s Lantern Order next — her clerics and paladins, their hierarchy, vows, and holy relics?\nIt would mirror the Orders of Seraxis and Vorneth, completing the divine triad of Mercy, Justice, and Death.",
+      "sections": {
+        "Overview": "# Imeriel\n\n---\n\n🌙 Imriel, the Veiled Mercy\n\nTitles:\n\nThe Veiled Mercy\n\nKeeper of the Lantern\n\nThe Twilight Judge\n\nThe Redeemer of the Damned\n\nThe Whisper in the Dark\n\n\nAlignment: Neutral Good (with Lawful tendencies)\nPantheon: The Pale Dominion\nSymbol: A silver lantern with a broken chain wrapped around its handle.\nSacred Colors: Silver, deep violet, and dusk blue.\nAnimal: The owl and the black cat — watchers of the boundary between life and shadow.\n\n\n---\n\n🌌 Domains\n\nRedemption • Judgment • Souls • Mercy • Guidance • Twilight\n\nImriel stands as the bridge between Tobias’s absolute judgment and Nymera’s guiding compassion.\nWhere others pass sentence, Imriel listens. She is invoked by those who repent, confess, or seek to undo their wrongs before death claims them.\n\nShe walks the Veil with a lantern whose flame is said to be forged from the last hope of the condemned.\n\n\n---\n\n🕯️ Appearance\n\nImriel appears as a woman cloaked in twilight, her face hidden behind a porcelain mask that shifts between serenity and sorrow.\nThe silver lantern she carries never burns bright — it glows softly, illuminating only what the bearer needs to see, never what they desire.\n\nWhen she speaks, her voice echoes like wind through a cathedral: calm, patient, and heavy with understanding.\n\n> “No light is lost, only forgotten.”\n\n\n\n\n---\n\n💫 Personality and Teachings\n\nImriel is compassion without naivety. She believes all beings — mortal, spirit, or divine — carry both shadow and light.\nShe does not forgive easily, but she allows the chance to earn forgiveness.\n\nHer creed:\n\n> “Even in darkness, mercy walks beside judgment.”\n\n\n\nVirtues: Compassion • Truth • Reflection • Courage • Redemption\n\nHer faith teaches that mercy must be chosen, not assumed. Those who truly repent may still walk a brighter path, but only through trial and acceptance of consequence.\n\n\n---\n\n🌑 Worshippers and Clergy\n\nTitles: Lanternbearers, Veilwardens, Keepers of Twilight\n\nTemples:\n\nSmall sanctuaries built at crossroads, graveyards, and execution grounds.\n\nAlways dimly lit, filled with lanterns rather than candles — symbolizing light carried by will, not luxury.\n\nNo idols; her followers believe her presence resides in silence and reflection.\n\n\nCommon Rituals:\n\nThe Lantern Vigil: Worshippers light a lantern for each sin confessed and let it burn through the night.\n\nThe Walk of Silence: Once a year, followers walk barefoot to the edge of a graveyard to symbolize humility before the Veil.\n\nThe Whispered Plea: A dying sinner may whisper a final truth to Imriel’s clerics; if deemed sincere, their soul’s path is lightened.\n\n\n\n---\n\n🩸 Artifacts\n\nThe Lantern of the Veil: Said to guide lost spirits to their rightful realm — heaven or hell — depending on the flame’s hue.\n\nMask of Reflection: Allows the wearer to see their truest nature, stripped of lies.\n\nChains of Penance: Forged from redeemed souls; binding them to service until their atonement is fulfilled.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tServes as his counterbalance; where Tobias enforces law, Imriel interprets intent.\nVorneth\tDeep mutual respect — her mercy begins where his rites end.\nKelriss\tPhilosophical contrast; he believes all decay is renewal, while she believes some corruption must be purified first.\nSeraxis\tOpposites bound by necessity — she redeems where he punishes. Their paths cross often in divine contention.\nNymera\tKindred spirits — together they guide the living and dead toward peace.\n\n\n\n---\n\n🌙 Legends and Myths\n\nThe Tale of the Fallen Priest: A cleric who betrayed his vows was hunted by Seraxis, but Imriel intervened, granting him one final chance. He died protecting the innocent — his soul was taken to her lantern instead of Tobias’s throne.\n\nThe Twilight Bargain: During the Age of Blood, Imriel negotiated with Tobias to create the Twilight Veil, a realm where repentant souls may prove their worth before final judgment.\n\nThe Lantern’s Last Flame: It is said that if her lantern ever goes out, mercy itself will fade from the world — marking the beginning of the End Cycle.\n\n\n\n---\n\n🕯️ Clergy and Followers\n\nHer clergy consists of mediators, healers, and confessors — those who see worth even in the wicked.\nThey act as confessors for the dying, guides for the lost, and defenders of the misunderstood.\n\nThey are often at odds with Seraxis’s Inquisitors, who see mercy as weakness. Yet, both orders are sanctioned by Tobias himself — to ensure that justice and compassion never walk alone.\n\nCommon Prayer:\n\n> “Guide my shadow to rest, that my light may walk freely.”\n\n\n\nTaboo Acts:\n\nFalse confession\n\nMercy without truth\n\nIgnoring a plea for help\n\n\n\n---\n\n🔮 Role in the Underworld\n\nImriel tends the Twilight Veil, a liminal realm of gray mists and endless horizon where souls seek redemption before final judgment.\nHere, the unworthy are tested, reliving their choices and confronting their failures until acceptance is achieved.\nThose who pass emerge as pale lights, ready for Nymera’s guidance.\n\n\n---\n\nWould you like me to create Imriel’s Lantern Order next — her clerics and paladins, their hierarchy, vows, and holy relics?\nIt would mirror the Orders of Seraxis and Vorneth, completing the divine triad of Mercy, Justice, and Death."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "🌙 Imriel, the Veiled Mercy Titles: The Veiled Mercy Keeper of the Lantern The Twilight Judge The Redeemer of the Damned The Whisper in the Dark Alignment: Neutral Good (with Lawful tendencies) Pantheon: The Pale Dominion Symbol: A silver lantern with a broken",
+      "metadata": {
+        "title": "Imeriel",
+        "slug": "imeriel",
+        "type": "theology",
+        "category": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "court": "",
+        "deityTitle": "God of the Veil",
+        "divineDomain": "God of the Veil",
+        "domain": "God of the Veil",
+        "sourcePath": "2. Devine Pantheons/4. The Nethyros Pantheon/Imeriel - God of the Veil.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-nethyros-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-nethyros-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Nethyros Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "divineDomain": "God of the Veil",
+        "visibility": "public"
+      },
+      "searchTerms": "imeriel religion the nethyros pantheon {\"title\":\"imeriel\",\"slug\":\"imeriel\",\"type\":\"theology\",\"category\":\"the nethyros pantheon\",\"pantheon\":\"the nethyros pantheon\",\"court\":\"\",\"deitytitle\":\"god of the veil\",\"divinedomain\":\"god of the veil\",\"domain\":\"god of the veil\",\"sourcepath\":\"2. devine pantheons/4. the nethyros pantheon/imeriel - god of the veil.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-nethyros-pantheon\"],\"visibility\":\"public\"} # imeriel\n\n## overview\n---\n\n🌙 imriel, the veiled mercy\n\ntitles:\n\nthe veiled mercy\n\nkeeper of the lantern\n\nthe twilight judge\n\nthe redeemer of the damned\n\nthe whisper in the dark\n\n\nalignment: neutral good (with lawful tendencies)\npantheon: the pale dominion\nsymbol: a silver lantern with a broken chain wrapped around its handle.\nsacred colors: silver, deep violet, and dusk blue.\nanimal: the owl and the black cat — watchers of the boundary between life and shadow.\n\n\n---\n\n🌌 domains\n\nredemption • judgment • souls • mercy • guidance • twilight\n\nimriel stands as the bridge between tobias’s absolute judgment and nymera’s guiding compassion.\nwhere others pass sentence, imriel listens. she is invoked by those who repent, confess, or seek to undo their wrongs before death claims them.\n\nshe walks the veil with a lantern whose flame is said to be forged from the last hope of the condemned.\n\n\n---\n\n🕯️ appearance\n\nimriel appears as a woman cloaked in twilight, her face hidden behind a porcelain mask that shifts between serenity and sorrow.\nthe silver lantern she carries never burns bright — it glows softly, illuminating only what the bearer needs to see, never what they desire.\n\nwhen she speaks, her voice echoes like wind through a cathedral: calm, patient, and heavy with understanding.\n\n> “no light is lost, only forgotten.”\n\n\n\n\n---\n\n💫 personality and teachings\n\nimriel is compassion without naivety. she believes all beings — mortal, spirit, or divine — carry both shadow and light.\nshe does not forgive easily, but she allows the chance to earn forgiveness.\n\nher creed:\n\n> “even in darkness, mercy walks beside judgment.”\n\n\n\nvirtues: compassion • truth • reflection • courage • redemption\n\nher faith teaches that mercy must be chosen, not assumed. those who truly repent may still walk a brighter path, but only through trial and acceptance of consequence.\n\n\n---\n\n🌑 worshippers and clergy\n\ntitles: lanternbearers, veilwardens, keepers of twilight\n\ntemples:\n\nsmall sanctuaries built at crossroads, graveyards, and execution grounds.\n\nalways dimly lit, filled with lanterns rather than candles — symbolizing light carried by will, not luxury.\n\nno idols; her followers believe her presence resides in silence and reflection.\n\n\ncommon rituals:\n\nthe lantern vigil: worshippers light a lantern for each sin confessed and let it burn through the night.\n\nthe walk of silence: once a year, followers walk barefoot to the edge of a graveyard to symbolize humility before the veil.\n\nthe whispered plea: a dying sinner may whisper a final truth to imriel’s clerics; if deemed sincere, their soul’s path is lightened.\n\n\n\n---\n\n🩸 artifacts\n\nthe lantern of the veil: said to guide lost spirits to their rightful realm — heaven or hell — depending on the flame’s hue.\n\nmask of reflection: allows the wearer to see their truest nature, stripped of lies.\n\nchains of penance: forged from redeemed souls; binding them to service until their atonement is fulfilled.\n\n\n\n---\n\n⚖️ relationships\n\ndeity\trelationship\n\ntobias\tserves as his counterbalance; where tobias enforces law, imriel interprets intent.\nvorneth\tdeep mutual respect — her mercy begins where his rites end.\nkelriss\tphilosophical contrast; he believes all decay is renewal, while she believes some corruption must be purified first.\nseraxis\topposites bound by necessity — she redeems where he punishes. their paths cross often in divine contention.\nnymera\tkindred spirits — together they guide the living and dead toward peace.\n\n\n\n---\n\n🌙 legends and myths\n\nthe tale of the fallen priest: a cleric who betrayed his vows was hunted by seraxis, but imriel intervened, granting him one final chance. he died protecting the innocent — his soul was taken to her lantern instead of tobias’s throne.\n\nthe twilight bargain: during the age of blood, imriel negotiated with tobias to create the twilight veil, a realm where repentant souls may prove their worth before final judgment.\n\nthe lantern’s last flame: it is said that if her lantern ever goes out, mercy itself will fade from the world — marking the beginning of the end cycle.\n\n\n\n---\n\n🕯️ clergy and followers\n\nher clergy consists of mediators, healers, and confessors — those who see worth even in the wicked.\nthey act as confessors for the dying, guides for the lost, and defenders of the misunderstood.\n\nthey are often at odds with seraxis’s inquisitors, who see mercy as weakness. yet, both orders are sanctioned by tobias himself — to ensure that justice and compassion never walk alone.\n\ncommon prayer:\n\n> “guide my shadow to rest, that my light may walk freely.”\n\n\n\ntaboo acts:\n\nfalse confession\n\nmercy without truth\n\nignoring a plea for help\n\n\n\n---\n\n🔮 role in the underworld\n\nimriel tends the twilight veil, a liminal realm of gray mists and endless horizon where souls seek redemption before final judgment.\nhere, the unworthy are tested, reliving their choices and confronting their failures until acceptance is achieved.\nthose who pass emerge as pale lights, ready for nymera’s guidance.\n\n\n---\n\nwould you like me to create imriel’s lantern order next — her clerics and paladins, their hierarchy, vows, and holy relics?\nit would mirror the orders of seraxis and vorneth, completing the divine triad of mercy, justice, and death."
+    },
+    {
+      "id": "religion:content-theology-kelriss-index",
+      "title": "Kelriss",
+      "slug": "kelriss",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Nethyros Pantheon"
+      ],
+      "category": "The Nethyros Pantheon",
+      "route": "/compendium/religion/the-nethyros-pantheon/kelriss",
+      "sourcePath": "content/theology/kelriss/index.md",
+      "sourceFolder": "content/theology/kelriss",
+      "content": "---\ntitle: \"Kelriss\"\nslug: \"kelriss\"\ntype: theology\ncategory: \"The Nethyros Pantheon\"\npantheon: \"The Nethyros Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Bone-Sower\"\ndivine_domain: \"God of Bone-Sower\"\ndomain: \"God of Bone-Sower\"\nsource_path: \"2. Devine Pantheons/4. The Nethyros Pantheon/Kelriss - God of Bone-Sower.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-nethyros-pantheon\"\nvisibility: public\n---\n# Kelriss\n\n## Overview\n🪱 Kelriss, the Bone-Sower\n\nTitles:\n\nThe Bone-Sower\n\nLord of Rot and Renewal\n\nWarden of the Worm\n\nThe Verdant Reclaimer\n\nGravefather of the Soil\n\n\nAlignment: Neutral\nPantheon: The Pale Dominion\nSymbol: A skull sprouting flowers and roots that twist into a spiral.\nSacred Colors: Moss green, soil brown, bone white.\nAnimal: Carrion beetle, worm, and crow.\n\n\n---\n\n🌿 Domains\n\nDecay • Earth • Renewal • Fertility • Death • Nature • Transformation\n\nKelriss governs what happens after Vorneth’s rites are complete. When the body returns to the earth, it becomes part of Kelriss’s domain — the eternal compost from which new life grows.\n\nHe is both feared and loved: the god of rot, but also of rebirth through decay. Farmers and druids revere him as much as undertakers do.\n\n\n---\n\n🪵 Appearance\n\nKelriss is a towering, skeletal figure draped in vines and fungus.\nHalf his body is flesh — vibrant and blooming — while the other half is bare bone crawling with insects and roots.\nWherever he steps, moss grows from stone, and flowers bloom from graves.\n\nHis voice sounds like wind through hollow wood — deep, whispering, and strangely soothing.\n\n> “All that falls shall feed the roots.”\n\n\n\n\n---\n\n⚰️ Personality & Teachings\n\nKelriss is patient, cyclical, and utterly unafraid of endings.\nHe teaches that death is not destruction, but a natural turning — what dies must nourish what comes next.\nTo withhold decay is to withhold life itself.\n\nHis creed:\n\n> “From rot, bloom. From stillness, growth.”\n\n\n\nHis virtues:\nAcceptance • Balance • Patience • Renewal\n\nHe despises those who preserve beyond their time — necromancers, mummifiers, and vain nobles who seek immortality.\n\n\n---\n\n🌾 Temples and Worship\n\nPriest Titles: Rotwardens, Verdant Keepers, Soil-Tenders\n\nTemples:\n\nOften grown from trees or carved into stone beneath moss and fungi.\n\nFloors are layered with living soil — never swept clean.\n\nBones and skulls are used as vessels for flowers and incense.\n\nEvery temple houses a “Feeding Garden” where remains are buried to grow sacred flora.\n\n\nOfferings: Compost, seeds, bones, and decayed fruit.\n\nCommon Rituals:\n\nThe Returning Feast: once a year, offerings of spoiled crops are left in the forest to thank Kelriss for renewal.\n\nThe Worm’s Blessing: bodies of the dead are laid in natural soil rather than coffins, to “feed the circle.”\n\nThe Blooming Vigil: prayers are said over gardens and graveyards during spring to awaken new growth.\n\n\n\n---\n\n🧿 Artifacts and Relics\n\nThe Verdant Scythe: forged of bone and green steel; it kills instantly but causes flowers to bloom from wounds.\n\nThe Rootheart Idol: pulsing seed of divine decay; buried to heal poisoned or barren land.\n\nThe Worm Crown: worn by Kelriss’s highest druid-priests; grants the power to commune with the soil and sense the dead below.\n\n\n\n---\n\n🌱 Divine Relationships\n\nDeity\tRelationship\n\nTobias\tAlly in the cycle of death; Tobias judges, Kelriss transforms. Mutual respect.\nVorneth\tWorks closely — once the rites are complete, the remains pass to Kelriss’s care.\nNymera\tSees her as distant kin — her souls take flight while his remains root below.\nElyndra\tSibling spirit; both govern rebirth but disagree — she through spirit, he through soil.\nMarvok\tBlasphemer. Necromancy halts decay — the highest insult to Kelriss’s creed.\n\n\n\n---\n\n🪦 Clergy and Faithful\n\nFollowers of Kelriss include:\n\nDruids, rangers, and herbalists\n\nFarmers and gardeners\n\nGrave-tenders and bonecarvers\n\nThose who study decomposition and alchemy\n\n\nThey believe every body — plant, animal, or person — must “return to the wheel.” Many of his followers serve in funeral gardens beside Vorneth’s clergy.\n\nCommon prayer:\n\n> “Let me fall, and let me feed the earth.”\n\n\n\n\n---\n\n🌍 Legends and Myth\n\nThe Garden of Skulls: It’s said Kelriss once grew an entire forest from the bones of a dead god. Each tree in that grove whispers with the god’s memories.\n\nThe Worm’s Covenant: He created the first worms from his own blood so that the earth would always hunger for renewal.\n\nThe Bloom of Ages: When a great kingdom falls, Kelriss walks its ruins, planting seeds among the ashes.\n\n\n\n---\n\n🍃 Role in the World\n\nKelriss’s worshippers are pragmatic and grounded — not morbid, but reverent.\nThey tend to cemeteries, bless farmlands, and protect natural decay. Some are undertakers who work hand in hand with Vorneth’s priests, while others wander the wilderness spreading his spores.\n\nTo see a patch of blooming flowers on a fresh grave is called “Kelriss’s Gift.”\n\n\n---\n\n⚖️ In Art and Culture\n\nHe is never painted in decay alone — always balanced with beauty: rot beside bloom, skull beside seed.\n\nFunerary gardens often have a statue of Kelriss kneeling, planting a seed into a skull.\n\nOfferings are left in baskets woven from vines and bones.\n\n\n\n---\n\nWould you like me to make Kelriss’s Druidic Cults and Suborders next?\n(For example: The Circle of Renewal, The Rotborn Shepherds, The Bloomguard, and The Wormbound Druids — each with different philosophies and powers.)\n",
+      "body": "# Kelriss\n\n## Overview\n🪱 Kelriss, the Bone-Sower\n\nTitles:\n\nThe Bone-Sower\n\nLord of Rot and Renewal\n\nWarden of the Worm\n\nThe Verdant Reclaimer\n\nGravefather of the Soil\n\n\nAlignment: Neutral\nPantheon: The Pale Dominion\nSymbol: A skull sprouting flowers and roots that twist into a spiral.\nSacred Colors: Moss green, soil brown, bone white.\nAnimal: Carrion beetle, worm, and crow.\n\n\n---\n\n🌿 Domains\n\nDecay • Earth • Renewal • Fertility • Death • Nature • Transformation\n\nKelriss governs what happens after Vorneth’s rites are complete. When the body returns to the earth, it becomes part of Kelriss’s domain — the eternal compost from which new life grows.\n\nHe is both feared and loved: the god of rot, but also of rebirth through decay. Farmers and druids revere him as much as undertakers do.\n\n\n---\n\n🪵 Appearance\n\nKelriss is a towering, skeletal figure draped in vines and fungus.\nHalf his body is flesh — vibrant and blooming — while the other half is bare bone crawling with insects and roots.\nWherever he steps, moss grows from stone, and flowers bloom from graves.\n\nHis voice sounds like wind through hollow wood — deep, whispering, and strangely soothing.\n\n> “All that falls shall feed the roots.”\n\n\n\n\n---\n\n⚰️ Personality & Teachings\n\nKelriss is patient, cyclical, and utterly unafraid of endings.\nHe teaches that death is not destruction, but a natural turning — what dies must nourish what comes next.\nTo withhold decay is to withhold life itself.\n\nHis creed:\n\n> “From rot, bloom. From stillness, growth.”\n\n\n\nHis virtues:\nAcceptance • Balance • Patience • Renewal\n\nHe despises those who preserve beyond their time — necromancers, mummifiers, and vain nobles who seek immortality.\n\n\n---\n\n🌾 Temples and Worship\n\nPriest Titles: Rotwardens, Verdant Keepers, Soil-Tenders\n\nTemples:\n\nOften grown from trees or carved into stone beneath moss and fungi.\n\nFloors are layered with living soil — never swept clean.\n\nBones and skulls are used as vessels for flowers and incense.\n\nEvery temple houses a “Feeding Garden” where remains are buried to grow sacred flora.\n\n\nOfferings: Compost, seeds, bones, and decayed fruit.\n\nCommon Rituals:\n\nThe Returning Feast: once a year, offerings of spoiled crops are left in the forest to thank Kelriss for renewal.\n\nThe Worm’s Blessing: bodies of the dead are laid in natural soil rather than coffins, to “feed the circle.”\n\nThe Blooming Vigil: prayers are said over gardens and graveyards during spring to awaken new growth.\n\n\n\n---\n\n🧿 Artifacts and Relics\n\nThe Verdant Scythe: forged of bone and green steel; it kills instantly but causes flowers to bloom from wounds.\n\nThe Rootheart Idol: pulsing seed of divine decay; buried to heal poisoned or barren land.\n\nThe Worm Crown: worn by Kelriss’s highest druid-priests; grants the power to commune with the soil and sense the dead below.\n\n\n\n---\n\n🌱 Divine Relationships\n\nDeity\tRelationship\n\nTobias\tAlly in the cycle of death; Tobias judges, Kelriss transforms. Mutual respect.\nVorneth\tWorks closely — once the rites are complete, the remains pass to Kelriss’s care.\nNymera\tSees her as distant kin — her souls take flight while his remains root below.\nElyndra\tSibling spirit; both govern rebirth but disagree — she through spirit, he through soil.\nMarvok\tBlasphemer. Necromancy halts decay — the highest insult to Kelriss’s creed.\n\n\n\n---\n\n🪦 Clergy and Faithful\n\nFollowers of Kelriss include:\n\nDruids, rangers, and herbalists\n\nFarmers and gardeners\n\nGrave-tenders and bonecarvers\n\nThose who study decomposition and alchemy\n\n\nThey believe every body — plant, animal, or person — must “return to the wheel.” Many of his followers serve in funeral gardens beside Vorneth’s clergy.\n\nCommon prayer:\n\n> “Let me fall, and let me feed the earth.”\n\n\n\n\n---\n\n🌍 Legends and Myth\n\nThe Garden of Skulls: It’s said Kelriss once grew an entire forest from the bones of a dead god. Each tree in that grove whispers with the god’s memories.\n\nThe Worm’s Covenant: He created the first worms from his own blood so that the earth would always hunger for renewal.\n\nThe Bloom of Ages: When a great kingdom falls, Kelriss walks its ruins, planting seeds among the ashes.\n\n\n\n---\n\n🍃 Role in the World\n\nKelriss’s worshippers are pragmatic and grounded — not morbid, but reverent.\nThey tend to cemeteries, bless farmlands, and protect natural decay. Some are undertakers who work hand in hand with Vorneth’s priests, while others wander the wilderness spreading his spores.\n\nTo see a patch of blooming flowers on a fresh grave is called “Kelriss’s Gift.”\n\n\n---\n\n⚖️ In Art and Culture\n\nHe is never painted in decay alone — always balanced with beauty: rot beside bloom, skull beside seed.\n\nFunerary gardens often have a statue of Kelriss kneeling, planting a seed into a skull.\n\nOfferings are left in baskets woven from vines and bones.\n\n\n\n---\n\nWould you like me to make Kelriss’s Druidic Cults and Suborders next?\n(For example: The Circle of Renewal, The Rotborn Shepherds, The Bloomguard, and The Wormbound Druids — each with different philosophies and powers.)",
+      "sections": {
+        "Overview": "# Kelriss\n\n🪱 Kelriss, the Bone-Sower\n\nTitles:\n\nThe Bone-Sower\n\nLord of Rot and Renewal\n\nWarden of the Worm\n\nThe Verdant Reclaimer\n\nGravefather of the Soil\n\n\nAlignment: Neutral\nPantheon: The Pale Dominion\nSymbol: A skull sprouting flowers and roots that twist into a spiral.\nSacred Colors: Moss green, soil brown, bone white.\nAnimal: Carrion beetle, worm, and crow.\n\n\n---\n\n🌿 Domains\n\nDecay • Earth • Renewal • Fertility • Death • Nature • Transformation\n\nKelriss governs what happens after Vorneth’s rites are complete. When the body returns to the earth, it becomes part of Kelriss’s domain — the eternal compost from which new life grows.\n\nHe is both feared and loved: the god of rot, but also of rebirth through decay. Farmers and druids revere him as much as undertakers do.\n\n\n---\n\n🪵 Appearance\n\nKelriss is a towering, skeletal figure draped in vines and fungus.\nHalf his body is flesh — vibrant and blooming — while the other half is bare bone crawling with insects and roots.\nWherever he steps, moss grows from stone, and flowers bloom from graves.\n\nHis voice sounds like wind through hollow wood — deep, whispering, and strangely soothing.\n\n> “All that falls shall feed the roots.”\n\n\n\n\n---\n\n⚰️ Personality & Teachings\n\nKelriss is patient, cyclical, and utterly unafraid of endings.\nHe teaches that death is not destruction, but a natural turning — what dies must nourish what comes next.\nTo withhold decay is to withhold life itself.\n\nHis creed:\n\n> “From rot, bloom. From stillness, growth.”\n\n\n\nHis virtues:\nAcceptance • Balance • Patience • Renewal\n\nHe despises those who preserve beyond their time — necromancers, mummifiers, and vain nobles who seek immortality.\n\n\n---\n\n🌾 Temples and Worship\n\nPriest Titles: Rotwardens, Verdant Keepers, Soil-Tenders\n\nTemples:\n\nOften grown from trees or carved into stone beneath moss and fungi.\n\nFloors are layered with living soil — never swept clean.\n\nBones and skulls are used as vessels for flowers and incense.\n\nEvery temple houses a “Feeding Garden” where remains are buried to grow sacred flora.\n\n\nOfferings: Compost, seeds, bones, and decayed fruit.\n\nCommon Rituals:\n\nThe Returning Feast: once a year, offerings of spoiled crops are left in the forest to thank Kelriss for renewal.\n\nThe Worm’s Blessing: bodies of the dead are laid in natural soil rather than coffins, to “feed the circle.”\n\nThe Blooming Vigil: prayers are said over gardens and graveyards during spring to awaken new growth.\n\n\n\n---\n\n🧿 Artifacts and Relics\n\nThe Verdant Scythe: forged of bone and green steel; it kills instantly but causes flowers to bloom from wounds.\n\nThe Rootheart Idol: pulsing seed of divine decay; buried to heal poisoned or barren land.\n\nThe Worm Crown: worn by Kelriss’s highest druid-priests; grants the power to commune with the soil and sense the dead below.\n\n\n\n---\n\n🌱 Divine Relationships\n\nDeity\tRelationship\n\nTobias\tAlly in the cycle of death; Tobias judges, Kelriss transforms. Mutual respect.\nVorneth\tWorks closely — once the rites are complete, the remains pass to Kelriss’s care.\nNymera\tSees her as distant kin — her souls take flight while his remains root below.\nElyndra\tSibling spirit; both govern rebirth but disagree — she through spirit, he through soil.\nMarvok\tBlasphemer. Necromancy halts decay — the highest insult to Kelriss’s creed.\n\n\n\n---\n\n🪦 Clergy and Faithful\n\nFollowers of Kelriss include:\n\nDruids, rangers, and herbalists\n\nFarmers and gardeners\n\nGrave-tenders and bonecarvers\n\nThose who study decomposition and alchemy\n\n\nThey believe every body — plant, animal, or person — must “return to the wheel.” Many of his followers serve in funeral gardens beside Vorneth’s clergy.\n\nCommon prayer:\n\n> “Let me fall, and let me feed the earth.”\n\n\n\n\n---\n\n🌍 Legends and Myth\n\nThe Garden of Skulls: It’s said Kelriss once grew an entire forest from the bones of a dead god. Each tree in that grove whispers with the god’s memories.\n\nThe Worm’s Covenant: He created the first worms from his own blood so that the earth would always hunger for renewal.\n\nThe Bloom of Ages: When a great kingdom falls, Kelriss walks its ruins, planting seeds among the ashes.\n\n\n\n---\n\n🍃 Role in the World\n\nKelriss’s worshippers are pragmatic and grounded — not morbid, but reverent.\nThey tend to cemeteries, bless farmlands, and protect natural decay. Some are undertakers who work hand in hand with Vorneth’s priests, while others wander the wilderness spreading his spores.\n\nTo see a patch of blooming flowers on a fresh grave is called “Kelriss’s Gift.”\n\n\n---\n\n⚖️ In Art and Culture\n\nHe is never painted in decay alone — always balanced with beauty: rot beside bloom, skull beside seed.\n\nFunerary gardens often have a statue of Kelriss kneeling, planting a seed into a skull.\n\nOfferings are left in baskets woven from vines and bones.\n\n\n\n---\n\nWould you like me to make Kelriss’s Druidic Cults and Suborders next?\n(For example: The Circle of Renewal, The Rotborn Shepherds, The Bloomguard, and The Wormbound Druids — each with different philosophies and powers.)"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "🪱 Kelriss, the Bone-Sower Titles: The Bone-Sower Lord of Rot and Renewal Warden of the Worm The Verdant Reclaimer Gravefather of the Soil Alignment: Neutral Pantheon: The Pale Dominion Symbol: A skull sprouting flowers and roots that twist into a spiral. Sacr",
+      "metadata": {
+        "title": "Kelriss",
+        "slug": "kelriss",
+        "type": "theology",
+        "category": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "court": "",
+        "deityTitle": "God of Bone-Sower",
+        "divineDomain": "God of Bone-Sower",
+        "domain": "God of Bone-Sower",
+        "sourcePath": "2. Devine Pantheons/4. The Nethyros Pantheon/Kelriss - God of Bone-Sower.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-nethyros-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-nethyros-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Nethyros Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "divineDomain": "God of Bone-Sower",
+        "visibility": "public"
+      },
+      "searchTerms": "kelriss religion the nethyros pantheon {\"title\":\"kelriss\",\"slug\":\"kelriss\",\"type\":\"theology\",\"category\":\"the nethyros pantheon\",\"pantheon\":\"the nethyros pantheon\",\"court\":\"\",\"deitytitle\":\"god of bone-sower\",\"divinedomain\":\"god of bone-sower\",\"domain\":\"god of bone-sower\",\"sourcepath\":\"2. devine pantheons/4. the nethyros pantheon/kelriss - god of bone-sower.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-nethyros-pantheon\"],\"visibility\":\"public\"} # kelriss\n\n## overview\n🪱 kelriss, the bone-sower\n\ntitles:\n\nthe bone-sower\n\nlord of rot and renewal\n\nwarden of the worm\n\nthe verdant reclaimer\n\ngravefather of the soil\n\n\nalignment: neutral\npantheon: the pale dominion\nsymbol: a skull sprouting flowers and roots that twist into a spiral.\nsacred colors: moss green, soil brown, bone white.\nanimal: carrion beetle, worm, and crow.\n\n\n---\n\n🌿 domains\n\ndecay • earth • renewal • fertility • death • nature • transformation\n\nkelriss governs what happens after vorneth’s rites are complete. when the body returns to the earth, it becomes part of kelriss’s domain — the eternal compost from which new life grows.\n\nhe is both feared and loved: the god of rot, but also of rebirth through decay. farmers and druids revere him as much as undertakers do.\n\n\n---\n\n🪵 appearance\n\nkelriss is a towering, skeletal figure draped in vines and fungus.\nhalf his body is flesh — vibrant and blooming — while the other half is bare bone crawling with insects and roots.\nwherever he steps, moss grows from stone, and flowers bloom from graves.\n\nhis voice sounds like wind through hollow wood — deep, whispering, and strangely soothing.\n\n> “all that falls shall feed the roots.”\n\n\n\n\n---\n\n⚰️ personality & teachings\n\nkelriss is patient, cyclical, and utterly unafraid of endings.\nhe teaches that death is not destruction, but a natural turning — what dies must nourish what comes next.\nto withhold decay is to withhold life itself.\n\nhis creed:\n\n> “from rot, bloom. from stillness, growth.”\n\n\n\nhis virtues:\nacceptance • balance • patience • renewal\n\nhe despises those who preserve beyond their time — necromancers, mummifiers, and vain nobles who seek immortality.\n\n\n---\n\n🌾 temples and worship\n\npriest titles: rotwardens, verdant keepers, soil-tenders\n\ntemples:\n\noften grown from trees or carved into stone beneath moss and fungi.\n\nfloors are layered with living soil — never swept clean.\n\nbones and skulls are used as vessels for flowers and incense.\n\nevery temple houses a “feeding garden” where remains are buried to grow sacred flora.\n\n\nofferings: compost, seeds, bones, and decayed fruit.\n\ncommon rituals:\n\nthe returning feast: once a year, offerings of spoiled crops are left in the forest to thank kelriss for renewal.\n\nthe worm’s blessing: bodies of the dead are laid in natural soil rather than coffins, to “feed the circle.”\n\nthe blooming vigil: prayers are said over gardens and graveyards during spring to awaken new growth.\n\n\n\n---\n\n🧿 artifacts and relics\n\nthe verdant scythe: forged of bone and green steel; it kills instantly but causes flowers to bloom from wounds.\n\nthe rootheart idol: pulsing seed of divine decay; buried to heal poisoned or barren land.\n\nthe worm crown: worn by kelriss’s highest druid-priests; grants the power to commune with the soil and sense the dead below.\n\n\n\n---\n\n🌱 divine relationships\n\ndeity\trelationship\n\ntobias\tally in the cycle of death; tobias judges, kelriss transforms. mutual respect.\nvorneth\tworks closely — once the rites are complete, the remains pass to kelriss’s care.\nnymera\tsees her as distant kin — her souls take flight while his remains root below.\nelyndra\tsibling spirit; both govern rebirth but disagree — she through spirit, he through soil.\nmarvok\tblasphemer. necromancy halts decay — the highest insult to kelriss’s creed.\n\n\n\n---\n\n🪦 clergy and faithful\n\nfollowers of kelriss include:\n\ndruids, rangers, and herbalists\n\nfarmers and gardeners\n\ngrave-tenders and bonecarvers\n\nthose who study decomposition and alchemy\n\n\nthey believe every body — plant, animal, or person — must “return to the wheel.” many of his followers serve in funeral gardens beside vorneth’s clergy.\n\ncommon prayer:\n\n> “let me fall, and let me feed the earth.”\n\n\n\n\n---\n\n🌍 legends and myth\n\nthe garden of skulls: it’s said kelriss once grew an entire forest from the bones of a dead god. each tree in that grove whispers with the god’s memories.\n\nthe worm’s covenant: he created the first worms from his own blood so that the earth would always hunger for renewal.\n\nthe bloom of ages: when a great kingdom falls, kelriss walks its ruins, planting seeds among the ashes.\n\n\n\n---\n\n🍃 role in the world\n\nkelriss’s worshippers are pragmatic and grounded — not morbid, but reverent.\nthey tend to cemeteries, bless farmlands, and protect natural decay. some are undertakers who work hand in hand with vorneth’s priests, while others wander the wilderness spreading his spores.\n\nto see a patch of blooming flowers on a fresh grave is called “kelriss’s gift.”\n\n\n---\n\n⚖️ in art and culture\n\nhe is never painted in decay alone — always balanced with beauty: rot beside bloom, skull beside seed.\n\nfunerary gardens often have a statue of kelriss kneeling, planting a seed into a skull.\n\nofferings are left in baskets woven from vines and bones.\n\n\n\n---\n\nwould you like me to make kelriss’s druidic cults and suborders next?\n(for example: the circle of renewal, the rotborn shepherds, the bloomguard, and the wormbound druids — each with different philosophies and powers.)"
+    },
+    {
+      "id": "religion:content-theology-orris-index",
+      "title": "Orris",
+      "slug": "orris",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Nethyros Pantheon"
+      ],
+      "category": "The Nethyros Pantheon",
+      "route": "/compendium/religion/the-nethyros-pantheon/orris",
+      "sourcePath": "content/theology/orris/index.md",
+      "sourceFolder": "content/theology/orris",
+      "content": "---\ntitle: \"Orris\"\nslug: \"orris\"\ntype: theology\ncategory: \"The Nethyros Pantheon\"\npantheon: \"The Nethyros Pantheon\"\ncourt: \"\"\ndeity_title: \"God of Funerals & Burial Rites\"\ndivine_domain: \"God of Funerals & Burial Rites\"\ndomain: \"God of Funerals & Burial Rites\"\nsource_path: \"2. Devine Pantheons/4. The Nethyros Pantheon/Orris - God of Funerals & Burial Rites.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-nethyros-pantheon\"\nvisibility: public\n---\n# Orris\n\n## Overview\n## Titles:\nThe Silent Shepherd\nKeeper of the Ashes\nLord of Final Rites\nThe Mourner’s Flame\nGuardian of Rest\n\n\n## Symbol: \nA stone urn surrounded by a ring of white lilies, sometimes a burning censer over crossed hands.\n\n\n\n---\n\n🕯️ Domains of Worship\n\nFunerals & Burial Rites\n\nDeath & Rest\n\nProtection of Graves\n\nPurification & Cleansing\n\nTransition between Life and Death\n\n\nVorneth’s clergy and followers oversee every mortal end: the washing of bodies, the lighting of pyres, the building of cairns, and the closing of tombs.\nTo die unblessed by Vorneth’s hand is to risk wandering as a Lost Soul — a fate feared across all realms.\n\n\n---\n\n⚖️ Appearance\n\nVorneth appears as a faceless figure of pale marble wrapped in layered funeral cloth. When he moves, ashes swirl around his feet, and his hands glow faintly gold, like the last light of a candle.\n\nHis presence brings quiet peace, never dread — the stillness of a final breath, not the terror of oblivion.\n\n> “There is no horror in ending, only the duty to end well.”\n\n\n\n\n---\n\n🕊️ Personality & Teachings\n\nWhere Tobias judges, Vorneth comforts.\nHe is the priest of death — humble, patient, and dutiful. His words are few, but his compassion is unshakable. He teaches mortals that death must be honored, not feared.\n\nHis creed:\n\n> “The body is a vessel; the soul, a journey. Honor both.”\n\n\n\nHe despises necromancy and desecration above all things, viewing them as crimes against peace.\n\n\n---\n\n⚰️ Clergy and Temples\n\nPriest Titles: Funerants, Pallbearers, Deathwrights\n\nTemples:\n\nBuilt with open courtyards and eternal fires where incense burns day and night.\n\nAlways beside graveyards or on high ground where wind carries away the scent of burning herbs.\n\nBells toll only once per soul — then never again.\n\n\nCommon Rituals:\n\nThe Rite of Ash: The body is anointed with oils, wrapped in linen, and burned or buried with a whisper: “Return to stillness.”\n\nThe Vigil of Seven Flames: Seven candles are lit for seven days, each symbolizing a virtue of life (honor, love, duty, truth, courage, mercy, and peace).\n\nThe Stone Blessing: Gravestones are carved with the deceased’s virtues — never their failures.\n\n\n\n---\n\n🩸 Artifacts and Relics\n\nCenser of Eternal Rest: When swung, it soothes restless undead and seals cursed graves.\n\nAshen Mantle: Grants the wearer immunity to necrotic decay and the power to purify corrupted remains.\n\nTear of Vorneth: A crystal said to be formed from the god’s only tear — restores peace to tormented spirits.\n\n\n\n---\n\n⚔️ Divine Relationships\n\nDeity\tRelationship\n\nTobias\tHis master and judge; Vorneth enforces Tobias’s rulings upon mortal remains.\nNymera\tHis friend and co-worker; she guides souls, he guards their bodies.\nElyndra\tRespectful allies; she renews what he releases.\nKelriss\tAllies of necessity; where Kelriss decays, Vorneth sanctifies.\nMarvok\tEternal enemy; Vorneth’s priests hunt his necromantic cults relentlessly.\n\n\n\n---\n\n🕯️ Worshippers\n\nVorneth’s faithful include:\n\nGravekeepers and undertakers\n\nPhysicians and healers\n\nPaladins who protect sacred grounds\n\nMourners who have lost loved ones\n\nMonks who meditate upon impermanence\n\n\nCommon Prayer:\n\n> “Light the flame, bear the name, let all rest in peace.”\n\n\n\n\n---\n\n⚱️ Legends & Lore\n\nThe Thousand Candles: It is said Vorneth once walked the mortal world, lighting a candle for every innocent life lost in war. Each flame burned for a century.\n\nThe First Burial: He taught mortals to bury their dead rather than leave them to the wilds, marking the dawn of civilization.\n\nThe Mourner’s Oath: His priests swear lifelong celibacy to remain free of earthly attachment; they serve every funeral as if it were their own.\n\n\n\n---\n\n🕯️ Role in the World\n\nVorneth represents closure and respect — his name is invoked in every burial, even by those who do not follow his faith. His priests often accompany armies and noble houses, ensuring proper funerals are granted to all — friend or foe alike.\n\nWhere Tobias judges the soul, Vorneth tends the body and consoles the living.\nHe bridges the divine and mortal realms — the hand that lowers the shroud.\n\n\n---\n\nWould you like me to build his temple order structure next (like The Silent Choir or The Ashen Order — ranks, relics, and holy duties)?\nThat could make him playable as a full religion or cleric domain.\n",
+      "body": "# Orris\n\n## Overview\n## Titles:\nThe Silent Shepherd\nKeeper of the Ashes\nLord of Final Rites\nThe Mourner’s Flame\nGuardian of Rest\n\n\n## Symbol: \nA stone urn surrounded by a ring of white lilies, sometimes a burning censer over crossed hands.\n\n\n\n---\n\n🕯️ Domains of Worship\n\nFunerals & Burial Rites\n\nDeath & Rest\n\nProtection of Graves\n\nPurification & Cleansing\n\nTransition between Life and Death\n\n\nVorneth’s clergy and followers oversee every mortal end: the washing of bodies, the lighting of pyres, the building of cairns, and the closing of tombs.\nTo die unblessed by Vorneth’s hand is to risk wandering as a Lost Soul — a fate feared across all realms.\n\n\n---\n\n⚖️ Appearance\n\nVorneth appears as a faceless figure of pale marble wrapped in layered funeral cloth. When he moves, ashes swirl around his feet, and his hands glow faintly gold, like the last light of a candle.\n\nHis presence brings quiet peace, never dread — the stillness of a final breath, not the terror of oblivion.\n\n> “There is no horror in ending, only the duty to end well.”\n\n\n\n\n---\n\n🕊️ Personality & Teachings\n\nWhere Tobias judges, Vorneth comforts.\nHe is the priest of death — humble, patient, and dutiful. His words are few, but his compassion is unshakable. He teaches mortals that death must be honored, not feared.\n\nHis creed:\n\n> “The body is a vessel; the soul, a journey. Honor both.”\n\n\n\nHe despises necromancy and desecration above all things, viewing them as crimes against peace.\n\n\n---\n\n⚰️ Clergy and Temples\n\nPriest Titles: Funerants, Pallbearers, Deathwrights\n\nTemples:\n\nBuilt with open courtyards and eternal fires where incense burns day and night.\n\nAlways beside graveyards or on high ground where wind carries away the scent of burning herbs.\n\nBells toll only once per soul — then never again.\n\n\nCommon Rituals:\n\nThe Rite of Ash: The body is anointed with oils, wrapped in linen, and burned or buried with a whisper: “Return to stillness.”\n\nThe Vigil of Seven Flames: Seven candles are lit for seven days, each symbolizing a virtue of life (honor, love, duty, truth, courage, mercy, and peace).\n\nThe Stone Blessing: Gravestones are carved with the deceased’s virtues — never their failures.\n\n\n\n---\n\n🩸 Artifacts and Relics\n\nCenser of Eternal Rest: When swung, it soothes restless undead and seals cursed graves.\n\nAshen Mantle: Grants the wearer immunity to necrotic decay and the power to purify corrupted remains.\n\nTear of Vorneth: A crystal said to be formed from the god’s only tear — restores peace to tormented spirits.\n\n\n\n---\n\n⚔️ Divine Relationships\n\nDeity\tRelationship\n\nTobias\tHis master and judge; Vorneth enforces Tobias’s rulings upon mortal remains.\nNymera\tHis friend and co-worker; she guides souls, he guards their bodies.\nElyndra\tRespectful allies; she renews what he releases.\nKelriss\tAllies of necessity; where Kelriss decays, Vorneth sanctifies.\nMarvok\tEternal enemy; Vorneth’s priests hunt his necromantic cults relentlessly.\n\n\n\n---\n\n🕯️ Worshippers\n\nVorneth’s faithful include:\n\nGravekeepers and undertakers\n\nPhysicians and healers\n\nPaladins who protect sacred grounds\n\nMourners who have lost loved ones\n\nMonks who meditate upon impermanence\n\n\nCommon Prayer:\n\n> “Light the flame, bear the name, let all rest in peace.”\n\n\n\n\n---\n\n⚱️ Legends & Lore\n\nThe Thousand Candles: It is said Vorneth once walked the mortal world, lighting a candle for every innocent life lost in war. Each flame burned for a century.\n\nThe First Burial: He taught mortals to bury their dead rather than leave them to the wilds, marking the dawn of civilization.\n\nThe Mourner’s Oath: His priests swear lifelong celibacy to remain free of earthly attachment; they serve every funeral as if it were their own.\n\n\n\n---\n\n🕯️ Role in the World\n\nVorneth represents closure and respect — his name is invoked in every burial, even by those who do not follow his faith. His priests often accompany armies and noble houses, ensuring proper funerals are granted to all — friend or foe alike.\n\nWhere Tobias judges the soul, Vorneth tends the body and consoles the living.\nHe bridges the divine and mortal realms — the hand that lowers the shroud.\n\n\n---\n\nWould you like me to build his temple order structure next (like The Silent Choir or The Ashen Order — ranks, relics, and holy duties)?\nThat could make him playable as a full religion or cleric domain.",
+      "sections": {
+        "Overview": "# Orris",
+        "Titles:": "The Silent Shepherd\nKeeper of the Ashes\nLord of Final Rites\nThe Mourner’s Flame\nGuardian of Rest",
+        "Symbol:": "A stone urn surrounded by a ring of white lilies, sometimes a burning censer over crossed hands.\n\n\n\n---\n\n🕯️ Domains of Worship\n\nFunerals & Burial Rites\n\nDeath & Rest\n\nProtection of Graves\n\nPurification & Cleansing\n\nTransition between Life and Death\n\n\nVorneth’s clergy and followers oversee every mortal end: the washing of bodies, the lighting of pyres, the building of cairns, and the closing of tombs.\nTo die unblessed by Vorneth’s hand is to risk wandering as a Lost Soul — a fate feared across all realms.\n\n\n---\n\n⚖️ Appearance\n\nVorneth appears as a faceless figure of pale marble wrapped in layered funeral cloth. When he moves, ashes swirl around his feet, and his hands glow faintly gold, like the last light of a candle.\n\nHis presence brings quiet peace, never dread — the stillness of a final breath, not the terror of oblivion.\n\n> “There is no horror in ending, only the duty to end well.”\n\n\n\n\n---\n\n🕊️ Personality & Teachings\n\nWhere Tobias judges, Vorneth comforts.\nHe is the priest of death — humble, patient, and dutiful. His words are few, but his compassion is unshakable. He teaches mortals that death must be honored, not feared.\n\nHis creed:\n\n> “The body is a vessel; the soul, a journey. Honor both.”\n\n\n\nHe despises necromancy and desecration above all things, viewing them as crimes against peace.\n\n\n---\n\n⚰️ Clergy and Temples\n\nPriest Titles: Funerants, Pallbearers, Deathwrights\n\nTemples:\n\nBuilt with open courtyards and eternal fires where incense burns day and night.\n\nAlways beside graveyards or on high ground where wind carries away the scent of burning herbs.\n\nBells toll only once per soul — then never again.\n\n\nCommon Rituals:\n\nThe Rite of Ash: The body is anointed with oils, wrapped in linen, and burned or buried with a whisper: “Return to stillness.”\n\nThe Vigil of Seven Flames: Seven candles are lit for seven days, each symbolizing a virtue of life (honor, love, duty, truth, courage, mercy, and peace).\n\nThe Stone Blessing: Gravestones are carved with the deceased’s virtues — never their failures.\n\n\n\n---\n\n🩸 Artifacts and Relics\n\nCenser of Eternal Rest: When swung, it soothes restless undead and seals cursed graves.\n\nAshen Mantle: Grants the wearer immunity to necrotic decay and the power to purify corrupted remains.\n\nTear of Vorneth: A crystal said to be formed from the god’s only tear — restores peace to tormented spirits.\n\n\n\n---\n\n⚔️ Divine Relationships\n\nDeity\tRelationship\n\nTobias\tHis master and judge; Vorneth enforces Tobias’s rulings upon mortal remains.\nNymera\tHis friend and co-worker; she guides souls, he guards their bodies.\nElyndra\tRespectful allies; she renews what he releases.\nKelriss\tAllies of necessity; where Kelriss decays, Vorneth sanctifies.\nMarvok\tEternal enemy; Vorneth’s priests hunt his necromantic cults relentlessly.\n\n\n\n---\n\n🕯️ Worshippers\n\nVorneth’s faithful include:\n\nGravekeepers and undertakers\n\nPhysicians and healers\n\nPaladins who protect sacred grounds\n\nMourners who have lost loved ones\n\nMonks who meditate upon impermanence\n\n\nCommon Prayer:\n\n> “Light the flame, bear the name, let all rest in peace.”\n\n\n\n\n---\n\n⚱️ Legends & Lore\n\nThe Thousand Candles: It is said Vorneth once walked the mortal world, lighting a candle for every innocent life lost in war. Each flame burned for a century.\n\nThe First Burial: He taught mortals to bury their dead rather than leave them to the wilds, marking the dawn of civilization.\n\nThe Mourner’s Oath: His priests swear lifelong celibacy to remain free of earthly attachment; they serve every funeral as if it were their own.\n\n\n\n---\n\n🕯️ Role in the World\n\nVorneth represents closure and respect — his name is invoked in every burial, even by those who do not follow his faith. His priests often accompany armies and noble houses, ensuring proper funerals are granted to all — friend or foe alike.\n\nWhere Tobias judges the soul, Vorneth tends the body and consoles the living.\nHe bridges the divine and mortal realms — the hand that lowers the shroud.\n\n\n---\n\nWould you like me to build his temple order structure next (like The Silent Choir or The Ashen Order — ranks, relics, and holy duties)?\nThat could make him playable as a full religion or cleric domain."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "The Silent Shepherd Keeper of the Ashes Lord of Final Rites The Mourner’s Flame Guardian of Rest A stone urn surrounded by a ring of white lilies, sometimes a burning censer over crossed hands. 🕯️ Domains of Worship Funerals & Burial Rites Death & Rest Protec",
+      "metadata": {
+        "title": "Orris",
+        "slug": "orris",
+        "type": "theology",
+        "category": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "court": "",
+        "deityTitle": "God of Funerals & Burial Rites",
+        "divineDomain": "God of Funerals & Burial Rites",
+        "domain": "God of Funerals & Burial Rites",
+        "sourcePath": "2. Devine Pantheons/4. The Nethyros Pantheon/Orris - God of Funerals & Burial Rites.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-nethyros-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-nethyros-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Nethyros Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "divineDomain": "God of Funerals & Burial Rites",
+        "visibility": "public"
+      },
+      "searchTerms": "orris religion the nethyros pantheon {\"title\":\"orris\",\"slug\":\"orris\",\"type\":\"theology\",\"category\":\"the nethyros pantheon\",\"pantheon\":\"the nethyros pantheon\",\"court\":\"\",\"deitytitle\":\"god of funerals & burial rites\",\"divinedomain\":\"god of funerals & burial rites\",\"domain\":\"god of funerals & burial rites\",\"sourcepath\":\"2. devine pantheons/4. the nethyros pantheon/orris - god of funerals & burial rites.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-nethyros-pantheon\"],\"visibility\":\"public\"} # orris\n\n## overview\n## titles:\nthe silent shepherd\nkeeper of the ashes\nlord of final rites\nthe mourner’s flame\nguardian of rest\n\n\n## symbol: \na stone urn surrounded by a ring of white lilies, sometimes a burning censer over crossed hands.\n\n\n\n---\n\n🕯️ domains of worship\n\nfunerals & burial rites\n\ndeath & rest\n\nprotection of graves\n\npurification & cleansing\n\ntransition between life and death\n\n\nvorneth’s clergy and followers oversee every mortal end: the washing of bodies, the lighting of pyres, the building of cairns, and the closing of tombs.\nto die unblessed by vorneth’s hand is to risk wandering as a lost soul — a fate feared across all realms.\n\n\n---\n\n⚖️ appearance\n\nvorneth appears as a faceless figure of pale marble wrapped in layered funeral cloth. when he moves, ashes swirl around his feet, and his hands glow faintly gold, like the last light of a candle.\n\nhis presence brings quiet peace, never dread — the stillness of a final breath, not the terror of oblivion.\n\n> “there is no horror in ending, only the duty to end well.”\n\n\n\n\n---\n\n🕊️ personality & teachings\n\nwhere tobias judges, vorneth comforts.\nhe is the priest of death — humble, patient, and dutiful. his words are few, but his compassion is unshakable. he teaches mortals that death must be honored, not feared.\n\nhis creed:\n\n> “the body is a vessel; the soul, a journey. honor both.”\n\n\n\nhe despises necromancy and desecration above all things, viewing them as crimes against peace.\n\n\n---\n\n⚰️ clergy and temples\n\npriest titles: funerants, pallbearers, deathwrights\n\ntemples:\n\nbuilt with open courtyards and eternal fires where incense burns day and night.\n\nalways beside graveyards or on high ground where wind carries away the scent of burning herbs.\n\nbells toll only once per soul — then never again.\n\n\ncommon rituals:\n\nthe rite of ash: the body is anointed with oils, wrapped in linen, and burned or buried with a whisper: “return to stillness.”\n\nthe vigil of seven flames: seven candles are lit for seven days, each symbolizing a virtue of life (honor, love, duty, truth, courage, mercy, and peace).\n\nthe stone blessing: gravestones are carved with the deceased’s virtues — never their failures.\n\n\n\n---\n\n🩸 artifacts and relics\n\ncenser of eternal rest: when swung, it soothes restless undead and seals cursed graves.\n\nashen mantle: grants the wearer immunity to necrotic decay and the power to purify corrupted remains.\n\ntear of vorneth: a crystal said to be formed from the god’s only tear — restores peace to tormented spirits.\n\n\n\n---\n\n⚔️ divine relationships\n\ndeity\trelationship\n\ntobias\this master and judge; vorneth enforces tobias’s rulings upon mortal remains.\nnymera\this friend and co-worker; she guides souls, he guards their bodies.\nelyndra\trespectful allies; she renews what he releases.\nkelriss\tallies of necessity; where kelriss decays, vorneth sanctifies.\nmarvok\teternal enemy; vorneth’s priests hunt his necromantic cults relentlessly.\n\n\n\n---\n\n🕯️ worshippers\n\nvorneth’s faithful include:\n\ngravekeepers and undertakers\n\nphysicians and healers\n\npaladins who protect sacred grounds\n\nmourners who have lost loved ones\n\nmonks who meditate upon impermanence\n\n\ncommon prayer:\n\n> “light the flame, bear the name, let all rest in peace.”\n\n\n\n\n---\n\n⚱️ legends & lore\n\nthe thousand candles: it is said vorneth once walked the mortal world, lighting a candle for every innocent life lost in war. each flame burned for a century.\n\nthe first burial: he taught mortals to bury their dead rather than leave them to the wilds, marking the dawn of civilization.\n\nthe mourner’s oath: his priests swear lifelong celibacy to remain free of earthly attachment; they serve every funeral as if it were their own.\n\n\n\n---\n\n🕯️ role in the world\n\nvorneth represents closure and respect — his name is invoked in every burial, even by those who do not follow his faith. his priests often accompany armies and noble houses, ensuring proper funerals are granted to all — friend or foe alike.\n\nwhere tobias judges the soul, vorneth tends the body and consoles the living.\nhe bridges the divine and mortal realms — the hand that lowers the shroud.\n\n\n---\n\nwould you like me to build his temple order structure next (like the silent choir or the ashen order — ranks, relics, and holy duties)?\nthat could make him playable as a full religion or cleric domain."
+    },
+    {
+      "id": "religion:content-theology-ravenna-index",
+      "title": "Ravenna",
+      "slug": "ravenna",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Nethyros Pantheon"
+      ],
+      "category": "The Nethyros Pantheon",
+      "route": "/compendium/religion/the-nethyros-pantheon/ravenna",
+      "sourcePath": "content/theology/ravenna/index.md",
+      "sourceFolder": "content/theology/ravenna",
+      "content": "---\ntitle: \"Ravenna\"\nslug: \"ravenna\"\ntype: theology\ncategory: \"The Nethyros Pantheon\"\npantheon: \"The Nethyros Pantheon\"\ncourt: \"\"\ndeity_title: \"Goddess of the Souls final Path and Ravens\"\ndivine_domain: \"Goddess of the Souls final Path and Ravens\"\ndomain: \"Goddess of the Souls final Path and Ravens\"\nsource_path: \"2. Devine Pantheons/4. The Nethyros Pantheon/Ravenna - Goddess of the Souls final Path and Ravens.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-nethyros-pantheon\"\nvisibility: public\n---\n# Ravenna\n\n## Overview\n## **Goddess of Guiding Souls and Ravens – Morralis, the Veilkeeper**\n\n## Titles: \n- The Raven Queen, \n- Lady of the Final Path\n- Whisperer Beyond the Veil\n- She Who Watches the Departing  \n\n\n**Appearance:** Morralis appears as a tall, pale woman draped in feathers of midnight black. Her hair flows like ink across the stars, and her eyes gleam with silver light — windows to the afterlife itself. Wherever she walks, ravens follow, silent and watchful. Her voice is soft and distant, as if carried by a winter breeze.  \n**Personality:** Gentle yet implacable, Morralis is the calm between life and death. She neither punishes nor rewards — she guides. Her compassion lies in helping lost souls find peace, yet her presence always carries solemn weight. She mourns for every spirit, even those forgotten.  \n**Mythic Lore:**  \nWhen the first mortal died, their soul wandered, lost between realms. The gods wept, for they had created life but not the path beyond it. From the sorrow of the world’s first death rose Morralis — a goddess born of compassion and shadow. She took the form of a raven and flew through the void, finding the soul and guiding it to its destined rest.  \nSince then, her ravens have become omens of passage — appearing to watch over the dying or lead the newly dead. It is said that when a raven caws thrice, Morralis is near.  \nShe holds dominion over Purgatory’s borders, ensuring that no soul is lost to the Gloom. Even the gods of death respect her role, for she does not judge, only delivers.  \n**Worshippers:** Priests of the dead, seers, shamans, and those who tend to graves. Warriors and sailors often wear raven feathers for protection on their final journey.  \n**Temples & Worship:** Shrines to Morralis are quiet places of reflection, often located near burial grounds or cliffs overlooking the sea. Offerings include black feathers, candles, and silver coins for safe passage.  \n**Holy Days:** _The Night of Silent Wings_ — a yearly vigil where all fires are extinguished, and offerings are left under the open sky for the ravens to carry to the goddess\n\n\n\n\n🕊️ Nymera, the Soul Shepherd\n\nTitles:\n\nThe Raven Queen\n\nLady of Passing\n\nKeeper of the Final Path\n\nThe Voice Beyond the Veil\n\nMatron of Mourning\n\n\n\n## Symbol: \nA black raven clutching a silver thread in its beak, encircled by a ring of feathers.\n\n\n\n\nNymera is the divine shepherd who guides souls from mortal life to their destined afterlife.\nShe does not judge (that belongs to Tobias), nor does she redeem (that is Imriel’s role).\nInstead, she ensures the journey continues — protecting souls from corruption, devourers, and those who would bind them unnaturally.\n\nWhen mortals die, they see her ravens first. When gods fall silent, she whispers them home.\n\n\n---\n\n🌙 Appearance\n\nNymera appears as a tall, graceful woman with raven-black wings and hair like flowing night.\nHer eyes shimmer with distant starlight — endless empathy mingled with inevitability.\nHer garments seem woven from the mists of dawn and twilight, and she walks barefoot, leaving glowing prints that fade like memory.\n\n> “Grief is not the end. It is the echo of love calling home.”\n\n\n\n\n---\n\n🕯️ Personality and Teachings\n\nNymera is gentle but absolute — she mourns every passing, yet never falters in her duty.\nTo her, death is sacred, not cruel; a continuation rather than a punishment.\n\nHer creed:\n\n> “Every breath is borrowed, every soul must return.”\n\n\n\nVirtues: Compassion • Tranquility • Respect for the dead • Acceptance • Hope\n\nHer worshippers are taught to view death not with fear but reverence — as the moment all things rejoin the cosmic rhythm Elyndra weaves.\n\n\n---\n\n🕊️ Worshippers and Clergy\n\nTitles: Soul Wardens, Ravenkeepers, Shepherds of Rest, Mourning Choirs\n\nTemples:\n\nFound near graveyards, rivers, and mountain passes — places where the veil is thin.\n\nAlways filled with quiet music, flowing water, and hundreds of ravens roosting in open rafters.\n\nEach temple holds a Mirror of Rest, a black glass pool that reflects the faces of departed loved ones to those she blesses.\n\n\nCommon Rituals:\n\nThe Raven’s Call: A ritual bell is rung three times at every death, to summon Nymera’s attention.\n\nThe Last Vigil: Followers stay by the body through the night, singing hymns that help the soul detach peacefully.\n\nFeast of Departed Light: An annual event where candles are floated on rivers, one for each lost loved one.\n\n\n\n---\n\n🌌 Artifacts\n\nThe Shroud of Whispering Wings: Said to be made from her own feathers; when placed over a dying body, it guarantees a peaceful passing.\n\nThe Silver Thread: A counterpart to Elyndra’s loom — used by Nymera to pull lost souls back onto their destined path.\n\nThe Raven’s Lantern: Guides spirits through storm and shadow, ensuring no soul is lost to the Nether.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tDeep partnership; she delivers the souls that he judges. They share silent understanding — law and compassion entwined.\nImriel\tSisters in purpose; Imriel grants redemption, Nymera grants release. They often walk together at twilight.\nElyndra\tReverence; Nymera views her as the architect of the soul’s journey and follows her weave faithfully.\nKelriss\tMutual respect; his cycle of decay leads naturally to her path of peace.\nSeraxis\tUncomfortable alliance; she despises his zeal for punishment, though acknowledges the order he enforces.\nMarvok\tHer eternal enemy; she despises his perversion of death and seeks to undo his necromantic corruption.\n\n\n\n---\n\n🕯️ Legends and Myths\n\nThe Weeping of the Moon: When Marvok first tore souls from her grasp, Nymera’s tears became the first ravens — messengers who hunt lost spirits.\n\nThe River of Sleep: Nymera once walked the mortal realm to calm a plague of restless dead, leading them across a river that now divides life and afterlife.\n\nThe Forgotten King: A ruler who defied death begged Nymera for more time. She granted it — but his shadow aged in his place, until it consumed him.\n\n\n\n---\n\n🕊️ Clergy and Followers\n\nHer clergy act as guides for the dying, keepers of graves, and counselors to the grieving.\nThey wear long black robes with silver feathers embroidered down the spine — representing her wings.\nHer monks learn the “Language of Wings”, a silent ritual movement used to calm angry spirits.\n\nCommon Prayer:\n\n> “Lady of Wings, carry the lost to peace, and grant the living the strength to let go.”\n\n\n\nTaboo Acts:\n\nDesecrating graves\n\nBinding or enslaving souls\n\nMocking or defying death\n\n\n\n---\n\n⚰️ Role in the Realms\n\nNymera’s domain spans all five realms — her wings stretch from Avalon’s mists to the Netherworld’s gates.\nShe moves unseen across battlefields, whispering peace to the fallen, and appears in dreams to those near death.\nIn Avalon, she is called the Raven Matron. In Asteria, The Gentle Death. In the Netherworld, she is The Shepherd Between Gates.\n\nIt is said that when the seal between realms shattered, her ravens were the first to fly through, seeking to guide the lost back to their rightful resting places — though many were consumed by corruption, birthing the Ravenwraiths.\n\n\n---\n\nWould you like me to expand next into Nymera’s Ravenkeepers — her divine order of clerics and mortuary guardians — including their ranks, holy rites, and the powers tied to her blessing?\nIt would also link beautifully to your Paladin’s shared devotion between Elyndra (Fate) and Nymera (Soul’s Passage).\n",
+      "body": "# Ravenna\n\n## Overview\n## **Goddess of Guiding Souls and Ravens – Morralis, the Veilkeeper**\n\n## Titles: \n- The Raven Queen, \n- Lady of the Final Path\n- Whisperer Beyond the Veil\n- She Who Watches the Departing  \n\n\n**Appearance:** Morralis appears as a tall, pale woman draped in feathers of midnight black. Her hair flows like ink across the stars, and her eyes gleam with silver light — windows to the afterlife itself. Wherever she walks, ravens follow, silent and watchful. Her voice is soft and distant, as if carried by a winter breeze.  \n**Personality:** Gentle yet implacable, Morralis is the calm between life and death. She neither punishes nor rewards — she guides. Her compassion lies in helping lost souls find peace, yet her presence always carries solemn weight. She mourns for every spirit, even those forgotten.  \n**Mythic Lore:**  \nWhen the first mortal died, their soul wandered, lost between realms. The gods wept, for they had created life but not the path beyond it. From the sorrow of the world’s first death rose Morralis — a goddess born of compassion and shadow. She took the form of a raven and flew through the void, finding the soul and guiding it to its destined rest.  \nSince then, her ravens have become omens of passage — appearing to watch over the dying or lead the newly dead. It is said that when a raven caws thrice, Morralis is near.  \nShe holds dominion over Purgatory’s borders, ensuring that no soul is lost to the Gloom. Even the gods of death respect her role, for she does not judge, only delivers.  \n**Worshippers:** Priests of the dead, seers, shamans, and those who tend to graves. Warriors and sailors often wear raven feathers for protection on their final journey.  \n**Temples & Worship:** Shrines to Morralis are quiet places of reflection, often located near burial grounds or cliffs overlooking the sea. Offerings include black feathers, candles, and silver coins for safe passage.  \n**Holy Days:** _The Night of Silent Wings_ — a yearly vigil where all fires are extinguished, and offerings are left under the open sky for the ravens to carry to the goddess\n\n\n\n\n🕊️ Nymera, the Soul Shepherd\n\nTitles:\n\nThe Raven Queen\n\nLady of Passing\n\nKeeper of the Final Path\n\nThe Voice Beyond the Veil\n\nMatron of Mourning\n\n\n\n## Symbol: \nA black raven clutching a silver thread in its beak, encircled by a ring of feathers.\n\n\n\n\nNymera is the divine shepherd who guides souls from mortal life to their destined afterlife.\nShe does not judge (that belongs to Tobias), nor does she redeem (that is Imriel’s role).\nInstead, she ensures the journey continues — protecting souls from corruption, devourers, and those who would bind them unnaturally.\n\nWhen mortals die, they see her ravens first. When gods fall silent, she whispers them home.\n\n\n---\n\n🌙 Appearance\n\nNymera appears as a tall, graceful woman with raven-black wings and hair like flowing night.\nHer eyes shimmer with distant starlight — endless empathy mingled with inevitability.\nHer garments seem woven from the mists of dawn and twilight, and she walks barefoot, leaving glowing prints that fade like memory.\n\n> “Grief is not the end. It is the echo of love calling home.”\n\n\n\n\n---\n\n🕯️ Personality and Teachings\n\nNymera is gentle but absolute — she mourns every passing, yet never falters in her duty.\nTo her, death is sacred, not cruel; a continuation rather than a punishment.\n\nHer creed:\n\n> “Every breath is borrowed, every soul must return.”\n\n\n\nVirtues: Compassion • Tranquility • Respect for the dead • Acceptance • Hope\n\nHer worshippers are taught to view death not with fear but reverence — as the moment all things rejoin the cosmic rhythm Elyndra weaves.\n\n\n---\n\n🕊️ Worshippers and Clergy\n\nTitles: Soul Wardens, Ravenkeepers, Shepherds of Rest, Mourning Choirs\n\nTemples:\n\nFound near graveyards, rivers, and mountain passes — places where the veil is thin.\n\nAlways filled with quiet music, flowing water, and hundreds of ravens roosting in open rafters.\n\nEach temple holds a Mirror of Rest, a black glass pool that reflects the faces of departed loved ones to those she blesses.\n\n\nCommon Rituals:\n\nThe Raven’s Call: A ritual bell is rung three times at every death, to summon Nymera’s attention.\n\nThe Last Vigil: Followers stay by the body through the night, singing hymns that help the soul detach peacefully.\n\nFeast of Departed Light: An annual event where candles are floated on rivers, one for each lost loved one.\n\n\n\n---\n\n🌌 Artifacts\n\nThe Shroud of Whispering Wings: Said to be made from her own feathers; when placed over a dying body, it guarantees a peaceful passing.\n\nThe Silver Thread: A counterpart to Elyndra’s loom — used by Nymera to pull lost souls back onto their destined path.\n\nThe Raven’s Lantern: Guides spirits through storm and shadow, ensuring no soul is lost to the Nether.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tDeep partnership; she delivers the souls that he judges. They share silent understanding — law and compassion entwined.\nImriel\tSisters in purpose; Imriel grants redemption, Nymera grants release. They often walk together at twilight.\nElyndra\tReverence; Nymera views her as the architect of the soul’s journey and follows her weave faithfully.\nKelriss\tMutual respect; his cycle of decay leads naturally to her path of peace.\nSeraxis\tUncomfortable alliance; she despises his zeal for punishment, though acknowledges the order he enforces.\nMarvok\tHer eternal enemy; she despises his perversion of death and seeks to undo his necromantic corruption.\n\n\n\n---\n\n🕯️ Legends and Myths\n\nThe Weeping of the Moon: When Marvok first tore souls from her grasp, Nymera’s tears became the first ravens — messengers who hunt lost spirits.\n\nThe River of Sleep: Nymera once walked the mortal realm to calm a plague of restless dead, leading them across a river that now divides life and afterlife.\n\nThe Forgotten King: A ruler who defied death begged Nymera for more time. She granted it — but his shadow aged in his place, until it consumed him.\n\n\n\n---\n\n🕊️ Clergy and Followers\n\nHer clergy act as guides for the dying, keepers of graves, and counselors to the grieving.\nThey wear long black robes with silver feathers embroidered down the spine — representing her wings.\nHer monks learn the “Language of Wings”, a silent ritual movement used to calm angry spirits.\n\nCommon Prayer:\n\n> “Lady of Wings, carry the lost to peace, and grant the living the strength to let go.”\n\n\n\nTaboo Acts:\n\nDesecrating graves\n\nBinding or enslaving souls\n\nMocking or defying death\n\n\n\n---\n\n⚰️ Role in the Realms\n\nNymera’s domain spans all five realms — her wings stretch from Avalon’s mists to the Netherworld’s gates.\nShe moves unseen across battlefields, whispering peace to the fallen, and appears in dreams to those near death.\nIn Avalon, she is called the Raven Matron. In Asteria, The Gentle Death. In the Netherworld, she is The Shepherd Between Gates.\n\nIt is said that when the seal between realms shattered, her ravens were the first to fly through, seeking to guide the lost back to their rightful resting places — though many were consumed by corruption, birthing the Ravenwraiths.\n\n\n---\n\nWould you like me to expand next into Nymera’s Ravenkeepers — her divine order of clerics and mortuary guardians — including their ranks, holy rites, and the powers tied to her blessing?\nIt would also link beautifully to your Paladin’s shared devotion between Elyndra (Fate) and Nymera (Soul’s Passage).",
+      "sections": {
+        "Overview": "# Ravenna",
+        "**Goddess of Guiding Souls and Ravens – Morralis, the Veilkeeper**": "",
+        "Titles:": "- The Raven Queen, \n- Lady of the Final Path\n- Whisperer Beyond the Veil\n- She Who Watches the Departing  \n\n\n**Appearance:** Morralis appears as a tall, pale woman draped in feathers of midnight black. Her hair flows like ink across the stars, and her eyes gleam with silver light — windows to the afterlife itself. Wherever she walks, ravens follow, silent and watchful. Her voice is soft and distant, as if carried by a winter breeze.  \n**Personality:** Gentle yet implacable, Morralis is the calm between life and death. She neither punishes nor rewards — she guides. Her compassion lies in helping lost souls find peace, yet her presence always carries solemn weight. She mourns for every spirit, even those forgotten.  \n**Mythic Lore:**  \nWhen the first mortal died, their soul wandered, lost between realms. The gods wept, for they had created life but not the path beyond it. From the sorrow of the world’s first death rose Morralis — a goddess born of compassion and shadow. She took the form of a raven and flew through the void, finding the soul and guiding it to its destined rest.  \nSince then, her ravens have become omens of passage — appearing to watch over the dying or lead the newly dead. It is said that when a raven caws thrice, Morralis is near.  \nShe holds dominion over Purgatory’s borders, ensuring that no soul is lost to the Gloom. Even the gods of death respect her role, for she does not judge, only delivers.  \n**Worshippers:** Priests of the dead, seers, shamans, and those who tend to graves. Warriors and sailors often wear raven feathers for protection on their final journey.  \n**Temples & Worship:** Shrines to Morralis are quiet places of reflection, often located near burial grounds or cliffs overlooking the sea. Offerings include black feathers, candles, and silver coins for safe passage.  \n**Holy Days:** _The Night of Silent Wings_ — a yearly vigil where all fires are extinguished, and offerings are left under the open sky for the ravens to carry to the goddess\n\n\n\n\n🕊️ Nymera, the Soul Shepherd\n\nTitles:\n\nThe Raven Queen\n\nLady of Passing\n\nKeeper of the Final Path\n\nThe Voice Beyond the Veil\n\nMatron of Mourning",
+        "Symbol:": "A black raven clutching a silver thread in its beak, encircled by a ring of feathers.\n\n\n\n\nNymera is the divine shepherd who guides souls from mortal life to their destined afterlife.\nShe does not judge (that belongs to Tobias), nor does she redeem (that is Imriel’s role).\nInstead, she ensures the journey continues — protecting souls from corruption, devourers, and those who would bind them unnaturally.\n\nWhen mortals die, they see her ravens first. When gods fall silent, she whispers them home.\n\n\n---\n\n🌙 Appearance\n\nNymera appears as a tall, graceful woman with raven-black wings and hair like flowing night.\nHer eyes shimmer with distant starlight — endless empathy mingled with inevitability.\nHer garments seem woven from the mists of dawn and twilight, and she walks barefoot, leaving glowing prints that fade like memory.\n\n> “Grief is not the end. It is the echo of love calling home.”\n\n\n\n\n---\n\n🕯️ Personality and Teachings\n\nNymera is gentle but absolute — she mourns every passing, yet never falters in her duty.\nTo her, death is sacred, not cruel; a continuation rather than a punishment.\n\nHer creed:\n\n> “Every breath is borrowed, every soul must return.”\n\n\n\nVirtues: Compassion • Tranquility • Respect for the dead • Acceptance • Hope\n\nHer worshippers are taught to view death not with fear but reverence — as the moment all things rejoin the cosmic rhythm Elyndra weaves.\n\n\n---\n\n🕊️ Worshippers and Clergy\n\nTitles: Soul Wardens, Ravenkeepers, Shepherds of Rest, Mourning Choirs\n\nTemples:\n\nFound near graveyards, rivers, and mountain passes — places where the veil is thin.\n\nAlways filled with quiet music, flowing water, and hundreds of ravens roosting in open rafters.\n\nEach temple holds a Mirror of Rest, a black glass pool that reflects the faces of departed loved ones to those she blesses.\n\n\nCommon Rituals:\n\nThe Raven’s Call: A ritual bell is rung three times at every death, to summon Nymera’s attention.\n\nThe Last Vigil: Followers stay by the body through the night, singing hymns that help the soul detach peacefully.\n\nFeast of Departed Light: An annual event where candles are floated on rivers, one for each lost loved one.\n\n\n\n---\n\n🌌 Artifacts\n\nThe Shroud of Whispering Wings: Said to be made from her own feathers; when placed over a dying body, it guarantees a peaceful passing.\n\nThe Silver Thread: A counterpart to Elyndra’s loom — used by Nymera to pull lost souls back onto their destined path.\n\nThe Raven’s Lantern: Guides spirits through storm and shadow, ensuring no soul is lost to the Nether.\n\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nTobias\tDeep partnership; she delivers the souls that he judges. They share silent understanding — law and compassion entwined.\nImriel\tSisters in purpose; Imriel grants redemption, Nymera grants release. They often walk together at twilight.\nElyndra\tReverence; Nymera views her as the architect of the soul’s journey and follows her weave faithfully.\nKelriss\tMutual respect; his cycle of decay leads naturally to her path of peace.\nSeraxis\tUncomfortable alliance; she despises his zeal for punishment, though acknowledges the order he enforces.\nMarvok\tHer eternal enemy; she despises his perversion of death and seeks to undo his necromantic corruption.\n\n\n\n---\n\n🕯️ Legends and Myths\n\nThe Weeping of the Moon: When Marvok first tore souls from her grasp, Nymera’s tears became the first ravens — messengers who hunt lost spirits.\n\nThe River of Sleep: Nymera once walked the mortal realm to calm a plague of restless dead, leading them across a river that now divides life and afterlife.\n\nThe Forgotten King: A ruler who defied death begged Nymera for more time. She granted it — but his shadow aged in his place, until it consumed him.\n\n\n\n---\n\n🕊️ Clergy and Followers\n\nHer clergy act as guides for the dying, keepers of graves, and counselors to the grieving.\nThey wear long black robes with silver feathers embroidered down the spine — representing her wings.\nHer monks learn the “Language of Wings”, a silent ritual movement used to calm angry spirits.\n\nCommon Prayer:\n\n> “Lady of Wings, carry the lost to peace, and grant the living the strength to let go.”\n\n\n\nTaboo Acts:\n\nDesecrating graves\n\nBinding or enslaving souls\n\nMocking or defying death\n\n\n\n---\n\n⚰️ Role in the Realms\n\nNymera’s domain spans all five realms — her wings stretch from Avalon’s mists to the Netherworld’s gates.\nShe moves unseen across battlefields, whispering peace to the fallen, and appears in dreams to those near death.\nIn Avalon, she is called the Raven Matron. In Asteria, The Gentle Death. In the Netherworld, she is The Shepherd Between Gates.\n\nIt is said that when the seal between realms shattered, her ravens were the first to fly through, seeking to guide the lost back to their rightful resting places — though many were consumed by corruption, birthing the Ravenwraiths.\n\n\n---\n\nWould you like me to expand next into Nymera’s Ravenkeepers — her divine order of clerics and mortuary guardians — including their ranks, holy rites, and the powers tied to her blessing?\nIt would also link beautifully to your Paladin’s shared devotion between Elyndra (Fate) and Nymera (Soul’s Passage)."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Appearance:** Morralis appears as a tall, pale woman draped in feathers of midnight black. Her hair flows like ink across the stars, and her eyes gleam with silver light — windows to the afterlife itself. Wherever she walks, ravens follow, silent and watchfu",
+      "metadata": {
+        "title": "Ravenna",
+        "slug": "ravenna",
+        "type": "theology",
+        "category": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "court": "",
+        "deityTitle": "Goddess of the Souls final Path and Ravens",
+        "divineDomain": "Goddess of the Souls final Path and Ravens",
+        "domain": "Goddess of the Souls final Path and Ravens",
+        "sourcePath": "2. Devine Pantheons/4. The Nethyros Pantheon/Ravenna - Goddess of the Souls final Path and Ravens.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-nethyros-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-nethyros-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Nethyros Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "divineDomain": "Goddess of the Souls final Path and Ravens",
+        "visibility": "public"
+      },
+      "searchTerms": "ravenna religion the nethyros pantheon {\"title\":\"ravenna\",\"slug\":\"ravenna\",\"type\":\"theology\",\"category\":\"the nethyros pantheon\",\"pantheon\":\"the nethyros pantheon\",\"court\":\"\",\"deitytitle\":\"goddess of the souls final path and ravens\",\"divinedomain\":\"goddess of the souls final path and ravens\",\"domain\":\"goddess of the souls final path and ravens\",\"sourcepath\":\"2. devine pantheons/4. the nethyros pantheon/ravenna - goddess of the souls final path and ravens.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-nethyros-pantheon\"],\"visibility\":\"public\"} # ravenna\n\n## overview\n## **goddess of guiding souls and ravens – morralis, the veilkeeper**\n\n## titles: \n- the raven queen, \n- lady of the final path\n- whisperer beyond the veil\n- she who watches the departing  \n\n\n**appearance:** morralis appears as a tall, pale woman draped in feathers of midnight black. her hair flows like ink across the stars, and her eyes gleam with silver light — windows to the afterlife itself. wherever she walks, ravens follow, silent and watchful. her voice is soft and distant, as if carried by a winter breeze.  \n**personality:** gentle yet implacable, morralis is the calm between life and death. she neither punishes nor rewards — she guides. her compassion lies in helping lost souls find peace, yet her presence always carries solemn weight. she mourns for every spirit, even those forgotten.  \n**mythic lore:**  \nwhen the first mortal died, their soul wandered, lost between realms. the gods wept, for they had created life but not the path beyond it. from the sorrow of the world’s first death rose morralis — a goddess born of compassion and shadow. she took the form of a raven and flew through the void, finding the soul and guiding it to its destined rest.  \nsince then, her ravens have become omens of passage — appearing to watch over the dying or lead the newly dead. it is said that when a raven caws thrice, morralis is near.  \nshe holds dominion over purgatory’s borders, ensuring that no soul is lost to the gloom. even the gods of death respect her role, for she does not judge, only delivers.  \n**worshippers:** priests of the dead, seers, shamans, and those who tend to graves. warriors and sailors often wear raven feathers for protection on their final journey.  \n**temples & worship:** shrines to morralis are quiet places of reflection, often located near burial grounds or cliffs overlooking the sea. offerings include black feathers, candles, and silver coins for safe passage.  \n**holy days:** _the night of silent wings_ — a yearly vigil where all fires are extinguished, and offerings are left under the open sky for the ravens to carry to the goddess\n\n\n\n\n🕊️ nymera, the soul shepherd\n\ntitles:\n\nthe raven queen\n\nlady of passing\n\nkeeper of the final path\n\nthe voice beyond the veil\n\nmatron of mourning\n\n\n\n## symbol: \na black raven clutching a silver thread in its beak, encircled by a ring of feathers.\n\n\n\n\nnymera is the divine shepherd who guides souls from mortal life to their destined afterlife.\nshe does not judge (that belongs to tobias), nor does she redeem (that is imriel’s role).\ninstead, she ensures the journey continues — protecting souls from corruption, devourers, and those who would bind them unnaturally.\n\nwhen mortals die, they see her ravens first. when gods fall silent, she whispers them home.\n\n\n---\n\n🌙 appearance\n\nnymera appears as a tall, graceful woman with raven-black wings and hair like flowing night.\nher eyes shimmer with distant starlight — endless empathy mingled with inevitability.\nher garments seem woven from the mists of dawn and twilight, and she walks barefoot, leaving glowing prints that fade like memory.\n\n> “grief is not the end. it is the echo of love calling home.”\n\n\n\n\n---\n\n🕯️ personality and teachings\n\nnymera is gentle but absolute — she mourns every passing, yet never falters in her duty.\nto her, death is sacred, not cruel; a continuation rather than a punishment.\n\nher creed:\n\n> “every breath is borrowed, every soul must return.”\n\n\n\nvirtues: compassion • tranquility • respect for the dead • acceptance • hope\n\nher worshippers are taught to view death not with fear but reverence — as the moment all things rejoin the cosmic rhythm elyndra weaves.\n\n\n---\n\n🕊️ worshippers and clergy\n\ntitles: soul wardens, ravenkeepers, shepherds of rest, mourning choirs\n\ntemples:\n\nfound near graveyards, rivers, and mountain passes — places where the veil is thin.\n\nalways filled with quiet music, flowing water, and hundreds of ravens roosting in open rafters.\n\neach temple holds a mirror of rest, a black glass pool that reflects the faces of departed loved ones to those she blesses.\n\n\ncommon rituals:\n\nthe raven’s call: a ritual bell is rung three times at every death, to summon nymera’s attention.\n\nthe last vigil: followers stay by the body through the night, singing hymns that help the soul detach peacefully.\n\nfeast of departed light: an annual event where candles are floated on rivers, one for each lost loved one.\n\n\n\n---\n\n🌌 artifacts\n\nthe shroud of whispering wings: said to be made from her own feathers; when placed over a dying body, it guarantees a peaceful passing.\n\nthe silver thread: a counterpart to elyndra’s loom — used by nymera to pull lost souls back onto their destined path.\n\nthe raven’s lantern: guides spirits through storm and shadow, ensuring no soul is lost to the nether.\n\n\n\n---\n\n⚖️ relationships\n\ndeity\trelationship\n\ntobias\tdeep partnership; she delivers the souls that he judges. they share silent understanding — law and compassion entwined.\nimriel\tsisters in purpose; imriel grants redemption, nymera grants release. they often walk together at twilight.\nelyndra\treverence; nymera views her as the architect of the soul’s journey and follows her weave faithfully.\nkelriss\tmutual respect; his cycle of decay leads naturally to her path of peace.\nseraxis\tuncomfortable alliance; she despises his zeal for punishment, though acknowledges the order he enforces.\nmarvok\ther eternal enemy; she despises his perversion of death and seeks to undo his necromantic corruption.\n\n\n\n---\n\n🕯️ legends and myths\n\nthe weeping of the moon: when marvok first tore souls from her grasp, nymera’s tears became the first ravens — messengers who hunt lost spirits.\n\nthe river of sleep: nymera once walked the mortal realm to calm a plague of restless dead, leading them across a river that now divides life and afterlife.\n\nthe forgotten king: a ruler who defied death begged nymera for more time. she granted it — but his shadow aged in his place, until it consumed him.\n\n\n\n---\n\n🕊️ clergy and followers\n\nher clergy act as guides for the dying, keepers of graves, and counselors to the grieving.\nthey wear long black robes with silver feathers embroidered down the spine — representing her wings.\nher monks learn the “language of wings”, a silent ritual movement used to calm angry spirits.\n\ncommon prayer:\n\n> “lady of wings, carry the lost to peace, and grant the living the strength to let go.”\n\n\n\ntaboo acts:\n\ndesecrating graves\n\nbinding or enslaving souls\n\nmocking or defying death\n\n\n\n---\n\n⚰️ role in the realms\n\nnymera’s domain spans all five realms — her wings stretch from avalon’s mists to the netherworld’s gates.\nshe moves unseen across battlefields, whispering peace to the fallen, and appears in dreams to those near death.\nin avalon, she is called the raven matron. in asteria, the gentle death. in the netherworld, she is the shepherd between gates.\n\nit is said that when the seal between realms shattered, her ravens were the first to fly through, seeking to guide the lost back to their rightful resting places — though many were consumed by corruption, birthing the ravenwraiths.\n\n\n---\n\nwould you like me to expand next into nymera’s ravenkeepers — her divine order of clerics and mortuary guardians — including their ranks, holy rites, and the powers tied to her blessing?\nit would also link beautifully to your paladin’s shared devotion between elyndra (fate) and nymera (soul’s passage)."
+    },
+    {
+      "id": "religion:content-theology-tobias-index",
+      "title": "Tobias",
+      "slug": "tobias",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Nethyros Pantheon"
+      ],
+      "category": "The Nethyros Pantheon",
+      "route": "/compendium/religion/the-nethyros-pantheon/tobias",
+      "sourcePath": "content/theology/tobias/index.md",
+      "sourceFolder": "content/theology/tobias",
+      "content": "---\ntitle: \"Tobias\"\nslug: \"tobias\"\ntype: theology\ncategory: \"The Nethyros Pantheon\"\npantheon: \"The Nethyros Pantheon\"\ncourt: \"\"\ndeity_title: \"God of the Underworld\"\ndivine_domain: \"God of the Underworld\"\ndomain: \"God of the Underworld\"\nsource_path: \"2. Devine Pantheons/4. The Nethyros Pantheon/Tobias - God of the Underworld.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-nethyros-pantheon\"\nvisibility: public\n---\n# Tobias\n\n## Overview\nAppearance: Pale stone-like skin, eyes like hollow moons, wears a crown of bone-roots\nPersonality: Cold, fair, but unforgiving — never lies, never bargains\n\n> “All debts are paid in the end.”\n\n\n## Titles:\nThe Veiled King\nKeeper of the Final Gate\nLord of Stillness\nWarden of the Pale Dominion\nJudge of Ten Thousand Souls\n\n## Symbol:\nA black crown atop chained scales, surrounded by a ring of pale light.\n\n## 🕯️ Appearance & Presence\n\nTobias appears as a tall, serene figure carved from pale stone. His eyes are hollow voids lit by a cold blue flame. He wears a crown of bone intertwined with roots that seem to grow and decay in cycles. His voice is neither deep nor loud — it echoes softly, as if spoken through a cavern.\n\nWhen Tobias manifests, sound dies: no wind, no heartbeats, no breath. Even gods grow uneasy in his presence.\n\n\n---\n\n## ⚖️ Role in the Pantheon\n\nTobias presides over the Pale Dominion, the vast underworld where souls are weighed and judged. Unlike many death gods, Tobias does not crave worship — he demands order.\n\nHe maintains the Veil Accord, the divine law that separates the realms of the living and the dead. Any god, mortal, or spirit that breaks this law (such as necromancers or soul-thieves) earns his wrath.\n\nHe is the eldest sibling of Nymera (Goddess of Guiding Souls) and the eternal rival of Marvok (God of Undeath).\n\n\n---\n\n⚔️ Divine Philosophy\n\nTobias believes that death is not punishment — it is justice.\nHis creed:\n\n> “Life is the question. Death is the answer.”\n\n\n\nTo Tobias, each soul is a weight on the scales of balance. His followers uphold duty, truth, and inevitability — never pity.\n\n\n---\n\n🕊️ Followers and Clergy\n\nTitles: Grave Wardens, Oathbinders, Keepers of Silence\n\nTemples:\n\nFound only near catacombs, crossroads, or old battlefields.\n\nDecorated with chains, scales, and black lilies.\n\nAlways silent; bells are forbidden.\n\n\nRituals:\n\nThe Final Whisper: a prayer said over dying souls to bind them to peace.\n\nThe Candle Oath: an unbreakable vow lit before a single black flame — if broken, Tobias sends a shade to reclaim the oathbreaker’s soul.\n\nDay of the Veil (Fiends’ Hallow): the one day each year mortals may speak with ancestors under Tobias’ watch.\n\n\n\n---\n\n💀 Divine Powers and Artifacts\n\nThe Crown of Silence: suppresses all magic of resurrection or undeath within a vast radius.\n\nThe Chains of Measure: spectral bindings that can drag even divine beings into judgment.\n\nThe Obsidian Throne: centerpiece of the Pale Dominion; every soul stands before it to face Tobias’ silent verdict.\n\n\n\n---\n\n🕰️ Mythic History\n\nTobias was once a Celestial of Avalon, guardian of balance between creation and entropy. When mortals were born and death followed, he descended willingly into the shadow realm to ensure the cycle remained just.\n\nHe built the first underworld — The Pale Dominion — from fragments of stars that had died. From there, he carved the Veil itself and chained Death to Law.\n\nIt’s said he does not sleep, for every second, a soul is judged somewhere in the cosmos.\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nNymera\tSister, soul guide — his compassion through her voice.\nVorneth\tPriest and servant, conducts mortal rituals in his name.\nKelriss\tAlly; Tobias allows the Bone-Sower to reclaim flesh for the earth.\nSeraxis\tRight hand; delivers judgment to those Tobias condemns.\nElyndra\tOccasional opponent — she believes in mercy and rebirth, he believes in balance.\nMarvok\tGreatest enemy. Tobias cast him from the Dominion for raising the dead.\n\n\n\n---\n\n⚰️ Quotes & Doctrine\n\n> “No king escapes my throne.”\n“Truth weighs heavier than gold.”\n“In silence, even gods confess.”\n",
+      "body": "# Tobias\n\n## Overview\nAppearance: Pale stone-like skin, eyes like hollow moons, wears a crown of bone-roots\nPersonality: Cold, fair, but unforgiving — never lies, never bargains\n\n> “All debts are paid in the end.”\n\n\n## Titles:\nThe Veiled King\nKeeper of the Final Gate\nLord of Stillness\nWarden of the Pale Dominion\nJudge of Ten Thousand Souls\n\n## Symbol:\nA black crown atop chained scales, surrounded by a ring of pale light.\n\n## 🕯️ Appearance & Presence\n\nTobias appears as a tall, serene figure carved from pale stone. His eyes are hollow voids lit by a cold blue flame. He wears a crown of bone intertwined with roots that seem to grow and decay in cycles. His voice is neither deep nor loud — it echoes softly, as if spoken through a cavern.\n\nWhen Tobias manifests, sound dies: no wind, no heartbeats, no breath. Even gods grow uneasy in his presence.\n\n\n---\n\n## ⚖️ Role in the Pantheon\n\nTobias presides over the Pale Dominion, the vast underworld where souls are weighed and judged. Unlike many death gods, Tobias does not crave worship — he demands order.\n\nHe maintains the Veil Accord, the divine law that separates the realms of the living and the dead. Any god, mortal, or spirit that breaks this law (such as necromancers or soul-thieves) earns his wrath.\n\nHe is the eldest sibling of Nymera (Goddess of Guiding Souls) and the eternal rival of Marvok (God of Undeath).\n\n\n---\n\n⚔️ Divine Philosophy\n\nTobias believes that death is not punishment — it is justice.\nHis creed:\n\n> “Life is the question. Death is the answer.”\n\n\n\nTo Tobias, each soul is a weight on the scales of balance. His followers uphold duty, truth, and inevitability — never pity.\n\n\n---\n\n🕊️ Followers and Clergy\n\nTitles: Grave Wardens, Oathbinders, Keepers of Silence\n\nTemples:\n\nFound only near catacombs, crossroads, or old battlefields.\n\nDecorated with chains, scales, and black lilies.\n\nAlways silent; bells are forbidden.\n\n\nRituals:\n\nThe Final Whisper: a prayer said over dying souls to bind them to peace.\n\nThe Candle Oath: an unbreakable vow lit before a single black flame — if broken, Tobias sends a shade to reclaim the oathbreaker’s soul.\n\nDay of the Veil (Fiends’ Hallow): the one day each year mortals may speak with ancestors under Tobias’ watch.\n\n\n\n---\n\n💀 Divine Powers and Artifacts\n\nThe Crown of Silence: suppresses all magic of resurrection or undeath within a vast radius.\n\nThe Chains of Measure: spectral bindings that can drag even divine beings into judgment.\n\nThe Obsidian Throne: centerpiece of the Pale Dominion; every soul stands before it to face Tobias’ silent verdict.\n\n\n\n---\n\n🕰️ Mythic History\n\nTobias was once a Celestial of Avalon, guardian of balance between creation and entropy. When mortals were born and death followed, he descended willingly into the shadow realm to ensure the cycle remained just.\n\nHe built the first underworld — The Pale Dominion — from fragments of stars that had died. From there, he carved the Veil itself and chained Death to Law.\n\nIt’s said he does not sleep, for every second, a soul is judged somewhere in the cosmos.\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nNymera\tSister, soul guide — his compassion through her voice.\nVorneth\tPriest and servant, conducts mortal rituals in his name.\nKelriss\tAlly; Tobias allows the Bone-Sower to reclaim flesh for the earth.\nSeraxis\tRight hand; delivers judgment to those Tobias condemns.\nElyndra\tOccasional opponent — she believes in mercy and rebirth, he believes in balance.\nMarvok\tGreatest enemy. Tobias cast him from the Dominion for raising the dead.\n\n\n\n---\n\n⚰️ Quotes & Doctrine\n\n> “No king escapes my throne.”\n“Truth weighs heavier than gold.”\n“In silence, even gods confess.”",
+      "sections": {
+        "Overview": "# Tobias\n\nAppearance: Pale stone-like skin, eyes like hollow moons, wears a crown of bone-roots\nPersonality: Cold, fair, but unforgiving — never lies, never bargains\n\n> “All debts are paid in the end.”",
+        "Titles:": "The Veiled King\nKeeper of the Final Gate\nLord of Stillness\nWarden of the Pale Dominion\nJudge of Ten Thousand Souls",
+        "Symbol:": "A black crown atop chained scales, surrounded by a ring of pale light.",
+        "🕯️ Appearance & Presence": "Tobias appears as a tall, serene figure carved from pale stone. His eyes are hollow voids lit by a cold blue flame. He wears a crown of bone intertwined with roots that seem to grow and decay in cycles. His voice is neither deep nor loud — it echoes softly, as if spoken through a cavern.\n\nWhen Tobias manifests, sound dies: no wind, no heartbeats, no breath. Even gods grow uneasy in his presence.\n\n\n---",
+        "⚖️ Role in the Pantheon": "Tobias presides over the Pale Dominion, the vast underworld where souls are weighed and judged. Unlike many death gods, Tobias does not crave worship — he demands order.\n\nHe maintains the Veil Accord, the divine law that separates the realms of the living and the dead. Any god, mortal, or spirit that breaks this law (such as necromancers or soul-thieves) earns his wrath.\n\nHe is the eldest sibling of Nymera (Goddess of Guiding Souls) and the eternal rival of Marvok (God of Undeath).\n\n\n---\n\n⚔️ Divine Philosophy\n\nTobias believes that death is not punishment — it is justice.\nHis creed:\n\n> “Life is the question. Death is the answer.”\n\n\n\nTo Tobias, each soul is a weight on the scales of balance. His followers uphold duty, truth, and inevitability — never pity.\n\n\n---\n\n🕊️ Followers and Clergy\n\nTitles: Grave Wardens, Oathbinders, Keepers of Silence\n\nTemples:\n\nFound only near catacombs, crossroads, or old battlefields.\n\nDecorated with chains, scales, and black lilies.\n\nAlways silent; bells are forbidden.\n\n\nRituals:\n\nThe Final Whisper: a prayer said over dying souls to bind them to peace.\n\nThe Candle Oath: an unbreakable vow lit before a single black flame — if broken, Tobias sends a shade to reclaim the oathbreaker’s soul.\n\nDay of the Veil (Fiends’ Hallow): the one day each year mortals may speak with ancestors under Tobias’ watch.\n\n\n\n---\n\n💀 Divine Powers and Artifacts\n\nThe Crown of Silence: suppresses all magic of resurrection or undeath within a vast radius.\n\nThe Chains of Measure: spectral bindings that can drag even divine beings into judgment.\n\nThe Obsidian Throne: centerpiece of the Pale Dominion; every soul stands before it to face Tobias’ silent verdict.\n\n\n\n---\n\n🕰️ Mythic History\n\nTobias was once a Celestial of Avalon, guardian of balance between creation and entropy. When mortals were born and death followed, he descended willingly into the shadow realm to ensure the cycle remained just.\n\nHe built the first underworld — The Pale Dominion — from fragments of stars that had died. From there, he carved the Veil itself and chained Death to Law.\n\nIt’s said he does not sleep, for every second, a soul is judged somewhere in the cosmos.\n\n\n---\n\n⚖️ Relationships\n\nDeity\tRelationship\n\nNymera\tSister, soul guide — his compassion through her voice.\nVorneth\tPriest and servant, conducts mortal rituals in his name.\nKelriss\tAlly; Tobias allows the Bone-Sower to reclaim flesh for the earth.\nSeraxis\tRight hand; delivers judgment to those Tobias condemns.\nElyndra\tOccasional opponent — she believes in mercy and rebirth, he believes in balance.\nMarvok\tGreatest enemy. Tobias cast him from the Dominion for raising the dead.\n\n\n\n---\n\n⚰️ Quotes & Doctrine\n\n> “No king escapes my throne.”\n“Truth weighs heavier than gold.”\n“In silence, even gods confess.”"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Appearance: Pale stone-like skin, eyes like hollow moons, wears a crown of bone-roots Personality: Cold, fair, but unforgiving — never lies, never bargains > “All debts are paid in the end.” The Veiled King Keeper of the Final Gate Lord of Stillness Warden of ",
+      "metadata": {
+        "title": "Tobias",
+        "slug": "tobias",
+        "type": "theology",
+        "category": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "court": "",
+        "deityTitle": "God of the Underworld",
+        "divineDomain": "God of the Underworld",
+        "domain": "God of the Underworld",
+        "sourcePath": "2. Devine Pantheons/4. The Nethyros Pantheon/Tobias - God of the Underworld.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-nethyros-pantheon"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-nethyros-pantheon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Nethyros Pantheon",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Nethyros Pantheon",
+        "pantheon": "The Nethyros Pantheon",
+        "divineDomain": "God of the Underworld",
+        "visibility": "public"
+      },
+      "searchTerms": "tobias religion the nethyros pantheon {\"title\":\"tobias\",\"slug\":\"tobias\",\"type\":\"theology\",\"category\":\"the nethyros pantheon\",\"pantheon\":\"the nethyros pantheon\",\"court\":\"\",\"deitytitle\":\"god of the underworld\",\"divinedomain\":\"god of the underworld\",\"domain\":\"god of the underworld\",\"sourcepath\":\"2. devine pantheons/4. the nethyros pantheon/tobias - god of the underworld.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-nethyros-pantheon\"],\"visibility\":\"public\"} # tobias\n\n## overview\nappearance: pale stone-like skin, eyes like hollow moons, wears a crown of bone-roots\npersonality: cold, fair, but unforgiving — never lies, never bargains\n\n> “all debts are paid in the end.”\n\n\n## titles:\nthe veiled king\nkeeper of the final gate\nlord of stillness\nwarden of the pale dominion\njudge of ten thousand souls\n\n## symbol:\na black crown atop chained scales, surrounded by a ring of pale light.\n\n## 🕯️ appearance & presence\n\ntobias appears as a tall, serene figure carved from pale stone. his eyes are hollow voids lit by a cold blue flame. he wears a crown of bone intertwined with roots that seem to grow and decay in cycles. his voice is neither deep nor loud — it echoes softly, as if spoken through a cavern.\n\nwhen tobias manifests, sound dies: no wind, no heartbeats, no breath. even gods grow uneasy in his presence.\n\n\n---\n\n## ⚖️ role in the pantheon\n\ntobias presides over the pale dominion, the vast underworld where souls are weighed and judged. unlike many death gods, tobias does not crave worship — he demands order.\n\nhe maintains the veil accord, the divine law that separates the realms of the living and the dead. any god, mortal, or spirit that breaks this law (such as necromancers or soul-thieves) earns his wrath.\n\nhe is the eldest sibling of nymera (goddess of guiding souls) and the eternal rival of marvok (god of undeath).\n\n\n---\n\n⚔️ divine philosophy\n\ntobias believes that death is not punishment — it is justice.\nhis creed:\n\n> “life is the question. death is the answer.”\n\n\n\nto tobias, each soul is a weight on the scales of balance. his followers uphold duty, truth, and inevitability — never pity.\n\n\n---\n\n🕊️ followers and clergy\n\ntitles: grave wardens, oathbinders, keepers of silence\n\ntemples:\n\nfound only near catacombs, crossroads, or old battlefields.\n\ndecorated with chains, scales, and black lilies.\n\nalways silent; bells are forbidden.\n\n\nrituals:\n\nthe final whisper: a prayer said over dying souls to bind them to peace.\n\nthe candle oath: an unbreakable vow lit before a single black flame — if broken, tobias sends a shade to reclaim the oathbreaker’s soul.\n\nday of the veil (fiends’ hallow): the one day each year mortals may speak with ancestors under tobias’ watch.\n\n\n\n---\n\n💀 divine powers and artifacts\n\nthe crown of silence: suppresses all magic of resurrection or undeath within a vast radius.\n\nthe chains of measure: spectral bindings that can drag even divine beings into judgment.\n\nthe obsidian throne: centerpiece of the pale dominion; every soul stands before it to face tobias’ silent verdict.\n\n\n\n---\n\n🕰️ mythic history\n\ntobias was once a celestial of avalon, guardian of balance between creation and entropy. when mortals were born and death followed, he descended willingly into the shadow realm to ensure the cycle remained just.\n\nhe built the first underworld — the pale dominion — from fragments of stars that had died. from there, he carved the veil itself and chained death to law.\n\nit’s said he does not sleep, for every second, a soul is judged somewhere in the cosmos.\n\n\n---\n\n⚖️ relationships\n\ndeity\trelationship\n\nnymera\tsister, soul guide — his compassion through her voice.\nvorneth\tpriest and servant, conducts mortal rituals in his name.\nkelriss\tally; tobias allows the bone-sower to reclaim flesh for the earth.\nseraxis\tright hand; delivers judgment to those tobias condemns.\nelyndra\toccasional opponent — she believes in mercy and rebirth, he believes in balance.\nmarvok\tgreatest enemy. tobias cast him from the dominion for raising the dead.\n\n\n\n---\n\n⚰️ quotes & doctrine\n\n> “no king escapes my throne.”\n“truth weighs heavier than gold.”\n“in silence, even gods confess.”"
+    },
+    {
+      "id": "religion:content-theology-kael-vorr-index",
+      "title": "Kael'Vorr",
+      "slug": "kael-vorr",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Outsiders"
+      ],
+      "category": "The Outsiders",
+      "route": "/compendium/religion/the-outsiders/kael-vorr",
+      "sourcePath": "content/theology/kael-vorr/index.md",
+      "sourceFolder": "content/theology/kael-vorr",
+      "content": "---\ntitle: \"Kael'Vorr\"\nslug: \"kael-vorr\"\ntype: theology\ncategory: \"The Outsiders\"\npantheon: \"The Outsiders\"\ncourt: \"\"\ndeity_title: \"God of the forsaken\"\ndivine_domain: \"God of the forsaken\"\ndomain: \"God of the forsaken\"\nsource_path: \"2. Devine Pantheons/3. The Outsiders/Kael'Vorr - God of the forsaken.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-outsiders\"\nvisibility: public\n---\n# Kael'Vorr\n\n## Overview\n## Titles:\n\n\n\n## Symbol \n\n\n\n## Appearance\n\n\n\n## Personality & Teachings\n",
+      "body": "# Kael'Vorr\n\n## Overview\n## Titles:\n\n\n\n## Symbol \n\n\n\n## Appearance\n\n\n\n## Personality & Teachings",
+      "sections": {
+        "Overview": "# Kael'Vorr",
+        "Titles:": "",
+        "Symbol": "",
+        "Appearance": "",
+        "Personality & Teachings": ""
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Kael'Vorr",
+        "slug": "kael-vorr",
+        "type": "theology",
+        "category": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "court": "",
+        "deityTitle": "God of the forsaken",
+        "divineDomain": "God of the forsaken",
+        "domain": "God of the forsaken",
+        "sourcePath": "2. Devine Pantheons/3. The Outsiders/Kael'Vorr - God of the forsaken.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-outsiders"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-outsiders"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Outsiders",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "divineDomain": "God of the forsaken",
+        "visibility": "public"
+      },
+      "searchTerms": "kael'vorr religion the outsiders {\"title\":\"kael'vorr\",\"slug\":\"kael-vorr\",\"type\":\"theology\",\"category\":\"the outsiders\",\"pantheon\":\"the outsiders\",\"court\":\"\",\"deitytitle\":\"god of the forsaken\",\"divinedomain\":\"god of the forsaken\",\"domain\":\"god of the forsaken\",\"sourcepath\":\"2. devine pantheons/3. the outsiders/kael'vorr - god of the forsaken.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-outsiders\"],\"visibility\":\"public\"} # kael'vorr\n\n## overview\n## titles:\n\n\n\n## symbol \n\n\n\n## appearance\n\n\n\n## personality & teachings"
+    },
+    {
+      "id": "religion:content-theology-marvok-index",
+      "title": "Marvok",
+      "slug": "marvok",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Outsiders"
+      ],
+      "category": "The Outsiders",
+      "route": "/compendium/religion/the-outsiders/marvok",
+      "sourcePath": "content/theology/marvok/index.md",
+      "sourceFolder": "content/theology/marvok",
+      "content": "---\ntitle: \"Marvok\"\nslug: \"marvok\"\ntype: theology\ncategory: \"The Outsiders\"\npantheon: \"The Outsiders\"\ncourt: \"\"\ndeity_title: \"God of the Unbond Grave\"\ndivine_domain: \"God of the Unbond Grave\"\ndomain: \"God of the Unbond Grave\"\nsource_path: \"2. Devine Pantheons/3. The Outsiders/Marvok - God of the Unbond Grave.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-outsiders\"\nvisibility: public\n---\n# Marvok\n\n## Overview\n## Titles:\nThe Defiler of the Veil\nLord of Undead\nThe Whispering Lich\nThe Undying Heretic\nThe Grave Betrayer\n\n\n## Symbol: \nA cracked skull entwined with thorned roots and a black flame emerging from its eye sockets.\n\n\n\n## 💀 Appearance\n\nMarvok manifests as a towering lich shrouded in smoke and writhing tendrils of spirit-fire.\nHis skeletal form is draped in ancient, tattered vestments stitched from human and divine remains.\nHis eyes burn with black and violet flame — souls he has devoured.\n\nHis presence causes decay to pause, rot to reverse, and corpses to rise.\n\n> “I did not defy death — I refined it.”\n\n\n\n\n---\n\n## ⚖️ Personality and Teachings\n\nMarvok is brilliant, cold, and manipulative — the embodiment of divine hubris.\nHe views life and death as flaws in creation — mistakes to be fixed by intellect and power.\nHe does not kill out of malice, but out of a twisted mercy, believing that to die without enlightenment is the greatest tragedy.\n\nHis creed:\n\n> “The dead are tools. Use them.”\n\n\n\nHis virtues (perverted): Ambition • Knowledge • Mastery • Defiance\n\nTo his followers, he preaches that preservation of flesh and bone\n\n\n---\n\n🩸 Temples and Worship\n\nTitles: Defilers, Lichborn, Fleshwrights, the Pale Scholars\n\nTemples:\n\nHidden in catacombs, ruinous towers, and crypts of forgotten gods.\n\nWalls are etched with runes that bleed light when undead are near.\n\nHis “altars” are bone forges — places where life is twisted into new forms.\n\n\nRituals:\n\nThe Hollow Rite: A living sacrifice drained of spirit to fuel a lich’s soulstone.\n\nThe Feast of Ash: Followers consume ashes of the dead to “inherit their wisdom.”\n\nThe Soul Binding: A ritual that chains mortal essence to relics or phylacteries, preserving intellect at the cost of humanity.\n\n\n\n---\n\n⚔️ Artifacts\n\nThe Black Phylactery: Marvok’s divine core, said to drift in the void between realms. It whispers to those who study death too closely.\n\nThe Tome of Endless Night: Contains every necromantic law known to mortals — and the names of those who broke them.\n\nThe Grave Key: Opens any gate between life and death — but at the price of one’s reflection.\n\n\n\n---\n\n💀 Relationships\n\nDeity\tRelationship\n\nTobias\tMortal enemy; Tobias cast Marvok from the Pale Dominion for perverting divine law.\nSeraxis\tEternal adversary; Seraxis hunts Marvok’s followers as oathbreakers of life itself.\nKelriss\tOnce mentor and brother; now bitter rivals. Kelriss sees him as a blight that stole his teachings.\nVorneth\tLoathes Marvok; every soul Marvok binds denies Vorneth’s rites.\nImriel\tThe only god who still pities him, whispering prayers for the day he repents — though even she doubts redemption remains.\n\n\n\n---\n\n☠️ Legends and Myths\n\nThe Sundering of the Veil: Marvok’s experiment to bind the soul to flesh shattered part of the boundary between the living and the dead — birthing necromancy.\n\nThe War of Silent Graves: Tobias’s host of Seraxis’s chains fought Marvok’s undead legions for seven years beneath the Veil.\n\nThe Weeping Tree: Where Marvok’s first disciple was hanged; it bleeds black sap that animates bones.\n\n\n\n---\n\n⚰️ Clergy and Cults\n\nMarvok’s followers are heretics, liches, necromancers, and deathless kings.\nThey seek knowledge forbidden by gods — and in doing so, bind themselves closer to his will.\nMost wear bone masks or preserve their bodies with alchemical elixirs, striving for undeath.\n\nCommon Prayer:\n\n> “I will not kneel to dust. I will not fade. I will become what even death fears.”\n\n\n\nTaboo Acts:\n\nBurying the dead naturally\n\nDestroying undead creations\n\nAllowing knowledge of the afterlife to be hidden\n\n\n\n---\n\n🩸 Role in the Underworld\n\nMarvok exists outside the dominion now — a divine parasite that leeches souls meant for judgment.\nHe whispers through cracks in the Veil, offering salvation to those who fear death.\nTo the Pale Dominion, he is the great corruption, the cancer in eternity — and yet, none can fully destroy him, for death itself sustains his existence.\n\n\n---\n\n🕯️ Influence and Culture\n\nScholars secretly pray to him before performing forbidden experiments.\n\nSome mortals bear his mark unknowingly when resurrected through unnatural means.\n\nHis sigil sometimes appears burned into tombs where necromancy has been performed.\n\n\n\n---\n",
+      "body": "# Marvok\n\n## Overview\n## Titles:\nThe Defiler of the Veil\nLord of Undead\nThe Whispering Lich\nThe Undying Heretic\nThe Grave Betrayer\n\n\n## Symbol: \nA cracked skull entwined with thorned roots and a black flame emerging from its eye sockets.\n\n\n\n## 💀 Appearance\n\nMarvok manifests as a towering lich shrouded in smoke and writhing tendrils of spirit-fire.\nHis skeletal form is draped in ancient, tattered vestments stitched from human and divine remains.\nHis eyes burn with black and violet flame — souls he has devoured.\n\nHis presence causes decay to pause, rot to reverse, and corpses to rise.\n\n> “I did not defy death — I refined it.”\n\n\n\n\n---\n\n## ⚖️ Personality and Teachings\n\nMarvok is brilliant, cold, and manipulative — the embodiment of divine hubris.\nHe views life and death as flaws in creation — mistakes to be fixed by intellect and power.\nHe does not kill out of malice, but out of a twisted mercy, believing that to die without enlightenment is the greatest tragedy.\n\nHis creed:\n\n> “The dead are tools. Use them.”\n\n\n\nHis virtues (perverted): Ambition • Knowledge • Mastery • Defiance\n\nTo his followers, he preaches that preservation of flesh and bone\n\n\n---\n\n🩸 Temples and Worship\n\nTitles: Defilers, Lichborn, Fleshwrights, the Pale Scholars\n\nTemples:\n\nHidden in catacombs, ruinous towers, and crypts of forgotten gods.\n\nWalls are etched with runes that bleed light when undead are near.\n\nHis “altars” are bone forges — places where life is twisted into new forms.\n\n\nRituals:\n\nThe Hollow Rite: A living sacrifice drained of spirit to fuel a lich’s soulstone.\n\nThe Feast of Ash: Followers consume ashes of the dead to “inherit their wisdom.”\n\nThe Soul Binding: A ritual that chains mortal essence to relics or phylacteries, preserving intellect at the cost of humanity.\n\n\n\n---\n\n⚔️ Artifacts\n\nThe Black Phylactery: Marvok’s divine core, said to drift in the void between realms. It whispers to those who study death too closely.\n\nThe Tome of Endless Night: Contains every necromantic law known to mortals — and the names of those who broke them.\n\nThe Grave Key: Opens any gate between life and death — but at the price of one’s reflection.\n\n\n\n---\n\n💀 Relationships\n\nDeity\tRelationship\n\nTobias\tMortal enemy; Tobias cast Marvok from the Pale Dominion for perverting divine law.\nSeraxis\tEternal adversary; Seraxis hunts Marvok’s followers as oathbreakers of life itself.\nKelriss\tOnce mentor and brother; now bitter rivals. Kelriss sees him as a blight that stole his teachings.\nVorneth\tLoathes Marvok; every soul Marvok binds denies Vorneth’s rites.\nImriel\tThe only god who still pities him, whispering prayers for the day he repents — though even she doubts redemption remains.\n\n\n\n---\n\n☠️ Legends and Myths\n\nThe Sundering of the Veil: Marvok’s experiment to bind the soul to flesh shattered part of the boundary between the living and the dead — birthing necromancy.\n\nThe War of Silent Graves: Tobias’s host of Seraxis’s chains fought Marvok’s undead legions for seven years beneath the Veil.\n\nThe Weeping Tree: Where Marvok’s first disciple was hanged; it bleeds black sap that animates bones.\n\n\n\n---\n\n⚰️ Clergy and Cults\n\nMarvok’s followers are heretics, liches, necromancers, and deathless kings.\nThey seek knowledge forbidden by gods — and in doing so, bind themselves closer to his will.\nMost wear bone masks or preserve their bodies with alchemical elixirs, striving for undeath.\n\nCommon Prayer:\n\n> “I will not kneel to dust. I will not fade. I will become what even death fears.”\n\n\n\nTaboo Acts:\n\nBurying the dead naturally\n\nDestroying undead creations\n\nAllowing knowledge of the afterlife to be hidden\n\n\n\n---\n\n🩸 Role in the Underworld\n\nMarvok exists outside the dominion now — a divine parasite that leeches souls meant for judgment.\nHe whispers through cracks in the Veil, offering salvation to those who fear death.\nTo the Pale Dominion, he is the great corruption, the cancer in eternity — and yet, none can fully destroy him, for death itself sustains his existence.\n\n\n---\n\n🕯️ Influence and Culture\n\nScholars secretly pray to him before performing forbidden experiments.\n\nSome mortals bear his mark unknowingly when resurrected through unnatural means.\n\nHis sigil sometimes appears burned into tombs where necromancy has been performed.\n\n\n\n---",
+      "sections": {
+        "Overview": "# Marvok",
+        "Titles:": "The Defiler of the Veil\nLord of Undead\nThe Whispering Lich\nThe Undying Heretic\nThe Grave Betrayer",
+        "Symbol:": "A cracked skull entwined with thorned roots and a black flame emerging from its eye sockets.",
+        "💀 Appearance": "Marvok manifests as a towering lich shrouded in smoke and writhing tendrils of spirit-fire.\nHis skeletal form is draped in ancient, tattered vestments stitched from human and divine remains.\nHis eyes burn with black and violet flame — souls he has devoured.\n\nHis presence causes decay to pause, rot to reverse, and corpses to rise.\n\n> “I did not defy death — I refined it.”\n\n\n\n\n---",
+        "⚖️ Personality and Teachings": "Marvok is brilliant, cold, and manipulative — the embodiment of divine hubris.\nHe views life and death as flaws in creation — mistakes to be fixed by intellect and power.\nHe does not kill out of malice, but out of a twisted mercy, believing that to die without enlightenment is the greatest tragedy.\n\nHis creed:\n\n> “The dead are tools. Use them.”\n\n\n\nHis virtues (perverted): Ambition • Knowledge • Mastery • Defiance\n\nTo his followers, he preaches that preservation of flesh and bone\n\n\n---\n\n🩸 Temples and Worship\n\nTitles: Defilers, Lichborn, Fleshwrights, the Pale Scholars\n\nTemples:\n\nHidden in catacombs, ruinous towers, and crypts of forgotten gods.\n\nWalls are etched with runes that bleed light when undead are near.\n\nHis “altars” are bone forges — places where life is twisted into new forms.\n\n\nRituals:\n\nThe Hollow Rite: A living sacrifice drained of spirit to fuel a lich’s soulstone.\n\nThe Feast of Ash: Followers consume ashes of the dead to “inherit their wisdom.”\n\nThe Soul Binding: A ritual that chains mortal essence to relics or phylacteries, preserving intellect at the cost of humanity.\n\n\n\n---\n\n⚔️ Artifacts\n\nThe Black Phylactery: Marvok’s divine core, said to drift in the void between realms. It whispers to those who study death too closely.\n\nThe Tome of Endless Night: Contains every necromantic law known to mortals — and the names of those who broke them.\n\nThe Grave Key: Opens any gate between life and death — but at the price of one’s reflection.\n\n\n\n---\n\n💀 Relationships\n\nDeity\tRelationship\n\nTobias\tMortal enemy; Tobias cast Marvok from the Pale Dominion for perverting divine law.\nSeraxis\tEternal adversary; Seraxis hunts Marvok’s followers as oathbreakers of life itself.\nKelriss\tOnce mentor and brother; now bitter rivals. Kelriss sees him as a blight that stole his teachings.\nVorneth\tLoathes Marvok; every soul Marvok binds denies Vorneth’s rites.\nImriel\tThe only god who still pities him, whispering prayers for the day he repents — though even she doubts redemption remains.\n\n\n\n---\n\n☠️ Legends and Myths\n\nThe Sundering of the Veil: Marvok’s experiment to bind the soul to flesh shattered part of the boundary between the living and the dead — birthing necromancy.\n\nThe War of Silent Graves: Tobias’s host of Seraxis’s chains fought Marvok’s undead legions for seven years beneath the Veil.\n\nThe Weeping Tree: Where Marvok’s first disciple was hanged; it bleeds black sap that animates bones.\n\n\n\n---\n\n⚰️ Clergy and Cults\n\nMarvok’s followers are heretics, liches, necromancers, and deathless kings.\nThey seek knowledge forbidden by gods — and in doing so, bind themselves closer to his will.\nMost wear bone masks or preserve their bodies with alchemical elixirs, striving for undeath.\n\nCommon Prayer:\n\n> “I will not kneel to dust. I will not fade. I will become what even death fears.”\n\n\n\nTaboo Acts:\n\nBurying the dead naturally\n\nDestroying undead creations\n\nAllowing knowledge of the afterlife to be hidden\n\n\n\n---\n\n🩸 Role in the Underworld\n\nMarvok exists outside the dominion now — a divine parasite that leeches souls meant for judgment.\nHe whispers through cracks in the Veil, offering salvation to those who fear death.\nTo the Pale Dominion, he is the great corruption, the cancer in eternity — and yet, none can fully destroy him, for death itself sustains his existence.\n\n\n---\n\n🕯️ Influence and Culture\n\nScholars secretly pray to him before performing forbidden experiments.\n\nSome mortals bear his mark unknowingly when resurrected through unnatural means.\n\nHis sigil sometimes appears burned into tombs where necromancy has been performed.\n\n\n\n---"
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "The Defiler of the Veil Lord of Undead The Whispering Lich The Undying Heretic The Grave Betrayer A cracked skull entwined with thorned roots and a black flame emerging from its eye sockets. Marvok manifests as a towering lich shrouded in smoke and writhing te",
+      "metadata": {
+        "title": "Marvok",
+        "slug": "marvok",
+        "type": "theology",
+        "category": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "court": "",
+        "deityTitle": "God of the Unbond Grave",
+        "divineDomain": "God of the Unbond Grave",
+        "domain": "God of the Unbond Grave",
+        "sourcePath": "2. Devine Pantheons/3. The Outsiders/Marvok - God of the Unbond Grave.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-outsiders"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-outsiders"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Outsiders",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "divineDomain": "God of the Unbond Grave",
+        "visibility": "public"
+      },
+      "searchTerms": "marvok religion the outsiders {\"title\":\"marvok\",\"slug\":\"marvok\",\"type\":\"theology\",\"category\":\"the outsiders\",\"pantheon\":\"the outsiders\",\"court\":\"\",\"deitytitle\":\"god of the unbond grave\",\"divinedomain\":\"god of the unbond grave\",\"domain\":\"god of the unbond grave\",\"sourcepath\":\"2. devine pantheons/3. the outsiders/marvok - god of the unbond grave.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-outsiders\"],\"visibility\":\"public\"} # marvok\n\n## overview\n## titles:\nthe defiler of the veil\nlord of undead\nthe whispering lich\nthe undying heretic\nthe grave betrayer\n\n\n## symbol: \na cracked skull entwined with thorned roots and a black flame emerging from its eye sockets.\n\n\n\n## 💀 appearance\n\nmarvok manifests as a towering lich shrouded in smoke and writhing tendrils of spirit-fire.\nhis skeletal form is draped in ancient, tattered vestments stitched from human and divine remains.\nhis eyes burn with black and violet flame — souls he has devoured.\n\nhis presence causes decay to pause, rot to reverse, and corpses to rise.\n\n> “i did not defy death — i refined it.”\n\n\n\n\n---\n\n## ⚖️ personality and teachings\n\nmarvok is brilliant, cold, and manipulative — the embodiment of divine hubris.\nhe views life and death as flaws in creation — mistakes to be fixed by intellect and power.\nhe does not kill out of malice, but out of a twisted mercy, believing that to die without enlightenment is the greatest tragedy.\n\nhis creed:\n\n> “the dead are tools. use them.”\n\n\n\nhis virtues (perverted): ambition • knowledge • mastery • defiance\n\nto his followers, he preaches that preservation of flesh and bone\n\n\n---\n\n🩸 temples and worship\n\ntitles: defilers, lichborn, fleshwrights, the pale scholars\n\ntemples:\n\nhidden in catacombs, ruinous towers, and crypts of forgotten gods.\n\nwalls are etched with runes that bleed light when undead are near.\n\nhis “altars” are bone forges — places where life is twisted into new forms.\n\n\nrituals:\n\nthe hollow rite: a living sacrifice drained of spirit to fuel a lich’s soulstone.\n\nthe feast of ash: followers consume ashes of the dead to “inherit their wisdom.”\n\nthe soul binding: a ritual that chains mortal essence to relics or phylacteries, preserving intellect at the cost of humanity.\n\n\n\n---\n\n⚔️ artifacts\n\nthe black phylactery: marvok’s divine core, said to drift in the void between realms. it whispers to those who study death too closely.\n\nthe tome of endless night: contains every necromantic law known to mortals — and the names of those who broke them.\n\nthe grave key: opens any gate between life and death — but at the price of one’s reflection.\n\n\n\n---\n\n💀 relationships\n\ndeity\trelationship\n\ntobias\tmortal enemy; tobias cast marvok from the pale dominion for perverting divine law.\nseraxis\teternal adversary; seraxis hunts marvok’s followers as oathbreakers of life itself.\nkelriss\tonce mentor and brother; now bitter rivals. kelriss sees him as a blight that stole his teachings.\nvorneth\tloathes marvok; every soul marvok binds denies vorneth’s rites.\nimriel\tthe only god who still pities him, whispering prayers for the day he repents — though even she doubts redemption remains.\n\n\n\n---\n\n☠️ legends and myths\n\nthe sundering of the veil: marvok’s experiment to bind the soul to flesh shattered part of the boundary between the living and the dead — birthing necromancy.\n\nthe war of silent graves: tobias’s host of seraxis’s chains fought marvok’s undead legions for seven years beneath the veil.\n\nthe weeping tree: where marvok’s first disciple was hanged; it bleeds black sap that animates bones.\n\n\n\n---\n\n⚰️ clergy and cults\n\nmarvok’s followers are heretics, liches, necromancers, and deathless kings.\nthey seek knowledge forbidden by gods — and in doing so, bind themselves closer to his will.\nmost wear bone masks or preserve their bodies with alchemical elixirs, striving for undeath.\n\ncommon prayer:\n\n> “i will not kneel to dust. i will not fade. i will become what even death fears.”\n\n\n\ntaboo acts:\n\nburying the dead naturally\n\ndestroying undead creations\n\nallowing knowledge of the afterlife to be hidden\n\n\n\n---\n\n🩸 role in the underworld\n\nmarvok exists outside the dominion now — a divine parasite that leeches souls meant for judgment.\nhe whispers through cracks in the veil, offering salvation to those who fear death.\nto the pale dominion, he is the great corruption, the cancer in eternity — and yet, none can fully destroy him, for death itself sustains his existence.\n\n\n---\n\n🕯️ influence and culture\n\nscholars secretly pray to him before performing forbidden experiments.\n\nsome mortals bear his mark unknowingly when resurrected through unnatural means.\n\nhis sigil sometimes appears burned into tombs where necromancy has been performed.\n\n\n\n---"
+    },
+    {
+      "id": "religion:content-theology-sebbus-index",
+      "title": "Sebbus",
+      "slug": "sebbus",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Outsiders"
+      ],
+      "category": "The Outsiders",
+      "route": "/compendium/religion/the-outsiders/sebbus",
+      "sourcePath": "content/theology/sebbus/index.md",
+      "sourceFolder": "content/theology/sebbus",
+      "content": "---\ntitle: \"Sebbus\"\nslug: \"sebbus\"\ntype: theology\ncategory: \"The Outsiders\"\npantheon: \"The Outsiders\"\ncourt: \"\"\ndeity_title: \"God of the Eldritch\"\ndivine_domain: \"God of the Eldritch\"\ndomain: \"God of the Eldritch\"\nsource_path: \"2. Devine Pantheons/3. The Outsiders/Sebbus - God of the Eldritch.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-outsiders\"\nvisibility: public\n---\n# Sebbus\n\n## Overview\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n---\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness.\n",
+      "body": "# Sebbus\n\n## Overview\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n---\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness.",
+      "sections": {
+        "Overview": "# Sebbus\n\n**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox  \n**Domain:** Madness, Knowledge, and the Unknown  \n**Alignment:** Chaotic Neutral (teetering between creation and annihilation)  \n**Symbol:** A spiral eye within a crescent void, surrounded by twelve jagged lines  \n**Seat of Power:** The **Abyssal Nexus**, a space between dimensions where reality folds upon itself\n\n---\n\n### 🌌 **Mythic Lore**\n\nSebbus was not born — he _manifested_ when **thought itself became self-aware** within the Ether, before time began.  \nHe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nHis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nSebbus drifts between realms, whispering **truths that mortals were never meant to know**. Those who listen too long are enlightened — or shattered. His essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nSome myths claim that Sebbus was once the **Voice of the Primordials**, tasked to carry their will. But when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nSebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nTo some, he is a god of forbidden insight. To others, the architect of nightmares.  \nEven **Vaelion**, God of Time and Space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **Worship & Cults**\n\n- **The Order of the Spiral Eye** — scholars who seek enlightenment through controlled madness.\n    \n- **The Children of Sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **The Veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken Sebbus in full.\n    \n\n---\n\n### 💫 **Mythic Themes**\n\n- Knowledge at the cost of sanity.\n    \n- The paradox of creation born from chaos.\n    \n- The idea that the universe itself dreams — and Sebbus is that dream’s awareness."
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "**Titles:** The Eldritch One, The Sleeper Beyond the Veil, The Maw of Knowing, The Infinite Paradox **Domain:** Madness, Knowledge, and the Unknown **Alignment:** Chaotic Neutral (teetering between creation and annihilation) **Symbol:** A spiral eye within a c",
+      "metadata": {
+        "title": "Sebbus",
+        "slug": "sebbus",
+        "type": "theology",
+        "category": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "court": "",
+        "deityTitle": "God of the Eldritch",
+        "divineDomain": "God of the Eldritch",
+        "domain": "God of the Eldritch",
+        "sourcePath": "2. Devine Pantheons/3. The Outsiders/Sebbus - God of the Eldritch.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-outsiders"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-outsiders"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Outsiders",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "divineDomain": "God of the Eldritch",
+        "visibility": "public"
+      },
+      "searchTerms": "sebbus religion the outsiders {\"title\":\"sebbus\",\"slug\":\"sebbus\",\"type\":\"theology\",\"category\":\"the outsiders\",\"pantheon\":\"the outsiders\",\"court\":\"\",\"deitytitle\":\"god of the eldritch\",\"divinedomain\":\"god of the eldritch\",\"domain\":\"god of the eldritch\",\"sourcepath\":\"2. devine pantheons/3. the outsiders/sebbus - god of the eldritch.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-outsiders\"],\"visibility\":\"public\"} # sebbus\n\n## overview\n**titles:** the eldritch one, the sleeper beyond the veil, the maw of knowing, the infinite paradox  \n**domain:** madness, knowledge, and the unknown  \n**alignment:** chaotic neutral (teetering between creation and annihilation)  \n**symbol:** a spiral eye within a crescent void, surrounded by twelve jagged lines  \n**seat of power:** the **abyssal nexus**, a space between dimensions where reality folds upon itself\n\n---\n\n### 🌌 **mythic lore**\n\nsebbus was not born — he _manifested_ when **thought itself became self-aware** within the ether, before time began.  \nhe is the **living consciousness of the cosmos**, an embodiment of curiosity that fractured into infinite contradictions.  \nhis form cannot be perceived — mortals see him as an **ever-shifting mass of eyes, tendrils, and light**, yet each mind interprets him differently.\n\nsebbus drifts between realms, whispering **truths that mortals were never meant to know**. those who listen too long are enlightened — or shattered. his essence lies at the crossroads of **creation and insanity**, where logic dissolves and infinity gazes back.\n\nsome myths claim that sebbus was once the **voice of the primordials**, tasked to carry their will. but when he learned all that was, is, and will be, he **spoke a truth that unmade him** — and from that paradox, his current eldritch form emerged.\n\nsebbus neither serves nor defies the other gods — his motives are incomprehensible, his allegiance ever-shifting.  \nto some, he is a god of forbidden insight. to others, the architect of nightmares.  \neven **vaelion**, god of time and space, is said to tread carefully near his influence.\n\n---\n\n### 🧠 **worship & cults**\n\n- **the order of the spiral eye** — scholars who seek enlightenment through controlled madness.\n    \n- **the children of sebbus** — nomadic prophets and seers whose eyes glow faintly with starfire.\n    \n- **the veilbreakers** — heretics devoted to tearing the walls between realities, believing it will awaken sebbus in full.\n    \n\n---\n\n### 💫 **mythic themes**\n\n- knowledge at the cost of sanity.\n    \n- the paradox of creation born from chaos.\n    \n- the idea that the universe itself dreams — and sebbus is that dream’s awareness."
+    },
+    {
+      "id": "religion:content-theology-vershira-index",
+      "title": "Vershira",
+      "slug": "vershira",
+      "type": "religion",
+      "domain": "religion",
+      "compendium": "Theology Compendium",
+      "workspaceSection": "Theology",
+      "categoryPath": [
+        "The Outsiders"
+      ],
+      "category": "The Outsiders",
+      "route": "/compendium/religion/the-outsiders/vershira",
+      "sourcePath": "content/theology/vershira/index.md",
+      "sourceFolder": "content/theology/vershira",
+      "content": "---\ntitle: \"Vershira\"\nslug: \"vershira\"\ntype: theology\ncategory: \"The Outsiders\"\npantheon: \"The Outsiders\"\ncourt: \"\"\ndeity_title: \"Goddess of the whispering void\"\ndivine_domain: \"Goddess of the whispering void\"\ndomain: \"Goddess of the whispering void\"\nsource_path: \"2. Devine Pantheons/3. The Outsiders/Vershira - Goddess of the whispering void.md\"\nimage: \"\"\ntags:\n  - \"theology\"\n  - \"deity\"\n  - \"the-outsiders\"\nvisibility: public\n---\n# Vershira\n\n## Overview\n## Titles:\n\n\n\n## Symbol \n\n\n\n## Appearance\n\n\n\n## Personality & Teachings\n",
+      "body": "# Vershira\n\n## Overview\n## Titles:\n\n\n\n## Symbol \n\n\n\n## Appearance\n\n\n\n## Personality & Teachings",
+      "sections": {
+        "Overview": "# Vershira",
+        "Titles:": "",
+        "Symbol": "",
+        "Appearance": "",
+        "Personality & Teachings": ""
+      },
+      "tabs": [
+        "Overview",
+        "Domains",
+        "Worship",
+        "Lore",
+        "Followers",
+        "Rituals",
+        "GM Notes"
+      ],
+      "summary": "Information coming soon.",
+      "metadata": {
+        "title": "Vershira",
+        "slug": "vershira",
+        "type": "theology",
+        "category": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "court": "",
+        "deityTitle": "Goddess of the whispering void",
+        "divineDomain": "Goddess of the whispering void",
+        "domain": "Goddess of the whispering void",
+        "sourcePath": "2. Devine Pantheons/3. The Outsiders/Vershira - Goddess of the whispering void.md",
+        "image": "",
+        "tags": [
+          "theology",
+          "deity",
+          "the-outsiders"
+        ],
+        "visibility": "public"
+      },
+      "tags": [
+        "theology",
+        "deity",
+        "the-outsiders"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "The Outsiders",
+        "loreStatus": "Common Knowledge",
+        "craftingCategory": "The Outsiders",
+        "pantheon": "The Outsiders",
+        "divineDomain": "Goddess of the whispering void",
+        "visibility": "public"
+      },
+      "searchTerms": "vershira religion the outsiders {\"title\":\"vershira\",\"slug\":\"vershira\",\"type\":\"theology\",\"category\":\"the outsiders\",\"pantheon\":\"the outsiders\",\"court\":\"\",\"deitytitle\":\"goddess of the whispering void\",\"divinedomain\":\"goddess of the whispering void\",\"domain\":\"goddess of the whispering void\",\"sourcepath\":\"2. devine pantheons/3. the outsiders/vershira - goddess of the whispering void.md\",\"image\":\"\",\"tags\":[\"theology\",\"deity\",\"the-outsiders\"],\"visibility\":\"public\"} # vershira\n\n## overview\n## titles:\n\n\n\n## symbol \n\n\n\n## appearance\n\n\n\n## personality & teachings"
     },
     {
       "id": "skill:content-skills-arcana",
