@@ -24,8 +24,9 @@ function matches(regex) {
   return [...html.matchAll(regex)].map(match => match[1]);
 }
 
-const cssFiles = matches(/<link[^>]+href="([^"]+)"/g);
-const jsFiles = matches(/<script[^>]+src="([^"]+)"/g);
+const assetPath = value => String(value || '').split('?')[0];
+const cssFiles = matches(/<link[^>]+href="([^"]+)"/g).map(assetPath);
+const jsFiles = matches(/<script[^>]+src="([^"]+)"/g).map(assetPath);
 
 cssFiles.forEach(file => {
   check(`CSS exists: ${file}`, fs.existsSync(path.join(root, file)));
@@ -228,6 +229,8 @@ const classManifestEntries = [];
   });
 })(classManifest.categories || []);
 check('Race pages support data-driven racial trait card slots', raceCompendiumJs.includes('traitSlotCount') && raceCompendiumJs.includes('while(slots.length < slotCount)') && raceCompendiumJs.includes('is-placeholder'));
+check('Race trait popups render full descriptions and effects', raceCompendiumJs.includes('traitDetailHtml') && raceCompendiumJs.includes('<h3>Description</h3>') && raceCompendiumJs.includes('<h3>Effects</h3>'));
+check('Pixie magical affinity keeps its Elemental Gift effect', raceCompendiumDataJs.includes('Unlock the corresponding **Elemental Gift** racial trait.'));
 check('Class content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-class-content.js')) && classContentDirs.length >= 30 && classContentDirs.every(entry => fs.existsSync(path.join(classContentRoot, entry.name, 'index.md'))));
 check('Class talents use per-tier content folders', fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-1/artificer-discipline/index.md')) && fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-5/arcane-exchange/index.md')));
 check('Class manifest is generated from content/classes', classManifest.source === 'content/classes' && classManifest.entryCount >= 30 && classManifestEntries.length >= 30 && classManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/classes/')));
@@ -253,7 +256,11 @@ check('Old fixed accent controls removed', !html.includes("setAccent('blue')") &
 check('Old fixed accent system removed', !appJs.includes('function setAccent') && !stylesCss.includes('body[data-accent') && !stylesCss.includes('.colour-grid'));
 check('Theme controls include required sliders', html.includes('asteriaThemeSelect') && html.includes('asteriaColourWheel') && html.includes('asteriaGlowSlider') && html.includes('asteriaOverlaySlider') && html.includes('asteriaPanelOpacitySlider'));
 check('Home reset clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('showPublicHome'));
-check('Top panel uses transparent black blur', themeCss.includes('background:rgba(0,0,0,.58)') && themeCss.includes('blur(4px)'));
+check('Navigation shell uses solid blue-gray panels', stylesCss.includes('--asteria-shell:#17242d') && stylesCss.includes('background:var(--asteria-shell)!important') && stylesCss.includes('overflow:hidden!important'));
+check('Settings drawer opens below the top panel', stylesCss.includes('top:var(--core-header-height)!important') && appJs.includes('function toggleSettings()') && appJs.includes("$('shade').onclick=closeSettings"));
+check('Authenticated top action logs out', authBridgeJs.includes("login.textContent = 'Log Out'") && coreShellJs.includes("window.logout?.()"));
+check('Bloodhunter dashboard resource is wired', html.includes('id="pBPResource"') && appJs.includes('function isBloodhunter(c)') && appJs.includes("bp:'pBPAmount'"));
+check('Dashboard quick items use four inventory slots', html.includes('id="dashboardQuickItems"') && appJs.includes('function renderDashboardQuickItems()') && appJs.includes('ASTERIA_V133_QUICK_SLOTS.map'));
 check('Theme engine updates required variables', ['--asteria-accent','--asteria-glow','--asteria-overlay-opacity'].every(token => themeSystemJs.includes(token)));
 check('Theme engine updates panel opacity', themeSystemJs.includes('asteriaPanelOpacitySlider') && themeSystemJs.includes('--panel-bg'));
 check('Theme engine clears legacy theme state', themeSystemJs.includes('removeAttribute("data-accent")') && themeSystemJs.includes('removeItem("asteria-accent")'));
@@ -273,7 +280,8 @@ const primordialTheologyEntries = theologyEntries.filter(entry => (entry.metadat
 check('Workspace routes compendium sections through one renderer', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Theology','Creatures','Factions'].every(section => cleanCompendiumJs.includes(section)));
 check('Theology compendium menu is wired', html.includes('data-workspace-section="Theology"') && cleanCompendiumJs.includes('theologyCategories') && cleanCompendiumJs.includes('theologyCardBody'));
 check('Theology entries are generated from content/theology', theologyEntries.length >= 100 && theologyEntries.every(entry => String(entry.sourcePath || '').startsWith('content/theology/')));
-check('Theology contains exactly three Primordials', primordialTheologyEntries.length === 3 && primordialTheologyEntries.every(entry => String(entry.title || '').toLowerCase() !== 'primordial'));
+check('Theology contains exactly three Primordials', primordialTheologyEntries.length === 3 && ['Primordial of Energy','Primordial of the Ether','Primordial of the Void'].every(title => primordialTheologyEntries.some(entry => entry.title === title)));
+check('Theology category matching uses pantheon metadata', cleanCompendiumJs.includes('if (query.pantheon)') && cleanCompendiumJs.includes('!query.pantheon'));
 check('Theology categories include requested pantheons and courts', ['Primordials','Pantheon of Elements','Aetherion Pantheon','The Outsiders','The Nethyros Pantheon','Dark Court','Light Court','Veilborn Court','The Shadow Court'].every(label => cleanCompendiumJs.includes(label)));
 check('Race navigation removes old playable folders', !html.includes("Races/Playable Races") && !html.includes("Races/Non-Playable Races") && !cleanCompendiumJs.includes('Playable Races') && !cleanCompendiumJs.includes('Non-Playable Races'));
 check('Race navigation uses lore/type categories', ['Beastkin','Celestial','Demonic','Dragon','Fae','Humanoid','Hybrid','Spirit Races','Undead','Demi-Races'].every(label => cleanCompendiumJs.includes(label)));

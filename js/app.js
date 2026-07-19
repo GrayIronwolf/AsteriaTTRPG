@@ -24,7 +24,19 @@ function resourceBreakdownHtml(c,key){const stat=resourceLinks[key], statLabel=s
 function renderBreakdowns(prefix,c){['hp','sp','mp'].forEach(key=>{ const id=prefix+key.toUpperCase()+'Breakdown'; if($(id)) $(id).innerHTML=resourceBreakdownHtml(c,key); }); }
 function currentPlayerId(){return session.role==='player' ? session.character : selected}
 function syncAfterResourceChange(id){ if($('player')?.classList.contains('show')) loadPlayer(currentPlayerId()); if($('gm')?.classList.contains('show')) renderGM(); if($('gmPlayer')?.classList.contains('show')) renderGMPlayer(); }
-function adjustCharacterResource(id,key,amount){ const c=chars[id]; if(!c) return; if(key==='xp'){ c.xp=Math.max(0,c.xp+amount); } else { c[key][0]=Math.max(0,Math.min(c[key][1],c[key][0]+amount)); } syncAfterResourceChange(id); toast(c.name+' '+key.toUpperCase()+' '+(amount>0?'+':'')+amount); }
+function adjustCharacterResource(id,key,amount){
+  const c=chars[id];
+  if(!c) return;
+  if(key==='xp'){
+    c.xp=Math.max(0,c.xp+amount);
+  } else {
+    if(!Array.isArray(c[key])) c[key]=[0,key==='bp'?200:0];
+    c[key][0]=Math.max(0,Math.min(c[key][1],c[key][0]+amount));
+  }
+  saveAsteriaState?.();
+  syncAfterResourceChange(id);
+  toast(c.name+' '+key.toUpperCase()+' '+(amount>0?'+':'')+amount);
+}
 function adjustPlayerResource(key,amount){ adjustCharacterResource(currentPlayerId(),key,amount); }
 function customPlayerResource(sign){ const key=$('playerResourceKey')?.value||'hp'; const amount=Math.abs(+$('playerResourceAmount')?.value||0); if(amount) adjustPlayerResource(key, sign*amount); }
 function customGMResource(sign){ const key=$('gmResourceKey')?.value||'hp'; const amount=Math.abs(+$('gmResourceAmount')?.value||0); if(amount) adjustCharacterResource(selected,key,sign*amount); }
@@ -128,13 +140,62 @@ function setView(id){
   if(id === 'quests') renderQuests?.();
   if(id === 'library') renderRuleLibrary?.($('ruleSearch')?.value || '');
   window.AsteriaViewHooks?.runView(id, { requestedView, role });
+  document.querySelector('main.main')?.scrollTo({top:0,left:0,behavior:'auto'});
 }
 function quickLogin(){toast('Demo logins have been removed. Please use Firebase login.')}
 function attemptLogin(){if(typeof window.firebaseLoginFromPage==='function')return window.firebaseLoginFromPage();if(typeof window.firebaseLogin==='function')return window.firebaseLogin();toast('Firebase Authentication is still loading.')}
-function logout(){session={role:'guest',character:null,account:null,uid:null,email:null};document.body.dataset.role='guest';$('accessSummary').textContent='Guest access. Log in to unlock your workspace dashboard.';updateRoleLocks();setView('home');toast('Logged out.')}
-function openSettings(){$('settingsPanel').classList.add('open');$('shade').classList.add('open')}function closeSettings(){$('settingsPanel').classList.remove('open');$('shade').classList.remove('open')}
+function logout(){session={role:'guest',character:null,account:null,uid:null,email:null};document.body.dataset.role='guest';if($('accessSummary'))$('accessSummary').textContent='Guest access. Log in to unlock your workspace dashboard.';updateRoleLocks();setView('home');toast('Logged out.')}
+function openSettings(){const panel=$('settingsPanel'),shade=$('shade'),toggle=$('settingsToggle');panel?.classList.add('open');shade?.classList.add('open');toggle?.setAttribute('aria-expanded','true')}
+function closeSettings(){const panel=$('settingsPanel'),shade=$('shade'),toggle=$('settingsToggle');panel?.classList.remove('open');shade?.classList.remove('open');toggle?.setAttribute('aria-expanded','false')}
+function toggleSettings(){if($('settingsPanel')?.classList.contains('open'))closeSettings();else openSettings()}
 
-function loadPlayer(id){const c=chars[id];if(!c)return;window.AsteriaViewHooks?.runBeforePlayerLoad(id,{character:c});const xpProgress=progressionSummaryFor(c);recalcResourceMax(c,true);$('pInitial').textContent=c.initial;$('pName').textContent=c.name;$('pRace').textContent=c.race;$('pClass').textContent=c.klass;$('pLevel').textContent='Level '+c.level;$('pHP').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('pSP').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('pMP').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('pHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('pSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('pMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';$('pXpBar').style.width=xpProgress.percent+'%';$('pXpLine').textContent=xpProgress.label;$('pCampaign').textContent=campaigns[activeCampaign].name;$('pSession').textContent=c.session;if($('pStats'))$('pStats').innerHTML=Object.entries(c.characteristics).map(([k,v])=>`<div><span>${statLabels[k]||k.slice(0,3).toUpperCase()}</span><b>${v}</b><small>${tierOf(v)}</small></div>`).join('');renderBreakdowns('p',c);if($('playerQuestList'))$('playerQuestList').innerHTML=quests.map(q=>`<div class="quest-row"><div><b>${q.name}</b><small>${q.detail}</small></div><span>${q.status}</span></div>`).join('');window.AsteriaViewHooks?.runPlayerLoad(id,{character:c});}
+function characterClassNames(c){return [c?.klass,c?.talentClass,...(c?.classKeys||[]),...(c?.talentClasses||[])].filter(Boolean).map(value=>String(value).trim().toLowerCase())}
+function isBloodhunter(c){return characterClassNames(c).some(value=>value==='bloodhunter'||value.includes('bloodhunter'))}
+function ensureBloodPoints(c){
+  if(!isBloodhunter(c)) return;
+  const legacy=Array.isArray(c.bhp)?c.bhp:null;
+  const current=Array.isArray(c.bp)?Number(c.bp[0]||0):Number(c.bp||c.bloodPoints||legacy?.[0]||0);
+  const maximum=Math.max(1,Array.isArray(c.bp)?Number(c.bp[1]||200):Number(c.bloodPointMax||legacy?.[1]||200));
+  c.bp=[Math.max(0,Math.min(maximum,current)),maximum];
+}
+function renderBloodPoints(c){
+  const block=$('pBPResource');
+  if(!block) return;
+  const visible=isBloodhunter(c);
+  block.hidden=!visible;
+  if(!visible) return;
+  ensureBloodPoints(c);
+  setTextSafe('pBP',`${c.bp[0]} / ${c.bp[1]}`);
+  if($('pBpBar')) $('pBpBar').style.width=pct(c.bp[0],c.bp[1])+'%';
+}
+function loadPlayer(id){
+  const c=chars[id];
+  if(!c) return;
+  window.AsteriaViewHooks?.runBeforePlayerLoad(id,{character:c});
+  const xpProgress=progressionSummaryFor(c);
+  recalcResourceMax(c,true);
+  ensureBloodPoints(c);
+  $('pInitial').textContent=c.initial;
+  $('pName').textContent=c.name;
+  $('pRace').textContent=c.race;
+  $('pClass').textContent=c.klass;
+  $('pLevel').textContent='Level '+c.level;
+  $('pHP').textContent=`${c.hp[0]} / ${c.hp[1]}`;
+  $('pSP').textContent=`${c.sp[0]} / ${c.sp[1]}`;
+  $('pMP').textContent=`${c.mp[0]} / ${c.mp[1]}`;
+  $('pHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';
+  $('pSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';
+  $('pMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';
+  renderBloodPoints(c);
+  $('pXpBar').style.width=xpProgress.percent+'%';
+  $('pXpLine').textContent=xpProgress.label;
+  $('pCampaign').textContent=campaigns[activeCampaign].name;
+  $('pSession').textContent=c.session;
+  if($('pStats')) $('pStats').innerHTML=Object.entries(c.characteristics).map(([k,v])=>`<div><span>${statLabels[k]||k.slice(0,3).toUpperCase()}</span><b>${v}</b><small>${tierOf(v)}</small></div>`).join('');
+  renderBreakdowns('p',c);
+  if($('playerQuestList')) $('playerQuestList').innerHTML=quests.map(q=>`<div class="quest-row"><div><b>${q.name}</b><small>${q.detail}</small></div><span>${q.status}</span></div>`).join('');
+  window.AsteriaViewHooks?.runPlayerLoad(id,{character:c});
+}
 
 function renderCampaigns(){if(!$('campaignList'))return;ensureAllCampaignUCNs();$('campaignList').innerHTML='';campaigns.forEach((c,i)=>{let b=document.createElement('button');b.className='campaign-card'+(i===activeCampaign?' active':'');b.innerHTML=`<b>${c.name}</b><small>Party ${c.party.length}/${c.partySize}</small><small>UCN ${ensureAppCampaignUCN(c)}</small>`;b.onclick=()=>selectCampaign(i);$('campaignList').appendChild(b)});selectCampaign(activeCampaign,false)}
 function selectCampaign(i,go=true){activeCampaign=i;let c=campaigns[i];ensureAppCampaignUCN(c);$('campaignNameInput').value=c.name;$('partySizeInput').value=c.partySize;renderCampaignUCNDisplay(c);$('loginSetup').innerHTML='<p class="muted">Campaign access now uses Firebase accounts and invite links.</p>';$('campaignAccess').innerHTML=Object.keys(c.access).map(k=>`<label><input type="checkbox" ${c.access[k]?'checked':''}> ${k}</label>`).join('');if(go)toast('Active campaign set to '+c.name)}
@@ -181,7 +242,7 @@ function openRulePage(slug){if(window.AsteriaWorkspace?.openEntryBySlug?.(slug))
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
   $('loginToggle').onclick=()=>$('loginPanel').classList.toggle('open');
-  $('settingsToggle').onclick=openSettings;$('settingsClose').onclick=closeSettings;$('shade').onclick=closeSettings;
+  $('settingsToggle').onclick=toggleSettings;$('settingsClose').onclick=closeSettings;$('shade').onclick=closeSettings;
   document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('show'));$(b.dataset.tab).classList.add('show')});
   buildDynamicSystemsMenu();
   ensureCharacterData();updateRoleLocks();loadPlayer('kael');renderCampaigns();renderGM();renderCreatureSelect();renderRuleLibrary();renderQuests();
@@ -421,7 +482,7 @@ function openDiceModal(){
 }
 function closeDiceModal(){ document.getElementById('diceModal')?.classList.remove('show'); }
 function playerResourceDelta(key,sign){
-  const map={hp:'pHPAmount',sp:'pSPAmount',mp:'pMPAmount'};
+  const map={hp:'pHPAmount',sp:'pSPAmount',mp:'pMPAmount',bp:'pBPAmount'};
   const amount=Math.abs(Number(document.getElementById(map[key])?.value||0));
   if(!amount) return toast('Enter an amount first.');
   adjustPlayerResource(key, sign*amount);
@@ -1043,6 +1104,19 @@ function renderInventorySlots(){
     return slotButtonHtml(slot,item,use);
   }).join('');
 }
+function renderDashboardQuickItems(){
+  const c=chars[currentPlayerId()];
+  if(!c) return;
+  ensureWebInventory(currentPlayerId());
+  const host=$('dashboardQuickItems');
+  if(!host) return;
+  host.innerHTML=ASTERIA_V133_QUICK_SLOTS.map((slot,index)=>{
+    const item=equippedBySlot(c,slot);
+    const usable=item?.type==='Consumable'&&Number(item.qty||0)>0;
+    const action=usable?`useInventoryItem('${item.id}')`:item?`openItemPage('${item.id}')`:`toast('Assign an item to Quick Slot ${index+1} from Inventory.')`;
+    return `<button type="button" class="dashboard-quick-slot ${item?'filled':'empty'}" onclick="${action}"><span>Quick ${index+1}</span><b>${item?escapeHtml(item.name):'Empty Slot'}</b><small>${item?`x${Number(item.qty||1)}`:'Assign in Inventory'}</small></button>`;
+  }).join('');
+}
 function bagUsedSlots(bag){return (bag.slots||[]).filter(s=>s.items&&s.items.length).length;}
 function renderBagBoxes(){
   const c=chars[currentPlayerId()]; if(!c) return; ensureWebInventory(currentPlayerId());
@@ -1104,6 +1178,7 @@ function closeItemModal(){ $('itemModal')?.classList.remove('show'); }
 function renderInventory(){
   ensureWebInventory(currentPlayerId());
   renderDashboardEquipment();
+  renderDashboardQuickItems();
   renderCoinPanel();
   renderInventorySlots();
   renderBagBoxes();

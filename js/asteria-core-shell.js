@@ -245,7 +245,7 @@
       login.addEventListener('click', ev => {
         ev.preventDefault();
         ev.stopImmediatePropagation();
-        if(window.AsteriaAuthBridge?.isLoggedIn?.()) window.AsteriaWorkspace?.openDashboard?.('dashboard');
+        if(window.AsteriaAuthBridge?.isLoggedIn?.()) window.logout?.();
         else window.setView?.('loginPage');
       }, true);
     }

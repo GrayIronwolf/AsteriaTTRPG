@@ -21,7 +21,7 @@ const types = {
 const compendiumAppRoutes = ['flora', 'fauna', 'minerals', 'materials', 'potions', 'weapons', 'armor', 'artifacts'];
 
 function send(res, status, body, type = 'text/plain; charset=utf-8') {
-  res.writeHead(status, { 'Content-Type': type });
+  res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   res.end(body);
 }
 

@@ -561,11 +561,58 @@
   function traitSlotCount(race){
     return Math.max(1, Math.min(5, Number(race?.traitSlots || 5)));
   }
+  function traitDetails(trait){
+    const description = [];
+    const effects = [];
+    let mode = '';
+    String(trait?.text || trait?.description || '').split(/\r?\n/).forEach(line => {
+      const trimmed = line.trim();
+      const marker = trimmed
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/\*\*/g, '')
+        .replace(/:$/, '')
+        .trim()
+        .toLowerCase();
+      if(marker === 'description'){
+        mode = 'description';
+        return;
+      }
+      if(marker === 'effects'){
+        mode = 'effects';
+        return;
+      }
+      if(trimmed === '---') return;
+      if(mode === 'description') description.push(line);
+      if(mode === 'effects' && /^[-*]\s+/.test(trimmed)) effects.push(trimmed.replace(/^[-*]\s+/, '').trim());
+    });
+    return {
+      description:String(trait?.description || description.join('\n')).trim(),
+      effects:array(trait?.effects).length ? array(trait.effects) : effects
+    };
+  }
+  function traitDetailHtml(trait){
+    const details = traitDetails(trait);
+    if(!details.description && !details.effects.length) return markdownHtml(trait?.text || 'Information coming soon.');
+    return `
+      <div class="race-trait-detail">
+        <section>
+          <h3>Description</h3>
+          ${markdownHtml(details.description || 'Information coming soon.')}
+        </section>
+        <section>
+          <h3>Effects</h3>
+          ${details.effects.length ? markdownHtml(details.effects.map(effect => `- ${effect}`).join('\n')) : '<p>Information coming soon.</p>'}
+        </section>
+      </div>
+    `;
+  }
   function traitSetForRace(race){
     const slotCount = traitSlotCount(race);
     const realTraits = array(race?.racialTraits).map((trait, index) => ({
       name:trait.name || `Racial Trait ${index + 1}`,
       text:trait.text || trait.description || 'Information coming soon.',
+      description:trait.description || '',
+      effects:array(trait.effects),
       isPlaceholder:false
     }));
     const slots = realTraits.slice(0, slotCount);
@@ -574,6 +621,8 @@
       slots.push({
         name:`Racial Trait ${number}`,
         text:'Information coming soon.',
+        description:'Information coming soon.',
+        effects:[],
         isPlaceholder:true
       });
     }
@@ -587,7 +636,7 @@
         <h3>Racial Traits</h3>
         <p class="smallnote">This race has ${slotCount} racial trait ${slotCount === 1 ? 'slot' : 'slots'}. Double-click a card to open its trait page.</p>
         <div class="race-trait-card-grid">
-          ${traits.map((trait, index) => `<article class="race-trait-card ${trait.isPlaceholder ? 'is-placeholder' : ''}" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.text || trait.description || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
+          ${traits.map((trait, index) => `<article class="race-trait-card ${trait.isPlaceholder ? 'is-placeholder' : ''}" role="button" tabindex="0" data-race-trait-index="${index}"><h4>${escapeHtml(trait.name || 'Trait')}</h4><p>${escapeHtml(plainMarkdown(trait.description || trait.text || 'Information coming soon.').slice(0, 220))}</p><small>Double-click to open trait</small></article>`).join('')}
         </div>
       </section>
     `;
@@ -601,7 +650,7 @@
         eyebrow:`${selectedRace.name} Trait`,
         title:trait.name || 'Racial Trait',
         subtitle:'Race Compendium',
-        body:markdownHtml(trait.text || trait.description || 'Information coming soon.'),
+        body:traitDetailHtml(trait),
         image:raceImage(selectedRace),
         meta:`<span class="item-chip">${escapeHtml(selectedRace.primaryCategory || 'Race')}</span><span class="item-chip">${escapeHtml(selectedRace.size || 'Varies')}</span>`
       });

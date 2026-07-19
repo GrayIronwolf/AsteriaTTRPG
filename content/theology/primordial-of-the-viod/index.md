@@ -1,6 +1,6 @@
 ---
-title: "Primordial of the viod"
-slug: "primordial-of-the-viod"
+title: "Primordial of the Void"
+slug: "primordial-of-the-void"
 type: theology
 category: "Primordials"
 pantheon: "Primordials"
@@ -8,7 +8,7 @@ court: ""
 deity_title: ""
 divine_domain: ""
 domain: ""
-source_path: "1. Primordials/Primordial of the viod.md"
+source_path: "1. Primordials/Primordial of the Void.md"
 image: ""
 tags:
   - "theology"
@@ -16,7 +16,7 @@ tags:
   - "primordials"
 visibility: public
 ---
-# Primordial of the viod
+# Primordial of the Void
 
 ## Overview
 Information coming soon.

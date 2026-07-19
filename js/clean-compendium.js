@@ -818,7 +818,11 @@
     if (query.type && lower(entry.type) !== lower(query.type)) return false;
     if (query.raceCategory && lower(entry.raceCategory) !== lower(query.raceCategory)) return false;
     if (query.wikiCollection && lower(entry.wikiCollection) !== lower(query.wikiCollection)) return false;
-    if (query.path && !haystack.includes(lower(query.path))) return false;
+    if (query.pantheon) {
+      const pantheon = entry.metadata?.pantheon || entry.metadata?.category || entry.category;
+      if (lower(pantheon) !== lower(query.pantheon)) return false;
+    }
+    if (query.path && !query.pantheon && !haystack.includes(lower(query.path))) return false;
     return true;
   }
 

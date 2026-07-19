@@ -298,8 +298,9 @@ Every Pixie is born with a perfect bond to a single element. This magical affini
 #### Effects
 - Born with **100% Affinity** in one chosen magical element.
 - This affinity cannot be naturally changed, reduced, or replaced.
-- Gain reduced magical backlash when casting spells of the aligned element.
-- Wing colour, eye colour, hair accents, and mana aura naturally reflect the chosen element.
+- Gain reduced magical backlash when casting spells of your aligned element.
+- Wing colour, eye colour, hair accents and mana aura naturally reflect the chosen element.
+- Unlock the corresponding **Elemental Gift** racial trait.
 
 ---
 

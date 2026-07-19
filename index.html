@@ -196,6 +196,7 @@
             <div class="resource-block"><label>HP <span id="pHP"></span></label><div class="meter hp"><i id="pHpBar"></i></div><div class="resource-input-controls"><input id="pHPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('hp',-1)">−</button><button onclick="playerResourceDelta('hp',1)">+</button></div><details class="resource-breakdown"><summary>HP breakdown</summary><div id="pHPBreakdown"></div></details></div>
             <div class="resource-block"><label>SP <span id="pSP"></span></label><div class="meter sp"><i id="pSpBar"></i></div><div class="resource-input-controls"><input id="pSPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('sp',-1)">−</button><button onclick="playerResourceDelta('sp',1)">+</button></div><details class="resource-breakdown"><summary>SP breakdown</summary><div id="pSPBreakdown"></div></details></div>
             <div class="resource-block"><label>MP <span id="pMP"></span></label><div class="meter mp"><i id="pMpBar"></i></div><div class="resource-input-controls"><input id="pMPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('mp',-1)">−</button><button onclick="playerResourceDelta('mp',1)">+</button></div><details class="resource-breakdown"><summary>MP breakdown</summary><div id="pMPBreakdown"></div></details></div>
+            <div id="pBPResource" class="resource-block blood-points-resource" hidden><label>BP <span id="pBP"></span></label><div class="meter bp"><i id="pBpBar"></i></div><div class="resource-input-controls"><input id="pBPAmount" type="number" value="5" min="1"><button onclick="playerResourceDelta('bp',-1)">−</button><button onclick="playerResourceDelta('bp',1)">+</button></div><p class="resource-note">Blood Points are available to Bloodhunters.</p></div>
             <button class="outline wide" onclick="recalculatePlayerResources()">Recalculate HP / SP / MP</button>
           </section>
           <section class="characteristics-compact"><h4>Characteristics</h4><div class="stats" id="pStats"></div></section>
@@ -217,7 +218,7 @@
               <section class="card racial-traits-panel talents-panel"><h3>Racial Traits</h3><div id="racialTraitsList" class="talent-list"><article><b>Fleet Footed</b><p>Increases movement speed by 10%.</p></article></div></section>
               <section class="card skills-panel"><h3>Skills</h3><div class="skill-row"><span>Archery</span><b>Rank 5</b><div class="mini-bar"><i style="width:65%"></i></div></div><div class="skill-row"><span>Stealth</span><b>Rank 4</b><div class="mini-bar"><i style="width:52%"></i></div></div><div class="skill-row"><span>Survival</span><b>Rank 3</b><div class="mini-bar"><i style="width:38%"></i></div></div><div class="skill-row"><span>Perception</span><b>Rank 4</b><div class="mini-bar"><i style="width:57%"></i></div></div></section>
               <section class="card conditions-panel"><h3>Conditions</h3><div id="playerConditionsInline"><p class="muted smallnote">No active conditions.</p></div></section>
-              <section class="card quick-items-panel"><h3>Quick Items</h3><button onclick="useInventoryItem('minor-health-potion')">🧪 Health Potion <b>x4</b></button><button onclick="useInventoryItem('stamina-draught')">🟢 Stamina Potion <b>x2</b></button><button onclick="useInventoryItem('mana-vial')">🔵 Mana Potion <b>x3</b></button><button>🧴 Antidote <b>x1</b></button></section>
+              <section class="card quick-items-panel"><h3>Quick Items</h3><div id="dashboardQuickItems" class="dashboard-quick-slots" aria-live="polite"></div></section>
               <section class="card quick-actions-panel"><h3>Quick Action</h3><div class="recovery-buttons"><button class="recovery short-rest" onclick="playerRecoveryAction('short')"><span></span><b>Short Rest</b></button><button class="recovery long-rest" onclick="playerRecoveryAction('long')"><span></span><b>Long Rest</b></button><button class="recovery recover" onclick="playerRecoveryAction('recover')"><span></span><b>Recovery</b></button></div></section>
               <section class="card coin-pouch-panel"><div class="section-head mini"><h3>Coin Pouch</h3><span class="pill">Dashboard</span></div><div id="coinPanelRows" class="coin-panel-rows"></div><div id="coinCopperTotal" class="muted smallnote"></div></section>
               <section id="combatLogPanel" class="card dashboard-combat-log"><div class="section-head mini"><h3>Action / Resource Log</h3><button onclick="clearCombatLog()">Clear</button></div><div id="combatLogRows" class="combat-log-rows"></div></section>
@@ -314,9 +315,9 @@
 <script src="js/data-sync.js"></script>
   <script src="js/compendium-snapshot-v1.1.js"></script>
 <script src="js/clean-compendium.js"></script>
- <script src="js/race-compendium-data.js"></script>
- <script src="js/race-info-data.js"></script>
- <script src="js/race-compendium.js"></script>
+ <script src="js/race-compendium-data.js?v=20260718-traits2"></script>
+ <script src="js/race-info-data.js?v=20260718-traits2"></script>
+ <script src="js/race-compendium.js?v=20260718-traits2"></script>
 <script src="js/class-compendium-data.js"></script>
 <script src="js/artificer-talent-texts.js"></script>
 <script src="js/creature-compendium-data.js"></script>

@@ -358,7 +358,48 @@ function parseTraits(markdown) {
     if (current) current.text += `${line}\n`;
   });
   if (current) traits.push(current);
-  return traits.map(trait => ({ name: trait.name, text: trait.text.trim() })).filter(trait => trait.name);
+  return traits.map(trait => {
+    const text = trait.text.trim();
+    const details = parseTraitDetails(text);
+    return {
+      name: trait.name,
+      text,
+      description: details.description,
+      effects: details.effects
+    };
+  }).filter(trait => trait.name);
+}
+
+function parseTraitDetails(markdown) {
+  const description = [];
+  const effects = [];
+  let mode = '';
+  String(markdown || '').split(/\r?\n/).forEach(line => {
+    const trimmed = line.trim();
+    const marker = trimmed
+      .replace(/^#{1,6}\s+/, '')
+      .replace(/\*\*/g, '')
+      .replace(/:$/, '')
+      .trim()
+      .toLowerCase();
+    if (marker === 'description') {
+      mode = 'description';
+      return;
+    }
+    if (marker === 'effects') {
+      mode = 'effects';
+      return;
+    }
+    if (trimmed === '---') return;
+    if (mode === 'description') description.push(line);
+    if (mode === 'effects' && /^[-*]\s+/.test(trimmed)) {
+      effects.push(trimmed.replace(/^[-*]\s+/, '').trim());
+    }
+  });
+  return {
+    description: description.join('\n').trim(),
+    effects
+  };
 }
 
 function characteristicKey(label) {

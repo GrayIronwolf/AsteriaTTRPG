@@ -2,7 +2,7 @@
 (function(){
   const index = {
   "version": "asteria-wiki-index-v1",
-  "generatedAt": "2026-07-01T23:52:02.578Z",
+  "generatedAt": "2026-07-18T14:53:22.254Z",
   "id": "flora",
   "title": "Flora",
   "singular": "Flora Item",
