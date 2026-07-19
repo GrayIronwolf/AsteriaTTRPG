@@ -1485,7 +1485,10 @@
     return (window.campaigns || []).findIndex((item, index) => campaignId(item, index) === campaign.id);
   }
 
-  function openCampaignGMDashboard(campaign) {
+  async function openCampaignGMDashboard(campaign) {
+    const campaignIdValue = campaign?.id;
+    await window.AsteriaDataSync?.refreshCampaigns?.('campaign-card-open');
+    campaign = findCampaign(campaignIdValue) || campaign;
     const index = campaignIndex(campaign);
     if (index < 0) return;
     if (campaignRole(campaign) !== 'GM') {
@@ -1970,12 +1973,25 @@
       id:characterId,
       ownerUid:uid,
       name:window.chars[characterId].name || characterId,
+      initial:window.chars[characterId].initial || String(window.chars[characterId].name || characterId).charAt(0).toUpperCase(),
+      race:window.chars[characterId].race || '',
+      klass:window.chars[characterId].klass || window.chars[characterId].class || '',
+      level:Number(window.chars[characterId].level || 0),
+      hp:Array.isArray(window.chars[characterId].hp) ? window.chars[characterId].hp.slice() : [10,10],
+      sp:Array.isArray(window.chars[characterId].sp) ? window.chars[characterId].sp.slice() : [10,10],
+      mp:Array.isArray(window.chars[characterId].mp) ? window.chars[characterId].mp.slice() : [10,10],
+      bp:Array.isArray(window.chars[characterId].bp) ? window.chars[characterId].bp.slice() : null,
+      xp:Number(window.chars[characterId].xp || 0),
+      xpMax:Number(window.chars[characterId].xpMax || 1000),
+      conditions:arrayValue(window.chars[characterId].conditions),
       status:'linked',
       linkedAt:new Date().toISOString()
     };
     campaign.playerCharacterLinks = Object.assign({}, campaign.playerCharacterLinks || {}, { [characterId]:accountKey() });
     campaign.activity = arrayValue(campaign.activity).concat(`${window.chars[characterId].name || characterId} linked to campaign.`);
     window.chars[characterId].campaign = campaign.name;
+    window.chars[characterId].sharedCampaignId = campaign.id;
+    window.chars[characterId].linkedCampaignIds = Array.from(new Set([...(window.chars[characterId].linkedCampaignIds || []), campaign.id]));
     persistWorkspaceChange('workspace-character-linked');
     if (window.AsteriaFirebase?.isReady?.() && window.AsteriaFirebase?.linkCharacterToCampaign) {
       try {

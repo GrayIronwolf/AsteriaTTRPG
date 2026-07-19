@@ -128,12 +128,13 @@
     window.setView?.('player');
   }
 
-  function openGMDashboard(){
+  async function openGMDashboard(){
     if(!isAccountSignedIn()){
       window.setView?.('loginPage');
       toast('Please log in first.');
       return;
     }
+    await window.AsteriaDataSync?.refreshCampaigns?.('gm-dashboard-open');
     const index = gmCampaignIndex();
     if(index < 0){
       window.AsteriaWorkspace?.openDashboard?.('createCampaign');

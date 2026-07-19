@@ -8,6 +8,7 @@
   let syncTimer = null;
   let cloudLoadedForUid = null;
   let saveInProgress = false;
+  let lastCampaignRefresh = 0;
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -100,13 +101,35 @@
   }
   function mergeCloudCampaigns(campaigns){
     if(!Array.isArray(campaigns) || !campaigns.length) return;
+    const activeId = window.campaigns?.[window.activeCampaign ?? 0]?.id || null;
     const merged = new Map((window.campaigns || []).filter(Boolean).map(campaign=>[campaign.id, campaign]));
     campaigns.forEach(campaign=>{
       if(!campaign?.id) return;
       merged.set(campaign.id, Object.assign({}, merged.get(campaign.id) || {}, campaign));
     });
     window.campaigns = Array.from(merged.values());
+    if(activeId){
+      const activeIndex = window.campaigns.findIndex(campaign=>campaign?.id === activeId);
+      if(activeIndex >= 0) window.activeCampaign = activeIndex;
+    }
     window.saveAsteriaState?.();
+    window.renderCampaigns?.();
+    if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
+    window.refreshSyncedViews?.();
+    window.dispatchEvent(new CustomEvent('asteria:campaigns-refreshed', { detail:{ campaigns:window.campaigns } }));
+  }
+  async function refreshCloudCampaigns(reason='manual'){
+    if(!isAuthed()) return [];
+    try{
+      const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
+      mergeCloudCampaigns(campaigns);
+      lastCampaignRefresh = Date.now();
+      localMeta({ lastCampaignRefresh, campaignRefreshReason:reason });
+      return campaigns || [];
+    }catch(err){
+      console.warn('Shared campaign refresh failed', err);
+      return [];
+    }
   }
   async function loadCloudData(reason='login'){
     const user = window.AsteriaFirebase?.getUser?.();
@@ -119,6 +142,7 @@
       const state = await window.AsteriaFirebase?.loadState?.();
       mergeCloudState(state);
       mergeCloudCampaigns(campaigns);
+      lastCampaignRefresh = Date.now();
       localMeta({ uid:user.uid, lastLoad:Date.now(), reason });
       setSyncStatus('Cloud sync: connected', 'success');
       toast('Asteria cloud data loaded.');
@@ -189,6 +213,7 @@
     load: loadCloudData,
     save: saveCloudData,
     scheduleSave: scheduleCloudSave,
+    refreshCampaigns: refreshCloudCampaigns,
     saveAppState,
     readAppState: readAppSystemState,
     status:()=>localMeta()
@@ -198,6 +223,12 @@
   window.addEventListener('asteria:firebase-ready', e=>{
     loadCloudData(e.detail?.source || 'auth');
     setTimeout(()=>scheduleCloudSave('auth-ready'), 1200);
+  });
+  window.addEventListener('focus', ()=>{
+    if(isAuthed() && Date.now() - lastCampaignRefresh > 10000) refreshCloudCampaigns('window-focus');
+  });
+  document.addEventListener('visibilitychange', ()=>{
+    if(!document.hidden && isAuthed() && Date.now() - lastCampaignRefresh > 10000) refreshCloudCampaigns('window-visible');
   });
   document.addEventListener('DOMContentLoaded', ()=>{
     installWrappers();

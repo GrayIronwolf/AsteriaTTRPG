@@ -23,7 +23,34 @@ function recalcResourceMax(c, clamp=true){['hp','sp','mp'].forEach(key=>{ const 
 function resourceBreakdownHtml(c,key){const stat=resourceLinks[key], statLabel=statLabels[stat]||stat.toUpperCase(), statVal=Number(c.characteristics?.[stat]||0), contribution=characteristicResourceContribution(statVal), other=Number(c.resourceMods?.[key]||0); return '<div class="break-row"><span>Base</span><b>'+RESOURCE_BASE+'</b></div><div class="break-row"><span>'+statLabel+' ('+statVal+' x '+RESOURCE_PER_CHARACTERISTIC+')</span><b>+'+contribution+'</b></div><div class="break-row"><span>Other modifiers</span><b>+'+other+'</b></div><div class="break-row total"><span>Max '+key.toUpperCase()+'</span><b>'+calcMax(c,key)+'</b></div>'; }
 function renderBreakdowns(prefix,c){['hp','sp','mp'].forEach(key=>{ const id=prefix+key.toUpperCase()+'Breakdown'; if($(id)) $(id).innerHTML=resourceBreakdownHtml(c,key); }); }
 function currentPlayerId(){return session.role==='player' ? session.character : selected}
-function syncAfterResourceChange(id){ if($('player')?.classList.contains('show')) loadPlayer(currentPlayerId()); if($('gm')?.classList.contains('show')) renderGM(); if($('gmPlayer')?.classList.contains('show')) renderGMPlayer(); }
+function syncAfterResourceChange(id){
+  const character=chars[id];
+  (campaigns||[]).filter(campaign=>(campaign.party||[]).includes(id)).forEach(campaign=>{
+    campaign.characters=campaign.characters||{};
+    campaign.characters[id]=Object.assign({},campaign.characters[id]||{}, {
+      id,
+      ownerUid:character?.ownerUid||campaign.playerCharacterLinks?.[id]||'',
+      name:character?.name||id,
+      initial:character?.initial||String(character?.name||id).charAt(0).toUpperCase(),
+      race:character?.race||'',
+      klass:character?.klass||character?.class||'',
+      level:Number(character?.level||0),
+      hp:Array.isArray(character?.hp)?character.hp.slice():[10,10],
+      sp:Array.isArray(character?.sp)?character.sp.slice():[10,10],
+      mp:Array.isArray(character?.mp)?character.mp.slice():[10,10],
+      bp:Array.isArray(character?.bp)?character.bp.slice():null,
+      xp:Number(character?.xp||0),
+      xpMax:Number(character?.xpMax||1000),
+      conditions:Array.isArray(character?.conditions)?character.conditions:[],
+      sharedCampaignId:campaign.id,
+      status:'linked'
+    });
+    window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id,id,character);
+  });
+  if($('player')?.classList.contains('show')) loadPlayer(currentPlayerId());
+  if($('gm')?.classList.contains('show')) renderGM();
+  if($('gmPlayer')?.classList.contains('show')) renderGMPlayer();
+}
 function adjustCharacterResource(id,key,amount){
   const c=chars[id];
   if(!c) return;
@@ -205,6 +232,34 @@ function saveCampaignSettings(){campaigns[activeCampaign].name=$('campaignNameIn
 function progressionSummaryFor(character){return window.AsteriaProgression?.progressSummary?.(character)||{xp:Number(character?.xp||0),xpMax:Number(character?.xpMax||1000),percent:pct(character?.xp||0,character?.xpMax||1000),label:`${Number(character?.xp||0)}/${Number(character?.xpMax||1000)}`};}
 function xpLabelFor(character){return progressionSummaryFor(character).label.replace(' XP','');}
 function line(label,val,max,cls){const capped=!Number.isFinite(Number(max));const meterMax=capped?1:max;const text=capped?'Cap':`${val}/${max}`;return `<div class="resource-line"><b>${label}</b><div class="mini-meter ${cls}"><i style="width:${capped?100:pct(val,meterMax)}%"></i></div><span>${text}</span></div>`}
+function campaignCharacterFor(campaign,id){
+  const summary=campaign?.characters?.[id]||{};
+  if(!chars[id]&&Object.keys(summary).length){
+    chars[id]=Object.assign({
+      id,
+      name:id,
+      initial:String(summary.name||id).charAt(0).toUpperCase(),
+      race:'Unselected',
+      klass:'Class',
+      level:0,
+      hp:[10,10],
+      sp:[10,10],
+      mp:[10,10],
+      xp:0,
+      xpMax:1000,
+      conditions:[],
+      characteristics:{},
+      resourceMods:{hp:0,sp:0,mp:0}
+    },summary,{id,sharedCampaignId:campaign?.id,campaign:campaign?.name||'Linked Campaign'});
+  }
+  const character=chars[id];
+  if(!character)return null;
+  character.hp=Array.isArray(character.hp)?character.hp:[10,10];
+  character.sp=Array.isArray(character.sp)?character.sp:[10,10];
+  character.mp=Array.isArray(character.mp)?character.mp:[10,10];
+  character.conditions=Array.isArray(character.conditions)?character.conditions:[];
+  return character;
+}
 function renderGM(){ensureProgressionData?.();const c=campaigns[activeCampaign];setTextSafe('gmCampaignTitle',c.name);setTextSafe('partyCampaignLabel',c.name+' party.');setTextSafe('topPlayers',c.party.length);setTextSafe('topEncounters',enemies.length);setTextSafe('topCreatures',Object.keys(creatures).length);if($('partyRoster'))$('partyRoster').innerHTML='';c.party.forEach(id=>{const ch=chars[id];let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small><div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,progressionSummaryFor(ch).xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});renderInitiative();renderEnemies();renderCreatureSelect()}
 function renderInitiative(){$('initCount').textContent=initiative.length;$('initiativeRows').innerHTML=initiative.map((x,i)=>`<div class="init-row ${i===turnIndex?'active':''}"><b>${i+1}. ${x.name}</b><input type="number" value="${x.roll}" onchange="initiative[${i}].roll=+this.value"><button onclick="initiative.splice(${i},1);renderInitiative()">×</button></div>`).join('')}
 function addInitiative(){if(!$('initName').value||!$('initRoll').value)return toast('Add a name and initiative roll.');initiative.push({name:$('initName').value,roll:+$('initRoll').value,type:'enemy'});$('initName').value='';$('initRoll').value='';renderInitiative()}
@@ -218,7 +273,12 @@ function openCreature(id){viewedCreature=id;const c=creatures[id];if(!c)return;$
 function renderQuests(){const html=quests.map(q=>`<div class="quest-row"><div><b>${q.name}</b><small>${q.detail}</small></div><span>${q.status}</span></div>`).join('');$('questList').innerHTML=html}
 function addQuest(){quests.push({name:'New Quest',status:'Draft',detail:'Add quest details here.'});renderQuests();toast('Quest added.')}
 function createPlayerCharacter(){const nm=$('newCharName')?.value||'New Character';toast('Character draft created: '+nm);}
-function openGMPlayer(id){selected=id;setView('gmPlayer')}
+function openGMPlayer(id){
+  const character=campaignCharacterFor(campaigns?.[activeCampaign],id);
+  if(!character){toast('That campaign character has not finished syncing yet. Refresh the campaign and try again.');return;}
+  selected=id;
+  setView('gmPlayer');
+}
 function renderGMPlayer(){const c=chars[selected];recalcResourceMax(c,true);$('gpName').textContent=c.name;$('gpLine').textContent=c.race+' • '+c.klass;$('gpHPTxt').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('gpSPTxt').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('gpMPTxt').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('gpXPTxt').textContent=progressionSummaryFor(c).label;$('gpHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('gpSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('gpMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';renderBreakdowns('gp',c);$('conditionsList').innerHTML=(c.conditions||[]).map((x,i)=>`<p><b>${x.name}</b> — ${x.rounds} rounds <button onclick="chars[selected].conditions.splice(${i},1);renderGMPlayer()">remove</button></p>`).join('')||'<p class="muted">No active conditions.</p>'}
 
 function addCondition(){if(!$('conditionName').value)return;chars[selected].conditions.push({name:$('conditionName').value,rounds:$('conditionRounds').value||1});$('conditionName').value='';$('conditionRounds').value='';renderGMPlayer();toast('Condition added.')}
@@ -295,7 +355,7 @@ function addEnemyCondition(i){const name=$(`enemyCond${i}`).value;const rounds=+
 renderGM=function(){
   ensureConditions();
   const c=campaigns[activeCampaign];setTextSafe('gmCampaignTitle',c.name);setTextSafe('partyCampaignLabel',c.name+' party.');setTextSafe('topPlayers',c.party.length);setTextSafe('topEncounters',enemies.length);setTextSafe('topCreatures',Object.keys(creatures).length);if($('partyRoster'))$('partyRoster').innerHTML='';
-  c.party.forEach(id=>{const ch=chars[id];let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small>${conditionChips(ch.conditions)}<div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,progressionSummaryFor(ch).xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});
+  c.party.forEach(id=>{const ch=campaignCharacterFor(c,id);if(!ch)return;let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small>${conditionChips(ch.conditions)}<div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,progressionSummaryFor(ch).xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});
   renderInitiative();renderEnemies();renderCreatureSelect();
   window.AsteriaViewHooks?.runGMRender({campaign:c});
 };
@@ -304,7 +364,7 @@ window.AsteriaViewHooks?.afterPlayerLoad('legacy-player-condition-box', id => {c
 
 renderGMPlayer=function(){
   ensureConditions();
-  const c=chars[selected];window.AsteriaViewHooks?.runBeforeGMPlayerRender(selected,{character:c});recalcResourceMax(c,true);$('gpName').textContent=c.name;$('gpLine').textContent=c.race+' • '+c.klass;$('gpHPTxt').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('gpSPTxt').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('gpMPTxt').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('gpXPTxt').textContent=progressionSummaryFor(c).label;$('gpHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('gpSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('gpMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';renderBreakdowns('gp',c);
+  const c=campaignCharacterFor(campaigns?.[activeCampaign],selected);if(!c){toast('Campaign character data is still syncing.');return;}window.AsteriaViewHooks?.runBeforeGMPlayerRender(selected,{character:c});recalcResourceMax(c,true);$('gpName').textContent=c.name;$('gpLine').textContent=c.race+' • '+c.klass;$('gpHPTxt').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('gpSPTxt').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('gpMPTxt').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('gpXPTxt').textContent=progressionSummaryFor(c).label;$('gpHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('gpSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('gpMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';renderBreakdowns('gp',c);
   $('conditionsList').innerHTML=(c.conditions||[]).map((x,i)=>`<div class="condition-row"><span>${conditionIcon(x.name)} <b>${x.name}</b></span><small>${x.rounds} rounds</small><em>${conditionLibrary[x.name]?.effect||''}</em><button onclick="chars[selected].conditions.splice(${i},1);renderGMPlayer();renderGM();">remove</button></div>`).join('')||'<p class="muted">No active conditions.</p>';
   window.AsteriaViewHooks?.runGMPlayerRender(selected,{character:c});
 };
@@ -3921,7 +3981,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     const camp=campaigns?.[activeCampaign];
     if(!box||!camp) return;
     box.innerHTML=(camp.party||[]).map(id=>{
-      const c=chars[id];
+      const c=campaignCharacterFor(camp,id);
       if(!c) return '';
       const active=id===selected?' active':'';
       return `<article class="gm-campaign-character-card${active}" onclick="selected='${id}';renderGM()" ondblclick="openGMPlayer('${id}')">
