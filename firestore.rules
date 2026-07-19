@@ -22,6 +22,25 @@ service cloud.firestore {
       );
     }
 
+    function sharedCampaign(campaignId) {
+      return get(/databases/$(database)/documents/campaigns/$(campaignId)).data;
+    }
+
+    function canReadCampaignCharacter(campaignId) {
+      return isCampaignMember(sharedCampaign(campaignId));
+    }
+
+    function canWriteCampaignCharacter(campaignId, ownerUid) {
+      return signedIn() && (
+        ownerUid == request.auth.uid ||
+        isCampaignOwner(sharedCampaign(campaignId)) ||
+        (
+          sharedCampaign(campaignId).keys().hasAll(['gmUids']) &&
+          request.auth.uid in sharedCampaign(campaignId).gmUids
+        )
+      );
+    }
+
     function hasActiveInvite(data, campaignId) {
       return signedIn() &&
         data.keys().hasAll(['ucn']) &&
@@ -95,6 +114,13 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
       allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || joinsCampaignAsSelf(campaignId) || linksOwnedCharacter();
       allow delete: if isCampaignOwner(resource.data);
+
+      match /characters/{characterId} {
+        allow read: if canReadCampaignCharacter(campaignId);
+        allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid);
+        allow update: if request.resource.data.ownerUid == resource.data.ownerUid && canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
+        allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
+      }
     }
   }
 }

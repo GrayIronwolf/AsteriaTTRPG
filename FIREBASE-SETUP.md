@@ -35,6 +35,7 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 ## Campaign Collections
 
 - `campaigns/{campaignId}` stores the shared campaign.
+- `campaigns/{campaignId}/characters/{characterId}` stores the campaign-visible character dashboard snapshot used by the GM roster and player viewer.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
 - `users/{uid}/characters/{characterId}` stores an owned character.
@@ -43,6 +44,8 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 
 When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
 
+When a player links a character, Asteria adds the character ID to the shared campaign party and writes its current sheet to the shared character subcollection. Later HP, SP, MP, XP, condition, and character-sheet saves update that same campaign snapshot. The GM client refreshes shared campaign data when the campaign dashboard opens and when the browser regains focus.
+
 ## Testing UCN Join
 
 1. Sign in with a real Firebase account and create a campaign.
@@ -50,6 +53,7 @@ When a GM creates or saves a campaign, the website creates both the shared campa
 3. Sign out and sign in with a different real Firebase account.
 4. Open Campaign Forge, enter the UCN, and choose Join Campaign.
 5. Link an existing character or forge a new character for that campaign.
+6. Return to the GM account and reopen the campaign card. The linked character should appear with resource bars; double-click it to open the GM character view.
 
 Campaigns created before this update gain their UCN lookup record the next time their GM signs in and the campaign is saved. Opening Campaign Forge and making any saved campaign change will trigger that migration.
 
@@ -59,6 +63,7 @@ Campaigns created before this update gain their UCN lookup record the next time 
 - Campaign owners can update or delete their shared campaign.
 - Authenticated users with an active UCN can add only themselves as a player.
 - Campaign members can link only characters owned by their own account.
+- Campaign members can read linked character snapshots; players can update only their own snapshots, while the campaign GM can update campaign-linked snapshots through GM controls.
 - A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.
 
 Firebase config remains in `js/firebase-auth.js`. Replace that object only if Asteria moves to a different Firebase project.
