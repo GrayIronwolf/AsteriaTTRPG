@@ -3320,11 +3320,12 @@
   }
 
   function installGMPanel(){
-    const host = document.querySelector('#gm .gm-main') || document.querySelector('#gm');
+    const host = document.querySelector('#gm .gm-panels') || document.querySelector('#gm .gm-main') || document.querySelector('#gm');
     if(!host || byId('phase3GMToolsPanel')) return;
     const panel = document.createElement('section');
     panel.id = 'phase3GMToolsPanel';
     panel.className = 'card phase3-gm-hook-panel';
+    panel.dataset.gmSystem = 'phase-3a';
     panel.innerHTML = `
       <div class="section-head mini"><div><p class="eyebrow">Phase 3A</p><h3>Gameplay Toolkit</h3></div><span class="pill">Database-linked</span></div>
       <div class="phase3-hook-actions">
@@ -3336,6 +3337,7 @@
     `;
     host.appendChild(panel);
     qsa('[data-phase3-side]', panel).forEach(button => button.addEventListener('click', () => openSystem(button.dataset.phase3Side)));
+    window.applyGMSystemPanel?.();
   }
 
   function publish(){

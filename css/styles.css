@@ -3781,3 +3781,63 @@ main.main,
   .spell-panel-v1722 .spell-list-v1722,
   .dashboard-skill-card-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+/* Shared campaign roster and compact GM workspace tabs */
+#gm .gm-menu-bar{
+  padding:0!important;
+  overflow:hidden!important;
+  border-radius:6px!important;
+}
+#gm .gm-menu-bar .gm-system-buttons{
+  display:grid!important;
+  grid-template-columns:repeat(8,minmax(0,1fr))!important;
+  gap:0!important;
+  margin:0!important;
+}
+#gm .gm-menu-bar .gm-system-btn{
+  min-width:0!important;
+  width:100%!important;
+  min-height:54px!important;
+  padding:10px 6px!important;
+  border-width:0 1px 0 0!important;
+  border-radius:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  background:rgba(4,14,16,.88)!important;
+}
+#gm .gm-menu-bar .gm-system-btn:last-child{border-right:0!important}
+#gm .gm-menu-bar .gm-system-btn b{
+  font-size:.8rem!important;
+  line-height:1.15!important;
+  color:var(--asteria-text,#f4ead2)!important;
+}
+#gm .gm-menu-bar .gm-system-btn small{
+  display:none!important;
+}
+#gm .gm-menu-bar .gm-system-btn.active{
+  background:rgba(var(--asteria-accent-rgb,36,224,255),.14)!important;
+  border-bottom:2px solid var(--asteria-accent)!important;
+  box-shadow:inset 0 0 20px rgba(var(--asteria-accent-rgb,36,224,255),.12)!important;
+}
+#gm .gm-system-title,#gmCampaignCharacterPanel{display:none!important}
+#gm .roster-player-pending{
+  display:grid;
+  gap:4px;
+  width:100%;
+  margin:8px 0;
+  padding:12px;
+  border:1px dashed rgba(var(--asteria-accent-rgb,36,224,255),.35);
+  background:rgba(4,14,16,.62);
+  color:var(--asteria-text,#f4ead2);
+}
+#gm .roster-player-pending small{color:var(--muted)}
+#gm .gm-xp-split{padding-top:18px!important}
+
+@media(max-width:1500px){
+  #gm .gm-menu-bar .gm-system-buttons{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
+@media(max-width:980px){
+  #gm .gm-menu-bar .gm-system-buttons{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}

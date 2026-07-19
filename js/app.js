@@ -260,6 +260,39 @@ function campaignCharacterFor(campaign,id){
   character.conditions=Array.isArray(character.conditions)?character.conditions:[];
   return character;
 }
+function campaignPartyIds(campaign){
+  const playerCharacterIds=Object.values(campaign?.players||{}).flatMap(player=>Array.isArray(player?.characterIds)?player.characterIds:[]);
+  return Array.from(new Set([
+    ...(Array.isArray(campaign?.party)?campaign.party:[]),
+    ...playerCharacterIds,
+    ...Object.keys(campaign?.characters||{}),
+    ...Object.keys(campaign?.playerCharacterLinks||{})
+  ].filter(Boolean)));
+}
+function campaignPlayerForCharacter(campaign,characterId){
+  const ownerUid=campaign?.playerCharacterLinks?.[characterId]||campaign?.characters?.[characterId]?.ownerUid||'';
+  if(ownerUid&&campaign?.players?.[ownerUid]) return campaign.players[ownerUid];
+  return Object.values(campaign?.players||{}).find(player=>(player?.characterIds||[]).includes(characterId))||null;
+}
+function decorateGMPartyRoster(campaign){
+  const host=$('partyRoster');
+  if(!host||!campaign) return;
+  const ids=campaignPartyIds(campaign);
+  const cards=Array.from(host.querySelectorAll('.roster-btn'));
+  ids.forEach((id,index)=>{
+    const player=campaignPlayerForCharacter(campaign,id);
+    const line=cards[index]?.querySelector('small');
+    if(line&&player?.displayName) line.textContent=`${player.displayName} - ${line.textContent}`;
+  });
+  const linkedOwners=new Set(ids.map(id=>campaignPlayerForCharacter(campaign,id)?.uid).filter(Boolean));
+  Object.values(campaign.players||{}).filter(player=>player?.role==='player'&&player?.status!=='removed'&&!linkedOwners.has(player.uid)).forEach(player=>{
+    const card=document.createElement('div');
+    card.className='roster-btn roster-player-pending';
+    card.innerHTML=`<b>${escapeHtml(player.displayName||'Campaign Player')}</b><small>Joined - no character linked yet</small>`;
+    host.appendChild(card);
+  });
+  if(!host.children.length) host.innerHTML='<p class="muted smallnote">No players or characters are linked to this campaign yet.</p>';
+}
 function renderGM(){ensureProgressionData?.();const c=campaigns[activeCampaign];setTextSafe('gmCampaignTitle',c.name);setTextSafe('partyCampaignLabel',c.name+' party.');setTextSafe('topPlayers',c.party.length);setTextSafe('topEncounters',enemies.length);setTextSafe('topCreatures',Object.keys(creatures).length);if($('partyRoster'))$('partyRoster').innerHTML='';c.party.forEach(id=>{const ch=chars[id];let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small><div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,progressionSummaryFor(ch).xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});renderInitiative();renderEnemies();renderCreatureSelect()}
 function renderInitiative(){$('initCount').textContent=initiative.length;$('initiativeRows').innerHTML=initiative.map((x,i)=>`<div class="init-row ${i===turnIndex?'active':''}"><b>${i+1}. ${x.name}</b><input type="number" value="${x.roll}" onchange="initiative[${i}].roll=+this.value"><button onclick="initiative.splice(${i},1);renderInitiative()">×</button></div>`).join('')}
 function addInitiative(){if(!$('initName').value||!$('initRoll').value)return toast('Add a name and initiative roll.');initiative.push({name:$('initName').value,roll:+$('initRoll').value,type:'enemy'});$('initName').value='';$('initRoll').value='';renderInitiative()}
@@ -277,7 +310,11 @@ function openGMPlayer(id){
   const character=campaignCharacterFor(campaigns?.[activeCampaign],id);
   if(!character){toast('That campaign character has not finished syncing yet. Refresh the campaign and try again.');return;}
   selected=id;
-  setView('gmPlayer');
+  window.__asteriaGMCharacterPreview={campaignId:campaigns?.[activeCampaign]?.id||'',characterId:id,previousCharacterId:session?.character||''};
+  session.character=id;
+  loadPlayer(id);
+  setView('player');
+  toast(`Opened ${character.name}'s full Character Dashboard.`);
 }
 function renderGMPlayer(){const c=chars[selected];recalcResourceMax(c,true);$('gpName').textContent=c.name;$('gpLine').textContent=c.race+' • '+c.klass;$('gpHPTxt').textContent=`${c.hp[0]} / ${c.hp[1]}`;$('gpSPTxt').textContent=`${c.sp[0]} / ${c.sp[1]}`;$('gpMPTxt').textContent=`${c.mp[0]} / ${c.mp[1]}`;$('gpXPTxt').textContent=progressionSummaryFor(c).label;$('gpHpBar').style.width=pct(c.hp[0],c.hp[1])+'%';$('gpSpBar').style.width=pct(c.sp[0],c.sp[1])+'%';$('gpMpBar').style.width=pct(c.mp[0],c.mp[1])+'%';renderBreakdowns('gp',c);$('conditionsList').innerHTML=(c.conditions||[]).map((x,i)=>`<p><b>${x.name}</b> — ${x.rounds} rounds <button onclick="chars[selected].conditions.splice(${i},1);renderGMPlayer()">remove</button></p>`).join('')||'<p class="muted">No active conditions.</p>'}
 
@@ -354,8 +391,10 @@ function addEnemyCondition(i){const name=$(`enemyCond${i}`).value;const rounds=+
 
 renderGM=function(){
   ensureConditions();
+  if(campaigns?.[activeCampaign]) campaigns[activeCampaign].party=campaignPartyIds(campaigns[activeCampaign]);
   const c=campaigns[activeCampaign];setTextSafe('gmCampaignTitle',c.name);setTextSafe('partyCampaignLabel',c.name+' party.');setTextSafe('topPlayers',c.party.length);setTextSafe('topEncounters',enemies.length);setTextSafe('topCreatures',Object.keys(creatures).length);if($('partyRoster'))$('partyRoster').innerHTML='';
   c.party.forEach(id=>{const ch=campaignCharacterFor(c,id);if(!ch)return;let b=document.createElement('button');b.className='roster-btn'+(id===selected?' active':'');b.innerHTML=`<b>${ch.name}</b><small>${ch.klass} • Level ${ch.level}</small>${conditionChips(ch.conditions)}<div class="resource-stack">${line('HP',ch.hp[0],ch.hp[1],'hp')}${line('SP',ch.sp[0],ch.sp[1],'sp')}${line('MP',ch.mp[0],ch.mp[1],'mp')}${line('XP',ch.xp,progressionSummaryFor(ch).xpMax,'xp')}</div>`;b.onclick=()=>{selected=id;renderGM()};b.ondblclick=()=>openGMPlayer(id);$('partyRoster')?.appendChild(b)});
+  decorateGMPartyRoster(c);
   renderInitiative();renderEnemies();renderCreatureSelect();
   window.AsteriaViewHooks?.runGMRender({campaign:c});
 };
@@ -1967,24 +2006,20 @@ function applyGMSystemPanel(){
   ensureGMRightMenu();
   const gm=document.getElementById('gm'); if(!gm) return;
   const btns=gm.querySelectorAll('.gm-menu-bar .gm-system-btn');
-  btns.forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes(`'${asteriaGMActiveSystem}'`)));
+  btns.forEach(b=>{
+    const active=b.getAttribute('onclick')?.includes(`'${asteriaGMActiveSystem}'`);
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-pressed',String(Boolean(active)));
+  });
   const panels=gm.querySelector('.gm-panels'); if(!panels) return;
   panels.classList.add('gm-systems-content');
+  panels.querySelectorAll('.gm-system-title').forEach(el=>el.remove());
   Array.from(panels.children).forEach(card=>{
     if(!card.classList?.contains('card')) return;
-    if(card.classList.contains('gm-system-title')) return;
     const system=card.dataset.gmSystem||gmMenuCardSystem(card);
     card.dataset.gmSystem=system;
     card.classList.toggle('gm-system-hidden',system!==asteriaGMActiveSystem);
   });
-  let title=panels.querySelector('.gm-system-title');
-  if(!title){
-    title=document.createElement('section');
-    title.className='card gm-system-title';
-    panels.prepend(title);
-  }
-  const meta=asteriaGMSystems.find(s=>s.id===asteriaGMActiveSystem)||asteriaGMSystems[0];
-  title.innerHTML=`<div><p class="eyebrow">Active GM System</p><h2>${meta.label}</h2><p class="muted">${meta.hint}. Player party stats stay visible on the left for live control.</p></div><span class="pill">${ASTERIA_V1719_VERSION}</span>`;
   const badge=document.querySelector('.version-badge'); if(badge) badge.textContent=ASTERIA_V1719_VERSION;
 }
 buildVersionBadge=function(){const b=document.querySelector('.version-badge');if(b)b.textContent=ASTERIA_V1719_VERSION;};
@@ -3196,7 +3231,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     const gm=document.querySelector('#gm .gm-main .gm-panels');
     if(gm&&!document.getElementById('partyLootManagerPanel')){
       const panel=document.createElement('section'); panel.className='card transaction-pipeline-panel'; panel.id='partyLootManagerPanel';
-      panel.innerHTML=`<div class="section-head"><div><p class="eyebrow">Unified Transaction Pipeline</p><h3>Party Loot + Rewards</h3></div><span class="pill">v1</span></div><p class="muted smallnote">All loot, purchases, services, quest rewards, trades, crafting placeholders, currency changes, and GM grants should flow through this handler.</p><div class="tx-tool-grid"><label>Player<select id="txRewardPlayer">${optionPlayers()}</select></label><label>Source<select id="txRewardSource"><option>GM Manual Reward</option><option>Encounter Loot</option><option>Creature Drop</option><option>Quest Reward</option><option>Treasure Chest</option><option>Shop Purchase</option><option>NPC Trade</option><option>Crafted Item</option><option>Service Purchase</option><option>Shattered Zone Reward</option></select></label><label>Item / Reward Name<input id="txRewardItem" placeholder="Iron Dagger, Relic Shard, Healing Service..."></label><label>Quantity<input id="txRewardQty" type="number" value="1" min="1"></label><label>Rarity<select id="txRewardRarity"><option>common</option><option>rare</option><option>legendary</option><option>relic</option><option>story</option></select></label><label>Destination<select id="txRewardDestination"><option value="inventory">Inventory / Selected Bag</option><option value="partyLoot">Party Loot</option></select></label></div><details open><summary>Currency Change</summary><div class="currency-entry-grid">${currencyInputs()}</div></details><div class="tx-button-row"><button class="primary" onclick="gmManualReward()">Create Transaction</button><button onclick="purchaseService('Inn Stay',5)">Test Service</button><button onclick="confirmPurchase('Shop Item',1)">Test Purchase</button></div><h4>Party Loot</h4><div id="partyLootList" class="party-loot-list"></div>`;
+      panel.innerHTML=`<div class="section-head"><h3>Party Loot + Rewards</h3><span class="pill">v1</span></div><p class="muted smallnote">All loot, purchases, services, quest rewards, trades, crafting placeholders, currency changes, and GM grants should flow through this handler.</p><div class="tx-tool-grid"><label>Player<select id="txRewardPlayer">${optionPlayers()}</select></label><label>Source<select id="txRewardSource"><option>GM Manual Reward</option><option>Encounter Loot</option><option>Creature Drop</option><option>Quest Reward</option><option>Treasure Chest</option><option>Shop Purchase</option><option>NPC Trade</option><option>Crafted Item</option><option>Service Purchase</option><option>Shattered Zone Reward</option></select></label><label>Item / Reward Name<input id="txRewardItem" placeholder="Iron Dagger, Relic Shard, Healing Service..."></label><label>Quantity<input id="txRewardQty" type="number" value="1" min="1"></label><label>Rarity<select id="txRewardRarity"><option>common</option><option>rare</option><option>legendary</option><option>relic</option><option>story</option></select></label><label>Destination<select id="txRewardDestination"><option value="inventory">Inventory / Selected Bag</option><option value="partyLoot">Party Loot</option></select></label></div><details open><summary>Currency Change</summary><div class="currency-entry-grid">${currencyInputs()}</div></details><div class="tx-button-row"><button class="primary" onclick="gmManualReward()">Create Transaction</button><button onclick="purchaseService('Inn Stay',5)">Test Service</button><button onclick="confirmPurchase('Shop Item',1)">Test Purchase</button></div><h4>Party Loot</h4><div id="partyLootList" class="party-loot-list"></div>`;
       gm.appendChild(panel);
       const approvals=document.createElement('section'); approvals.className='card transaction-approval-panel'; approvals.innerHTML=`<div class="section-head mini"><h3>Approval Queue</h3><span class="pill">GM Only</span></div><div id="transactionApprovalQueue"></div>`; gm.appendChild(approvals);
       const log=document.createElement('section'); log.className='card transaction-log-panel'; log.innerHTML=`<div class="section-head mini"><h3>Transaction Log</h3><span class="pill">Session Linked</span></div><div id="transactionLogRows"></div>`; gm.appendChild(log);
@@ -3642,7 +3677,9 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     {id:'gm-notes',label:'GM Notes',hint:'Private prep, live notes, and session logs'},
     {id:'economy',label:'Economy',hint:'Prices, trade routes, shipping, and scarcity'},
     {id:'crafting',label:'Crafting',hint:'Projects, approvals, materials, and enchantments'},
-    {id:'campaign-manager',label:'Campaign Manager',hint:'Campaign settings, GM tools, and utilities'}
+    {id:'campaign-manager',label:'Campaign Manager',hint:'Campaign settings, GM tools, and utilities'},
+    {id:'phase-3a',label:'Gameplay Systems',hint:'Encounter, loot, party, and GM gameplay tools'},
+    {id:'phase-4',label:'World Systems',hint:'World state, events, economy, and lore controls'}
   ];
   const GM_SYSTEM_ALIASES={
     actions:'gm-main',
@@ -3741,15 +3778,23 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     normaliseGMSystems();
     ensureGMRightMenu?.();
     document.querySelector('#gm .gm-menu-bar-actions')?.remove();
+    document.querySelector('#gm .gm-menu-bar-head')?.remove();
     const buttons=document.querySelector('#gm .gm-menu-bar .gm-system-buttons');
     if(buttons){
-      buttons.innerHTML=asteriaGMSystems.map(s=>`<button class="gm-system-btn ${s.id===asteriaGMActiveSystem?'active':''}" onclick="setGMSystemPanel('${s.id}')"><b>${s.label}</b><small>${s.hint}</small></button>`).join('');
+      buttons.innerHTML=asteriaGMSystems.map(s=>`<button class="gm-system-btn ${s.id===asteriaGMActiveSystem?'active':''}" type="button" title="${s.hint}" aria-pressed="${s.id===asteriaGMActiveSystem}" onclick="setGMSystemPanel('${s.id}')"><b>${s.label}</b></button>`).join('');
     }
   }
   function classifyGMPanels(){
     const assign=(selector,system)=>document.querySelectorAll(selector).forEach(el=>{el.dataset.gmSystem=system;});
+    const panelHost=document.querySelector('#gm .gm-panels');
+    ['phase3GMToolsPanel','phase4GMWorldPanel'].forEach(id=>{
+      const panel=document.getElementById(id);
+      if(panelHost&&panel&&panel.parentElement!==panelHost) panelHost.appendChild(panel);
+    });
     assign('#gmActionPanel','gm-hidden');
-    assign('#gmCampaignCharacterPanel,#gmEncounterWorkspace,#gm .gm-xp-split,#gm .transaction-pipeline-panel,#gm #partyLootManagerPanel','gm-main');
+    document.getElementById('gmCampaignCharacterPanel')?.remove();
+    document.querySelectorAll('#gm .gm-system-title').forEach(el=>el.remove());
+    assign('#gmEncounterWorkspace,#gm .gm-xp-split,#gm .transaction-pipeline-panel,#gm #partyLootManagerPanel','gm-main');
     assign('#gm .active-encounter,#gm .initiative,#gm .encounter,#gm .combat-system-panel','gm-hidden');
     assign('#gm .gm-session-control,#gm .gm-session-log-builder,#gm #sessionLedgerPanel,#gm .session-ledger-panel,#gm .session-log-system-panel,#gm .manual-roll-card,#gm .gm-view-toggle,#gm .gm-dice-log-panel','gm-notes');
     document.querySelectorAll('#gm .gm-placeholder-panel').forEach(el=>{el.dataset.gmSystem=el.querySelector('#gmQuestUpdates')?'quests':'gm-notes';});
@@ -3761,6 +3806,8 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     assign('#gmMaterialsPanel','crafting');
     assign('#gmEnchantPanel','crafting');
     assign('#gmEconomyPanel','economy');
+    assign('#phase3GMToolsPanel','phase-3a');
+    assign('#phase4GMWorldPanel','phase-4');
   }
   function restoreGMDashboard(){
     if(!document.getElementById('gm')) return;
@@ -3901,12 +3948,6 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
   function ensureEncounterData(){
     (window.enemies||[]).forEach(ensureEnemyShape);
   }
-  function resourceMini(label,pair,cls){
-    const value=Array.isArray(pair)?pair[0]:0;
-    const max=Array.isArray(pair)?pair[1]:1;
-    const width=Math.max(0,Math.min(100,(value/(max||1))*100));
-    return `<div class="gm-mini-resource ${cls}"><span>${label}</span><i><b style="width:${width}%"></b></i><strong>${value}/${max}</strong></div>`;
-  }
   function insertPanel(panel, beforeSelector){
     const host=document.querySelector('#gm .gm-panels');
     if(!host) return;
@@ -3915,13 +3956,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     else host.appendChild(panel);
   }
   function ensureCampaignCharacterPanel(){
-    if(document.getElementById('gmCampaignCharacterPanel')) return;
-    const panel=document.createElement('section');
-    panel.id='gmCampaignCharacterPanel';
-    panel.className='card gm-campaign-character-panel';
-    panel.dataset.gmSystem='gm-main';
-    panel.innerHTML='<div class="section-head"><div><p class="eyebrow">Campaign Characters</p><h3>Party Overview</h3></div><span class="pill">Double-click opens sheet</span></div><div id="gmCampaignCharacterCards" class="gm-campaign-character-cards"></div>';
-    insertPanel(panel,'.gm-xp-split');
+    document.getElementById('gmCampaignCharacterPanel')?.remove();
   }
   function ensureEncounterPanel(){
     if(document.getElementById('gmEncounterWorkspace')) return;
@@ -3929,7 +3964,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     panel.id='gmEncounterWorkspace';
     panel.className='card gm-encounter-workspace';
     panel.dataset.gmSystem='gm-main';
-    panel.innerHTML=`<div class="section-head"><div><p class="eyebrow">Combat Workspace</p><h3>Create Encounter</h3><p class="muted smallnote">Search creature/NPC data, add enemies, control initiative, and send defeated enemy XP into the XP rewards panel.</p></div><span id="gmEncounterStatusPill" class="pill">Ready</span></div>
+    panel.innerHTML=`<div class="section-head"><div><p class="eyebrow">Campaign Encounters</p><h3>Create Encounter</h3><p class="muted smallnote">Search creature/NPC data, add enemies, control initiative, and send defeated enemy XP into the XP rewards panel.</p></div><span id="gmEncounterStatusPill" class="pill">Ready</span></div>
       <div class="gm-encounter-toolbar">
         <button class="primary" type="button" onclick="gmStartEncounter()">Start Encounter</button>
         <button type="button" onclick="gmSortEncounterInitiative()">Reorder by Initiative</button>
@@ -3975,21 +4010,6 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     insertPanel(panel,'.gm-xp-split');
     const search=document.getElementById('gmEncounterSearch');
     if(search) search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();const first=document.querySelector('#gmEnemySearchResults [data-source-id]');if(first) gmAddCreatureToEncounter(first.dataset.sourceId);}});
-  }
-  function renderCampaignCharacters(){
-    const box=document.getElementById('gmCampaignCharacterCards');
-    const camp=campaigns?.[activeCampaign];
-    if(!box||!camp) return;
-    box.innerHTML=(camp.party||[]).map(id=>{
-      const c=campaignCharacterFor(camp,id);
-      if(!c) return '';
-      const active=id===selected?' active':'';
-      return `<article class="gm-campaign-character-card${active}" onclick="selected='${id}';renderGM()" ondblclick="openGMPlayer('${id}')">
-        <div class="gm-character-avatar">${text(c.initial||c.name?.[0]||'?')}</div>
-        <div><b>${text(c.name)}</b><small>${text(c.race||'Unselected')} / ${text(c.klass||'Class')} - Level ${c.level||0}</small></div>
-        ${resourceMini('HP',c.hp,'hp')}${resourceMini('SP',c.sp,'sp')}${resourceMini('MP',c.mp,'mp')}
-      </article>`;
-    }).join('');
   }
   function renderSummary(){
     const state=readEncounterState();
@@ -4066,7 +4086,6 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     if(!document.getElementById('gm')) return;
     ensureCampaignCharacterPanel();
     ensureEncounterPanel();
-    renderCampaignCharacters();
     renderSummary();
     renderGMEncounterSearch();
     renderUnifiedInitiative();

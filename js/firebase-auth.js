@@ -66,16 +66,20 @@ function mergeCampaignPlayers(localPlayers={}, sharedPlayers={}){
 function mergeSharedCampaign(localCampaign={}, sharedCampaign={}){
   const local = localCampaign || {};
   const shared = sharedCampaign || {};
+  const players = mergeCampaignPlayers(local.players, shared.players);
+  const characters = Object.assign({}, local.characters || {}, shared.characters || {});
+  const playerCharacterLinks = Object.assign({}, local.playerCharacterLinks || {}, shared.playerCharacterLinks || {});
+  const playerCharacterIds = Object.values(players).flatMap(player=>Array.isArray(player?.characterIds) ? player.characterIds : []);
   return Object.assign({}, shared, local, {
     id:shared.id || local.id,
     ownerUid:shared.ownerUid || local.ownerUid || '',
     gmUids:uniqueValues(local.gmUids, shared.gmUids),
     playerUids:uniqueValues(local.playerUids, shared.playerUids),
-    party:uniqueValues(local.party, shared.party),
+    party:uniqueValues(local.party, shared.party, playerCharacterIds, Object.keys(characters), Object.keys(playerCharacterLinks)),
     roles:Object.assign({}, local.roles || {}, shared.roles || {}),
-    players:mergeCampaignPlayers(local.players, shared.players),
-    characters:Object.assign({}, local.characters || {}, shared.characters || {}),
-    playerCharacterLinks:Object.assign({}, local.playerCharacterLinks || {}, shared.playerCharacterLinks || {}),
+    players,
+    characters,
+    playerCharacterLinks,
     activity:uniqueValues(local.activity, shared.activity),
     lastLinkedCharacterId:shared.lastLinkedCharacterId || local.lastLinkedCharacterId || ''
   });
@@ -94,7 +98,12 @@ function campaignCharacterSnapshot(character, campaignId, ownerUid=currentUser?.
 }
 function campaignCharacterSummary(character, campaignId, ownerUid=currentUser?.uid || ''){
   const snapshot = campaignCharacterSnapshot(character, campaignId, ownerUid);
-  return {
+  const summary = Object.assign({}, snapshot);
+  delete summary.character;
+  delete summary.dashboard;
+  delete summary.racialFeaturesMarkdown;
+  delete summary.racialTraitsMarkdown;
+  return Object.assign(summary, {
     id:snapshot.id,
     sourceCharacterId:snapshot.sourceCharacterId,
     ownerUid:snapshot.ownerUid,
@@ -113,7 +122,7 @@ function campaignCharacterSummary(character, campaignId, ownerUid=currentUser?.u
     status:'linked',
     sharedCampaignId:campaignId,
     linkedAt:snapshot.linkedAt || new Date().toISOString()
-  };
+  });
 }
 function hydrateSharedCampaignCharacters(campaign, sharedCharacters={}){
   if(!campaign?.id) return;
@@ -161,12 +170,69 @@ async function linkedCampaignIdsForCharacter(characterId, character){
     campaignsSnap.forEach(item=>{
       const campaign = item.data() || {};
       const player = campaign.players?.[currentUser.uid] || {};
-      if((player.characterIds || []).includes(characterId) || campaign.playerCharacterLinks?.[characterId] === currentUser.uid){
+      const matchesSavedName=character?.campaign && character.campaign !== 'Unassigned' && String(campaign.name||'').toLowerCase() === String(character.campaign).toLowerCase();
+      if((player.characterIds || []).includes(characterId) || campaign.playerCharacterLinks?.[characterId] === currentUser.uid || matchesSavedName){
         linked.push(item.id);
       }
     });
   }catch(err){ console.warn('Could not discover linked campaigns for character sync.', err); }
+  if(!linked.length){
+    try{
+      const stateSnap = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'appState'));
+      const savedCampaigns = stateSnap.exists() && Array.isArray(stateSnap.data()?.campaigns) ? stateSnap.data().campaigns : [];
+      savedCampaigns.forEach(campaign=>{
+        const player = campaign?.players?.[currentUser.uid] || {};
+        const matchesSavedName=character?.campaign && character.campaign !== 'Unassigned' && String(campaign?.name||'').toLowerCase() === String(character.campaign).toLowerCase();
+        if((campaign?.party||[]).includes(characterId) || (player.characterIds||[]).includes(characterId) || campaign?.playerCharacterLinks?.[characterId] === currentUser.uid || matchesSavedName){
+          if(campaign?.id) linked.push(campaign.id);
+        }
+      });
+    }catch(err){ console.warn('Could not inspect the saved workspace for a legacy campaign link.', err); }
+  }
   return uniqueValues(linked);
+}
+async function upsertSharedCampaignCharacter(campaignId, characterId, character){
+  if(!db || !currentUser || !campaignId || !characterId || !character) return null;
+  const uid = currentUser.uid;
+  const linkedCharacter = campaignCharacterSnapshot(Object.assign({}, character, { id:characterId }), campaignId, character.ownerUid || uid);
+  const merged = await runTransaction(db, async transaction=>{
+    const campaignRef = doc(db, 'campaigns', campaignId);
+    const campaignSnap = await transaction.get(campaignRef);
+    if(!campaignSnap.exists()) return null;
+    const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
+    const roles = Object.assign({}, campaign.roles || {});
+    const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
+    if(!isMember) throw new Error('campaign-membership-required');
+
+    const players = Object.assign({}, campaign.players || {});
+    const previousPlayer = players[uid] || { uid, role:campaign.ownerUid === uid ? 'gm' : 'player', status:'active', characterIds:[], joinedAt:new Date().toISOString() };
+    players[uid] = Object.assign({}, previousPlayer, {
+      uid,
+      displayName:previousPlayer.displayName || campaignDisplayName(),
+      status:'active',
+      characterIds:uniqueValues(previousPlayer.characterIds, [characterId])
+    });
+    const party = uniqueValues(campaign.party, [characterId]);
+    const characters = Object.assign({}, campaign.characters || {}, {
+      [characterId]:campaignCharacterSummary(Object.assign({}, linkedCharacter, { linkedAt:new Date().toISOString() }), campaignId, linkedCharacter.ownerUid || uid)
+    });
+    const playerCharacterLinks = Object.assign({}, campaign.playerCharacterLinks || {}, { [characterId]:uid });
+    const activity = Array.isArray(campaign.activity) ? campaign.activity.slice() : [];
+    if(!(campaign.party || []).includes(characterId)) activity.push(`${character.name || characterId} linked to campaign.`);
+    const result = Object.assign({}, campaign, { party, players, characters, playerCharacterLinks, activity, lastLinkedCharacterId:characterId });
+    transaction.update(campaignRef, {
+      party,
+      players,
+      characters,
+      playerCharacterLinks,
+      activity,
+      lastLinkedCharacterId:characterId,
+      updatedAt:serverTimestamp()
+    });
+    transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, result, { updatedAt:serverTimestamp() }), { merge:true });
+    return result;
+  });
+  return merged ? { campaign:merged, character:linkedCharacter } : null;
 }
 async function syncCharacterToCampaigns(characterId, character){
   if(!db || !currentUser || !characterId || !character) return;
@@ -174,10 +240,14 @@ async function syncCharacterToCampaigns(characterId, character){
   if(!campaignIds.length) return;
   const snapshotBase = Object.assign({}, character, { id:characterId, linkedCampaignIds:campaignIds });
   for(const campaignId of campaignIds){
+    let linked = null;
     try{
-      const snapshot = campaignCharacterSnapshot(snapshotBase, campaignId, currentUser.uid);
-      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, snapshot, { updatedAt:serverTimestamp() }), { merge:true });
-    }catch(err){ console.warn(`Could not sync ${characterId} to campaign ${campaignId}.`, err); }
+      linked = await upsertSharedCampaignCharacter(campaignId, characterId, snapshotBase);
+    }catch(err){ console.warn(`Could not sync ${characterId} into shared campaign ${campaignId}.`, err); }
+    if(!linked) continue;
+    try{
+      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
+    }catch(err){ console.warn(`Campaign ${campaignId} accepted ${characterId}, but its optional full-sheet snapshot could not be updated.`, err); }
   }
 }
 
@@ -593,45 +663,15 @@ window.AsteriaFirebase = {
     if(!db || !currentUser || !campaignId || !character?.id) return null;
     const uid = currentUser.uid;
     const characterId = String(character.id);
-    return runTransaction(db, async transaction => {
-      const campaignRef = doc(db, 'campaigns', campaignId);
-      const campaignSnap = await transaction.get(campaignRef);
-      if(!campaignSnap.exists()) return null;
-      const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
-      const roles = Object.assign({}, campaign.roles || {});
-      const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
-      if(!isMember) throw new Error('campaign-membership-required');
-
-      const players = Object.assign({}, campaign.players || {});
-      const previousPlayer = players[uid] || { uid, role:campaign.ownerUid === uid ? 'gm' : 'player', status:'active', characterIds:[], joinedAt:new Date().toISOString() };
-      players[uid] = Object.assign({}, previousPlayer, {
-        uid,
-        status:'active',
-        characterIds:Array.from(new Set([...(previousPlayer.characterIds || []), characterId]))
-      });
-      const party = Array.from(new Set([...(campaign.party || []), characterId]));
-      const linkedCharacter = campaignCharacterSnapshot(Object.assign({}, character, { linkedAt:new Date().toISOString() }), campaignId, uid);
-      const characters = Object.assign({}, campaign.characters || {}, {
-        [characterId]:campaignCharacterSummary(linkedCharacter, campaignId, uid)
-      });
-      const playerCharacterLinks = Object.assign({}, campaign.playerCharacterLinks || {}, { [characterId]:uid });
-      const activity = Array.isArray(campaign.activity) ? campaign.activity.slice() : [];
-      if(!campaign.party?.includes(characterId)) activity.push(`${character.name || characterId} linked to campaign.`);
-      const merged = Object.assign({}, campaign, { party, players, characters, playerCharacterLinks, activity, lastLinkedCharacterId:characterId });
-      transaction.update(campaignRef, {
-        party,
-        players,
-        characters,
-        playerCharacterLinks,
-        activity,
-        lastLinkedCharacterId:characterId,
-        updatedAt:serverTimestamp()
-      });
-      transaction.set(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, linkedCharacter, { updatedAt:serverTimestamp() }), { merge:true });
-      transaction.set(doc(db, 'users', uid, 'characters', characterId), Object.assign({}, linkedCharacter, { updatedAt:serverTimestamp() }), { merge:true });
-      transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, merged, { updatedAt:serverTimestamp() }), { merge:true });
-      return merged;
-    });
+    const linked = await upsertSharedCampaignCharacter(campaignId, characterId, character);
+    if(!linked) return null;
+    await setDoc(doc(db, 'users', uid, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
+    try{
+      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
+    }catch(err){
+      console.warn('Campaign membership and party stats were linked, but the optional full-sheet snapshot needs the latest Firestore rules.', err);
+    }
+    return linked.campaign;
   },
   loadCampaigns: async function(){
     if(!db || !currentUser) return [];

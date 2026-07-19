@@ -1996,10 +1996,21 @@
     if (window.AsteriaFirebase?.isReady?.() && window.AsteriaFirebase?.linkCharacterToCampaign) {
       try {
         const sharedCampaign = await window.AsteriaFirebase.linkCharacterToCampaign(campaign.id, Object.assign({ id:characterId }, window.chars[characterId]));
-        if (sharedCampaign) storeAccountCampaign(sharedCampaign);
+        if (!sharedCampaign) throw new Error('shared-campaign-link-failed');
+        storeAccountCampaign(sharedCampaign);
       } catch (error) {
         console.warn('Could not link character to the shared campaign.', error);
-        window.toast?.('Character saved locally, but Firebase could not link it to the shared campaign.');
+        campaign.party = arrayValue(campaign.party).filter(id => id !== characterId);
+        if (campaign.players?.[uid]) campaign.players[uid].characterIds = arrayValue(campaign.players[uid].characterIds).filter(id => id !== characterId);
+        if (campaign.characters) delete campaign.characters[characterId];
+        if (campaign.playerCharacterLinks) delete campaign.playerCharacterLinks[characterId];
+        window.chars[characterId].linkedCampaignIds = arrayValue(window.chars[characterId].linkedCampaignIds).filter(id => id !== campaign.id);
+        if (window.chars[characterId].sharedCampaignId === campaign.id) delete window.chars[characterId].sharedCampaignId;
+        window.chars[characterId].campaign = 'Unassigned';
+        persistWorkspaceChange('workspace-character-link-rollback');
+        window.toast?.('Firebase could not link this character. It has not been added to the campaign party.');
+        if (!options.skipRender) renderCampaignDetail(campaign);
+        return null;
       }
     } else {
       window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);

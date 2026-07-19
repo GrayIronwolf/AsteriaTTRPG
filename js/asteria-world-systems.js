@@ -889,11 +889,12 @@
   }
 
   function installGMPanel(){
-    const host = document.querySelector('#gm .gm-main') || document.querySelector('#gm');
+    const host = document.querySelector('#gm .gm-panels') || document.querySelector('#gm .gm-main') || document.querySelector('#gm');
     if(!host || byId('phase4GMWorldPanel')) return;
     const panel = document.createElement('section');
     panel.id = 'phase4GMWorldPanel';
     panel.className = 'card phase4-gm-hook-panel';
+    panel.dataset.gmSystem = 'phase-4';
     panel.innerHTML = `
       <div class="section-head mini"><div><p class="eyebrow">Phase 4</p><h3>Living World Engine</h3></div><span class="pill">Campaign State</span></div>
       <div class="phase4-hook-actions">
@@ -906,6 +907,7 @@
     `;
     host.appendChild(panel);
     qsa('[data-phase4-side]', panel).forEach(button => button.addEventListener('click', () => openSystem(button.dataset.phase4Side)));
+    window.applyGMSystemPanel?.();
   }
 
   function publish(){

@@ -35,7 +35,8 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 ## Campaign Collections
 
 - `campaigns/{campaignId}` stores the shared campaign.
-- `campaigns/{campaignId}/characters/{characterId}` stores the campaign-visible character dashboard snapshot used by the GM roster and player viewer.
+- `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
+- `campaigns/{campaignId}/characters/{characterId}` stores the optional full character-sheet snapshot used for live sheet hydration.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
 - `users/{uid}/characters/{characterId}` stores an owned character.
@@ -44,7 +45,9 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 
 When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
 
-When a player links a character, Asteria adds the character ID to the shared campaign party and writes its current sheet to the shared character subcollection. Later HP, SP, MP, XP, condition, and character-sheet saves update that same campaign snapshot. The GM client refreshes shared campaign data when the campaign dashboard opens and when the browser regains focus.
+When a player links a character, Asteria first commits the member, character ID, owner link, and a sanitized dashboard summary directly to the shared campaign document. The optional full-sheet subcollection is written afterwards, so a missing or older subcollection rule can no longer leave the GM with an empty roster after the join appeared successful. Later HP, SP, MP, XP, condition, and character-sheet saves refresh the shared snapshot. The GM client refreshes authoritative campaign data when the campaign dashboard opens and when the browser regains focus.
+
+Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
 
 ## Testing UCN Join
 
@@ -53,7 +56,7 @@ When a player links a character, Asteria adds the character ID to the shared cam
 3. Sign out and sign in with a different real Firebase account.
 4. Open Campaign Forge, enter the UCN, and choose Join Campaign.
 5. Link an existing character or forge a new character for that campaign.
-6. Return to the GM account and reopen the campaign card. The linked character should appear with resource bars; double-click it to open the GM character view.
+6. Return to the GM account and reopen the campaign card. The linked character should appear with HP, SP, MP, and XP bars; double-click it to open the full Character Dashboard.
 
 Campaigns created before this update gain their UCN lookup record the next time their GM signs in and the campaign is saved. Opening Campaign Forge and making any saved campaign change will trigger that migration.
 
