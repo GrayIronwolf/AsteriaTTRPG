@@ -1,25 +1,5 @@
-# Skill Database
+# Legacy Skill Root
 
-Skill entries support ranks, checks, training notes, and rule references.
+The active Skill Compendium and Character Forge now use `content/skills/` as their one canonical database.
 
-## Pattern
-
-```text
-skills/
-  survival/
-    foraging/
-      foraging.md
-```
-
-## Useful Metadata
-
-```yaml
-type: skill
-skill_rank:
-primary_stat:
-training_type:
-lore_status:
-visibility:
-tags:
-```
-
+Do not add skill entries here. See `content/skills/README.md` for the current folder structure and importer command.

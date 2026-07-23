@@ -245,7 +245,8 @@
           affinityRolls:{ magic:{}, skills:{} },
           forgeCategories:{ race:[], class:[] },
           forgeDrill:{ race:[], class:[] },
-          forgeSearch:{ race:'', class:'', patron:'' },
+          forgeSearch:{ race:'', class:'', patron:'', skill:'' },
+          skillCategory:'',
           skills:[],
           equipment:[],
           appearance:{},
@@ -825,6 +826,39 @@
     return entryBySlug('race', draft.raceSlug)?.title || draft.raceSlug || '';
   }
 
+  function canonicalMagicType(value){
+    const cleaned = String(value || '').replace(/\s+\d+%.*$/i, '').trim();
+    if(!cleaned) return '';
+    return magicInfoByName(cleaned).name || cleaned;
+  }
+
+  function racialMagicTypesForEntry(entry){
+    if(!entry) return [];
+    const meta = entry.metadata || {};
+    const title = String(entry.title || entry.name || '');
+    const key = slug(`${title} ${entry.slug || ''}`);
+    const explicit = array(
+      meta.racialMagicTypes ||
+      meta.racial_magic_types ||
+      meta.innateMagicTypes ||
+      meta.innate_magic_types
+    );
+    const granted = explicit.slice();
+    if(key.includes('undien')) granted.push('Water Magic');
+    if(key.includes('pixie')){
+      const profile = meta.affinityProfile || meta.affinity_profile || {};
+      const affinities = array(meta.magicAffinity || meta.magic_affinity);
+      const perfectAffinity = affinities.find(value => /\b100\s*%/i.test(String(value)));
+      const titleAffinity = title.match(/^(Air|Earth|Fire|Water|Life|Death|Light|Dark)\b/i)?.[1];
+      granted.push(profile.primary || perfectAffinity || (titleAffinity ? `${titleAffinity} Magic` : ''));
+    }
+    return Array.from(new Set(granted.map(canonicalMagicType).filter(Boolean)));
+  }
+
+  function racialMagicTypesForDraft(d = draft()){
+    return racialMagicTypesForEntry(entryBySlug('race', d.raceSlug));
+  }
+
   function entriesForSelect(domain, fallback){
     const entries = databaseEntries(domain);
     return entries.length ? entries : fallback;
@@ -1118,7 +1152,8 @@
     d.forgeDrill = Object.assign({ race:[], class:[] }, d.forgeDrill || {});
     d.forgeDrill.race = array(d.forgeDrill.race);
     d.forgeDrill.class = array(d.forgeDrill.class);
-    d.forgeSearch = Object.assign({ race:'', class:'', patron:'' }, d.forgeSearch || {});
+    d.forgeSearch = Object.assign({ race:'', class:'', patron:'', skill:'' }, d.forgeSearch || {});
+    d.skillCategory = d.skillCategory || '';
     d.skills = array(d.skills);
     d.classMode = d.classMode === 'multi' ? 'multi' : 'single';
     d.activePatronClassSlug = d.activePatronClassSlug || '';
@@ -1746,6 +1781,7 @@
     const d = draft();
     const rules = classMagicRulesForDraft(d);
     const selected = new Set(d.magicTypes);
+    const racialMagic = racialMagicTypesForDraft(d);
     const selectedCount = array(d.magicTypes).filter(name => String(name).toLowerCase() !== 'no magic').length;
     const groups = magicGroups();
     const issues = magicSelectionIssues(d);
@@ -1756,6 +1792,15 @@
           <span>${esc(rules.slots ? `${selectedCount}/${rules.slots} slots` : 'Choose class first')}</span>
         </div>
         ${renderMagicRuleControls(rules, d)}
+        ${racialMagic.length ? `
+          <article class="phase3-magic-rule-panel phase3-racial-magic-panel">
+            <div>
+              <strong>Race-granted magic</strong>
+              <span>${esc(racialMagic.join(', '))}</span>
+            </div>
+            <p>These innate affinities are granted by the selected race and do not use class magical element slots.</p>
+          </article>
+        ` : ''}
         ${issues.length ? `<div class="phase3-rule-warning">${issues.map(esc).join(' ')}</div>` : ''}
         <div class="phase3-magic-layout">
           ${groups.map(group => `
@@ -1788,17 +1833,36 @@
     const d = draft();
     const skills = entriesForSelect('skill', FALLBACK_SKILLS);
     const suggestions = suggestedSkills(d);
+    const query = String(d.forgeSearch?.skill || '').trim().toLowerCase();
+    const categories = [...new Set(skills.map(skill => entryPath(skill).slice(0, 2).join(' / ')).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const visibleSkills = skills.filter(skill => {
+      const categoryPath = entryPath(skill).slice(0, 2).join(' / ');
+      if(d.skillCategory && categoryPath !== d.skillCategory) return false;
+      if(!query) return true;
+      return [skill.title, skill.name, skill.summary, categoryPath, array(skill.tags).join(' '), skill.primary_stat, skill.secondary_stat]
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    });
     return `
       <section class="phase3-card">
         <h2>Choose 4 Starting Skills</h2>
         <p>Skills come from the Skill Compendium. Race, class, and origin recommendations are shown as suggestions only.</p>
         <div class="phase3-suggestion-line"><b>Suggestions:</b> ${suggestions.length ? suggestions.map(esc).join(', ') : 'No database recommendations yet.'}</div>
+        <div class="phase3-patron-filters">
+          <label>Search Skills<input data-phase3-forge-search="skill" value="${esc(d.forgeSearch?.skill || '')}" placeholder="Search names, categories, or characteristics..."></label>
+          <label>Skill Category<select data-phase3-skill-category>
+            <option value="">All Skill Categories</option>
+            ${categories.map(category => `<option value="${esc(category)}" ${d.skillCategory === category ? 'selected' : ''}>${esc(category)}</option>`).join('')}
+          </select></label>
+        </div>
+        <div class="phase3-patron-card-status"><span>${esc(d.skillCategory || 'All Skills')}</span><b>${visibleSkills.length} skills</b></div>
         <div class="phase3-card-grid compact">
-          ${skills.map(skill => {
+          ${visibleSkills.map(skill => {
             const name = skill.title || skill.name;
             const selected = d.skills.includes(name);
             return `<article class="phase3-pick-card ${selected ? 'selected' : ''}" data-phase3-skill="${esc(name)}"><span>${esc(selected ? 'Selected' : (skill.category || 'Skill'))}</span><h3>${esc(name)}</h3><p>${esc(skill.summary || 'Rank starts at Novice unless modified by race, class, or origin.')}</p></article>`;
-          }).join('')}
+          }).join('') || '<p class="muted smallnote">No skills match the current search and category.</p>'}
         </div>
         <p class="muted smallnote">Selected: ${d.skills.length}/4. Exactly 4 skills are required before saving.</p>
       </section>
@@ -2321,6 +2385,12 @@
 
   function handleInput(event){
     const target = event.target;
+    if(target.dataset.phase3SkillCategory !== undefined){
+      draft().skillCategory = target.value;
+      saveState('forge-skill-category');
+      render();
+      return;
+    }
     if(target.dataset.phase3PatronSearch !== undefined){
       draft().forgeSearch.patron = target.value;
       saveState('forge-patron-search');
@@ -2725,6 +2795,11 @@
     const magicRules = classMagicRulesForDraft(d);
     const classPatrons = classPatronRecordsForDraft(d);
     const existingGmGrantedMagic = array(existingCharacter?.gmGrantedMagicTypes || existingCharacter?.character?.magic?.gmGrantedTypes);
+    const racialMagicTypes = racialMagicTypesForEntry(raceEntry);
+    const existingGmBonusMagicSlots = Math.max(
+      Number(existingCharacter?.gmBonusMagicSlots || existingCharacter?.character?.magic?.gmBonusSlots || 0),
+      existingGmGrantedMagic.length
+    );
     const mancerAffinity = magicRules.hasMancer ? {
       advantage:d.mancerAdvantageMagicType,
       disadvantage:d.magicTypes.filter(name => slug(name) !== slug(d.mancerAdvantageMagicType))
@@ -2786,7 +2861,9 @@
       religiousPatrons:classPatrons,
       magic:{
         types:d.magicTypes.slice(),
+        racialTypes:racialMagicTypes.slice(),
         gmGrantedTypes:existingGmGrantedMagic.slice(),
+        gmBonusSlots:existingGmBonusMagicSlots,
         rules:magicRules,
         patronLinkedType:d.patronMagicType || '',
         classPatrons,
@@ -2857,7 +2934,9 @@
       talentClasses,
       spells:array(existingCharacter?.spells),
       magicTypes:d.magicTypes.slice(),
+      racialMagicTypes:racialMagicTypes.slice(),
       gmGrantedMagicTypes:existingGmGrantedMagic.slice(),
+      gmBonusMagicSlots:existingGmBonusMagicSlots,
       magicRules,
       patronMagicType:d.patronMagicType || '',
       classPatrons,
@@ -3205,67 +3284,179 @@
     return magicGroups().flatMap(group => group.elements).map(element => magicInfoByName(element.name || element.type).name || element.name || element.type).filter(Boolean);
   }
 
+  function activeMagicCampaign(){
+    return array(window.campaigns)[Number(window.activeCampaign || 0)] || array(window.campaigns)[0] || null;
+  }
+
+  function campaignMagicCharacterIds(campaign = activeMagicCampaign()){
+    if(!campaign) return [];
+    const playerIds = Object.values(campaign.players || {}).flatMap(player => array(player?.characterIds));
+    return Array.from(new Set([
+      ...array(campaign.party),
+      ...Object.keys(campaign.characters || {}),
+      ...Object.keys(campaign.playerCharacterLinks || {}),
+      ...playerIds
+    ])).filter(Boolean);
+  }
+
+  function magicCharacter(id){
+    const campaign = activeMagicCampaign();
+    return window.chars?.[id] || campaign?.characters?.[id] || null;
+  }
+
+  function persistMagicCharacter(id, character, reason){
+    if(!character) return;
+    window.chars = window.chars || {};
+    window.chars[id] = character;
+    window.saveAccountState?.();
+    window.saveAsteriaState?.();
+    const user = window.AsteriaFirebase?.getUser?.();
+    if(!character.ownerUid || character.ownerUid === user?.uid) window.AsteriaFirebase?.saveCharacter?.(id, character);
+    array(window.campaigns).filter(campaign => campaign?.characters?.[id] || campaignMagicCharacterIds(campaign).includes(id)).forEach(campaign => {
+      if(campaign?.id) window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id, id, character);
+    });
+    window.AsteriaDataSync?.scheduleSave?.(reason);
+    saveState(reason);
+  }
+
+  function characterRacialMagicTypes(character){
+    const types = array(character?.racialMagicTypes || character?.character?.magic?.racialTypes).map(canonicalMagicType).filter(Boolean);
+    const raceName = String(character?.race || character?.raceName || character?.character?.race?.name || '');
+    if(/undien/i.test(raceName)) types.push('Water Magic');
+    const pixie = raceName.match(/^(Air|Earth|Water|Fire|Life|Death|Light|Dark)\s+Pixie/i);
+    if(pixie) types.push(`${pixie[1]} Magic`);
+    return Array.from(new Set(types.map(canonicalMagicType).filter(Boolean)));
+  }
+
+  function characterGMBonusMagicSlots(character){
+    const grants = array(character?.gmGrantedMagicTypes || character?.character?.magic?.gmGrantedTypes);
+    return Math.max(Number(character?.gmBonusMagicSlots || character?.character?.magic?.gmBonusSlots || 0), grants.length);
+  }
+
+  function setCharacterGMBonusMagicSlots(id, amount){
+    const character = magicCharacter(id);
+    if(!character) return false;
+    const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes);
+    const slots = Math.max(grants.length, Math.min(20, Number(amount || 0)));
+    character.gmBonusMagicSlots = slots;
+    character.character = character.character || {};
+    character.character.magic = Object.assign({}, character.character.magic || {}, { gmBonusSlots:slots });
+    persistMagicCharacter(id, character, 'gm-magic-slot-update');
+    installGMMagicGrantPanel(id);
+    installGMPartyMagicPanel();
+    window.toast?.(`${character.name} now has ${slots} GM bonus magic slot${slots === 1 ? '' : 's'}.`);
+    return true;
+  }
+
   function grantCharacterMagicType(id, type){
-    const character = window.chars?.[id];
+    const character = magicCharacter(id);
     const magicType = magicInfoByName(type).name || type;
     if(!character || !magicType) return false;
     const base = array(character.magicTypes || character.character?.magic?.types);
+    const racial = characterRacialMagicTypes(character);
     const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes);
-    if(base.some(name => slug(name) === slug(magicType))){
-      window.toast?.(`${magicType} is already class-selected for ${character.name}.`);
+    const slots = characterGMBonusMagicSlots(character);
+    if(base.concat(racial).some(name => slug(name) === slug(magicType))){
+      window.toast?.(`${magicType} is already available to ${character.name}.`);
+      return false;
+    }
+    if(grants.length >= slots){
+      window.toast?.(`Grant an additional magic slot to ${character.name} first.`);
       return false;
     }
     if(!grants.some(name => slug(name) === slug(magicType))) grants.push(magicType);
     character.gmGrantedMagicTypes = grants;
     character.character = character.character || {};
     character.character.magic = Object.assign({}, character.character.magic || {}, { gmGrantedTypes:grants.slice() });
-    window.saveAccountState?.();
-    window.saveAsteriaState?.();
-    window.AsteriaFirebase?.saveCharacter?.(id, character);
-    saveState('gm-magic-grant');
+    persistMagicCharacter(id, character, 'gm-magic-grant');
     window.toast?.(`${magicType} granted to ${character.name}.`);
+    installGMPartyMagicPanel();
     if(document.getElementById('gmPlayer')?.classList.contains('show')) window.renderGMPlayer?.();
     if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
     return true;
   }
 
   function revokeCharacterMagicType(id, type){
-    const character = window.chars?.[id];
+    const character = magicCharacter(id);
     if(!character || !type) return false;
     const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes).filter(name => slug(name) !== slug(type));
     character.gmGrantedMagicTypes = grants;
     if(character.character?.magic) character.character.magic.gmGrantedTypes = grants.slice();
-    window.saveAccountState?.();
-    window.saveAsteriaState?.();
-    window.AsteriaFirebase?.saveCharacter?.(id, character);
-    saveState('gm-magic-revoke');
+    persistMagicCharacter(id, character, 'gm-magic-revoke');
     window.toast?.(`${type} removed from GM-granted magic.`);
+    installGMPartyMagicPanel();
     if(document.getElementById('gmPlayer')?.classList.contains('show')) window.renderGMPlayer?.();
     if(document.getElementById('player')?.classList.contains('show')) window.loadPlayer?.(id);
     return true;
   }
 
   function installGMMagicGrantPanel(id = selectedCharacterId()){
-    const character = window.chars?.[id];
+    const character = magicCharacter(id);
     const host = document.querySelector('#gmPlayer .gm-player-grid') || document.querySelector('#gmPlayer');
     if(!host || !character) return;
     byId('phase3GMMagicGrantPanel')?.remove();
     const base = array(character.magicTypes || character.character?.magic?.types);
+    const racial = characterRacialMagicTypes(character);
     const grants = array(character.gmGrantedMagicTypes || character.character?.magic?.gmGrantedTypes);
-    const available = allMagicTypeNames().filter(name => !base.concat(grants).some(existing => slug(existing) === slug(name)));
+    const bonusSlots = characterGMBonusMagicSlots(character);
+    const available = allMagicTypeNames().filter(name => !base.concat(racial, grants).some(existing => slug(existing) === slug(name)));
     const panel = document.createElement('section');
     panel.id = 'phase3GMMagicGrantPanel';
     panel.className = 'card phase3-gm-magic-grant-panel';
     panel.innerHTML = `
       <div class="section-head mini"><div><p class="eyebrow">GM Magic Access</p><h3>Grant Additional Elements</h3></div><span class="pill">GM override</span></div>
-      <p class="muted smallnote">Class-selected elements stay locked. GM grants sit above Character Forge slot limits.</p>
-      <div class="phase3-gm-magic-row"><label>Element<select id="phase3GMMagicGrantSelect">${available.map(name => `<option>${esc(name)}</option>`).join('')}</select></label><button type="button" class="primary" data-phase3-gm-grant-magic="${esc(id)}" ${available.length ? '' : 'disabled'}>Grant Element</button></div>
+      <p class="muted smallnote">Race magic and class-selected elements stay separate. Each GM-granted element uses one bonus slot.</p>
+      <div class="phase3-gm-magic-slot-row"><b>Bonus slots: ${grants.length}/${bonusSlots} used</b><button type="button" data-phase3-gm-slot-delta="-1" ${bonusSlots <= grants.length ? 'disabled' : ''}>- Slot</button><button type="button" data-phase3-gm-slot-delta="1">+ Slot</button></div>
+      <div class="phase3-gm-magic-row"><label>Element<select id="phase3GMMagicGrantSelect">${available.map(name => `<option>${esc(name)}</option>`).join('')}</select></label><button type="button" class="primary" data-phase3-gm-grant-magic="${esc(id)}" ${available.length && grants.length < bonusSlots ? '' : 'disabled'}>Grant Element</button></div>
       <div class="phase3-gm-magic-list"><b>Class Magic</b><span>${esc(base.join(', ') || 'None')}</span></div>
+      <div class="phase3-gm-magic-list"><b>Race Magic</b><span>${esc(racial.join(', ') || 'None')}</span></div>
       <div class="phase3-gm-magic-list"><b>GM Granted</b>${grants.length ? grants.map(name => `<button type="button" data-phase3-gm-revoke-magic="${esc(name)}" data-phase3-gm-revoke-id="${esc(id)}">${esc(name)} x</button>`).join('') : '<span>None</span>'}</div>
     `;
     host.appendChild(panel);
     panel.querySelector('[data-phase3-gm-grant-magic]')?.addEventListener('click', () => grantCharacterMagicType(id, byId('phase3GMMagicGrantSelect')?.value));
+    qsa('[data-phase3-gm-slot-delta]', panel).forEach(button => button.addEventListener('click', () => {
+      setCharacterGMBonusMagicSlots(id, bonusSlots + Number(button.dataset.phase3GmSlotDelta || 0));
+    }));
     qsa('[data-phase3-gm-revoke-magic]', panel).forEach(button => button.addEventListener('click', () => revokeCharacterMagicType(button.dataset.phase3GmRevokeId, button.dataset.phase3GmRevokeMagic)));
+  }
+
+  function installGMPartyMagicPanel(){
+    const host = document.querySelector('#gm .gm-panels');
+    if(!host) return;
+    byId('phase3GMPartyMagicPanel')?.remove();
+    const campaign = activeMagicCampaign();
+    const ids = campaignMagicCharacterIds(campaign).filter(id => magicCharacter(id));
+    const panel = document.createElement('section');
+    panel.id = 'phase3GMPartyMagicPanel';
+    panel.className = 'card phase3-gm-party-magic-panel';
+    panel.dataset.gmSystem = 'gm-main';
+    panel.innerHTML = `
+      <div class="section-head mini"><div><p class="eyebrow">GM Magic Access</p><h3>Additional Element Slots</h3></div><span class="pill">Campaign linked</span></div>
+      <p class="muted smallnote">Bonus elements are separate from class slots and race-granted affinities.</p>
+      <div class="phase3-gm-party-magic-list">${ids.map(id => {
+        const character = magicCharacter(id);
+        const classTypes = array(character?.magicTypes || character?.character?.magic?.types).map(canonicalMagicType).filter(Boolean);
+        const raceTypes = characterRacialMagicTypes(character);
+        const granted = array(character?.gmGrantedMagicTypes || character?.character?.magic?.gmGrantedTypes).map(canonicalMagicType).filter(Boolean);
+        const slots = characterGMBonusMagicSlots(character);
+        const available = allMagicTypeNames().filter(name => !classTypes.concat(raceTypes, granted).some(existing => slug(existing) === slug(name)));
+        return `<article class="phase3-gm-party-magic-row">
+          <div><h4>${esc(character?.name || id)}</h4><small>Class: ${esc(classTypes.join(', ') || 'None')} | Race: ${esc(raceTypes.join(', ') || 'None')}</small></div>
+          <div class="phase3-gm-magic-slot-row"><b>${granted.length}/${slots} bonus slots</b><button type="button" data-party-magic-slot="${esc(id)}" data-party-magic-delta="-1" ${slots <= granted.length ? 'disabled' : ''}>-</button><button type="button" data-party-magic-slot="${esc(id)}" data-party-magic-delta="1">+</button></div>
+          <div class="phase3-gm-magic-row"><select data-party-magic-select="${esc(id)}">${available.map(name => `<option>${esc(name)}</option>`).join('')}</select><button type="button" class="primary" data-party-magic-grant="${esc(id)}" ${available.length && granted.length < slots ? '' : 'disabled'}>Grant</button></div>
+          <div class="phase3-gm-magic-list"><b>GM Granted</b>${granted.length ? granted.map(name => `<button type="button" data-party-magic-revoke="${esc(id)}" data-party-magic-type="${esc(name)}">${esc(name)} x</button>`).join('') : '<span>None</span>'}</div>
+        </article>`;
+      }).join('') || '<p>No linked campaign characters are available.</p>'}</div>`;
+    host.appendChild(panel);
+    qsa('[data-party-magic-slot]', panel).forEach(button => button.addEventListener('click', () => {
+      const character = magicCharacter(button.dataset.partyMagicSlot);
+      setCharacterGMBonusMagicSlots(button.dataset.partyMagicSlot, characterGMBonusMagicSlots(character) + Number(button.dataset.partyMagicDelta || 0));
+    }));
+    qsa('[data-party-magic-grant]', panel).forEach(button => button.addEventListener('click', () => {
+      grantCharacterMagicType(button.dataset.partyMagicGrant, panel.querySelector(`[data-party-magic-select="${button.dataset.partyMagicGrant}"]`)?.value);
+    }));
+    qsa('[data-party-magic-revoke]', panel).forEach(button => button.addEventListener('click', () => revokeCharacterMagicType(button.dataset.partyMagicRevoke, button.dataset.partyMagicType)));
+    window.applyGMSystemPanel?.();
   }
 
   function openCharacterForgeHub(){
@@ -3366,6 +3557,8 @@
       openCharacterDashboard:openCharacterDashboardFromForge,
       grantCharacterMagicType,
       revokeCharacterMagicType,
+      setCharacterGMBonusMagicSlots,
+      racialMagicTypesForEntry,
       classMagicRulesForDraft
     };
     function routedDashboard(mode, ...args){
@@ -3392,14 +3585,22 @@
     window.toggleCharacterCreator = function(){ return openCharacterForgeHub(); };
     window.AsteriaGameplayGrantMagic = grantCharacterMagicType;
     window.AsteriaGameplayRevokeMagic = revokeCharacterMagicType;
+    window.AsteriaGameplaySetMagicSlots = setCharacterGMBonusMagicSlots;
   }
 
   function boot(){
     publish();
     installNav();
     window.AsteriaViewHooks?.afterGMRender?.('phase3-gm-toolkit', installGMPanel);
+    window.AsteriaViewHooks?.afterGMRender?.('phase3-gm-party-magic', installGMPartyMagicPanel);
     window.AsteriaViewHooks?.afterGMPlayerRender?.('phase3-gm-magic-grants', id => installGMMagicGrantPanel(id));
-    if(byId('gm')?.classList.contains('show')) installGMPanel();
+    window.addEventListener('asteria:campaigns-refreshed', () => {
+      if(byId('gm')?.classList.contains('show')) installGMPartyMagicPanel();
+    });
+    if(byId('gm')?.classList.contains('show')){
+      installGMPanel();
+      installGMPartyMagicPanel();
+    }
     if(byId('gmPlayer')?.classList.contains('show')) installGMMagicGrantPanel();
   }
 

@@ -47,6 +47,7 @@ jsFiles.forEach(file => {
   'js/asteria-magic-data.js',
   'js/app.js',
   'js/asteria-inventory-api.js',
+  'js/asteria-inventory-workflows.js',
   'js/asteria-core-shell.js'
 ].forEach(file => {
   check(`Required script is loaded: ${file}`, jsFiles.includes(file));
@@ -100,7 +101,7 @@ check('No duplicate IDs', duplicateIds.length === 0, duplicateIds.map(([id, coun
 });
 
 const mojibakePattern = /[\u00e2\u00c3\u00f0\ufffd]/;
-['index.html', 'js/wiki-index.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/asteria-magic-data.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/clean-compendium.js'].forEach(file => {
+['index.html', 'js/wiki-index.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/asteria-magic-data.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/asteria-inventory-workflows.js', 'js/clean-compendium.js'].forEach(file => {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   check(`No mojibake markers: ${file}`, !mojibakePattern.test(text));
 });
@@ -121,6 +122,8 @@ const dataSyncJs = fs.readFileSync(path.join(root, 'js/data-sync.js'), 'utf8');
 const snapshotJs = fs.readFileSync(path.join(root, 'js/compendium-snapshot-v1.1.js'), 'utf8');
 const magicDataJs = fs.readFileSync(path.join(root, 'js/asteria-magic-data.js'), 'utf8');
 const gameplayJs = fs.readFileSync(path.join(root, 'js/asteria-gameplay-systems.js'), 'utf8');
+const inventoryWorkflowJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-workflows.js'), 'utf8');
+const inventoryWorkflowCss = fs.readFileSync(path.join(root, 'css/asteria-inventory-workflows.css'), 'utf8');
 const worldJs = fs.readFileSync(path.join(root, 'js/asteria-world-systems.js'), 'utf8');
 const homeGuardJs = fs.readFileSync(path.join(root, 'js/asteria-home-guard.js'), 'utf8');
 const homeFixJs = fs.readFileSync(path.join(root, 'js/asteria-home-fix.js'), 'utf8');
@@ -131,6 +134,10 @@ const cleanCompendiumCss = fs.readFileSync(path.join(root, 'css/clean-compendium
 const homeHtml = html.slice(html.indexOf('<section id="home"'), html.indexOf('<section id="loginPage"'));
 const gmDashboardBlock = appJs.slice(appJs.indexOf('Asteria GM Dashboard v1'), appJs.indexOf('/* v1.7.3.2 Public Website Layout Helpers */'));
 const contentManifestJs = fs.readFileSync(path.join(root, 'js/content-manifest.js'), 'utf8');
+const universalCompendiumIndex = JSON.parse(fs.readFileSync(path.join(root, 'data/universal-compendium-index.json'), 'utf8'));
+const skillEntries = universalCompendiumIndex.entries.filter(entry => entry.domain === 'skill');
+const skillTitles = skillEntries.map(entry => String(entry.title || '').toLowerCase());
+const duplicateSkillTitles = skillTitles.filter((title, index) => skillTitles.indexOf(title) !== index);
 check('Legacy global binder removed from app.js', !appJs.includes('bindAsteriaGlobal'));
 check('Stacked setView replacements removed from app.js', !/setView\s*=\s*function|window\.setView\s*=\s*function/.test(appJs));
 const renderGMAssignments = (appJs.match(/(?:^|\n)renderGM\s*=\s*function/g) || []).length;
@@ -170,6 +177,8 @@ check('Character Forge stores locked affinity rolls', ['renderAffinityRolls','af
 check('Character Forge enforces class magic slots', ['CLASS_MAGIC_CATEGORY_SLOTS','CLASS_MAGIC_REQUIRED','classMagicRulesForDraft','magicSelectionIssues','data-phase3-class-mode','patronMagicType','mancerAdvantageMagicType'].every(token => gameplayJs.includes(token)) && ['Druid','Blood Magic','Chaos Magic','Death Magic'].every(token => gameplayJs.includes(token)));
 check('Religious classes use Theology card gallery patrons', ['classPatrons','religiousClassSelections','religiousPatronIssues','renderPatronSelection','data-phase3-class-patron-card','classPatronRecordsForDraft','patronDatabaseEntries',"startsWith('content/theology/')"].every(token => gameplayJs.includes(token)) && stylesCss.includes('.phase3-patron-card-grid'));
 check('GM can grant extra magic after creation', ['grantCharacterMagicType','revokeCharacterMagicType','installGMMagicGrantPanel','gmGrantedMagicTypes','gmGrantedTypes'].every(token => gameplayJs.includes(token)) && appJs.includes('gmGrantedAccess'));
+check('GM bonus magic uses shared campaign character records', ['installGMPartyMagicPanel','persistMagicCharacter','saveCampaignCharacter','gmBonusMagicSlots'].every(token => gameplayJs.includes(token)));
+check('Race affinities remain separate from class magic slots', ['racialMagicTypesForEntry','characterRacialMagicTypes','Water Magic','Pixie'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('do not use class magical element slots'));
 check('Player active spells sync from forged magic choices', appJs.includes('c?.magicTypes||c?.character?.magic?.types||c?.magic?.types') && appJs.includes('v1722MagicSlug') && appJs.includes('No active spells assigned to the selected magic types.') && !appJs.includes("access=['light','water','blood','fate','eldritch']"));
 check('Spell cards open shared foreground popup', appJs.includes('function v1722OpenSpell(name)') && appJs.includes("eyebrow:'Spell'") && appJs.includes('openAsteriaInfoModal({'));
 check('Dashboard and character spell panels share forged magic filters', ['v1724RenderSpellPanels','v1724EnsureSpellMenuPanel','v1724OpenSpellsTab','data-spell-context-v1724','spell-card-linked-v1724'].every(token => appJs.includes(token)) && stylesCss.includes('.spell-card-linked-v1724') && stylesCss.includes('.spell-menu-panel-v1724'));
@@ -189,6 +198,10 @@ check('Character Forge supports editing existing characters', ['editForgedCharac
 check('Character Forge supports popup character card colour settings', ['CARD_COLOUR_OPTIONS','data-forge-card-colour-settings','openCharacterCardColourSettings','data-forge-colour-picker','openAsteriaInfoModal','setCharacterCardColour','--character-card-colour','.forge-card-colour-settings'].every(token => gameplayJs.includes(token) || stylesCss.includes(token)));
 check('Character Forge stores max-two class locks', gameplayJs.includes('MAX_CHARACTER_CLASSES = 2') && gameplayJs.includes('classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true }') && gameplayJs.includes('secondaryClassSlugs'));
 check('Character Forge is data-driven', ["databaseEntries('race')", "databaseEntries('class')", "entriesForSelect('skill'", "entriesForSelect('origin'", "databaseEntries('item')"].every(token => gameplayJs.includes(token)));
+check('Skill Compendium is available from public navigation', html.includes('data-workspace-section="Skills"') && cleanCompendiumJs.includes("section === 'Skills'") && cleanCompendiumJs.includes("openSection('Skills'"));
+check('Skill database is canonical and duplicate-free', skillEntries.length === 154 && duplicateSkillTitles.length === 0 && skillEntries.every(entry => String(entry.sourcePath || '').startsWith('content/skills/')), `${skillEntries.length} skills / ${duplicateSkillTitles.length} duplicates`);
+check('Detailed skill techniques are retained', skillEntries.some(entry => entry.title === 'Archery' && String(entry.sections?.Ranks || '').includes('Steady Draw') && String(entry.sections?.Ranks || '').includes('Grandmaster Techniques')));
+check('Character Forge filters shared Skill Compendium entries', gameplayJs.includes("entriesForSelect('skill', FALLBACK_SKILLS)") && gameplayJs.includes('data-phase3-skill-category') && gameplayJs.includes('forgeSearch?.skill'));
 check('Character Forge stores final schema', ['family_tree','backstory','characterSchema','created','updated','appearance','origin','characteristics','equipment'].every(token => gameplayJs.includes(token)));
 check('Player dashboard uses Characteristic Tier structure', progressionUiJs.includes('characteristicTierRules') && progressionUiJs.includes('characteristicTierInfo') && progressionUiJs.includes('characteristicCapFor') && appJs.includes("return v>=100?'Tier V'"));
 check('Player dashboard reflects class lock and max classes', appJs.includes('Primary class locked') && appJs.includes('Class Slots') && appJs.includes('Class limit reached') && appJs.includes('slice(0,max)'));
@@ -260,6 +273,7 @@ check('Navigation shell uses solid blue-gray panels', stylesCss.includes('--aste
 check('Settings drawer opens below the top panel', stylesCss.includes('top:var(--core-header-height)!important') && appJs.includes('function toggleSettings()') && appJs.includes("$('shade').onclick=closeSettings"));
 check('Authenticated top action logs out', authBridgeJs.includes("login.textContent = 'Log Out'") && coreShellJs.includes("window.logout?.()"));
 check('Bloodhunter dashboard resource is wired', html.includes('id="pBPResource"') && appJs.includes('function isBloodhunter(c)') && appJs.includes("bp:'pBPAmount'"));
+check('Bloodhunter talent triggers update BP', ['bloodhunterBPGainForTalent','applyBloodhunterTalentBP','talent-bp-trigger'].every(token => appJs.includes(token)) && inventoryWorkflowCss.includes('.talent-bp-trigger'));
 check('Dashboard quick items use four inventory slots', html.includes('id="dashboardQuickItems"') && appJs.includes('function renderDashboardQuickItems()') && appJs.includes('ASTERIA_V133_QUICK_SLOTS.map'));
 check('Theme engine updates required variables', ['--asteria-accent','--asteria-glow','--asteria-overlay-opacity'].every(token => themeSystemJs.includes(token)));
 check('Theme engine updates panel opacity', themeSystemJs.includes('asteriaPanelOpacitySlider') && themeSystemJs.includes('--panel-bg'));
@@ -268,6 +282,10 @@ check('Background linework uses theme colour', themeCss.includes('color:var(--as
 const inventoryApiJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-api.js'), 'utf8');
 check('Inventory API exposes AsteriaInventory', inventoryApiJs.includes('window.AsteriaInventory'));
 check('Inventory API wraps existing inventory render path', inventoryApiJs.includes('window.renderInventory'));
+check('Inventory workflow uses Compendium-backed item picker', ['catalogEntries','openItemPicker','workflowItemSearch','itemSnapshot'].every(token => inventoryWorkflowJs.includes(token)));
+check('Inventory supports drag-drop equipment and safe replacement', ['data-inventory-drag-item','data-equipment-slot','placeInBag','replacementDestination','No empty bag slot is available'].every(token => inventoryWorkflowJs.includes(token)) && inventoryWorkflowCss.includes('.inventory-drag-over'));
+check('GM can send campaign item rewards', ['pendingItemRewards','saveCampaignCharacter','gmItemRewardPanel','resolveReward'].every(token => inventoryWorkflowJs.includes(token)));
+check('GM campaign shops use cart checkout and coin deduction', ['gmCampaignShopPanel','shopCart','purchaseShopCart','setCharacterCopper','emptyBagSlotCount'].every(token => inventoryWorkflowJs.includes(token)));
 check('Shell exposes router API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaRouter'));
 check('Shell exposes account API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaAccounts'));
 
@@ -453,6 +471,7 @@ jsFiles.forEach(file => {
   'scripts/generate-clean-compendium-index.js',
   'scripts/generate-content-manifest.js',
   'scripts/generate-universal-compendium-index.js',
+  'scripts/import-skills.js',
   'scripts/wiki-engine-config.js',
   'scripts/local-static-server.js'
 ].forEach(file => {

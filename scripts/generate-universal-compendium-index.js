@@ -113,7 +113,7 @@ const workspaceSections = {
   spell: 'Magic',
   talent: 'Classes',
   profession: 'Asteria Handbook',
-  skill: 'Asteria Handbook',
+  skill: 'Skills',
   origin: 'Asteria Handbook',
   location: 'World, Realms & Planes',
   religion: 'Theology',
@@ -374,6 +374,7 @@ function titleCase(value) {
     .replace(/\.[^.]+$/, '')
     .replace(/[-_]+/g, ' ')
     .replace(/\b\w/g, char => char.toUpperCase())
+    .replace(/\bNon Combat\b/g, 'Non-Combat')
     .trim();
 }
 

@@ -716,11 +716,7 @@
   function layout(){
     return `
       <section class="codex-compendium-header universal-compendium-header">
-        <div>
-          <p class="eyebrow">Phase 1 Universal Compendium Engine</p>
-          <h1>${escapeHtml(domainLabels[activeDomain] || 'Asteria Compendium')}</h1>
-          <p>Generated from structured content, metadata, manifests, and reusable compendium rendering.</p>
-        </div>
+        <h1>${escapeHtml(domainLabels[activeDomain] || 'Asteria Compendium')}</h1>
         <div class="codex-breadcrumbs">${breadcrumb(activePath, selectedEntry)}</div>
       </section>
       ${searchBar()}

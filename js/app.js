@@ -954,6 +954,7 @@ function renderTierTalentCard(id,talent,locked,tier){
   const safeName=String(name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const atMax=shown>=max;
   const actionLabel=current===0&&staged===0?'Unlock Talent':`Buy Rank ${Math.min(max,shown+1)}`;
+  const bpGain=bloodhunterBPGainForTalent(name,current);
   return `<article class="tier-talent-card ${locked?'locked':''} ${current>0?'unlocked':''} ${staged>0?'pending':''}">
     <div class="tier-talent-card-head">
       <div><small>${escapeHtml(type)}${tier.capstone?' / Capstone':''}</small><h4>${escapeHtml(name)}</h4></div>
@@ -966,6 +967,7 @@ function renderTierTalentCard(id,talent,locked,tier){
       <span>${locked?'Locked':atMax?'Max Rank':`${actionLabel} (${talentRankCost(shown+1)} TP)`}</span>
       <button ${locked||atMax?'disabled':''} onclick="stageTalent('${safeName}',${max},1)">+</button>
     </div>
+    ${bpGain?`<button type="button" class="talent-bp-trigger" onclick="applyBloodhunterTalentBP('${safeName}')">Apply +${bpGain} BP Trigger</button>`:''}
   </article>`;
 }
 // TP talent controls are now tier-tab cards; keep visual-tree-board as a legacy smoke-test marker.
@@ -1078,8 +1080,31 @@ const bloodhunterRankDetails={
 'Blood Homanen':{summary:'Legendary Bloodhunter class skill tracking BHP, frenzy control, mutation, and corruption.',ranks:['Emergence: 0–49 BHP. Minor abilities awaken; whispers begin. Control DC 10.','Mutation: 50–99 BHP. Blood reshapes the body; hunger escalates. Control DC 30.','Evolution: 100–199 BHP. Humanity fades; crimson aura appears. Control DC 50.','Ascension: 200+ BHP. Mortal shell risks collapse into a bloodborn entity. Control DC 80.']}
 };
 function getBloodhunterDetail(name){const d=bloodhunterRankDetails[name];return d?.alias?bloodhunterRankDetails[d.alias]:d;}
+function bloodhunterBPGainForTalent(name,rank){
+  const detail=getBloodhunterDetail(name);
+  if(!detail||!rank)return 0;
+  return Math.max(0,...detail.ranks.slice(0,rank).map(text=>{
+    const match=String(text).match(/\bgain\s+\+?(\d+)\s+B?HP\b/i);
+    return Number(match?.[1]||0);
+  }));
+}
+function applyBloodhunterTalentBP(name){
+  const id=currentPlayerId();
+  const c=chars[id];
+  const rank=Number(c?.talents?.[name]?.rank||0);
+  const gain=bloodhunterBPGainForTalent(name,rank);
+  if(!c||!gain){toast?.(`${name} has no BP trigger at the unlocked rank.`);return false;}
+  const bp=ensureBloodPoints(c);
+  bp[0]=Math.min(bp[1],bp[0]+gain);
+  c.bp=bp;
+  syncAfterResourceChange?.(id);
+  renderBloodPoints?.(id);
+  renderUnlockedTalentSummary?.(id);
+  toast?.(`${name}: +${gain} BP.`);
+  return true;
+}
 if(asteriaClassTalentTrees?.bloodhunter){asteriaClassTalentTrees.bloodhunter.label='Bloodhunter';asteriaClassTalentTrees.bloodhunter.systems=[{name:'Blood Homanen',type:'Legendary Class Skill',desc:'Tracks BHP, frenzy control, mutation, and corruption consequences.'}];asteriaClassTalentTrees.bloodhunter.tiers=[{name:'Tier I — Initiate Talents',unlock:1,talents:[['Blood Rite','Active',5,'Empower weapons through Sangramancy at a health cost.'],['Blood Control','Reactive',5,'Control frenzy and redirect blood power.'],['Blood Scent','Active / Sense',3,'Detect blood, wounds, corruption, and injured creatures.'],['Hunter’s Bane','Passive',3,'Track favoured prey and corrupted beings.'],['Veinlock','Reactive',5,'Disrupt movement, timing, or reactions.'],['Mark of the Quarry','Active / Passive',5,'Bind your hunt to a chosen target.']]},{name:'Tier II — Adept Talents',unlock:15,talents:[['Blood Reprisal','Reactive',4,'Counterattack when damaged, inflicting blood damage and BHP gain.'],['Hardened Soul','Passive',4,'Resist fear, charm, and mental backlash.'],['Clotted Resolve','Passive',4,'Suppress bleeding and condition escalation.'],['Blood Tithe','Passive',3,'Recover minor resources on marked kills.'],['Blood Remembers','Passive',4,'Gain recall and bonuses against past prey.'],['Scarred Flesh','Passive',4,'Build resilience through repeated wounds.']]},{name:'Tier III — Veteran Talents',unlock:30,talents:[['Blood Rage','Active / Toggle',4,'Gain damage and speed while suffering HP strain.'],['Crimson Ritual','Active / Ritual',4,'Create a blood circle that empowers, heals, or corrupts.'],['Pulse Sever','Active',4,'Disrupt circulation, casting, and concentration.'],['Bleeding Future','Active',3,'Borrow power from future vitality with deferred cost.'],['Crimson Survivor','Passive',3,'Resist death and act while dying.']]},{name:'Tier IV — Paragon Talents',unlock:50,capstone:true,talents:[['Avatar of the Crimson Path','Active / Capstone',1,'Embrace Sangramancy with overwhelming power and backlash.'],['Blood Pact','Active / Narrative',3,'Bind blood to a supernatural force.'],['Crimson Debt','Passive / Narrative',3,'Turn accumulated blood cost into scars, curses, and debt.']]}];}
-function renderBloodhunterSystemPanel(){const d=getBloodhunterDetail('Blood Homanen');return `<div class="bloodhunter-system-card"><h4>🩸 Blood Homanen — Class System</h4><p>${d.summary}</p><ul>${d.ranks.map(r=>`<li>${r}</li>`).join('')}</ul><p class="muted">BHP is GM tracked. Mutations and pathways are narrative-weighted and GM-approved.</p></div>`;}
+function renderBloodhunterSystemPanel(){const d=getBloodhunterDetail('Blood Homanen');return `<div class="bloodhunter-system-card"><h4>Blood Homanen - Class System</h4><p>${d.summary}</p><ul>${d.ranks.map(r=>`<li>${r}</li>`).join('')}</ul><p class="muted">BP talent triggers update the Blood Points resource automatically. Mutations and pathways remain narrative-weighted and GM-approved.</p></div>`;}
 const asteria132OldRenderTalentDetail=renderTalentDetail;
 renderTalentDetail=function(id){asteria132OldRenderTalentDetail(id);const host=document.getElementById('visualTalentDetail');if(!host||!selectedTalentNode)return;const detail=getBloodhunterDetail(selectedTalentNode.name);if(!detail)return;const c=chars[id]||{};const current=(c.talents?.[selectedTalentNode.name]?.rank||0)+(talentDrafts[id]?.[selectedTalentNode.name]||0);const rankList=(detail.ranks||[]).map((txt,i)=>`<li class="${(i+1)===Math.max(1,current)?'current-rank':''}"><b>${selectedTalentNode.name} — Rank ${i+1}</b><br>${txt}</li>`).join('');const paths=detail.pathways?`<div class="pathway-box"><h5>Pathways</h5>${Object.entries(detail.pathways).map(([k,v])=>`<p><b>${k}</b> — ${v}</p>`).join('')}</div>`:'';host.insertAdjacentHTML('beforeend',`<div class="rank-buildout"><h5>Rank Buildout</h5><p>${detail.summary||''}</p><ol>${rankList}</ol>${paths}</div>`);};
 const asteria132OldRenderTalentTreeUI=renderTalentTreeUI;
@@ -1155,10 +1180,10 @@ function ensureWebInventory(id=currentPlayerId()){
   if(!selectedWebBagId && c.bags[0]) selectedWebBagId=c.bags[0].id;
 }
 function equippedBySlot(c,slot){
-  return (c.inventory||[]).find(it=>it.equipped && it.slot===slot);
+  return (c.inventory||[]).find(it=>it.equipped && (it.equippedSlot||it.slot)===slot);
 }
 function slotButtonHtml(slot,item,extra=''){
-  return `<button class="inventory-slot-button ${item?'filled':''}" onclick="${item?`openItemPage('${item.id}')`:`toast('Empty slot: ${slot}')`}"><span>${slot}</span><b>${item?item.name:'Empty'}</b>${extra}</button>`;
+  return `<button class="inventory-slot-button inventory-drop-target ${item?'filled':''}" data-equipment-slot="${escapeHtml(slot)}" onclick="${item?`openItemPage('${item.id}')`:`window.AsteriaInventory?.openItemPicker?.({equipSlot:'${escapeHtml(slot)}'})||toast('Empty slot: ${slot}')`}"><span>${slot}</span><b>${item?item.name:'Empty'}</b>${extra}</button>`;
 }
 function renderDashboardEquipment(){
   const c=chars[currentPlayerId()]; if(!c) return; ensureWebInventory(currentPlayerId());
@@ -1170,7 +1195,7 @@ function renderDashboardEquipment(){
   if(weapons) weapons.innerHTML=ASTERIA_V133_WEAPON_SLOTS.map(slot=>{
     const item=equippedBySlot(c,slot);
     const icon=slot==='Shield'?'🛡':slot==='Quiver'?'➳':slot.includes('Secondary')?'🏹':'🗡';
-    return `<div class="weapon-card ${item?'filled':''}" onclick="${item?`openItemPage('${item.id}')`:`toast('Empty weapon slot: ${slot}')`}"><span>${icon}</span><div><small>${slot}</small><b>${item?item.name:'Empty'}</b></div></div>`;
+    return `<div class="weapon-card inventory-drop-target ${item?'filled':''}" data-equipment-slot="${escapeHtml(slot)}" onclick="${item?`openItemPage('${item.id}')`:`window.AsteriaInventory?.openItemPicker?.({equipSlot:'${escapeHtml(slot)}'})||toast('Empty weapon slot: ${slot}')`}"><span>${icon}</span><div><small>${slot}</small><b>${item?item.name:'Empty'}</b></div></div>`;
   }).join('');
 }
 function renderCoinPanel(){
@@ -1233,13 +1258,17 @@ function renderBagGrid(){
   for(let i=1;i<=total;i++){
     const slot=(bag.slots||[]).find(s=>Number(s.slot)===i);
     const items=slot?.items||[];
-    cells+=`<button class="bag-cell ${items.length?'filled':''}" onclick="${items[0]?`openItemPage('${items[0].id}')`:`addItemToBagSlot('${bag.id}',${i})`}"><small>${i}</small>${items.length?items.map(it=>{const item=asteriaV133FindItem(c,it.id);return `<b>${item.name}</b><em>x${it.qty||1}</em>`;}).join(''):'<span>Empty</span>'}</button>`;
+    cells+=`<button class="bag-cell inventory-bag-drop-target ${items.length?'filled':''}" data-bag-id="${escapeHtml(bag.id)}" data-bag-slot="${i}" ${items[0]?`draggable="true" data-inventory-drag-item="${escapeHtml(items[0].id)}"`:''} onclick="${items[0]?`openItemPage('${items[0].id}')`:`addItemToBagSlot('${bag.id}',${i})`}"><small>${i}</small>${items.length?items.map(it=>{const item=asteriaV133FindItem(c,it.id);return `<b>${item.name}</b><em>x${it.qty||1}</em>`;}).join(''):'<span>Empty</span>'}</button>`;
   }
   panel.innerHTML=`<div class="bag-grid-head"><div><h3>${bag.name}</h3><p class="muted smallnote">${bag.type} • ${bag.rows} × ${bag.cols} grid</p></div><button onclick="renameWebBag('${bag.id}')">Rename</button></div><div class="bag-grid" style="grid-template-columns:repeat(${bag.cols},minmax(74px,1fr))">${cells}</div>`;
 }
 function addItemToBagSlot(bagId,slotNo){
   const c=chars[currentPlayerId()]; if(!c) return; ensureWebInventory(currentPlayerId());
   const bag=c.bags.find(b=>b.id===bagId); if(!bag) return;
+  if(window.AsteriaInventory?.openItemPicker){
+    window.AsteriaInventory.openItemPicker({bagId,slotNo});
+    return;
+  }
   const itemId=prompt('Add item ID to this slot (example: minor-health-potion, iron-rations, wolf-pelt):','iron-rations');
   if(!itemId) return;
   const qty=Math.max(1,Number(prompt('Quantity:','1')||1));
@@ -2334,14 +2363,18 @@ function v1722MagicDef(key){
 function v1722CurrentMagicAccess(){
   const c=(typeof v1721Actor==='function'?v1721Actor():null)||(chars&&chars[currentPlayerId?.()]);
   const forgedAccess=c?.magicTypes||c?.character?.magic?.types||c?.magic?.types;
+  const racialAccess=c?.racialMagicTypes||c?.character?.magic?.racialTypes||c?.magic?.racialTypes||[];
   const gmGrantedAccess=c?.gmGrantedMagicTypes||c?.character?.magic?.gmGrantedTypes||c?.magic?.gmGrantedTypes||[];
   let access=forgedAccess || c?.magicAccess || c?.spellTypes || c?.magics || [];
   if(typeof access==='string') access=access.split(',').map(x=>x.trim());
+  let raceAccess=racialAccess;
   let gmAccess=gmGrantedAccess;
+  if(typeof raceAccess==='string') raceAccess=raceAccess.split(',').map(x=>x.trim());
   if(typeof gmAccess==='string') gmAccess=gmAccess.split(',').map(x=>x.trim());
   if(!Array.isArray(access)) access=[];
+  if(!Array.isArray(raceAccess)) raceAccess=[];
   if(!Array.isArray(gmAccess)) gmAccess=[];
-  access=access.concat(gmAccess);
+  access=access.concat(raceAccess,gmAccess);
   if(access.some(value=>String(value).toLowerCase()==='no magic')) return [];
   return [...new Set(access.map(v1722MagicSlug).filter(key=>v1722MagicDef(key).label || v1722MagicDef(key).name))];
 }
@@ -2800,6 +2833,10 @@ function v1724TalentCostText(talent){
   const matches=[...text.matchAll(/(\d+)\s*(HP|SP|MP)/gi)].map(match=>`${match[1]} ${match[2].toUpperCase()}`);
   return matches.length?matches.join(', '):'No resource cost';
 }
+function v1724TalentBPEffect(name,rank){
+  const gain=typeof bloodhunterBPGainForTalent==='function'?bloodhunterBPGainForTalent(name,rank):0;
+  return gain?`BP trigger +${gain}`:'';
+}
 function v1724TalentImage(name,type){
   return `<div class="talent-card-image" aria-hidden="true">${typeof talentSummaryIcon==='function'?talentSummaryIcon(name,type):'&#9673;'}</div>`;
 }
@@ -2831,7 +2868,7 @@ renderUnlockedTalentSummary=function(id=currentPlayerId()){
       (tier.talents||[]).forEach(talent=>{
         const [name,type,max,desc]=talent;
         const rank=c.talents?.[name]?.rank || (legacyUnlocked.has(String(name).toLowerCase())?1:0);
-        if(rank>0)cards.push({classKey,classLabel:tree.label,tierNumber:tierIndex+1,tierName:tier.name,name,type,max,desc,rank,cost:v1724TalentCostText({desc})});
+        if(rank>0)cards.push({classKey,classLabel:tree.label,tierNumber:tierIndex+1,tierName:tier.name,name,type,max,desc,rank,cost:v1724TalentCostText({desc}),bpEffect:v1724TalentBPEffect(name,rank)});
       });
     });
   });
@@ -2841,6 +2878,7 @@ renderUnlockedTalentSummary=function(id=currentPlayerId()){
     ${v1724TalentImage(card.name,card.type)}
     <small>${escapeHtml(card.classLabel)} - Tier ${card.tierNumber} - Rank ${card.rank}/${card.max}</small>
     <span>${escapeHtml(card.cost)}</span>
+    ${card.bpEffect?`<button type="button" class="talent-bp-trigger" onclick="event.stopPropagation();applyBloodhunterTalentBP('${v1724SafeAttr(card.name)}')">${escapeHtml(card.bpEffect)}</button>`:''}
   </article>`).join(''):'<p class="muted smallnote">No class talents are unlocked yet. Spend TP in the Class/Talent Tree tab to add talents here.</p>';
 };
 function v1724TierUnlockLevel(tierNumber){return ASTERIA_TALENT_TIER_UNLOCKS[tierNumber]??0;}

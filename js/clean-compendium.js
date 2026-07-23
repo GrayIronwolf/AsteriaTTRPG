@@ -28,7 +28,7 @@
     'The Shadow Court'
   ];
   const sizes = ['Small','Medium','Large','Extra Large','Titan-Class'];
-  const publicSections = ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Theology','Creatures','Factions'];
+  const publicSections = ['Asteria Handbook','World, Realms & Planes','Races','Classes','Skills','Items','Magic','Theology','Creatures','Factions'];
   const relationshipMetadataKeys = [
     'source_items',
     'sourceItems',
@@ -57,6 +57,7 @@
     worldHub: 'World, Realms & Planes',
     racesHub: 'Races',
     classesHub: 'Classes',
+    skillsHub: 'Skills',
     itemsHub: 'Items',
     magicHub: 'Magic',
     theologyHub: 'Theology',
@@ -68,6 +69,7 @@
     'World, Realms & Planes': 'Lore, realms, planes, timelines, pantheons, kingdoms, and locations as workspace entries.',
     Races: 'Lineages and creature peoples with playable status stored as metadata, not navigation.',
     Classes: 'Class pages, talent trees, pathways, roles, and lore references.',
+    Skills: 'Skills, characteristic pairings, ranks, checks, training, and detailed techniques.',
     Items: 'Items, flora, minerals, materials, equipment, crafting resources, and magic objects.',
     Magic: 'Spells, enchantments, elements, runes, soul stones, and magic system notes.',
     Theology: 'Gods, goddesses, pantheons, courts, primordials, outsiders, divine domains, and worship notes.',
@@ -79,6 +81,7 @@
     'World, Realms & Planes': [],
     Races: ['Race Sheet','Racial Traits','Lore','Images'],
     Classes: ['Overview','Talent Tree','Lore','Images'],
+    Skills: [],
     Items: [],
     Magic: [],
     Theology: [],
@@ -128,6 +131,13 @@
         leaf('Class Pages', { section:'Classes', type:'Class' }),
         leaf('Class Talents', { section:'Classes', path:'Class Talent' }),
         leaf('Talent Tree', { section:'Classes', path:'Talent Tree' })
+      ]
+    },
+    Skills: {
+      label: 'Skill Categories',
+      children: [
+        leaf('Combat Skills', { section:'Skills', path:'Combat Skills' }),
+        leaf('Non-Combat Skills', { section:'Skills', path:'Non-Combat Skills' })
       ]
     },
     Items: {
@@ -2462,13 +2472,14 @@
     const value = lower(hint);
     if (value.includes('race')) return 'Races';
     if (value.includes('class') || value.includes('talent tree') || value.includes('pathway')) return 'Classes';
+    if (value.includes('skill')) return 'Skills';
     if (value.startsWith('items') || value.includes('items/') || value.includes('weapon') || value.includes('armour') || value.includes('armor') || value.includes('material') || value.includes('consumable')) return 'Items';
     if (value.includes('theology') || value.includes('deity') || value.includes('god') || value.includes('goddess') || value.includes('pantheon') || value.includes('court')) return 'Theology';
     if (value.includes('spell') || value.includes('magic') || value.includes('enchantment') || value.includes('element') || value.includes('soul stone') || value.includes('rune')) return 'Magic';
     if (value.includes('creature') || value.includes('beast') || value.includes('monster') || value.includes('animal') || value.includes('construct')) return 'Creatures';
     if (value.includes('faction') || value.includes('guild') || value.includes('organisation') || value.includes('organization') || value.includes('npc')) return 'Factions';
     if (value.includes('world') || value.includes('realm') || value.includes('plane') || value.includes('continent') || value.includes('shattered') || value.includes('pantheon') || value.includes('kingdom') || value.includes('timeline')) return 'World, Realms & Planes';
-    if (value.includes('handbook') || value.includes('system') || value.includes('skill') || value.includes('talent') || value.includes('profession')) return 'Asteria Handbook';
+    if (value.includes('handbook') || value.includes('system') || value.includes('talent') || value.includes('profession')) return 'Asteria Handbook';
     return publicSections.includes(hint) ? hint : '';
   }
 
@@ -2484,6 +2495,10 @@
 
   function openSection(name, options = {}) {
     const section = publicSections.includes(name) ? name : (sectionFromHint(name) || 'Items');
+    if (section === 'Skills' && window.AsteriaUniversalCompendium?.openSection && !options.cleanCompendiumFallback) {
+      window.AsteriaUniversalCompendium.openSection('Skills', options);
+      return;
+    }
     if (section === 'Races' && window.AsteriaRaceCompendium?.open && !options.cleanCompendiumFallback) {
       window.AsteriaRaceCompendium.open(options);
       return;

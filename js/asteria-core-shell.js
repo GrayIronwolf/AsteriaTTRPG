@@ -178,7 +178,7 @@
       ...(window.AsteriaRouter || {}),
       go(view){
         if(view === 'home') return goHome();
-        if(['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic'].includes(view)){
+        if(['Asteria Handbook','World, Realms & Planes','Races','Classes','Skills','Items','Magic'].includes(view)){
           window.AsteriaWorkspace?.openSection?.(view);
           return;
         }

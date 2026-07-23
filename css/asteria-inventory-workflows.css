@@ -1,0 +1,150 @@
+.asteria-workflow-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:12000;
+  display:none;
+  place-items:center;
+  padding:24px;
+  background:rgba(0,6,10,.68);
+  backdrop-filter:blur(7px);
+}
+.asteria-workflow-backdrop.show{display:grid}
+.asteria-workflow-modal{
+  width:min(1120px,calc(100vw - 48px));
+  max-height:min(820px,calc(100vh - 48px));
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  overflow:hidden;
+  border:1px solid var(--asteria-accent,#26d9ff);
+  border-radius:6px;
+  background:rgba(2,12,16,.98);
+  box-shadow:0 0 calc(26px * var(--asteria-glow-intensity,1)) var(--asteria-glow,rgba(38,217,255,.28));
+  color:var(--asteria-text,#f4eddb);
+}
+.asteria-workflow-modal>header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  border-bottom:1px solid color-mix(in srgb,var(--asteria-accent,#26d9ff) 38%,transparent);
+}
+.asteria-workflow-modal h2,.asteria-workflow-modal h3,.asteria-workflow-modal h4{margin:0}
+.asteria-workflow-close{
+  width:42px;
+  height:42px;
+  padding:0;
+  font-size:28px;
+  line-height:1;
+}
+.asteria-workflow-body{
+  min-height:0;
+  overflow:auto;
+  padding:20px;
+}
+.workflow-search-row{position:sticky;top:-20px;z-index:2;padding:0 0 14px;background:rgba(2,12,16,.98)}
+.workflow-search-row input,.workflow-gm-panel input,.workflow-gm-panel select,.asteria-workflow-modal input,.asteria-workflow-modal select{width:100%;min-height:42px}
+.workflow-item-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px}
+.workflow-item-grid.compact{grid-template-columns:repeat(6,minmax(96px,1fr));max-height:310px;overflow:auto}
+.workflow-item-card{
+  position:relative;
+  min-width:0;
+  min-height:190px;
+  display:grid;
+  grid-template-rows:1fr auto auto;
+  gap:7px;
+  padding:10px;
+  text-align:center;
+}
+.workflow-item-grid.compact .workflow-item-card{min-height:150px}
+.workflow-item-image{
+  min-height:100px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--asteria-accent,#26d9ff) 35%,transparent);
+  border-radius:5px;
+  background:#02080b;
+  font-size:42px;
+}
+.workflow-item-image.large{width:160px;height:160px}
+.workflow-item-image img{width:100%;height:100%;object-fit:contain}
+.workflow-rarity{
+  position:absolute;
+  top:6px;
+  right:6px;
+  z-index:1;
+  padding:3px 7px;
+  border:1px solid currentColor;
+  border-radius:999px;
+  background:rgba(0,0,0,.84);
+  font-size:11px;
+  text-transform:uppercase;
+}
+.workflow-two-column{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.5fr);gap:18px}
+.workflow-character-list{display:grid;gap:8px;max-height:330px;overflow:auto}
+.workflow-check-card{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:5px;background:rgba(3,13,16,.86)}
+.workflow-check-card input{width:18px;min-height:18px}
+.workflow-check-card span{display:grid}
+.workflow-form-row{display:grid;grid-template-columns:minmax(110px,.25fr) minmax(220px,1fr) auto;gap:12px;align-items:end;margin-top:14px}
+.workflow-form-row label{display:grid;gap:5px}.workflow-form-row .wide{min-width:0}
+.workflow-stock-row{display:grid;grid-template-columns:minmax(180px,1fr) auto auto 38px;gap:12px;align-items:center;padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.12)}
+.workflow-modal-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}
+.workflow-reward-hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.workflow-reward-hero .workflow-rarity{position:static;display:inline-block;margin-right:8px}
+.workflow-shop-scene{
+  min-height:170px;
+  display:flex;
+  align-items:flex-end;
+  margin:-20px -20px 20px;
+  padding:24px;
+  background:
+    linear-gradient(rgba(0,6,9,.22),rgba(0,6,9,.92)),
+    var(--shop-background,linear-gradient(135deg,#172028,#090f13));
+  background-size:cover;
+  background-position:center;
+}
+.workflow-shop-grid{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px}
+.workflow-shop-card{display:grid;gap:8px;padding:10px;border:1px solid rgba(255,255,255,.18);border-radius:5px;background:rgba(3,13,16,.88);text-align:center}
+.workflow-shop-card .workflow-item-image{min-height:125px}.workflow-shop-card>div:last-child{display:grid;grid-template-columns:38px 1fr 38px;align-items:center}
+.workflow-shop-checkout{position:sticky;bottom:-20px;display:flex;align-items:center;justify-content:flex-end;gap:16px;margin:20px -20px -20px;padding:16px 20px;border-top:1px solid rgba(255,255,255,.18);background:rgba(2,12,16,.98)}
+.workflow-slot-choice{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.inventory-drop-target,.inventory-bag-drop-target{transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.inventory-drag-over{border-color:var(--asteria-accent,#26d9ff)!important;box-shadow:0 0 18px var(--asteria-glow,rgba(38,217,255,.35))!important;transform:translateY(-2px)}
+[data-inventory-drag-item].dragging{opacity:.48}
+.phase3-gm-magic-slot-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0}
+.phase3-gm-magic-slot-row b{margin-right:auto}
+.phase3-gm-party-magic-list{display:grid;gap:10px}
+.phase3-gm-party-magic-row{
+  display:grid;
+  grid-template-columns:minmax(220px,1.1fr) minmax(190px,.65fr) minmax(280px,1fr);
+  gap:12px;
+  align-items:center;
+  padding:12px;
+  border:1px solid color-mix(in srgb,var(--asteria-accent,#26d9ff) 32%,transparent);
+  border-radius:5px;
+  background:rgba(3,13,16,.82);
+}
+.phase3-gm-party-magic-row h4{margin:0 0 4px}
+.phase3-gm-party-magic-row>.phase3-gm-magic-list{grid-column:1/-1}
+.phase3-racial-magic-panel{border-color:color-mix(in srgb,var(--asteria-accent,#26d9ff) 58%,#8fd9a8)}
+.talent-bp-trigger{margin-top:7px;border-color:#a92540!important;color:#ffb2c0!important}
+@media(max-width:1500px){
+  .phase3-gm-party-magic-row{grid-template-columns:minmax(0,1fr) auto}
+  .phase3-gm-party-magic-row>.phase3-gm-magic-row,
+  .phase3-gm-party-magic-row>.phase3-gm-magic-list{grid-column:1/-1}
+}
+@media(max-width:1280px){
+  .workflow-item-grid,.workflow-item-grid.compact{grid-template-columns:repeat(4,minmax(110px,1fr))}
+  .workflow-shop-grid{grid-template-columns:repeat(4,minmax(120px,1fr))}
+}
+@media(max-width:850px){
+  .asteria-workflow-backdrop{padding:10px}
+  .asteria-workflow-modal{width:calc(100vw - 20px);max-height:calc(100vh - 20px)}
+  .workflow-two-column,.workflow-reward-hero{grid-template-columns:1fr}
+  .phase3-gm-party-magic-row{grid-template-columns:1fr}
+  .phase3-gm-party-magic-row>.phase3-gm-magic-list{grid-column:auto}
+  .workflow-item-grid,.workflow-item-grid.compact,.workflow-shop-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}
+  .workflow-form-row{grid-template-columns:1fr}
+  .workflow-slot-choice{grid-template-columns:1fr 1fr}
+}
