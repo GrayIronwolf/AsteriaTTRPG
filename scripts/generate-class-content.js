@@ -194,6 +194,19 @@ function writeMissingClassFiles() {
       fs.writeFileSync(file, classMarkdown(classItem, classIndex + 1), 'utf8');
       written += 1;
     }
+    const talentsRoot = path.join(folder, 'talents');
+    const canonicalTalentFiles = [];
+    if (fs.existsSync(talentsRoot)) {
+      const walkTalents = dir => {
+        fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+          const next = path.join(dir, entry.name);
+          if (entry.isDirectory()) walkTalents(next);
+          else if (entry.isFile() && entry.name.toLowerCase() === 'index.md') canonicalTalentFiles.push(next);
+        });
+      };
+      walkTalents(talentsRoot);
+    }
+    if (canonicalTalentFiles.length) return;
     (Array.isArray(node.talents) ? node.talents : []).forEach((talent, talentIndex) => {
       if (!talent?.name) return;
       const tier = tierNumber(talent.tier);
@@ -295,6 +308,13 @@ function talentFromFile(file, classEntry) {
     prerequisite: metadata.prerequisite || sections.Prerequisites || 'None',
     cost: metadata.cost || '1 Talent Point',
     cooldown: metadata.cooldown || 'Passive',
+    abilityType: metadata.ability_type || '',
+    manaCost: metadata.mana_cost || '',
+    staminaCost: metadata.stamina_cost || '',
+    hpCost: metadata.hp_cost || '',
+    bloodPointCost: metadata.blood_point_cost || '',
+    duration: metadata.duration || '',
+    range: metadata.range || '',
     scaling: metadata.scaling || sections.Scaling || 'Improves by rank',
     synergy: metadata.synergy || sections.Synergy || 'Information coming soon',
     gmNotes: sections['GM Notes'] || 'Information coming soon',

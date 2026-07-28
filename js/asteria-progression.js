@@ -127,8 +127,12 @@
     const result = applyLevelUps(c);
     if(c && result.leveled){
       window.addCombatLog?.(`${c.name} reached Level ${c.level}.`, 'important');
-      window.feedback?.(`LEVEL UP: ${c.name}`, 'level');
-      window.showLevelModal?.(c, result);
+      const playerOpen=typeof document!=='undefined'&&document.getElementById('player')?.classList.contains('show');
+      const isActivePlayer=window.session?.role==='player'&&window.session?.character===id&&playerOpen;
+      if(isActivePlayer){
+        window.feedback?.(`LEVEL UP: ${c.name}`, 'level');
+        window.showLevelModal?.(c, result);
+      }
     }
     return result;
   }

@@ -5,7 +5,7 @@
    ========================= */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -685,6 +685,10 @@ window.AsteriaFirebase = {
           const sharedSnap = await getDoc(doc(db, 'campaigns', item.id));
           if(sharedSnap.exists()) campaign = mergeSharedCampaign(accountCampaign, Object.assign({}, sharedSnap.data(), { id:item.id }));
         }catch(err){ console.warn(`Could not refresh shared campaign ${item.id}.`, err); }
+        try{
+          const ecosystemSnap = await getDoc(doc(db, 'campaigns', item.id, 'systems', 'itemEcosystem'));
+          if(ecosystemSnap.exists()) campaign.itemEcosystem = ecosystemSnap.data();
+        }catch(err){ console.warn(`Could not load the shared item ecosystem for ${item.id}.`, err); }
         const sharedCharacters = {};
         try{
           const characterSnap = await getDocs(collection(db, 'campaigns', item.id, 'characters'));
@@ -695,6 +699,68 @@ window.AsteriaFirebase = {
       }
       return campaigns;
     }catch(err){ console.warn('Could not load campaigns from Firestore.', err); return []; }
+  },
+  subscribeCampaign: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      doc(db, 'campaigns', campaignId),
+      snapshot=>{
+        if(snapshot.exists()) onChange(Object.assign({}, snapshot.data(), { id:snapshot.id }));
+      },
+      err=>console.warn(`Could not watch shared campaign ${campaignId}.`, err)
+    );
+  },
+  saveCampaignItemEcosystem: async function(campaignId, ecosystem){
+    if(!db || !currentUser || !campaignId || !ecosystem) return false;
+    try{
+      const clean = cleanData(ecosystem);
+      await setDoc(
+        doc(db, 'campaigns', campaignId, 'systems', 'itemEcosystem'),
+        Object.assign({}, clean, {
+          version:clean.version || 'asteria-item-ecosystem-v1',
+          updatedBy:currentUser.uid,
+          updatedAt:serverTimestamp()
+        })
+      );
+      return true;
+    }catch(err){
+      console.warn(`Could not save the shared item ecosystem for campaign ${campaignId}.`, err);
+      return false;
+    }
+  },
+  loadCampaignItemEcosystem: async function(campaignId){
+    if(!db || !currentUser || !campaignId) return null;
+    try{
+      const snapshot = await getDoc(doc(db, 'campaigns', campaignId, 'systems', 'itemEcosystem'));
+      return snapshot.exists() ? snapshot.data() : null;
+    }catch(err){
+      console.warn(`Could not load the shared item ecosystem for campaign ${campaignId}.`, err);
+      return null;
+    }
+  },
+  subscribeCampaignItemEcosystem: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      doc(db, 'campaigns', campaignId, 'systems', 'itemEcosystem'),
+      snapshot=>{
+        if(snapshot.exists()) onChange(snapshot.data());
+      },
+      err=>console.warn(`Could not watch the shared item ecosystem for campaign ${campaignId}.`, err)
+    );
+  },
+  subscribeCampaignCharacters: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      collection(db, 'campaigns', campaignId, 'characters'),
+      snapshot=>{
+        const characters={};
+        snapshot.forEach(characterDoc=>{
+          characters[characterDoc.id]=Object.assign({ id:characterDoc.id }, characterDoc.data());
+        });
+        onChange(characters);
+      },
+      err=>console.warn(`Could not watch shared characters for campaign ${campaignId}.`, err)
+    );
   },
   saveCampaignCharacter: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;

@@ -610,6 +610,63 @@ function updateXPSplitPreview(){
   const rem=count?amount%count:0;
   if($('campaignXPSplitPreview')) $('campaignXPSplitPreview').textContent=count?`Split: ${share.toLocaleString()} XP each${rem?` + ${rem} remainder distributed from top of roster`:''}.`:'No players in campaign.';
 }
+function queueCharacterDashboardNotice(character,notice={}){
+  if(!character)return null;
+  character.dashboardNotifications=Array.isArray(character.dashboardNotifications)?character.dashboardNotifications:[];
+  const record=Object.assign({
+    id:`character-notice-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    type:'info',
+    title:'Character Update',
+    message:'',
+    createdAt:new Date().toISOString()
+  },notice);
+  character.dashboardNotifications.unshift(record);
+  character.dashboardNotifications=character.dashboardNotifications.slice(0,30);
+  return record;
+}
+function renderCharacterDashboardNotices(id=currentPlayerId?.()){
+  const character=chars?.[id];
+  const main=document.querySelector('#player .player-main-panel');
+  if(!character||!main)return;
+  let panel=document.getElementById('characterDashboardNotices');
+  if(!panel){
+    panel=document.createElement('section');
+    panel.id='characterDashboardNotices';
+    panel.className='card character-dashboard-notices';
+    const campaignPanel=main.querySelector('.campaign-session-panel');
+    if(campaignPanel?.nextSibling)main.insertBefore(panel,campaignPanel.nextSibling);
+    else main.prepend(panel);
+  }
+  const notices=(character.dashboardNotifications||[]).filter(notice=>notice.visibility!=='GM-only'&&notice.visibility!=='Hidden until revealed').slice(0,5);
+  panel.hidden=!notices.length;
+  panel.innerHTML=notices.length?`<div class="section-head mini"><h3>Character Updates</h3><span class="pill">${notices.length} Recent</span></div><div class="character-notice-list">${notices.map(notice=>`<article class="${notice.type||'info'}"><div><b>${escapeHtml(notice.title||'Character Update')}</b><small>${escapeHtml(notice.createdAt?new Date(notice.createdAt).toLocaleString():'')}</small></div><p>${escapeHtml(notice.message||'')}</p></article>`).join('')}</div>`:'';
+}
+function deliveredCharacterNoticeIds(){
+  const uid=window.AsteriaFirebase?.getUser?.()?.uid||window.session?.account||'local';
+  const key=`asteria-delivered-character-notices-${uid}`;
+  try{return {key,ids:new Set(JSON.parse(localStorage.getItem(key)||'[]'))};}catch(e){return {key,ids:new Set()};}
+}
+function deliverCharacterDashboardNotices(id){
+  const character=chars?.[id];
+  const playerVisible=document.getElementById('player')?.classList.contains('show')&&currentPlayerId?.()===id;
+  if(!character||!playerVisible)return;
+  const delivered=deliveredCharacterNoticeIds();
+  (character.dashboardNotifications||[]).filter(notice=>notice.visibility!=='GM-only'&&notice.visibility!=='Hidden until revealed').slice().reverse().forEach(notice=>{
+    if(!notice?.id||delivered.ids.has(notice.id))return;
+    asteriaNotify?.({
+      level:notice.type==='level'?'major':'medium',
+      title:notice.title,
+      message:notice.message,
+      type:notice.type||'xp',
+      sound:notice.type==='level'?'level':'xp',
+      important:notice.type==='level',
+      targetPlayer:id,
+      sessionLog:false
+    });
+    delivered.ids.add(notice.id);
+  });
+  localStorage.setItem(delivered.key,JSON.stringify(Array.from(delivered.ids).slice(-100)));
+}
 function distributeCampaignXP(){
   ensureProgressionData();
   const amount=Math.max(0,Number($('campaignXPAmount')?.value||0));
@@ -2454,25 +2511,150 @@ function skillCardIcon(name){
   if(text.includes('arcana')||text.includes('magic'))return '&#10022;';
   return '&#9672;';
 }
+function skillSlug(value){
+  return String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function skillCompendiumEntry(name){
+  const target=skillSlug(name);
+  return (window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries||[]).find(entry=>{
+    const type=String(entry.type||entry.metadata?.type||'').toLowerCase();
+    return type==='skill' && (skillSlug(entry.title)===target||skillSlug(entry.slug)===target);
+  })||null;
+}
+function skillRankNumber(value){
+  if(Number.isFinite(Number(value))) return Math.max(1,Math.min(7,Number(value)));
+  const index=ASTERIA_SKILL_RANK_NAMES.findIndex(rank=>rank.toLowerCase()===String(value||'').toLowerCase());
+  return index>=0?index+1:1;
+}
+function skillAffinityRecord(character,name){
+  const key=skillSlug(name);
+  const records=character?.skillAffinities||character?.affinityRolls?.skills||character?.character?.skillAffinities||{};
+  return records[key]||Object.values(records).find(record=>skillSlug(record?.title||record?.name)===key)||null;
+}
+function selectedCharacterSkills(character){
+  const raw=character?.skills??character?.character?.skills??character?.build?.skills??[];
+  let rows=[];
+  if(Array.isArray(raw)) rows=raw.map(skill=>typeof skill==='string'?{name:skill}:{...skill,name:skill.name||skill.title});
+  else if(raw&&typeof raw==='object') rows=Object.entries(raw).map(([name,value])=>typeof value==='object'?{...value,name:value.name||value.title||name}:{name,rank:value});
+  return rows.filter(skill=>skill.name).map(skill=>{
+    const entry=skillCompendiumEntry(skill.name);
+    const affinity=skillAffinityRecord(character,skill.name);
+    const affinityRank=skillRankNumber(affinity?.rank);
+    const savedRank=skillRankNumber(skill.rank||skill.level||skill.rankName);
+    const rank=Math.max(savedRank,affinityRank);
+    return {
+      ...skill,
+      name:skill.name,
+      rank,
+      rankName:skillRankName(rank),
+      category:entry?.metadata?.category||entry?.category||entry?.filters?.category||skill.category||'Skill',
+      summary:entry?.metadata?.summary||entry?.summary||skill.summary||'Open the Skill Compendium entry for full rules.',
+      entry
+    };
+  });
+}
+function skillTechniqueMarkdown(entry,rankName){
+  const body=String(entry?.body||entry?.content||'');
+  if(!body) return '';
+  const safe=String(rankName||'Novice').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const match=body.match(new RegExp(`###\\s+${safe}\\s+Techniques\\s*([\\s\\S]*?)(?=\\n###\\s+|$)`,'i'));
+  return match?.[1]?.trim()||'Detailed techniques for this rank are coming soon.';
+}
+function ensureSkillProgress(character,skill){
+  character.skillProgress=character.skillProgress||{};
+  const key=skillSlug(skill.name);
+  const existing=character.skillProgress[key]||{};
+  const rank=Math.max(skill.rank||1,skillRankNumber(existing.rank||existing.rankName));
+  const target=rank>=7?0:rank*5;
+  character.skillProgress[key]={
+    name:skill.name,
+    rank,
+    rankName:skillRankName(rank),
+    successes:Math.max(0,Number(existing.successes||0)),
+    target,
+    updatedAt:existing.updatedAt||''
+  };
+  return character.skillProgress[key];
+}
+function skillCardMarkup(skill,character,compact=false){
+  const progress=ensureSkillProgress(character,skill);
+  const rankName=skillRankName(progress.rank);
+  const cls=rankName.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const encoded=encodeURIComponent(skill.name);
+  const meter=progress.target?Math.min(100,(progress.successes/progress.target)*100):100;
+  return `<article class="dashboard-skill-card rank-${cls}${compact?' compact':''}">
+    <div class="skill-card-icon" aria-hidden="true">${skillCardIcon(skill.name)}</div>
+    <div class="skill-card-copy"><b>${escapeHtml(skill.name)}</b><span>${escapeHtml(rankName)}</span><small>${escapeHtml(skill.category)}</small></div>
+    <div class="skill-success-meter" title="${progress.target?`${progress.successes} of ${progress.target} successful checks`:'Maximum rank'}"><i style="width:${meter}%"></i></div>
+    <div class="skill-card-actions">
+      <button type="button" onclick="recordSkillSuccess(decodeURIComponent('${encoded}'))" ${progress.rank>=7?'disabled':''}>Successful</button>
+      <button type="button" onclick="openDashboardSkillTechniques(decodeURIComponent('${encoded}'))">Techniques</button>
+    </div>
+  </article>`;
+}
 function renderDashboardSkills(id=currentPlayerId?.()){
   const host=document.querySelector('.skills-panel');
   const c=chars?.[id];
-  if(!host||!c)return;
-  const defaults=[
-    {name:'Archery',rank:5},
-    {name:'Stealth',rank:4},
-    {name:'Survival',rank:3},
-    {name:'Perception',rank:4}
-  ];
-  const raw=Array.isArray(c.skills)?c.skills:defaults;
-  const skills=raw.map(skill=>typeof skill==='string'?{name:skill,rank:1}:skill);
-  host.innerHTML=`<h3>Skills</h3><div class="dashboard-skill-card-list">${skills.map(skill=>{
-    const rank=Number(skill.rank||skill.level||1);
-    const rankName=skill.rankName||skillRankName(rank);
-    const cls=String(rankName).toLowerCase().replace(/[^a-z0-9]+/g,'-');
-    return `<article class="dashboard-skill-card rank-${cls}"><div class="skill-card-icon" aria-hidden="true">${skillCardIcon(skill.name)}</div><div><b>${skill.name}</b><span>${rankName}</span><small>Rank ${rank}</small></div></article>`;
-  }).join('')}</div>`;
+  if(!c)return;
+  const skills=selectedCharacterSkills(c);
+  if(host) host.innerHTML=`<h3>Skills</h3><div class="dashboard-skill-card-list">${skills.length?skills.map(skill=>skillCardMarkup(skill,c,true)).join(''):'<p class="muted">No starting skills were selected for this character.</p>'}</div>`;
+  const tab=document.getElementById('skillsTabDock');
+  if(tab) tab.innerHTML=`<section class="card character-skills-workspace">
+    <div class="section-head"><div><h3>Character Skills</h3><p class="muted">Record successful checks to advance each selected skill. Techniques shown are read from the Skill Compendium.</p></div><span class="pill">${skills.length} Selected</span></div>
+    <div class="character-skill-gallery">${skills.length?skills.map(skill=>skillCardMarkup(skill,c)).join(''):'<p class="muted">No selected skills are linked to this character yet.</p>'}</div>
+  </section>`;
 }
+window.recordSkillSuccess=function(name){
+  const id=currentPlayerId?.();
+  const character=chars?.[id];
+  const skill=selectedCharacterSkills(character).find(item=>skillSlug(item.name)===skillSlug(name));
+  if(!character||!skill)return toast?.('This skill is not linked to the active character.');
+  const progress=ensureSkillProgress(character,skill);
+  if(progress.rank>=7)return toast?.(`${skill.name} is already Grandmaster rank.`);
+  progress.successes+=1;
+  progress.updatedAt=new Date().toISOString();
+  let rankedUp=false;
+  if(progress.successes>=progress.target){
+    progress.rank=Math.min(7,progress.rank+1);
+    progress.rankName=skillRankName(progress.rank);
+    progress.successes=0;
+    progress.target=progress.rank>=7?0:progress.rank*5;
+    rankedUp=true;
+    if(Array.isArray(character.skills)){
+      const stored=character.skills.find(item=>typeof item==='object'&&skillSlug(item.name||item.title)===skillSlug(name));
+      if(stored){stored.rank=progress.rank;stored.rankName=progress.rankName;}
+    }else{
+      character.skills=character.skills||{};
+      character.skills[skill.name]=progress.rank;
+    }
+  }
+  saveAsteriaState?.();
+  saveAccountState?.();
+  syncAfterResourceChange?.(id);
+  const user=window.AsteriaFirebase?.getUser?.();
+  if(!character.ownerUid||character.ownerUid===user?.uid) window.AsteriaFirebase?.saveCharacter?.(id,character);
+  window.AsteriaDataSync?.scheduleSave?.('skill-success');
+  renderDashboardSkills(id);
+  if(rankedUp){
+    asteriaNotify?.({level:'medium',title:`${skill.name} Ranked Up`,message:`${character.name} reached ${progress.rankName}.`,type:'level',sound:'level',targetPlayer:id});
+    toast?.(`${skill.name} advanced to ${progress.rankName}.`);
+  }else toast?.(`${skill.name}: successful check ${progress.successes}/${progress.target}.`);
+};
+window.openDashboardSkillTechniques=function(name){
+  const id=currentPlayerId?.();
+  const character=chars?.[id];
+  const skill=selectedCharacterSkills(character).find(item=>skillSlug(item.name)===skillSlug(name));
+  if(!skill)return;
+  const progress=ensureSkillProgress(character,skill);
+  const techniques=skillTechniqueMarkdown(skill.entry,skillRankName(progress.rank));
+  openAsteriaInfoModal({
+    eyebrow:`${skillRankName(progress.rank)} Skill Techniques`,
+    title:skill.name,
+    subtitle:skill.category,
+    body:`<p>${escapeHtml(skill.summary)}</p>${typeof mdToHtml==='function'?mdToHtml(techniques):`<p>${escapeHtml(techniques)}</p>`}`,
+    meta:`<span class="item-chip">${escapeHtml(skillRankName(progress.rank))}</span><span class="item-chip">${progress.target?`${progress.successes}/${progress.target} successes`:'Maximum rank'}</span>`
+  });
+};
 function playerRecoveryAction(kind){
   const id=currentPlayerId?.();
   const c=chars?.[id];
@@ -3052,6 +3234,21 @@ function distributeCampaignXP(){
     const c=chars[id]; const before={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
     adjustCharacterResource(id,'xp',add);
     const after={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
+    queueCharacterDashboardNotice(c,{
+      type:'xp',
+      title:'XP Reward Received',
+      message:`+${add.toLocaleString()} XP from ${source}. ${reason}`,
+      visibility
+    });
+    if(after.level>before.level){
+      queueCharacterDashboardNotice(c,{
+        type:'level',
+        title:`Level Up: Level ${after.level}`,
+        message:`${c.name} advanced from Level ${before.level} to Level ${after.level}. CP and TP rewards have been applied.`,
+        visibility
+      });
+    }
+    syncAfterResourceChange?.(id);
     results.push(`${c.name} +${add.toLocaleString()} XP${after.level>before.level?` → Level ${after.level}`:''}`);
     slEvent?.('XP awards',`${c.name} received ${add.toLocaleString()} XP from ${source}.`,{source,reason,award:add,before,after,carryover:c.xp,splitXP:add},visibility);
     if(after.level>before.level) slEvent?.('Level-ups',`${c.name} levelled from ${before.level} to ${after.level}. Carryover XP: ${c.xp.toLocaleString()}.`,{source,from:before.level,to:after.level,carryover:c.xp,cp:c.cp,tp:c.tp},visibility);
@@ -3059,13 +3256,19 @@ function distributeCampaignXP(){
   if(!results.length){toast('No XP recipients selected.');return;}
   const msg=`GM awarded XP (${source}): ${results.join('; ')}. Reason: ${reason}`;
   addCombatLog?.(msg,'important');
-  feedback?.(`XP Award Applied: ${results.length} character${results.length===1?'':'s'}`,'level');
-  previewXPAwardMarkdown(false); saveAsteriaState?.(); saveAccountState?.(); refreshSyncedViews?.(); syncAfterResourceChange?.(selected); renderXPSplitPanel(); renderGM?.(); toast('XP applied and synced.');
+  previewXPAwardMarkdown(false); saveAsteriaState?.(); saveAccountState?.(); refreshSyncedViews?.(); renderXPSplitPanel(); renderGM?.(); toast('XP saved to the linked character dashboards.');
 }
 function clearXPManualInputs(){xpPartyIds().forEach(id=>{const el=document.getElementById('manualXP_'+id); if(el)el.value=0;}); updateXPSplitPreview();}
 function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) document.getElementById('xpSplitPartyList').innerHTML=xpSummaryForCampaign(); updateXPSplitPreview(); }
 (function(){
   window.AsteriaViewHooks?.afterGMRender('xp-distribution-panel-v1725', () => renderXPSplitPanel());
+  window.AsteriaViewHooks?.afterPlayerLoad('character-dashboard-notices', id=>{renderCharacterDashboardNotices(id);deliverCharacterDashboardNotices(id);});
+  window.addEventListener('asteria:character-realtime',event=>{
+    const id=event.detail?.id;
+    if(!id)return;
+    renderCharacterDashboardNotices(id);
+    deliverCharacterDashboardNotices(id);
+  });
   const oldBadge=buildVersionBadge; buildVersionBadge=function(){ oldBadge?.(); const b=document.querySelector('.version-badge'); if(b)b.textContent='v1.7.2.5 • XP Distribution + Level Progression'; };
   document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{renderXPSplitPanel(); buildVersionBadge();},100));
 })();
@@ -3106,7 +3309,10 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     if(!n) return false;
     if(n.visibility==='GM-only' && window.session?.role!=='gm') return false;
     if(n.visibility==='Hidden until revealed' && window.session?.role!=='gm' && !n.revealed) return false;
-    if(n.targetPlayer && window.session?.role==='player' && window.session?.character!==n.targetPlayer) return false;
+    if(n.targetPlayer){
+      const playerOpen=document.getElementById('player')?.classList.contains('show');
+      if(window.session?.role!=='player'||window.session?.character!==n.targetPlayer||!playerOpen)return false;
+    }
     return true;
   }
   window.asteriaNotify=function(opts={}){
@@ -3158,9 +3364,6 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
   }
   const oldAdjust=window.adjustCharacterResource; if(typeof oldAdjust==='function'){
     window.adjustCharacterResource=function(id,key,amount){const c=chars[id]; const before=key==='xp'?(c?.xp||0):(c?.[key]?.[0]||0); oldAdjust(id,key,amount); const after=key==='xp'?(c?.xp||0):(c?.[key]?.[0]||0); const diff=after-before; if(!c||!diff) return; if(key==='xp'&&diff>0){asteriaNotify({level:'small',title:'XP Received',message:`${c.name} received +${diff.toLocaleString()} XP.`,type:'xp',sound:'xp',targetPlayer:id,sessionLog:false});} else if(['hp','sp','mp'].includes(key)){asteriaNotify({level:'small',title:`${key.toUpperCase()} Updated`,message:`${c.name}: ${before} → ${after}.`,type:diff<0?'warning':'info',sound:diff<0?'warning':'rest',targetPlayer:id,sessionLog:false});}}
-  }
-  const oldDistribute=window.distributeCampaignXP; if(typeof oldDistribute==='function'){
-    window.distributeCampaignXP=function(){const total=Number(document.getElementById('campaignXPAmount')?.value||0); oldDistribute(); if(total>0) asteriaNotify({level:'small',title:'Party XP Awarded',message:`${total.toLocaleString()} XP processed through the GM XP panel.`,type:'xp',sound:'xp',partyWide:true,sessionLog:true});};
   }
   const oldUseItem=window.useInventoryItem; if(typeof oldUseItem==='function'){
     window.useInventoryItem=function(itemId){const c=chars[currentPlayerId?.()||selected]; const item=c?.inventory?.find(x=>x.id===itemId); oldUseItem(itemId); if(item) asteriaNotify({level:'small',title:'Item Used',message:`${c.name} used ${item.name}.`,type:'item',sound:'item',targetPlayer:currentPlayerId?.()||selected,sessionLog:true});};
@@ -3715,7 +3918,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     {id:'gm-notes',label:'GM Notes',hint:'Private prep, live notes, and session logs'},
     {id:'economy',label:'Economy',hint:'Prices, trade routes, shipping, and scarcity'},
     {id:'crafting',label:'Crafting',hint:'Projects, approvals, materials, and enchantments'},
-    {id:'campaign-manager',label:'Campaign Manager',hint:'Campaign settings, GM tools, and utilities'},
+    {id:'campaign-manager',label:'GM Tools',hint:'Campaign settings, loot, item rewards, and GM utilities'},
     {id:'phase-3a',label:'Gameplay Systems',hint:'Encounter, loot, party, and GM gameplay tools'},
     {id:'phase-4',label:'World Systems',hint:'World state, events, economy, and lore controls'}
   ];
@@ -3832,14 +4035,14 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     assign('#gmActionPanel','gm-hidden');
     document.getElementById('gmCampaignCharacterPanel')?.remove();
     document.querySelectorAll('#gm .gm-system-title').forEach(el=>el.remove());
-    assign('#gmEncounterWorkspace,#gm .gm-xp-split,#gm .transaction-pipeline-panel,#gm #partyLootManagerPanel','gm-main');
+    assign('#gmEncounterWorkspace,#gm .gm-xp-split','gm-main');
     assign('#gm .active-encounter,#gm .initiative,#gm .encounter,#gm .combat-system-panel','gm-hidden');
     assign('#gm .gm-session-control,#gm .gm-session-log-builder,#gm #sessionLedgerPanel,#gm .session-ledger-panel,#gm .session-log-system-panel,#gm .manual-roll-card,#gm .gm-view-toggle,#gm .gm-dice-log-panel','gm-notes');
     document.querySelectorAll('#gm .gm-placeholder-panel').forEach(el=>{el.dataset.gmSystem=el.querySelector('#gmQuestUpdates')?'quests':'gm-notes';});
     assign('#gm #gmQuestUpdates','quests');
     document.querySelectorAll('#gm #gmQuestUpdates').forEach(el=>{const card=el.closest('.card'); if(card) card.dataset.gmSystem='quests';});
     document.querySelectorAll('#gm textarea[placeholder="Persistent campaign notes..."]').forEach(el=>{const card=el.closest('.card'); if(card) card.dataset.gmSystem='campaign-manager';});
-    assign('#gm .gm-tools,#gm .notification-settings-panel','campaign-manager');
+    assign('#gm .gm-tools,#gm .notification-settings-panel,#gm .transaction-pipeline-panel,#gm #partyLootManagerPanel,#gm #gmItemRewardPanel','campaign-manager');
     assign('#gmCraftingPanel','crafting');
     assign('#gmMaterialsPanel','crafting');
     assign('#gmEnchantPanel','crafting');
@@ -3922,10 +4125,39 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
       attacks:c.attacks||[],
       notes:c.notes||''
     },c));
+    const npcStores=[window.npcs,window.NPCS,window.ASTERIA_NPC_DATA,window.ASTERIA_NPCS].filter(Boolean);
+    const npcs=npcStores.flatMap(store=>(Array.isArray(store)?store:Object.entries(store).map(([id,npc])=>Object.assign({id},npc))))
+      .filter(Boolean)
+      .map((npc,index)=>({
+        id:`npc-${npc.id||npc.slug||slug(npc.name||npc.title||index)}`,
+        source:'NPC Database',
+        entryId:npc.id||npc.slug||'',
+        compendiumSlug:npc.slug||slug(npc.name||npc.title),
+        name:npc.name||npc.title||'Unnamed NPC',
+        type:npc.type||npc.category||'NPC',
+        tier:npc.threatTier||npc.tier||'Tier 1 Threat',
+        hp:Number(npc.hp||npc.health||50),
+        max:Number(npc.max||npc.hp||npc.health||50),
+        ac:Number(npc.ac||npc.armour||10),
+        initiative:Number(npc.initiative||10),
+        status:npc.status||'None',
+        notes:npc.notes||npc.description||npc.summary||'NPC encounter entry.',
+        attacks:npc.attacks||[]
+      }));
     const workspace=(window.AsteriaWorkspace?.entries?.()||[])
       .filter(entry=>{
-        const blob=[entry.section,entry.type,entry.category,entry.sourcePath,entry.title].join(' ').toLowerCase();
-        return entry.section==='Creatures'||blob.includes('creature')||blob.includes('npc')||blob.includes('monster')||blob.includes('beast');
+        const section=String(entry.section||'').toLowerCase();
+        const type=String(entry.type||'').toLowerCase();
+        const category=String(entry.category||'').toLowerCase();
+        const sourcePath=String(entry.sourcePath||'').replace(/\\/g,'/').toLowerCase();
+        const nonEncounterTypes=new Set(['race','class','item','spell','talent','skill','theology','god','location','lore']);
+        if(nonEncounterTypes.has(type)) return false;
+        const encounterTypes=new Set(['creature','npc','monster','beast','animal','construct','undead','dragon','elemental','aberration','celestial','demon','spirit','plant']);
+        return section==='creatures'
+          || sourcePath.includes('/content/creatures/')
+          || sourcePath.includes('/content/npcs/')
+          || encounterTypes.has(type)
+          || type==='entry'&&(/\bnpc\b|\bmonster\b|\bcreature\b/.test(category));
       })
       .map(entry=>({
         id:`entry-${entry.id||entry.slug||slug(entry.title)}`,
@@ -3944,7 +4176,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
         attacks:[]
       }));
     const seen=new Set();
-    return base.concat(workspace).filter(item=>{
+    return base.concat(npcs,workspace).filter(item=>{
       const key=slug(item.name||item.id);
       if(seen.has(key)) return false;
       seen.add(key);
@@ -4023,7 +4255,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
           <details class="gm-manual-enemy">
             <summary>Manual Enemy</summary>
             <div class="gm-manual-enemy-grid">
-              <label>Name<input id="gmManualEnemyName" placeholder="Enemy name"></label>
+              <label>Name<input id="gmManualEnemyName" placeholder="Start typing a creature or NPC..." oninput="gmSyncManualEnemySearch(this.value)"></label>
               <label>HP<input id="gmManualEnemyHP" type="number" value="30"></label>
               <label>AC<input id="gmManualEnemyAC" type="number" value="10"></label>
               <label>Initiative<input id="gmManualEnemyInit" type="number" value="10"></label>
@@ -4132,6 +4364,11 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
   }
 
   window.renderGMEncounterSearch=renderGMEncounterSearch;
+  window.gmSyncManualEnemySearch=function(value){
+    const search=document.getElementById('gmEncounterSearch');
+    if(search)search.value=value||'';
+    renderGMEncounterSearch();
+  };
   window.gmStartEncounter=function(){
     const state=readEncounterState();
     state.status='Active';

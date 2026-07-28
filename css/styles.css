@@ -3841,3 +3841,135 @@ main.main,
 @media(max-width:980px){
   #gm .gm-menu-bar .gm-system-buttons{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+/* GM XP realtime sync + character skill progression */
+.character-dashboard-notices{
+  margin:0 0 12px!important;
+  padding:12px 14px!important;
+  border-color:rgba(var(--asteria-accent-rgb,36,224,255),.34)!important;
+}
+.character-dashboard-notices[hidden]{display:none!important}
+.character-notice-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.character-notice-list article{
+  min-width:0;
+  padding:9px 11px;
+  border:1px solid rgba(var(--asteria-accent-rgb,36,224,255),.24);
+  background:rgba(4,14,16,.72);
+}
+.character-notice-list article.level{border-color:rgba(219,172,69,.55)}
+.character-notice-list article div{display:flex;justify-content:space-between;gap:10px}
+.character-notice-list article small{color:var(--muted);font-size:.68rem}
+.character-notice-list article p{margin:5px 0 0;font-size:.82rem}
+
+#gm .xp-distribution-system-v1{padding:14px!important;min-height:0!important}
+#gm .xp-distribution-system-v1>.muted{margin:4px 0 10px!important}
+#gm .xp-system-grid{grid-template-columns:repeat(4,minmax(125px,1fr));gap:8px;margin:8px 0}
+#gm .xp-system-grid.two{grid-template-columns:minmax(260px,2fr) minmax(150px,1fr)}
+#gm .xp-system-grid input,#gm .xp-system-grid select{min-height:38px;padding:7px 9px}
+#gm .xp-split-controls{margin:9px 0;flex-wrap:wrap}
+#gm .xp-award-row{grid-template-columns:22px minmax(150px,1fr) 62px 62px 92px minmax(110px,1fr);padding:7px 9px}
+#gm .xp-system-details{margin-top:8px}
+
+.dashboard-skill-card-list{grid-auto-rows:152px!important}
+.dashboard-skill-card{
+  height:152px!important;
+  min-height:152px!important;
+  max-height:152px!important;
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:minmax(44px,1fr) 5px 31px!important;
+  align-items:center!important;
+}
+.dashboard-skill-card .skill-card-copy{min-width:0}
+.dashboard-skill-card .skill-card-copy b,
+.dashboard-skill-card .skill-card-copy span,
+.dashboard-skill-card .skill-card-copy small{display:block;overflow-wrap:anywhere}
+.skill-success-meter{
+  grid-column:1/-1;
+  height:5px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+}
+.skill-success-meter i{
+  display:block;
+  height:100%;
+  background:var(--asteria-accent,#24e0ff);
+  box-shadow:0 0 8px var(--asteria-glow,rgba(36,224,255,.45));
+}
+.skill-card-actions{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+}
+.skill-card-actions button{
+  width:100%;
+  min-width:0;
+  min-height:29px!important;
+  padding:4px 6px!important;
+  font-size:.66rem!important;
+  line-height:1!important;
+}
+.character-skills-workspace{min-height:420px}
+.character-skill-gallery{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(170px,1fr));
+  gap:10px;
+}
+.character-skill-gallery .dashboard-skill-card{
+  height:178px!important;
+  min-height:178px!important;
+  max-height:178px!important;
+  grid-template-rows:minmax(62px,1fr) 7px 36px!important;
+  padding:12px!important;
+}
+.character-skill-gallery .dashboard-skill-card b{font-size:.9rem!important}
+.character-skill-gallery .dashboard-skill-card span{font-size:.78rem!important}
+
+@media(max-width:1400px){
+  .character-skill-gallery{grid-template-columns:repeat(3,minmax(165px,1fr))}
+  #gm .xp-award-row{grid-template-columns:22px minmax(150px,1fr) 90px minmax(110px,1fr)}
+  #gm .xp-award-row .hide-sm{display:none}
+}
+@media(max-width:900px){
+  .character-skill-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #gm .xp-system-grid,#gm .xp-system-grid.two{grid-template-columns:1fr 1fr}
+}
+
+/* Keep dashboard identity and tab labels readable on compact desktop widths. */
+.identity-block,
+.identity-block h2,
+.identity-block p{
+  min-width:0;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  hyphens:none;
+}
+
+.xp-card .resource-title span{
+  font-size:.78rem!important;
+  white-space:nowrap;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+}
+
+.player-menu-panel .tab{
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  hyphens:none;
+}
+
+@media(max-width:1450px){
+  .identity-block h2{font-size:1.35rem!important}
+  .player-menu-panel{
+    grid-template-columns:repeat(9,minmax(96px,1fr))!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+  }
+}
+
+@media(max-width:900px){
+  .player-menu-panel{
+    grid-template-columns:repeat(9,minmax(110px,1fr))!important;
+  }
+}

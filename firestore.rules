@@ -41,6 +41,10 @@ service cloud.firestore {
       );
     }
 
+    function canUseCampaignSystems(campaignId) {
+      return isCampaignMember(sharedCampaign(campaignId));
+    }
+
     function hasActiveInvite(data, campaignId) {
       return signedIn() &&
         data.keys().hasAll(['ucn']) &&
@@ -120,6 +124,11 @@ service cloud.firestore {
         allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid);
         allow update: if request.resource.data.ownerUid == resource.data.ownerUid && canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
         allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
+      }
+
+      match /systems/{systemId} {
+        allow read, create, update: if canUseCampaignSystems(campaignId);
+        allow delete: if isCampaignOwner(sharedCampaign(campaignId));
       }
     }
   }

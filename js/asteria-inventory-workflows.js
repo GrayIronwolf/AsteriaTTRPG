@@ -166,6 +166,9 @@
         slot.items = array(slot.items).filter(reference => reference.id !== item.id);
       });
     });
+    array(characterRecord?.storages).forEach(storage => {
+      storage.itemIds = array(storage.itemIds).filter(itemId => itemId !== item.id);
+    });
   }
   function firstEmptyBagSlot(characterRecord){
     for(const bag of array(characterRecord?.bags)){
@@ -200,6 +203,9 @@
     removeBagReferences(item, record);
     item.equipped = false;
     item.equippedSlot = '';
+    item.location = 'bag';
+    item.bagId = bag.id;
+    item.storageId = '';
     const existing = array(slotRecord.items).find(reference => reference.id === item.id);
     if(existing) existing.qty = Math.max(1, Number(quantity || item.qty || existing.qty || 1));
     else slotRecord.items = [{id:item.id, qty:Math.max(1, Number(quantity || item.qty || 1))}];
@@ -231,6 +237,9 @@
     removeBagReferences(item, record);
     item.equipped = true;
     item.equippedSlot = slot;
+    item.location = 'equipment';
+    item.bagId = '';
+    item.storageId = '';
     persistCharacter(id, 'inventory-equip');
     window.renderInventory?.();
     window.toast?.(`${item.name} equipped in ${slot}.`);
@@ -249,6 +258,9 @@
     item.equippedSlot = '';
     removeBagReferences(item, record);
     destination.slotRecord.items = [{id:item.id, qty:Math.max(1, Number(item.qty || 1))}];
+    item.location = 'bag';
+    item.bagId = destination.bag.id;
+    item.storageId = '';
     persistCharacter(id, 'inventory-unequip');
     window.renderInventory?.();
     return true;
@@ -478,7 +490,7 @@
     const panel = document.createElement('section');
     panel.id = 'gmItemRewardPanel';
     panel.className = 'card workflow-gm-panel';
-    panel.dataset.gmSystem = 'gm-main';
+    panel.dataset.gmSystem = 'campaign-manager';
     panel.innerHTML = `
       <div class="section-head"><div><p class="eyebrow">GM Loot Tool</p><h3>Send Item Reward</h3></div><span class="pill">Campaign linked</span></div>
       <div class="workflow-two-column">

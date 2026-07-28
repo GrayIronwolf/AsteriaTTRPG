@@ -913,6 +913,36 @@
   function publish(){
     originalWorkspaceEntries = originalWorkspaceEntries || window.AsteriaWorkspace?.entries;
     originalOpenDashboard = originalOpenDashboard || window.AsteriaWorkspace?.openDashboard;
+    function registerShopMarker(shop){
+      if(!shop?.id) return null;
+      const record = world();
+      record.map = record.map || { zoom:1, selectedRegion:'', markers:[], routes:[], discoveries:[] };
+      record.map.markers = array(record.map.markers);
+      let marker = record.map.markers.find(item => item.shopId === shop.id);
+      const region = record.regions?.[shop.region] || Object.values(record.regions || {}).find(item => slug(item.name) === slug(shop.region));
+      const next = {
+        id:`shop-marker-${shop.id}`,
+        type:'shop',
+        shopId:shop.id,
+        title:shop.name,
+        owner:shop.owner || '',
+        categories:[shop.type].filter(Boolean),
+        location:shop.location || '',
+        region:shop.region || '',
+        status:shop.status || 'closed',
+        visibility:shop.visibility || 'discovered',
+        x:Number(region?.x || 50),
+        y:Number(region?.y || 50),
+        updatedAt:now()
+      };
+      if(marker) Object.assign(marker, next);
+      else {
+        marker = next;
+        record.map.markers.push(marker);
+      }
+      saveState('shop-map-marker');
+      return JSON.parse(JSON.stringify(marker));
+    }
     const api = {
       version:VERSION,
       systems:() => WORLD_SYSTEMS.map(system => Object.assign({}, system)),
@@ -928,7 +958,8 @@
       triggerWorldEvent,
       recalcReputation,
       databaseEntries,
-      computeWorldEffects
+      computeWorldEffects,
+      registerShopMarker
     };
     function entriesWithWorld(){
       const base = typeof originalWorkspaceEntries === 'function' ? originalWorkspaceEntries() : [];

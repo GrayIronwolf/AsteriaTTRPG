@@ -9,6 +9,8 @@
   let cloudLoadedForUid = null;
   let saveInProgress = false;
   let lastCampaignRefresh = 0;
+  let realtimeUid = null;
+  const realtimeSubscriptions = new Map();
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -117,12 +119,108 @@
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
     window.refreshSyncedViews?.();
     window.dispatchEvent(new CustomEvent('asteria:campaigns-refreshed', { detail:{ campaigns:window.campaigns } }));
+    setupRealtimeCampaignSync(window.campaigns);
+  }
+  function stopRealtimeCampaignSync(){
+    realtimeSubscriptions.forEach(unsubscribe=>{
+      try{ unsubscribe?.(); }catch(e){}
+    });
+    realtimeSubscriptions.clear();
+    realtimeUid = null;
+  }
+  function mergeRealtimeCampaign(campaign){
+    if(!campaign?.id) return;
+    const index=(window.campaigns||[]).findIndex(item=>item?.id===campaign.id);
+    if(index < 0) window.campaigns=[...(window.campaigns||[]),campaign];
+    else window.campaigns[index]=Object.assign({},window.campaigns[index]||{},campaign);
+    window.renderCampaigns?.();
+    if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
+    window.dispatchEvent(new CustomEvent('asteria:campaign-realtime', { detail:{ campaign } }));
+  }
+  function mergeRealtimeItemEcosystem(campaignId, itemEcosystem){
+    if(!campaignId || !itemEcosystem) return;
+    const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
+    if(!campaign) return;
+    campaign.itemEcosystem=safeClone(itemEcosystem);
+    window.dispatchEvent(new CustomEvent('asteria:item-ecosystem-realtime', {
+      detail:{ campaignId, itemEcosystem:campaign.itemEcosystem }
+    }));
+    window.AsteriaItemEcosystem?.renderPlayer?.();
+    window.AsteriaItemEcosystem?.renderGM?.();
+    if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
+  }
+  function mergeRealtimeCharacters(campaignId, sharedCharacters){
+    const user=window.AsteriaFirebase?.getUser?.();
+    if(!user || !sharedCharacters) return;
+    window.chars=window.chars||{};
+    const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
+    if(campaign) campaign.characters=Object.assign({},campaign.characters||{});
+    Object.entries(sharedCharacters).forEach(([id,incoming])=>{
+      const before=window.chars[id]||{};
+      const character=Object.assign({},before,incoming,{
+        id,
+        sharedCampaignId:campaignId,
+        linkedCampaignIds:Array.from(new Set([...(before.linkedCampaignIds||[]),...(incoming.linkedCampaignIds||[]),campaignId]))
+      });
+      window.chars[id]=character;
+      if(campaign){
+        campaign.party=Array.from(new Set([...(campaign.party||[]),id]));
+        campaign.characters[id]=Object.assign({},campaign.characters[id]||{},incoming);
+      }
+      window.dispatchEvent(new CustomEvent('asteria:character-realtime', {
+        detail:{ id, campaignId, character, previous:before, owned:character.ownerUid===user.uid }
+      }));
+    });
+    if(document.getElementById('player')?.classList.contains('show')){
+      const current=window.currentPlayerId?.()||window.session?.character;
+      if(current && sharedCharacters[current]) window.loadPlayer?.(current);
+    }
+    if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
+    window.renderPlayerHome?.();
+    window.refreshSyncedViews?.();
+  }
+  function setupRealtimeCampaignSync(campaigns=window.campaigns||[]){
+    const user=window.AsteriaFirebase?.getUser?.();
+    if(!user || !window.AsteriaFirebase?.subscribeCampaign || !window.AsteriaFirebase?.subscribeCampaignCharacters) return;
+    if(realtimeUid && realtimeUid!==user.uid) stopRealtimeCampaignSync();
+    realtimeUid=user.uid;
+    const activeKeys=new Set();
+    (campaigns||[]).filter(Boolean).forEach(campaign=>{
+      if(!campaign.id) return;
+      const campaignKey=`campaign:${campaign.id}`;
+      const charactersKey=`characters:${campaign.id}`;
+      const itemEcosystemKey=`item-ecosystem:${campaign.id}`;
+      activeKeys.add(campaignKey);
+      activeKeys.add(charactersKey);
+      activeKeys.add(itemEcosystemKey);
+      if(!realtimeSubscriptions.has(campaignKey)){
+        realtimeSubscriptions.set(campaignKey,window.AsteriaFirebase.subscribeCampaign(campaign.id,mergeRealtimeCampaign));
+      }
+      if(!realtimeSubscriptions.has(charactersKey)){
+        realtimeSubscriptions.set(charactersKey,window.AsteriaFirebase.subscribeCampaignCharacters(
+          campaign.id,
+          characters=>mergeRealtimeCharacters(campaign.id,characters)
+        ));
+      }
+      if(window.AsteriaFirebase?.subscribeCampaignItemEcosystem && !realtimeSubscriptions.has(itemEcosystemKey)){
+        realtimeSubscriptions.set(itemEcosystemKey,window.AsteriaFirebase.subscribeCampaignItemEcosystem(
+          campaign.id,
+          itemEcosystem=>mergeRealtimeItemEcosystem(campaign.id,itemEcosystem)
+        ));
+      }
+    });
+    realtimeSubscriptions.forEach((unsubscribe,key)=>{
+      if(activeKeys.has(key)) return;
+      try{unsubscribe?.();}catch(e){}
+      realtimeSubscriptions.delete(key);
+    });
   }
   async function refreshCloudCampaigns(reason='manual'){
     if(!isAuthed()) return [];
     try{
       const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
       mergeCloudCampaigns(campaigns);
+      setupRealtimeCampaignSync(window.campaigns);
       lastCampaignRefresh = Date.now();
       localMeta({ lastCampaignRefresh, campaignRefreshReason:reason });
       return campaigns || [];
@@ -214,6 +312,8 @@
     save: saveCloudData,
     scheduleSave: scheduleCloudSave,
     refreshCampaigns: refreshCloudCampaigns,
+    watchCampaigns: setupRealtimeCampaignSync,
+    stopWatching: stopRealtimeCampaignSync,
     saveAppState,
     readAppState: readAppSystemState,
     status:()=>localMeta()

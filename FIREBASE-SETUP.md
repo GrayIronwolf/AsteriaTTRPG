@@ -37,6 +37,7 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 - `campaigns/{campaignId}` stores the shared campaign.
 - `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
 - `campaigns/{campaignId}/characters/{characterId}` stores the optional full character-sheet snapshot used for live sheet hydration.
+- `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
 - `users/{uid}/characters/{characterId}` stores an owned character.
@@ -48,6 +49,8 @@ When a GM creates or saves a campaign, the website creates both the shared campa
 When a player links a character, Asteria first commits the member, character ID, owner link, and a sanitized dashboard summary directly to the shared campaign document. The optional full-sheet subcollection is written afterwards, so a missing or older subcollection rule can no longer leave the GM with an empty roster after the join appeared successful. Later HP, SP, MP, XP, condition, and character-sheet saves refresh the shared snapshot. The GM client refreshes authoritative campaign data when the campaign dashboard opens and when the browser regains focus.
 
 Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
+
+The item ecosystem uses a dedicated real-time campaign system document. This is the canonical campaign-wide record for Need/Greed/Pass responses, shop stock, trade offers, listings, loot tables, and the audit log. It is not a second item database: item definitions still come from the Asteria Item Compendium, while character-owned item instances remain on character records.
 
 ## Testing UCN Join
 
@@ -67,6 +70,9 @@ Campaigns created before this update gain their UCN lookup record the next time 
 - Authenticated users with an active UCN can add only themselves as a player.
 - Campaign members can link only characters owned by their own account.
 - Campaign members can read linked character snapshots; players can update only their own snapshots, while the campaign GM can update campaign-linked snapshots through GM controls.
+- Campaign members can read and update the shared item ecosystem used by multiplayer loot, shops, storage, and trade workflows. GM-only controls remain hidden and permission-checked by the application.
 - A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.
+
+For a public production release, route high-value marketplace settlement and GM-only stock mutations through trusted Cloud Functions or another server authority. The current static build validates roles in the application, restricts the shared document to campaign members, and records every mutation in the campaign audit log.
 
 Firebase config remains in `js/firebase-auth.js`. Replace that object only if Asteria moves to a different Firebase project.

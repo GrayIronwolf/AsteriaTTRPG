@@ -48,6 +48,7 @@ jsFiles.forEach(file => {
   'js/app.js',
   'js/asteria-inventory-api.js',
   'js/asteria-inventory-workflows.js',
+  'js/asteria-item-ecosystem.js',
   'js/asteria-core-shell.js'
 ].forEach(file => {
   check(`Required script is loaded: ${file}`, jsFiles.includes(file));
@@ -124,6 +125,8 @@ const magicDataJs = fs.readFileSync(path.join(root, 'js/asteria-magic-data.js'),
 const gameplayJs = fs.readFileSync(path.join(root, 'js/asteria-gameplay-systems.js'), 'utf8');
 const inventoryWorkflowJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-workflows.js'), 'utf8');
 const inventoryWorkflowCss = fs.readFileSync(path.join(root, 'css/asteria-inventory-workflows.css'), 'utf8');
+const itemEcosystemJs = fs.readFileSync(path.join(root, 'js/asteria-item-ecosystem.js'), 'utf8');
+const itemEcosystemCss = fs.readFileSync(path.join(root, 'css/asteria-item-ecosystem.css'), 'utf8');
 const worldJs = fs.readFileSync(path.join(root, 'js/asteria-world-systems.js'), 'utf8');
 const homeGuardJs = fs.readFileSync(path.join(root, 'js/asteria-home-guard.js'), 'utf8');
 const homeFixJs = fs.readFileSync(path.join(root, 'js/asteria-home-fix.js'), 'utf8');
@@ -247,6 +250,28 @@ check('Pixie magical affinity keeps its Elemental Gift effect', raceCompendiumDa
 check('Class content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-class-content.js')) && classContentDirs.length >= 30 && classContentDirs.every(entry => fs.existsSync(path.join(classContentRoot, entry.name, 'index.md'))));
 check('Class talents use per-tier content folders', fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-1/artificer-discipline/index.md')) && fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-5/arcane-exchange/index.md')));
 check('Class manifest is generated from content/classes', classManifest.source === 'content/classes' && classManifest.entryCount >= 30 && classManifestEntries.length >= 30 && classManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/classes/')));
+const importedClassTalentChecks = [
+  ['druid', 'tier-1', 'aura-reading'],
+  ['ranger', 'tier-1', 'animal-companion'],
+  ['bloodhunter', 'tier-1', 'blood-rite'],
+  ['paladin', 'tier-1', 'aura-of-courage'],
+  ['cleric', 'tier-1', 'channel-divinity'],
+  ['spellblade', 'tier-1', 'arcane-edge']
+];
+check('Imported class manuscripts use the canonical talent tree', importedClassTalentChecks.every(parts => fs.existsSync(path.join(classContentRoot, parts[0], 'talents', parts[1], parts[2], 'index.md'))));
+check('Imported class rank content is complete', importedClassTalentChecks.every(parts => {
+  const markdown = fs.readFileSync(path.join(classContentRoot, parts[0], 'talents', parts[1], parts[2], 'index.md'), 'utf8');
+  return ['## Rank 1', '## Rank 2', '## Rank 3', '## Rank 4', '## Rank 5'].every(rank => markdown.includes(rank));
+}));
+check('Imported class trees do not retain generated placeholders', [
+  'druid-discipline',
+  'ranger-discipline',
+  'cleric-discipline',
+  'paladin-discipline',
+  'spellblade-discipline',
+  'crimson-brand'
+].every(slug => !classManifestEntries.some(entry => entry.talents.some(talent => talent.slug === slug))));
+check('Class manifest preserves talent resource metadata', classManifestEntries.some(entry => entry.slug === 'bloodhunter' && entry.talents.some(talent => talent.slug === 'blood-rite' && talent.hpCost && talent.bloodPointCost)));
 check('Gameplay systems do not inject extra sidebar shortcuts', !gameplayJs.includes('data-phase3-sidebar') && !gameplayJs.includes('data-phase3-side="characterCreator"'));
 check('Phase 4 world script is loaded', jsFiles.includes('js/asteria-world-systems.js'));
 check('Phase 4 exposes world API', worldJs.includes('window.AsteriaWorld') && worldJs.includes('openWorldState') && worldJs.includes('openWorldMap'));
@@ -286,6 +311,16 @@ check('Inventory workflow uses Compendium-backed item picker', ['catalogEntries'
 check('Inventory supports drag-drop equipment and safe replacement', ['data-inventory-drag-item','data-equipment-slot','placeInBag','replacementDestination','No empty bag slot is available'].every(token => inventoryWorkflowJs.includes(token)) && inventoryWorkflowCss.includes('.inventory-drag-over'));
 check('GM can send campaign item rewards', ['pendingItemRewards','saveCampaignCharacter','gmItemRewardPanel','resolveReward'].every(token => inventoryWorkflowJs.includes(token)));
 check('GM campaign shops use cart checkout and coin deduction', ['gmCampaignShopPanel','shopCart','purchaseShopCart','setCharacterCopper','emptyBagSlotCount'].every(token => inventoryWorkflowJs.includes(token)));
+check('Item ecosystem extends one canonical inventory API', ['normalizeItem','ensureCampaign','splitStack','combineStacks','moveToStorage','encumbrance','filterItems','audit'].every(token => inventoryApiJs.includes(token)));
+check('Player item workspace includes complete navigation', ['Inventory','Equipment','Bags','Storage','Party Loot','Shops','Player Trade','Trade Listings','Wishlist','Transaction History'].every(label => itemEcosystemJs.includes(`'${label}'`)));
+check('GM item workspace includes loot, shop, inventory, trade, and audit tools', ['Reward Loot','Party Loot Manager','Loot Tables','Loot Drop Generator','Shop Manager','Player Inventories','Trade History','Inventory Activity Logs'].every(label => itemEcosystemJs.includes(`'${label}'`)));
+check('Party loot supports Need Greed Pass and shared distribution', ['chooseLoot','need-greed','distributeLoot','sellAllPartyLoot'].every(token => itemEcosystemJs.includes(token)));
+check('Shop and trading workflows use campaign-shared state', ['createShop','restockShop','buyShopItem','sellShopItem','createDirectTrade','confirmTrade','createListing','buyListing'].every(token => itemEcosystemJs.includes(token)));
+check('Campaign item ecosystem uses a member-shared Firebase document', ['saveCampaignItemEcosystem','loadCampaignItemEcosystem','subscribeCampaignItemEcosystem'].every(token => firebaseAuthJs.includes(token)) && dataSyncJs.includes('mergeRealtimeItemEcosystem') && firestoreRules.includes('match /systems/{systemId}') && firestoreRules.includes('canUseCampaignSystems'));
+check('Direct trades allow both players to revise and confirm offers', ['updateTradeOffer','data-trade-update','trade-offer-updated','Confirm Final Offer'].every(token => itemEcosystemJs.includes(token)));
+check('Party loot inspection is read-only', itemEcosystemJs.includes('function openLootDetails') && itemEcosystemJs.includes("subtitle:'Read-only inspection'") && !itemEcosystemJs.includes("source:'Temporary inspection'"));
+check('Central item cards support drag-drop equipment, bags, and storage', ['draggable="true"','data-bag-drop','data-storage-drop',"text/asteria-item-id",'data-equipment-slot'].every(token => itemEcosystemJs.includes(token)) && itemEcosystemCss.includes('.drop-ready'));
+check('Item ecosystem provides responsive layouts', ['@media(max-width:1600px)','@media(max-width:1050px)','@media(max-width:760px)','@media(max-width:480px)'].every(token => itemEcosystemCss.includes(token)));
 check('Shell exposes router API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaRouter'));
 check('Shell exposes account API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaAccounts'));
 
@@ -328,11 +363,11 @@ check('Campaign creation generates and displays 12-digit UCN', html.includes('ca
 check('GM Campaign Manager shows UCN panel', appJs.includes('gmCampaignManagerUCNPanel') && appJs.includes('Unique Campaign Number') && stylesCss.includes('.gm-campaign-ucn-panel'));
 check('Shared popups use centered blurred foreground layer', stylesCss.includes('Unified foreground popup layer') && stylesCss.includes('.item-modal') && stylesCss.includes('.codex-talent-modal-backdrop') && stylesCss.includes('z-index:8200') && stylesCss.includes('backdrop-filter:blur(5px)'));
 check('GM dashboard render tolerates missing top counters', appJs.includes('setTextSafe') && appJs.includes("setTextSafe('topPlayers'") && !appJs.includes("$('topPlayers').textContent=c.party.length;$('topEncounters')"));
-check('GM dashboard uses the compact eight-tab menu', gmDashboardBlock.includes('Asteria GM Dashboard v1') && ['GM Main','Quests','GM Notes','Economy','Crafting','Campaign Manager','Gameplay Systems','World Systems'].every(label => gmDashboardBlock.includes(`label:'${label}'`)) && ['Actions','Encounter Builder','Rewards','Materials','Enchantments'].every(label => !gmDashboardBlock.includes(`label:'${label}'`)));
+check('GM dashboard uses the compact eight-tab menu', gmDashboardBlock.includes('Asteria GM Dashboard v1') && ['GM Main','Quests','GM Notes','Economy','Crafting','GM Tools','Gameplay Systems','World Systems'].every(label => gmDashboardBlock.includes(`label:'${label}'`)) && ['Actions','Encounter Builder','Rewards','Materials','Enchantments'].every(label => !gmDashboardBlock.includes(`label:'${label}'`)));
 check('GM dashboard keeps one sync panel', appJs.includes('gmSyncStatusPanel') && appJs.includes("v170RenderSyncPanel=function(){document.getElementById('v170SyncPanel')?.remove();renderGMSyncPanel();}") && stylesCss.includes('.gm-sync-card'));
 check('GM top panel keeps session actions only', gmDashboardBlock.includes('Start Session</button><button class="danger" onclick="endSession()">End Session') && stylesCss.includes('#gm .gm-dashboard-hero-v1 .gm-sync-card'));
 check('GM menu bottom actions are removed', gmDashboardBlock.includes("document.querySelector('#gm .gm-menu-bar-actions')?.remove();") && stylesCss.includes('#gm .gm-menu-bar-actions{display:none!important}'));
-check('GM main tab owns encounter, progression, and party loot', gmDashboardBlock.includes("assign('#gmEncounterWorkspace,#gm .gm-xp-split,#gm .transaction-pipeline-panel,#gm #partyLootManagerPanel','gm-main')") && appJs.includes('Asteria GM Encounter Workspace v1'));
+check('GM main owns encounter and progression while GM Tools owns loot and items', gmDashboardBlock.includes("assign('#gmEncounterWorkspace,#gm .gm-xp-split','gm-main')") && gmDashboardBlock.includes(".transaction-pipeline-panel,#gm #partyLootManagerPanel,#gm #gmItemRewardPanel','campaign-manager'") && appJs.includes('Asteria GM Encounter Workspace v1'));
 check('GM old split encounter panels are hidden', gmDashboardBlock.includes("assign('#gm .active-encounter,#gm .initiative,#gm .encounter,#gm .combat-system-panel','gm-hidden')"));
 check('GM encounter workspace supports requested controls', ['gmEncounterWorkspace','gmEnemySearchResults','gmDefeatEnemy','openGMEnemyDetail','gmAddCreatureToEncounter','gmSortEncounterInitiative'].every(token => appJs.includes(token)) && !appJs.includes("panel.id='gmCampaignCharacterPanel'") && stylesCss.includes('.gm-encounter-workspace') && stylesCss.includes('.gm-enemy-card.defeated'));
 check('GM legacy systems map into requested tabs', ['actions:\'gm-main\'','encounter:\'gm-main\'','rewards:\'gm-main\'','materials:\'crafting\'','enchantments:\'crafting\'','tools:\'campaign-manager\''].every(token => gmDashboardBlock.includes(token)));
@@ -468,6 +503,7 @@ jsFiles.forEach(file => {
   'scripts/generate-flora-index.js',
   'scripts/generate-race-content.js',
   'scripts/generate-class-content.js',
+  'scripts/import-class-source.js',
   'scripts/generate-clean-compendium-index.js',
   'scripts/generate-content-manifest.js',
   'scripts/generate-universal-compendium-index.js',
@@ -525,6 +561,12 @@ check(
 check(
   'Script order keeps inventory API after app',
   jsFiles.indexOf('js/asteria-inventory-api.js') > jsFiles.indexOf('js/app.js'),
+  scriptOrder
+);
+check(
+  'Item ecosystem loads after inventory workflows and world map hooks',
+  jsFiles.indexOf('js/asteria-item-ecosystem.js') > jsFiles.indexOf('js/asteria-inventory-workflows.js') &&
+    jsFiles.indexOf('js/asteria-item-ecosystem.js') > jsFiles.indexOf('js/asteria-world-systems.js'),
   scriptOrder
 );
 check(
