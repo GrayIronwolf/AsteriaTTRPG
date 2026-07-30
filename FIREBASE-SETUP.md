@@ -38,6 +38,7 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 - `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
 - `campaigns/{campaignId}/characters/{characterId}` stores the optional full character-sheet snapshot used for live sheet hydration.
 - `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
+- `campaigns/{campaignId}/systems/progression` is the authoritative real-time XP, level, CP, TP, and player-notification stream. Deploy the included `firestore.rules` before testing GM-to-player XP delivery on separate accounts or devices.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
 - `users/{uid}/characters/{characterId}` stores an owned character.

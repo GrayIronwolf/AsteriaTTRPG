@@ -8,6 +8,7 @@ const events = [];
 const saved = [];
 const renders = [];
 const listeners = {};
+let progressionListener = null;
 
 const playerView = {
   classList: {
@@ -87,6 +88,12 @@ const context = {
       saveOwnedCharacterProgress(id, character) {
         saved.push({ id, xp:character.xp, level:character.level });
         return Promise.resolve(true);
+      },
+      subscribeCampaign() { return () => {}; },
+      subscribeCampaignCharacters() { return () => {}; },
+      subscribeCampaignProgression(campaignId, onChange) {
+        progressionListener = onChange;
+        return () => {};
       }
     }
   }
@@ -95,29 +102,51 @@ const context = {
 vm.createContext(context);
 vm.runInContext(source, context);
 
+context.window.AsteriaDataSync.watchCampaigns(context.window.campaigns);
+if(typeof progressionListener !== 'function') {
+  throw new Error('Campaign progression listener was not registered.');
+}
+progressionListener({
+  version:'asteria-campaign-progression-v1',
+  characters:{
+    hero: {
+      id:'hero',
+      ownerUid:'player-1',
+      name:'Test Hero',
+      level:2,
+      xp:350,
+      xpMax:3000,
+      cp:6,
+      tp:6,
+      progressionSync:{ revision:'xp-test-1', award:2250 }
+    }
+  }
+});
 context.window.AsteriaDataSync.mergeCampaignCharacters('campaign-1', {
   hero: {
     id:'hero',
     ownerUid:'player-1',
     name:'Test Hero',
-    level:2,
-    xp:350,
-    xpMax:3000,
-    cp:6,
-    tp:6,
-    progressionSync:{ revision:'xp-test-1', award:2250 }
+    level:1,
+    xp:100,
+    xpMax:2000,
+    cp:3,
+    tp:3
   }
 });
 
 setImmediate(() => {
   const character = context.window.chars.hero;
   const xpEvent = events.find(event => event.type === 'asteria:xp-reward-realtime');
+  const progressionEvent = events.find(event => event.type === 'asteria:progression-realtime');
   const failures = [];
   if(character.xp !== 350 || character.level !== 2) failures.push('shared XP and level were not merged');
+  if(character.progressionSync?.revision !== 'xp-test-1') failures.push('a stale full-character snapshot overwrote authoritative progression');
   if(character.cp !== 6 || character.tp !== 6) failures.push('shared CP and TP were not merged');
   if(!saved.some(entry => entry.id === 'hero' && entry.xp === 350 && entry.level === 2)) failures.push('received progression was not persisted to the owner record');
   if(!renders.includes('hero')) failures.push('active Character Dashboard was not rerendered');
   if(!xpEvent || xpEvent.detail?.id !== 'hero') failures.push('XP real-time event was not dispatched');
+  if(!progressionEvent || progressionEvent.detail?.campaignId !== 'campaign-1') failures.push('campaign progression event was not dispatched');
 
   if(failures.length) {
     console.error(`XP real-time sync test failed: ${failures.join('; ')}`);

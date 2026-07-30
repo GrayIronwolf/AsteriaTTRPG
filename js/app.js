@@ -57,6 +57,21 @@ function syncAfterResourceChange(id){
   if($('gm')?.classList.contains('show')) renderGM();
   if($('gmPlayer')?.classList.contains('show')) renderGMPlayer();
 }
+function publishCharacterProgression(id){
+  const character=chars?.[id];
+  if(!character || !window.AsteriaFirebase?.saveCampaignProgression) return Promise.resolve(false);
+  const linkedCampaigns=(campaigns||[]).filter(campaign=>
+    campaign?.id && (
+      (campaign.party||[]).includes(id) ||
+      campaign.playerCharacterLinks?.[id] ||
+      campaign.characters?.[id]
+    )
+  );
+  if(!linkedCampaigns.length) return Promise.resolve(false);
+  return Promise.all(
+    linkedCampaigns.map(campaign=>window.AsteriaFirebase.saveCampaignProgression(campaign.id,id,character))
+  ).then(results=>results.every(Boolean));
+}
 function adjustCharacterResource(id,key,amount){
   const c=chars[id];
   if(!c) return;
@@ -3235,6 +3250,7 @@ function distributeCampaignXP(){
   }
   const awards=xpAwardsForCurrentPanel();
   const results=[];
+  const progressionWrites=[];
   xpPartyIds().forEach(id=>{
     const add=Math.max(0,Number(awards[id]||0)); if(!add) return;
     const c=chars[id]; const before={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
@@ -3268,6 +3284,7 @@ function distributeCampaignXP(){
       });
     }
     syncAfterResourceChange?.(id);
+    progressionWrites.push(publishCharacterProgression(id));
     results.push(`${c.name} +${add.toLocaleString()} XP${after.level>before.level?` → Level ${after.level}`:''}`);
     slEvent?.('XP awards',`${c.name} received ${add.toLocaleString()} XP from ${source}.`,{source,reason,award:add,before,after,carryover:c.xp,splitXP:add},visibility);
     if(after.level>before.level) slEvent?.('Level-ups',`${c.name} levelled from ${before.level} to ${after.level}. Carryover XP: ${c.xp.toLocaleString()}.`,{source,from:before.level,to:after.level,carryover:c.xp,cp:c.cp,tp:c.tp},visibility);
@@ -3276,6 +3293,10 @@ function distributeCampaignXP(){
   const msg=`GM awarded XP (${source}): ${results.join('; ')}. Reason: ${reason}`;
   addCombatLog?.(msg,'important');
   previewXPAwardMarkdown(false); saveAsteriaState?.(); saveAccountState?.(); refreshSyncedViews?.(); renderXPSplitPanel(); renderGM?.(); toast('XP saved to the linked character dashboards.');
+  Promise.all(progressionWrites).then(writes=>{
+    if(writes.some(Boolean)) toast('XP delivered to the live player dashboards.');
+    else toast('XP changed locally, but Firebase delivery failed. Check the deployed Firestore rules and connection.');
+  });
 }
 function clearXPManualInputs(){xpPartyIds().forEach(id=>{const el=document.getElementById('manualXP_'+id); if(el)el.value=0;}); updateXPSplitPreview();}
 function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) document.getElementById('xpSplitPartyList').innerHTML=xpSummaryForCampaign(); updateXPSplitPreview(); }

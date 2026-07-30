@@ -12,6 +12,7 @@
   let realtimeUid = null;
   const realtimeSubscriptions = new Map();
   const persistedProgressionSignatures = new Map();
+  const authoritativeProgression = new Map();
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -150,6 +151,17 @@
     window.AsteriaItemEcosystem?.renderGM?.();
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
   }
+  function mergeRealtimeProgression(campaignId, progression){
+    const characters=progression?.characters || {};
+    if(!Object.keys(characters).length) return;
+    Object.entries(characters).forEach(([id,character])=>{
+      authoritativeProgression.set(`${campaignId}:${id}`,safeClone(character));
+    });
+    mergeRealtimeCharacters(campaignId,characters,{ source:'progression' });
+    window.dispatchEvent(new CustomEvent('asteria:progression-realtime', {
+      detail:{ campaignId, progression }
+    }));
+  }
   function progressionSignature(character){
     if(!character) return '';
     return [
@@ -191,14 +203,27 @@
     window.deliverCharacterDashboardNotices?.(id);
     window.flashResource?.('xp');
   }
-  function mergeRealtimeCharacters(campaignId, sharedCharacters){
+  function mergeRealtimeCharacters(campaignId, sharedCharacters, options={}){
     const user=window.AsteriaFirebase?.getUser?.();
     if(!user || !sharedCharacters) return;
     window.chars=window.chars||{};
     const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
     if(campaign) campaign.characters=Object.assign({},campaign.characters||{});
     const progressionUpdates=[];
-    Object.entries(sharedCharacters).forEach(([id,incoming])=>{
+    Object.entries(sharedCharacters).forEach(([id,rawIncoming])=>{
+      const authority=authoritativeProgression.get(`${campaignId}:${id}`);
+      const incoming=options.source==='progression' || !authority
+        ? rawIncoming
+        : Object.assign({},rawIncoming,{
+            level:authority.level,
+            xp:authority.xp,
+            xpMax:authority.xpMax,
+            cp:authority.cp,
+            tp:authority.tp,
+            pendingSkillChoices:authority.pendingSkillChoices,
+            dashboardNotifications:authority.dashboardNotifications,
+            progressionSync:authority.progressionSync
+          });
       const before=window.chars[id]||{};
       const character=Object.assign({},before,incoming,{
         id,
@@ -243,9 +268,11 @@
       if(!campaign.id) return;
       const campaignKey=`campaign:${campaign.id}`;
       const charactersKey=`characters:${campaign.id}`;
+      const progressionKey=`progression:${campaign.id}`;
       const itemEcosystemKey=`item-ecosystem:${campaign.id}`;
       activeKeys.add(campaignKey);
       activeKeys.add(charactersKey);
+      activeKeys.add(progressionKey);
       activeKeys.add(itemEcosystemKey);
       if(!realtimeSubscriptions.has(campaignKey)){
         realtimeSubscriptions.set(campaignKey,window.AsteriaFirebase.subscribeCampaign(campaign.id,mergeRealtimeCampaign));
@@ -254,6 +281,12 @@
         realtimeSubscriptions.set(charactersKey,window.AsteriaFirebase.subscribeCampaignCharacters(
           campaign.id,
           characters=>mergeRealtimeCharacters(campaign.id,characters)
+        ));
+      }
+      if(window.AsteriaFirebase?.subscribeCampaignProgression && !realtimeSubscriptions.has(progressionKey)){
+        realtimeSubscriptions.set(progressionKey,window.AsteriaFirebase.subscribeCampaignProgression(
+          campaign.id,
+          progression=>mergeRealtimeProgression(campaign.id,progression)
         ));
       }
       if(window.AsteriaFirebase?.subscribeCampaignItemEcosystem && !realtimeSubscriptions.has(itemEcosystemKey)){
@@ -369,6 +402,7 @@
     watchCampaigns: setupRealtimeCampaignSync,
     stopWatching: stopRealtimeCampaignSync,
     mergeCampaignCharacters: mergeRealtimeCharacters,
+    mergeCampaignProgression: mergeRealtimeProgression,
     saveAppState,
     readAppState: readAppSystemState,
     status:()=>localMeta()

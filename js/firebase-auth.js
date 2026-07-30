@@ -762,6 +762,14 @@ window.AsteriaFirebase = {
       err=>console.warn(`Could not watch shared characters for campaign ${campaignId}.`, err)
     );
   },
+  subscribeCampaignProgression: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      doc(db, 'campaigns', campaignId, 'systems', 'progression'),
+      snapshot=>onChange(snapshot.exists() ? snapshot.data() : { characters:{} }),
+      err=>console.warn(`Could not watch campaign progression for ${campaignId}.`, err)
+    );
+  },
   saveOwnedCharacterProgress: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
     if(character.ownerUid && character.ownerUid !== currentUser.uid) return false;
@@ -817,6 +825,45 @@ window.AsteriaFirebase = {
       return true;
     }catch(err){
       console.warn('Could not publish the campaign character progression.', err);
+      return false;
+    }
+  },
+  saveCampaignProgression: async function(campaignId, characterId, character){
+    if(!db || !currentUser || !campaignId || !characterId || !character) return false;
+    try{
+      const progressionRef=doc(db, 'campaigns', campaignId, 'systems', 'progression');
+      await runTransaction(db, async transaction=>{
+        const progressionDoc=await transaction.get(progressionRef);
+        const current=progressionDoc.exists() ? progressionDoc.data() : {};
+        const characters=Object.assign({},current.characters || {});
+        characters[characterId]={
+          id:characterId,
+          ownerUid:character.ownerUid || '',
+          sourceCharacterId:character.sourceCharacterId || characterId,
+          level:Number(character.level || 0),
+          xp:Number(character.xp || 0),
+          xpMax:Number(character.xpMax || 1000),
+          cp:Number(character.cp || 0),
+          tp:Number(character.tp || 0),
+          pendingSkillChoices:Number(character.pendingSkillChoices || 0),
+          dashboardNotifications:cleanData(character.dashboardNotifications || []),
+          progressionSync:cleanData(character.progressionSync || {}),
+          updatedAt:new Date().toISOString()
+        };
+        transaction.set(
+          progressionRef,
+          {
+            version:'asteria-campaign-progression-v1',
+            characters,
+            updatedBy:currentUser.uid,
+            updatedAt:serverTimestamp()
+          },
+          { merge:true }
+        );
+      });
+      return true;
+    }catch(err){
+      console.warn('Could not publish the authoritative campaign progression.', err);
       return false;
     }
   },
