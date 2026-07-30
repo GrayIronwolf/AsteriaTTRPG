@@ -93,6 +93,14 @@
     const owned = array(window.accountUsers?.[account]?.characters);
     return isGM() || owned.includes(id) || Boolean(record && user?.uid && (!record.ownerUid || record.ownerUid === user.uid));
   }
+  function isAccountOwned(id = currentId()){
+    const record = character(id);
+    const user = window.AsteriaFirebase?.getUser?.();
+    const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+    const account = session.account || session.uid || session.user;
+    const owned = array(window.accountUsers?.[account]?.characters);
+    return owned.includes(id) || Boolean(record && user?.uid && (!record.ownerUid || record.ownerUid === user.uid));
+  }
 
   function itemKey(item){
     return slug(item?.catalogId || item?.slug || item?.name || item?.id);
@@ -285,7 +293,7 @@
     window.saveAccountState?.();
     window.saveAsteriaState?.();
     window.AsteriaDataSync?.scheduleSave?.(reason);
-    if(isOwned(id)) window.AsteriaFirebase?.saveCharacter?.(id, record);
+    if(isAccountOwned(id)) window.AsteriaFirebase?.saveCharacter?.(id, record);
     (window.campaigns || []).filter(campaign => campaignCharacterIds(campaign).includes(id)).forEach(campaign => {
       if(campaign?.id) window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id, id, record);
     });

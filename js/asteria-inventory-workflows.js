@@ -67,7 +67,7 @@
     const user = window.AsteriaFirebase?.getUser?.();
     const account = window.session?.account || window.session?.uid || window.session?.user;
     const owned = array(window.accountUsers?.[account]?.characters);
-    return owned.includes(id) || Boolean(user?.uid && (!item?.ownerUid || item.ownerUid === user.uid));
+    return owned.includes(id) || Boolean(user?.uid && item?.ownerUid === user.uid);
   }
   function campaignsForCharacter(id){
     return array(window.campaigns).filter(campaign => campaignCharacterIds(campaign).includes(id));
@@ -453,7 +453,7 @@
       if(selected) selected.innerHTML = rewardSelectedHtml();
     }));
   }
-  function sendGMReward(){
+  async function sendGMReward(){
     const campaign = activeCampaign();
     const ids = Array.from(document.querySelectorAll('[data-reward-character]:checked')).map(input => input.value);
     const quantity = Math.max(1, Number(document.getElementById('gmRewardQuantity')?.value || 1));
@@ -464,6 +464,7 @@
     }
     const snapshot = itemSnapshot(rewardPickerEntry, quantity);
     const rewardId = `reward-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const writes=[];
     ids.forEach(id => {
       const record = getCampaignCharacter(id, campaign);
       if(!record) return;
@@ -478,10 +479,17 @@
         createdAt:new Date().toISOString()
       });
       window.chars[id] = Object.assign(window.chars[id] || {}, record);
-      window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id, id, window.chars[id]);
+      if(window.AsteriaFirebase?.saveCampaignCharacter){
+        writes.push(window.AsteriaFirebase.saveCampaignCharacter(campaign.id, id, window.chars[id]));
+      }
     });
     window.saveAsteriaState?.();
-    window.toast?.(`Item reward sent to ${ids.length} character${ids.length === 1 ? '' : 's'}.`);
+    const results=await Promise.all(writes);
+    if(writes.length === ids.length && results.every(Boolean)){
+      window.toast?.(`Item reward delivered to ${ids.length} live character dashboard${ids.length === 1 ? '' : 's'}.`);
+    }else{
+      window.toast?.('Item reward changed locally, but Firebase delivery failed. Check the cloud sync warning and deployed Firestore rules.');
+    }
   }
   function installGMRewardPanel(){
     const host = document.querySelector('#gm .gm-panels');

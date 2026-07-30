@@ -5,7 +5,7 @@
    ========================= */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -70,7 +70,7 @@ function mergeSharedCampaign(localCampaign={}, sharedCampaign={}){
   const characters = Object.assign({}, local.characters || {}, shared.characters || {});
   const playerCharacterLinks = Object.assign({}, local.playerCharacterLinks || {}, shared.playerCharacterLinks || {});
   const playerCharacterIds = Object.values(players).flatMap(player=>Array.isArray(player?.characterIds) ? player.characterIds : []);
-  return Object.assign({}, shared, local, {
+  return Object.assign({}, local, shared, {
     id:shared.id || local.id,
     ownerUid:shared.ownerUid || local.ownerUid || '',
     gmUids:uniqueValues(local.gmUids, shared.gmUids),
@@ -83,6 +83,75 @@ function mergeSharedCampaign(localCampaign={}, sharedCampaign={}){
     activity:uniqueValues(local.activity, shared.activity),
     lastLinkedCharacterId:shared.lastLinkedCharacterId || local.lastLinkedCharacterId || ''
   });
+}
+function reportSyncError(scope, error, detail={}){
+  console.warn(`Asteria Firebase ${scope} failed.`, error);
+  window.dispatchEvent(new CustomEvent('asteria:firebase-sync-error', {
+    detail:Object.assign({
+      scope,
+      code:error?.code || '',
+      message:error?.message || String(error || 'Unknown Firebase error')
+    }, detail)
+  }));
+}
+function linkedCampaignIdsFromOwnedCharacters(uid){
+  const ids = new Set();
+  Object.values(window.chars || {}).forEach(character=>{
+    if(!character || character.ownerUid && character.ownerUid !== uid) return;
+    uniqueValues(
+      character.linkedCampaignIds,
+      character.sharedCampaignId ? [character.sharedCampaignId] : []
+    ).forEach(id=>ids.add(String(id)));
+  });
+  return Array.from(ids);
+}
+async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=null){
+  let shared = knownShared;
+  if(!shared){
+    try{
+      const sharedSnap = await getDoc(doc(db, 'campaigns', id));
+      if(sharedSnap.exists()) shared = Object.assign({}, sharedSnap.data(), { id });
+    }catch(error){
+      reportSyncError('campaign-read', error, { campaignId:id });
+    }
+  }
+  let campaign = mergeSharedCampaign(accountCampaign, shared || { id });
+  try{
+    const ecosystemSnap = await getDoc(doc(db, 'campaigns', id, 'systems', 'itemEcosystem'));
+    if(ecosystemSnap.exists()) campaign.itemEcosystem = ecosystemSnap.data();
+  }catch(error){
+    reportSyncError('item-ecosystem-read', error, { campaignId:id });
+  }
+  const sharedCharacters = {};
+  try{
+    const characterSnap = await getDocs(collection(db, 'campaigns', id, 'characters'));
+    characterSnap.forEach(characterDoc=>{
+      sharedCharacters[characterDoc.id] = Object.assign({ id:characterDoc.id }, characterDoc.data());
+    });
+  }catch(error){
+    reportSyncError('campaign-characters-read', error, { campaignId:id });
+  }
+  hydrateSharedCampaignCharacters(campaign, sharedCharacters);
+  return campaign;
+}
+function campaignMembershipQueries(uid){
+  const campaignsCollection = collection(db, 'campaigns');
+  return [
+    query(campaignsCollection, where('ownerUid', '==', uid)),
+    query(campaignsCollection, where('gmUids', 'array-contains', uid)),
+    query(campaignsCollection, where('playerUids', 'array-contains', uid))
+  ];
+}
+function campaignCharacterOwner(campaignId, characterId, character={}){
+  if(character?.ownerUid) return String(character.ownerUid);
+  const campaign=(window.campaigns || []).find(item=>String(item?.id || '') === String(campaignId || ''));
+  const direct=campaign?.playerCharacterLinks?.[characterId]
+    || campaign?.characters?.[characterId]?.ownerUid;
+  if(direct) return String(direct);
+  const player=Object.entries(campaign?.players || {}).find(([,record])=>
+    Array.isArray(record?.characterIds) && record.characterIds.includes(characterId)
+  );
+  return player ? String(player[0]) : '';
 }
 function campaignCharacterSnapshot(character, campaignId, ownerUid=currentUser?.uid || ''){
   const clean = cleanData(character || {});
@@ -676,29 +745,83 @@ window.AsteriaFirebase = {
   loadCampaigns: async function(){
     if(!db || !currentUser) return [];
     try{
-      const snap = await getDocs(collection(db, 'users', currentUser.uid, 'campaigns'));
+      const uid = currentUser.uid;
+      const accountCampaigns = new Map();
+      const sharedCampaigns = new Map();
+      const accountSnap = await getDocs(collection(db, 'users', uid, 'campaigns'));
+      accountSnap.forEach(item=>{
+        accountCampaigns.set(item.id, Object.assign({}, item.data(), { id:item.id }));
+      });
+      const membershipResults = await Promise.allSettled(
+        campaignMembershipQueries(uid).map(campaignQuery=>getDocs(campaignQuery))
+      );
+      membershipResults.forEach(result=>{
+        if(result.status === 'rejected'){
+          reportSyncError('campaign-membership-query', result.reason, { uid });
+          return;
+        }
+        result.value.forEach(item=>{
+          sharedCampaigns.set(item.id, Object.assign({}, item.data(), { id:item.id }));
+        });
+      });
+      const campaignIds = new Set([
+        ...accountCampaigns.keys(),
+        ...sharedCampaigns.keys(),
+        ...linkedCampaignIdsFromOwnedCharacters(uid)
+      ]);
       const campaigns = [];
-      for(const item of snap.docs){
-        const accountCampaign = Object.assign({}, item.data(), { id:item.id });
-        let campaign = accountCampaign;
-        try{
-          const sharedSnap = await getDoc(doc(db, 'campaigns', item.id));
-          if(sharedSnap.exists()) campaign = mergeSharedCampaign(accountCampaign, Object.assign({}, sharedSnap.data(), { id:item.id }));
-        }catch(err){ console.warn(`Could not refresh shared campaign ${item.id}.`, err); }
-        try{
-          const ecosystemSnap = await getDoc(doc(db, 'campaigns', item.id, 'systems', 'itemEcosystem'));
-          if(ecosystemSnap.exists()) campaign.itemEcosystem = ecosystemSnap.data();
-        }catch(err){ console.warn(`Could not load the shared item ecosystem for ${item.id}.`, err); }
-        const sharedCharacters = {};
-        try{
-          const characterSnap = await getDocs(collection(db, 'campaigns', item.id, 'characters'));
-          characterSnap.forEach(characterDoc=>{ sharedCharacters[characterDoc.id] = Object.assign({ id:characterDoc.id }, characterDoc.data()); });
-        }catch(err){ console.warn(`Could not load shared campaign characters for ${item.id}.`, err); }
-        hydrateSharedCampaignCharacters(campaign, sharedCharacters);
-        campaigns.push(campaign);
+      for(const id of campaignIds){
+        campaigns.push(await loadSharedCampaignDetails(
+          id,
+          accountCampaigns.get(id) || {},
+          sharedCampaigns.get(id) || null
+        ));
       }
       return campaigns;
-    }catch(err){ console.warn('Could not load campaigns from Firestore.', err); return []; }
+    }catch(err){
+      reportSyncError('campaign-load', err, { uid:currentUser?.uid || '' });
+      return [];
+    }
+  },
+  subscribeAccountCampaigns: function(onChange){
+    if(!db || !currentUser || typeof onChange !== 'function') return ()=>{};
+    const uid = currentUser.uid;
+    const sources = new Map();
+    const emit = ()=>{
+      const account = sources.get('account') || new Map();
+      const shared = new Map();
+      ['owner','gm','player'].forEach(key=>{
+        (sources.get(key) || new Map()).forEach((campaign,id)=>{
+          shared.set(id, Object.assign({}, shared.get(id) || {}, campaign));
+        });
+      });
+      const ids = new Set([
+        ...account.keys(),
+        ...shared.keys(),
+        ...linkedCampaignIdsFromOwnedCharacters(uid)
+      ]);
+      onChange(Array.from(ids).map(id=>mergeSharedCampaign(
+        account.get(id) || { id },
+        shared.get(id) || { id }
+      )));
+    };
+    const watch = (key, reference)=>{
+      return onSnapshot(reference, snapshot=>{
+        const records = new Map();
+        snapshot.forEach(item=>{
+          records.set(item.id, Object.assign({}, item.data(), { id:item.id }));
+        });
+        sources.set(key, records);
+        emit();
+      }, error=>reportSyncError('campaign-membership-listener', error, { uid, source:key }));
+    };
+    const unsubscribers = [
+      watch('account', collection(db, 'users', uid, 'campaigns')),
+      ...campaignMembershipQueries(uid).map((campaignQuery,index)=>watch(['owner','gm','player'][index], campaignQuery))
+    ];
+    return ()=>unsubscribers.forEach(unsubscribe=>{
+      try{ unsubscribe?.(); }catch(error){}
+    });
   },
   subscribeCampaign: function(campaignId, onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
@@ -707,7 +830,7 @@ window.AsteriaFirebase = {
       snapshot=>{
         if(snapshot.exists()) onChange(Object.assign({}, snapshot.data(), { id:snapshot.id }));
       },
-      err=>console.warn(`Could not watch shared campaign ${campaignId}.`, err)
+      err=>reportSyncError('campaign-listener', err, { campaignId })
     );
   },
   saveCampaignItemEcosystem: async function(campaignId, ecosystem){
@@ -745,7 +868,7 @@ window.AsteriaFirebase = {
       snapshot=>{
         if(snapshot.exists()) onChange(snapshot.data());
       },
-      err=>console.warn(`Could not watch the shared item ecosystem for campaign ${campaignId}.`, err)
+      err=>reportSyncError('item-ecosystem-listener', err, { campaignId })
     );
   },
   subscribeCampaignCharacters: function(campaignId, onChange){
@@ -759,7 +882,7 @@ window.AsteriaFirebase = {
         });
         onChange(characters);
       },
-      err=>console.warn(`Could not watch shared characters for campaign ${campaignId}.`, err)
+      err=>reportSyncError('campaign-characters-listener', err, { campaignId })
     );
   },
   subscribeCampaignProgression: function(campaignId, onChange){
@@ -797,13 +920,42 @@ window.AsteriaFirebase = {
       return false;
     }
   },
+  saveOwnedCharacterSnapshot: async function(characterId, character){
+    if(!db || !currentUser || !characterId || !character) return false;
+    if(character.ownerUid && character.ownerUid !== currentUser.uid) return false;
+    try{
+      const clean = cleanData(character);
+      await setDoc(
+        doc(db, 'users', currentUser.uid, 'characters', characterId),
+        Object.assign({}, clean, {
+          id:characterId,
+          ownerUid:currentUser.uid,
+          updatedAt:serverTimestamp()
+        }),
+        { merge:true }
+      );
+      return true;
+    }catch(error){
+      reportSyncError('owned-character-receive', error, { characterId });
+      return false;
+    }
+  },
   saveCampaignCharacterProgress: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
     try{
-      const ownerUid=character.ownerUid || '';
+      const ownerUid=campaignCharacterOwner(campaignId, characterId, character);
+      if(!ownerUid){
+        reportSyncError(
+          'campaign-character-owner',
+          new Error('The linked character owner could not be resolved.'),
+          { campaignId, characterId }
+        );
+        return false;
+      }
       const progressionPayload={
         id:characterId,
         sourceCharacterId:character.sourceCharacterId || characterId,
+        ownerUid,
         sharedCampaignId:campaignId,
         status:'linked',
         level:Number(character.level || 0),
@@ -814,9 +966,12 @@ window.AsteriaFirebase = {
         pendingSkillChoices:Number(character.pendingSkillChoices || 0),
         dashboardNotifications:cleanData(character.dashboardNotifications || []),
         progressionSync:cleanData(character.progressionSync || {}),
+        hp:cleanData(Array.isArray(character.hp) ? character.hp : [10,10]),
+        sp:cleanData(Array.isArray(character.sp) ? character.sp : [10,10]),
+        mp:cleanData(Array.isArray(character.mp) ? character.mp : [10,10]),
+        bp:cleanData(Array.isArray(character.bp) ? character.bp : null),
         updatedAt:serverTimestamp()
       };
-      if(ownerUid) progressionPayload.ownerUid=ownerUid;
       await setDoc(
         doc(db, 'campaigns', campaignId, 'characters', characterId),
         progressionPayload,
@@ -824,56 +979,36 @@ window.AsteriaFirebase = {
       );
       return true;
     }catch(err){
-      console.warn('Could not publish the campaign character progression.', err);
+      reportSyncError('campaign-character-progress-write', err, { campaignId, characterId });
       return false;
     }
   },
   saveCampaignProgression: async function(campaignId, characterId, character){
-    if(!db || !currentUser || !campaignId || !characterId || !character) return false;
-    try{
-      const progressionRef=doc(db, 'campaigns', campaignId, 'systems', 'progression');
-      await runTransaction(db, async transaction=>{
-        const progressionDoc=await transaction.get(progressionRef);
-        const current=progressionDoc.exists() ? progressionDoc.data() : {};
-        const characters=Object.assign({},current.characters || {});
-        characters[characterId]={
-          id:characterId,
-          ownerUid:character.ownerUid || '',
-          sourceCharacterId:character.sourceCharacterId || characterId,
-          level:Number(character.level || 0),
-          xp:Number(character.xp || 0),
-          xpMax:Number(character.xpMax || 1000),
-          cp:Number(character.cp || 0),
-          tp:Number(character.tp || 0),
-          pendingSkillChoices:Number(character.pendingSkillChoices || 0),
-          dashboardNotifications:cleanData(character.dashboardNotifications || []),
-          progressionSync:cleanData(character.progressionSync || {}),
-          updatedAt:new Date().toISOString()
-        };
-        transaction.set(
-          progressionRef,
-          {
-            version:'asteria-campaign-progression-v1',
-            characters,
-            updatedBy:currentUser.uid,
-            updatedAt:serverTimestamp()
-          },
-          { merge:true }
-        );
-      });
-      return true;
-    }catch(err){
-      console.warn('Could not publish the authoritative campaign progression.', err);
-      return false;
-    }
+    return this.saveCampaignCharacterProgress(campaignId, characterId, character);
   },
   saveCampaignCharacter: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
     try{
-      const snapshot = campaignCharacterSnapshot(Object.assign({}, character, { id:characterId }), campaignId, character.ownerUid || currentUser.uid);
+      const ownerUid=campaignCharacterOwner(campaignId, characterId, character);
+      if(!ownerUid){
+        reportSyncError(
+          'campaign-character-owner',
+          new Error('The linked character owner could not be resolved.'),
+          { campaignId, characterId }
+        );
+        return false;
+      }
+      const snapshot = campaignCharacterSnapshot(
+        Object.assign({}, character, { id:characterId, ownerUid }),
+        campaignId,
+        ownerUid
+      );
       await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, snapshot, { updatedAt:serverTimestamp() }), { merge:true });
       return true;
-    }catch(err){ console.warn('Could not save the shared campaign character.', err); return false; }
+    }catch(err){
+      reportSyncError('campaign-character-write', err, { campaignId, characterId });
+      return false;
+    }
   },
   loadCharacters: async function(){
     if(currentUser) await loadCharacters(currentUser);

@@ -8,7 +8,7 @@ Asteria uses one Firebase Authentication account per user. GM and Player are cam
 2. Under Authentication, enable Email/Password sign-in.
 3. Under Authentication > Settings > Authorized domains, add the deployed website domain and local test domains you use.
 4. Create a Cloud Firestore database if the project does not already have one.
-5. Publish the included `firestore.rules` before testing cross-account UCN joins.
+5. Publish the included `firestore.rules` before testing cross-account UCN joins, XP awards, or item rewards.
 
 The Test Login is browser-only. It cannot create or join campaigns across separate accounts or devices. Use two real Firebase accounts for UCN testing.
 
@@ -36,9 +36,8 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 
 - `campaigns/{campaignId}` stores the shared campaign.
 - `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
-- `campaigns/{campaignId}/characters/{characterId}` stores the optional full character-sheet snapshot used for live sheet hydration.
+- `campaigns/{campaignId}/characters/{characterId}` is the canonical live character record used for XP, levels, resources, dashboard notices, inventory rewards, and full-sheet hydration.
 - `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
-- `campaigns/{campaignId}/systems/progression` is the authoritative real-time XP, level, CP, TP, and player-notification stream. Deploy the included `firestore.rules` before testing GM-to-player XP delivery on separate accounts or devices.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
 - `users/{uid}/characters/{characterId}` stores an owned character.
@@ -47,7 +46,9 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 
 When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
 
-When a player links a character, Asteria first commits the member, character ID, owner link, and a sanitized dashboard summary directly to the shared campaign document. The optional full-sheet subcollection is written afterwards, so a missing or older subcollection rule can no longer leave the GM with an empty roster after the join appeared successful. Later HP, SP, MP, XP, condition, and character-sheet saves refresh the shared snapshot. The GM client refreshes authoritative campaign data when the campaign dashboard opens and when the browser regains focus.
+When a player links a character, Asteria commits the member, character ID, owner link, and dashboard summary to the shared campaign, then writes the full record to `campaigns/{campaignId}/characters/{characterId}`. All live XP and direct item-reward updates use that same character document. The player subscribes to it through both campaign membership and the character's saved campaign links, so a stale account workspace cannot prevent delivery.
+
+The older `campaigns/{campaignId}/systems/progression` document is no longer part of the active sync path. Keeping XP, notices, resources, and inventory on the same canonical character stream prevents late autosaves from racing a second progression system.
 
 Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
 
@@ -63,6 +64,17 @@ The item ecosystem uses a dedicated real-time campaign system document. This is 
 6. Return to the GM account and reopen the campaign card. The linked character should appear with HP, SP, MP, and XP bars; double-click it to open the full Character Dashboard.
 
 Campaigns created before this update gain their UCN lookup record the next time their GM signs in and the campaign is saved. Opening Campaign Forge and making any saved campaign change will trigger that migration.
+
+## Testing Live XP And Item Delivery
+
+1. Publish the included `firestore.rules`.
+2. Refresh the website on both the GM and player devices so both load the current cache-busted scripts.
+3. Open the linked campaign on the GM account and the linked Character Dashboard on the player account.
+4. Apply an XP award. The GM success message must say the XP was delivered to the live player dashboards.
+5. Confirm the player's XP bar and notification update without refreshing.
+6. Send a direct item reward. The GM success message must say the reward was delivered, and the player's reward window should open without refreshing.
+
+If Firebase rejects a listener or write, Asteria now shows `Cloud delivery blocked by Firestore rules` instead of reporting a false delivery. Re-publish `firestore.rules`, then refresh both devices.
 
 ## Security Model
 

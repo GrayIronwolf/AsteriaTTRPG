@@ -3936,6 +3936,189 @@ main.main,
   #gm .xp-system-grid,#gm .xp-system-grid.two{grid-template-columns:1fr 1fr}
 }
 
+/* Canonical GM workspace sizing: every tool must fit its panel without clipping. */
+#gm,
+#gm .gm-layout,
+#gm .gm-main,
+#gm .gm-panels,
+#gm .gm-panels > *,
+#gm .gm-menu-bar,
+#gm .gm-system-panel,
+#gm .gm-dashboard-hero-v1,
+#gm .asteria-item-ecosystem,
+#gm .ecosystem-display{
+  min-width:0!important;
+  max-width:100%!important;
+}
+#gm .gm-main,
+#gm .gm-panels,
+#gm .gm-system-panel{
+  width:100%!important;
+}
+#gm .border-glow-card{
+  --glow-padding:0px!important;
+}
+#gm .gm-panels{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))!important;
+  align-items:start!important;
+  gap:14px!important;
+}
+#gm .gm-panels > .gm-encounter-workspace,
+#gm .gm-panels > .xp-distribution-system-v1,
+#gm .gm-panels > .asteria-item-ecosystem,
+#gm .gm-panels > .transaction-pipeline-panel,
+#gm .gm-panels > .gm-crafting-panel,
+#gm .gm-panels > .economy-dashboard-panel,
+#gm .gm-panels > [class*="campaign-"],
+#gm .gm-panels > [class*="world-"]{
+  grid-column:1/-1!important;
+}
+#gm .card,
+#gm .gm-system-panel,
+#gm .ecosystem-display,
+#gm .gm-encounter-search-panel,
+#gm .gm-enemy-board-wrap{
+  overflow:visible!important;
+  overflow-wrap:anywhere!important;
+}
+#gm input,
+#gm select,
+#gm textarea,
+#gm button,
+#gm label{
+  min-width:0!important;
+  max-width:100%!important;
+}
+#gm .section-head,
+#gm .gm-menu-bar-head,
+#gm .ecosystem-section-head,
+#gm .gm-enemy-card-head,
+#gm .tx-button-row,
+#gm .gm-actions{
+  flex-wrap:wrap!important;
+}
+#gm .gm-dashboard-hero-v1{
+  grid-template-columns:minmax(0,1fr) auto minmax(250px,320px)!important;
+  align-items:start!important;
+  gap:14px!important;
+}
+#gm .gm-dashboard-hero-v1 .gm-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(130px,1fr))!important;
+  width:min(100%,340px)!important;
+}
+#gm .gm-sync-card{
+  width:100%!important;
+}
+#gm .xp-system-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))!important;
+}
+#gm .xp-system-grid.two{
+  grid-template-columns:minmax(240px,2fr) minmax(170px,1fr)!important;
+}
+#gm .xp-award-row{
+  grid-template-columns:22px minmax(150px,1fr) repeat(3,minmax(58px,auto)) minmax(120px,1fr)!important;
+}
+#gm .gm-encounter-summary{
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr))!important;
+}
+#gm .gm-encounter-builder-grid,
+#gm .ecosystem-gm-grid,
+#gm .ecosystem-two-column{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+#gm .gm-enemy-search-controls,
+#gm .gm-manual-enemy-grid,
+#gm .tx-tool-grid,
+#gm .currency-entry-grid,
+#gm .craft-form-grid,
+#gm .material-filter-grid,
+#gm .gm-material-tools,
+#gm .material-gm-form{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))!important;
+}
+#gm .gm-init-row{
+  grid-template-columns:30px minmax(150px,1fr) 72px repeat(3,minmax(58px,68px))!important;
+}
+#gm .gm-unified-enemy-cards,
+#gm .gm-campaign-character-cards{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))!important;
+}
+#gm .ecosystem-loot-card{
+  grid-template-columns:84px minmax(160px,1fr) minmax(190px,1fr) auto!important;
+}
+#gm .ecosystem-item-gallery,
+#gm .ecosystem-shop-stock-grid{
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;
+}
+#gm .table-wrap,
+#gm .ecosystem-audit-table,
+#gm .xp-system-details,
+#gm .gm-unified-initiative-rows{
+  max-width:100%!important;
+  overflow:auto!important;
+}
+@media(max-width:1450px){
+  #gm .gm-layout{
+    grid-template-columns:minmax(210px,240px) minmax(0,1fr)!important;
+    gap:14px!important;
+  }
+  #gm .gm-dashboard-hero-v1{
+    grid-template-columns:minmax(0,1fr) minmax(250px,320px)!important;
+  }
+  #gm .gm-dashboard-hero-v1 .gm-actions{
+    grid-column:1!important;
+    grid-row:2!important;
+  }
+  #gm .gm-dashboard-hero-v1 .gm-sync-card{
+    grid-column:2!important;
+    grid-row:1/3!important;
+  }
+  #gm .xp-award-row{
+    grid-template-columns:22px minmax(150px,1fr) 90px minmax(120px,1fr)!important;
+  }
+  #gm .xp-award-row .hide-sm{display:none!important}
+  #gm .gm-encounter-builder-grid,
+  #gm .ecosystem-gm-grid,
+  #gm .ecosystem-two-column,
+  #gm .xp-system-grid.two{
+    grid-template-columns:1fr!important;
+  }
+}
+@media(max-width:1120px){
+  #gm .gm-dashboard-hero-v1,
+  #gm .gm-encounter-builder-grid,
+  #gm .ecosystem-gm-grid,
+  #gm .ecosystem-two-column,
+  #gm .xp-system-grid.two{
+    grid-template-columns:1fr!important;
+  }
+  #gm .gm-dashboard-hero-v1 .gm-actions,
+  #gm .gm-dashboard-hero-v1 .gm-sync-card{
+    grid-column:auto!important;
+    grid-row:auto!important;
+    width:100%!important;
+  }
+  #gm .ecosystem-loot-card{
+    grid-template-columns:72px minmax(0,1fr)!important;
+  }
+  #gm .ecosystem-loot-card > :nth-child(n+3){
+    grid-column:1/-1!important;
+  }
+}
+@media(max-width:760px){
+  #gm .gm-layout{grid-template-columns:1fr!important}
+  #gm .roster{min-height:0!important}
+  #gm .gm-init-row,
+  #gm .xp-award-row{
+    grid-template-columns:1fr!important;
+  }
+  #gm .gm-init-row > *,
+  #gm .xp-award-row > *{
+    width:100%!important;
+  }
+}
+
 /* Keep dashboard identity and tab labels readable on compact desktop widths. */
 .identity-block,
 .identity-block h2,

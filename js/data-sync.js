@@ -10,9 +10,10 @@
   let saveInProgress = false;
   let lastCampaignRefresh = 0;
   let realtimeUid = null;
+  let accountCampaignUnsubscribe = null;
   const realtimeSubscriptions = new Map();
   const persistedProgressionSignatures = new Map();
-  const authoritativeProgression = new Map();
+  const persistedCharacterSignatures = new Map();
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -69,10 +70,15 @@
     const s = getSession();
     const account = s.account || s.uid || s.user;
     const rec = window.accountUsers?.[account];
-    if(Array.isArray(rec?.characters)) return rec.characters.filter(id=>window.chars?.[id]);
-    if(Array.isArray(s.profile?.characters)) return s.profile.characters.filter(id=>window.chars?.[id]);
-    if(s.character && window.chars?.[s.character]) return [s.character];
-    return [];
+    const uid=window.AsteriaFirebase?.getUser?.()?.uid || '';
+    const ids=new Set();
+    if(Array.isArray(rec?.characters)) rec.characters.forEach(id=>ids.add(id));
+    if(Array.isArray(s.profile?.characters)) s.profile.characters.forEach(id=>ids.add(id));
+    if(s.character) ids.add(s.character);
+    Object.entries(window.chars || {}).forEach(([id,character])=>{
+      if(uid && character?.ownerUid === uid) ids.add(id);
+    });
+    return Array.from(ids).filter(id=>window.chars?.[id]);
   }
   function exportOwnedCharacters(){
     const out = {};
@@ -104,7 +110,7 @@
     }catch(e){ console.warn('Cloud state merge failed', e); }
   }
   function mergeCloudCampaigns(campaigns){
-    if(!Array.isArray(campaigns) || !campaigns.length) return;
+    if(!Array.isArray(campaigns)) return;
     const activeId = window.campaigns?.[window.activeCampaign ?? 0]?.id || null;
     const merged = new Map((window.campaigns || []).filter(Boolean).map(campaign=>[campaign.id, campaign]));
     campaigns.forEach(campaign=>{
@@ -124,6 +130,8 @@
     setupRealtimeCampaignSync(window.campaigns);
   }
   function stopRealtimeCampaignSync(){
+    try{ accountCampaignUnsubscribe?.(); }catch(e){}
+    accountCampaignUnsubscribe = null;
     realtimeSubscriptions.forEach(unsubscribe=>{
       try{ unsubscribe?.(); }catch(e){}
     });
@@ -135,14 +143,20 @@
     const index=(window.campaigns||[]).findIndex(item=>item?.id===campaign.id);
     if(index < 0) window.campaigns=[...(window.campaigns||[]),campaign];
     else window.campaigns[index]=Object.assign({},window.campaigns[index]||{},campaign);
+    if(campaign.characters && Object.keys(campaign.characters).length){
+      mergeRealtimeCharacters(campaign.id,campaign.characters,{ source:'campaign-summary' });
+    }
     window.renderCampaigns?.();
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
     window.dispatchEvent(new CustomEvent('asteria:campaign-realtime', { detail:{ campaign } }));
   }
   function mergeRealtimeItemEcosystem(campaignId, itemEcosystem){
     if(!campaignId || !itemEcosystem) return;
-    const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
-    if(!campaign) return;
+    let campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
+    if(!campaign){
+      campaign={ id:campaignId, name:'Linked Campaign', party:[], characters:{} };
+      window.campaigns=[...(window.campaigns||[]),campaign];
+    }
     campaign.itemEcosystem=safeClone(itemEcosystem);
     window.dispatchEvent(new CustomEvent('asteria:item-ecosystem-realtime', {
       detail:{ campaignId, itemEcosystem:campaign.itemEcosystem }
@@ -154,9 +168,6 @@
   function mergeRealtimeProgression(campaignId, progression){
     const characters=progression?.characters || {};
     if(!Object.keys(characters).length) return;
-    Object.entries(characters).forEach(([id,character])=>{
-      authoritativeProgression.set(`${campaignId}:${id}`,safeClone(character));
-    });
     mergeRealtimeCharacters(campaignId,characters,{ source:'progression' });
     window.dispatchEvent(new CustomEvent('asteria:progression-realtime', {
       detail:{ campaignId, progression }
@@ -196,6 +207,35 @@
       if(!saved && persistedProgressionSignatures.get(id) === signature) persistedProgressionSignatures.delete(id);
     });
   }
+  function receivedCharacterSignature(character){
+    if(!character) return '';
+    const inventory=(character.inventory || []).map(item=>[
+      item?.id || item?.instanceId || item?.name || '',
+      Number(item?.qty || 0),
+      item?.location || '',
+      item?.equipped ? 1 : 0
+    ]);
+    return JSON.stringify({
+      progression:progressionSignature(character),
+      hp:character.hp,
+      sp:character.sp,
+      mp:character.mp,
+      bp:character.bp,
+      inventory,
+      pendingItemRewards:character.pendingItemRewards || [],
+      coins:character.coins || {},
+      quickSlots:character.quickSlots || []
+    });
+  }
+  function persistReceivedCharacter(id, character, user){
+    if(!character || character.ownerUid !== user?.uid || !window.AsteriaFirebase?.saveOwnedCharacterSnapshot) return;
+    const signature=receivedCharacterSignature(character);
+    if(persistedCharacterSignatures.get(id) === signature) return;
+    persistedCharacterSignatures.set(id,signature);
+    window.AsteriaFirebase.saveOwnedCharacterSnapshot(id,character).then(saved=>{
+      if(!saved && persistedCharacterSignatures.get(id) === signature) persistedCharacterSignatures.delete(id);
+    });
+  }
   function refreshRealtimePlayer(id){
     if(!id || !document.getElementById('player')?.classList.contains('show')) return;
     window.loadPlayer?.(id);
@@ -211,19 +251,7 @@
     if(campaign) campaign.characters=Object.assign({},campaign.characters||{});
     const progressionUpdates=[];
     Object.entries(sharedCharacters).forEach(([id,rawIncoming])=>{
-      const authority=authoritativeProgression.get(`${campaignId}:${id}`);
-      const incoming=options.source==='progression' || !authority
-        ? rawIncoming
-        : Object.assign({},rawIncoming,{
-            level:authority.level,
-            xp:authority.xp,
-            xpMax:authority.xpMax,
-            cp:authority.cp,
-            tp:authority.tp,
-            pendingSkillChoices:authority.pendingSkillChoices,
-            dashboardNotifications:authority.dashboardNotifications,
-            progressionSync:authority.progressionSync
-          });
+      const incoming=rawIncoming;
       const before=window.chars[id]||{};
       const character=Object.assign({},before,incoming,{
         id,
@@ -239,6 +267,7 @@
         progressionUpdates.push({ id, character, previous:before });
         persistReceivedProgression(id,character,user);
       }
+      persistReceivedCharacter(id,character,user);
       window.dispatchEvent(new CustomEvent('asteria:character-realtime', {
         detail:{ id, campaignId, character, previous:before, owned:character.ownerUid===user.uid }
       }));
@@ -258,21 +287,59 @@
     window.renderPlayerHome?.();
     window.refreshSyncedViews?.();
   }
+  function realtimeCampaignTargets(campaigns, user){
+    const targets=new Map();
+    (campaigns||[]).filter(Boolean).forEach(campaign=>{
+      if(campaign?.id) targets.set(String(campaign.id),campaign);
+    });
+    ownedCharacterIds().forEach(id=>{
+      const character=window.chars?.[id];
+      if(!character) return;
+      const linkedIds=[
+        ...(Array.isArray(character.linkedCampaignIds)?character.linkedCampaignIds:[]),
+        ...(character.sharedCampaignId?[character.sharedCampaignId]:[])
+      ];
+      linkedIds.filter(Boolean).forEach(campaignId=>{
+        const key=String(campaignId);
+        if(!targets.has(key)) targets.set(key,{ id:key, name:character.campaign || 'Linked Campaign' });
+      });
+    });
+    return Array.from(targets.values()).filter(campaign=>{
+      if(!campaign?.id) return false;
+      if(!campaign.ownerUid && !campaign.gmUids && !campaign.playerUids && !campaign.players) return true;
+      return campaign.ownerUid===user.uid
+        || campaign.gmId===user.uid
+        || (campaign.gmUids||[]).includes(user.uid)
+        || (campaign.playerUids||[]).includes(user.uid)
+        || campaign.players?.[user.uid];
+    });
+  }
+  function startAccountCampaignDiscovery(){
+    const user=window.AsteriaFirebase?.getUser?.();
+    if(!user || !window.AsteriaFirebase?.subscribeAccountCampaigns) return;
+    if(realtimeUid && realtimeUid!==user.uid) stopRealtimeCampaignSync();
+    realtimeUid=user.uid;
+    if(accountCampaignUnsubscribe) return;
+    accountCampaignUnsubscribe=window.AsteriaFirebase.subscribeAccountCampaigns(campaigns=>{
+      mergeCloudCampaigns(campaigns || []);
+      setupRealtimeCampaignSync(window.campaigns || []);
+      lastCampaignRefresh=Date.now();
+    });
+  }
   function setupRealtimeCampaignSync(campaigns=window.campaigns||[]){
     const user=window.AsteriaFirebase?.getUser?.();
     if(!user || !window.AsteriaFirebase?.subscribeCampaign || !window.AsteriaFirebase?.subscribeCampaignCharacters) return;
     if(realtimeUid && realtimeUid!==user.uid) stopRealtimeCampaignSync();
     realtimeUid=user.uid;
+    startAccountCampaignDiscovery();
     const activeKeys=new Set();
-    (campaigns||[]).filter(Boolean).forEach(campaign=>{
+    realtimeCampaignTargets(campaigns,user).forEach(campaign=>{
       if(!campaign.id) return;
       const campaignKey=`campaign:${campaign.id}`;
       const charactersKey=`characters:${campaign.id}`;
-      const progressionKey=`progression:${campaign.id}`;
       const itemEcosystemKey=`item-ecosystem:${campaign.id}`;
       activeKeys.add(campaignKey);
       activeKeys.add(charactersKey);
-      activeKeys.add(progressionKey);
       activeKeys.add(itemEcosystemKey);
       if(!realtimeSubscriptions.has(campaignKey)){
         realtimeSubscriptions.set(campaignKey,window.AsteriaFirebase.subscribeCampaign(campaign.id,mergeRealtimeCampaign));
@@ -281,12 +348,6 @@
         realtimeSubscriptions.set(charactersKey,window.AsteriaFirebase.subscribeCampaignCharacters(
           campaign.id,
           characters=>mergeRealtimeCharacters(campaign.id,characters)
-        ));
-      }
-      if(window.AsteriaFirebase?.subscribeCampaignProgression && !realtimeSubscriptions.has(progressionKey)){
-        realtimeSubscriptions.set(progressionKey,window.AsteriaFirebase.subscribeCampaignProgression(
-          campaign.id,
-          progression=>mergeRealtimeProgression(campaign.id,progression)
         ));
       }
       if(window.AsteriaFirebase?.subscribeCampaignItemEcosystem && !realtimeSubscriptions.has(itemEcosystemKey)){
@@ -305,6 +366,7 @@
   async function refreshCloudCampaigns(reason='manual'){
     if(!isAuthed()) return [];
     try{
+      startAccountCampaignDiscovery();
       const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
       mergeCloudCampaigns(campaigns);
       setupRealtimeCampaignSync(window.campaigns);
@@ -318,11 +380,17 @@
   }
   async function loadCloudData(reason='login'){
     const user = window.AsteriaFirebase?.getUser?.();
-    if(!user || cloudLoadedForUid === user.uid) return;
+    if(!user) return;
+    startAccountCampaignDiscovery();
+    if(cloudLoadedForUid === user.uid){
+      setupRealtimeCampaignSync(window.campaigns || []);
+      return;
+    }
     cloudLoadedForUid = user.uid;
     setSyncStatus('Cloud sync: loading account data...', 'info');
     try{
       await window.AsteriaFirebase?.loadCharacters?.();
+      startAccountCampaignDiscovery();
       const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
       const state = await window.AsteriaFirebase?.loadState?.();
       mergeCloudState(state);
@@ -412,6 +480,19 @@
   window.addEventListener('asteria:firebase-ready', e=>{
     loadCloudData(e.detail?.source || 'auth');
     setTimeout(()=>scheduleCloudSave('auth-ready'), 1200);
+  });
+  window.addEventListener('asteria:firebase-sync-error', event=>{
+    const detail=event.detail || {};
+    const permissionDenied=String(detail.code || '').includes('permission-denied');
+    setSyncStatus(
+      permissionDenied
+        ? 'Cloud delivery blocked by Firestore rules'
+        : 'Cloud delivery interrupted - retrying',
+      'warn'
+    );
+    if(permissionDenied){
+      toast('Firebase blocked campaign delivery. Deploy the included firestore.rules, then refresh both accounts.');
+    }
   });
   window.addEventListener('focus', ()=>{
     if(isAuthed() && Date.now() - lastCampaignRefresh > 10000) refreshCloudCampaigns('window-focus');

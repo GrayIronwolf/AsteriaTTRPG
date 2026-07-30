@@ -25,6 +25,7 @@ function renderBreakdowns(prefix,c){['hp','sp','mp'].forEach(key=>{ const id=pre
 function currentPlayerId(){return session.role==='player' ? session.character : selected}
 function syncAfterResourceChange(id){
   const character=chars[id];
+  const writes=[];
   (campaigns||[]).filter(campaign=>(campaign.party||[]).includes(id)).forEach(campaign=>{
     campaign.characters=campaign.characters||{};
     campaign.characters[id]=Object.assign({},campaign.characters[id]||{}, {
@@ -50,16 +51,18 @@ function syncAfterResourceChange(id){
       sharedCampaignId:campaign.id,
       status:'linked'
     });
-    window.AsteriaFirebase?.saveCampaignCharacterProgress?.(campaign.id,id,character);
-    window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id,id,character);
+    if(window.AsteriaFirebase?.saveCampaignCharacterProgress){
+      writes.push(window.AsteriaFirebase.saveCampaignCharacterProgress(campaign.id,id,character));
+    }
   });
   if($('player')?.classList.contains('show')) loadPlayer(currentPlayerId());
   if($('gm')?.classList.contains('show')) renderGM();
   if($('gmPlayer')?.classList.contains('show')) renderGMPlayer();
+  return Promise.all(writes).then(results=>results.length > 0 && results.every(Boolean));
 }
 function publishCharacterProgression(id){
   const character=chars?.[id];
-  if(!character || !window.AsteriaFirebase?.saveCampaignProgression) return Promise.resolve(false);
+  if(!character || !window.AsteriaFirebase?.saveCampaignCharacterProgress) return Promise.resolve(false);
   const linkedCampaigns=(campaigns||[]).filter(campaign=>
     campaign?.id && (
       (campaign.party||[]).includes(id) ||
@@ -69,10 +72,10 @@ function publishCharacterProgression(id){
   );
   if(!linkedCampaigns.length) return Promise.resolve(false);
   return Promise.all(
-    linkedCampaigns.map(campaign=>window.AsteriaFirebase.saveCampaignProgression(campaign.id,id,character))
+    linkedCampaigns.map(campaign=>window.AsteriaFirebase.saveCampaignCharacterProgress(campaign.id,id,character))
   ).then(results=>results.every(Boolean));
 }
-function adjustCharacterResource(id,key,amount){
+function adjustCharacterResource(id,key,amount,options={}){
   const c=chars[id];
   if(!c) return;
   if(key==='xp'){
@@ -82,8 +85,9 @@ function adjustCharacterResource(id,key,amount){
     c[key][0]=Math.max(0,Math.min(c[key][1],c[key][0]+amount));
   }
   saveAsteriaState?.();
-  syncAfterResourceChange(id);
+  const delivery=options.deferSync ? Promise.resolve(false) : syncAfterResourceChange(id);
   toast(c.name+' '+key.toUpperCase()+' '+(amount>0?'+':'')+amount);
+  return delivery;
 }
 function adjustPlayerResource(key,amount){ adjustCharacterResource(currentPlayerId(),key,amount); }
 function customPlayerResource(sign){ const key=$('playerResourceKey')?.value||'hp'; const amount=Math.abs(+$('playerResourceAmount')?.value||0); if(amount) adjustPlayerResource(key, sign*amount); }
@@ -3254,7 +3258,7 @@ function distributeCampaignXP(){
   xpPartyIds().forEach(id=>{
     const add=Math.max(0,Number(awards[id]||0)); if(!add) return;
     const c=chars[id]; const before={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
-    adjustCharacterResource(id,'xp',add);
+    adjustCharacterResource(id,'xp',add,{deferSync:true});
     const after={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
     const progressionRevision=`xp-${Date.now()}-${id}-${Math.random().toString(36).slice(2,8)}`;
     c.progressionSync={
@@ -3283,8 +3287,7 @@ function distributeCampaignXP(){
         visibility
       });
     }
-    syncAfterResourceChange?.(id);
-    progressionWrites.push(publishCharacterProgression(id));
+    progressionWrites.push(syncAfterResourceChange(id));
     results.push(`${c.name} +${add.toLocaleString()} XP${after.level>before.level?` → Level ${after.level}`:''}`);
     slEvent?.('XP awards',`${c.name} received ${add.toLocaleString()} XP from ${source}.`,{source,reason,award:add,before,after,carryover:c.xp,splitXP:add},visibility);
     if(after.level>before.level) slEvent?.('Level-ups',`${c.name} levelled from ${before.level} to ${after.level}. Carryover XP: ${c.xp.toLocaleString()}.`,{source,from:before.level,to:after.level,carryover:c.xp,cp:c.cp,tp:c.tp},visibility);
