@@ -762,6 +762,64 @@ window.AsteriaFirebase = {
       err=>console.warn(`Could not watch shared characters for campaign ${campaignId}.`, err)
     );
   },
+  saveOwnedCharacterProgress: async function(characterId, character){
+    if(!db || !currentUser || !characterId || !character) return false;
+    if(character.ownerUid && character.ownerUid !== currentUser.uid) return false;
+    try{
+      await setDoc(
+        doc(db, 'users', currentUser.uid, 'characters', characterId),
+        {
+          id:characterId,
+          ownerUid:currentUser.uid,
+          level:Number(character.level || 0),
+          xp:Number(character.xp || 0),
+          xpMax:Number(character.xpMax || 1000),
+          cp:Number(character.cp || 0),
+          tp:Number(character.tp || 0),
+          pendingSkillChoices:Number(character.pendingSkillChoices || 0),
+          dashboardNotifications:cleanData(character.dashboardNotifications || []),
+          progressionSync:cleanData(character.progressionSync || {}),
+          updatedAt:serverTimestamp()
+        },
+        { merge:true }
+      );
+      return true;
+    }catch(err){
+      console.warn('Could not persist the received character progression.', err);
+      return false;
+    }
+  },
+  saveCampaignCharacterProgress: async function(campaignId, characterId, character){
+    if(!db || !currentUser || !campaignId || !characterId || !character) return false;
+    try{
+      const ownerUid=character.ownerUid || '';
+      const progressionPayload={
+        id:characterId,
+        sourceCharacterId:character.sourceCharacterId || characterId,
+        sharedCampaignId:campaignId,
+        status:'linked',
+        level:Number(character.level || 0),
+        xp:Number(character.xp || 0),
+        xpMax:Number(character.xpMax || 1000),
+        cp:Number(character.cp || 0),
+        tp:Number(character.tp || 0),
+        pendingSkillChoices:Number(character.pendingSkillChoices || 0),
+        dashboardNotifications:cleanData(character.dashboardNotifications || []),
+        progressionSync:cleanData(character.progressionSync || {}),
+        updatedAt:serverTimestamp()
+      };
+      if(ownerUid) progressionPayload.ownerUid=ownerUid;
+      await setDoc(
+        doc(db, 'campaigns', campaignId, 'characters', characterId),
+        progressionPayload,
+        { merge:true }
+      );
+      return true;
+    }catch(err){
+      console.warn('Could not publish the campaign character progression.', err);
+      return false;
+    }
+  },
   saveCampaignCharacter: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
     try{

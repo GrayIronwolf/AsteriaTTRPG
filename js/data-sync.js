@@ -11,6 +11,7 @@
   let lastCampaignRefresh = 0;
   let realtimeUid = null;
   const realtimeSubscriptions = new Map();
+  const persistedProgressionSignatures = new Map();
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -149,12 +150,54 @@
     window.AsteriaItemEcosystem?.renderGM?.();
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
   }
+  function progressionSignature(character){
+    if(!character) return '';
+    return [
+      Number(character.level || 0),
+      Number(character.xp || 0),
+      Number(character.xpMax || 0),
+      Number(character.cp || 0),
+      Number(character.tp || 0),
+      Number(character.pendingSkillChoices || 0),
+      String(character.progressionSync?.revision || '')
+    ].join(':');
+  }
+  function progressionChanged(previous, character){
+    return progressionSignature(previous) !== progressionSignature(character);
+  }
+  function activeSharedCharacterId(sharedCharacters){
+    const session=getSession();
+    const candidates=[
+      window.currentPlayerId?.(),
+      window.selected,
+      session.character,
+      session.profile?.activeCharacterId
+    ].filter(Boolean);
+    return candidates.find(id=>sharedCharacters[id]) || '';
+  }
+  function persistReceivedProgression(id, character, user){
+    if(!character || character.ownerUid !== user?.uid || !window.AsteriaFirebase?.saveOwnedCharacterProgress) return;
+    const signature=progressionSignature(character);
+    if(persistedProgressionSignatures.get(id) === signature) return;
+    persistedProgressionSignatures.set(id,signature);
+    window.AsteriaFirebase.saveOwnedCharacterProgress(id,character).then(saved=>{
+      if(!saved && persistedProgressionSignatures.get(id) === signature) persistedProgressionSignatures.delete(id);
+    });
+  }
+  function refreshRealtimePlayer(id){
+    if(!id || !document.getElementById('player')?.classList.contains('show')) return;
+    window.loadPlayer?.(id);
+    window.renderCharacterDashboardNotices?.(id);
+    window.deliverCharacterDashboardNotices?.(id);
+    window.flashResource?.('xp');
+  }
   function mergeRealtimeCharacters(campaignId, sharedCharacters){
     const user=window.AsteriaFirebase?.getUser?.();
     if(!user || !sharedCharacters) return;
     window.chars=window.chars||{};
     const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
     if(campaign) campaign.characters=Object.assign({},campaign.characters||{});
+    const progressionUpdates=[];
     Object.entries(sharedCharacters).forEach(([id,incoming])=>{
       const before=window.chars[id]||{};
       const character=Object.assign({},before,incoming,{
@@ -167,13 +210,24 @@
         campaign.party=Array.from(new Set([...(campaign.party||[]),id]));
         campaign.characters[id]=Object.assign({},campaign.characters[id]||{},incoming);
       }
+      if(progressionChanged(before,character)){
+        progressionUpdates.push({ id, character, previous:before });
+        persistReceivedProgression(id,character,user);
+      }
       window.dispatchEvent(new CustomEvent('asteria:character-realtime', {
         detail:{ id, campaignId, character, previous:before, owned:character.ownerUid===user.uid }
       }));
     });
-    if(document.getElementById('player')?.classList.contains('show')){
-      const current=window.currentPlayerId?.()||window.session?.character;
-      if(current && sharedCharacters[current]) window.loadPlayer?.(current);
+    const current=activeSharedCharacterId(sharedCharacters);
+    if(current){
+      refreshRealtimePlayer(current);
+      const update=progressionUpdates.find(item=>item.id===current);
+      if(update){
+        window.dispatchEvent(new CustomEvent('asteria:xp-reward-realtime', {
+          detail:Object.assign({ campaignId },update)
+        }));
+        queueMicrotask(()=>refreshRealtimePlayer(current));
+      }
     }
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
     window.renderPlayerHome?.();
@@ -314,6 +368,7 @@
     refreshCampaigns: refreshCloudCampaigns,
     watchCampaigns: setupRealtimeCampaignSync,
     stopWatching: stopRealtimeCampaignSync,
+    mergeCampaignCharacters: mergeRealtimeCharacters,
     saveAppState,
     readAppState: readAppSystemState,
     status:()=>localMeta()

@@ -41,10 +41,16 @@ function syncAfterResourceChange(id){
       bp:Array.isArray(character?.bp)?character.bp.slice():null,
       xp:Number(character?.xp||0),
       xpMax:Number(character?.xpMax||1000),
+      cp:Number(character?.cp||0),
+      tp:Number(character?.tp||0),
+      pendingSkillChoices:Number(character?.pendingSkillChoices||0),
+      dashboardNotifications:Array.isArray(character?.dashboardNotifications)?character.dashboardNotifications:[],
+      progressionSync:character?.progressionSync||{},
       conditions:Array.isArray(character?.conditions)?character.conditions:[],
       sharedCampaignId:campaign.id,
       status:'linked'
     });
+    window.AsteriaFirebase?.saveCampaignCharacterProgress?.(campaign.id,id,character);
     window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id,id,character);
   });
   if($('player')?.classList.contains('show')) loadPlayer(currentPlayerId());
@@ -3234,7 +3240,19 @@ function distributeCampaignXP(){
     const c=chars[id]; const before={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
     adjustCharacterResource(id,'xp',add);
     const after={level:c.level,xp:c.xp,cp:c.cp||0,tp:c.tp||0};
+    const progressionRevision=`xp-${Date.now()}-${id}-${Math.random().toString(36).slice(2,8)}`;
+    c.progressionSync={
+      revision:progressionRevision,
+      award:add,
+      source,
+      reason,
+      before,
+      after,
+      awardedAt:new Date().toISOString(),
+      awardedBy:window.AsteriaFirebase?.getUser?.()?.uid||window.session?.account||'gm'
+    };
     queueCharacterDashboardNotice(c,{
+      id:`${progressionRevision}-reward`,
       type:'xp',
       title:'XP Reward Received',
       message:`+${add.toLocaleString()} XP from ${source}. ${reason}`,
@@ -3242,6 +3260,7 @@ function distributeCampaignXP(){
     });
     if(after.level>before.level){
       queueCharacterDashboardNotice(c,{
+        id:`${progressionRevision}-level`,
         type:'level',
         title:`Level Up: Level ${after.level}`,
         message:`${c.name} advanced from Level ${before.level} to Level ${after.level}. CP and TP rewards have been applied.`,
