@@ -3271,6 +3271,13 @@
     window.session = window.session || {};
     window.session.character = id;
     window.selected = id;
+    const character=window.chars[id];
+    const campaignId=character.sharedCampaignId || array(character.linkedCampaignIds)[0] ||
+      array(window.campaigns).find(campaign => array(campaign?.party).includes(id))?.id || '';
+    if(campaignId && window.AsteriaReactMigration?.available){
+      window.AsteriaReactMigration.openCharacter(campaignId,id);
+      return true;
+    }
     if(typeof window.forceOpenPlayerDashboard === 'function') return window.forceOpenPlayerDashboard(id);
     document.querySelectorAll('.view').forEach(view => view.classList.remove('show'));
     byId('workspace')?.classList.remove('show');

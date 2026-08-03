@@ -1,0 +1,19 @@
+{
+  "name": "asteria-react-migration",
+  "private": true,
+  "version": "1.0.0-milestone.1",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test:react": "node scripts/test-react-live-session.mjs",
+    "test:smoke": "node scripts/smoke-test.js",
+    "test": "npm run test:react && npm run test:smoke"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "vite": "5.4.14"
+  }
+}

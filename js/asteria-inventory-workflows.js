@@ -522,6 +522,7 @@
     return array(character(id)?.pendingItemRewards).find(reward => reward.status === 'pending');
   }
   function showPendingReward(id = currentId()){
+    if(window.AsteriaReactMigration?.isDashboardActive?.()) return;
     const reward = pendingReward(id);
     if(!reward || activeRewardId === reward.id && document.getElementById('asteriaWorkflowModal')?.classList.contains('show')) return;
     activeRewardId = reward.id;
@@ -547,12 +548,12 @@
   async function resolveReward(id, reward, action, slot){
     const record = character(id);
     const rewardId = String(reward?.id || '');
-    if(!record || !rewardId || resolvingRewardIds.has(rewardId)) return;
+    if(!record || !rewardId || resolvingRewardIds.has(rewardId)) return false;
     record.resolvedItemRewardIds = array(record.resolvedItemRewardIds);
     if(record.resolvedItemRewardIds.includes(rewardId) || reward.status === 'accepted' || reward.status === 'declined'){
       closeModal();
       activeRewardId = '';
-      return;
+      return true;
     }
     const before = clone(record);
     const campaign = campaignsForCharacter(id).find(item => String(item?.id || '') === String(reward.campaignId || ''))
@@ -570,6 +571,7 @@
         }
       }
       reward.status = action === 'declined' ? 'declined' : 'accepted';
+      reward.resolution = action;
       reward.resolvedAt = new Date().toISOString();
       record.resolvedItemRewardIds = Array.from(new Set([...record.resolvedItemRewardIds, rewardId]));
       if(campaign){
@@ -616,6 +618,7 @@
       setRewardActionsDisabled(modal, false);
       if(resolved) setTimeout(() => showPendingReward(id), 100);
     }
+    return resolved;
   }
 
   function shopSelectedHtml(){
@@ -836,7 +839,8 @@
     openItemPicker,
     openActiveShop:showActiveShop,
     showPendingReward,
-    sendGMReward
+    sendGMReward,
+    resolveReward
   });
   window.toggleEquipItem = function(itemId){
     const item = findItem(itemId);

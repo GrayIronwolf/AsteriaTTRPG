@@ -17,14 +17,18 @@ const firebaseConfig = {
   measurementId: 'G-FVD0YYJ0HP'
 };
 
+const reactDevFixture = ['127.0.0.1', 'localhost'].includes(window.location.hostname) &&
+  new URLSearchParams(window.location.search).get('reactFixture') === '1';
+
 let app, auth, db, currentUser = null, currentProfile = null;
 try {
+  if(reactDevFixture) throw new Error('React development fixture active.');
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   setPersistence(auth, browserLocalPersistence).catch(err => console.warn('Firebase persistence setup failed.', err));
   db = getFirestore(app);
 } catch (err) {
-  console.warn('Firebase failed to initialise. Account login requires Firebase setup.', err);
+  if(!reactDevFixture) console.warn('Firebase failed to initialise. Account login requires Firebase setup.', err);
 }
 
 function $(id){ return document.getElementById(id); }
@@ -601,10 +605,285 @@ window.firebaseLogout = async function(){
   notice('Logged out.');
 };
 
-window.AsteriaFirebase = {
+const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser),
   getUser:()=>currentUser,
   getProfile:()=>currentProfile,
+  subscribeLiveSession: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      doc(db, 'campaigns', campaignId, 'liveSession', 'current'),
+      snapshot=>onChange(snapshot.exists() ? Object.assign({ id:'' }, snapshot.data()) : { id:'', status:'idle' }),
+      error=>reportSyncError('live-session-listener', error, { campaignId })
+    );
+  },
+  startLiveSession: async function(campaignId){
+    if(!db || !currentUser || !campaignId) throw new Error('A signed-in campaign GM is required.');
+    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
+    const result=await runTransaction(db, async transaction=>{
+      const liveSnapshot=await transaction.get(liveRef);
+      const current=liveSnapshot.exists() ? liveSnapshot.data() : {};
+      if(current.status === 'active') return current;
+      const resume=current.status === 'paused' && current.id;
+      const sessionId=resume ? current.id : `session-${Date.now()}-${currentUser.uid.slice(0,6)}`;
+      const sessionRef=doc(db, 'campaigns', campaignId, 'sessions', sessionId);
+      const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+      const next=Object.assign({}, current, {
+        id:sessionId,
+        campaignId,
+        status:'active',
+        startedBy:current.startedBy || currentUser.uid,
+        startedAt:current.startedAt || serverTimestamp(),
+        resumedAt:resume ? serverTimestamp() : null,
+        updatedAt:serverTimestamp(),
+        endedAt:null
+      });
+      transaction.set(liveRef, next, { merge:true });
+      transaction.set(sessionRef, next, { merge:true });
+      transaction.set(eventRef, {
+        id:eventRef.id,
+        campaignId,
+        sessionId,
+        targetCharacterId:'',
+        targetOwnerUid:'',
+        type:resume ? 'session-started' : 'session-started',
+        payload:{ resumed:Boolean(resume) },
+        status:'delivered',
+        deliveryStatus:'delivered',
+        acknowledged:false,
+        createdBy:currentUser.uid,
+        createdAt:serverTimestamp(),
+        resolvedAt:serverTimestamp()
+      });
+      return Object.assign({}, next, { startedAt:current.startedAt || new Date().toISOString() });
+    });
+    return { ok:true, session:result };
+  },
+  pauseLiveSession: async function(campaignId){
+    if(!db || !currentUser || !campaignId) throw new Error('A signed-in campaign GM is required.');
+    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
+    const result=await runTransaction(db, async transaction=>{
+      const snapshot=await transaction.get(liveRef);
+      if(!snapshot.exists() || snapshot.data().status !== 'active') throw new Error('Only an active session can be paused.');
+      const current=snapshot.data();
+      const sessionRef=doc(db, 'campaigns', campaignId, 'sessions', current.id);
+      const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+      const patch={ status:'paused', pausedAt:serverTimestamp(), updatedAt:serverTimestamp() };
+      transaction.set(liveRef, patch, { merge:true });
+      transaction.set(sessionRef, patch, { merge:true });
+      transaction.set(eventRef, {
+        id:eventRef.id, campaignId, sessionId:current.id, targetCharacterId:'', targetOwnerUid:'',
+        type:'session-paused', payload:{}, status:'delivered', deliveryStatus:'delivered', acknowledged:false,
+        createdBy:currentUser.uid, createdAt:serverTimestamp(), resolvedAt:serverTimestamp()
+      });
+      return Object.assign({}, current, patch);
+    });
+    return { ok:true, session:result };
+  },
+  endLiveSession: async function(campaignId){
+    if(!db || !currentUser || !campaignId) throw new Error('A signed-in campaign GM is required.');
+    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
+    const result=await runTransaction(db, async transaction=>{
+      const snapshot=await transaction.get(liveRef);
+      if(!snapshot.exists() || !['active','paused'].includes(snapshot.data().status)) throw new Error('Start a session before ending it.');
+      const current=snapshot.data();
+      const sessionRef=doc(db, 'campaigns', campaignId, 'sessions', current.id);
+      const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+      const patch={ status:'ended', endedAt:serverTimestamp(), updatedAt:serverTimestamp() };
+      transaction.set(liveRef, patch, { merge:true });
+      transaction.set(sessionRef, patch, { merge:true });
+      transaction.set(eventRef, {
+        id:eventRef.id, campaignId, sessionId:current.id, targetCharacterId:'', targetOwnerUid:'',
+        type:'session-ended', payload:{}, status:'delivered', deliveryStatus:'delivered', acknowledged:false,
+        createdBy:currentUser.uid, createdAt:serverTimestamp(), resolvedAt:serverTimestamp()
+      });
+      return Object.assign({}, current, patch);
+    });
+    return { ok:true, session:result };
+  },
+  setSessionPresence: async function(campaignId, sessionId, presence={}){
+    if(!db || !currentUser || !campaignId || !sessionId) return false;
+    await setDoc(doc(db, 'campaigns', campaignId, 'sessions', sessionId, 'presence', currentUser.uid), Object.assign({}, cleanData(presence), {
+      uid:currentUser.uid,
+      displayName:currentProfile?.username || currentUser.displayName || currentUser.email || 'Asteria User',
+      updatedAt:serverTimestamp()
+    }), { merge:true });
+    return true;
+  },
+  subscribeSessionPresence: function(campaignId, sessionId, onChange){
+    if(!db || !currentUser || !campaignId || !sessionId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(collection(db, 'campaigns', campaignId, 'sessions', sessionId, 'presence'), snapshot=>{
+      const records={};
+      snapshot.forEach(item=>{ records[item.id]=Object.assign({ uid:item.id }, item.data()); });
+      onChange(records);
+    }, error=>reportSyncError('session-presence-listener', error, { campaignId, sessionId }));
+  },
+  subscribeCampaignEvents: function(campaignId, onChange, options={}){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    const source=options.mode === 'character'
+      ? query(collection(db, 'campaigns', campaignId, 'events'), where('targetOwnerUid', '==', options.targetOwnerUid || currentUser.uid))
+      : collection(db, 'campaigns', campaignId, 'events');
+    return onSnapshot(source, snapshot=>{
+      const events=[];
+      snapshot.forEach(item=>{
+        const event=Object.assign({ id:item.id }, item.data());
+        if(options.characterId && event.targetCharacterId && event.targetCharacterId !== options.characterId) return;
+        events.push(event);
+      });
+      onChange(events);
+    }, error=>reportSyncError('campaign-events-listener', error, { campaignId, mode:options.mode || 'gm' }));
+  },
+  acknowledgeCampaignEvent: async function(campaignId, eventId, resolution={}){
+    if(!db || !currentUser || !campaignId || !eventId) return { ok:false, applied:false };
+    const eventRef=doc(db, 'campaigns', campaignId, 'events', eventId);
+    const applied=await runTransaction(db, async transaction=>{
+      const snapshot=await transaction.get(eventRef);
+      if(!snapshot.exists()) return false;
+      const event=snapshot.data();
+      if(event.acknowledged && !resolution.status) return false;
+      transaction.set(eventRef, Object.assign({}, cleanData(resolution), {
+        acknowledged:true,
+        acknowledgedBy:currentUser.uid,
+        acknowledgedAt:serverTimestamp(),
+        deliveryStatus:'acknowledged',
+        updatedAt:serverTimestamp()
+      }), { merge:true });
+      return true;
+    });
+    return { ok:true, applied };
+  },
+  grantCampaignXP: async function(campaignId, characterId, amount, metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
+    const delta=Math.floor(Number(amount || 0));
+    if(delta <= 0) throw new Error('XP must be greater than zero.');
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
+    try{
+      const result=await runTransaction(db, async transaction=>{
+        const characterSnapshot=await transaction.get(characterRef);
+        const liveSnapshot=await transaction.get(liveRef);
+        if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({ id:characterId }, characterSnapshot.data());
+        const before={ level:Number(character.level || 0), xp:Number(character.xp || 0) };
+        const progression=window.AsteriaProgression?.grantXP?.(character, delta) || { leveled:false, fromLevel:before.level, toLevel:before.level, messages:[] };
+        const revision=`xp-${eventRef.id}`;
+        character.progressionSync={ revision, source:'gm-live-reward', updatedAt:new Date().toISOString() };
+        transaction.set(characterRef, Object.assign({}, cleanData(character), { updatedAt:serverTimestamp() }), { merge:true });
+        const event={
+          id:eventRef.id,
+          campaignId,
+          sessionId:liveSnapshot.exists() && ['active','paused'].includes(liveSnapshot.data().status) ? liveSnapshot.data().id : '',
+          targetCharacterId:characterId,
+          targetOwnerUid:character.ownerUid || '',
+          type:'xp-reward',
+          payload:{
+            amount:delta,
+            reason:metadata.reason || 'Campaign reward',
+            source:metadata.source || 'GM Dashboard',
+            characterName:character.name || characterId,
+            before,
+            level:Number(character.level || 0),
+            xp:Number(character.xp || 0),
+            xpMax:Number(character.xpMax || 0),
+            leveled:Boolean(progression.leveled),
+            fromLevel:Number(progression.fromLevel ?? before.level),
+            toLevel:Number(progression.toLevel ?? character.level ?? 0),
+            messages:progression.messages || []
+          },
+          status:'delivered',
+          deliveryStatus:'delivered',
+          acknowledged:false,
+          createdBy:currentUser.uid,
+          createdAt:serverTimestamp(),
+          resolvedAt:null
+        };
+        transaction.set(eventRef, event);
+        return { character, event:Object.assign({}, event, { createdAt:new Date().toISOString() }) };
+      });
+      return { ok:true, applied:true, character:result.character, event:result.event };
+    }catch(error){
+      reportSyncError('campaign-xp-transaction', error, { campaignId, characterId, amount:delta });
+      return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  createLootReward: async function(campaignId, characterId, item, metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId || !item) return { ok:false };
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
+    try{
+      const result=await runTransaction(db, async transaction=>{
+        const characterSnapshot=await transaction.get(characterRef);
+        const liveSnapshot=await transaction.get(liveRef);
+        if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({ id:characterId }, characterSnapshot.data());
+        const reward={
+          id:eventRef.id,
+          campaignId,
+          campaignName:metadata.campaignName || '',
+          item:cleanData(item),
+          message:metadata.message || 'The GM awarded an item.',
+          status:'pending',
+          createdAt:new Date().toISOString()
+        };
+        const pending=Array.isArray(character.pendingItemRewards) ? character.pendingItemRewards : [];
+        if(!pending.some(value=>String(value?.id || '') === eventRef.id)) character.pendingItemRewards=[...pending,reward];
+        transaction.set(characterRef, { pendingItemRewards:cleanData(character.pendingItemRewards), updatedAt:serverTimestamp() }, { merge:true });
+        const event={
+          id:eventRef.id,
+          campaignId,
+          sessionId:liveSnapshot.exists() && ['active','paused'].includes(liveSnapshot.data().status) ? liveSnapshot.data().id : '',
+          targetCharacterId:characterId,
+          targetOwnerUid:character.ownerUid || '',
+          type:'loot-reward',
+          payload:{ item:cleanData(item), message:reward.message, campaignName:reward.campaignName },
+          status:'pending',
+          deliveryStatus:'delivered',
+          acknowledged:false,
+          createdBy:currentUser.uid,
+          createdAt:serverTimestamp(),
+          resolvedAt:null
+        };
+        transaction.set(eventRef, event);
+        return event;
+      });
+      return { ok:true, applied:true, event:Object.assign({}, result, { createdAt:new Date().toISOString() }) };
+    }catch(error){
+      reportSyncError('campaign-loot-transaction', error, { campaignId, characterId });
+      return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  updateCampaignCharacterResource: async function(campaignId, characterId, key, amount, metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
+    const resource=String(key || '').toLowerCase();
+    if(!['hp','sp','mp','bp'].includes(resource)) throw new Error('Unsupported character resource.');
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+    try{
+      const result=await runTransaction(db, async transaction=>{
+        const snapshot=await transaction.get(characterRef);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({ id:characterId }, snapshot.data());
+        const pair=Array.isArray(character[resource]) ? character[resource] : [0,0];
+        const maximum=Math.max(0,Number(pair[1] || 0));
+        const current=Math.max(0,Math.min(maximum,Number(pair[0] || 0) + Number(amount || 0)));
+        const next=[current,maximum];
+        transaction.set(characterRef, { [resource]:next, updatedAt:serverTimestamp() }, { merge:true });
+        transaction.set(eventRef, {
+          id:eventRef.id, campaignId, sessionId:'', targetCharacterId:characterId, targetOwnerUid:character.ownerUid || '',
+          type:'resource-update', payload:{ resource, value:next, delta:Number(amount || 0), source:metadata.source || 'Dashboard' },
+          status:'delivered', deliveryStatus:'delivered', acknowledged:false, createdBy:currentUser.uid,
+          createdAt:serverTimestamp(), resolvedAt:serverTimestamp()
+        });
+        return next;
+      });
+      return { ok:true, applied:true, value:result };
+    }catch(error){
+      reportSyncError('campaign-resource-transaction', error, { campaignId, characterId, resource });
+      return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
   saveCharacter: async function(id, character){
     if(!db || !currentUser || !id || !character) return false;
     try{
@@ -991,15 +1270,28 @@ window.AsteriaFirebase = {
       return { ok:false, applied:false, character:null };
     }
     const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const eventRef=doc(db, 'campaigns', campaignId, 'events', rewardId);
     try{
       const result=await runTransaction(db, async transaction=>{
         const snapshot=await transaction.get(characterRef);
+        const eventSnapshot=await transaction.get(eventRef);
         if(!snapshot.exists()) throw new Error('The linked campaign character no longer exists.');
         const canonical=Object.assign({ id:characterId }, snapshot.data());
         const canonicalRewards=Array.isArray(canonical.pendingItemRewards) ? canonical.pendingItemRewards : [];
         const canonicalReward=canonicalRewards.find(reward=>String(reward?.id || '') === String(rewardId));
         if(!canonicalReward) throw new Error('The item reward no longer exists.');
         if(canonicalReward.status === 'accepted' || canonicalReward.status === 'declined'){
+          if(eventSnapshot.exists() && !eventSnapshot.data().resolvedAt){
+            transaction.set(eventRef, {
+              status:canonicalReward.resolution === 'equip' ? 'equipped' : canonicalReward.status,
+              deliveryStatus:'acknowledged',
+              acknowledged:true,
+              acknowledgedBy:currentUser.uid,
+              acknowledgedAt:serverTimestamp(),
+              resolvedAt:serverTimestamp(),
+              updatedAt:serverTimestamp()
+            }, { merge:true });
+          }
           return { applied:false, character:canonical };
         }
 
@@ -1023,6 +1315,17 @@ window.AsteriaFirebase = {
           Object.assign({}, submitted, { updatedAt:serverTimestamp() }),
           { merge:true }
         );
+        if(eventSnapshot.exists()){
+          transaction.set(eventRef, {
+            status:submittedReward.resolution === 'equip' ? 'equipped' : submittedReward.status,
+            deliveryStatus:'acknowledged',
+            acknowledged:true,
+            acknowledgedBy:currentUser.uid,
+            acknowledgedAt:serverTimestamp(),
+            resolvedAt:serverTimestamp(),
+            updatedAt:serverTimestamp()
+          }, { merge:true });
+        }
         return { applied:true, character:submitted };
       });
 
@@ -1072,11 +1375,12 @@ window.AsteriaFirebase = {
     if(currentUser) await loadCharacters(currentUser);
   }
 };
+if(!reactDevFixture) window.AsteriaFirebase = firebasePublicApi;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   const panel = $('loginPanel');
   if(panel) panel.innerHTML = authPanelHtml();
-  const title = document.querySelector('title'); if(title) title.textContent = 'ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1';
+  const title = document.querySelector('title'); if(title) title.textContent = 'ASTERIA REACT MIGRATION - MILESTONE 1';
   const oldLogout = window.logout;
   window.logout = function(){ firebaseLogout(); if(!auth && oldLogout) oldLogout(); };
   window.requestPasswordReset = function(){ return window.firebaseResetPassword(); };
@@ -1095,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 });
 
-if(auth){
+if(auth && !reactDevFixture){
   onAuthStateChanged(auth, async user=>{
     if(!user){
       const hadSession = Boolean(currentUser || window.AsteriaAuthBridge?.isLoggedIn?.());

@@ -37,6 +37,10 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 - `campaigns/{campaignId}` stores the shared campaign.
 - `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
 - `campaigns/{campaignId}/characters/{characterId}` is the canonical live character record used for XP, levels, resources, dashboard notices, inventory rewards, and full-sheet hydration.
+- `campaigns/{campaignId}/liveSession/current` stores the active, paused, or ended live-session pointer.
+- `campaigns/{campaignId}/sessions/{sessionId}` stores preserved session state and timestamps.
+- `campaigns/{campaignId}/sessions/{sessionId}/presence/{uid}` stores lightweight online/away presence for connected GM and Character dashboards.
+- `campaigns/{campaignId}/events/{eventId}` is the single campaign event stream for XP, loot, resources, notifications, and session lifecycle events. Events remain usable when no live session is active.
 - `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
@@ -49,6 +53,8 @@ When a GM creates or saves a campaign, the website creates both the shared campa
 When a player links a character, Asteria commits the member, character ID, owner link, and dashboard summary to the shared campaign, then writes the full record to `campaigns/{campaignId}/characters/{characterId}`. All live XP and direct item-reward updates use that same character document. The player subscribes to it through both campaign membership and the character's saved campaign links, so a stale account workspace cannot prevent delivery.
 
 The older `campaigns/{campaignId}/systems/progression` document is no longer part of the active sync path. Keeping XP, notices, resources, and inventory on the same canonical character stream prevents late autosaves from racing a second progression system.
+
+The React milestone does not initialize another Firebase application. `src/firebase/asteriaFirebaseService.js` adapts the existing `window.AsteriaFirebase` singleton from `js/firebase-auth.js`. XP, loot, resource mutations, and reward resolution are transaction-backed; React components contain no raw Firestore calls.
 
 Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
 
@@ -73,6 +79,8 @@ Campaigns created before this update gain their UCN lookup record the next time 
 4. Apply an XP award. The GM success message must say the XP was delivered to the live player dashboards.
 5. Confirm the player's XP bar and notification update without refreshing.
 6. Send a direct item reward. The GM success message must say the reward was delivered, and the player's reward window should open without refreshing.
+7. Accept, equip, or decline the reward. Refresh the Character Dashboard and confirm that the resolved popup does not return.
+8. Start a live session and confirm that both dashboards show the same active session and online presence. End the session and confirm normal XP/resource synchronization still works.
 
 If Firebase rejects a listener or write, Asteria now shows `Cloud delivery blocked by Firestore rules` instead of reporting a false delivery. Re-publish `firestore.rules`, then refresh both devices.
 
@@ -83,6 +91,8 @@ If Firebase rejects a listener or write, Asteria now shows `Cloud delivery block
 - Authenticated users with an active UCN can add only themselves as a player.
 - Campaign members can link only characters owned by their own account.
 - Campaign members can read linked character snapshots; players can update only their own snapshots, while the campaign GM can update campaign-linked snapshots through GM controls.
+- Campaign members can read live-session and presence records. Only campaign GMs can start, pause, resume, or end sessions.
+- Campaign GMs create campaign events. Target players can read only events addressed to their own Firebase UID and may update only acknowledgement/resolution fields.
 - Campaign members can read and update the shared item ecosystem used by multiplayer loot, shops, storage, and trade workflows. GM-only controls remain hidden and permission-checked by the application.
 - A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.
 

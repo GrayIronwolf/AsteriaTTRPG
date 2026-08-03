@@ -334,6 +334,11 @@ function createPlayerCharacter(){const nm=$('newCharName')?.value||'New Characte
 function openGMPlayer(id){
   const character=campaignCharacterFor(campaigns?.[activeCampaign],id);
   if(!character){toast('That campaign character has not finished syncing yet. Refresh the campaign and try again.');return;}
+  const campaignId=campaigns?.[activeCampaign]?.id || character.sharedCampaignId || '';
+  if(campaignId && window.AsteriaReactMigration?.available){
+    window.AsteriaReactMigration.openCharacter(campaignId,id);
+    return;
+  }
   selected=id;
   window.__asteriaGMCharacterPreview={campaignId:campaigns?.[activeCampaign]?.id||'',characterId:id,previousCharacterId:session?.character||''};
   session.character=id;

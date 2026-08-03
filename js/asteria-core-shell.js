@@ -123,6 +123,13 @@
     window.session = window.session || {};
     window.session.character = id;
     window.selected = id;
+    const character=window.chars?.[id] || {};
+    const campaignId=character.sharedCampaignId || character.linkedCampaignIds?.[0] ||
+      (window.campaigns || []).find(campaign => (campaign.party || []).includes(id))?.id || '';
+    if(campaignId && window.AsteriaReactMigration?.available){
+      window.AsteriaReactMigration.openCharacter(campaignId,id);
+      return;
+    }
     restoreMainViews();
     window.loadPlayer?.(id);
     window.setView?.('player');
@@ -142,6 +149,11 @@
       return;
     }
     window.activeCampaign = index;
+    const campaignId=window.campaigns?.[index]?.id || '';
+    if(campaignId && window.AsteriaReactMigration?.available){
+      window.AsteriaReactMigration.openGM(campaignId);
+      return;
+    }
     restoreMainViews();
     window.renderCampaigns?.();
     window.renderGM?.();

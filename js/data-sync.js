@@ -353,18 +353,18 @@
         detail:{ id, campaignId, character, previous:before, owned:character.ownerUid===user.uid }
       }));
     });
+    const reactDashboardActive=Boolean(window.AsteriaReactMigration?.isDashboardActive?.());
     const current=activeSharedCharacterId(sharedCharacters);
     if(current && changedIds.has(current)){
-      refreshRealtimePlayer(current);
       const update=progressionUpdates.find(item=>item.id===current);
       if(update){
         window.dispatchEvent(new CustomEvent('asteria:xp-reward-realtime', {
           detail:Object.assign({ campaignId },update)
         }));
-        queueMicrotask(()=>refreshRealtimePlayer(current));
       }
+      if(!reactDashboardActive) refreshRealtimePlayer(current);
     }
-    if(changedIds.size){
+    if(changedIds.size && !reactDashboardActive){
       if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
       window.renderPlayerHome?.();
       window.refreshSyncedViews?.();

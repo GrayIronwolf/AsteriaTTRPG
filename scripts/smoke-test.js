@@ -80,12 +80,18 @@ check('No duplicate IDs', duplicateIds.length === 0, duplicateIds.map(([id, coun
   'crafting',
   'gm',
   'gmPlayer',
+  'reactDashboard',
   'quests',
   'creature',
   'devLog'
 ].forEach(id => {
   check(`Required view exists: ${id}`, ids.includes(id));
 });
+
+check('React migration entry is loaded', jsFiles.includes('src/dev-entry.js'));
+check('React production CSS is loaded', cssFiles.includes('react-dist/asteria-react.css'));
+check('React production bundle exists', fs.existsSync(path.join(root, 'react-dist/asteria-react.js')));
+check('React source keeps static dashboard fallbacks', html.includes('id="player"') && html.includes('id="gm"') && html.includes('id="reactDashboard"'));
 
 [
   'css/v17447-core.css',
@@ -356,7 +362,7 @@ check('Clean compendium generator exists', fs.existsSync(path.join(root, 'script
 check('Old public hub pages removed', ['handbookHub','worldHub','racesHub','classesHub','itemsHub','magicHub'].every(id => !ids.includes(id)));
 check('Old handbook library viewer removed', !ids.includes('library') && !ids.includes('rulePage') && !html.includes('ruleCards') && !html.includes('ruleContent'));
 check('Public sidebar targets workspace sections', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic'].every(section => html.includes(`data-workspace-section="${section}"`)));
-check('Auth dashboard version is active', html.includes('ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1'));
+check('React migration milestone version is active', html.includes('ASTERIA REACT MIGRATION - MILESTONE 1'));
 check('Login page has one account type only', !html.includes('loginPageRole') && !html.includes('GM Account') && !html.includes('Administrator</option>'));
 check('Logged-in sidebar keeps only dashboard/settings actions', ['data-workspace-mode="dashboard"', 'data-workspace-action="settings"'].every(token => html.includes(token)) && ['data-workspace-mode="campaigns"', 'data-workspace-action="create-campaign"', 'data-workspace-mode="characters"', 'data-workspace-action="create-character"', 'data-app-route="player-dashboard"', 'data-app-route="campaign-manager"', 'data-app-route="gm-dashboard"'].every(token => !html.includes(token)));
 check('Top bar owns Character Forge and Campaign Forge navigation', ['id="characterForgeTop"', 'id="campaignsTop"', 'Character Forge', 'Campaign Forge', 'openCharacterForgeHub', 'openCampaignHub'].every(token => html.includes(token) || coreShellJs.includes(token)) && stylesCss.includes('.top-workspace-menu .top-menu-btn'));
@@ -410,11 +416,11 @@ check('GM roster supports hydrated shared character records', appJs.includes('fu
 check('Firestore permits member character snapshot sync', firestoreRules.includes('match /characters/{characterId}') && firestoreRules.includes('canReadCampaignCharacter') && firestoreRules.includes('canWriteCampaignCharacter'));
 check('GM XP awards publish the canonical character record immediately', appJs.includes('saveCampaignCharacterProgress') && firebaseAuthJs.includes('saveCampaignCharacterProgress: async function') && firebaseAuthJs.includes("doc(db, 'campaigns', campaignId, 'characters', characterId)"));
 check('Player receives and persists real-time progression', dataSyncJs.includes('progressionChanged') && dataSyncJs.includes('persistReceivedProgression') && dataSyncJs.includes('saveOwnedCharacterProgress') && firebaseAuthJs.includes('saveOwnedCharacterProgress: async function'));
-check('Active Character Dashboard rerenders on XP snapshots', dataSyncJs.includes('refreshRealtimePlayer') && dataSyncJs.includes('asteria:xp-reward-realtime') && dataSyncJs.includes('queueMicrotask(()=>refreshRealtimePlayer(current))'));
+check('React Character Dashboard patches XP snapshots without duplicate full rerenders', dataSyncJs.includes('asteria:xp-reward-realtime') && dataSyncJs.includes('reactDashboardActive') && !dataSyncJs.includes('queueMicrotask(()=>refreshRealtimePlayer(current))'));
 check('XP and loot use one canonical campaign character stream', appJs.includes('publishCharacterProgression') && appJs.includes('saveCampaignCharacterProgress') && !dataSyncJs.includes('subscribeCampaignProgression('));
 check('Player discovers campaigns before subscribing to character delivery', firebaseAuthJs.includes('subscribeAccountCampaigns: function') && dataSyncJs.includes('startAccountCampaignDiscovery') && dataSyncJs.includes('subscribeCampaignCharacters'));
 check('Received character snapshots preserve XP and inventory together', dataSyncJs.includes('receivedCharacterSignature') && dataSyncJs.includes('persistReceivedCharacter') && dataSyncJs.includes('saveOwnedCharacterSnapshot'));
-check('Live delivery scripts use cache-busted URLs', ['js/app.js?v=20260730-live-delivery-4','js/firebase-auth.js?v=20260730-live-delivery-4','js/data-sync.js?v=20260730-live-delivery-4','js/asteria-inventory-workflows.js?v=20260730-live-delivery-4'].every(src=>html.includes(src)));
+check('Live delivery scripts use cache-busted URLs', ['js/app.js?v=react-m1','js/firebase-auth.js?v=react-m1','js/data-sync.js?v=react-m1','js/asteria-inventory-workflows.js?v=react-m1'].every(src=>html.includes(src)));
 const firebaseCampaignSaveBlock = firebaseAuthJs.slice(firebaseAuthJs.indexOf('saveCampaign: async function'), firebaseAuthJs.indexOf('findCampaignByUCN: async function'));
 check('Campaign save preserves GM ownership', firebaseCampaignSaveBlock.includes('const ownerUid = campaignOwner(clean)') && firebaseCampaignSaveBlock.includes("if(ownerUid === currentUser.uid)") && !firebaseCampaignSaveBlock.includes('ownerUid: currentUser.uid'));
 check('Deployable Firestore campaign rules exist', Boolean(firestoreRules) && ['campaignInvites', 'joinsCampaignAsSelf', 'linksOwnedCharacter', "allow list: if false"].every(token => firestoreRules.includes(token)) && fs.existsSync(path.join(root, 'firebase.json')) && fs.existsSync(path.join(root, 'firestore.indexes.json')));

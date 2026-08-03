@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</title>
+  <title>ASTERIA REACT MIGRATION - MILESTONE 1</title>
   <link rel="stylesheet" href="css/styles.css?v=20260730-live-delivery-4" />
 <link rel="stylesheet" href="css/clean-compendium.css">
 <link rel="stylesheet" href="css/asteria-ui-theme-system.css">
 <link rel="stylesheet" href="css/border-glow.css">
 <link rel="stylesheet" href="css/asteria-inventory-workflows.css">
 <link rel="stylesheet" href="css/asteria-item-ecosystem.css">
+<link rel="stylesheet" href="react-dist/asteria-react.css?v=react-m1">
 <script src="js/asteria-home-guard.js"></script>
 </head>
 <body data-role="guest">
@@ -93,7 +94,7 @@
       <div class="theme-live-preview"><span>Live Preview</span><button type="button">Button</button><i></i></div>
     </section>
 
-    <section><h3>System</h3><p><b>Current Version:</b> ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
+    <section><h3>System</h3><p><b>Current Version:</b> ASTERIA REACT MIGRATION - MILESTONE 1</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
     <section><h3>Access</h3><p id="accessSummary">Guest access. Log in to unlock your workspace dashboard.</p><button onclick="logout()" class="outline">Log Out</button></section>
   </aside><div id="shade" class="shade"></div>
 
@@ -118,6 +119,7 @@
     </section>
 
     <section id="workspace" class="view workspace-view" aria-label="Asteria Workspace"></section>
+    <section id="reactDashboard" class="view react-dashboard-view" aria-label="Asteria React Dashboard"><div id="asteriaReactRoot"></div></section>
 
     <section id="loginPage" class="view"><div class="account-create-page card login-page-full">
       <div class="section-head"><div><p class="eyebrow">Asteria Access</p><h2>Login</h2></div><button class="outline" onclick="setView('home')">Back Home</button></div>
@@ -287,7 +289,7 @@
     <section id="quests" class="view"><div class="card"><div class="section-head"><div><p class="eyebrow">Campaign</p><h2>Quest Log</h2></div><button class="gm-only locked" onclick="addQuest()">+ Add Quest</button></div><p class="muted">Players can view active quests. GM can manage campaign quest information.</p><div id="questList"></div></div></section>
     <section id="creature" class="view"><div class="creature-page card"><button onclick="setView('gm')">← Back</button><h2 id="creatureName">Creature</h2><p id="creatureMeta"></p><div class="creature-grid"><section><h3>Combat Stats</h3><p id="creatureStats"></p><button class="primary" onclick="addViewedCreatureToEncounter()">Add To Encounter</button></section><section><h3>Attacks</h3><div id="creatureAttacks"></div></section><section><h3>Lore / Notes</h3><p id="creatureNotes"></p></section></div></div></section>
     <section id="devLog" class="view"><div class="card devlog-page">
-      <div class="section-head"><div><p class="eyebrow">Unified Workspace</p><h2>ASTERIA AUTH + WORKSPACE DASHBOARD SYSTEM v1</h2></div><span class="pill">Firebase Auth</span></div>
+      <div class="section-head"><div><p class="eyebrow">Incremental React Migration</p><h2>ASTERIA REACT MIGRATION - MILESTONE 1</h2></div><span class="pill">Live Sessions</span></div>
       <p class="muted">This build keeps the unified compendium and RPG systems intact while adding Firebase account login, persistent sessions, and a logged-in workspace dashboard for campaigns, characters, activity, and account settings.</p>
       <div class="v17-grid">
         <section><h3>Locked Foundation</h3><ul><li>v1.3.9.4 account and username login foundation retained.</li><li>Compendium content folders and manifest system retained.</li><li>Player dashboard, GM dashboard, inventory/bag UI, dice modal, and talent UI retained.</li></ul></section>
@@ -308,13 +310,13 @@
   <script src="js/asteria-progression.js"></script>
   <script src="js/asteria-progression-ui.js"></script>
   <script src="js/asteria-magic-data.js"></script>
-  <script src="js/app.js?v=20260730-live-delivery-4"></script>
-  <script src="js/asteria-inventory-api.js?v=20260730-live-delivery-4"></script>
+  <script src="js/app.js?v=react-m1"></script>
+  <script src="js/asteria-inventory-api.js?v=react-m1"></script>
   <script src="js/auth-bridge.js"></script>
-  <script type="module" src="js/firebase-auth.js?v=20260730-live-delivery-4"></script>
-<script src="js/data-sync.js?v=20260730-live-delivery-4"></script>
+  <script type="module" src="js/firebase-auth.js?v=react-m1"></script>
+<script src="js/data-sync.js?v=react-m1"></script>
   <script src="js/compendium-snapshot-v1.1.js"></script>
-<script src="js/clean-compendium.js"></script>
+<script src="js/clean-compendium.js?v=react-m1"></script>
  <script src="js/race-compendium-data.js?v=20260718-traits2"></script>
  <script src="js/race-info-data.js?v=20260718-traits2"></script>
  <script src="js/race-compendium.js?v=20260718-traits2"></script>
@@ -323,13 +325,14 @@
 <script src="js/creature-compendium-data.js"></script>
 <script src="js/codex-compendium.js"></script>
 <script src="js/universal-compendium-engine.js"></script>
-<script src="js/asteria-gameplay-systems.js"></script>
-<script src="js/asteria-inventory-workflows.js?v=20260730-live-delivery-4"></script>
+<script src="js/asteria-gameplay-systems.js?v=react-m1"></script>
+<script src="js/asteria-inventory-workflows.js?v=react-m1"></script>
 <script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-item-ecosystem.js"></script>
-<script src="js/asteria-core-shell.js"></script>
+<script src="js/asteria-core-shell.js?v=react-m1"></script>
 <script src="js/asteria-ui-theme-system.js"></script>
 <script src="js/border-glow.js"></script>
 <script src="js/asteria-home-fix.js"></script>
+<script type="module" src="src/dev-entry.js?v=milestone-1-live"></script>
 </body>
 </html>

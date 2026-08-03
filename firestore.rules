@@ -45,6 +45,14 @@ service cloud.firestore {
       return isCampaignMember(sharedCampaign(campaignId));
     }
 
+    function isCampaignGM(campaignId) {
+      let campaign = sharedCampaign(campaignId);
+      return signedIn() && (
+        campaign.ownerUid == request.auth.uid ||
+        (campaign.keys().hasAll(['gmUids']) && request.auth.uid in campaign.gmUids)
+      );
+    }
+
     function hasActiveInvite(data, campaignId) {
       return signedIn() &&
         data.keys().hasAll(['ucn']) &&
@@ -128,6 +136,42 @@ service cloud.firestore {
 
       match /systems/{systemId} {
         allow read, create, update: if canUseCampaignSystems(campaignId);
+        allow delete: if isCampaignOwner(sharedCampaign(campaignId));
+      }
+
+      match /liveSession/{sessionDocument} {
+        allow read: if canUseCampaignSystems(campaignId);
+        allow create, update: if isCampaignGM(campaignId);
+        allow delete: if isCampaignOwner(sharedCampaign(campaignId));
+      }
+
+      match /sessions/{sessionId} {
+        allow read: if canUseCampaignSystems(campaignId);
+        allow create, update: if isCampaignGM(campaignId);
+        allow delete: if isCampaignOwner(sharedCampaign(campaignId));
+
+        match /presence/{uid} {
+          allow read: if canUseCampaignSystems(campaignId);
+          allow create, update: if ownsUserData(uid) || isCampaignGM(campaignId);
+          allow delete: if ownsUserData(uid) || isCampaignGM(campaignId);
+        }
+      }
+
+      match /events/{eventId} {
+        allow read: if isCampaignGM(campaignId) ||
+          (signedIn() && resource.data.targetOwnerUid == request.auth.uid);
+        allow create: if isCampaignGM(campaignId);
+        allow update: if isCampaignGM(campaignId) || (
+          signedIn() &&
+          resource.data.targetOwnerUid == request.auth.uid &&
+          request.resource.data.targetOwnerUid == resource.data.targetOwnerUid &&
+          request.resource.data.targetCharacterId == resource.data.targetCharacterId &&
+          request.resource.data.type == resource.data.type &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'deliveryStatus', 'acknowledged', 'acknowledgedBy',
+            'acknowledgedAt', 'resolvedAt', 'updatedAt'
+          ])
+        );
         allow delete: if isCampaignOwner(sharedCampaign(campaignId));
       }
     }

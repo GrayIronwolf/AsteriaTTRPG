@@ -1507,6 +1507,11 @@
       return;
     }
     window.activeCampaign = index;
+    if(campaign.id && window.AsteriaReactMigration?.available){
+      window.AsteriaReactMigration.openGM(campaign.id);
+      window.toast?.(`Opened ${campaign.name || 'campaign'} live GM Dashboard.`);
+      return;
+    }
     hideOldViews();
     window.renderCampaigns?.();
     window.renderGM?.();
