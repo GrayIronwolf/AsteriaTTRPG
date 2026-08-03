@@ -14,6 +14,8 @@
   const realtimeSubscriptions = new Map();
   const persistedProgressionSignatures = new Map();
   const persistedCharacterSignatures = new Map();
+  const repairingRewardResolutions = new Map();
+  const FINAL_REWARD_STATUSES = new Set(['accepted','declined']);
 
   function safeClone(value){
     try{ return JSON.parse(JSON.stringify(value)); }catch(e){ return value; }
@@ -188,6 +190,44 @@
   function progressionChanged(previous, character){
     return progressionSignature(previous) !== progressionSignature(character);
   }
+  function rewardId(reward){
+    return String(reward?.id || '');
+  }
+  function mergeItemRewardState(previous={}, incoming={}){
+    const previousRewards=Array.isArray(previous.pendingItemRewards) ? previous.pendingItemRewards : [];
+    const incomingRewards=Array.isArray(incoming.pendingItemRewards) ? incoming.pendingItemRewards : [];
+    const previousById=new Map(previousRewards.filter(reward=>rewardId(reward)).map(reward=>[rewardId(reward),reward]));
+    const incomingById=new Map(incomingRewards.filter(reward=>rewardId(reward)).map(reward=>[rewardId(reward),reward]));
+    const resolvedIds=new Set([
+      ...(Array.isArray(previous.resolvedItemRewardIds) ? previous.resolvedItemRewardIds : []),
+      ...(Array.isArray(incoming.resolvedItemRewardIds) ? incoming.resolvedItemRewardIds : [])
+    ].map(String));
+    [...previousRewards,...incomingRewards].forEach(reward=>{
+      if(FINAL_REWARD_STATUSES.has(reward?.status) && rewardId(reward)) resolvedIds.add(rewardId(reward));
+    });
+    const ids=Array.from(new Set([...incomingById.keys(),...previousById.keys()]));
+    const rewards=ids.map(id=>{
+      const local=previousById.get(id);
+      const shared=incomingById.get(id);
+      if(FINAL_REWARD_STATUSES.has(local?.status) && !FINAL_REWARD_STATUSES.has(shared?.status)) return safeClone(local);
+      if(FINAL_REWARD_STATUSES.has(shared?.status)) return safeClone(shared);
+      if(resolvedIds.has(id)){
+        return Object.assign({}, safeClone(shared || local || { id }), {
+          status:local?.status === 'declined' ? 'declined' : 'accepted',
+          resolvedAt:local?.resolvedAt || shared?.resolvedAt || new Date().toISOString()
+        });
+      }
+      return safeClone(shared || local);
+    });
+    const staleResolvedIds=incomingRewards
+      .filter(reward=>reward?.status === 'pending' && resolvedIds.has(rewardId(reward)))
+      .map(reward=>rewardId(reward));
+    return {
+      rewards,
+      resolvedIds:Array.from(resolvedIds),
+      staleResolvedIds
+    };
+  }
   function activeSharedCharacterId(sharedCharacters){
     const session=getSession();
     const candidates=[
@@ -223,8 +263,26 @@
       bp:character.bp,
       inventory,
       pendingItemRewards:character.pendingItemRewards || [],
+      resolvedItemRewardIds:character.resolvedItemRewardIds || [],
       coins:character.coins || {},
-      quickSlots:character.quickSlots || []
+      quickSlots:character.quickSlots || [],
+      bags:character.bags || []
+    });
+  }
+  function realtimeCharacterSignature(character){
+    if(!character) return '';
+    return JSON.stringify({
+      identity:[
+        character.id || '',
+        character.ownerUid || '',
+        character.name || '',
+        character.race || '',
+        character.klass || character.class || ''
+      ],
+      state:receivedCharacterSignature(character),
+      conditions:character.conditions || [],
+      characteristics:character.characteristics || {},
+      campaign:character.sharedCampaignId || ''
     });
   }
   function persistReceivedCharacter(id, character, user){
@@ -243,6 +301,16 @@
     window.deliverCharacterDashboardNotices?.(id);
     window.flashResource?.('xp');
   }
+  function repairStaleRewardResolution(campaignId, id, character, rewardIds, user){
+    if(character?.ownerUid !== user?.uid || !rewardIds.length || !window.AsteriaFirebase?.resolveCampaignItemReward) return;
+    rewardIds.forEach(rewardId=>{
+      const key=`${campaignId}:${id}:${rewardId}`;
+      if(repairingRewardResolutions.has(key)) return;
+      const repair=window.AsteriaFirebase.resolveCampaignItemReward(campaignId,id,rewardId,character)
+        .finally(()=>repairingRewardResolutions.delete(key));
+      repairingRewardResolutions.set(key,repair);
+    });
+  }
   function mergeRealtimeCharacters(campaignId, sharedCharacters, options={}){
     const user=window.AsteriaFirebase?.getUser?.();
     if(!user || !sharedCharacters) return;
@@ -250,19 +318,32 @@
     const campaign=(window.campaigns||[]).find(item=>item?.id===campaignId);
     if(campaign) campaign.characters=Object.assign({},campaign.characters||{});
     const progressionUpdates=[];
+    const changedIds=new Set();
     Object.entries(sharedCharacters).forEach(([id,rawIncoming])=>{
       const incoming=rawIncoming;
       const before=window.chars[id]||{};
+      const rewardState=mergeItemRewardState(before,incoming);
       const character=Object.assign({},before,incoming,{
         id,
         sharedCampaignId:campaignId,
-        linkedCampaignIds:Array.from(new Set([...(before.linkedCampaignIds||[]),...(incoming.linkedCampaignIds||[]),campaignId]))
+        linkedCampaignIds:Array.from(new Set([...(before.linkedCampaignIds||[]),...(incoming.linkedCampaignIds||[]),campaignId])),
+        pendingItemRewards:rewardState.rewards,
+        resolvedItemRewardIds:rewardState.resolvedIds
       });
+      if(rewardState.staleResolvedIds.length){
+        character.inventory=safeClone(before.inventory || character.inventory || []);
+        character.bags=safeClone(before.bags || character.bags || []);
+        character.quickSlots=safeClone(before.quickSlots || character.quickSlots || []);
+      }
+      const changed=realtimeCharacterSignature(before) !== realtimeCharacterSignature(character);
       window.chars[id]=character;
       if(campaign){
         campaign.party=Array.from(new Set([...(campaign.party||[]),id]));
-        campaign.characters[id]=Object.assign({},campaign.characters[id]||{},incoming);
+        campaign.characters[id]=Object.assign({},campaign.characters[id]||{},character);
       }
+      repairStaleRewardResolution(campaignId,id,character,rewardState.staleResolvedIds,user);
+      if(!changed) return;
+      changedIds.add(id);
       if(progressionChanged(before,character)){
         progressionUpdates.push({ id, character, previous:before });
         persistReceivedProgression(id,character,user);
@@ -273,7 +354,7 @@
       }));
     });
     const current=activeSharedCharacterId(sharedCharacters);
-    if(current){
+    if(current && changedIds.has(current)){
       refreshRealtimePlayer(current);
       const update=progressionUpdates.find(item=>item.id===current);
       if(update){
@@ -283,9 +364,11 @@
         queueMicrotask(()=>refreshRealtimePlayer(current));
       }
     }
-    if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
-    window.renderPlayerHome?.();
-    window.refreshSyncedViews?.();
+    if(changedIds.size){
+      if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
+      window.renderPlayerHome?.();
+      window.refreshSyncedViews?.();
+    }
   }
   function realtimeCampaignTargets(campaigns, user){
     const targets=new Map();
@@ -471,6 +554,7 @@
     stopWatching: stopRealtimeCampaignSync,
     mergeCampaignCharacters: mergeRealtimeCharacters,
     mergeCampaignProgression: mergeRealtimeProgression,
+    mergeItemRewardState,
     saveAppState,
     readAppState: readAppSystemState,
     status:()=>localMeta()

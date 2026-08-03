@@ -23,6 +23,7 @@
   let dragPayload = null;
   let activeRewardId = '';
   let activeShopId = '';
+  const resolvingRewardIds = new Set();
   const shopCart = new Map();
 
   function esc(value){
@@ -74,14 +75,20 @@
   }
   function persistCharacter(id, reason = 'inventory-workflow'){
     const item = character(id);
-    if(!item) return;
+    if(!item) return Promise.resolve(false);
+    const writes = [];
     window.saveAccountState?.();
     window.saveAsteriaState?.();
     window.AsteriaDataSync?.scheduleSave?.(reason);
-    if(isOwnedCharacter(id, item)) window.AsteriaFirebase?.saveCharacter?.(id, item);
+    if(isOwnedCharacter(id, item) && window.AsteriaFirebase?.saveCharacter){
+      writes.push(Promise.resolve(window.AsteriaFirebase.saveCharacter(id, item)));
+    }
     campaignsForCharacter(id).forEach(campaign => {
-      if(campaign?.id) window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id, id, item);
+      if(campaign?.id && window.AsteriaFirebase?.saveCampaignCharacter){
+        writes.push(Promise.resolve(window.AsteriaFirebase.saveCampaignCharacter(campaign.id, id, item)));
+      }
     });
+    return Promise.all(writes).then(results => results.every(result => result !== false));
   }
   function persistCampaign(campaign, reason = 'campaign-inventory-workflow'){
     if(!campaign?.id) return;
@@ -213,7 +220,7 @@
     window.renderInventory?.();
     return true;
   }
-  function equipItem(itemId, slot, id = currentId()){
+  function equipItem(itemId, slot, id = currentId(), options = {}){
     const record = ensureInventory(id);
     const item = findItem(itemId, id);
     if(!record || !item || !slot) return false;
@@ -240,9 +247,9 @@
     item.location = 'equipment';
     item.bagId = '';
     item.storageId = '';
-    persistCharacter(id, 'inventory-equip');
-    window.renderInventory?.();
-    window.toast?.(`${item.name} equipped in ${slot}.`);
+    if(options.persist !== false) persistCharacter(id, 'inventory-equip');
+    if(options.render !== false) window.renderInventory?.();
+    if(options.notify !== false) window.toast?.(`${item.name} equipped in ${slot}.`);
     return true;
   }
   function unequipItem(itemId, id = currentId()){
@@ -265,7 +272,7 @@
     window.renderInventory?.();
     return true;
   }
-  function addSnapshot(snapshot, id = currentId(), bagId, slotNumber){
+  function addSnapshot(snapshot, id = currentId(), bagId, slotNumber, options = {}){
     const record = ensureInventory(id);
     if(!record || !snapshot) return null;
     let item = record.inventory.find(existing => existing.id === snapshot.id && !existing.equipped);
@@ -310,8 +317,8 @@
     }
     removeBagReferences(item, record);
     destination.slotRecord.items = [{id:item.id, qty:Math.max(1, Number(item.qty || quantity))}];
-    persistCharacter(id, 'inventory-add');
-    window.renderInventory?.();
+    if(options.persist !== false) persistCharacter(id, 'inventory-add');
+    if(options.render !== false) window.renderInventory?.();
     return item;
   }
 
@@ -531,20 +538,84 @@
     modal.querySelector('[data-reward-equip]')?.addEventListener('click', () => resolveReward(id, reward, 'equip', modal.querySelector('#workflowRewardEquipSlot')?.value));
     modal.querySelector('[data-reward-decline]').addEventListener('click', () => resolveReward(id, reward, 'declined'));
   }
-  function resolveReward(id, reward, action, slot){
+  function setRewardActionsDisabled(modal, disabled){
+    modal?.querySelectorAll('[data-reward-decline],[data-reward-inventory],[data-reward-equip]').forEach(button => {
+      button.disabled = disabled;
+    });
+    modal?.setAttribute('aria-busy', disabled ? 'true' : 'false');
+  }
+  async function resolveReward(id, reward, action, slot){
     const record = character(id);
-    if(!record) return;
-    if(action !== 'declined'){
-      const item = addSnapshot(reward.item, id);
-      if(!item) return;
-      if(action === 'equip' && !equipItem(item.id, slot, id)) window.toast?.(`${item.name} was added to inventory because it could not be equipped.`);
+    const rewardId = String(reward?.id || '');
+    if(!record || !rewardId || resolvingRewardIds.has(rewardId)) return;
+    record.resolvedItemRewardIds = array(record.resolvedItemRewardIds);
+    if(record.resolvedItemRewardIds.includes(rewardId) || reward.status === 'accepted' || reward.status === 'declined'){
+      closeModal();
+      activeRewardId = '';
+      return;
     }
-    reward.status = action === 'declined' ? 'declined' : 'accepted';
-    reward.resolvedAt = new Date().toISOString();
-    persistCharacter(id, 'item-reward-resolution');
-    closeModal();
-    activeRewardId = '';
-    setTimeout(() => showPendingReward(id), 100);
+    const before = clone(record);
+    const campaign = campaignsForCharacter(id).find(item => String(item?.id || '') === String(reward.campaignId || ''))
+      || activeCampaign();
+    const modal = document.getElementById('asteriaWorkflowModal');
+    resolvingRewardIds.add(rewardId);
+    setRewardActionsDisabled(modal, true);
+    let resolved = false;
+    try{
+      if(action !== 'declined'){
+        const item = addSnapshot(reward.item, id, undefined, undefined, { persist:false, render:false });
+        if(!item) return;
+        if(action === 'equip' && !equipItem(item.id, slot, id, { persist:false, render:false, notify:false })){
+          window.toast?.(`${item.name} was added to inventory because it could not be equipped.`);
+        }
+      }
+      reward.status = action === 'declined' ? 'declined' : 'accepted';
+      reward.resolvedAt = new Date().toISOString();
+      record.resolvedItemRewardIds = Array.from(new Set([...record.resolvedItemRewardIds, rewardId]));
+      if(campaign){
+        campaign.characters = Object.assign({}, campaign.characters || {}, { [id]:record });
+      }
+
+      let saved = true;
+      if(reward.campaignId && window.AsteriaFirebase?.resolveCampaignItemReward){
+        const result = await window.AsteriaFirebase.resolveCampaignItemReward(
+          reward.campaignId,
+          id,
+          rewardId,
+          record
+        );
+        saved = Boolean(result?.ok);
+        if(result?.character && !result.applied){
+          window.chars[id] = Object.assign({}, record, result.character);
+          if(campaign){
+            campaign.characters = Object.assign({}, campaign.characters || {}, { [id]:window.chars[id] });
+          }
+        }
+      }else{
+        saved = await persistCharacter(id, 'item-reward-resolution');
+      }
+      if(!saved) throw new Error('The reward resolution could not be saved.');
+
+      window.saveAccountState?.();
+      window.saveAsteriaState?.();
+      window.renderInventory?.();
+      window.renderCoinPanel?.();
+      closeModal();
+      activeRewardId = '';
+      resolved = true;
+    }catch(error){
+      window.chars[id] = before;
+      if(campaign){
+        campaign.characters = Object.assign({}, campaign.characters || {}, { [id]:before });
+      }
+      window.renderInventory?.();
+      console.warn('Could not resolve the item reward.', error);
+      window.toast?.('The item reward could not be saved. It remains pending so you can try again.');
+    }finally{
+      resolvingRewardIds.delete(rewardId);
+      setRewardActionsDisabled(modal, false);
+      if(resolved) setTimeout(() => showPendingReward(id), 100);
+    }
   }
 
   function shopSelectedHtml(){

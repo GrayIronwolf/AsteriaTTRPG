@@ -45,7 +45,7 @@
 .workflow-search-row{position:sticky;top:-20px;z-index:2;padding:0 0 14px;background:rgba(2,12,16,.98)}
 .workflow-search-row input,.workflow-gm-panel input,.workflow-gm-panel select,.asteria-workflow-modal input,.asteria-workflow-modal select{width:100%;min-height:42px}
 .workflow-item-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px}
-.workflow-item-grid.compact{grid-template-columns:repeat(6,minmax(96px,1fr));max-height:310px;overflow:auto}
+.workflow-item-grid.compact{grid-template-columns:repeat(auto-fit,minmax(min(96px,100%),1fr));max-height:310px;overflow:auto}
 .workflow-item-card{
   position:relative;
   min-width:0;
@@ -81,12 +81,12 @@
   font-size:11px;
   text-transform:uppercase;
 }
-.workflow-two-column{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.5fr);gap:18px}
+.workflow-two-column{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:18px}
 .workflow-character-list{display:grid;gap:8px;max-height:330px;overflow:auto}
 .workflow-check-card{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.16);border-radius:5px;background:rgba(3,13,16,.86)}
 .workflow-check-card input{width:18px;min-height:18px}
 .workflow-check-card span{display:grid}
-.workflow-form-row{display:grid;grid-template-columns:minmax(110px,.25fr) minmax(220px,1fr) auto;gap:12px;align-items:end;margin-top:14px}
+.workflow-form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px;align-items:end;margin-top:14px}
 .workflow-form-row label{display:grid;gap:5px}.workflow-form-row .wide{min-width:0}
 .workflow-stock-row{display:grid;grid-template-columns:minmax(180px,1fr) auto auto 38px;gap:12px;align-items:center;padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.12)}
 .workflow-modal-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}
@@ -135,7 +135,7 @@
   .phase3-gm-party-magic-row>.phase3-gm-magic-list{grid-column:1/-1}
 }
 @media(max-width:1280px){
-  .workflow-item-grid,.workflow-item-grid.compact{grid-template-columns:repeat(4,minmax(110px,1fr))}
+  .workflow-item-grid:not(.compact){grid-template-columns:repeat(4,minmax(110px,1fr))}
   .workflow-shop-grid{grid-template-columns:repeat(4,minmax(120px,1fr))}
 }
 @media(max-width:850px){
@@ -144,7 +144,7 @@
   .workflow-two-column,.workflow-reward-hero{grid-template-columns:1fr}
   .phase3-gm-party-magic-row{grid-template-columns:1fr}
   .phase3-gm-party-magic-row>.phase3-gm-magic-list{grid-column:auto}
-  .workflow-item-grid,.workflow-item-grid.compact,.workflow-shop-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}
+  .workflow-item-grid:not(.compact),.workflow-shop-grid{grid-template-columns:repeat(2,minmax(110px,1fr))}
   .workflow-form-row{grid-template-columns:1fr}
   .workflow-slot-choice{grid-template-columns:1fr 1fr}
 }

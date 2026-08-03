@@ -986,6 +986,64 @@ window.AsteriaFirebase = {
   saveCampaignProgression: async function(campaignId, characterId, character){
     return this.saveCampaignCharacterProgress(campaignId, characterId, character);
   },
+  resolveCampaignItemReward: async function(campaignId, characterId, rewardId, character){
+    if(!db || !currentUser || !campaignId || !characterId || !rewardId || !character){
+      return { ok:false, applied:false, character:null };
+    }
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    try{
+      const result=await runTransaction(db, async transaction=>{
+        const snapshot=await transaction.get(characterRef);
+        if(!snapshot.exists()) throw new Error('The linked campaign character no longer exists.');
+        const canonical=Object.assign({ id:characterId }, snapshot.data());
+        const canonicalRewards=Array.isArray(canonical.pendingItemRewards) ? canonical.pendingItemRewards : [];
+        const canonicalReward=canonicalRewards.find(reward=>String(reward?.id || '') === String(rewardId));
+        if(!canonicalReward) throw new Error('The item reward no longer exists.');
+        if(canonicalReward.status === 'accepted' || canonicalReward.status === 'declined'){
+          return { applied:false, character:canonical };
+        }
+
+        const submitted=campaignCharacterSnapshot(
+          Object.assign({}, canonical, cleanData(character), { id:characterId }),
+          campaignId,
+          canonical.ownerUid || currentUser.uid
+        );
+        const submittedRewards=Array.isArray(submitted.pendingItemRewards) ? submitted.pendingItemRewards : [];
+        const submittedReward=submittedRewards.find(reward=>String(reward?.id || '') === String(rewardId));
+        if(!submittedReward || !['accepted','declined'].includes(submittedReward.status)){
+          throw new Error('The item reward must have a final resolution before it can be saved.');
+        }
+        submitted.resolvedItemRewardIds=uniqueValues(
+          canonical.resolvedItemRewardIds,
+          submitted.resolvedItemRewardIds,
+          [rewardId]
+        );
+        transaction.set(
+          characterRef,
+          Object.assign({}, submitted, { updatedAt:serverTimestamp() }),
+          { merge:true }
+        );
+        return { applied:true, character:submitted };
+      });
+
+      const resolvedCharacter=result?.character;
+      if(resolvedCharacter?.ownerUid === currentUser.uid){
+        await setDoc(
+          doc(db, 'users', currentUser.uid, 'characters', characterId),
+          Object.assign({}, cleanData(resolvedCharacter), {
+            id:characterId,
+            ownerUid:currentUser.uid,
+            updatedAt:serverTimestamp()
+          }),
+          { merge:true }
+        );
+      }
+      return { ok:true, applied:Boolean(result?.applied), character:resolvedCharacter || null };
+    }catch(error){
+      reportSyncError('campaign-item-reward-resolution', error, { campaignId, characterId, rewardId });
+      return { ok:false, applied:false, character:null };
+    }
+  },
   saveCampaignCharacter: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
     try{
