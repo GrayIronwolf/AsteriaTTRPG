@@ -40,7 +40,9 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 - `campaigns/{campaignId}/liveSession/current` stores the active, paused, or ended live-session pointer.
 - `campaigns/{campaignId}/sessions/{sessionId}` stores preserved session state and timestamps.
 - `campaigns/{campaignId}/sessions/{sessionId}/presence/{uid}` stores lightweight online/away presence for connected GM and Character dashboards.
-- `campaigns/{campaignId}/events/{eventId}` is the single campaign event stream for XP, loot, resources, notifications, and session lifecycle events. Events remain usable when no live session is active.
+- `campaigns/{campaignId}/events/{eventId}` is the single campaign event stream for XP, loot, resources, notifications, and session lifecycle events. Gameplay rewards and mutations require an active live session.
+- `campaigns/{campaignId}/systems/party-workspace` stores the shared party notes and campaign quest workspace.
+- `campaigns/{campaignId}/partyChat/{messageId}` stores the live party chat stream for campaign members.
 - `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
 - `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
 - `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
@@ -80,7 +82,9 @@ Campaigns created before this update gain their UCN lookup record the next time 
 5. Confirm the player's XP bar and notification update without refreshing.
 6. Send a direct item reward. The GM success message must say the reward was delivered, and the player's reward window should open without refreshing.
 7. Accept, equip, or decline the reward. Refresh the Character Dashboard and confirm that the resolved popup does not return.
-8. Start a live session and confirm that both dashboards show the same active session and online presence. End the session and confirm normal XP/resource synchronization still works.
+8. Start a live session and confirm that both dashboards show the same active session, countdown, and online presence.
+9. End the session and confirm CP, TP, spells, resources, inventory, shops, trades, quests, journal, party notes, and chat controls are locked.
+10. Leave a test session active and confirm it becomes read-only when its 10-hour limit is reached.
 
 If Firebase rejects a listener or write, Asteria now shows `Cloud delivery blocked by Firestore rules` instead of reporting a false delivery. Re-publish `firestore.rules`, then refresh both devices.
 
@@ -92,6 +96,7 @@ If Firebase rejects a listener or write, Asteria now shows `Cloud delivery block
 - Campaign members can link only characters owned by their own account.
 - Campaign members can read linked character snapshots; players can update only their own snapshots, while the campaign GM can update campaign-linked snapshots through GM controls.
 - Campaign members can read live-session and presence records. Only campaign GMs can start, pause, resume, or end sessions.
+- Live sessions have a fixed 10-hour wall-clock expiry. The Character Dashboard derives its lock from the shared session record, and an expired session is finalized when a GM dashboard is connected.
 - Campaign GMs create campaign events. Target players can read only events addressed to their own Firebase UID and may update only acknowledgement/resolution fields.
 - Campaign members can read and update the shared item ecosystem used by multiplayer loot, shops, storage, and trade workflows. GM-only controls remain hidden and permission-checked by the application.
 - A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.

@@ -2,7 +2,20 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConnectionBanner, EmptyState, Modal, Panel, ResourceBar, StatusPill, Tabs, WorkspaceShell } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { pendingLootEvent, pendingMagicRewardEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
+import { parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
+import {
+  ActivityLog,
+  CharacterTab,
+  InventoryTab,
+  JournalTab,
+  PartyTab,
+  QuestTab,
+  SessionGate,
+  SkillsTab,
+  SpellsTab,
+  TalentsTab
+} from './CharacterWorkspaceTabs.jsx';
 
 const CHARACTER_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: '\u2630' },
@@ -47,7 +60,7 @@ function isBloodhunter(character) {
   return classes.some(value => String(value || '').toLowerCase().includes('bloodhunter'));
 }
 
-function SidebarResource({ campaignId, character, label, resource, value }) {
+function SidebarResource({ campaignId, character, label, resource, value, editable }) {
   const [amount, setAmount] = useState(1);
   const [busy, setBusy] = useState(false);
   const update = async direction => {
@@ -57,31 +70,33 @@ function SidebarResource({ campaignId, character, label, resource, value }) {
   };
   return <div className="react-sidebar-resource">
     <ResourceBar label={label} kind={resource} value={value?.[0]} maximum={value?.[1]} />
-    <div className="react-resource-controls"><input aria-label={`${label} change amount`} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} /><button disabled={busy} aria-label={`Remove ${amount} ${label}`} onClick={() => update(-1)}>-</button><button disabled={busy} aria-label={`Add ${amount} ${label}`} onClick={() => update(1)}>+</button></div>
+    <div className="react-resource-controls"><input disabled={!editable || busy} aria-label={`${label} change amount`} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} /><button disabled={!editable || busy} aria-label={`Remove ${amount} ${label}`} onClick={() => update(-1)}>-</button><button disabled={!editable || busy} aria-label={`Add ${amount} ${label}`} onClick={() => update(1)}>+</button></div>
   </div>;
 }
 
-function CharacterSidebar({ campaignId, character }) {
+function CharacterSidebar({ campaignId, character, editable }) {
   const xp = window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || { xp: character.xp || 0, xpMax: character.xpMax || 1000 };
   const portrait = character.image || character.portrait || character.characterImage || character.appearance?.image || character.appearance?.portrait;
   return <Panel className="react-character-sidebar">
     <div className="react-character-identity"><div className="react-character-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}<b>Level {Number(character.level || 0)}</b></div><div><h2>{character.name || 'Unnamed Character'}</h2><p>{characterClass(character)}</p><small>{character.race || 'Unselected Race'}</small></div></div>
     <div className="react-xp-sidebar"><ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} /><small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP to next level</small></div>
     <div className="react-sidebar-resources">
-      <SidebarResource campaignId={campaignId} character={character} label="HP" resource="hp" value={character.hp || [0,0]} />
-      <SidebarResource campaignId={campaignId} character={character} label="SP" resource="sp" value={character.sp || [0,0]} />
-      <SidebarResource campaignId={campaignId} character={character} label="MP" resource="mp" value={character.mp || [0,0]} />
-      {isBloodhunter(character) || Array.isArray(character.bp) ? <SidebarResource campaignId={campaignId} character={character} label="BP" resource="bp" value={character.bp || [0,20]} /> : null}
+      <SidebarResource campaignId={campaignId} character={character} label="HP" resource="hp" value={character.hp || [0,0]} editable={editable} />
+      <SidebarResource campaignId={campaignId} character={character} label="SP" resource="sp" value={character.sp || [0,0]} editable={editable} />
+      <SidebarResource campaignId={campaignId} character={character} label="MP" resource="mp" value={character.mp || [0,0]} editable={editable} />
+      {isBloodhunter(character) || Array.isArray(character.bp) ? <SidebarResource campaignId={campaignId} character={character} label="BP" resource="bp" value={character.bp || [0,20]} editable={editable} /> : null}
     </div>
     <div className="react-stat-grid">{CHARACTERISTICS.map(([label, aliases]) => { const score=characteristicValue(character, aliases); const tier=characteristicTier(score); return <div key={label}><b>{label}</b><span>{score}</span><small>{tier.label}{tier.modifier ? ` +${tier.modifier}` : ''}</small></div>; })}</div>
   </Panel>;
 }
 
-function SmallCard({ title, image, meta, cost }) {
-  return <article className="react-small-card"><b>{title}</b><div className="react-small-card-image">{image ? <img src={image} alt="" /> : <span>{String(title || '?').charAt(0)}</span>}</div>{meta ? <small>{meta}</small> : null}{cost ? <small>{cost}</small> : null}</article>;
+function SmallCard({ title, image, meta, cost, disabled, onDoubleClick }) {
+  return <article className={`react-small-card ${disabled ? 'disabled' : ''}`} tabIndex={onDoubleClick ? 0 : undefined} onDoubleClick={disabled ? undefined : onDoubleClick}><b>{title}</b><div className="react-small-card-image">{image ? <img src={image} alt="" /> : <span>{String(title || '?').charAt(0)}</span>}</div>{meta ? <small>{meta}</small> : null}{cost ? <small>{cost}</small> : null}</article>;
 }
 
-function DashboardPanels({ character }) {
+function DashboardPanels({ campaignId, character, editable, onNavigate }) {
+  const [message,setMessage]=useState('');
+  const [busy,setBusy]=useState(false);
   const equipment = character.equipment || {};
   const inventory = values(character.inventory);
   const talents = values(character.unlockedTalents || character.talents).filter(talent => talent?.unlocked !== false);
@@ -89,19 +104,21 @@ function DashboardPanels({ character }) {
   const skills = values(character.skills || character.selectedSkills);
   const quickSlots = values(character.quickSlots).slice(0, 4);
   const coins = character.coins || character.coinPouch || {};
+  const run=async operation=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(result?.ok?'Dashboard updated.':result?.error||'That action could not be completed.');}catch(error){setMessage(error.message||String(error));}finally{setBusy(false);}};
+  const cast=spell=>run(()=>firebaseService.castSpell(campaignId,character.id,spell,parseResourceCost(spell.costs||spell.cost)));
   return <div className="react-character-dashboard-grid">
-    <Panel title="Equipment / Armor" className="react-equipment-panel"><div className="react-equipment-grid">{['Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase()])}</b></div>)}</div></Panel>
-    <Panel title="Equipped Weapons"><div className="react-equipment-grid weapons">{['Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase().replaceAll(' ', '')])}</b></div>)}</div></Panel>
-    <Panel title="Quick Items"><div className="react-quick-grid">{[0,1,2,3].map(index => <div key={index}><b>{index + 1}</b><span>{itemName(quickSlots[index])}</span></div>)}</div></Panel>
-    <Panel title="Class Talents" className="react-wide-panel"><div className="react-card-gallery compact">{talents.slice(0, 8).map((talent, index) => <SmallCard key={talent.id || talent.name || index} title={talent.name || talent.title} image={talent.image} meta={`Tier ${talent.tier || 1} | Rank ${talent.rank || 1}`} cost={talent.cost} />)}{!talents.length ? <EmptyState title="No unlocked talents" /> : null}</div></Panel>
-    <Panel title="Active Spells" className="react-wide-panel"><div className="react-card-gallery compact">{spells.slice(0, 8).map((spell, index) => <SmallCard key={spell.id || spell.name || index} title={spell.name || spell.title} image={spell.image} meta={spell.element || spell.magicType || ''} cost={spell.cost ? `${spell.cost} MP` : ''} />)}{!spells.length ? <EmptyState title="No active spells" /> : null}</div></Panel>
-    <Panel title="Skills"><div className="react-card-gallery compact">{skills.slice(0, 8).map((skill, index) => <SmallCard key={skill.id || skill.name || index} title={skill.name || skill.title || skill} meta={skill.rankName || skill.rank || 'Novice'} />)}{!skills.length ? <EmptyState title="No selected skills" /> : null}</div></Panel>
+    <Panel title="Equipment / Armor" className="react-equipment-panel"><div className="react-equipment-grid" onDoubleClick={()=>onNavigate('inventory')}>{['Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase()])}</b></div>)}</div></Panel>
+    <Panel title="Equipped Weapons"><div className="react-equipment-grid weapons" onDoubleClick={()=>onNavigate('inventory')}>{['Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase().replaceAll(' ', '')])}</b></div>)}</div></Panel>
+    <Panel title="Quick Items"><div className="react-quick-grid">{[0,1,2,3].map(index => <button disabled={!editable||busy||!quickSlots[index]?.id} title="Double-click to use" onDoubleClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:quickSlots[index].id}))} key={index}><b>{index + 1}</b><span>{itemName(quickSlots[index])}</span></button>)}</div></Panel>
+    <Panel title="Class Talents" className="react-wide-panel"><div className="react-card-gallery compact">{talents.slice(0, 8).map((talent, index) => <SmallCard key={talent.id || talent.name || index} title={talent.name || talent.title} image={talent.image} meta={`Tier ${talent.tier || 1} | Rank ${talent.rank || 1}`} cost={talent.cost} onDoubleClick={()=>onNavigate('talents')} />)}{!talents.length ? <EmptyState title="No unlocked talents" /> : null}</div></Panel>
+    <Panel title="Active Spells" className="react-wide-panel"><div className="react-card-gallery compact">{spells.slice(0, 8).map((spell, index) => <SmallCard key={spell.id || spell.name || index} title={spell.name || spell.title} image={spell.image} meta={spell.element || spell.magicType || ''} cost={spell.cost ? String(spell.cost) : ''} disabled={!editable||busy} onDoubleClick={()=>cast(spell)} />)}{!spells.length ? <EmptyState title="No active spells" /> : null}</div></Panel>
+    <Panel title="Skills"><div className="react-card-gallery compact">{skills.slice(0, 8).map((skill, index) => <SmallCard key={skill.id || skill.name || index} title={skill.name || skill.title || skill} meta={skill.rankName || skill.rank || 'Novice'} onDoubleClick={()=>onNavigate('skills')} />)}{!skills.length ? <EmptyState title="No selected skills" /> : null}</div></Panel>
     <Panel title="Conditions"><div className="react-condition-list">{values(character.conditions).map((condition, index) => <StatusPill key={condition.id || condition.name || index}>{condition.name || condition}</StatusPill>)}{!values(character.conditions).length ? <p>No active conditions.</p> : null}</div></Panel>
-    <Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div></Panel>
+    <Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div><p className="react-action-message">{message}</p></Panel>
   </div>;
 }
 
-function LootModal({ character, event, onResolved }) {
+function LootModal({ campaignId, character, event, editable, onResolved }) {
   const [busy, setBusy] = useState(false);
   const reward = values(character.pendingItemRewards).find(item => String(item.id) === String(event.id)) || {
     id: event.id,
@@ -115,11 +132,11 @@ function LootModal({ character, event, onResolved }) {
   const [slot, setSlot] = useState(slots[0] || '');
   const resolve = async action => {
     setBusy(true);
-    const ok = await firebaseService.resolveLoot(character.id, reward, action, slot);
+    const result = await firebaseService.resolveLoot(campaignId, character.id, reward, action, slot);
     setBusy(false);
-    if(ok !== false) onResolved?.();
+    if(result?.ok) onResolved?.();
   };
-  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={busy} onClick={() => resolve('declined')}>Decline</button><button className="primary" disabled={busy} onClick={() => resolve('inventory')}>Add to Inventory</button>{slots.length ? <button className="primary" disabled={busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
+  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => resolve('declined')}>Decline</button><button className="primary" disabled={!editable || busy} onClick={() => resolve('inventory')}>Add to Inventory</button>{slots.length ? <button className="primary" disabled={!editable || busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
     <div className="react-loot-hero">{reward.item?.image ? <img src={reward.item.image} alt="" /> : <span>{String(reward.item?.name || '?').charAt(0)}</span>}<div><p>{reward.message || 'The GM awarded an item.'}</p><StatusPill>{reward.item?.itemClass || 'Common'}</StatusPill><p>Quantity {Number(reward.item?.qty || 1)}</p></div></div>
     {slots.length ? <label>Equipment slot<select value={slot} onChange={event => setSlot(event.target.value)}>{slots.map(value => <option key={value}>{value}</option>)}</select></label> : null}
   </Modal>;
@@ -144,10 +161,6 @@ function MagicRewardModal({ campaignId, character, event, onResolved }) {
   </Modal>;
 }
 
-function LegacyTab({ title, copy, characterId, open }) {
-  return <Panel title={title}><p>{copy}</p><button onClick={() => { window.AsteriaReactMigration?.openLegacyCharacter?.(characterId); if(open) window.setPlayerTab?.(open); }}>Open full existing {title}</button></Panel>;
-}
-
 export function CharacterDashboard({ campaignId, characterId }) {
   const live = useCampaignLiveData(campaignId, { mode: 'character', characterId });
   const [tab, setTab] = useState('dashboard');
@@ -155,6 +168,11 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const processedLoot = useRef(new Set());
   const processedMagic = useRef(new Set());
   const character = live.character;
+  useEffect(()=>{
+    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab))setTab(event.detail.tab);};
+    window.addEventListener('asteria:open-character-tab',openTab);
+    return()=>window.removeEventListener('asteria:open-character-tab',openTab);
+  },[]);
   useEffect(() => {
     if(character){
       window.chars = window.chars || {};
@@ -174,26 +192,28 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const resolvedLoot = () => { if(lootEvent) processedLoot.current.add(lootEvent.id); };
   const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
   if(live.loading || !character) return <div className="react-route-state">Connecting Character Dashboard...</div>;
+  const editable = Boolean(live.session?.editable);
   return <WorkspaceShell
     className="react-character-dashboard"
     eyebrow="Character Dashboard"
     title={live.campaign?.name || character.campaign || 'Campaign'}
-    subtitle={live.session?.status === 'active' ? `Live session ${live.session.id || ''}` : 'Character synchronization remains active outside live sessions.'}
-    sidebar={<CharacterSidebar campaignId={campaignId} character={character} />}
+    subtitle={editable ? `Live session ${live.session.id || ''}. Gameplay changes are enabled.` : 'The dashboard is read-only until the GM starts a live session.'}
+    sidebar={<CharacterSidebar campaignId={campaignId} character={character} editable={editable} />}
     actions={<ConnectionBanner online={live.online} error={live.error} session={live.session} />}
   >
+    <SessionGate session={live.session} />
     <Tabs tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
-    {tab === 'dashboard' ? <DashboardPanels character={character} /> : null}
-    {tab === 'character' ? <LegacyTab title="Character" copy="Identity, race information, racial traits, characteristics, and CP remain connected to the current character sheet." characterId={characterId} open="characteristicsPane" /> : null}
-    {tab === 'talents' ? <LegacyTab title="Class/Talent Tree" copy="Class talent trees, tier locks, ranks, TP purchases, and class compendium links remain operational." characterId={characterId} open="talents" /> : null}
-    {tab === 'skills' ? <LegacyTab title="Skills" copy="Selected skills, ranks, successful checks, and techniques remain operational." characterId={characterId} open="skillsPane" /> : null}
-    {tab === 'spells' ? <LegacyTab title="Spells" copy="Known magic elements, spell filters, costs, and spell compendium links remain operational." characterId={characterId} open="spells" /> : null}
-    {tab === 'inventory' ? <LegacyTab title="Inventory" copy={`${values(character.inventory).length} item records are synchronized. Bags, equipment, quick slots, shops, and trading remain operational.`} characterId={characterId} open="inventory" /> : null}
-    {tab === 'quest' ? <LegacyTab title="Quest" copy="Campaign objectives and quest progress remain operational." characterId={characterId} open="questsPane" /> : null}
-    {tab === 'journal' ? <LegacyTab title="Journal" copy="Character notes and story records remain operational." characterId={characterId} open="journal" /> : null}
-    {tab === 'party' ? <LegacyTab title="Party" copy="Shared notes, loot, guild information, and party systems remain operational." characterId={characterId} open="partyPane" /> : null}
+    {tab === 'dashboard' ? <><DashboardPanels campaignId={campaignId} character={character} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
+    {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'inventory' ? <InventoryTab campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} /> : null}
+    {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}
+    {tab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} editable={editable} /> : null}
     {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
-    {lootEvent ? <LootModal character={character} event={lootEvent} onResolved={resolvedLoot} /> : null}
-    {magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}
+    {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : null}
+    {editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}
   </WorkspaceShell>;
 }

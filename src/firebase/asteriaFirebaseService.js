@@ -34,9 +34,13 @@ export const firebaseService = {
   subscribePresence: (campaignId, sessionId, onChange) => requireMethod('subscribeSessionPresence')(campaignId, sessionId, onChange),
   subscribeEvents: (campaignId, onChange, options) => requireMethod('subscribeCampaignEvents')(campaignId, onChange, options),
   subscribeEncounter: (campaignId, onChange) => requireMethod('subscribeCampaignEncounter')(campaignId, onChange),
+  subscribePartyWorkspace: (campaignId, onChange) => requireMethod('subscribePartyWorkspace')(campaignId, onChange),
+  subscribePartyChat: (campaignId, onChange) => requireMethod('subscribePartyChat')(campaignId, onChange),
+  subscribeItemEcosystem: (campaignId, onChange) => requireMethod('subscribeCampaignItemEcosystem')(campaignId, onChange),
   startSession: campaignId => requireMethod('startLiveSession')(campaignId),
   pauseSession: campaignId => requireMethod('pauseLiveSession')(campaignId),
-  endSession: campaignId => requireMethod('endLiveSession')(campaignId),
+  endSession: (campaignId, reason) => requireMethod('endLiveSession')(campaignId, reason),
+  expireSession: campaignId => requireMethod('expireLiveSession')(campaignId),
   setPresence: (campaignId, sessionId, state) => requireMethod('setSessionPresence')(campaignId, sessionId, state),
   acknowledgeEvent: (campaignId, eventId, patch) => requireMethod('acknowledgeCampaignEvent')(campaignId, eventId, patch),
   grantXP: (campaignId, characterId, amount, metadata) => requireMethod('grantCampaignXP')(campaignId, characterId, amount, metadata),
@@ -45,9 +49,18 @@ export const firebaseService = {
   respondMagicReward: (campaignId, characterId, eventId, accepted) => requireMethod('respondMagicElementReward')(campaignId, characterId, eventId, accepted),
   saveEncounter: (campaignId, encounter) => requireMethod('saveCampaignEncounter')(campaignId, encounter),
   updateResource: (campaignId, characterId, key, amount, metadata) => requireMethod('updateCampaignCharacterResource')(campaignId, characterId, key, amount, metadata),
-  resolveLoot: (characterId, reward, action, slot) => {
-    const inventory = window.AsteriaInventory;
-    if(typeof inventory?.resolveReward !== 'function') throw new Error('Asteria inventory reward resolver is unavailable.');
-    return inventory.resolveReward(characterId, reward, action, slot);
-  }
+  spendCP: (campaignId, characterId, key, amount) => requireMethod('spendCharacteristicPoints')(campaignId, characterId, key, amount),
+  purchaseTalent: (campaignId, characterId, talent) => requireMethod('purchaseTalentRank')(campaignId, characterId, talent),
+  recordSkillSuccess: (campaignId, characterId, skill) => requireMethod('recordSkillSuccess')(campaignId, characterId, skill),
+  castSpell: (campaignId, characterId, spell, costs) => requireMethod('castCharacterSpell')(campaignId, characterId, spell, costs),
+  updateInventory: (campaignId, characterId, operation) => requireMethod('updateCharacterInventory')(campaignId, characterId, operation),
+  buyShopItem: (campaignId, characterId, shopId, stockIndex, quantity) => requireMethod('buyLiveShopItem')(campaignId, characterId, shopId, stockIndex, quantity),
+  sellShopItem: (campaignId, characterId, shopId, itemId) => requireMethod('sellLiveShopItem')(campaignId, characterId, shopId, itemId),
+  createTrade: (campaignId, characterId, recipientId, itemId, quantity, note) => requireMethod('createLiveTrade')(campaignId, characterId, recipientId, itemId, quantity, note),
+  respondTrade: (campaignId, characterId, tradeId, accepted) => requireMethod('respondLiveTrade')(campaignId, characterId, tradeId, accepted),
+  updateQuest: (campaignId, characterId, questId, status) => requireMethod('updateCharacterQuest')(campaignId, characterId, questId, status),
+  addJournalEntry: (campaignId, characterId, entry) => requireMethod('addJournalEntry')(campaignId, characterId, entry),
+  updatePartyNotes: (campaignId, notes) => requireMethod('updatePartyNotes')(campaignId, notes),
+  sendPartyMessage: (campaignId, characterId, message) => requireMethod('sendPartyMessage')(campaignId, characterId, message),
+  resolveLoot: (campaignId, characterId, reward, action, slot) => requireMethod('resolveLootReward')(campaignId, characterId, reward.id, action, slot)
 };

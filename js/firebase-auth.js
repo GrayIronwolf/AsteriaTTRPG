@@ -5,7 +5,8 @@
    ========================= */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { SESSION_LIMIT_MS, applyCharacteristicPoints, nextSkillProgress, parseResourceCost, slug as liveSlug, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -605,6 +606,49 @@ window.firebaseLogout = async function(){
   notice('Logged out.');
 };
 
+function liveSessionState(value={}){
+  const expiresAt=timestampMs(value.expiresAt);
+  const expired=['active','paused'].includes(value.status) && Boolean(expiresAt) && Date.now() >= expiresAt;
+  return Object.assign({},value,{ status:expired ? 'expired' : (value.status || 'idle'), expired, editable:value.status === 'active' && !expired });
+}
+function requireLiveSession(transaction,campaignId){
+  const liveRef=doc(db,'campaigns',campaignId,'liveSession','current');
+  return transaction.get(liveRef).then(snapshot=>{
+    const session=liveSessionState(snapshot.exists() ? snapshot.data() : {});
+    if(!session.editable) throw new Error(session.expired ? 'This session reached its 10-hour limit.' : 'The GM must start the session before this dashboard can be edited.');
+    return session;
+  });
+}
+function liveCharacterRefs(campaignId,characterId){
+  return {
+    campaign:doc(db,'campaigns',campaignId,'characters',characterId),
+    private:doc(db,'users',currentUser.uid,'characters',characterId)
+  };
+}
+function writeLiveCharacter(transaction,refs,character){
+  const clean=structuredCloneSafe(character);
+  transaction.set(refs.campaign,Object.assign({},clean,{updatedAt:serverTimestamp()}),{merge:true});
+  if(character.ownerUid === currentUser.uid) transaction.set(refs.private,Object.assign({},clean,{id:character.id,ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+}
+function characterInventory(character){
+  return (Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>typeof item === 'string' ? {id:liveSlug(item)||`item-${index}`,name:item,qty:1} : Object.assign({id:item.id || item.instanceId || liveSlug(item.name || item.title) || `item-${index}`,qty:Number(item.qty ?? item.quantity ?? 1)},item));
+}
+const LIVE_CURRENCY=[['royal_platinum',10000000000],['royal_crown',100000000],['platinum_crown',1000000],['gold',10000],['silver',100],['copper',1]];
+function currencyTotal(character){
+  const coins=character.coins || character.coinPouch || {};
+  return LIVE_CURRENCY.reduce((sum,[key,value])=>sum+Number(coins[key] ?? coins[key.replaceAll('_',' ')] ?? coins[key.split('_').map(part=>part[0]?.toUpperCase()+part.slice(1)).join(' ')] ?? 0)*value,0);
+}
+function setCurrencyTotal(character,total){
+  let remainder=Math.max(0,Math.floor(Number(total||0)));
+  character.coins=Object.assign({},character.coins || {});
+  LIVE_CURRENCY.forEach(([key,value])=>{character.coins[key]=Math.floor(remainder/value);remainder%=value;});
+}
+function liveItemId(item,index=0){return String(item?.id || item?.instanceId || item?.catalogId || liveSlug(item?.name || item?.title) || `item-${index}`);}
+function appendActivity(character,entry){
+  const rows=Array.isArray(character.actionLog) ? character.actionLog : [];
+  character.actionLog=[Object.assign({id:`action-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString()},entry),...rows].slice(0,100);
+}
+
 const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser),
   getUser:()=>currentUser,
@@ -613,7 +657,7 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(
       doc(db, 'campaigns', campaignId, 'liveSession', 'current'),
-      snapshot=>onChange(snapshot.exists() ? Object.assign({ id:'' }, snapshot.data()) : { id:'', status:'idle' }),
+      snapshot=>onChange(liveSessionState(snapshot.exists() ? Object.assign({ id:'' }, snapshot.data()) : { id:'', status:'idle' })),
       error=>reportSyncError('live-session-listener', error, { campaignId })
     );
   },
@@ -623,9 +667,13 @@ const firebasePublicApi = {
     const result=await runTransaction(db, async transaction=>{
       const liveSnapshot=await transaction.get(liveRef);
       const current=liveSnapshot.exists() ? liveSnapshot.data() : {};
-      if(current.status === 'active') return current;
-      const resume=current.status === 'paused' && current.id;
+      const liveCurrent=liveSessionState(current);
+      if(liveCurrent.editable) return current;
+      const resume=current.status === 'paused' && current.id && !liveCurrent.expired;
       const sessionId=resume ? current.id : `session-${Date.now()}-${currentUser.uid.slice(0,6)}`;
+      const now=Date.now();
+      const originalExpiry=timestampMs(current.expiresAt);
+      const expiresAt=resume && originalExpiry > now ? current.expiresAt : Timestamp.fromMillis(now + SESSION_LIMIT_MS);
       const sessionRef=doc(db, 'campaigns', campaignId, 'sessions', sessionId);
       const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
       const next=Object.assign({}, current, {
@@ -635,6 +683,8 @@ const firebasePublicApi = {
         startedBy:current.startedBy || currentUser.uid,
         startedAt:current.startedAt || serverTimestamp(),
         resumedAt:resume ? serverTimestamp() : null,
+        expiresAt,
+        maxDurationHours:10,
         updatedAt:serverTimestamp(),
         endedAt:null
       });
@@ -655,7 +705,7 @@ const firebasePublicApi = {
         createdAt:serverTimestamp(),
         resolvedAt:serverTimestamp()
       });
-      return Object.assign({}, next, { startedAt:current.startedAt || new Date().toISOString() });
+      return Object.assign({}, next, { startedAt:current.startedAt || new Date().toISOString(), expiresAt });
     });
     return { ok:true, session:result };
   },
@@ -680,26 +730,33 @@ const firebasePublicApi = {
     });
     return { ok:true, session:result };
   },
-  endLiveSession: async function(campaignId){
+  endLiveSession: async function(campaignId, reason='gm-ended'){
     if(!db || !currentUser || !campaignId) throw new Error('A signed-in campaign GM is required.');
     const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
     const result=await runTransaction(db, async transaction=>{
       const snapshot=await transaction.get(liveRef);
-      if(!snapshot.exists() || !['active','paused'].includes(snapshot.data().status)) throw new Error('Start a session before ending it.');
+      if(!snapshot.exists() || !['active','paused','expired'].includes(liveSessionState(snapshot.data()).status)) throw new Error('Start a session before ending it.');
       const current=snapshot.data();
       const sessionRef=doc(db, 'campaigns', campaignId, 'sessions', current.id);
       const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
-      const patch={ status:'ended', endedAt:serverTimestamp(), updatedAt:serverTimestamp() };
+      const patch={ status:'ended', endReason:reason, endedAt:serverTimestamp(), updatedAt:serverTimestamp() };
       transaction.set(liveRef, patch, { merge:true });
       transaction.set(sessionRef, patch, { merge:true });
       transaction.set(eventRef, {
         id:eventRef.id, campaignId, sessionId:current.id, targetCharacterId:'', targetOwnerUid:'',
-        type:'session-ended', payload:{}, status:'delivered', deliveryStatus:'delivered', acknowledged:false,
+        type:'session-ended', payload:{ reason }, status:'delivered', deliveryStatus:'delivered', acknowledged:false,
         createdBy:currentUser.uid, createdAt:serverTimestamp(), resolvedAt:serverTimestamp()
       });
       return Object.assign({}, current, patch);
     });
     return { ok:true, session:result };
+  },
+  expireLiveSession: async function(campaignId){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    const liveRef=doc(db,'campaigns',campaignId,'liveSession','current');
+    const snapshot=await getDoc(liveRef);
+    if(!snapshot.exists() || !liveSessionState(snapshot.data()).expired) return {ok:true,applied:false};
+    return this.endLiveSession(campaignId,'time-limit');
   },
   setSessionPresence: async function(campaignId, sessionId, presence={}){
     if(!db || !currentUser || !campaignId || !sessionId) return false;
@@ -741,14 +798,344 @@ const firebasePublicApi = {
       error=>reportSyncError('campaign-encounter-listener', error, { campaignId })
     );
   },
+  subscribePartyWorkspace: function(campaignId,onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'systems','party-workspace'),snapshot=>onChange(snapshot.exists() ? snapshot.data() : {sharedNotes:'',questLog:[]}),error=>reportSyncError('party-workspace-listener',error,{campaignId}));
+  },
+  subscribePartyChat: function(campaignId,onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'partyChat'),snapshot=>{
+      const messages=[];
+      snapshot.forEach(item=>messages.push(Object.assign({id:item.id},item.data())));
+      messages.sort((left,right)=>timestampMs(left.createdAt)-timestampMs(right.createdAt));
+      onChange(messages.slice(-100));
+    },error=>reportSyncError('party-chat-listener',error,{campaignId}));
+  },
+  updatePartyNotes: async function(campaignId,sharedNotes){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    const workspaceRef=doc(db,'campaigns',campaignId,'systems','party-workspace');
+    try{
+      await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        transaction.set(workspaceRef,{sharedNotes:String(sharedNotes||'').slice(0,20000),sessionId:session.id,updatedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  sendPartyMessage: async function(campaignId,characterId,text){
+    if(!db || !currentUser || !campaignId || !String(text||'').trim()) return {ok:false};
+    const characterRef=doc(db,'campaigns',campaignId,'characters',characterId);
+    const messageRef=doc(collection(db,'campaigns',campaignId,'partyChat'));
+    try{
+      await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        const characterSnapshot=await transaction.get(characterRef);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const character=characterSnapshot.data();
+        if(character.ownerUid && character.ownerUid !== currentUser.uid) throw new Error('You can only chat as your own character.');
+        transaction.set(messageRef,{id:messageRef.id,campaignId,sessionId:session.id,characterId,ownerUid:currentUser.uid,characterName:character.name||'Character',text:String(text).trim().slice(0,2000),createdAt:serverTimestamp()});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  spendCharacteristicPoints: async function(campaignId,characterId,key,amount=1){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const current=Object.assign({id:characterId},snapshot.data());
+        const applied=applyCharacteristicPoints(current,key,amount);
+        appendActivity(applied.character,{type:'cp-spent',message:`Spent ${applied.applied} CP on ${key}.`});
+        writeLiveCharacter(transaction,refs,applied.character);
+        return applied;
+      });
+      return {ok:true,applied:result.applied};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  purchaseTalentRank: async function(campaignId,characterId,talent={}){
+    if(!db || !currentUser || !campaignId || !characterId || !talent.name) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const tier=Math.max(1,Math.min(5,Number(talent.tier||1)));
+        if(!talentTierUnlocked(character.level,tier)) throw new Error(`Tier ${tier} unlocks at Level ${[0,1,10,20,30,40][tier]}.`);
+        character.talents=Array.isArray(character.talents) ? Object.fromEntries(character.talents.map(value=>[value.name||value.title||value,{rank:Number(value.rank||1)}])) : Object.assign({},character.talents||{});
+        const existing=character.talents[talent.name]||{};
+        const rank=Math.max(0,Number(existing.rank||0));
+        const maximum=Math.max(1,Number(talent.maxRank||talent.max||talent.ranks||5));
+        if(rank>=maximum) throw new Error('Talent is already at maximum rank.');
+        const cost=talentRankCost(rank+1);
+        if(Number(character.tp||0)<cost) throw new Error(`Rank ${rank+1} costs ${cost} TP.`);
+        character.tp=Number(character.tp||0)-cost;
+        character.talents[talent.name]=Object.assign({},existing,structuredCloneSafe(talent),{name:talent.name,rank:rank+1,tier,maxRank:maximum,unlocked:true});
+        character.unlockedTalents=Object.values(character.talents).filter(value=>Number(value.rank||0)>0);
+        appendActivity(character,{type:'talent-rank',message:`Unlocked ${talent.name} Rank ${rank+1} for ${cost} TP.`});
+        writeLiveCharacter(transaction,refs,character);
+        return {rank:rank+1,cost};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  recordSkillSuccess: async function(campaignId,characterId,skill={}){
+    if(!db || !currentUser || !campaignId || !characterId || !skill.name) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const progress=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const key=liveSlug(skill.name);
+        character.skillProgress=Object.assign({},character.skillProgress||{});
+        const existing=character.skillProgress[key]||{name:skill.name,rank:skill.rank||skill.rankName||1,successes:0};
+        const next=nextSkillProgress(existing);
+        character.skillProgress[key]=next;
+        if(Array.isArray(character.skills)) character.skills=character.skills.map(value=>liveSlug(value?.name||value?.title||value)===key ? Object.assign(typeof value==='object'?value:{name:value},{rank:next.rank,rankName:next.rankName}) : value);
+        appendActivity(character,{type:'skill-success',message:`${skill.name}: successful check${next.rankedUp?` - advanced to ${next.rankName}`:''}.`});
+        writeLiveCharacter(transaction,refs,character);
+        return next;
+      });
+      return {ok:true,progress};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  castCharacterSpell: async function(campaignId,characterId,spell={},costs={}){
+    if(!db || !currentUser || !campaignId || !characterId || !spell.name) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const paid={};
+        Object.entries(costs||{}).forEach(([resource,raw])=>{
+          if(!['hp','sp','mp','bp'].includes(resource)) return;
+          const amount=Math.max(0,Number(raw||0));
+          if(!amount) return;
+          const pair=Array.isArray(character[resource])?character[resource]:[0,0];
+          if(Number(pair[0]||0)<amount) throw new Error(`Not enough ${resource.toUpperCase()} to cast ${spell.name}.`);
+          character[resource]=[Number(pair[0])-amount,Number(pair[1]||0)];
+          paid[resource]=amount;
+        });
+        appendActivity(character,{type:'spell-cast',message:`Cast ${spell.name}.`,costs:paid});
+        writeLiveCharacter(transaction,refs,character);
+        return paid;
+      });
+      return {ok:true,paid:result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  updateCharacterInventory: async function(campaignId,characterId,operation={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const inventory=characterInventory(character);
+        const item=inventory.find((value,index)=>liveItemId(value,index)===String(operation.itemId||''));
+        if(!item) throw new Error('Inventory item not found.');
+        if(operation.type==='equip'){
+          const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
+          if(!slot) throw new Error('Choose an equipment slot.');
+          inventory.forEach(value=>{if(value.equippedSlot===slot){value.equipped=false;value.equippedSlot='';value.location='inventory';}});
+          item.equipped=true;item.equippedSlot=slot;item.slot=slot;item.location='equipment';
+          character.equipment=Object.assign({},character.equipment||{},{[slot]:item});
+          appendActivity(character,{type:'item-equipped',message:`Equipped ${item.name} in ${slot}.`});
+        }else if(operation.type==='unequip'){
+          const slot=item.equippedSlot||item.slot;
+          item.equipped=false;item.equippedSlot='';item.location='inventory';
+          if(slot&&character.equipment) delete character.equipment[slot];
+          appendActivity(character,{type:'item-unequipped',message:`Unequipped ${item.name}.`});
+        }else if(operation.type==='quick'){
+          const index=Math.max(0,Math.min(3,Number(operation.index||0)));
+          character.quickSlots=Array.isArray(character.quickSlots)?character.quickSlots.slice(0,4):[];
+          while(character.quickSlots.length<4) character.quickSlots.push(null);
+          character.quickSlots[index]=item;
+          appendActivity(character,{type:'quick-slot',message:`Assigned ${item.name} to Quick Slot ${index+1}.`});
+        }else if(operation.type==='use'){
+          const effect=item.effect||item.effects||{};
+          const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
+          const changes=Object.entries(parsed).filter(([resource,amount])=>['hp','sp','mp','bp'].includes(resource)&&Number(amount)>0);
+          if(!changes.length) throw new Error('This item does not have a usable resource effect.');
+          changes.forEach(([resource,amount])=>{const pair=Array.isArray(character[resource])?character[resource]:[0,0];character[resource]=[Math.min(Number(pair[1]||0),Number(pair[0]||0)+Number(amount)),Number(pair[1]||0)];});
+          item.qty=Math.max(0,Number(item.qty||1)-1);
+          appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
+        }else throw new Error('Unsupported inventory action.');
+        character.inventory=inventory.filter(value=>Number(value.qty??1)>0);
+        writeLiveCharacter(transaction,refs,character);
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const characterSnapshot=await transaction.get(refs.campaign);
+        const ecosystemSnapshot=await transaction.get(ecosystemRef);
+        if(!characterSnapshot.exists()||!ecosystemSnapshot.exists()) throw new Error('Shop data is not available.');
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
+        const shop=(ecosystem.shops||[]).find(value=>String(value.id)===String(shopId));
+        const stock=shop?.stock?.[Number(stockIndex)];
+        if(!shop||!stock||shop.status!=='open') throw new Error('This shop is not open.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
+        const qty=Math.max(1,Math.min(Number(quantity||1),Number(stock.qty||0)));
+        if(!qty) throw new Error('This item is out of stock.');
+        const item=Object.assign({},structuredCloneSafe(stock.item||{}),{id:`${liveSlug(stock.item?.name||'item')}-${Date.now()}`,qty,location:'inventory',equipped:false});
+        item.name=item.name||item.title||'Shop Item';
+        const cost=Math.max(0,Number(stock.priceCopper||item.value||0))*qty;
+        const total=currencyTotal(character);
+        if(total<cost) throw new Error('Not enough currency.');
+        setCurrencyTotal(character,total-cost);
+        character.inventory=[...characterInventory(character),item];
+        stock.qty=Number(stock.qty||0)-qty;
+        shop.currencyCopper=Number(shop.currencyCopper||0)+cost;
+        appendActivity(character,{type:'shop-purchase',message:`Purchased ${qty} x ${item.name} for ${cost} copper.`});
+        writeLiveCharacter(transaction,refs,character);
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        return {item,cost};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  sellLiveShopItem: async function(campaignId,characterId,shopId,itemId){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const characterSnapshot=await transaction.get(refs.campaign);
+        const ecosystemSnapshot=await transaction.get(ecosystemRef);
+        if(!characterSnapshot.exists()||!ecosystemSnapshot.exists()) throw new Error('Shop data is not available.');
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
+        const shop=(ecosystem.shops||[]).find(value=>String(value.id)===String(shopId));
+        const inventory=characterInventory(character);
+        const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
+        if(!shop||shop.status!=='open'||!item) throw new Error('The shop or item is unavailable.');
+        if(item.equipped||item.locked||item.bound||item.questItem) throw new Error('This item cannot be sold.');
+        const value=Math.max(0,Math.floor(Number(item.value||0)*Number(shop.sellModifier??0.5)*Math.max(0.1,Number(item.condition??100)/100)));
+        if(Number(shop.currencyCopper??Infinity)<value) throw new Error('The merchant cannot afford this item.');
+        item.qty=Math.max(0,Number(item.qty||1)-1);
+        character.inventory=inventory.filter(record=>Number(record.qty??1)>0);
+        setCurrencyTotal(character,currencyTotal(character)+value);
+        shop.currencyCopper=Number(shop.currencyCopper||0)-value;
+        shop.stock=Array.isArray(shop.stock)?shop.stock:[];
+        const existing=shop.stock.find(row=>liveSlug(row.item?.name)===liveSlug(item.name));
+        if(existing) existing.qty=Number(existing.qty||0)+1;
+        else shop.stock.push({item:Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'}),qty:1,priceCopper:Math.max(value,Number(item.value||value))});
+        appendActivity(character,{type:'shop-sale',message:`Sold ${item.name} for ${value} copper.`});
+        writeLiveCharacter(transaction,refs,character);
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        return {value};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  createLiveTrade: async function(campaignId,characterId,recipientId,itemId,quantity=1,note=''){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        const characterSnapshot=await transaction.get(refs.campaign);
+        const ecosystemSnapshot=await transaction.get(ecosystemRef);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const inventory=characterInventory(character);
+        const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
+        const qty=Math.max(1,Math.min(Number(quantity||1),Number(item?.qty||0)));
+        if(!item||item.equipped||item.locked||item.bound||item.questItem||!qty) throw new Error('This item cannot be traded.');
+        const snapshot=Object.assign({},structuredCloneSafe(item),{qty,equipped:false,equippedSlot:'',location:'trade-escrow'});
+        item.qty=Number(item.qty||1)-qty;
+        character.inventory=inventory.filter(value=>Number(value.qty??1)>0);
+        ecosystem.directTrades=Array.isArray(ecosystem.directTrades)?ecosystem.directTrades:[];
+        const trade={id:`trade-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,sessionId:session.id,fromCharacterId:characterId,toCharacterId:recipientId,item:snapshot,quantity:qty,note:String(note||'').slice(0,1000),status:'pending',createdAt:new Date().toISOString(),createdBy:currentUser.uid};
+        ecosystem.directTrades.push(trade);
+        appendActivity(character,{type:'trade-sent',message:`Offered ${qty} x ${item.name} in trade.`});
+        writeLiveCharacter(transaction,refs,character);
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        return trade;
+      });
+      return {ok:true,trade:result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  respondLiveTrade: async function(campaignId,characterId,tradeId,accepted){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const characterSnapshot=await transaction.get(refs.campaign);
+        const ecosystemSnapshot=await transaction.get(ecosystemRef);
+        if(!characterSnapshot.exists()||!ecosystemSnapshot.exists()) throw new Error('Trade data is unavailable.');
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
+        const trade=(ecosystem.directTrades||[]).find(value=>String(value.id)===String(tradeId));
+        if(!trade||trade.status!=='pending'||trade.toCharacterId!==characterId) throw new Error('This trade is no longer pending for this character.');
+        trade.status=accepted?'accepted':'declined';trade.resolvedAt=new Date().toISOString();trade.resolvedBy=currentUser.uid;
+        if(accepted){
+          const item=Object.assign({},structuredCloneSafe(trade.item),{id:`${liveSlug(trade.item?.name||'item')}-${Date.now()}`,location:'inventory',equipped:false});
+          character.inventory=[...characterInventory(character),item];
+          appendActivity(character,{type:'trade-accepted',message:`Accepted ${item.name} from a party member.`});
+          writeLiveCharacter(transaction,refs,character);
+        }
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  updateCharacterQuest: async function(campaignId,characterId,questId,status){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const quests=Array.isArray(character.quests||character.questLog)?(character.quests||character.questLog):[];
+        character.quests=quests.map((quest,index)=>String(quest.id||quest.slug||index)===String(questId)?Object.assign(typeof quest==='object'?quest:{name:quest},{status}):quest);
+        writeLiveCharacter(transaction,refs,character);
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  addJournalEntry: async function(campaignId,characterId,entry={}){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const journal=Array.isArray(character.journal)?character.journal:[];
+        character.journal=[{id:`journal-${Date.now()}`,title:String(entry.title||'Journal Entry').slice(0,120),body:String(entry.body||'').slice(0,20000),createdAt:new Date().toISOString()},...journal];
+        writeLiveCharacter(transaction,refs,character);
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   saveCampaignEncounter: async function(campaignId, encounter={}){
     if(!db || !currentUser || !campaignId) return { ok:false };
     try{
-      await setDoc(doc(db, 'campaigns', campaignId, 'systems', 'encounter'), Object.assign({}, cleanData(encounter), {
-        campaignId,
-        updatedBy:currentUser.uid,
-        updatedAt:serverTimestamp()
-      }), { merge:true });
+      const encounterRef=doc(db, 'campaigns', campaignId, 'systems', 'encounter');
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        transaction.set(encounterRef,Object.assign({},cleanData(encounter),{campaignId,updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+      });
       return { ok:true };
     }catch(error){
       reportSyncError('campaign-encounter-save', error, { campaignId });
@@ -780,11 +1167,10 @@ const firebasePublicApi = {
     if(delta <= 0) throw new Error('XP must be greater than zero.');
     const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
-    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
     try{
       const result=await runTransaction(db, async transaction=>{
+        const live=await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
-        const liveSnapshot=await transaction.get(liveRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
         const before={ level:Number(character.level || 0), xp:Number(character.xp || 0) };
@@ -795,7 +1181,7 @@ const firebasePublicApi = {
         const event={
           id:eventRef.id,
           campaignId,
-          sessionId:liveSnapshot.exists() && ['active','paused'].includes(liveSnapshot.data().status) ? liveSnapshot.data().id : '',
+          sessionId:live.id || '',
           targetCharacterId:characterId,
           targetOwnerUid:character.ownerUid || '',
           type:'xp-reward',
@@ -833,11 +1219,10 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || !characterId || !item) return { ok:false };
     const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
-    const liveRef=doc(db, 'campaigns', campaignId, 'liveSession', 'current');
     try{
       const result=await runTransaction(db, async transaction=>{
+        const live=await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
-        const liveSnapshot=await transaction.get(liveRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
         const reward={
@@ -855,7 +1240,7 @@ const firebasePublicApi = {
         const event={
           id:eventRef.id,
           campaignId,
-          sessionId:liveSnapshot.exists() && ['active','paused'].includes(liveSnapshot.data().status) ? liveSnapshot.data().id : '',
+          sessionId:live.id || '',
           targetCharacterId:characterId,
           targetOwnerUid:character.ownerUid || '',
           type:'loot-reward',
@@ -882,6 +1267,7 @@ const firebasePublicApi = {
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
     try{
       const event=await runTransaction(db, async transaction=>{
+        const live=await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
@@ -895,7 +1281,7 @@ const firebasePublicApi = {
         const value={
           id:eventRef.id,
           campaignId,
-          sessionId:'',
+          sessionId:live.id || '',
           targetCharacterId:characterId,
           targetOwnerUid:character.ownerUid || '',
           type:'magic-element-reward',
@@ -923,6 +1309,7 @@ const firebasePublicApi = {
     const eventRef=doc(db, 'campaigns', campaignId, 'events', eventId);
     try{
       const result=await runTransaction(db, async transaction=>{
+        await requireLiveSession(transaction,campaignId);
         const eventSnapshot=await transaction.get(eventRef);
         const characterSnapshot=await transaction.get(characterRef);
         if(!eventSnapshot.exists() || !characterSnapshot.exists()) throw new Error('The magic reward is no longer available.');
@@ -955,6 +1342,46 @@ const firebasePublicApi = {
       return { ok:false, applied:false, error:error.message || String(error) };
     }
   },
+  resolveLootReward: async function(campaignId,characterId,eventId,action='inventory',slot=''){
+    if(!db || !currentUser || !campaignId || !characterId || !eventId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const eventRef=doc(db,'campaigns',campaignId,'events',eventId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const eventSnapshot=await transaction.get(eventRef);
+        const characterSnapshot=await transaction.get(refs.campaign);
+        if(!eventSnapshot.exists() || !characterSnapshot.exists()) throw new Error('This loot reward is no longer available.');
+        const event=eventSnapshot.data();
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(event.type!=='loot-reward'||event.targetCharacterId!==characterId||event.targetOwnerUid!==currentUser.uid) throw new Error('This reward is not assigned to this character.');
+        if(event.resolvedAt||['accepted','equipped','declined','resolved'].includes(String(event.status||'').toLowerCase())) return {applied:false};
+        const pending=Array.isArray(character.pendingItemRewards)?character.pendingItemRewards:[];
+        character.pendingItemRewards=pending.filter(value=>String(value?.id||'')!==String(eventId));
+        if(action!=='declined'){
+          const item=Object.assign({},structuredCloneSafe(event.payload?.item||{}));
+          item.id=item.id||item.instanceId||`${liveSlug(item.name||item.title)||'item'}-${Date.now()}`;
+          item.instanceId=item.instanceId||item.id;
+          item.name=item.name||item.title||'Reward Item';
+          item.qty=Math.max(1,Number(item.qty||item.quantity||1));
+          item.location=action==='equip'?'equipment':'inventory';
+          item.equipped=action==='equip';
+          if(action==='equip'){
+            item.equippedSlot=slot||item.slot||item.allowedSlots?.[0]||'';
+            item.slot=item.equippedSlot;
+            character.equipment=Object.assign({},character.equipment||{});
+            if(item.equippedSlot) character.equipment[item.equippedSlot]=item;
+          }
+          character.inventory=[...characterInventory(character),item];
+          appendActivity(character,{type:'loot-received',message:`Received ${item.name}${action==='equip'?' and equipped it':''}.`});
+        }
+        writeLiveCharacter(transaction,refs,character);
+        transaction.set(eventRef,{status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',deliveryStatus:'acknowledged',acknowledged:true,acknowledgedBy:currentUser.uid,acknowledgedAt:serverTimestamp(),resolvedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+        return {applied:true};
+      });
+      return {ok:true,applied:result.applied};
+    }catch(error){return {ok:false,applied:false,error:error.message||String(error)};}
+  },
   updateCampaignCharacterResource: async function(campaignId, characterId, key, amount, metadata={}){
     if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
     const resource=String(key || '').toLowerCase();
@@ -963,6 +1390,7 @@ const firebasePublicApi = {
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
     try{
       const result=await runTransaction(db, async transaction=>{
+        const live=await requireLiveSession(transaction,campaignId);
         const snapshot=await transaction.get(characterRef);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, snapshot.data());
@@ -972,7 +1400,7 @@ const firebasePublicApi = {
         const next=[current,maximum];
         transaction.set(characterRef, { [resource]:next, updatedAt:serverTimestamp() }, { merge:true });
         transaction.set(eventRef, {
-          id:eventRef.id, campaignId, sessionId:'', targetCharacterId:characterId, targetOwnerUid:character.ownerUid || '',
+          id:eventRef.id, campaignId, sessionId:live.id || '', targetCharacterId:characterId, targetOwnerUid:character.ownerUid || '',
           type:'resource-update', payload:{ resource, value:next, delta:Number(amount || 0), source:metadata.source || 'Dashboard' },
           status:'delivered', deliveryStatus:'delivered', acknowledged:false, createdBy:currentUser.uid,
           createdAt:serverTimestamp(), resolvedAt:serverTimestamp()

@@ -849,7 +849,12 @@ function renderPlayerHome(){
 }
 function openAccountCharacter(id){
   if(!chars[id]) return toast('Character not found.');
-  session.character=id; selected=id; loadPlayer(id); saveAsteriaState(); setView('player'); toast('Opened '+chars[id].name+'.');
+  session.character=id; selected=id; saveAsteriaState();
+  const character=chars[id]||{};
+  const campaignId=character.sharedCampaignId||character.campaignId||character.linkedCampaignIds?.[0]||(campaigns||[]).find(campaign=>(campaign.party||[]).includes(id))?.id||'';
+  if(campaignId&&window.AsteriaReactMigration?.available){window.AsteriaReactMigration.openCharacter(campaignId,id);toast('Opened '+chars[id].name+'.');return;}
+  window.AsteriaGameplay?.openCharacterForgeHub?.()||window.AsteriaWorkspace?.openCharacterForge?.();
+  toast('Link this character to a campaign to open its live dashboard.');
 }
 function toggleCharacterCreator(){
   if(window.AsteriaGameplay?.openCharacterForge) return window.AsteriaGameplay.openCharacterForge();

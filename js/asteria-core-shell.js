@@ -130,9 +130,8 @@
       window.AsteriaReactMigration.openCharacter(campaignId,id);
       return;
     }
-    restoreMainViews();
-    window.loadPlayer?.(id);
-    window.setView?.('player');
+    window.AsteriaGameplay?.openCharacterForgeHub?.() || window.AsteriaWorkspace?.openCharacterForge?.();
+    toast('Link this character to a campaign to open its live dashboard.');
   }
 
   async function openGMDashboard(){

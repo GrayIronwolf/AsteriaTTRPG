@@ -12,6 +12,13 @@ import {
   resourcePatch,
   xpNoticeEvent
 } from '../src/state/liveEventReducer.mjs';
+import {
+  SESSION_LIMIT_MS,
+  applyCharacteristicPoints,
+  effectiveSession,
+  nextSkillProgress,
+  talentRankCost
+} from '../src/state/liveWorkspaceModel.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -82,12 +89,14 @@ test('10. Firebase exposes transactional session, XP, loot, resource, and acknow
   assert.match(firebase, /runTransaction/);
 });
 
-test('11. Static dashboards remain available as explicit fallbacks', () => {
+test('11. The character dashboard has one live route and no legacy character fallback', () => {
   const html = read('index.html');
   assert.match(html, /id="player"/);
   assert.match(html, /id="gm"/);
   assert.match(read('src/main.jsx'), /openLegacyGM/);
-  assert.match(read('src/main.jsx'), /openLegacyCharacter/);
+  assert.doesNotMatch(read('src/main.jsx'), /openLegacyCharacter/);
+  assert.match(read('src/main.jsx'), /if\(view === 'player'\).*openCurrentCharacter/);
+  assert.doesNotMatch(read('src/dashboards/CharacterDashboard.jsx'), /LegacyTab|openLegacyCharacter|Open full existing/);
 });
 
 test('12. React route and production bundle are present', () => {
@@ -115,6 +124,46 @@ test('14. React owns encounter and additional-magic workflows without raw Firest
   assert.match(character, /MagicRewardModal/);
   ['subscribeEncounter','saveEncounter','createMagicReward','respondMagicReward'].forEach(name => assert.match(service, new RegExp(name)));
   assert.doesNotMatch(gm + character, /firebase\/firestore|runTransaction|getFirestore/);
+});
+
+test('15. A live session expires after ten wall-clock hours and locks editing', () => {
+  const startedAt = Date.now();
+  const active = effectiveSession({ status:'active', startedAt, expiresAt:startedAt + SESSION_LIMIT_MS }, startedAt + SESSION_LIMIT_MS - 1);
+  const expired = effectiveSession({ status:'active', startedAt, expiresAt:startedAt + SESSION_LIMIT_MS }, startedAt + SESSION_LIMIT_MS);
+  const pausedExpired = effectiveSession({ status:'paused', startedAt, expiresAt:startedAt + SESSION_LIMIT_MS }, startedAt + SESSION_LIMIT_MS);
+  assert.equal(active.editable, true);
+  assert.equal(expired.status, 'expired');
+  assert.equal(expired.editable, false);
+  assert.equal(pausedExpired.status, 'expired');
+});
+
+test('16. Characteristic spending uses CP and the 1:10 resource rule', () => {
+  const result = applyCharacteristicPoints({ cp:2, characteristics:{ constitution:10 }, hp:[50,100] }, 'constitution', 2);
+  assert.equal(result.character.cp, 0);
+  assert.equal(result.character.characteristics.constitution, 12);
+  assert.deepEqual(result.character.hp, [50,120]);
+});
+
+test('17. Talent and skill progression match the existing Asteria costs', () => {
+  assert.equal(talentRankCost(1), 3);
+  assert.equal(talentRankCost(5), 15);
+  const progress = nextSkillProgress({ rank:'Novice', successes:4 });
+  assert.equal(progress.rankName, 'Initiate');
+  assert.equal(progress.successes, 0);
+});
+
+test('18. All character workspace systems render natively in React', () => {
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  ['CharacterTab','TalentsTab','SkillsTab','SpellsTab','InventoryTab','QuestTab','JournalTab','PartyTab'].forEach(name => assert.match(dashboard + tabs, new RegExp(name)));
+  ['spendCP','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs, new RegExp(name)));
+});
+
+test('19. Firebase gates live mutations and exposes the party workspace', () => {
+  const firebase = read('js/firebase-auth.js');
+  ['spendCharacteristicPoints','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCharacterInventory','buyLiveShopItem','sellLiveShopItem','createLiveTrade','respondLiveTrade','updateCharacterQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(firebase, new RegExp(name)));
+  assert.match(firebase, /requireLiveSession/);
+  assert.match(read('firestore.rules'), /match \/partyChat\/\{messageId\}/);
 });
 
 let failed = 0;

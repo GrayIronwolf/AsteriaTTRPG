@@ -176,6 +176,17 @@ service cloud.firestore {
         );
         allow delete: if isCampaignOwner(sharedCampaign(campaignId));
       }
+
+      match /partyChat/{messageId} {
+        allow read: if canUseCampaignSystems(campaignId);
+        allow create: if canUseCampaignSystems(campaignId) &&
+          request.resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() <= 2000;
+        allow update: if false;
+        allow delete: if isCampaignGM(campaignId) ||
+          (signedIn() && resource.data.ownerUid == request.auth.uid);
+      }
     }
   }
 }

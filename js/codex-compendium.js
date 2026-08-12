@@ -683,10 +683,11 @@
   function openCharacterTalentTree(){
     if(typeof window.openPlayerDashboard === 'function'){
       window.openPlayerDashboard();
-    }else if(typeof window.setView === 'function'){
-      window.setView('player');
+    }else if(window.AsteriaReactMigration?.openCurrentCharacter){
+      window.AsteriaReactMigration.openCurrentCharacter();
     }
     setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('asteria:open-character-tab',{detail:{tab:'talents'}}));
       const tab = document.querySelector('.tab[data-tab="talents"]');
       tab?.click();
       document.getElementById('talents')?.scrollIntoView({ block:'start', behavior:'smooth' });

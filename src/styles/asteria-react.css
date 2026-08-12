@@ -8,6 +8,8 @@
   min-width: 0;
 }
 
+html[data-asteria-live-character-dashboard="active"] #player { display: none !important; }
+
 .react-workspace-shell {
   display: grid;
   grid-template-columns: minmax(250px, 292px) minmax(0, 1fr);
@@ -283,10 +285,12 @@
 .react-equipment-grid > div { display: grid; align-content: center; min-height: 58px; padding: 8px; border: 1px solid rgba(41,151,220,.46); background: rgba(3,17,23,.62); }
 .react-equipment-grid small { color: #81d9f2; text-transform: uppercase; }
 .react-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.react-quick-grid > div { display: grid; grid-template-columns: 30px 1fr; align-items: center; min-height: 66px; padding: 8px; border: 1px solid rgba(255,255,255,.15); }
+.react-quick-grid > div, .react-quick-grid > button { display: grid; grid-template-columns: 30px 1fr; align-items: center; min-height: 66px; padding: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(0,0,0,.18); color: inherit; text-align: left; }
 .react-quick-grid b { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--asteria-accent, #1f7dff); }
 .react-card-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .react-small-card { display: grid; grid-template-rows: minmax(34px, auto) 74px auto auto; gap: 5px; min-width: 0; height: 176px; padding: 8px; border: 1px solid color-mix(in srgb, var(--asteria-accent, #1f7dff) 55%, #704dc0); background: rgba(6,16,22,.82); }
+.react-small-card[tabindex] { cursor: pointer; }
+.react-small-card.disabled { cursor: not-allowed; opacity: .52; }
 .react-small-card > b { overflow-wrap: break-word; font-size: .7rem; line-height: 1.1; }
 .react-small-card-image { display: grid; place-items: center; overflow: hidden; background: rgba(0,0,0,.36); color: var(--asteria-accent, #1f7dff); font-size: 1.8rem; }
 .react-small-card-image img { width: 100%; height: 100%; object-fit: contain; }
@@ -296,6 +300,95 @@
 .react-coin-list > div { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,.11); }
 .react-live-resource-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .react-live-resource-actions > div { display: grid; grid-template-columns: 45px 48px 48px; align-items: center; gap: 5px; }
+
+.react-session-gate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid #9b3144;
+  border-left-width: 4px;
+  background: rgba(55, 8, 17, .76);
+}
+.react-session-gate.open { border-color: #35d982; background: rgba(5, 45, 28, .68); }
+.react-session-gate span { font-size: .82rem; opacity: .86; text-align: right; }
+button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: .48; }
+
+.react-character-tab-grid { display: grid; grid-template-columns: minmax(230px, .35fr) minmax(0, 1fr); gap: 12px; }
+.react-character-tab-grid > .react-full-panel { grid-column: 1 / -1; }
+.react-detail-list { display: grid; gap: 0; margin: 0; }
+.react-detail-list > div { display: grid; grid-template-columns: minmax(88px, .38fr) 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+.react-detail-list dt { opacity: .7; }
+.react-detail-list dd { margin: 0; font-weight: 800; text-align: right; }
+.react-characteristic-gallery { display: grid; grid-template-columns: repeat(5, minmax(105px, 1fr)); gap: 8px; }
+.react-characteristic-gallery article { display: grid; grid-template-rows: auto auto auto auto minmax(38px,auto); gap: 5px; min-width: 0; padding: 9px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.25); }
+.react-characteristic-gallery header { display: flex; justify-content: space-between; gap: 6px; }
+.react-characteristic-gallery strong { font-size: 1.55rem; color: var(--asteria-text,#f7ead1); }
+.react-characteristic-gallery button { min-width: 0; padding: 7px 5px; white-space: normal; }
+.react-action-message { min-height: 1.2em; margin-bottom: 0; }
+
+.react-record-card, .react-talent-card, .react-skill-card, .react-spell-card, .react-item-card {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  min-height: 220px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb,var(--asteria-accent,#1f7dff) 58%,#48525b);
+  border-radius: 5px;
+  background: rgba(5,16,21,.84);
+  color: inherit;
+  text-align: left;
+}
+.react-record-card { min-height: 132px; }
+.react-record-card > span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.react-talent-card.unlocked { box-shadow: inset 3px 0 0 #35d982; }
+.react-talent-card > b, .react-skill-card > b, .react-spell-card > b, .react-item-card > b { min-height: 2.2em; overflow-wrap: anywhere; line-height: 1.1; }
+.react-talent-card .react-small-card-image, .react-spell-card .react-small-card-image, .react-item-card .react-small-card-image { height: 72px; }
+.react-talent-card em { font-size: .68rem; font-style: normal; }
+.react-tier-tabs, .react-filter-tabs { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
+.react-tier-tabs button { display: grid; gap: 2px; min-width: 0; min-height: 56px; }
+.react-tier-tabs button.active, .react-filter-tabs button.active { border-color: var(--asteria-accent,#1f7dff); box-shadow: inset 0 -2px 0 var(--asteria-accent,#1f7dff); }
+.react-filter-tabs { grid-template-columns: repeat(auto-fit,minmax(100px,1fr)); margin-bottom: 12px; }
+.react-skill-card strong { color: #74d8f3; }
+.react-skill-meter { height: 6px; overflow: hidden; background: #1d292b; }
+.react-skill-meter i { display: block; height: 100%; background: var(--asteria-accent,#1f7dff); }
+.react-spell-card > div:last-child, .react-item-actions, .react-quick-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.react-spell-card > div:last-child button, .react-item-actions button { flex: 1 1 70px; min-width: 0; padding: 7px; }
+.react-quick-actions { display: grid; grid-template-columns: repeat(4,1fr); }
+.react-quick-actions button { min-width: 0; padding: 5px; }
+.react-record-art { float: left; width: 150px; height: 180px; margin: 0 16px 12px 0; object-fit: contain; background: rgba(0,0,0,.3); }
+.react-source-preview { margin-top: 12px; white-space: pre-wrap; }
+
+.react-inventory-workspace, .react-talent-workspaces, .react-shop-list { display: grid; gap: 12px; }
+.react-equipment-workspace { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.react-shop-stock { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.react-shop-stock article, .react-trade-list article, .react-member-grid article { display: grid; align-content: start; gap: 7px; min-width: 0; padding: 10px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.23); }
+.react-sell-list, .react-trade-list, .react-journal-list { display: grid; gap: 7px; }
+.react-sell-list > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+.react-trade-grid, .react-journal-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.react-journal-grid label { display: grid; gap: 5px; margin-bottom: 10px; }
+.react-journal-grid input, .react-journal-grid textarea, .react-party-workspace textarea { width: 100%; }
+.react-journal-list { max-height: 560px; overflow: auto; }
+.react-journal-list article { padding: 10px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.react-journal-list article small { display: block; margin-top: 3px; opacity: .7; }
+.react-quest-list { display: grid; gap: 7px; }
+.react-quest-list article { display: grid; grid-template-columns: minmax(0,1fr) 170px; align-items: center; gap: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.2); }
+.react-quest-list p { margin: 3px 0 0; }
+.react-party-workspace { display: grid; grid-template-columns: minmax(230px,.32fr) minmax(280px,.45fr) minmax(420px,1fr); gap: 12px; }
+.react-member-grid { display: grid; gap: 7px; }
+.react-member-grid article small { margin-top: 4px; }
+.react-party-chat { min-height: 520px; display: grid; grid-template-rows: auto minmax(0,1fr) auto; }
+.react-chat-log { min-height: 280px; max-height: 430px; overflow: auto; padding-right: 4px; }
+.react-chat-log article { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.react-chat-log article header { display: flex; justify-content: space-between; gap: 8px; }
+.react-chat-log article p { margin: 4px 0 0; }
+.react-chat-compose { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; padding-top: 10px; }
+.react-action-log > div { display: grid; gap: 3px; max-height: 260px; overflow: auto; }
+.react-action-log article { display: grid; grid-template-columns: 90px minmax(0,1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.react-action-log article p { margin: 0; }
 
 .react-empty { display: grid; place-items: center; align-content: center; min-height: 100px; padding: 14px; text-align: center; border: 1px dashed rgba(255,255,255,.2); opacity: .78; }
 .react-empty h3 { font-size: 1rem; }
@@ -319,12 +412,19 @@
   .react-gm-main-grid > *, .react-gm-main-grid .react-xp-panel, .react-gm-main-grid .react-loot-panel { grid-column: 1; grid-row: auto; }
   .react-card-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .react-gm-tools-grid, .react-encounter-builder { grid-template-columns: 1fr; }
+  .react-characteristic-gallery { grid-template-columns: repeat(3,minmax(105px,1fr)); }
+  .react-party-workspace { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .react-party-workspace .react-party-chat { grid-column: 1 / -1; }
+  .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
 
 @container (max-width: 720px) {
   .react-character-dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .react-character-dashboard-grid > .asteria-react-panel { grid-column: span 1 !important; }
   .react-card-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .react-character-tab-grid, .react-trade-grid, .react-journal-grid, .react-party-workspace { grid-template-columns: 1fr; }
+  .react-character-tab-grid > .react-full-panel, .react-party-workspace .react-party-chat { grid-column: 1; }
+  .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width: 900px) {
@@ -352,6 +452,12 @@
   .react-magic-reward { grid-template-columns: 1fr; }
   .react-loot-hero img, .react-loot-hero > span { width: 100%; }
   .react-modal-backdrop { padding: 8px; }
+  .react-session-gate { align-items: flex-start; flex-direction: column; }
+  .react-session-gate span { text-align: left; }
+  .react-characteristic-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .react-tier-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .react-quest-list article { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

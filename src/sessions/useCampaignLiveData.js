@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { firebaseService, waitForFirebase } from '../firebase/asteriaFirebaseService.js';
 import { mergeEvents } from '../state/liveEventReducer.mjs';
+import { effectiveSession } from '../state/liveWorkspaceModel.mjs';
 
 export function useCampaignLiveData(campaignId, { mode = 'character', characterId = '' } = {}) {
   const [campaign, setCampaign] = useState(null);
@@ -9,6 +10,10 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [events, setEvents] = useState([]);
   const [encounter, setEncounter] = useState({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] });
   const [presence, setPresence] = useState({});
+  const [partyWorkspace, setPartyWorkspace] = useState({ sharedNotes:'', questLog:[] });
+  const [partyChat, setPartyChat] = useState([]);
+  const [itemEcosystem, setItemEcosystem] = useState({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
+  const [clock, setClock] = useState(Date.now());
   const [online, setOnline] = useState(navigator.onLine);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,7 +40,10 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       const uid = firebaseService.currentUser()?.uid || '';
       unsubscribers.push(firebaseService.subscribeCampaign(campaignId, value => { setCampaign(value); setLoading(false); }));
       unsubscribers.push(firebaseService.subscribeCharacters(campaignId, value => { setCharacters(value || {}); setLoading(false); }));
-      unsubscribers.push(firebaseService.subscribeSession(campaignId, value => setSession(value || { status: 'idle', id: '' })));
+      unsubscribers.push(firebaseService.subscribeSession(campaignId, value => setSession(effectiveSession(value || { status: 'idle', id: '' }))));
+      unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, value => setPartyWorkspace(value || { sharedNotes:'', questLog:[] })));
+      unsubscribers.push(firebaseService.subscribePartyChat(campaignId, value => setPartyChat(value || [])));
+      unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, value => setItemEcosystem(value || { shops:[], directTrades:[] })));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(previous => mergeEvents(previous, value || [])), {
         mode,
         targetOwnerUid: mode === 'character' ? uid : '',
@@ -52,14 +60,26 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode]);
 
   useEffect(() => {
-    if(!campaignId || !session?.id || !['active', 'paused'].includes(session.status)) return undefined;
+    const timer=window.setInterval(()=>setClock(Date.now()),1000);
+    return ()=>window.clearInterval(timer);
+  },[]);
+
+  const liveSession=useMemo(()=>effectiveSession(session,clock),[session,clock]);
+
+  useEffect(()=>{
+    if(mode !== 'gm' || !campaignId || !liveSession.expired) return;
+    firebaseService.expireSession(campaignId).catch(()=>{});
+  },[campaignId,liveSession.expired,mode]);
+
+  useEffect(() => {
+    if(!campaignId || !liveSession?.id || !['active', 'paused'].includes(liveSession.status)) return undefined;
     let unsubscribe = () => {};
     let timer = 0;
     const user = firebaseService.currentUser();
     if(!user) return undefined;
     try {
-      unsubscribe = firebaseService.subscribePresence(campaignId, session.id, setPresence);
-      const publish = () => firebaseService.setPresence(campaignId, session.id, {
+      unsubscribe = firebaseService.subscribePresence(campaignId, liveSession.id, setPresence);
+      const publish = () => firebaseService.setPresence(campaignId, liveSession.id, {
         state: document.hidden ? 'away' : 'online',
         mode,
         characterId
@@ -73,8 +93,8 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       window.clearInterval(timer);
       unsubscribe?.();
     };
-  }, [campaignId, characterId, mode, session?.id, session?.status]);
+  }, [campaignId, characterId, mode, liveSession?.id, liveSession?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session, events, encounter, presence, online, loading, error, setEvents, setEncounter };
+  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, online, loading, error, setEvents, setEncounter };
 }
