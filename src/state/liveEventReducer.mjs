@@ -38,6 +38,10 @@ export function pendingLootEvent(events = []) {
   return sortEvents(events).find(event => event.type === 'loot-reward' && !eventIsResolved(event)) || null;
 }
 
+export function pendingMagicRewardEvent(events = []) {
+  return sortEvents(events).find(event => event.type === 'magic-element-reward' && !eventIsResolved(event)) || null;
+}
+
 export function xpNoticeEvent(events = [], acknowledged = new Set()) {
   return sortEvents(events).find(event => event.type === 'xp-reward' && !event.acknowledged && !acknowledged.has(event.id)) || null;
 }

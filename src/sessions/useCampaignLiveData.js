@@ -7,6 +7,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [characters, setCharacters] = useState({});
   const [session, setSession] = useState({ status: 'idle', id: '' });
   const [events, setEvents] = useState([]);
+  const [encounter, setEncounter] = useState({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] });
   const [presence, setPresence] = useState({});
   const [online, setOnline] = useState(navigator.onLine);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
         targetOwnerUid: mode === 'character' ? uid : '',
         characterId
       }));
+      if(mode === 'gm') unsubscribers.push(firebaseService.subscribeEncounter(campaignId, value => setEncounter(value || { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })));
     }).catch(reason => {
       if(active){ setError(reason.message || String(reason)); setLoading(false); }
     });
@@ -74,5 +76,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, session?.id, session?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session, events, presence, online, loading, error, setEvents };
+  return { campaign, characters, character, session, events, encounter, presence, online, loading, error, setEvents, setEncounter };
 }

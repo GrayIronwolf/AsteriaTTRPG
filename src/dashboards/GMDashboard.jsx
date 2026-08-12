@@ -62,6 +62,63 @@ function SessionActions({ campaignId, session, busy, run }) {
   </div>;
 }
 
+function slug(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+
+function encounterSources() {
+  const codex = window.AsteriaCodexCompendium?.creatureEntries?.() || [];
+  const npcStores = [window.npcs, window.NPCS, window.ASTERIA_NPC_DATA, window.ASTERIA_NPCS].filter(Boolean);
+  const npcs = npcStores.flatMap(store => Array.isArray(store) ? store : Object.entries(store).map(([id, value]) => Object.assign({ id }, value)));
+  const records = [
+    ...codex.map(entry => ({ id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, type:entry.creatureType || entry.type || entry.category || 'Creature', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative || 10), hp:Number(entry.hp || entry.health || 50), source:'Creature Compendium', compendiumSlug:entry.slug || entry.id })),
+    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative || 10), hp:Number(entry.hp || entry.health || 50), source:'NPC', compendiumSlug:entry.slug || entry.id }))
+  ].filter(entry => entry.name);
+  const seen = new Set();
+  return records.filter(entry => { const key=slug(entry.name); if(seen.has(key)) return false; seen.add(key); return true; });
+}
+
+function CampaignEncounter({ campaignId, characters, encounter }) {
+  const [search, setSearch] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const sources = useMemo(encounterSources, []);
+  const state = Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, encounter || {});
+  const results = search ? sources.filter(entry => `${entry.name} ${entry.type} ${entry.source}`.toLowerCase().includes(search.toLowerCase())).slice(0, 8) : [];
+  const save = async next => {
+    setBusy(true); setMessage('Saving encounter...');
+    const result = await firebaseService.saveEncounter(campaignId, next);
+    setMessage(result?.ok ? 'Encounter synchronized.' : result?.error || 'Encounter could not be saved.');
+    setBusy(false);
+  };
+  const ensurePlayers = combatants => {
+    const existing = new Set(combatants.filter(entry => entry.kind === 'player').map(entry => entry.characterId));
+    return [...combatants, ...Object.values(characters).filter(character => !existing.has(character.id)).map(character => ({ id:`player-${character.id}`, characterId:character.id, name:character.name || 'Character', kind:'player', initiative:Number(character.initiative || 10), defeated:false }))];
+  };
+  const start = () => save({ ...state, status:'active', round:Math.max(1, Number(state.round || 1)), turnIndex:0, combatants:ensurePlayers(state.combatants || []) });
+  const addEnemy = source => {
+    const added = Array.from({ length:Math.max(1, Math.min(20, Number(quantity || 1))) }, (_, index) => ({ id:`enemy-${Date.now()}-${index}`, sourceId:source.id, compendiumSlug:source.compendiumSlug || '', name:Number(quantity) > 1 ? `${source.name} ${index + 1}` : source.name, kind:'enemy', type:source.type, threatTier:source.threatTier, initiative:source.initiative, hp:[source.hp, source.hp], defeated:false }));
+    save({ ...state, enemies:[...(state.enemies || []), ...added], combatants:[...(state.combatants || []), ...added] });
+    setSearch('');
+  };
+  const updateCombatant = (id, patch) => save({ ...state, combatants:(state.combatants || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry), enemies:(state.enemies || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry) });
+  const removeCombatant = id => save({ ...state, combatants:(state.combatants || []).filter(entry => entry.id !== id), enemies:(state.enemies || []).filter(entry => entry.id !== id), turnIndex:0 });
+  const sortInitiative = () => save({ ...state, combatants:[...(state.combatants || [])].sort((a,b) => Number(b.initiative || 0) - Number(a.initiative || 0)), turnIndex:0 });
+  const nextTurn = () => {
+    const count=(state.combatants || []).length;
+    if(!count) return;
+    const nextIndex=(Number(state.turnIndex || 0)+1)%count;
+    save({ ...state, turnIndex:nextIndex, round:nextIndex === 0 ? Number(state.round || 1)+1 : Number(state.round || 1) });
+  };
+  return <Panel title="Campaign Encounters" eyebrow="Initiative & Encounter Tracker" className="react-encounter-panel" action={<StatusPill tone={state.status === 'active' ? 'success' : ''}>{state.status}</StatusPill>}>
+    <div className="react-encounter-toolbar"><button className="primary" disabled={busy} onClick={start}>{state.status === 'active' ? 'Refresh Players' : 'Start Encounter'}</button><button disabled={busy || !(state.combatants || []).length} onClick={sortInitiative}>Sort Initiative</button><button disabled={busy || state.status !== 'active'} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy} onClick={() => save({ ...state, status:'ended' })}>End</button><button disabled={busy} onClick={() => save({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })}>Clear</button></div>
+    <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{Object.keys(characters).length} players</StatusPill><span>{message}</span></div>
+    <div className="react-encounter-builder">
+      <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<input type="number" min="1" max="20" value={quantity} onChange={event => setQuantity(Math.max(1, Number(event.target.value || 1)))} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>
+      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small></div><input aria-label={`${entry.name} initiative`} type="number" value={Number(entry.initiative || 0)} onChange={event => updateCombatant(entry.id, { initiative:Number(event.target.value || 0) })} />{entry.kind === 'enemy' ? <button title="Toggle defeated" onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
+    </div>
+  </Panel>;
+}
+
 function XPDistribution({ campaignId, characters, events }) {
   const [selected, setSelected] = useState([]);
   const [amount, setAmount] = useState(1000);
@@ -83,9 +140,35 @@ function XPDistribution({ campaignId, characters, events }) {
       <label>XP per character<input type="number" min="1" value={amount} onChange={event => setAmount(event.target.value)} /></label>
       <label>Reason<input value={reason} onChange={event => setReason(event.target.value)} /></label>
     </div>
+    <div className="react-recipient-actions"><button type="button" onClick={() => setSelected(Object.keys(characters))}>Select All</button><button type="button" onClick={() => setSelected([])}>Clear</button><span>{selected.length} selected</span></div>
     <div className="react-recipient-grid">{Object.values(characters).map(character => <label key={character.id}><input type="checkbox" checked={selected.includes(character.id)} onChange={event => setSelected(ids => event.target.checked ? [...new Set([...ids, character.id])] : ids.filter(id => id !== character.id))} />{character.name}</label>)}</div>
     <div className="react-action-row"><button className="primary" type="button" disabled={busy} onClick={send}>{busy ? 'Delivering...' : 'Grant XP'}</button><span>{message}</span></div>
     <div className="react-delivery-list">{xpEvents.map(event => <div key={event.id}><b>{event.payload?.characterName || characters[event.targetCharacterId]?.name || 'Character'}</b><span>+{Number(event.payload?.amount || 0).toLocaleString()} XP</span><StatusPill tone={event.acknowledged ? 'success' : 'pending'}>{event.acknowledged ? 'Acknowledged' : event.deliveryStatus || 'Delivered'}</StatusPill></div>)}</div>
+  </Panel>;
+}
+
+function MagicElementRewards({ campaignId, characters, events }) {
+  const magicTypes = window.ASTERIA_MAGIC_LIBRARY?.all || [];
+  const [target, setTarget] = useState('');
+  const [selectedMagic, setSelectedMagic] = useState('');
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  useEffect(() => { if(!target && Object.keys(characters)[0]) setTarget(Object.keys(characters)[0]); }, [characters, target]);
+  const results = magicTypes.filter(item => `${item.name} ${item.group}`.toLowerCase().includes(search.toLowerCase()));
+  const send = async () => {
+    if(!target || !selectedMagic) return setMessage('Choose a character and magical element.');
+    setBusy(true); setMessage('Sending magic reward...');
+    const result = await firebaseService.createMagicReward(campaignId, target, selectedMagic, { message:'The GM granted access to a new magical element.' });
+    setMessage(result?.ok ? `${selectedMagic} sent to ${characters[target]?.name || 'character'} for acceptance.` : result?.error || 'Magic reward could not be sent.');
+    if(result?.ok) setSelectedMagic('');
+    setBusy(false);
+  };
+  return <Panel title="Additional Magic Elements" eyebrow="GM Reward Tool" className="react-magic-grant-panel">
+    <div className="react-form-grid"><label>Recipient<select value={target} onChange={event => setTarget(event.target.value)}>{Object.values(characters).map(character => <option key={character.id} value={character.id}>{character.name}</option>)}</select></label><label>Filter Elements<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search magic elements..." /></label></div>
+    <div className="react-magic-grid">{results.map(item => <button key={item.slug} type="button" className={selectedMagic === item.name ? 'active' : ''} style={{ '--magic-color':item.color }} onClick={() => setSelectedMagic(item.name)}><span>{String(item.label || item.name).charAt(0)}</span><b>{item.name}</b><small>{item.group}</small></button>)}</div>
+    <div className="react-action-row"><button className="primary" disabled={busy || !target || !selectedMagic} onClick={send}>{busy ? 'Sending...' : `Send ${selectedMagic || 'Magic Reward'}`}</button><span>{message}</span></div>
+    <div className="react-delivery-list">{events.filter(event => event.type === 'magic-element-reward').slice(0, 8).map(event => <div key={event.id}><b>{event.payload?.magicType || 'Magic Element'}</b><span>{characters[event.targetCharacterId]?.name || event.payload?.characterName || 'Character'}</span><StatusPill tone={event.status === 'pending' ? 'pending' : 'success'}>{event.status || 'pending'}</StatusPill></div>)}</div>
   </Panel>;
 }
 
@@ -140,15 +223,14 @@ export function GMDashboard({ campaignId }) {
   >
     <Tabs tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'main' ? <div className="react-gm-main-grid">
-      <Panel title="Campaign Encounters" eyebrow="Combat Workspace"><p>Initiative, enemies, threat data, and encounter notes remain connected to the existing encounter system.</p><div className="react-summary-row"><StatusPill>{window.enemies?.length || 0} enemies</StatusPill><StatusPill>{window.initiative?.length || 0} initiative entries</StatusPill></div><button onClick={() => window.AsteriaReactMigration?.openLegacyGM?.()}>Open full encounter controls</button></Panel>
+      <CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
-      <LootRewards campaignId={campaignId} characters={live.characters} events={live.events} />
     </div> : null}
     {tab === 'quests' ? <ExistingSystem title="Quests" copy="Campaign objectives, hooks, and quest updates remain available during migration." tab="quests" /> : null}
     {tab === 'notes' ? <ExistingSystem title="GM Notes" copy="Private preparation, live notes, and session logs remain in the current GM system." tab="gm-notes" /> : null}
     {tab === 'economy' ? <ExistingSystem title="Economy" copy="Prices, trade routes, shipping, scarcity, merchants, and shops remain operational." tab="economy" /> : null}
     {tab === 'crafting' ? <ExistingSystem title="Crafting" copy="Projects, approvals, materials, recipes, and enchantments remain operational." tab="crafting" /> : null}
-    {tab === 'tools' ? <ExistingSystem title="GM Tools" copy="Loot, item rewards, overrides, encounter utilities, and campaign controls remain operational." tab="campaign-manager" /> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} /></div> : null}
     {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => { window.location.hash = ''; window.setView?.('campaigns'); }}>Open Campaign Manager</button></Panel> : null}
     {tab === 'world' ? <ExistingSystem title="World Systems" copy="World state, events, factions, settlements, merchants, and timeline tools remain available in the static workspace." tab="world" /> : null}
   </WorkspaceShell>;

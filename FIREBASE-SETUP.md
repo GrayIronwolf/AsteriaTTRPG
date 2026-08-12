@@ -54,7 +54,7 @@ When a player links a character, Asteria commits the member, character ID, owner
 
 The older `campaigns/{campaignId}/systems/progression` document is no longer part of the active sync path. Keeping XP, notices, resources, and inventory on the same canonical character stream prevents late autosaves from racing a second progression system.
 
-The React milestone does not initialize another Firebase application. `src/firebase/asteriaFirebaseService.js` adapts the existing `window.AsteriaFirebase` singleton from `js/firebase-auth.js`. XP, loot, resource mutations, and reward resolution are transaction-backed; React components contain no raw Firestore calls.
+The React milestone does not initialize another Firebase application. `src/firebase/asteriaFirebaseService.js` adapts the existing `window.AsteriaFirebase` singleton from `js/firebase-auth.js`. XP, loot, resources, encounter state, and magic reward resolution use the shared Firebase service; React components contain no raw Firestore calls. Deploy the included rules so only the campaign GM can write `campaigns/{campaignId}/systems/encounter`, while campaign members can read it and targeted players can accept or decline their own reward events.
 
 Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
 

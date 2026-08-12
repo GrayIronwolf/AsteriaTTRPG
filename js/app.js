@@ -4277,6 +4277,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     document.getElementById('gmCampaignCharacterPanel')?.remove();
   }
   function ensureEncounterPanel(){
+    if(window.AsteriaReactMigration?.isDashboardActive?.()) return;
     if(document.getElementById('gmEncounterWorkspace')) return;
     const panel=document.createElement('section');
     panel.id='gmEncounterWorkspace';
@@ -4401,6 +4402,7 @@ function renderXPSplitPanel(){ if(document.getElementById('xpSplitPartyList')) d
     }).join('')||'<p class="muted smallnote">No enemies in this encounter yet.</p>';
   }
   function refreshEncounterWorkspace(){
+    if(window.AsteriaReactMigration?.isDashboardActive?.()) return;
     if(!document.getElementById('gm')) return;
     ensureCampaignCharacterPanel();
     ensureEncounterPanel();

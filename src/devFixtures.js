@@ -49,7 +49,8 @@ export function installDevFixtures() {
   };
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now() };
   let events = [];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [] };
+  let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
+  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [] };
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
@@ -61,6 +62,7 @@ export function installDevFixtures() {
     if(key === 'session') callback(clone(session));
     if(key === 'presence') callback(clone(presence));
     if(key === 'events') callback(clone(events));
+    if(key === 'encounter') callback(clone(encounter));
   });
   const subscribe = (key, callback) => {
     document.documentElement.dataset.asteriaFixtureSubscription = key;
@@ -93,6 +95,8 @@ export function installDevFixtures() {
     subscribeLiveSession: (_campaignId, callback) => subscribe('session', callback),
     subscribeSessionPresence: (_campaignId, _sessionId, callback) => subscribe('presence', callback),
     subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
+    subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
+    saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
     startLiveSession: async () => { session = { ...session, id: session.id || eventId('session'), status: 'active' }; notify('session'); return { ok: true, session: clone(session) }; },
     pauseLiveSession: async () => { session = { ...session, status: 'paused' }; notify('session'); return { ok: true }; },
     endLiveSession: async () => { session = { ...session, status: 'ended', endedAt: Date.now() }; notify('session'); return { ok: true }; },
@@ -107,6 +111,22 @@ export function installDevFixtures() {
     createLootReward: async (_campaignId, characterId, item, metadata = {}) => {
       const event = { id: eventId('loot'), campaignId: DEMO_CAMPAIGN_ID, type: 'loot-reward', status: 'pending', targetCharacterId: characterId, payload: { item, message: metadata.message, campaignName: campaign.name } };
       events = [event, ...events]; notify('events'); return { ok: true, eventId: event.id };
+    },
+    createMagicElementReward: async (_campaignId, characterId, magicType, metadata = {}) => {
+      const character=characters[characterId];
+      const event={ id:eventId('magic'), campaignId:DEMO_CAMPAIGN_ID, type:'magic-element-reward', status:'pending', targetCharacterId:characterId, targetOwnerUid:character?.ownerUid || 'player-demo', payload:{ magicType, message:metadata.message, characterName:character?.name } };
+      events=[event,...events]; notify('events'); return { ok:true, eventId:event.id };
+    },
+    respondMagicElementReward: async (_campaignId, characterId, id, accepted) => {
+      const event=events.find(value => value.id === id);
+      if(accepted && event){
+        const character=characters[characterId];
+        character.gmGrantedMagicTypes=Array.from(new Set([...(character.gmGrantedMagicTypes || []),event.payload.magicType]));
+        character.character={ ...(character.character || {}), magic:{ ...(character.character?.magic || {}), gmGrantedTypes:character.gmGrantedMagicTypes.slice() } };
+        notify('characters');
+      }
+      events=events.map(value => value.id === id ? { ...value, status:accepted ? 'accepted' : 'declined', acknowledged:true, resolvedAt:new Date().toISOString() } : value);
+      notify('events'); return { ok:true, applied:true };
     },
     updateCampaignCharacterResource: async (_campaignId, characterId, key, amount) => {
       const resource = characters[characterId]?.[key];

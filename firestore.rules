@@ -135,7 +135,9 @@ service cloud.firestore {
       }
 
       match /systems/{systemId} {
-        allow read, create, update: if canUseCampaignSystems(campaignId);
+        allow read: if canUseCampaignSystems(campaignId);
+        allow create, update: if (systemId == 'encounter' && isCampaignGM(campaignId)) ||
+          (systemId != 'encounter' && canUseCampaignSystems(campaignId));
         allow delete: if isCampaignOwner(sharedCampaign(campaignId));
       }
 

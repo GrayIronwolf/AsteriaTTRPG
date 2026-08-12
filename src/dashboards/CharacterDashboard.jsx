@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConnectionBanner, EmptyState, Modal, Panel, ResourceBar, StatusPill, Tabs, WorkspaceShell } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { pendingLootEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
+import { pendingLootEvent, pendingMagicRewardEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 
 const CHARACTER_TABS = [
@@ -20,16 +20,60 @@ function values(value) { return Array.isArray(value) ? value : []; }
 function itemName(item) { return item?.name || item?.title || 'Empty'; }
 function characterClass(character = {}) { return character.klass || character.class || 'Unselected Class'; }
 
-function CharacterSidebar({ character }) {
+const CHARACTERISTICS = [
+  ['STR',['strength','str']], ['DEX',['dexterity','dex']], ['AGI',['agility','agi']],
+  ['CON',['constitution','con']], ['END',['endurance','end']], ['INT',['intelligence','int']],
+  ['WIS',['wisdom','wis']], ['CHA',['charisma','cha']], ['LCK',['luck','lck']]
+];
+
+function characteristicValue(character, aliases) {
+  const source = character.characteristics || {};
+  const value = aliases.map(key => source[key]).find(item => item !== undefined);
+  return Number(value?.value ?? value ?? 0);
+}
+
+function characteristicTier(score) {
+  const value = Number(score || 0);
+  if(value >= 100) return { label:'Tier V', modifier:5 };
+  if(value >= 80) return { label:'Tier IV', modifier:4 };
+  if(value >= 60) return { label:'Tier III', modifier:3 };
+  if(value >= 40) return { label:'Tier II', modifier:2 };
+  if(value >= 20) return { label:'Tier I', modifier:1 };
+  return { label:'Tier 0', modifier:0 };
+}
+
+function isBloodhunter(character) {
+  const classes = [characterClass(character), ...(Array.isArray(character.classNames) ? character.classNames : []), ...(Array.isArray(character.classKeys) ? character.classKeys : [])];
+  return classes.some(value => String(value || '').toLowerCase().includes('bloodhunter'));
+}
+
+function SidebarResource({ campaignId, character, label, resource, value }) {
+  const [amount, setAmount] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const update = async direction => {
+    setBusy(true);
+    try { await firebaseService.updateResource(campaignId, character.id, resource, direction * Math.max(1, Number(amount || 1)), { source:'Character Dashboard' }); }
+    finally { setBusy(false); }
+  };
+  return <div className="react-sidebar-resource">
+    <ResourceBar label={label} kind={resource} value={value?.[0]} maximum={value?.[1]} />
+    <div className="react-resource-controls"><input aria-label={`${label} change amount`} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} /><button disabled={busy} aria-label={`Remove ${amount} ${label}`} onClick={() => update(-1)}>-</button><button disabled={busy} aria-label={`Add ${amount} ${label}`} onClick={() => update(1)}>+</button></div>
+  </div>;
+}
+
+function CharacterSidebar({ campaignId, character }) {
   const xp = window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || { xp: character.xp || 0, xpMax: character.xpMax || 1000 };
+  const portrait = character.image || character.portrait || character.characterImage || character.appearance?.image || character.appearance?.portrait;
   return <Panel className="react-character-sidebar">
-    <div className="react-character-identity">{character.image || character.portrait ? <img src={character.image || character.portrait} alt="" /> : <span>{String(character.name || 'A').charAt(0)}</span>}<div><h2>{character.name || 'Unnamed Character'}</h2><p>{character.race || 'Unselected Race'}</p><p>{characterClass(character)}</p><b>Level {Number(character.level || 0)}</b></div></div>
-    <ResourceBar label="HP" kind="hp" value={character.hp?.[0]} maximum={character.hp?.[1]} />
-    <ResourceBar label="SP" kind="sp" value={character.sp?.[0]} maximum={character.sp?.[1]} />
-    <ResourceBar label="MP" kind="mp" value={character.mp?.[0]} maximum={character.mp?.[1]} />
-    {Array.isArray(character.bp) ? <ResourceBar label="BP" kind="bp" value={character.bp[0]} maximum={character.bp[1]} /> : null}
-    <ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
-    <div className="react-stat-grid">{Object.entries(character.characteristics || {}).slice(0, 9).map(([key, value]) => <div key={key}><b>{key.toUpperCase()}</b><span>{Number(value?.value ?? value ?? 0)}</span></div>)}</div>
+    <div className="react-character-identity"><div className="react-character-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}<b>Level {Number(character.level || 0)}</b></div><div><h2>{character.name || 'Unnamed Character'}</h2><p>{characterClass(character)}</p><small>{character.race || 'Unselected Race'}</small></div></div>
+    <div className="react-xp-sidebar"><ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} /><small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP to next level</small></div>
+    <div className="react-sidebar-resources">
+      <SidebarResource campaignId={campaignId} character={character} label="HP" resource="hp" value={character.hp || [0,0]} />
+      <SidebarResource campaignId={campaignId} character={character} label="SP" resource="sp" value={character.sp || [0,0]} />
+      <SidebarResource campaignId={campaignId} character={character} label="MP" resource="mp" value={character.mp || [0,0]} />
+      {isBloodhunter(character) || Array.isArray(character.bp) ? <SidebarResource campaignId={campaignId} character={character} label="BP" resource="bp" value={character.bp || [0,20]} /> : null}
+    </div>
+    <div className="react-stat-grid">{CHARACTERISTICS.map(([label, aliases]) => { const score=characteristicValue(character, aliases); const tier=characteristicTier(score); return <div key={label}><b>{label}</b><span>{score}</span><small>{tier.label}{tier.modifier ? ` +${tier.modifier}` : ''}</small></div>; })}</div>
   </Panel>;
 }
 
@@ -55,12 +99,6 @@ function DashboardPanels({ character }) {
     <Panel title="Conditions"><div className="react-condition-list">{values(character.conditions).map((condition, index) => <StatusPill key={condition.id || condition.name || index}>{condition.name || condition}</StatusPill>)}{!values(character.conditions).length ? <p>No active conditions.</p> : null}</div></Panel>
     <Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div></Panel>
   </div>;
-}
-
-function ResourceActions({ campaignId, character }) {
-  const [busy, setBusy] = useState('');
-  const update = async (key, amount) => { setBusy(key); try { await firebaseService.updateResource(campaignId, character.id, key, amount, { source: 'Character Dashboard' }); } finally { setBusy(''); } };
-  return <Panel title="Live Resources"><div className="react-live-resource-actions">{['hp','sp','mp',...(Array.isArray(character.bp) ? ['bp'] : [])].map(key => <div key={key}><b>{key.toUpperCase()}</b><button disabled={busy === key} onClick={() => update(key, -1)}>-1</button><button disabled={busy === key} onClick={() => update(key, 1)}>+1</button></div>)}</div></Panel>;
 }
 
 function LootModal({ character, event, onResolved }) {
@@ -91,6 +129,21 @@ function XPModal({ event, onClose }) {
   return <Modal title="XP Received" eyebrow="Campaign Progression" onClose={onClose} footer={<button className="primary" onClick={onClose}>Continue</button>}><div className="react-xp-reward"><strong>+{Number(event.payload?.amount || 0).toLocaleString()} XP</strong><p>{event.payload?.reason || 'Campaign reward'}</p>{event.payload?.leveled ? <StatusPill tone="success">Level {event.payload?.toLevel}</StatusPill> : null}</div></Modal>;
 }
 
+function MagicRewardModal({ campaignId, character, event, onResolved }) {
+  const [busy, setBusy] = useState(false);
+  const magicType = event.payload?.magicType || 'Unknown Magic';
+  const info = window.ASTERIA_MAGIC_LIBRARY?.all?.find(item => item.name === magicType) || {};
+  const respond = async accepted => {
+    setBusy(true);
+    const result = await firebaseService.respondMagicReward(campaignId, character.id, event.id, accepted);
+    setBusy(false);
+    if(result?.ok) onResolved?.();
+  };
+  return <Modal title={magicType} eyebrow="New Magical Element" busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={busy} onClick={() => respond(false)}>Decline</button><button className="primary" disabled={busy} onClick={() => respond(true)}>Accept Element</button></div>}>
+    <div className="react-magic-reward" style={{ '--magic-color':info.color || '#26d9ff' }}><span>{String(info.label || magicType).charAt(0)}</span><div><h3>{magicType}</h3><p>{event.payload?.message || 'The GM granted access to a new magical element.'}</p><p>{info.description || 'Accepting adds this element to the character as a GM-granted affinity.'}</p></div></div>
+  </Modal>;
+}
+
 function LegacyTab({ title, copy, characterId, open }) {
   return <Panel title={title}><p>{copy}</p><button onClick={() => { window.AsteriaReactMigration?.openLegacyCharacter?.(characterId); if(open) window.setPlayerTab?.(open); }}>Open full existing {title}</button></Panel>;
 }
@@ -100,6 +153,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const [tab, setTab] = useState('dashboard');
   const [acknowledged, setAcknowledged] = useState(() => new Set());
   const processedLoot = useRef(new Set());
+  const processedMagic = useRef(new Set());
   const character = live.character;
   useEffect(() => {
     if(character){
@@ -111,23 +165,25 @@ export function CharacterDashboard({ campaignId, characterId }) {
   }, [character]);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
+  const magicEvent = pendingMagicRewardEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedMagic.current.has(event.id)));
   const closeXP = async () => {
     if(!xpEvent) return;
     setAcknowledged(previous => new Set([...previous, xpEvent.id]));
     await firebaseService.acknowledgeEvent(campaignId, xpEvent.id, { status: 'acknowledged' }).catch(() => {});
   };
   const resolvedLoot = () => { if(lootEvent) processedLoot.current.add(lootEvent.id); };
+  const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
   if(live.loading || !character) return <div className="react-route-state">Connecting Character Dashboard...</div>;
   return <WorkspaceShell
     className="react-character-dashboard"
     eyebrow="Character Dashboard"
     title={live.campaign?.name || character.campaign || 'Campaign'}
     subtitle={live.session?.status === 'active' ? `Live session ${live.session.id || ''}` : 'Character synchronization remains active outside live sessions.'}
-    sidebar={<CharacterSidebar character={character} />}
+    sidebar={<CharacterSidebar campaignId={campaignId} character={character} />}
     actions={<ConnectionBanner online={live.online} error={live.error} session={live.session} />}
   >
     <Tabs tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
-    {tab === 'dashboard' ? <><DashboardPanels character={character} /><ResourceActions campaignId={campaignId} character={character} /></> : null}
+    {tab === 'dashboard' ? <DashboardPanels character={character} /> : null}
     {tab === 'character' ? <LegacyTab title="Character" copy="Identity, race information, racial traits, characteristics, and CP remain connected to the current character sheet." characterId={characterId} open="characteristicsPane" /> : null}
     {tab === 'talents' ? <LegacyTab title="Class/Talent Tree" copy="Class talent trees, tier locks, ranks, TP purchases, and class compendium links remain operational." characterId={characterId} open="talents" /> : null}
     {tab === 'skills' ? <LegacyTab title="Skills" copy="Selected skills, ranks, successful checks, and techniques remain operational." characterId={characterId} open="skillsPane" /> : null}
@@ -138,5 +194,6 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'party' ? <LegacyTab title="Party" copy="Shared notes, loot, guild information, and party systems remain operational." characterId={characterId} open="partyPane" /> : null}
     {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
     {lootEvent ? <LootModal character={character} event={lootEvent} onResolved={resolvedLoot} /> : null}
+    {magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}
   </WorkspaceShell>;
 }

@@ -3,6 +3,9 @@ import { resolve } from 'node:path';
 
 export default defineConfig({
   appType: 'spa',
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  },
   build: {
     outDir: 'react-dist',
     emptyOutDir: true,

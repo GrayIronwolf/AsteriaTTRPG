@@ -7,6 +7,9 @@ const host = document.getElementById('asteriaReactRoot');
 if(host) createRoot(host).render(<AsteriaReactRoot />);
 
 function openRoute(path) {
+  document.getElementById('gmEncounterWorkspace')?.remove();
+  document.getElementById('phase3GMPartyMagicPanel')?.remove();
+  document.getElementById('phase3GMMagicGrantPanel')?.remove();
   window.location.hash = path;
   window.setView?.('reactDashboard');
 }

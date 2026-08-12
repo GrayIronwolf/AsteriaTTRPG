@@ -733,6 +733,28 @@ const firebasePublicApi = {
       onChange(events);
     }, error=>reportSyncError('campaign-events-listener', error, { campaignId, mode:options.mode || 'gm' }));
   },
+  subscribeCampaignEncounter: function(campaignId, onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
+    return onSnapshot(
+      doc(db, 'campaigns', campaignId, 'systems', 'encounter'),
+      snapshot=>onChange(snapshot.exists() ? Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, snapshot.data()) : { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }),
+      error=>reportSyncError('campaign-encounter-listener', error, { campaignId })
+    );
+  },
+  saveCampaignEncounter: async function(campaignId, encounter={}){
+    if(!db || !currentUser || !campaignId) return { ok:false };
+    try{
+      await setDoc(doc(db, 'campaigns', campaignId, 'systems', 'encounter'), Object.assign({}, cleanData(encounter), {
+        campaignId,
+        updatedBy:currentUser.uid,
+        updatedAt:serverTimestamp()
+      }), { merge:true });
+      return { ok:true };
+    }catch(error){
+      reportSyncError('campaign-encounter-save', error, { campaignId });
+      return { ok:false, error:error.message || String(error) };
+    }
+  },
   acknowledgeCampaignEvent: async function(campaignId, eventId, resolution={}){
     if(!db || !currentUser || !campaignId || !eventId) return { ok:false, applied:false };
     const eventRef=doc(db, 'campaigns', campaignId, 'events', eventId);
@@ -854,6 +876,85 @@ const firebasePublicApi = {
       return { ok:false, applied:false, error:error.message || String(error) };
     }
   },
+  createMagicElementReward: async function(campaignId, characterId, magicType, metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId || !magicType) return { ok:false };
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
+    try{
+      const event=await runTransaction(db, async transaction=>{
+        const characterSnapshot=await transaction.get(characterRef);
+        if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({ id:characterId }, characterSnapshot.data());
+        const existing=[
+          ...(Array.isArray(character.magicTypes) ? character.magicTypes : []),
+          ...(Array.isArray(character.gmGrantedMagicTypes) ? character.gmGrantedMagicTypes : []),
+          ...(Array.isArray(character.character?.magic?.types) ? character.character.magic.types : []),
+          ...(Array.isArray(character.character?.magic?.gmGrantedTypes) ? character.character.magic.gmGrantedTypes : [])
+        ].map(value=>String(value).toLowerCase());
+        if(existing.includes(String(magicType).toLowerCase())) throw new Error(`${magicType} is already available to ${character.name || characterId}.`);
+        const value={
+          id:eventRef.id,
+          campaignId,
+          sessionId:'',
+          targetCharacterId:characterId,
+          targetOwnerUid:character.ownerUid || '',
+          type:'magic-element-reward',
+          payload:{ magicType:String(magicType), message:metadata.message || 'The GM granted access to a new magical element.', characterName:character.name || characterId },
+          status:'pending',
+          deliveryStatus:'delivered',
+          acknowledged:false,
+          createdBy:currentUser.uid,
+          createdAt:serverTimestamp(),
+          resolvedAt:null
+        };
+        transaction.set(eventRef, value);
+        return value;
+      });
+      return { ok:true, applied:true, event:Object.assign({}, event, { createdAt:new Date().toISOString() }) };
+    }catch(error){
+      reportSyncError('campaign-magic-reward', error, { campaignId, characterId, magicType });
+      return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  respondMagicElementReward: async function(campaignId, characterId, eventId, accepted){
+    if(!db || !currentUser || !campaignId || !characterId || !eventId) return { ok:false };
+    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const privateCharacterRef=doc(db, 'users', currentUser.uid, 'characters', characterId);
+    const eventRef=doc(db, 'campaigns', campaignId, 'events', eventId);
+    try{
+      const result=await runTransaction(db, async transaction=>{
+        const eventSnapshot=await transaction.get(eventRef);
+        const characterSnapshot=await transaction.get(characterRef);
+        if(!eventSnapshot.exists() || !characterSnapshot.exists()) throw new Error('The magic reward is no longer available.');
+        const reward=eventSnapshot.data();
+        const character=Object.assign({ id:characterId }, characterSnapshot.data());
+        if(reward.type !== 'magic-element-reward' || reward.targetCharacterId !== characterId || reward.targetOwnerUid !== currentUser.uid) throw new Error('This magic reward is not assigned to this character.');
+        if(reward.resolvedAt || ['accepted','declined','resolved'].includes(String(reward.status || '').toLowerCase())) return { applied:false, character };
+        const magicType=String(reward.payload?.magicType || '').trim();
+        const grants=Array.from(new Set([...(Array.isArray(character.gmGrantedMagicTypes) ? character.gmGrantedMagicTypes : []), ...(accepted && magicType ? [magicType] : [])]));
+        const nestedMagic=Object.assign({}, character.character?.magic || {}, { gmGrantedTypes:grants.slice() });
+        const patch={ gmGrantedMagicTypes:grants, character:Object.assign({}, character.character || {}, { magic:nestedMagic }), updatedAt:serverTimestamp() };
+        if(accepted){
+          transaction.set(characterRef, patch, { merge:true });
+          transaction.set(privateCharacterRef, Object.assign({}, patch, { ownerUid:currentUser.uid, id:characterId }), { merge:true });
+        }
+        transaction.set(eventRef, {
+          status:accepted ? 'accepted' : 'declined',
+          deliveryStatus:'acknowledged',
+          acknowledged:true,
+          acknowledgedBy:currentUser.uid,
+          acknowledgedAt:serverTimestamp(),
+          resolvedAt:serverTimestamp(),
+          updatedAt:serverTimestamp()
+        }, { merge:true });
+        return { applied:true, character:Object.assign({}, character, accepted ? patch : {}) };
+      });
+      return { ok:true, applied:result.applied, character:result.character };
+    }catch(error){
+      reportSyncError('campaign-magic-reward-response', error, { campaignId, characterId, eventId });
+      return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
   updateCampaignCharacterResource: async function(campaignId, characterId, key, amount, metadata={}){
     if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
     const resource=String(key || '').toLowerCase();
@@ -865,7 +966,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(characterRef);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, snapshot.data());
-        const pair=Array.isArray(character[resource]) ? character[resource] : [0,0];
+        const pair=Array.isArray(character[resource]) ? character[resource] : [0,resource === 'bp' ? 20 : 0];
         const maximum=Math.max(0,Number(pair[1] || 0));
         const current=Math.max(0,Math.min(maximum,Number(pair[0] || 0) + Number(amount || 0)));
         const next=[current,maximum];

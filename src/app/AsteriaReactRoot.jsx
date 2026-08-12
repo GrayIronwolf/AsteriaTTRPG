@@ -17,7 +17,12 @@ export function AsteriaReactRoot() {
   }, []);
 
   useEffect(() => {
-    if(route) window.setView?.('reactDashboard');
+    if(route) {
+      document.getElementById('gmEncounterWorkspace')?.remove();
+      document.getElementById('phase3GMPartyMagicPanel')?.remove();
+      document.getElementById('phase3GMMagicGrantPanel')?.remove();
+      window.setView?.('reactDashboard');
+    }
   }, [route]);
 
   if(!route) return null;

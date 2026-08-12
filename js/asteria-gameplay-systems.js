@@ -3398,6 +3398,7 @@
   }
 
   function installGMMagicGrantPanel(id = selectedCharacterId()){
+    if(window.AsteriaReactMigration?.isDashboardActive?.()) return;
     const character = magicCharacter(id);
     const host = document.querySelector('#gmPlayer .gm-player-grid') || document.querySelector('#gmPlayer');
     if(!host || !character) return;
@@ -3428,6 +3429,7 @@
   }
 
   function installGMPartyMagicPanel(){
+    if(window.AsteriaReactMigration?.isDashboardActive?.()) return;
     const host = document.querySelector('#gm .gm-panels');
     if(!host) return;
     byId('phase3GMPartyMagicPanel')?.remove();

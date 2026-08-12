@@ -8,6 +8,7 @@ import {
   mergeEvents,
   nextSessionState,
   pendingLootEvent,
+  pendingMagicRewardEvent,
   resourcePatch,
   xpNoticeEvent
 } from '../src/state/liveEventReducer.mjs';
@@ -94,6 +95,26 @@ test('12. React route and production bundle are present', () => {
   assert.match(read('index.html'), /src\/dev-entry\.js/);
   assert.equal(fs.existsSync(path.join(root, 'react-dist/asteria-react.js')), true);
   assert.equal(fs.existsSync(path.join(root, 'react-dist/asteria-react.css')), true);
+});
+
+test('13. Magic rewards remain pending once and resolve through the canonical event helper', () => {
+  const event = pendingMagicRewardEvent([
+    { id:'closed', type:'magic-element-reward', status:'accepted', createdAt:'2026-01-01' },
+    { id:'open', type:'magic-element-reward', status:'pending', createdAt:'2026-01-02' }
+  ]);
+  assert.equal(event.id, 'open');
+  assert.equal(pendingMagicRewardEvent([{ id:'closed', type:'magic-element-reward', status:'declined' }]), null);
+});
+
+test('14. React owns encounter and additional-magic workflows without raw Firestore calls', () => {
+  const gm = read('src/dashboards/GMDashboard.jsx');
+  const character = read('src/dashboards/CharacterDashboard.jsx');
+  const service = read('src/firebase/asteriaFirebaseService.js');
+  assert.match(gm, /CampaignEncounter/);
+  assert.match(gm, /MagicElementRewards/);
+  assert.match(character, /MagicRewardModal/);
+  ['subscribeEncounter','saveEncounter','createMagicReward','respondMagicReward'].forEach(name => assert.match(service, new RegExp(name)));
+  assert.doesNotMatch(gm + character, /firebase\/firestore|runTransaction|getFirestore/);
 });
 
 let failed = 0;

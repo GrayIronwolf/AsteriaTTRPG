@@ -16,8 +16,8 @@ Campaign and character cards route to React when the compiled bundle is availabl
 - `src/main.jsx`: React mount and migration routing bridge.
 - `src/app/AsteriaReactRoot.jsx`: hash route selection.
 - `src/components/WorkspaceUI.jsx`: shared panels, tabs, resource bars, modal, status, and workspace shell.
-- `src/dashboards/GMDashboard.jsx`: party roster, sessions, XP, loot, encounter entry point, and preserved GM system tabs.
-- `src/dashboards/CharacterDashboard.jsx`: live character snapshot, resources, dashboard panels, XP notices, loot resolution, and preserved character tabs.
+- `src/dashboards/GMDashboard.jsx`: party roster, sessions, targeted XP, loot, native encounter/initiative control, magic rewards, and preserved GM system tabs.
+- `src/dashboards/CharacterDashboard.jsx`: live identity/resource sidebar, dashboard panels, XP notices, loot resolution, magic reward acceptance, and preserved character tabs.
 - `src/firebase/asteriaFirebaseService.js`: adapter to the existing Firebase singleton. It does not initialize Firebase.
 - `src/sessions/useCampaignLiveData.js`: lifecycle-safe campaign, character, event, session, and presence subscriptions.
 - `src/state/liveEventReducer.mjs`: idempotency, event merging, session transitions, and resource patch helpers.
@@ -30,6 +30,8 @@ The canonical character remains `campaigns/{campaignId}/characters/{characterId}
 - Loot event IDs are also reward IDs, allowing one atomic character/reward/event resolution.
 - Resource updates are clamped and transactional.
 - Player event acknowledgement is persisted so notices do not reopen after reconnecting.
+- Encounter state is shared at `campaigns/{campaignId}/systems/encounter` and writable only by the campaign GM.
+- Additional magic is delivered as a targeted `magic-element-reward` event and written to the canonical campaign character plus its owner's private character only after acceptance.
 - Live session state and presence are separate from canonical character sync. XP, loot, and resources still work outside a session.
 
 ## Development
@@ -63,9 +65,9 @@ npm.cmd run test:react
 npm.cmd run test:smoke
 ```
 
-The focused milestone test covers duplicate XP prevention, reconnect event merging, loot terminal states, one-popup behavior, acknowledgement persistence, session transitions, resource clamping, singleton Firebase use, transactional API presence, static fallbacks, and production route assets.
+The focused milestone test covers duplicate XP prevention, reconnect event merging, loot terminal states, one-popup behavior, acknowledgement persistence, session transitions, resource clamping, singleton Firebase use, encounter ownership, magic reward resolution, static fallbacks, and production route assets.
 
-Browser QA also covers 1440px desktop and 1024px tablet layouts, live session pause state, instant XP delivery and acknowledgement, one-time loot delivery, and resolved-loot route remount protection.
+Browser QA also covers 1600px desktop and 1024px tablet layouts, the Character resource sidebar, automatic initiative population, targeted XP controls, and the GM Tools magic reward flow.
 
 ## Firebase Deployment
 

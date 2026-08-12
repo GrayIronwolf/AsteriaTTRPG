@@ -197,12 +197,12 @@
 
 .react-gm-main-grid {
   display: grid;
-  grid-template-columns: minmax(300px, .75fr) minmax(520px, 1.5fr);
+  grid-template-columns: minmax(560px, 1.45fr) minmax(360px, .85fr);
   gap: 12px;
 }
 .react-gm-main-grid > :first-child { grid-column: 1; }
 .react-gm-main-grid .react-xp-panel { grid-column: 2; grid-row: 1 / span 2; }
-.react-gm-main-grid .react-loot-panel { grid-column: 1 / -1; }
+.react-gm-tools-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .react-summary-row, .react-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
 
 .react-form-grid {
@@ -214,6 +214,7 @@
 .react-form-grid input, .react-form-grid select, .react-modal input, .react-modal select { width: 100%; min-height: 40px; }
 .react-recipient-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 7px; margin: 12px 0; }
 .react-recipient-grid label { display: flex; align-items: center; gap: 7px; padding: 8px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.18); }
+.react-recipient-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .react-delivery-list { display: grid; gap: 6px; margin-top: 14px; }
 .react-delivery-list > div { display: grid; grid-template-columns: minmax(120px, 1fr) auto auto; align-items: center; gap: 10px; padding: 8px 10px; border-top: 1px solid rgba(255,255,255,.1); }
 .react-status-pill { display: inline-flex; align-items: center; width: max-content; max-width: 100%; padding: 3px 8px; border: 1px solid var(--asteria-accent, #1f7dff); border-radius: 999px; font-size: .72rem; white-space: nowrap; }
@@ -222,13 +223,50 @@
 .react-search-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin-top: 10px; }
 .react-search-results button.active { border-color: var(--asteria-accent, #1f7dff); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 18%, black); }
 
-.react-character-sidebar { display: grid; gap: 15px; }
-.react-character-identity { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: center; }
-.react-character-identity img, .react-character-identity > span { width: 92px; height: 112px; object-fit: cover; display: grid; place-items: center; border: 1px solid var(--asteria-accent, #1f7dff); background: rgba(0,0,0,.38); font-size: 2.8rem; }
+.react-character-sidebar { display: grid; gap: 13px; max-height: calc(100dvh - 116px); overflow: auto; }
+.react-character-identity { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 12px; align-items: start; }
+.react-character-portrait { display: grid; gap: 7px; text-align: center; }
+.react-character-portrait img, .react-character-portrait > span { width: 100px; height: 124px; object-fit: cover; display: grid; place-items: center; border: 1px solid var(--asteria-accent, #1f7dff); background: rgba(0,0,0,.38); font-size: 2.8rem; }
+.react-character-portrait > b { padding: 6px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.24); }
 .react-character-identity h2 { font-size: 1.35rem; }
 .react-character-identity p { margin: 3px 0; }
+.react-character-identity small { display: block; margin-top: 8px; opacity: .8; }
+.react-xp-sidebar { display: grid; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.react-xp-sidebar small { text-align: right; opacity: .78; }
+.react-sidebar-resources { display: grid; gap: 12px; }
+.react-sidebar-resource { display: grid; gap: 6px; }
+.react-resource-controls { display: grid; grid-template-columns: minmax(0, 1fr) 42px 42px; gap: 5px; }
+.react-resource-controls input { width: 100%; min-width: 0; height: 38px; }
+.react-resource-controls button { width: 42px; height: 38px; padding: 0; font-size: 1rem; }
 .react-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.react-stat-grid > div { display: grid; place-items: center; min-height: 52px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.2); }
+.react-stat-grid > div { display: grid; place-items: center; min-height: 64px; padding: 5px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.2); }
+.react-stat-grid > div span { font-size: 1.05rem; font-weight: 800; }
+.react-stat-grid > div small { font-size: .62rem; color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 60%, white); }
+
+.react-encounter-toolbar, .react-encounter-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.react-encounter-summary { margin: 10px 0 14px; }
+.react-encounter-builder { display: grid; grid-template-columns: minmax(260px, .75fr) minmax(420px, 1.25fr); gap: 12px; }
+.react-encounter-builder > section { min-width: 0; padding: 12px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.18); }
+.react-encounter-builder h3 { margin-bottom: 10px; font-size: 1rem; }
+.react-search-results.encounter { grid-template-columns: 1fr; max-height: 290px; overflow: auto; }
+.react-search-results.encounter button { display: grid; gap: 3px; text-align: left; }
+.react-initiative-list { display: grid; gap: 6px; max-height: 430px; overflow: auto; }
+.react-initiative-list article { display: grid; grid-template-columns: 28px minmax(110px, 1fr) 68px auto 38px; align-items: center; gap: 6px; padding: 7px; border: 1px solid rgba(255,255,255,.12); background: rgba(3,13,18,.72); }
+.react-initiative-list article.active { border-color: var(--asteria-accent, #1f7dff); box-shadow: inset 3px 0 0 var(--asteria-accent, #1f7dff); }
+.react-initiative-list article.defeated { opacity: .5; filter: grayscale(1); }
+.react-initiative-list article > span { display: grid; place-items: center; font-weight: 800; }
+.react-initiative-list article > div { display: grid; min-width: 0; }
+.react-initiative-list article input { width: 68px; min-width: 0; }
+.react-initiative-list article button { min-width: 0; padding: 6px; }
+
+.react-magic-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin: 12px 0; }
+.react-magic-grid button { display: grid; place-items: center; gap: 4px; min-width: 0; min-height: 108px; padding: 8px; border-color: color-mix(in srgb, var(--magic-color, #26d9ff) 70%, #71808d); background: color-mix(in srgb, var(--magic-color, #26d9ff) 14%, rgba(0,0,0,.7)); }
+.react-magic-grid button.active { box-shadow: inset 0 0 18px color-mix(in srgb, var(--magic-color, #26d9ff) 45%, transparent), 0 0 10px var(--magic-color, #26d9ff); }
+.react-magic-grid button > span { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--magic-color, #26d9ff); border-radius: 50%; }
+.react-magic-grid button b { overflow-wrap: anywhere; font-size: .72rem; }
+.react-magic-grid button small { font-size: .58rem; }
+.react-magic-reward { display: grid; grid-template-columns: 130px 1fr; gap: 18px; align-items: center; }
+.react-magic-reward > span { display: grid; place-items: center; width: 130px; height: 130px; border: 2px solid var(--magic-color); background: color-mix(in srgb, var(--magic-color) 18%, black); box-shadow: 0 0 22px color-mix(in srgb, var(--magic-color) 55%, transparent); font-size: 3rem; }
 
 .react-character-dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
 .react-character-dashboard-grid > .asteria-react-panel { min-height: 258px; }
@@ -280,6 +318,7 @@
   .react-gm-main-grid { grid-template-columns: 1fr; }
   .react-gm-main-grid > *, .react-gm-main-grid .react-xp-panel, .react-gm-main-grid .react-loot-panel { grid-column: 1; grid-row: auto; }
   .react-card-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .react-gm-tools-grid, .react-encounter-builder { grid-template-columns: 1fr; }
 }
 
 @container (max-width: 720px) {
@@ -294,6 +333,7 @@
   .react-workspace-sidebar { position: static; max-height: none; }
   .react-party-sidebar { max-height: none; }
   .react-party-list { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .react-character-sidebar { max-height: none; }
   .react-workspace-header { align-items: flex-start; flex-direction: column; }
   .react-header-actions { width: 100%; justify-content: space-between; }
   .react-character-dashboard-grid { grid-template-columns: 1fr; }
@@ -308,6 +348,8 @@
   .react-card-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .react-equipment-grid { grid-template-columns: 1fr; }
   .react-loot-hero { grid-template-columns: 1fr; }
+  .react-magic-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .react-magic-reward { grid-template-columns: 1fr; }
   .react-loot-hero img, .react-loot-hero > span { width: 100%; }
   .react-modal-backdrop { padding: 8px; }
 }
