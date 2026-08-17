@@ -15,10 +15,61 @@ function useSaveAction() {
   return {busy,message,run};
 }
 
+function imageSource(value) {
+  if (!value) return '';
+  const source = typeof value === 'string' ? value : value.url || value.downloadURL || value.src || value.image || '';
+  return String(source).replace(/\\/g, '/');
+}
+
+export function galleryRecords(character = {}) {
+  const records = (Array.isArray(character.gallery) ? character.gallery : []).map((value, index) => {
+    const record = typeof value === 'string' ? { url: value } : value || {};
+    return {
+      ...record,
+      id: record.id || `legacy-gallery-${index}`,
+      rawId: record.id || '',
+      url: imageSource(record),
+      name: record.name || `Character Image ${index + 1}`
+    };
+  }).filter(record => record.url || record.path);
+  const portrait = imageSource(character.image || character.portrait || character.characterImage);
+  if (portrait && !records.some(record => record.url === portrait)) {
+    records.unshift({ id: 'current-portrait', rawId: '', url: portrait, name: 'Current Portrait', portraitOnly: true });
+  }
+  return records;
+}
+
+function GalleryImage({ campaignId, character, image, active, editable, busy, run }) {
+  const [source, setSource] = useState(image.url);
+  const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  React.useEffect(() => { setSource(image.url); setFailed(false); }, [image.url]);
+  const recover = async () => {
+    if (!image.path || refreshing) return setFailed(true);
+    setRefreshing(true);
+    const result = await firebaseService.refreshGalleryImage(campaignId, character.id, image.rawId || image.id);
+    if (result?.ok && result.url) {
+      setSource(result.url);
+      setFailed(false);
+    } else setFailed(true);
+    setRefreshing(false);
+  };
+  return <article className={active ? 'active' : ''}>
+    <div className="react-gallery-image-frame">
+      {source && !failed ? <img src={source} alt={image.name || `${character.name} gallery`} onError={recover} /> : <div className="react-gallery-image-error"><b>Image unavailable</b><small>{image.path ? 'Retry the Firebase image.' : 'Upload this image again.'}</small>{image.path ? <button disabled={refreshing} onClick={recover}>{refreshing ? 'Loading...' : 'Retry'}</button> : null}</div>}
+    </div>
+    <b>{image.name || 'Character Image'}</b>
+    <div>
+      <button disabled={!editable || busy || active || !image.rawId || failed} onClick={() => run(() => firebaseService.setGalleryPortrait(campaignId, character.id, image.rawId), 'Character portrait updated.')}>Use as Portrait</button>
+      <button className="danger" disabled={!editable || busy || !image.rawId} onClick={() => run(() => firebaseService.deleteGalleryImage(campaignId, character.id, image.rawId), 'Image removed.')}>Delete</button>
+    </div>
+  </article>;
+}
+
 export function GalleryTab({ campaignId, character, editable }) {
   const action=useSaveAction();
-  const gallery=Array.isArray(character.gallery)?character.gallery:[];
-  const portrait=character.image||character.portrait||character.characterImage||'';
+  const gallery=galleryRecords(character);
+  const portrait=imageSource(character.image||character.portrait||character.characterImage||'');
   const upload=event=>{
     const file=event.target.files?.[0];
     if(file) action.run(()=>firebaseService.uploadGalleryImage(campaignId,character.id,file),'Image added to the gallery.');
@@ -27,7 +78,7 @@ export function GalleryTab({ campaignId, character, editable }) {
   return <div className="react-gallery-workspace">
     <Panel title="Character Gallery" action={<StatusPill>{gallery.length} images</StatusPill>}>
       <div className="react-gallery-toolbar"><label className={`react-upload-button ${!editable||action.busy?'disabled':''}`}>Add Image<input type="file" accept="image/*" disabled={!editable||action.busy} onChange={upload}/></label><span>PNG, JPG, WEBP or GIF, up to 8 MB.</span></div>
-      <div className="react-gallery-grid">{gallery.map(image=><article key={image.id} className={portrait===image.url?'active':''}><img src={image.url} alt={image.name||`${character.name} gallery`}/><b>{image.name||'Character Image'}</b><div><button disabled={!editable||action.busy||portrait===image.url} onClick={()=>action.run(()=>firebaseService.setGalleryPortrait(campaignId,character.id,image.id),'Character portrait updated.')}>Use as Portrait</button><button className="danger" disabled={!editable||action.busy} onClick={()=>action.run(()=>firebaseService.deleteGalleryImage(campaignId,character.id,image.id),'Image removed.')}>Delete</button></div></article>)}{!gallery.length?<EmptyState title="No gallery images">Add artwork during a live session, then choose any image as the character portrait.</EmptyState>:null}</div>
+      <div className="react-gallery-grid">{gallery.map(image=><GalleryImage key={image.id} campaignId={campaignId} character={character} image={image} active={portrait===image.url} editable={editable} busy={action.busy} run={action.run}/>)}{!gallery.length?<EmptyState title="No gallery images">Add artwork during a live session, then choose any image as the character portrait.</EmptyState>:null}</div>
       <p className="react-action-message">{action.message}</p>
     </Panel>
   </div>;

@@ -913,6 +913,18 @@ const firebasePublicApi = {
       return {ok:false,error:error.message||String(error)};
     }
   },
+  refreshCharacterGalleryImage: async function(campaignId,characterId,imageId){
+    if(!db || !storage || !currentUser || !campaignId || !characterId || !imageId) return {ok:false,error:'Gallery image is unavailable.'};
+    try{
+      const snapshot=await getDoc(doc(db,'campaigns',campaignId,'characters',characterId));
+      if(!snapshot.exists()) throw new Error('Character not found.');
+      const image=(snapshot.data().gallery||[]).find(value=>String(value?.id||'')===String(imageId));
+      if(!image) throw new Error('Gallery image not found.');
+      if(image.path) return {ok:true,url:await getDownloadURL(storageRef(storage,image.path))};
+      if(image.url) return {ok:true,url:image.url};
+      throw new Error('This gallery record has no image source.');
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   setCharacterGalleryPortrait: async function(campaignId,characterId,imageId){
     const refs=liveCharacterRefs(campaignId,characterId);
     try{

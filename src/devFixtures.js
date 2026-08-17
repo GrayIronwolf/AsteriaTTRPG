@@ -21,6 +21,8 @@ export function installDevFixtures() {
     kael: {
       id: 'kael', ownerUid: 'player-demo', campaignId: DEMO_CAMPAIGN_ID,
       name: 'Kael', race: 'Cavern Sprite', klass: 'Artificer', level: 12,
+      image: 'assets/races/cavern-sprite/cavern-sprite-male-adult.png',
+      gallery: [{ id:'gallery-kael-1', url:'assets/races/cavern-sprite/cavern-sprite-male-adult.png', name:'Cavern Sprite Portrait' }],
       hp: [74, 96], sp: [60, 80], mp: [110, 140], xp: 11800, xpMax: 16000,
       cp: 4, tp: 18, magicTypes: ['Light', 'Space', 'Life'],
       characteristics: { str: 12, dex: 18, agi: 17, con: 16, end: 15, int: 20, wis: 14, cha: 11, lck: 13 },
@@ -41,7 +43,12 @@ export function installDevFixtures() {
       conditions: [], inventory: [
         { id:'field-notebook', name:'Field Notebook', qty:1, type:'Tool', rarity:'Common' },
         { id:'health-potion', name:'Health Potion', qty:3, type:'Consumable', rarity:'Common', effect:{ hp:10 } },
-        { id:'iron-longsword', name:'Iron Longsword', qty:1, type:'Weapon', rarity:'Common', allowedSlots:['Main Weapon','Secondary Weapon'] }
+        { id:'iron-longsword', name:'Iron Longsword', qty:1, type:'Weapon', rarity:'Common', allowedSlots:['Main Weapon','Secondary Weapon'] },
+        { id:'mana-potion', name:'Mana Potion', qty:2, type:'Consumable', rarity:'Common', effect:{ mp:10 } },
+        { id:'iron-ore', name:'Iron Ore', qty:8, type:'Material', rarity:'Common' },
+        { id:'antimony-ingot', name:'Antimony Ingot', qty:2, type:'Material', rarity:'Uncommon' },
+        { id:'rope', name:'Rope', qty:1, type:'Tool', rarity:'Common' },
+        { id:'rations', name:'Iron Rations', qty:6, type:'Consumable', rarity:'Common' }
       ],
       quests:[{ id:'echoes-below', name:'Echoes Below', description:'Investigate the singing caverns.', status:'Active' }],
       journal:[{ id:'journal-1', title:'Arrival', body:'We reached the cavern gate before nightfall.', createdAt:new Date().toISOString() }],
@@ -50,6 +57,7 @@ export function installDevFixtures() {
     lyra: {
       id: 'lyra', ownerUid: 'player-lyra', campaignId: DEMO_CAMPAIGN_ID,
       name: 'Lyra', race: 'Air Pixie', klass: 'Druid', level: 8,
+      image: 'assets/races/air-pixie/air-pixie-female-adult.png',
       hp: [62, 70], sp: [54, 65], mp: [92, 110], xp: 7200, xpMax: 10000,
       characteristics: { str: 8, dex: 17, agi: 19, con: 13, end: 12, int: 16, wis: 18, cha: 15, lck: 14 },
       quickSlots: [{ name: 'Healing Salve' }], unlockedTalents: [], spells: [],
@@ -195,6 +203,7 @@ export function installDevFixtures() {
     updateCharacterDashboardPreferences: async (_campaignId,characterId,preferences)=>{updateCharacter(characterId,next=>{next.dashboardPreferences=normalizeDashboardPreferences({dashboardPreferences:{...(next.dashboardPreferences||{}),...preferences}});return next;});return {ok:true};},
     createPartyOrganization: async (_campaignId,characterId,details)=>{requireFixtureSession();const organization={id:eventId('organization'),name:details.name,type:details.type,ownerCharacterId:characterId,memberCharacterIds:[characterId]};partyWorkspace={...partyWorkspace,organizations:[...(partyWorkspace.organizations||[]),organization]};notify('partyWorkspace');return {ok:true,organization};},
     uploadCharacterGalleryImage: async (_campaignId,characterId,file)=>{requireFixtureSession();const url=URL.createObjectURL(file);const image={id:eventId('gallery'),url,name:file.name};updateCharacter(characterId,next=>{next.gallery=[...(next.gallery||[]),image];if(!next.image)next.image=url;return next;});return {ok:true,image};},
+    refreshCharacterGalleryImage: async (_campaignId,characterId,imageId)=>{const image=(characters[characterId]?.gallery||[]).find(value=>value.id===imageId);return image?.url?{ok:true,url:image.url}:{ok:false,error:'Gallery image not found.'};},
     setCharacterGalleryPortrait: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{const image=(next.gallery||[]).find(value=>value.id===imageId);if(image){next.image=image.url;next.portrait=image.url;}return next;});return {ok:true};},
     deleteCharacterGalleryImage: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{next.gallery=(next.gallery||[]).filter(value=>value.id!==imageId);return next;});return {ok:true};},
     grantCharacterTitle: async (_campaignId,ids,title)=>{(ids||[]).forEach(id=>updateCharacter(id,next=>{next.titles=[...(next.titles||[]),{id:eventId('title'),text:title,source:'GM'}];return next;}));return {ok:true};},

@@ -197,11 +197,29 @@ test('23. Gallery, organizations, titles, custom items, and player item offers u
   const firebase = read('js/firebase-auth.js');
   const service = read('src/firebase/asteriaFirebaseService.js');
   const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
-  ['uploadCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemOffer','respondLiveItemOffer'].forEach(name => assert.match(firebase, new RegExp(name)));
-  ['uploadGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemOffer','respondItemOffer'].forEach(name => assert.match(service, new RegExp(name)));
+  ['uploadCharacterGalleryImage','refreshCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemOffer','respondLiveItemOffer'].forEach(name => assert.match(firebase, new RegExp(name)));
+  ['uploadGalleryImage','refreshGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemOffer','respondItemOffer'].forEach(name => assert.match(service, new RegExp(name)));
   ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','Player Requests'].forEach(name => assert.match(dashboard, new RegExp(name)));
   assert.match(read('storage.rules'), /gallery\/\{fileName\}/);
   assert.match(read('firestore.rules'), /match \/customItems\/\{itemId\}/);
+});
+
+test('24. Inventory uses one equipment, storage, and party workspace with direct party actions', () => {
+  const inventory = read('src/dashboards/InventoryWorkspace.jsx');
+  const styles = read('src/styles/asteria-react.css');
+  ['InventoryEquipmentPanel','StoragePanel','PartyInventoryPanel','PartyActionBubble'].forEach(name => assert.match(inventory, new RegExp(name)));
+  ['Trade','Sell','Give','Identify'].forEach(label => assert.match(inventory, new RegExp(label)));
+  assert.match(styles, /react-inventory-layout/);
+  assert.match(styles, /grid-template-columns:\s*repeat\(6/);
+  assert.match(styles, /react-party-speech::after/);
+});
+
+test('25. Gallery supports legacy image records and Firebase URL recovery', () => {
+  const gallery = read('src/dashboards/CharacterGallerySettings.jsx');
+  assert.match(gallery, /galleryRecords/);
+  assert.match(gallery, /downloadURL/);
+  assert.match(gallery, /refreshGalleryImage/);
+  assert.match(gallery, /Image unavailable/);
 });
 
 let failed = 0;
