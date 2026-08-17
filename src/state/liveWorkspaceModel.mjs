@@ -16,14 +16,17 @@ export const SKILL_RANKS = ['Novice','Initiate','Apprentice','Journeyman','Adept
 export const TALENT_TIER_LEVELS = { 1:1, 2:10, 3:20, 4:30, 5:40 };
 
 export const DEFAULT_DASHBOARD_PANELS = [
-  'equipment', 'weapons', 'quick-items', 'talents', 'spells', 'skills', 'conditions', 'coins'
+  'weapons', 'talents', 'spells', 'skills', 'conditions', 'coins'
 ];
 
 export const DEFAULT_CHARACTER_STORAGES = [
-  { id:'storage-1', name:'Adventuring Pack', order:0 },
-  { id:'storage-2', name:'Item Pouch', order:1 },
-  { id:'storage-3', name:'Personal Storage', order:2 }
+  { id:'storage-1', name:'Adventuring Pack', order:0, rows:4, cols:4 },
+  { id:'storage-2', name:'Item Pouch', order:1, rows:4, cols:4 },
+  { id:'storage-3', name:'Personal Storage', order:2, rows:6, cols:10 }
 ];
+
+export const STORAGE_GRID_MIN = 1;
+export const STORAGE_GRID_MAX = 20;
 
 export function timestampMs(value) {
   if(!value) return 0;
@@ -152,17 +155,45 @@ export function normalizeDashboardPreferences(character = {}) {
 }
 
 export function normalizeCharacterStorages(character = {}) {
-  const limit = Math.max(3, Math.floor(Number(character.storageLimit || 3)));
-  const source = Array.isArray(character.storages) ? character.storages : [];
+  const current = Array.isArray(character.storages) ? character.storages : [];
+  const legacy = Array.isArray(character.bags) ? character.bags : [];
+  const source = current.length ? current : legacy;
+  const limit = Math.max(3, Math.floor(Number(character.storageLimit || 3)), source.length);
   const records = [...source];
   DEFAULT_CHARACTER_STORAGES.forEach(storage => {
     if(records.length < limit && !records.some(value => value.id === storage.id)) records.push({ ...storage });
   });
   return records
     .slice(0, limit)
-    .map((storage,index) => ({ id:String(storage.id || `storage-${index+1}`), name:String(storage.name || `Storage ${index+1}`), order:Number(storage.order ?? index) }))
+    .map((storage,index) => {
+      const fallback = DEFAULT_CHARACTER_STORAGES[index] || {};
+      const requestedSlots = Math.max(1, Number(storage.maxSlots || fallback.maxSlots || 16));
+      const requestedCols = Number(storage.cols ?? storage.columns ?? storage.gridCols ?? fallback.cols);
+      const cols = Math.max(STORAGE_GRID_MIN, Math.min(STORAGE_GRID_MAX, Math.floor(requestedCols || Math.ceil(Math.sqrt(requestedSlots)))));
+      const requestedRows = Number(storage.rows ?? storage.gridRows ?? fallback.rows);
+      const rows = Math.max(STORAGE_GRID_MIN, Math.min(STORAGE_GRID_MAX, Math.floor(requestedRows || Math.ceil(requestedSlots / cols))));
+      return {
+        ...structuredCloneSafe(storage),
+        id:String(storage.id || storage.bagId || `storage-${index+1}`),
+        name:String(storage.name || storage.label || `Storage ${index+1}`),
+        order:Number(storage.order ?? index),
+        rows,
+        cols,
+        maxSlots:rows * cols
+      };
+    })
     .sort((left,right) => left.order - right.order)
     .map((storage,index) => ({ ...storage, order:index }));
+}
+
+export function firstFreeStorageSlot(items = [], storage = {}, excludeItemId = '') {
+  const capacity = Math.max(1, Number(storage.maxSlots || Number(storage.rows || 4) * Number(storage.cols || 4)));
+  const occupied = new Set(items
+    .filter(item => String(item.storageId || item.bagId || '') === String(storage.id || '') && !item.equipped && String(item.id || '') !== String(excludeItemId || ''))
+    .map(item => Number(item.storageSlot ?? item.bagSlot))
+    .filter(slot => Number.isInteger(slot) && slot >= 0 && slot < capacity));
+  for(let slot = 0; slot < capacity; slot += 1) if(!occupied.has(slot)) return slot;
+  return -1;
 }
 
 export function characterKnowsIdentify(character = {}) {
@@ -192,6 +223,7 @@ export function unidentifiedItemName(item = {}) {
 export function normalizeLiveItem(item = {}, index = 0, character = {}) {
   const storages = normalizeCharacterStorages(character);
   const identified = item.identified !== false;
+  const storedSlot = Number(item.storageSlot ?? item.bagSlot);
   return {
     ...structuredCloneSafe(item),
     id:String(item.id || item.instanceId || item.catalogId || slug(item.name || item.title) || `item-${index}`),
@@ -200,6 +232,7 @@ export function normalizeLiveItem(item = {}, index = 0, character = {}) {
     basicName:String(item.basicName || unidentifiedItemName({ ...item, identified:false })),
     identified,
     storageId:String(item.storageId || storages[0]?.id || 'storage-1'),
+    storageSlot:Number.isInteger(storedSlot) && storedSlot >= 0 ? storedSlot : null,
     isSpellbook:Boolean(item.isSpellbook || /spellbook|grimoire|tome/i.test(`${item.type || ''} ${item.category || ''}`)),
     spell:item.spell || item.spellData || null
   };

@@ -41,6 +41,13 @@ service cloud.firestore {
       );
     }
 
+    function isLinkedCharacterOwner(campaignId, characterId) {
+      let campaign = sharedCampaign(campaignId);
+      return signedIn() &&
+        campaign.keys().hasAll(['playerCharacterLinks']) &&
+        campaign.playerCharacterLinks[characterId] == request.auth.uid;
+    }
+
     function canUseCampaignSystems(campaignId) {
       return isCampaignMember(sharedCampaign(campaignId));
     }
@@ -140,9 +147,9 @@ service cloud.firestore {
 
       match /characters/{characterId} {
         allow read: if canReadCampaignCharacter(campaignId);
-        allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid);
-        allow update: if (request.resource.data.ownerUid == resource.data.ownerUid && canWriteCampaignCharacter(campaignId, resource.data.ownerUid)) || canTransferLiveItems(campaignId);
-        allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
+        allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId);
+        allow update: if (request.resource.data.ownerUid == resource.data.ownerUid && (canWriteCampaignCharacter(campaignId, resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId))) || canTransferLiveItems(campaignId);
+        allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId);
       }
 
       match /systems/{systemId} {

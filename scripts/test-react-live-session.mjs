@@ -18,6 +18,7 @@ import {
   applyCharacteristicPoints,
   characterKnowsIdentify,
   effectiveSession,
+  firstFreeStorageSlot,
   nextSkillProgress,
   normalizeCharacterStorages,
   normalizeDashboardPreferences,
@@ -210,7 +211,9 @@ test('24. Inventory uses one equipment, storage, and party workspace with direct
   ['InventoryEquipmentPanel','StoragePanel','PartyInventoryPanel','PartyActionBubble'].forEach(name => assert.match(inventory, new RegExp(name)));
   ['Trade','Sell','Give','Identify'].forEach(label => assert.match(inventory, new RegExp(label)));
   assert.match(styles, /react-inventory-layout/);
-  assert.match(styles, /grid-template-columns:\s*repeat\(6/);
+  assert.match(styles, /repeat\(var\(--storage-cols/);
+  assert.match(inventory, /storageSlot:slot/);
+  assert.match(inventory, /max="20"/);
   assert.match(styles, /react-party-speech::after/);
 });
 
@@ -220,6 +223,30 @@ test('25. Gallery supports legacy image records and Firebase URL recovery', () =
   assert.match(gallery, /downloadURL/);
   assert.match(gallery, /refreshGalleryImage/);
   assert.match(gallery, /Image unavailable/);
+});
+
+test('26. Storage grids preserve dimensions, legacy bags, and occupied cells', () => {
+  const current = normalizeCharacterStorages({ storages:[{ id:'pack', name:'Pack', rows:10, cols:6 }] });
+  assert.equal(current[0].maxSlots, 60);
+  const legacy = normalizeCharacterStorages({ bags:[{ id:'old-bag', name:'Old Bag', rows:4, cols:4 }] });
+  assert.equal(legacy[0].id, 'old-bag');
+  assert.equal(firstFreeStorageSlot([{ id:'a', storageId:'pack', storageSlot:0 }], current[0]), 1);
+});
+
+test('27. Linked owners can use gallery and item workflows without trusting stale owner metadata', () => {
+  const firebase = read('js/firebase-auth.js');
+  const rules = read('firestore.rules');
+  assert.match(firebase, /verifyOwnedLiveCharacter/);
+  assert.match(firebase, /syncOwnedCharacterGalleryMedia/);
+  assert.match(rules, /isLinkedCharacterOwner/);
+  assert.match(read('src/firebase/asteriaFirebaseService.js'), /syncGalleryMedia/);
+});
+
+test('28. The dashboard uses one compact weapons and quick-items panel', () => {
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  assert.match(dashboard, /Weapons & Quick Items/);
+  assert.doesNotMatch(dashboard, /title="Equipment \/ Armor"/);
+  assert.deepEqual(DEFAULT_CHARACTER_STORAGES.map(value => value.rows * value.cols), [16,16,60]);
 });
 
 let failed = 0;

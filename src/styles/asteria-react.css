@@ -273,20 +273,20 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-character-dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
 .react-character-dashboard-grid > .asteria-react-panel { min-height: 258px; }
 .react-character-dashboard-grid > .react-wide-panel { min-height: 330px; }
-.react-character-dashboard-grid > .react-panel-equipment { grid-column: span 5; }
-.react-character-dashboard-grid > .react-panel-weapons { grid-column: span 4; }
-.react-character-dashboard-grid > .react-panel-quick-items { grid-column: span 3; }
+.react-character-dashboard-grid > .react-panel-weapons { grid-column: span 12; min-height: 174px; }
 .react-character-dashboard-grid > .react-panel-talents,
 .react-character-dashboard-grid > .react-panel-spells { grid-column: span 6; }
 .react-character-dashboard-grid > .react-panel-skills { grid-column: span 5; }
 .react-character-dashboard-grid > .react-panel-conditions { grid-column: span 3; }
 .react-character-dashboard-grid > .react-panel-coins { grid-column: span 4; }
-.react-equipment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
-.react-equipment-grid > div { display: grid; align-content: center; min-height: 58px; padding: 8px; border: 1px solid rgba(41,151,220,.46); background: rgba(3,17,23,.62); }
+.react-dashboard-loadout { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); gap: 12px; }
+.react-dashboard-loadout h3 { margin: 0 0 7px; font-size: .72rem; text-transform: uppercase; }
+.react-equipment-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.react-equipment-grid > div { display: grid; align-content: center; min-height: 42px; padding: 5px 6px; border: 1px solid rgba(41,151,220,.46); background: rgba(3,17,23,.62); }
 .react-equipment-grid small { color: #81d9f2; text-transform: uppercase; }
-.react-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.react-quick-grid > div, .react-quick-grid > button { display: grid; grid-template-columns: 30px 1fr; align-items: center; min-height: 66px; padding: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(0,0,0,.18); color: inherit; text-align: left; }
-.react-quick-grid b { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--asteria-accent, #1f7dff); }
+.react-quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.react-quick-grid > div, .react-quick-grid > button { display: grid; grid-template-columns: 22px 1fr; align-items: center; min-height: 42px; padding: 5px; border: 1px solid rgba(255,255,255,.15); background: rgba(0,0,0,.18); color: inherit; text-align: left; }
+.react-quick-grid b { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--asteria-accent, #1f7dff); }
 .react-card-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .react-small-card { display: grid; grid-template-rows: minmax(34px, auto) 74px auto auto; gap: 5px; min-width: 0; height: 176px; padding: 8px; border: 1px solid color-mix(in srgb, var(--asteria-accent, #1f7dff) 55%, #704dc0); background: rgba(6,16,22,.82); }
 .react-small-card[tabindex] { cursor: pointer; }
@@ -434,7 +434,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-storage-list article.active { border-color: var(--asteria-accent,#1f7dff); box-shadow: inset 3px 0 0 var(--asteria-accent,#1f7dff); }
 .react-storage-list article > div { grid-column: 1/-1; display: flex; gap: 5px; }
 .react-storage-list article button { min-width: 0; flex: 1; padding: 5px; }
-.react-create-storage { display: grid; gap: 6px; margin-top: 12px; }
+.react-create-storage { display: grid; grid-template-columns: minmax(150px,1fr) 76px 76px auto; align-items: end; gap: 6px; margin-top: 12px; }
+.react-create-storage label { display: grid; gap: 3px; font-size: .62rem; text-transform: uppercase; }
 .react-player-bubbles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .react-player-bubbles button { display: grid; place-items: center; gap: 5px; min-width: 0; min-height: 104px; padding: 7px; }
 .react-player-bubbles img, .react-player-bubbles span { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; border: 1px solid var(--asteria-accent,#1f7dff); }
@@ -694,10 +695,49 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-inventory-item-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(82px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(var(--storage-cols, 4), 64px) !important;
+  grid-auto-rows: 92px;
+  gap: 4px;
   align-content: start;
+  width: max-content;
+  min-width: 100%;
 }
+
+.react-inventory-grid-scroll {
+  max-width: 100%;
+  max-height: 610px;
+  overflow: auto;
+  padding: 2px;
+  border: 1px solid rgba(69,153,213,.24);
+  background: rgba(0,0,0,.18);
+}
+
+.react-storage-grid-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 7px;
+  font-size: .66rem;
+  opacity: .78;
+}
+
+.react-storage-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 92px;
+  border: 1px dashed rgba(75,147,195,.28);
+  background: rgba(2,10,16,.42);
+  color: rgba(255,255,255,.28);
+  font-size: .55rem;
+}
+
+.react-storage-cell.filled { border-style: solid; border-color: rgba(75,147,195,.48); }
+.react-storage-cell.filtered-out .react-inventory-item-card { opacity: .16; filter: grayscale(.7); }
+.react-storage-cell::after { content: attr(data-slot); position: absolute; bottom: 1px; right: 2px; pointer-events: none; font-size: .46rem; opacity: .28; }
+.react-storage-cell > small { opacity: .4; }
+.react-storage-cell .react-inventory-item-card { width: 100%; height: 100%; }
 
 .react-inventory-item-grid > .react-empty {
   grid-column: 1 / -1;
@@ -706,12 +746,12 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-inventory-item-card {
   position: relative;
   display: grid;
-  grid-template-rows: 72px minmax(28px, auto) auto;
+  grid-template-rows: 48px minmax(20px, auto) auto;
   justify-items: center;
   gap: 4px;
   min-width: 0;
-  min-height: 125px;
-  padding: 6px;
+  min-height: 0;
+  padding: 3px;
   border: 1px solid rgba(69, 153, 213, .42);
   background: rgba(2, 12, 18, .72);
   cursor: grab;
@@ -725,7 +765,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-inventory-item-card b {
   width: 100%;
   overflow: hidden;
-  font-size: .68rem;
+  font-size: .54rem;
   line-height: 1.15;
   text-align: center;
   text-overflow: ellipsis;
@@ -733,7 +773,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 
 .react-inventory-item-card small {
-  font-size: .56rem;
+  font-size: .46rem;
   opacity: .78;
 }
 
@@ -741,7 +781,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   display: grid;
   place-items: center;
   width: 100%;
-  height: 72px;
+  height: 48px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .1);
   background: rgba(0, 0, 0, .32);

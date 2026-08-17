@@ -58,6 +58,7 @@ export const firebaseService = {
   updateInventory: (campaignId, characterId, operation) => requireMethod('updateCharacterInventory')(campaignId, characterId, operation),
   updateDashboardPreferences: (campaignId, characterId, preferences) => requireMethod('updateCharacterDashboardPreferences')(campaignId, characterId, preferences),
   uploadGalleryImage: (campaignId, characterId, file) => requireMethod('uploadCharacterGalleryImage')(campaignId, characterId, file),
+  syncGalleryMedia: (campaignId, characterId) => requireMethod('syncOwnedCharacterGalleryMedia')(campaignId, characterId),
   refreshGalleryImage: (campaignId, characterId, imageId) => requireMethod('refreshCharacterGalleryImage')(campaignId, characterId, imageId),
   setGalleryPortrait: (campaignId, characterId, imageId) => requireMethod('setCharacterGalleryPortrait')(campaignId, characterId, imageId),
   deleteGalleryImage: (campaignId, characterId, imageId) => requireMethod('deleteCharacterGalleryImage')(campaignId, characterId, imageId),

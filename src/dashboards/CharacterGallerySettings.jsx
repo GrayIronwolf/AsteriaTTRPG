@@ -4,9 +4,11 @@ import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { DEFAULT_DASHBOARD_PANELS, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 
 const PANEL_LABELS = {
-  equipment:'Equipment / Armor', weapons:'Equipped Weapons', 'quick-items':'Quick Items',
+  weapons:'Weapons & Quick Items',
   talents:'Class Talents', spells:'Active Spells', skills:'Skills', conditions:'Conditions', coins:'Coin Pouch'
 };
+
+const repairedGalleryLinks = new Set();
 
 function useSaveAction() {
   const [busy,setBusy]=useState(false);
@@ -70,6 +72,12 @@ export function GalleryTab({ campaignId, character, editable }) {
   const action=useSaveAction();
   const gallery=galleryRecords(character);
   const portrait=imageSource(character.image||character.portrait||character.characterImage||'');
+  React.useEffect(()=>{
+    const key=`${campaignId}:${character.id}`;
+    if(!campaignId||!character.id||repairedGalleryLinks.has(key)) return;
+    repairedGalleryLinks.add(key);
+    firebaseService.syncGalleryMedia(campaignId,character.id).catch(()=>{});
+  },[campaignId,character.id]);
   const upload=event=>{
     const file=event.target.files?.[0];
     if(file) action.run(()=>firebaseService.uploadGalleryImage(campaignId,character.id,file),'Image added to the gallery.');

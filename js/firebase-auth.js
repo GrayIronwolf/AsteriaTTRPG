@@ -7,7 +7,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -627,10 +627,47 @@ function liveCharacterRefs(campaignId,characterId){
     private:doc(db,'users',currentUser.uid,'characters',characterId)
   };
 }
+function ownedCharacterSourceId(characterId,character={}){
+  return String(character.sourceCharacterId || character.id || characterId || '');
+}
+function campaignLinksCurrentUser(campaign={},characterId=''){
+  const uid=currentUser?.uid || '';
+  if(!uid) return false;
+  if(String(campaign.playerCharacterLinks?.[characterId] || '')===uid) return true;
+  if((campaign.players?.[uid]?.characterIds || []).map(String).includes(String(characterId))) return true;
+  return String(campaign.characters?.[characterId]?.ownerUid || '')===uid;
+}
+async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs={}){
+  if(!currentUser) throw new Error('Sign in to use this character.');
+  const sourceId=ownedCharacterSourceId(characterId,character);
+  const privateRef=doc(db,'users',currentUser.uid,'characters',sourceId || characterId);
+  refs.private=privateRef;
+  if(String(character.ownerUid || '')===currentUser.uid){ refs.verifiedOwner=true; return {privateRef,privateSnapshot:null}; }
+  const [privateSnapshot,campaignSnapshot]=await Promise.all([
+    transaction.get(privateRef),
+    transaction.get(doc(db,'campaigns',campaignId))
+  ]);
+  if(!privateSnapshot.exists() && !campaignLinksCurrentUser(campaignSnapshot.exists()?campaignSnapshot.data():{},characterId)){
+    throw new Error('This character is not linked to your account.');
+  }
+  refs.verifiedOwner=true;
+  return {privateRef,privateSnapshot};
+}
+async function verifyOwnedLiveCharacterRead(campaignId,characterId,character){
+  if(!currentUser) return {ok:false,error:'Sign in to use this character.'};
+  const sourceId=ownedCharacterSourceId(characterId,character);
+  const privateRef=doc(db,'users',currentUser.uid,'characters',sourceId || characterId);
+  if(String(character.ownerUid || '')===currentUser.uid) return {ok:true,privateRef,privateSnapshot:await getDoc(privateRef)};
+  const [privateSnapshot,campaignSnapshot]=await Promise.all([getDoc(privateRef),getDoc(doc(db,'campaigns',campaignId))]);
+  if(!privateSnapshot.exists() && !campaignLinksCurrentUser(campaignSnapshot.exists()?campaignSnapshot.data():{},characterId)){
+    return {ok:false,error:'This character is not linked to your account.'};
+  }
+  return {ok:true,privateRef,privateSnapshot};
+}
 function writeLiveCharacter(transaction,refs,character){
   const clean=structuredCloneSafe(character);
   transaction.set(refs.campaign,Object.assign({},clean,{updatedAt:serverTimestamp()}),{merge:true});
-  if(character.ownerUid === currentUser.uid) transaction.set(refs.private,Object.assign({},clean,{id:character.id,ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+  if(character.ownerUid === currentUser.uid || refs.verifiedOwner) transaction.set(refs.private,Object.assign({},clean,{id:ownedCharacterSourceId(character.id,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
 }
 function characterInventory(character){
   return (Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>normalizeLiveItem(
@@ -888,7 +925,10 @@ const firebasePublicApi = {
     if(Number(file.size||0)>8*1024*1024) return {ok:false,error:'Images must be 8 MB or smaller.'};
     const refs=liveCharacterRefs(campaignId,characterId);
     const snapshot=await getDoc(refs.campaign);
-    if(!snapshot.exists() || (snapshot.data().ownerUid && snapshot.data().ownerUid!==currentUser.uid)) return {ok:false,error:'You can only upload images for your own character.'};
+    if(!snapshot.exists()) return {ok:false,error:'Character not found.'};
+    const verified=await verifyOwnedLiveCharacterRead(campaignId,characterId,Object.assign({id:characterId},snapshot.data()));
+    if(!verified.ok) return verified;
+    refs.private=verified.privateRef;
     const id=`gallery-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
     const extension=String(file.name||'image').split('.').pop().replace(/[^a-z0-9]/gi,'').slice(0,8)||'image';
     const path=`users/${currentUser.uid}/characters/${characterId}/gallery/${id}.${extension}`;
@@ -901,7 +941,7 @@ const firebasePublicApi = {
         const characterSnapshot=await transaction.get(refs.campaign);
         if(!characterSnapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
-        if(character.ownerUid && character.ownerUid!==currentUser.uid) throw new Error('You can only upload images for your own character.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const image={id,url,path,name:String(file.name||'Character image').slice(0,160),createdAt:new Date().toISOString()};
         character.gallery=[...(Array.isArray(character.gallery)?character.gallery:[]),image];
         if(!character.image&&!character.portrait) character.image=url;
@@ -912,6 +952,39 @@ const firebasePublicApi = {
       deleteObject(reference).catch(()=>{});
       return {ok:false,error:error.message||String(error)};
     }
+  },
+  syncOwnedCharacterGalleryMedia: async function(campaignId,characterId){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const changed=await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const verification=await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        const privateData=verification.privateSnapshot?.exists() ? verification.privateSnapshot.data() : {};
+        const privateGallery=Array.isArray(privateData.gallery)?privateData.gallery:Array.isArray(privateData.character?.gallery)?privateData.character.gallery:[];
+        const currentGallery=Array.isArray(character.gallery)?character.gallery:[];
+        const mergedGallery=[];
+        const seen=new Set();
+        [...currentGallery,...privateGallery].forEach((image,index)=>{
+          const clean=typeof image==='string'?{url:image}:structuredCloneSafe(image);
+          const key=String(clean.id || clean.path || clean.url || clean.downloadURL || index);
+          if(!seen.has(key)){seen.add(key);mergedGallery.push(clean);}
+        });
+        const portrait=character.image || character.portrait || character.characterImage || privateData.image || privateData.portrait || privateData.characterImage || privateData.appearance?.image || privateData.appearance?.portrait || privateData.character?.image || '';
+        const hasChange=mergedGallery.length!==currentGallery.length || (!character.image && Boolean(portrait));
+        if(hasChange) transaction.set(refs.campaign,{
+          gallery:mergedGallery,
+          image:character.image || portrait,
+          portrait:character.portrait || portrait,
+          characterImage:character.characterImage || portrait,
+          updatedAt:serverTimestamp()
+        },{merge:true});
+        return hasChange;
+      });
+      return {ok:true,changed};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   refreshCharacterGalleryImage: async function(campaignId,characterId,imageId){
     if(!db || !storage || !currentUser || !campaignId || !characterId || !imageId) return {ok:false,error:'Gallery image is unavailable.'};
@@ -933,7 +1006,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
-        if(character.ownerUid && character.ownerUid!==currentUser.uid) throw new Error('You can only edit your own portrait.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const image=(character.gallery||[]).find(value=>String(value.id)===String(imageId));
         if(!image?.url) throw new Error('Gallery image not found.');
         character.image=image.url;character.portrait=image.url;character.characterImage=image.url;
@@ -951,7 +1024,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
-        if(character.ownerUid && character.ownerUid!==currentUser.uid) throw new Error('You can only edit your own gallery.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         removed=(character.gallery||[]).find(value=>String(value.id)===String(imageId));
         character.gallery=(character.gallery||[]).filter(value=>String(value.id)!==String(imageId));
         if(removed?.url && [character.image,character.portrait,character.characterImage].includes(removed.url)){
@@ -1115,7 +1188,9 @@ const firebasePublicApi = {
           if(character.storages.length>=character.storageLimit) throw new Error('The GM must unlock another storage slot first.');
           const name=String(operation.name||'').trim().slice(0,80);
           if(!name) throw new Error('Enter a storage name.');
-          character.storages.push({id:`storage-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,order:character.storages.length});
+          const rows=Math.max(1,Math.min(20,Math.floor(Number(operation.rows||4))));
+          const cols=Math.max(1,Math.min(20,Math.floor(Number(operation.cols||4))));
+          character.storages.push({id:`storage-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,order:character.storages.length,rows,cols,maxSlots:rows*cols});
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
@@ -1130,7 +1205,12 @@ const firebasePublicApi = {
         if(operation.type==='add-item'){
           const source=structuredCloneSafe(operation.item||{});
           if(!source.name&&!source.title) throw new Error('Item data is incomplete.');
-          const added=normalizeLiveItem(Object.assign({},source,{id:`${liveSlug(source.name||source.title)||'item'}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,qty:Math.max(1,Number(source.qty||1)),storageId:String(operation.storageId||character.storages[0]?.id||'storage-1'),location:'inventory',equipped:false}),inventory.length,character);
+          const storageId=String(operation.storageId||character.storages[0]?.id||'storage-1');
+          const storage=character.storages.find(value=>value.id===storageId);
+          if(!storage) throw new Error('Storage not found.');
+          const storageSlot=firstFreeStorageSlot(inventory,storage);
+          if(storageSlot<0) throw new Error(`${storage.name} is full.`);
+          const added=normalizeLiveItem(Object.assign({},source,{id:`${liveSlug(source.name||source.title)||'item'}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,qty:Math.max(1,Number(source.qty||1)),storageId,storageSlot,location:'inventory',equipped:false}),inventory.length,character);
           character.inventory=[...inventory,added];
           appendActivity(character,{type:'custom-item-added',message:`Added custom item ${added.name} to inventory.`});
           writeLiveCharacter(transaction,refs,character);
@@ -1167,7 +1247,13 @@ const firebasePublicApi = {
         }else if(operation.type==='move-storage'){
           const storage=character.storages.find(value=>value.id===String(operation.storageId||''));
           if(!storage) throw new Error('Storage not found.');
-          item.storageId=storage.id;item.location='inventory';
+          const requested=Number(operation.storageSlot);
+          const capacity=Number(storage.maxSlots||storage.rows*storage.cols||16);
+          const storageSlot=Number.isInteger(requested)&&requested>=0&&requested<capacity?requested:firstFreeStorageSlot(inventory,storage,item.id);
+          if(storageSlot<0) throw new Error(`${storage.name} is full.`);
+          const occupied=inventory.find(value=>!value.equipped&&String(value.id)!==String(item.id)&&value.storageId===storage.id&&Number(value.storageSlot)===storageSlot);
+          if(occupied) throw new Error(`Slot ${storageSlot+1} is already occupied.`);
+          item.storageId=storage.id;item.storageSlot=storageSlot;item.location='inventory';
           appendActivity(character,{type:'item-stored',message:`Moved ${item.name} to ${storage.name}.`});
         }else if(operation.type==='identify'){
           if(item.identified!==false) throw new Error('This item is already identified.');
@@ -1324,7 +1410,7 @@ const firebasePublicApi = {
         const [characterSnapshot,ecosystemSnapshot]=await Promise.all([transaction.get(refs.campaign),transaction.get(ecosystemRef)]);
         if(!characterSnapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
-        if(character.ownerUid&&character.ownerUid!==currentUser.uid) throw new Error('You can only offer your own items.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const inventory=characterInventory(character);
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
         const quantity=Math.max(1,Math.min(Number(details.quantity||1),Number(item?.qty||0)));
@@ -1362,7 +1448,8 @@ const firebasePublicApi = {
         if(!recipientSnapshot.exists()||!senderSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         const recipient=Object.assign({id:characterId},recipientSnapshot.data());
         const sender=Object.assign({id:offer.fromCharacterId},senderSnapshot.data());
-        if(recipient.ownerUid&&recipient.ownerUid!==currentUser.uid) throw new Error('This offer is not assigned to your character.');
+        const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
         let revealedItem=null;
         if(accepted&&offer.mode==='identify'){
           if(!characterKnowsIdentify(recipient)) throw new Error('This character does not know the Identify spell.');
@@ -1376,6 +1463,9 @@ const firebasePublicApi = {
         }else if(accepted){
           const received=Object.assign({},structuredCloneSafe(offer.item),{id:`${liveSlug(offer.item?.trueName||offer.item?.name||'item')}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,location:'inventory',equipped:false,equippedSlot:''});
           recipient.storageLimit=Math.max(3,Number(recipient.storageLimit||3));recipient.storages=normalizeCharacterStorages(recipient);received.storageId=String(details.storageId||recipient.storages[0]?.id||'storage-1');
+          const recipientStorage=recipient.storages.find(value=>value.id===received.storageId)||recipient.storages[0];
+          received.storageId=recipientStorage?.id||'storage-1';received.storageSlot=firstFreeStorageSlot(characterInventory(recipient),recipientStorage||{});
+          if(received.storageSlot<0) throw new Error(`${recipientStorage?.name||'Inventory'} is full.`);
           if(offer.mode==='sell'){
             const price=Math.max(0,Number(offer.priceCopper||0));
             if(currencyTotal(recipient)<price) throw new Error('Not enough currency for this purchase.');
@@ -1388,20 +1478,22 @@ const firebasePublicApi = {
             exchange.qty=Math.max(0,Number(exchange.qty||1)-1);
             recipient.inventory=recipientInventory.filter(value=>Number(value.qty??1)>0);
             const sentBack=Object.assign({},structuredCloneSafe(exchange),{id:`${liveSlug(exchange.trueName||exchange.name||'item')}-${Date.now()+1}`,qty:1,location:'inventory',equipped:false,equippedSlot:''});
-            sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);sentBack.storageId=sender.storages[0]?.id||'storage-1';
+            sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);sentBack.storageId=sender.storages[0]?.id||'storage-1';sentBack.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]||{});
+            if(sentBack.storageSlot<0) throw new Error(`${sender.storages[0]?.name||'Sender inventory'} is full.`);
             sender.inventory=[...characterInventory(sender),sentBack];
           }
           recipient.inventory=[...characterInventory(recipient),received];
           appendActivity(recipient,{type:`item-${offer.mode}-accepted`,message:`Accepted ${received.name} from ${sender.name||'a party member'}.`});
         }else if(offer.mode!=='identify'){
           const returned=Object.assign({},structuredCloneSafe(offer.item),{location:'inventory',equipped:false,equippedSlot:''});
-          sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);returned.storageId=sender.storages[0]?.id||'storage-1';
+          sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);returned.storageId=sender.storages[0]?.id||'storage-1';returned.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]||{});
+          if(returned.storageSlot<0) throw new Error(`${sender.storages[0]?.name||'Sender inventory'} is full.`);
           sender.inventory=[...characterInventory(sender),returned];
         }
         offer.status=accepted?'accepted':'declined';offer.resolvedAt=new Date().toISOString();offer.resolvedBy=currentUser.uid;
         transaction.set(senderRef,Object.assign({},structuredCloneSafe(sender),{updatedAt:serverTimestamp()}),{merge:true});
         transaction.set(recipientRef,Object.assign({},structuredCloneSafe(recipient),{updatedAt:serverTimestamp()}),{merge:true});
-        if(recipient.ownerUid===currentUser.uid) transaction.set(doc(db,'users',currentUser.uid,'characters',characterId),Object.assign({},structuredCloneSafe(recipient),{updatedAt:serverTimestamp()}),{merge:true});
+        if(recipientRefs.verifiedOwner) transaction.set(recipientRefs.private,Object.assign({},structuredCloneSafe(recipient),{id:ownedCharacterSourceId(characterId,recipient),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         return {revealedItem};
       });

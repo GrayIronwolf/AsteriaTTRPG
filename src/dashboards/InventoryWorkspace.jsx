@@ -258,16 +258,40 @@ function InventoryItemCard({ item, editable, onDragStart, onDragEnd, onDetails }
   </article>;
 }
 
+function storageGrid(items, storage, sort) {
+  const capacity = Math.max(1, Number(storage?.maxSlots || Number(storage?.rows || 4) * Number(storage?.cols || 4)));
+  const slots = Array(capacity).fill(null);
+  const unplaced = [];
+  items.forEach(item => {
+    const slot = Number(item.storageSlot);
+    if (Number.isInteger(slot) && slot >= 0 && slot < capacity && !slots[slot]) slots[slot] = item;
+    else unplaced.push(item);
+  });
+  unplaced.sort((left, right) => sort === 'rarity'
+    ? String(left.rarity).localeCompare(String(right.rarity)) || String(left.name).localeCompare(String(right.name))
+    : sort === 'quantity'
+      ? Number(right.qty || 0) - Number(left.qty || 0)
+      : String(left.name).localeCompare(String(right.name)));
+  let cursor = 0;
+  unplaced.forEach(item => {
+    while (cursor < capacity && slots[cursor]) cursor += 1;
+    if (cursor < capacity) slots[cursor] = item;
+  });
+  return slots;
+}
+
 function StoragePanel({ campaignId, character, storages, activeStorage, setActiveStorage, items, editable, busy, run, onCustom, onDragStart, onDragEnd, onDetails }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name');
   const [newStorage, setNewStorage] = useState('');
-  const visibleItems = useMemo(() => {
-    const filtered = items.filter(item => !item.equipped && item.storageId === activeStorage && (!query.trim() || `${item.name} ${item.type} ${item.rarity}`.toLowerCase().includes(query.trim().toLowerCase())));
-    return [...filtered].sort((left, right) => sort === 'rarity' ? String(left.rarity).localeCompare(String(right.rarity)) || String(left.name).localeCompare(String(right.name)) : sort === 'quantity' ? Number(right.qty || 0) - Number(left.qty || 0) : String(left.name).localeCompare(String(right.name)));
-  }, [activeStorage, items, query, sort]);
+  const [newRows, setNewRows] = useState(4);
+  const [newCols, setNewCols] = useState(4);
+  const storage = storages.find(value => value.id === activeStorage) || storages[0] || { rows:4, cols:4, maxSlots:16 };
+  const storedItems = useMemo(() => items.filter(item => !item.equipped && item.storageId === activeStorage), [activeStorage, items]);
+  const grid = useMemo(() => storageGrid(storedItems, storage, sort), [sort, storage, storedItems]);
+  const matches = item => !query.trim() || `${item.name} ${item.type} ${item.rarity}`.toLowerCase().includes(query.trim().toLowerCase());
   const createStorage = async () => {
-    const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage }), 'Storage created.');
+    const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage, rows:newRows, cols:newCols }), 'Storage created.');
     if (result?.ok) setNewStorage('');
   };
   return <Panel title="Inventory / Storage" action={<StatusPill>{items.filter(item => !item.equipped).length} items</StatusPill>} className="react-inventory-storage">
@@ -284,10 +308,23 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
       <select aria-label="Sort inventory" value={sort} onChange={event => setSort(event.target.value)}><option value="name">Sort: Name</option><option value="rarity">Sort: Rarity</option><option value="quantity">Sort: Quantity</option></select>
       <button type="button" disabled={!editable} onClick={onCustom}>Add Item</button>
     </div>
-    <div className="react-inventory-item-grid">{visibleItems.map(item => <InventoryItemCard key={item.id} item={item} editable={editable} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} />)}
-      {!visibleItems.length ? <EmptyState title={query ? 'No matching items' : 'This storage is empty'}>{query ? 'Try a different search.' : 'Drag an item onto a storage tab to move it here.'}</EmptyState> : null}
+    <div className="react-storage-grid-meta"><span>{storage.rows} rows x {storage.cols} columns</span><span>{storedItems.length} / {storage.maxSlots} slots used</span></div>
+    <div className="react-inventory-grid-scroll"><div className="react-inventory-item-grid" style={{ '--storage-cols':storage.cols }}>
+      {grid.map((item, slot) => <div
+        key={slot}
+        className={`react-storage-cell ${item ? 'filled' : ''} ${item && !matches(item) ? 'filtered-out' : ''}`}
+        data-slot={slot + 1}
+        onDragOver={event => editable && event.preventDefault()}
+        onDrop={event => {
+          if (!editable) return;
+          event.preventDefault();
+          const itemId = event.dataTransfer.getData('application/x-asteria-item');
+          if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type:'move-storage', itemId, storageId:storage.id, storageSlot:slot }), `Moved item to ${storage.name}, slot ${slot + 1}.`);
+        }}
+      >{item ? <InventoryItemCard item={item} editable={editable} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} /> : <small>{slot + 1}</small>}</div>)}
     </div>
-    {storages.length < Number(character.storageLimit || 3) ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="New storage name" /><button disabled={!editable || busy || !newStorage.trim()} onClick={createStorage}>Create Storage</button></div> : null}
+    </div>
+    {storages.length < Number(character.storageLimit || 3) ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="New storage name" /><label>Rows<input type="number" min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><label>Columns<input type="number" min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><button disabled={!editable || busy || !newStorage.trim()} onClick={createStorage}>Create Storage</button></div> : null}
   </Panel>;
 }
 

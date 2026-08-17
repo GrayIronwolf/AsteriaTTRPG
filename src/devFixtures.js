@@ -1,4 +1,4 @@
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
 
@@ -194,7 +194,43 @@ export function installDevFixtures() {
       updateCharacter(characterId,next=>{for(const [resource,amount] of Object.entries(costs||parseResourceCost(spell.cost))){if(Number(next[resource]?.[0]||0)<amount)throw new Error(`Not enough ${resource.toUpperCase()}.`);next[resource]=[next[resource][0]-amount,next[resource][1]];}return next;});return {ok:true};
     },
     updateCharacterInventory: async (_campaignId,characterId,operation) => {
-      updateCharacter(characterId,next=>{const items=next.inventory||[];next.storageLimit=Math.max(3,Number(next.storageLimit||3));next.storages=normalizeCharacterStorages(next);if(operation.type==='create-storage'){if(next.storages.length>=next.storageLimit)throw new Error('Storage limit reached.');next.storages.push({id:eventId('storage'),name:operation.name,order:next.storages.length});return next;}if(operation.type==='reorder-storages'){next.storages.sort((a,b)=>operation.storageIds.indexOf(a.id)-operation.storageIds.indexOf(b.id));return next;}if(operation.type==='add-item'){next.inventory=[...items,{...clone(operation.item),id:eventId('item'),storageId:operation.storageId||next.storages[0].id}];return next;}const index=items.findIndex(item=>String(item.id)===String(operation.itemId));const item=items[index];if(!item)throw new Error('Item not found.');if(operation.type==='equip'){item.equipped=true;item.equippedSlot=operation.slot;}if(operation.type==='unequip'){item.equipped=false;item.equippedSlot='';}if(operation.type==='quick'){next.quickSlots=[...(next.quickSlots||[])];next.quickSlots[operation.index]=clone(item);}if(operation.type==='move-storage')item.storageId=operation.storageId;if(operation.type==='identify'){if(!characterKnowsIdentify(next))throw new Error('Identify spell required.');item.identified=true;item.name=item.trueName||item.name;}if(operation.type==='read-spellbook'){if(item.identified===false)throw new Error('Identify this book first.');next.spells=[...(next.spells||[]),clone(item.spell||{name:item.trueName||item.name})];item.qty-=1;}if(operation.type==='use'){item.qty=Math.max(0,Number(item.qty||1)-1);for(const [resource,amount] of Object.entries(item.effect||{})){if(Array.isArray(next[resource]))next[resource][0]=Math.min(next[resource][1],next[resource][0]+Number(amount||0));}}next.inventory=items.filter(value=>Number(value.qty||1)>0);return next;});return {ok:true};
+      updateCharacter(characterId,next=>{
+        const items=next.inventory||[];
+        next.storageLimit=Math.max(3,Number(next.storageLimit||3));
+        next.storages=normalizeCharacterStorages(next);
+        if(operation.type==='create-storage'){
+          if(next.storages.length>=next.storageLimit)throw new Error('Storage limit reached.');
+          const rows=Math.max(1,Math.min(20,Number(operation.rows||4)));
+          const cols=Math.max(1,Math.min(20,Number(operation.cols||4)));
+          next.storages.push({id:eventId('storage'),name:operation.name,order:next.storages.length,rows,cols,maxSlots:rows*cols});
+          return next;
+        }
+        if(operation.type==='reorder-storages'){next.storages.sort((a,b)=>operation.storageIds.indexOf(a.id)-operation.storageIds.indexOf(b.id));return next;}
+        if(operation.type==='add-item'){
+          const storage=next.storages.find(value=>value.id===(operation.storageId||next.storages[0].id));
+          const storageSlot=firstFreeStorageSlot(items,storage||{});
+          if(storageSlot<0)throw new Error(`${storage?.name||'Storage'} is full.`);
+          next.inventory=[...items,{...clone(operation.item),id:eventId('item'),storageId:storage.id,storageSlot}];return next;
+        }
+        const index=items.findIndex(item=>String(item.id)===String(operation.itemId));
+        const item=items[index];
+        if(!item)throw new Error('Item not found.');
+        if(operation.type==='equip'){item.equipped=true;item.equippedSlot=operation.slot;}
+        if(operation.type==='unequip'){item.equipped=false;item.equippedSlot='';}
+        if(operation.type==='quick'){next.quickSlots=[...(next.quickSlots||[])];next.quickSlots[operation.index]=clone(item);}
+        if(operation.type==='move-storage'){
+          const storage=next.storages.find(value=>value.id===operation.storageId);
+          const requested=Number(operation.storageSlot);
+          const storageSlot=Number.isInteger(requested)?requested:firstFreeStorageSlot(items,storage||{},item.id);
+          if(storageSlot<0)throw new Error(`${storage?.name||'Storage'} is full.`);
+          if(items.some(value=>value.id!==item.id&&!value.equipped&&value.storageId===storage.id&&Number(value.storageSlot)===storageSlot))throw new Error('That grid slot is occupied.');
+          item.storageId=operation.storageId;item.storageSlot=storageSlot;
+        }
+        if(operation.type==='identify'){if(!characterKnowsIdentify(next))throw new Error('Identify spell required.');item.identified=true;item.name=item.trueName||item.name;}
+        if(operation.type==='read-spellbook'){if(item.identified===false)throw new Error('Identify this book first.');next.spells=[...(next.spells||[]),clone(item.spell||{name:item.trueName||item.name})];item.qty-=1;}
+        if(operation.type==='use'){item.qty=Math.max(0,Number(item.qty||1)-1);for(const [resource,amount] of Object.entries(item.effect||{})){if(Array.isArray(next[resource]))next[resource][0]=Math.min(next[resource][1],next[resource][0]+Number(amount||0));}}
+        next.inventory=items.filter(value=>Number(value.qty||1)>0);return next;
+      });return {ok:true};
     },
     updateCharacterQuest: async (_campaignId,characterId,questId,status) => {updateCharacter(characterId,next=>{next.quests=(next.quests||[]).map(quest=>quest.id===questId?{...quest,status}:quest);return next;});return {ok:true};},
     addJournalEntry: async (_campaignId,characterId,entry) => {updateCharacter(characterId,next=>{next.journal=[{id:eventId('journal'),...entry,createdAt:new Date().toISOString()},...(next.journal||[])];return next;});return {ok:true};},
@@ -203,6 +239,7 @@ export function installDevFixtures() {
     updateCharacterDashboardPreferences: async (_campaignId,characterId,preferences)=>{updateCharacter(characterId,next=>{next.dashboardPreferences=normalizeDashboardPreferences({dashboardPreferences:{...(next.dashboardPreferences||{}),...preferences}});return next;});return {ok:true};},
     createPartyOrganization: async (_campaignId,characterId,details)=>{requireFixtureSession();const organization={id:eventId('organization'),name:details.name,type:details.type,ownerCharacterId:characterId,memberCharacterIds:[characterId]};partyWorkspace={...partyWorkspace,organizations:[...(partyWorkspace.organizations||[]),organization]};notify('partyWorkspace');return {ok:true,organization};},
     uploadCharacterGalleryImage: async (_campaignId,characterId,file)=>{requireFixtureSession();const url=URL.createObjectURL(file);const image={id:eventId('gallery'),url,name:file.name};updateCharacter(characterId,next=>{next.gallery=[...(next.gallery||[]),image];if(!next.image)next.image=url;return next;});return {ok:true,image};},
+    syncOwnedCharacterGalleryMedia: async ()=>({ok:true,changed:false}),
     refreshCharacterGalleryImage: async (_campaignId,characterId,imageId)=>{const image=(characters[characterId]?.gallery||[]).find(value=>value.id===imageId);return image?.url?{ok:true,url:image.url}:{ok:false,error:'Gallery image not found.'};},
     setCharacterGalleryPortrait: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{const image=(next.gallery||[]).find(value=>value.id===imageId);if(image){next.image=image.url;next.portrait=image.url;}return next;});return {ok:true};},
     deleteCharacterGalleryImage: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{next.gallery=(next.gallery||[]).filter(value=>value.id!==imageId);return next;});return {ok:true};},
