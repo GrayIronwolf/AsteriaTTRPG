@@ -172,22 +172,36 @@ function MagicElementRewards({ campaignId, characters, events }) {
   </Panel>;
 }
 
-function LootRewards({ campaignId, characters, events }) {
-  const catalog = useMemo(() => window.AsteriaInventory?.catalogEntries?.() || [], []);
+function LootRewards({ campaignId, characters, events, customItems }) {
+  const catalog = useMemo(() => {
+    const source = [...(window.AsteriaInventory?.catalogEntries?.() || []), ...(customItems || [])];
+    const seen = new Set();
+    return source.filter(item => {
+      const key = String(item.slug || item.id || item.title || item.name || '').toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [customItems]);
   const [target, setTarget] = useState('');
   const [search, setSearch] = useState('');
   const [item, setItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [customMode,setCustomMode]=useState(false);
+  const [custom,setCustom]=useState({name:'',type:'Item',itemClass:'Common',description:'',value:0,isSpellbook:false,spellName:'',element:''});
+  const [message,setMessage]=useState('');
   const results = catalog.filter(entry => String(entry.title || entry.name || '').toLowerCase().includes(search.toLowerCase())).slice(0, 8);
   useEffect(() => { if(!target && Object.keys(characters)[0]) setTarget(Object.keys(characters)[0]); }, [characters, target]);
   const send = async () => {
     if(!target || !item) return;
     setBusy(true);
     const snapshot = window.AsteriaInventory?.itemSnapshot?.(item, quantity) || Object.assign({}, item, { qty: quantity });
-    await firebaseService.createLootReward(campaignId, target, snapshot, { message: 'The GM awarded an item.' });
+    const result=await firebaseService.createLootReward(campaignId, target, snapshot, { message: 'The GM awarded an unidentified item.' });
+    setMessage(result?.ok?'Unidentified reward sent.':result?.error||'Reward could not be sent.');
     setBusy(false); setItem(null); setSearch('');
   };
+  const createAndSend=async()=>{if(!target||!custom.name.trim())return;setBusy(true);const source={...custom,spell:custom.isSpellbook?{name:custom.spellName||custom.name,element:custom.element,rank:'Rank I'}:null,basicName:custom.isSpellbook?'Book':custom.type||'Item'};const created=await firebaseService.createCustomItem(campaignId,source);if(created?.ok){const result=await firebaseService.createLootReward(campaignId,target,{...created.item,qty:quantity},{message:custom.isSpellbook?'The GM awarded an unidentified spellbook.':'The GM awarded an unidentified custom item.'});setMessage(result?.ok?'Custom reward added to the shared catalog and sent.':result?.error||'Reward could not be sent.');if(result?.ok){setCustom({...custom,name:'',description:'',spellName:''});setCustomMode(false);}}else setMessage(created?.error||'Custom item could not be created.');setBusy(false);};
   return <Panel title="Party Loot" eyebrow="GM Loot Tool" className="react-loot-panel">
     <div className="react-form-grid">
       <label>Recipient<select value={target} onChange={event => setTarget(event.target.value)}>{Object.values(characters).map(character => <option key={character.id} value={character.id}>{character.name}</option>)}</select></label>
@@ -195,9 +209,18 @@ function LootRewards({ campaignId, characters, events }) {
       <label>Quantity<input type="number" min="1" value={quantity} onChange={event => setQuantity(Math.max(1, Number(event.target.value || 1)))} /></label>
     </div>
     {search ? <div className="react-search-results">{results.map(entry => <button key={entry.slug || entry.id || entry.title} onClick={() => setItem(entry)} className={item === entry ? 'active' : ''}>{entry.title || entry.name}</button>)}</div> : null}
-    <div className="react-action-row"><button className="primary" disabled={busy || !item || !target} onClick={send}>{busy ? 'Sending...' : `Send ${item?.title || item?.name || 'Reward'}`}</button></div>
+    <div className="react-action-row"><button className="primary" disabled={busy || !item || !target} onClick={send}>{busy ? 'Sending...' : `Send ${item?.title || item?.name || 'Reward'}`}</button><button disabled={busy} onClick={()=>setCustomMode(value=>!value)}>{customMode?'Cancel Custom Item':'Create Custom Item / Spellbook'}</button></div>
+    {customMode?<div className="react-custom-loot-form"><div className="react-form-grid"><label>Name<input value={custom.name} onChange={event=>setCustom(value=>({...value,name:event.target.value}))}/></label><label>Type<input value={custom.type} onChange={event=>setCustom(value=>({...value,type:event.target.value}))}/></label><label>Item Class<select value={custom.itemClass} onChange={event=>setCustom(value=>({...value,itemClass:event.target.value}))}>{['Common','Uncommon','Unusual','Rare','Epic','Mythic','Legendary','Relic'].map(value=><option key={value}>{value}</option>)}</select></label><label>Value<input type="number" min="0" value={custom.value} onChange={event=>setCustom(value=>({...value,value:Number(event.target.value||0)}))}/></label></div><label>Description<textarea rows="4" value={custom.description} onChange={event=>setCustom(value=>({...value,description:event.target.value}))}/></label><label className="react-check-row"><input type="checkbox" checked={custom.isSpellbook} onChange={event=>setCustom(value=>({...value,isSpellbook:event.target.checked,type:event.target.checked?'Spellbook':value.type}))}/>Create as elemental spellbook</label>{custom.isSpellbook?<div className="react-form-grid"><label>Spell Name<input value={custom.spellName} onChange={event=>setCustom(value=>({...value,spellName:event.target.value}))}/></label><label>Magic Element<input value={custom.element} onChange={event=>setCustom(value=>({...value,element:event.target.value}))}/></label></div>:null}<button className="primary" disabled={busy||!target||!custom.name.trim()} onClick={createAndSend}>Create in Compendium & Send</button></div>:null}
+    <p>{message}</p>
     <div className="react-delivery-list">{events.filter(event => event.type === 'loot-reward').slice(0, 6).map(event => <div key={event.id}><b>{event.payload?.item?.name || 'Item'}</b><span>{characters[event.targetCharacterId]?.name || 'Character'}</span><StatusPill tone={event.status === 'pending' ? 'pending' : 'success'}>{event.status || 'pending'}</StatusPill></div>)}</div>
   </Panel>;
+}
+
+function PlayerManagementTools({ campaignId, characters }) {
+  const [selected,setSelected]=useState([]);const [title,setTitle]=useState('');const [slots,setSlots]=useState(1);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
+  useEffect(()=>setSelected(current=>current.filter(id=>characters[id])),[characters]);
+  const run=async(operation,success)=>{setBusy(true);const result=await operation();setMessage(result?.ok?success:result?.error||'The GM change could not be saved.');setBusy(false);};
+  return <Panel title="Player Titles & Storage" eyebrow="GM Character Tools"><div className="react-recipient-actions"><button onClick={()=>setSelected(Object.keys(characters))}>Select All</button><button onClick={()=>setSelected([])}>Clear</button><span>{selected.length} selected</span></div><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={selected.includes(character.id)} onChange={event=>setSelected(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div><div className="react-gm-grant-grid"><section><h3>Grant Player Title</h3><label>Title<input value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. Hero of Elarion"/></label><button className="primary" disabled={busy||!selected.length||!title.trim()} onClick={()=>run(()=>firebaseService.grantTitle(campaignId,selected,title),'Title granted to selected characters.')}>Grant Title</button></section><section><h3>Grant Storage Slots</h3><label>Additional Slots<input type="number" min="1" max="10" value={slots} onChange={event=>setSlots(Math.max(1,Number(event.target.value||1)))}/></label><button className="primary" disabled={busy||!selected.length} onClick={()=>run(()=>firebaseService.grantStorageSlots(campaignId,selected,slots),'Storage slots granted.')}>Grant Slots</button></section></div><p>{message}</p></Panel>;
 }
 
 function ExistingSystem({ title, copy, tab }) {
@@ -230,7 +253,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'notes' ? <ExistingSystem title="GM Notes" copy="Private preparation, live notes, and session logs remain in the current GM system." tab="gm-notes" /> : null}
     {tab === 'economy' ? <ExistingSystem title="Economy" copy="Prices, trade routes, shipping, scarcity, merchants, and shops remain operational." tab="economy" /> : null}
     {tab === 'crafting' ? <ExistingSystem title="Crafting" copy="Projects, approvals, materials, recipes, and enchantments remain operational." tab="crafting" /> : null}
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} /></div> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
     {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => { window.location.hash = ''; window.setView?.('campaigns'); }}>Open Campaign Manager</button></Panel> : null}
     {tab === 'world' ? <ExistingSystem title="World Systems" copy="World state, events, factions, settlements, merchants, and timeline tools remain available in the static workspace." tab="world" /> : null}
   </WorkspaceShell>;

@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConnectionBanner, EmptyState, Modal, Panel, ResourceBar, StatusPill, Tabs, WorkspaceShell } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { pendingLootEvent, pendingMagicRewardEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
-import { parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import { characterKnowsIdentify, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
+import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
+import { InventoryWorkspace } from './InventoryWorkspace.jsx';
 import {
   ActivityLog,
   CharacterTab,
-  InventoryTab,
   JournalTab,
   PartyTab,
   QuestTab,
@@ -26,7 +27,9 @@ const CHARACTER_TABS = [
   { id: 'inventory', label: 'Inventory', icon: '\u25a6' },
   { id: 'quest', label: 'Quest', icon: '\u2691' },
   { id: 'journal', label: 'Journal', icon: '\u270e' },
-  { id: 'party', label: 'Party', icon: '\u25c9' }
+  { id: 'party', label: 'Party', icon: '\u25c9' },
+  { id: 'gallery', label: 'Gallery', icon: '\u25a3' },
+  { id: 'settings', label: 'Dashboard Settings', icon: '\u2699' }
 ];
 
 function values(value) { return Array.isArray(value) ? value : []; }
@@ -74,11 +77,16 @@ function SidebarResource({ campaignId, character, label, resource, value, editab
   </div>;
 }
 
-function CharacterSidebar({ campaignId, character, editable }) {
+function CharacterSidebar({ campaignId, character, partyWorkspace, editable }) {
   const xp = window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || { xp: character.xp || 0, xpMax: character.xpMax || 1000 };
   const portrait = character.image || character.portrait || character.characterImage || character.appearance?.image || character.appearance?.portrait;
+  const preferences=normalizeDashboardPreferences(character);
+  const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
+  const visibleTitle=titles.find(title=>title.id===preferences.visibleTitleId)||titles[0];
+  const membership=(partyWorkspace.organizations||[]).find(value=>String(value.type).toLowerCase()==='adventure party'&&(value.memberCharacterIds||[]).includes(character.id));
   return <Panel className="react-character-sidebar">
     <div className="react-character-identity"><div className="react-character-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}<b>Level {Number(character.level || 0)}</b></div><div><h2>{character.name || 'Unnamed Character'}</h2><p>{characterClass(character)}</p><small>{character.race || 'Unselected Race'}</small></div></div>
+    {visibleTitle?<p className="react-character-title">{visibleTitle.text}</p>:null}{preferences.showPartyMembership&&membership?<p className="react-party-membership">A member of {membership.name}</p>:null}
     <div className="react-xp-sidebar"><ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} /><small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP to next level</small></div>
     <div className="react-sidebar-resources">
       <SidebarResource campaignId={campaignId} character={character} label="HP" resource="hp" value={character.hp || [0,0]} editable={editable} />
@@ -106,20 +114,23 @@ function DashboardPanels({ campaignId, character, editable, onNavigate }) {
   const coins = character.coins || character.coinPouch || {};
   const run=async operation=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(result?.ok?'Dashboard updated.':result?.error||'That action could not be completed.');}catch(error){setMessage(error.message||String(error));}finally{setBusy(false);}};
   const cast=spell=>run(()=>firebaseService.castSpell(campaignId,character.id,spell,parseResourceCost(spell.costs||spell.cost)));
-  return <div className="react-character-dashboard-grid">
-    <Panel title="Equipment / Armor" className="react-equipment-panel"><div className="react-equipment-grid" onDoubleClick={()=>onNavigate('inventory')}>{['Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase()])}</b></div>)}</div></Panel>
-    <Panel title="Equipped Weapons"><div className="react-equipment-grid weapons" onDoubleClick={()=>onNavigate('inventory')}>{['Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase().replaceAll(' ', '')])}</b></div>)}</div></Panel>
-    <Panel title="Quick Items"><div className="react-quick-grid">{[0,1,2,3].map(index => <button disabled={!editable||busy||!quickSlots[index]?.id} title="Double-click to use" onDoubleClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:quickSlots[index].id}))} key={index}><b>{index + 1}</b><span>{itemName(quickSlots[index])}</span></button>)}</div></Panel>
-    <Panel title="Class Talents" className="react-wide-panel"><div className="react-card-gallery compact">{talents.slice(0, 8).map((talent, index) => <SmallCard key={talent.id || talent.name || index} title={talent.name || talent.title} image={talent.image} meta={`Tier ${talent.tier || 1} | Rank ${talent.rank || 1}`} cost={talent.cost} onDoubleClick={()=>onNavigate('talents')} />)}{!talents.length ? <EmptyState title="No unlocked talents" /> : null}</div></Panel>
-    <Panel title="Active Spells" className="react-wide-panel"><div className="react-card-gallery compact">{spells.slice(0, 8).map((spell, index) => <SmallCard key={spell.id || spell.name || index} title={spell.name || spell.title} image={spell.image} meta={spell.element || spell.magicType || ''} cost={spell.cost ? String(spell.cost) : ''} disabled={!editable||busy} onDoubleClick={()=>cast(spell)} />)}{!spells.length ? <EmptyState title="No active spells" /> : null}</div></Panel>
-    <Panel title="Skills"><div className="react-card-gallery compact">{skills.slice(0, 8).map((skill, index) => <SmallCard key={skill.id || skill.name || index} title={skill.name || skill.title || skill} meta={skill.rankName || skill.rank || 'Novice'} onDoubleClick={()=>onNavigate('skills')} />)}{!skills.length ? <EmptyState title="No selected skills" /> : null}</div></Panel>
-    <Panel title="Conditions"><div className="react-condition-list">{values(character.conditions).map((condition, index) => <StatusPill key={condition.id || condition.name || index}>{condition.name || condition}</StatusPill>)}{!values(character.conditions).length ? <p>No active conditions.</p> : null}</div></Panel>
-    <Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div><p className="react-action-message">{message}</p></Panel>
-  </div>;
+  const panelNodes={
+    equipment:<Panel title="Equipment / Armor" className="react-equipment-panel"><div className="react-equipment-grid" onDoubleClick={()=>onNavigate('inventory')}>{['Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase()])}</b></div>)}</div></Panel>,
+    weapons:<Panel title="Equipped Weapons"><div className="react-equipment-grid weapons" onDoubleClick={()=>onNavigate('inventory')}>{['Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase().replaceAll(' ', '')])}</b></div>)}</div></Panel>,
+    'quick-items':<Panel title="Quick Items"><div className="react-quick-grid">{[0,1,2,3].map(index => <button disabled={!editable||busy||!quickSlots[index]?.id} title="Double-click to use" onDoubleClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:quickSlots[index].id}))} key={index}><b>{index + 1}</b><span>{itemName(quickSlots[index])}</span></button>)}</div></Panel>,
+    talents:<Panel title="Class Talents" className="react-wide-panel"><div className="react-card-gallery compact">{talents.slice(0, 8).map((talent, index) => <SmallCard key={talent.id || talent.name || index} title={talent.name || talent.title} image={talent.image} meta={`Tier ${talent.tier || 1} | Rank ${talent.rank || 1}`} cost={talent.cost} onDoubleClick={()=>onNavigate('talents')} />)}{!talents.length ? <EmptyState title="No unlocked talents" /> : null}</div></Panel>,
+    spells:<Panel title="Active Spells" className="react-wide-panel"><div className="react-card-gallery compact">{spells.slice(0, 8).map((spell, index) => <SmallCard key={spell.id || spell.name || index} title={spell.name || spell.title} image={spell.image} meta={spell.element || spell.magicType || ''} cost={spell.cost ? String(spell.cost) : ''} disabled={!editable||busy} onDoubleClick={()=>cast(spell)} />)}{!spells.length ? <EmptyState title="No active spells" /> : null}</div></Panel>,
+    skills:<Panel title="Skills"><div className="react-card-gallery compact">{skills.slice(0, 8).map((skill, index) => <SmallCard key={skill.id || skill.name || index} title={skill.name || skill.title || skill} meta={skill.rankName || skill.rank || 'Novice'} onDoubleClick={()=>onNavigate('skills')} />)}{!skills.length ? <EmptyState title="No selected skills" /> : null}</div></Panel>,
+    conditions:<Panel title="Conditions"><div className="react-condition-list">{values(character.conditions).map((condition, index) => <StatusPill key={condition.id || condition.name || index}>{condition.name || condition}</StatusPill>)}{!values(character.conditions).length ? <p>No active conditions.</p> : null}</div></Panel>,
+    coins:<Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div><p className="react-action-message">{message}</p></Panel>
+  };
+  const preferences=normalizeDashboardPreferences(character);
+  return <div className="react-character-dashboard-grid">{preferences.panelOrder.filter(key=>!preferences.hiddenPanels.includes(key)).map(key=>React.cloneElement(panelNodes[key],{key,className:`${panelNodes[key].props.className||''} react-panel-${key}`}))}</div>;
 }
 
 function LootModal({ campaignId, character, event, editable, onResolved }) {
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
   const reward = values(character.pendingItemRewards).find(item => String(item.id) === String(event.id)) || {
     id: event.id,
     campaignId: event.campaignId,
@@ -130,15 +141,22 @@ function LootModal({ campaignId, character, event, editable, onResolved }) {
   };
   const slots = window.AsteriaInventory?.inferSlots?.(reward.item) || [];
   const [slot, setSlot] = useState(slots[0] || '');
+  const storages=normalizeCharacterStorages(character);
+  const [storageId,setStorageId]=useState(storages[0]?.id||'storage-1');
   const resolve = async action => {
     setBusy(true);
-    const result = await firebaseService.resolveLoot(campaignId, character.id, reward, action, slot);
+    const result = await firebaseService.resolveLoot(campaignId, character.id, reward, action, action==='equip'?slot:storageId);
     setBusy(false);
+    setMessage(result?.ok?'Reward resolved.':result?.error||'The reward could not be resolved.');
     if(result?.ok) onResolved?.();
   };
-  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => resolve('declined')}>Decline</button><button className="primary" disabled={!editable || busy} onClick={() => resolve('inventory')}>Add to Inventory</button>{slots.length ? <button className="primary" disabled={!editable || busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
-    <div className="react-loot-hero">{reward.item?.image ? <img src={reward.item.image} alt="" /> : <span>{String(reward.item?.name || '?').charAt(0)}</span>}<div><p>{reward.message || 'The GM awarded an item.'}</p><StatusPill>{reward.item?.itemClass || 'Common'}</StatusPill><p>Quantity {Number(reward.item?.qty || 1)}</p></div></div>
+  const identify=async()=>{setBusy(true);const result=await firebaseService.identifyLootReward(campaignId,character.id,reward.id);setMessage(result?.ok?'Item identified.':result?.error||'The item could not be identified.');setBusy(false);};
+  const unknown=reward.item?.identified===false;
+  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => resolve('declined')}>Decline</button>{unknown?<button disabled={!editable||busy||!characterKnowsIdentify(character)} title={characterKnowsIdentify(character)?'Cast Identify':'Identify spell required'} onClick={identify}>Identify</button>:null}<button className="primary" disabled={!editable || busy} onClick={() => resolve('inventory')}>Add to Storage</button>{slots.length ? <button className="primary" disabled={!editable || busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
+    <div className="react-loot-hero">{reward.item?.image ? <img src={reward.item.image} alt="" /> : <span>{String(reward.item?.name || '?').charAt(0)}</span>}<div><p>{reward.message || 'The GM awarded an item.'}</p><StatusPill>{unknown?'Unknown':reward.item?.itemClass || 'Common'}</StatusPill><p>Quantity {Number(reward.item?.qty || 1)}</p><p>{unknown?'Description: ???':reward.item?.description||reward.item?.summary||'Information coming soon.'}</p></div></div>
+    <label>Inventory Storage<select value={storageId} onChange={event=>setStorageId(event.target.value)}>{storages.map(storage=><option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label>
     {slots.length ? <label>Equipment slot<select value={slot} onChange={event => setSlot(event.target.value)}>{slots.map(value => <option key={value}>{value}</option>)}</select></label> : null}
+    <p>{message}</p>
   </Modal>;
 }
 
@@ -198,7 +216,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
     eyebrow="Character Dashboard"
     title={live.campaign?.name || character.campaign || 'Campaign'}
     subtitle={editable ? `Live session ${live.session.id || ''}. Gameplay changes are enabled.` : 'The dashboard is read-only until the GM starts a live session.'}
-    sidebar={<CharacterSidebar campaignId={campaignId} character={character} editable={editable} />}
+    sidebar={<CharacterSidebar campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} />}
     actions={<ConnectionBanner online={live.online} error={live.error} session={live.session} />}
   >
     <SessionGate session={live.session} />
@@ -208,10 +226,12 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {tab === 'inventory' ? <InventoryTab campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} /> : null}
+    {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} /> : null}
     {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}
     {tab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} editable={editable} /> : null}
+    {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : null}
     {editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}

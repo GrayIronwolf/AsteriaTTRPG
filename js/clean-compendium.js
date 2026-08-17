@@ -551,6 +551,42 @@
     });
   }
 
+  function customItemToEntry(item) {
+    const title = item.title || item.name || 'Custom Item';
+    const itemClass = item.itemClass || item.rarity || 'Common';
+    const category = item.category || item.type || 'Custom Items';
+    const description = item.summary || item.description || item.desc || 'Custom campaign item.';
+    return {
+      id:`custom-item:${item.id || slugify(title)}`,
+      section:'Items',
+      title,
+      slug:item.slug || slugify(title),
+      type:item.type || 'Item',
+      category,
+      categoryPath:['Items', category],
+      rarity:itemClass,
+      rarityRank:Math.max(0, itemClasses.findIndex(value => lower(value) === lower(itemClass))),
+      description,
+      imagePath:item.image || item.imagePath || '',
+      tags:arrayValue(item.tags),
+      searchTerms:arrayValue(item.tags).concat([category, itemClass, item.spell?.name || '', item.spell?.element || '']).join(' '),
+      content:`# ${title}\n\n${description}`,
+      metadata:{
+        ...(item.metadata || {}),
+        type:'item',
+        itemClass,
+        category,
+        custom:true,
+        spell:item.spell || null
+      }
+    };
+  }
+
+  function mergeCustomItems(items = window.ASTERIA_CUSTOM_ITEMS || []) {
+    const staticEntries = entries.filter(entry => !String(entry.id || '').startsWith('custom-item:'));
+    entries = mergeEntries(staticEntries, arrayValue(items).map(customItemToEntry));
+  }
+
   async function load() {
     entries = loadFromManifest();
     let loadedCleanIndex = false;
@@ -569,6 +605,7 @@
     if (!loadedCleanIndex) {
       entries = mergeEntries(entries, loadFromWikiIndexes()).filter(entry => !isDeprecatedLooseResourceEntry(entry));
     }
+    mergeCustomItems();
   }
 
   function hideOldViews() {
@@ -2752,6 +2789,13 @@
   async function init() {
     await load();
     publishApis();
+    window.addEventListener('asteria:custom-items-updated', event => {
+      mergeCustomItems(event.detail?.items || []);
+      if (currentSection === 'Items' && workspaceView()?.querySelector('#clean-grid')) {
+        renderFilters();
+        render();
+      }
+    });
     bindPublicButtons();
     openRouteFromLocation();
     if (window.__asteriaOpenDashboardOnReady || (accountSignedIn() && byId('home')?.classList.contains('show'))) {

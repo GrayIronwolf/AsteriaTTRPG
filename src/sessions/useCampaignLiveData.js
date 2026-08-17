@@ -13,6 +13,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [partyWorkspace, setPartyWorkspace] = useState({ sharedNotes:'', questLog:[] });
   const [partyChat, setPartyChat] = useState([]);
   const [itemEcosystem, setItemEcosystem] = useState({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
+  const [customItems, setCustomItems] = useState([]);
   const [clock, setClock] = useState(Date.now());
   const [online, setOnline] = useState(navigator.onLine);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,12 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, value => setPartyWorkspace(value || { sharedNotes:'', questLog:[] })));
       unsubscribers.push(firebaseService.subscribePartyChat(campaignId, value => setPartyChat(value || [])));
       unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, value => setItemEcosystem(value || { shops:[], directTrades:[] })));
+      unsubscribers.push(firebaseService.subscribeCustomItems(value => {
+        const nextItems = value || [];
+        setCustomItems(nextItems);
+        window.ASTERIA_CUSTOM_ITEMS = nextItems;
+        window.dispatchEvent(new CustomEvent('asteria:custom-items-updated', { detail:{ items:nextItems } }));
+      }));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(previous => mergeEvents(previous, value || [])), {
         mode,
         targetOwnerUid: mode === 'character' ? uid : '',
@@ -96,5 +103,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, liveSession?.id, liveSession?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, online, loading, error, setEvents, setEncounter };
+  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, loading, error, setEvents, setEncounter };
 }

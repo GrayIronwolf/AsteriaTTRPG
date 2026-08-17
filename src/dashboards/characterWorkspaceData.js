@@ -1,4 +1,4 @@
-import { SKILL_RANKS, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
+import { SKILL_RANKS, normalizeLiveItem, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
 
 export function list(value) {
   if(Array.isArray(value)) return value;
@@ -96,13 +96,17 @@ export function knownSpells(character = {}) {
 }
 
 export function inventoryItems(character = {}) {
-  return list(character.inventory).map((item,index)=>({
-    id:String(item.id || item.instanceId || item.catalogId || slug(item.name||item.title) || `item-${index}`),
-    name:item.name || item.title || `Item ${index+1}`, qty:Number(item.qty ?? item.quantity ?? 1), image:item.image || '',
-    type:item.type || item.itemType || item.category || 'Item', rarity:item.rarity || item.itemClass || 'Common', value:Number(item.value || item.priceCopper || 0),
-    equipped:Boolean(item.equipped), equippedSlot:item.equippedSlot || item.slot || '', allowedSlots:item.allowedSlots || window.AsteriaInventory?.inferSlots?.(item) || [],
-    effect:item.effect || item.effects || null, locked:Boolean(item.locked), bound:Boolean(item.bound), questItem:Boolean(item.questItem), raw:item
-  }));
+  return list(character.inventory).map((source,index)=>{
+    const item=normalizeLiveItem(source,index,character);
+    return {
+      id:item.id,
+      name:item.name || `Item ${index+1}`, trueName:item.trueName, basicName:item.basicName, identified:item.identified, storageId:item.storageId,
+      isSpellbook:item.isSpellbook, spell:item.spell, qty:Number(item.qty ?? item.quantity ?? 1), image:item.image || '',
+      type:item.type || item.itemType || item.category || 'Item', rarity:item.rarity || item.itemClass || 'Common', value:Number(item.value || item.priceCopper || 0),
+      equipped:Boolean(item.equipped), equippedSlot:item.equippedSlot || item.slot || '', allowedSlots:item.allowedSlots || window.AsteriaInventory?.inferSlots?.(item) || [],
+      effect:item.effect || item.effects || null, locked:Boolean(item.locked), bound:Boolean(item.bound), questItem:Boolean(item.questItem), raw:item
+    };
+  });
 }
 
 export function raceTraits(character = {}) {

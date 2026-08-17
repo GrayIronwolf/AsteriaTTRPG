@@ -8,7 +8,8 @@ Asteria uses one Firebase Authentication account per user. GM and Player are cam
 2. Under Authentication, enable Email/Password sign-in.
 3. Under Authentication > Settings > Authorized domains, add the deployed website domain and local test domains you use.
 4. Create a Cloud Firestore database if the project does not already have one.
-5. Publish the included `firestore.rules` before testing cross-account UCN joins, XP awards, or item rewards.
+5. Create or enable Firebase Storage for the project.
+6. Publish the included `firestore.rules` and `storage.rules` before testing cross-account UCN joins, rewards, character galleries, or item transfers.
 
 The Test Login is browser-only. It cannot create or join campaigns across separate accounts or devices. Use two real Firebase accounts for UCN testing.
 
@@ -27,7 +28,7 @@ From the website folder:
 ```powershell
 firebase login
 firebase use asteria-ttrpg
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules,storage
 ```
 
 The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` already point the CLI at the Asteria project. No custom Firestore index is needed because UCNs are direct document IDs.
@@ -49,6 +50,8 @@ The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` alread
 - `users/{uid}/characters/{characterId}` stores an owned character.
 - `users/{uid}/settings/appState` stores account workspace state.
 - `usernames/{usernameLower}` supports username login lookup.
+- `customItems/{itemId}` stores session-created item definitions shared by the live item catalog and Item Compendium.
+- Firebase Storage path `users/{uid}/characters/{characterId}/gallery/` stores character gallery images. Owners may upload images up to 8 MB; signed-in users can read them for linked dashboards.
 
 When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
 

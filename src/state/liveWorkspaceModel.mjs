@@ -15,6 +15,16 @@ export const CHARACTERISTICS = [
 export const SKILL_RANKS = ['Novice','Initiate','Apprentice','Journeyman','Adept','Master','Grandmaster'];
 export const TALENT_TIER_LEVELS = { 1:1, 2:10, 3:20, 4:30, 5:40 };
 
+export const DEFAULT_DASHBOARD_PANELS = [
+  'equipment', 'weapons', 'quick-items', 'talents', 'spells', 'skills', 'conditions', 'coins'
+];
+
+export const DEFAULT_CHARACTER_STORAGES = [
+  { id:'storage-1', name:'Adventuring Pack', order:0 },
+  { id:'storage-2', name:'Item Pouch', order:1 },
+  { id:'storage-3', name:'Personal Storage', order:2 }
+];
+
 export function timestampMs(value) {
   if(!value) return 0;
   if(typeof value.toMillis === 'function') return value.toMillis();
@@ -126,6 +136,73 @@ export function parseResourceCost(value, fallbackResource = 'mp') {
 
 export function structuredCloneSafe(value) {
   return JSON.parse(JSON.stringify(value || {}));
+}
+
+export function normalizeDashboardPreferences(character = {}) {
+  const source = character.dashboardPreferences || {};
+  const requested = Array.isArray(source.panelOrder) ? source.panelOrder : [];
+  const panelOrder = [...new Set([...requested, ...DEFAULT_DASHBOARD_PANELS])]
+    .filter(key => DEFAULT_DASHBOARD_PANELS.includes(key));
+  return {
+    panelOrder,
+    hiddenPanels:Array.isArray(source.hiddenPanels) ? source.hiddenPanels.filter(key => DEFAULT_DASHBOARD_PANELS.includes(key)) : [],
+    visibleTitleId:String(source.visibleTitleId || ''),
+    showPartyMembership:source.showPartyMembership !== false
+  };
+}
+
+export function normalizeCharacterStorages(character = {}) {
+  const limit = Math.max(3, Math.floor(Number(character.storageLimit || 3)));
+  const source = Array.isArray(character.storages) ? character.storages : [];
+  const records = [...source];
+  DEFAULT_CHARACTER_STORAGES.forEach(storage => {
+    if(records.length < limit && !records.some(value => value.id === storage.id)) records.push({ ...storage });
+  });
+  return records
+    .slice(0, limit)
+    .map((storage,index) => ({ id:String(storage.id || `storage-${index+1}`), name:String(storage.name || `Storage ${index+1}`), order:Number(storage.order ?? index) }))
+    .sort((left,right) => left.order - right.order)
+    .map((storage,index) => ({ ...storage, order:index }));
+}
+
+export function characterKnowsIdentify(character = {}) {
+  const spells = [character.spells, character.activeSpells, character.knownSpells]
+    .flatMap(value => Array.isArray(value) ? value : [])
+    .map(value => slug(value?.name || value?.title || value));
+  return spells.includes('identify');
+}
+
+export function unidentifiedItemName(item = {}) {
+  if(item.identified !== false) return String(item.name || item.title || 'Item');
+  if(item.basicName) return String(item.basicName);
+  const text = `${item.type || ''} ${item.category || ''} ${item.name || item.title || ''}`.toLowerCase();
+  if(/spellbook|book|tome|grimoire/.test(text)) return 'Book';
+  if(/shield/.test(text)) return 'Shield';
+  const weaponType = [
+    ['sword','Sword'], ['axe','Axe'], ['dagger','Dagger'], ['mace','Mace'],
+    ['spear','Spear'], ['staff','Staff'], ['crossbow','Crossbow'], ['bow','Bow']
+  ].find(([pattern]) => text.includes(pattern));
+  if(weaponType) return weaponType[1];
+  if(/weapon/.test(text)) return 'Weapon';
+  if(/armour|armor|helmet|helm|breastplate|robe|boots|gloves/.test(text)) return 'Equipment';
+  if(/potion|elixir|poison|vial/.test(text)) return 'Vial';
+  return 'Item';
+}
+
+export function normalizeLiveItem(item = {}, index = 0, character = {}) {
+  const storages = normalizeCharacterStorages(character);
+  const identified = item.identified !== false;
+  return {
+    ...structuredCloneSafe(item),
+    id:String(item.id || item.instanceId || item.catalogId || slug(item.name || item.title) || `item-${index}`),
+    name:unidentifiedItemName(item),
+    trueName:String(item.trueName || item.name || item.title || 'Unknown Item'),
+    basicName:String(item.basicName || unidentifiedItemName({ ...item, identified:false })),
+    identified,
+    storageId:String(item.storageId || storages[0]?.id || 'storage-1'),
+    isSpellbook:Boolean(item.isSpellbook || /spellbook|grimoire|tome/i.test(`${item.type || ''} ${item.category || ''}`)),
+    spell:item.spell || item.spellData || null
+  };
 }
 
 export function slug(value) {

@@ -99,11 +99,32 @@
 
   function catalogEntries(){
     const source = window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries || window.ASTERIA_CONTENT_MANIFEST?.entries || [];
-    return array(source).filter(entry => {
+    const custom = array(window.ASTERIA_CUSTOM_ITEMS).map(item => ({
+      ...item,
+      title:item.title || item.name,
+      type:'item',
+      domain:'items',
+      category:item.category || item.type || 'Custom Items',
+      summary:item.summary || item.description || item.desc || 'Custom campaign item.',
+      metadata:{
+        ...(item.metadata || {}),
+        type:'item',
+        category:item.category || item.type || 'Custom Items',
+        itemClass:item.itemClass || item.rarity || 'Common',
+        image:item.image || ''
+      }
+    }));
+    const seen = new Set();
+    return [...array(source), ...custom].filter(entry => {
       const type = String(entry.type || entry.domain || entry.metadata?.type || '').toLowerCase();
       const path = String(entry.path || entry.sourcePath || '').toLowerCase();
       return type === 'item' || type === 'items' || path.includes('/items/');
-    }).filter(entry => !/index$/i.test(String(entry.title || '')));
+    }).filter(entry => !/index$/i.test(String(entry.title || ''))).filter(entry => {
+      const key = slug(entry.slug || entry.title || entry.name);
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
   function entryBySlug(value){
     const key = slug(value);

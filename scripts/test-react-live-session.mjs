@@ -13,10 +13,15 @@ import {
   xpNoticeEvent
 } from '../src/state/liveEventReducer.mjs';
 import {
+  DEFAULT_CHARACTER_STORAGES,
   SESSION_LIMIT_MS,
   applyCharacteristicPoints,
+  characterKnowsIdentify,
   effectiveSession,
   nextSkillProgress,
+  normalizeCharacterStorages,
+  normalizeDashboardPreferences,
+  normalizeLiveItem,
   talentRankCost
 } from '../src/state/liveWorkspaceModel.mjs';
 
@@ -164,6 +169,39 @@ test('19. Firebase gates live mutations and exposes the party workspace', () => 
   ['spendCharacteristicPoints','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCharacterInventory','buyLiveShopItem','sellLiveShopItem','createLiveTrade','respondLiveTrade','updateCharacterQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(firebase, new RegExp(name)));
   assert.match(firebase, /requireLiveSession/);
   assert.match(read('firestore.rules'), /match \/partyChat\/\{messageId\}/);
+});
+
+test('20. Unidentified items hide their true name until Identify is available', () => {
+  const item = normalizeLiveItem({ id:'relic-1', name:'Moonfall Blade', type:'Sword', identified:false });
+  assert.equal(item.name, 'Sword');
+  assert.equal(item.trueName, 'Moonfall Blade');
+  assert.equal(characterKnowsIdentify({ spells:[{ name:'Identify' }] }), true);
+  assert.equal(characterKnowsIdentify({ spells:[{ name:'Fire Bolt' }] }), false);
+});
+
+test('21. Characters receive three ordered default inventory storages', () => {
+  const storages = normalizeCharacterStorages({});
+  assert.equal(storages.length, 3);
+  assert.deepEqual(storages.map(value => value.id), DEFAULT_CHARACTER_STORAGES.map(value => value.id));
+});
+
+test('22. Dashboard preferences preserve valid ordering and visibility choices', () => {
+  const preferences = normalizeDashboardPreferences({ dashboardPreferences:{ panelOrder:['spells','equipment'], hiddenPanels:['coins','invalid'], visibleTitleId:'title-1', showPartyMembership:false } });
+  assert.equal(preferences.panelOrder[0], 'spells');
+  assert.deepEqual(preferences.hiddenPanels, ['coins']);
+  assert.equal(preferences.visibleTitleId, 'title-1');
+  assert.equal(preferences.showPartyMembership, false);
+});
+
+test('23. Gallery, organizations, titles, custom items, and player item offers use the shared Firebase service', () => {
+  const firebase = read('js/firebase-auth.js');
+  const service = read('src/firebase/asteriaFirebaseService.js');
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
+  ['uploadCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemOffer','respondLiveItemOffer'].forEach(name => assert.match(firebase, new RegExp(name)));
+  ['uploadGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemOffer','respondItemOffer'].forEach(name => assert.match(service, new RegExp(name)));
+  ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','Player Requests'].forEach(name => assert.match(dashboard, new RegExp(name)));
+  assert.match(read('storage.rules'), /gallery\/\{fileName\}/);
+  assert.match(read('firestore.rules'), /match \/customItems\/\{itemId\}/);
 });
 
 let failed = 0;

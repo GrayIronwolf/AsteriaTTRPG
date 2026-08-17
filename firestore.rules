@@ -45,6 +45,17 @@ service cloud.firestore {
       return isCampaignMember(sharedCampaign(campaignId));
     }
 
+    function canTransferLiveItems(campaignId) {
+      return canUseCampaignSystems(campaignId) &&
+        exists(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current) &&
+        get(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current).data.status == 'active' &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'inventory', 'equipment', 'quickSlots', 'coins', 'coinPouch',
+          'storages', 'storageLimit', 'actionLog', 'updatedAt'
+        ]);
+    }
+
     function isCampaignGM(campaignId) {
       let campaign = sharedCampaign(campaignId);
       return signedIn() && (
@@ -130,7 +141,7 @@ service cloud.firestore {
       match /characters/{characterId} {
         allow read: if canReadCampaignCharacter(campaignId);
         allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid);
-        allow update: if request.resource.data.ownerUid == resource.data.ownerUid && canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
+        allow update: if (request.resource.data.ownerUid == resource.data.ownerUid && canWriteCampaignCharacter(campaignId, resource.data.ownerUid)) || canTransferLiveItems(campaignId);
         allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid);
       }
 
@@ -187,6 +198,13 @@ service cloud.firestore {
         allow delete: if isCampaignGM(campaignId) ||
           (signedIn() && resource.data.ownerUid == request.auth.uid);
       }
+    }
+
+    match /customItems/{itemId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if signedIn() && resource.data.createdBy == request.auth.uid && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
     }
   }
 }
