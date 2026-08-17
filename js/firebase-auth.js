@@ -7,7 +7,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -1190,7 +1190,14 @@ const firebasePublicApi = {
           if(!name) throw new Error('Enter a storage name.');
           const rows=Math.max(1,Math.min(20,Math.floor(Number(operation.rows||4))));
           const cols=Math.max(1,Math.min(20,Math.floor(Number(operation.cols||4))));
-          character.storages.push({id:`storage-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,order:character.storages.length,rows,cols,maxSlots:rows*cols});
+          const storage={id:`storage-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,order:character.storages.length,rows,cols,maxSlots:rows*cols};
+          character.storages.push(storage);
+          const knownStorageIds=new Set(character.storages.map(value=>String(value.id)));
+          let nextSlot=0;
+          inventory.filter(item=>!item.equipped&&!knownStorageIds.has(String(item.storageId||''))).forEach(item=>{
+            if(nextSlot>=storage.maxSlots) return;
+            item.storageId=storage.id;item.storageSlot=nextSlot;item.location='inventory';nextSlot+=1;
+          });
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
@@ -1207,7 +1214,15 @@ const firebasePublicApi = {
           if(!source.name&&!source.title) throw new Error('Item data is incomplete.');
           const storageId=String(operation.storageId||character.storages[0]?.id||'storage-1');
           const storage=character.storages.find(value=>value.id===storageId);
-          if(!storage) throw new Error('Storage not found.');
+          if(!storage) throw new Error('Create a bag or storage container before adding items.');
+          const stacked=stackableStorageItem(inventory,source,storageId);
+          if(stacked){
+            stacked.qty=Math.max(1,Number(stacked.qty||1))+Math.max(1,Number(source.qty||1));
+            character.inventory=inventory;
+            appendActivity(character,{type:'item-stacked',message:`Stacked ${source.name||source.title} in ${storage.name}.`});
+            writeLiveCharacter(transaction,refs,character);
+            return;
+          }
           const storageSlot=firstFreeStorageSlot(inventory,storage);
           if(storageSlot<0) throw new Error(`${storage.name} is full.`);
           const added=normalizeLiveItem(Object.assign({},source,{id:`${liveSlug(source.name||source.title)||'item'}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,qty:Math.max(1,Number(source.qty||1)),storageId,storageSlot,location:'inventory',equipped:false}),inventory.length,character);
@@ -1462,10 +1477,11 @@ const firebasePublicApi = {
           appendActivity(sender,{type:'item-identified',message:`${recipient.name||'A party member'} identified ${original.name}.`});
         }else if(accepted){
           const received=Object.assign({},structuredCloneSafe(offer.item),{id:`${liveSlug(offer.item?.trueName||offer.item?.name||'item')}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,location:'inventory',equipped:false,equippedSlot:''});
-          recipient.storageLimit=Math.max(3,Number(recipient.storageLimit||3));recipient.storages=normalizeCharacterStorages(recipient);received.storageId=String(details.storageId||recipient.storages[0]?.id||'storage-1');
+          recipient.storageLimit=Math.max(3,Number(recipient.storageLimit||3));recipient.storages=normalizeCharacterStorages(recipient);received.storageId=String(details.storageId||recipient.storages[0]?.id||'');
           const recipientStorage=recipient.storages.find(value=>value.id===received.storageId)||recipient.storages[0];
-          received.storageId=recipientStorage?.id||'storage-1';received.storageSlot=firstFreeStorageSlot(characterInventory(recipient),recipientStorage||{});
-          if(received.storageSlot<0) throw new Error(`${recipientStorage?.name||'Inventory'} is full.`);
+          if(!recipientStorage) throw new Error('Create a bag or storage container before accepting items.');
+          received.storageId=recipientStorage.id;received.storageSlot=firstFreeStorageSlot(characterInventory(recipient),recipientStorage);
+          if(received.storageSlot<0) throw new Error(`${recipientStorage.name} is full.`);
           if(offer.mode==='sell'){
             const price=Math.max(0,Number(offer.priceCopper||0));
             if(currencyTotal(recipient)<price) throw new Error('Not enough currency for this purchase.');
@@ -1478,16 +1494,19 @@ const firebasePublicApi = {
             exchange.qty=Math.max(0,Number(exchange.qty||1)-1);
             recipient.inventory=recipientInventory.filter(value=>Number(value.qty??1)>0);
             const sentBack=Object.assign({},structuredCloneSafe(exchange),{id:`${liveSlug(exchange.trueName||exchange.name||'item')}-${Date.now()+1}`,qty:1,location:'inventory',equipped:false,equippedSlot:''});
-            sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);sentBack.storageId=sender.storages[0]?.id||'storage-1';sentBack.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]||{});
-            if(sentBack.storageSlot<0) throw new Error(`${sender.storages[0]?.name||'Sender inventory'} is full.`);
+            sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);
+            if(!sender.storages[0]) throw new Error('The sending character needs a storage container for the exchanged item.');
+            sentBack.storageId=sender.storages[0].id;sentBack.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]);
+            if(sentBack.storageSlot<0) throw new Error(`${sender.storages[0].name} is full.`);
             sender.inventory=[...characterInventory(sender),sentBack];
           }
           recipient.inventory=[...characterInventory(recipient),received];
           appendActivity(recipient,{type:`item-${offer.mode}-accepted`,message:`Accepted ${received.name} from ${sender.name||'a party member'}.`});
         }else if(offer.mode!=='identify'){
           const returned=Object.assign({},structuredCloneSafe(offer.item),{location:'inventory',equipped:false,equippedSlot:''});
-          sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);returned.storageId=sender.storages[0]?.id||'storage-1';returned.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]||{});
-          if(returned.storageSlot<0) throw new Error(`${sender.storages[0]?.name||'Sender inventory'} is full.`);
+          sender.storageLimit=Math.max(3,Number(sender.storageLimit||3));sender.storages=normalizeCharacterStorages(sender);
+          returned.storageId=sender.storages[0]?.id||'';returned.storageSlot=firstFreeStorageSlot(characterInventory(sender),sender.storages[0]||{});
+          if(sender.storages[0]&&returned.storageSlot<0) throw new Error(`${sender.storages[0].name} is full.`);
           sender.inventory=[...characterInventory(sender),returned];
         }
         offer.status=accepted?'accepted':'declined';offer.resolvedAt=new Date().toISOString();offer.resolvedBy=currentUser.uid;
@@ -1801,7 +1820,13 @@ const firebasePublicApi = {
           item.equipped=action==='equip';
           character.storageLimit=Math.max(3,Number(character.storageLimit||3));
           character.storages=normalizeCharacterStorages(character);
-          item.storageId=action==='equip' ? String(item.storageId||character.storages[0]?.id||'storage-1') : String(destination||item.storageId||character.storages[0]?.id||'storage-1');
+          item.storageId=action==='equip' ? String(item.storageId||character.storages[0]?.id||'') : String(destination||item.storageId||character.storages[0]?.id||'');
+          if(action!=='equip'){
+            const storage=character.storages.find(value=>value.id===item.storageId);
+            if(!storage) throw new Error('Create a bag or storage container before accepting this reward.');
+            item.storageSlot=firstFreeStorageSlot(characterInventory(character),storage);
+            if(item.storageSlot<0) throw new Error(`${storage.name} is full.`);
+          }
           if(action==='equip'){
             item.equippedSlot=destination||item.slot||item.allowedSlots?.[0]||'';
             item.slot=item.equippedSlot;

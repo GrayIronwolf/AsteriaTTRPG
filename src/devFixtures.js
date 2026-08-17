@@ -1,4 +1,4 @@
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
 
@@ -40,6 +40,7 @@ export function installDevFixtures() {
       ],
       skills: [{ name: 'Engineering', rankName: 'Adept' }, { name: 'Alchemy', rankName: 'Journeyman' }, { name: 'Perception', rankName: 'Apprentice' }],
       racialTraits: [{ name:'Mana Sensitive', description:'Cavern Sprites can sense nearby magical currents.', effects:['Detect nearby active magic.'] }],
+      storageLimit:3, storages:[{ id:'kael-personal-chest', name:'Personal Chest', order:0, rows:4, cols:4, maxSlots:16 }],
       conditions: [], inventory: [
         { id:'field-notebook', name:'Field Notebook', qty:1, type:'Tool', rarity:'Common' },
         { id:'health-potion', name:'Health Potion', qty:3, type:'Consumable', rarity:'Common', effect:{ hp:10 } },
@@ -61,6 +62,7 @@ export function installDevFixtures() {
       hp: [62, 70], sp: [54, 65], mp: [92, 110], xp: 7200, xpMax: 10000,
       characteristics: { str: 8, dex: 17, agi: 19, con: 13, end: 12, int: 16, wis: 18, cha: 15, lck: 14 },
       quickSlots: [{ name: 'Healing Salve' }], unlockedTalents: [], spells: [],
+      storageLimit:3, storages:[{ id:'lyra-field-pack', name:'Field Pack', order:0, rows:4, cols:4, maxSlots:16 }],
       skills: [{ name: 'Nature', rankName: 'Adept' }], conditions: [{ name: 'Blessed' }],
       coins: { Copper: 12, Silver: 31, Gold: 4 }
     }
@@ -202,12 +204,19 @@ export function installDevFixtures() {
           if(next.storages.length>=next.storageLimit)throw new Error('Storage limit reached.');
           const rows=Math.max(1,Math.min(20,Number(operation.rows||4)));
           const cols=Math.max(1,Math.min(20,Number(operation.cols||4)));
-          next.storages.push({id:eventId('storage'),name:operation.name,order:next.storages.length,rows,cols,maxSlots:rows*cols});
+          const storage={id:eventId('storage'),name:operation.name,order:next.storages.length,rows,cols,maxSlots:rows*cols};
+          next.storages.push(storage);
+          const knownStorageIds=new Set(next.storages.map(value=>value.id));
+          let nextSlot=0;
+          items.filter(item=>!item.equipped&&!knownStorageIds.has(item.storageId)).forEach(item=>{if(nextSlot<storage.maxSlots){item.storageId=storage.id;item.storageSlot=nextSlot;nextSlot+=1;}});
           return next;
         }
         if(operation.type==='reorder-storages'){next.storages.sort((a,b)=>operation.storageIds.indexOf(a.id)-operation.storageIds.indexOf(b.id));return next;}
         if(operation.type==='add-item'){
-          const storage=next.storages.find(value=>value.id===(operation.storageId||next.storages[0].id));
+          const storage=next.storages.find(value=>value.id===(operation.storageId||next.storages[0]?.id));
+          if(!storage)throw new Error('Create a bag or storage container before adding items.');
+          const stacked=stackableStorageItem(items,operation.item,storage.id);
+          if(stacked){stacked.qty=Math.max(1,Number(stacked.qty||1))+Math.max(1,Number(operation.item.qty||1));return next;}
           const storageSlot=firstFreeStorageSlot(items,storage||{});
           if(storageSlot<0)throw new Error(`${storage?.name||'Storage'} is full.`);
           next.inventory=[...items,{...clone(operation.item),id:eventId('item'),storageId:storage.id,storageSlot}];return next;

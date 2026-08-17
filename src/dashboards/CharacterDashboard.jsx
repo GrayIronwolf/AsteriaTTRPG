@@ -139,7 +139,7 @@ function LootModal({ campaignId, character, event, editable, onResolved }) {
   const slots = window.AsteriaInventory?.inferSlots?.(reward.item) || [];
   const [slot, setSlot] = useState(slots[0] || '');
   const storages=normalizeCharacterStorages(character);
-  const [storageId,setStorageId]=useState(storages[0]?.id||'storage-1');
+  const [storageId,setStorageId]=useState(storages[0]?.id||'');
   const resolve = async action => {
     setBusy(true);
     const result = await firebaseService.resolveLoot(campaignId, character.id, reward, action, action==='equip'?slot:storageId);
@@ -149,9 +149,9 @@ function LootModal({ campaignId, character, event, editable, onResolved }) {
   };
   const identify=async()=>{setBusy(true);const result=await firebaseService.identifyLootReward(campaignId,character.id,reward.id);setMessage(result?.ok?'Item identified.':result?.error||'The item could not be identified.');setBusy(false);};
   const unknown=reward.item?.identified===false;
-  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => resolve('declined')}>Decline</button>{unknown?<button disabled={!editable||busy||!characterKnowsIdentify(character)} title={characterKnowsIdentify(character)?'Cast Identify':'Identify spell required'} onClick={identify}>Identify</button>:null}<button className="primary" disabled={!editable || busy} onClick={() => resolve('inventory')}>Add to Storage</button>{slots.length ? <button className="primary" disabled={!editable || busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
+  return <Modal title={reward.item?.name || 'Loot Reward'} eyebrow={reward.campaignName || 'Campaign Reward'} busy={busy} onClose={() => {}} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => resolve('declined')}>Decline</button>{unknown?<button disabled={!editable||busy||!characterKnowsIdentify(character)} title={characterKnowsIdentify(character)?'Cast Identify':'Identify spell required'} onClick={identify}>Identify</button>:null}<button className="primary" disabled={!editable || busy || !storages.length} title={storages.length?'Add this reward to storage':'Create a storage container first'} onClick={() => resolve('inventory')}>Add to Storage</button>{slots.length ? <button className="primary" disabled={!editable || busy} onClick={() => resolve('equip')}>Equip</button> : null}</div>}>
     <div className="react-loot-hero">{reward.item?.image ? <img src={reward.item.image} alt="" /> : <span>{String(reward.item?.name || '?').charAt(0)}</span>}<div><p>{reward.message || 'The GM awarded an item.'}</p><StatusPill>{unknown?'Unknown':reward.item?.itemClass || 'Common'}</StatusPill><p>Quantity {Number(reward.item?.qty || 1)}</p><p>{unknown?'Description: ???':reward.item?.description||reward.item?.summary||'Information coming soon.'}</p></div></div>
-    <label>Inventory Storage<select value={storageId} onChange={event=>setStorageId(event.target.value)}>{storages.map(storage=><option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label>
+    <label>Inventory Storage<select disabled={!storages.length} value={storageId} onChange={event=>setStorageId(event.target.value)}>{!storages.length?<option value="">Create a storage container first</option>:null}{storages.map(storage=><option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label>
     {slots.length ? <label>Equipment slot<select value={slot} onChange={event => setSlot(event.target.value)}>{slots.map(value => <option key={value}>{value}</option>)}</select></label> : null}
     <p>{message}</p>
   </Modal>;

@@ -13,7 +13,6 @@ import {
   xpNoticeEvent
 } from '../src/state/liveEventReducer.mjs';
 import {
-  DEFAULT_CHARACTER_STORAGES,
   SESSION_LIMIT_MS,
   applyCharacteristicPoints,
   characterKnowsIdentify,
@@ -23,6 +22,7 @@ import {
   normalizeCharacterStorages,
   normalizeDashboardPreferences,
   normalizeLiveItem,
+  stackableStorageItem,
   talentRankCost
 } from '../src/state/liveWorkspaceModel.mjs';
 
@@ -180,10 +180,10 @@ test('20. Unidentified items hide their true name until Identify is available', 
   assert.equal(characterKnowsIdentify({ spells:[{ name:'Fire Bolt' }] }), false);
 });
 
-test('21. Characters receive three ordered default inventory storages', () => {
+test('21. New characters start with three available but uncreated storage slots', () => {
   const storages = normalizeCharacterStorages({});
-  assert.equal(storages.length, 3);
-  assert.deepEqual(storages.map(value => value.id), DEFAULT_CHARACTER_STORAGES.map(value => value.id));
+  assert.equal(storages.length, 0);
+  assert.equal(normalizeLiveItem({ id:'loose-item', name:'Loose Item' }).storageId, '');
 });
 
 test('22. Dashboard preferences preserve valid ordering and visibility choices', () => {
@@ -200,7 +200,7 @@ test('23. Gallery, organizations, titles, custom items, and player item offers u
   const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
   ['uploadCharacterGalleryImage','refreshCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemOffer','respondLiveItemOffer'].forEach(name => assert.match(firebase, new RegExp(name)));
   ['uploadGalleryImage','refreshGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemOffer','respondItemOffer'].forEach(name => assert.match(service, new RegExp(name)));
-  ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','Player Requests'].forEach(name => assert.match(dashboard, new RegExp(name)));
+  ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','Incoming Requests'].forEach(name => assert.match(dashboard, new RegExp(name)));
   assert.match(read('storage.rules'), /gallery\/\{fileName\}/);
   assert.match(read('firestore.rules'), /match \/customItems\/\{itemId\}/);
 });
@@ -246,7 +246,19 @@ test('28. The dashboard uses one compact weapons and quick-items panel', () => {
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   assert.match(dashboard, /Weapons & Quick Items/);
   assert.doesNotMatch(dashboard, /title="Equipment \/ Armor"/);
-  assert.deepEqual(DEFAULT_CHARACTER_STORAGES.map(value => value.rows * value.cols), [16,16,60]);
+  assert.doesNotMatch(read('src/dashboards/InventoryWorkspace.jsx'), /ariaLabel="Inventory menu"/);
+});
+
+test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage headers', () => {
+  const inventory = read('src/dashboards/InventoryWorkspace.jsx');
+  const styles = read('src/styles/asteria-react.css');
+  const storage = normalizeCharacterStorages({ storages:[{ id:'pack', name:'Pack', rows:4, cols:4 }] })[0];
+  const existing = { id:'ore-1', name:'Iron Ore', identified:true, storageId:'pack', storageSlot:0, qty:2 };
+  assert.equal(firstFreeStorageSlot([existing], storage), 1);
+  assert.equal(stackableStorageItem([existing], { name:'Iron Ore', identified:true }, 'pack'), existing);
+  assert.match(inventory, /Empty Storage Slot/);
+  assert.match(inventory, /Create Container/);
+  assert.match(styles, /grid-template-columns: minmax\(320px, 360px\) minmax\(0, 1fr\) 105px/);
 });
 
 let failed = 0;

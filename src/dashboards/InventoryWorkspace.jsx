@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { EmptyState, Modal, Panel, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
+import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
@@ -286,9 +286,12 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   const [newStorage, setNewStorage] = useState('');
   const [newRows, setNewRows] = useState(4);
   const [newCols, setNewCols] = useState(4);
-  const storage = storages.find(value => value.id === activeStorage) || storages[0] || { rows:4, cols:4, maxSlots:16 };
-  const storedItems = useMemo(() => items.filter(item => !item.equipped && item.storageId === activeStorage), [activeStorage, items]);
+  const storageLimit = Math.max(3, Number(character.storageLimit || 3), storages.length);
+  const storage = storages.find(value => value.id === activeStorage) || storages[0] || null;
+  const storedItems = useMemo(() => storage ? items.filter(item => !item.equipped && item.storageId === storage.id) : [], [items, storage]);
   const grid = useMemo(() => storageGrid(storedItems, storage, sort), [sort, storage, storedItems]);
+  const storageIds = useMemo(() => new Set(storages.map(value => value.id)), [storages]);
+  const unassignedItems = items.filter(item => !item.equipped && !storageIds.has(item.storageId));
   const matches = item => !query.trim() || `${item.name} ${item.type} ${item.rarity}`.toLowerCase().includes(query.trim().toLowerCase());
   const createStorage = async () => {
     const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage, rows:newRows, cols:newCols }), 'Storage created.');
@@ -296,21 +299,26 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   };
   return <Panel title="Inventory / Storage" action={<StatusPill>{items.filter(item => !item.equipped).length} items</StatusPill>} className="react-inventory-storage">
     <nav className="react-storage-tabs" aria-label="Character storage">
-      {storages.map((storage, index) => <button key={storage.id} type="button" className={activeStorage === storage.id ? 'active' : ''} onClick={() => setActiveStorage(storage.id)} onDragOver={event => editable && event.preventDefault()} onDrop={event => {
-        if (!editable) return;
-        event.preventDefault();
-        const itemId = event.dataTransfer.getData('application/x-asteria-item');
-        if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'move-storage', itemId, storageId: storage.id }), `Moved item to ${storage.name}.`);
-      }}><span>{storage.name || `Storage ${index + 1}`}</span><small>{items.filter(item => !item.equipped && item.storageId === storage.id).length}</small></button>)}
+      {Array.from({ length:storageLimit }, (_, index) => {
+        const record = storages[index];
+        return record ? <button key={record.id} type="button" className={storage?.id === record.id ? 'active' : ''} onClick={() => setActiveStorage(record.id)} onDragOver={event => editable && event.preventDefault()} onDrop={event => {
+          if (!editable) return;
+          event.preventDefault();
+          const itemId = event.dataTransfer.getData('application/x-asteria-item');
+          if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'move-storage', itemId, storageId: record.id }), `Moved item to ${record.name}.`);
+        }}><span>{record.name || `Storage ${index + 1}`}</span><small>{items.filter(item => !item.equipped && item.storageId === record.id).length}</small></button>
+          : <button key={`empty-storage-${index}`} type="button" className="empty" disabled={!editable || busy} onClick={() => setActiveStorage('')}><span>Empty Storage Slot</span><small>+</small></button>;
+      })}
     </nav>
-    <div className="react-inventory-toolbar">
-      <label><span className="visually-hidden">Search inventory</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search items..." /></label>
-      <select aria-label="Sort inventory" value={sort} onChange={event => setSort(event.target.value)}><option value="name">Sort: Name</option><option value="rarity">Sort: Rarity</option><option value="quantity">Sort: Quantity</option></select>
-      <button type="button" disabled={!editable} onClick={onCustom}>Add Item</button>
-    </div>
-    <div className="react-storage-grid-meta"><span>{storage.rows} rows x {storage.cols} columns</span><span>{storedItems.length} / {storage.maxSlots} slots used</span></div>
-    <div className="react-inventory-grid-scroll"><div className="react-inventory-item-grid" style={{ '--storage-cols':storage.cols }}>
-      {grid.map((item, slot) => <div
+    {storage ? <>
+      <div className="react-inventory-toolbar">
+        <label><span className="visually-hidden">Search inventory</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search items..." /></label>
+        <select aria-label="Sort inventory" value={sort} onChange={event => setSort(event.target.value)}><option value="name">Sort: Name</option><option value="rarity">Sort: Rarity</option><option value="quantity">Sort: Quantity</option></select>
+        <button type="button" disabled={!editable} onClick={onCustom}>Add Item</button>
+      </div>
+      <div className="react-storage-grid-meta"><span>{storage.rows} rows x {storage.cols} columns</span><span>{storedItems.length} / {storage.maxSlots} slots used</span></div>
+      <div className="react-inventory-grid-scroll"><div className="react-inventory-item-grid" style={{ '--storage-cols':storage.cols }}>
+        {grid.map((item, slot) => <div
         key={slot}
         className={`react-storage-cell ${item ? 'filled' : ''} ${item && !matches(item) ? 'filtered-out' : ''}`}
         data-slot={slot + 1}
@@ -321,16 +329,17 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
           const itemId = event.dataTransfer.getData('application/x-asteria-item');
           if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type:'move-storage', itemId, storageId:storage.id, storageSlot:slot }), `Moved item to ${storage.name}, slot ${slot + 1}.`);
         }}
-      >{item ? <InventoryItemCard item={item} editable={editable} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} /> : <small>{slot + 1}</small>}</div>)}
-    </div>
-    </div>
-    {storages.length < Number(character.storageLimit || 3) ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="New storage name" /><label>Rows<input type="number" min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><label>Columns<input type="number" min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><button disabled={!editable || busy || !newStorage.trim()} onClick={createStorage}>Create Storage</button></div> : null}
+        >{item ? <InventoryItemCard item={item} editable={editable} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} /> : <small>{slot + 1}</small>}</div>)}
+      </div></div>
+    </> : <EmptyState title="No storage container equipped">Create a bag, pouch, chest, or other container in one of the available storage slots.</EmptyState>}
+    {unassignedItems.length ? <p className="react-storage-warning">{unassignedItems.length} existing item{unassignedItems.length === 1 ? ' is' : 's are'} waiting for a container. They will fill the first available slots when storage is created.</p> : null}
+    {storages.length < storageLimit ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="Bag or container name" /><label>Rows<input type="number" min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><label>Columns<input type="number" min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><button disabled={!editable || busy || !newStorage.trim()} onClick={createStorage}>Create Container</button></div> : null}
   </Panel>;
 }
 
 function PartyPortrait({ member, active, editable, onClick, onDrop }) {
   const [failed, setFailed] = useState(false);
-  const source = member.image || member.portrait || member.characterImage || '';
+  const source = member.image || member.portrait || member.characterImage || member.appearance?.image || member.appearance?.portrait || '';
   React.useEffect(() => setFailed(false), [source]);
   return <button
     type="button"
@@ -342,8 +351,8 @@ function PartyPortrait({ member, active, editable, onClick, onDrop }) {
     onDragOver={event => editable && event.preventDefault()}
     onDrop={onDrop}
   >
-    <span className="react-party-portrait">{source && !failed ? <img src={source} alt="" onError={() => setFailed(true)} /> : <b>{String(member.name || '?').charAt(0)}</b>}<i /></span>
-    <span><b>{member.name}</b><small>{member.klass || member.class || 'Adventurer'}</small></span>
+    <span className="react-party-portrait">{source && !failed ? <img src={source} alt={`${member.name || 'Party member'} portrait`} onError={() => setFailed(true)} /> : <b>{String(member.name || '?').charAt(0)}</b>}<i /></span>
+    <span className="visually-hidden">{member.name} {member.klass || member.class || 'Adventurer'}</span>
   </button>;
 }
 
@@ -369,7 +378,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
     setActiveMemberId(current => current === member.id ? '' : member.id);
     setSelectedItemId(current => availableItems.some(item => item.id === current) ? current : availableItems[0]?.id || '');
   };
-  return <Panel title="Party" action={<StatusPill>{members.length + 1}</StatusPill>} className="react-inventory-party">
+  return <aside className="react-inventory-party" aria-label="Party item actions">
     <div className="react-player-bubbles">{members.map(member => <div className="react-party-bubble-row" key={member.id}>
       <PartyPortrait member={member} active={activeMemberId === member.id} editable={editable} onClick={() => openFor(member)} onDrop={event => {
         if (!editable || !dragged) return;
@@ -383,12 +392,11 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
         setActiveMemberId('');
       }} onClose={() => setActiveMemberId('')} /> : null}
     </div>)}</div>
-    {!members.length ? <EmptyState title="No other party members" /> : <p className="react-help">Select a portrait for Trade, Sell, Give, or Identify. Dragging an item onto a portrait also opens these actions.</p>}
-  </Panel>;
+    {!members.length ? <span className="react-party-empty" title="No other party members">-</span> : null}
+  </aside>;
 }
 
 export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable }) {
-  const [view, setView] = useState('inventory');
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
@@ -406,20 +414,12 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     setBusy(false);
     return result;
   };
-  const tabs = [
-    { id: 'inventory', label: 'Inventory', icon: '[]' },
-    { id: 'shops', label: 'Shops', icon: '$' },
-    { id: 'requests', label: 'Player Requests', icon: '<>' }
-  ];
   return <div className="react-inventory-workspace">
-    <Tabs tabs={tabs} active={view} onChange={setView} ariaLabel="Inventory menu" />
-    {view === 'inventory' ? <div className="react-inventory-layout">
+    <div className="react-inventory-layout">
       <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} editable={editable} run={run} onDetails={setDetails} />
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
-    </div> : null}
-    {view === 'shops' ? <Panel title="Campaign Shops"><div className="react-shop-stock">{(ecosystem.shops || []).filter(shop => shop.status === 'open' && (!(shop.visitorCharacterIds || []).length || shop.visitorCharacterIds.includes(character.id))).flatMap(shop => (shop.stock || []).map((stock, index) => <article key={`${shop.id}-${index}`}><b>{stock.item?.name || 'Item'}</b><small>{shop.name} | {stock.qty} available</small><strong>{Number(stock.priceCopper || 0).toLocaleString()} copper</strong><button disabled={!editable || busy || Number(stock.qty || 0) < 1} onClick={() => run(() => firebaseService.buyShopItem(campaignId, character.id, shop.id, index, 1), 'Purchase completed.')}>Buy</button></article>))}{!(ecosystem.shops || []).some(shop => shop.status === 'open') ? <EmptyState title="No shops are open" /> : null}</div></Panel> : null}
-    {view === 'requests' ? <IncomingOffers campaignId={campaignId} character={character} characters={characters} ecosystem={ecosystem} editable={editable} /> : null}
+    </div>
     <p className="react-action-message">{message}</p>
     {details ? <ItemDetailModal campaignId={campaignId} character={character} item={details} editable={editable} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
     {offer ? <ItemOfferModal key={`${offer.target.id}-${offer.item.id}-${offer.mode}`} campaignId={campaignId} character={character} target={offer.target} item={offer.item} initialMode={offer.mode} editable={editable} onClose={() => { setOffer(null); setDragged(null); }} /> : null}
