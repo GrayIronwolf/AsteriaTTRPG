@@ -194,13 +194,13 @@ test('22. Dashboard preferences preserve valid ordering and visibility choices',
   assert.equal(preferences.showPartyMembership, false);
 });
 
-test('23. Gallery, organizations, titles, custom items, and player item offers use the shared Firebase service', () => {
+test('23. Gallery, organizations, titles, custom items, and player item requests use the shared Firebase service', () => {
   const firebase = read('js/firebase-auth.js');
   const service = read('src/firebase/asteriaFirebaseService.js');
-  const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
-  ['uploadCharacterGalleryImage','refreshCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemOffer','respondLiveItemOffer'].forEach(name => assert.match(firebase, new RegExp(name)));
-  ['uploadGalleryImage','refreshGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemOffer','respondItemOffer'].forEach(name => assert.match(service, new RegExp(name)));
-  ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','Incoming Requests'].forEach(name => assert.match(dashboard, new RegExp(name)));
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/PlayerItemExchange.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
+  ['uploadCharacterGalleryImage','refreshCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemRequest','respondLiveItemRequest','cancelLiveItemRequest','acknowledgeLiveItemRequest'].forEach(name => assert.match(firebase, new RegExp(name)));
+  ['uploadGalleryImage','refreshGalleryImage','createPartyOrganization','grantTitle','grantStorageSlots','createCustomItem','createItemRequest','respondItemRequest','cancelItemRequest','acknowledgeItemRequest'].forEach(name => assert.match(service, new RegExp(name)));
+  ['GalleryTab','DashboardSettingsTab','InventoryWorkspace','Create Custom Item','PlayerItemRequestCenter'].forEach(name => assert.match(dashboard, new RegExp(name)));
   assert.match(read('storage.rules'), /gallery\/\{fileName\}/);
   assert.match(read('firestore.rules'), /match \/customItems\/\{itemId\}/);
 });
@@ -259,6 +259,38 @@ test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage he
   assert.match(inventory, /Empty Storage Slot/);
   assert.match(inventory, /Create Container/);
   assert.match(styles, /grid-template-columns: minmax\(320px, 360px\) minmax\(0, 1fr\) 105px/);
+});
+
+test('30. Player item requests use one canonical live record collection', () => {
+  const firebase = read('js/firebase-auth.js');
+  const fixture = read('src/devFixtures.js');
+  assert.match(firebase, /ecosystem\.playerItemRequests/);
+  assert.match(fixture, /playerItemRequests:\[\]/);
+  assert.match(firebase, /player-request-escrow/);
+  assert.match(firebase, /senderNotice\s*=\s*'unread'/);
+  assert.match(firebase, /recipientNotice\s*=\s*'acknowledged'/);
+});
+
+test('31. Incoming item notifications are mounted outside the inventory tab', () => {
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  assert.match(dashboard, /<PlayerItemRequestCenter/);
+  assert.match(dashboard, /ecosystem=\{live\.itemEcosystem\}/);
+  assert.doesNotMatch(read('src/dashboards/InventoryWorkspace.jsx'), /function IncomingOffers/);
+});
+
+test('32. Trade, sell, give, and identify have dedicated shared request windows', () => {
+  const exchange = read('src/dashboards/PlayerItemExchange.jsx');
+  ['trade','sell','give','identify'].forEach(mode => assert.match(exchange, new RegExp(`${mode}: \\{`)));
+  ['SendPlayerItemModal','IncomingRequestModal','RequestResultModal','SentRequestsModal'].forEach(name => assert.match(exchange, new RegExp(name)));
+  assert.match(exchange, /exchangeItemId/);
+  assert.match(exchange, /priceCopper/);
+  assert.match(exchange, /characterKnowsIdentify/);
+});
+
+test('33. The exchange UI has a persistent request dock and responsive transaction layout', () => {
+  const styles = read('src/styles/asteria-react.css');
+  ['react-item-request-dock','react-exchange-route','react-exchange-item','react-request-history'].forEach(name => assert.match(styles, new RegExp(name)));
+  assert.match(styles, /@media \(max-width: 680px\)/);
 });
 
 let failed = 0;

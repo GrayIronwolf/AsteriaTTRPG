@@ -3,6 +3,7 @@ import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
+import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -128,57 +129,6 @@ function CustomItemModal({ campaignId, character, storageId, onClose }) {
     {form.isSpellbook ? <div className="react-form-grid"><label>Spell Name<input value={form.spellName} onChange={event => set('spellName', event.target.value)} /></label><label>Element<input value={form.element} onChange={event => set('element', event.target.value)} /></label></div> : null}
     <p>{message}</p>
   </Modal>;
-}
-
-function ItemOfferModal({ campaignId, character, target, item, initialMode = 'give', editable, onClose }) {
-  const [mode, setMode] = useState(initialMode);
-  const [price, setPrice] = useState(Math.max(0, Number(item?.value || 0)));
-  const [note, setNote] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  if (!target || !item) return null;
-  const send = async () => {
-    setBusy(true);
-    const result = await firebaseService.createItemOffer(campaignId, character.id, target.id, item.id, mode, { priceCopper: price, note, quantity: 1 });
-    setMessage(resultText(result, `${mode === 'identify' ? 'Identify request' : 'Item offer'} sent to ${target.name}.`));
-    setBusy(false);
-    if (result?.ok) window.setTimeout(onClose, 500);
-  };
-  return <Modal title={`${item.name} to ${target.name}`} eyebrow="Player Item Action" busy={busy} onClose={onClose} footer={<><button onClick={onClose}>Cancel</button><button className="primary" disabled={!editable || busy} onClick={send}>Send Request</button></>}>
-    <div className="react-segmented-actions">{[['trade', 'Trade'], ['sell', 'Sell'], ['give', 'Give'], ['identify', 'Identify']].map(([id, label]) => <button className={mode === id ? 'active' : ''} key={id} onClick={() => setMode(id)}>{label}</button>)}</div>
-    {mode === 'sell' ? <label>Sale Price in Copper<input type="number" min="0" value={price} onChange={event => setPrice(Number(event.target.value || 0))} /></label> : null}
-    <label>Message<textarea rows="4" value={note} onChange={event => setNote(event.target.value)} /></label>
-    <p>{message}</p>
-  </Modal>;
-}
-
-function IncomingOffers({ campaignId, character, characters, ecosystem, editable }) {
-  const offers = (ecosystem.directTrades || []).filter(value => value.toCharacterId === character.id && value.status === 'pending' && value.id?.startsWith('offer-'));
-  const exchangeItems = inventoryItems(character).filter(item => !item.equipped && !item.locked && !item.bound && !item.questItem);
-  const [exchange, setExchange] = useState('');
-  const [revealed, setRevealed] = useState(null);
-  const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
-  const respond = async (offer, accepted) => {
-    setBusy(true);
-    const result = await firebaseService.respondItemOffer(campaignId, character.id, offer.id, accepted, { exchangeItemId: exchange });
-    setMessage(resultText(result, accepted ? 'Offer accepted.' : 'Offer declined.'));
-    if (result?.revealedItem) setRevealed(result.revealedItem);
-    setBusy(false);
-  };
-  return <Panel title="Incoming Requests" action={<StatusPill>{offers.length} pending</StatusPill>}>
-    <div className="react-offer-list">{offers.map(offer => <article key={offer.id}>
-      <b>{offer.mode.toUpperCase()}: {offer.item?.name || 'Item'}</b>
-      <small>From {characters[offer.fromCharacterId]?.name || 'Party Member'}</small>
-      {offer.note ? <p>{offer.note}</p> : null}
-      {offer.mode === 'sell' ? <strong>{Number(offer.priceCopper || 0).toLocaleString()} copper</strong> : null}
-      {offer.mode === 'trade' ? <select value={exchange} onChange={event => setExchange(event.target.value)}><option value="">Choose your offered item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select> : null}
-      {offer.mode === 'identify' && !characterKnowsIdentify(character) ? <small className="react-warning">Identify spell required</small> : null}
-      <div><button disabled={!editable || busy} onClick={() => respond(offer, false)}>Reject</button><button className="primary" disabled={!editable || busy || (offer.mode === 'trade' && !exchange) || (offer.mode === 'identify' && !characterKnowsIdentify(character))} onClick={() => respond(offer, true)}>Accept</button></div>
-    </article>)}{!offers.length ? <EmptyState title="No incoming item requests" /> : null}</div>
-    <p>{message}</p>
-    {revealed ? <ItemDetailModal campaignId={campaignId} character={character} item={{ ...revealed, identified: true }} editable={false} onClose={() => setRevealed(null)} /> : null}
-  </Panel>;
 }
 
 function equipmentFallback(equipment, aliases) {
@@ -358,6 +308,7 @@ function PartyPortrait({ member, active, editable, onClick, onDrop }) {
 
 function PartyActionBubble({ member, items, selectedItemId, onSelectItem, onAction, onClose }) {
   const hasItems = items.length > 0;
+  const selectedItem = items.find(item => String(item.id) === String(selectedItemId));
   return <aside className="react-party-speech" role="dialog" aria-label={`Item actions for ${member.name}`}>
     <button type="button" className="react-party-speech-close" aria-label="Close party actions" onClick={onClose}>X</button>
     <p>Send an item to <b>{member.name}</b></p>
@@ -365,7 +316,7 @@ function PartyActionBubble({ member, items, selectedItemId, onSelectItem, onActi
       {!hasItems ? <option value="">No available items</option> : null}
       {items.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}
     </select>
-    <div>{[['trade', 'Trade'], ['sell', 'Sell'], ['give', 'Give'], ['identify', 'Identify']].map(([mode, label]) => <button key={mode} type="button" disabled={!selectedItemId} onClick={() => onAction(mode)}>{label}</button>)}</div>
+    <div>{[['trade', 'Trade'], ['sell', 'Sell'], ['give', 'Give'], ['identify', 'Identify']].map(([mode, label]) => <button key={mode} type="button" disabled={!selectedItemId || (mode === 'identify' && selectedItem?.identified !== false)} title={mode === 'identify' && selectedItem?.identified !== false ? 'Choose an unidentified item' : `${label} ${selectedItem?.name || 'item'}`} onClick={() => onAction(mode)}>{label}</button>)}</div>
   </aside>;
 }
 
@@ -396,7 +347,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
   </aside>;
 }
 
-export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable }) {
+export function InventoryWorkspace({ campaignId, character, characters, editable }) {
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
@@ -422,7 +373,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     </div>
     <p className="react-action-message">{message}</p>
     {details ? <ItemDetailModal campaignId={campaignId} character={character} item={details} editable={editable} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
-    {offer ? <ItemOfferModal key={`${offer.target.id}-${offer.item.id}-${offer.mode}`} campaignId={campaignId} character={character} target={offer.target} item={offer.item} initialMode={offer.mode} editable={editable} onClose={() => { setOffer(null); setDragged(null); }} /> : null}
+    {offer ? <SendPlayerItemModal key={`${offer.target.id}-${offer.item.id}-${offer.mode}`} campaignId={campaignId} character={character} target={offer.target} item={offer.item} mode={offer.mode} editable={editable} onClose={() => { setOffer(null); setDragged(null); }} /> : null}
     {custom ? <CustomItemModal campaignId={campaignId} character={character} storageId={activeStorage} onClose={() => setCustom(false)} /> : null}
   </div>;
 }

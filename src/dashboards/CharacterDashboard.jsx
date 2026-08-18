@@ -6,6 +6,7 @@ import { characterKnowsIdentify, normalizeCharacterStorages, normalizeDashboardP
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
+import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import {
   ActivityLog,
   CharacterTab,
@@ -223,12 +224,13 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} /> : null}
+    {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}
     {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}
     {tab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} editable={editable} /> : null}
     {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    <PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />
     {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : null}
     {editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}

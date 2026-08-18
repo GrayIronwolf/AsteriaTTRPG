@@ -50,6 +50,7 @@ export function installDevFixtures() {
         { id:'antimony-ingot', name:'Antimony Ingot', qty:2, type:'Material', rarity:'Uncommon' },
         { id:'rope', name:'Rope', qty:1, type:'Tool', rarity:'Common' },
         { id:'rations', name:'Iron Rations', qty:6, type:'Consumable', rarity:'Common' }
+        ,{ id:'sealed-relic', name:'Sealed Relic', trueName:'Moonwell Reliquary', qty:1, type:'Magic Item', rarity:'Rare', identified:false, description:'A silver reliquary carrying a dormant lunar blessing.' }
       ],
       quests:[{ id:'echoes-below', name:'Echoes Below', description:'Investigate the singing caverns.', status:'Active' }],
       journal:[{ id:'journal-1', title:'Arrival', body:'We reached the cavern gate before nightfall.', createdAt:new Date().toISOString() }],
@@ -61,9 +62,10 @@ export function installDevFixtures() {
       image: 'assets/races/air-pixie/air-pixie-female-adult.png',
       hp: [62, 70], sp: [54, 65], mp: [92, 110], xp: 7200, xpMax: 10000,
       characteristics: { str: 8, dex: 17, agi: 19, con: 13, end: 12, int: 16, wis: 18, cha: 15, lck: 14 },
-      quickSlots: [{ name: 'Healing Salve' }], unlockedTalents: [], spells: [],
+      quickSlots: [{ name: 'Healing Salve' }], unlockedTalents: [], spells: [{ name:'Identify', element:'Spirit', cost:4 }],
       storageLimit:3, storages:[{ id:'lyra-field-pack', name:'Field Pack', order:0, rows:4, cols:4, maxSlots:16 }],
       skills: [{ name: 'Nature', rankName: 'Adept' }], conditions: [{ name: 'Blessed' }],
+      inventory:[{ id:'healing-salve', name:'Healing Salve', qty:2, type:'Consumable', rarity:'Common', effect:{hp:8}, storageId:'lyra-field-pack', storageSlot:0 }],
       coins: { Copper: 12, Silver: 31, Gold: 4 }
     }
   };
@@ -74,7 +76,7 @@ export function installDevFixtures() {
   let partyChat=[{ id:'chat-1', characterId:'lyra', ownerUid:'player-lyra', characterName:'Lyra', text:'I will bring the healing supplies.', createdAt:new Date().toISOString() }];
   let itemEcosystem={
     shops:[{ id:'moon-market', name:'Moon Market', type:'General Merchant', status:'open', visitorCharacterIds:['kael'], stock:[{ qty:4, priceCopper:25, item:{ id:'mana-vial', name:'Mana Vial', type:'Consumable', rarity:'Common', effect:{mp:10} } }] }],
-    directTrades:[], partyLoot:[], sharedStorages:[]
+    playerItemRequests:[], directTrades:[], partyLoot:[], sharedStorages:[]
   };
   let customItems=[];
   const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], partyWorkspace:[], partyChat:[], itemEcosystem:[], customItems:[] };
@@ -114,6 +116,33 @@ export function installDevFixtures() {
     notify('characters');
     return next;
   };
+  const fixtureCurrencyTotal=character=>{
+    const coins=character.coins||character.coinPouch||{};
+    return [['royal_platinum',10000000000],['royal_crown',100000000],['platinum_crown',1000000],['gold',10000],['silver',100],['copper',1]].reduce((sum,[key,value])=>{
+      const title=key.split('_').map(part=>part.charAt(0).toUpperCase()+part.slice(1)).join(' ');
+      return sum+Number(coins[key]??coins[key.replaceAll('_',' ')]??coins[title]??0)*value;
+    },0);
+  };
+  const setFixtureCurrencyTotal=(character,total)=>{
+    let remainder=Math.max(0,Math.floor(Number(total||0)));
+    character.coins={};
+    [['Royal Platinum',10000000000],['Royal Crown',100000000],['Platinum Crown',1000000],['Gold',10000],['Silver',100],['Copper',1]].forEach(([key,value])=>{character.coins[key]=Math.floor(remainder/value);remainder%=value;});
+  };
+  const placeFixtureItem=(character,source,storageId='')=>{
+    character.storages=normalizeCharacterStorages(character);
+    const storage=character.storages.find(value=>value.id===storageId)||character.storages[0];
+    if(!storage)throw new Error(`${character.name} needs a storage container before receiving items.`);
+    const item={...clone(source),qty:Math.max(1,Number(source.qty||1)),storageId:storage.id,equipped:false,equippedSlot:''};
+    character.inventory=Array.isArray(character.inventory)?character.inventory:[];
+    const stacked=stackableStorageItem(character.inventory,item,storage.id);
+    if(stacked){stacked.qty=Number(stacked.qty||1)+item.qty;return stacked;}
+    const storageSlot=firstFreeStorageSlot(character.inventory,storage);
+    if(storageSlot<0)throw new Error(`${storage.name} is full.`);
+    const received={...item,id:eventId(slug(item.trueName||item.name||'item')),storageSlot};
+    character.inventory.push(received);
+    return received;
+  };
+  const itemRequestById=requestId=>(itemEcosystem.playerItemRequests||[]).find(value=>String(value.id)===String(requestId));
 
   const fixtureApi = {
     isReady: () => true,
@@ -255,13 +284,72 @@ export function installDevFixtures() {
     grantCharacterTitle: async (_campaignId,ids,title)=>{(ids||[]).forEach(id=>updateCharacter(id,next=>{next.titles=[...(next.titles||[]),{id:eventId('title'),text:title,source:'GM'}];return next;}));return {ok:true};},
     grantCharacterStorageSlots: async (_campaignId,ids,amount)=>{(ids||[]).forEach(id=>updateCharacter(id,next=>{next.storageLimit=Math.max(3,Number(next.storageLimit||3))+Number(amount||1);return next;}));return {ok:true};},
     createCustomItem: async (_campaignId,item)=>{requireFixtureSession();const record={...clone(item),id:eventId('custom'),name:item.name,title:item.name,custom:true};customItems=[...customItems,record];notify('customItems');return {ok:true,item:record};},
-    createLiveItemOffer: async (_campaignId,characterId,recipientId,itemId,mode,details)=>{requireFixtureSession();const item=characters[characterId].inventory.find(value=>value.id===itemId);if(!item)return {ok:false,error:'Item not found.'};const offer={id:eventId('offer'),fromCharacterId:characterId,toCharacterId:recipientId,item:clone(item),mode,priceCopper:details.priceCopper||0,note:details.note||'',status:'pending'};if(mode!=='identify')item.qty-=1;characters[characterId].inventory=characters[characterId].inventory.filter(value=>value.qty>0);itemEcosystem.directTrades=[...itemEcosystem.directTrades,offer];notify('characters');notify('itemEcosystem');return {ok:true,offer};},
-    respondLiveItemOffer: async (_campaignId,characterId,offerId,accepted,details)=>{requireFixtureSession();const offer=itemEcosystem.directTrades.find(value=>value.id===offerId);if(!offer)return {ok:false,error:'Offer not found.'};let revealedItem=null;if(accepted&&offer.mode==='identify'){if(!characterKnowsIdentify(characters[characterId]))return {ok:false,error:'Identify spell required.'};const original=characters[offer.fromCharacterId].inventory.find(value=>value.id===offer.item.id);if(original){original.identified=true;original.name=original.trueName||original.name;revealedItem=clone(original);}}else if(accepted){characters[characterId].inventory=[...(characters[characterId].inventory||[]),{...clone(offer.item),id:eventId('item'),storageId:normalizeCharacterStorages(characters[characterId])[0].id}];}else if(offer.mode!=='identify')characters[offer.fromCharacterId].inventory=[...(characters[offer.fromCharacterId].inventory||[]),clone(offer.item)];offer.status=accepted?'accepted':'declined';notify('characters');notify('itemEcosystem');return {ok:true,revealedItem};},
+    createLiveItemRequest: async (_campaignId,characterId,recipientId,itemId,mode='give',details={})=>{
+      try{
+        requireFixtureSession();
+        const sender=characters[characterId];const recipient=characters[recipientId];
+        if(!sender||!recipient||characterId===recipientId)throw new Error('Choose another linked character.');
+        const item=(sender.inventory||[]).find(value=>String(value.id)===String(itemId));
+        const action=['trade','sell','give','identify'].includes(mode)?mode:'give';
+        const quantity=Math.max(1,Math.min(Number(details.quantity||1),Number(item?.qty||0)));
+        if(!item||item.equipped||item.locked||item.bound||item.questItem||!quantity)throw new Error('This item cannot be offered.');
+        if(action==='identify'&&item.identified!==false)throw new Error('Only unidentified items can be sent for identification.');
+        const snapshot={...clone(item),sourceItemId:item.id,qty:action==='identify'?1:quantity,equipped:false,equippedSlot:'',location:action==='identify'?'inventory':'player-request-escrow'};
+        if(action!=='identify')item.qty=Number(item.qty||1)-quantity;
+        sender.inventory=(sender.inventory||[]).filter(value=>Number(value.qty??1)>0);
+        const request={id:eventId('item-request'),version:2,sessionId:session.id,mode:action,fromCharacterId:characterId,fromCharacterName:sender.name,fromOwnerUid:sender.ownerUid,toCharacterId:recipientId,toCharacterName:recipient.name,toOwnerUid:recipient.ownerUid,item:snapshot,quantity:snapshot.qty,note:String(details.note||''),priceCopper:Math.max(0,Math.floor(Number(details.priceCopper||0))),requestedItem:String(details.requestedItem||''),status:'pending',recipientNotice:'unread',senderNotice:'waiting',createdAt:new Date().toISOString()};
+        itemEcosystem.playerItemRequests=[request,...(itemEcosystem.playerItemRequests||[])];
+        notify('characters');notify('itemEcosystem');
+        return {ok:true,request,offer:request};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    respondLiveItemRequest: async (_campaignId,characterId,requestId,accepted,details={})=>{
+      try{
+        requireFixtureSession();
+        const request=itemRequestById(requestId);
+        if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId))throw new Error('This item request is no longer pending for this character.');
+        const recipient=characters[characterId];const sender=characters[request.fromCharacterId];
+        let revealedItem=null;let receivedItem=null;let exchangeItem=null;
+        if(accepted&&request.mode==='identify'){
+          if(!characterKnowsIdentify(recipient))throw new Error('This character does not know the Identify spell.');
+          const original=(sender.inventory||[]).find(value=>String(value.id)===String(request.item.sourceItemId||request.item.id));
+          if(!original)throw new Error('The item is no longer available to identify.');
+          original.identified=true;original.name=original.trueName||original.name;revealedItem=clone(original);
+        }else if(accepted){
+          if(request.mode==='sell'){
+            const price=Math.max(0,Number(request.priceCopper||0));
+            if(fixtureCurrencyTotal(recipient)<price)throw new Error('Not enough currency for this purchase.');
+            setFixtureCurrencyTotal(recipient,fixtureCurrencyTotal(recipient)-price);setFixtureCurrencyTotal(sender,fixtureCurrencyTotal(sender)+price);
+          }
+          if(request.mode==='trade'){
+            const exchange=(recipient.inventory||[]).find(value=>String(value.id)===String(details.exchangeItemId||''));
+            if(!exchange||exchange.equipped||exchange.locked||exchange.bound||exchange.questItem)throw new Error('Choose an available item to trade.');
+            const exchangeQuantity=Math.max(1,Math.min(Number(details.exchangeQuantity||1),Number(exchange.qty||1)));
+            exchangeItem={...clone(exchange),qty:exchangeQuantity};exchange.qty=Number(exchange.qty||1)-exchangeQuantity;
+            recipient.inventory=recipient.inventory.filter(value=>Number(value.qty??1)>0);
+            placeFixtureItem(sender,exchangeItem);
+          }
+          receivedItem=placeFixtureItem(recipient,request.item,details.storageId||'');
+        }else if(request.mode!=='identify')placeFixtureItem(sender,request.item,request.item.storageId||'');
+        request.status=accepted?'accepted':'declined';request.recipientNotice='acknowledged';request.senderNotice='unread';request.resolvedAt=new Date().toISOString();
+        request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
+        notify('characters');notify('itemEcosystem');
+        return {ok:true,revealedItem};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    cancelLiveItemRequest: async (_campaignId,characterId,requestId)=>{
+      try{requireFixtureSession();const request=itemRequestById(requestId);if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId))throw new Error('This request can no longer be cancelled.');if(request.mode!=='identify')placeFixtureItem(characters[characterId],request.item,request.item.storageId||'');request.status='cancelled';request.recipientNotice='cancelled';request.senderNotice='acknowledged';request.resolvedAt=new Date().toISOString();notify('characters');notify('itemEcosystem');return {ok:true};}catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    acknowledgeLiveItemRequest: async (_campaignId,characterId,requestId)=>{
+      const request=itemRequestById(requestId);if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId))return {ok:false,error:'This result cannot be acknowledged.'};request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();notify('itemEcosystem');return {ok:true};
+    },
+    createLiveItemOffer: (...args)=>fixtureApi.createLiveItemRequest(...args),
+    respondLiveItemOffer: (...args)=>fixtureApi.respondLiveItemRequest(...args),
     resolveLootReward: async (_campaignId,characterId,id,action,destination) => {requireFixtureSession();const event=events.find(value=>value.id===id);if(!event)return {ok:false,error:'Reward not found.'};if(action!=='declined')updateCharacter(characterId,next=>{const item={...event.payload.item,id:event.payload.item.id||eventId('item'),equipped:action==='equip',equippedSlot:action==='equip'?destination:'',storageId:action==='equip'?normalizeCharacterStorages(next)[0].id:destination};next.inventory=[...(next.inventory||[]),item];return next;});events=events.map(value=>value.id===id?{...value,status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',resolvedAt:new Date().toISOString()}:value);notify('events');return {ok:true};},
     buyLiveShopItem: async (_campaignId,characterId,shopId,stockIndex,quantity) => {requireFixtureSession();const shop=itemEcosystem.shops.find(value=>value.id===shopId);const stock=shop?.stock?.[stockIndex];if(!stock||stock.qty<quantity)return {ok:false,error:'Item unavailable.'};updateCharacter(characterId,next=>{next.inventory=[...(next.inventory||[]),{...stock.item,id:eventId('item'),qty:quantity}];return next;});stock.qty-=quantity;notify('itemEcosystem');return {ok:true};},
     sellLiveShopItem: async (_campaignId,characterId,_shopId,itemId) => {updateCharacter(characterId,next=>{const item=next.inventory.find(value=>value.id===itemId);if(!item)throw new Error('Item not found.');item.qty-=1;next.inventory=next.inventory.filter(value=>value.qty>0);return next;});return {ok:true};},
-    createLiveTrade: async (_campaignId,characterId,recipientId,itemId,quantity,note) => {requireFixtureSession();const item=characters[characterId].inventory.find(value=>value.id===itemId);if(!item)return {ok:false,error:'Item not found.'};itemEcosystem.directTrades=[...itemEcosystem.directTrades,{id:eventId('trade'),fromCharacterId:characterId,toCharacterId:recipientId,item:clone(item),quantity,note,status:'pending'}];notify('itemEcosystem');return {ok:true};},
-    respondLiveTrade: async (_campaignId,characterId,tradeId,accepted) => {requireFixtureSession();const trade=itemEcosystem.directTrades.find(value=>value.id===tradeId);if(!trade||trade.toCharacterId!==characterId)return {ok:false,error:'Trade unavailable.'};trade.status=accepted?'accepted':'declined';if(accepted)updateCharacter(characterId,next=>{next.inventory=[...(next.inventory||[]),{...trade.item,id:eventId('item'),qty:trade.quantity}];return next;});notify('itemEcosystem');return {ok:true};}
+    createLiveTrade: (campaignId,characterId,recipientId,itemId,quantity,note)=>fixtureApi.createLiveItemRequest(campaignId,characterId,recipientId,itemId,'trade',{quantity,note}),
+    respondLiveTrade: (campaignId,characterId,requestId,accepted)=>fixtureApi.respondLiveItemRequest(campaignId,characterId,requestId,accepted,{})
   };
   Object.defineProperty(window, 'AsteriaFirebase', {
     configurable: true,
