@@ -1,0 +1,22 @@
+ASTERIA UI MODERNISATION DELIVERY
+=================================
+
+This folder is the complete working website source.
+
+Run locally:
+1. Open PowerShell in this folder.
+2. Run: npm install
+3. Run: npm run dev
+4. Open the local URL printed by Vite.
+
+Validation:
+- npm test
+- npm run build
+
+Documentation:
+- UI_MODERNISATION_DELIVERY.md
+- UI_REACT_MIGRATION.md
+- FIREBASE-SETUP.md
+
+The compiled React dashboard assets are also included in react-dist/.
+

@@ -130,15 +130,18 @@ export function installDevFixtures() {
   };
   const placeFixtureItem=(character,source,storageId='')=>{
     character.storages=normalizeCharacterStorages(character);
-    const storage=character.storages.find(value=>value.id===storageId)||character.storages[0];
-    if(!storage)throw new Error(`${character.name} needs a storage container before receiving items.`);
-    const item={...clone(source),qty:Math.max(1,Number(source.qty||1)),storageId:storage.id,equipped:false,equippedSlot:''};
+    const requested=character.storages.find(value=>value.id===storageId);
+    const candidates=[requested,...character.storages].filter((value,index,all)=>value&&all.findIndex(record=>record.id===value.id)===index);
+    if(!candidates.length)throw new Error(`${character.name} needs a storage container before receiving items.`);
+    const item={...clone(source),qty:Math.max(1,Number(source.qty||1)),equipped:false,equippedSlot:''};
     character.inventory=Array.isArray(character.inventory)?character.inventory:[];
-    const stacked=stackableStorageItem(character.inventory,item,storage.id);
-    if(stacked){stacked.qty=Number(stacked.qty||1)+item.qty;return stacked;}
-    const storageSlot=firstFreeStorageSlot(character.inventory,storage);
-    if(storageSlot<0)throw new Error(`${storage.name} is full.`);
-    const received={...item,id:eventId(slug(item.trueName||item.name||'item')),storageSlot};
+    for(const storage of candidates){
+      const stacked=stackableStorageItem(character.inventory,item,storage.id);
+      if(stacked){stacked.qty=Number(stacked.qty||1)+item.qty;return stacked;}
+    }
+    const placement=candidates.map(storage=>({storage,slot:firstFreeStorageSlot(character.inventory,storage)})).find(value=>value.slot>=0);
+    if(!placement)throw new Error(`Every storage container for ${character.name} is full.`);
+    const received={...item,id:eventId(slug(item.trueName||item.name||'item')),storageId:placement.storage.id,storageSlot:placement.slot};
     character.inventory.push(received);
     return received;
   };
@@ -240,15 +243,17 @@ export function installDevFixtures() {
           items.filter(item=>!item.equipped&&!knownStorageIds.has(item.storageId)).forEach(item=>{if(nextSlot<storage.maxSlots){item.storageId=storage.id;item.storageSlot=nextSlot;nextSlot+=1;}});
           return next;
         }
-        if(operation.type==='reorder-storages'){next.storages.sort((a,b)=>operation.storageIds.indexOf(a.id)-operation.storageIds.indexOf(b.id));return next;}
+        if(operation.type==='reorder-storages'){
+          const order=Array.isArray(operation.storageIds)?operation.storageIds:[];
+          next.storages.sort((a,b)=>{
+            const left=order.indexOf(a.id);const right=order.indexOf(b.id);
+            return (left<0?Number.MAX_SAFE_INTEGER:left)-(right<0?Number.MAX_SAFE_INTEGER:right);
+          }).forEach((storage,index)=>{storage.order=index;});
+          return next;
+        }
         if(operation.type==='add-item'){
-          const storage=next.storages.find(value=>value.id===(operation.storageId||next.storages[0]?.id));
-          if(!storage)throw new Error('Create a bag or storage container before adding items.');
-          const stacked=stackableStorageItem(items,operation.item,storage.id);
-          if(stacked){stacked.qty=Math.max(1,Number(stacked.qty||1))+Math.max(1,Number(operation.item.qty||1));return next;}
-          const storageSlot=firstFreeStorageSlot(items,storage||{});
-          if(storageSlot<0)throw new Error(`${storage?.name||'Storage'} is full.`);
-          next.inventory=[...items,{...clone(operation.item),id:eventId('item'),storageId:storage.id,storageSlot}];return next;
+          placeFixtureItem(next,{...operation.item,id:operation.item?.id||eventId('item')},operation.storageId||'');
+          return next;
         }
         const index=items.findIndex(item=>String(item.id)===String(operation.itemId));
         const item=items[index];
@@ -282,6 +287,7 @@ export function installDevFixtures() {
     setCharacterGalleryPortrait: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{const image=(next.gallery||[]).find(value=>value.id===imageId);if(image){next.image=image.url;next.portrait=image.url;}return next;});return {ok:true};},
     deleteCharacterGalleryImage: async (_campaignId,characterId,imageId)=>{updateCharacter(characterId,next=>{next.gallery=(next.gallery||[]).filter(value=>value.id!==imageId);return next;});return {ok:true};},
     grantCharacterTitle: async (_campaignId,ids,title)=>{(ids||[]).forEach(id=>updateCharacter(id,next=>{next.titles=[...(next.titles||[]),{id:eventId('title'),text:title,source:'GM'}];return next;}));return {ok:true};},
+    manageCharacterTitle: async (_campaignId,characterId,titleId,details={})=>{updateCharacter(characterId,next=>{const titles=Array.isArray(next.titles)?next.titles:[];if(details.revoke){next.titles=titles.filter(record=>String(record.id)!==String(titleId));if(next.dashboardPreferences?.visibleTitleId===titleId)next.dashboardPreferences={...next.dashboardPreferences,visibleTitleId:''};return next;}next.titles=titles.map(record=>String(record.id)===String(titleId)?{...record,text:String(details.text||record.text||'').trim()}:record);return next;});return {ok:true};},
     grantCharacterStorageSlots: async (_campaignId,ids,amount)=>{(ids||[]).forEach(id=>updateCharacter(id,next=>{next.storageLimit=Math.max(3,Number(next.storageLimit||3))+Number(amount||1);return next;}));return {ok:true};},
     createCustomItem: async (_campaignId,item)=>{requireFixtureSession();const record={...clone(item),id:eventId('custom'),name:item.name,title:item.name,custom:true};customItems=[...customItems,record];notify('customItems');return {ok:true,item:record};},
     createLiveItemRequest: async (_campaignId,characterId,recipientId,itemId,mode='give',details={})=>{
@@ -327,7 +333,11 @@ export function installDevFixtures() {
             const exchangeQuantity=Math.max(1,Math.min(Number(details.exchangeQuantity||1),Number(exchange.qty||1)));
             exchangeItem={...clone(exchange),qty:exchangeQuantity};exchange.qty=Number(exchange.qty||1)-exchangeQuantity;
             recipient.inventory=recipient.inventory.filter(value=>Number(value.qty??1)>0);
-            placeFixtureItem(sender,exchangeItem);
+            request.exchangeItem=exchangeItem;
+            request.status='awaiting-sender';request.recipientNotice='acknowledged';request.senderNotice='unread';request.recipientAcceptedAt=new Date().toISOString();
+            request.resolution={accepted:true,exchangeItem:{name:exchangeItem.name,qty:exchangeItem.qty},awaitingSender:true};
+            notify('characters');notify('itemEcosystem');
+            return {ok:true,awaitingSender:true};
           }
           receivedItem=placeFixtureItem(recipient,request.item,details.storageId||'');
         }else if(request.mode!=='identify')placeFixtureItem(sender,request.item,request.item.storageId||'');
@@ -343,6 +353,20 @@ export function installDevFixtures() {
     acknowledgeLiveItemRequest: async (_campaignId,characterId,requestId)=>{
       const request=itemRequestById(requestId);if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId))return {ok:false,error:'This result cannot be acknowledged.'};request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();notify('itemEcosystem');return {ok:true};
     },
+    finalizeLiveItemTrade: async (_campaignId,characterId,requestId,accepted)=>{
+      try{
+        requireFixtureSession();
+        const request=itemRequestById(requestId);
+        if(!request||request.mode!=='trade'||request.status!=='awaiting-sender'||String(request.fromCharacterId)!==String(characterId))throw new Error('This trade is no longer awaiting final confirmation.');
+        const sender=characters[request.fromCharacterId];const recipient=characters[request.toCharacterId];
+        if(accepted){placeFixtureItem(recipient,request.item);placeFixtureItem(sender,request.exchangeItem);}
+        else{placeFixtureItem(sender,request.item);placeFixtureItem(recipient,request.exchangeItem);}
+        request.status=accepted?'accepted':'declined';request.senderNotice='acknowledged';request.recipientNotice='unread';request.resolvedAt=new Date().toISOString();
+        request.resolution={...(request.resolution||{}),accepted:Boolean(accepted),awaitingSender:false,receivedItem:accepted?{name:request.item.name,qty:request.item.qty}:null};
+        notify('characters');notify('itemEcosystem');return {ok:true};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    acknowledgeLiveItemRecipientUpdate: async (_campaignId,characterId,requestId)=>{const request=itemRequestById(requestId);if(!request||String(request.toCharacterId)!==String(characterId)||!['accepted','declined','cancelled'].includes(request.status))return {ok:false,error:'This update cannot be acknowledged.'};request.recipientNotice='acknowledged';request.recipientAcknowledgedAt=new Date().toISOString();notify('itemEcosystem');return {ok:true};},
     createLiveItemOffer: (...args)=>fixtureApi.createLiveItemRequest(...args),
     respondLiveItemOffer: (...args)=>fixtureApi.respondLiveItemRequest(...args),
     resolveLootReward: async (_campaignId,characterId,id,action,destination) => {requireFixtureSession();const event=events.find(value=>value.id===id);if(!event)return {ok:false,error:'Reward not found.'};if(action!=='declined')updateCharacter(characterId,next=>{const item={...event.payload.item,id:event.payload.item.id||eventId('item'),equipped:action==='equip',equippedSlot:action==='equip'?destination:'',storageId:action==='equip'?normalizeCharacterStorages(next)[0].id:destination};next.inventory=[...(next.inventory||[]),item];return next;});events=events.map(value=>value.id===id?{...value,status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',resolvedAt:new Date().toISOString()}:value);notify('events');return {ok:true};},

@@ -16,7 +16,11 @@ export const SKILL_RANKS = ['Novice','Initiate','Apprentice','Journeyman','Adept
 export const TALENT_TIER_LEVELS = { 1:1, 2:10, 3:20, 4:30, 5:40 };
 
 export const DEFAULT_DASHBOARD_PANELS = [
-  'weapons', 'talents', 'spells', 'skills', 'conditions', 'coins'
+  'weapons', 'talents', 'spells', 'skills', 'conditions'
+];
+
+export const OPTIONAL_INFORMATION_FIELDS = [
+  'portrait', 'title', 'party', 'currency', 'campaignDetails', 'liveSync'
 ];
 
 export const DEFAULT_CHARACTER_STORAGES = [];
@@ -151,6 +155,9 @@ export function normalizeDashboardPreferences(character = {}) {
   return {
     panelOrder,
     hiddenPanels:Array.isArray(source.hiddenPanels) ? source.hiddenPanels.filter(key => DEFAULT_DASHBOARD_PANELS.includes(key)) : [],
+    hiddenInformationFields:Array.isArray(source.hiddenInformationFields)
+      ? source.hiddenInformationFields.filter(key => OPTIONAL_INFORMATION_FIELDS.includes(key))
+      : [],
     visibleTitleId:String(source.visibleTitleId || ''),
     showPartyMembership:source.showPartyMembership !== false
   };

@@ -12,7 +12,9 @@ async function loadEntry() {
     }
     return import('./main.jsx');
   }
-  return import('../react-dist/asteria-react.js?v=react-m1');
+  // Keep the entry URL identical to the URLs imported by Rollup chunks. A query
+  // suffix here would cause the browser to evaluate a second React runtime.
+  return import('../react-dist/asteria-react.js');
 }
 
 loadEntry().catch(error => {

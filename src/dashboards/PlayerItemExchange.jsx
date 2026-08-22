@@ -110,7 +110,7 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
     setBusy(true);
     setMessage(accepted ? 'Completing transaction...' : 'Declining request...');
     const result = await firebaseService.respondItemRequest(campaignId, character.id, request.id, accepted, { storageId, exchangeItemId, exchangeQuantity });
-    setMessage(resultMessage(result, accepted ? `${action.label} completed.` : 'Request declined.'));
+    setMessage(resultMessage(result, result?.awaitingSender ? 'Your offer is ready for the other player\'s final confirmation.' : accepted ? `${action.label} completed.` : 'Request declined.'));
     setBusy(false);
     if(result?.revealedItem) setRevealed(result.revealedItem);
     else if(result?.ok) onDismiss();
@@ -143,6 +143,19 @@ function RequestResultModal({ campaignId, character, recipient, request, onDone 
     if(result?.ok) onDone();
   };
   const accepted = request.status === 'accepted';
+  const awaitingSender = request.status === 'awaiting-sender';
+  const finalize = async acceptedTrade => {
+    setBusy(true);
+    const result = await firebaseService.finalizeItemTrade(campaignId, character.id, request.id, acceptedTrade);
+    setMessage(resultMessage(result, acceptedTrade ? 'Trade completed.' : 'Trade declined and both items returned.'));
+    setBusy(false);
+    if(result?.ok) onDone();
+  };
+  if(awaitingSender) return <Modal title="Final Trade Confirmation" eyebrow="Both Players Must Confirm" busy={busy} onClose={onDone} footer={<div className="react-modal-actions"><button className="danger" disabled={busy} onClick={()=>finalize(false)}>Decline &amp; Return Items</button><button className="primary" disabled={busy} onClick={()=>finalize(true)}>Confirm Final Trade</button></div>}>
+    <p><b>{recipient?.name || request.toCharacterName || 'The other player'}</b> has selected their exchange item. Review both offers before committing the atomic transfer.</p>
+    <div className="react-final-trade-grid"><section><small>Your Offer</small><ExchangeItem item={request.item} quantity={request.quantity}/></section><section><small>Their Offer</small><ExchangeItem item={request.exchangeItem} quantity={request.exchangeItem?.qty}/></section></div>
+    <p className="react-action-message" role="status">{message}</p>
+  </Modal>;
   return <Modal title={`${action.label} ${accepted ? 'Completed' : request.status === 'cancelled' ? 'Cancelled' : 'Declined'}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}>
     <div className="react-exchange-result"><StatusPill tone={accepted ? 'success' : 'warning'}>{String(request.status || 'updated').toUpperCase()}</StatusPill><h3>{request.item?.name || 'Item Request'}</h3><p>{recipient?.name || request.toCharacterName || 'The other player'} {accepted ? `accepted your ${action.label.toLowerCase()} request.` : `did not accept your ${action.label.toLowerCase()} request.`}</p>
       {request.resolution?.exchangeItem ? <p>You received <b>{request.resolution.exchangeItem.name} x{request.resolution.exchangeItem.qty}</b>.</p> : null}
@@ -151,6 +164,13 @@ function RequestResultModal({ campaignId, character, recipient, request, onDone 
     </div>
     <p className="react-action-message" role="status">{message}</p>
   </Modal>;
+}
+
+function RecipientResultModal({ campaignId, character, sender, request, onDone }) {
+  const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
+  const acknowledge=async()=>{setBusy(true);const result=await firebaseService.acknowledgeRecipientItemUpdate(campaignId,character.id,request.id);setMessage(resultMessage(result,'Update acknowledged.'));setBusy(false);if(result?.ok)onDone();};
+  const accepted=request.status==='accepted';
+  return <Modal title={`Trade ${accepted?'Completed':'Declined'}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}><StatusPill tone={accepted?'success':'warning'}>{String(request.status).toUpperCase()}</StatusPill><p>{sender?.name||request.fromCharacterName||'The other player'} {accepted?'confirmed the final exchange. Your item has been placed in the first available storage slot.':'declined the final exchange. Your offered item has been returned to your inventory.'}</p>{accepted?<ExchangeItem item={request.item} quantity={request.quantity} caption="Item received"/>:null}<p className="react-action-message">{message}</p></Modal>;
 }
 
 function SentRequestsModal({ campaignId, character, characters, requests, editable, onClose, onOpen }) {
@@ -173,6 +193,7 @@ export function PlayerItemRequestCenter({ campaignId, character, characters, eco
   const incoming = requests.filter(request => String(request.toCharacterId) === String(character.id) && request.status === 'pending');
   const sent = requests.filter(request => String(request.fromCharacterId) === String(character.id));
   const updates = sent.filter(request => request.status !== 'pending' && request.senderNotice !== 'acknowledged');
+  const recipientUpdates = requests.filter(request => String(request.toCharacterId) === String(character.id) && ['accepted','declined','cancelled'].includes(request.status) && request.recipientNotice === 'unread');
   const [activeId, setActiveId] = useState('');
   const [dismissed, setDismissed] = useState(() => new Set());
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -183,9 +204,9 @@ export function PlayerItemRequestCenter({ campaignId, character, characters, eco
   }, [character.id]);
   useEffect(() => {
     if(activeId) return;
-    const next = incoming.find(request => !dismissed.has(request.id)) || updates.find(request => !dismissed.has(request.id));
+    const next = incoming.find(request => !dismissed.has(request.id)) || recipientUpdates.find(request => !dismissed.has(request.id)) || updates.find(request => !dismissed.has(request.id));
     if(next) setActiveId(next.id);
-  }, [activeId, dismissed, incoming, updates]);
+  }, [activeId, dismissed, incoming, recipientUpdates, updates]);
   const active = requests.find(request => String(request.id) === String(activeId));
   const dismiss = () => {
     if(activeId) setDismissed(current => new Set([...current, activeId]));
@@ -198,9 +219,11 @@ export function PlayerItemRequestCenter({ campaignId, character, characters, eco
     <div className="react-item-request-dock" aria-live="polite">
       {incoming.length ? <button className="primary" onClick={() => { setHistoryOpen(false); setActiveId(incoming[0].id); }}><span>{incoming.length}</span> Incoming Item Request{incoming.length === 1 ? '' : 's'}</button> : null}
       {updates.length ? <button onClick={() => { setHistoryOpen(false); setActiveId(updates[0].id); }}><span>{updates.length}</span> Item Update{updates.length === 1 ? '' : 's'}</button> : null}
+      {recipientUpdates.length ? <button onClick={() => { setHistoryOpen(false); setActiveId(recipientUpdates[0].id); }}><span>{recipientUpdates.length}</span> Received Update{recipientUpdates.length === 1 ? '' : 's'}</button> : null}
       {sent.length ? <button onClick={() => setHistoryOpen(true)}>Sent Requests</button> : null}
     </div>
-    {active && String(active.toCharacterId) === String(character.id) ? <IncomingRequestModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} editable={editable} onDismiss={dismiss} /> : null}
+    {active && active.status === 'pending' && String(active.toCharacterId) === String(character.id) ? <IncomingRequestModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} editable={editable} onDismiss={dismiss} /> : null}
+    {active && recipientUpdates.some(request=>request.id===active.id) ? <RecipientResultModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} onDone={dismiss}/> : null}
     {active && active.status !== 'pending' && String(active.fromCharacterId) === String(character.id) ? <RequestResultModal campaignId={campaignId} character={character} recipient={characters[active.toCharacterId]} request={active} onDone={dismiss} /> : null}
     {historyOpen ? <SentRequestsModal campaignId={campaignId} character={character} characters={characters} requests={sent} editable={editable} onClose={() => setHistoryOpen(false)} onOpen={requestId => { setHistoryOpen(false); setActiveId(requestId); }} /> : null}
   </>;

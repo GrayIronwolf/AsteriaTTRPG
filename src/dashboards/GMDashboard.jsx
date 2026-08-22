@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { ConnectionBanner, EmptyState, Panel, ResourceBar, StatusPill, Tabs, WorkspaceShell } from '../components/WorkspaceUI.jsx';
+import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
+import { openLegacyGMSystem, openLegacyView } from '../app/legacyBridge.js';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
@@ -218,13 +219,23 @@ function LootRewards({ campaignId, characters, events, customItems }) {
 
 function PlayerManagementTools({ campaignId, characters }) {
   const [selected,setSelected]=useState([]);const [title,setTitle]=useState('');const [slots,setSlots]=useState(1);const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
+  const [manageCharacterId,setManageCharacterId]=useState('');const [titleEdits,setTitleEdits]=useState({});
   useEffect(()=>setSelected(current=>current.filter(id=>characters[id])),[characters]);
-  const run=async(operation,success)=>{setBusy(true);const result=await operation();setMessage(result?.ok?success:result?.error||'The GM change could not be saved.');setBusy(false);};
-  return <Panel title="Player Titles & Storage" eyebrow="GM Character Tools"><div className="react-recipient-actions"><button onClick={()=>setSelected(Object.keys(characters))}>Select All</button><button onClick={()=>setSelected([])}>Clear</button><span>{selected.length} selected</span></div><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={selected.includes(character.id)} onChange={event=>setSelected(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div><div className="react-gm-grant-grid"><section><h3>Grant Player Title</h3><label>Title<input value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. Hero of Elarion"/></label><button className="primary" disabled={busy||!selected.length||!title.trim()} onClick={()=>run(()=>firebaseService.grantTitle(campaignId,selected,title),'Title granted to selected characters.')}>Grant Title</button></section><section><h3>Grant Storage Slots</h3><label>Additional Slots<input type="number" min="1" max="10" value={slots} onChange={event=>setSlots(Math.max(1,Number(event.target.value||1)))}/></label><button className="primary" disabled={busy||!selected.length} onClick={()=>run(()=>firebaseService.grantStorageSlots(campaignId,selected,slots),'Storage slots granted.')}>Grant Slots</button></section></div><p>{message}</p></Panel>;
+  useEffect(()=>{if(!manageCharacterId||!characters[manageCharacterId])setManageCharacterId(Object.keys(characters)[0]||'');},[characters,manageCharacterId]);
+  const run=async(operation,success)=>{setBusy(true);const result=await operation();setMessage(result?.ok?success:result?.error||'The GM change could not be saved.');setBusy(false);return result;};
+  const managed=characters[manageCharacterId];
+  const managedTitles=(Array.isArray(managed?.titles)?managed.titles:[]).map((value,index)=>typeof value==='string'?{id:`title-${index}`,text:value}:value);
+  return <Panel title="Player Titles & Storage" eyebrow="GM Character Tools">
+    <div className="react-recipient-actions"><button onClick={()=>setSelected(Object.keys(characters))}>Select All</button><button onClick={()=>setSelected([])}>Clear</button><span>{selected.length} selected</span></div>
+    <div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={selected.includes(character.id)} onChange={event=>setSelected(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div>
+    <div className="react-gm-grant-grid"><section><h3>Grant Player Title</h3><label>Title<input value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. Hero of Elarion"/></label><button className="primary" disabled={busy||!selected.length||!title.trim()} onClick={async()=>{const result=await run(()=>firebaseService.grantTitle(campaignId,selected,title),'Title granted to selected characters.');if(result?.ok)setTitle('');}}>Grant Title</button></section><section><h3>Grant Storage Slots</h3><label>Additional Slots<input type="number" min="1" max="10" value={slots} onChange={event=>setSlots(Math.max(1,Number(event.target.value||1)))}/></label><button className="primary" disabled={busy||!selected.length} onClick={()=>run(()=>firebaseService.grantStorageSlots(campaignId,selected,slots),'Storage slots granted.')}>Grant Slots</button></section></div>
+    <section className="react-title-manager"><h3>Manage Existing Titles</h3><label>Character<select value={manageCharacterId} onChange={event=>setManageCharacterId(event.target.value)}>{Object.values(characters).map(character=><option key={character.id} value={character.id}>{character.name}</option>)}</select></label><div>{managedTitles.map(record=><article key={record.id}><input aria-label={`Edit ${record.text}`} value={titleEdits[record.id]??record.text} onChange={event=>setTitleEdits(current=>({...current,[record.id]:event.target.value}))}/><button disabled={busy} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{text:titleEdits[record.id]??record.text}),'Player title updated.')}>Save</button><button className="danger" disabled={busy} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{revoke:true}),'Player title revoked.')}>Revoke</button></article>)}{!managedTitles.length?<p className="react-help">This character has no granted titles.</p>:null}</div></section>
+    <p>{message}</p>
+  </Panel>;
 }
 
 function ExistingSystem({ title, copy, tab }) {
-  return <Panel title={title}><p>{copy}</p><button type="button" onClick={() => { window.AsteriaReactMigration?.openLegacyGM?.(); window.setGMSystem?.(tab); }}>Open existing {title}</button></Panel>;
+  return <Panel title={title}><p>{copy}</p><button type="button" onClick={() => openLegacyGMSystem(tab)}>Open existing {title}</button></Panel>;
 }
 
 export function GMDashboard({ campaignId }) {
@@ -236,15 +247,15 @@ export function GMDashboard({ campaignId }) {
   useEffect(() => { if(!selectedId && Object.keys(live.characters)[0]) setSelectedId(Object.keys(live.characters)[0]); }, [live.characters, selectedId]);
   const run = async operation => { setBusy(true); setActionError(''); try { await operation(); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
-  return <WorkspaceShell
+  return <AsteriaAppShell
     className="react-gm-dashboard"
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} />}
-    actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><ConnectionBanner online={live.online} error={live.error || actionError} session={live.session} /></>}
+    actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError} loading={live.loading} session={live.session} /></>}
   >
-    <Tabs tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
+    <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'main' ? <div className="react-gm-main-grid">
       <CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
@@ -254,7 +265,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'economy' ? <ExistingSystem title="Economy" copy="Prices, trade routes, shipping, scarcity, merchants, and shops remain operational." tab="economy" /> : null}
     {tab === 'crafting' ? <ExistingSystem title="Crafting" copy="Projects, approvals, materials, recipes, and enchantments remain operational." tab="crafting" /> : null}
     {tab === 'tools' ? <div className="react-gm-tools-grid"><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
-    {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => { window.location.hash = ''; window.setView?.('campaigns'); }}>Open Campaign Manager</button></Panel> : null}
+    {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => openLegacyView('campaigns')}>Open Campaign Manager</button></Panel> : null}
     {tab === 'world' ? <ExistingSystem title="World Systems" copy="World state, events, factions, settlements, merchants, and timeline tools remain available in the static workspace." tab="world" /> : null}
-  </WorkspaceShell>;
+  </AsteriaAppShell>;
 }

@@ -4,15 +4,162 @@
   const hiddenUtilitySelector = '.test-logins,.offline-logins';
   let setViewHomeWrapped = false;
   let homeRouting = false;
+  let mobileNavReturnFocus = null;
+  let settingsReturnFocus = null;
 
   function byId(id){ return document.getElementById(id); }
   function qsa(selector, root=document){ return Array.from(root.querySelectorAll(selector)); }
   function toast(message){ if(typeof window.toast === 'function') window.toast(message); else alert(message); }
+  function announce(message, priority = 'polite'){
+    const region = byId('asteriaLiveRegion');
+    if(!region || !message) return;
+    region.setAttribute('aria-live', priority === 'assertive' ? 'assertive' : 'polite');
+    region.textContent = '';
+    requestAnimationFrame(() => { region.textContent = String(message); });
+  }
   function normalizeLoginRole(role){ return role === 'admin' ? 'gm' : (role || 'player'); }
   function cleanUsername(value){ return String(value || '').trim().toLowerCase(); }
   function isAccountSignedIn(){
     const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
     return Boolean(session.uid || session.email || ['account', 'player', 'gm'].includes(session.role));
+  }
+
+  function mobileNavigationIsAvailable(){
+    return window.matchMedia?.('(max-width: 900px)').matches;
+  }
+
+  function setMobileNavigation(open, restoreFocus = true){
+    const toggle = byId('mobileNavToggle');
+    const navigation = byId('globalNavigation');
+    if(!toggle || !navigation) return;
+    const shouldOpen = Boolean(open && mobileNavigationIsAvailable());
+    if(shouldOpen) mobileNavReturnFocus = document.activeElement;
+    document.body.classList.toggle('mobile-nav-open', shouldOpen);
+    toggle.setAttribute('aria-expanded', String(shouldOpen));
+    toggle.setAttribute('aria-label', shouldOpen ? 'Close main navigation' : 'Open main navigation');
+    navigation.setAttribute('aria-hidden', String(mobileNavigationIsAvailable() && !shouldOpen));
+    if(shouldOpen){
+      requestAnimationFrame(() => navigation.querySelector('button, a, [tabindex]:not([tabindex="-1"])')?.focus());
+    } else if(restoreFocus && mobileNavReturnFocus){
+      mobileNavReturnFocus.focus?.();
+      mobileNavReturnFocus = null;
+    }
+  }
+
+  function bindMobileNavigation(){
+    const toggle = byId('mobileNavToggle');
+    const navigation = byId('globalNavigation');
+    const shade = byId('mobileNavShade');
+    if(!toggle || !navigation || toggle.dataset.shellBound) return;
+    toggle.dataset.shellBound = '1';
+    setMobileNavigation(false, false);
+    toggle.addEventListener('click', event => {
+      event.preventDefault();
+      setMobileNavigation(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+    shade?.addEventListener('click', () => setMobileNavigation(false));
+    navigation.addEventListener('click', event => {
+      if(mobileNavigationIsAvailable() && event.target.closest('button, a, [role="button"]')) setMobileNavigation(false, false);
+    }, true);
+    document.addEventListener('keydown', event => {
+      if(!document.body.classList.contains('mobile-nav-open')) return;
+      if(event.key === 'Escape'){
+        event.preventDefault();
+        setMobileNavigation(false);
+        return;
+      }
+      if(event.key !== 'Tab') return;
+      const controls = qsa('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])', navigation)
+        .filter(control => control.offsetParent !== null);
+      if(!controls.length) return event.preventDefault();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+      else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+    });
+    window.matchMedia?.('(max-width: 900px)').addEventListener?.('change', () => setMobileNavigation(false, false));
+  }
+
+  function settingsFocusableControls(panel){
+    return qsa('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', panel)
+      .filter(control => control.offsetParent !== null);
+  }
+
+  function syncSettingsAccessibility({ focusPanel = false, restoreFocus = false } = {}){
+    const panel = byId('settingsPanel');
+    const toggle = byId('settingsToggle');
+    const shade = byId('shade');
+    if(!panel || !toggle) return;
+    const open = panel.classList.contains('open');
+    panel.setAttribute('aria-hidden', String(!open));
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close settings' : 'Open settings');
+    shade?.setAttribute('aria-hidden', String(!open));
+    if(open){
+      if(!settingsReturnFocus) settingsReturnFocus = toggle;
+      if(focusPanel) requestAnimationFrame(() => settingsFocusableControls(panel)[0]?.focus());
+    } else if(restoreFocus && settingsReturnFocus){
+      settingsReturnFocus.focus?.();
+      settingsReturnFocus = null;
+    }
+  }
+
+  function bindSettingsAccessibility(){
+    const panel = byId('settingsPanel');
+    const toggle = byId('settingsToggle');
+    const close = byId('settingsClose');
+    const shade = byId('shade');
+    if(!panel || !toggle || panel.dataset.shellA11yBound) return;
+    panel.dataset.shellA11yBound = '1';
+    syncSettingsAccessibility();
+
+    const observer = new MutationObserver(() => {
+      const open = panel.classList.contains('open');
+      syncSettingsAccessibility({ focusPanel:open, restoreFocus:!open });
+      if(open) announce('Settings opened.');
+    });
+    observer.observe(panel, { attributes:true, attributeFilter:['class'] });
+
+    toggle.addEventListener('click', () => requestAnimationFrame(() => syncSettingsAccessibility({ focusPanel:panel.classList.contains('open') })));
+    close?.addEventListener('click', () => requestAnimationFrame(() => syncSettingsAccessibility({ restoreFocus:true })));
+    shade?.addEventListener('click', () => requestAnimationFrame(() => syncSettingsAccessibility({ restoreFocus:true })));
+    document.addEventListener('keydown', event => {
+      if(!panel.classList.contains('open')) return;
+      if(event.key === 'Escape'){
+        event.preventDefault();
+        close?.click();
+        return;
+      }
+      if(event.key !== 'Tab') return;
+      const controls = settingsFocusableControls(panel);
+      if(!controls.length) return event.preventDefault();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+      else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+    });
+  }
+
+  function bindStaticDialogAccessibility(){
+    if(document.body.dataset.shellDialogA11yBound) return;
+    document.body.dataset.shellDialogA11yBound = '1';
+    document.addEventListener('keydown', event => {
+      const overlay = [byId('itemModal'), byId('levelModal')].find(element => element?.classList.contains('show'));
+      const dialog = overlay?.querySelector('[role="dialog"]');
+      if(!dialog) return;
+      if(event.key === 'Escape'){
+        event.preventDefault();
+        dialog.querySelector('[aria-label^="Close"]')?.click();
+        return;
+      }
+      if(event.key !== 'Tab') return;
+      const controls = settingsFocusableControls(dialog);
+      if(!controls.length) return event.preventDefault();
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
+      else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+    });
   }
   function accountKey(){
     const session = window.AsteriaAuthBridge?.getSession?.() || window.session || {};
@@ -214,6 +361,7 @@
       save(){ window.saveAccountState?.(); },
       session(){ return window.session || { role:'guest', character:null }; }
     };
+    window.AsteriaAnnounce = announce;
   }
 
   window.loginFromPage = function(){
@@ -244,6 +392,9 @@
   function bindStaticControls(){
     qsa(hiddenUtilitySelector).forEach(el => el.remove());
     wrapSetViewHomeRoute();
+    bindMobileNavigation();
+    bindSettingsAccessibility();
+    bindStaticDialogAccessibility();
 
     const settings = byId('settingsToggle') || document.querySelector('.hamburger');
     if(settings && qsa('span', settings).length !== 3){

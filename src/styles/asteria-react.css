@@ -13,9 +13,13 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-workspace-shell {
   display: grid;
   grid-template-columns: minmax(250px, 292px) minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--asteria-space-4, 16px);
   width: 100%;
   color: var(--asteria-text, #f7ead1);
+}
+
+.react-workspace-shell.no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .react-workspace-sidebar,
@@ -33,18 +37,19 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-workspace-main {
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: var(--asteria-space-3, 12px);
   container-type: inline-size;
 }
 
 .asteria-react-panel {
   min-width: 0;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--asteria-accent, #1f7dff) 52%, #7e8791 48%);
-  border-radius: 6px;
-  background: rgba(4, 14, 16, var(--asteria-panel-alpha, .82));
+  padding: var(--asteria-space-4, 16px);
+  border: 1px solid color-mix(in srgb, var(--asteria-border-active) 52%, var(--asteria-border) 48%);
+  border-radius: var(--asteria-radius, 6px);
+  background: color-mix(in srgb, var(--asteria-surface) calc(var(--asteria-panel-alpha, .82) * 100%), transparent);
   backdrop-filter: blur(2px);
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, .24), 0 0 calc(var(--asteria-glow-strength, .36) * 14px) color-mix(in srgb, var(--asteria-accent, #1f7dff) 42%, transparent);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, .24), var(--asteria-glow-panel);
+  transition: border-color var(--asteria-transition-fast), box-shadow var(--asteria-transition-fast), background var(--asteria-transition-fast);
 }
 
 .asteria-react-panel:hover {
@@ -64,12 +69,12 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .asteria-react-panel h2,
 .asteria-react-panel h3 {
   margin: 0;
-  color: var(--asteria-text, #f7ead1);
+  color: var(--asteria-text);
   letter-spacing: 0;
 }
 
 .react-workspace-header h1 {
-  font-size: clamp(1.9rem, 2.4rem, 2.4rem);
+  font-size: var(--asteria-type-page, 2rem);
 }
 
 .react-workspace-header p {
@@ -79,7 +84,7 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-eyebrow {
   margin: 0 0 6px !important;
   color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 68%, #e0b85f 32%);
-  font-size: .76rem;
+  font-size: var(--asteria-type-xs, .72rem);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -104,8 +109,9 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
   gap: 2px 8px;
   min-width: 190px;
   padding: 9px 11px;
-  border: 1px solid rgba(255, 255, 255, .16);
-  background: rgba(0, 0, 0, .34);
+  border: 1px solid var(--asteria-border-subtle);
+  border-radius: var(--asteria-radius-sm, 3px);
+  background: color-mix(in srgb, var(--asteria-surface-solid) 58%, transparent);
 }
 
 .react-connection > span {
@@ -113,16 +119,19 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #d7a347;
+  background: var(--asteria-warning);
 }
 
-.react-connection.online > span { background: #35d982; box-shadow: 0 0 10px #35d982; }
-.react-connection.error > span { background: #d43f56; box-shadow: 0 0 10px #d43f56; }
+.react-connection.online > span { background: var(--asteria-success); box-shadow: 0 0 10px var(--asteria-success); }
+.react-connection.error > span { background: var(--asteria-danger); box-shadow: 0 0 10px var(--asteria-danger); }
+.react-connection.pending > span,
+.react-connection.warning > span { background: var(--asteria-warning); box-shadow: 0 0 10px color-mix(in srgb, var(--asteria-warning) 72%, transparent); }
+.react-connection.offline > span { background: var(--asteria-text-disabled); box-shadow: none; }
 .react-connection small { opacity: .78; }
 
 .react-tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
   gap: 0;
   padding: 0;
   overflow: hidden;
@@ -135,12 +144,19 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
   border-right: 1px solid rgba(255, 255, 255, .12);
   border-radius: 0;
   background: rgba(0, 0, 0, .2);
-  color: inherit;
+  color: var(--asteria-text);
   font-weight: 800;
 }
 
-.react-tabs button span { margin-right: 7px; color: var(--asteria-accent, #1f7dff); }
+.react-tabs button > span:first-child { display: inline-grid; place-items: center; margin-right: 7px; color: var(--asteria-accent, #1f7dff); }
+.asteria-icon { display: block; flex: 0 0 auto; }
+.react-tab-label { overflow-wrap: anywhere; }
 .react-tabs button.active { background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 18%, rgba(0,0,0,.58)); box-shadow: inset 0 -2px 0 var(--asteria-accent, #1f7dff); }
+
+#asteriaReactRoot :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 0;
+  box-shadow: var(--asteria-focus);
+}
 
 .react-panel-header {
   display: flex;
@@ -149,10 +165,104 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
   align-items: center;
   margin-bottom: 13px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  border-bottom: 1px solid var(--asteria-border-subtle);
 }
 
 .react-panel-header h2 { font-size: 1.3rem; }
+
+.react-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--asteria-space-3, 12px);
+  margin-bottom: var(--asteria-space-3, 12px);
+}
+
+.react-section-header h2,
+.react-section-header h3 { margin: 0; color: var(--asteria-text); }
+
+.react-resource-chip {
+  display: inline-grid;
+  gap: 2px;
+  min-width: 72px;
+  padding: var(--asteria-space-2, 8px) var(--asteria-space-3, 12px);
+  border: 1px solid var(--asteria-border-subtle);
+  border-radius: var(--asteria-radius-sm, 3px);
+  background: var(--asteria-surface-raised);
+}
+
+.react-resource-chip small { color: var(--asteria-text-muted); }
+.react-resource-chip strong { color: var(--asteria-text); }
+
+.react-search-field {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding-left: 10px;
+  border: 1px solid var(--asteria-border-subtle);
+  background: var(--asteria-surface-solid);
+}
+.react-search-field input { width: 100%; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+.react-search-field .asteria-icon { color: var(--asteria-text-muted); }
+.react-filter-control { display: grid; gap: 4px; min-width: 0; }
+.react-filter-control > span { color: var(--asteria-text-muted); font-size: var(--asteria-type-xs); font-weight: 800; text-transform: uppercase; }
+.react-filter-control select { width: 100%; min-width: 0; }
+.react-content-toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(150px, .32fr); align-items: end; gap: 10px; margin-bottom: 12px; }
+.react-tooltip { position: relative; display: inline-flex; }
+.react-tooltip::after { content: attr(data-tooltip); position: absolute; left: 50%; bottom: calc(100% + 7px); z-index: 90; width: max-content; max-width: 210px; padding: 5px 7px; border: 1px solid var(--asteria-border-active); background: var(--asteria-surface-solid); color: var(--asteria-text); font-size: .68rem; opacity: 0; pointer-events: none; transform: translate(-50%, 4px); transition: opacity var(--asteria-transition-fast), transform var(--asteria-transition-fast); }
+.react-tooltip:hover::after, .react-tooltip:focus-within::after { opacity: 1; transform: translate(-50%, 0); }
+
+.react-currency-display {
+  display: flex;
+  align-items: center;
+  gap: var(--asteria-space-3, 12px);
+  min-width: 0;
+}
+
+.react-currency-display > span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--asteria-gold);
+  font-family: var(--asteria-font-display);
+  font-weight: 800;
+}
+
+.react-currency-display > div { display: grid; }
+.react-currency-display small { color: var(--asteria-text-muted); }
+.react-currency-display strong { color: var(--asteria-text); font-size: var(--asteria-type-lg); }
+
+.react-loading-state {
+  display: grid;
+  gap: var(--asteria-space-2, 8px);
+  width: 100%;
+  padding-block: var(--asteria-space-2, 8px);
+}
+
+.react-loading-state > span {
+  display: block;
+  height: 12px;
+  border-radius: var(--asteria-radius-sm, 3px);
+  background: linear-gradient(90deg, var(--asteria-surface-raised), var(--asteria-surface-solid), var(--asteria-surface-raised));
+  background-size: 200% 100%;
+  animation: asteria-loading-sweep 1.4s ease-in-out infinite;
+}
+
+.react-loading-state > span:nth-child(2) { width: 82%; }
+.react-loading-state > span:nth-child(3) { width: 64%; }
+.react-loading-state > span:nth-child(4) { width: 74%; }
+
+@keyframes asteria-loading-sweep {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
 
 .react-party-sidebar {
   display: flex;
@@ -186,13 +296,13 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 
 .react-resource { display: grid; gap: 4px; }
 .react-resource > div:first-child { display: flex; justify-content: space-between; gap: 8px; font-size: .84rem; }
-.react-resource-track { height: 8px; overflow: hidden; background: #1d292b; border-radius: 2px; }
-.react-resource-track i { display: block; height: 100%; transition: width .22s ease; background: var(--asteria-accent, #1f7dff); }
-.react-resource.hp i { background: #9f2038; }
-.react-resource.sp i { background: #26cb7a; }
-.react-resource.mp i { background: #216bd4; }
-.react-resource.bp i { background: #a82747; }
-.react-resource.xp i { background: #5cd3f0; }
+.react-resource-track { height: 8px; overflow: hidden; background: var(--asteria-surface-solid); border-radius: var(--asteria-radius-sm, 3px); }
+.react-resource-track i { display: block; height: 100%; transition: width var(--asteria-transition-normal); background: var(--asteria-border-active); }
+.react-resource.hp i { background: var(--asteria-hp); }
+.react-resource.sp i { background: var(--asteria-sp); }
+.react-resource.mp i { background: var(--asteria-mp); }
+.react-resource.bp i { background: var(--asteria-bp); }
+.react-resource.xp i { background: var(--asteria-xp); }
 .react-resource.compact { gap: 2px; }
 .react-resource.compact > div:first-child { font-size: .7rem; }
 .react-resource.compact .react-resource-track { height: 5px; }
@@ -225,25 +335,83 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-search-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin-top: 10px; }
 .react-search-results button.active { border-color: var(--asteria-accent, #1f7dff); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 18%, black); }
 
-.react-character-sidebar { display: grid; gap: 13px; max-height: calc(100dvh - 116px); overflow: auto; }
-.react-character-identity { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 12px; align-items: start; }
-.react-character-portrait { display: grid; gap: 7px; text-align: center; }
-.react-character-portrait img, .react-character-portrait > span { width: 100px; height: 124px; object-fit: cover; display: grid; place-items: center; border: 1px solid var(--asteria-accent, #1f7dff); background: rgba(0,0,0,.38); font-size: 2.8rem; }
-.react-character-portrait > b { padding: 6px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.24); }
-.react-character-identity h2 { font-size: 1.35rem; }
-.react-character-identity p { margin: 3px 0; }
-.react-character-identity small { display: block; margin-top: 8px; opacity: .8; }
-.react-xp-sidebar { display: grid; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.12); }
-.react-xp-sidebar small { text-align: right; opacity: .78; }
-.react-sidebar-resources { display: grid; gap: 12px; }
-.react-sidebar-resource { display: grid; gap: 6px; }
-.react-resource-controls { display: grid; grid-template-columns: minmax(0, 1fr) 42px 42px; gap: 5px; }
-.react-resource-controls input { width: 100%; min-width: 0; height: 38px; }
-.react-resource-controls button { width: 42px; height: 38px; padding: 0; font-size: 1rem; }
-.react-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.react-stat-grid > div { display: grid; place-items: center; min-height: 64px; padding: 5px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.2); }
-.react-stat-grid > div span { font-size: 1.05rem; font-weight: 800; }
-.react-stat-grid > div small { font-size: .62rem; color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 60%, white); }
+.react-campaign-resource-hud {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.05fr) minmax(420px, 1.35fr) minmax(190px, .65fr);
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.react-campaign-resource-hud > * {
+  min-width: 0;
+  padding: 16px;
+}
+
+.react-campaign-resource-hud > * + * {
+  border-left: 1px solid rgba(255,255,255,.12);
+}
+
+.react-hud-character {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.react-hud-character-identity {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+}
+
+.react-hud-character-identity h2,
+.react-hud-character-identity p { margin: 0; }
+.react-hud-character-identity h2 { font-size: 1.25rem; }
+.react-hud-character-identity small { display: block; margin-top: 4px; color: var(--asteria-text-muted, #9eafbd); }
+
+.react-hud-portrait,
+.react-hud-portrait img {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 72px;
+  object-fit: cover;
+}
+
+.react-hud-portrait {
+  overflow: hidden;
+  border: 1px solid var(--asteria-accent, #1f7dff);
+  background: rgba(0,0,0,.38);
+  font-size: 1.9rem;
+}
+
+.react-hud-xp { display: grid; gap: 3px; }
+.react-hud-xp > small { text-align: right; }
+.react-hud-resource-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.react-hud-resource { display: grid; gap: 5px; }
+.react-hud-resource-controls { display: grid; grid-template-columns: minmax(0, 1fr) 34px 34px; gap: 4px; }
+.react-hud-resource-controls input { width: 100%; min-width: 0; height: 34px; }
+.react-hud-resource-controls button { width: 34px; min-height: 34px; height: 34px; padding: 0; }
+.react-hud-adjust-toggle { display: none; }
+
+.react-hud-status {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+}
+
+.react-hud-status .react-connection { min-width: 0; }
+.react-hud-status .react-currency-panel { min-height: 0; padding: 0; }
+.react-campaign-facts-mobile { display: none; }
+.react-hud-currencies { display: grid; gap: 8px; }
+.react-hud-currencies .react-currency-display { padding-bottom: 7px; border-bottom: 1px solid var(--asteria-border-subtle); }
+.react-hud-currencies .react-currency-display:last-child { padding-bottom: 0; border-bottom: 0; }
+.react-currency-display.arcane > span { color: var(--asteria-accent, #1f7dff); }
+.react-hud-location { display: grid; grid-template-columns: 24px minmax(0,1fr); gap: 8px; align-items: center; padding: 9px; border: 1px solid var(--asteria-border-subtle); background: rgba(0,0,0,.18); }
+.react-hud-location .asteria-icon { color: var(--asteria-accent, #1f7dff); }
+.react-hud-location > div { display: grid; min-width: 0; }
+.react-hud-location small, .react-hud-location span { color: var(--asteria-text-muted); }
 
 .react-encounter-toolbar, .react-encounter-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .react-encounter-summary { margin: 10px 0 14px; }
@@ -279,6 +447,15 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-character-dashboard-grid > .react-panel-skills { grid-column: span 5; }
 .react-character-dashboard-grid > .react-panel-conditions { grid-column: span 3; }
 .react-character-dashboard-grid > .react-panel-coins { grid-column: span 4; }
+.react-dashboard-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.react-summary-list { display: grid; gap: 6px; }
+.react-summary-list > button { display: grid; gap: 4px; min-width: 0; padding: 9px; text-align: left; }
+.react-summary-list > button span { display: -webkit-box; overflow: hidden; color: var(--asteria-text-muted); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.react-dashboard-party-summary { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.react-dashboard-party-summary > button { display: grid; grid-template-columns: 46px minmax(0,1fr); grid-template-rows: auto auto; gap: 2px 8px; align-items: center; min-width: 0; padding: 7px; text-align: left; }
+.react-dashboard-party-summary > button > span { grid-row: 1 / 3; display: grid; place-items: center; width: 46px; height: 46px; overflow: hidden; border: 1px solid var(--asteria-accent); border-radius: 50%; }
+.react-dashboard-party-summary img { width: 100%; height: 100%; object-fit: cover; }
+.react-dashboard-party-summary b, .react-dashboard-party-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .react-dashboard-loadout { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); gap: 12px; }
 .react-dashboard-loadout h3 { margin: 0 0 7px; font-size: .72rem; text-transform: uppercase; }
 .react-equipment-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
@@ -318,6 +495,13 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-character-tab-grid { display: grid; grid-template-columns: minmax(230px, .35fr) minmax(0, 1fr); gap: 12px; }
 .react-character-tab-grid > .react-full-panel { grid-column: 1 / -1; }
+.react-character-support-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.react-character-identity-summary { display: grid; grid-template-columns: minmax(100px,140px) minmax(0,1fr); gap: 12px; align-items: start; }
+.react-character-identity-summary > img, .react-character-identity-summary > span { display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 1px solid var(--asteria-border-active); background: rgba(0,0,0,.28); font-family: var(--asteria-font-display); font-size: 2.4rem; }
+.react-character-equipment-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+.react-character-equipment-list > button { display: grid; min-width: 0; padding: 7px; text-align: left; }
+.react-character-equipment-list b { color: var(--asteria-text-muted); font-size: .62rem; text-transform: uppercase; }
+.react-character-equipment-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .react-detail-list { display: grid; gap: 0; margin: 0; }
 .react-detail-list > div { display: grid; grid-template-columns: minmax(88px, .38fr) 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
 .react-detail-list dt { opacity: .7; }
@@ -344,7 +528,9 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 .react-record-card { min-height: 132px; }
 .react-record-card > span { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-.react-talent-card.unlocked { box-shadow: inset 3px 0 0 #35d982; }
+.react-talent-card.purchased { box-shadow: inset 3px 0 0 var(--asteria-success); }
+.react-talent-card.available { box-shadow: inset 3px 0 0 var(--asteria-info); }
+.react-talent-card.locked { opacity: .72; box-shadow: inset 3px 0 0 var(--asteria-warning); }
 .react-talent-card > b, .react-skill-card > b, .react-spell-card > b, .react-item-card > b { min-height: 2.2em; overflow-wrap: anywhere; line-height: 1.1; }
 .react-talent-card .react-small-card-image, .react-spell-card .react-small-card-image, .react-item-card .react-small-card-image { height: 72px; }
 .react-talent-card em { font-size: .68rem; font-style: normal; }
@@ -377,11 +563,20 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-quest-list { display: grid; gap: 7px; }
 .react-quest-list article { display: grid; grid-template-columns: minmax(0,1fr) 170px; align-items: center; gap: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.13); background: rgba(0,0,0,.2); }
 .react-quest-list p { margin: 3px 0 0; }
+.react-quest-list article header { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.react-quest-list article.tracked { border-left: 3px solid var(--asteria-gold); }
 .react-party-workspace { display: grid; grid-template-columns: minmax(230px,.32fr) minmax(280px,.45fr) minmax(420px,1fr); gap: 12px; }
 .react-party-container, .react-organization-workspace, .react-gallery-workspace, .react-settings-workspace { display: grid; gap: 12px; }
 .react-organization-workspace { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .react-member-grid { display: grid; gap: 7px; }
 .react-member-grid article small { margin-top: 4px; }
+.react-party-member-card { grid-template-columns: 62px minmax(0,1fr); align-items: center !important; }
+.react-party-member-portrait { position: relative; display: grid; place-items: center; width: 62px; height: 62px; overflow: hidden; border: 2px solid var(--asteria-accent); border-radius: 50%; background: var(--asteria-surface-solid); }
+.react-party-member-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.react-party-member-portrait i { position: absolute; right: 2px; bottom: 2px; width: 10px; height: 10px; border: 2px solid var(--asteria-surface-solid); border-radius: 50%; }
+.react-party-member-portrait i.online { background: var(--asteria-success); }
+.react-party-member-portrait i.offline { background: var(--asteria-text-disabled); }
+.react-party-member-card > div { display: grid; gap: 4px; min-width: 0; }
 .react-party-chat { min-height: 520px; display: grid; grid-template-rows: auto minmax(0,1fr) auto; }
 .react-chat-log { min-height: 280px; max-height: 430px; overflow: auto; padding-right: 4px; }
 .react-chat-log article { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.1); }
@@ -559,6 +754,9 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-gallery-grid article.active { border-color: var(--asteria-accent,#1f7dff); box-shadow: inset 0 0 15px color-mix(in srgb,var(--asteria-accent,#1f7dff) 20%,transparent); }
 .react-gallery-grid img { width: 100%; aspect-ratio: 4/5; object-fit: contain; background: rgba(0,0,0,.36); }
 .react-gallery-grid article > div { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.react-gallery-media-button { width: 100%; height: 100%; padding: 0; border: 0; background: transparent; }
+.react-gallery-media-button img { width: 100%; height: 100%; object-fit: contain; }
+.react-gallery-lightbox-image { display: block; width: 100%; max-height: 64dvh; object-fit: contain; background: rgba(0,0,0,.42); }
 .react-panel-order-list { display: grid; gap: 6px; }
 .react-panel-order-list article { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.2); }
 .react-panel-order-list label, .react-check-row { display: flex !important; align-items: center; gap: 8px; }
@@ -612,6 +810,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .react-storage-workspace { grid-template-columns: 210px minmax(0,1fr); }
   .react-equipment-drop-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .react-dashboard-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .react-dashboard-summary-grid > :last-child { grid-column: 1 / -1; }
 }
 
 @container (max-width: 720px) {
@@ -623,6 +823,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .react-storage-workspace, .react-settings-workspace, .react-organization-workspace { grid-template-columns: 1fr; }
   .react-settings-save { grid-column: 1; }
+  .react-dashboard-summary-grid, .react-character-support-grid { grid-template-columns: 1fr; }
+  .react-dashboard-summary-grid > :last-child { grid-column: 1; }
 }
 
 @media (max-width: 900px) {
@@ -631,7 +833,9 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-workspace-sidebar { position: static; max-height: none; }
   .react-party-sidebar { max-height: none; }
   .react-party-list { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-  .react-character-sidebar { max-height: none; }
+  .react-campaign-resource-hud { grid-template-columns: 1fr 1fr; }
+  .react-campaign-resource-hud > * + * { border-left: 1px solid rgba(255,255,255,.12); }
+  .react-hud-status { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(220px, .7fr); border-top: 1px solid rgba(255,255,255,.12); border-left: 0 !important; }
   .react-workspace-header { align-items: flex-start; flex-direction: column; }
   .react-header-actions { width: 100%; justify-content: space-between; }
   .react-character-dashboard-grid { grid-template-columns: 1fr; }
@@ -642,6 +846,19 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 
 @media (max-width: 560px) {
+  .react-campaign-resource-hud { grid-template-columns: 1fr; }
+  .react-campaign-resource-hud > * + * { border-top: 1px solid rgba(255,255,255,.12); border-left: 0; }
+  .react-hud-status { grid-column: 1; grid-template-columns: 1fr; }
+  .react-hud-resource-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .react-hud-adjust-toggle { display: block; width: 100%; min-height: 38px; }
+  .react-hud-resource-controls { display: none; }
+  .react-hud-resource-grid.show-adjustments .react-hud-resource-controls { display: grid; }
+  .react-campaign-resource-hud > * { padding: 12px; }
+  .react-campaign-information .react-empty { min-height: 0; padding: 8px; }
+  .react-campaign-information .react-empty p { display: none; }
+  .react-campaign-facts-desktop { display: none; }
+  .react-campaign-facts-mobile { display: block; }
+  .react-campaign-facts-mobile summary { min-height: 44px; padding: 11px 0; color: var(--asteria-accent); cursor: pointer; font-weight: 800; }
   .react-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .react-header-actions, .react-session-actions { align-items: stretch; flex-direction: column; }
   .react-connection { width: 100%; }
@@ -661,19 +878,26 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-tier-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .react-quest-list article { grid-template-columns: 1fr; }
+  .react-content-toolbar, .react-character-identity-summary { grid-template-columns: 1fr; }
+  .react-character-identity-summary > img, .react-character-identity-summary > span { max-width: 180px; }
+  .react-dashboard-party-summary { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .asteria-react-panel { transition: none; }
   .react-resource-track i { transition: none; }
+  .react-loading-state > span { animation: none; }
 }
 
 /* Compact live inventory, party actions, and resilient gallery images */
 .react-inventory-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr) 105px;
+  grid-template-columns: minmax(320px, 360px) minmax(420px, 1fr) minmax(150px, 178px);
   gap: 10px;
   align-items: start;
 }
+
+.react-inventory-mobile-tabs { display: none; }
 
 .react-inventory-layout > .asteria-react-panel {
   padding: 12px;
@@ -709,6 +933,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-inventory-slot.filled {
   border-color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 70%, #d7ae54);
 }
+.react-inventory-slot.valid-drop { border-color: var(--asteria-success); background: color-mix(in srgb,var(--asteria-success) 15%,rgba(2,13,20,.75)); box-shadow: inset 0 0 14px color-mix(in srgb,var(--asteria-success) 24%,transparent); }
+.react-inventory-slot.invalid-drop { border-color: var(--asteria-danger); background: color-mix(in srgb,var(--asteria-danger) 12%,rgba(2,13,20,.75)); }
 
 .react-inventory-slot > span {
   display: grid;
@@ -830,16 +1056,21 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-inventory-toolbar {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) minmax(95px, .34fr) auto;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, .32fr) auto auto;
+  align-items: end;
   gap: 6px;
   margin-bottom: 9px;
 }
 
 .react-inventory-toolbar input,
-.react-inventory-toolbar select {
+.react-inventory-toolbar select,
+.react-inventory-toolbar .react-search-field {
   width: 100%;
   min-height: 36px;
 }
+.react-inventory-view-controls { display: flex; gap: 4px; }
+.react-inventory-view-controls .react-icon-button { width: 36px; height: 36px; }
+.react-inventory-view-controls .active { border-color: var(--asteria-accent); background: color-mix(in srgb,var(--asteria-accent) 18%,black); }
 
 .react-inventory-item-grid {
   display: grid;
@@ -850,6 +1081,13 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   width: max-content;
   min-width: 100%;
 }
+.react-inventory-item-grid.list { grid-template-columns: 1fr !important; grid-auto-rows: auto; width: 100%; }
+.react-inventory-item-grid.list .react-storage-cell { width: 100%; height: auto; min-height: 64px; }
+.react-inventory-item-grid.list .react-storage-cell:not(.filled) { display: none; }
+.react-inventory-item-grid.list .react-inventory-item-card { grid-template-columns: 60px minmax(0,1fr) auto; grid-template-rows: auto auto; align-items: center; justify-items: start; min-height: 64px; padding: 5px 36px 5px 5px; }
+.react-inventory-item-grid.list .react-inventory-item-image { grid-row: 1 / 3; width: 60px; height: 52px; }
+.react-inventory-item-grid.list .react-inventory-item-card b { font-size: .76rem; text-align: left; }
+.react-inventory-item-grid.list .react-inventory-item-card small { font-size: .66rem; }
 
 .react-inventory-grid-scroll {
   max-width: 100%;
@@ -862,6 +1100,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-storage-grid-meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   margin: 4px 0 7px;
@@ -911,7 +1150,26 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   border: 1px solid rgba(69, 153, 213, .42);
   background: rgba(2, 12, 18, .72);
   cursor: grab;
+  --rarity-color: #8b969d;
 }
+
+.react-inventory-item-card.selected {
+  border-color: var(--asteria-accent, #1f7dff);
+  box-shadow: inset 0 0 0 1px var(--asteria-accent, #1f7dff), 0 0 12px color-mix(in srgb, var(--asteria-accent, #1f7dff) 30%, transparent);
+}
+
+.react-inventory-mobile-tabs .react-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.react-inventory-item-card.rarity-uncommon { --rarity-color: #35c96f; }
+.react-inventory-item-card.rarity-unusual { --rarity-color: #2fc9c5; }
+.react-inventory-item-card.rarity-rare { --rarity-color: #328df5; }
+.react-inventory-item-card.rarity-epic { --rarity-color: #a45cf0; }
+.react-inventory-item-card.rarity-mythic { --rarity-color: #e84d82; }
+.react-inventory-item-card.rarity-legendary { --rarity-color: #e7a83e; }
+.react-inventory-item-card.rarity-relic { --rarity-color: #f1df96; }
+.react-inventory-item-card { border-color: color-mix(in srgb,var(--rarity-color) 78%,#203344); box-shadow: inset 0 -2px 0 color-mix(in srgb,var(--rarity-color) 68%,transparent); }
 
 .react-inventory-item-card:hover {
   border-color: var(--asteria-accent, #1f7dff);
@@ -969,7 +1227,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   display: grid;
   justify-items: center;
   min-width: 0;
-  padding: 5px 0;
+  padding: 5px;
   overflow: visible;
 }
 
@@ -989,14 +1247,16 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-party-bubble {
   display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 6px;
   place-items: center;
-  width: 62px;
-  min-width: 62px;
-  height: 62px;
+  width: 100%;
+  min-width: 0;
+  height: auto;
   min-height: 62px;
   padding: 3px;
   border: 1px solid transparent;
-  border-radius: 50%;
+  border-radius: var(--asteria-radius-sm, 3px);
   background: transparent;
 }
 
@@ -1037,6 +1297,12 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   background: #35d982;
   box-shadow: 0 0 8px #35d982;
 }
+
+.react-party-bubble-copy { display: grid; justify-self: stretch; min-width: 0; text-align: left; }
+.react-party-bubble-copy b,
+.react-party-bubble-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.react-party-bubble-copy b { font-size: .68rem; }
+.react-party-bubble-copy small { color: var(--asteria-text-muted); font-size: .55rem; }
 
 .react-party-speech {
   position: absolute;
@@ -1108,7 +1374,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   background: rgba(0, 0, 0, .36);
 }
 
-.react-gallery-image-frame > img {
+.react-gallery-image-frame > img,
+.react-gallery-image-frame .react-gallery-media-button > img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -1126,17 +1393,21 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   opacity: .72;
 }
 
-@container (max-width: 760px) {
+@container (max-width: 900px) {
+  .react-inventory-mobile-tabs { display: block; }
   .react-inventory-layout {
-    grid-template-columns: minmax(290px, 330px) minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
-  .react-inventory-party {
-    grid-column: 1 / -1;
-  }
+  .react-inventory-layout > .react-inventory-equipment,
+  .react-inventory-layout > .react-inventory-storage,
+  .react-inventory-layout > .react-inventory-party { display: none; grid-column: 1; }
+  .react-inventory-layout.mobile-equipment > .react-inventory-equipment,
+  .react-inventory-layout.mobile-inventory > .react-inventory-storage,
+  .react-inventory-layout.mobile-party > .react-inventory-party { display: block; }
   .react-player-bubbles {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
+    align-items: stretch;
   }
   .react-party-speech {
     top: calc(100% + 9px);
@@ -1150,22 +1421,13 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
     transform: rotate(-45deg);
   }
   .react-inventory-item-grid {
-    grid-template-columns: repeat(5, minmax(78px, 1fr));
+    grid-template-columns: repeat(var(--storage-cols, 4), 64px) !important;
   }
 }
 
 @container (max-width: 620px) {
-  .react-inventory-layout {
-    grid-template-columns: 1fr;
-  }
-  .react-inventory-party {
-    grid-column: 1;
-  }
   .react-inventory-slot-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .react-inventory-item-grid {
-    grid-template-columns: repeat(4, minmax(76px, 1fr));
   }
 }
 
@@ -1177,9 +1439,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-inventory-toolbar {
     grid-template-columns: 1fr;
   }
-  .react-inventory-item-grid {
-    grid-template-columns: repeat(3, minmax(72px, 1fr));
-  }
+  .react-inventory-view-controls { justify-content: flex-start; }
   .react-party-speech {
     width: min(270px, calc(100vw - 48px));
   }
@@ -1190,4 +1450,396 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-exchange-route > span { transform: rotate(90deg); }
   .react-request-history > article { grid-template-columns: 1fr; }
   .react-item-request-dock { right: 8px; bottom: 8px; max-width: calc(100vw - 16px); }
+}
+
+/* Player Dashboard: compact fantasy HUD and summary workspace. */
+.react-character-dashboard {
+  --dashboard-line: color-mix(in srgb, var(--asteria-border-highlight, var(--asteria-accent)) 46%, rgba(102, 137, 157, .42));
+  --dashboard-line-soft: color-mix(in srgb, var(--asteria-border, #31556b) 58%, transparent);
+  gap: 9px;
+  isolation: isolate;
+}
+
+.react-character-dashboard::before {
+  content: '';
+  position: fixed;
+  inset: var(--asteria-header-height, 82px) 0 0 var(--asteria-sidebar-width, 246px);
+  z-index: -1;
+  pointer-events: none;
+  background: rgba(1, 10, 15, .2);
+}
+
+.react-character-dashboard .asteria-react-panel {
+  border-color: var(--dashboard-line);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--asteria-bg-panel, #06141c) 88%, transparent);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, .28), 0 0 0 1px rgba(0, 0, 0, .25);
+}
+
+.react-character-dashboard .asteria-react-panel:hover {
+  border-color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 58%, #6d8290 42%);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, .28), 0 0 8px color-mix(in srgb, var(--asteria-accent, #1f7dff) 12%, transparent);
+}
+
+.react-panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.react-panel-title-group > .asteria-icon {
+  color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 82%, #9ed8ea 18%);
+}
+
+.react-character-dashboard .react-panel-header {
+  min-height: 31px;
+  margin-bottom: 9px;
+  padding-bottom: 7px;
+}
+
+.react-character-dashboard .react-panel-header h2 {
+  font-family: var(--asteria-font-ui, Arial, sans-serif);
+  font-size: .83rem;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.react-character-dashboard .react-panel-header button,
+.react-character-dashboard .react-empty-action {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: .65rem;
+}
+
+.react-player-topbar {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  align-items: stretch;
+  min-height: 136px;
+  padding: 0;
+  overflow: visible;
+  background: color-mix(in srgb, var(--asteria-bg-primary, #020b11) 94%, transparent) !important;
+}
+
+.react-player-topbar > .react-player-topbar-section {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  padding: 12px 13px;
+}
+
+.react-player-topbar > .react-player-topbar-section + .react-player-topbar-section {
+  border-left: 1px solid var(--dashboard-line-soft);
+}
+
+.react-player-identity-level { grid-column: span 4; grid-template-columns: 60px minmax(0, 1fr) 52px; align-items: center; gap: 10px; }
+.react-player-xp { grid-column: span 3; gap: 5px; }
+.react-player-resources { grid-column: span 4; gap: 6px; }
+.react-player-currency { grid-column: span 2; gap: 8px; }
+.react-player-campaign { grid-column: span 3; gap: 7px; }
+
+.react-player-portrait {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 74px;
+  overflow: hidden;
+  border: 1px solid var(--dashboard-line);
+  background: rgba(0, 0, 0, .38);
+  color: var(--asteria-text-primary, #f7ead1);
+  font-family: var(--asteria-font-display, Georgia, serif);
+  font-size: 1.8rem;
+}
+
+.react-player-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.react-player-identity-copy { display: grid; min-width: 0; gap: 2px; }
+.react-player-identity-copy small,
+.react-player-section-label,
+.react-loadout-slot-copy small { color: var(--asteria-text-secondary, #a8bac6); font-size: .57rem; font-weight: 800; text-transform: uppercase; }
+.react-player-identity-copy strong { overflow: hidden; color: var(--asteria-text-primary, #f7ead1); font-family: var(--asteria-font-display, Georgia, serif); font-size: 1.05rem; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+.react-player-identity-copy > span,
+.react-player-identity-copy em { overflow: hidden; color: var(--asteria-text-secondary, #a8bac6); font-size: .66rem; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+
+.react-level-shield {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 52px;
+  height: 62px;
+  border: 1px solid var(--dashboard-line);
+  clip-path: polygon(50% 0, 93% 14%, 88% 70%, 50% 100%, 12% 70%, 7% 14%);
+  background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 12%, #07131a);
+}
+.react-level-shield .asteria-icon { display: none; }
+.react-level-shield small { color: var(--asteria-text-secondary); font-size: .51rem; text-transform: uppercase; }
+.react-level-shield b { font-size: 1.28rem; line-height: 1; }
+
+.react-player-section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 20px;
+}
+.react-player-section-label .asteria-icon { color: var(--asteria-accent, #1f7dff); }
+.react-player-section-label .react-tooltip { margin-left: auto; }
+
+.react-player-xp > small { color: var(--asteria-text-primary); font-size: .69rem; font-weight: 800; }
+.react-player-xp > span { color: var(--asteria-text-secondary); font-size: .61rem; }
+.react-player-xp .react-resource > div:first-child { display: none; }
+.react-player-xp .react-resource-track { height: 9px; border-color: var(--dashboard-line-soft); }
+
+.react-player-resource-list { display: grid; gap: 5px; }
+.react-player-resource-row { display: grid; gap: 3px; }
+.react-player-resource-controls { display: grid; grid-template-columns: minmax(42px, 1fr) 28px 28px; gap: 3px; }
+.react-player-resource-controls input,
+.react-player-resource-controls button { min-height: 27px; height: 27px; padding: 2px 5px; }
+.react-player-resource-controls input { min-width: 0; width: 100%; }
+.react-resource-adjust-button { margin-left: auto; min-height: 24px !important; padding: 2px 6px !important; }
+.react-player-resources.is-adjusting { align-content: start; }
+
+.react-player-currencies { display: grid; align-content: start; gap: 5px; max-height: 112px; overflow: auto; overflow-anchor: none; }
+.react-player-currency .react-currency-display { grid-template-columns: 28px minmax(0, 1fr); min-width: 0; padding: 4px 0; background: transparent; }
+.react-player-currency .react-currency-display > span { width: 27px; height: 27px; font-size: .67rem; }
+.react-player-currency .react-currency-display small { color: var(--asteria-text-secondary); font-size: .55rem; }
+.react-player-currency .react-currency-display strong { font-size: .76rem; }
+
+.react-player-campaign-title { display: grid; gap: 2px; }
+.react-player-campaign-title strong { overflow: hidden; font-family: var(--asteria-font-display, Georgia, serif); font-size: .93rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-player-campaign-title span { overflow: hidden; color: var(--asteria-text-secondary); font-size: .59rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-player-campaign-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 9px; margin: 0; }
+.react-player-campaign-facts > div { display: grid; min-width: 0; }
+.react-player-campaign-facts dt { color: var(--asteria-text-secondary); font-size: .51rem; text-transform: uppercase; }
+.react-player-campaign-facts dd { overflow: hidden; margin: 0; font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-player-compact-empty { margin: 0; color: var(--asteria-text-secondary); font-size: .59rem; }
+.react-player-campaign .react-connection { grid-template-columns: auto minmax(0, 1fr); min-width: 0; padding: 4px 6px; background: rgba(0, 0, 0, .2); }
+.react-player-campaign .react-connection b { font-size: .58rem; }
+.react-player-campaign .react-connection small { overflow: hidden; font-size: .49rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-player-campaign .react-connection > span { width: 7px; height: 7px; }
+
+.react-character-dashboard .react-workspace-main > .react-session-gate {
+  min-height: 33px;
+  padding: 6px 10px;
+  border-left-width: 3px;
+  font-size: .67rem;
+}
+.react-character-dashboard .react-workspace-main > .react-session-gate span { font-size: .62rem; }
+
+.react-character-dashboard .react-workspace-main > .react-tabs {
+  display: flex;
+  min-height: 43px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar { display: none; }
+.react-character-dashboard .react-workspace-main > .react-tabs button {
+  flex: 1 0 auto;
+  min-width: 82px;
+  min-height: 42px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+.react-character-dashboard .react-workspace-main > .react-tabs button .asteria-icon { width: 16px; height: 16px; }
+.react-character-dashboard .react-workspace-main > .react-tabs button.active { color: var(--asteria-text-primary); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 15%, rgba(0, 0, 0, .7)); }
+
+.react-player-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 9px;
+  align-items: stretch;
+}
+.react-player-overview-grid > .react-dashboard-panel { padding: 11px; }
+.react-overview-armour { grid-column: span 5; min-height: 286px; }
+.react-overview-weapons { grid-column: span 4; min-height: 286px; }
+.react-overview-quick { grid-column: span 3; min-height: 286px; }
+.react-overview-talents,
+.react-overview-spells { grid-column: span 6; min-height: 246px; }
+.react-overview-skills { grid-column: span 8; min-height: 154px; }
+.react-overview-conditions { grid-column: span 4; min-height: 154px; }
+
+.react-armour-layout { display: grid; grid-template-columns: minmax(88px, 1fr) minmax(100px, .92fr) minmax(88px, 1fr); gap: 7px; height: calc(100% - 41px); }
+.react-armour-slots { display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.react-armour-core { display: grid; place-items: center; align-content: center; gap: 3px; min-width: 0; min-height: 0; padding: 8px; border-color: color-mix(in srgb, var(--asteria-gold, #d2ad5a) 65%, var(--dashboard-line)); background: rgba(0, 0, 0, .25); }
+.react-armour-core .asteria-icon { color: var(--asteria-gold, #d2ad5a); }
+.react-armour-core small { color: var(--asteria-text-secondary); font-size: .53rem; text-transform: uppercase; }
+.react-armour-core strong { color: var(--asteria-text-primary); font-size: 1.35rem; }
+.react-armour-core span { font-size: .57rem; }
+
+.react-loadout-slot { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 6px; width: 100%; min-width: 0; min-height: 46px; padding: 5px 6px; border-color: var(--dashboard-line-soft); background: rgba(1, 11, 16, .65); text-align: left; }
+.react-loadout-slot:hover { border-color: var(--asteria-accent, #1f7dff); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 8%, rgba(1, 11, 16, .7)); }
+.react-loadout-slot-art { position: relative; display: grid; place-items: center; width: 30px; height: 30px; overflow: hidden; border: 1px solid var(--dashboard-line-soft); color: var(--asteria-accent, #1f7dff); }
+.react-loadout-slot-art img { width: 100%; height: 100%; object-fit: contain; }
+.react-loadout-slot-art i { position: absolute; top: -1px; left: 2px; font-size: .49rem; font-style: normal; font-weight: 900; }
+.react-loadout-slot-copy { display: grid; min-width: 0; line-height: 1.08; }
+.react-loadout-slot-copy b { overflow: hidden; font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-loadout-slot-copy em { overflow: hidden; color: var(--asteria-text-secondary); font-size: .48rem; font-style: normal; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.react-loadout-slot.is-empty { opacity: .74; }
+
+.react-weapon-slot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; align-content: start; }
+.react-quick-slot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.react-overview-quick .react-loadout-slot { grid-template-columns: 34px minmax(0, 1fr); min-height: 82px; }
+.react-overview-quick .react-loadout-slot-art { width: 34px; height: 42px; }
+
+.react-ability-filters { display: flex; gap: 5px; margin-bottom: 8px; overflow-x: auto; }
+.react-ability-filters button { flex: 0 0 auto; min-height: 28px; padding: 4px 8px; font-size: .61rem; }
+.react-ability-filters button.active { border-color: var(--asteria-accent, #1f7dff); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 18%, black); }
+.react-ability-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.react-ability-card { display: grid; grid-template-rows: 50px auto auto auto; align-content: start; gap: 3px; min-width: 0; min-height: 126px; padding: 7px; border-color: var(--dashboard-line-soft); background: rgba(1, 12, 18, .76); color: var(--asteria-text-primary); text-align: center; }
+.react-ability-card:hover { border-color: var(--asteria-accent, #1f7dff); }
+.react-ability-art { display: grid; place-items: center; width: 100%; height: 50px; overflow: hidden; border: 1px solid var(--dashboard-line-soft); background: rgba(0, 0, 0, .28); color: var(--asteria-accent, #1f7dff); }
+.react-ability-art img { width: 100%; height: 100%; object-fit: contain; }
+.react-ability-card b { overflow: hidden; font-size: .64rem; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+.react-ability-card small { overflow: hidden; color: var(--asteria-text-secondary); font-size: .52rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-ability-card em { color: color-mix(in srgb, var(--asteria-mp, #1e6ed8) 72%, #d9e9ef 28%); font-size: .52rem; font-style: normal; }
+.react-ability-card.is-disabled { opacity: .54; }
+
+.react-dashboard-empty { display: grid; place-items: center; align-content: center; gap: 6px; min-height: 146px; padding: 14px; text-align: center; }
+.react-dashboard-empty .asteria-icon { color: var(--asteria-accent, #1f7dff); opacity: .72; }
+.react-dashboard-empty h3,
+.react-dashboard-empty p { margin: 0; }
+.react-dashboard-empty h3 { font-size: .82rem; }
+.react-dashboard-empty p { max-width: 34ch; color: var(--asteria-text-secondary); font-size: .65rem; }
+
+.react-dashboard-skill-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.react-dashboard-skill-grid > button { display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; padding: 7px; text-align: left; }
+.react-dashboard-skill-grid > button > .asteria-icon { color: var(--asteria-accent, #1f7dff); }
+.react-dashboard-skill-grid span { display: grid; min-width: 0; }
+.react-dashboard-skill-grid b,
+.react-dashboard-skill-grid small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.react-dashboard-skill-grid b { font-size: .65rem; }
+.react-dashboard-skill-grid small { color: var(--asteria-text-secondary); font-size: .54rem; }
+.react-condition-list { align-content: start; }
+.react-quiet-state { margin: 0; color: var(--asteria-text-secondary); font-size: .66rem; }
+
+.react-dashboard-summary-grid { gap: 9px; }
+.react-dashboard-summary-grid > .react-dashboard-panel { min-height: 150px; padding: 10px; }
+.react-dashboard-summary-grid .react-dashboard-empty { min-height: 72px; padding: 7px; }
+.react-summary-list > button { min-height: 46px; padding: 6px 7px; }
+.react-summary-list > button b { font-size: .67rem; }
+.react-summary-list > button span { font-size: .58rem; }
+.react-dashboard-party-summary > button { grid-template-columns: 38px minmax(0, 1fr); padding: 5px; }
+.react-dashboard-party-summary > button > span { width: 38px; height: 38px; }
+.react-action-message { min-height: 16px; margin: -2px 0 0; color: var(--asteria-text-secondary); font-size: .61rem; }
+
+@container (max-width: 980px) {
+  .react-player-topbar { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .react-player-identity-level { grid-column: span 4; }
+  .react-player-xp { grid-column: span 3; }
+  .react-player-resources { grid-column: span 5; }
+  .react-player-currency { grid-column: span 4; border-top: 1px solid var(--dashboard-line-soft); border-left: 0 !important; }
+  .react-player-campaign { grid-column: span 8; border-top: 1px solid var(--dashboard-line-soft); }
+  .react-overview-armour { grid-column: span 6; }
+  .react-overview-weapons { grid-column: span 6; }
+  .react-overview-quick { grid-column: span 4; min-height: 214px; }
+  .react-overview-talents,
+  .react-overview-spells { grid-column: span 6; }
+  .react-overview-skills { grid-column: span 8; }
+  .react-overview-conditions { grid-column: span 4; }
+}
+
+@container (max-width: 900px) {
+  .react-player-identity-level { grid-column: span 6; }
+  .react-player-xp { grid-column: span 6; }
+  .react-player-resources { grid-column: span 12; border-top: 1px solid var(--dashboard-line-soft); border-left: 0 !important; }
+  .react-player-currency { grid-column: span 5; }
+  .react-player-campaign { grid-column: span 7; }
+  .react-overview-armour { grid-column: span 12; }
+  .react-overview-weapons { grid-column: span 7; min-height: 220px; }
+  .react-overview-quick { grid-column: span 5; min-height: 220px; }
+  .react-overview-talents,
+  .react-overview-spells,
+  .react-overview-skills,
+  .react-overview-conditions { grid-column: span 12; }
+  .react-ability-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@container (max-width: 620px) {
+  .react-player-topbar { grid-template-columns: 1fr; }
+  .react-player-topbar > .react-player-topbar-section { grid-column: 1; border-top: 1px solid var(--dashboard-line-soft); border-left: 0 !important; }
+  .react-player-topbar > .react-player-identity-level { border-top: 0; }
+  .react-player-overview-grid { grid-template-columns: 1fr; }
+  .react-player-overview-grid > .react-dashboard-panel { grid-column: 1; min-height: 0; }
+  .react-armour-layout { min-height: 240px; }
+  .react-ability-grid,
+  .react-dashboard-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .react-dashboard-summary-grid { grid-template-columns: 1fr; }
+  .react-dashboard-summary-grid > :last-child { grid-column: 1; }
+}
+
+@container (max-width: 420px) {
+  .react-player-identity-level { grid-template-columns: 52px minmax(0, 1fr) 46px; }
+  .react-player-portrait { width: 52px; height: 64px; }
+  .react-level-shield { width: 46px; height: 55px; }
+  .react-armour-layout { grid-template-columns: 1fr 82px 1fr; gap: 4px; }
+  .react-loadout-slot { grid-template-columns: 25px minmax(0, 1fr); padding: 4px; }
+  .react-loadout-slot-art { width: 25px; height: 25px; }
+  .react-weapon-slot-grid,
+  .react-quick-slot-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-character-dashboard :is(button, .asteria-react-panel) { transition: none; }
+}
+
+/* Player systems: unified inventory workspace and persistent customisation. */
+.react-inventory-layout { grid-template-columns: minmax(150px,.58fr) minmax(315px,1.18fr) minmax(440px,2.85fr) minmax(76px,.32fr); }
+.react-inventory-support { display: grid; align-content: start; gap: 10px; }
+.react-inventory-support-stat { display: grid; gap: 4px; padding: 8px; border: 1px solid rgba(86,179,232,.28); background: rgba(2,13,20,.56); }
+.react-inventory-support-stat span { color: #8edcf2; font-size: .57rem; text-transform: uppercase; }
+.react-inventory-support-stat strong { font-size: .75rem; }
+.react-inventory-support-stat i { height: 5px; overflow: hidden; background: rgba(255,255,255,.1); }
+.react-inventory-support-stat i span { display: block; height: 100%; background: var(--asteria-accent,#1f7dff); }
+.react-inventory-support-list { display: grid; gap: 4px; padding: 9px; border-left: 2px solid var(--asteria-accent,#1f7dff); background: rgba(0,0,0,.2); }
+.react-inventory-support-list p { margin: 3px 0 0; color: var(--asteria-text-muted); font-size: .62rem; line-height: 1.4; }
+.react-storage-tabs { grid-template-columns: repeat(auto-fit,minmax(125px,1fr)); align-items: stretch; }
+.react-storage-tab { position: relative; display: grid; grid-template-columns: minmax(0,1fr) 26px; min-width: 0; border: 1px solid transparent; }
+.react-storage-tab.dragging { opacity: .45; }
+.react-storage-tab > button { width: 100%; border-right: 0; }
+.react-storage-tab-order { display: grid; grid-template-rows: 1fr 1fr; }
+.react-storage-tab-order button { display: grid; place-items: center; min-width: 26px; min-height: 0; padding: 0; border-radius: 0; font-size: .56rem; }
+.react-inventory-party { align-content: start; border: 1px solid rgba(86,179,232,.28); background: rgba(2,13,20,.56); }
+.react-inventory-party > h2 { margin: 3px 0 9px; color: #8edcf2; font-family: var(--asteria-font-ui,Arial,sans-serif); font-size: .62rem; text-transform: uppercase; }
+.react-inventory-party .react-player-bubbles { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.react-inventory-party .react-party-bubble { display: grid; grid-template-columns: 1fr; width: 60px; min-height: 60px; padding: 3px; border-radius: 50%; }
+.react-inventory-party .react-party-bubble-copy { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.react-inventory-party .react-party-bubble-row { width: 60px; }
+.react-inventory-party .react-party-speech { top: auto; right: calc(100% + 15px); bottom: 0; }
+.react-inventory-party .react-party-speech::after { top: auto; bottom: 22px; }
+.react-panel-order-list article[draggable="true"] { cursor: grab; }
+.react-panel-order-list article.dragging { border-color: var(--asteria-accent,#1f7dff); opacity: .52; }
+.react-information-field-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 12px; }
+.react-information-field-list label { min-height: 34px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.1); background: rgba(0,0,0,.2); }
+.react-title-manager { display: grid; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
+.react-title-manager > div { display: grid; gap: 6px; }
+.react-title-manager article { display: grid; grid-template-columns: minmax(140px,1fr) auto auto; gap: 6px; }
+
+@container (max-width: 1160px) {
+  .react-inventory-layout { grid-template-columns: minmax(140px,.55fr) minmax(290px,1fr) minmax(390px,2.25fr) 76px; }
+}
+
+@container (max-width: 900px) {
+  .react-inventory-mobile-tabs { display: block; }
+  .react-inventory-mobile-tabs .react-tabs { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .react-inventory-layout { grid-template-columns: 1fr; }
+  .react-inventory-layout > .react-inventory-support,
+  .react-inventory-layout > .react-inventory-equipment,
+  .react-inventory-layout > .react-inventory-storage,
+  .react-inventory-layout > .react-inventory-party { display: none; grid-column: 1; }
+  .react-inventory-layout.mobile-support > .react-inventory-support,
+  .react-inventory-layout.mobile-equipment > .react-inventory-equipment,
+  .react-inventory-layout.mobile-inventory > .react-inventory-storage,
+  .react-inventory-layout.mobile-party > .react-inventory-party { display: grid; }
+  .react-inventory-party .react-player-bubbles { display: grid; grid-template-columns: repeat(auto-fill,minmax(72px,1fr)); width: 100%; }
+  .react-inventory-party .react-party-bubble-row { width: auto; }
+  .react-inventory-party .react-party-speech { top: calc(100% + 9px); right: auto; bottom: auto; left: 0; }
+  .react-inventory-party .react-party-speech::after { top: -9px; right: auto; bottom: auto; left: 22px; transform: rotate(-45deg); }
+}
+
+@container (max-width: 560px) {
+  .react-information-field-list { grid-template-columns: 1fr; }
+  .react-title-manager article { grid-template-columns: 1fr 1fr; }
+  .react-title-manager article input { grid-column: 1/-1; }
 }

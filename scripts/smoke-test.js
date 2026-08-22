@@ -90,8 +90,12 @@ check('No duplicate IDs', duplicateIds.length === 0, duplicateIds.map(([id, coun
 
 check('React migration entry is loaded', jsFiles.includes('src/dev-entry.js'));
 check('React production CSS is loaded', cssFiles.includes('react-dist/asteria-react.css'));
+check('Modern responsive UI CSS is loaded', cssFiles.includes('css/asteria-modern-ui.css'));
+check('Canonical design token CSS is loaded first', cssFiles.includes('css/asteria-design-tokens.css') && cssFiles.indexOf('css/asteria-design-tokens.css') < cssFiles.indexOf('css/styles.css') && cssFiles.indexOf('css/asteria-design-tokens.css') < cssFiles.indexOf('css/asteria-modern-ui.css'));
 check('React production bundle exists', fs.existsSync(path.join(root, 'react-dist/asteria-react.js')));
 check('React source keeps static dashboard fallbacks', html.includes('id="player"') && html.includes('id="gm"') && html.includes('id="reactDashboard"'));
+check('React migration architecture contract exists', fs.existsSync(path.join(root, 'UI_REACT_MIGRATION.md')) && fs.existsSync(path.join(root, 'STEPS_1_3_DELIVERY.md')));
+check('Canonical React architecture modules exist', ['src/app/AsteriaAppContext.jsx','src/app/asteriaRoutes.mjs','src/app/legacyBridge.js','src/types/asteriaContracts.mjs','src/state/liveSyncState.mjs'].every(file => fs.existsSync(path.join(root, file))));
 
 [
   'css/v17447-core.css',
@@ -135,11 +139,11 @@ const itemEcosystemJs = fs.readFileSync(path.join(root, 'js/asteria-item-ecosyst
 const itemEcosystemCss = fs.readFileSync(path.join(root, 'css/asteria-item-ecosystem.css'), 'utf8');
 const worldJs = fs.readFileSync(path.join(root, 'js/asteria-world-systems.js'), 'utf8');
 const homeGuardJs = fs.readFileSync(path.join(root, 'js/asteria-home-guard.js'), 'utf8');
-const homeFixJs = fs.readFileSync(path.join(root, 'js/asteria-home-fix.js'), 'utf8');
 const themeSystemJs = fs.readFileSync(path.join(root, 'js/asteria-ui-theme-system.js'), 'utf8');
 const themeCss = fs.readFileSync(path.join(root, 'css/asteria-ui-theme-system.css'), 'utf8');
 const stylesCss = fs.readFileSync(path.join(root, 'css/styles.css'), 'utf8');
 const cleanCompendiumCss = fs.readFileSync(path.join(root, 'css/clean-compendium.css'), 'utf8');
+const modernUiCss = fs.readFileSync(path.join(root, 'css/asteria-modern-ui.css'), 'utf8');
 const homeHtml = html.slice(html.indexOf('<section id="home"'), html.indexOf('<section id="loginPage"'));
 const gmDashboardBlock = appJs.slice(appJs.indexOf('Asteria GM Dashboard v1'), appJs.indexOf('/* v1.7.3.2 Public Website Layout Helpers */'));
 const contentManifestJs = fs.readFileSync(path.join(root, 'js/content-manifest.js'), 'utf8');
@@ -292,8 +296,8 @@ check('Home button uses early hard-home action', html.includes('id="sidebarHomeB
 check('Home button uses shell home action', html.includes('data-home-action="true"') && coreShellJs.includes('window.goHome') && coreShellJs.includes('clearRouteState'));
 check('Home action clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('stopImmediatePropagation') && coreShellJs.includes('shellHomeCaptureBound'));
 check('Legacy setView home route is wrapped', coreShellJs.includes('wrapSetViewHomeRoute') && coreShellJs.includes('__asteriaHomeWrapped') && coreShellJs.includes("if(id === 'home') return goHome()") && appJs.includes("if(id === 'home' && window.AsteriaRouter?.home"));
-check('Final home fallback is loaded last', jsFiles.includes('js/asteria-home-fix.js') && jsFiles.indexOf('js/asteria-home-fix.js') > jsFiles.indexOf('js/asteria-core-shell.js') && html.includes('id="sidebarHomeButton"'));
-check('Final home fallback owns visible home button', homeFixJs.includes('window.asteriaHardHome') && homeFixJs.includes('sidebarHomeButton') && homeFixJs.includes('__asteriaFinalHomeWrapped'));
+check('Duplicate home fallback is removed', !jsFiles.includes('js/asteria-home-fix.js') && !fs.existsSync(path.join(root, 'js/asteria-home-fix.js')));
+check('Canonical home guard and shell own the visible Home action', homeGuardJs.includes('window.asteriaHardHome') && html.includes('id="sidebarHomeButton"') && coreShellJs.includes('wrapSetViewHomeRoute'));
 check('Old dark/light controls removed', !html.includes('Dark Mode') && !html.includes('Light Mode') && !appJs.includes('setThemeMode'));
 check('Old dark/light CSS modes removed', !stylesCss.includes('body[data-theme'));
 check('Old fixed accent controls removed', !html.includes("setAccent('blue')") && !html.includes('class="colour-grid"'));
@@ -307,9 +311,14 @@ check('Bloodhunter dashboard resource is wired', html.includes('id="pBPResource"
 check('Bloodhunter talent triggers update BP', ['bloodhunterBPGainForTalent','applyBloodhunterTalentBP','talent-bp-trigger'].every(token => appJs.includes(token)) && inventoryWorkflowCss.includes('.talent-bp-trigger'));
 check('Dashboard quick items use four inventory slots', html.includes('id="dashboardQuickItems"') && appJs.includes('function renderDashboardQuickItems()') && appJs.includes('ASTERIA_V133_QUICK_SLOTS.map'));
 check('Theme engine updates required variables', ['--asteria-accent','--asteria-glow','--asteria-overlay-opacity'].every(token => themeSystemJs.includes(token)));
+check('Theme controls use event binding without repeated polling', themeSystemJs.includes('refreshControls:bind') && !themeSystemJs.includes('setInterval(bind'));
 check('Theme engine updates panel opacity', themeSystemJs.includes('asteriaPanelOpacitySlider') && themeSystemJs.includes('--panel-bg'));
 check('Theme engine clears legacy theme state', themeSystemJs.includes('removeAttribute("data-accent")') && themeSystemJs.includes('removeItem("asteria-accent")'));
 check('Background linework uses theme colour', themeCss.includes('color:var(--asteria-accent)') && themeCss.includes('mask:url("../assets/themes/asteria-spell-d20-overlay.svg")'));
+check('Site-wide accessibility shell is present', html.includes('class="skip-link"') && html.includes('id="mainContent"') && html.includes('id="asteriaLiveRegion"') && html.includes('aria-controls="settingsPanel"') && coreShellJs.includes('bindSettingsAccessibility') && coreShellJs.includes('AsteriaAnnounce'));
+check('Site-wide responsive card galleries and reading width are canonical', modernUiCss.includes('grid-template-columns: repeat(6, minmax(0, 1fr))') && modernUiCss.includes('--asteria-content-reading') && modernUiCss.includes('@media (max-width: 560px)'));
+check('Non-critical compendium artwork uses native lazy loading', [cleanCompendiumJs,codexCompendiumJs,raceCompendiumJs].every(source => source.includes('loading="lazy"')));
+check('Static live sync yields campaign listeners to React routes', dataSyncJs.includes('reactOwnsCampaignSubscriptions') && dataSyncJs.includes('stopCampaignRealtimeSubscriptions') && dataSyncJs.includes("window.addEventListener('hashchange'"));
 const inventoryApiJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-api.js'), 'utf8');
 check('Inventory API exposes AsteriaInventory', inventoryApiJs.includes('window.AsteriaInventory'));
 check('Inventory API wraps existing inventory render path', inventoryApiJs.includes('window.renderInventory'));
@@ -362,7 +371,7 @@ check('Clean compendium generator exists', fs.existsSync(path.join(root, 'script
 check('Old public hub pages removed', ['handbookHub','worldHub','racesHub','classesHub','itemsHub','magicHub'].every(id => !ids.includes(id)));
 check('Old handbook library viewer removed', !ids.includes('library') && !ids.includes('rulePage') && !html.includes('ruleCards') && !html.includes('ruleContent'));
 check('Public sidebar targets workspace sections', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic'].every(section => html.includes(`data-workspace-section="${section}"`)));
-check('React migration milestone version is active', html.includes('ASTERIA REACT MIGRATION - MILESTONE 1'));
+check('UI modernisation delivery version is active', html.includes('Asteria UI Modernisation Steps 7-12'));
 check('Login page has one account type only', !html.includes('loginPageRole') && !html.includes('GM Account') && !html.includes('Administrator</option>'));
 check('Logged-in sidebar keeps only dashboard/settings actions', ['data-workspace-mode="dashboard"', 'data-workspace-action="settings"'].every(token => html.includes(token)) && ['data-workspace-mode="campaigns"', 'data-workspace-action="create-campaign"', 'data-workspace-mode="characters"', 'data-workspace-action="create-character"', 'data-app-route="player-dashboard"', 'data-app-route="campaign-manager"', 'data-app-route="gm-dashboard"'].every(token => !html.includes(token)));
 check('Top bar owns Character Forge and Campaign Forge navigation', ['id="characterForgeTop"', 'id="campaignsTop"', 'Character Forge', 'Campaign Forge', 'openCharacterForgeHub', 'openCampaignHub'].every(token => html.includes(token) || coreShellJs.includes(token)) && stylesCss.includes('.top-workspace-menu .top-menu-btn'));

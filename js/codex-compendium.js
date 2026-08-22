@@ -441,7 +441,7 @@
     }
     return `
       <article class="codex-card codex-creature-card" data-codex-entry="${escapeHtml(entry.id)}" tabindex="0">
-        <div class="codex-card-art">${entry.image ? `<img src="${escapeHtml(entry.image)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
+        <div class="codex-card-art">${entry.image ? `<img src="${escapeHtml(entry.image)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
         <h3>${escapeHtml(entry.title)}</h3>
       </article>
     `;

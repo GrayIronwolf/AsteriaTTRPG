@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ASTERIA REACT MIGRATION - MILESTONE 1</title>
+  <title>Asteria TTRPG</title>
+  <link rel="stylesheet" href="css/asteria-design-tokens.css?v=design-system-v1" />
   <link rel="stylesheet" href="css/styles.css?v=20260730-live-delivery-4" />
 <link rel="stylesheet" href="css/clean-compendium.css">
 <link rel="stylesheet" href="css/asteria-ui-theme-system.css">
@@ -11,9 +12,11 @@
 <link rel="stylesheet" href="css/asteria-inventory-workflows.css">
 <link rel="stylesheet" href="css/asteria-item-ecosystem.css">
 <link rel="stylesheet" href="react-dist/asteria-react.css?v=react-m1">
+<link rel="stylesheet" href="css/asteria-modern-ui.css?v=modern-ui-v2">
 <script src="js/asteria-home-guard.js"></script>
 </head>
 <body data-role="guest">
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
   <header class="topbar core-v2-topbar">
     <div class="brand">
       <img class="brand-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo">
@@ -23,12 +26,13 @@
       <button id="campaignsTop" class="primary small top-menu-btn" type="button" onclick="window.AsteriaWorkspace?.openCampaignHub?.()">Campaign Forge</button>
     </nav>
     <div class="top-actions">
+      <button id="mobileNavToggle" class="hamburger global-nav-toggle" type="button" aria-label="Open main navigation" aria-controls="globalNavigation" aria-expanded="false"><span></span><span></span><span></span></button>
       <button id="loginToggle" class="primary small" type="button" onclick="setView('loginPage')">Login</button>
-      <button id="settingsToggle" class="hamburger" title="Settings"><span></span><span></span><span></span></button>
+      <button id="settingsToggle" class="hamburger" type="button" title="Settings" aria-label="Open settings" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </header>
 
-  <aside class="sidebar public-sidebar">
+  <aside id="globalNavigation" class="sidebar public-sidebar" aria-label="Main navigation">
     <div class="side-section portal-buttons">
       <button id="sidebarHomeButton" class="side-main" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
       <div class="side-logo-block"><span>Asteria Compendiums</span></div>
@@ -46,10 +50,16 @@
       <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="dashboard">Dashboard</button>
       <button class="side-main auth-only locked" data-workspace-action="settings">Settings</button>
     </div>
+    <div class="side-section mobile-shell-actions" aria-label="Account workspace">
+      <button class="side-main auth-only locked" type="button" onclick="window.AsteriaGameplay?.openCharacterForgeHub?.()">Character Forge</button>
+      <button class="side-main auth-only locked" type="button" onclick="window.AsteriaWorkspace?.openCampaignHub?.()">Campaign Forge</button>
+      <button class="side-main" type="button" onclick="document.getElementById('settingsToggle')?.click()">Settings</button>
+    </div>
   </aside>
+  <div id="mobileNavShade" class="mobile-nav-shade" aria-hidden="true"></div>
 
-  <aside id="settingsPanel" class="settings-panel">
-    <div class="settings-head"><h2>Settings</h2><button id="settingsClose">×</button></div>
+  <aside id="settingsPanel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <div class="settings-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" type="button" aria-label="Close settings">×</button></div>
     <section id="asteriaThemeSettings" class="theme-settings-section">
       <h3>UI Theme</h3>
       <p>Choose a class theme or create your own accent colour.</p>
@@ -94,11 +104,11 @@
       <div class="theme-live-preview"><span>Live Preview</span><button type="button">Button</button><i></i></div>
     </section>
 
-    <section><h3>System</h3><p><b>Current Version:</b> ASTERIA REACT MIGRATION - MILESTONE 1</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
+    <section><h3>System</h3><p><b>Current Version:</b> Asteria UI Modernisation Steps 7-12</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
     <section><h3>Access</h3><p id="accessSummary">Guest access. Log in to unlock your workspace dashboard.</p><button onclick="logout()" class="outline">Log Out</button></section>
-  </aside><div id="shade" class="shade"></div>
+  </aside><div id="shade" class="shade" aria-hidden="true"></div>
 
-  <main class="main">
+  <main id="mainContent" class="main" tabindex="-1">
     <section id="home" class="view show">
       <div class="public-home-grid">
         <section class="home-hero card public-hero">
@@ -289,7 +299,7 @@
     <section id="quests" class="view"><div class="card"><div class="section-head"><div><p class="eyebrow">Campaign</p><h2>Quest Log</h2></div><button class="gm-only locked" onclick="addQuest()">+ Add Quest</button></div><p class="muted">Players can view active quests. GM can manage campaign quest information.</p><div id="questList"></div></div></section>
     <section id="creature" class="view"><div class="creature-page card"><button onclick="setView('gm')">← Back</button><h2 id="creatureName">Creature</h2><p id="creatureMeta"></p><div class="creature-grid"><section><h3>Combat Stats</h3><p id="creatureStats"></p><button class="primary" onclick="addViewedCreatureToEncounter()">Add To Encounter</button></section><section><h3>Attacks</h3><div id="creatureAttacks"></div></section><section><h3>Lore / Notes</h3><p id="creatureNotes"></p></section></div></div></section>
     <section id="devLog" class="view"><div class="card devlog-page">
-      <div class="section-head"><div><p class="eyebrow">Incremental React Migration</p><h2>ASTERIA REACT MIGRATION - MILESTONE 1</h2></div><span class="pill">Live Sessions</span></div>
+      <div class="section-head"><div><p class="eyebrow">Incremental React Migration</p><h2>Asteria UI Modernisation Steps 7-12</h2></div><span class="pill">Live Sessions</span></div>
       <p class="muted">This build keeps the unified compendium and RPG systems intact while adding Firebase account login, persistent sessions, and a logged-in workspace dashboard for campaigns, characters, activity, and account settings.</p>
       <div class="v17-grid">
         <section><h3>Locked Foundation</h3><ul><li>v1.3.9.4 account and username login foundation retained.</li><li>Compendium content folders and manifest system retained.</li><li>Player dashboard, GM dashboard, inventory/bag UI, dice modal, and talent UI retained.</li></ul></section>
@@ -298,9 +308,9 @@
       <div id="v17SystemAudit" class="v17-audit"></div>
     </div></section>
   </main>
-  <div id="itemModal" class="item-modal"><div class="item-modal-card"><div class="section-head"><div><p class="eyebrow">Inventory Item</p><h2 id="itemModalName">Item</h2></div><button onclick="closeItemModal()">×</button></div><div id="itemModalBody"></div></div></div>
+  <div id="itemModal" class="item-modal" aria-hidden="true"><div class="item-modal-card" role="dialog" aria-modal="true" aria-labelledby="itemModalName" tabindex="-1"><div class="section-head"><div><p class="eyebrow">Inventory Item</p><h2 id="itemModalName">Item</h2></div><button type="button" onclick="closeItemModal()" aria-label="Close item details">×</button></div><div id="itemModalBody"></div></div></div>
   <div id="feedbackStack" class="feedback-stack"></div>
-  <div id="levelModal" class="level-modal"><div class="level-card"><button class="level-close" onclick="closeLevelModal()">×</button><p class="eyebrow">Asteria Progression</p><h2 id="levelModalTitle">Level Up!</h2><div id="levelModalBody"></div><button class="primary" onclick="setView('player');closeLevelModal()">Open Character</button></div></div>
+  <div id="levelModal" class="level-modal" aria-hidden="true"><div class="level-card" role="dialog" aria-modal="true" aria-labelledby="levelModalTitle" tabindex="-1"><button type="button" class="level-close" onclick="closeLevelModal()" aria-label="Close level notification">×</button><p class="eyebrow">Asteria Progression</p><h2 id="levelModalTitle">Level Up!</h2><div id="levelModalBody"></div><button class="primary" onclick="setView('player');closeLevelModal()">Open Character</button></div></div>
   <div id="toast" class="toast"></div>
   <script src="js/content-manifest.js"></script>
   <script src="js/wiki-index.js"></script>
@@ -332,7 +342,7 @@
 <script src="js/asteria-core-shell.js?v=react-m1"></script>
 <script src="js/asteria-ui-theme-system.js"></script>
 <script src="js/border-glow.js"></script>
-<script src="js/asteria-home-fix.js"></script>
 <script type="module" src="src/dev-entry.js?v=milestone-1-dashboards"></script>
+<div id="asteriaLiveRegion" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

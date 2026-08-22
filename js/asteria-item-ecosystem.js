@@ -427,6 +427,10 @@
     return root;
   }
   function renderPlayer(){
+    if(document.documentElement.dataset.asteriaLiveCharacterDashboard==='active'){
+      document.getElementById('asteriaItemEcosystemPlayer')?.remove();
+      return;
+    }
     const root = ensurePlayerShell();
     if(!root) return;
     api.ensure(activeId());

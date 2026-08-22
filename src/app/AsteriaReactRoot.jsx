@@ -1,31 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { GMDashboard } from '../dashboards/GMDashboard.jsx';
-import { CharacterDashboard } from '../dashboards/CharacterDashboard.jsx';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { AsteriaAppProvider, useAsteriaApp } from './AsteriaAppContext.jsx';
+import { activateReactDashboard } from './legacyBridge.js';
 
-function parseRoute() {
-  const match = window.location.hash.match(/^#\/react\/(gm|character)\/([^/]+)(?:\/([^/]+))?/);
-  if(!match) return null;
-  return { type: match[1], campaignId: decodeURIComponent(match[2]), characterId: decodeURIComponent(match[3] || '') };
-}
+const GMDashboard = lazy(() => import('../dashboards/GMDashboard.jsx').then(module => ({ default:module.GMDashboard })));
+const CharacterDashboard = lazy(() => import('../dashboards/CharacterDashboard.jsx').then(module => ({ default:module.CharacterDashboard })));
 
-export function AsteriaReactRoot() {
-  const [route, setRoute] = useState(parseRoute);
+function AsteriaRouteOutlet() {
+  const { route } = useAsteriaApp();
   useEffect(() => {
-    const update = () => setRoute(parseRoute());
-    window.addEventListener('hashchange', update);
-    return () => window.removeEventListener('hashchange', update);
-  }, []);
-
-  useEffect(() => {
-    if(route) {
-      document.getElementById('gmEncounterWorkspace')?.remove();
-      document.getElementById('phase3GMPartyMagicPanel')?.remove();
-      document.getElementById('phase3GMMagicGrantPanel')?.remove();
-      window.setView?.('reactDashboard');
-    }
+    if(route) activateReactDashboard();
   }, [route]);
 
   if(!route) return null;
-  if(route.type === 'gm') return <GMDashboard campaignId={route.campaignId} />;
-  return <CharacterDashboard campaignId={route.campaignId} characterId={route.characterId} />;
+  return <Suspense fallback={<div className="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>}>
+    {route.type === 'gm'
+      ? <GMDashboard campaignId={route.campaignId} />
+      : <CharacterDashboard campaignId={route.campaignId} characterId={route.characterId} />}
+  </Suspense>;
+}
+
+export function AsteriaReactRoot() {
+  return <AsteriaAppProvider><AsteriaRouteOutlet /></AsteriaAppProvider>;
 }

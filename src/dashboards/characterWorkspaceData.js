@@ -103,6 +103,7 @@ export function inventoryItems(character = {}) {
       name:item.name || `Item ${index+1}`, trueName:item.trueName, basicName:item.basicName, identified:item.identified, storageId:item.storageId, storageSlot:item.storageSlot,
       isSpellbook:item.isSpellbook, spell:item.spell, qty:Number(item.qty ?? item.quantity ?? 1), image:item.image || '',
       type:item.type || item.itemType || item.category || 'Item', rarity:item.rarity || item.itemClass || 'Common', value:Number(item.value || item.priceCopper || 0),
+      weight:Number(item.weight ?? item.unitWeight ?? item.metadata?.weight ?? 0),
       equipped:Boolean(item.equipped), equippedSlot:item.equippedSlot || item.slot || '', allowedSlots:item.allowedSlots || window.AsteriaInventory?.inferSlots?.(item) || [],
       effect:item.effect || item.effects || null, locked:Boolean(item.locked), bound:Boolean(item.bound), questItem:Boolean(item.questItem), raw:item
     };

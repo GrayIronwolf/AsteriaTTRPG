@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { firebaseService, waitForFirebase } from '../firebase/asteriaFirebaseService.js';
 import { mergeEvents } from '../state/liveEventReducer.mjs';
 import { effectiveSession } from '../state/liveWorkspaceModel.mjs';
+import { publishCustomItems } from '../app/legacyBridge.js';
+import { LIVE_SYNC_STATES } from '../types/asteriaContracts.mjs';
 
 export function useCampaignLiveData(campaignId, { mode = 'character', characterId = '' } = {}) {
   const [campaign, setCampaign] = useState(null);
@@ -16,15 +18,27 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [customItems, setCustomItems] = useState([]);
   const [clock, setClock] = useState(Date.now());
   const [online, setOnline] = useState(navigator.onLine);
+  const [connectionState, setConnectionState] = useState(navigator.onLine ? LIVE_SYNC_STATES.CONNECTING : LIVE_SYNC_STATES.DISCONNECTED);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const connected = () => setOnline(true);
-    const disconnected = () => setOnline(false);
+    let reconnectTimer = 0;
+    const connected = () => {
+      setOnline(true);
+      setConnectionState(LIVE_SYNC_STATES.RECONNECTING);
+      window.clearTimeout(reconnectTimer);
+      reconnectTimer = window.setTimeout(() => setConnectionState(LIVE_SYNC_STATES.CONNECTED), 400);
+    };
+    const disconnected = () => {
+      window.clearTimeout(reconnectTimer);
+      setOnline(false);
+      setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
+    };
     window.addEventListener('online', connected);
     window.addEventListener('offline', disconnected);
     return () => {
+      window.clearTimeout(reconnectTimer);
       window.removeEventListener('online', connected);
       window.removeEventListener('offline', disconnected);
     };
@@ -36,10 +50,15 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     const unsubscribers = [];
     setLoading(true);
     setError('');
+    setConnectionState(navigator.onLine ? LIVE_SYNC_STATES.CONNECTING : LIVE_SYNC_STATES.DISCONNECTED);
     waitForFirebase().then(() => {
       if(!active) return;
       const uid = firebaseService.currentUser()?.uid || '';
-      unsubscribers.push(firebaseService.subscribeCampaign(campaignId, value => { setCampaign(value); setLoading(false); }));
+      unsubscribers.push(firebaseService.subscribeCampaign(campaignId, value => {
+        setCampaign(value);
+        setLoading(false);
+        setConnectionState(LIVE_SYNC_STATES.CONNECTED);
+      }));
       unsubscribers.push(firebaseService.subscribeCharacters(campaignId, value => { setCharacters(value || {}); setLoading(false); }));
       unsubscribers.push(firebaseService.subscribeSession(campaignId, value => setSession(effectiveSession(value || { status: 'idle', id: '' }))));
       unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, value => setPartyWorkspace(value || { sharedNotes:'', questLog:[] })));
@@ -48,8 +67,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribeCustomItems(value => {
         const nextItems = value || [];
         setCustomItems(nextItems);
-        window.ASTERIA_CUSTOM_ITEMS = nextItems;
-        window.dispatchEvent(new CustomEvent('asteria:custom-items-updated', { detail:{ items:nextItems } }));
+        publishCustomItems(nextItems);
       }));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(previous => mergeEvents(previous, value || [])), {
         mode,
@@ -58,7 +76,11 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       }));
       if(mode === 'gm') unsubscribers.push(firebaseService.subscribeEncounter(campaignId, value => setEncounter(value || { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })));
     }).catch(reason => {
-      if(active){ setError(reason.message || String(reason)); setLoading(false); }
+      if(active){
+        setError(reason.message || String(reason));
+        setLoading(false);
+        setConnectionState(LIVE_SYNC_STATES.ERROR);
+      }
     });
     return () => {
       active = false;
@@ -103,5 +125,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, liveSession?.id, liveSession?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, loading, error, setEvents, setEncounter };
+  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
 }

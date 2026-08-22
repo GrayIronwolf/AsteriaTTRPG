@@ -1,24 +1,21 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { AsteriaReactRoot } from './app/AsteriaReactRoot.jsx';
+import { navigateReactRoute, parseReactRoute } from './app/asteriaRoutes.mjs';
+import { activateReactDashboard, openLegacyView } from './app/legacyBridge.js';
 import './styles/asteria-react.css';
 
 const host = document.getElementById('asteriaReactRoot');
 if(host) createRoot(host).render(<AsteriaReactRoot />);
 document.documentElement.dataset.asteriaLiveCharacterDashboard = 'active';
 
-function openRoute(path) {
-  document.getElementById('gmEncounterWorkspace')?.remove();
-  document.getElementById('phase3GMPartyMagicPanel')?.remove();
-  document.getElementById('phase3GMMagicGrantPanel')?.remove();
-  window.location.hash = path;
-  window.setView?.('reactDashboard');
+function openRoute(route) {
+  activateReactDashboard();
+  return navigateReactRoute(route);
 }
 
 function restoreLegacy(view, callback) {
-  window.location.hash = '';
-  window.setView?.(view);
-  callback?.();
+  openLegacyView(view, callback);
 }
 
 function linkedCharacterRoute(characterId = '') {
@@ -32,16 +29,16 @@ function linkedCharacterRoute(characterId = '') {
 window.AsteriaReactMigration = Object.assign(window.AsteriaReactMigration || {}, {
   available: true,
   milestone: 'live-session-real-time-dashboards-v1',
-  openGM: campaignId => openRoute(`#/react/gm/${encodeURIComponent(campaignId)}`),
-  openCharacter: (campaignId, characterId) => openRoute(`#/react/character/${encodeURIComponent(campaignId)}/${encodeURIComponent(characterId)}`),
+  openGM: campaignId => openRoute({ type:'gm', campaignId }),
+  openCharacter: (campaignId, characterId) => openRoute({ type:'character', campaignId, characterId }),
   openLegacyGM: () => restoreLegacy('gm', () => window.renderGM?.()),
   openCurrentCharacter: characterId => {
     const route = linkedCharacterRoute(characterId);
-    if(route) return openRoute(`#/react/character/${encodeURIComponent(route.campaignId)}/${encodeURIComponent(route.id)}`);
+    if(route) return openRoute({ type:'character', campaignId:route.campaignId, characterId:route.id });
     window.AsteriaGameplay?.openCharacterForgeHub?.() || window.AsteriaWorkspace?.openCharacterForge?.();
     window.toast?.('Link this character to a campaign to open its live dashboard.');
   },
-  isDashboardActive: () => Boolean(window.location.hash.match(/^#\/react\/(gm|character)\//))
+  isDashboardActive: () => Boolean(parseReactRoute(window.location.hash))
 });
 
 const legacySetView = window.setView;

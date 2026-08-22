@@ -328,7 +328,7 @@
     const controls = genderControls(race);
     return `
       <article class="race-card" data-race-id="${escapeHtml(race.id)}" tabindex="0">
-        <div class="race-card-art">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
+        <div class="race-card-art">${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(race.name)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
         ${controls}
         <h3>${escapeHtml(race.name)}</h3>
       </article>
@@ -514,7 +514,7 @@
   function RaceOverviewArt(race){
     return `
       <section class="race-overview-art-panel">
-        <div class="race-overview-art">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
+        <div class="race-overview-art">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}" decoding="async">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>
         ${genderControls(race)}
       </section>
     `;
@@ -679,7 +679,7 @@
     }
     if(activeTab === 'Racial Sheet') return `<div class="race-overview-grid">${RaceSheetContent(race)}</div>`;
     if(activeTab === 'Lore') return `<div class="race-overview-grid">${RaceStatsPanel(race)}${markdownPanel('Lore', race.loreMarkdown || race.overviewMarkdown, 'span-2') || placeholderSections(['Origins','History','Mythology','Common Knowledge','Unlocked Lore','Hidden Lore'])}${markdownPanel('Culture', race.cultureMarkdown, 'span-2') || ''}${markdownPanel('Historical Figures', race.historicalFiguresMarkdown, 'span-2') || ''}${markdownPanel('Settlements', race.settlementsMarkdown, 'span-2') || ''}${markdownPanel('Mottos', race.mottosMarkdown)}${GMNotesBlock(race)}</div>`;
-    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>${race.galleryMarkdown ? markdownHtml(race.galleryMarkdown) : '<p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p>'}</section>`;
+    if(activeTab === 'Gallery') return `<section class="race-gallery-panel"><h3>Gallery</h3><div class="race-gallery-slot">${raceImage(race) ? `<img src="${escapeHtml(raceImage(race))}" alt="${escapeHtml(race.name)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(race.name))}</span>`}</div>${race.galleryMarkdown ? markdownHtml(race.galleryMarkdown) : '<p>Race artwork, symbols, cultural images, architecture, clothing, and variants can be added here.</p>'}</section>`;
     return '<p>Information coming soon.</p>';
   }
   function RaceTabs(race){

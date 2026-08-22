@@ -1214,7 +1214,7 @@
     return `
       <article class="forge-character-card" tabindex="0" role="button" style="--character-card-colour:${esc(colour)}" data-forge-character-id="${esc(id)}" data-dashboard-id="${esc(dashboard.id || '')}">
         <div class="forge-character-image">
-          ${image ? `<img src="${esc(image)}" alt="${esc(title)} portrait">` : `<span>${esc(character.initial || title.charAt(0).toUpperCase() || '?')}</span>`}
+          ${image ? `<img src="${esc(image)}" alt="${esc(title)} portrait" loading="lazy" decoding="async">` : `<span>${esc(character.initial || title.charAt(0).toUpperCase() || '?')}</span>`}
         </div>
         <div class="forge-character-card-body">
           <p class="eyebrow">${esc(characterCampaignName(character))}</p>
@@ -1357,7 +1357,7 @@
     if(!entries.length) return `<p class="muted smallnote">${esc(emptyText || 'No database entries found yet.')}</p>`;
     return `<div class="phase3-card-grid">${entries.map(entry => `
       <article class="phase3-pick-card ${entry.slug === selectedSlug ? 'selected' : ''}" data-${actionName}="${esc(entry.slug)}" data-phase3-entry-domain="${esc(domain)}" data-phase3-entry-slug="${esc(entry.slug)}">
-        ${entryImage(entry, domain) ? `<div class="phase3-pick-art"><img src="${esc(entryImage(entry, domain))}" alt="${esc(entry.title)}"></div>` : `<div class="phase3-pick-art phase3-pick-symbol">${esc(String(entry.title || '?').charAt(0).toUpperCase())}</div>`}
+        ${entryImage(entry, domain) ? `<div class="phase3-pick-art"><img src="${esc(entryImage(entry, domain))}" alt="${esc(entry.title)}" loading="lazy" decoding="async"></div>` : `<div class="phase3-pick-art phase3-pick-symbol">${esc(String(entry.title || '?').charAt(0).toUpperCase())}</div>`}
         <span>${esc(entryCategory(entry, titleCase(domain)))}</span>
         <h3>${esc(entry.title)}</h3>
         <p>${esc(entry.summary || 'Information coming soon.')}</p>
@@ -1518,7 +1518,7 @@
     }
     return `
       <article class="phase3-pick-card phase3-forge-entry-card ${selected ? 'selected' : ''}" data-${actionName}="${esc(entry.slug)}" data-phase3-entry-domain="${esc(domain)}" data-phase3-entry-slug="${esc(entry.slug)}">
-        ${image ? `<div class="phase3-pick-art"><img src="${esc(image)}" alt="${esc(entry.title)}"></div>` : `<div class="phase3-pick-art phase3-pick-symbol">${esc(String(entry.title || '?').charAt(0).toUpperCase())}</div>`}
+        ${image ? `<div class="phase3-pick-art"><img src="${esc(image)}" alt="${esc(entry.title)}" loading="lazy" decoding="async"></div>` : `<div class="phase3-pick-art phase3-pick-symbol">${esc(String(entry.title || '?').charAt(0).toUpperCase())}</div>`}
         <span>${esc(entryCategory(entry, 'Race'))}</span>
         <h3>${esc(entry.title)}</h3>
         <p>${esc(entry.summary || 'Information coming soon.')}</p>
@@ -1667,7 +1667,7 @@
             return `
               <article class="phase3-pick-card phase3-patron-card ${selected ? 'selected' : ''}" tabindex="0" role="button" data-phase3-class-patron-card="${esc(value)}" data-phase3-entry-domain="religion" data-phase3-entry-slug="${esc(value)}">
                 <span class="phase3-patron-category">${esc(patronCategory(entry))}</span>
-                ${image ? `<div class="phase3-patron-art"><img src="${esc(image)}" alt="${esc(entry.title || entry.name)}"></div>` : `<div class="phase3-patron-art phase3-patron-symbol">${esc(String(entry.title || entry.name || '?').charAt(0).toUpperCase())}</div>`}
+                ${image ? `<div class="phase3-patron-art"><img src="${esc(image)}" alt="${esc(entry.title || entry.name)}" loading="lazy" decoding="async"></div>` : `<div class="phase3-patron-art phase3-patron-symbol">${esc(String(entry.title || entry.name || '?').charAt(0).toUpperCase())}</div>`}
                 <h3>${esc(entry.title || entry.name)}</h3>
                 <p>${esc(patronTitleLine(entry) || 'Divine information coming soon.')}</p>
               </article>
@@ -1983,7 +1983,7 @@
         <article class="phase3-detail-panel">
           <button type="button" class="phase3-detail-close" data-phase3-close-detail>Close</button>
           <header class="phase3-detail-head">
-            ${image ? `<img src="${esc(image)}" alt="${esc(entry.title)}">` : `<span>${esc(String(entry.title || '?').charAt(0).toUpperCase())}</span>`}
+            ${image ? `<img src="${esc(image)}" alt="${esc(entry.title)}" loading="lazy" decoding="async">` : `<span>${esc(String(entry.title || '?').charAt(0).toUpperCase())}</span>`}
             <div>
               <p class="eyebrow">${esc(entry.compendium || titleCase(entry.domain || 'Compendium'))}</p>
               <h2>${esc(entry.title)}</h2>

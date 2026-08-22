@@ -998,7 +998,7 @@
 
   function itemCardBody(entry) {
     const imageMarkup = entry.imagePath
-      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.closest('.clean-item-card-image')?.classList.add('is-missing'); this.remove();">`
+      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async" onerror="this.closest('.clean-item-card-image')?.classList.add('is-missing'); this.remove();">`
       : `<span aria-hidden="true">${escapeHtml((entry.title || 'I').charAt(0))}</span>`;
 
     return `
@@ -1025,7 +1025,7 @@
     const metadata = entry.metadata || {};
     const domain = metadata.deityTitle || metadata.deity_title || metadata.divineDomain || metadata.divine_domain || metadata.domain || entry.category || 'Divine Domain';
     const imageMarkup = entry.imagePath
-      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.closest('.clean-theology-card-image')?.classList.add('is-missing'); this.remove();">`
+      ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async" onerror="this.closest('.clean-theology-card-image')?.classList.add('is-missing'); this.remove();">`
       : `<span aria-hidden="true">${escapeHtml(initialsForTitle(entry.title))}</span>`;
 
     return `
@@ -1400,7 +1400,7 @@
     element.tabIndex = 0;
     element.innerHTML = `
       <div class="workspace-gallery-art">
-        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}">` : `<span>${escapeHtml(initial || String(title || '?').charAt(0).toUpperCase() || '?')}</span>`}
+        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initial || String(title || '?').charAt(0).toUpperCase() || '?')}</span>`}
       </div>
       <div class="workspace-gallery-copy">
         <span class="clean-tag">${escapeHtml(tag || 'Workspace')}</span>

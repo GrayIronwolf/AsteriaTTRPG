@@ -134,11 +134,17 @@
   function stopRealtimeCampaignSync(){
     try{ accountCampaignUnsubscribe?.(); }catch(e){}
     accountCampaignUnsubscribe = null;
+    stopCampaignRealtimeSubscriptions();
+    realtimeUid = null;
+  }
+  function stopCampaignRealtimeSubscriptions(){
     realtimeSubscriptions.forEach(unsubscribe=>{
       try{ unsubscribe?.(); }catch(e){}
     });
     realtimeSubscriptions.clear();
-    realtimeUid = null;
+  }
+  function reactOwnsCampaignSubscriptions(){
+    return Boolean(window.AsteriaReactMigration?.isDashboardActive?.());
   }
   function mergeRealtimeCampaign(campaign){
     if(!campaign?.id) return;
@@ -415,6 +421,10 @@
     if(realtimeUid && realtimeUid!==user.uid) stopRealtimeCampaignSync();
     realtimeUid=user.uid;
     startAccountCampaignDiscovery();
+    if(reactOwnsCampaignSubscriptions()){
+      stopCampaignRealtimeSubscriptions();
+      return;
+    }
     const activeKeys=new Set();
     realtimeCampaignTargets(campaigns,user).forEach(campaign=>{
       if(!campaign.id) return;
@@ -583,6 +593,10 @@
   });
   document.addEventListener('visibilitychange', ()=>{
     if(!document.hidden && isAuthed() && Date.now() - lastCampaignRefresh > 10000) refreshCloudCampaigns('window-visible');
+  });
+  window.addEventListener('hashchange', ()=>{
+    if(!isAuthed()) return;
+    setupRealtimeCampaignSync(window.campaigns || []);
   });
   document.addEventListener('DOMContentLoaded', ()=>{
     installWrappers();

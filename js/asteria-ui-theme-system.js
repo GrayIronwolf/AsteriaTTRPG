@@ -187,7 +187,10 @@
     }
     if(save && !save.dataset.bound){
       save.dataset.bound = "1";
-      save.addEventListener("click", () => applyTheme(current(), true));
+      save.addEventListener("click", () => {
+        applyTheme(current(), true);
+        window.AsteriaAnnounce?.("Theme saved.");
+      });
     }
     if(reset && !reset.dataset.bound){
       reset.dataset.bound = "1";
@@ -196,6 +199,7 @@
         localStorage.removeItem("asteria-theme");
         localStorage.removeItem("asteria-accent");
         applyTheme({theme:"spellblade", ...themes.spellblade}, true);
+        window.AsteriaAnnounce?.("Theme reset to Spellblade.");
       });
     }
   }
@@ -207,12 +211,12 @@
     try{ saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); }catch(e){}
     applyTheme(saved || {theme:"spellblade", ...themes.spellblade}, false);
     bind();
-    setInterval(bind, 1000);
   }
 
   window.AsteriaThemeSystem = {
     themes,
     applyTheme,
+    refreshControls:bind,
     reset(){
       localStorage.removeItem(STORAGE_KEY);
       applyTheme({theme:"spellblade", ...themes.spellblade}, true);

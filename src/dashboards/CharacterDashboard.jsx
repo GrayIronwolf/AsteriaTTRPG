@@ -1,12 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ConnectionBanner, EmptyState, Modal, Panel, ResourceBar, StatusPill, Tabs, WorkspaceShell } from '../components/WorkspaceUI.jsx';
+import React, { useEffect, useRef, useState } from 'react';
+import { AsteriaAppShell, DashboardNavigation, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
+import { DashboardInformationRow } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { pendingLootEvent, pendingMagicRewardEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
-import { characterKnowsIdentify, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
+import { mirrorCharacterSnapshot } from '../app/legacyBridge.js';
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
 import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
+import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import {
   ActivityLog,
   CharacterTab,
@@ -20,111 +23,20 @@ import {
 } from './CharacterWorkspaceTabs.jsx';
 
 const CHARACTER_TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '\u2630' },
-  { id: 'character', label: 'Character', icon: '\u25c9' },
-  { id: 'talents', label: 'Class/Talent Tree', icon: '\u2726' },
-  { id: 'skills', label: 'Skills', icon: '\u25cf' },
-  { id: 'spells', label: 'Spells', icon: '\u26a1' },
-  { id: 'inventory', label: 'Inventory', icon: '\u25a6' },
-  { id: 'quest', label: 'Quest', icon: '\u2691' },
-  { id: 'journal', label: 'Journal', icon: '\u270e' },
-  { id: 'party', label: 'Party', icon: '\u25c9' },
-  { id: 'gallery', label: 'Gallery', icon: '\u25a3' },
-  { id: 'settings', label: 'Dashboard Settings', icon: '\u2699' }
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'character', label: 'Character', icon: 'character' },
+  { id: 'talents', label: 'Class/Talent Tree', icon: 'talents' },
+  { id: 'skills', label: 'Skills', icon: 'skills' },
+  { id: 'spells', label: 'Spells', icon: 'spells' },
+  { id: 'inventory', label: 'Inventory', icon: 'inventory' },
+  { id: 'quest', label: 'Quest', icon: 'quest' },
+  { id: 'journal', label: 'Journal', icon: 'journal' },
+  { id: 'party', label: 'Party', icon: 'party' },
+  { id: 'gallery', label: 'Gallery', icon: 'gallery' },
+  { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
 function values(value) { return Array.isArray(value) ? value : []; }
-function itemName(item) { return item?.name || item?.title || 'Empty'; }
-function characterClass(character = {}) { return character.klass || character.class || 'Unselected Class'; }
-
-const CHARACTERISTICS = [
-  ['STR',['strength','str']], ['DEX',['dexterity','dex']], ['AGI',['agility','agi']],
-  ['CON',['constitution','con']], ['END',['endurance','end']], ['INT',['intelligence','int']],
-  ['WIS',['wisdom','wis']], ['CHA',['charisma','cha']], ['LCK',['luck','lck']]
-];
-
-function characteristicValue(character, aliases) {
-  const source = character.characteristics || {};
-  const value = aliases.map(key => source[key]).find(item => item !== undefined);
-  return Number(value?.value ?? value ?? 0);
-}
-
-function characteristicTier(score) {
-  const value = Number(score || 0);
-  if(value >= 100) return { label:'Tier V', modifier:5 };
-  if(value >= 80) return { label:'Tier IV', modifier:4 };
-  if(value >= 60) return { label:'Tier III', modifier:3 };
-  if(value >= 40) return { label:'Tier II', modifier:2 };
-  if(value >= 20) return { label:'Tier I', modifier:1 };
-  return { label:'Tier 0', modifier:0 };
-}
-
-function isBloodhunter(character) {
-  const classes = [characterClass(character), ...(Array.isArray(character.classNames) ? character.classNames : []), ...(Array.isArray(character.classKeys) ? character.classKeys : [])];
-  return classes.some(value => String(value || '').toLowerCase().includes('bloodhunter'));
-}
-
-function SidebarResource({ campaignId, character, label, resource, value, editable }) {
-  const [amount, setAmount] = useState(1);
-  const [busy, setBusy] = useState(false);
-  const update = async direction => {
-    setBusy(true);
-    try { await firebaseService.updateResource(campaignId, character.id, resource, direction * Math.max(1, Number(amount || 1)), { source:'Character Dashboard' }); }
-    finally { setBusy(false); }
-  };
-  return <div className="react-sidebar-resource">
-    <ResourceBar label={label} kind={resource} value={value?.[0]} maximum={value?.[1]} />
-    <div className="react-resource-controls"><input disabled={!editable || busy} aria-label={`${label} change amount`} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} /><button disabled={!editable || busy} aria-label={`Remove ${amount} ${label}`} onClick={() => update(-1)}>-</button><button disabled={!editable || busy} aria-label={`Add ${amount} ${label}`} onClick={() => update(1)}>+</button></div>
-  </div>;
-}
-
-function CharacterSidebar({ campaignId, character, partyWorkspace, editable }) {
-  const xp = window.AsteriaProgression?.progressSummary?.(Object.assign({}, character)) || { xp: character.xp || 0, xpMax: character.xpMax || 1000 };
-  const portrait = character.image || character.portrait || character.characterImage || character.appearance?.image || character.appearance?.portrait;
-  const preferences=normalizeDashboardPreferences(character);
-  const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
-  const visibleTitle=titles.find(title=>title.id===preferences.visibleTitleId)||titles[0];
-  const membership=(partyWorkspace.organizations||[]).find(value=>String(value.type).toLowerCase()==='adventure party'&&(value.memberCharacterIds||[]).includes(character.id));
-  return <Panel className="react-character-sidebar">
-    <div className="react-character-identity"><div className="react-character-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}<b>Level {Number(character.level || 0)}</b></div><div><h2>{character.name || 'Unnamed Character'}</h2><p>{characterClass(character)}</p><small>{character.race || 'Unselected Race'}</small></div></div>
-    {visibleTitle?<p className="react-character-title">{visibleTitle.text}</p>:null}{preferences.showPartyMembership&&membership?<p className="react-party-membership">A member of {membership.name}</p>:null}
-    <div className="react-xp-sidebar"><ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} /><small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP to next level</small></div>
-    <div className="react-sidebar-resources">
-      <SidebarResource campaignId={campaignId} character={character} label="HP" resource="hp" value={character.hp || [0,0]} editable={editable} />
-      <SidebarResource campaignId={campaignId} character={character} label="SP" resource="sp" value={character.sp || [0,0]} editable={editable} />
-      <SidebarResource campaignId={campaignId} character={character} label="MP" resource="mp" value={character.mp || [0,0]} editable={editable} />
-      {isBloodhunter(character) || Array.isArray(character.bp) ? <SidebarResource campaignId={campaignId} character={character} label="BP" resource="bp" value={character.bp || [0,20]} editable={editable} /> : null}
-    </div>
-    <div className="react-stat-grid">{CHARACTERISTICS.map(([label, aliases]) => { const score=characteristicValue(character, aliases); const tier=characteristicTier(score); return <div key={label}><b>{label}</b><span>{score}</span><small>{tier.label}{tier.modifier ? ` +${tier.modifier}` : ''}</small></div>; })}</div>
-  </Panel>;
-}
-
-function SmallCard({ title, image, meta, cost, disabled, onDoubleClick }) {
-  return <article className={`react-small-card ${disabled ? 'disabled' : ''}`} tabIndex={onDoubleClick ? 0 : undefined} onDoubleClick={disabled ? undefined : onDoubleClick}><b>{title}</b><div className="react-small-card-image">{image ? <img src={image} alt="" /> : <span>{String(title || '?').charAt(0)}</span>}</div>{meta ? <small>{meta}</small> : null}{cost ? <small>{cost}</small> : null}</article>;
-}
-
-function DashboardPanels({ campaignId, character, editable, onNavigate }) {
-  const [message,setMessage]=useState('');
-  const [busy,setBusy]=useState(false);
-  const equipment = character.equipment || {};
-  const talents = values(character.unlockedTalents || character.talents).filter(talent => talent?.unlocked !== false);
-  const spells = values(character.spells || character.activeSpells);
-  const skills = values(character.skills || character.selectedSkills);
-  const quickSlots = values(character.quickSlots).slice(0, 4);
-  const coins = character.coins || character.coinPouch || {};
-  const run=async operation=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(result?.ok?'Dashboard updated.':result?.error||'That action could not be completed.');}catch(error){setMessage(error.message||String(error));}finally{setBusy(false);}};
-  const cast=spell=>run(()=>firebaseService.castSpell(campaignId,character.id,spell,parseResourceCost(spell.costs||spell.cost)));
-  const panelNodes={
-    weapons:<Panel title="Weapons & Quick Items" className="react-loadout-panel"><div className="react-dashboard-loadout"><section><h3>Equipped Weapons</h3><div className="react-equipment-grid weapons" onDoubleClick={()=>onNavigate('inventory')}>{['Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'].map(slot => <div key={slot}><small>{slot}</small><b>{itemName(equipment[slot] || equipment[slot.toLowerCase().replaceAll(' ', '')])}</b></div>)}</div></section><section><h3>Quick Items</h3><div className="react-quick-grid">{[0,1,2,3].map(index => <button disabled={!editable||busy||!quickSlots[index]?.id} title="Double-click to use" onDoubleClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:quickSlots[index].id}))} key={index}><b>{index + 1}</b><span>{itemName(quickSlots[index])}</span></button>)}</div></section></div></Panel>,
-    talents:<Panel title="Class Talents" className="react-wide-panel"><div className="react-card-gallery compact">{talents.slice(0, 8).map((talent, index) => <SmallCard key={talent.id || talent.name || index} title={talent.name || talent.title} image={talent.image} meta={`Tier ${talent.tier || 1} | Rank ${talent.rank || 1}`} cost={talent.cost} onDoubleClick={()=>onNavigate('talents')} />)}{!talents.length ? <EmptyState title="No unlocked talents" /> : null}</div></Panel>,
-    spells:<Panel title="Active Spells" className="react-wide-panel"><div className="react-card-gallery compact">{spells.slice(0, 8).map((spell, index) => <SmallCard key={spell.id || spell.name || index} title={spell.name || spell.title} image={spell.image} meta={spell.element || spell.magicType || ''} cost={spell.cost ? String(spell.cost) : ''} disabled={!editable||busy} onDoubleClick={()=>cast(spell)} />)}{!spells.length ? <EmptyState title="No active spells" /> : null}</div></Panel>,
-    skills:<Panel title="Skills"><div className="react-card-gallery compact">{skills.slice(0, 8).map((skill, index) => <SmallCard key={skill.id || skill.name || index} title={skill.name || skill.title || skill} meta={skill.rankName || skill.rank || 'Novice'} onDoubleClick={()=>onNavigate('skills')} />)}{!skills.length ? <EmptyState title="No selected skills" /> : null}</div></Panel>,
-    conditions:<Panel title="Conditions"><div className="react-condition-list">{values(character.conditions).map((condition, index) => <StatusPill key={condition.id || condition.name || index}>{condition.name || condition}</StatusPill>)}{!values(character.conditions).length ? <p>No active conditions.</p> : null}</div></Panel>,
-    coins:<Panel title="Coin Pouch"><div className="react-coin-list">{Object.entries(coins).map(([name, amount]) => <div key={name}><span>{name}</span><b>{Number(amount || 0).toLocaleString()}</b></div>)}{!Object.keys(coins).length ? <p>No currency recorded.</p> : null}</div><p className="react-action-message">{message}</p></Panel>
-  };
-  const preferences=normalizeDashboardPreferences(character);
-  return <div className="react-character-dashboard-grid">{preferences.panelOrder.filter(key=>!preferences.hiddenPanels.includes(key)).map(key=>React.cloneElement(panelNodes[key],{key,className:`${panelNodes[key].props.className||''} react-panel-${key}`}))}</div>;
-}
 
 function LootModal({ campaignId, character, event, editable, onResolved }) {
   const [busy, setBusy] = useState(false);
@@ -190,12 +102,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[]);
   useEffect(() => {
-    if(character){
-      window.chars = window.chars || {};
-      window.chars[character.id] = Object.assign({}, window.chars[character.id] || {}, character);
-      window.selected = character.id;
-      window.session = Object.assign({}, window.session || {}, { character: character.id });
-    }
+    mirrorCharacterSnapshot(character);
   }, [character]);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
@@ -209,17 +116,15 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
   if(live.loading || !character) return <div className="react-route-state">Connecting Character Dashboard...</div>;
   const editable = Boolean(live.session?.editable);
-  return <WorkspaceShell
+  const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD' });
+  return <AsteriaAppShell
     className="react-character-dashboard"
-    eyebrow="Character Dashboard"
-    title={live.campaign?.name || character.campaign || 'Campaign'}
-    subtitle={editable ? `Live session ${live.session.id || ''}. Gameplay changes are enabled.` : 'The dashboard is read-only until the GM starts a live session.'}
-    sidebar={<CharacterSidebar campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} />}
-    actions={<ConnectionBanner online={live.online} error={live.error} session={live.session} />}
+    showHeader={false}
   >
+    <DashboardInformationRow campaign={live.campaign} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error} loading={live.loading} />
     <SessionGate session={live.session} />
-    <Tabs tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
-    {tab === 'dashboard' ? <><DashboardPanels campaignId={campaignId} character={character} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
+    <DashboardNavigation tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
+    {tab === 'dashboard' ? <><PlayerDashboardOverview campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
     {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
@@ -227,12 +132,12 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}
     {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}
     {tab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} editable={editable} /> : null}
+    {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     <PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />
     {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : null}
     {editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}
-  </WorkspaceShell>;
+  </AsteriaAppShell>;
 }

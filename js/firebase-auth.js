@@ -704,21 +704,31 @@ function placeCharacterItem(character,source,options={}){
   const qty=Math.max(1,Number(source?.qty ?? source?.quantity ?? 1));
   character.storageLimit=Math.max(3,Number(character.storageLimit||3));
   character.storages=normalizeCharacterStorages(character);
-  const storage=character.storages.find(value=>String(value.id)===String(options.storageId||'')) || character.storages[0];
-  if(!storage) throw new Error(`${character.name||'This character'} needs a storage container before receiving items.`);
+  const preferred=character.storages.find(value=>String(value.id)===String(options.storageId||''));
+  const candidates=[preferred,...character.storages].filter((value,index,rows)=>value&&rows.findIndex(row=>String(row.id)===String(value.id))===index);
+  if(!candidates.length) throw new Error(`${character.name||'This character'} needs a storage container before receiving items.`);
   const inventory=characterInventory(character);
-  const cleanSource=Object.assign({},structuredCloneSafe(source),{qty,storageId:storage.id,location:'inventory',equipped:false,equippedSlot:''});
-  const stacked=stackableStorageItem(inventory,cleanSource,storage.id);
-  if(stacked){
-    stacked.qty=Number(stacked.qty||1)+qty;
-    character.inventory=inventory;
-    return stacked;
+  const baseSource=Object.assign({},structuredCloneSafe(source),{qty,location:'inventory',equipped:false,equippedSlot:''});
+  for(const storage of candidates){
+    const cleanSource=Object.assign({},baseSource,{storageId:storage.id});
+    const stacked=stackableStorageItem(inventory,cleanSource,storage.id);
+    if(stacked){
+      stacked.qty=Number(stacked.qty||1)+qty;
+      character.inventory=inventory;
+      return stacked;
+    }
   }
-  const capacity=Math.max(1,Number(storage.maxSlots||Number(storage.rows||4)*Number(storage.cols||4)));
-  const requestedSlot=Number(options.storageSlot);
-  const requestedAvailable=Number.isInteger(requestedSlot)&&requestedSlot>=0&&requestedSlot<capacity&&!inventory.some(value=>!value.equipped&&String(value.storageId)===String(storage.id)&&Number(value.storageSlot)===requestedSlot);
-  const storageSlot=requestedAvailable?requestedSlot:firstFreeStorageSlot(inventory,storage);
-  if(storageSlot<0) throw new Error(`${storage.name} is full.`);
+  let storage=null;
+  let storageSlot=-1;
+  for(const candidate of candidates){
+    const capacity=Math.max(1,Number(candidate.maxSlots||Number(candidate.rows||4)*Number(candidate.cols||4)));
+    const requestedSlot=Number(options.storageSlot);
+    const requestedAvailable=String(candidate.id)===String(preferred?.id||'')&&Number.isInteger(requestedSlot)&&requestedSlot>=0&&requestedSlot<capacity&&!inventory.some(value=>!value.equipped&&String(value.storageId)===String(candidate.id)&&Number(value.storageSlot)===requestedSlot);
+    const nextSlot=requestedAvailable?requestedSlot:firstFreeStorageSlot(inventory,candidate);
+    if(nextSlot>=0){storage=candidate;storageSlot=nextSlot;break;}
+  }
+  if(!storage) throw new Error('Every storage container is full. Create space before accepting this item.');
+  const cleanSource=Object.assign({},baseSource,{storageId:storage.id});
   const preserveId=Boolean(options.preserveId)&&!inventory.some(value=>liveItemId(value)===liveItemId(cleanSource));
   const received=Object.assign({},cleanSource,{
     id:preserveId?liveItemId(cleanSource):`${liveSlug(cleanSource.trueName||cleanSource.name||'item')}-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
@@ -1096,6 +1106,31 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  manageCharacterTitle: async function(campaignId,characterId,titleId,details={}){
+    if(!db||!currentUser||!campaignId||!characterId||!titleId) return {ok:false,error:'Choose a character and title.'};
+    const reference=doc(db,'campaigns',campaignId,'characters',characterId);
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(reference);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const titles=(Array.isArray(character.titles)?character.titles:[]).map((value,index)=>typeof value==='string'?{id:`title-${index}`,text:value}:value);
+        const index=titles.findIndex(value=>String(value.id)===String(titleId));
+        if(index<0) throw new Error('Player title not found.');
+        if(details.revoke){
+          titles.splice(index,1);
+          if(String(character.dashboardPreferences?.visibleTitleId||'')===String(titleId)) character.dashboardPreferences=Object.assign({},character.dashboardPreferences||{},{visibleTitleId:''});
+        }else{
+          const text=String(details.text||'').trim().slice(0,120);
+          if(!text) throw new Error('Enter a title.');
+          titles[index]=Object.assign({},titles[index],{text,updatedAt:new Date().toISOString(),updatedBy:currentUser.uid});
+        }
+        transaction.set(reference,{titles,dashboardPreferences:character.dashboardPreferences||{},updatedAt:serverTimestamp()},{merge:true});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   grantCharacterStorageSlots: async function(campaignId,characterIds,amount=1){
     if(!db || !currentUser || !campaignId) return {ok:false};
     const ids=[...new Set((Array.isArray(characterIds)?characterIds:[characterIds]).filter(Boolean))];
@@ -1240,8 +1275,9 @@ const firebasePublicApi = {
           return;
         }
         if(operation.type==='reorder-storages'){
-          const order=Array.isArray(operation.storageIds)?operation.storageIds:[];
-          character.storages.sort((left,right)=>order.indexOf(left.id)-order.indexOf(right.id)).forEach((storage,index)=>{storage.order=index;});
+          const order=[...new Set((Array.isArray(operation.storageIds)?operation.storageIds:[]).map(String))];
+          const rank=value=>{const index=order.indexOf(String(value.id));return index<0?order.length+Number(value.order||0):index;};
+          character.storages.sort((left,right)=>rank(left)-rank(right)).forEach((storage,index)=>{storage.order=index;});
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
@@ -1249,21 +1285,7 @@ const firebasePublicApi = {
         if(operation.type==='add-item'){
           const source=structuredCloneSafe(operation.item||{});
           if(!source.name&&!source.title) throw new Error('Item data is incomplete.');
-          const storageId=String(operation.storageId||character.storages[0]?.id||'storage-1');
-          const storage=character.storages.find(value=>value.id===storageId);
-          if(!storage) throw new Error('Create a bag or storage container before adding items.');
-          const stacked=stackableStorageItem(inventory,source,storageId);
-          if(stacked){
-            stacked.qty=Math.max(1,Number(stacked.qty||1))+Math.max(1,Number(source.qty||1));
-            character.inventory=inventory;
-            appendActivity(character,{type:'item-stacked',message:`Stacked ${source.name||source.title} in ${storage.name}.`});
-            writeLiveCharacter(transaction,refs,character);
-            return;
-          }
-          const storageSlot=firstFreeStorageSlot(inventory,storage);
-          if(storageSlot<0) throw new Error(`${storage.name} is full.`);
-          const added=normalizeLiveItem(Object.assign({},source,{id:`${liveSlug(source.name||source.title)||'item'}-${Date.now()}`,instanceId:`item-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,qty:Math.max(1,Number(source.qty||1)),storageId,storageSlot,location:'inventory',equipped:false}),inventory.length,character);
-          character.inventory=[...inventory,added];
+          const added=placeCharacterItem(character,source,{storageId:String(operation.storageId||'')});
           appendActivity(character,{type:'custom-item-added',message:`Added custom item ${added.name} to inventory.`});
           writeLiveCharacter(transaction,refs,character);
           return;
@@ -1483,10 +1505,16 @@ const firebasePublicApi = {
             const exchange=recipientInventory.find((value,index)=>liveItemId(value,index)===String(details.exchangeItemId||''));
             if(!exchange||exchange.equipped||exchange.locked||exchange.bound||exchange.questItem) throw new Error('Choose an available item to trade.');
             const exchangeQuantity=Math.max(1,Math.min(Number(details.exchangeQuantity||1),Number(exchange.qty||1)));
-            exchangeItem=Object.assign({},structuredCloneSafe(exchange),{qty:exchangeQuantity});
+            exchangeItem=Object.assign({},structuredCloneSafe(exchange),{sourceItemId:liveItemId(exchange),qty:exchangeQuantity,equipped:false,equippedSlot:'',location:'player-request-escrow'});
             exchange.qty=Math.max(0,Number(exchange.qty||1)-exchangeQuantity);
             recipient.inventory=recipientInventory.filter(value=>Number(value.qty??1)>0);
-            placeCharacterItem(sender,exchangeItem,{storageId:details.senderStorageId||''});
+            request.exchangeItem=exchangeItem;
+            request.recipientStorageId=String(details.storageId||'');
+            request.status='awaiting-sender';request.recipientNotice='acknowledged';request.senderNotice='unread';request.recipientReadyAt=new Date().toISOString();request.recipientReadyBy=currentUser.uid;
+            appendActivity(recipient,{type:'item-trade-ready',message:`Confirmed an exchange offer for ${request.item?.name||'an item'}.`});
+            writeLiveCharacter(transaction,recipientRefs,recipient);
+            transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+            return {awaitingSender:true};
           }
           receivedItem=placeCharacterItem(recipient,request.item,{storageId:details.storageId||''});
           appendActivity(recipient,{type:`item-${request.mode}-accepted`,message:`Accepted ${receivedItem.name} from ${sender.name||'a party member'}.`});
@@ -1503,6 +1531,45 @@ const firebasePublicApi = {
         return {revealedItem};
       });
       return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  finalizeLiveItemTrade: async function(campaignId,characterId,requestId,accepted){
+    if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
+    const senderRefs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const [ecosystemSnapshot,senderSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(senderRefs.campaign)]);
+        if(!ecosystemSnapshot.exists()||!senderSnapshot.exists()) throw new Error('Trade data is unavailable.');
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
+        const request=findPlayerItemRequest(ecosystem,requestId);
+        if(!request||request.status!=='awaiting-sender'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This trade is no longer awaiting your confirmation.');
+        const recipientRef=doc(db,'campaigns',campaignId,'characters',request.toCharacterId);
+        const recipientSnapshot=await transaction.get(recipientRef);
+        if(!recipientSnapshot.exists()) throw new Error('The other linked character is unavailable.');
+        const sender=Object.assign({id:characterId},senderSnapshot.data());
+        const recipient=Object.assign({id:request.toCharacterId},recipientSnapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,sender,senderRefs);
+        let senderReceived=null;let recipientReceived=null;
+        if(accepted){
+          senderReceived=placeCharacterItem(sender,request.exchangeItem,{});
+          recipientReceived=placeCharacterItem(recipient,request.item,{storageId:request.recipientStorageId||''});
+          appendActivity(sender,{type:'item-trade-completed',message:`Completed a trade with ${recipient.name||'a party member'}.`});
+          appendActivity(recipient,{type:'item-trade-completed',message:`Completed a trade with ${sender.name||'a party member'}.`});
+        }else{
+          placeCharacterItem(sender,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
+          placeCharacterItem(recipient,request.exchangeItem,{storageId:request.exchangeItem?.storageId||'',storageSlot:request.exchangeItem?.storageSlot,preserveId:true});
+          appendActivity(sender,{type:'item-trade-declined',message:`Declined the final trade with ${recipient.name||'a party member'}.`});
+          appendActivity(recipient,{type:'item-trade-declined',message:`${sender.name||'The other player'} declined the final trade.`});
+        }
+        request.status=accepted?'accepted':'declined';request.senderNotice='acknowledged';request.recipientNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
+        request.resolution={accepted:Boolean(accepted),receivedItem:recipientReceived?{name:recipientReceived.name,qty:recipientReceived.qty}:null,exchangeItem:senderReceived?{name:senderReceived.name,qty:senderReceived.qty}:null};
+        writeLiveCharacter(transaction,senderRefs,sender);
+        transaction.set(recipientRef,Object.assign({},structuredCloneSafe(recipient),{updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+      });
+      return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   respondLiveItemOffer: async function(campaignId,characterId,requestId,accepted,details={}){
@@ -1549,6 +1616,26 @@ const firebasePublicApi = {
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();request.senderAcknowledgedBy=currentUser.uid;
+        transaction.set(refs.private,Object.assign({},structuredCloneSafe(character),{id:ownedCharacterSourceId(characterId,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  acknowledgeLiveItemRecipientUpdate: async function(campaignId,characterId,requestId){
+    if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      await runTransaction(db,async transaction=>{
+        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
+        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request update is unavailable.');
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
+        const request=findPlayerItemRequest(ecosystem,requestId);
+        if(!request||!['accepted','declined','cancelled'].includes(request.status)||String(request.toCharacterId)!==String(characterId)) throw new Error('This recipient update cannot be acknowledged.');
+        const character=Object.assign({id:characterId},characterSnapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        request.recipientNotice='acknowledged';request.recipientAcknowledgedAt=new Date().toISOString();request.recipientAcknowledgedBy=currentUser.uid;
         transaction.set(refs.private,Object.assign({},structuredCloneSafe(character),{id:ownedCharacterSourceId(characterId,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
@@ -2434,7 +2521,7 @@ if(!reactDevFixture) window.AsteriaFirebase = firebasePublicApi;
 document.addEventListener('DOMContentLoaded', ()=>{
   const panel = $('loginPanel');
   if(panel) panel.innerHTML = authPanelHtml();
-  const title = document.querySelector('title'); if(title) title.textContent = 'ASTERIA REACT MIGRATION - MILESTONE 1';
+  const title = document.querySelector('title'); if(title) title.textContent = 'Asteria TTRPG';
   const oldLogout = window.logout;
   window.logout = function(){ firebaseLogout(); if(!auth && oldLogout) oldLogout(); };
   window.requestPasswordReset = function(){ return window.firebaseResetPassword(); };

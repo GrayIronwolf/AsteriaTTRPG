@@ -1,0 +1,95 @@
+/* Asteria Design System v1: the canonical site-wide visual token layer. */
+:root {
+  color-scheme: dark;
+
+  --asteria-bg-deep: #03070b;
+  --asteria-bg: #071018;
+  --asteria-bg-primary: var(--asteria-bg);
+  --asteria-surface: #0a1822;
+  --asteria-surface-raised: #102330;
+  --asteria-surface-solid: #152631;
+  --asteria-bg-panel: rgba(6, 18, 27, .88);
+  --asteria-bg-panel-hover: rgba(10, 28, 40, .92);
+  --asteria-surface-overlay: rgba(3, 10, 15, .96);
+  --asteria-control-bg: #07131b;
+  --asteria-control-bg-hover: #10232f;
+  --asteria-border: #28506a;
+  --asteria-border-subtle: rgba(100, 160, 194, .24);
+  --asteria-divider: rgba(125, 169, 195, .2);
+  --asteria-border-active: var(--asteria-accent, #249ee8);
+  --asteria-border-highlight: var(--asteria-border-active);
+
+  --asteria-text: #f3ead8;
+  --asteria-text-primary: var(--asteria-text);
+  --asteria-text-muted: #9eafbd;
+  --asteria-text-secondary: var(--asteria-text-muted);
+  --asteria-text-disabled: #687985;
+  --asteria-gold: #d2aa56;
+  --asteria-accent-soft: color-mix(in srgb, var(--asteria-accent, #249ee8) 20%, transparent);
+  --asteria-success: #35d982;
+  --asteria-warning: #d7a347;
+  --asteria-danger: #c9475b;
+  --asteria-info: #56b9e8;
+  --asteria-hp: #a92842;
+  --asteria-sp: #2dbd72;
+  --asteria-mp: #2777d9;
+  --asteria-bp: #a82747;
+  --asteria-xp: #62cce9;
+
+  --asteria-rarity-common: #98a4ad;
+  --asteria-rarity-uncommon: #35c878;
+  --asteria-rarity-unusual: #35c5d5;
+  --asteria-rarity-rare: #378cf2;
+  --asteria-rarity-epic: #a76af2;
+  --asteria-rarity-mythic: #e16cc4;
+  --asteria-rarity-legendary: #d5a53b;
+  --asteria-rarity-relic: #ef5a55;
+
+  --asteria-font-display: Georgia, "Times New Roman", serif;
+  --asteria-font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --asteria-type-xs: .72rem;
+  --asteria-type-sm: .82rem;
+  --asteria-type-md: 1rem;
+  --asteria-type-lg: 1.25rem;
+  --asteria-type-xl: 1.65rem;
+  --asteria-type-page: 2rem;
+
+  --asteria-space-0: 0;
+  --asteria-space-1: 4px;
+  --asteria-space-2: 8px;
+  --asteria-space-3: 12px;
+  --asteria-space-4: 16px;
+  --asteria-panel-gap: var(--asteria-space-3);
+  --asteria-space-5: 24px;
+  --asteria-space-6: 32px;
+  --asteria-space-7: 40px;
+  --asteria-space-8: 48px;
+
+  --asteria-radius-sm: 3px;
+  --asteria-radius: 6px;
+  --asteria-radius-lg: 8px;
+  --asteria-radius-round: 999px;
+  --asteria-control-min: 40px;
+  --asteria-touch-target: 44px;
+  --asteria-focus: 0 0 0 3px color-mix(in srgb, var(--asteria-accent, #249ee8) 42%, transparent);
+  --asteria-shadow-panel: 0 12px 28px rgba(0, 0, 0, .32);
+  --asteria-shadow-overlay: 0 20px 54px rgba(0, 0, 0, .62);
+  --asteria-glow-panel: 0 0 calc(var(--asteria-glow-strength, .36) * 14px) color-mix(in srgb, var(--asteria-accent, #249ee8) 42%, transparent);
+  --asteria-transition-fast: 140ms ease;
+  --asteria-transition-normal: 220ms ease;
+  --asteria-transition-slow: 360ms ease;
+
+  --asteria-breakpoint-mobile: 680px;
+  --asteria-breakpoint-tablet: 900px;
+  --asteria-breakpoint-desktop: 1280px;
+  --asteria-content-reading: 76ch;
+  --asteria-content-max: 1920px;
+  --asteria-line-height: 1.58;
+  --asteria-line-height-tight: 1.2;
+  --asteria-z-header: 1200;
+  --asteria-z-navigation: 1500;
+  --asteria-z-overlay: 1900;
+  --asteria-z-dialog: 2000;
+  --core-header-height: 84px;
+  --core-sidebar-width: 176px;
+}

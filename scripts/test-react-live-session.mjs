@@ -25,6 +25,8 @@ import {
   stackableStorageItem,
   talentRankCost
 } from '../src/state/liveWorkspaceModel.mjs';
+import { buildReactRoute, parseReactRoute } from '../src/app/asteriaRoutes.mjs';
+import { liveSyncPresentation } from '../src/state/liveSyncState.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -161,8 +163,10 @@ test('17. Talent and skill progression match the existing Asteria costs', () => 
 test('18. All character workspace systems render natively in React', () => {
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
-  ['CharacterTab','TalentsTab','SkillsTab','SpellsTab','InventoryTab','QuestTab','JournalTab','PartyTab'].forEach(name => assert.match(dashboard + tabs, new RegExp(name)));
-  ['spendCP','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs, new RegExp(name)));
+  const inventory = read('src/dashboards/InventoryWorkspace.jsx');
+  ['CharacterTab','TalentsTab','SkillsTab','SpellsTab','InventoryWorkspace','QuestTab','JournalTab','PartyTab'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
+  ['spendCP','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
+  assert.doesNotMatch(tabs, /export function InventoryTab/);
 });
 
 test('19. Firebase gates live mutations and exposes the party workspace', () => {
@@ -189,7 +193,7 @@ test('21. New characters start with three available but uncreated storage slots'
 test('22. Dashboard preferences preserve valid ordering and visibility choices', () => {
   const preferences = normalizeDashboardPreferences({ dashboardPreferences:{ panelOrder:['spells','equipment'], hiddenPanels:['coins','invalid'], visibleTitleId:'title-1', showPartyMembership:false } });
   assert.equal(preferences.panelOrder[0], 'spells');
-  assert.deepEqual(preferences.hiddenPanels, ['coins']);
+  assert.deepEqual(preferences.hiddenPanels, []);
   assert.equal(preferences.visibleTitleId, 'title-1');
   assert.equal(preferences.showPartyMembership, false);
 });
@@ -242,10 +246,12 @@ test('27. Linked owners can use gallery and item workflows without trusting stal
   assert.match(read('src/firebase/asteriaFirebaseService.js'), /syncGalleryMedia/);
 });
 
-test('28. The dashboard uses one compact weapons and quick-items panel', () => {
+test('28. The dashboard uses modular armour, weapon, and quick-item summaries', () => {
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
-  assert.match(dashboard, /Weapons & Quick Items/);
-  assert.doesNotMatch(dashboard, /title="Equipment \/ Armor"/);
+  const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
+  assert.match(dashboard, /PlayerDashboardOverview/);
+  ['ArmourPanel','WeaponsPanel','QuickItemsPanel'].forEach(name => assert.match(overview, new RegExp(name)));
+  assert.match(overview, /firebaseService\.updateInventory/);
   assert.doesNotMatch(read('src/dashboards/InventoryWorkspace.jsx'), /ariaLabel="Inventory menu"/);
 });
 
@@ -258,7 +264,9 @@ test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage he
   assert.equal(stackableStorageItem([existing], { name:'Iron Ore', identified:true }, 'pack'), existing);
   assert.match(inventory, /Empty Storage Slot/);
   assert.match(inventory, /Create Container/);
-  assert.match(styles, /grid-template-columns: minmax\(320px, 360px\) minmax\(0, 1fr\) 105px/);
+  assert.match(styles, /grid-template-columns: minmax\(320px, 360px\) minmax\(420px, 1fr\) minmax\(150px, 178px\)/);
+  assert.match(inventory, /react-inventory-mobile-tabs/);
+  assert.match(inventory, /react-inventory-item-grid.*view/);
 });
 
 test('30. Player item requests use one canonical live record collection', () => {
@@ -291,6 +299,248 @@ test('33. The exchange UI has a persistent request dock and responsive transacti
   const styles = read('src/styles/asteria-react.css');
   ['react-item-request-dock','react-exchange-route','react-exchange-item','react-request-history'].forEach(name => assert.match(styles, new RegExp(name)));
   assert.match(styles, /@media \(max-width: 680px\)/);
+});
+
+test('34. Campaign, character progression, resources, and Gold share one reusable HUD', () => {
+  const information = read('src/components/DashboardInformation.jsx');
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  ['CampaignInformationPanel','CurrencyPanel','DashboardInformationRow','selectGold'].forEach(name => assert.match(information, new RegExp(name)));
+  assert.match(dashboard, /<DashboardInformationRow/);
+  assert.match(information, /react-campaign-resource-hud/);
+  assert.match(information, /onResourceChange/);
+  assert.doesNotMatch(dashboard, /CharacterSidebar|SidebarResource/);
+  assert.match(information, /selectCurrencies/);
+  assert.match(information, /Object\.entries\(source\)/);
+  assert.match(information, /currencies\.map/);
+  assert.doesNotMatch(dashboard, /Coin Pouch/);
+});
+
+test('35. The modern shell exposes an accessible responsive navigation drawer', () => {
+  const html = read('index.html');
+  const shell = read('js/asteria-core-shell.js');
+  const styles = read('css/asteria-modern-ui.css');
+  ['mobileNavToggle','globalNavigation','mobileNavShade'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
+  assert.match(shell, /setMobileNavigation/);
+  assert.match(shell, /mobile-nav-open/);
+  assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /body\.mobile-nav-open \.public-sidebar/);
+});
+
+test('36. Shared tabs and modals expose keyboard and focus behavior', () => {
+  const ui = read('src/components/WorkspaceUI.jsx');
+  assert.match(ui, /role="tablist"/);
+  assert.match(ui, /aria-selected/);
+  assert.match(ui, /ArrowLeft/);
+  assert.match(ui, /aria-modal="true"/);
+  assert.match(ui, /returnFocusRef/);
+});
+
+test('37. One application provider and route contract own React navigation', () => {
+  assert.equal(buildReactRoute({ type:'gm', campaignId:'campaign one' }), '#/react/gm/campaign%20one');
+  assert.deepEqual(parseReactRoute('#/react/character/campaign%201/character%202'), {
+    type:'character', campaignId:'campaign 1', characterId:'character 2'
+  });
+  assert.equal(parseReactRoute('#/react/character/campaign-only'), null);
+  const provider = read('src/app/AsteriaAppContext.jsx');
+  const bridge = read('src/app/legacyBridge.js');
+  assert.match(provider, /AsteriaAppProvider/);
+  assert.match(provider, /parseReactRoute/);
+  assert.match(bridge, /openLegacyView/);
+  assert.match(read('src/main.jsx'), /navigateReactRoute/);
+  assert.doesNotMatch(read('src/dashboards/GMDashboard.jsx'), /window\.location\.hash|window\.setView|window\.setGMSystem/);
+});
+
+test('38. Live sync presentation covers every user-visible connection state', () => {
+  assert.equal(liveSyncPresentation({ loading:true }).state, 'connecting');
+  assert.equal(liveSyncPresentation({ online:false }).state, 'disconnected');
+  assert.equal(liveSyncPresentation({ session:{ status:'expired' } }).state, 'expired');
+  assert.equal(liveSyncPresentation({ session:{ readOnly:true } }).state, 'read-only');
+  assert.equal(liveSyncPresentation({ session:{ status:'idle' } }).state, 'waiting-for-gm');
+  assert.equal(liveSyncPresentation({ error:'Denied' }).state, 'error');
+});
+
+test('39. Central tokens and reusable components form the design-system boundary', () => {
+  const html = read('index.html');
+  const tokens = read('css/asteria-design-tokens.css');
+  const ui = read('src/components/WorkspaceUI.jsx');
+  assert.ok(html.indexOf('asteria-design-tokens.css') < html.indexOf('asteria-modern-ui.css'));
+  ['--asteria-surface','--asteria-text','--asteria-hp','--asteria-sp','--asteria-mp','--asteria-xp','--asteria-focus'].forEach(token => assert.match(tokens, new RegExp(token)));
+  ['AsteriaAppShell','AppHeader','AsteriaPanel','DashboardNavigation','LiveSyncStatus','LoadingSkeleton','CurrencyDisplay','ResourceChip'].forEach(name => assert.match(ui, new RegExp(name)));
+  assert.match(read('src/dashboards/CharacterDashboard.jsx'), /AsteriaAppShell/);
+  assert.match(read('src/dashboards/GMDashboard.jsx'), /DashboardNavigation/);
+});
+
+test('40. Player navigation uses one SVG icon system and preserves every dashboard route', () => {
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  const icons = read('src/components/AsteriaIcons.jsx');
+  const ui = read('src/components/WorkspaceUI.jsx');
+  ['dashboard','character','talents','skills','spells','inventory','quest','journal','party','gallery','settings'].forEach(route => assert.match(dashboard, new RegExp(`id: '${route}'`)));
+  assert.match(icons, /viewBox="0 0 24 24"/);
+  assert.match(ui, /<AsteriaIcon name=\{tab\.icon/);
+  assert.doesNotMatch(dashboard, /icon: '\\u/);
+});
+
+test('41. Inventory has responsive Equipment, Inventory, and Party workspaces with real state summaries', () => {
+  const inventory = read('src/dashboards/InventoryWorkspace.jsx');
+  const styles = read('src/styles/asteria-react.css');
+  ['Equipment Slots','Inventory / Storage','Party item actions'].forEach(label => assert.match(inventory, new RegExp(label)));
+  ['mobile-equipment','mobile-inventory','mobile-party','valid-drop','invalid-drop','Sort: Rarity','Encumbered'].forEach(label => assert.match(inventory + styles, new RegExp(label)));
+  ['rarity-uncommon','rarity-unusual','rarity-rare','rarity-epic','rarity-mythic','rarity-legendary','rarity-relic'].forEach(name => assert.match(styles, new RegExp(name)));
+  assert.match(styles, /@container \(max-width: 900px\)/);
+});
+
+test('42. Dashboard routes expose search, content states, party presence, and an accessible gallery lightbox', () => {
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  const gallery = read('src/dashboards/CharacterGallerySettings.jsx');
+  const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/PlayerDashboardOverview.jsx');
+  assert.match(tabs, /SearchField/);
+  assert.match(tabs, /Tracked/);
+  assert.match(tabs, /Archived/);
+  assert.match(tabs, /react-party-member-card/);
+  assert.match(gallery, /react-gallery-lightbox-image/);
+  assert.match(gallery, /<Modal/);
+  ['Current Quests','Recent Journal','Party'].forEach(title => assert.match(dashboard, new RegExp(title)));
+});
+
+test('43. Live sync has a canonical reconnecting state without hiding session expiry', () => {
+  assert.equal(liveSyncPresentation({ connectionState:'reconnecting' }).state, 'reconnecting');
+  assert.equal(liveSyncPresentation({ connectionState:'reconnecting', session:{ status:'expired' } }).state, 'expired');
+  const hook = read('src/sessions/useCampaignLiveData.js');
+  assert.match(hook, /LIVE_SYNC_STATES\.RECONNECTING/);
+  assert.match(hook, /connectionState/);
+});
+
+test('44. GM and character dashboard routes are split behind one Suspense boundary', () => {
+  const rootSource = read('src/app/AsteriaReactRoot.jsx');
+  assert.match(rootSource, /lazy\(\(\) => import\('\.\.\/dashboards\/GMDashboard\.jsx'\)/);
+  assert.match(rootSource, /lazy\(\(\) => import\('\.\.\/dashboards\/CharacterDashboard\.jsx'\)/);
+  assert.match(rootSource, /<Suspense/);
+  assert.match(rootSource, /role="status"/);
+});
+
+test('45. Shared controls expose progress, dialog, disabled, and announcement semantics', () => {
+  const ui = read('src/components/WorkspaceUI.jsx');
+  assert.match(ui, /role="progressbar"/);
+  assert.match(ui, /aria-valuenow/);
+  assert.match(ui, /useId/);
+  assert.match(ui, /disabledReason/);
+  assert.match(ui, /LiveRegion/);
+  assert.match(ui, /Close dialog/);
+});
+
+test('46. Static campaign sync relinquishes campaign listeners while React is active', () => {
+  const sync = read('js/data-sync.js');
+  assert.match(sync, /reactOwnsCampaignSubscriptions/);
+  assert.match(sync, /stopCampaignRealtimeSubscriptions/);
+  assert.match(sync, /isDashboardActive/);
+  assert.match(sync, /addEventListener\('hashchange'/);
+});
+
+test('47. Settings and mobile navigation both trap focus and restore the trigger', () => {
+  const shell = read('js/asteria-core-shell.js');
+  const html = read('index.html');
+  assert.match(shell, /bindSettingsAccessibility/);
+  assert.match(shell, /settingsReturnFocus/);
+  assert.match(shell, /event\.key === 'Escape'/);
+  assert.match(html, /class="skip-link"/);
+  assert.match(html, /aria-labelledby="settingsTitle"/);
+  assert.match(html, /id="asteriaLiveRegion"/);
+});
+
+test('48. Site-wide compendium and Forge galleries share responsive six-column primitives', () => {
+  const styles = read('css/asteria-modern-ui.css');
+  ['.codex-card-grid','.race-card-grid','.clean-card-grid','.phase3-forge-card-grid','.forge-character-gallery'].forEach(selector => assert.match(styles, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))));
+  assert.match(styles, /repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /@media \(max-width: 900px\)/);
+  assert.match(styles, /@media \(max-width: 560px\)/);
+});
+
+test('49. Removed fallback and theme polling no longer compete with the official shell', () => {
+  const html = read('index.html');
+  const theme = read('js/asteria-ui-theme-system.js');
+  assert.doesNotMatch(html, /asteria-home-fix\.js/);
+  assert.equal(fs.existsSync(path.join(root, 'js/asteria-home-fix.js')), false);
+  assert.doesNotMatch(theme, /setInterval\(bind/);
+  assert.match(theme, /refreshControls:bind/);
+});
+
+test('50. The player HUD is connected, modular, and backed by existing state actions', () => {
+  const information = read('src/components/DashboardInformation.jsx');
+  const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
+  const ui = read('src/components/WorkspaceUI.jsx');
+  ['PlayerLevelDisplay','ExperienceBar','ResourceBarGroup','CurrencyPanel','CampaignInformationPanel'].forEach(name => assert.match(information, new RegExp(name)));
+  assert.match(information, /react-player-topbar/);
+  assert.match(information, /onResourceChange/);
+  assert.match(information, /excluded = new Set/);
+  assert.match(overview, /firebaseService\.castSpell/);
+  assert.match(overview, /firebaseService\.updateInventory/);
+  assert.match(ui, /DashboardPanel/);
+  assert.doesNotMatch(overview, /Kaelen|Lyra|Thorne|Isera|Borin|12,845|Elden Reach|Western Cliffs/);
+});
+
+test('51. The redesigned player dashboard responds by reflowing panels and scrolling navigation', () => {
+  const styles = read('src/styles/asteria-react.css');
+  assert.match(styles, /react-player-topbar[\s\S]*repeat\(16, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /react-player-overview-grid/);
+  assert.match(styles, /react-armour-layout/);
+  assert.match(styles, /react-ability-grid/);
+  assert.match(styles, /@container \(max-width: 900px\)/);
+  assert.match(styles, /@container \(max-width: 620px\)/);
+  assert.match(styles, /react-character-dashboard \.react-workspace-main > \.react-tabs[\s\S]*overflow-x: auto/);
+});
+
+test('52. Production chunks share one React entry URL', () => {
+  const entry = read('src/dev-entry.js');
+  assert.match(entry, /import\('\.\.\/react-dist\/asteria-react\.js'\)/);
+  assert.doesNotMatch(entry, /asteria-react\.js\?/);
+});
+
+test('53. Optional HUD fields persist without allowing essential information to disappear', () => {
+  const preferences = normalizeDashboardPreferences({ dashboardPreferences:{ hiddenInformationFields:['portrait','currency','campaignDetails','invalid'] } });
+  assert.deepEqual(preferences.hiddenInformationFields, ['portrait','currency','campaignDetails']);
+  const information = read('src/components/DashboardInformation.jsx');
+  assert.match(information, /hiddenInformationFields\.includes\('currency'\)/);
+  assert.match(information, /hiddenInformationFields\.includes\('campaignDetails'\)/);
+  assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS[\s\S]*'name'/);
+});
+
+test('54. React snapshots are isolated from mutable legacy dashboard helpers', () => {
+  const bridge = read('src/app/legacyBridge.js');
+  assert.match(bridge, /structuredClone\(character\)/);
+  assert.doesNotMatch(bridge, /Object\.assign\(\{\}, window\.chars\[character\.id\] \|\| \{\}, character\)/);
+});
+
+test('55. Inventory uses the requested four-column support, equipment, storage, and party layout', () => {
+  const inventory = read('src/dashboards/InventoryWorkspace.jsx');
+  const styles = read('src/styles/asteria-react.css');
+  ['InventorySupportPanel','InventoryEquipmentPanel','StoragePanel','PartyInventoryPanel'].forEach(name => assert.match(inventory, new RegExp(name)));
+  assert.match(styles, /react-inventory-layout \{ grid-template-columns: minmax\(150px,\.58fr\) minmax\(315px,1\.18fr\) minmax\(440px,2\.85fr\) minmax\(76px,\.32fr\)/);
+  assert.match(inventory, /type:'reorder-storages'/);
+  assert.match(inventory, /Drag storage tabs to change that order/);
+});
+
+test('56. Titles can be granted, selected, edited, and revoked through shared services', () => {
+  const firebase = read('js/firebase-auth.js');
+  const service = read('src/firebase/asteriaFirebaseService.js');
+  const settings = read('src/dashboards/CharacterGallerySettings.jsx');
+  const gm = read('src/dashboards/GMDashboard.jsx');
+  assert.match(firebase, /manageCharacterTitle/);
+  assert.match(service, /manageTitle/);
+  assert.match(settings, /visibleTitleId/);
+  assert.match(gm, /Manage Existing Titles/);
+  assert.match(gm, /revoke:true/);
+});
+
+test('57. Player trades require recipient acceptance and sender final confirmation', () => {
+  const firebase = read('js/firebase-auth.js');
+  const exchange = read('src/dashboards/PlayerItemExchange.jsx');
+  const fixture = read('src/devFixtures.js');
+  assert.match(firebase, /status='awaiting-sender'/);
+  assert.match(firebase, /finalizeLiveItemTrade/);
+  assert.match(exchange, /Final Trade Confirmation/);
+  assert.match(exchange, /Confirm Final Trade/);
+  assert.match(fixture, /finalizeLiveItemTrade/);
+  assert.match(fixture, /acknowledgeLiveItemRecipientUpdate/);
 });
 
 let failed = 0;

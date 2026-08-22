@@ -647,7 +647,7 @@
   function card(entry){
     return `
       <article class="codex-card universal-card" data-universal-entry="${escapeHtml(entry.id)}" tabindex="0">
-        <div class="codex-card-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
+        <div class="codex-card-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
         <h3>${escapeHtml(entry.title)}</h3>
         <span class="universal-card-type">${escapeHtml(entry.category || entry.compendium)}</span>
       </article>
@@ -672,7 +672,7 @@
 
   function tabContent(entry){
     if(activeTab === 'GM Notes' && !isGMMode()) return '<section class="codex-gm-notes locked"><h3>GM Notes</h3><p>Hidden from player view.</p></section>';
-    if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="codex-gallery-slot">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div></section>`;
+    if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="codex-gallery-slot">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div></section>`;
     if(activeTab === 'Related') return `<section class="codex-info-panel"><h3>Related Content</h3>${related(entry).map(item => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>`).join('') || '<p>Information coming soon.</p>'}</section>`;
     if(entry.domain === 'class' && activeTab === 'Overview'){
       const content = sectionBundle(entry, ['Overview','Class Information','Class Features']);
@@ -700,7 +700,7 @@
       <article class="codex-detail-page universal-detail-page">
         <button type="button" id="universalBackToCards" class="clean-back codex-return">Back to cards</button>
         <header class="codex-detail-head">
-          <div class="codex-detail-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
+          <div class="codex-detail-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
           <div>
             <p class="eyebrow">${escapeHtml(entry.compendium || domainLabels[entry.domain])}</p>
             <h2>${escapeHtml(entry.title)}</h2>

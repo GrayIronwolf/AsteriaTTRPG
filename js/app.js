@@ -525,8 +525,8 @@ function renderCombatLog(){const box=$('combatLogRows');if(!box)return;box.inner
 function clearCombatLog(){asteriaCombatLog=[];renderCombatLog();feedback('Combat log cleared.');}
 function feedback(msg,type='normal'){const stack=$('feedbackStack');if(!stack)return;const el=document.createElement('div');el.className='float-feedback '+type;el.textContent=msg;stack.appendChild(el);setTimeout(()=>el.remove(),1700);}
 function flashResource(key){const ids={hp:['pHpBar','gpHpBar'],sp:['pSpBar','gpSpBar'],mp:['pMpBar','gpMpBar'],xp:['pXpBar']};(ids[key]||[]).forEach(id=>{const el=$(id);if(el){el.classList.remove('resource-flash');void el.offsetWidth;el.classList.add('resource-flash');}});}
-function showLevelModal(c,details){if(!$('levelModal'))return;$('levelModalTitle').textContent=`Level Up! ${c.name} is now Level ${c.level}`;$('levelModalBody').innerHTML=`<p>${c.name} has grown in power.</p><div><span class="reward-chip">+3 CP</span><span class="reward-chip">+3 TP</span>${details.bonusTP?'<span class="reward-chip">+10 Milestone TP</span>':''}${details.skillChoice?'<span class="reward-chip">Skill Development Choice</span>':''}</div><ul>${details.messages.map(m=>`<li>${m}</li>`).join('')}</ul>`;$('levelModal').classList.add('show');}
-function closeLevelModal(){$('levelModal')?.classList.remove('show');}
+function showLevelModal(c,details){if(!$('levelModal'))return;const modal=$('levelModal');modal._asteriaReturnFocus=document.activeElement;$('levelModalTitle').textContent=`Level Up! ${c.name} is now Level ${c.level}`;$('levelModalBody').innerHTML=`<p>${c.name} has grown in power.</p><div><span class="reward-chip">+3 CP</span><span class="reward-chip">+3 TP</span>${details.bonusTP?'<span class="reward-chip">+10 Milestone TP</span>':''}${details.skillChoice?'<span class="reward-chip">Skill Development Choice</span>':''}</div><ul>${details.messages.map(m=>`<li>${m}</li>`).join('')}</ul>`;modal.classList.add('show');modal.setAttribute('aria-hidden','false');requestAnimationFrame(()=>modal.querySelector('[role="dialog"]')?.focus());window.AsteriaAnnounce?.(`Level up. ${c.name} is now level ${c.level}.`,'assertive');}
+function closeLevelModal(){const modal=$('levelModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true');modal?._asteriaReturnFocus?.focus?.();}
 adjustCharacterResource=function(id,key,amount){const c=chars[id];if(!c)return;const old=key==='xp'?c.xp:c[key][0];let diff=0;if(key==='xp'){const beforeLevel=c.level;c.xp=Math.max(0,c.xp+amount);checkLevelUp(id);diff=Number(amount||0);if(c.level>beforeLevel)addCombatLog(`${c.name} XP awarded: ${diff>=0?'+':''}${diff.toLocaleString()} XP. Carryover ${c.xp.toLocaleString()} XP.`,'important');}else{c[key][0]=Math.max(0,Math.min(c[key][1],c[key][0]+amount));diff=c[key][0]-old;}const now=key==='xp'?c.xp:c[key][0];syncAfterResourceChange(id);flashResource(key);const sign=diff>0?'+':'';const type=diff>=0?'good':'bad';feedback(`${c.name} ${key.toUpperCase()} ${sign}${diff}`,type);addCombatLog(`${c.name} ${key.toUpperCase()} ${old} → ${now}`);toast(`${c.name} ${key.toUpperCase()} ${sign}${diff}`);};
 adjustStat=function(key,amount,stay=false){adjustCharacterResource(selected,key,amount);};
 window.AsteriaViewHooks?.beforePlayerLoad('ensure-progression-data', () => ensureProgressionData(), {defer:false});
@@ -1392,9 +1392,12 @@ function openItemPage(itemId){
   const modal=$('itemModal'); if(!modal){toast('Opened item page: '+item.name);return;}
   $('itemModalName').textContent=item.name;
   $('itemModalBody').innerHTML=`<div class="item-detail-grid"><div><span class="item-chip">${item.type||'Item'}</span>${item.slot?` <span class="item-chip">${item.slot}</span>`:''}${item.qty?` <span class="item-chip">Qty ${item.qty}</span>`:''}</div><p>${item.desc||'No item information has been added yet.'}</p>${item.effect?`<p><b>Use Effect:</b> +${item.effect.amount} ${item.effect.resource.toUpperCase()}</p><button class="primary" onclick="useInventoryItem('${item.id}');closeItemModal();">Use Item</button>`:''}${item.slot?`<button onclick="toggleEquipItem('${item.id}');closeItemModal();">Toggle Equip</button>`:''}</div>`;
+  modal._asteriaReturnFocus=document.activeElement;
   modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>modal.querySelector('[role="dialog"]')?.focus());
 }
-function closeItemModal(){ $('itemModal')?.classList.remove('show'); }
+function closeItemModal(){ const modal=$('itemModal'); modal?.classList.remove('show'); modal?.setAttribute('aria-hidden','true'); modal?._asteriaReturnFocus?.focus?.(); }
 function renderInventory(){
   ensureWebInventory(currentPlayerId());
   renderDashboardEquipment();
