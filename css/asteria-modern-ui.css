@@ -1,5 +1,12 @@
 /* Asteria Modern UI v2: responsive shell rules consuming asteria-design-tokens.css. */
 
+:root {
+  --asteria-navigation-slate: #2a343d;
+  --asteria-navigation-slate-raised: #34414b;
+  --asteria-navigation-slate-deep: #222c34;
+  --core-header-height: 112px;
+}
+
 html,
 body {
   min-width: 0 !important;
@@ -47,7 +54,7 @@ textarea:focus-visible,
   height: var(--core-header-height) !important;
   min-height: var(--core-header-height) !important;
   padding: 0 18px 0 0 !important;
-  background: var(--asteria-surface-solid) !important;
+  background: var(--asteria-navigation-slate) !important;
   border-bottom-color: color-mix(in srgb, var(--asteria-accent, #249ee8) 54%, var(--asteria-border)) !important;
   box-shadow: 0 8px 28px rgba(0, 0, 0, .3);
 }
@@ -56,12 +63,17 @@ textarea:focus-visible,
   flex-basis: var(--core-sidebar-width) !important;
   width: var(--core-sidebar-width) !important;
   min-width: var(--core-sidebar-width) !important;
+  justify-content: center !important;
+  overflow: hidden !important;
 }
 
 .topbar .brand-logo {
-  width: 110px !important;
-  height: 76px !important;
-  max-height: 76px !important;
+  flex: 0 0 auto !important;
+  width: 150px !important;
+  height: 225px !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
   transform: none !important;
 }
 
@@ -77,7 +89,7 @@ textarea:focus-visible,
   min-height: 42px !important;
   padding: 8px 14px !important;
   border: 1px solid var(--asteria-border) !important;
-  background: #09151d !important;
+  background: var(--asteria-navigation-slate-raised) !important;
   color: var(--asteria-text) !important;
   box-shadow: none !important;
 }
@@ -85,12 +97,12 @@ textarea:focus-visible,
 .top-workspace-menu .top-menu-btn:hover,
 .top-actions > button:hover {
   border-color: var(--asteria-border-active) !important;
-  background: var(--asteria-surface-raised) !important;
+  background: color-mix(in srgb, var(--asteria-accent, #249ee8) 12%, var(--asteria-navigation-slate-raised)) !important;
 }
 
 .top-actions #loginToggle {
   border-color: var(--asteria-border-active) !important;
-  background: color-mix(in srgb, var(--asteria-accent, #249ee8) 24%, #09151d) !important;
+  background: color-mix(in srgb, var(--asteria-accent, #249ee8) 20%, var(--asteria-navigation-slate-raised)) !important;
   color: var(--asteria-text) !important;
 }
 
@@ -108,7 +120,7 @@ textarea:focus-visible,
   top: var(--core-header-height) !important;
   width: var(--core-sidebar-width) !important;
   padding: 10px !important;
-  background: var(--asteria-surface-solid) !important;
+  background: var(--asteria-navigation-slate-deep) !important;
   border-right-color: var(--asteria-border) !important;
   box-shadow: 10px 0 28px rgba(0, 0, 0, .24);
 }
@@ -129,7 +141,7 @@ textarea:focus-visible,
   margin: 4px 0 !important;
   padding: 7px 10px !important;
   border: 1px solid color-mix(in srgb, var(--asteria-border) 72%, transparent) !important;
-  background: #09151d !important;
+  background: var(--asteria-navigation-slate-raised) !important;
   color: var(--asteria-text) !important;
   font-family: ui-sans-serif, system-ui, sans-serif !important;
   font-size: .82rem !important;
@@ -138,7 +150,7 @@ textarea:focus-visible,
 .side-main:hover,
 .side-main.active {
   border-color: var(--asteria-border-active) !important;
-  background: color-mix(in srgb, var(--asteria-accent, #249ee8) 16%, #09151d) !important;
+  background: color-mix(in srgb, var(--asteria-accent, #249ee8) 17%, var(--asteria-navigation-slate-raised)) !important;
   color: var(--asteria-text) !important;
 }
 
@@ -399,15 +411,16 @@ small {
   }
 
   .topbar .brand {
-    flex: 0 0 68px !important;
-    width: 68px !important;
-    min-width: 68px !important;
+    flex: 0 0 84px !important;
+    width: 84px !important;
+    min-width: 84px !important;
   }
 
   .topbar .brand-logo {
-    width: 66px !important;
-    height: 64px !important;
-    max-height: 64px !important;
+    width: 95px !important;
+    height: 142px !important;
+    max-height: none !important;
+    transform: none !important;
   }
 
   .top-workspace-menu {

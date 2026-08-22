@@ -301,12 +301,15 @@ test('33. The exchange UI has a persistent request dock and responsive transacti
   assert.match(styles, /@media \(max-width: 680px\)/);
 });
 
-test('34. Campaign, character progression, resources, and Gold share one reusable HUD', () => {
+test('34. Campaign, character progression, resources, characteristics, and currency share reusable dashboard components', () => {
   const information = read('src/components/DashboardInformation.jsx');
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
+  const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
   ['CampaignInformationPanel','CurrencyPanel','DashboardInformationRow','selectGold'].forEach(name => assert.match(information, new RegExp(name)));
   assert.match(dashboard, /<DashboardInformationRow/);
   assert.match(information, /react-campaign-resource-hud/);
+  assert.match(information, /CharacteristicSummary/);
+  assert.match(overview, /<CurrencyPanel[\s\S]*react-overview-currency/);
   assert.match(information, /onResourceChange/);
   assert.doesNotMatch(dashboard, /CharacterSidebar|SidebarResource/);
   assert.match(information, /selectCurrencies/);
@@ -480,7 +483,7 @@ test('50. The player HUD is connected, modular, and backed by existing state act
 
 test('51. The redesigned player dashboard responds by reflowing panels and scrolling navigation', () => {
   const styles = read('src/styles/asteria-react.css');
-  assert.match(styles, /react-player-topbar[\s\S]*repeat\(16, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /react-player-topbar[\s\S]*repeat\(20, minmax\(0, 1fr\)\)/);
   assert.match(styles, /react-player-overview-grid/);
   assert.match(styles, /react-armour-layout/);
   assert.match(styles, /react-ability-grid/);
@@ -499,7 +502,7 @@ test('53. Optional HUD fields persist without allowing essential information to 
   const preferences = normalizeDashboardPreferences({ dashboardPreferences:{ hiddenInformationFields:['portrait','currency','campaignDetails','invalid'] } });
   assert.deepEqual(preferences.hiddenInformationFields, ['portrait','currency','campaignDetails']);
   const information = read('src/components/DashboardInformation.jsx');
-  assert.match(information, /hiddenInformationFields\.includes\('currency'\)/);
+  assert.match(read('src/dashboards/PlayerDashboardOverview.jsx'), /hiddenInformationFields\.includes\('currency'\)/);
   assert.match(information, /hiddenInformationFields\.includes\('campaignDetails'\)/);
   assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS[\s\S]*'name'/);
 });

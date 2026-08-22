@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { CurrencyDisplay, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar, Tooltip } from './WorkspaceUI.jsx';
+import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar, Tooltip } from './WorkspaceUI.jsx';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
-import { normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
+import { CHARACTERISTICS, characteristicTier, characteristicValue, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 
 function firstValue(...values) {
   return values.find(value => value !== undefined && value !== null && String(value).trim() !== '');
@@ -114,11 +114,6 @@ export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, prefer
       {title ? <em>{title}</em> : null}
       {preferences.showPartyMembership && !preferences.hiddenInformationFields.includes('party') && membership ? <em>Member of {membership.name}</em> : null}
     </div>
-    <div className="react-level-shield" aria-label={`Level ${Number(character.level || 0)}`}>
-      <AsteriaIcon name="level" size={25} />
-      <small>Level</small>
-      <b>{Number(character.level || 0)}</b>
-    </div>
   </section>;
 }
 
@@ -126,10 +121,17 @@ export function ExperienceBar({ character = {} }) {
   const xp = progression(character);
   const remaining = Math.max(0, Number(xp.xpMax || 0) - Number(xp.xp || 0));
   return <section className="react-player-topbar-section react-player-xp" aria-label="Experience progression">
-    <div className="react-player-section-label"><AsteriaIcon name="xp" /><span>Experience</span></div>
-    <ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
-    <small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP</small>
-    <span>{remaining.toLocaleString()} XP to next level</span>
+    <div className="react-level-shield" aria-label={`Level ${Number(character.level || 0)}`}>
+      <AsteriaIcon name="level" size={25} />
+      <small>Level</small>
+      <b>{Number(character.level || 0)}</b>
+    </div>
+    <div className="react-player-xp-copy">
+      <div className="react-player-section-label"><AsteriaIcon name="xp" /><span>Experience</span></div>
+      <ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
+      <small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP</small>
+      <span>{remaining.toLocaleString()} XP to next level</span>
+    </div>
   </section>;
 }
 
@@ -147,6 +149,24 @@ export function ResourceBarGroup({ character = {}, editable, onResourceChange })
   </section>;
 }
 
+export function CharacteristicSummary({ character = {} }) {
+  return <section className="react-player-topbar-section react-player-characteristics" aria-label="Character characteristics">
+    <div className="react-player-section-label"><AsteriaIcon name="character" /><span>Characteristics</span></div>
+    <div className="react-player-characteristic-grid">
+      {CHARACTERISTICS.map(stat => {
+        const score = characteristicValue(character, stat.key);
+        const tier = characteristicTier(score);
+        const modifier = Number(tier.modifier || 0);
+        return <article key={stat.key} title={`${stat.label}: ${score}, ${tier.label}${modifier ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`}>
+          <span>{stat.short}</span>
+          <strong>{score}</strong>
+          <small>{modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : tier.label}</small>
+        </article>;
+      })}
+    </div>
+  </section>;
+}
+
 export function CampaignInformationPanel({ campaign = {}, session = {}, character = {}, loading = false, embedded = false, online, error = '', connectionState = '', preferences = normalizeDashboardPreferences(character) }) {
   const name = campaign.name || character.campaignName || character.campaign || 'Campaign';
   const sessionNumber = firstValue(session.number, campaign.currentSessionNumber);
@@ -161,22 +181,21 @@ export function CampaignInformationPanel({ campaign = {}, session = {}, characte
   return embedded ? <section className="react-player-topbar-section react-player-campaign">{content}</section> : <Panel className="react-player-campaign">{content}</Panel>;
 }
 
-export function CurrencyPanel({ character = {}, campaign = {}, loading = false, error = '', embedded = false }) {
+export function CurrencyPanel({ character = {}, campaign = {}, loading = false, error = '', embedded = false, className = '', style }) {
   const currencies = selectCurrencies(character, campaign);
-  const content = <>
-    <div className="react-player-section-label"><AsteriaIcon name="coin" /><span>Currency</span></div>
-    {loading ? <LoadingSkeleton label="Loading currency" lines={2} /> : error ? <div className="react-error-state" role="alert">Currency could not be loaded.</div> : <div className="react-player-currencies">{currencies.map(([label, value]) => <CurrencyDisplay key={label} label={label} value={value} symbol={label === 'Gold' ? 'G' : String(label).charAt(0)} tone={label === 'Gold' ? 'gold' : 'arcane'} />)}</div>}
-  </>;
-  return embedded ? <section className="react-player-topbar-section react-player-currency">{content}</section> : <Panel className="react-player-currency" title="Currency">{content}</Panel>;
+  const content = loading ? <LoadingSkeleton label="Loading currency" lines={2} /> : error ? <div className="react-error-state" role="alert">Currency could not be loaded.</div> : <div className="react-player-currencies">{currencies.map(([label, value]) => <CurrencyDisplay key={label} label={label} value={value} symbol={label === 'Gold' ? 'G' : String(label).charAt(0)} tone={label === 'Gold' ? 'gold' : 'arcane'} />)}</div>;
+  return embedded
+    ? <section className={`react-player-topbar-section react-player-currency ${className}`.trim()}><div className="react-player-section-label"><AsteriaIcon name="coin" /><span>Currency</span></div>{content}</section>
+    : <DashboardPanel className={`react-player-currency react-dashboard-currency-panel ${className}`.trim()} title="Currency" icon="coin" compact style={style}>{content}</DashboardPanel>;
 }
 
 export function DashboardInformationRow(props) {
   const preferences = normalizeDashboardPreferences(props.character);
-  return <section className="asteria-react-panel react-campaign-resource-hud react-player-topbar" aria-label="Character progression, resources, currency, and campaign status">
+  return <section className="asteria-react-panel react-campaign-resource-hud react-player-topbar" aria-label="Character progression, resources, characteristics, and campaign status">
     <PlayerLevelDisplay character={props.character} partyWorkspace={props.partyWorkspace} preferences={preferences} />
     <ExperienceBar character={props.character} />
     <ResourceBarGroup character={props.character} editable={props.editable} onResourceChange={props.onResourceChange} />
-    {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={props.character} campaign={props.campaign} loading={props.loading} error={props.error} embedded /> : null}
+    <CharacteristicSummary character={props.character} />
     <CampaignInformationPanel {...props} preferences={preferences} embedded />
   </section>;
 }

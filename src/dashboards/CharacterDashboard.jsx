@@ -124,7 +124,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
     <DashboardInformationRow campaign={live.campaign} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error} loading={live.loading} />
     <SessionGate session={live.session} />
     <DashboardNavigation tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
-    {tab === 'dashboard' ? <><PlayerDashboardOverview campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
+    {tab === 'dashboard' ? <><PlayerDashboardOverview campaignId={campaignId} campaign={live.campaign} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
     {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}

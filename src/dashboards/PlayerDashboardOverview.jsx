@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { DashboardPanel, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
+import { CurrencyPanel } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { quests as selectQuests } from './characterWorkspaceData.js';
@@ -168,7 +169,7 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
   </div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, character, characters, partyWorkspace, editable, onNavigate }) {
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, onNavigate }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const talents = values(character.unlockedTalents || character.talents).map(record).filter(talent => talent.unlocked !== false);
@@ -199,6 +200,7 @@ export function PlayerDashboardOverview({ campaignId, character, characters, par
       {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
       {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
       {visible('conditions') ? <ConditionsSummary conditions={conditions} style={{ order:order('conditions') }} /> : null}
+      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} className="react-overview-currency" style={{ order:order('conditions') + 1 }} /> : null}
     </div>
     <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
     <p className="react-action-message" role="status">{message}</p>
