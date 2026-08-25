@@ -15,7 +15,9 @@ refinement_ratio: "4:1"
 weight_class: Very Light
 durability: Low
 enchantment_affinity: "25% (+2 dice)"
-market_value: 4 Marks
+market_value: 4
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - minerals

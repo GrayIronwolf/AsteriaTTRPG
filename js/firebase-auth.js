@@ -8,6 +8,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -676,6 +677,11 @@ async function verifyOwnedLiveCharacterRead(campaignId,characterId,character){
 }
 function writeLiveCharacter(transaction,refs,character){
   const clean=structuredCloneSafe(character);
+  clean.inventory=(Array.isArray(clean.inventory)?clean.inventory:[]).map((item,index)=>normalizeLiveItem(item,index,clean));
+  if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
+    slot,
+    item&&typeof item==='object'?normalizeLiveItem(Object.assign({},item,{equipped:true,equippedSlot:item.equippedSlot||slot}),index,clean):item
+  ]));
   transaction.set(refs.campaign,Object.assign({},clean,{updatedAt:serverTimestamp()}),{merge:true});
   if(character.ownerUid === currentUser.uid || refs.verifiedOwner) transaction.set(refs.private,Object.assign({},clean,{id:ownedCharacterSourceId(character.id,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
 }
@@ -1383,9 +1389,12 @@ const firebasePublicApi = {
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
         const qty=Math.max(1,Math.min(Number(quantity||1),Number(stock.qty||0)));
         if(!qty) throw new Error('This item is out of stock.');
-        const item=Object.assign({},structuredCloneSafe(stock.item||{}),{id:`${liveSlug(stock.item?.name||'item')}-${Date.now()}`,qty,location:'inventory',equipped:false});
+        const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(stock.item||{}),{id:`${liveSlug(stock.item?.name||'item')}-${Date.now()}`,qty,location:'inventory',equipped:false}),{legacy:true,removeLegacy:true,migratedRecord:true});
         item.name=item.name||item.title||'Shop Item';
-        const cost=Math.max(0,Number(stock.priceCopper||item.value||0))*qty;
+        const unitCost=getPlayerPurchasePriceCopper(item,shop.buyModifier??1);
+        if(unitCost===null) throw new Error(`${item.name} needs a Market Price before it can be sold.`);
+        if(unitCost===0&&marketPricingStatus(item).id==='not-tradeable') throw new Error(`${item.name} is not normally tradeable.`);
+        const cost=unitCost*qty;
         const total=currencyTotal(character);
         if(total<cost) throw new Error('Not enough currency.');
         setCurrencyTotal(character,total-cost);
@@ -1416,7 +1425,8 @@ const firebasePublicApi = {
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
         if(!shop||shop.status!=='open'||!item) throw new Error('The shop or item is unavailable.');
         if(item.equipped||item.locked||item.bound||item.questItem) throw new Error('This item cannot be sold.');
-        const value=Math.max(0,Math.floor(Number(item.value||0)*Number(shop.sellModifier??0.5)*Math.max(0.1,Number(item.condition??100)/100)));
+        const value=getPlayerSaleValueCopper(item,shop.sellModifier??1);
+        if(value===0) throw new Error(`${item.name} has no Market Value and cannot normally be sold.`);
         if(Number(shop.currencyCopper??Infinity)<value) throw new Error('The merchant cannot afford this item.');
         item.qty=Math.max(0,Number(item.qty||1)-1);
         character.inventory=inventory.filter(record=>Number(record.qty??1)>0);
@@ -1425,7 +1435,7 @@ const firebasePublicApi = {
         shop.stock=Array.isArray(shop.stock)?shop.stock:[];
         const existing=shop.stock.find(row=>liveSlug(row.item?.name)===liveSlug(item.name));
         if(existing) existing.qty=Number(existing.qty||0)+1;
-        else shop.stock.push({item:Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'}),qty:1,priceCopper:Math.max(value,Number(item.value||value))});
+        else shop.stock.push({item:Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'}),qty:1,priceCopper:getPlayerPurchasePriceCopper(item,shop.buyModifier??1)});
         appendActivity(character,{type:'shop-sale',message:`Sold ${item.name} for ${value} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
@@ -1783,7 +1793,7 @@ const firebasePublicApi = {
         const characterSnapshot=await transaction.get(characterRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
-        const sourceItem=structuredCloneSafe(item);
+        const sourceItem=normalizeMarketPricing(structuredCloneSafe(item),{legacy:true,removeLegacy:true,migratedRecord:true});
         const realName=String(sourceItem.trueName||sourceItem.name||sourceItem.title||'Unknown Item');
         const rewardItem=Object.assign({},sourceItem,{
           trueName:realName,
@@ -1948,7 +1958,7 @@ const firebasePublicApi = {
         const pending=Array.isArray(character.pendingItemRewards)?character.pendingItemRewards:[];
         character.pendingItemRewards=pending.filter(value=>String(value?.id||'')!==String(eventId));
         if(action!=='declined'){
-          const item=Object.assign({},structuredCloneSafe(event.payload?.item||{}));
+          const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(event.payload?.item||{})),{legacy:true,removeLegacy:true,migratedRecord:true});
           item.id=item.id||item.instanceId||`${liveSlug(item.name||item.title)||'item'}-${Date.now()}`;
           item.instanceId=item.instanceId||item.id;
           item.name=item.name||item.title||'Reward Item';
@@ -2326,7 +2336,7 @@ const firebasePublicApi = {
     if(!db || !currentUser || typeof onChange!=='function') return ()=>{};
     return onSnapshot(collection(db,'customItems'),snapshot=>{
       const rows=[];
-      snapshot.forEach(item=>rows.push(Object.assign({id:item.id},item.data())));
+      snapshot.forEach(item=>rows.push(normalizeMarketPricing(Object.assign({id:item.id},item.data()),{legacy:true,removeLegacy:true,migratedRecord:true})));
       rows.sort((left,right)=>String(left.name||'').localeCompare(String(right.name||'')));
       window.ASTERIA_CUSTOM_ITEMS=rows;
       onChange(rows);
@@ -2343,7 +2353,8 @@ const firebasePublicApi = {
         if(!sessionSnapshot.exists()||!liveSessionState(sessionSnapshot.data()).editable) throw new Error('Custom items can be created during an active session.');
       }
       const id=`custom-${liveSlug(name)||'item'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;
-      const record=Object.assign({},structuredCloneSafe(item),{
+      const priced=createAsteriaItem(item);
+      const record=Object.assign({},structuredCloneSafe(priced),{
         id,slug:id,name,title:name,type:String(item.type||'Item'),itemClass:String(item.itemClass||item.rarity||'Common'),rarity:String(item.itemClass||item.rarity||'Common'),description:String(item.description||'').slice(0,10000),custom:true,visibility:'public',createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()
       });
       await setDoc(doc(db,'customItems',id),record);

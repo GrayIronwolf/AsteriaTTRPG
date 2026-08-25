@@ -2,7 +2,7 @@
 (function(){
   const index = {
   "version": "asteria-wiki-index-v1",
-  "generatedAt": "2026-07-18T14:53:22.254Z",
+  "generatedAt": "2026-08-25T13:51:09.801Z",
   "id": "flora",
   "title": "Flora",
   "singular": "Flora Item",
@@ -146,8 +146,13 @@
     },
     {
       "key": "market_value",
-      "label": "Market",
-      "empty": "Unknown"
+      "label": "Market Value",
+      "empty": "Needs Pricing Completion"
+    },
+    {
+      "key": "market_price",
+      "label": "Market Price",
+      "empty": "Needs Pricing Completion"
     }
   ],
   "routes": {
@@ -202,7 +207,9 @@
       "mana_density": "Very Low",
       "toxicity": "None",
       "growth_difficulty": "Easy",
-      "market_value": "Low",
+      "market_value": 0,
+      "market_price": null,
+      "pricing_status": "needs-completion",
       "affinities": [
         "Life"
       ],
@@ -237,7 +244,6 @@
         "mana_density": "Very Low",
         "toxicity": "None",
         "growth_difficulty": "Easy",
-        "market_value": "Low",
         "affinities": [
           "Life"
         ],
@@ -248,6 +254,10 @@
         "alchemy_uses": [],
         "culinary_uses": [],
         "image": "rose.png",
+        "market_value": 0,
+        "market_price": null,
+        "market_value_source_text": "Low",
+        "pricing_status": "needs-completion",
         "tags": [
           "flora",
           "common",

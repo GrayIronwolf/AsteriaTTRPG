@@ -16,7 +16,9 @@ weight: 1.1kg
 weight_class: Medium
 durability: Moderate
 enchantment_affinity: "20% (+1 dice)"
-market_value: 12 Marks
+market_value: 12
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

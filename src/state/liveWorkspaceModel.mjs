@@ -1,3 +1,5 @@
+import { normalizeMarketPricing } from '../systems/items/marketPricing.mjs';
+
 export const SESSION_LIMIT_MS = 10 * 60 * 60 * 1000;
 
 export const CHARACTERISTICS = [
@@ -244,7 +246,7 @@ export function normalizeLiveItem(item = {}, index = 0, character = {}) {
   const storages = normalizeCharacterStorages(character);
   const identified = item.identified !== false;
   const storedSlot = Number(item.storageSlot ?? item.bagSlot);
-  return {
+  return normalizeMarketPricing({
     ...structuredCloneSafe(item),
     id:String(item.id || item.instanceId || item.catalogId || slug(item.name || item.title) || `item-${index}`),
     name:unidentifiedItemName(item),
@@ -255,7 +257,7 @@ export function normalizeLiveItem(item = {}, index = 0, character = {}) {
     storageSlot:Number.isInteger(storedSlot) && storedSlot >= 0 ? storedSlot : null,
     isSpellbook:Boolean(item.isSpellbook || /spellbook|grimoire|tome/i.test(`${item.type || ''} ${item.category || ''}`)),
     spell:item.spell || item.spellData || null
-  };
+  }, { legacy:true, removeLegacy:true, migratedRecord:true });
 }
 
 export function slug(value) {

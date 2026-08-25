@@ -29,6 +29,15 @@ export const LIVE_SYNC_STATES = Object.freeze({
   ERROR: 'error'
 });
 
+/**
+ * @typedef {Object} AsteriaItem
+ * @property {string} id
+ * @property {string} name
+ * @property {string} type
+ * @property {number} marketValue Standard amount the player normally receives when selling, in Marks.
+ * @property {number|null} marketPrice Standard amount the player normally pays when purchasing, in Marks. Null is legacy-only.
+ */
+
 /** @typedef {'gm'|'character'} AsteriaReactRouteType */
 /**
  * @typedef {Object} AsteriaReactRoute
@@ -49,4 +58,3 @@ export const LIVE_SYNC_STATES = Object.freeze({
  * @property {string} detail
  * @property {string} tone
  */
-

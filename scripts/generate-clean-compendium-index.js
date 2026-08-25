@@ -76,6 +76,8 @@ function parseScalar(value) {
   if (trimmed === '[]') return [];
   if (trimmed === 'true') return true;
   if (trimmed === 'false') return false;
+  if (trimmed === 'null') return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (/^\[.*\]$/.test(trimmed)) {
     const inner = trimmed.slice(1, -1).trim();
     return inner ? inner.split(',').map(part => parseScalar(part)) : [];
@@ -278,7 +280,11 @@ function entryFromFile(file) {
     size: metadata.size || (section === 'Races' ? 'Unknown' : ''),
     affinity: arrayValue(metadata.affinity || metadata.affinities),
     traits: section === 'Races' ? sectionListItems(body, /^##\s+(Racial\s+)?Traits/i) : [],
-    marketValue: metadata.marketValue || metadata.market_value || '',
+    marketValue: metadata.marketValue ?? metadata.market_value ?? null,
+    marketPrice: metadata.marketPrice ?? metadata.market_price ?? null,
+    pricingStatus: metadata.pricingStatus || metadata.pricing_status || '',
+    marketValueSourceText: metadata.marketValueSourceText || metadata.market_value_source_text || '',
+    marketPriceSourceText: metadata.marketPriceSourceText || metadata.market_price_source_text || '',
     damage: metadata.damage || '',
     content,
     imagePath: imagePathFor(file, metadata),

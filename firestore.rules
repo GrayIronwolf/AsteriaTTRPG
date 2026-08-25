@@ -10,6 +10,19 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function hasValidMarketPricing(data) {
+      return data.keys().hasAll(['marketValue', 'marketPrice']) &&
+        data.marketValue is number &&
+        data.marketPrice is number &&
+        data.marketValue >= 0 &&
+        data.marketPrice >= 0 &&
+        (
+          data.marketValue == 0 ||
+          data.marketPrice == 0 ||
+          data.marketValue < data.marketPrice
+        );
+    }
+
     function isCampaignOwner(data) {
       return signedIn() && data.ownerUid == request.auth.uid;
     }
@@ -209,8 +222,13 @@ service cloud.firestore {
 
     match /customItems/{itemId} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if signedIn() && resource.data.createdBy == request.auth.uid && request.resource.data.createdBy == resource.data.createdBy;
+      allow create: if signedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        hasValidMarketPricing(request.resource.data);
+      allow update: if signedIn() &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        hasValidMarketPricing(request.resource.data);
       allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
     }
   }

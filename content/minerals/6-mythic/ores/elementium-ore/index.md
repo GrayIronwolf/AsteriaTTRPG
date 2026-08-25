@@ -25,7 +25,10 @@ elemental_alignment:
   - Life
   - Death
 enchantment_affinity: "85% (+7 dice)"
-market_value: 500–800 Marks (Mythic Trade)
+market_value: 500
+market_price: null
+market_value_source_text: "500–800 Marks (Mythic Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

@@ -16,7 +16,6 @@ harvest_season:
 mana_density: Very Low
 toxicity: None
 growth_difficulty: Easy
-market_value: Low
 affinities:
   - Life
 crafting_uses:
@@ -25,6 +24,10 @@ crafting_uses:
 alchemy_uses: []
 culinary_uses: []
 image: rose.png
+market_value: 0
+market_price: null
+market_value_source_text: "Low"
+pricing_status: needs-completion
 tags:
   - flora
   - common

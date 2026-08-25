@@ -15,8 +15,10 @@ weight: 0.8kg
 weight_class: Light
 durability: Low
 enchantment_affinity: "12% (+0 dice)"
-market_value: 8 Marks
 image: Antimony Ingot.png
+market_value: 8
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

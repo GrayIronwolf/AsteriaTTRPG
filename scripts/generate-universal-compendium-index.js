@@ -298,6 +298,7 @@ function parseScalar(value) {
   if (trimmed === '[]') return [];
   if (trimmed === 'true') return true;
   if (trimmed === 'false') return false;
+  if (trimmed === 'null') return null;
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (/^\[.*\]$/.test(trimmed)) {
     const inner = trimmed.slice(1, -1).trim();

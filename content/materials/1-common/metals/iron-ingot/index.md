@@ -15,8 +15,10 @@ weight: 1.3kg
 weight_class: Medium
 durability: Moderate
 enchantment_affinity: "10% (+0 dice)"
-market_value: 12 Marks
 image: Iron Ingot.png
+market_value: 12
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

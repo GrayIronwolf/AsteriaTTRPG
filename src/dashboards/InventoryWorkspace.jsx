@@ -6,6 +6,7 @@ import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liv
 import { calculateArmourPieceAC, previewEquipmentChange, validateEquipmentChange } from '../systems/armour/armourSystem.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
+import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -38,12 +39,13 @@ function resultText(result, success = 'Saved.') {
 
 function itemDetails(item) {
   return item?.identified === false
-    ? { description: '???', effects: ['???'], rarity: 'Unknown', value: '???' }
+    ? { description: '???', effects: ['???'], rarity: 'Unknown', marketValue: '???', marketPrice: '???' }
     : {
         description: item?.raw?.description || item?.raw?.summary || item?.raw?.desc || 'Information coming soon.',
         effects: item?.raw?.effects || item?.raw?.effect || [],
         rarity: item?.rarity,
-        value: item?.value
+        marketValue: item?.marketValue,
+        marketPrice: item?.marketPrice
       };
 }
 
@@ -68,6 +70,7 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
   const [message, setMessage] = useState('');
   if (!item) return null;
   const detail = itemDetails(item);
+  const pricing = item.identified === false ? null : marketPricingStatus(item);
   const effects = Array.isArray(detail.effects) ? detail.effects : detail.effects ? [detail.effects] : [];
   const armourPiece = calculateArmourPieceAC(item);
   const armourPreview = armourPiece.piece ? previewEquipmentChange(character, item, armourPiece.piece.location) : null;
@@ -111,10 +114,18 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
       <ItemImage item={item} className="react-item-detail-image" />
       <div><StatusPill>{detail.rarity}</StatusPill><p>{detail.description}</p><dl>
         <div><dt>Type</dt><dd>{item.identified === false ? '???' : item.type}</dd></div>
-        <div><dt>Value</dt><dd>{detail.value}</dd></div>
         <div><dt>Quantity</dt><dd>{item.qty}</dd></div>
       </dl></div>
     </div>
+    <section className="react-market-information">
+      <header><div><p className="react-eyebrow">Market Information</p><h3>{pricing?.label || 'Market Information'}</h3></div>{pricing ? <StatusPill tone={pricing.id === 'tradeable' ? 'success' : pricing.id === 'invalid' ? 'warning' : 'pending'}>{pricing.label}</StatusPill> : null}</header>
+      {pricing?.id === 'not-tradeable' ? <p>Not Normally Tradeable</p> : <dl className="react-detail-list">
+        <div title="The standard amount received when selling this item."><dt>Market Value</dt><dd>{item.identified === false ? '???' : formatMarks(detail.marketValue)}</dd></div>
+        <div title="The standard amount required to purchase this item."><dt>Market Price</dt><dd>{item.identified === false ? '???' : formatMarks(detail.marketPrice)}</dd></div>
+      </dl>}
+      {pricing?.id === 'needs-completion' ? <p className="react-storage-warning">This legacy item needs a Market Price before it can be sold by a shop.</p> : null}
+      {pricing?.id === 'invalid' ? <p className="react-storage-warning">{pricing.errors.join(' ')}</p> : null}
+    </section>
     {effects.length ? <><h3>Effects</h3><ul>{effects.map((effect, index) => <li key={index}>{typeof effect === 'object' ? effect.description || effect.name || JSON.stringify(effect) : effect}</li>)}</ul></> : null}
     {armourPiece.piece ? <section className="react-item-ac-details">
       <header><div><p className="react-eyebrow">Armour Calculation</p><h3>{armourPiece.piece.name}</h3></div><StatusPill tone={armourPiece.valid ? 'success' : 'warning'}>{armourPiece.valid ? `${signed(armourPiece.contribution)} AC` : 'Needs metadata'}</StatusPill></header>
@@ -136,13 +147,15 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
 }
 
 function CustomItemModal({ campaignId, character, storageId, onClose }) {
-  const [form, setForm] = useState({ name: '', type: 'Item', itemClass: 'Common', description: '', value: 0, isSpellbook: false, spellName: '', element: '', identified: true });
+  const [form, setForm] = useState({ name: '', type: 'Item', itemClass: 'Common', description: '', marketValue: 0, marketPrice: 0, isSpellbook: false, spellName: '', element: '', identified: true });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
+  const pricing = validateMarketPricing(form);
   const save = async () => {
+    if(!pricing.valid) { setMessage(pricing.errors[0]); return; }
     setBusy(true);
-    const item = { ...form, spell: form.isSpellbook ? { name: form.spellName || form.name, element: form.element, rank: 'Rank I' } : null, basicName: form.isSpellbook ? 'Book' : form.type || 'Item' };
+    const item = createAsteriaItem({ ...form, spell: form.isSpellbook ? { name: form.spellName || form.name, element: form.element, rank: 'Rank I' } : null, basicName: form.isSpellbook ? 'Book' : form.type || 'Item' });
     const created = await firebaseService.createCustomItem(campaignId, item);
     if (created?.ok) {
       const added = await firebaseService.updateInventory(campaignId, character.id, { type: 'add-item', item: created.item, storageId });
@@ -150,13 +163,16 @@ function CustomItemModal({ campaignId, character, storageId, onClose }) {
     } else setMessage(resultText(created));
     setBusy(false);
   };
-  return <Modal title="Create Custom Item" eyebrow="Shared Item Catalog" busy={busy} onClose={onClose} footer={<><button onClick={onClose}>Close</button><button className="primary" disabled={busy || !form.name.trim()} onClick={save}>Create Item</button></>}>
+  return <Modal title="Create Custom Item" eyebrow="Shared Item Catalog" busy={busy} onClose={onClose} footer={<><button onClick={onClose}>Close</button><button className="primary" disabled={busy || !form.name.trim() || !pricing.valid} onClick={save}>Create Item</button></>}>
     <div className="react-form-grid">
       <label>Name<input value={form.name} onChange={event => set('name', event.target.value)} /></label>
       <label>Type<input value={form.type} onChange={event => set('type', event.target.value)} /></label>
       <label>Item Class<select value={form.itemClass} onChange={event => set('itemClass', event.target.value)}>{['Common', 'Uncommon', 'Unusual', 'Rare', 'Epic', 'Mythic', 'Legendary', 'Relic'].map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Value in Copper<input type="number" min="0" value={form.value} onChange={event => set('value', Number(event.target.value || 0))} /></label>
     </div>
+    <fieldset className="react-market-form"><legend>Market Information</legend><div className="react-form-grid">
+      <label>Market Value <small>Marks received when selling</small><input type="number" min="0" step="0.01" value={form.marketValue} onChange={event => set('marketValue', Number(event.target.value || 0))} /></label>
+      <label>Market Price <small>Marks paid when purchasing</small><input type="number" min="0" step="0.01" value={form.marketPrice} onChange={event => set('marketPrice', Number(event.target.value || 0))} /></label>
+    </div>{!pricing.valid ? <p className="react-storage-warning">{pricing.errors[0]}</p> : form.marketValue === 0 && form.marketPrice === 0 ? <p className="react-help">0 / 0 marks this item as Not Normally Tradeable.</p> : null}</fieldset>
     <label>Description<textarea rows="5" value={form.description} onChange={event => set('description', event.target.value)} /></label>
     <label className="react-check-row"><input type="checkbox" checked={form.isSpellbook} onChange={event => set('isSpellbook', event.target.checked)} />This item is a spellbook</label>
     {form.isSpellbook ? <div className="react-form-grid"><label>Spell Name<input value={form.spellName} onChange={event => set('spellName', event.target.value)} /></label><label>Element<input value={form.element} onChange={event => set('element', event.target.value)} /></label></div> : null}
@@ -367,11 +383,13 @@ function InventorySupportPanel({ character, items, storages }) {
   const unidentified=storedItems.filter(item=>item.identified===false).length;
   const storageLimit=Math.max(3,Number(character.storageLimit||3));
   const weightPercent=carryCapacity?Math.min(100,(totalWeight/carryCapacity)*100):0;
+  const resaleValue=storedItems.reduce((total,item)=>total+getInventoryResaleValue(item,item.qty),0);
   return <Panel title="Inventory Info" className="react-inventory-support">
     <div className="react-inventory-support-stat"><span>Carry Weight</span><strong>{totalWeight.toLocaleString()} {carryCapacity?`/ ${carryCapacity.toLocaleString()}`:''}</strong>{carryCapacity?<i><span style={{width:`${weightPercent}%`}}/></i>:null}</div>
     <div className="react-inventory-support-stat"><span>Item Slots</span><strong>{storedItems.length} / {slotCapacity||0}</strong></div>
     <div className="react-inventory-support-stat"><span>Storage Containers</span><strong>{storages.length} / {storageLimit}</strong></div>
     <div className="react-inventory-support-stat"><span>Unidentified Items</span><strong>{unidentified}</strong></div>
+    <div className="react-inventory-support-stat"><span>Potential Resale</span><strong>{formatMarks(resaleValue)}</strong></div>
     <div className="react-inventory-support-list"><small>Default Delivery</small><b>{storages[0]?.name||'Create a storage container'}</b><p>New items fill containers from left to right. Drag storage tabs to change that order.</p></div>
     {carryCapacity&&totalWeight>carryCapacity?<StatusPill tone="warning">Encumbered</StatusPill>:null}
   </Panel>;

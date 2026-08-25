@@ -19,7 +19,9 @@ enchantment_affinity: "30% (+2 dice)"
 damage_modifier: 3
 armor_modifier: 3
 materialBaseAC: 3
-market_value: 60 Marks
+market_value: 60
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

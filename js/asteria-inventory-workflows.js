@@ -2,6 +2,7 @@
    Extends the shared inventory API without creating another inventory model. */
 (function(){
   const api = window.AsteriaInventory = window.AsteriaInventory || {};
+  const pricing = window.AsteriaMarketPricing;
   const COINS = [
     ['royal_platinum', 10000000000],
     ['royal_crown', 100000000],
@@ -148,11 +149,13 @@
       qty:Math.max(1, Number(quantity || 1)),
       desc:entry?.summary || meta.description || 'Open the item page for full information.',
       image:entryImage(entry),
-      compendiumPath:entry?.route || entry?.path || entry?.sourcePath || ''
+      compendiumPath:entry?.route || entry?.path || entry?.sourcePath || '',
+      marketValue:entry?.marketValue ?? meta.marketValue ?? meta.market_value,
+      marketPrice:entry?.marketPrice ?? meta.marketPrice ?? meta.market_price
     };
     snapshot.allowedSlots = inferSlots(snapshot);
     snapshot.slot = snapshot.allowedSlots[0] || null;
-    return snapshot;
+    return pricing ? pricing.normalizeMarketPricing(snapshot, { legacy:true, removeLegacy:true, migratedRecord:true }) : snapshot;
   }
   function inferSlots(item){
     const explicit = array(item?.allowedSlots || item?.equipmentSlots || item?.metadata?.equipmentSlots).filter(slot => ALL_SLOTS.includes(slot));
@@ -654,6 +657,10 @@
       shopPickerEntry = entryBySlug(button.dataset.workflowShopItem);
       const selected = document.getElementById('gmShopSelectedItem');
       if(selected) selected.innerHTML = shopSelectedHtml();
+      const snapshot = shopPickerEntry ? itemSnapshot(shopPickerEntry, 1) : null;
+      const price = snapshot && pricing ? pricing.getPlayerPurchasePriceCopper(snapshot) : null;
+      const label = document.getElementById('gmShopStockPrice');
+      if(label) label.textContent = price === null ? 'Needs Market Price' : `${price.toLocaleString()} copper`;
     }));
   }
   function renderShopDraft(){
@@ -668,10 +675,13 @@
   function addShopStock(){
     if(!shopPickerEntry){window.toast?.('Select an item first.');return;}
     const quantity = Math.max(1, Number(document.getElementById('gmShopStockQty')?.value || 1));
-    const priceCopper = Math.max(0, Number(document.getElementById('gmShopStockPrice')?.value || 0));
+    const item = itemSnapshot(shopPickerEntry, 1);
+    const priceCopper = pricing ? pricing.getPlayerPurchasePriceCopper(item) : null;
+    if(priceCopper === null){window.toast?.(`${item.name} needs a Market Price before it can be stocked.`);return;}
+    if(priceCopper === 0 && pricing?.marketPricingStatus(item).id === 'not-tradeable'){window.toast?.(`${item.name} is not normally tradeable.`);return;}
     const existing = shopDraftStock.find(stock => stock.item.id === slug(shopPickerEntry.slug || shopPickerEntry.title));
     if(existing){existing.qty += quantity;existing.priceCopper = priceCopper;}
-    else shopDraftStock.push({item:itemSnapshot(shopPickerEntry, 1), qty:quantity, priceCopper});
+    else shopDraftStock.push({item, qty:quantity, priceCopper});
     renderShopDraft();
   }
   function openCampaignShop(){
@@ -713,7 +723,7 @@
       <div class="section-head"><div><p class="eyebrow">GM Economy Tool</p><h3>Campaign Shop</h3></div><span class="pill">${campaign?.activeShop?.status === 'open' ? 'Open' : 'Closed'}</span></div>
       <div class="workflow-two-column">
         <div><h4>Visiting Characters</h4><div class="workflow-character-list">${campaignCharacterIds(campaign).map(id => {const item=getCampaignCharacter(id,campaign);return `<label class="workflow-check-card"><input type="checkbox" value="${esc(id)}" data-shop-character><span><b>${esc(item?.name || id)}</b><small>${esc(item?.race || '')}</small></span></label>`;}).join('') || '<p>No linked characters.</p>'}</div><label>Shop name<input id="gmShopName" value="${esc(campaign?.activeShop?.name || 'Campaign Store')}"></label><label>Background image path<input id="gmShopImage" placeholder="Optional image URL or asset path"></label></div>
-        <div><label>Search Item Compendium<input id="gmShopItemSearch" type="search" placeholder="Search stock..."></label><div id="gmShopSelectedItem">${shopSelectedHtml()}</div><div class="workflow-form-row"><label>Price (copper)<input id="gmShopStockPrice" type="number" min="0" value="100"></label><label>Stock<input id="gmShopStockQty" type="number" min="1" value="1"></label><button type="button" id="gmAddShopStock">Add Stock</button></div><div id="gmShopSearchResults" class="workflow-item-grid compact"></div></div>
+        <div><label>Search Item Compendium<input id="gmShopItemSearch" type="search" placeholder="Search stock..."></label><div id="gmShopSelectedItem">${shopSelectedHtml()}</div><div class="workflow-form-row"><label>Market Price <span id="gmShopStockPrice">Select an item</span></label><label>Stock<input id="gmShopStockQty" type="number" min="1" value="1"></label><button type="button" id="gmAddShopStock">Add Stock</button></div><div id="gmShopSearchResults" class="workflow-item-grid compact"></div></div>
       </div>
       <h4>Shop Stock</h4><div id="gmShopDraftStock"></div>
       <div class="workflow-modal-actions"><button type="button" id="gmCloseShop">Close Shop</button><button type="button" class="primary" id="gmOpenShop">Open Shop for Selected Players</button></div>`;

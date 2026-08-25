@@ -16,7 +16,10 @@ formation_type: Celestial Mineral Formation
 weight_class: Light
 durability: Very High
 enchantment_affinity: "75% (+6 dice)"
-market_value: 250–420 Marks (Legendary Trade)
+market_value: 250
+market_price: null
+market_value_source_text: "250–420 Marks (Legendary Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

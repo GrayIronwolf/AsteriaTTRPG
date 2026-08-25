@@ -17,7 +17,10 @@ durability: High
 enchantment_affinity: "70% (+5 dice)"
 damage_modifier: 3
 armor_modifier: 3
-market_value: 180–300 Marks (Rare Trade)
+market_value: 180
+market_price: null
+market_value_source_text: "180–300 Marks (Rare Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - materials

@@ -42,7 +42,8 @@ const collections = {
       { key: 'harvest_season', label: 'Season', empty: 'None' },
       { key: 'mana_density', label: 'Mana', empty: 'Unknown' },
       { key: 'toxicity', label: 'Toxicity', empty: 'Unknown' },
-      { key: 'market_value', label: 'Market', empty: 'Unknown' }
+      { key: 'market_value', label: 'Market Value', empty: 'Needs Pricing Completion' },
+      { key: 'market_price', label: 'Market Price', empty: 'Needs Pricing Completion' }
     ]
   },
   minerals: {
@@ -76,7 +77,8 @@ const collections = {
       { key: 'hardness', label: 'Hardness', empty: 'Unknown' },
       { key: 'refinement_yield', label: 'Refinement', empty: 'Unknown' },
       { key: 'mana_density', label: 'Mana', empty: 'Unknown' },
-      { key: 'market_value', label: 'Market', empty: 'Unknown' }
+      { key: 'market_value', label: 'Market Value', empty: 'Needs Pricing Completion' },
+      { key: 'market_price', label: 'Market Price', empty: 'Needs Pricing Completion' }
     ]
   },
   materials: {
@@ -110,7 +112,8 @@ const collections = {
       { key: 'processing', label: 'Processing', empty: 'Unknown' },
       { key: 'crafting_grade', label: 'Craft Grade', empty: 'Unknown' },
       { key: 'mana_density', label: 'Mana', empty: 'Unknown' },
-      { key: 'market_value', label: 'Market', empty: 'Unknown' }
+      { key: 'market_value', label: 'Market Value', empty: 'Needs Pricing Completion' },
+      { key: 'market_price', label: 'Market Price', empty: 'Needs Pricing Completion' }
     ]
   }
 };

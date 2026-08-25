@@ -15,8 +15,10 @@ refinement_ratio: "4:1"
 weight_class: Light
 durability: Low
 enchantment_affinity: "12% (+0 dice)"
-market_value: 3 Marks
 image: Antimony Ore.png
+market_value: 3
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - minerals

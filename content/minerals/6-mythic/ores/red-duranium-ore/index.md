@@ -16,7 +16,10 @@ formation_type: Environmental Transformation
 weight_class: Very Heavy
 durability: Extreme
 enchantment_affinity: "75% (+6 dice)"
-market_value: 300–450 Marks (Restricted Trade)
+market_value: 300
+market_price: null
+market_value_source_text: "300–450 Marks (Restricted Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

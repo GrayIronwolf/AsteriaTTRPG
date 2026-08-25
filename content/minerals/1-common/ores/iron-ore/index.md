@@ -15,8 +15,10 @@ refinement_ratio: "4:1"
 weight_class: Medium
 durability: Moderate
 enchantment_affinity: "10% (+0 dice)"
-market_value: 3 Marks
 image: Iron Ore.png
+market_value: 3
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - minerals

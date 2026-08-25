@@ -11,7 +11,9 @@ material_form: Liquid
 material_family: Mercury
 source_items: []
 enchantment_affinity: "35% (+3 dice)"
-market_value: 35 Marks
+market_value: 35
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

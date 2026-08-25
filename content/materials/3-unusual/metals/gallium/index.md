@@ -13,7 +13,9 @@ source_items: []
 weight_class: Light
 durability: Very Low
 enchantment_affinity: "20% (+1 dice)"
-market_value: 25 Marks
+market_value: 25
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

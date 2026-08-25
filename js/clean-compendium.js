@@ -287,6 +287,8 @@
     if (trimmed === '[]') return [];
     if (trimmed === 'true') return true;
     if (trimmed === 'false') return false;
+    if (trimmed === 'null') return null;
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
     if (/^\[.*\]$/.test(trimmed)) {
       const inner = trimmed.slice(1, -1).trim();
       return inner ? inner.split(',').map(part => parseScalar(part)) : [];
@@ -413,7 +415,11 @@
       size: metadata.size || (section === 'Races' ? 'Unknown' : ''),
       affinity: arrayValue(metadata.affinity || metadata.affinities),
       traits: section === 'Races' ? sectionListItems(body, /^##\s+(Racial\s+)?Traits/i) : [],
-      marketValue: metadata.marketValue || metadata.market_value || '',
+      marketValue: metadata.marketValue ?? metadata.market_value ?? null,
+      marketPrice: metadata.marketPrice ?? metadata.market_price ?? null,
+      pricingStatus: metadata.pricingStatus || metadata.pricing_status || '',
+      marketValueSourceText: metadata.marketValueSourceText || metadata.market_value_source_text || '',
+      marketPriceSourceText: metadata.marketPriceSourceText || metadata.market_price_source_text || '',
       damage: metadata.damage || '',
       content: page.content || '',
       searchTerms: lower([page.title, page.category, page.content, JSON.stringify(metadata)].join(' '))
@@ -462,7 +468,9 @@
       size: '',
       affinity: arrayValue(item.affinities),
       traits: [],
-      marketValue: item.market_value || item.metadata?.market_value || '',
+      marketValue: item.marketValue ?? item.market_value ?? item.metadata?.marketValue ?? item.metadata?.market_value ?? null,
+      marketPrice: item.marketPrice ?? item.market_price ?? item.metadata?.marketPrice ?? item.metadata?.market_price ?? null,
+      pricingStatus: item.pricing_status || item.metadata?.pricing_status || '',
       damage: item.metadata?.damage || '',
       content: item.body || '',
       imagePath: item.imagePath || '',
@@ -569,6 +577,9 @@
       description,
       imagePath:item.image || item.imagePath || '',
       tags:arrayValue(item.tags),
+      marketValue:item.marketValue ?? item.market_value ?? item.metadata?.marketValue ?? item.metadata?.market_value ?? null,
+      marketPrice:item.marketPrice ?? item.market_price ?? item.metadata?.marketPrice ?? item.metadata?.market_price ?? null,
+      pricingStatus:item.pricingStatus || item.pricing_status || '',
       searchTerms:arrayValue(item.tags).concat([category, itemClass, item.spell?.name || '', item.spell?.element || '']).join(' '),
       content:`# ${title}\n\n${description}`,
       metadata:{
@@ -577,6 +588,8 @@
         itemClass,
         category,
         custom:true,
+        marketValue:item.marketValue ?? item.market_value ?? null,
+        marketPrice:item.marketPrice ?? item.market_price ?? null,
         spell:item.spell || null
       }
     };
@@ -1086,7 +1099,7 @@
         subtitle:entry.description || '',
         image:entry.imagePath || '',
         meta,
-        body:`${metadata}<div class="markdown-body clean-page-body">${linkKnownReferences(markdownToHtml(body), entry)}</div>`
+        body:`${metadata}${marketInformationPanel(entry)}<div class="markdown-body clean-page-body">${linkKnownReferences(markdownToHtml(body), entry)}</div>`
       });
       return;
     }
@@ -2315,7 +2328,6 @@
       add('Item Class', entry.rarity);
       add('Content Collection', entry.wikiCollectionTitle || '');
       add('Content Category', entry.wikiCategory || '');
-      add('Market Value', entry.marketValue || entry.metadata?.market_value || entry.metadata?.marketValue);
     }
     add('Tags', entry.tags);
 
@@ -2347,6 +2359,25 @@
     ].forEach(key => add(metadataLabel(key), entry.metadata?.[key]));
 
     return rows.length ? `<dl class="clean-page-meta">${rows.map(row => `<div><dt>${escapeHtml(row.label)}</dt><dd>${escapeHtml(row.value)}</dd></div>`).join('')}</dl>` : '';
+  }
+
+  function marketInformationPanel(entry) {
+    if (entry.section !== 'Items') return '';
+    const source = {
+      marketValue: entry.marketValue ?? entry.metadata?.marketValue ?? entry.metadata?.market_value ?? null,
+      marketPrice: entry.marketPrice ?? entry.metadata?.marketPrice ?? entry.metadata?.market_price ?? null
+    };
+    const pricing = window.AsteriaMarketPricing;
+    const status = pricing?.marketPricingStatus(source);
+    const value = status?.marketValue ?? source.marketValue;
+    const price = status?.marketPrice ?? source.marketPrice;
+    const valueLabel = pricing?.formatMarks ? pricing.formatMarks(value) : (value === null ? 'Needs Pricing Completion' : `${value} Marks`);
+    const priceLabel = pricing?.formatMarks ? pricing.formatMarks(price) : (price === null ? 'Needs Pricing Completion' : `${price} Marks`);
+    const state = status?.label || (Number(value) === 0 && Number(price) === 0 ? 'Not Normally Tradeable' : 'Market Information');
+    return `<section class="clean-market-information">
+      <header><div><small>Market Information</small><h3>${escapeHtml(state)}</h3></div></header>
+      ${status?.id === 'not-tradeable' ? '<p>Not Normally Tradeable</p>' : `<dl><div><dt>Market Value</dt><dd>${escapeHtml(valueLabel)}</dd><small>The standard amount received when selling this item.</small></div><div><dt>Market Price</dt><dd>${escapeHtml(priceLabel)}</dd><small>The standard amount required to purchase this item.</small></div></dl>`}
+    </section>`;
   }
 
   function bindPageLinks(grid) {
@@ -2489,7 +2520,7 @@
         </header>
         ${tabsForSection(entry.section).length ? `<div class="workspace-note-tab-label">${escapeHtml(activeWorkspaceTab)}</div>` : ''}
         ${(entry.imagePath && (showOverview || activeWorkspaceTab === 'Images')) ? `<div class="clean-page-image"><img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" onerror="this.parentElement.remove();"></div>` : ''}
-        ${showOverview ? pageMetadata(entry) : ''}
+        ${showOverview ? `${pageMetadata(entry)}${marketInformationPanel(entry)}` : ''}
         ${showOverview || ['Sources','Relationships','Crafting'].includes(activeWorkspaceTab) ? relationshipPanel(entry, content) : ''}
         <div class="markdown-body clean-page-body">${linkKnownReferences(markdownToHtml(tabContent), entry)}</div>
       </article>

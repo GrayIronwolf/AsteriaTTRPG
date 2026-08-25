@@ -15,7 +15,10 @@ refinement_ratio: "4:1"
 weight_class: Medium-Light
 durability: High
 enchantment_affinity: "70% (+5 dice)"
-market_value: 220–350 Marks (Restricted Trade)
+market_value: 220
+market_price: null
+market_value_source_text: "220–350 Marks (Restricted Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

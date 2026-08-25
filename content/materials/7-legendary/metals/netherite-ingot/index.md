@@ -18,7 +18,10 @@ durability: Extremely High
 enchantment_affinity: "90% (+7 dice)"
 damage_modifier: +5
 armor_modifier: +4
-market_value: 550–850 Marks (Legendary Trade)
+market_value: 550
+market_price: null
+market_value_source_text: "550–850 Marks (Legendary Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - materials

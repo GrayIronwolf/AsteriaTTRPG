@@ -1,10 +1,12 @@
 ---
 type: Weapon
 item_class: Common
+market_value: 60
+market_price: null
+pricing_status: needs-completion
 visibility: public
 tags: [Item, Weapon, Sword, Test]
 damage: 1D10 Slashing
-market_value: 60 Marks
 ---
 
 # Longsword

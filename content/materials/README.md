@@ -66,7 +66,8 @@ processing:
 crafting_grade: Basic
 durability: Moderate
 mana_density: Very Low
-market_value: 10 Marks
+market_value: 10
+market_price: 15
 affinities:
   - Earth
 crafting_uses:
@@ -91,3 +92,9 @@ node scripts/generate-wiki-index.js
 ```
 
 The static site reads `js/wiki-index.js`, so no individual item should be hardcoded into the renderer.
+
+Use numeric Marks for both `market_value` (the player selling baseline) and
+`market_price` (the player purchase baseline). Market Value must be lower than
+Market Price when both are positive. Use `0` / `0` for an item that is not
+normally tradeable; `market_price: null` is reserved for migrated legacy items
+that still need pricing completion.

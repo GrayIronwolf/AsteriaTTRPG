@@ -67,7 +67,8 @@ harvest_season:
 mana_density: Very Low
 toxicity: None
 growth_difficulty: Easy
-market_value: Low
+market_value: 1
+market_price: 2
 affinities:
   - Life
 crafting_uses:
@@ -102,5 +103,11 @@ Every item page should use these headings:
 ## Market Value
 ## Related Items
 ```
+
+Use numeric Marks for both `market_value` (the player selling baseline) and
+`market_price` (the player purchase baseline). Market Value must be lower than
+Market Price when both are positive. Use `0` / `0` for an item that is not
+normally tradeable; `market_price: null` is reserved for migrated legacy items
+that still need pricing completion.
 
 The static website reads generated metadata from `js/flora-index.js`. The markdown files remain the long-term editable content source.

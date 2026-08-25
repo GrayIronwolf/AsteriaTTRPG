@@ -16,7 +16,10 @@ formation_type: Deep Earth / Star Collapse
 weight_class: Extremely Heavy
 durability: Extreme
 enchantment_affinity: "65% (+5 dice)"
-market_value: 350–500 Marks (Mythic Trade)
+market_value: 350
+market_price: null
+market_value_source_text: "350–500 Marks (Mythic Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

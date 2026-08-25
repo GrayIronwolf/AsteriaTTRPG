@@ -16,7 +16,10 @@ formation_type: Celestial Impact
 weight_class: Heavy
 durability: Very High
 enchantment_affinity: "60% (+5 dice)"
-market_value: 180–320 Marks (Restricted Trade)
+market_value: 180
+market_price: null
+market_value_source_text: "180–320 Marks (Restricted Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

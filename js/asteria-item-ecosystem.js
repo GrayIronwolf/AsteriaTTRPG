@@ -5,6 +5,7 @@
 
   const api = window.AsteriaInventory;
   if(!api) return;
+  const pricing = window.AsteriaMarketPricing;
 
   const VERSION = 'ASTERIA ITEM ECOSYSTEM v1';
   const PLAYER_TABS = [
@@ -109,7 +110,8 @@
       image:entry.imagePath || meta.image || '',
       desc:entry.summary || meta.description || '',
       weight:meta.weight || 0,
-      value:meta.value || meta.marketValue || 0,
+      marketValue:entry.marketValue ?? meta.marketValue ?? meta.market_value,
+      marketPrice:entry.marketPrice ?? meta.marketPrice ?? meta.market_price,
       tags:entry.tags || meta.tags || [],
       compendiumPath:entry.route || entry.sourcePath || ''
     }, { newInstance:true });
@@ -131,7 +133,7 @@
         openingHours:'GM controlled',
         acceptedCurrencies:api.CURRENCY.map(currency => currency.key),
         buyModifier:1,
-        sellModifier:.5,
+        sellModifier:1,
         services:[],
         restock:{ mode:'Manual', days:0 },
         visibility:'discovered'
@@ -178,7 +180,7 @@
           <span class="ecosystem-item-art">${itemImage(item)}</span>
           <b>${esc(item.name)}</b>
           <small>${esc(item.type)}${item.qty > 1 ? ` · ×${item.qty}` : ''}</small>
-          <span class="ecosystem-card-meta"><em>${number(item.weight * item.qty).toFixed(1)} wt</em><em>${number(item.value * item.qty).toLocaleString()} cp</em></span>
+          <span class="ecosystem-card-meta"><em>${number(item.weight * item.qty).toFixed(1)} wt</em><em>${esc(pricing?.formatMarks(pricing.getInventoryResaleValue(item,item.qty)) || 'Pricing unavailable')}</em></span>
         </button>
         ${options.actions || ''}
       </article>`;
@@ -313,7 +315,7 @@
     const choice = loot.responses?.[id] || '';
     return `<article class="ecosystem-loot-card ${rarityClass(loot.item)}">
       <span class="ecosystem-item-art">${itemImage(loot.item)}</span>
-      <div><span class="ecosystem-rarity">${esc(loot.item.rarity)}</span><h3>${esc(loot.item.name)}</h3><p>${esc(loot.source || 'Unknown source')}</p><small>×${number(loot.quantity || loot.item.qty, 1)} · ${number(loot.item.value).toLocaleString()} cp · ${number(loot.item.weight).toFixed(1)} wt</small></div>
+      <div><span class="ecosystem-rarity">${esc(loot.item.rarity)}</span><h3>${esc(loot.item.name)}</h3><p>${esc(loot.source || 'Unknown source')}</p><small>×${number(loot.quantity || loot.item.qty, 1)} · ${esc(pricing?.formatMarks(pricing.getInventoryResaleValue(loot.item,loot.quantity || loot.item.qty)) || 'Pricing unavailable')} · ${number(loot.item.weight).toFixed(1)} wt</small></div>
       <div class="ecosystem-loot-responses">${lootResponseSummary(loot)}</div>
       ${gm ? `<div class="ecosystem-card-actions"><select data-loot-recipient="${esc(loot.id)}"><option value="">Choose recipient</option>${campaignCharacters().map(entry => `<option value="${esc(entry.id)}">${esc(entry.record.name)}</option>`).join('')}</select><button type="button" data-loot-distribute="${esc(loot.id)}">Distribute</button><button type="button" data-loot-random="${esc(loot.id)}">Need / Greed Roll</button></div>` : `<div class="ecosystem-card-actions choice"><button type="button" class="${choice === 'need' ? 'active' : ''}" data-loot-choice="${esc(loot.id)}:need">Need</button><button type="button" class="${choice === 'greed' ? 'active' : ''}" data-loot-choice="${esc(loot.id)}:greed">Greed</button><button type="button" class="${choice === 'pass' ? 'active' : ''}" data-loot-choice="${esc(loot.id)}:pass">Pass</button><button type="button" data-loot-inspect="${esc(loot.id)}">Inspect</button></div>`}
     </article>`;
@@ -331,7 +333,8 @@
   function shopStockCard(shop, stock, index){
     const item = api.normalizeItem(stock.item || {});
     const available = Math.max(0, number(stock.qty, 0));
-    return `<article class="ecosystem-shop-stock ${rarityClass(item)}"><span class="ecosystem-item-art">${itemImage(item)}</span><b>${esc(item.name)}</b><small>${available} in stock</small><strong>${number(stock.priceCopper || item.value).toLocaleString()} cp</strong><div><input type="number" min="1" max="${available}" value="1" data-shop-qty="${esc(shop.id)}:${index}"><button type="button" data-shop-buy="${esc(shop.id)}:${index}" ${available ? '' : 'disabled'}>Buy</button></div></article>`;
+    const price = pricing?.getPlayerPurchasePriceCopper(item,shop.buyModifier??1);
+    return `<article class="ecosystem-shop-stock ${rarityClass(item)}"><span class="ecosystem-item-art">${itemImage(item)}</span><b>${esc(item.name)}</b><small>${available} in stock</small><strong>${price === null ? 'Needs Market Price' : `${number(price).toLocaleString()} cp`}</strong><div><input type="number" min="1" max="${available}" value="1" data-shop-qty="${esc(shop.id)}:${index}"><button type="button" data-shop-buy="${esc(shop.id)}:${index}" ${available && price !== null && price > 0 ? '' : 'disabled'}>Buy</button></div></article>`;
   }
   function renderShopsView(){
     const shops = array(ecosystem()?.shops).filter(shop => shop.visibility !== 'hidden' && shopAccessible(shop));
@@ -494,7 +497,7 @@
     const shops = array(ecosystem()?.shops);
     return `
       <div class="ecosystem-two-column">
-        <section class="ecosystem-form-card"><h3>Shop Creator</h3><label>Shop name<input id="gmEcoShopName" placeholder="Greystone Forge"></label><label>Type<select id="gmEcoShopType">${SHOP_TYPES.map(type => `<option>${type}</option>`).join('')}</select></label><label>Owner / NPC<input id="gmEcoShopOwner" placeholder="Merchant name"></label><label>Description<textarea id="gmEcoShopDescription"></textarea></label><label>Map location<input id="gmEcoShopLocation" placeholder="Settlement or location slug"></label><label>Region<input id="gmEcoShopRegion" placeholder="Region"></label><label>Opening hours<input id="gmEcoShopHours" value="GM controlled"></label><div class="ecosystem-form-inline"><label>Buy modifier<input id="gmEcoShopBuyMod" type="number" step=".05" value="1"></label><label>Sell modifier<input id="gmEcoShopSellMod" type="number" step=".05" value=".5"></label></div><label>Restock<select id="gmEcoShopRestock"><option>Manual</option><option>No Restocking</option><option>In-game Days</option><option>Party Leaves Region</option><option>Random Item Table</option><option>Local Resources</option><option>World Events</option></select></label><button type="button" class="primary" data-shop-create>Create Shop & Map Marker</button></section>
+        <section class="ecosystem-form-card"><h3>Shop Creator</h3><label>Shop name<input id="gmEcoShopName" placeholder="Greystone Forge"></label><label>Type<select id="gmEcoShopType">${SHOP_TYPES.map(type => `<option>${type}</option>`).join('')}</select></label><label>Owner / NPC<input id="gmEcoShopOwner" placeholder="Merchant name"></label><label>Description<textarea id="gmEcoShopDescription"></textarea></label><label>Map location<input id="gmEcoShopLocation" placeholder="Settlement or location slug"></label><label>Region<input id="gmEcoShopRegion" placeholder="Region"></label><label>Opening hours<input id="gmEcoShopHours" value="GM controlled"></label><div class="ecosystem-form-inline"><label>Purchase modifier<input id="gmEcoShopBuyMod" type="number" min="0" step=".05" value="1"></label><label>Sale modifier<input id="gmEcoShopSellMod" type="number" min="0" step=".05" value="1"></label></div><label>Restock<select id="gmEcoShopRestock"><option>Manual</option><option>No Restocking</option><option>In-game Days</option><option>Party Leaves Region</option><option>Random Item Table</option><option>Local Resources</option><option>World Events</option></select></label><button type="button" class="primary" data-shop-create>Create Shop & Map Marker</button></section>
         <section><h3>Campaign Shops</h3><div class="ecosystem-shop-admin-list">${shops.map(shop => `<article><div><small>${esc(shop.type)} · ${esc(shop.region || 'No region')}</small><h4>${esc(shop.name)}</h4><p>${array(shop.stock).length} stock lines · ${esc(shop.status || 'closed')}</p></div><div><button type="button" data-shop-admin-open="${esc(shop.id)}">${shop.status === 'open' ? 'Close' : 'Open'}</button><button type="button" data-shop-admin-restock="${esc(shop.id)}">Restock</button><button type="button" data-shop-admin-stock="${esc(shop.id)}">Add Selected Item</button></div></article>`).join('') || emptyState('No shops', 'Create a campaign merchant and connect it to the existing map.')}</div></section>
       </div>`;
   }
@@ -555,14 +558,19 @@
     const bagOptions = array(record?.bags).map(bag => `<option value="${esc(bag.id)}">${esc(bag.name)}</option>`).join('');
     const storageOptions = array(record?.storages).map(storage => `<option value="${esc(storage.id)}">${esc(storage.name)}</option>`).join('');
     const history = array(item.history).slice(0, 12);
+    const pricingStatus = pricing?.marketPricingStatus(item);
+    const marketInformation = pricingStatus?.id === 'not-tradeable'
+      ? '<section><h3>Market Information</h3><p>Not Normally Tradeable</p></section>'
+      : `<section><h3>Market Information</h3><div class="ecosystem-detail-stats"><div title="The standard amount received when selling this item."><small>Market Value</small><b>${esc(pricing?.formatMarks(item.marketValue) || '')}</b></div><div title="The standard amount required to purchase this item."><small>Market Price</small><b>${esc(pricing?.formatMarks(item.marketPrice) || '')}</b></div></div>${pricingStatus?.id === 'needs-completion' ? '<p class="warning">This legacy item needs pricing completion.</p>' : ''}</section>`;
     const meta = `<span class="ecosystem-rarity ${rarityClass(item)}">${esc(item.rarity)}</span><span>${esc(item.quality)}</span><span>${item.condition}% condition</span><span>${item.durability}/${item.maxDurability} durability</span>`;
     const body = `
       <div class="ecosystem-item-detail">
-        <div class="ecosystem-detail-stats"><div><small>Type</small><b>${esc(item.type)}</b></div><div><small>Quantity</small><b>${item.qty}</b></div><div><small>Weight</small><b>${item.weight} each</b></div><div><small>Value</small><b>${item.value.toLocaleString()} cp</b></div><div><small>Location</small><b>${esc(item.location)}</b></div><div><small>Trade</small><b>${item.tradeAvailable && !item.bound ? 'Available' : 'Restricted'}</b></div></div>
+        <div class="ecosystem-detail-stats"><div><small>Type</small><b>${esc(item.type)}</b></div><div><small>Quantity</small><b>${item.qty}</b></div><div><small>Weight</small><b>${item.weight} each</b></div><div><small>Location</small><b>${esc(item.location)}</b></div><div><small>Trade</small><b>${item.tradeAvailable && !item.bound ? 'Available' : 'Restricted'}</b></div></div>
+        ${marketInformation}
         <section><h3>Description</h3><p>${esc(item.desc || item.description || 'Information coming soon.')}</p></section>
         ${item.lore ? `<section><h3>Lore</h3><p>${esc(item.lore)}</p></section>` : ''}
         <section><h3>Requirements</h3><p class="${requirement.met ? 'success' : 'warning'}">${requirement.met ? 'All requirements met.' : `Missing: ${esc(requirement.failures.join(', '))}`}</p></section>
-        ${slots.length ? `<section><h3>Equipment Comparison</h3><div class="ecosystem-comparison"><div><small>Selected</small><b>${esc(item.name)}</b><span>${number(item.weight).toFixed(1)} wt · ${number(item.value).toLocaleString()} cp</span><pre>${esc(JSON.stringify(item.stats || item.effects || {}, null, 2))}</pre></div><div><small>Currently Equipped</small><b>${esc(equippedComparison?.name || 'Empty slot')}</b><span>${equippedComparison ? `${number(equippedComparison.weight).toFixed(1)} wt · ${number(equippedComparison.value).toLocaleString()} cp` : 'No comparison item'}</span>${equippedComparison ? `<pre>${esc(JSON.stringify(equippedComparison.stats || equippedComparison.effects || {}, null, 2))}</pre>` : ''}</div></div></section>` : ''}
+        ${slots.length ? `<section><h3>Equipment Comparison</h3><div class="ecosystem-comparison"><div><small>Selected</small><b>${esc(item.name)}</b><span>${number(item.weight).toFixed(1)} wt · ${esc(pricing?.formatMarks(item.marketValue) || '')}</span><pre>${esc(JSON.stringify(item.stats || item.effects || {}, null, 2))}</pre></div><div><small>Currently Equipped</small><b>${esc(equippedComparison?.name || 'Empty slot')}</b><span>${equippedComparison ? `${number(equippedComparison.weight).toFixed(1)} wt · ${esc(pricing?.formatMarks(equippedComparison.marketValue) || '')}` : 'No comparison item'}</span>${equippedComparison ? `<pre>${esc(JSON.stringify(equippedComparison.stats || equippedComparison.effects || {}, null, 2))}</pre>` : ''}</div></div></section>` : ''}
         <section><h3>Effects & Enchantments</h3><pre>${esc(JSON.stringify({ effects:item.effects, enchantments:item.enchantments }, null, 2))}</pre></section>
         <section><h3>Quick Actions</h3><div class="ecosystem-detail-actions">
           ${slots.length ? `<select id="ecoDetailEquipSlot">${slots.map(slot => `<option>${esc(slot)}</option>`).join('')}</select><button type="button" data-detail-equip="${esc(item.id)}">${item.equipped ? 'Unequip' : 'Equip'}</button>` : ''}
@@ -591,7 +599,8 @@
     const item = loot?.item ? api.normalizeItem(loot.item) : null;
     if(!item) return;
     const meta = `<span class="ecosystem-rarity ${rarityClass(item)}">${esc(item.rarity)}</span><span>${esc(item.quality)}</span><span>${item.condition}% condition</span>`;
-    const body = `<div class="ecosystem-item-detail"><div class="ecosystem-detail-stats"><div><small>Type</small><b>${esc(item.type)}</b></div><div><small>Quantity</small><b>${number(loot.quantity || item.qty,1)}</b></div><div><small>Weight</small><b>${number(item.weight).toFixed(1)} each</b></div><div><small>Value</small><b>${number(item.value).toLocaleString()} cp</b></div><div><small>Source</small><b>${esc(loot.source || 'Party Loot')}</b></div><div><small>Status</small><b>${esc(loot.status || 'Available')}</b></div></div><section><h3>Description</h3><p>${esc(item.desc || item.description || 'Information coming soon.')}</p></section><section><h3>Effects & Enchantments</h3><pre>${esc(JSON.stringify({ effects:item.effects, enchantments:item.enchantments }, null, 2))}</pre></section></div>`;
+    const marketStatus=pricing?.marketPricingStatus(item);
+    const body = `<div class="ecosystem-item-detail"><div class="ecosystem-detail-stats"><div><small>Type</small><b>${esc(item.type)}</b></div><div><small>Quantity</small><b>${number(loot.quantity || item.qty,1)}</b></div><div><small>Weight</small><b>${number(item.weight).toFixed(1)} each</b></div><div><small>Source</small><b>${esc(loot.source || 'Party Loot')}</b></div><div><small>Status</small><b>${esc(loot.status || 'Available')}</b></div></div><section><h3>Market Information</h3>${marketStatus?.id==='not-tradeable'?'<p>Not Normally Tradeable</p>':`<div class="ecosystem-detail-stats"><div><small>Market Value</small><b>${esc(pricing?.formatMarks(item.marketValue)||'')}</b></div><div><small>Market Price</small><b>${esc(pricing?.formatMarks(item.marketPrice)||'')}</b></div></div>`}</section><section><h3>Description</h3><p>${esc(item.desc || item.description || 'Information coming soon.')}</p></section><section><h3>Effects & Enchantments</h3><pre>${esc(JSON.stringify({ effects:item.effects, enchantments:item.enchantments }, null, 2))}</pre></section></div>`;
     window.openAsteriaInfoModal?.({
       eyebrow:'Shared Party Loot',
       title:item.identified ? item.name : 'Unidentified Item',
@@ -662,7 +671,7 @@
     const shared = ecosystem();
     const available = array(shared?.partyLoot).filter(loot => loot.status !== 'distributed');
     if(!available.length) return;
-    const total = available.reduce((sum,loot) => sum + number(loot.item.value) * number(loot.quantity,1), 0);
+    const total = available.reduce((sum,loot) => sum + (pricing?.getPlayerSaleValueCopper(loot.item) || 0) * number(loot.quantity,1), 0);
     const members = campaignCharacters();
     const share = members.length ? Math.floor(total / members.length) : 0;
     members.forEach(entry => api.adjustCurrency(entry.id, share, { action:'party-loot-currency-share', source:'Party Loot Sale' }));
@@ -672,15 +681,7 @@
     notify('Party Loot Sold', `${total.toLocaleString()} copper was divided between ${members.length} characters.`, { level:'medium', partyWide:true });
   }
   function saleValue(item, shop){
-    const condition = Math.max(.1, number(item.condition,100) / 100);
-    const quality = { Trash:.1,Poor:.35,Average:1,'Well Crafted':1.15,Exceptional:1.35,Superb:1.6,Exquisite:2,Masterwork:2.5 }[item.quality] || 1;
-    const speciality = String(shop.type || '').toLowerCase();
-    const text = `${item.type} ${item.category} ${item.material}`.toLowerCase();
-    let specialtyModifier = .75;
-    if(speciality.includes('blacksmith') && /weapon|armor|armour|ore|metal/.test(text)) specialtyModifier = 1.1;
-    if(speciality.includes('alchemist') && /herb|potion|reagent|alchemy/.test(text)) specialtyModifier = 1.1;
-    if(speciality.includes('general')) specialtyModifier = .85;
-    return Math.max(0, Math.floor(number(item.value) * number(shop.sellModifier,.5) * condition * quality * specialtyModifier));
+    return pricing?.getPlayerSaleValueCopper(item,number(shop.sellModifier,1)) || 0;
   }
   function buyShopItem(shopId, stockIndex, quantity){
     const shop = ecosystem()?.shops?.find(entry => entry.id === shopId);
@@ -688,8 +689,11 @@
     const record = activeCharacter();
     if(!shop || !stock || !record || !shopAccessible(shop)) return false;
     const qty = Math.max(1, Math.min(number(quantity,1), number(stock.qty,0)));
-    const cost = number(stock.priceCopper || stock.item?.value) * qty;
     const item = api.normalizeItem(Object.assign({}, stock.item, { qty }), { newInstance:true });
+    const unitPrice = pricing?.getPlayerPurchasePriceCopper(item,number(shop.buyModifier,1));
+    if(unitPrice === null){ notify('Purchase Failed',`${item.name} needs a Market Price.`,{type:'warning'}); return false; }
+    if(unitPrice === 0){ notify('Purchase Failed',`${item.name} is not normally tradeable.`,{type:'warning'}); return false; }
+    const cost = unitPrice * qty;
     const enc = api.encumbrance(activeId());
     if(api.currencyTotal(record) < cost){ notify('Purchase Failed','Not enough currency.',{type:'warning'}); return false; }
     if(!activeCampaign()?.itemEcosystem?.settings?.allowOverencumbrance && enc.weight + item.weight * qty > enc.capacity){ notify('Purchase Failed','This purchase exceeds carry capacity.',{type:'warning'}); return false; }
@@ -708,13 +712,14 @@
     const item = api.find(itemId, activeId());
     if(!shop || !item || item.equipped || item.locked || item.bound || item.questItem) return false;
     const value = saleValue(item, shop);
+    if(!value){ notify('Sale Failed',`${item.name} has no Market Value.`,{type:'warning'}); return false; }
     if(number(shop.currencyCopper, Infinity) < value) return false;
     const snapshot = api.normalizeItem(Object.assign({}, clone(item), { qty:1 }), { newInstance:true });
     if(!api.remove(item.id, activeId(), 1, { action:'shop-sale', source:shop.name })) return false;
     api.adjustCurrency(activeId(), value, { action:'shop-sale-payment', source:shop.name });
     const stock = array(shop.stock).find(line => slug(line.item?.catalogId || line.item?.name) === slug(snapshot.catalogId || snapshot.name));
     if(stock) stock.qty += 1;
-    else shop.stock.push({ item:snapshot, qty:1, priceCopper:Math.max(snapshot.value, Math.ceil(value / Math.max(.1,number(shop.sellModifier,.5)))) });
+    else shop.stock.push({ item:snapshot, qty:1, priceCopper:pricing?.getPlayerPurchasePriceCopper(snapshot,number(shop.buyModifier,1)) });
     shop.currencyCopper = Math.max(0, number(shop.currencyCopper,0) - value);
     shop.buyback = array(shop.buyback);
     shop.buyback.unshift({ item:snapshot, sellerCharacterId:activeId(), priceCopper:value, soldAt:now() });
@@ -955,7 +960,7 @@
       openingHours:document.getElementById('gmEcoShopHours')?.value || 'GM controlled',
       acceptedCurrencies:api.CURRENCY.map(currency => currency.key),
       buyModifier:number(document.getElementById('gmEcoShopBuyMod')?.value,1),
-      sellModifier:number(document.getElementById('gmEcoShopSellMod')?.value,.5),
+      sellModifier:number(document.getElementById('gmEcoShopSellMod')?.value,1),
       services:[],
       stock:[],
       currencyCopper:100000,
@@ -979,10 +984,12 @@
     candidates.forEach(entry => {
       const item = catalogSnapshot(entry.slug || entry.title,1);
       if(!item) return;
+      const priceCopper = pricing?.getPlayerPurchasePriceCopper(item,number(shop.buyModifier,1));
+      if(priceCopper === null || priceCopper === 0) return;
       const existing = array(shop.stock).find(line => slug(line.item?.catalogId || line.item?.name) === slug(item.catalogId || item.name));
       const quantity = Math.floor(Math.random()*4)+1;
       if(existing) existing.qty += quantity;
-      else shop.stock.push({ item, qty:quantity, priceCopper:Math.max(1,Math.round(number(item.value,100)*number(shop.buyModifier,1))) });
+      else shop.stock.push({ item, qty:quantity, priceCopper });
     });
     shop.restock.lastRestockedAt = now();
     api.audit('shop-restocked',{characterId:'GM',source:shop.name,gmOverride:true});
@@ -1154,7 +1161,7 @@
       if(button.hasAttribute('data-shop-create')){createShop();renderGM();return;}
       if(button.dataset.shopAdminOpen){const shop=ecosystem()?.shops.find(item=>item.id===button.dataset.shopAdminOpen);if(shop){shop.status=shop.status==='open'?'closed':'open';activeCampaign().activeShop=shop.status==='open'?shop:null;saveCampaign('shop-status-changed');}return;}
       if(button.dataset.shopAdminRestock){restockShop(button.dataset.shopAdminRestock);return;}
-      if(button.dataset.shopAdminStock){const shop=ecosystem()?.shops.find(item=>item.id===button.dataset.shopAdminStock);const snapshot=catalogSnapshot(ui.gmSelectedCatalogId,1);if(shop&&snapshot){shop.stock.push({item:snapshot,qty:1,priceCopper:Math.max(1,snapshot.value||100)});saveCampaign('shop-stock-added');}else notify('Select Item','Select an item in Reward Loot first.',{type:'warning'});return;}
+      if(button.dataset.shopAdminStock){const shop=ecosystem()?.shops.find(item=>item.id===button.dataset.shopAdminStock);const snapshot=catalogSnapshot(ui.gmSelectedCatalogId,1);const priceCopper=shop&&snapshot?pricing?.getPlayerPurchasePriceCopper(snapshot,number(shop.buyModifier,1)):null;if(shop&&snapshot&&priceCopper!==null&&priceCopper>0){shop.stock.push({item:snapshot,qty:1,priceCopper});saveCampaign('shop-stock-added');}else notify('Pricing Required','Select a normally tradeable item with a completed Market Price.',{type:'warning'});return;}
       if(button.dataset.gmItemRemove){const [characterId,itemId]=button.dataset.gmItemRemove.split(':');api.remove(itemId,characterId,null,{action:'gm-item-removed',source:'GM Inventory Tool',gmOverride:true});renderGM();return;}
       if(button.dataset.gmTradeRemove){cancelListing(button.dataset.gmTradeRemove,true);renderGM();return;}
       if(button.hasAttribute('data-audit-export')){exportAudit();return;}

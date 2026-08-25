@@ -3,6 +3,7 @@ import { EmptyState, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
+import { getPlayerSaleValueCopper } from '../systems/items/marketPricing.mjs';
 
 const ACTIONS = {
   trade: { label:'Trade', eyebrow:'Player Trade', action:'Send Trade Request', description:'Offer this item and let the other player choose an item to exchange.' },
@@ -64,7 +65,7 @@ export function SendPlayerItemModal({ campaignId, character, target, item, mode 
   const action = ACTIONS[mode] || ACTIONS.give;
   const maximum = mode === 'identify' ? 1 : Math.max(1, Number(item?.qty || 1));
   const [quantity, setQuantity] = useState(1);
-  const [priceCopper, setPriceCopper] = useState(Math.max(0, Number(item?.value || 0)));
+  const [priceCopper, setPriceCopper] = useState(getPlayerSaleValueCopper(item));
   const [requestedItem, setRequestedItem] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);

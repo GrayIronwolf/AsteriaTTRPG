@@ -16,7 +16,10 @@ formation_type: Divine Solar Formation
 weight_class: Medium-Light
 durability: Extremely High
 enchantment_affinity: "80% (+6 dice)"
-market_value: 320–500 Marks (Legendary Trade)
+market_value: 320
+market_price: null
+market_value_source_text: "320–500 Marks (Legendary Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

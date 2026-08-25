@@ -1889,6 +1889,41 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-title-manager > div { display: grid; gap: 6px; }
 .react-title-manager article { display: grid; grid-template-columns: minmax(140px,1fr) auto auto; gap: 6px; }
 
+/* Universal item pricing fields. */
+.react-market-information {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent,#1f7dff) 45%, transparent);
+  background: rgba(2,13,20,.62);
+}
+.react-market-information > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.react-market-information h3 { margin: 2px 0 0; }
+.react-market-information .react-detail-list { margin: 0; }
+.react-market-form {
+  min-width: 0;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent,#1f7dff) 38%, transparent);
+  background: rgba(2,13,20,.5);
+}
+.react-market-form legend {
+  padding: 0 7px;
+  color: var(--asteria-text-primary,#f3f6f8);
+  font-weight: 700;
+}
+.react-market-form label small {
+  display: block;
+  color: var(--asteria-text-muted,#9aabb5);
+  font-weight: 400;
+}
+
 @container (max-width: 1160px) {
   .react-inventory-layout { grid-template-columns: minmax(140px,.55fr) minmax(290px,1fr) minmax(390px,2.25fr) 76px; }
 }

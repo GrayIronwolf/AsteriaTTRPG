@@ -15,7 +15,9 @@ weight: 1kg
 weight_class: Medium
 durability: Low
 enchantment_affinity: "35% (+3 dice)"
-market_value: 40 Marks
+market_value: 40
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

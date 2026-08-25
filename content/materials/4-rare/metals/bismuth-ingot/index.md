@@ -17,7 +17,9 @@ durability: Low
 enchantment_affinity: "75% (+6 dice)"
 damage_modifier: 4
 armor_modifier: 1
-market_value: 75 Marks
+market_value: 75
+market_price: null
+pricing_status: needs-completion
 tags:
   - items
   - materials

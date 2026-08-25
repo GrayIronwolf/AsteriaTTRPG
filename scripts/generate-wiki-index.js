@@ -26,6 +26,10 @@ function parseScalar(value) {
   const trimmed = String(value || '').trim();
   if (!trimmed) return '';
   if (trimmed === '[]') return [];
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  if (trimmed === 'null') return null;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (/^\[.*\]$/.test(trimmed)) {
     const inner = trimmed.slice(1, -1).trim();
     return inner ? inner.split(',').map(part => parseScalar(part)) : [];
@@ -106,7 +110,9 @@ function readItem(collection, rarity, category, itemDir) {
     mana_density: parsed.metadata.mana_density || '',
     toxicity: parsed.metadata.toxicity || '',
     growth_difficulty: parsed.metadata.growth_difficulty || '',
-    market_value: parsed.metadata.market_value || '',
+    market_value: parsed.metadata.market_value ?? null,
+    market_price: parsed.metadata.market_price ?? null,
+    pricing_status: parsed.metadata.pricing_status || '',
     affinities: listValue(parsed.metadata.affinities),
     crafting_uses: listValue(parsed.metadata.crafting_uses),
     alchemy_uses: listValue(parsed.metadata.alchemy_uses),

@@ -18,7 +18,10 @@ durability: Moderate
 enchantment_affinity: "70% (+5 dice)"
 damage_modifier: +4
 armor_modifier: +1
-market_value: 160–260 Marks (Rare Trade)
+market_value: 160
+market_price: null
+market_value_source_text: "160–260 Marks (Rare Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - materials

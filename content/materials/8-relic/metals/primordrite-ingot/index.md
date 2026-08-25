@@ -27,7 +27,10 @@ elemental_alignment:
 enchantment_affinity: "100% (+9 dice)"
 damage_modifier: +6
 armor_modifier: +6
-market_value: Unknown / Relic Trade Only
+market_value: 0
+market_price: null
+market_value_source_text: "Unknown / Relic Trade Only"
+pricing_status: needs-completion
 tags:
   - items
   - materials

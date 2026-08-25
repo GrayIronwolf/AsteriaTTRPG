@@ -5,6 +5,7 @@
   'use strict';
 
   const api = window.AsteriaInventory = window.AsteriaInventory || {};
+  const pricing = window.AsteriaMarketPricing;
   const VERSION = 'asteria-item-ecosystem-v1';
   const CURRENCY = [
     { key:'royal_platinum', label:'Royal Platinum', value:10000000000 },
@@ -160,7 +161,6 @@
       quality:String(source.quality || 'Average'),
       qty:Math.max(0, Math.floor(number(source.qty ?? source.quantity, 1))),
       weight:Math.max(0, number(source.weight, 0)),
-      value:Math.max(0, number(source.value ?? source.priceCopper, 0)),
       condition:Math.max(0, Math.min(100, number(source.condition, 100))),
       durability:Math.max(0, number(source.durability, 100)),
       maxDurability:Math.max(1, number(source.maxDurability, 100)),
@@ -189,7 +189,9 @@
       item.instanceId = item.id;
       item.acquiredAt = now();
     }
-    return item;
+    return pricing
+      ? pricing.normalizeMarketPricing(item, { legacy:true, removeLegacy:true, migratedRecord:true })
+      : Object.assign(item, { marketValue:0, marketPrice:null, pricingNeedsCompletion:true });
   }
   function normalizeBag(bag = {}, index = 0){
     const rows = Math.max(1, number(bag.rows, 4));
@@ -619,8 +621,8 @@
       if(filters.favourite && !item.favourite) return false;
       if(filters.quest && !item.questItem) return false;
       if(filters.trade && (!item.tradeAvailable || item.locked || item.bound)) return false;
-      if(filters.minValue !== undefined && item.value < number(filters.minValue)) return false;
-      if(filters.maxValue !== undefined && item.value > number(filters.maxValue, Infinity)) return false;
+      if(filters.minValue !== undefined && item.marketValue < number(filters.minValue)) return false;
+      if(filters.maxValue !== undefined && item.marketValue > number(filters.maxValue, Infinity)) return false;
       if(filters.minWeight !== undefined && item.weight < number(filters.minWeight)) return false;
       if(filters.maxWeight !== undefined && item.weight > number(filters.maxWeight, Infinity)) return false;
       return true;
@@ -630,8 +632,8 @@
       alphabetical:(a,b) => a.name.localeCompare(b.name),
       newest:(a,b) => String(b.acquiredAt).localeCompare(String(a.acquiredAt)),
       oldest:(a,b) => String(a.acquiredAt).localeCompare(String(b.acquiredAt)),
-      'value-high':(a,b) => b.value - a.value,
-      'value-low':(a,b) => a.value - b.value,
+      'value-high':(a,b) => b.marketValue - a.marketValue,
+      'value-low':(a,b) => a.marketValue - b.marketValue,
       'weight-high':(a,b) => b.weight - a.weight,
       'weight-low':(a,b) => a.weight - b.weight,
       rarity:(a,b) => rarityOrder.indexOf(b.rarity) - rarityOrder.indexOf(a.rarity),

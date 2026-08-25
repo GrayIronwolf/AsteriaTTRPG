@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const marketPricing = require('../js/asteria-market-pricing.js');
 
 const root = path.resolve(__dirname, '..');
 const sourceRoot = 'C:\\Users\\jaida\\OneDrive\\Desktop\\DND CAMPAIGN\\Locked - DnD Campaign\\5. ITEMS\\RESOURCES & MATERIALS\\Metal';
@@ -208,6 +209,12 @@ function writeItem({ file, rarity }, kind, images) {
     .replace(/\s+Ore$/i, '')
     .replace(/\s+Ingot$/i, '')
     .trim();
+  const pricing = marketPricing.migrateLegacyItem({
+    marketValue: metadata.marketValue,
+    marketPrice: metadata.marketPrice,
+    sellingPrice: metadata.sellingPrice,
+    purchasePrice: metadata.purchasePrice
+  });
 
   const frontmatter = [
     '---',
@@ -232,7 +239,11 @@ function writeItem({ file, rarity }, kind, images) {
     metadata.enchantmentAffinity ? `enchantment_affinity: ${yamlScalar(metadata.enchantmentAffinity)}` : '',
     metadata.damageModifier ? `damage_modifier: ${yamlScalar(metadata.damageModifier)}` : '',
     metadata.armorModifier ? `armor_modifier: ${yamlScalar(metadata.armorModifier)}` : '',
-    metadata.marketValue ? `market_value: ${yamlScalar(metadata.marketValue)}` : '',
+    `market_value: ${pricing.marketValue}`,
+    `market_price: ${pricing.marketPrice === null ? 'null' : pricing.marketPrice}`,
+    pricing.marketValueSourceText ? `market_value_source_text: ${yamlScalar(pricing.marketValueSourceText)}` : '',
+    pricing.marketPriceSourceText ? `market_price_source_text: ${yamlScalar(pricing.marketPriceSourceText)}` : '',
+    pricing.pricingNeedsCompletion ? 'pricing_status: needs-completion' : '',
     imageName ? `image: ${yamlScalar(imageName)}` : '',
     yamlList('tags', tags),
     'visibility: public',

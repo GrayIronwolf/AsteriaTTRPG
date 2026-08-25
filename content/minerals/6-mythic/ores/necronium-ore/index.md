@@ -16,7 +16,10 @@ formation_type: Event / Death Saturation
 weight_class: Medium
 durability: Very High
 enchantment_affinity: "75% (+6 dice)"
-market_value: 280–420 Marks (Restricted Trade)
+market_value: 280
+market_price: null
+market_value_source_text: "280–420 Marks (Restricted Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals

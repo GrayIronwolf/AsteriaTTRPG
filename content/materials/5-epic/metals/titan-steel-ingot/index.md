@@ -18,7 +18,10 @@ durability: Extreme
 enchantment_affinity: "65% (+5 dice)"
 damage_modifier: +5
 armor_modifier: +5
-market_value: 300–500 Marks (Mythic Trade)
+market_value: 300
+market_price: null
+market_value_source_text: "300–500 Marks (Mythic Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - materials

@@ -16,7 +16,10 @@ formation_type: Infernal Convergence
 weight_class: Heavy
 durability: Very High
 enchantment_affinity: "80% (+6 dice)"
-market_value: 280–450 Marks (Legendary Trade)
+market_value: 280
+market_price: null
+market_value_source_text: "280–450 Marks (Legendary Trade)"
+pricing_status: needs-completion
 tags:
   - items
   - minerals
