@@ -1,0 +1,181 @@
+{
+  "version": "asteria-armour-class-migration-v1",
+  "generatedAt": "2026-08-24T16:18:57.238Z",
+  "summary": {
+    "raceFiles": 201,
+    "validRaceNaturalAC": 201,
+    "materialDefinitions": 40,
+    "armourCandidates": 0,
+    "safelyMappedArmour": 0,
+    "flaggedArmour": 0
+  },
+  "rules": {
+    "preserveUnmappedItems": true,
+    "storedFinalAC": false,
+    "materialLookup": "Compendium metadata first; flagged fallback when unavailable"
+  },
+  "invalidRaces": [],
+  "armourItems": [],
+  "materialSources": [
+    {
+      "title": "Aluminum Ingot",
+      "materialBaseAC": 1
+    },
+    {
+      "title": "Cast Iron Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Chromium Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Platinum Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Steel Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Cobalt Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "High Steel Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Thorium Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Bismuth Ingot",
+      "materialBaseAC": 1
+    },
+    {
+      "title": "Celestial Bronze Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Dark Silver Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Glass Ingot",
+      "materialBaseAC": 1
+    },
+    {
+      "title": "Infernal Bronze Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Moonstone Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Pure Silver Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Quicksilver Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Tungsten Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Abyssal Steel Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Arricallium Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Celestial Steel Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Dark Stone Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Duranium Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Ebony Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Ice Glass Ingot",
+      "materialBaseAC": 2
+    },
+    {
+      "title": "Infernal Steel Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Light Stone Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Titan Steel Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Adamantium Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Dragon Glass Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Elementium Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Meteorite Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Necronium Ingot",
+      "materialBaseAC": 3
+    },
+    {
+      "title": "Red Duranium Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Voidsteel Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Mythril Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Netherite Ingot",
+      "materialBaseAC": 4
+    },
+    {
+      "title": "Orichalcum Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Starite Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Vibranium Ingot",
+      "materialBaseAC": 5
+    },
+    {
+      "title": "Primordrite Ingot",
+      "materialBaseAC": 6
+    }
+  ]
+}
