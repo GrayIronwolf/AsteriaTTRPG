@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { liveSyncPresentation } from '../state/liveSyncState.mjs';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
 
@@ -126,13 +127,14 @@ export function Modal({ title, eyebrow, onClose, children, busy = false, footer 
     document.addEventListener('keydown', keydown);
     return () => { document.removeEventListener('keydown', keydown); returnFocusRef.current?.focus?.(); };
   }, []);
-  return <div className="react-modal-backdrop" role="presentation" onMouseDown={event => { if(event.target === event.currentTarget && !busy) onClose?.(); }}>
+  const modal = <div className="react-modal-backdrop" role="presentation" onMouseDown={event => { if(event.target === event.currentTarget && !busy) onClose?.(); }}>
     <section ref={dialogRef} tabIndex="-1" className="react-modal asteria-react-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={busy}>
       <header><div>{eyebrow ? <p className="react-eyebrow">{eyebrow}</p> : null}<h2 id={titleId}>{title}</h2></div><button type="button" className="react-icon-button" onClick={onClose} disabled={busy} aria-label="Close dialog"><AsteriaIcon name="close" /></button></header>
       <div className="react-modal-body">{children}</div>
       {footer ? <footer>{footer}</footer> : null}
     </section>
   </div>;
+  return createPortal(modal, document.body);
 }
 
 export function AsteriaButton({ children, tone = '', className = '', disabledReason = '', ...props }) {

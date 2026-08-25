@@ -202,6 +202,7 @@ function raceMarkdown(race, info, order) {
     `secondaryCategory: ${yamlString(secondaryCategory)}`,
     `tertiaryCategory: ${yamlString(tertiaryCategory)}`,
     `playable: ${node.playable === false ? 'false' : 'true'}`,
+    `naturalAC: ${Math.max(1, Math.min(12, Number(node.naturalAC || info.naturalAC || 1)))}`,
     `traitSlots: ${Math.max(1, Math.min(5, Number(node.traitSlots || info.traitSlots || 5)))}`,
     `size: ${yamlString(size)}`,
     `movement: ${yamlString(movement)}`,

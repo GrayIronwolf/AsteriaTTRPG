@@ -3,11 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { AsteriaReactRoot } from './app/AsteriaReactRoot.jsx';
 import { navigateReactRoute, parseReactRoute } from './app/asteriaRoutes.mjs';
 import { activateReactDashboard, openLegacyView } from './app/legacyBridge.js';
+import * as armourSystem from './systems/armour/armourSystem.mjs';
 import './styles/asteria-react.css';
 
 const host = document.getElementById('asteriaReactRoot');
 if(host) createRoot(host).render(<AsteriaReactRoot />);
 document.documentElement.dataset.asteriaLiveCharacterDashboard = 'active';
+window.AsteriaArmour = Object.freeze({ ...armourSystem });
 
 function openRoute(route) {
   activateReactDashboard();

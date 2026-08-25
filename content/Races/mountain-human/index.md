@@ -6,6 +6,7 @@ raceCategory: "Medium Races"
 secondaryCategory: "Human Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

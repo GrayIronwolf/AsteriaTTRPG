@@ -18,6 +18,7 @@ durability: Very High
 enchantment_affinity: "30% (+2 dice)"
 damage_modifier: 3
 armor_modifier: 3
+materialBaseAC: 3
 market_value: 60 Marks
 tags:
   - items

@@ -621,6 +621,16 @@ function requireLiveSession(transaction,campaignId){
     return session;
   });
 }
+async function requireCampaignGM(transaction,campaignId){
+  const campaignRef=doc(db,'campaigns',campaignId);
+  const snapshot=await transaction.get(campaignRef);
+  if(!snapshot.exists()) throw new Error('Campaign not found.');
+  const campaign=snapshot.data();
+  const uid=currentUser?.uid || '';
+  const allowed=campaign.ownerUid===uid || campaign.roles?.[uid]==='gm' || (campaign.gmUids||[]).includes(uid);
+  if(!allowed) throw new Error('Only a GM for this campaign can change Armour Class modifiers.');
+  return campaign;
+}
 function liveCharacterRefs(campaignId,characterId){
   return {
     campaign:doc(db,'campaigns',campaignId,'characters',characterId),
@@ -1295,9 +1305,13 @@ const firebasePublicApi = {
         if(operation.type==='equip'){
           const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
           if(!slot) throw new Error('Choose an equipment slot.');
+          const armourValidation=window.AsteriaArmour?.validateEquipmentChange?.(character,item,slot);
+          if(armourValidation && !armourValidation.ok) throw new Error(armourValidation.error||'This armour cannot be equipped in that location.');
           inventory.forEach(value=>{if(value.equippedSlot===slot){value.equipped=false;value.equippedSlot='';value.location='inventory';}});
           item.equipped=true;item.equippedSlot=slot;item.slot=slot;item.location='equipment';
-          character.equipment=Object.assign({},character.equipment||{},{[slot]:item});
+          character.equipment=Object.assign({},character.equipment||{});
+          Object.keys(character.equipment).forEach(key=>{if(key===slot||String(character.equipment[key]?.id||'')===String(item.id||'')) delete character.equipment[key];});
+          character.equipment[slot]=item;
           appendActivity(character,{type:'item-equipped',message:`Equipped ${item.name} in ${slot}.`});
         }else if(operation.type==='unequip'){
           const slot=item.equippedSlot||item.slot;
@@ -1995,6 +2009,51 @@ const firebasePublicApi = {
     }catch(error){
       reportSyncError('campaign-resource-transaction', error, { campaignId, characterId, resource });
       return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  setCharacterACModifier: async function(campaignId,characterId,modifier={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const saved=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        const rows=(Array.isArray(character.acModifiers)?character.acModifiers:[]).filter(value=>value&&typeof value==='object');
+        const id=String(modifier.id||`gm-ac-${Date.now()}-${Math.random().toString(36).slice(2,7)}`);
+        let next;
+        if(modifier.remove){
+          next=rows.filter(value=>String(value.id)!==id);
+        }else{
+          const value=Number(modifier.value);
+          if(!Number.isFinite(value) || value===0) throw new Error('Enter a non-zero AC modifier.');
+          const minutes=Math.max(0,Math.min(10080,Number(modifier.durationMinutes||0)));
+          const record={
+            id,
+            type:'AC_MODIFIER',
+            sourceType:'gm',
+            sourceId:currentUser.uid,
+            name:String(modifier.name||'GM AC Modifier').trim().slice(0,100),
+            value,
+            active:true,
+            temporary:minutes>0,
+            expiresAt:minutes>0 ? new Date(Date.now()+minutes*60000).toISOString() : '',
+            createdAt:new Date().toISOString(),
+            createdBy:currentUser.uid
+          };
+          next=[record,...rows.filter(value=>String(value.id)!==id)];
+        }
+        character.acModifiers=next;
+        appendActivity(character,{type:'ac-modifier',message:modifier.remove?'GM removed an AC modifier.':`GM applied ${modifier.name||'AC modifier'} (${Number(modifier.value)>0?'+':''}${Number(modifier.value)} AC).`});
+        transaction.set(refs.campaign,{acModifiers:cleanData(next),actionLog:cleanData(character.actionLog),updatedAt:serverTimestamp()},{merge:true});
+        return next;
+      });
+      return {ok:true,modifiers:saved};
+    }catch(error){
+      reportSyncError('campaign-ac-modifier',error,{campaignId,characterId});
+      return {ok:false,error:error.message||String(error)};
     }
   },
   saveCharacter: async function(id, character){

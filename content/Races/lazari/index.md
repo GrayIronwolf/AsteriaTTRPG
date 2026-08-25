@@ -6,6 +6,7 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Insect & Arachnid Races"
 tertiaryCategory: "Insect Races"
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

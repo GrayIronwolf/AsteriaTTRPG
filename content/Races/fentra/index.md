@@ -6,6 +6,7 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Mustelidae Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

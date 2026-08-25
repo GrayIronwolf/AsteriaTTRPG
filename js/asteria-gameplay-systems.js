@@ -478,8 +478,37 @@
       movement:pick('movement'),
       senses:pick('senses'),
       languages:pick('languages'),
-      magicAffinity:pick('magicAffinity','magic_affinity')
+      magicAffinity:pick('magicAffinity','magic_affinity'),
+      naturalAC:Math.max(1, Math.min(12, Number(pick('naturalAC','natural_ac') || 1)))
     };
+  }
+
+  function forgeInventoryItem(entry, fallbackSlug){
+    const metadata=Object.assign({},entry?.metadata||{});
+    const id=entry?.slug||fallbackSlug||slug(entry?.title||entry?.name||'item');
+    return Object.assign({},metadata,entry||{}, {
+      id,
+      catalogId:id,
+      name:entry?.title||entry?.name||titleCase(fallbackSlug),
+      title:entry?.title||entry?.name||titleCase(fallbackSlug),
+      qty:1,
+      equipped:false,
+      equippedSlot:'',
+      raw:Object.assign({},metadata,entry||{})
+    });
+  }
+
+  function armourPreviewForDraft(d = draft()){
+    const raceEntry=entryBySlug('race',d.raceSlug);
+    const naturalAC=Math.max(1,Math.min(12,Number(metadataValue(raceEntry,['naturalAC','natural_ac'])||1)));
+    const pack=EQUIPMENT_PACKS.find(value=>value.slug===d.equipmentPackSlug);
+    const inventory=(pack?resolveEquipmentPack(pack):[]).map(entry=>forgeInventoryItem(entry,entry.slug));
+    inventory.forEach(item=>{
+      const piece=window.AsteriaArmour?.resolveArmourPiece?.(item);
+      if(piece){item.equipped=true;item.equippedSlot=piece.location;item.slot=piece.location;}
+    });
+    const character={naturalAC,raceData:{naturalAC},inventory,equipment:{}};
+    return window.AsteriaArmour?.calculateCharacterAC?.(character)||{naturalAC,armourAC:0,armourTypeSetBonus:0,modifierTotal:0,rawAC:naturalAC,finalAC:naturalAC,validation:{errors:[],warnings:[]}};
   }
 
   function finalForgeCharacteristics(d = draft()){
@@ -1558,6 +1587,7 @@
           <p>Racial features, traits, and characteristic rules will transfer into the saved Character Dashboard.</p>
         </div>
         ${rows.length ? `<dl>${rows.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(String(value).split(/\r?\n/)[0])}</dd></div>`).join('')}</dl>` : ''}
+        <div class="phase3-forge-ac-preview"><span>Natural Armour Class</span><strong>${esc(info.naturalAC)}</strong></div>
         ${traits.length ? `<div class="phase3-race-trait-chips">${traits.map(trait => `<span>${esc(trait.name || trait)}</span>`).join('')}</div>` : ''}
       </article>
     `;
@@ -1932,6 +1962,7 @@
     const d = draft();
     const selectedPack = EQUIPMENT_PACKS.find(pack => pack.slug === d.equipmentPackSlug);
     const resolved = selectedPack ? resolveEquipmentPack(selectedPack) : [];
+    const armour = armourPreviewForDraft(d);
     return `
       <section class="phase3-card">
         <div class="phase3-panel-head"><div><h2>Starting Equipment</h2><p>Choose one equipment pack. Pack items resolve against the Item Compendium when matching entries exist.</p></div><span>${esc(selectedPack?.title || 'No pack selected')}</span></div>
@@ -1942,6 +1973,7 @@
           <h3>Selected Pack Items</h3>
           ${resolved.length ? resolved.map(item => `<article><span>${esc(item.category || item.filters?.rarity || 'Item')}</span><b>${esc(item.title)}</b><small>${esc(item.source === 'fallback' ? 'Compendium link pending' : 'Linked to Item Compendium')}</small></article>`).join('') : '<p class="muted smallnote">Select a pack to preview starting equipment.</p>'}
         </div>
+        <article class="phase3-forge-armour-summary"><div><span>Natural AC</span><strong>${esc(armour.naturalAC)}</strong></div><div><span>Armour Pieces</span><strong>${esc(Number(armour.armourAC||0).toFixed(2).replace(/\.00$/,''))}</strong></div><div><span>Type Set</span><strong>${esc(signed(armour.armourTypeSetBonus||0))}</strong></div><div><span>Starting AC</span><strong>${esc(armour.finalAC)}</strong></div>${array(armour.validation?.warnings).length?`<p>${esc(armour.validation.warnings[0])}</p>`:''}</article>
       </section>
     `;
   }
@@ -2027,6 +2059,7 @@
       .concat(Object.values(affinityRolls.skills || {}))
       .map(record => `${record.title}: ${record.rank}${record.value !== '' ? ` (${record.value})` : ''}`);
     const portrait = entryImage(raceEntry, 'race');
+    const armour = armourPreviewForDraft(d);
     return `
       <section class="phase3-review-grid">
         <article class="phase3-card span-2">
@@ -2050,6 +2083,7 @@
             <div><dt>Affinity Rolls</dt><dd>${esc(affinitySummary.join(', ') || 'Not locked yet')}</dd></div>
             <div><dt>Equipment</dt><dd>${esc(equipment.join(', ') || 'None selected')}</dd></div>
             <div><dt>Characteristics</dt><dd>${esc(FORGE_CHARACTERISTICS.map(key => `${FORGE_STAT_LABELS[key]} ${finalCharacteristics[key] ?? 0}`).join(', '))}</dd></div>
+            <div><dt>Starting Armour Class</dt><dd>${esc(armour.finalAC)} (Natural ${esc(armour.naturalAC)} + Armour ${esc(Number(armour.armourAC||0).toFixed(2).replace(/\.00$/,''))} + Set ${esc(signed(armour.armourTypeSetBonus||0))})</dd></div>
             <div><dt>Backstory</dt><dd>${esc(d.origin.backstory || d.origin.history || 'No backstory entered yet.')}</dd></div>
           </dl>
           <div class="phase3-actions inline">
@@ -2132,6 +2166,7 @@
   function renderCharacterSheet(){
     const character = selectedCharacter();
     if(!character) return '<section class="phase3-card"><h2>No Character Selected</h2><p>Create or select a character first.</p></section>';
+    const armour = window.AsteriaArmour?.calculateCharacterAC?.(character) || { finalAC:Math.max(1,Number(character.naturalAC || 1)) };
     const professions = array(character.professions);
     const skills = Object.entries(character.skills || {}).map(([name, rank]) => ({ name, rank }));
     return `
@@ -2144,7 +2179,7 @@
             <div><dt>HP</dt><dd>${esc(character.hp?.[0] ?? 10)} / ${esc(character.hp?.[1] ?? 10)}</dd></div>
             <div><dt>SP</dt><dd>${esc(character.sp?.[0] ?? 10)} / ${esc(character.sp?.[1] ?? 10)}</dd></div>
             <div><dt>MP</dt><dd>${esc(character.mp?.[0] ?? 10)} / ${esc(character.mp?.[1] ?? 10)}</dd></div>
-            <div><dt>Defence</dt><dd>${esc(character.defence || character.ac || 10)}</dd></div>
+            <div><dt>Armour Class</dt><dd>${esc(armour.finalAC)}</dd></div>
             <div><dt>Movement</dt><dd>${esc(character.movement || 'Standard')}</dd></div>
             <div><dt>Campaign</dt><dd>${esc(character.campaign || 'Unassigned')}</dd></div>
           </dl>
@@ -2819,7 +2854,11 @@
       updated
     };
     const selectedPack = EQUIPMENT_PACKS.find(pack => pack.slug === d.equipmentPackSlug);
-    const inventory = d.equipment.map(slugValue => ({ id:slugValue, name:entryBySlug('item', slugValue)?.title || titleCase(slugValue) }));
+    const inventory = d.equipment.map(slugValue => forgeInventoryItem(entryBySlug('item',slugValue),slugValue));
+    inventory.forEach(item=>{
+      const piece=window.AsteriaArmour?.resolveArmourPiece?.(item);
+      if(piece){item.equipped=true;item.equippedSlot=piece.location;item.slot=piece.location;}
+    });
     const characterSchema = {
       id,
       name,
@@ -2834,6 +2873,7 @@
         movementMarkdown:racialInfo.movementMarkdown,
         bonusesMarkdown:racialInfo.bonusesMarkdown
       },
+      naturalAC:racialInfo.naturalAC,
       class:{
         slug:classSlugs[0] || d.classSlug,
         title:klass,
@@ -2919,6 +2959,7 @@
       characteristics,
       characteristicRules,
       raceInfo:racialInfo,
+      naturalAC:racialInfo.naturalAC,
       racialFeatures:racialInfo.featuresMarkdown,
       racialTraits:racialInfo.traits,
       racialTraitsMarkdown:racialInfo.traitsMarkdown,
@@ -2943,6 +2984,7 @@
       religiousPatrons:classPatrons,
       mancerAffinity,
       inventory,
+      equipment:Object.fromEntries(inventory.filter(item=>item.equipped&&item.equippedSlot).map(item=>[item.equippedSlot,item])),
       bags:array(existingCharacter?.bags),
       coins:Object.assign({}, existingCharacter?.coins || {}),
       conditions:array(existingCharacter?.conditions),

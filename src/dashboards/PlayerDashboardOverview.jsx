@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { DashboardPanel, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DashboardPanel, Modal, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { quests as selectQuests } from './characterWorkspaceData.js';
 
 function values(value) {
@@ -81,18 +82,48 @@ function ArmourPanel({ character, onNavigate, style }) {
   const equipment = character.equipment || {};
   const left = ['Head', 'Chest', 'Hands', 'Feet'];
   const right = ['Back', 'Torso', 'Waist', 'Shoulders'];
-  const armourClass = Number(character.ac ?? character.armourClass ?? character.armorClass ?? 10);
-  return <DashboardPanel icon="armour" title="Equipment / Armour" variant="equipment" className="react-overview-armour" style={style}>
+  const armour = useArmourClass(character);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [changed, setChanged] = useState(false);
+  const previousAC = useRef(armour.finalAC);
+  useEffect(() => {
+    if(previousAC.current === armour.finalAC) return;
+    previousAC.current = armour.finalAC;
+    setChanged(true);
+    const timer = window.setTimeout(() => setChanged(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, [armour.finalAC]);
+  const signed = value => `${Number(value) >= 0 ? '+' : ''}${Number(value)}`;
+  const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
+  return <DashboardPanel icon="armour" title="Equipment / Armour" variant="equipment" className={`react-overview-armour ${changed ? 'ac-updated' : ''}`} style={style}>
     <div className="react-armour-layout">
       <div className="react-armour-slots">{left.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
-      <button className="react-armour-core" type="button" onClick={() => onNavigate('inventory')} aria-label={`Open equipment. Armour Class ${armourClass}`}>
+      <button className="react-armour-core" type="button" onClick={() => setShowBreakdown(true)} aria-label={`Open Armour Class breakdown. Armour Class ${armour.finalAC}`}>
         <AsteriaIcon name="armour" size={46} />
         <small>Armour Class</small>
-        <strong>{armourClass}</strong>
-        <span>Open Equipment</span>
+        <strong>{armour.finalAC}</strong>
+        <span>View Breakdown</span>
       </button>
       <div className="react-armour-slots">{right.map(slot => <LoadoutSlot key={slot} label={slot} item={equipmentItem(equipment, slot)} icon="armour" onOpen={() => onNavigate('inventory')} />)}</div>
     </div>
+    {showBreakdown ? <Modal title={`Armour Class ${armour.finalAC}`} eyebrow="Live Defence Calculation" onClose={() => setShowBreakdown(false)} footer={<><button type="button" onClick={() => setShowBreakdown(false)}>Close</button><button className="primary" type="button" onClick={() => { setShowBreakdown(false); onNavigate('inventory'); }}>Open Equipment</button></>}>
+      <div className="react-ac-summary">
+        <div><span>Natural AC</span><strong>{armour.naturalAC}</strong><small>{armour.naturalACSource.replace(/-/g,' ')}</small></div>
+        <div><span>Armour Pieces</span><strong>{signed(decimal(armour.armourAC))}</strong><small>{armour.armourPieces.filter(piece => piece.valid).length} contributing</small></div>
+        <div><span>Type Set</span><strong>{signed(armour.armourTypeSetBonus)}</strong><small>{armour.armourType || 'No armour type'}</small></div>
+        <div><span>Modifiers</span><strong>{signed(armour.modifierTotal)}</strong><small>{armour.modifiers.filter(entry => entry.active && !entry.conditional).length} active</small></div>
+      </div>
+      <div className="react-ac-equation"><span>{decimal(armour.naturalAC)} + {decimal(armour.armourAC)} + {decimal(armour.armourTypeSetBonus)} + {decimal(armour.modifierTotal)}</span><b>Raw {decimal(armour.rawAC)}</b><strong>Final AC {armour.finalAC}</strong></div>
+      {armour.armourPieces.length ? <div className="react-ac-piece-list">{armour.armourPieces.map(piece => <article className={piece.valid ? '' : 'is-invalid'} key={piece.itemId}>
+        <div><b>{piece.name}</b><small>{piece.piece?.name || 'Unknown piece'} | {piece.materialName} | {piece.quality.name}</small></div>
+        <span>{decimal(piece.modifiedBaseAC)} x {Math.round(piece.percentile * 100)}%</span>
+        <strong>{signed(decimal(piece.contribution))} AC</strong>
+        {piece.errors.map(error => <em key={error}>{error}</em>)}
+      </article>)}</div> : <p className="react-quiet-state">No equipped armour pieces contribute to AC.</p>}
+      <div className="react-ac-secondary"><span>Mobility {signed(armour.mobilityModifier)}</span><span>Stealth {signed(armour.stealthModifier)}</span></div>
+      {[...armour.validation.errors, ...armour.validation.warnings].length ? <div className="react-ac-warnings" role="status">{[...armour.validation.errors, ...armour.validation.warnings].map(message => <p key={message}>{message}</p>)}</div> : null}
+      {armour.conditionalModifiers.length ? <div className="react-ac-conditionals"><h3>Conditional AC</h3>{armour.conditionalModifiers.map(modifier => <p key={modifier.id}><b>{modifier.name} {signed(modifier.value)}</b><span>{modifier.condition || 'Applies when its condition is met.'}</span></p>)}</div> : null}
+    </Modal> : null}
   </DashboardPanel>;
 }
 

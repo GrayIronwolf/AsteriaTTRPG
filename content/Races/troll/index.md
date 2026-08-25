@@ -6,6 +6,7 @@ raceCategory: "Extra Large Races"
 secondaryCategory: 
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

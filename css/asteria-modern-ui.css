@@ -356,8 +356,18 @@ small {
   background: rgba(0, 4, 8, .72);
 }
 
+/* BorderGlow positions direct children for its inner stacking layer. Modals are
+   rendered inside that tree, so restore their viewport anchoring explicitly. */
+.border-glow-card > .react-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw;
+  height: 100dvh;
+}
+
 .react-modal {
   max-height: min(84dvh, 760px);
+  overflow-x: hidden;
 }
 
 .react-modal:focus {
@@ -955,7 +965,8 @@ th { color: var(--asteria-gold); }
 .react-modal {
   width: min(760px, calc(100vw - 24px));
   max-height: min(84dvh, 760px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .feedback-stack,

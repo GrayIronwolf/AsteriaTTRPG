@@ -6,6 +6,7 @@ raceCategory: "Small Races"
 secondaryCategory: "Hobbit Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

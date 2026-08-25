@@ -20,13 +20,20 @@ export function installDevFixtures() {
   const characters = {
     kael: {
       id: 'kael', ownerUid: 'player-demo', campaignId: DEMO_CAMPAIGN_ID,
-      name: 'Kael', race: 'Cavern Sprite', klass: 'Artificer', level: 12,
+      name: 'Kael', race: 'Cavern Sprite', klass: 'Artificer', level: 12, naturalAC:2, armourType:'Medium Armour',
       image: 'assets/races/cavern-sprite/cavern-sprite-male-adult.png',
       gallery: [{ id:'gallery-kael-1', url:'assets/races/cavern-sprite/cavern-sprite-male-adult.png', name:'Cavern Sprite Portrait' }],
       hp: [74, 96], sp: [60, 80], mp: [110, 140], xp: 11800, xpMax: 16000,
       cp: 4, tp: 18, magicTypes: ['Light', 'Space', 'Life'],
       characteristics: { str: 12, dex: 18, agi: 17, con: 16, end: 15, int: 20, wis: 14, cha: 11, lck: 13 },
-      equipment: { Head: { name: 'Leather Hood' }, Chest: { name: 'Iron Breastplate' }, Back: { name: 'Traveller Cloak' }, 'Main Weapon': { name: 'Iron Longsword' }, 'Secondary Weapon': { name: 'Longbow' }, Shield: { name: 'Wooden Shield' } },
+      equipment: {
+        Head: { id:'leather-cap-equipped', name:'Leather Cap', type:'Armour', material:'Leather', materialBaseAC:1, quality:'Average', armourPieceType:'cap', armourType:'Medium Armour', equipped:true, equippedSlot:'Head' },
+        Torso: { id:'iron-breastplate-equipped', name:'Iron Breastplate', type:'Armour', material:'Iron', materialBaseAC:1, quality:'Average', armourPieceType:'breastplate', armourType:'Medium Armour', equipped:true, equippedSlot:'Torso' },
+        Back: { name: 'Traveller Cloak' },
+        'Main Weapon': { name: 'Iron Longsword' },
+        'Secondary Weapon': { name: 'Longbow' },
+        'Off-Hand': { id:'wooden-shield-equipped', name:'Wooden Shield', type:'Shield', material:'Wood', materialBaseAC:0, quality:'Average', armourPieceType:'roundShield', equipped:true, equippedSlot:'Off-Hand' }
+      },
       quickSlots: [{ name: 'Health Potion' }, { name: 'Stamina Potion' }, { name: 'Mana Potion' }],
       unlockedTalents: [
         { name: 'Gadgeteer\'s Gambit', tier: 1, rank: 3, cost: '2 SP' },
@@ -213,6 +220,17 @@ export function installDevFixtures() {
     updateCampaignCharacterResource: async (_campaignId, characterId, key, amount) => {
       updateCharacter(characterId,character=>{const resource=character[key];if(Array.isArray(resource))resource[0]=Math.max(0,Math.min(resource[1],resource[0]+Number(amount||0)));return character;});return {ok:true};
     },
+    setCharacterACModifier: async (_campaignId,characterId,modifier={}) => {
+      updateCharacter(characterId,character=>{
+        const rows=Array.isArray(character.acModifiers)?character.acModifiers:[];
+        const id=String(modifier.id||eventId('gm-ac'));
+        character.acModifiers=modifier.remove
+          ? rows.filter(value=>String(value.id)!==id)
+          : [{id,type:'AC_MODIFIER',sourceType:'gm',name:modifier.name||'GM AC Modifier',value:Number(modifier.value||0),active:true,temporary:Number(modifier.durationMinutes||0)>0,expiresAt:Number(modifier.durationMinutes||0)>0?new Date(Date.now()+Number(modifier.durationMinutes)*60000).toISOString():''},...rows.filter(value=>String(value.id)!==id)];
+        return character;
+      });
+      return {ok:true};
+    },
     spendCharacteristicPoints: async (_campaignId,characterId,key,amount) => {
       const applied=applyCharacteristicPoints(characters[characterId],key,amount);updateCharacter(characterId,()=>applied.character);return {ok:true,applied:applied.applied};
     },
@@ -258,7 +276,16 @@ export function installDevFixtures() {
         const index=items.findIndex(item=>String(item.id)===String(operation.itemId));
         const item=items[index];
         if(!item)throw new Error('Item not found.');
-        if(operation.type==='equip'){item.equipped=true;item.equippedSlot=operation.slot;}
+        if(operation.type==='equip'){
+          const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
+          const armourValidation=window.AsteriaArmour?.validateEquipmentChange?.(next,item,slot);
+          if(armourValidation&&!armourValidation.ok)throw new Error(armourValidation.error||'This armour cannot be equipped in that location.');
+          items.forEach(value=>{if(value.equippedSlot===slot){value.equipped=false;value.equippedSlot='';}});
+          item.equipped=true;item.equippedSlot=slot;item.slot=slot;
+          next.equipment={...(next.equipment||{})};
+          Object.keys(next.equipment).forEach(key=>{if(key===slot||String(next.equipment[key]?.id||'')===String(item.id||''))delete next.equipment[key];});
+          next.equipment[slot]=clone(item);
+        }
         if(operation.type==='unequip'){item.equipped=false;item.equippedSlot='';}
         if(operation.type==='quick'){next.quickSlots=[...(next.quickSlots||[])];next.quickSlots[operation.index]=clone(item);}
         if(operation.type==='move-storage'){

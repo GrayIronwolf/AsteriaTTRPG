@@ -6,6 +6,7 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Canine Races"
 tertiaryCategory: "Hyena Races"
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

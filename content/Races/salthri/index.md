@@ -6,6 +6,7 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Fish & Amphibian Races"
 tertiaryCategory: "Amphibian Races"
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

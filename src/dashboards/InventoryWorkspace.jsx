@@ -3,26 +3,32 @@ import { EmptyState, FilterControl, IconButton, Modal, Panel, SearchField, Statu
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
+import { calculateArmourPieceAC, previewEquipmentChange, validateEquipmentChange } from '../systems/armour/armourSystem.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
   ['Neck', ['Neck', 'Amulet']],
-  ['Shoulders', ['Shoulders']],
-  ['Chest', ['Chest', 'Chest Armor', 'Torso']],
-  ['Back', ['Back', 'Cloak']],
+  ['Torso', ['Torso', 'Chest', 'Chest Armor']],
+  ['Shoulders', ['Shoulders', 'Large Shoulder', 'Small Shoulder']],
+  ['Upper Arms', ['Upper Arms', 'Upper Arm']],
+  ['Elbows', ['Elbows', 'Elbow']],
+  ['Forearms', ['Forearms', 'Forearm']],
   ['Hands', ['Hands', 'Gloves']],
-  ['Waist', ['Waist', 'Belt']],
-  ['Legs', ['Legs', 'Leg Armor']],
-  ['Feet', ['Feet', 'Boots']]
+  ['Waist / Hips', ['Waist / Hips', 'Waist', 'Hips', 'Belt']],
+  ['Upper Legs', ['Upper Legs', 'Upper Leg', 'Legs', 'Leg Armor']],
+  ['Rear / Hips', ['Rear / Hips', 'Rear', 'Rear Guard']],
+  ['Knees', ['Knees', 'Knee']],
+  ['Lower Legs', ['Lower Legs', 'Lower Leg']],
+  ['Feet', ['Feet', 'Boots']],
+  ['Accessories', ['Accessories', 'Accessory']]
 ];
 
 const WEAPON_SLOTS = [
   ['Main Weapon', ['Main Weapon', 'Main Hand']],
   ['Secondary Weapon', ['Secondary Weapon', 'Ranged Weapon']],
-  ['Off Weapon', ['Off Weapon', 'Off Hand']],
-  ['Shield', ['Shield']],
+  ['Off-Hand', ['Off-Hand', 'Off Hand', 'Off Weapon', 'Shield']],
   ['Quiver', ['Quiver', 'Ammunition']]
 ];
 
@@ -63,6 +69,11 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
   if (!item) return null;
   const detail = itemDetails(item);
   const effects = Array.isArray(detail.effects) ? detail.effects : detail.effects ? [detail.effects] : [];
+  const armourPiece = calculateArmourPieceAC(item);
+  const armourPreview = armourPiece.piece ? previewEquipmentChange(character, item, armourPiece.piece.location) : null;
+  const armourValidation = armourPiece.piece ? validateEquipmentChange(character, item, armourPiece.piece.location) : null;
+  const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
+  const signed = value => `${Number(value) >= 0 ? '+' : ''}${decimal(value)}`;
   const run = async (operation, success) => {
     setBusy(true);
     const result = await operation();
@@ -87,6 +98,12 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
         disabled={!editable}
         onClick={() => run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'read-spellbook', itemId: item.id }), `Learned ${item.spell?.name || item.trueName}.`)}
       >Read &amp; Learn</button> : null}
+      {armourPiece.piece ? <button
+        className="primary"
+        disabled={!editable || busy || !armourValidation?.ok}
+        title={armourValidation?.ok ? `Equip in ${armourPiece.piece.location}` : armourValidation?.error}
+        onClick={() => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'equip', itemId:item.id, slot:armourPiece.piece.location }), `Equipped ${item.name}.`)}
+      >Equip in {armourPiece.piece.location}</button> : null}
       <button onClick={onClose}>Close</button>
     </div>}
   >
@@ -99,6 +116,21 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
       </dl></div>
     </div>
     {effects.length ? <><h3>Effects</h3><ul>{effects.map((effect, index) => <li key={index}>{typeof effect === 'object' ? effect.description || effect.name || JSON.stringify(effect) : effect}</li>)}</ul></> : null}
+    {armourPiece.piece ? <section className="react-item-ac-details">
+      <header><div><p className="react-eyebrow">Armour Calculation</p><h3>{armourPiece.piece.name}</h3></div><StatusPill tone={armourPiece.valid ? 'success' : 'warning'}>{armourPiece.valid ? `${signed(armourPiece.contribution)} AC` : 'Needs metadata'}</StatusPill></header>
+      <dl className="react-detail-list">
+        <div><dt>Equipment Location</dt><dd>{armourPiece.piece.location}</dd></div>
+        <div><dt>Armour Type</dt><dd>{armourPiece.armourType?.name || 'Not configured'}</dd></div>
+        <div><dt>Material Base AC</dt><dd>{armourPiece.materialName}: {decimal(armourPiece.materialBaseAC)}</dd></div>
+        <div><dt>Item Quality</dt><dd>{armourPiece.quality.name}: {signed(armourPiece.quality.modifier)}</dd></div>
+        <div><dt>Modified Base AC</dt><dd>{decimal(armourPiece.modifiedBaseAC)}</dd></div>
+        <div><dt>Piece Percentage</dt><dd>{Math.round(armourPiece.percentile * 100)}%</dd></div>
+      </dl>
+      <p className="react-ac-equation">{decimal(armourPiece.modifiedBaseAC)} x {Math.round(armourPiece.percentile * 100)}% = <strong>{decimal(armourPiece.contribution)} AC</strong></p>
+      {armourPreview ? <div className="react-item-ac-comparison"><span>Current AC <b>{armourPreview.before.finalAC}</b></span><AsteriaIcon name="chevronRight"/><span>Equipped AC <b>{armourPreview.result.finalAC}</b></span><StatusPill tone={armourPreview.delta.ac >= 0 ? 'success' : 'warning'}>{signed(armourPreview.delta.ac)} AC</StatusPill><small>Mobility {signed(armourPreview.delta.mobility)} | Stealth {signed(armourPreview.delta.stealth)}</small></div> : null}
+      {armourPiece.errors.map(error => <p className="react-storage-warning" key={error}>{error}</p>)}
+      {armourValidation && !armourValidation.ok ? <p className="react-storage-warning">{armourValidation.error}</p> : null}
+    </section> : null}
     <p>{message}</p>
   </Modal>;
 }
@@ -196,7 +228,7 @@ function InventoryEquipmentPanel({ campaignId, character, items, dragged, editab
     if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'quick', itemId, index }), `Assigned Quick Slot ${index + 1}.`);
   };
   return <Panel title="Equipment Slots" className="react-inventory-equipment">
-    <h3>Armor</h3>
+    <h3>Armour</h3>
     <div className="react-inventory-slot-list">{ARMOR_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} />)}</div>
     <h3>Weapons</h3>
     <div className="react-inventory-slot-list">{WEAPON_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} />)}</div>

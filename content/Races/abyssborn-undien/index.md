@@ -6,6 +6,7 @@ raceCategory: "Demi Races"
 secondaryCategory: "Undien Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: "12m (Walking) - 30m (Swimming)"
 languages:

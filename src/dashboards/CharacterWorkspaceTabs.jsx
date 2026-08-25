@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { CHARACTERISTICS, TALENT_TIER_LEVELS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs, talentRankCost, talentTierUnlocked } from '../state/liveWorkspaceModel.mjs';
+import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { characterClasses, classTalentGroups, inventoryItems, knownMagic, knownSpells, quests, raceTraits, selectedSkills, talentRank } from './characterWorkspaceData.js';
 
 function resultMessage(result, fallback='Saved.') { return result?.ok ? fallback : result?.error || 'That change could not be saved.'; }
@@ -44,13 +45,13 @@ export function CharacterTab({ campaignId, character, editable }) {
   const items=inventoryItems(character);
   const equipped=items.filter(item=>item.equipped);
   const progression=window.AsteriaProgression?.progressSummary?.({...character})||{xp:Number(character.xp||0),xpMax:Number(character.xpMax||1000)};
-  const defence=character.defence||character.defense||character.ac||character.armour||character.armor;
+  const armour=useArmourClass(character);
   const conditions=Array.isArray(character.conditions)?character.conditions:[];
   return <div className="react-character-tab-grid">
     <Panel title="Character Identity" className="react-character-identity-panel"><div className="react-character-identity-summary">{character.image||character.portrait?<img src={character.image||character.portrait} alt={`${character.name||'Character'} portrait`}/>:<span>{String(character.name||'?').charAt(0)}</span>}<dl className="react-detail-list"><div><dt>Name</dt><dd>{character.name}</dd></div><div><dt>Race</dt><dd>{character.race||'Unselected'}</dd></div><div><dt>Class</dt><dd>{characterClasses(character).join(' / ')||'Unselected'}</dd></div><div><dt>Campaign</dt><dd>{character.campaign||character.campaignName||'Linked campaign'}</dd></div></dl></div></Panel>
     <div className="react-character-support-grid">
       <Panel title="Progression"><ResourceBar label="XP" kind="xp" value={progression.xp} maximum={progression.xpMax}/><dl className="react-detail-list"><div><dt>Level</dt><dd>{Number(character.level||0)}</dd></div><div><dt>CP</dt><dd>{Number(character.cp||0)}</dd></div><div><dt>TP</dt><dd>{Number(character.tp||0)}</dd></div></dl></Panel>
-      <Panel title="Defences & Conditions"><dl className="react-detail-list"><div><dt>Defence</dt><dd>{defence??'Not recorded'}</dd></div><div><dt>Movement</dt><dd>{character.movement||character.speed||'Not recorded'}</dd></div></dl><div className="react-condition-list">{conditions.map((condition,index)=><StatusPill key={condition.id||condition.name||index} tone="warning">{condition.name||condition}</StatusPill>)}{!conditions.length?<small>No active conditions.</small>:null}</div></Panel>
+      <Panel title="Defences & Conditions"><dl className="react-detail-list"><div><dt>Armour Class</dt><dd>{armour.finalAC}</dd></div><div><dt>Raw AC</dt><dd>{Number(armour.rawAC).toFixed(2).replace(/\.00$/,'')}</dd></div><div><dt>Mobility</dt><dd>{armour.mobilityModifier>=0?'+':''}{armour.mobilityModifier}</dd></div><div><dt>Stealth</dt><dd>{armour.stealthModifier>=0?'+':''}{armour.stealthModifier}</dd></div><div><dt>Movement</dt><dd>{character.movement||character.speed||'Not recorded'}</dd></div></dl>{armour.validation.errors.length?<div className="react-ac-warnings">{armour.validation.errors.map(error=><p key={error}>{error}</p>)}</div>:null}<div className="react-condition-list">{conditions.map((condition,index)=><StatusPill key={condition.id||condition.name||index} tone="warning">{condition.name||condition}</StatusPill>)}{!conditions.length?<small>No active conditions.</small>:null}</div></Panel>
       <Panel title="Equipped Items"><div className="react-character-equipment-list">{equipped.slice(0,8).map(item=><button key={item.id} type="button"><b>{item.equippedSlot||item.raw?.slot||'Equipment'}</b><span>{item.name}</span></button>)}{!equipped.length?<EmptyState title="No equipped items"/>:null}</div></Panel>
     </div>
     <Panel title="Characteristics" action={<StatusPill>{Number(character.cp||0)} CP</StatusPill>} className="react-characteristics-panel">

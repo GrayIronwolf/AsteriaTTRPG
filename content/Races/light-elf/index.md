@@ -6,6 +6,7 @@ raceCategory: "Medium Races"
 secondaryCategory: "Elf Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

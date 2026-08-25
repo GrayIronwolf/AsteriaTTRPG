@@ -6,6 +6,7 @@ raceCategory: "Demi Races"
 secondaryCategory: 
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

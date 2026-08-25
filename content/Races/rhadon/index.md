@@ -6,6 +6,7 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Megafaun Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: 
 languages: []

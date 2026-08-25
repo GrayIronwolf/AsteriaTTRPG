@@ -1805,6 +1805,58 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-character-dashboard :is(button, .asteria-react-panel) { transition: none; }
 }
 
+/* Shared Armour Class presentation. Calculations live in src/systems/armour. */
+.react-overview-armour { transition: border-color 180ms ease, box-shadow 180ms ease; }
+.react-overview-armour.ac-updated { border-color: var(--asteria-accent, #1f7dff); box-shadow: 0 0 24px color-mix(in srgb, var(--asteria-accent, #1f7dff) 38%, transparent); }
+.react-ac-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.react-ac-summary > div { display: grid; gap: 3px; min-height: 78px; padding: 10px; border: 1px solid var(--dashboard-line-soft, rgba(86,179,232,.28)); background: rgba(2, 13, 20, .7); }
+.react-ac-summary span { color: var(--asteria-text-secondary); font-size: .62rem; text-transform: uppercase; }
+.react-ac-summary strong { font-size: 1.35rem; }
+.react-ac-summary small { overflow: hidden; color: var(--asteria-text-muted); font-size: .58rem; text-overflow: ellipsis; white-space: nowrap; }
+.react-ac-equation { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 10px 0; padding: 10px 12px; border-left: 3px solid var(--asteria-accent, #1f7dff); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 8%, rgba(0,0,0,.45)); }
+.react-ac-equation > span { flex: 1 1 230px; font-family: var(--asteria-font-mono, Consolas, monospace); }
+.react-ac-equation > strong { color: var(--asteria-accent, #1f7dff); font-size: 1.05rem; }
+.react-ac-piece-list { display: grid; gap: 6px; }
+.react-ac-piece-list article { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; align-items: center; gap: 8px 14px; padding: 9px 10px; border: 1px solid var(--dashboard-line-soft, rgba(86,179,232,.28)); background: rgba(0, 8, 13, .68); }
+.react-ac-piece-list article > div { display: grid; min-width: 0; }
+.react-ac-piece-list article small { overflow: hidden; color: var(--asteria-text-secondary); text-overflow: ellipsis; white-space: nowrap; }
+.react-ac-piece-list article > span { font-family: var(--asteria-font-mono, Consolas, monospace); font-size: .7rem; }
+.react-ac-piece-list article > strong { color: var(--asteria-accent, #1f7dff); }
+.react-ac-piece-list article > em { grid-column: 1 / -1; color: #f0b45b; font-size: .65rem; font-style: normal; }
+.react-ac-piece-list article.is-invalid { border-color: rgba(240, 180, 91, .5); }
+.react-ac-secondary { display: flex; gap: 8px; margin-top: 9px; }
+.react-ac-secondary span { padding: 6px 9px; border: 1px solid var(--dashboard-line-soft); color: var(--asteria-text-secondary); }
+.react-ac-warnings { display: grid; gap: 4px; margin-top: 10px; padding: 9px; border: 1px solid rgba(240, 180, 91, .45); background: rgba(88, 50, 8, .22); }
+.react-ac-warnings p { margin: 0; color: #f0c77f; font-size: .68rem; }
+.react-ac-conditionals { margin-top: 10px; }
+.react-ac-conditionals p { display: flex; justify-content: space-between; gap: 12px; padding: 7px; border-bottom: 1px solid var(--dashboard-line-soft); }
+.react-ac-conditionals p span { color: var(--asteria-text-secondary); }
+.react-item-ac-details { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--dashboard-line-soft); }
+.react-item-ac-details > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.react-item-ac-details h3, .react-item-ac-details p { margin: 0; }
+.react-item-ac-comparison { display: grid; grid-template-columns: 1fr auto 1fr auto; align-items: center; gap: 8px; margin-top: 10px; padding: 10px; border: 1px solid var(--dashboard-line-soft); background: rgba(2, 13, 20, .7); }
+.react-item-ac-comparison span { display: grid; gap: 2px; }
+.react-item-ac-comparison b { font-size: 1.15rem; }
+.react-item-ac-comparison small { grid-column: 1 / -1; color: var(--asteria-text-secondary); }
+.react-gm-ac-panel { grid-column: 1 / -1; }
+.react-gm-ac-form { display: grid; grid-template-columns: minmax(180px, 1.4fr) minmax(110px, .55fr) minmax(150px, .7fr) auto; gap: 8px; align-items: end; margin: 12px 0; }
+.react-gm-ac-form button { min-height: 40px; }
+
+@container (max-width: 720px) {
+  .react-ac-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .react-ac-piece-list article { grid-template-columns: 1fr auto; }
+  .react-ac-piece-list article > span { grid-column: 1; }
+  .react-gm-ac-form { grid-template-columns: 1fr 1fr; }
+  .react-gm-ac-form label:first-child { grid-column: 1 / -1; }
+}
+
+@container (max-width: 440px) {
+  .react-ac-summary, .react-gm-ac-form { grid-template-columns: 1fr; }
+  .react-gm-ac-form label:first-child { grid-column: auto; }
+  .react-item-ac-comparison { grid-template-columns: 1fr auto 1fr; }
+  .react-item-ac-comparison .react-status-pill { grid-column: 1 / -1; }
+}
+
 /* Player systems: unified inventory workspace and persistent customisation. */
 .react-inventory-layout { grid-template-columns: minmax(150px,.58fr) minmax(315px,1.18fr) minmax(440px,2.85fr) minmax(76px,.32fr); }
 .react-inventory-support { display: grid; align-content: start; gap: 10px; }

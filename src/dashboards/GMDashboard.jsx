@@ -3,6 +3,7 @@ import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { openLegacyGMSystem, openLegacyView } from '../app/legacyBridge.js';
+import { useArmourClass } from '../systems/armour/useArmourClass.js';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
@@ -22,9 +23,10 @@ function progression(character = {}) {
 
 function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }) {
   const xp = progression(character);
+  const armour = useArmourClass(character);
   const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
   return <button className={`react-party-card ${selected ? 'active' : ''}`} type="button" onClick={onSelect} onDoubleClick={onOpen}>
-    <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
+    <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
     <ResourceBar compact label="HP" kind="hp" value={character.hp?.[0]} maximum={character.hp?.[1]} />
     <ResourceBar compact label="SP" kind="sp" value={character.sp?.[0]} maximum={character.sp?.[1]} />
     <ResourceBar compact label="MP" kind="mp" value={character.mp?.[0]} maximum={character.mp?.[1]} />
@@ -234,6 +236,37 @@ function PlayerManagementTools({ campaignId, characters }) {
   </Panel>;
 }
 
+function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }) {
+  const character=characters[selectedId]||Object.values(characters)[0]||null;
+  const armour=useArmourClass(character||{});
+  const [name,setName]=useState('GM AC Modifier');
+  const [value,setValue]=useState(1);
+  const [duration,setDuration]=useState(0);
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const decimal=amount=>Number(amount).toFixed(2).replace(/\.00$/,'');
+  const signed=amount=>`${Number(amount)>=0?'+':''}${decimal(amount)}`;
+  const save=async modifier=>{
+    if(!character)return;
+    setBusy(true);setMessage('Saving AC modifier...');
+    const result=await firebaseService.setACModifier(campaignId,character.id,modifier);
+    setMessage(result?.ok?'Armour Class modifier synchronized.':result?.error||'AC modifier could not be saved.');
+    setBusy(false);
+  };
+  return <Panel title="Armour Class Inspector" eyebrow="GM Character Tool" className="react-gm-ac-panel" action={character?<StatusPill tone="info">Final AC {armour.finalAC}</StatusPill>:null}>
+    <label>Character<select value={character?.id||''} onChange={event=>setSelectedId(event.target.value)}>{Object.values(characters).map(entry=><option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+    {!character?<EmptyState title="No linked characters">Link a character to inspect its live Armour Class.</EmptyState>:<>
+      <div className="react-ac-summary"><div><span>Natural</span><strong>{armour.naturalAC}</strong></div><div><span>Armour</span><strong>{signed(armour.armourAC)}</strong></div><div><span>Type Set</span><strong>{signed(armour.armourTypeSetBonus)}</strong><small>{armour.armourType||'None'}</small></div><div><span>Modifiers</span><strong>{signed(armour.modifierTotal)}</strong></div></div>
+      <div className="react-ac-equation"><span>{decimal(armour.naturalAC)} + {decimal(armour.armourAC)} + {decimal(armour.armourTypeSetBonus)} + {decimal(armour.modifierTotal)}</span><b>Raw {decimal(armour.rawAC)}</b><strong>Final AC {armour.finalAC}</strong></div>
+      <div className="react-ac-piece-list">{armour.armourPieces.map(piece=><article className={piece.valid?'':'is-invalid'} key={piece.itemId}><div><b>{piece.name}</b><small>{piece.piece?.name||'Unknown'} | {piece.materialName} | {piece.quality.name}</small></div><span>{decimal(piece.modifiedBaseAC)} x {Math.round(piece.percentile*100)}%</span><strong>{signed(piece.contribution)} AC</strong></article>)}{!armour.armourPieces.length?<p className="react-quiet-state">No equipped armour pieces.</p>:null}</div>
+      <div className="react-gm-ac-form"><label>Modifier Name<input value={name} onChange={event=>setName(event.target.value)}/></label><label>AC Change<input type="number" step="1" value={value} onChange={event=>setValue(Number(event.target.value||0))}/></label><label>Duration (minutes)<input type="number" min="0" max="10080" value={duration} onChange={event=>setDuration(Math.max(0,Number(event.target.value||0)))}/></label><button className="primary" disabled={busy||!name.trim()||!Number(value)} onClick={()=>save({name,value,durationMinutes:duration})}>Apply Modifier</button></div>
+      <div className="react-delivery-list">{armour.modifiers.filter(modifier=>modifier.sourceType==='gm').map(modifier=><div key={modifier.id}><b>{modifier.name}</b><span>{signed(modifier.value)} AC{modifier.temporary?' (temporary)':''}</span><button className="danger" disabled={busy} onClick={()=>save({id:modifier.id,remove:true})}>Remove</button></div>)}{!armour.modifiers.some(modifier=>modifier.sourceType==='gm')?<p className="react-help">No GM AC modifiers are active.</p>:null}</div>
+      {[...armour.validation.errors,...armour.validation.warnings].length?<div className="react-ac-warnings">{[...armour.validation.errors,...armour.validation.warnings].map(warning=><p key={warning}>{warning}</p>)}</div>:null}
+    </>}
+    <p className="react-action-message" role="status">{message}</p>
+  </Panel>;
+}
+
 function ExistingSystem({ title, copy, tab }) {
   return <Panel title={title}><p>{copy}</p><button type="button" onClick={() => openLegacyGMSystem(tab)}>Open existing {title}</button></Panel>;
 }
@@ -264,7 +297,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'notes' ? <ExistingSystem title="GM Notes" copy="Private preparation, live notes, and session logs remain in the current GM system." tab="gm-notes" /> : null}
     {tab === 'economy' ? <ExistingSystem title="Economy" copy="Prices, trade routes, shipping, scarcity, merchants, and shops remain operational." tab="economy" /> : null}
     {tab === 'crafting' ? <ExistingSystem title="Crafting" copy="Projects, approvals, materials, recipes, and enchantments remain operational." tab="crafting" /> : null}
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
     {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => openLegacyView('campaigns')}>Open Campaign Manager</button></Panel> : null}
     {tab === 'world' ? <ExistingSystem title="World Systems" copy="World state, events, factions, settlements, merchants, and timeline tools remain available in the static workspace." tab="world" /> : null}
   </AsteriaAppShell>;

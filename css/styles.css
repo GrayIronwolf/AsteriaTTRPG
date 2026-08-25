@@ -2393,6 +2393,34 @@ main.main,
   border-radius:5px!important;
 }
 
+/* Character Forge Armour Class preview. */
+.phase3-forge-ac-preview{
+  display:grid;
+  justify-items:center;
+  gap:3px;
+  min-width:130px;
+  padding:10px;
+  border:1px solid color-mix(in srgb,var(--asteria-accent,#1f7dff) 58%,transparent);
+  background:rgba(0,8,13,.68);
+}
+.phase3-forge-ac-preview span{font-size:.68rem;text-transform:uppercase}
+.phase3-forge-ac-preview strong{font-size:1.6rem;color:var(--asteria-accent,#1f7dff)}
+.phase3-forge-armour-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-top:14px;
+  padding:12px;
+  border:1px solid rgba(31,125,255,.38);
+  background:rgba(0,8,13,.58);
+}
+.phase3-forge-armour-summary>div{display:grid;gap:3px;padding:8px;border:1px solid rgba(255,255,255,.1)}
+.phase3-forge-armour-summary span{font-size:.68rem;text-transform:uppercase}
+.phase3-forge-armour-summary strong{font-size:1.2rem;color:var(--asteria-accent,#1f7dff)}
+.phase3-forge-armour-summary p{grid-column:1/-1;margin:0;color:#f0c77f}
+@media(max-width:700px){.phase3-forge-armour-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.craft-destruction-warning{margin:10px 0 0;padding:10px;border:1px solid rgba(220,65,65,.7);background:rgba(92,8,8,.35);color:#ffd1d1!important;font-weight:800}
+
 /* ==================================================
    Asteria unified menu, gallery, modal, and class page pass
 ================================================== */

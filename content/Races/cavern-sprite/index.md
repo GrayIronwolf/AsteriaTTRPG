@@ -6,6 +6,7 @@ raceCategory: "Small Races"
 secondaryCategory: "Sprite Races"
 tertiaryCategory: 
 playable: true
+naturalAC: 1
 size: 
 movement: "8m (Walking)"
 languages:
