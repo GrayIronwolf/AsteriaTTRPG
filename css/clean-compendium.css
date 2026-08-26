@@ -985,14 +985,23 @@
   display: block;
 }
 
-.clean-rarity-common { border-color: rgba(210,210,210,.34) !important; }
-.clean-rarity-uncommon { border-color: rgba(92,210,120,.36) !important; }
-.clean-rarity-unusual { border-color: rgba(80,174,255,.38) !important; }
-.clean-rarity-rare { border-color: rgba(215,72,72,.42) !important; }
-.clean-rarity-epic { border-color: rgba(255,155,47,.42) !important; }
-.clean-rarity-mythic { border-color: rgba(180,92,255,.42) !important; }
-.clean-rarity-legendary { border-color: rgba(255,210,74,.46) !important; }
-.clean-rarity-relic { border-color: rgba(215,248,255,.5) !important; box-shadow: 0 0 18px rgba(148,224,255,.18); }
+.clean-item-card[class*="clean-rarity-"] {
+  border-color: color-mix(in srgb, var(--item-class-color) 78%, rgba(31, 55, 67, .72)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--item-class-color) 20%, transparent), 0 0 13px color-mix(in srgb, var(--item-class-color) 25%, transparent), 0 14px 28px rgba(0,0,0,.24) !important;
+}
+.clean-item-card[class*="clean-rarity-"]:is(:hover, :focus, .selected) {
+  border-color: var(--item-class-color) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--item-class-color) 34%, transparent), 0 0 21px color-mix(in srgb, var(--item-class-color) 44%, transparent), 0 14px 28px rgba(0,0,0,.28) !important;
+}
+.clean-rarity-common { --item-class-color: var(--asteria-rarity-common, #98a4ad); }
+.clean-rarity-uncommon { --item-class-color: var(--asteria-rarity-uncommon, #35c878); }
+.clean-rarity-unusual { --item-class-color: var(--asteria-rarity-unusual, #3b82f6); }
+.clean-rarity-rare { --item-class-color: var(--asteria-rarity-rare, #d94b4b); }
+.clean-rarity-epic { --item-class-color: var(--asteria-rarity-epic, #f28a2e); }
+.clean-rarity-mythic { --item-class-color: var(--asteria-rarity-mythic, #a65cff); }
+.clean-rarity-legendary { --item-class-color: var(--asteria-rarity-legendary, #e7bd45); }
+.clean-rarity-relic { --item-class-color: var(--asteria-rarity-relic, #dff8ff); }
+.clean-item-card.clean-rarity-relic { box-shadow: inset 0 0 0 1px rgba(255,255,255,.34), 0 0 10px rgba(223,248,255,.45), 0 0 22px rgba(91,198,255,.24), 0 14px 28px rgba(0,0,0,.26) !important; }
 
 .clean-rarity-common .clean-rarity-tag { color:#d8d8d8; border-color:#8f8f8f; background:rgba(143,143,143,.16); }
 .clean-rarity-uncommon .clean-rarity-tag { color:#bfffd0; border-color:#3fbf65; background:rgba(63,191,101,.16); }

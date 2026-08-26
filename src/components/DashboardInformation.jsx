@@ -108,13 +108,15 @@ export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, prefer
     String(value.type).toLowerCase() === 'adventure party' && (value.memberCharacterIds || []).includes(character.id)
   );
   return <section className="react-player-topbar-section react-player-identity-level" aria-label="Active character">
-    {!preferences.hiddenInformationFields.includes('portrait') ? <div className="react-player-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}</div> : null}
-    <div className="react-player-identity-copy">
-      <small>Active Character</small>
-      <strong>{character.name || 'Unnamed Character'}</strong>
-      <span>{characterClass(character)} / {character.race || 'Unselected Race'}</span>
-      {title ? <em>{title}</em> : null}
-      {preferences.showPartyMembership && !preferences.hiddenInformationFields.includes('party') && membership ? <em>Member of {membership.name}</em> : null}
+    <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="character" /><span>Active Character</span></div>
+    <div className="react-player-identity-content">
+      {!preferences.hiddenInformationFields.includes('portrait') ? <div className="react-player-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}</div> : null}
+      <div className="react-player-identity-copy">
+        <strong>{character.name || 'Unnamed Character'}</strong>
+        <span>{characterClass(character)} / {character.race || 'Unselected Race'}</span>
+        {title ? <em>{title}</em> : null}
+        {preferences.showPartyMembership && !preferences.hiddenInformationFields.includes('party') && membership ? <em>Member of {membership.name}</em> : null}
+      </div>
     </div>
   </section>;
 }
@@ -123,16 +125,18 @@ export function ExperienceBar({ character = {} }) {
   const xp = progression(character);
   const remaining = Math.max(0, Number(xp.xpMax || 0) - Number(xp.xp || 0));
   return <section className="react-player-topbar-section react-player-xp" aria-label="Experience progression">
-    <div className="react-level-shield" aria-label={`Level ${Number(character.level || 0)}`}>
-      <AsteriaIcon name="level" size={25} />
-      <small>Level</small>
-      <b>{Number(character.level || 0)}</b>
-    </div>
-    <div className="react-player-xp-copy">
-      <div className="react-player-section-label"><AsteriaIcon name="xp" /><span>Experience</span></div>
-      <ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
-      <small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP</small>
-      <span>{remaining.toLocaleString()} XP to next level</span>
+    <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="xp" /><span>Experience</span></div>
+    <div className="react-player-xp-content">
+      <div className="react-level-shield" aria-label={`Level ${Number(character.level || 0)}`}>
+        <AsteriaIcon name="level" size={25} />
+        <small>Level</small>
+        <b>{Number(character.level || 0)}</b>
+      </div>
+      <div className="react-player-xp-copy">
+        <ResourceBar label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
+        <small>{Number(xp.xp || 0).toLocaleString()} / {Number(xp.xpMax || 0).toLocaleString()} XP</small>
+        <span>{remaining.toLocaleString()} XP to next level</span>
+      </div>
     </div>
   </section>;
 }
@@ -145,14 +149,14 @@ export function ResourceBarGroup({ character = {}, editable, onResourceChange })
   ];
   if(isBloodhunter(character) || Array.isArray(character.bp)) resources.push(['BP', 'bp', character.bp || [0, 20]]);
   return <section className="react-player-topbar-section react-player-resources" aria-label="Character resources">
-    <div className="react-player-section-label"><AsteriaIcon name="use" /><span>Core Resources</span></div>
+    <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="use" /><span>Core Resources</span></div>
     <div className="react-player-resource-list">{resources.map(([label, resource, value]) => <ResourceControl key={resource} label={label} resource={resource} value={value} editable={editable} onResourceChange={onResourceChange} />)}</div>
   </section>;
 }
 
 export function CharacteristicSummary({ character = {} }) {
   return <section className="react-player-topbar-section react-player-characteristics" aria-label="Character characteristics">
-    <div className="react-player-section-label"><AsteriaIcon name="character" /><span>Characteristics</span></div>
+    <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="character" /><span>Characteristics</span></div>
     <div className="react-player-characteristic-grid">
       {CHARACTERISTICS.map(stat => {
         const score = characteristicValue(character, stat.key);
@@ -174,7 +178,7 @@ export function CampaignInformationPanel({ campaign = {}, session = {}, characte
   const sessionName = firstValue(session.name, session.title, campaign.currentSessionName, campaign.sessionName);
   const details = compactCampaignDetails(campaign, session, character);
   const content = loading ? <LoadingSkeleton label="Loading campaign information" lines={3} /> : <>
-    <div className="react-player-section-label"><AsteriaIcon name="campaign" /><span>Campaign Information</span></div>
+    <div className={`react-player-section-label ${embedded ? 'react-player-topbar-heading' : ''}`.trim()}><AsteriaIcon name="campaign" /><span>Campaign Information</span></div>
     <div className="react-player-campaign-title"><strong>{name}</strong>{sessionNumber || sessionName ? <span>{sessionNumber ? `Session ${sessionNumber}` : 'Current Session'}{sessionName ? ` | ${sessionName}` : ''}</span> : <span>No active session details</span>}</div>
     {!preferences.hiddenInformationFields.includes('campaignDetails') ? (details.length ? <dl className="react-player-campaign-facts">{details.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{String(value)}</dd></div>)}</dl> : <p className="react-player-compact-empty">Location and campaign details have not been recorded.</p>) : null}
     {!preferences.hiddenInformationFields.includes('liveSync') ? <LiveSyncStatus online={online} error={error} loading={loading} connectionState={connectionState} session={session} /> : null}

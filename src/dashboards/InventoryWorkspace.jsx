@@ -267,14 +267,14 @@ function InventoryItemCard({ item, editable, selected, onSelect, onDragStart, on
     onDoubleClick={() => onDetails(item)}
     className={`react-inventory-item-card rarity-${String(item.rarity||'common').toLowerCase()} ${item.identified === false ? 'unidentified' : ''} ${selected ? 'selected' : ''}`}
     data-rarity={item.identified === false ? 'Unknown' : item.rarity}
+    aria-label={`${item.name}, quantity ${item.qty}, ${item.identified === false ? 'unidentified' : `${item.rarity || 'Common'} item`}`}
     tabIndex="0"
     onKeyDown={event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();onDetails(item);}}}
     style={item.isSpellbook ? { '--item-magic': magicColor(item) } : undefined}
   >
-    <span className="react-inventory-quantity">x{item.qty}</span>
+    <span className="react-inventory-quantity" title="Quantity">x{item.qty}</span>
     <ItemImage item={item} className="react-inventory-item-image" />
-    <b>{item.name}</b>
-    <small>{item.identified === false ? 'Unknown' : item.rarity}</small>
+    <b title={item.name}>{item.name}</b>
   </article>;
 }
 

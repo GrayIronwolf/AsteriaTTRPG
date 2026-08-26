@@ -38,12 +38,12 @@
 
   --asteria-rarity-common: #98a4ad;
   --asteria-rarity-uncommon: #35c878;
-  --asteria-rarity-unusual: #35c5d5;
-  --asteria-rarity-rare: #378cf2;
-  --asteria-rarity-epic: #a76af2;
-  --asteria-rarity-mythic: #e16cc4;
-  --asteria-rarity-legendary: #d5a53b;
-  --asteria-rarity-relic: #ef5a55;
+  --asteria-rarity-unusual: #3b82f6;
+  --asteria-rarity-rare: #d94b4b;
+  --asteria-rarity-epic: #f28a2e;
+  --asteria-rarity-mythic: #a65cff;
+  --asteria-rarity-legendary: #e7bd45;
+  --asteria-rarity-relic: #dff8ff;
 
   --asteria-font-display: Georgia, "Times New Roman", serif;
   --asteria-font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

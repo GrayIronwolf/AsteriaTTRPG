@@ -494,7 +494,9 @@ test('50. The player HUD is connected, modular, and backed by existing state act
 
 test('51. The redesigned player dashboard responds by reflowing panels and scrolling navigation', () => {
   const styles = read('src/styles/asteria-react.css');
-  assert.match(styles, /react-player-topbar[\s\S]*repeat\(20, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /react-player-topbar[\s\S]*repeat\(24, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /react-player-resources \{ grid-column: span 8/);
+  assert.match(styles, /react-player-topbar-heading[\s\S]*border-bottom/);
   assert.match(styles, /react-player-overview-grid/);
   assert.match(styles, /react-armour-layout/);
   assert.match(styles, /react-ability-grid/);
