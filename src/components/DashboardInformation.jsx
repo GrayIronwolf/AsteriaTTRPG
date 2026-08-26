@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar, Tooltip } from './WorkspaceUI.jsx';
+import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar } from './WorkspaceUI.jsx';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
 import { CHARACTERISTICS, characteristicTier, characteristicValue, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 
@@ -41,11 +41,13 @@ export function selectCurrencies(character = {}, campaign = {}) {
       const number = Number(value);
       const compact = String(key).replace(/[^a-z0-9]/gi, '').toLowerCase();
       if(!Number.isFinite(number) || excluded.has(compact)) return;
-      found.set(resourceLabel(key), number);
+      found.set(resourceLabel(key), { key, value:number });
     });
   });
-  if(!found.has('Gold')) found.set('Gold', selectGold(character));
-  return [...found.entries()].sort(([left], [right]) => left === 'Gold' ? -1 : right === 'Gold' ? 1 : left.localeCompare(right));
+  if(!found.has('Gold')) found.set('Gold', { key:'gold', value:selectGold(character) });
+  return [...found.entries()]
+    .map(([label, record]) => [label, record.value, record.key])
+    .sort(([left], [right]) => left === 'Gold' ? -1 : right === 'Gold' ? 1 : left.localeCompare(right));
 }
 
 function characterClass(character = {}) {
@@ -79,7 +81,7 @@ function resourcePair(value) {
   return [Number(value || 0), Number(value || 0)];
 }
 
-function ResourceControl({ label, resource, value, editable, adjusting, onResourceChange }) {
+function ResourceControl({ label, resource, value, editable, onResourceChange }) {
   const [amount, setAmount] = useState(1);
   const [busy, setBusy] = useState(false);
   const pair = resourcePair(value);
@@ -91,11 +93,11 @@ function ResourceControl({ label, resource, value, editable, adjusting, onResour
   };
   return <div className="react-player-resource-row">
     <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact />
-    {adjusting ? <div className="react-player-resource-controls">
+    <div className="react-player-resource-controls" aria-label={`${label} manual adjustment`}>
       <input aria-label={`${label} change amount`} disabled={!editable || busy} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} />
       <button aria-label={`Remove ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(-1)} type="button">-</button>
       <button aria-label={`Add ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(1)} type="button">+</button>
-    </div> : null}
+    </div>
   </div>;
 }
 
@@ -136,16 +138,15 @@ export function ExperienceBar({ character = {} }) {
 }
 
 export function ResourceBarGroup({ character = {}, editable, onResourceChange }) {
-  const [adjusting, setAdjusting] = useState(false);
   const resources = [
     ['HP', 'hp', character.hp || [0, 0]],
     ['MP', 'mp', character.mp || [0, 0]],
     ['SP', 'sp', character.sp || [0, 0]]
   ];
   if(isBloodhunter(character) || Array.isArray(character.bp)) resources.push(['BP', 'bp', character.bp || [0, 20]]);
-  return <section className={`react-player-topbar-section react-player-resources ${adjusting ? 'is-adjusting' : ''}`} aria-label="Character resources">
-    <div className="react-player-section-label"><AsteriaIcon name="use" /><span>Core Resources</span>{editable ? <Tooltip label={adjusting ? 'Close resource controls' : 'Adjust HP, MP, SP, and BP'}><button className="react-resource-adjust-button" aria-expanded={adjusting} onClick={() => setAdjusting(value => !value)} type="button">{adjusting ? 'Done' : 'Adjust'}</button></Tooltip> : null}</div>
-    <div className="react-player-resource-list">{resources.map(([label, resource, value]) => <ResourceControl key={resource} label={label} resource={resource} value={value} editable={editable} adjusting={adjusting} onResourceChange={onResourceChange} />)}</div>
+  return <section className="react-player-topbar-section react-player-resources" aria-label="Character resources">
+    <div className="react-player-section-label"><AsteriaIcon name="use" /><span>Core Resources</span></div>
+    <div className="react-player-resource-list">{resources.map(([label, resource, value]) => <ResourceControl key={resource} label={label} resource={resource} value={value} editable={editable} onResourceChange={onResourceChange} />)}</div>
   </section>;
 }
 
@@ -181,9 +182,28 @@ export function CampaignInformationPanel({ campaign = {}, session = {}, characte
   return embedded ? <section className="react-player-topbar-section react-player-campaign">{content}</section> : <Panel className="react-player-campaign">{content}</Panel>;
 }
 
-export function CurrencyPanel({ character = {}, campaign = {}, loading = false, error = '', embedded = false, className = '', style }) {
+function CurrencyControl({ label, currencyKey, value, editable, onCurrencyChange }) {
+  const [amount, setAmount] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const update = async direction => {
+    if(!onCurrencyChange) return;
+    setBusy(true);
+    try { await onCurrencyChange(currencyKey, direction * Math.max(1, Number(amount || 1))); }
+    finally { setBusy(false); }
+  };
+  return <div className="react-player-currency-row">
+    <CurrencyDisplay label={label} value={value} symbol={label === 'Gold' ? 'G' : String(label).charAt(0)} tone={label === 'Gold' ? 'gold' : 'arcane'} />
+    <div className="react-player-currency-controls" aria-label={`${label} manual adjustment`}>
+      <input aria-label={`${label} change amount`} disabled={!editable || busy} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} />
+      <button aria-label={`Remove ${amount} ${label}`} disabled={!editable || busy || Number(value) <= 0} onClick={() => update(-1)} type="button">-</button>
+      <button aria-label={`Add ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(1)} type="button">+</button>
+    </div>
+  </div>;
+}
+
+export function CurrencyPanel({ character = {}, campaign = {}, loading = false, error = '', embedded = false, editable = false, onCurrencyChange, className = '', style }) {
   const currencies = selectCurrencies(character, campaign);
-  const content = loading ? <LoadingSkeleton label="Loading currency" lines={2} /> : error ? <div className="react-error-state" role="alert">Currency could not be loaded.</div> : <div className="react-player-currencies">{currencies.map(([label, value]) => <CurrencyDisplay key={label} label={label} value={value} symbol={label === 'Gold' ? 'G' : String(label).charAt(0)} tone={label === 'Gold' ? 'gold' : 'arcane'} />)}</div>;
+  const content = loading ? <LoadingSkeleton label="Loading currency" lines={2} /> : error ? <div className="react-error-state" role="alert">Currency could not be loaded.</div> : <div className="react-player-currencies">{currencies.map(([label, value, currencyKey]) => <CurrencyControl key={label} label={label} currencyKey={currencyKey} value={value} editable={editable} onCurrencyChange={onCurrencyChange} />)}</div>;
   return embedded
     ? <section className={`react-player-topbar-section react-player-currency ${className}`.trim()}><div className="react-player-section-label"><AsteriaIcon name="coin" /><span>Currency</span></div>{content}</section>
     : <DashboardPanel className={`react-player-currency react-dashboard-currency-panel ${className}`.trim()} title="Currency" icon="coin" compact style={style}>{content}</DashboardPanel>;

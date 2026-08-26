@@ -1,0 +1,542 @@
+
+> asteria-react-migration@1.0.0-milestone.1 test
+> npm run test:armour && npm run test:market-pricing && npm run test:react && npm run test:smoke
+
+
+> asteria-react-migration@1.0.0-milestone.1 test:armour
+> node scripts/test-armour-system.mjs
+
+PASS quality modifiers and destruction threshold are exact
+PASS every configured armour piece applies its exact percentage
+PASS reference High Steel calculations match the requested examples
+PASS only equipped pieces count and one armour type set bonus is applied
+PASS final AC is floored once and cannot fall below one
+PASS unconditional active modifiers apply while conditional modifiers stay separate
+PASS natural AC is race-driven, clamped to 1-12, and has a safe fallback
+PASS equipment locations and shield off-hand validation use canonical slots
+PASS piece limits and duplicate occupied locations are rejected
+PASS equipment preview reports AC, mobility, and stealth changes
+PASS malformed legacy armour is preserved and explicitly flagged
+
+11 armour system tests passed.
+
+> asteria-react-migration@1.0.0-milestone.1 test:market-pricing
+> node scripts/test-market-pricing.mjs
+
+PASS new base items always receive both core fields
+PASS market value is selling baseline and market price is purchase baseline
+PASS inventory resale uses quantity times market value
+PASS positive market value must remain below market price
+PASS negative prices are rejected by business logic
+PASS zero-zero is valid and means not normally tradeable
+PASS legacy market value is preserved and missing market price remains null
+PASS legacy purchase and selling prices migrate without duplicates
+PASS legacy generic runtime value migrates only to market value
+PASS ambiguous legacy range is audited and never invents a purchase price
+PASS crafted, loot, shop, imported, and future categories share the base creator
+PASS all generated compendium item records expose both pricing properties
+PASS migrated item frontmatter contains canonical fields and no legacy duplicates
+PASS database and transaction boundaries enforce shared market pricing
+Market pricing tests passed: 14
+
+> asteria-react-migration@1.0.0-milestone.1 test:react
+> node scripts/test-react-live-session.mjs
+
+PASS 1. XP bursts apply each event exactly once
+PASS 2. Reconnect snapshots merge without duplicate events
+PASS 3. Accepted, equipped, declined, and resolved loot never reopens
+PASS 4. Only one unresolved loot event is presented
+PASS 5. Acknowledged XP notifications stay closed after reconnect
+PASS 6. Live sessions follow start, pause, resume, and end states
+PASS 7. Invalid session transitions do not corrupt state
+PASS 8. Resource updates clamp to canonical minimum and maximum
+PASS 9. React uses the existing Firebase singleton service
+PASS 10. Firebase exposes transactional session, XP, loot, resource, and acknowledgement APIs
+PASS 11. The character dashboard has one live route and no legacy character fallback
+PASS 12. React route and production bundle are present
+PASS 13. Magic rewards remain pending once and resolve through the canonical event helper
+PASS 14. React owns encounter and additional-magic workflows without raw Firestore calls
+PASS 15. A live session expires after ten wall-clock hours and locks editing
+PASS 16. Characteristic spending uses CP and the 1:10 resource rule
+PASS 16b. Staged characteristic allocations commit atomically
+PASS 17. Talent and skill progression match the existing Asteria costs
+PASS 18. All character workspace systems render natively in React
+PASS 19. Firebase gates live mutations and exposes the party workspace
+PASS 20. Unidentified items hide their true name until Identify is available
+PASS 21. New characters start with three available but uncreated storage slots
+PASS 22. Dashboard preferences preserve valid ordering and visibility choices
+PASS 23. Gallery, organizations, titles, custom items, and player item requests use the shared Firebase service
+PASS 24. Inventory uses one equipment, storage, and party workspace with direct party actions
+PASS 25. Gallery supports legacy image records and Firebase URL recovery
+PASS 26. Storage grids preserve dimensions, legacy bags, and occupied cells
+PASS 27. Linked owners can use gallery and item workflows without trusting stale owner metadata
+PASS 28. The dashboard uses modular armour, weapon, and quick-item summaries
+PASS 29. Bag inventory follows fixed slots, auto-stacking, and blank storage headers
+PASS 30. Player item requests use one canonical live record collection
+PASS 31. Incoming item notifications are mounted outside the inventory tab
+PASS 32. Trade, sell, give, and identify have dedicated shared request windows
+PASS 33. The exchange UI has a persistent request dock and responsive transaction layout
+PASS 34. Campaign, character progression, resources, characteristics, and currency share reusable dashboard components
+PASS 35. The modern shell exposes an accessible responsive navigation drawer
+PASS 36. Shared tabs and modals expose keyboard and focus behavior
+PASS 37. One application provider and route contract own React navigation
+PASS 38. Live sync presentation covers every user-visible connection state
+PASS 39. Central tokens and reusable components form the design-system boundary
+PASS 40. Player navigation uses one SVG icon system and preserves every dashboard route
+PASS 41. Inventory has responsive Equipment, Inventory, and Party workspaces with real state summaries
+PASS 42. Dashboard routes expose search, content states, party presence, and an accessible gallery lightbox
+PASS 43. Live sync has a canonical reconnecting state without hiding session expiry
+PASS 44. GM and character dashboard routes are split behind one Suspense boundary
+PASS 45. Shared controls expose progress, dialog, disabled, and announcement semantics
+PASS 46. Static campaign sync relinquishes campaign listeners while React is active
+PASS 47. Settings and mobile navigation both trap focus and restore the trigger
+PASS 48. Site-wide compendium and Forge galleries share responsive six-column primitives
+PASS 49. Removed fallback and theme polling no longer compete with the official shell
+PASS 50. The player HUD is connected, modular, and backed by existing state actions
+PASS 51. The redesigned player dashboard responds by reflowing panels and scrolling navigation
+PASS 52. Production chunks share one React entry URL
+PASS 53. Optional HUD fields persist without allowing essential information to disappear
+PASS 54. React snapshots are isolated from mutable legacy dashboard helpers
+PASS 55. Inventory uses the requested four-column support, equipment, storage, and party layout
+PASS 56. Titles can be granted, selected, edited, and revoked through shared services
+PASS 57. Player trades require recipient acceptance and sender final confirmation
+
+58/58 React milestone tests passed.
+
+> asteria-react-migration@1.0.0-milestone.1 test:smoke
+> node scripts/smoke-test.js
+
+PASS CSS exists: css/asteria-design-tokens.css
+PASS CSS exists: css/styles.css
+PASS CSS exists: css/clean-compendium.css
+PASS CSS exists: css/asteria-ui-theme-system.css
+PASS CSS exists: css/border-glow.css
+PASS CSS exists: css/asteria-inventory-workflows.css
+PASS CSS exists: css/asteria-item-ecosystem.css
+PASS CSS exists: react-dist/asteria-react.css
+PASS CSS exists: css/asteria-modern-ui.css
+PASS JS exists: js/asteria-home-guard.js
+PASS JS exists: js/content-manifest.js
+PASS JS exists: js/wiki-index.js
+PASS JS exists: js/universal-compendium-index.js
+PASS JS exists: js/asteria-state.js
+PASS JS exists: js/asteria-view-hooks.js
+PASS JS exists: js/asteria-progression.js
+PASS JS exists: js/asteria-progression-ui.js
+PASS JS exists: js/asteria-magic-data.js
+PASS JS exists: js/asteria-market-pricing.js
+PASS JS exists: js/app.js
+PASS JS exists: js/asteria-inventory-api.js
+PASS JS exists: js/auth-bridge.js
+PASS JS exists: js/firebase-auth.js
+PASS JS exists: js/data-sync.js
+PASS JS exists: js/compendium-snapshot-v1.1.js
+PASS JS exists: js/clean-compendium.js
+PASS JS exists: js/race-compendium-data.js
+PASS JS exists: js/race-info-data.js
+PASS JS exists: js/race-compendium.js
+PASS JS exists: js/class-compendium-data.js
+PASS JS exists: js/artificer-talent-texts.js
+PASS JS exists: js/creature-compendium-data.js
+PASS JS exists: js/codex-compendium.js
+PASS JS exists: js/universal-compendium-engine.js
+PASS JS exists: js/asteria-gameplay-systems.js
+PASS JS exists: js/asteria-inventory-workflows.js
+PASS JS exists: js/asteria-world-systems.js
+PASS JS exists: js/asteria-item-ecosystem.js
+PASS JS exists: js/asteria-core-shell.js
+PASS JS exists: js/asteria-ui-theme-system.js
+PASS JS exists: js/border-glow.js
+PASS JS exists: src/dev-entry.js
+PASS Required script is loaded: js/content-manifest.js
+PASS Required script is loaded: js/wiki-index.js
+PASS Required script is loaded: js/asteria-home-guard.js
+PASS Required script is loaded: js/asteria-state.js
+PASS Required script is loaded: js/asteria-view-hooks.js
+PASS Required script is loaded: js/asteria-progression.js
+PASS Required script is loaded: js/asteria-progression-ui.js
+PASS Required script is loaded: js/asteria-magic-data.js
+PASS Required script is loaded: js/app.js
+PASS Required script is loaded: js/asteria-inventory-api.js
+PASS Required script is loaded: js/asteria-inventory-workflows.js
+PASS Required script is loaded: js/asteria-item-ecosystem.js
+PASS Required script is loaded: js/asteria-core-shell.js
+PASS Balanced <main> tags - 1 open / 1 close
+PASS Balanced <section> tags - 80 open / 80 close
+PASS Balanced <div> tags - 213 open / 213 close
+PASS Balanced <aside> tags - 4 open / 4 close
+PASS Balanced <header> tags - 1 open / 1 close
+PASS Balanced <script> tags - 33 open / 33 close
+PASS No duplicate IDs
+PASS Required view exists: home
+PASS Required view exists: workspace
+PASS Required view exists: loginPage
+PASS Required view exists: forgotPassword
+PASS Required view exists: accountCreate
+PASS Required view exists: playerHome
+PASS Required view exists: campaigns
+PASS Required view exists: player
+PASS Required view exists: map
+PASS Required view exists: crafting
+PASS Required view exists: gm
+PASS Required view exists: gmPlayer
+PASS Required view exists: reactDashboard
+PASS Required view exists: quests
+PASS Required view exists: creature
+PASS Required view exists: devLog
+PASS React migration entry is loaded
+PASS React production CSS is loaded
+PASS Modern responsive UI CSS is loaded
+PASS Canonical design token CSS is loaded first
+PASS React production bundle exists
+PASS React source keeps static dashboard fallbacks
+PASS React migration architecture contract exists
+PASS Canonical React architecture modules exist
+PASS Deleted legacy file is not referenced: css/v17447-core.css
+PASS Deleted legacy file is not referenced: css/asteria-core-v2.css
+PASS Deleted legacy file is not referenced: css/asteria-conflict-cleanup-guard.css
+PASS Deleted legacy file is not referenced: js/v17447-core.js
+PASS Deleted legacy file is not referenced: js/asteria-core-v2.js
+PASS Deleted legacy file is not referenced: js/asteria-conflict-cleanup-guard.js
+PASS Deleted legacy file is not referenced: js/v1742-admin-editor.js
+PASS Deleted legacy file is not referenced: js/app.js.bak
+PASS Deleted legacy file is not referenced: js/app.js.bak1720
+PASS No mojibake markers: index.html
+PASS No mojibake markers: js/wiki-index.js
+PASS No mojibake markers: js/asteria-state.js
+PASS No mojibake markers: js/asteria-view-hooks.js
+PASS No mojibake markers: js/asteria-progression.js
+PASS No mojibake markers: js/asteria-progression-ui.js
+PASS No mojibake markers: js/asteria-magic-data.js
+PASS No mojibake markers: js/app.js
+PASS No mojibake markers: js/asteria-inventory-api.js
+PASS No mojibake markers: js/asteria-inventory-workflows.js
+PASS No mojibake markers: js/clean-compendium.js
+PASS Legacy global binder removed from app.js
+PASS Stacked setView replacements removed from app.js
+PASS Stacked renderGM wrappers removed from app.js - 1 renderGM assignments
+PASS Stacked renderGMPlayer wrappers removed from app.js - 1 renderGMPlayer assignments
+PASS Stacked loadPlayer wrappers removed from app.js
+PASS Stacked renderPlayerExtras wrappers removed from app.js
+PASS Window renderGM wrappers removed from app.js
+PASS State module exposes AsteriaState
+PASS View hook module exposes AsteriaViewHooks
+PASS View hook module exposes player hooks
+PASS View hook module exposes GM hooks
+PASS View hook module exposes GM player hooks
+PASS Progression module exposes AsteriaProgression
+PASS Progression module owns XP threshold function
+PASS Progression module owns level-up function
+PASS Progression UI module exposes AsteriaProgressionUI
+PASS Progression UI module owns CP rendering
+PASS Progression UI module owns base talent data
+PASS Progression UI module owns talent spending helpers
+PASS Phase 3 gameplay script is loaded
+PASS Phase 3A exposes gameplay API
+PASS Phase 3 uses universal compendium data
+PASS Phase 3 keeps creation talent rules locked
+PASS Phase 3 keeps profession slots campaign-earned
+PASS Phase 3A presents Character Forge
+PASS Character Forge uses conditional Patron flow with Affinity Rolls
+PASS Shared magic data loads before dashboard and forge scripts
+PASS Shared magic data includes requested element groups
+PASS Shared magic data matches Laws of Magic colour labels
+PASS Character Forge magic selection uses colour card gallery
+PASS Character Forge stores locked affinity rolls
+PASS Character Forge enforces class magic slots
+PASS Religious classes use Theology card gallery patrons
+PASS GM can grant extra magic after creation
+PASS GM bonus magic uses shared campaign character records
+PASS Race affinities remain separate from class magic slots
+PASS Player active spells sync from forged magic choices
+PASS Spell cards open shared foreground popup
+PASS Dashboard and character spell panels share forged magic filters
+PASS Dashboard spell cards can cast and spend resources once per double-click
+PASS Dashboard talent cards show highest unlocked ranks
+PASS Talent Tree renders tier-gated class panels
+PASS Character Forge renders as standalone page
+PASS Character Forge uses compendium category panels for race and class
+PASS Character Forge uses dashboard characteristic keys
+PASS Linked characteristics grant resources at a 1 to 10 ratio
+PASS Character Forge treats public races as playable by campaign-default
+PASS Character Forge applies race characteristic rules
+PASS Character Forge stores racial info for dashboards
+PASS Character Forge supports editing existing characters
+PASS Character Forge supports popup character card colour settings
+PASS Character Forge stores max-two class locks
+PASS Character Forge is data-driven
+PASS Skill Compendium is available from public navigation
+PASS Skill database is canonical and duplicate-free - 154 skills / 0 duplicates
+PASS Detailed skill techniques are retained
+PASS Character Forge filters shared Skill Compendium entries
+PASS Character Forge stores final schema
+PASS Player dashboard uses Characteristic Tier structure
+PASS Player dashboard reflects class lock and max classes
+PASS Player dashboard syncs racial info from forged character
+PASS Racial trait cards open shared popup on race page and dashboard
+PASS Race pages expose characteristic roll and cap panels
+PASS Race info data loads before race renderer
+PASS Race content folder is flat and generated
+PASS Race manifest is generated from content/races
+PASS Removed race entries are not active
+PASS Race pages merge markdown racial information
+PASS Generated race info carries rules and traits
+PASS Race pages support data-driven racial trait card slots
+PASS Race trait popups render full descriptions and effects
+PASS Pixie magical affinity keeps its Elemental Gift effect
+PASS Class content folder is flat and generated
+PASS Class talents use per-tier content folders
+PASS Class manifest is generated from content/classes
+PASS Imported class manuscripts use the canonical talent tree
+PASS Imported class rank content is complete
+PASS Imported class trees do not retain generated placeholders
+PASS Class manifest preserves talent resource metadata
+PASS Gameplay systems do not inject extra sidebar shortcuts
+PASS Phase 4 world script is loaded
+PASS Phase 4 exposes world API
+PASS Phase 4 uses universal compendium data
+PASS Phase 4 tracks campaign world persistence
+PASS Phase 4 supports GM visibility controls
+PASS World systems do not inject extra sidebar shortcuts
+PASS Home view has no account option panel
+PASS Top-right login remains and create account moved to login page
+PASS Home guard loads before app scripts
+PASS Home button uses early hard-home action
+PASS Home button uses shell home action
+PASS Home action clears workspace shells
+PASS Legacy setView home route is wrapped
+PASS Duplicate home fallback is removed
+PASS Canonical home guard and shell own the visible Home action
+PASS Old dark/light controls removed
+PASS Old dark/light CSS modes removed
+PASS Old fixed accent controls removed
+PASS Old fixed accent system removed
+PASS Theme controls include required sliders
+PASS Home reset clears workspace shells
+PASS Navigation shell uses solid blue-gray panels
+PASS Settings drawer opens below the top panel
+PASS Authenticated top action logs out
+PASS Bloodhunter dashboard resource is wired
+PASS Bloodhunter talent triggers update BP
+PASS Dashboard quick items use four inventory slots
+PASS Theme engine updates required variables
+PASS Theme controls use event binding without repeated polling
+PASS Theme engine updates panel opacity
+PASS Theme engine clears legacy theme state
+PASS Background linework uses theme colour
+PASS Site-wide accessibility shell is present
+PASS Site-wide responsive card galleries and reading width are canonical
+PASS Non-critical compendium artwork uses native lazy loading
+PASS Static live sync yields campaign listeners to React routes
+PASS Inventory API exposes AsteriaInventory
+PASS Inventory API wraps existing inventory render path
+PASS Inventory workflow uses Compendium-backed item picker
+PASS Inventory supports drag-drop equipment and safe replacement
+PASS GM can send campaign item rewards
+PASS Item rewards resolve through one idempotent transaction
+PASS Realtime sync rejects stale pending reward snapshots
+PASS GM campaign shops use cart checkout and coin deduction
+PASS Item ecosystem extends one canonical inventory API
+PASS Player item workspace includes complete navigation
+PASS GM item workspace includes loot, shop, inventory, trade, and audit tools
+PASS Party loot supports Need Greed Pass and shared distribution
+PASS Shop and trading workflows use campaign-shared state
+PASS Campaign item ecosystem uses a member-shared Firebase document
+PASS Direct trades allow both players to revise and confirm offers
+PASS Party loot inspection is read-only
+PASS Central item cards support drag-drop equipment, bags, and storage
+PASS Item ecosystem provides responsive layouts
+PASS Shell exposes router API
+PASS Shell exposes account API
+PASS Unified workspace compendium index exists
+PASS Workspace exposes shared APIs
+PASS Workspace routes compendium sections through one renderer
+PASS Theology compendium menu is wired
+PASS Theology entries are generated from content/theology
+PASS Theology contains exactly three Primordials
+PASS Theology category matching uses pantheon metadata
+PASS Theology categories include requested pantheons and courts
+PASS Race navigation removes old playable folders
+PASS Race navigation uses lore/type categories
+PASS Race playable status is metadata
+PASS Race cards use playable status bubble
+PASS Item rarity system remains in clean compendium
+PASS Workspace layout uses standard panels
+PASS Category panel uses click-through navigation, not dropdown folders
+PASS Top tab menu is section-specific
+PASS Class compendium uses cleaned class tabs
+PASS Class overview removes legacy metadata table
+PASS Class talent detail opens by double-click
+PASS Player dashboard keeps TP talent unlock controls
+PASS Workspace maps generated collections into item categories
+PASS Compendium page viewer supports wiki item images
+PASS Clean compendium generator exists
+PASS Old public hub pages removed
+PASS Old handbook library viewer removed
+PASS Public sidebar targets workspace sections
+PASS UI modernisation delivery version is active
+PASS Login page has one account type only
+PASS Logged-in sidebar keeps only dashboard/settings actions
+PASS Top bar owns Character Forge and Campaign Forge navigation
+PASS Campaign gallery opens GM dashboards
+PASS Campaign creation generates and displays 12-digit UCN
+PASS GM Campaign Manager shows UCN panel
+PASS Shared popups use centered blurred foreground layer
+PASS GM dashboard render tolerates missing top counters
+PASS GM dashboard uses the compact eight-tab menu
+PASS GM dashboard keeps one sync panel
+PASS GM top panel keeps session actions only
+PASS GM menu bottom actions are removed
+PASS GM main owns encounter and progression while GM Tools owns loot and items
+PASS GM old split encounter panels are hidden
+PASS GM encounter workspace supports requested controls
+PASS GM legacy systems map into requested tabs
+PASS GM roster derives all shared campaign character links
+PASS GM roster opens the full Character Dashboard
+PASS Player dashboard keeps summary and campaign panels
+PASS Player dashboard hides visible summary heading
+PASS Player dashboard tabs use requested order and icons
+PASS Player dashboard has new Character, Skills, Spells, and Party docks
+PASS Player dashboard relocates panels through existing renderer
+PASS Player dashboard talent summary uses unlocked ranked cards
+PASS Player dashboard equipment uses all weapon slots
+PASS Player dashboard uses requested panel order
+PASS Player dashboard quick action is recovery only
+PASS Player dashboard skills use ranked cards
+PASS Player coin pouch shows all currencies without internal scroll
+PASS Character snapshot panel is removed from player dashboard
+PASS Player dashboard does not install crafting/material/economy panels
+PASS Player dashboard does not install player enchantment builder
+PASS Material and economy panels no longer fall back into player overview
+PASS Fake visible login controls removed
+PASS Single account-style test login exists
+PASS Core shell login routes to Firebase only
+PASS Auth bridge opens workspace dashboard
+PASS Workspace exposes auth dashboard APIs
+PASS Workspace campaign creation stores GM permissions
+PASS Workspace campaign structure supports future systems
+PASS Workspace character linking exists
+PASS Campaign Forge supports 12 digit UCN invites
+PASS Campaign Forge tolerates removed title descriptions
+PASS UCN join uses shared Firebase invite records
+PASS Linked campaign characters use shared dashboard snapshots
+PASS Campaign party membership commits before optional full-sheet sync
+PASS Legacy local character links can repair into shared campaigns
+PASS Shared campaign loading rebuilds missing party arrays
+PASS GM campaign loading refreshes authoritative shared data
+PASS GM roster supports hydrated shared character records
+PASS Firestore permits member character snapshot sync
+PASS GM XP awards publish the canonical character record immediately
+PASS Player receives and persists real-time progression
+PASS React Character Dashboard patches XP snapshots without duplicate full rerenders
+PASS XP and loot use one canonical campaign character stream
+PASS Player discovers campaigns before subscribing to character delivery
+PASS Received character snapshots preserve XP and inventory together
+PASS Live delivery scripts use cache-busted URLs
+PASS Campaign save preserves GM ownership
+PASS Deployable Firestore campaign rules exist
+PASS Campaign join can link existing or newly forged characters
+PASS Dashboard includes required logged-in panels
+PASS Data sync uses auth dashboard version
+PASS Firebase setup instructions exist
+PASS Pixie race is split into elemental race entries
+PASS Pixie races carry primary and opposite magic affinities
+PASS Race cards use matched male/female image assets
+PASS Flora README exists
+PASS Flora sample Rose page exists
+PASS Flora sample image exists
+PASS Flora rarity/category scaffold exists
+PASS Minerals README exists
+PASS Minerals sample Iron Ore page exists
+PASS Minerals sample image exists
+PASS Minerals rarity/category scaffold exists
+PASS Materials README exists
+PASS Materials sample Iron Ingot page exists
+PASS Materials sample image exists
+PASS Materials rarity/category scaffold exists
+PASS Shared wiki documentation exists
+PASS Shared wiki generator exists
+PASS Flora index generator exists
+PASS Combined wiki index exposes collections
+PASS Flora generated index exposes global
+PASS Minerals generated index exposes global through shared index
+PASS Materials generated index exposes global through shared index
+PASS Legacy loose ore and ingot content files are removed
+PASS Legacy loose ore and ingot manifest entries are excluded
+PASS Collection overview indexes do not become item cards
+PASS Clean item index excludes legacy loose ore and ingot sources
+PASS Structured ore and ingot cards use canonical image paths
+PASS Item workspace tabs are hidden for item index
+PASS Item cards use compact item-only grid
+PASS Old standalone wiki renderer is not loaded
+PASS Old wiki relationship styles are removed from global CSS
+PASS Unified compendium exposes relationship links
+PASS Unified compendium page viewer renders metadata
+PASS Unified cards support selection and double-click open
+PASS Item cards double-click into shared item popup
+PASS Magic elements category renders split card panels
+PASS Universal viewer supports tabbed note sections
+PASS Unified compendium supports collection app routes
+PASS Generated collection paths use normal item categories
+PASS Local static server supports compendium app routes
+PASS Progression module calculates level 0 XP cap
+PASS Progression module uses imported XP table
+PASS Progression module applies level rewards
+PASS Progression module preserves carryover XP
+PASS Progression module keeps skill-choice rewards disabled
+PASS Syntax OK: js/asteria-home-guard.js
+PASS Syntax OK: js/content-manifest.js
+PASS Syntax OK: js/wiki-index.js
+PASS Syntax OK: js/universal-compendium-index.js
+PASS Syntax OK: js/asteria-state.js
+PASS Syntax OK: js/asteria-view-hooks.js
+PASS Syntax OK: js/asteria-progression.js
+PASS Syntax OK: js/asteria-progression-ui.js
+PASS Syntax OK: js/asteria-magic-data.js
+PASS Syntax OK: js/asteria-market-pricing.js
+PASS Syntax OK: js/app.js
+PASS Syntax OK: js/asteria-inventory-api.js
+PASS Syntax OK: js/auth-bridge.js
+PASS Syntax OK: js/firebase-auth.js
+PASS Syntax OK: js/data-sync.js
+PASS Syntax OK: js/compendium-snapshot-v1.1.js
+PASS Syntax OK: js/clean-compendium.js
+PASS Syntax OK: js/race-compendium-data.js
+PASS Syntax OK: js/race-info-data.js
+PASS Syntax OK: js/race-compendium.js
+PASS Syntax OK: js/class-compendium-data.js
+PASS Syntax OK: js/artificer-talent-texts.js
+PASS Syntax OK: js/creature-compendium-data.js
+PASS Syntax OK: js/codex-compendium.js
+PASS Syntax OK: js/universal-compendium-engine.js
+PASS Syntax OK: js/asteria-gameplay-systems.js
+PASS Syntax OK: js/asteria-inventory-workflows.js
+PASS Syntax OK: js/asteria-world-systems.js
+PASS Syntax OK: js/asteria-item-ecosystem.js
+PASS Syntax OK: js/asteria-core-shell.js
+PASS Syntax OK: js/asteria-ui-theme-system.js
+PASS Syntax OK: js/border-glow.js
+PASS Syntax OK: src/dev-entry.js
+PASS Syntax OK: scripts/generate-wiki-index.js
+PASS Syntax OK: scripts/generate-flora-index.js
+PASS Syntax OK: scripts/generate-race-content.js
+PASS Syntax OK: scripts/generate-class-content.js
+PASS Syntax OK: scripts/import-class-source.js
+PASS Syntax OK: scripts/generate-clean-compendium-index.js
+PASS Syntax OK: scripts/generate-content-manifest.js
+PASS Syntax OK: scripts/generate-universal-compendium-index.js
+PASS Syntax OK: scripts/import-skills.js
+PASS Syntax OK: scripts/wiki-engine-config.js
+PASS Syntax OK: scripts/local-static-server.js
+PASS Script order keeps manifest before app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps generated content index before unified compendium - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps unified compendium after app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps state between manifest and app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps view hooks before app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps progression before app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps progression UI before app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Script order keeps inventory API after app - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Item ecosystem loads after inventory workflows and world map hooks - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+PASS Shell helper loads after compendium cleanup - js/asteria-home-guard.js > js/content-manifest.js > js/wiki-index.js > js/universal-compendium-index.js > js/asteria-state.js > js/asteria-view-hooks.js > js/asteria-progression.js > js/asteria-progression-ui.js > js/asteria-magic-data.js > js/asteria-market-pricing.js > js/app.js > js/asteria-inventory-api.js > js/auth-bridge.js > js/firebase-auth.js > js/data-sync.js > js/compendium-snapshot-v1.1.js > js/clean-compendium.js > js/race-compendium-data.js > js/race-info-data.js > js/race-compendium.js > js/class-compendium-data.js > js/artificer-talent-texts.js > js/creature-compendium-data.js > js/codex-compendium.js > js/universal-compendium-engine.js > js/asteria-gameplay-systems.js > js/asteria-inventory-workflows.js > js/asteria-world-systems.js > js/asteria-item-ecosystem.js > js/asteria-core-shell.js > js/asteria-ui-theme-system.js > js/border-glow.js > src/dev-entry.js
+
+Smoke test: 432/432 passed

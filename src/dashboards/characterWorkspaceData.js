@@ -30,13 +30,13 @@ export function talentCatalog(character = {}) {
   const classKeys=classes.map(slug);
   const fromIndex=universalEntries('talent').filter(entry=>{
     const owner=entry.className || entry.metadata?.className || entry.metadata?.classname || entry.metadata?.class_name || '';
-    return !owner || classKeys.some(key=>slug(owner)===key);
+    return Boolean(owner) && classKeys.some(key=>slug(owner)===key);
   }).map(entry=>({
-    id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, className:entry.className || entry.metadata?.className || entry.metadata?.classname || classes[0] || 'Class',
-    tier:tierNumber(entry.talentTier || entry.filters?.talentTier || entry.metadata?.talentTier || entry.metadata?.talent_tier || entry.category),
+    id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, className:entry.className || entry.metadata?.className || entry.metadata?.classname || entry.metadata?.class_name || classes[0] || 'Class',
+    tier:tierNumber(entry.talentTier || entry.filters?.talentTier || entry.metadata?.talentTier || entry.metadata?.talent_tier || entry.metadata?.talenttier || entry.metadata?.tier || entry.category),
     maxRank:Number(entry.ranks || entry.metadata?.ranks || entry.metadata?.maxRank || 5), image:entry.imagePath || entry.metadata?.image || '',
     type:entry.metadata?.abilityType || entry.metadata?.abilitytype || entry.category || 'Talent', summary:entry.summary || entry.metadata?.summary || 'Talent information coming soon.',
-    cost:entry.metadata?.cost || entry.cost || '', body:entry.body || entry.content || ''
+    cost:entry.metadata?.cost || entry.cost || '', body:entry.body || entry.content || '', sourceOrder:Number(entry.sourceOrder || entry.metadata?.sourceorder || 99999)
   }));
   const fallback=[];
   const trees=window.AsteriaProgressionUI?.asteriaClassTalentTrees || {};
@@ -44,9 +44,10 @@ export function talentCatalog(character = {}) {
     const tree=trees[key] || trees[window.AsteriaProgressionUI?.guessTalentClass?.(classes[index])];
     (tree?.tiers || []).forEach((tier,tierIndex)=>(tier.talents || []).forEach(([name,type,maxRank,summary])=>fallback.push({id:slug(name),name,className:tree.label||classes[index],tier:tierIndex+1,maxRank,type,summary,image:'',cost:''})));
   });
+  const indexedClasses=new Set(fromIndex.map(talent=>slug(talent.className)));
   const map=new Map();
-  [...fallback,...fromIndex].forEach(talent=>{if(talent.name)map.set(`${slug(talent.className)}:${slug(talent.name)}`,talent);});
-  return [...map.values()];
+  [...fallback.filter(talent=>!indexedClasses.has(slug(talent.className))),...fromIndex].forEach(talent=>{if(talent.name)map.set(`${slug(talent.className)}:${slug(talent.name)}`,talent);});
+  return [...map.values()].sort((left,right)=>classKeys.indexOf(slug(left.className))-classKeys.indexOf(slug(right.className)) || left.tier-right.tier || Number(left.sourceOrder||99999)-Number(right.sourceOrder||99999) || left.name.localeCompare(right.name));
 }
 
 export function talentRank(character,talent) {

@@ -7,7 +7,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 
 const firebaseConfig = {
@@ -1184,6 +1184,25 @@ const firebasePublicApi = {
       return {ok:true,applied:result.applied};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  spendCharacteristicAllocations: async function(campaignId,characterId,allocations={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('Character not found.');
+        const current=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,current,refs);
+        const applied=applyCharacteristicAllocations(current,allocations);
+        const summary=Object.entries(applied.applied).map(([name,value])=>`${name} +${value}`).join(', ');
+        appendActivity(applied.character,{type:'cp-spent',message:`Applied ${applied.total} CP: ${summary}.`});
+        writeLiveCharacter(transaction,refs,applied.character);
+        return applied;
+      });
+      return {ok:true,applied:result.applied,total:result.total};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   purchaseTalentRank: async function(campaignId,characterId,talent={}){
     if(!db || !currentUser || !campaignId || !characterId || !talent.name) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
@@ -1733,7 +1752,8 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
     const delta=Math.floor(Number(amount || 0));
     if(delta <= 0) throw new Error('XP must be greater than zero.');
-    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const characterRef=refs.campaign;
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
     try{
       const result=await runTransaction(db, async transaction=>{
@@ -2002,11 +2022,13 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(characterRef);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const pair=Array.isArray(character[resource]) ? character[resource] : [0,resource === 'bp' ? 20 : 0];
         const maximum=Math.max(0,Number(pair[1] || 0));
         const current=Math.max(0,Math.min(maximum,Number(pair[0] || 0) + Number(amount || 0)));
         const next=[current,maximum];
-        transaction.set(characterRef, { [resource]:next, updatedAt:serverTimestamp() }, { merge:true });
+        character[resource]=next;
+        writeLiveCharacter(transaction,refs,character);
         transaction.set(eventRef, {
           id:eventRef.id, campaignId, sessionId:live.id || '', targetCharacterId:characterId, targetOwnerUid:character.ownerUid || '',
           type:'resource-update', payload:{ resource, value:next, delta:Number(amount || 0), source:metadata.source || 'Dashboard' },
@@ -2019,6 +2041,32 @@ const firebasePublicApi = {
     }catch(error){
       reportSyncError('campaign-resource-transaction', error, { campaignId, characterId, resource });
       return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  updateCampaignCharacterCurrency: async function(campaignId, characterId, key, amount, metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const currency=liveSlug(key).replaceAll('-','_');
+    if(!LIVE_CURRENCY.some(([name])=>name===currency)) return {ok:false,error:'Unsupported currency.'};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const value=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        character.coins={...(character.coins||character.coinPouch||{})};
+        const storedKey=Object.keys(character.coins).find(value=>liveSlug(value).replaceAll('-','_')===currency) || currency;
+        character.coins[storedKey]=Math.max(0,Number(character.coins[storedKey]||0)+Number(amount||0));
+        const label=currency.replaceAll('_',' ').replace(/\b\w/g,value=>value.toUpperCase());
+        appendActivity(character,{type:'currency-adjusted',message:`${label} ${Number(amount||0)>=0?'+':''}${Number(amount||0)}.`});
+        writeLiveCharacter(transaction,refs,character);
+        return character.coins[storedKey];
+      });
+      return {ok:true,applied:true,value};
+    }catch(error){
+      reportSyncError('campaign-currency-transaction',error,{campaignId,characterId,currency});
+      return {ok:false,applied:false,error:error.message||String(error)};
     }
   },
   setCharacterACModifier: async function(campaignId,characterId,modifier={}){

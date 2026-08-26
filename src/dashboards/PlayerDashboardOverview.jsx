@@ -231,7 +231,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
       {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
       {visible('conditions') ? <ConditionsSummary conditions={conditions} style={{ order:order('conditions') }} /> : null}
-      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} className="react-overview-currency" style={{ order:order('conditions') + 1 }} /> : null}
+      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 1 }} /> : null}
     </div>
     <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
     <p className="react-action-message" role="status">{message}</p>

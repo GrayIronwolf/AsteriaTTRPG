@@ -14,6 +14,7 @@ import {
 } from '../src/state/liveEventReducer.mjs';
 import {
   SESSION_LIMIT_MS,
+  applyCharacteristicAllocations,
   applyCharacteristicPoints,
   characterKnowsIdentify,
   effectiveSession,
@@ -152,6 +153,16 @@ test('16. Characteristic spending uses CP and the 1:10 resource rule', () => {
   assert.deepEqual(result.character.hp, [50,120]);
 });
 
+test('16b. Staged characteristic allocations commit atomically', () => {
+  const result = applyCharacteristicAllocations({ cp:3, characteristics:{ constitution:10, endurance:8 }, hp:[50,100], sp:[40,80] }, { constitution:2, endurance:1 });
+  assert.equal(result.total, 3);
+  assert.equal(result.character.cp, 0);
+  assert.equal(result.character.characteristics.constitution, 12);
+  assert.equal(result.character.characteristics.endurance, 9);
+  assert.deepEqual(result.character.hp, [50,120]);
+  assert.deepEqual(result.character.sp, [40,90]);
+});
+
 test('17. Talent and skill progression match the existing Asteria costs', () => {
   assert.equal(talentRankCost(1), 3);
   assert.equal(talentRankCost(5), 15);
@@ -165,13 +176,13 @@ test('18. All character workspace systems render natively in React', () => {
   const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
   const inventory = read('src/dashboards/InventoryWorkspace.jsx');
   ['CharacterTab','TalentsTab','SkillsTab','SpellsTab','InventoryWorkspace','QuestTab','JournalTab','PartyTab'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
-  ['spendCP','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
+  ['spendCPBatch','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
   assert.doesNotMatch(tabs, /export function InventoryTab/);
 });
 
 test('19. Firebase gates live mutations and exposes the party workspace', () => {
   const firebase = read('js/firebase-auth.js');
-  ['spendCharacteristicPoints','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCharacterInventory','buyLiveShopItem','sellLiveShopItem','createLiveTrade','respondLiveTrade','updateCharacterQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(firebase, new RegExp(name)));
+  ['spendCharacteristicAllocations','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCampaignCharacterCurrency','updateCharacterInventory','buyLiveShopItem','sellLiveShopItem','createLiveTrade','respondLiveTrade','updateCharacterQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(firebase, new RegExp(name)));
   assert.match(firebase, /requireLiveSession/);
   assert.match(read('firestore.rules'), /match \/partyChat\/\{messageId\}/);
 });

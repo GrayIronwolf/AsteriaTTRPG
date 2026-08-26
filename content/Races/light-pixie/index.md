@@ -291,12 +291,14 @@ Values:
 ---
 
 ## Racial Traits
-### Magical Affinity (Innate)
+## Magical Affinity (Innate)
 
-#### Description
+### Description
+
 Every Pixie is born with a perfect bond to a single element. This magical affinity defines their soul, shapes their appearance, and can never naturally be altered or diminished.
 
-#### Effects
+### Effects
+
 - Born with **100% Affinity** in one chosen magical element.
 - This affinity cannot be naturally changed, reduced, or replaced.
 - Gain reduced magical backlash when casting spells of your aligned element.
@@ -305,26 +307,30 @@ Every Pixie is born with a perfect bond to a single element. This magical affini
 
 ---
 
-### Racial Bond: Split Soul
+## Trait II — Racial Bond: Split Soul
 
-#### Description
+### Description
+
 A Pixie's soul is incomplete at birth, with its missing half manifesting as a Sprite. Together they form a single spiritual existence connected beyond distance and ordinary magic.
 
-#### Effects
+### Effects
+
 - Every Pixie possesses a spiritually linked **Sprite**.
 - Pixie and Sprite always know the general direction of one another.
 - The bond functions across any distance on the same plane.
 - While close together, magical energy flows more efficiently between the pair.
-- If the bond is damaged, suppressed, or severed, both become **Soul Unstable**, suffering narrative and mechanical consequences determined by the GM.
+- If the bond is damaged, suppressed or severed, both become **Soul Unstable**, suffering narrative and mechanical consequences determined by the GM.
 
 ---
 
-### Fey Perception
+## Trait III — Fey Perception
 
-#### Description
-Pixies instinctively perceive the subtle currents of Fey magic, allowing them to notice illusions, enchantments, and magical disturbances that often escape ordinary senses.
+### Description
 
-#### Effects
+Pixies instinctively perceive the subtle currents of Fey magic, allowing them to notice illusions, enchantments and magical disturbances that often escape ordinary senses.
+
+### Effects
+
 - Naturally detect magical illusions and glamours.
 - Sense nearby magical distortions and unstable mana.
 - Gain heightened intuition toward hidden magical intent.
@@ -332,12 +338,14 @@ Pixies instinctively perceive the subtle currents of Fey magic, allowing them to
 
 ---
 
-### Fey Wings
+## Trait IV — Fey Wings
 
-#### Description
+### Description
+
 Pixie wings are living extensions of their soul, formed from condensed mana rather than flesh. They provide effortless flight and continually regenerate while their soul remains whole.
 
-#### Effects
+### Effects
+
 - Gain a natural Flight Speed.
 - Can hover without requiring forward movement.
 - Descend safely while conscious, greatly reducing falling damage.
@@ -345,6 +353,19 @@ Pixie wings are living extensions of their soul, formed from condensed mana rath
 - Wing appearance permanently reflects the Pixie's elemental affinity.
 
 ---
+
+## Trait V — Elemental Gift
+
+### Description
+
+Each Pixie's soul manifests a unique blessing determined by its elemental affinity. This Elemental Gift grants passive abilities reflecting the nature of the magic bound to their soul.
+
+### Effects
+
+- Gain one unique **Elemental Gift** based on your chosen magical affinity.
+- The Elemental Gift grants passive bonuses, resistances and magical adaptations unique to that element.
+- This trait is permanent and cannot naturally change.
+- See **Pixie Elemental Gifts** for individual elemental abilities.
 
 ## Lore
 # Pixie Lore

@@ -103,6 +103,23 @@ export function applyCharacteristicPoints(character, key, amount) {
   return { character:next, applied };
 }
 
+export function applyCharacteristicAllocations(character, allocations = {}) {
+  const requested = Object.entries(allocations)
+    .map(([key, amount]) => [key, Math.max(0, Math.floor(Number(amount || 0)))])
+    .filter(([, amount]) => amount > 0);
+  if(!requested.length) throw new Error('Choose at least one Characteristic Point to apply.');
+  const total = requested.reduce((sum, [, amount]) => sum + amount, 0);
+  if(total > Math.max(0, Number(character.cp || 0))) throw new Error('Not enough Characteristic Points.');
+  let next = structuredCloneSafe(character);
+  const applied = {};
+  requested.forEach(([key, amount]) => {
+    const result = applyCharacteristicPoints(next, key, amount);
+    next = result.character;
+    applied[key] = result.applied;
+  });
+  return { character:next, applied, total:Object.values(applied).reduce((sum, amount) => sum + amount, 0) };
+}
+
 export function talentRankCost(nextRank) {
   return Math.max(1, Math.floor(Number(nextRank || 1))) * 3;
 }

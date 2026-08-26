@@ -114,68 +114,66 @@ sourceOrder: 182
 ---
 
 ## Racial Traits
-### Water Spirit Heritage
+## 🌊 Water Spirit Heritage
 
-#### Description
+### Description
 Every Undien carries a fragment of a Water Spirit's soul, granting an unbreakable connection to Water Magic. This spiritual bond forms the foundation of every Undien lineage from birth.
 
-#### Effects
+### Effects
 - Gain **100% Water Magic Affinity**.
 - Water is permanently one of your natural elemental affinities.
 - This affinity cannot be removed or replaced by any normal means.
 
 ---
 
-### Amphibious
+## 🌊 Amphibious
 
-#### Description
+### Description
 The essence of a Water Spirit allows every Undien to live effortlessly between land and sea, breathing naturally in both environments without restriction or discomfort throughout their lifetime.
 
-#### Effects
+### Effects
 - Can breathe underwater indefinitely.
 - Can breathe air normally.
 - Cannot drown through natural causes.
 
 ---
 
-### Storm Sense
+## ⚡ Storm Sense
 
-#### Description
+### Description
 Tempestborn instinctively perceive atmospheric changes before they occur. Their connection to the skies allows them to sense storms, shifting winds, and dangerous weather long before others notice.
 
-#### Effects
-- Gain Advantage on Survival checks involving weather prediction.
-- Can sense approaching storms up to 24 hours in advance.
+### Effects
+- Gain advantage on Survival checks involving weather prediction.
+- Detect approaching storms up to 24 hours in advance.
 - Always know the current wind direction and approximate wind strength.
-- Gain Advantage on Perception checks during storms, heavy rain, or high winds.
+- Gain advantage on Perception checks during storms, heavy rain, or high winds.
 
 ---
 
-### Stormforged Constitution
+## ⚡ Stormforged Constitution
 
-#### Description
+### Description
 Born beneath relentless storms, Tempestborn have bodies adapted to rain, humidity, and violent weather. Their storm-blessed constitution protects them from illnesses and hardships carried by the elements.
 
-#### Effects
+### Effects
 - Gain immunity to natural illnesses caused by wet, cold, or humid environments.
 - Gain immunity to diseases contracted through contaminated water.
-- Gain Advantage on checks to resist weather-related exhaustion.
+- Gain advantage on checks to resist weather-related exhaustion.
 - Ignore environmental penalties caused by heavy rain, thunderstorms, strong winds, and severe storms.
 
 ---
 
-### Lightning Reflexes
+## ⚡ Lightning Reflexes
 
-#### Description
+### Description
 Storm energy races through every Tempestborn, granting extraordinary speed and lightning-fast reactions. Their movements are sudden, precise, and as unpredictable as the storms from which they were born.
 
-#### Effects
+### Effects
 - Gain **+2 Initiative**.
 - Gain **+1 Agility**.
-- Gain Advantage on reaction-based Agility checks.
+- Gain advantage on reaction-based Agility checks.
 - Reduce fall damage by **50%**.
-
----
 
 ## Lore
 Information coming soon.

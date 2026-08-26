@@ -1,4 +1,4 @@
-import { SESSION_LIMIT_MS, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
@@ -221,6 +221,16 @@ export function installDevFixtures() {
     updateCampaignCharacterResource: async (_campaignId, characterId, key, amount) => {
       updateCharacter(characterId,character=>{const resource=character[key];if(Array.isArray(resource))resource[0]=Math.max(0,Math.min(resource[1],resource[0]+Number(amount||0)));return character;});return {ok:true};
     },
+    updateCampaignCharacterCurrency: async (_campaignId, characterId, key, amount) => {
+      updateCharacter(characterId,character=>{
+        const currency=slug(key).replaceAll('-','_');
+        character.coins={...(character.coins||{})};
+        const storedKey=Object.keys(character.coins).find(value=>slug(value).replaceAll('-','_')===currency) || currency;
+        character.coins[storedKey]=Math.max(0,Number(character.coins[storedKey]||0)+Number(amount||0));
+        return character;
+      });
+      return {ok:true};
+    },
     setCharacterACModifier: async (_campaignId,characterId,modifier={}) => {
       updateCharacter(characterId,character=>{
         const rows=Array.isArray(character.acModifiers)?character.acModifiers:[];
@@ -234,6 +244,9 @@ export function installDevFixtures() {
     },
     spendCharacteristicPoints: async (_campaignId,characterId,key,amount) => {
       const applied=applyCharacteristicPoints(characters[characterId],key,amount);updateCharacter(characterId,()=>applied.character);return {ok:true,applied:applied.applied};
+    },
+    spendCharacteristicAllocations: async (_campaignId,characterId,allocations) => {
+      const applied=applyCharacteristicAllocations(characters[characterId],allocations);updateCharacter(characterId,()=>applied.character);return {ok:true,applied:applied.applied,total:applied.total};
     },
     purchaseTalentRank: async (_campaignId,characterId,talent) => {
       const character=characters[characterId];const current=(character.talents||{})[talent.name]?.rank||character.unlockedTalents?.find(value=>value.name===talent.name)?.rank||0;const cost=talentRankCost(current+1);

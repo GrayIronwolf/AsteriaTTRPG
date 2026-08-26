@@ -38,8 +38,52 @@ function InfoModal({ record, title, eyebrow, onClose }) {
   </Modal>;
 }
 
-export function CharacterTab({ campaignId, character, editable }) {
+function CharacteristicsPanel({ campaignId, character, editable }) {
   const action=useAction();
+  const [draft,setDraft]=useState({});
+  useEffect(()=>setDraft({}),[character.id]);
+  const staged=Object.values(draft).reduce((sum,value)=>sum+Number(value||0),0);
+  const available=Math.max(0,Number(character.cp||0)-staged);
+  const change=(key,delta)=>setDraft(current=>{
+    const value=characteristicValue(character,key);
+    const cap=characteristicCap(character,key);
+    const currentAmount=Number(current[key]||0);
+    const nextAmount=Math.max(0,Math.min(currentAmount+delta,Math.max(0,cap-value)));
+    if(delta>0 && available<1) return current;
+    const next={...current,[key]:nextAmount};
+    if(!nextAmount) delete next[key];
+    return next;
+  });
+  const apply=async()=>{
+    const result=await action.run(()=>firebaseService.spendCPBatch(campaignId,character.id,draft),`Applied ${staged} Characteristic Point${staged===1?'':'s'}.`);
+    if(result?.ok) setDraft({});
+  };
+  return <Panel title="Characteristics" action={<StatusPill>{available} CP available</StatusPill>} className="react-characteristics-panel">
+    <p className="react-help">Stage available Characteristic Points with the controls below. Constitution, Endurance, and Wisdom each add 10 maximum HP, SP, or MP per applied point.</p>
+    <div className="react-characteristic-gallery">{CHARACTERISTICS.map(stat=>{
+      const base=characteristicValue(character,stat.key);
+      const pending=Number(draft[stat.key]||0);
+      const value=base+pending;
+      const tier=characteristicTier(value);
+      const cap=characteristicCap(character,stat.key);
+      return <article key={stat.key}>
+        <header><h3>{stat.label}</h3><span>{stat.short}</span></header>
+        <strong>{value}</strong>
+        <small>{tier.label}</small>
+        <small>Tier Cap {cap}</small>
+        <div className="react-characteristic-controls">
+          <button aria-label={`Remove staged point from ${stat.label}`} disabled={!editable||action.busy||pending<1} onClick={()=>change(stat.key,-1)} type="button">-</button>
+          <span>{pending?`+${pending} staged`:'No change'}</span>
+          <button aria-label={`Add point to ${stat.label}`} disabled={!editable||action.busy||available<1||value>=cap} onClick={()=>change(stat.key,1)} type="button">+</button>
+        </div>
+      </article>;
+    })}</div>
+    <div className="react-characteristics-apply"><span>{staged} CP staged</span><button className="primary" disabled={!editable||action.busy||staged<1} onClick={apply} type="button">Apply Characteristic Points</button></div>
+    <p className="react-action-message" role="status">{action.message}</p>
+  </Panel>;
+}
+
+export function CharacterTab({ campaignId, character, editable }) {
   const [trait,setTrait]=useState(null);
   const traits=raceTraits(character);
   const items=inventoryItems(character);
@@ -54,11 +98,7 @@ export function CharacterTab({ campaignId, character, editable }) {
       <Panel title="Defences & Conditions"><dl className="react-detail-list"><div><dt>Armour Class</dt><dd>{armour.finalAC}</dd></div><div><dt>Raw AC</dt><dd>{Number(armour.rawAC).toFixed(2).replace(/\.00$/,'')}</dd></div><div><dt>Mobility</dt><dd>{armour.mobilityModifier>=0?'+':''}{armour.mobilityModifier}</dd></div><div><dt>Stealth</dt><dd>{armour.stealthModifier>=0?'+':''}{armour.stealthModifier}</dd></div><div><dt>Movement</dt><dd>{character.movement||character.speed||'Not recorded'}</dd></div></dl>{armour.validation.errors.length?<div className="react-ac-warnings">{armour.validation.errors.map(error=><p key={error}>{error}</p>)}</div>:null}<div className="react-condition-list">{conditions.map((condition,index)=><StatusPill key={condition.id||condition.name||index} tone="warning">{condition.name||condition}</StatusPill>)}{!conditions.length?<small>No active conditions.</small>:null}</div></Panel>
       <Panel title="Equipped Items"><div className="react-character-equipment-list">{equipped.slice(0,8).map(item=><button key={item.id} type="button"><b>{item.equippedSlot||item.raw?.slot||'Equipment'}</b><span>{item.name}</span></button>)}{!equipped.length?<EmptyState title="No equipped items"/>:null}</div></Panel>
     </div>
-    <Panel title="Characteristics" action={<StatusPill>{Number(character.cp||0)} CP</StatusPill>} className="react-characteristics-panel">
-      <p className="react-help">Each point in CON, END, or WIS also adds 10 maximum HP, SP, or MP.</p>
-      <div className="react-characteristic-gallery">{CHARACTERISTICS.map(stat=>{const value=characteristicValue(character,stat.key);const tier=characteristicTier(value);const cap=characteristicCap(character,stat.key);return <article key={stat.key}><header><b>{stat.label}</b><span>{stat.short}</span></header><strong>{value}</strong><small>{tier.label}{tier.modifier?` +${tier.modifier}`:''}</small><small>Tier cap {cap}</small><button disabled={!editable||action.busy||Number(character.cp||0)<1||value>=cap} onClick={()=>action.run(()=>firebaseService.spendCP(campaignId,character.id,stat.key,1),`Added 1 CP to ${stat.label}.`)}>+ Spend 1 CP</button></article>;})}</div>
-      <p className="react-action-message">{action.message}</p>
-    </Panel>
+    <CharacteristicsPanel campaignId={campaignId} character={character} editable={editable}/>
     <Panel title="Racial Traits" className="react-full-panel"><div className="react-card-gallery">{traits.map(record=><button className="react-record-card" key={record.id} onClick={()=>setTrait(record)}><b>{record.name}</b><span>{record.description}</span><small>Open full trait</small></button>)}{!traits.length?<EmptyState title="Racial traits coming soon"/>:null}</div></Panel>
     <InfoModal record={trait} eyebrow={`${character.race||'Race'} Trait`} onClose={()=>setTrait(null)}/>
   </div>;

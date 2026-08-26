@@ -331,7 +331,7 @@ function parseSections(markdown) {
   let current = '';
   body.split(/\r?\n/).forEach(line => {
     const heading = line.match(/^##\s+(.+)$/);
-    if (heading) {
+    if (heading && sectionNames.includes(heading[1].trim())) {
       current = heading[1].trim();
       sections[current] = '';
       return;
@@ -350,8 +350,9 @@ function parseTraits(markdown) {
   const traits = [];
   let current = null;
   text.split(/\r?\n/).forEach(line => {
-    const heading = line.match(/^###\s+(.+)$/);
-    if (heading) {
+    const heading = line.match(/^#{2,3}\s+(.+)$/);
+    const marker = heading?.[1].replace(/:$/, '').trim().toLowerCase();
+    if (heading && marker !== 'description' && marker !== 'effects') {
       if (current) traits.push(current);
       current = { name: heading[1].trim(), text: '' };
       return;
