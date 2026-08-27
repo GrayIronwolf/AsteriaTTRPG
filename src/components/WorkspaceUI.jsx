@@ -81,8 +81,12 @@ export function ResourceChip({ label, value, tone = '' }) {
   return <span className={`react-resource-chip ${tone}`}><small>{label}</small><strong>{value}</strong></span>;
 }
 
-export function CurrencyDisplay({ label, value, symbol = 'G', tone = 'gold' }) {
-  return <div className={`react-currency-display ${tone}`}><span aria-hidden="true">{symbol}</span><div><small>{label}</small><strong>{Number(value || 0).toLocaleString()}</strong></div></div>;
+export function CurrencyDisplay({ label, detail = '', value, symbol = 'G', image = '', tone = 'gold' }) {
+  const accessibleLabel = detail ? `${label} (${detail})` : label;
+  return <div className={`react-currency-display ${tone}`} aria-label={`${accessibleLabel}: ${Number(value || 0).toLocaleString()}`}>
+    <span className={image ? 'has-image' : ''} aria-hidden="true">{image ? <img src={image} alt="" loading="lazy" decoding="async" /> : symbol}</span>
+    <div><small>{label}{detail ? ` (${detail})` : ''}</small><strong>{Number(value || 0).toLocaleString()}</strong></div>
+  </div>;
 }
 
 export function LiveSyncStatus({ online, error, loading, connectionState, session }) {

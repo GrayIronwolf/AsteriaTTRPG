@@ -235,6 +235,22 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
   font-weight: 800;
 }
 
+.react-currency-display > span.has-image {
+  overflow: hidden;
+  padding: 1px;
+  border-color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 55%, var(--asteria-gold, #d2aa56));
+  background: rgba(0, 0, 0, .48);
+  box-shadow: 0 0 10px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.react-currency-display > span.has-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .react-currency-display > div { display: grid; }
 .react-currency-display small { color: var(--asteria-text-muted); }
 .react-currency-display strong { color: var(--asteria-text); font-size: var(--asteria-type-lg); }
@@ -1656,10 +1672,10 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-player-characteristic-grid small { color: var(--asteria-text-secondary); font-size: .57rem; font-weight: 800; }
 
 .react-player-currencies { display: grid; align-content: start; gap: 5px; max-height: 112px; overflow: auto; overflow-anchor: none; }
-.react-player-currency-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(116px,.72fr); align-items: center; gap: 7px; min-width: 0; padding: 6px; border: 1px solid var(--dashboard-line-soft); background: rgba(0,0,0,.2); }
-.react-player-currency .react-currency-display { grid-template-columns: 28px minmax(0, 1fr); min-width: 0; padding: 0; background: transparent; }
-.react-player-currency .react-currency-display > span { width: 27px; height: 27px; font-size: .67rem; }
-.react-player-currency .react-currency-display small { color: var(--asteria-text-secondary); font-size: .55rem; }
+.react-player-currency-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(104px,.72fr); align-items: center; gap: 7px; min-width: 0; padding: 6px; border: 1px solid var(--dashboard-line-soft); background: rgba(0,0,0,.2); }
+.react-player-currency .react-currency-display { display: grid; grid-template-columns: 32px minmax(0, 1fr); min-width: 0; padding: 0; background: transparent; }
+.react-player-currency .react-currency-display > span { width: 32px; height: 32px; font-size: .67rem; }
+.react-player-currency .react-currency-display small { color: var(--asteria-text-secondary); font-size: .55rem; line-height: 1.15; overflow-wrap: anywhere; }
 .react-player-currency .react-currency-display strong { font-size: .76rem; }
 .react-player-currency-controls { display: grid; grid-template-columns: minmax(44px,1fr) 28px 28px; gap: 3px; }
 .react-player-currency-controls input,

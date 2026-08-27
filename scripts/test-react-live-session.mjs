@@ -314,6 +314,7 @@ test('33. The exchange UI has a persistent request dock and responsive transacti
 
 test('34. Campaign, character progression, resources, characteristics, and currency share reusable dashboard components', () => {
   const information = read('src/components/DashboardInformation.jsx');
+  const currency = read('src/systems/currency/currencyConfig.mjs');
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
   const overview = read('src/dashboards/PlayerDashboardOverview.jsx');
   ['CampaignInformationPanel','CurrencyPanel','DashboardInformationRow','selectGold'].forEach(name => assert.match(information, new RegExp(name)));
@@ -326,6 +327,10 @@ test('34. Campaign, character progression, resources, characteristics, and curre
   assert.match(information, /selectCurrencies/);
   assert.match(information, /Object\.entries\(source\)/);
   assert.match(information, /currencies\.map/);
+  ['Penny','Mark','Crown','Platinum Crown','Royal Crown','Royal Platinum'].forEach(name => assert.match(currency, new RegExp(`name:'${name}'`)));
+  ['penny-copper','mark-silver','crown-gold','platinum-crown','royal-crown','royal-platinum'].forEach(name => assert.match(currency, new RegExp(name)));
+  assert.match(information, /ASTERIA_CURRENCIES\.map/);
+  assert.match(information, /definition\?\.image/);
   assert.doesNotMatch(dashboard, /Coin Pouch/);
 });
 
