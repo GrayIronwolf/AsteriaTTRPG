@@ -559,6 +559,19 @@ test('57. Player trades require recipient acceptance and sender final confirmati
   assert.match(fixture, /acknowledgeLiveItemRecipientUpdate/);
 });
 
+test('58. Character profile uses the compact HUD and Forge-backed information panels', () => {
+  const information = read('src/components/DashboardInformation.jsx');
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  const styles = read('src/styles/asteria-react.css');
+  assert.match(information, /<span>\{characterClass\(character\)\}<\/span>/);
+  assert.doesNotMatch(information, /characterClass\(character\)\} \/ \{character\.race/);
+  ['Appearance','Origin & Background','Family & Personal History'].forEach(title => assert.match(tabs, new RegExp(title.replace('&', '&'))));
+  assert.doesNotMatch(tabs, /title="Defences & Conditions"|title="Equipped Items"/);
+  assert.match(styles, /react-player-topbar[\s\S]*min-height: 255px/);
+  assert.match(styles, /react-player-portrait[\s\S]*width: min\(160px, 100%\)[\s\S]*height: 198px/);
+  assert.match(styles, /react-character-tab-grid > \.react-characteristics-panel[\s\S]*grid-column: 2/);
+});
+
 let failed = 0;
 for(const entry of cases) {
   try { await entry.action(); console.log(`PASS ${entry.name}`); }

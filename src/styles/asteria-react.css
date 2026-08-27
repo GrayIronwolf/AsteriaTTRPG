@@ -493,9 +493,12 @@ html[data-asteria-live-character-dashboard="active"] #player { display: none !im
 .react-session-gate span { font-size: .82rem; opacity: .86; text-align: right; }
 button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: .48; }
 
-.react-character-tab-grid { display: grid; grid-template-columns: minmax(230px, .35fr) minmax(0, 1fr); gap: 12px; }
+.react-character-tab-grid { display: grid; grid-template-columns: minmax(280px, .38fr) minmax(0, .62fr); gap: 12px; align-items: start; }
 .react-character-tab-grid > .react-full-panel { grid-column: 1 / -1; }
-.react-character-support-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.react-character-primary-column { display: grid; grid-column: 1; grid-row: 1; gap: 12px; align-content: start; }
+.react-character-information-grid { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.react-character-detail-panel { min-height: 250px; }
+.react-character-detail-list dd { max-width: 42ch; white-space: normal; overflow-wrap: anywhere; }
 .react-character-identity-summary { display: grid; grid-template-columns: minmax(100px,140px) minmax(0,1fr); gap: 12px; align-items: start; }
 .react-character-identity-summary > img, .react-character-identity-summary > span { display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 1px solid var(--asteria-border-active); background: rgba(0,0,0,.28); font-family: var(--asteria-font-display); font-size: 2.4rem; }
 .react-character-equipment-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
@@ -507,6 +510,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-detail-list dt { opacity: .7; }
 .react-detail-list dd { margin: 0; font-weight: 800; text-align: right; }
 .react-characteristics-panel { grid-column: 1 / -1; justify-self: start; width: min(50%, 860px); }
+.react-character-tab-grid > .react-characteristics-panel { grid-column: 2; grid-row: 1; justify-self: stretch; width: 100%; }
 .react-characteristic-gallery { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 10px; }
 .react-characteristic-gallery article { display: grid; grid-template-rows: auto auto auto auto minmax(38px,auto); gap: 8px; min-width: 0; min-height: 220px; padding: 14px; border: 1px solid rgba(255,255,255,.16); background: rgba(0,0,0,.28); }
 .react-characteristic-gallery header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
@@ -827,11 +831,16 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-character-dashboard-grid > .asteria-react-panel { grid-column: span 1 !important; }
   .react-card-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .react-character-tab-grid, .react-trade-grid, .react-journal-grid, .react-party-workspace { grid-template-columns: 1fr; }
-  .react-character-tab-grid > .react-full-panel, .react-party-workspace .react-party-chat { grid-column: 1; }
+  .react-character-primary-column,
+  .react-character-information-grid,
+  .react-character-tab-grid > .react-characteristics-panel,
+  .react-character-tab-grid > .react-full-panel,
+  .react-party-workspace .react-party-chat { grid-column: 1; grid-row: auto; }
+  .react-character-information-grid { grid-template-columns: 1fr; }
   .react-equipment-workspace, .react-shop-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .react-storage-workspace, .react-settings-workspace, .react-organization-workspace { grid-template-columns: 1fr; }
   .react-settings-save { grid-column: 1; }
-  .react-dashboard-summary-grid, .react-character-support-grid { grid-template-columns: 1fr; }
+  .react-dashboard-summary-grid { grid-template-columns: 1fr; }
   .react-dashboard-summary-grid > :last-child { grid-column: 1; }
   .react-characteristics-panel { width: 100%; }
 }
@@ -1526,7 +1535,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
   align-items: stretch;
-  min-height: 380px;
+  min-height: 255px;
   padding: 0;
   overflow: visible;
   background: color-mix(in srgb, var(--asteria-bg-primary, #020b11) 94%, transparent) !important;
@@ -1537,31 +1546,31 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   display: grid;
   align-content: start;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 10px 12px;
 }
 
 .react-player-topbar > .react-player-topbar-section + .react-player-topbar-section {
   border-left: 1px solid var(--dashboard-line-soft);
 }
 
-.react-player-identity-level { grid-column: span 7; gap: 11px; }
+.react-player-identity-level { grid-column: span 7; gap: 7px; }
 .react-player-xp { grid-column: span 3; gap: 9px; }
-.react-player-resources { grid-column: span 8; gap: 6px; }
+.react-player-resources { grid-column: span 8; gap: 3px; }
 .react-player-characteristics { grid-column: span 3; gap: 7px; }
 .react-player-campaign { grid-column: span 3; gap: 7px; }
 
 .react-player-topbar-heading {
   width: 100%;
-  min-height: 28px;
-  margin: 0 0 12px;
-  padding: 0 0 9px;
+  min-height: 24px;
+  margin: 0 0 7px;
+  padding: 0 0 6px;
   border-bottom: 1px solid var(--dashboard-line-soft);
   color: var(--asteria-text-primary, #f7ead1);
 }
 
 .react-player-identity-content {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   min-width: 0;
@@ -1577,8 +1586,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-player-portrait {
   display: grid;
   place-items: center;
-  width: min(240px, 100%);
-  height: 296px;
+  width: min(160px, 100%);
+  height: 198px;
   overflow: hidden;
   border: 1px solid var(--dashboard-line);
   background: rgba(0, 0, 0, .38);
@@ -1631,14 +1640,14 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-player-xp .react-resource > div:first-child { display: none; }
 .react-player-xp .react-resource-track { height: 12px; border-color: var(--dashboard-line-soft); }
 
-.react-player-resource-list { display: grid; gap: 5px; }
-.react-player-resource-row { display: grid; gap: 3px; }
+.react-player-resource-list { display: grid; gap: 3px; }
+.react-player-resource-row { display: grid; gap: 2px; }
 .react-player-resource-controls { display: grid; grid-template-columns: minmax(42px, 1fr) 28px 28px; gap: 3px; }
 .react-player-resource-controls input,
-.react-player-resource-controls button { min-height: 27px; height: 27px; padding: 2px 5px; }
+.react-player-resource-controls button { min-height: 22px; height: 22px; padding: 1px 5px; }
 .react-player-resource-controls input { min-width: 0; width: 100%; }
 .react-player-resources .react-resource.compact > div:first-child { font-size: .82rem; }
-.react-player-resources .react-resource.compact .react-resource-track { height: 14px; }
+.react-player-resources .react-resource.compact .react-resource-track { height: 10px; }
 
 .react-player-characteristic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
 .react-player-characteristic-grid article { display: grid; place-items: center; align-content: center; min-width: 0; min-height: 34px; padding: 3px 4px; border: 1px solid var(--dashboard-line-soft); background: rgba(0, 0, 0, .24); line-height: 1.05; }
@@ -1825,8 +1834,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-dashboard-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .react-dashboard-summary-grid { grid-template-columns: 1fr; }
   .react-dashboard-summary-grid > :last-child { grid-column: 1; }
-  .react-player-identity-content { grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); }
-  .react-player-portrait { width: min(220px, 100%); height: 272px; }
+  .react-player-identity-content { grid-template-columns: minmax(120px, 160px) minmax(0, 1fr); }
+  .react-player-portrait { width: min(160px, 100%); height: 198px; }
 }
 
 @container (max-width: 420px) {

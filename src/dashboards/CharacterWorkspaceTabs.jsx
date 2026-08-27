@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { CHARACTERISTICS, TALENT_TIER_LEVELS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs, talentRankCost, talentTierUnlocked } from '../state/liveWorkspaceModel.mjs';
-import { useArmourClass } from '../systems/armour/useArmourClass.js';
-import { characterClasses, classTalentGroups, inventoryItems, knownMagic, knownSpells, quests, raceTraits, selectedSkills, talentRank } from './characterWorkspaceData.js';
+import { characterClasses, classTalentGroups, knownMagic, knownSpells, quests, raceTraits, selectedSkills, talentRank } from './characterWorkspaceData.js';
 
 function resultMessage(result, fallback='Saved.') { return result?.ok ? fallback : result?.error || 'That change could not be saved.'; }
 function formatDuration(milliseconds) {
@@ -83,22 +82,76 @@ function CharacteristicsPanel({ campaignId, character, editable }) {
   </Panel>;
 }
 
+function detailLabel(value) {
+  return String(value || '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function detailValue(value) {
+  if(Array.isArray(value)) return value.filter(Boolean).join(', ');
+  if(value && typeof value === 'object') {
+    return Object.entries(value)
+      .filter(([, entry]) => entry !== '' && entry !== null && entry !== undefined && entry !== false)
+      .map(([key, entry]) => `${detailLabel(key)}: ${detailValue(entry)}`)
+      .join('; ');
+  }
+  return value === 0 ? '0' : String(value || '').trim();
+}
+
+function detailRows(source = {}, preferred = [], extra = []) {
+  const ignored = new Set(['image', 'portrait', 'characterImage', 'id', 'slug']);
+  const keys = [...new Set([...preferred, ...Object.keys(source || {})])];
+  return keys.filter(key => !ignored.has(key)).map(key => ({
+    key,
+    label: detailLabel(key),
+    value: detailValue(source?.[key])
+  })).filter(row => row.value).concat(extra.filter(row => row?.value));
+}
+
+function CharacterDetailPanel({ title, rows, emptyMessage }) {
+  return <Panel title={title} className="react-character-detail-panel">
+    {rows.length ? <dl className="react-detail-list react-character-detail-list">{rows.map(row => <div key={`${title}-${row.key || row.label}`}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : <p className="react-quiet-state">{emptyMessage}</p>}
+  </Panel>;
+}
+
 export function CharacterTab({ campaignId, character, editable }) {
   const [trait,setTrait]=useState(null);
   const traits=raceTraits(character);
-  const items=inventoryItems(character);
-  const equipped=items.filter(item=>item.equipped);
   const progression=window.AsteriaProgression?.progressSummary?.({...character})||{xp:Number(character.xp||0),xpMax:Number(character.xpMax||1000)};
-  const armour=useArmourClass(character);
-  const conditions=Array.isArray(character.conditions)?character.conditions:[];
+  const schema=character.character || {};
+  const schemaOrigin=schema.origin || {};
+  const appearance={...(schema.appearance || {}),...(character.appearance || {})};
+  const origin={...(schemaOrigin.data || {}),...(character.backstory || {})};
+  const family={...(schema.family_tree || {}),...(character.family_tree || {})};
+  const race=typeof character.race==='object' ? character.race.title || character.race.name : character.race || schema.race?.title;
+  const campaign=character.campaignName || character.campaign || 'Linked campaign';
+  const identityRows=[
+    {key:'name',label:'Name',value:character.name || 'Unnamed Character'},
+    {key:'race',label:'Race',value:race || 'Unselected'},
+    {key:'class',label:'Class',value:characterClasses(character).join(' / ') || 'Unselected'},
+    {key:'campaign',label:'Campaign',value:campaign},
+    {key:'age',label:'Age',value:detailValue(character.age)},
+    {key:'pronouns',label:'Pronouns',value:detailValue(character.pronouns)}
+  ].filter(row=>row.value);
+  const appearanceRows=detailRows(appearance,['height','weight','body_type','body_build','skin_colour','fur_colour','scale_colour','feather_colour','hair_style','hair_colour','eye_colour','facial_hair','scars','markings','tattoos','accessories','special_features']);
+  const originRows=detailRows(origin,['birthplace','history','backstory','personality','goals','ideals','flaws','notes'],[
+    {key:'origin',label:'Origin',value:detailValue(character.originTitle || schemaOrigin.title || character.origin)}
+  ]).sort((left,right)=>left.key==='origin'?-1:right.key==='origin'?1:0);
+  const familyRows=detailRows(family,['father','mother','siblings','partner','children']);
+  const portrait=character.image || character.portrait || appearance.image || appearance.portrait;
   return <div className="react-character-tab-grid">
-    <Panel title="Character Identity" className="react-character-identity-panel"><div className="react-character-identity-summary">{character.image||character.portrait?<img src={character.image||character.portrait} alt={`${character.name||'Character'} portrait`}/>:<span>{String(character.name||'?').charAt(0)}</span>}<dl className="react-detail-list"><div><dt>Name</dt><dd>{character.name}</dd></div><div><dt>Race</dt><dd>{character.race||'Unselected'}</dd></div><div><dt>Class</dt><dd>{characterClasses(character).join(' / ')||'Unselected'}</dd></div><div><dt>Campaign</dt><dd>{character.campaign||character.campaignName||'Linked campaign'}</dd></div></dl></div></Panel>
-    <div className="react-character-support-grid">
+    <div className="react-character-primary-column">
+      <Panel title="Character Identity" className="react-character-identity-panel"><div className="react-character-identity-summary">{portrait?<img src={portrait} alt={`${character.name||'Character'} portrait`}/>:<span>{String(character.name||'?').charAt(0)}</span>}<dl className="react-detail-list">{identityRows.map(row=><div key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></div></Panel>
       <Panel title="Progression"><ResourceBar label="XP" kind="xp" value={progression.xp} maximum={progression.xpMax}/><dl className="react-detail-list"><div><dt>Level</dt><dd>{Number(character.level||0)}</dd></div><div><dt>CP</dt><dd>{Number(character.cp||0)}</dd></div><div><dt>TP</dt><dd>{Number(character.tp||0)}</dd></div></dl></Panel>
-      <Panel title="Defences & Conditions"><dl className="react-detail-list"><div><dt>Armour Class</dt><dd>{armour.finalAC}</dd></div><div><dt>Raw AC</dt><dd>{Number(armour.rawAC).toFixed(2).replace(/\.00$/,'')}</dd></div><div><dt>Mobility</dt><dd>{armour.mobilityModifier>=0?'+':''}{armour.mobilityModifier}</dd></div><div><dt>Stealth</dt><dd>{armour.stealthModifier>=0?'+':''}{armour.stealthModifier}</dd></div><div><dt>Movement</dt><dd>{character.movement||character.speed||'Not recorded'}</dd></div></dl>{armour.validation.errors.length?<div className="react-ac-warnings">{armour.validation.errors.map(error=><p key={error}>{error}</p>)}</div>:null}<div className="react-condition-list">{conditions.map((condition,index)=><StatusPill key={condition.id||condition.name||index} tone="warning">{condition.name||condition}</StatusPill>)}{!conditions.length?<small>No active conditions.</small>:null}</div></Panel>
-      <Panel title="Equipped Items"><div className="react-character-equipment-list">{equipped.slice(0,8).map(item=><button key={item.id} type="button"><b>{item.equippedSlot||item.raw?.slot||'Equipment'}</b><span>{item.name}</span></button>)}{!equipped.length?<EmptyState title="No equipped items"/>:null}</div></Panel>
     </div>
     <CharacteristicsPanel campaignId={campaignId} character={character} editable={editable}/>
+    <div className="react-character-information-grid">
+      <CharacterDetailPanel title="Appearance" rows={appearanceRows} emptyMessage="Appearance details have not been recorded yet."/>
+      <CharacterDetailPanel title="Origin & Background" rows={originRows} emptyMessage="Origin and background details have not been recorded yet."/>
+      <CharacterDetailPanel title="Family & Personal History" rows={familyRows} emptyMessage="Family information has not been recorded yet."/>
+    </div>
     <Panel title="Racial Traits" className="react-full-panel"><div className="react-card-gallery">{traits.map(record=><button className="react-record-card" key={record.id} onClick={()=>setTrait(record)}><b>{record.name}</b><span>{record.description}</span><small>Open full trait</small></button>)}{!traits.length?<EmptyState title="Racial traits coming soon"/>:null}</div></Panel>
     <InfoModal record={trait} eyebrow={`${character.race||'Race'} Trait`} onClose={()=>setTrait(null)}/>
   </div>;

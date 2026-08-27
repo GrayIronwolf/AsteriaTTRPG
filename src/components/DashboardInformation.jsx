@@ -50,8 +50,20 @@ export function selectCurrencies(character = {}, campaign = {}) {
     .sort(([left], [right]) => left === 'Gold' ? -1 : right === 'Gold' ? 1 : left.localeCompare(right));
 }
 
+function characterClasses(character = {}) {
+  const values = [
+    character.klass,
+    typeof character.class === 'string' ? character.class : character.class?.title || character.class?.name,
+    character.character?.class?.title,
+    ...(Array.isArray(character.classNames) ? character.classNames : []),
+    ...(Array.isArray(character.classes) ? character.classes.map(value => value?.title || value?.name || value) : []),
+    ...(Array.isArray(character.secondaryClasses) ? character.secondaryClasses.map(value => value?.title || value?.name || value) : [])
+  ].filter(Boolean).map(String);
+  return [...new Set(values)];
+}
+
 function characterClass(character = {}) {
-  return character.klass || character.class || 'Unselected Class';
+  return characterClasses(character).join(' / ') || 'Unselected Class';
 }
 
 function isBloodhunter(character = {}) {
@@ -113,7 +125,7 @@ export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, prefer
       {!preferences.hiddenInformationFields.includes('portrait') ? <div className="react-player-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}</div> : null}
       <div className="react-player-identity-copy">
         <strong>{character.name || 'Unnamed Character'}</strong>
-        <span>{characterClass(character)} / {character.race || 'Unselected Race'}</span>
+        <span>{characterClass(character)}</span>
         {title ? <em>{title}</em> : null}
         {preferences.showPartyMembership && !preferences.hiddenInformationFields.includes('party') && membership ? <em>Member of {membership.name}</em> : null}
       </div>
