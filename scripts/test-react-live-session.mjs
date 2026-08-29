@@ -28,6 +28,7 @@ import {
 } from '../src/state/liveWorkspaceModel.mjs';
 import { buildReactRoute, parseReactRoute } from '../src/app/asteriaRoutes.mjs';
 import { liveSyncPresentation } from '../src/state/liveSyncState.mjs';
+import { GM_WORKSPACE_VERSION, migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../src/state/gmWorkspaceModel.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -575,6 +576,30 @@ test('58. Character profile uses the compact HUD and Forge-backed information pa
   assert.match(styles, /react-player-topbar[\s\S]*min-height: 255px/);
   assert.match(styles, /react-player-portrait[\s\S]*width: min\(160px, 100%\)[\s\S]*height: 198px/);
   assert.match(styles, /react-character-tab-grid > \.react-characteristics-panel[\s\S]*grid-column: 2/);
+});
+
+test('59. Every legacy GM system has a native live React workspace', () => {
+  const dashboard = read('src/dashboards/GMDashboard.jsx');
+  const panels = read('src/dashboards/GMWorkspacePanels.jsx');
+  const service = read('src/firebase/asteriaFirebaseService.js');
+  ['QuestWorkspace','NotesWorkspace','EconomyWorkspace','CraftingWorkspace','CampaignManagerWorkspace','GameplayWorkspace','WorldWorkspace'].forEach(name=>assert.match(dashboard+panels,new RegExp(name)));
+  ['subscribeGMWorkspace','saveGMWorkspace','assignQuest','updateCampaignDetails','manageShop'].forEach(name=>assert.match(service,new RegExp(name)));
+  assert.doesNotMatch(dashboard,/ExistingSystem|openLegacyGMSystem|openLegacyView/);
+});
+
+test('60. Legacy GM state migrates into a normalized campaign workspace', () => {
+  const migrated=migrateLegacyGMWorkspace({
+    campaign:{name:'Test',gmNotes:'Keep this private'},
+    gameplay:{guild:{contracts:[{id:'c1'}]},encounters:{saved:[{id:'e1'}]}},
+    world:{world_state:{kingdom_status:'War',economy_status:'Strained'},regions:{north:{name:'North'}},npcs:[{name:'Ada'}]},
+    partyWorkspace:{questLog:[{id:'q1'}]},
+    itemEcosystem:{lootTables:[{id:'l1'}]}
+  });
+  assert.equal(migrated.version,GM_WORKSPACE_VERSION);
+  assert.equal(migrated.quests[0].id,'q1');
+  assert.equal(migrated.world.regions[0].name,'North');
+  assert.equal(migrated.gameplay.lootTables[0].id,'l1');
+  assert.deepEqual(normalizeGMWorkspace({crafting:{projects:null}}).crafting.projects,[]);
 });
 
 let failed = 0;

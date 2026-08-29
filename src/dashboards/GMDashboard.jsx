@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
-import { openLegacyGMSystem, openLegacyView } from '../app/legacyBridge.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
+import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
+import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, GameplayWorkspace, NotesWorkspace, QuestWorkspace, WorldWorkspace } from './GMWorkspacePanels.jsx';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
@@ -13,7 +14,7 @@ const GM_TABS = [
   { id: 'economy', label: 'Economy', icon: '\u25ce' },
   { id: 'crafting', label: 'Crafting', icon: '\u2692' },
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
-  { id: 'campaign', label: 'Campaign Manager', icon: '\u25a3' },
+  { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
   { id: 'world', label: 'World Systems', icon: '\u2318' }
 ];
 
@@ -269,17 +270,30 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
   </Panel>;
 }
 
-function ExistingSystem({ title, copy, tab }) {
-  return <Panel title={title}><p>{copy}</p><button type="button" onClick={() => openLegacyGMSystem(tab)}>Open existing {title}</button></Panel>;
-}
-
 export function GMDashboard({ campaignId }) {
   const live = useCampaignLiveData(campaignId, { mode: 'gm' });
   const [tab, setTab] = useState('main');
   const [selectedId, setSelectedId] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
+  const migrationStarted = useRef(false);
   useEffect(() => { if(!selectedId && Object.keys(live.characters)[0]) setSelectedId(Object.keys(live.characters)[0]); }, [live.characters, selectedId]);
+  useEffect(() => {
+    if(migrationStarted.current || !live.gmWorkspaceLoaded || live.gmWorkspace || !live.campaign) return;
+    migrationStarted.current=true;
+    const seed=migrateLegacyGMWorkspace({
+      campaign:live.campaign,
+      gameplay:window.AsteriaGameplay?.state?.() || {},
+      world:window.AsteriaWorld?.world?.() || {},
+      partyWorkspace:live.partyWorkspace,
+      itemEcosystem:live.itemEcosystem
+    });
+    firebaseService.saveGMWorkspace(campaignId,seed).then(result=>{
+      if(!result?.ok){migrationStarted.current=false;setActionError(result?.error||'Legacy GM systems could not be initialized.');}
+    });
+  },[campaignId,live.campaign,live.gmWorkspace,live.gmWorkspaceLoaded,live.itemEcosystem,live.partyWorkspace]);
+  const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
+  const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const run = async operation => { setBusy(true); setActionError(''); try { await operation(); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
   return <AsteriaAppShell
@@ -295,12 +309,12 @@ export function GMDashboard({ campaignId }) {
       <CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
     </div> : null}
-    {tab === 'quests' ? <ExistingSystem title="Quests" copy="Campaign objectives, hooks, and quest updates remain available during migration." tab="quests" /> : null}
-    {tab === 'notes' ? <ExistingSystem title="GM Notes" copy="Private preparation, live notes, and session logs remain in the current GM system." tab="gm-notes" /> : null}
-    {tab === 'economy' ? <ExistingSystem title="Economy" copy="Prices, trade routes, shipping, scarcity, merchants, and shops remain operational." tab="economy" /> : null}
-    {tab === 'crafting' ? <ExistingSystem title="Crafting" copy="Projects, approvals, materials, recipes, and enchantments remain operational." tab="crafting" /> : null}
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
-    {tab === 'campaign' ? <Panel title="Campaign Manager"><p><b>UCN:</b> {live.campaign?.ucn || live.campaign?.uniqueCampaignCode || 'Not generated'}</p><p>{Object.keys(live.characters).length} linked character{Object.keys(live.characters).length === 1 ? '' : 's'}.</p><button onClick={() => openLegacyView('campaigns')}>Open Campaign Manager</button></Panel> : null}
-    {tab === 'world' ? <ExistingSystem title="World Systems" copy="World state, events, factions, settlements, merchants, and timeline tools remain available in the static workspace." tab="world" /> : null}
+    {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
+    {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
+    {tab === 'economy' ? <EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/> : null}
+    {tab === 'crafting' ? <CraftingWorkspace workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid"><CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
+    {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} saveSection={saveSection}/> : null}
+    {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
   </AsteriaAppShell>;
 }

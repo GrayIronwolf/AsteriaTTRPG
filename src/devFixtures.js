@@ -15,7 +15,7 @@ export function installDevFixtures() {
     id: DEMO_CAMPAIGN_ID,
     name: 'Shadows of Elarion',
     ucn: '204015717454',
-    gmId: 'gm-demo',
+    gmId: 'gm-demo', ownerUid:'player-demo', gmUids:['player-demo'],
     party: ['kael', 'lyra']
   };
   const characters = {
@@ -80,6 +80,7 @@ export function installDevFixtures() {
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
+  let gmWorkspace=null;
   let partyWorkspace={ sharedNotes:'Meet at the western gate before the next expedition.', questLog:[] };
   let partyChat=[{ id:'chat-1', characterId:'lyra', ownerUid:'player-lyra', characterName:'Lyra', text:'I will bring the healing supplies.', createdAt:new Date().toISOString() }];
   let itemEcosystem={
@@ -87,7 +88,7 @@ export function installDevFixtures() {
     playerItemRequests:[], directTrades:[], partyLoot:[], sharedStorages:[]
   };
   let customItems=[];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], partyWorkspace:[], partyChat:[], itemEcosystem:[], customItems:[] };
+  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], customItems:[] };
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
@@ -100,6 +101,7 @@ export function installDevFixtures() {
     if(key === 'presence') callback(clone(presence));
     if(key === 'events') callback(clone(events));
     if(key === 'encounter') callback(clone(encounter));
+    if(key === 'gmWorkspace') callback(gmWorkspace ? clone(gmWorkspace) : null);
     if(key === 'partyWorkspace') callback(clone(partyWorkspace));
     if(key === 'partyChat') callback(clone(partyChat));
     if(key === 'itemEcosystem') callback(clone(itemEcosystem));
@@ -179,11 +181,16 @@ export function installDevFixtures() {
     subscribeSessionPresence: (_campaignId, _sessionId, callback) => subscribe('presence', callback),
     subscribeCampaignEvents: (_campaignId, callback) => subscribe('events', callback),
     subscribeCampaignEncounter: (_campaignId, callback) => subscribe('encounter', callback),
+    subscribeGMWorkspace: (_campaignId, callback) => subscribe('gmWorkspace', callback),
     subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
+    saveGMWorkspace: async (_campaignId,patch) => { gmWorkspace={...(gmWorkspace||{}),...clone(patch),version:'asteria-react-gm-workspace-v1'};notify('gmWorkspace');return {ok:true}; },
+    assignCampaignQuest: async (_campaignId,quest,ids) => {(ids||[]).forEach(id=>{const character=characters[id];if(!character)return;const quests=[...(character.quests||[])];const index=quests.findIndex(value=>value.id===quest.id);if(index>=0)quests[index]={...quests[index],...clone(quest)};else quests.push(clone(quest));character.quests=quests;});notify('characters');return {ok:true,assigned:(ids||[]).length};},
+    updateCampaignDetails: async (_campaignId,patch) => {Object.assign(campaign,clone(patch));notify('campaign');return {ok:true};},
+    manageCampaignShop: async (_campaignId,action={}) => {const shops=[...(itemEcosystem.shops||[])];const shopId=String(action.shopId||action.shop?.id||'');const index=shops.findIndex(value=>String(value.id)===shopId);if(action.type==='delete'){if(index>=0)shops.splice(index,1);}else if(action.type==='stock'){if(index<0)return {ok:false,error:'Shop not found.'};shops[index].stock=[...(shops[index].stock||[]),{item:clone(action.item),qty:Number(action.quantity||1)}];}else if(action.type==='remove-stock'){if(index>=0)shops[index].stock=(shops[index].stock||[]).filter((_value,row)=>row!==Number(action.stockIndex));}else{const shop={id:shopId||eventId('shop'),name:'Campaign Shop',type:'General Goods',status:'closed',buyModifier:1,sellModifier:1,currencyCopper:100000,visitorCharacterIds:[],stock:[],...clone(action.shop||{})};if(index>=0)shops[index]=shop;else shops.push(shop);}itemEcosystem={...itemEcosystem,shops};notify('itemEcosystem');return {ok:true,shops:clone(shops)};},
     startLiveSession: async () => { const now=Date.now(); session = { ...session, id: session.id || eventId('session'), status: 'active', startedAt:session.startedAt||now, expiresAt:Number(session.expiresAt)>now?session.expiresAt:now+SESSION_LIMIT_MS, maxDurationHours:10 }; notify('session'); return { ok: true, session: clone(session) }; },
     pauseLiveSession: async () => { session = { ...session, status: 'paused' }; notify('session'); return { ok: true }; },
     endLiveSession: async (_campaignId,reason='gm-ended') => { session = { ...session, status: 'ended', endReason:reason, endedAt: Date.now() }; notify('session'); return { ok: true }; },

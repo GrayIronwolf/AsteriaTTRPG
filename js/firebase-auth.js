@@ -57,6 +57,10 @@ function campaignOwner(campaign){
 function campaignDisplayName(){
   return currentProfile?.username || currentProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Asteria Player';
 }
+function currentUserIsCampaignGM(campaign={}){
+  const uid=currentUser?.uid || '';
+  return Boolean(uid && (campaign.ownerUid===uid || (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid))));
+}
 
 function uniqueValues(...lists){
   return Array.from(new Set(lists.flatMap(value => Array.isArray(value) ? value : []).filter(Boolean)));
@@ -903,6 +907,119 @@ const firebasePublicApi = {
       snapshot=>onChange(snapshot.exists() ? Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, snapshot.data()) : { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }),
       error=>reportSyncError('campaign-encounter-listener', error, { campaignId })
     );
+  },
+  subscribeGMWorkspace: function(campaignId,onChange){
+    if(!db || !currentUser || !campaignId || typeof onChange!=='function') return ()=>{};
+    return onSnapshot(
+      doc(db,'campaigns',campaignId,'systems','gmWorkspace'),
+      snapshot=>onChange(snapshot.exists() ? snapshot.data() : null),
+      error=>reportSyncError('gm-workspace-listener',error,{campaignId})
+    );
+  },
+  saveGMWorkspace: async function(campaignId,patch={}){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    try{
+      const campaignRef=doc(db,'campaigns',campaignId);
+      const workspaceRef=doc(db,'campaigns',campaignId,'systems','gmWorkspace');
+      await runTransaction(db,async transaction=>{
+        const campaignSnapshot=await transaction.get(campaignRef);
+        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can update GM systems.');
+        transaction.set(workspaceRef,Object.assign({},cleanData(patch),{
+          version:'asteria-react-gm-workspace-v1',
+          updatedBy:currentUser.uid,
+          updatedAt:serverTimestamp()
+        }),{merge:true});
+      });
+      return {ok:true};
+    }catch(error){
+      reportSyncError('gm-workspace-write',error,{campaignId});
+      return {ok:false,error:error.message||String(error)};
+    }
+  },
+  assignCampaignQuest: async function(campaignId,quest={},characterIds=[]){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    const ids=Array.from(new Set((characterIds||[]).map(String).filter(Boolean)));
+    if(!ids.length) return {ok:false,error:'Choose at least one character.'};
+    try{
+      const campaignRef=doc(db,'campaigns',campaignId);
+      const characterRefs=ids.map(id=>doc(db,'campaigns',campaignId,'characters',id));
+      await runTransaction(db,async transaction=>{
+        const campaignSnapshot=await transaction.get(campaignRef);
+        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can assign quests.');
+        const characterSnapshots=[];
+        for(const characterRef of characterRefs) characterSnapshots.push(await transaction.get(characterRef));
+        characterSnapshots.forEach((snapshot,index)=>{
+          if(!snapshot.exists()) return;
+          const character=Object.assign({},snapshot.data());
+          const quests=Array.isArray(character.quests||character.questLog) ? (character.quests||character.questLog).slice() : [];
+          const questId=String(quest.id||quest.slug||'');
+          const nextQuest=Object.assign({},cleanData(quest),{id:questId,assignedAt:new Date().toISOString(),assignedBy:currentUser.uid});
+          const existing=quests.findIndex(value=>String(value?.id||value?.slug||'')===questId);
+          if(existing>=0) quests[existing]=Object.assign({},quests[existing],nextQuest);
+          else quests.push(nextQuest);
+          transaction.set(characterRefs[index],{quests:cleanData(quests),updatedAt:serverTimestamp()},{merge:true});
+        });
+      });
+      return {ok:true,assigned:ids.length};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  updateCampaignDetails: async function(campaignId,patch={}){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    try{
+      const campaignRef=doc(db,'campaigns',campaignId);
+      await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(campaignRef);
+        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can update campaign details.');
+        const clean={};
+        if(patch.name!==undefined) clean.name=String(patch.name||'').trim().slice(0,160);
+        if(patch.description!==undefined) clean.description=String(patch.description||'').slice(0,20000);
+        if(patch.location!==undefined) clean.location=String(patch.location||'').slice(0,300);
+        if(patch.playerLimit!==undefined) clean.playerLimit=Math.max(1,Math.min(50,Number(patch.playerLimit||6)));
+        transaction.update(campaignRef,Object.assign(clean,{updatedAt:serverTimestamp()}));
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  manageCampaignShop: async function(campaignId,action={}){
+    if(!db || !currentUser || !campaignId) return {ok:false};
+    try{
+      const campaignRef=doc(db,'campaigns',campaignId);
+      const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+      const saved=await runTransaction(db,async transaction=>{
+        const campaignSnapshot=await transaction.get(campaignRef);
+        const ecosystemSnapshot=await transaction.get(ecosystemRef);
+        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can manage shops.');
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const shops=Array.isArray(ecosystem.shops)?ecosystem.shops.slice():[];
+        const shopId=String(action.shopId||action.shop?.id||'');
+        const index=shops.findIndex(value=>String(value.id)===shopId);
+        if(action.type==='delete'){
+          if(index>=0) shops.splice(index,1);
+        }else if(action.type==='stock'){
+          if(index<0) throw new Error('Shop not found.');
+          const item=normalizeMarketPricing(structuredCloneSafe(action.item||{}),{legacy:true,removeLegacy:true,migratedRecord:true});
+          item.name=item.name||item.title||'Item';
+          shops[index].stock=Array.isArray(shops[index].stock)?shops[index].stock:[];
+          shops[index].stock.push({item,qty:Math.max(1,Number(action.quantity||1)),priceCopper:getPlayerPurchasePriceCopper(item,shops[index].buyModifier??1)});
+        }else if(action.type==='remove-stock'){
+          if(index<0) throw new Error('Shop not found.');
+          shops[index].stock=(shops[index].stock||[]).filter((_value,stockIndex)=>stockIndex!==Number(action.stockIndex));
+        }else{
+          const source=Object.assign({},index>=0?shops[index]:{},structuredCloneSafe(action.shop||{}));
+          const shop=Object.assign({
+            id:source.id||`shop-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+            name:'Campaign Shop',type:'General Goods',status:'closed',buyModifier:1,sellModifier:1,
+            currencyCopper:100000,visitorCharacterIds:[],stock:[]
+          },source);
+          shop.name=String(shop.name||'Campaign Shop').trim().slice(0,160);
+          shop.visitorCharacterIds=Array.from(new Set((shop.visitorCharacterIds||[]).map(String)));
+          if(index>=0) shops[index]=shop; else shops.push(shop);
+        }
+        transaction.set(ecosystemRef,Object.assign({},ecosystem,{shops,version:ecosystem.version||'asteria-item-ecosystem-v1',updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        return shops;
+      });
+      return {ok:true,shops:saved};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   subscribePartyWorkspace: function(campaignId,onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};

@@ -11,6 +11,8 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [session, setSession] = useState({ status: 'idle', id: '' });
   const [events, setEvents] = useState([]);
   const [encounter, setEncounter] = useState({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] });
+  const [gmWorkspace, setGMWorkspace] = useState(null);
+  const [gmWorkspaceLoaded, setGMWorkspaceLoaded] = useState(false);
   const [presence, setPresence] = useState({});
   const [partyWorkspace, setPartyWorkspace] = useState({ sharedNotes:'', questLog:[] });
   const [partyChat, setPartyChat] = useState([]);
@@ -49,6 +51,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     let active = true;
     const unsubscribers = [];
     setLoading(true);
+    if(mode === 'gm') { setGMWorkspace(null); setGMWorkspaceLoaded(false); }
     setError('');
     setConnectionState(navigator.onLine ? LIVE_SYNC_STATES.CONNECTING : LIVE_SYNC_STATES.DISCONNECTED);
     waitForFirebase().then(() => {
@@ -75,6 +78,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
         characterId
       }));
       if(mode === 'gm') unsubscribers.push(firebaseService.subscribeEncounter(campaignId, value => setEncounter(value || { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })));
+      if(mode === 'gm') unsubscribers.push(firebaseService.subscribeGMWorkspace(campaignId, value => { setGMWorkspace(value); setGMWorkspaceLoaded(true); }));
     }).catch(reason => {
       if(active){
         setError(reason.message || String(reason));
@@ -125,5 +129,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, liveSession?.id, liveSession?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session:liveSession, events, encounter, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
+  return { campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
 }
