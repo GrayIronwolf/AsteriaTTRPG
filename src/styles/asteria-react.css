@@ -824,6 +824,22 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-item-detail dd { margin: 0; font-weight: 800; }
 .react-custom-loot-form { display: grid; gap: 10px; margin: 12px 0; padding: 12px; border: 1px solid rgba(255,255,255,.14); }
 .react-custom-loot-form > label { display: grid; gap: 5px; }
+.react-custom-loot-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.react-custom-loot-heading h3 { margin: 0; }
+.react-spellbook-picker { display: grid; gap: 9px; }
+.react-spellbook-picker > label { display: grid; gap: 5px; font-size: .8rem; font-weight: 800; text-transform: uppercase; }
+.react-spellbook-picker input { width: 100%; min-height: 40px; }
+.react-spellbook-results { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 7px; max-height: 290px; overflow: auto; padding: 2px; }
+.react-spellbook-results > button { display: grid; grid-template-columns: 52px minmax(0,1fr); align-items: center; gap: 9px; min-width: 0; padding: 8px; text-align: left; }
+.react-spellbook-results > button.active { border-color: var(--asteria-accent,#1f7dff); background: color-mix(in srgb,var(--asteria-accent,#1f7dff) 18%,black); box-shadow: inset 0 0 14px color-mix(in srgb,var(--asteria-accent,#1f7dff) 14%,transparent); }
+.react-spellbook-results > button > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.react-spellbook-results b, .react-spellbook-results small { overflow-wrap: anywhere; }
+.react-spellbook-result-image { display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden; border: 1px solid rgba(89,173,228,.48); background: rgba(0,0,0,.32); }
+.react-spellbook-result-image img { width: 100%; height: 100%; object-fit: contain; }
+.react-selected-spell { display: grid; grid-template-columns: 52px minmax(0,1fr); align-items: center; gap: 10px; padding: 9px; border-left: 3px solid var(--asteria-accent,#1f7dff); background: color-mix(in srgb,var(--asteria-accent,#1f7dff) 10%,transparent); }
+.react-selected-spell > div { display: grid; gap: 2px; min-width: 0; }
+.react-selected-spell small { color: var(--asteria-muted,#9eb2bf); text-transform: uppercase; }
+.react-selected-spell b, .react-selected-spell span { overflow-wrap: anywhere; }
 .react-gm-grant-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .react-gm-grant-grid section { display: grid; align-content: start; gap: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.2); }
 
@@ -860,6 +876,11 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-dashboard-summary-grid { grid-template-columns: 1fr; }
   .react-dashboard-summary-grid > :last-child { grid-column: 1; }
   .react-characteristics-panel { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .react-custom-loot-heading { align-items: stretch; flex-direction: column; }
+  .react-spellbook-results { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {

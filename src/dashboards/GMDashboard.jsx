@@ -6,6 +6,7 @@ import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
+import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
 import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, GameplayWorkspace, NotesWorkspace, QuestWorkspace, WorldWorkspace } from './GMWorkspacePanels.jsx';
 
 const GM_TABS = [
@@ -70,6 +71,25 @@ function SessionActions({ campaignId, session, busy, run }) {
 }
 
 function slug(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+
+const EMPTY_CUSTOM_REWARD = {
+  name:'',
+  type:'Item',
+  itemClass:'Common',
+  description:'',
+  marketValue:0,
+  marketPrice:0,
+  isSpellbook:false
+};
+
+function spellCompendiumEntries() {
+  const api = window.AsteriaUniversalCompendium;
+  const source = api?.search?.('', { domain:'spell', includeGM:true })
+    || api?.entries?.().filter(entry => entry.domain === 'spell')
+    || window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries?.filter(entry => entry.domain === 'spell')
+    || [];
+  return normalizeSpellCompendiumEntries(source);
+}
 
 function encounterSources() {
   const codex = window.AsteriaCodexCompendium?.creatureEntries?.() || [];
@@ -230,8 +250,13 @@ function LootRewards({ campaignId, characters, events, customItems }) {
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
   const [customMode,setCustomMode]=useState(false);
-  const [custom,setCustom]=useState({name:'',type:'Item',itemClass:'Common',description:'',marketValue:0,marketPrice:0,isSpellbook:false,spellName:'',element:''});
+  const [custom,setCustom]=useState(EMPTY_CUSTOM_REWARD);
+  const [spellSearch,setSpellSearch]=useState('');
+  const [selectedSpellId,setSelectedSpellId]=useState('');
   const [message,setMessage]=useState('');
+  const spellCatalog=useMemo(spellCompendiumEntries,[]);
+  const selectedSpell=spellCatalog.find(spell=>spell.id===selectedSpellId)||null;
+  const spellResults=spellCatalog.filter(spell=>`${spell.name} ${spell.element} ${spell.rank}`.toLowerCase().includes(spellSearch.toLowerCase())).slice(0,12);
   const customPricing=validateMarketPricing(custom);
   const results = catalog.filter(entry => String(entry.title || entry.name || '').toLowerCase().includes(search.toLowerCase())).slice(0, 8);
   useEffect(() => { if(!target && Object.keys(characters)[0]) setTarget(Object.keys(characters)[0]); }, [characters, target]);
@@ -243,8 +268,54 @@ function LootRewards({ campaignId, characters, events, customItems }) {
     setMessage(result?.ok?'Unidentified reward sent.':result?.error||'Reward could not be sent.');
     setBusy(false); setItem(null); setSearch('');
   };
-  const createAndSend=async()=>{if(!target||!custom.name.trim()||!customPricing.valid){setMessage(customPricing.errors[0]||'Complete the custom item.');return;}setBusy(true);const source={...custom,spell:custom.isSpellbook?{name:custom.spellName||custom.name,element:custom.element,rank:'Rank I'}:null,basicName:custom.isSpellbook?'Book':custom.type||'Item'};const created=await firebaseService.createCustomItem(campaignId,source);if(created?.ok){const result=await firebaseService.createLootReward(campaignId,target,{...created.item,qty:quantity},{message:custom.isSpellbook?'The GM awarded an unidentified spellbook.':'The GM awarded an unidentified custom item.'});setMessage(result?.ok?'Custom reward added to the shared catalog and sent.':result?.error||'Reward could not be sent.');if(result?.ok){setCustom({...custom,name:'',description:'',spellName:''});setCustomMode(false);}}else setMessage(created?.error||'Custom item could not be created.');setBusy(false);};
-  return <Panel title="Party Loot" eyebrow="GM Loot Tool" className="react-loot-panel">
+  const selectSpell=spell=>{
+    setSelectedSpellId(spell.id);
+    setCustom(value=>({
+      ...value,
+      name:`${spell.name} Spellbook`,
+      type:'Spellbook',
+      isSpellbook:true,
+      description:spell.summary
+    }));
+  };
+  const toggleSpellbook=checked=>{
+    setSelectedSpellId('');
+    setSpellSearch('');
+    setCustom(value=>({
+      ...value,
+      name:'',
+      type:checked?'Spellbook':'Item',
+      description:'',
+      isSpellbook:checked
+    }));
+  };
+  const resetCustomReward=()=>{
+    setCustom(EMPTY_CUSTOM_REWARD);
+    setSelectedSpellId('');
+    setSpellSearch('');
+    setCustomMode(false);
+  };
+  const createAndSend=async()=>{
+    if(!target){setMessage('Choose a recipient.');return;}
+    if(custom.isSpellbook&&!selectedSpell){setMessage('Select a spell from the Spell Compendium.');return;}
+    if(!custom.name.trim()||!customPricing.valid){setMessage(customPricing.errors[0]||'Complete the custom item.');return;}
+    setBusy(true);
+    try{
+      const source=custom.isSpellbook
+        ? buildSpellbookItem(selectedSpell,custom)
+        : {...custom,basicName:custom.type||'Item'};
+      const created=await firebaseService.createCustomItem(campaignId,source);
+      if(!created?.ok){setMessage(created?.error||'Custom item could not be created.');return;}
+      const result=await firebaseService.createLootReward(campaignId,target,{...created.item,qty:quantity},{message:custom.isSpellbook?'The GM awarded an unidentified spellbook.':'The GM awarded an unidentified custom item.'});
+      setMessage(result?.ok?'Custom reward added to the shared catalog and sent.':result?.error||'Reward could not be sent.');
+      if(result?.ok) resetCustomReward();
+    }catch(error){
+      setMessage(error.message||String(error));
+    }finally{
+      setBusy(false);
+    }
+  };
+  return <Panel title="Loot Reward" eyebrow="GM Reward Tool" className="react-loot-panel">
     <div className="react-form-grid">
       <label>Recipient<select value={target} onChange={event => setTarget(event.target.value)}>{Object.values(characters).map(character => <option key={character.id} value={character.id}>{character.name}</option>)}</select></label>
       <label>Search Item Compendium<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search exact item..." /></label>
@@ -252,7 +323,24 @@ function LootRewards({ campaignId, characters, events, customItems }) {
     </div>
     {search ? <div className="react-search-results">{results.map(entry => <button key={entry.slug || entry.id || entry.title} onClick={() => setItem(entry)} className={item === entry ? 'active' : ''}>{entry.title || entry.name}</button>)}</div> : null}
     <div className="react-action-row"><button className="primary" disabled={busy || !item || !target} onClick={send}>{busy ? 'Sending...' : `Send ${item?.title || item?.name || 'Reward'}`}</button><button disabled={busy} onClick={()=>setCustomMode(value=>!value)}>{customMode?'Cancel Custom Item':'Create Custom Item / Spellbook'}</button></div>
-    {customMode?<div className="react-custom-loot-form"><div className="react-form-grid"><label>Name<input value={custom.name} onChange={event=>setCustom(value=>({...value,name:event.target.value}))}/></label><label>Type<input value={custom.type} onChange={event=>setCustom(value=>({...value,type:event.target.value}))}/></label><label>Item Class<select value={custom.itemClass} onChange={event=>setCustom(value=>({...value,itemClass:event.target.value}))}>{['Common','Uncommon','Unusual','Rare','Epic','Mythic','Legendary','Relic'].map(value=><option key={value}>{value}</option>)}</select></label></div><fieldset className="react-market-form"><legend>Market Information</legend><div className="react-form-grid"><label>Market Value <small>Marks received when selling</small><input type="number" min="0" step="0.01" value={custom.marketValue} onChange={event=>setCustom(value=>({...value,marketValue:Number(event.target.value||0)}))}/></label><label>Market Price <small>Marks paid when purchasing</small><input type="number" min="0" step="0.01" value={custom.marketPrice} onChange={event=>setCustom(value=>({...value,marketPrice:Number(event.target.value||0)}))}/></label></div>{!customPricing.valid?<p className="react-storage-warning">{customPricing.errors[0]}</p>:custom.marketValue===0&&custom.marketPrice===0?<p className="react-help">0 / 0 marks this item as Not Normally Tradeable.</p>:null}</fieldset><label>Description<textarea rows="4" value={custom.description} onChange={event=>setCustom(value=>({...value,description:event.target.value}))}/></label><label className="react-check-row"><input type="checkbox" checked={custom.isSpellbook} onChange={event=>setCustom(value=>({...value,isSpellbook:event.target.checked,type:event.target.checked?'Spellbook':value.type}))}/>Create as elemental spellbook</label>{custom.isSpellbook?<div className="react-form-grid"><label>Spell Name<input value={custom.spellName} onChange={event=>setCustom(value=>({...value,spellName:event.target.value}))}/></label><label>Magic Element<input value={custom.element} onChange={event=>setCustom(value=>({...value,element:event.target.value}))}/></label></div>:null}<button className="primary" disabled={busy||!target||!custom.name.trim()||!customPricing.valid} onClick={createAndSend}>Create in Compendium & Send</button></div>:null}
+    {customMode?<div className="react-custom-loot-form">
+      <div className="react-custom-loot-heading"><h3>{custom.isSpellbook?'Create Spellbook':'Create Custom Item'}</h3><label className="react-check-row"><input type="checkbox" checked={custom.isSpellbook} onChange={event=>toggleSpellbook(event.target.checked)}/>Spellbook from Spell Compendium</label></div>
+      {custom.isSpellbook?<section className="react-spellbook-picker" aria-label="Spell Compendium search">
+        <label>Search Spell Compendium<input type="search" value={spellSearch} onChange={event=>setSpellSearch(event.target.value)} placeholder="Search by spell name, element, or rank..."/></label>
+        <div className="react-spellbook-results" role="listbox" aria-label="Spell Compendium results">
+          {spellResults.map(spell=><button type="button" role="option" aria-selected={selectedSpellId===spell.id} className={selectedSpellId===spell.id?'active':''} key={spell.id} onClick={()=>selectSpell(spell)}>
+            <span className="react-spellbook-result-image">{spell.image?<img src={spell.image} alt="" loading="lazy"/>:<span>{spell.name.charAt(0)}</span>}</span>
+            <span><b>{spell.name}</b><small>{spell.element} | {spell.rank}{spell.manaCost?` | ${spell.manaCost}`:''}</small></span>
+          </button>)}
+          {!spellResults.length?<EmptyState title={spellCatalog.length?'No matching spells':'Spell Compendium unavailable'}>{spellCatalog.length?'Try another spell name, element, or rank.':'No spell records were available to create a spellbook.'}</EmptyState>:null}
+        </div>
+        {selectedSpell?<div className="react-selected-spell" role="status"><span className="react-spellbook-result-image">{selectedSpell.image?<img src={selectedSpell.image} alt=""/>:<span>{selectedSpell.name.charAt(0)}</span>}</span><div><small>Selected Spell</small><b>{selectedSpell.name}</b><span>{selectedSpell.element} | {selectedSpell.rank}{selectedSpell.manaCost?` | ${selectedSpell.manaCost}`:''}</span></div></div>:<p className="react-help">Select one compendium spell to bind into the new book.</p>}
+      </section>:null}
+      <div className="react-form-grid"><label>{custom.isSpellbook?'Spellbook Name':'Name'}<input value={custom.name} placeholder={custom.isSpellbook?'Select a spell to create its book':''} onChange={event=>setCustom(value=>({...value,name:event.target.value}))}/></label><label>Type<input value={custom.type} readOnly={custom.isSpellbook} onChange={event=>setCustom(value=>({...value,type:event.target.value}))}/></label><label>Item Class<select value={custom.itemClass} onChange={event=>setCustom(value=>({...value,itemClass:event.target.value}))}>{['Common','Uncommon','Unusual','Rare','Epic','Mythic','Legendary','Relic'].map(value=><option key={value}>{value}</option>)}</select></label></div>
+      <fieldset className="react-market-form"><legend>Market Information</legend><div className="react-form-grid"><label>Market Value <small>Marks received when selling</small><input type="number" min="0" step="0.01" value={custom.marketValue} onChange={event=>setCustom(value=>({...value,marketValue:Number(event.target.value||0)}))}/></label><label>Market Price <small>Marks paid when purchasing</small><input type="number" min="0" step="0.01" value={custom.marketPrice} onChange={event=>setCustom(value=>({...value,marketPrice:Number(event.target.value||0)}))}/></label></div>{!customPricing.valid?<p className="react-storage-warning">{customPricing.errors[0]}</p>:custom.marketValue===0&&custom.marketPrice===0?<p className="react-help">0 / 0 marks this item as Not Normally Tradeable.</p>:null}</fieldset>
+      <label>Description<textarea rows="4" value={custom.description} onChange={event=>setCustom(value=>({...value,description:event.target.value}))}/></label>
+      <button className="primary" disabled={busy||!target||!custom.name.trim()||!customPricing.valid||(custom.isSpellbook&&!selectedSpell)} onClick={createAndSend}>{custom.isSpellbook?'Create Spellbook & Send':'Create in Compendium & Send'}</button>
+    </div>:null}
     <p>{message}</p>
     <div className="react-delivery-list">{events.filter(event => event.type === 'loot-reward').slice(0, 6).map(event => <div key={event.id}><b>{event.payload?.item?.name || 'Item'}</b><span>{characters[event.targetCharacterId]?.name || 'Character'}</span><StatusPill tone={event.status === 'pending' ? 'pending' : 'success'}>{event.status || 'pending'}</StatusPill></div>)}</div>
   </Panel>;

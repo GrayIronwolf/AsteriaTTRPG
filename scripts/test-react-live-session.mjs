@@ -31,6 +31,7 @@ import { liveSyncPresentation } from '../src/state/liveSyncState.mjs';
 import { GM_WORKSPACE_VERSION, migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../src/state/gmWorkspaceModel.mjs';
 import { MAGIC_ELEMENT_SYMBOL_SLUGS, magicElementImage } from '../src/data/magicElementSymbols.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue, soulHealingCap } from '../src/state/specialDamageModel.mjs';
+import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../src/state/spellbookModel.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -653,6 +654,31 @@ test('62. Soul Damage seals HP and recovers only through the long-rest flow', ()
   assert.match(gm,/Apply Soul Damage/);
   assert.match(gm,/Recover Soul Damage/);
   assert.match(ui,/react-resource-reserved/);
+});
+
+test('63. GM Loot Reward creates spellbooks from canonical Compendium spells', () => {
+  const index=JSON.parse(read('data/universal-compendium-index.json'));
+  const spells=normalizeSpellCompendiumEntries(index.entries.filter(entry=>entry.domain==='spell'));
+  assert.equal(spells.length>=3,true);
+  const heal=spells.find(spell=>spell.name==='Heal — Weak');
+  assert.equal(heal.element,'Life Magic');
+  assert.equal(heal.rank,'Weak');
+  assert.equal(heal.image,'assets/magic-elements/life-spells.png');
+  const book=buildSpellbookItem(heal,{itemClass:'Uncommon',marketValue:10,marketPrice:15});
+  assert.equal(book.name,'Heal — Weak Spellbook');
+  assert.equal(book.basicName,'Book');
+  assert.equal(book.isSpellbook,true);
+  assert.equal(book.spell.name,'Heal — Weak');
+  assert.equal(book.spell.element,'Life Magic');
+  assert.equal(book.spell.rank,'Weak');
+  assert.equal(book.compendiumSpellSlug,'heal-weak');
+  const gm=read('src/dashboards/GMDashboard.jsx');
+  assert.match(gm,/title="Loot Reward"/);
+  assert.doesNotMatch(gm,/title="Party Loot"/);
+  assert.match(gm,/Search Spell Compendium/);
+  assert.match(gm,/normalizeSpellCompendiumEntries/);
+  assert.match(gm,/buildSpellbookItem/);
+  assert.doesNotMatch(gm,/Spell Name<input|Magic Element<input/);
 });
 
 let failed = 0;
