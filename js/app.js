@@ -2429,7 +2429,7 @@ const ASTERIA_MAGIC_TYPES_V1722={
   earth:{label:'Earth',cls:'magic-earth',desc:'Green',spells:[['Stoneguard','4 MP','Earth Magic'],['Root Grip','5 MP','Earth Magic']]},
   fire:{label:'Fire',cls:'magic-fire',desc:'Red',spells:[['Ember Bolt','4 MP','Fire Magic'],['Cinder Ward','3 MP','Fire Magic']]},
   water:{label:'Water',cls:'magic-water',desc:'Blue',spells:[['Ripple Mend','4 MP','Water Magic'],['Tide Push','5 MP','Water Magic']]},
-  life:{label:'Life',cls:'magic-life',desc:'Yellow',spells:[['Living Spark','5 MP','Life Magic']]},
+  life:{label:'Life',cls:'magic-life',desc:'Yellow',spells:[['Heal — Weak','45 MP','Life Magic'],['Heal — Minor','70 MP','Life Magic']]},
   death:{label:'Death',cls:'magic-death',desc:'Purple',spells:[['Grave Whisper','5 MP','Death Magic']]},
   light:{label:'Light',cls:'magic-light',desc:'White',spells:[['Healing Light','6 MP','Light Magic'],['Radiant Mark','4 MP','Light Magic']]},
   dark:{label:'Dark',cls:'magic-dark',desc:'Black',spells:[['Shadow Veil','4 MP','Dark Magic']]},
@@ -2915,7 +2915,8 @@ function v1724SpellRank(spell){
 }
 function v1724SpellImageHtml(spell){
   const entry=spell.entry||v1724SpellEntry(spell.name,spell.school);
-  const image=entry?.imagePath||entry?.image||entry?.metadata?.image;
+  const elementImage=spell.type?.image||window.ASTERIA_MAGIC_LIBRARY?.bySlug?.[v1724Slug(spell.school)]?.image||'';
+  const image=entry?.imagePath||entry?.image||entry?.metadata?.image||elementImage;
   if(image)return `<img src="${escapeHtml(image)}" alt="${escapeHtml(spell.name)}">`;
   return `<span>${escapeHtml(String(spell.name||'?').charAt(0).toUpperCase())}</span>`;
 }

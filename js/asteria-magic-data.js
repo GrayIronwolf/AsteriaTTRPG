@@ -6,7 +6,7 @@
     earth:[['Stoneguard','4 MP','Earth Magic'],['Root Grip','5 MP','Earth Magic']],
     water:[['Ripple Mend','4 MP','Water Magic'],['Tide Push','5 MP','Water Magic']],
     fire:[['Ember Bolt','4 MP','Fire Magic'],['Cinder Ward','3 MP','Fire Magic']],
-    life:[['Living Spark','5 MP','Life Magic']],
+    life:[['Heal — Weak','45 MP','Life Magic'],['Heal — Minor','70 MP','Life Magic']],
     death:[['Grave Whisper','5 MP','Death Magic']],
     light:[['Healing Light','6 MP','Light Magic'],['Radiant Mark','4 MP','Light Magic']],
     dark:[['Shadow Veil','4 MP','Dark Magic']],
@@ -48,6 +48,8 @@
     ['Abyssal Magic','abyssal','#020713','Obsidian Blue','Deep black with abyssal blue undertones, pulses faintly like a heartbeat.','Nyhlomancer']
   ];
 
+  const symbolSlugs = new Set(['air','blood','celestial','chaos','dark','death','earth','eldritch','fae','fate','fire','infernal','life','light','space','spirit','time','water']);
+
   function entry(tuple, group){
     const [name, slug, color, colourName, description, mancer] = tuple;
     return {
@@ -60,6 +62,7 @@
       colourName,
       mancer,
       cls:`magic-${slug}`,
+      image:symbolSlugs.has(slug) ? `assets/magic-elements/${slug}-spells.png` : '',
       desc:colourName,
       description,
       spells:spellSamples[slug] || []

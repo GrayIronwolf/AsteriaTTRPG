@@ -8,6 +8,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 
 const firebaseConfig = {
@@ -633,7 +634,7 @@ async function requireCampaignGM(transaction,campaignId){
   const campaign=snapshot.data();
   const uid=currentUser?.uid || '';
   const allowed=campaign.ownerUid===uid || campaign.roles?.[uid]==='gm' || (campaign.gmUids||[]).includes(uid);
-  if(!allowed) throw new Error('Only a GM for this campaign can change Armour Class modifiers.');
+  if(!allowed) throw new Error('Only a GM for this campaign can make this change.');
   return campaign;
 }
 function liveCharacterRefs(campaignId,characterId){
@@ -1471,7 +1472,7 @@ const firebasePublicApi = {
           const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
           const changes=Object.entries(parsed).filter(([resource,amount])=>['hp','sp','mp','bp'].includes(resource)&&Number(amount)>0);
           if(!changes.length) throw new Error('This item does not have a usable resource effect.');
-          changes.forEach(([resource,amount])=>{const pair=Array.isArray(character[resource])?character[resource]:[0,0];character[resource]=[Math.min(Number(pair[1]||0),Number(pair[0]||0)+Number(amount)),Number(pair[1]||0)];});
+          changes.forEach(([resource,amount])=>{const pair=Array.isArray(character[resource])?character[resource]:[0,0];const requested=Number(pair[0]||0)+Number(amount);character[resource]=[resource==='hp'?clampHpForSoulDamage(character,requested):Math.min(Number(pair[1]||0),requested),Number(pair[1]||0)];});
           item.qty=Math.max(0,Number(item.qty||1)-1);
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
@@ -2131,7 +2132,8 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
     const resource=String(key || '').toLowerCase();
     if(!['hp','sp','mp','bp'].includes(resource)) throw new Error('Unsupported character resource.');
-    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const characterRef=refs.campaign;
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
     try{
       const result=await runTransaction(db, async transaction=>{
@@ -2142,7 +2144,8 @@ const firebasePublicApi = {
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const pair=Array.isArray(character[resource]) ? character[resource] : [0,resource === 'bp' ? 20 : 0];
         const maximum=Math.max(0,Number(pair[1] || 0));
-        const current=Math.max(0,Math.min(maximum,Number(pair[0] || 0) + Number(amount || 0)));
+        const requested=Number(pair[0] || 0) + Number(amount || 0);
+        const current=resource==='hp' ? clampHpForSoulDamage(character,requested) : Math.max(0,Math.min(maximum,requested));
         const next=[current,maximum];
         character[resource]=next;
         writeLiveCharacter(transaction,refs,character);
@@ -2158,6 +2161,72 @@ const firebasePublicApi = {
     }catch(error){
       reportSyncError('campaign-resource-transaction', error, { campaignId, characterId, resource });
       return { ok:false, applied:false, error:error.message || String(error) };
+    }
+  },
+  updateCampaignSpecialDamage: async function(campaignId,target={},amount,mode='apply',metadata={}){
+    if(!db || !currentUser || !campaignId || !target?.id) return {ok:false};
+    const delta=Math.max(0,Math.floor(Number(amount||0)));
+    if(!delta) return {ok:false,error:'Soul Damage amount must be greater than zero.'};
+    const operation=String(mode||'apply').toLowerCase();
+    if(!['apply','recover'].includes(operation)) return {ok:false,error:'Unsupported Soul Damage action.'};
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
+        if(String(target.kind||'character')==='creature'){
+          const encounterRef=doc(db,'campaigns',campaignId,'systems','encounter');
+          const snapshot=await transaction.get(encounterRef);
+          if(!snapshot.exists()) throw new Error('The encounter is not available.');
+          const encounter=structuredCloneSafe(snapshot.data());
+          let saved=null;
+          const update=value=>{
+            if(String(value.id)!==String(target.id)) return value;
+            const changed=operation==='recover'?recoverSoulDamage(value,delta,metadata.source||'GM Dashboard'):applySoulDamage(value,delta,metadata.source||'GM Dashboard');
+            saved=changed;
+            return changed.entity;
+          };
+          encounter.enemies=(Array.isArray(encounter.enemies)?encounter.enemies:[]).map(update);
+          encounter.combatants=(Array.isArray(encounter.combatants)?encounter.combatants:[]).map(update);
+          if(!saved) throw new Error('The encounter creature was not found.');
+          transaction.set(encounterRef,Object.assign({},cleanData(encounter),{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+          return {applied:saved.applied||0,recovered:saved.recovered||0,soulDamage:saved.soulDamage,hp:saved.entity.hp};
+        }
+        const characterRef=doc(db,'campaigns',campaignId,'characters',target.id);
+        const snapshot=await transaction.get(characterRef);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({id:target.id},snapshot.data());
+        const changed=operation==='recover'?recoverSoulDamage(character,delta,metadata.source||'GM Dashboard'):applySoulDamage(character,delta,metadata.source||'GM Dashboard');
+        appendActivity(changed.entity,{type:'soul-damage',message:operation==='recover'?`${changed.recovered} Soul Damage recovered naturally.`:`${changed.applied} Soul Damage taken.`});
+        transaction.set(characterRef,Object.assign({},cleanData(changed.entity),{updatedAt:serverTimestamp()}),{merge:true});
+        return {applied:changed.applied||0,recovered:changed.recovered||0,soulDamage:changed.soulDamage,hp:changed.entity.hp};
+      });
+      return {ok:true,...result};
+    }catch(error){
+      reportSyncError('campaign-special-damage',error,{campaignId,target,amount:delta,mode:operation});
+      return {ok:false,error:error.message||String(error)};
+    }
+  },
+  takeCampaignCharacterRest: async function(campaignId,characterId,type='short',metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const restType=String(type||'short').toLowerCase();
+    if(!['short','long'].includes(restType)) return {ok:false,error:'Choose a short or long rest.'};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        const rested=applyRest(character,restType,restType==='long'?Number(metadata.soulRecovery||0):0);
+        appendActivity(rested.entity,{type:`${restType}-rest`,message:`${restType==='long'?'Long':'Short'} Rest completed${rested.recoveredSoul?`; ${rested.recoveredSoul} Soul Damage recovered naturally`:''}.`});
+        writeLiveCharacter(transaction,refs,rested.entity);
+        return {type:restType,recoveredSoul:rested.recoveredSoul,soulDamage:rested.soulDamage,hp:rested.entity.hp,sp:rested.entity.sp,mp:rested.entity.mp};
+      });
+      return {ok:true,...result};
+    }catch(error){
+      reportSyncError('campaign-character-rest',error,{campaignId,characterId,type:restType});
+      return {ok:false,error:error.message||String(error)};
     }
   },
   updateCampaignCharacterCurrency: async function(campaignId, characterId, key, amount, metadata={}){

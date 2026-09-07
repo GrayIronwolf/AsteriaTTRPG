@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '..');
 const contentRoot = path.join(root, 'content');
 const outputPath = path.join(root, 'data', 'compendium-index-clean.json');
 const itemClasses = ['Common','Uncommon','Unusual','Rare','Epic','Mythic','Legendary','Relic'];
+const magicElementSymbolSlugs = new Set(['air','blood','celestial','chaos','dark','death','earth','eldritch','fae','fate','fire','infernal','life','light','space','spirit','time','water']);
 const includedRoots = new Set([
   'Asteria Handbook',
   'Asteria Systems',
@@ -150,9 +151,9 @@ function sectionFromCategory(category, metadata = {}) {
   return 'Asteria Handbook';
 }
 
-function titleFromBody(file, body) {
+function titleFromBody(file, body, metadata = {}) {
   const heading = String(body || '').match(/^#\s+(.+)$/m);
-  return heading ? heading[1].trim() : path.basename(file, '.md');
+  return metadata.title || (heading ? heading[1].trim() : path.basename(file, '.md'));
 }
 
 function descriptionFromBody(markdown) {
@@ -216,9 +217,15 @@ function structuredItemPlacement(parts, metadata = {}, title = '') {
 
 function imagePathFor(file, metadata) {
   const image = metadata.image || metadata.icon || metadata.artwork || '';
-  if (!image) return '';
-  const imageFile = path.join(path.dirname(file), image);
-  return fs.existsSync(imageFile) ? `content/${toWebPath(path.relative(contentRoot, imageFile))}` : '';
+  if (image) {
+    const imageFile = path.join(path.dirname(file), image);
+    if (fs.existsSync(imageFile)) return `content/${toWebPath(path.relative(contentRoot, imageFile))}`;
+  }
+  const elementValue = metadata.magicalElement || metadata.magicType || metadata.magic_type || metadata.element || '';
+  const element = slugify(String(elementValue).replace(/\s+magic$/i, ''));
+  const isSpell = String(metadata.type || '').toLowerCase() === 'spell' || arrayValue(metadata.tags).some(tag => String(tag).toLowerCase() === 'spell');
+  const symbol = path.join(root, 'assets', 'magic-elements', `${element}-spells.png`);
+  return isSpell && magicElementSymbolSlugs.has(element) && fs.existsSync(symbol) ? `assets/magic-elements/${element}-spells.png` : '';
 }
 
 function entryFromFile(file) {
@@ -235,7 +242,7 @@ function entryFromFile(file) {
   if (String(metadata.visibility || 'public').toLowerCase().includes('gm')) return null;
 
   const body = stripFrontmatter(content);
-  const title = titleFromBody(file, body);
+  const title = titleFromBody(file, body, metadata);
   const structuredPlacement = structuredItemPlacement(parts, metadata, title);
   if (structuredPlacement?.skip) return null;
   let categoryPath = structuredPlacement?.categoryPath || parts.slice(0, -1);

@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DashboardPanel, Modal, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
+import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
+import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
-import { quests as selectQuests } from './characterWorkspaceData.js';
+import { knownSpells, quests as selectQuests } from './characterWorkspaceData.js';
 
 function values(value) {
   return Array.isArray(value) ? value : [];
@@ -189,6 +190,48 @@ function ConditionsSummary({ conditions, style }) {
   return <DashboardPanel icon="info" title="Conditions" compact className="react-overview-conditions" style={style}><div className="react-condition-list">{conditions.map((condition, index) => { const entry = record(condition); return <StatusPill key={entry.id || entry.name || index}>{entry.name}</StatusPill>; })}{!conditions.length ? <p className="react-quiet-state">No active conditions.</p> : null}</div></DashboardPanel>;
 }
 
+function SpecialDamagePanel({ character, style }) {
+  const soulDamage = soulDamageValue(character);
+  const [hpCurrent, hpMaximum] = resourcePair(character.hp);
+  return <DashboardPanel icon="soul" title="Special Damage" compact className="react-overview-special-damage" style={style}>
+    <div className="react-special-damage-summary">
+      <div className="react-special-damage-type"><span aria-hidden="true">S</span><div><b>Soul Damage</b><small>{soulDamage ? `${soulDamage} HP sealed` : 'No Soul Damage'}</small></div><strong>{soulDamage}</strong></div>
+      <ResourceBar label="HP after Soul Damage" kind="hp" value={hpCurrent} maximum={hpMaximum} reserved={soulDamage} />
+      <p className="react-special-damage-copy">Soul Damage cannot be restored by spells, enchantments, potions, or ordinary HP healing. It recovers only through time during a long rest.</p>
+      {soulDamage ? <StatusPill tone="pending">Healing cap {soulHealingCap(character)} HP</StatusPill> : <StatusPill tone="success">Soul intact</StatusPill>}
+    </div>
+  </DashboardPanel>;
+}
+
+function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }) {
+  const soulDamage = soulDamageValue(character);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recovery, setRecovery] = useState(0);
+  const takeRest = async (type, soulRecovery = 0) => run(() => firebaseService.takeRest(campaignId, character.id, type, { soulRecovery, source:'Character Dashboard' }));
+  const requestLongRest = () => {
+    if(!soulDamage) return takeRest('long');
+    setRecovery(0);
+    setShowRecovery(true);
+  };
+  const applyLongRest = async () => {
+    const result = await takeRest('long', Math.max(0, Math.min(soulDamage, Number(recovery || 0))));
+    if(result?.ok) setShowRecovery(false);
+  };
+  return <DashboardPanel icon="rest" title="Rest & Recovery" compact className="react-overview-rest" style={style}>
+    <div className="react-rest-actions"><button disabled={!editable || busy} type="button" onClick={() => takeRest('short')}>Short Rest</button><button className="primary" disabled={!editable || busy} type="button" onClick={requestLongRest}>Long Rest</button></div>
+    <p className="react-special-damage-copy">Short Rest restores 35% SP. Long Rest restores 50% HP and MP, plus all SP. Remaining Soul Damage continues to cap HP.</p>
+    {soulDamage ? <StatusPill tone="pending">{soulDamage} Soul Damage requires time</StatusPill> : <StatusPill tone="success">No Soul recovery required</StatusPill>}
+    {showRecovery ? <Modal title="Long Rest Soul Recovery" eyebrow="Natural Recovery" busy={busy} onClose={() => setShowRecovery(false)} footer={<><button disabled={busy} type="button" onClick={() => setShowRecovery(false)}>Cancel</button><button className="primary" disabled={busy} type="button" onClick={applyLongRest}>Apply Long Rest</button></>}>
+      <div className="react-soul-recovery-form">
+        <p>Soul Damage can recover only through the natural passage of time. Enter the amount recovered during this long rest.</p>
+        <ResourceBar label="Current Soul Damage" kind="hp" value={resourcePair(character.hp)[0]} maximum={resourcePair(character.hp)[1]} reserved={soulDamage} />
+        <label>Soul Damage Recovered<input autoFocus type="number" min="0" max={soulDamage} value={recovery} onChange={event => setRecovery(Math.max(0, Math.min(soulDamage, Number(event.target.value || 0))))} /></label>
+        <small>{soulDamage} Soul Damage currently recorded. The Soul Damage System or GM determines the natural recovery amount.</small>
+      </div>
+    </Modal> : null}
+  </DashboardPanel>;
+}
+
 function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
   const currentQuests = selectQuests(character, partyWorkspace).filter(quest => String(quest.status || 'Active').toLowerCase() === 'active').slice(0, 3);
   const journals = values(character.journal).slice().sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)).slice(0, 3);
@@ -204,7 +247,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const talents = values(character.unlockedTalents || character.talents).map(record).filter(talent => talent.unlocked !== false);
-  const spells = values(character.spells || character.activeSpells).map(record);
+  const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
   const conditions = values(character.conditions).map(record);
   const preferences = normalizeDashboardPreferences(character);
@@ -231,7 +274,9 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
       {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
       {visible('conditions') ? <ConditionsSummary conditions={conditions} style={{ order:order('conditions') }} /> : null}
-      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 1 }} /> : null}
+      <SpecialDamagePanel character={character} style={{ order:order('conditions') + 1 }} />
+      <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run} style={{ order:order('conditions') + 2 }} />
+      {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 3 }} /> : null}
     </div>
     <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
     <p className="react-action-message" role="status">{message}</p>

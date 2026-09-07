@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, '..');
 const outputJs = path.join(root, 'js', 'universal-compendium-index.js');
 const outputJson = path.join(root, 'data', 'universal-compendium-index.json');
 const contentExtensions = new Set(['.md', '.mdx']);
+const magicElementSymbolSlugs = new Set(['air','blood','celestial','chaos','dark','death','earth','eldritch','fae','fate','fire','infernal','life','light','space','spirit','time','water']);
 
 const supportedRoots = [
   'content',
@@ -379,6 +380,12 @@ function titleCase(value) {
     .trim();
 }
 
+function magicElementSymbolPath(metadata = {}) {
+  const value = metadata.magicalElement || metadata.magicType || metadata.magic_type || metadata.element || '';
+  const element = slugify(String(value).replace(/\s+magic$/i, ''));
+  return magicElementSymbolSlugs.has(element) ? `assets/magic-elements/${element}-spells.png` : '';
+}
+
 function detectDomain(parts, metadata = {}) {
   const explicit = String(metadata.type || metadata.domain || metadata.compendium || metadata.kingdom || '').toLowerCase();
   const joined = parts.join(' ').toLowerCase();
@@ -516,6 +523,7 @@ function entryFromMarkdown(filePath, rootName) {
   const categoryPath = categoryPartsFor(filePath, domain, rootName, metadata);
   const sourceFolder = relativeWebPath(dir);
   const images = findImages(dir, metadata);
+  if (domain === 'spell' && !images.image && !images.symbol) images.symbol = magicElementSymbolPath(metadata);
   const visibility = String(metadata.visibility || metadata.status || 'public').toLowerCase();
   const gmOnly = visibility.includes('gm') || metadata.gmOnly === true || metadata.gm_only === true;
 

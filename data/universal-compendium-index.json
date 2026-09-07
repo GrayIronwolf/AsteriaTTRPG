@@ -1,6 +1,6 @@
 {
   "version": "asteria-phase-2-content-database-expansion",
-  "generatedAt": "2026-08-25T14:59:38.032Z",
+  "generatedAt": "2026-09-02T14:22:00.837Z",
   "domains": {
     "race": "Race Compendium",
     "class": "Class Compendium",
@@ -49465,8 +49465,10 @@
       ],
       "visibility": "public",
       "gmOnly": false,
-      "images": {},
-      "imagePath": "",
+      "images": {
+        "symbol": "assets/magic-elements/light-spells.png"
+      },
+      "imagePath": "assets/magic-elements/light-spells.png",
       "related": [],
       "filters": {
         "category": "Light",
@@ -49481,6 +49483,144 @@
         "visibility": "public"
       },
       "searchTerms": "arcane spark spell arcane light {\"title\":\"arcane spark\",\"slug\":\"arcane-spark\",\"type\":\"spell\",\"spellschool\":\"arcane\",\"magictype\":\"light\",\"element\":[\"aether\"],\"rank\":\"novice\",\"castingtype\":\"action\",\"damagetype\":\"radiant\",\"manacost\":2,\"visibility\":\"public\",\"tags\":[\"spell\",\"arcane\",\"light\"]} # arcane spark\n\n## overview\na small snap of focused arcane light, useful for signaling, distraction, or minor magical impact.\n\n## casting\ninformation coming soon.\n\n## scaling\ninformation coming soon.\n\n## lore\ninformation coming soon.\n\n## sources\ninformation coming soon.\n\n## gm notes\nhidden campaign notes can be added here."
+    },
+    {
+      "id": "spell:content-spells-life-magic-healing-heal-minor",
+      "title": "Heal — Minor",
+      "slug": "heal-minor",
+      "type": "spell",
+      "domain": "spell",
+      "compendium": "Spell Compendium",
+      "workspaceSection": "Magic",
+      "categoryPath": [
+        "Life Magic"
+      ],
+      "category": "Life Magic",
+      "route": "/compendium/spell/life-magic/heal-minor",
+      "sourcePath": "content/Spells/Life Magic/Healing/Heal — Minor.md",
+      "sourceFolder": "content/Spells/Life Magic/Healing",
+      "content": "---\ntags:\n  - Spell\n  - Enchantment\ntitle: Heal — Minor\ntype: Spell\nMagical Element: Life Magic\nSpell Type: Healing\nSpell Rank: Minor\nMana Cost: 70 MP\nRange: Touch\nDuration: Instantaneous\nDamage: None\nEnchantment Available: Yes\nEnchantment Rank: Minor\nEnchantment Type: Mana Activated\nMarket Value:\nMarket Price:\n---\n## Description\n\nHeal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Minor form of Heal channels a stronger concentration of Life Magic than Weak Heal, allowing the caster to restore more serious wounds and injuries through direct physical contact with the target.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 2D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment\n\n## Enchantment Description & Effects\n\n**Heal — Minor** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Minor Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Minor** spell.\n\nThe user spends the normal Mana Cost of Heal — Minor and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Minor\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Weak Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 20 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Minor casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Minor Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Minor normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Minor.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Minor.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nMinor Heal is a reliable restorative Life spell used to mend injuries beyond the capabilities of basic healing magic.\n",
+      "body": "## Description\n\nHeal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Minor form of Heal channels a stronger concentration of Life Magic than Weak Heal, allowing the caster to restore more serious wounds and injuries through direct physical contact with the target.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 2D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment\n\n## Enchantment Description & Effects\n\n**Heal — Minor** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Minor Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Minor** spell.\n\nThe user spends the normal Mana Cost of Heal — Minor and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Minor\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Weak Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 20 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Minor casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Minor Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Minor normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Minor.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Minor.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nMinor Heal is a reliable restorative Life spell used to mend injuries beyond the capabilities of basic healing magic.",
+      "sections": {
+        "Overview": "",
+        "Description": "Heal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Minor form of Heal channels a stronger concentration of Life Magic than Weak Heal, allowing the caster to restore more serious wounds and injuries through direct physical contact with the target.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 2D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment",
+        "Enchantment Description & Effects": "**Heal — Minor** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Minor Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Minor** spell.\n\nThe user spends the normal Mana Cost of Heal — Minor and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Minor\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Weak Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 20 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Minor casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Minor Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Minor normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Minor.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Minor.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nMinor Heal is a reliable restorative Life spell used to mend injuries beyond the capabilities of basic healing magic."
+      },
+      "tabs": [
+        "Overview",
+        "Casting",
+        "Scaling",
+        "Lore",
+        "Sources",
+        "GM Notes"
+      ],
+      "summary": "Heal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality. The Minor form of Heal channels a stronger concentration of Life Magic than Weak Heal, allowing the caster to restore more serious wounds and injuries thr",
+      "metadata": {
+        "tags": [
+          "Spell",
+          "Enchantment"
+        ],
+        "title": "Heal — Minor",
+        "type": "Spell",
+        "magicalElement": "Life Magic",
+        "spellType": "Healing",
+        "spellRank": "Minor",
+        "manaCost": "70 MP",
+        "range": "Touch",
+        "duration": "Instantaneous",
+        "damage": "None",
+        "enchantmentAvailable": "Yes",
+        "enchantmentRank": "Minor",
+        "enchantmentType": "Mana Activated",
+        "marketValue": "",
+        "marketPrice": ""
+      },
+      "tags": [
+        "Spell",
+        "Enchantment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "symbol": "assets/magic-elements/life-spells.png"
+      },
+      "imagePath": "assets/magic-elements/life-spells.png",
+      "related": [],
+      "filters": {
+        "category": "Life Magic",
+        "loreStatus": "Common Knowledge",
+        "rank": "Minor"
+      },
+      "searchTerms": "heal — minor spell life magic {\"tags\":[\"spell\",\"enchantment\"],\"title\":\"heal — minor\",\"type\":\"spell\",\"magicalelement\":\"life magic\",\"spelltype\":\"healing\",\"spellrank\":\"minor\",\"manacost\":\"70 mp\",\"range\":\"touch\",\"duration\":\"instantaneous\",\"damage\":\"none\",\"enchantmentavailable\":\"yes\",\"enchantmentrank\":\"minor\",\"enchantmenttype\":\"mana activated\",\"marketvalue\":\"\",\"marketprice\":\"\"} ## description\n\nheal channels life magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nthe minor form of heal channels a stronger concentration of life magic than weak heal, allowing the caster to restore more serious wounds and injuries through direct physical contact with the target.\n\n- **status effect:** healing\n- **target:** 1 living creature\n- **area of effect:** none\n- **saving throw / check:** none\n- **healing:** 2d10\n\nthe target immediately restores the listed amount of **hp** when the spell is successfully cast.\n\nheal cannot restore hp beyond the target's **maximum hp**.\n\n# enchantment\n\n## enchantment description & effects\n\n**heal — minor** can be permanently bound to a suitable item, allowing the wielder or wearer to channel minor heal through the enchanted item.\n\nwhen activated, the enchantment reproduces the effects of the corresponding **heal — minor** spell.\n\nthe user spends the normal mana cost of heal — minor and must touch the intended creature with the enchanted item.\n\nthe target immediately receives the normal healing provided by the spell.\n\n### enchantment requirements\n\n- **enchantment rank:** minor\n- **activation type:** mana activated\n- **soul stone required:** weak soul stone or higher\n- **powdered crystal required:** 1 measure (100 g)\n- **enchanting time:** 20 minutes\n- **enchanting mana cost:** 2 × heal — minor casting mana cost\n\n### enchantment properties\n\n- permanently binds minor heal to the enchanted item.\n- requires mana to activate.\n- activation costs the same mana as casting heal — minor normally.\n- does not use charges.\n- restores the same amount of hp as heal — minor.\n- healing cannot exceed the target's maximum hp.\n- the enchanted item acts as the point through which the healing magic is channelled.\n\n### enchantment limitations\n\n- requires physical contact with the target.\n- cannot heal beyond maximum hp.\n- does not reduce the normal mana cost of heal — minor.\n- does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- does not regenerate missing body parts unless specifically stated by another effect.\n- the enchantment is permanent once successfully applied.\n\n---\n\n# lore\n\nminor heal is a reliable restorative life spell used to mend injuries beyond the capabilities of basic healing magic."
+    },
+    {
+      "id": "spell:content-spells-life-magic-healing-heal-weak",
+      "title": "Heal — Weak",
+      "slug": "heal-weak",
+      "type": "spell",
+      "domain": "spell",
+      "compendium": "Spell Compendium",
+      "workspaceSection": "Magic",
+      "categoryPath": [
+        "Life Magic"
+      ],
+      "category": "Life Magic",
+      "route": "/compendium/spell/life-magic/heal-weak",
+      "sourcePath": "content/Spells/Life Magic/Healing/Heal — Weak.md",
+      "sourceFolder": "content/Spells/Life Magic/Healing",
+      "content": "---\ntags:\n  - Spell\n  - Enchantment\ntitle: Heal — Weak\ntype: Spell\nMagical Element: Life Magic\nSpell Type: Healing\nSpell Rank: Weak\nMana Cost: 45 MP\nRange: Touch\nDuration: Instantaneous\nDamage: None\nEnchantment Available: Yes\nEnchantment Rank: Weak\nEnchantment Type: Mana Activated\nMarket Value: 34 Gold\nMarket Price: 40 Gold\n---\n## Description\n\nHeal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Weak form of Heal is a basic restorative spell intended for treating minor wounds and injuries. The caster must make physical contact with the target and channel Life Magic directly into them.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 1D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment\n\n## Enchantment Description & Effects\n\n**Heal — Weak** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Weak Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Weak** spell.\n\nThe user spends the normal Mana Cost of Heal — Weak and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Weak\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Poor Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 10 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Weak casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Weak Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Weak normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Weak.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Weak.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nWeak Heal is among the most fundamental forms of Life Magic, commonly learned by healers and adventurers for treating minor injuries.\n",
+      "body": "## Description\n\nHeal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Weak form of Heal is a basic restorative spell intended for treating minor wounds and injuries. The caster must make physical contact with the target and channel Life Magic directly into them.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 1D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment\n\n## Enchantment Description & Effects\n\n**Heal — Weak** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Weak Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Weak** spell.\n\nThe user spends the normal Mana Cost of Heal — Weak and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Weak\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Poor Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 10 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Weak casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Weak Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Weak normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Weak.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Weak.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nWeak Heal is among the most fundamental forms of Life Magic, commonly learned by healers and adventurers for treating minor injuries.",
+      "sections": {
+        "Overview": "",
+        "Description": "Heal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nThe Weak form of Heal is a basic restorative spell intended for treating minor wounds and injuries. The caster must make physical contact with the target and channel Life Magic directly into them.\n\n- **Status Effect:** Healing\n- **Target:** 1 Living Creature\n- **Area of Effect:** None\n- **Saving Throw / Check:** None\n- **Healing:** 1D10\n\nThe target immediately restores the listed amount of **HP** when the spell is successfully cast.\n\nHeal cannot restore HP beyond the target's **Maximum HP**.\n\n# Enchantment",
+        "Enchantment Description & Effects": "**Heal — Weak** can be permanently bound to a suitable item, allowing the wielder or wearer to channel Weak Heal through the enchanted item.\n\nWhen activated, the enchantment reproduces the effects of the corresponding **Heal — Weak** spell.\n\nThe user spends the normal Mana Cost of Heal — Weak and must touch the intended creature with the enchanted item.\n\nThe target immediately receives the normal healing provided by the spell.\n\n### Enchantment Requirements\n\n- **Enchantment Rank:** Weak\n- **Activation Type:** Mana Activated\n- **Soul Stone Required:** Poor Soul Stone or higher\n- **Powdered Crystal Required:** 1 Measure (100 g)\n- **Enchanting Time:** 10 minutes\n- **Enchanting Mana Cost:** 2 × Heal — Weak casting Mana Cost\n\n### Enchantment Properties\n\n- Permanently binds Weak Heal to the enchanted item.\n- Requires Mana to activate.\n- Activation costs the same Mana as casting Heal — Weak normally.\n- Does not use Charges.\n- Restores the same amount of HP as Heal — Weak.\n- Healing cannot exceed the target's Maximum HP.\n- The enchanted item acts as the point through which the healing magic is channelled.\n\n### Enchantment Limitations\n\n- Requires physical contact with the target.\n- Cannot heal beyond Maximum HP.\n- Does not reduce the normal Mana Cost of Heal — Weak.\n- Does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- Does not regenerate missing body parts unless specifically stated by another effect.\n- The enchantment is permanent once successfully applied.\n\n---\n\n# Lore\n\nWeak Heal is among the most fundamental forms of Life Magic, commonly learned by healers and adventurers for treating minor injuries."
+      },
+      "tabs": [
+        "Overview",
+        "Casting",
+        "Scaling",
+        "Lore",
+        "Sources",
+        "GM Notes"
+      ],
+      "summary": "Heal channels Life Magic into a living creature, restoring damaged tissue and replenishing lost vitality. The Weak form of Heal is a basic restorative spell intended for treating minor wounds and injuries. The caster must make physical contact with the target ",
+      "metadata": {
+        "tags": [
+          "Spell",
+          "Enchantment"
+        ],
+        "title": "Heal — Weak",
+        "type": "Spell",
+        "magicalElement": "Life Magic",
+        "spellType": "Healing",
+        "spellRank": "Weak",
+        "manaCost": "45 MP",
+        "range": "Touch",
+        "duration": "Instantaneous",
+        "damage": "None",
+        "enchantmentAvailable": "Yes",
+        "enchantmentRank": "Weak",
+        "enchantmentType": "Mana Activated",
+        "marketValue": "34 Gold",
+        "marketPrice": "40 Gold"
+      },
+      "tags": [
+        "Spell",
+        "Enchantment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "symbol": "assets/magic-elements/life-spells.png"
+      },
+      "imagePath": "assets/magic-elements/life-spells.png",
+      "related": [],
+      "filters": {
+        "category": "Life Magic",
+        "loreStatus": "Common Knowledge",
+        "rank": "Weak"
+      },
+      "searchTerms": "heal — weak spell life magic {\"tags\":[\"spell\",\"enchantment\"],\"title\":\"heal — weak\",\"type\":\"spell\",\"magicalelement\":\"life magic\",\"spelltype\":\"healing\",\"spellrank\":\"weak\",\"manacost\":\"45 mp\",\"range\":\"touch\",\"duration\":\"instantaneous\",\"damage\":\"none\",\"enchantmentavailable\":\"yes\",\"enchantmentrank\":\"weak\",\"enchantmenttype\":\"mana activated\",\"marketvalue\":\"34 gold\",\"marketprice\":\"40 gold\"} ## description\n\nheal channels life magic into a living creature, restoring damaged tissue and replenishing lost vitality.\n\nthe weak form of heal is a basic restorative spell intended for treating minor wounds and injuries. the caster must make physical contact with the target and channel life magic directly into them.\n\n- **status effect:** healing\n- **target:** 1 living creature\n- **area of effect:** none\n- **saving throw / check:** none\n- **healing:** 1d10\n\nthe target immediately restores the listed amount of **hp** when the spell is successfully cast.\n\nheal cannot restore hp beyond the target's **maximum hp**.\n\n# enchantment\n\n## enchantment description & effects\n\n**heal — weak** can be permanently bound to a suitable item, allowing the wielder or wearer to channel weak heal through the enchanted item.\n\nwhen activated, the enchantment reproduces the effects of the corresponding **heal — weak** spell.\n\nthe user spends the normal mana cost of heal — weak and must touch the intended creature with the enchanted item.\n\nthe target immediately receives the normal healing provided by the spell.\n\n### enchantment requirements\n\n- **enchantment rank:** weak\n- **activation type:** mana activated\n- **soul stone required:** poor soul stone or higher\n- **powdered crystal required:** 1 measure (100 g)\n- **enchanting time:** 10 minutes\n- **enchanting mana cost:** 2 × heal — weak casting mana cost\n\n### enchantment properties\n\n- permanently binds weak heal to the enchanted item.\n- requires mana to activate.\n- activation costs the same mana as casting heal — weak normally.\n- does not use charges.\n- restores the same amount of hp as heal — weak.\n- healing cannot exceed the target's maximum hp.\n- the enchanted item acts as the point through which the healing magic is channelled.\n\n### enchantment limitations\n\n- requires physical contact with the target.\n- cannot heal beyond maximum hp.\n- does not reduce the normal mana cost of heal — weak.\n- does not automatically remove diseases, poisons, curses, conditions, or other status effects.\n- does not regenerate missing body parts unless specifically stated by another effect.\n- the enchantment is permanent once successfully applied.\n\n---\n\n# lore\n\nweak heal is among the most fundamental forms of life magic, commonly learned by healers and adventurers for treating minor injuries."
     },
     {
       "id": "talent:content-classes-druid-talents-tier-5-ancient-avatar-index",

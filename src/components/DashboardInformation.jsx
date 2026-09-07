@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar } from './WorkspaceUI.jsx';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
 import { CHARACTERISTICS, characteristicTier, characteristicValue, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
+import { soulDamageValue } from '../state/specialDamageModel.mjs';
 import { ASTERIA_CURRENCIES, currencyDefinitionFor } from '../systems/currency/currencyConfig.mjs';
 
 function firstValue(...values) {
@@ -108,7 +109,7 @@ function resourcePair(value) {
   return [Number(value || 0), Number(value || 0)];
 }
 
-function ResourceControl({ label, resource, value, editable, onResourceChange }) {
+function ResourceControl({ label, resource, value, editable, onResourceChange, reserved = 0 }) {
   const [amount, setAmount] = useState(1);
   const [busy, setBusy] = useState(false);
   const pair = resourcePair(value);
@@ -119,7 +120,7 @@ function ResourceControl({ label, resource, value, editable, onResourceChange })
     finally { setBusy(false); }
   };
   return <div className="react-player-resource-row">
-    <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact />
+    <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact reserved={reserved} />
     <div className="react-player-resource-controls" aria-label={`${label} manual adjustment`}>
       <input aria-label={`${label} change amount`} disabled={!editable || busy} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} />
       <button aria-label={`Remove ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(-1)} type="button">-</button>
@@ -169,15 +170,16 @@ export function ExperienceBar({ character = {} }) {
 }
 
 export function ResourceBarGroup({ character = {}, editable, onResourceChange }) {
+  const soulDamage = soulDamageValue(character);
   const resources = [
-    ['HP', 'hp', character.hp || [0, 0]],
-    ['MP', 'mp', character.mp || [0, 0]],
-    ['SP', 'sp', character.sp || [0, 0]]
+    ['HP', 'hp', character.hp || [0, 0], soulDamage],
+    ['MP', 'mp', character.mp || [0, 0], 0],
+    ['SP', 'sp', character.sp || [0, 0], 0]
   ];
-  if(isBloodhunter(character) || Array.isArray(character.bp)) resources.push(['BP', 'bp', character.bp || [0, 20]]);
+  if(isBloodhunter(character) || Array.isArray(character.bp)) resources.push(['BP', 'bp', character.bp || [0, 20], 0]);
   return <section className="react-player-topbar-section react-player-resources" aria-label="Character resources">
     <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="use" /><span>Core Resources</span></div>
-    <div className="react-player-resource-list">{resources.map(([label, resource, value]) => <ResourceControl key={resource} label={label} resource={resource} value={value} editable={editable} onResourceChange={onResourceChange} />)}</div>
+    <div className="react-player-resource-list">{resources.map(([label, resource, value, reserved]) => <ResourceControl key={resource} label={label} resource={resource} value={value} reserved={reserved} editable={editable} onResourceChange={onResourceChange} />)}</div>
   </section>;
 }
 

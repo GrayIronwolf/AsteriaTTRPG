@@ -355,7 +355,13 @@
 
   function titleFromPage(page, body) {
     const heading = String(body || '').match(/^#\s+(.+)$/m);
-    return heading ? heading[1].trim() : (page.title || 'Untitled');
+    return page.title || (heading ? heading[1].trim() : 'Untitled');
+  }
+
+  function magicElementImage(value) {
+    const library = window.ASTERIA_MAGIC_LIBRARY;
+    const key = library?.slugFor?.(value) || slugify(String(value || '').replace(/\s+magic$/i, ''));
+    return library?.bySlug?.[key]?.image || '';
   }
 
   function descriptionFromBody(body) {
@@ -422,6 +428,7 @@
       marketPriceSourceText: metadata.marketPriceSourceText || metadata.market_price_source_text || '',
       damage: metadata.damage || '',
       content: page.content || '',
+      imagePath: metadata.image || (lower(type) === 'spell' ? magicElementImage(metadata.magicalElement || metadata.magicType || metadata.element) : ''),
       searchTerms: lower([page.title, page.category, page.content, JSON.stringify(metadata)].join(' '))
     };
   }
@@ -990,6 +997,7 @@
     if (entry.section === 'Races') return `clean-card clean-race-card clean-race-${entry.playable ? 'playable' : 'non-playable'}`;
     if (entry.section === 'Items') return `clean-card clean-item-card clean-rarity-${slugify(entry.rarity || 'common')}`;
     if (entry.section === 'Theology') return `clean-card clean-theology-card clean-section-theology`;
+    if (entry.section === 'Magic' && lower(entry.type) === 'spell') return `clean-card clean-generic-card clean-spell-card clean-section-magic`;
     return `clean-card clean-generic-card clean-section-${slugify(entry.section)}`;
   }
 
@@ -1058,11 +1066,30 @@
     `;
   }
 
+  function spellElement(entry) {
+    return entry.metadata?.magicalElement || entry.metadata?.magicType || entry.metadata?.magic_type || entry.metadata?.element || entry.category || 'Magic';
+  }
+
+  function spellCardBody(entry) {
+    const element = spellElement(entry);
+    const image = entry.imagePath || magicElementImage(element);
+    const imageMarkup = image
+      ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(element)} symbol" loading="lazy" decoding="async">`
+      : `<span aria-hidden="true">${escapeHtml(initialsForTitle(element))}</span>`;
+    const rank = entry.metadata?.spellRank || entry.metadata?.rank || '';
+    return `
+      <span class="clean-tag">${escapeHtml(entry.type || 'Spell')}</span>
+      <div class="clean-spell-card-image">${imageMarkup}</div>
+      <h3>${escapeHtml(entry.title)}</h3>
+      <div class="clean-card-subtitle">${escapeHtml(element)}${rank ? ` &bull; ${escapeHtml(rank)}` : ''}</div>
+    `;
+  }
+
   function card(entry) {
     const element = document.createElement('article');
     element.className = cardClass(entry);
     element.tabIndex = 0;
-    element.innerHTML = entry.section === 'Races' ? raceCardBody(entry) : entry.section === 'Items' ? itemCardBody(entry) : entry.section === 'Theology' ? theologyCardBody(entry) : genericCardBody(entry);
+    element.innerHTML = entry.section === 'Races' ? raceCardBody(entry) : entry.section === 'Items' ? itemCardBody(entry) : entry.section === 'Theology' ? theologyCardBody(entry) : entry.section === 'Magic' && lower(entry.type) === 'spell' ? spellCardBody(entry) : genericCardBody(entry);
     element.onclick = () => {
       qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
       element.classList.add('selected');
@@ -1138,6 +1165,7 @@
               ${group.elements.map(element => `
                 <article class="clean-magic-element-card" role="button" tabindex="0" data-magic-element="${escapeHtml(element.slug)}" style="--magic-color:${escapeHtml(element.color || element.cssColor || '#19d9ff')}">
                   <span>${escapeHtml(element.label || element.name)}</span>
+                  ${element.image ? `<div class="clean-magic-element-symbol"><img src="${escapeHtml(element.image)}" alt="${escapeHtml(element.name)} symbol" loading="lazy" decoding="async"></div>` : ''}
                   <h4>${escapeHtml(element.name)}</h4>
                   <p>${escapeHtml(element.desc || 'Magic information coming soon.')}</p>
                 </article>
@@ -1175,6 +1203,7 @@
         eyebrow:element.group || 'Magic Element',
         title:element.name,
         subtitle:'Magic Compendium Element',
+        image:element.image || '',
         meta:`<span class="item-chip">${escapeHtml(element.group || 'Magic')}</span>`,
         body
       });

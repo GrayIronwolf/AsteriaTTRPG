@@ -1,4 +1,5 @@
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
+import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
@@ -25,6 +26,7 @@ export function installDevFixtures() {
       image: 'assets/races/cavern-sprite/cavern-sprite-male-adult.png',
       gallery: [{ id:'gallery-kael-1', url:'assets/races/cavern-sprite/cavern-sprite-male-adult.png', name:'Cavern Sprite Portrait' }],
       hp: [74, 96], sp: [60, 80], mp: [110, 140], xp: 11800, xpMax: 16000,
+      specialDamage: { soul:{ type:'Soul Damage', value:18, recovery:'time-only' } },
       cp: 4, tp: 18, magicTypes: ['Light', 'Space', 'Life'],
       characteristics: { str: 12, dex: 18, agi: 17, con: 16, end: 15, int: 20, wis: 14, cha: 11, lck: 13 },
       equipment: {
@@ -44,7 +46,8 @@ export function installDevFixtures() {
       spells: [
         { name: 'Arcane Edge', element: 'Light', cost: 4 },
         { name: 'Mana Step', element: 'Space', cost: 6 },
-        { name: 'Mending Spark', element: 'Life', cost: 3 }
+        { name: 'Heal — Weak', element: 'Life', rank:'Weak', cost:'45 MP' },
+        { name: 'Heal — Minor', element: 'Life', rank:'Minor', cost:'70 MP' }
       ],
       skills: [{ name: 'Engineering', rankName: 'Adept' }, { name: 'Alchemy', rankName: 'Journeyman' }, { name: 'Perception', rankName: 'Apprentice' }],
       racialTraits: [{ name:'Mana Sensitive', description:'Cavern Sprites can sense nearby magical currents.', effects:['Detect nearby active magic.'] }],
@@ -226,7 +229,24 @@ export function installDevFixtures() {
       notify('events'); return { ok:true, applied:true };
     },
     updateCampaignCharacterResource: async (_campaignId, characterId, key, amount) => {
-      updateCharacter(characterId,character=>{const resource=character[key];if(Array.isArray(resource))resource[0]=Math.max(0,Math.min(resource[1],resource[0]+Number(amount||0)));return character;});return {ok:true};
+      updateCharacter(characterId,character=>{const resource=character[key];if(Array.isArray(resource)){const requested=resource[0]+Number(amount||0);resource[0]=key==='hp'?clampHpForSoulDamage(character,requested):Math.max(0,Math.min(resource[1],requested));}return character;});return {ok:true};
+    },
+    updateCampaignSpecialDamage: async (_campaignId,target,amount,mode='apply') => {
+      requireFixtureSession();
+      let changed;
+      const update=value=>{if(String(value.id)!==String(target.id))return value;changed=mode==='recover'?recoverSoulDamage(value,amount,'GM Dashboard'):applySoulDamage(value,amount,'GM Dashboard');return changed.entity;};
+      if(target.kind==='creature'){
+        encounter={...encounter,enemies:(encounter.enemies||[]).map(update),combatants:(encounter.combatants||[]).map(update)};
+        notify('encounter');
+      }else{
+        updateCharacter(target.id,character=>update(character));
+      }
+      return changed?{ok:true,applied:changed.applied||0,recovered:changed.recovered||0,soulDamage:changed.soulDamage,hp:changed.entity.hp}:{ok:false,error:'Target not found.'};
+    },
+    takeCampaignCharacterRest: async (_campaignId,characterId,type='short',metadata={}) => {
+      let rested;
+      updateCharacter(characterId,character=>{rested=applyRest(character,type,type==='long'?Number(metadata.soulRecovery||0):0);return rested.entity;});
+      return {ok:true,type:rested.type,recoveredSoul:rested.recoveredSoul,soulDamage:rested.soulDamage,hp:rested.entity.hp,sp:rested.entity.sp,mp:rested.entity.mp};
     },
     updateCampaignCharacterCurrency: async (_campaignId, characterId, key, amount) => {
       updateCharacter(characterId,character=>{
@@ -319,7 +339,7 @@ export function installDevFixtures() {
         }
         if(operation.type==='identify'){if(!characterKnowsIdentify(next))throw new Error('Identify spell required.');item.identified=true;item.name=item.trueName||item.name;}
         if(operation.type==='read-spellbook'){if(item.identified===false)throw new Error('Identify this book first.');next.spells=[...(next.spells||[]),clone(item.spell||{name:item.trueName||item.name})];item.qty-=1;}
-        if(operation.type==='use'){item.qty=Math.max(0,Number(item.qty||1)-1);for(const [resource,amount] of Object.entries(item.effect||{})){if(Array.isArray(next[resource]))next[resource][0]=Math.min(next[resource][1],next[resource][0]+Number(amount||0));}}
+        if(operation.type==='use'){item.qty=Math.max(0,Number(item.qty||1)-1);for(const [resource,amount] of Object.entries(item.effect||{})){if(Array.isArray(next[resource])){const requested=next[resource][0]+Number(amount||0);next[resource][0]=resource==='hp'?clampHpForSoulDamage(next,requested):Math.min(next[resource][1],requested);}}}
         next.inventory=items.filter(value=>Number(value.qty||1)>0);return next;
       });return {ok:true};
     },

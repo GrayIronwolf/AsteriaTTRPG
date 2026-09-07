@@ -492,6 +492,48 @@
   font-size: .72rem;
 }
 
+.clean-spell-card {
+  display: grid;
+  grid-template-rows: auto 92px auto auto;
+  gap: 8px;
+  align-content: start;
+  min-height: 214px;
+  text-align: center;
+}
+
+.clean-spell-card .clean-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.clean-spell-card-image {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 24%, transparent);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .22);
+  overflow: hidden;
+}
+
+.clean-spell-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.clean-spell-card-image span {
+  color: rgba(255, 244, 214, .7);
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.clean-spell-card h3 {
+  margin: 0;
+}
+
 .clean-magic-elements-wrap {
   display: grid;
   gap: 18px;
@@ -564,6 +606,20 @@
   text-transform: uppercase;
   letter-spacing: .08em;
   font-size: .68rem;
+}
+
+.clean-magic-element-symbol {
+  display: grid;
+  place-items: center;
+  height: 84px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.clean-magic-element-symbol img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .clean-magic-element-card h4 {

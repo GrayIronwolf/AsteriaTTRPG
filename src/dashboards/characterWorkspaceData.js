@@ -1,5 +1,6 @@
 import { SKILL_RANKS, normalizeLiveItem, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
 import { getMarketPrice, getMarketValue } from '../systems/items/marketPricing.mjs';
+import { magicElementImage } from '../data/magicElementSymbols.mjs';
 
 export function list(value) {
   if(Array.isArray(value)) return value;
@@ -88,9 +89,10 @@ export function knownSpells(character = {}) {
   return source.map((spell,index)=>{
     const name=spell.name || spell.title || String(spell);
     const entry=universalEntries('spell').find(value=>slug(value.title||value.name)===slug(name));
+    const element=spell.element || spell.magicType || entry?.metadata?.magicalElement || entry?.metadata?.element || entry?.metadata?.magicType || 'Unaligned';
     return {
-      id:spell.id || entry?.id || slug(name) || `spell-${index}`, name, image:spell.image || entry?.imagePath || entry?.metadata?.image || '',
-      element:spell.element || spell.magicType || entry?.metadata?.element || entry?.metadata?.magicType || 'Unaligned',
+      id:spell.id || entry?.id || slug(name) || `spell-${index}`, name, image:spell.image || entry?.imagePath || entry?.metadata?.image || magicElementImage(element),
+      element,
       rank:spell.rank || entry?.metadata?.rank || 'Rank I', cost:spell.cost ?? spell.manaCost ?? entry?.metadata?.manaCost ?? entry?.metadata?.cost ?? 0,
       costs:spell.costs || spell.resourceCosts || null, summary:spell.summary || entry?.summary || 'Spell information coming soon.', body:entry?.body || entry?.content || ''
     };

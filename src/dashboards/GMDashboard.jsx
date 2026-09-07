@@ -5,6 +5,7 @@ import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
+import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, GameplayWorkspace, NotesWorkspace, QuestWorkspace, WorldWorkspace } from './GMWorkspacePanels.jsx';
 
 const GM_TABS = [
@@ -26,10 +27,11 @@ function progression(character = {}) {
 function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }) {
   const xp = progression(character);
   const armour = useArmourClass(character);
+  const soulDamage = soulDamageValue(character);
   const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
   return <button className={`react-party-card ${selected ? 'active' : ''}`} type="button" onClick={onSelect} onDoubleClick={onOpen}>
     <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
-    <ResourceBar compact label="HP" kind="hp" value={character.hp?.[0]} maximum={character.hp?.[1]} />
+    <ResourceBar compact label="HP" kind="hp" value={character.hp?.[0]} maximum={character.hp?.[1]} reserved={soulDamage} />
     <ResourceBar compact label="SP" kind="sp" value={character.sp?.[0]} maximum={character.sp?.[1]} />
     <ResourceBar compact label="MP" kind="mp" value={character.mp?.[0]} maximum={character.mp?.[1]} />
     {Array.isArray(character.bp) ? <ResourceBar compact label="BP" kind="bp" value={character.bp[0]} maximum={character.bp[1]} /> : null}
@@ -119,8 +121,42 @@ function CampaignEncounter({ campaignId, characters, encounter }) {
     <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{Object.keys(characters).length} players</StatusPill><span>{message}</span></div>
     <div className="react-encounter-builder">
       <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<input type="number" min="1" max="20" value={quantity} onChange={event => setQuantity(Math.max(1, Number(event.target.value || 1)))} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>
-      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small></div><input aria-label={`${entry.name} initiative`} type="number" value={Number(entry.initiative || 0)} onChange={event => updateCombatant(entry.id, { initiative:Number(event.target.value || 0) })} />{entry.kind === 'enemy' ? <button title="Toggle defeated" onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
+      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small>{entry.kind === 'enemy' && Array.isArray(entry.hp) ? <ResourceBar compact label="HP" kind="hp" value={entry.hp[0]} maximum={entry.hp[1]} reserved={soulDamageValue(entry)} /> : null}</div><input aria-label={`${entry.name} initiative`} type="number" value={Number(entry.initiative || 0)} onChange={event => updateCombatant(entry.id, { initiative:Number(event.target.value || 0) })} />{entry.kind === 'enemy' ? <button title="Toggle defeated" onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
     </div>
+  </Panel>;
+}
+
+function SpecialDamageControl({ campaignId, characters, encounter }) {
+  const targets = [
+    ...Object.values(characters).map(character => ({ key:`character:${character.id}`, kind:'character', id:character.id, name:character.name || 'Character', record:character })),
+    ...(encounter?.enemies || []).map(enemy => ({ key:`creature:${enemy.id}`, kind:'creature', id:enemy.id, name:enemy.name || 'Creature', record:enemy }))
+  ];
+  const [targetKey, setTargetKey] = useState('');
+  const [amount, setAmount] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    if(!targets.some(target => target.key === targetKey)) setTargetKey(targets[0]?.key || '');
+  }, [targetKey, characters, encounter]);
+  const target = targets.find(value => value.key === targetKey);
+  const hp = resourcePair(target?.record?.hp);
+  const soulDamage = soulDamageValue(target?.record);
+  const update = async mode => {
+    if(!target || Number(amount) <= 0) return setMessage('Choose a target and enter an amount.');
+    setBusy(true);
+    setMessage(mode === 'recover' ? 'Recovering Soul Damage...' : 'Applying Soul Damage...');
+    const result = await firebaseService.updateSpecialDamage(campaignId, { kind:target.kind, id:target.id }, Number(amount), mode, { source:'GM Dashboard' });
+    setMessage(result?.ok ? `${target.name}: ${result.soulDamage} Soul Damage remains.` : result?.error || 'Soul Damage could not be updated.');
+    setBusy(false);
+  };
+  return <Panel title="Special Damage" eyebrow="Soul Damage Control" icon="soul" className="react-gm-special-damage" action={target ? <StatusPill tone={soulDamage ? 'pending' : 'success'}>{soulDamage} Soul</StatusPill> : null}>
+    {!targets.length ? <EmptyState title="No available targets">Linked characters and encounter creatures appear here.</EmptyState> : <>
+      <div className="react-form-grid"><label>Player or Creature<select value={targetKey} onChange={event => setTargetKey(event.target.value)}>{targets.map(value => <option key={value.key} value={value.key}>{value.kind === 'creature' ? 'Creature' : 'Player'} | {value.name}</option>)}</select></label><label>Amount<input type="number" min="1" max={Math.max(1, hp[1])} value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} /></label></div>
+      <div className="react-gm-special-target"><ResourceBar label={`${target?.name || 'Target'} HP`} kind="hp" value={hp[0]} maximum={hp[1]} reserved={soulDamage} /><span>{soulDamage ? `${soulDamage} HP is sealed. Ordinary healing is capped at ${soulHealingCap(target.record)} HP.` : 'No Soul Damage is recorded.'}</span></div>
+      <div className="react-gm-special-actions"><button className="danger" disabled={busy || !target} onClick={() => update('apply')}>Apply Soul Damage</button><button disabled={busy || !target || !soulDamage} onClick={() => update('recover')}>Recover Soul Damage</button></div>
+      <p className="react-special-damage-copy">Soul Damage cannot be magically healed. Recovery represents natural time passing and should follow the Soul Damage System.</p>
+    </>}
+    <p className="react-action-message" role="status">{message}</p>
   </Panel>;
 }
 
@@ -308,6 +344,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'main' ? <div className="react-gm-main-grid">
       <CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
+      <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
     </div> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}

@@ -65,13 +65,16 @@ export function Tabs({ tabs, active, onChange, ariaLabel = 'Workspace sections' 
 
 export const DashboardNavigation = Tabs;
 
-export const ResourceBar = memo(function ResourceBar({ label, value, maximum, kind, compact = false }) {
+export const ResourceBar = memo(function ResourceBar({ label, value, maximum, kind, compact = false, reserved = 0, reservedLabel = 'Soul Damage' }) {
   const current = Number(value || 0);
   const max = Math.max(0, Number(maximum || 0));
   const percent = max ? Math.max(0, Math.min(100, current / max * 100)) : 0;
-  return <div className={`react-resource ${kind || ''} ${compact ? 'compact' : ''}`} data-resource={kind} role="progressbar" aria-label={label} aria-valuemin="0" aria-valuemax={max} aria-valuenow={current} aria-valuetext={`${current} of ${max}`}>
+  const reservedValue = Math.max(0, Math.min(max, Number(reserved || 0)));
+  const reservedPercent = max ? reservedValue / max * 100 : 0;
+  const valueText = `${current} of ${max}${reservedValue ? `; ${reservedValue} ${reservedLabel}` : ''}`;
+  return <div className={`react-resource ${kind || ''} ${compact ? 'compact' : ''} ${reservedValue ? 'has-reserved' : ''}`} data-resource={kind} role="progressbar" aria-label={label} aria-valuemin="0" aria-valuemax={max} aria-valuenow={current} aria-valuetext={valueText}>
     <div><b>{label}</b><span>{current.toLocaleString()} / {max.toLocaleString()}</span></div>
-    <div className="react-resource-track"><i style={{ width: `${percent}%` }} /></div>
+    <div className="react-resource-track"><i style={{ width: `${percent}%` }} />{reservedValue ? <span className="react-resource-reserved" style={{ width:`${reservedPercent}%` }} title={`${reservedValue} ${reservedLabel}`} aria-hidden="true" /> : null}</div>
   </div>;
 });
 

@@ -29,6 +29,8 @@ import {
 import { buildReactRoute, parseReactRoute } from '../src/app/asteriaRoutes.mjs';
 import { liveSyncPresentation } from '../src/state/liveSyncState.mjs';
 import { GM_WORKSPACE_VERSION, migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../src/state/gmWorkspaceModel.mjs';
+import { MAGIC_ELEMENT_SYMBOL_SLUGS, magicElementImage } from '../src/data/magicElementSymbols.mjs';
+import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue, soulHealingCap } from '../src/state/specialDamageModel.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
@@ -600,6 +602,57 @@ test('60. Legacy GM state migrates into a normalized campaign workspace', () => 
   assert.equal(migrated.world.regions[0].name,'North');
   assert.equal(migrated.gameplay.lootTables[0].id,'l1');
   assert.deepEqual(normalizeGMWorkspace({crafting:{projects:null}}).crafting.projects,[]);
+});
+
+test('61. Element symbols power Compendium and player spell artwork without changing magic colours', () => {
+  assert.equal(MAGIC_ELEMENT_SYMBOL_SLUGS.length,18);
+  assert.equal(magicElementImage('Life Magic'),'assets/magic-elements/life-spells.png');
+  MAGIC_ELEMENT_SYMBOL_SLUGS.forEach(element=>assert.equal(fs.existsSync(path.join(root,magicElementImage(element))),true));
+  const index=JSON.parse(read('data/universal-compendium-index.json'));
+  const spells=index.entries.filter(entry=>entry.domain==='spell' && ['Heal — Weak','Heal — Minor'].includes(entry.title));
+  assert.equal(spells.length,2);
+  spells.forEach(spell=>{
+    assert.equal(spell.metadata.magicalElement,'Life Magic');
+    assert.equal(spell.imagePath,'assets/magic-elements/life-spells.png');
+  });
+  assert.match(read('src/dashboards/PlayerDashboardOverview.jsx'),/const spells = knownSpells\(character\)/);
+  assert.match(read('js/clean-compendium.js'),/clean-magic-element-symbol/);
+  assert.match(read('css/styles.css'),/\.magic-life\{--spell-colour:#ffd84d\}/);
+});
+
+test('62. Soul Damage seals HP and recovers only through the long-rest flow', () => {
+  const base={hp:[80,100],sp:[20,100],mp:[10,100]};
+  const damaged=applySoulDamage(base,25,'Test');
+  assert.equal(damaged.applied,25);
+  assert.deepEqual(damaged.entity.hp,[55,100]);
+  assert.equal(soulDamageValue(damaged.entity),25);
+  assert.equal(soulHealingCap(damaged.entity),75);
+  assert.equal(clampHpForSoulDamage(damaged.entity,100),75);
+  const recovered=recoverSoulDamage(damaged.entity,10,'Long Rest');
+  assert.equal(recovered.recovered,10);
+  assert.equal(soulDamageValue(recovered.entity),15);
+  const short=applyRest(damaged.entity,'short');
+  assert.equal(soulDamageValue(short.entity),25);
+  assert.deepEqual(short.entity.sp,[55,100]);
+  const long=applyRest(damaged.entity,'long',5);
+  assert.equal(long.recoveredSoul,5);
+  assert.equal(long.soulDamage,20);
+  assert.deepEqual(long.entity.hp,[80,100]);
+  assert.deepEqual(long.entity.sp,[100,100]);
+  assert.deepEqual(long.entity.mp,[60,100]);
+  const firebase=read('js/firebase-auth.js');
+  const service=read('src/firebase/asteriaFirebaseService.js');
+  const player=read('src/dashboards/PlayerDashboardOverview.jsx');
+  const gm=read('src/dashboards/GMDashboard.jsx');
+  const ui=read('src/components/WorkspaceUI.jsx');
+  ['updateCampaignSpecialDamage','takeCampaignCharacterRest','clampHpForSoulDamage'].forEach(name=>assert.match(firebase,new RegExp(name)));
+  assert.match(service,/updateSpecialDamage/);
+  assert.match(service,/takeRest/);
+  assert.match(player,/Long Rest Soul Recovery/);
+  assert.match(player,/Soul Damage Recovered/);
+  assert.match(gm,/Apply Soul Damage/);
+  assert.match(gm,/Recover Soul Damage/);
+  assert.match(ui,/react-resource-reserved/);
 });
 
 let failed = 0;
