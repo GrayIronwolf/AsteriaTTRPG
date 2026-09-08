@@ -19,7 +19,7 @@ function useSaveAction() {
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
   const run=async (operation,success)=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(result?.ok?success:result?.error||'The change could not be saved.');return result;}catch(error){setMessage(error.message||String(error));return {ok:false};}finally{setBusy(false);}};
-  return {busy,message,run};
+  return {busy,message,setMessage,run};
 }
 
 function imageSource(value) {
@@ -83,7 +83,9 @@ export function GalleryTab({ campaignId, character, editable }) {
     const key=`${campaignId}:${character.id}`;
     if(!campaignId||!character.id||repairedGalleryLinks.has(key)) return;
     repairedGalleryLinks.add(key);
-    firebaseService.syncGalleryMedia(campaignId,character.id).catch(()=>{});
+    firebaseService.syncGalleryMedia(campaignId,character.id).then(result=>{
+      if(!result?.ok) action.setMessage(result?.error||'Gallery references could not be synchronized.');
+    }).catch(error=>action.setMessage(error.message||'Gallery references could not be synchronized.'));
   },[campaignId,character.id]);
   const upload=event=>{
     const file=event.target.files?.[0];
@@ -92,7 +94,7 @@ export function GalleryTab({ campaignId, character, editable }) {
   };
   return <div className="react-gallery-workspace">
     <Panel title="Character Gallery" action={<StatusPill>{gallery.length} images</StatusPill>}>
-      <div className="react-gallery-toolbar"><label className={`react-upload-button ${!editable||action.busy?'disabled':''}`}>Add Image<input type="file" accept="image/*" disabled={!editable||action.busy} onChange={upload}/></label><span>PNG, JPG, WEBP or GIF, up to 8 MB.</span></div>
+      <div className="react-gallery-toolbar"><label className={`react-upload-button ${!editable||action.busy?'disabled':''}`}>Add Image<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={!editable||action.busy} onChange={upload}/></label><span>PNG, JPG, WEBP or GIF, up to 8 MB.</span></div>
       <div className="react-gallery-grid">{gallery.map(image=><GalleryImage key={image.id} campaignId={campaignId} character={character} image={image} active={portrait===image.url} editable={editable} busy={action.busy} run={action.run} onPreview={setPreview} onDelete={setDeleteTarget}/>)}{!gallery.length?<EmptyState title="No gallery images">Add artwork during a live session, then choose any image as the character portrait.</EmptyState>:null}</div>
       <p className="react-action-message">{action.message}</p>
     </Panel>

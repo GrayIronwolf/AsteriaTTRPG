@@ -31,7 +31,11 @@ service cloud.firestore {
       return signedIn() && (
         data.ownerUid == request.auth.uid ||
         (data.keys().hasAll(['gmUids']) && request.auth.uid in data.gmUids) ||
-        (data.keys().hasAll(['playerUids']) && request.auth.uid in data.playerUids)
+        (data.keys().hasAll(['playerUids']) && request.auth.uid in data.playerUids) ||
+        (
+          data.keys().hasAll(['roles']) &&
+          (data.roles[request.auth.uid] == 'gm' || data.roles[request.auth.uid] == 'player')
+        )
       );
     }
 
@@ -50,6 +54,10 @@ service cloud.firestore {
         (
           sharedCampaign(campaignId).keys().hasAll(['gmUids']) &&
           request.auth.uid in sharedCampaign(campaignId).gmUids
+        ) ||
+        (
+          sharedCampaign(campaignId).keys().hasAll(['roles']) &&
+          sharedCampaign(campaignId).roles[request.auth.uid] == 'gm'
         )
       );
     }
@@ -80,7 +88,8 @@ service cloud.firestore {
       let campaign = sharedCampaign(campaignId);
       return signedIn() && (
         campaign.ownerUid == request.auth.uid ||
-        (campaign.keys().hasAll(['gmUids']) && request.auth.uid in campaign.gmUids)
+        (campaign.keys().hasAll(['gmUids']) && request.auth.uid in campaign.gmUids) ||
+        (campaign.keys().hasAll(['roles']) && campaign.roles[request.auth.uid] == 'gm')
       );
     }
 

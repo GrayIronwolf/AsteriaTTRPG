@@ -1,6 +1,7 @@
 import { SKILL_RANKS, normalizeLiveItem, skillRankNumber, slug } from '../state/liveWorkspaceModel.mjs';
 import { getMarketPrice, getMarketValue } from '../systems/items/marketPricing.mjs';
 import { magicElementImage } from '../data/magicElementSymbols.mjs';
+import { knownMagicElements } from '../state/characterIntegrityModel.mjs';
 
 export function list(value) {
   if(Array.isArray(value)) return value;
@@ -75,13 +76,7 @@ export function selectedSkills(character = {}) {
 }
 
 export function knownMagic(character = {}) {
-  return Array.from(new Set([
-    ...(Array.isArray(character.magicTypes) ? character.magicTypes : []),
-    ...(Array.isArray(character.magicAffinities) ? character.magicAffinities : []),
-    ...(Array.isArray(character.gmGrantedMagicTypes) ? character.gmGrantedMagicTypes : []),
-    ...(Array.isArray(character.character?.magic?.types) ? character.character.magic.types : []),
-    ...(Array.isArray(character.character?.magic?.gmGrantedTypes) ? character.character.magic.gmGrantedTypes : [])
-  ].filter(Boolean).map(value=>String(value).replace(/\s+Magic$/i,''))));
+  return knownMagicElements(character);
 }
 
 export function knownSpells(character = {}) {
@@ -125,7 +120,24 @@ export function raceTraits(character = {}) {
 export function quests(character = {}, partyWorkspace = {}) {
   const rows=[...list(character.quests || character.questLog),...list(partyWorkspace.questLog)];
   const map=new Map();
-  rows.forEach((quest,index)=>{const name=quest.name||quest.title||String(quest);const id=String(quest.id||quest.slug||slug(name)||index);map.set(id,{id,name,description:quest.description||quest.detail||'',status:quest.status||'Active',objectives:list(quest.objectives)});});
+  rows.forEach((quest,index)=>{
+    const record=quest && typeof quest==='object' ? quest : {};
+    const name=record.name||record.title||String(quest);
+    const id=String(record.id||record.slug||slug(name)||index);
+    map.set(id,{
+      ...record,
+      id,
+      name,
+      title:record.title||name,
+      description:record.description||record.objective||record.detail||'',
+      status:record.status||'Active',
+      objectives:list(record.objectives),
+      reward:record.reward||{},
+      rewardClaimedAt:record.rewardClaimedAt||null,
+      rewardTransactionId:record.rewardTransactionId||'',
+      rewardStatus:record.rewardStatus||''
+    });
+  });
   return [...map.values()];
 }
 

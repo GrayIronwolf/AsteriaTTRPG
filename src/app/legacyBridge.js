@@ -4,6 +4,7 @@
  */
 
 export function activateReactDashboard() {
+  window.AsteriaReactMigration = Object.assign(window.AsteriaReactMigration || {}, { liveStateAuthority:'react' });
   document.getElementById('gmEncounterWorkspace')?.remove();
   document.getElementById('phase3GMPartyMagicPanel')?.remove();
   document.getElementById('phase3GMMagicGrantPanel')?.remove();

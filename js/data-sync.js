@@ -146,6 +146,9 @@
   function reactOwnsCampaignSubscriptions(){
     return Boolean(window.AsteriaReactMigration?.isDashboardActive?.());
   }
+  function reactOwnsSharedMutations(){
+    return reactOwnsCampaignSubscriptions() || window.AsteriaReactMigration?.liveStateAuthority === 'react';
+  }
   function mergeRealtimeCampaign(campaign){
     if(!campaign?.id) return;
     const index=(window.campaigns||[]).findIndex(item=>item?.id===campaign.id);
@@ -249,14 +252,15 @@
     const signature=progressionSignature(character);
     if(persistedProgressionSignatures.get(id) === signature) return;
     persistedProgressionSignatures.set(id,signature);
-    window.AsteriaFirebase.saveOwnedCharacterProgress(id,character).then(saved=>{
+    const sourceId=character.sourceCharacterId || id;
+    window.AsteriaFirebase.saveOwnedCharacterProgress(sourceId,character).then(saved=>{
       if(!saved && persistedProgressionSignatures.get(id) === signature) persistedProgressionSignatures.delete(id);
     });
   }
   function receivedCharacterSignature(character){
     if(!character) return '';
     const inventory=(character.inventory || []).map(item=>[
-      item?.id || item?.instanceId || item?.name || '',
+      item?.instanceId || item?.id || item?.name || '',
       Number(item?.qty || 0),
       item?.location || '',
       item?.equipped ? 1 : 0
@@ -272,7 +276,21 @@
       resolvedItemRewardIds:character.resolvedItemRewardIds || [],
       coins:character.coins || {},
       quickSlots:character.quickSlots || [],
-      bags:character.bags || []
+      bags:character.bags || [],
+      storages:character.storages || [],
+      storageLimit:character.storageLimit,
+      equipment:character.equipment || {},
+      conditions:character.conditions || [],
+      characteristics:character.characteristics || {},
+      talents:character.talents || character.unlockedTalents || [],
+      skills:character.skills || character.selectedSkills || [],
+      quests:character.quests || character.questLog || [],
+      journal:character.journal || [],
+      titles:character.titles || [],
+      gmGrantedMagicTypes:character.gmGrantedMagicTypes || [],
+      specialDamage:character.specialDamage || {},
+      gallery:character.gallery || [],
+      dashboardPreferences:character.dashboardPreferences || {}
     });
   }
   function realtimeCharacterSignature(character){
@@ -296,7 +314,8 @@
     const signature=receivedCharacterSignature(character);
     if(persistedCharacterSignatures.get(id) === signature) return;
     persistedCharacterSignatures.set(id,signature);
-    window.AsteriaFirebase.saveOwnedCharacterSnapshot(id,character).then(saved=>{
+    const sourceId=character.sourceCharacterId || id;
+    window.AsteriaFirebase.saveOwnedCharacterSnapshot(sourceId,character).then(saved=>{
       if(!saved && persistedCharacterSignatures.get(id) === signature) persistedCharacterSignatures.delete(id);
     });
   }
@@ -503,13 +522,15 @@
     setSyncStatus('Cloud sync: saving...', 'info');
     try{
       const owned = exportOwnedCharacters();
-      for(const [id, character] of Object.entries(owned)){
-        await window.AsteriaFirebase.saveCharacter(id, character);
-      }
-      const user = window.AsteriaFirebase?.getUser?.();
-      for(const campaign of (window.campaigns || [])){
-        if(!campaign?.id || !user || (campaign.ownerUid !== user.uid && campaign.gmId !== user.uid && !(campaign.gmUids || []).includes(user.uid))) continue;
-        await window.AsteriaFirebase.saveCampaign(campaign.id, campaign);
+      if(!reactOwnsSharedMutations()){
+        for(const [id, character] of Object.entries(owned)){
+          await window.AsteriaFirebase.saveCharacter(id, character);
+        }
+        const user = window.AsteriaFirebase?.getUser?.();
+        for(const campaign of (window.campaigns || [])){
+          if(!campaign?.id || !user || (campaign.ownerUid !== user.uid && campaign.gmId !== user.uid && !(campaign.gmUids || []).includes(user.uid))) continue;
+          await window.AsteriaFirebase.saveCampaign(campaign.id, campaign);
+        }
       }
       await window.AsteriaFirebase.saveState(exportCloudState());
       localMeta({ lastSave:Date.now(), reason, characterCount:Object.keys(owned).length });
@@ -607,6 +628,6 @@
     }, 500);
   });
   window.addEventListener('beforeunload', ()=>{
-    if(isAuthed()) saveCloudData('beforeunload');
+    if(isAuthed() && !reactOwnsSharedMutations()) saveCloudData('beforeunload');
   });
 })();

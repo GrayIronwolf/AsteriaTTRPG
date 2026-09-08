@@ -10,8 +10,9 @@
     "test:armour": "node scripts/test-armour-system.mjs",
     "test:market-pricing": "node scripts/test-market-pricing.mjs",
     "test:react": "node scripts/test-react-live-session.mjs",
+    "test:stability": "node scripts/test-stability-audit.mjs",
     "test:smoke": "node scripts/smoke-test.js",
-    "test": "npm run test:armour && npm run test:market-pricing && npm run test:react && npm run test:smoke"
+    "test": "npm run test:armour && npm run test:market-pricing && npm run test:react && npm run test:stability && npm run test:smoke"
   },
   "dependencies": {
     "react": "18.3.1",

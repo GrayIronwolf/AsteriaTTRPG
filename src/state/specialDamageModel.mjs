@@ -15,6 +15,16 @@ export function resourcePair(value) {
   return [amount, amount];
 }
 
+function existingResourcePair(value) {
+  if(Array.isArray(value) && value.length >= 2 && Number.isFinite(Number(value[0])) && Number.isFinite(Number(value[1]))) return resourcePair(value);
+  if(value && typeof value === 'object') {
+    const current=value.current ?? value.value;
+    const maximum=value.maximum ?? value.max;
+    if(Number.isFinite(Number(current)) && Number.isFinite(Number(maximum))) return resourcePair(value);
+  }
+  return null;
+}
+
 export function soulDamageValue(entity = {}) {
   const soul = entity.specialDamage?.soul;
   const raw = soul && typeof soul === 'object'
@@ -76,20 +86,20 @@ export function applyRest(entity = {}, type = 'short', soulRecovery = 0) {
   if(!['short', 'long'].includes(restType)) throw new Error('Unsupported rest type.');
   let next = { ...entity };
   let recoveredSoul = 0;
-  if(restType === 'long') {
+  if(restType === 'long' && Number(soulRecovery) > 0 && soulDamageValue(next) > 0) {
     const recovery = recoverSoulDamage(next, soulRecovery, 'Long Rest');
     next = recovery.entity;
     recoveredSoul = recovery.recovered;
   }
-  const hp = resourcePair(next.hp);
-  const sp = resourcePair(next.sp);
-  const mp = resourcePair(next.mp);
+  const hp = existingResourcePair(next.hp);
+  const sp = existingResourcePair(next.sp);
+  const mp = existingResourcePair(next.mp);
   if(restType === 'short') {
-    next.sp = [Math.min(sp[1], sp[0] + Math.ceil(sp[1] * 0.35)), sp[1]];
+    if(sp) next.sp = [Math.min(sp[1], sp[0] + Math.ceil(sp[1] * 0.35)), sp[1]];
   } else {
-    next.hp = [clampHpForSoulDamage(next, hp[0] + Math.ceil(hp[1] * 0.5)), hp[1]];
-    next.sp = [sp[1], sp[1]];
-    next.mp = [Math.min(mp[1], mp[0] + Math.ceil(mp[1] * 0.5)), mp[1]];
+    if(hp) next.hp = [clampHpForSoulDamage(next, hp[0] + Math.ceil(hp[1] * 0.5)), hp[1]];
+    if(sp) next.sp = [sp[1], sp[1]];
+    if(mp) next.mp = [Math.min(mp[1], mp[0] + Math.ceil(mp[1] * 0.5)), mp[1]];
   }
   return { entity:next, type:restType, recoveredSoul, soulDamage:soulDamageValue(next) };
 }

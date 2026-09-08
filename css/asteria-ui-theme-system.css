@@ -6,6 +6,13 @@
   --asteria-accent-rgb: 31, 125, 255;
   --asteria-accent-soft: rgba(31,125,255,.22);
   --asteria-accent-faint: rgba(31,125,255,.10);
+  --asteria-border: rgba(31,125,255,.34);
+  --asteria-border-subtle: rgba(31,125,255,.20);
+  --asteria-border-active: var(--asteria-accent);
+  --asteria-border-highlight: rgba(31,125,255,.76);
+  --asteria-divider: rgba(31,125,255,.18);
+  --asteria-focus: 0 0 0 3px rgba(31,125,255,.42);
+  --asteria-button-active-bg: rgba(31,125,255,.18);
   --asteria-text: #f7ead1;
   --asteria-text-rgb: 247,234,209;
   --asteria-glow: rgba(31,125,255,.36);
@@ -90,6 +97,10 @@ button.primary,.primary,#loginToggle,#createAccountTop,.account-top-btn {
 .outline:hover,.clean-card:hover,.clean-nav button.cat.active,.side-main.active,.toplink.active {
   border-color:var(--asteria-accent) !important;
   box-shadow:0 0 calc(8px + 14px * var(--asteria-glow-intensity)) var(--asteria-glow) !important;
+}
+
+.clean-nav button.cat.active,.side-main.active,.toplink.active {
+  background:var(--asteria-button-active-bg) !important;
 }
 
 ::selection { background:var(--asteria-accent-soft); color:var(--text-primary); }

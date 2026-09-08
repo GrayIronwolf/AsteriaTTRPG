@@ -27,6 +27,7 @@ function requireMethod(name) {
 export const firebaseService = {
   currentUser: () => api()?.getUser?.() || null,
   currentProfile: () => api()?.getProfile?.() || null,
+  mirrorOwnedCharacter: (characterId, character) => requireMethod('saveOwnedCharacterSnapshot')(characterId, character),
   loadCampaigns: () => requireMethod('loadCampaigns')(),
   subscribeCampaign: (campaignId, onChange) => requireMethod('subscribeCampaign')(campaignId, onChange),
   subscribeCharacters: (campaignId, onChange) => requireMethod('subscribeCampaignCharacters')(campaignId, onChange),
@@ -51,6 +52,7 @@ export const firebaseService = {
   createMagicReward: (campaignId, characterId, magicType, metadata) => requireMethod('createMagicElementReward')(campaignId, characterId, magicType, metadata),
   respondMagicReward: (campaignId, characterId, eventId, accepted) => requireMethod('respondMagicElementReward')(campaignId, characterId, eventId, accepted),
   saveEncounter: (campaignId, encounter) => requireMethod('saveCampaignEncounter')(campaignId, encounter),
+  updateEncounterResource: (campaignId, combatantId, resource, current, maximum) => requireMethod('updateCampaignEncounterResource')(campaignId, combatantId, resource, current, maximum),
   saveGMWorkspace: (campaignId, patch) => requireMethod('saveGMWorkspace')(campaignId, patch),
   assignQuest: (campaignId, quest, characterIds) => requireMethod('assignCampaignQuest')(campaignId, quest, characterIds),
   updateCampaignDetails: (campaignId, patch) => requireMethod('updateCampaignDetails')(campaignId, patch),

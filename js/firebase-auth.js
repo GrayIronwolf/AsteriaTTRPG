@@ -7,9 +7,12 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
-import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeLiveItem, parseResourceCost, slug as liveSlug, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { addGrantedMagicElement, incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
+import { markQuestRewardClaimed, normalizeAssignedQuest, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
+import { encounterResourcePair, preserveEncounterResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -60,7 +63,11 @@ function campaignDisplayName(){
 }
 function currentUserIsCampaignGM(campaign={}){
   const uid=currentUser?.uid || '';
-  return Boolean(uid && (campaign.ownerUid===uid || (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid))));
+  return Boolean(uid && (
+    campaign.ownerUid===uid ||
+    campaign.roles?.[uid]==='gm' ||
+    (Array.isArray(campaign.gmUids) && campaign.gmUids.includes(uid))
+  ));
 }
 
 function uniqueValues(...lists){
@@ -106,6 +113,15 @@ function reportSyncError(scope, error, detail={}){
       message:error?.message || String(error || 'Unknown Firebase error')
     }, detail)
   }));
+}
+const GALLERY_IMAGE_TYPES=new Set(['image/png','image/jpeg','image/webp','image/gif']);
+function galleryUploadError(error){
+  const code=String(error?.code||'');
+  if(code.includes('unauthorized')) return 'Firebase Storage blocked this upload. Check that you are signed in as the character owner and deploy storage.rules.';
+  if(code.includes('quota')) return 'Firebase Storage quota has been reached. Try again after checking the Firebase project quota.';
+  if(code.includes('canceled')) return 'The image upload was cancelled.';
+  if(code.includes('unknown')) return 'Firebase Storage could not complete the upload. Check the browser console and try again.';
+  return error?.message||String(error||'The gallery image could not be uploaded.');
 }
 function linkedCampaignIdsFromOwnedCharacters(uid){
   const ids = new Set();
@@ -276,15 +292,28 @@ async function linkedCampaignIdsForCharacter(characterId, character){
 async function upsertSharedCampaignCharacter(campaignId, characterId, character){
   if(!db || !currentUser || !campaignId || !characterId || !character) return null;
   const uid = currentUser.uid;
-  const linkedCharacter = campaignCharacterSnapshot(Object.assign({}, character, { id:characterId }), campaignId, character.ownerUid || uid);
   const merged = await runTransaction(db, async transaction=>{
     const campaignRef = doc(db, 'campaigns', campaignId);
-    const campaignSnap = await transaction.get(campaignRef);
+    const characterRef = doc(db, 'campaigns', campaignId, 'characters', characterId);
+    const [campaignSnap, characterSnap] = await Promise.all([transaction.get(campaignRef), transaction.get(characterRef)]);
     if(!campaignSnap.exists()) return null;
     const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
     const roles = Object.assign({}, campaign.roles || {});
     const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
     if(!isMember) throw new Error('campaign-membership-required');
+
+    const submitted = campaignCharacterSnapshot(Object.assign({}, character, { id:characterId }), campaignId, character.ownerUid || uid);
+    const existing = characterSnap.exists() ? Object.assign({ id:characterId }, characterSnap.data()) : null;
+    const ownerUid = existing?.ownerUid || submitted.ownerUid || uid;
+    const linkMetadata = {
+      id:characterId,
+      sourceCharacterId:existing?.sourceCharacterId || submitted.sourceCharacterId || characterId,
+      ownerUid,
+      sharedCampaignId:campaignId,
+      linkedCampaignIds:uniqueValues(existing?.linkedCampaignIds, submitted.linkedCampaignIds, [campaignId]),
+      status:'linked'
+    };
+    const linkedCharacter = mergeLinkedCharacter(existing, submitted, linkMetadata);
 
     const players = Object.assign({}, campaign.players || {});
     const previousPlayer = players[uid] || { uid, role:campaign.ownerUid === uid ? 'gm' : 'player', status:'active', characterIds:[], joinedAt:new Date().toISOString() };
@@ -311,10 +340,15 @@ async function upsertSharedCampaignCharacter(campaignId, characterId, character)
       lastLinkedCharacterId:characterId,
       updatedAt:serverTimestamp()
     });
+    transaction.set(
+      characterRef,
+      Object.assign({}, existing ? safeLinkedCharacterPatch(submitted) : cleanData(linkedCharacter), linkMetadata, { updatedAt:serverTimestamp() }),
+      { merge:true }
+    );
     transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, result, { updatedAt:serverTimestamp() }), { merge:true });
-    return result;
+    return { campaign:result, character:linkedCharacter };
   });
-  return merged ? { campaign:merged, character:linkedCharacter } : null;
+  return merged || null;
 }
 async function syncCharacterToCampaigns(characterId, character){
   if(!db || !currentUser || !characterId || !character) return;
@@ -322,14 +356,9 @@ async function syncCharacterToCampaigns(characterId, character){
   if(!campaignIds.length) return;
   const snapshotBase = Object.assign({}, character, { id:characterId, linkedCampaignIds:campaignIds });
   for(const campaignId of campaignIds){
-    let linked = null;
     try{
-      linked = await upsertSharedCampaignCharacter(campaignId, characterId, snapshotBase);
+      await upsertSharedCampaignCharacter(campaignId, characterId, snapshotBase);
     }catch(err){ console.warn(`Could not sync ${characterId} into shared campaign ${campaignId}.`, err); }
-    if(!linked) continue;
-    try{
-      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
-    }catch(err){ console.warn(`Campaign ${campaignId} accepted ${characterId}, but its optional full-sheet snapshot could not be updated.`, err); }
   }
 }
 
@@ -682,7 +711,7 @@ async function verifyOwnedLiveCharacterRead(campaignId,characterId,character){
 }
 function writeLiveCharacter(transaction,refs,character){
   const clean=structuredCloneSafe(character);
-  clean.inventory=(Array.isArray(clean.inventory)?clean.inventory:[]).map((item,index)=>normalizeLiveItem(item,index,clean));
+  clean.inventory=normalizeInventoryItems(clean.inventory,clean);
   if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
     slot,
     item&&typeof item==='object'?normalizeLiveItem(Object.assign({},item,{equipped:true,equippedSlot:item.equippedSlot||slot}),index,clean):item
@@ -691,11 +720,9 @@ function writeLiveCharacter(transaction,refs,character){
   if(character.ownerUid === currentUser.uid || refs.verifiedOwner) transaction.set(refs.private,Object.assign({},clean,{id:ownedCharacterSourceId(character.id,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
 }
 function characterInventory(character){
-  return (Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>normalizeLiveItem(
-    typeof item === 'string' ? {id:liveSlug(item)||`item-${index}`,name:item,qty:1} : Object.assign({qty:Number(item.qty ?? item.quantity ?? 1)},item),
-    index,
-    character
-  ));
+  return normalizeInventoryItems((Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>
+    typeof item === 'string' ? {id:liveSlug(item)||`item-${index}`,name:item,qty:1} : Object.assign({qty:Number(item.qty ?? item.quantity ?? 1)},item)
+  ),character);
 }
 const LIVE_CURRENCY=[['royal_platinum',10000000000],['royal_crown',100000000],['platinum_crown',1000000],['gold',10000],['silver',100],['copper',1]];
 function currencyTotal(character){
@@ -707,7 +734,7 @@ function setCurrencyTotal(character,total){
   character.coins=Object.assign({},character.coins || {});
   LIVE_CURRENCY.forEach(([key,value])=>{character.coins[key]=Math.floor(remainder/value);remainder%=value;});
 }
-function liveItemId(item,index=0){return String(item?.id || item?.instanceId || item?.catalogId || liveSlug(item?.name || item?.title) || `item-${index}`);}
+function liveItemId(item,index=0){return stableInventoryItemId(item,index);}
 function appendActivity(character,entry){
   const rows=Array.isArray(character.actionLog) ? character.actionLog : [];
   character.actionLog=[Object.assign({id:`action-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString()},entry),...rows].slice(0,100);
@@ -730,13 +757,15 @@ function placeCharacterItem(character,source,options={}){
   if(!candidates.length) throw new Error(`${character.name||'This character'} needs a storage container before receiving items.`);
   const inventory=characterInventory(character);
   const baseSource=Object.assign({},structuredCloneSafe(source),{qty,location:'inventory',equipped:false,equippedSlot:''});
-  for(const storage of candidates){
-    const cleanSource=Object.assign({},baseSource,{storageId:storage.id});
-    const stacked=stackableStorageItem(inventory,cleanSource,storage.id);
-    if(stacked){
-      stacked.qty=Number(stacked.qty||1)+qty;
-      character.inventory=inventory;
-      return stacked;
+  if(!options.noStack){
+    for(const storage of candidates){
+      const cleanSource=Object.assign({},baseSource,{storageId:storage.id});
+      const stacked=stackableStorageItem(inventory,cleanSource,storage.id);
+      if(stacked){
+        stacked.qty=Number(stacked.qty||1)+qty;
+        character.inventory=inventory;
+        return stacked;
+      }
     }
   }
   let storage=null;
@@ -941,9 +970,11 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId) return {ok:false};
     const ids=Array.from(new Set((characterIds||[]).map(String).filter(Boolean)));
     if(!ids.length) return {ok:false,error:'Choose at least one character.'};
+    const questId=String(quest.id||quest.slug||`quest-${Date.now()}-${Math.random().toString(36).slice(2,7)}`);
     try{
       const campaignRef=doc(db,'campaigns',campaignId);
       const characterRefs=ids.map(id=>doc(db,'campaigns',campaignId,'characters',id));
+      const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',`quest-${liveSlug(questId)}-${liveSlug(id)}`));
       await runTransaction(db,async transaction=>{
         const campaignSnapshot=await transaction.get(campaignRef);
         if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can assign quests.');
@@ -953,12 +984,23 @@ const firebasePublicApi = {
           if(!snapshot.exists()) return;
           const character=Object.assign({},snapshot.data());
           const quests=Array.isArray(character.quests||character.questLog) ? (character.quests||character.questLog).slice() : [];
-          const questId=String(quest.id||quest.slug||'');
-          const nextQuest=Object.assign({},cleanData(quest),{id:questId,assignedAt:new Date().toISOString(),assignedBy:currentUser.uid});
+          const nextQuest=normalizeAssignedQuest(quest,{id:questId,assignedAt:new Date().toISOString(),assignedBy:currentUser.uid});
           const existing=quests.findIndex(value=>String(value?.id||value?.slug||'')===questId);
-          if(existing>=0) quests[existing]=Object.assign({},quests[existing],nextQuest);
+          if(existing>=0) {
+            const previous=quests[existing];
+            quests[existing]=Object.assign({},previous,nextQuest,{
+              rewardClaimedAt:previous.rewardClaimedAt||null,
+              rewardTransactionId:previous.rewardTransactionId||'',
+              rewardStatus:previous.rewardStatus||''
+            });
+          }
           else quests.push(nextQuest);
           transaction.set(characterRefs[index],{quests:cleanData(quests),updatedAt:serverTimestamp()},{merge:true});
+          transaction.set(eventRefs[index],{
+            id:eventRefs[index].id,campaignId,targetCharacterId:ids[index],targetOwnerUid:character.ownerUid||'',type:'quest-assigned',
+            payload:{questId,title:nextQuest.title,objective:nextQuest.objective,reward:cleanData(nextQuest.reward)},
+            status:'delivered',deliveryStatus:'delivered',acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:null
+          },{merge:true});
         });
       });
       return {ok:true,assigned:ids.length};
@@ -1071,7 +1113,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
-        if(character.ownerUid && character.ownerUid!==currentUser.uid) throw new Error('You can only edit your own dashboard.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         character.dashboardPreferences=normalizeDashboardPreferences({dashboardPreferences:Object.assign({},character.dashboardPreferences||{},structuredCloneSafe(preferences))});
         writeLiveCharacter(transaction,refs,character);
       });
@@ -1102,7 +1144,7 @@ const firebasePublicApi = {
   },
   uploadCharacterGalleryImage: async function(campaignId,characterId,file){
     if(!db || !storage || !currentUser || !campaignId || !characterId || !(file instanceof File)) return {ok:false,error:'Choose an image file.'};
-    if(!String(file.type||'').startsWith('image/')) return {ok:false,error:'Gallery uploads must be images.'};
+    if(!GALLERY_IMAGE_TYPES.has(String(file.type||'').toLowerCase())) return {ok:false,error:'Choose a PNG, JPG, WEBP, or GIF image.'};
     if(Number(file.size||0)>8*1024*1024) return {ok:false,error:'Images must be 8 MB or smaller.'};
     const refs=liveCharacterRefs(campaignId,characterId);
     const snapshot=await getDoc(refs.campaign);
@@ -1110,13 +1152,15 @@ const firebasePublicApi = {
     const verified=await verifyOwnedLiveCharacterRead(campaignId,characterId,Object.assign({id:characterId},snapshot.data()));
     if(!verified.ok) return verified;
     refs.private=verified.privateRef;
+    const sourceCharacterId=ownedCharacterSourceId(characterId,snapshot.data());
     const id=`gallery-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const extension=String(file.name||'image').split('.').pop().replace(/[^a-z0-9]/gi,'').slice(0,8)||'image';
-    const path=`users/${currentUser.uid}/characters/${characterId}/gallery/${id}.${extension}`;
+    const extension=({ 'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif' })[String(file.type).toLowerCase()];
+    const path=`users/${currentUser.uid}/characters/${sourceCharacterId}/gallery/${id}.${extension}`;
     const reference=storageRef(storage,path);
     try{
-      await uploadBytes(reference,file,{contentType:file.type,customMetadata:{campaignId,characterId}});
+      await uploadBytes(reference,file,{contentType:file.type,customMetadata:{campaignId,campaignCharacterId:characterId,sourceCharacterId}});
       const url=await getDownloadURL(reference);
+      if(!/^https:\/\//i.test(String(url||''))) throw new Error('Firebase returned an invalid permanent image URL.');
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(refs.campaign);
@@ -1131,7 +1175,8 @@ const firebasePublicApi = {
       return {ok:true,image:{id,url,path,name:file.name}};
     }catch(error){
       deleteObject(reference).catch(()=>{});
-      return {ok:false,error:error.message||String(error)};
+      reportSyncError('gallery-upload',error,{campaignId,characterId});
+      return {ok:false,error:galleryUploadError(error)};
     }
   },
   syncOwnedCharacterGalleryMedia: async function(campaignId,characterId){
@@ -1225,6 +1270,7 @@ const firebasePublicApi = {
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const references=ids.map(characterId=>doc(db,'campaigns',campaignId,'characters',characterId));
         const snapshots=await Promise.all(references.map(reference=>transaction.get(reference)));
         for(let index=0;index<references.length;index++){
@@ -1246,6 +1292,7 @@ const firebasePublicApi = {
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const snapshot=await transaction.get(reference);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
@@ -1272,6 +1319,7 @@ const firebasePublicApi = {
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const references=ids.map(characterId=>doc(db,'campaigns',campaignId,'characters',characterId));
         const snapshots=await Promise.all(references.map(reference=>transaction.get(reference)));
         for(let index=0;index<references.length;index++){
@@ -1294,6 +1342,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const current=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,current,refs);
         const applied=applyCharacteristicPoints(current,key,amount);
         appendActivity(applied.character,{type:'cp-spent',message:`Spent ${applied.applied} CP on ${key}.`});
         writeLiveCharacter(transaction,refs,applied.character);
@@ -1330,6 +1379,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const tier=Math.max(1,Math.min(5,Number(talent.tier||1)));
         if(!talentTierUnlocked(character.level,tier)) throw new Error(`Tier ${tier} unlocks at Level ${[0,1,10,20,30,40][tier]}.`);
         character.talents=Array.isArray(character.talents) ? Object.fromEntries(character.talents.map(value=>[value.name||value.title||value,{rank:Number(value.rank||1)}])) : Object.assign({},character.talents||{});
@@ -1358,6 +1408,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const key=liveSlug(skill.name);
         character.skillProgress=Object.assign({},character.skillProgress||{});
         const existing=character.skillProgress[key]||{name:skill.name,rank:skill.rank||skill.rankName||1,successes:0};
@@ -1380,14 +1431,15 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const paid={};
         Object.entries(costs||{}).forEach(([resource,raw])=>{
           if(!['hp','sp','mp','bp'].includes(resource)) return;
           const amount=Math.max(0,Number(raw||0));
           if(!amount) return;
-          const pair=Array.isArray(character[resource])?character[resource]:[0,0];
-          if(Number(pair[0]||0)<amount) throw new Error(`Not enough ${resource.toUpperCase()} to cast ${spell.name}.`);
-          character[resource]=[Number(pair[0])-amount,Number(pair[1]||0)];
+          const pair=strictResourcePair(character[resource],resource);
+          if(pair[0]<amount) throw new Error(`Not enough ${resource.toUpperCase()} to cast ${spell.name}.`);
+          character[resource]=[pair[0]-amount,pair[1]];
           paid[resource]=amount;
         });
         appendActivity(character,{type:'spell-cast',message:`Cast ${spell.name}.`,costs:paid});
@@ -1406,6 +1458,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const inventory=characterInventory(character);
         character.storageLimit=Math.max(3,Number(character.storageLimit||3));
         character.storages=normalizeCharacterStorages(character);
@@ -1472,7 +1525,7 @@ const firebasePublicApi = {
           const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
           const changes=Object.entries(parsed).filter(([resource,amount])=>['hp','sp','mp','bp'].includes(resource)&&Number(amount)>0);
           if(!changes.length) throw new Error('This item does not have a usable resource effect.');
-          changes.forEach(([resource,amount])=>{const pair=Array.isArray(character[resource])?character[resource]:[0,0];const requested=Number(pair[0]||0)+Number(amount);character[resource]=[resource==='hp'?clampHpForSoulDamage(character,requested):Math.min(Number(pair[1]||0),requested),Number(pair[1]||0)];});
+          changes.forEach(([resource,amount])=>{const pair=strictResourcePair(character[resource],resource);const requested=pair[0]+Number(amount);character[resource]=[resource==='hp'?clampHpForSoulDamage(character,requested):Math.min(pair[1],requested),pair[1]];});
           item.qty=Math.max(0,Number(item.qty||1)-1);
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
@@ -1519,6 +1572,7 @@ const firebasePublicApi = {
         const ecosystemSnapshot=await transaction.get(ecosystemRef);
         if(!characterSnapshot.exists()||!ecosystemSnapshot.exists()) throw new Error('Shop data is not available.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
         const shop=(ecosystem.shops||[]).find(value=>String(value.id)===String(shopId));
         const stock=shop?.stock?.[Number(stockIndex)];
@@ -1526,7 +1580,7 @@ const firebasePublicApi = {
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
         const qty=Math.max(1,Math.min(Number(quantity||1),Number(stock.qty||0)));
         if(!qty) throw new Error('This item is out of stock.');
-        const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(stock.item||{}),{id:`${liveSlug(stock.item?.name||'item')}-${Date.now()}`,qty,location:'inventory',equipped:false}),{legacy:true,removeLegacy:true,migratedRecord:true});
+        const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(stock.item||{}),{qty,location:'inventory',equipped:false}),{legacy:true,removeLegacy:true,migratedRecord:true});
         item.name=item.name||item.title||'Shop Item';
         const unitCost=getPlayerPurchasePriceCopper(item,shop.buyModifier??1);
         if(unitCost===null) throw new Error(`${item.name} needs a Market Price before it can be sold.`);
@@ -1534,14 +1588,14 @@ const firebasePublicApi = {
         const cost=unitCost*qty;
         const total=currencyTotal(character);
         if(total<cost) throw new Error('Not enough currency.');
+        const received=placeCharacterItem(character,item,{});
         setCurrencyTotal(character,total-cost);
-        character.inventory=[...characterInventory(character),item];
         stock.qty=Number(stock.qty||0)-qty;
         shop.currencyCopper=Number(shop.currencyCopper||0)+cost;
         appendActivity(character,{type:'shop-purchase',message:`Purchased ${qty} x ${item.name} for ${cost} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
-        return {item,cost};
+        return {item:received,cost};
       });
       return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -1556,6 +1610,7 @@ const firebasePublicApi = {
         const ecosystemSnapshot=await transaction.get(ecosystemRef);
         if(!characterSnapshot.exists()||!ecosystemSnapshot.exists()) throw new Error('Shop data is not available.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
         const shop=(ecosystem.shops||[]).find(value=>String(value.id)===String(shopId));
         const inventory=characterInventory(character);
@@ -1806,16 +1861,42 @@ const firebasePublicApi = {
   updateCharacterQuest: async function(campaignId,characterId,questId,status){
     const refs=liveCharacterRefs(campaignId,characterId);
     try{
-      await runTransaction(db,async transaction=>{
+      const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
-        const quests=Array.isArray(character.quests||character.questLog)?(character.quests||character.questLog):[];
-        character.quests=quests.map((quest,index)=>String(quest.id||quest.slug||index)===String(questId)?Object.assign(typeof quest==='object'?quest:{name:quest},{status}):quest);
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        const quests=Array.isArray(character.quests||character.questLog)?structuredCloneSafe(character.quests||character.questLog):[];
+        const index=quests.findIndex((quest,index)=>String(quest?.id||quest?.slug||index)===String(questId));
+        if(index<0) throw new Error('Quest not found.');
+        const quest=typeof quests[index]==='object'?quests[index]:{name:String(quests[index])};
+        quest.status=String(status||'Active');
+        let rewardApplied=false;
+        let summary='';
+        if(quest.status==='Completed'&&!questRewardClaimed(quest)){
+          const reward=normalizeQuestReward(quest.reward);
+          summary=questRewardSummary(reward);
+          if(reward.xp){
+            if(!window.AsteriaProgression?.grantXP) throw new Error('The XP progression service is unavailable. The quest was not completed.');
+            window.AsteriaProgression.grantXP(character,reward.xp);
+          }
+          if(reward.currency.amount){
+            character.coins={...(character.coins||character.coinPouch||{})};
+            character.coins[reward.currency.key]=Math.max(0,Number(character.coins[reward.currency.key]||0)+reward.currency.amount);
+          }
+          reward.items.forEach(item=>placeCharacterItem(character,item,{}));
+          const claimed=markQuestRewardClaimed(quest,`quest-reward-${questId}-${characterId}`);
+          Object.assign(quest,claimed.quest);
+          rewardApplied=claimed.applied;
+          appendActivity(character,{type:'quest-reward',message:`Completed ${quest.title||quest.name||'quest'}${summary?` and received ${summary}`:''}.`});
+        }
+        quests[index]=quest;
+        character.quests=quests;
         writeLiveCharacter(transaction,refs,character);
+        return {rewardApplied,rewardSummary:summary};
       });
-      return {ok:true};
+      return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   addJournalEntry: async function(campaignId,characterId,entry={}){
@@ -1826,6 +1907,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         const journal=Array.isArray(character.journal)?character.journal:[];
         character.journal=[{id:`journal-${Date.now()}`,title:String(entry.title||'Journal Entry').slice(0,120),body:String(entry.body||'').slice(0,20000),createdAt:new Date().toISOString()},...journal];
         writeLiveCharacter(transaction,refs,character);
@@ -1839,12 +1921,50 @@ const firebasePublicApi = {
       const encounterRef=doc(db, 'campaigns', campaignId, 'systems', 'encounter');
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        transaction.set(encounterRef,Object.assign({},cleanData(encounter),{campaignId,updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(encounterRef);
+        const persisted=snapshot.exists()?snapshot.data():{};
+        const next=structuredCloneSafe(encounter);
+        next.combatants=preserveEncounterResources(next.combatants,persisted.combatants);
+        next.enemies=preserveEncounterResources(next.enemies,persisted.enemies);
+        transaction.set(encounterRef,Object.assign({},cleanData(next),{campaignId,updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
       return { ok:true };
     }catch(error){
       reportSyncError('campaign-encounter-save', error, { campaignId });
       return { ok:false, error:error.message || String(error) };
+    }
+  },
+  updateCampaignEncounterResource: async function(campaignId,combatantId,resource,current,maximum){
+    if(!db || !currentUser || !campaignId || !combatantId) return {ok:false};
+    const key=String(resource||'').toLowerCase();
+    const encounterRef=doc(db,'campaigns',campaignId,'systems','encounter');
+    try{
+      const value=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(encounterRef);
+        if(!snapshot.exists()) throw new Error('The encounter is not available.');
+        const encounter=structuredCloneSafe(snapshot.data());
+        let found=false;
+        let pair=null;
+        const update=record=>{
+          if(String(record?.id||'')!==String(combatantId)) return record;
+          found=true;
+          const next=setEncounterResource(record,key,current,maximum);
+          pair=encounterResourcePair(next,key);
+          return next;
+        };
+        encounter.combatants=(Array.isArray(encounter.combatants)?encounter.combatants:[]).map(update);
+        encounter.enemies=(Array.isArray(encounter.enemies)?encounter.enemies:[]).map(update);
+        if(!found) throw new Error('The encounter entry was not found.');
+        transaction.set(encounterRef,Object.assign({},cleanData(encounter),{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        return pair;
+      });
+      return {ok:true,value};
+    }catch(error){
+      reportSyncError('campaign-encounter-resource',error,{campaignId,combatantId,resource:key});
+      return {ok:false,error:error.message||String(error)};
     }
   },
   acknowledgeCampaignEvent: async function(campaignId, eventId, resolution={}){
@@ -1876,11 +1996,13 @@ const firebasePublicApi = {
     try{
       const result=await runTransaction(db, async transaction=>{
         const live=await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
         const before={ level:Number(character.level || 0), xp:Number(character.xp || 0) };
-        const progression=window.AsteriaProgression?.grantXP?.(character, delta) || { leveled:false, fromLevel:before.level, toLevel:before.level, messages:[] };
+        if(!window.AsteriaProgression?.grantXP) throw new Error('The XP progression service is unavailable. No XP was awarded.');
+        const progression=window.AsteriaProgression.grantXP(character, delta);
         const revision=`xp-${eventRef.id}`;
         character.progressionSync={ revision, source:'gm-live-reward', updatedAt:new Date().toISOString() };
         transaction.set(characterRef, Object.assign({}, cleanData(character), { updatedAt:serverTimestamp() }), { merge:true });
@@ -1928,6 +2050,7 @@ const firebasePublicApi = {
     try{
       const result=await runTransaction(db, async transaction=>{
         const live=await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
@@ -1982,16 +2105,12 @@ const firebasePublicApi = {
     try{
       const event=await runTransaction(db, async transaction=>{
         const live=await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
         const characterSnapshot=await transaction.get(characterRef);
         if(!characterSnapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, characterSnapshot.data());
-        const existing=[
-          ...(Array.isArray(character.magicTypes) ? character.magicTypes : []),
-          ...(Array.isArray(character.gmGrantedMagicTypes) ? character.gmGrantedMagicTypes : []),
-          ...(Array.isArray(character.character?.magic?.types) ? character.character.magic.types : []),
-          ...(Array.isArray(character.character?.magic?.gmGrantedTypes) ? character.character.magic.gmGrantedTypes : [])
-        ].map(value=>String(value).toLowerCase());
-        if(existing.includes(String(magicType).toLowerCase())) throw new Error(`${magicType} is already available to ${character.name || characterId}.`);
+        const requested=String(magicType).replace(/\s+Magic$/i,'').toLowerCase();
+        if(knownMagicElements(character).some(value=>value.toLowerCase()===requested)) throw new Error(`${magicType} is already available to ${character.name || characterId}.`);
         const value={
           id:eventRef.id,
           campaignId,
@@ -2019,7 +2138,6 @@ const firebasePublicApi = {
   respondMagicElementReward: async function(campaignId, characterId, eventId, accepted){
     if(!db || !currentUser || !campaignId || !characterId || !eventId) return { ok:false };
     const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
-    const privateCharacterRef=doc(db, 'users', currentUser.uid, 'characters', characterId);
     const eventRef=doc(db, 'campaigns', campaignId, 'events', eventId);
     try{
       const result=await runTransaction(db, async transaction=>{
@@ -2032,12 +2150,10 @@ const firebasePublicApi = {
         if(reward.type !== 'magic-element-reward' || reward.targetCharacterId !== characterId || reward.targetOwnerUid !== currentUser.uid) throw new Error('This magic reward is not assigned to this character.');
         if(reward.resolvedAt || ['accepted','declined','resolved'].includes(String(reward.status || '').toLowerCase())) return { applied:false, character };
         const magicType=String(reward.payload?.magicType || '').trim();
-        const grants=Array.from(new Set([...(Array.isArray(character.gmGrantedMagicTypes) ? character.gmGrantedMagicTypes : []), ...(accepted && magicType ? [magicType] : [])]));
-        const nestedMagic=Object.assign({}, character.character?.magic || {}, { gmGrantedTypes:grants.slice() });
-        const patch={ gmGrantedMagicTypes:grants, character:Object.assign({}, character.character || {}, { magic:nestedMagic }), updatedAt:serverTimestamp() };
+        const granted=accepted ? addGrantedMagicElement(character,magicType) : {character,added:false};
         if(accepted){
-          transaction.set(characterRef, patch, { merge:true });
-          transaction.set(privateCharacterRef, Object.assign({}, patch, { ownerUid:currentUser.uid, id:characterId }), { merge:true });
+          const refs={campaign:characterRef,private:doc(db,'users',currentUser.uid,'characters',ownedCharacterSourceId(characterId,character)),verifiedOwner:true};
+          writeLiveCharacter(transaction,refs,granted.character);
         }
         transaction.set(eventRef, {
           status:accepted ? 'accepted' : 'declined',
@@ -2048,7 +2164,7 @@ const firebasePublicApi = {
           resolvedAt:serverTimestamp(),
           updatedAt:serverTimestamp()
         }, { merge:true });
-        return { applied:true, character:Object.assign({}, character, accepted ? patch : {}) };
+        return { applied:true, character:granted.character };
       });
       return { ok:true, applied:result.applied, character:result.character };
     }catch(error){
@@ -2068,13 +2184,13 @@ const firebasePublicApi = {
         const event=structuredCloneSafe(eventSnapshot.data());
         const character=Object.assign({id:characterId},characterSnapshot.data());
         if(event.targetCharacterId!==characterId||event.targetOwnerUid!==currentUser.uid) throw new Error('This reward is not assigned to this character.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         if(!characterKnowsIdentify(character)) throw new Error('Learn the Identify spell before identifying loot.');
         const item=Object.assign({},event.payload?.item||{});
         item.identified=true;item.name=item.trueName||item.name;item.identifiedAt=new Date().toISOString();item.identifiedBy=characterId;
         event.payload=Object.assign({},event.payload||{},{item});
         character.pendingItemRewards=(character.pendingItemRewards||[]).map(value=>String(value.id)===String(eventId)?Object.assign({},value,{item}):value);
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(eventRef,{payload:event.payload,updatedAt:serverTimestamp()},{merge:true});
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -2092,34 +2208,36 @@ const firebasePublicApi = {
         const event=eventSnapshot.data();
         const character=Object.assign({id:characterId},characterSnapshot.data());
         if(event.type!=='loot-reward'||event.targetCharacterId!==characterId||event.targetOwnerUid!==currentUser.uid) throw new Error('This reward is not assigned to this character.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         if(event.resolvedAt||['accepted','equipped','declined','resolved'].includes(String(event.status||'').toLowerCase())) return {applied:false};
         const pending=Array.isArray(character.pendingItemRewards)?character.pendingItemRewards:[];
         character.pendingItemRewards=pending.filter(value=>String(value?.id||'')!==String(eventId));
+        character.resolvedItemRewardIds=uniqueValues(character.resolvedItemRewardIds,[eventId]);
         if(action!=='declined'){
           const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(event.payload?.item||{})),{legacy:true,removeLegacy:true,migratedRecord:true});
           item.id=item.id||item.instanceId||`${liveSlug(item.name||item.title)||'item'}-${Date.now()}`;
           item.instanceId=item.instanceId||item.id;
           item.name=item.name||item.title||'Reward Item';
           item.qty=Math.max(1,Number(item.qty||item.quantity||1));
-          item.location=action==='equip'?'equipment':'inventory';
-          item.equipped=action==='equip';
+          item.location='inventory';
+          item.equipped=false;
           character.storageLimit=Math.max(3,Number(character.storageLimit||3));
           character.storages=normalizeCharacterStorages(character);
-          item.storageId=action==='equip' ? String(item.storageId||character.storages[0]?.id||'') : String(destination||item.storageId||character.storages[0]?.id||'');
-          if(action!=='equip'){
-            const storage=character.storages.find(value=>value.id===item.storageId);
-            if(!storage) throw new Error('Create a bag or storage container before accepting this reward.');
-            item.storageSlot=firstFreeStorageSlot(characterInventory(character),storage);
-            if(item.storageSlot<0) throw new Error(`${storage.name} is full.`);
-          }
+          item.storageId=String(action==='equip' ? item.storageId||character.storages[0]?.id||'' : destination||item.storageId||character.storages[0]?.id||'');
+          const received=placeCharacterItem(character,item,{storageId:item.storageId,noStack:action==='equip'});
           if(action==='equip'){
-            item.equippedSlot=destination||item.slot||item.allowedSlots?.[0]||'';
-            item.slot=item.equippedSlot;
+            received.equippedSlot=destination||item.slot||item.allowedSlots?.[0]||'';
+            if(!received.equippedSlot) throw new Error('Choose an equipment slot for this reward.');
+            character.inventory.forEach(value=>{
+              if(value!==received&&value.equippedSlot===received.equippedSlot){value.equipped=false;value.equippedSlot='';value.location='inventory';}
+            });
+            received.equipped=true;
+            received.slot=received.equippedSlot;
+            received.location='equipment';
             character.equipment=Object.assign({},character.equipment||{});
-            if(item.equippedSlot) character.equipment[item.equippedSlot]=item;
+            character.equipment[received.equippedSlot]=received;
           }
-          character.inventory=[...characterInventory(character),item];
-          appendActivity(character,{type:'loot-received',message:`Received ${item.name}${action==='equip'?' and equipped it':''}.`});
+          appendActivity(character,{type:'loot-received',message:`Received ${received.name}${action==='equip'?' and equipped it':''}.`});
         }
         writeLiveCharacter(transaction,refs,character);
         transaction.set(eventRef,{status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',deliveryStatus:'acknowledged',acknowledged:true,acknowledgedBy:currentUser.uid,acknowledgedAt:serverTimestamp(),resolvedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
@@ -2142,9 +2260,9 @@ const firebasePublicApi = {
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, snapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const pair=Array.isArray(character[resource]) ? character[resource] : [0,resource === 'bp' ? 20 : 0];
-        const maximum=Math.max(0,Number(pair[1] || 0));
-        const requested=Number(pair[0] || 0) + Number(amount || 0);
+        const pair=strictResourcePair(character[resource],resource);
+        const maximum=pair[1];
+        const requested=pair[0] + Number(amount || 0);
         const current=resource==='hp' ? clampHpForSoulDamage(character,requested) : Math.max(0,Math.min(maximum,requested));
         const next=[current,maximum];
         character[resource]=next;
@@ -2181,6 +2299,7 @@ const firebasePublicApi = {
           let saved=null;
           const update=value=>{
             if(String(value.id)!==String(target.id)) return value;
+            strictResourcePair(value.hp,'hp');
             const changed=operation==='recover'?recoverSoulDamage(value,delta,metadata.source||'GM Dashboard'):applySoulDamage(value,delta,metadata.source||'GM Dashboard');
             saved=changed;
             return changed.entity;
@@ -2195,6 +2314,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(characterRef);
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({id:target.id},snapshot.data());
+        strictResourcePair(character.hp,'hp');
         const changed=operation==='recover'?recoverSoulDamage(character,delta,metadata.source||'GM Dashboard'):applySoulDamage(character,delta,metadata.source||'GM Dashboard');
         appendActivity(changed.entity,{type:'soul-damage',message:operation==='recover'?`${changed.recovered} Soul Damage recovered naturally.`:`${changed.applied} Soul Damage taken.`});
         transaction.set(characterRef,Object.assign({},cleanData(changed.entity),{updatedAt:serverTimestamp()}),{merge:true});
@@ -2218,6 +2338,8 @@ const firebasePublicApi = {
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({id:characterId},snapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        if(restType==='short') strictResourcePair(character.sp,'sp');
+        else ['hp','sp','mp'].forEach(resource=>strictResourcePair(character[resource],resource));
         const rested=applyRest(character,restType,restType==='long'?Number(metadata.soulRecovery||0):0);
         appendActivity(rested.entity,{type:`${restType}-rest`,message:`${restType==='long'?'Long':'Short'} Rest completed${rested.recoveredSoul?`; ${rested.recoveredSoul} Soul Damage recovered naturally`:''}.`});
         writeLiveCharacter(transaction,refs,rested.entity);
@@ -2429,12 +2551,7 @@ const firebasePublicApi = {
     const characterId = String(character.id);
     const linked = await upsertSharedCampaignCharacter(campaignId, characterId, character);
     if(!linked) return null;
-    await setDoc(doc(db, 'users', uid, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
-    try{
-      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, linked.character, { updatedAt:serverTimestamp() }), { merge:true });
-    }catch(err){
-      console.warn('Campaign membership and party stats were linked, but the optional full-sheet snapshot needs the latest Firestore rules.', err);
-    }
+    await setDoc(doc(db, 'users', uid, 'characters', linked.character.sourceCharacterId || characterId), Object.assign({}, linked.character, { id:linked.character.sourceCharacterId || characterId, updatedAt:serverTimestamp() }), { merge:true });
     return linked.campaign;
   },
   loadCampaigns: async function(){
@@ -2666,6 +2783,7 @@ const firebasePublicApi = {
   },
   saveCampaignCharacterProgress: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
+    if(window.AsteriaReactMigration?.isDashboardActive?.() || window.AsteriaReactMigration?.liveStateAuthority === 'react') return true;
     try{
       const ownerUid=campaignCharacterOwner(campaignId, characterId, character);
       if(!ownerUid){
@@ -2696,11 +2814,12 @@ const firebasePublicApi = {
         bp:cleanData(Array.isArray(character.bp) ? character.bp : null),
         updatedAt:serverTimestamp()
       };
-      await setDoc(
-        doc(db, 'campaigns', campaignId, 'characters', characterId),
-        progressionPayload,
-        { merge:true }
-      );
+      const reference=doc(db,'campaigns',campaignId,'characters',characterId);
+      await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(reference);
+        if(snapshot.exists() && incomingSnapshotIsStale(snapshot.data(),character)) throw new Error('A newer live character update already exists. Refresh before saving progression.');
+        transaction.set(reference,progressionPayload,{merge:true});
+      });
       return true;
     }catch(err){
       reportSyncError('campaign-character-progress-write', err, { campaignId, characterId });
@@ -2714,86 +2833,19 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || !characterId || !rewardId || !character){
       return { ok:false, applied:false, character:null };
     }
-    const characterRef=doc(db, 'campaigns', campaignId, 'characters', characterId);
-    const eventRef=doc(db, 'campaigns', campaignId, 'events', rewardId);
     try{
-      const result=await runTransaction(db, async transaction=>{
-        const snapshot=await transaction.get(characterRef);
-        const eventSnapshot=await transaction.get(eventRef);
-        if(!snapshot.exists()) throw new Error('The linked campaign character no longer exists.');
-        const canonical=Object.assign({ id:characterId }, snapshot.data());
-        const canonicalRewards=Array.isArray(canonical.pendingItemRewards) ? canonical.pendingItemRewards : [];
-        const canonicalReward=canonicalRewards.find(reward=>String(reward?.id || '') === String(rewardId));
-        if(!canonicalReward) throw new Error('The item reward no longer exists.');
-        if(canonicalReward.status === 'accepted' || canonicalReward.status === 'declined'){
-          if(eventSnapshot.exists() && !eventSnapshot.data().resolvedAt){
-            transaction.set(eventRef, {
-              status:canonicalReward.resolution === 'equip' ? 'equipped' : canonicalReward.status,
-              deliveryStatus:'acknowledged',
-              acknowledged:true,
-              acknowledgedBy:currentUser.uid,
-              acknowledgedAt:serverTimestamp(),
-              resolvedAt:serverTimestamp(),
-              updatedAt:serverTimestamp()
-            }, { merge:true });
-          }
-          return { applied:false, character:canonical };
-        }
-
-        const submitted=campaignCharacterSnapshot(
-          Object.assign({}, canonical, cleanData(character), { id:characterId }),
-          campaignId,
-          canonical.ownerUid || currentUser.uid
-        );
-        const submittedRewards=Array.isArray(submitted.pendingItemRewards) ? submitted.pendingItemRewards : [];
-        const submittedReward=submittedRewards.find(reward=>String(reward?.id || '') === String(rewardId));
-        if(!submittedReward || !['accepted','declined'].includes(submittedReward.status)){
-          throw new Error('The item reward must have a final resolution before it can be saved.');
-        }
-        submitted.resolvedItemRewardIds=uniqueValues(
-          canonical.resolvedItemRewardIds,
-          submitted.resolvedItemRewardIds,
-          [rewardId]
-        );
-        transaction.set(
-          characterRef,
-          Object.assign({}, submitted, { updatedAt:serverTimestamp() }),
-          { merge:true }
-        );
-        if(eventSnapshot.exists()){
-          transaction.set(eventRef, {
-            status:submittedReward.resolution === 'equip' ? 'equipped' : submittedReward.status,
-            deliveryStatus:'acknowledged',
-            acknowledged:true,
-            acknowledgedBy:currentUser.uid,
-            acknowledgedAt:serverTimestamp(),
-            resolvedAt:serverTimestamp(),
-            updatedAt:serverTimestamp()
-          }, { merge:true });
-        }
-        return { applied:true, character:submitted };
-      });
-
-      const resolvedCharacter=result?.character;
-      if(resolvedCharacter?.ownerUid === currentUser.uid){
-        await setDoc(
-          doc(db, 'users', currentUser.uid, 'characters', characterId),
-          Object.assign({}, cleanData(resolvedCharacter), {
-            id:characterId,
-            ownerUid:currentUser.uid,
-            updatedAt:serverTimestamp()
-          }),
-          { merge:true }
-        );
-      }
-      return { ok:true, applied:Boolean(result?.applied), character:resolvedCharacter || null };
+      const submitted=(Array.isArray(character.pendingItemRewards)?character.pendingItemRewards:[]).find(reward=>String(reward?.id||'')===String(rewardId));
+      if(!submitted || !['accepted','declined'].includes(String(submitted.status||'').toLowerCase())) throw new Error('The item reward must have a final resolution before it can be saved.');
+      const action=String(submitted.status).toLowerCase()==='declined'?'declined':submitted.resolution==='equip'?'equip':'inventory';
+      return await firebasePublicApi.resolveLootReward(campaignId,characterId,rewardId,action,submitted.destination||submitted.storageId||submitted.equippedSlot||'');
     }catch(error){
       reportSyncError('campaign-item-reward-resolution', error, { campaignId, characterId, rewardId });
-      return { ok:false, applied:false, character:null };
+      return { ok:false, applied:false, character:null, error:error.message||String(error) };
     }
   },
   saveCampaignCharacter: async function(campaignId, characterId, character){
     if(!db || !currentUser || !campaignId || !characterId || !character) return false;
+    if(window.AsteriaReactMigration?.isDashboardActive?.() || window.AsteriaReactMigration?.liveStateAuthority === 'react') return true;
     try{
       const ownerUid=campaignCharacterOwner(campaignId, characterId, character);
       if(!ownerUid){
@@ -2809,7 +2861,12 @@ const firebasePublicApi = {
         campaignId,
         ownerUid
       );
-      await setDoc(doc(db, 'campaigns', campaignId, 'characters', characterId), Object.assign({}, snapshot, { updatedAt:serverTimestamp() }), { merge:true });
+      const reference=doc(db,'campaigns',campaignId,'characters',characterId);
+      await runTransaction(db,async transaction=>{
+        const current=await transaction.get(reference);
+        if(current.exists() && incomingSnapshotIsStale(current.data(),character)) throw new Error('A newer live character update already exists. Refresh before saving this character.');
+        transaction.set(reference,Object.assign({},snapshot,{updatedAt:serverTimestamp()}),{merge:true});
+      });
       return true;
     }catch(err){
       reportSyncError('campaign-character-write', err, { campaignId, characterId });

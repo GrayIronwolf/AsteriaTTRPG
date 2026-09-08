@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { EmptyState, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
+import { QUEST_CURRENCIES, normalizeQuestReward, questRewardSummary } from '../state/questRewardModel.mjs';
 
 const array = value => Array.isArray(value) ? value : [];
 const uid = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
@@ -14,16 +15,29 @@ function RecordActions({ onEdit, onDelete }) {
   return <div className="react-record-actions"><button type="button" onClick={onEdit}>Edit</button><button type="button" className="danger" onClick={onDelete}>Delete</button></div>;
 }
 
+const emptyQuestDraft=()=>({id:'',title:'',objective:'',reward:normalizeQuestReward(),status:'Draft',visibility:'Party'});
+
 export function QuestWorkspace({ campaignId, workspace, characters, saveSection }) {
   const quests=array(workspace.quests);
-  const [draft,setDraft]=useState({id:'',title:'',objective:'',reward:'',status:'Draft',visibility:'Party'});
+  const [draft,setDraft]=useState(emptyQuestDraft);
   const [recipients,setRecipients]=useState([]);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
-  const reset=()=>setDraft({id:'',title:'',objective:'',reward:'',status:'Draft',visibility:'Party'});
+  const [itemSearch,setItemSearch]=useState('');
+  const [itemQuantity,setItemQuantity]=useState(1);
+  const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.()||[],[]);
+  const itemResults=itemSearch?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(itemSearch.toLowerCase())).slice(0,8):[];
+  const reset=()=>{setDraft(emptyQuestDraft());setItemSearch('');setItemQuantity(1);};
+  const updateReward=patch=>setDraft(value=>({...value,reward:{...normalizeQuestReward(value.reward),...patch}}));
+  const addRewardItem=item=>{
+    const reward=normalizeQuestReward(draft.reward);
+    const source=window.AsteriaInventory?.itemSnapshot?.(item,itemQuantity)||{...item,qty:itemQuantity};
+    updateReward({items:[...reward.items,{...source,qty:itemQuantity}]});
+    setItemSearch('');setItemQuantity(1);
+  };
   const save=async()=>{
     if(!draft.title.trim())return setMessage('Enter a quest title.');
-    const record={...draft,id:draft.id||uid('quest'),title:draft.title.trim(),updatedAt:new Date().toISOString()};
+    const record={...draft,reward:normalizeQuestReward(draft.reward),id:draft.id||uid('quest'),title:draft.title.trim(),updatedAt:new Date().toISOString()};
     const next=draft.id?quests.map(item=>item.id===draft.id?record:item):[record,...quests];
     setBusy(true);const result=await saveSection('quests',next);setBusy(false);
     setMessage(result?.ok?'Quest saved to the live campaign workspace.':result?.error||'Quest could not be saved.');
@@ -38,13 +52,19 @@ export function QuestWorkspace({ campaignId, workspace, characters, saveSection 
     <Panel title="Quest Builder" eyebrow="Campaign Objectives">
       <div className="react-form-grid"><label>Quest Title<input value={draft.title} onChange={event=>setDraft(value=>({...value,title:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Draft','Active','Completed','Failed','Archived'].map(value=><option key={value}>{value}</option>)}</select></label><label>Visibility<select value={draft.visibility} onChange={event=>setDraft(value=>({...value,visibility:event.target.value}))}><option>Party</option><option>GM Only</option></select></label></div>
       <label>Objective<textarea rows="5" value={draft.objective} onChange={event=>setDraft(value=>({...value,objective:event.target.value}))}/></label>
-      <label>Rewards<textarea rows="3" value={draft.reward} onChange={event=>setDraft(value=>({...value,reward:event.target.value}))}/></label>
+      <fieldset className="react-quest-reward-builder"><legend>Quest Rewards</legend>
+        <div className="react-form-grid"><label>XP<input type="number" min="0" value={normalizeQuestReward(draft.reward).xp} onChange={event=>updateReward({xp:Math.max(0,Number(event.target.value||0))})}/></label><label>Currency<select value={normalizeQuestReward(draft.reward).currency.key} onChange={event=>updateReward({currency:{...normalizeQuestReward(draft.reward).currency,key:event.target.value}})}>{QUEST_CURRENCIES.map(currency=><option value={currency.key} key={currency.key}>{currency.label}</option>)}</select></label><label>Currency Amount<input type="number" min="0" value={normalizeQuestReward(draft.reward).currency.amount} onChange={event=>updateReward({currency:{...normalizeQuestReward(draft.reward).currency,amount:Math.max(0,Number(event.target.value||0))}})}/></label></div>
+        <div className="react-form-grid"><label>Search Item Compendium<input type="search" value={itemSearch} onChange={event=>setItemSearch(event.target.value)} placeholder="Add an item reward..."/></label><label>Quantity<input type="number" min="1" value={itemQuantity} onChange={event=>setItemQuantity(Math.max(1,Number(event.target.value||1)))}/></label></div>
+        {itemSearch?<div className="react-search-results">{itemResults.map(item=><button type="button" key={item.id||item.slug||item.name||item.title} onClick={()=>addRewardItem(item)}>{item.name||item.title}</button>)}{!itemResults.length?<EmptyState title="No matching items"/>:null}</div>:null}
+        <div className="react-stock-list">{normalizeQuestReward(draft.reward).items.map((item,index)=><article key={`${item.id||item.name}-${index}`}><div><b>{item.trueName||item.name||item.title||'Item'}</b><small>Quantity {Number(item.qty||1)}</small></div><button type="button" className="danger" onClick={()=>updateReward({items:normalizeQuestReward(draft.reward).items.filter((_,itemIndex)=>itemIndex!==index)})}>Remove</button></article>)}</div>
+        <label>Other Existing Reward Notes<textarea rows="2" value={normalizeQuestReward(draft.reward).notes} onChange={event=>updateReward({notes:event.target.value})}/></label>
+      </fieldset>
       <div className="react-action-row"><button className="primary" disabled={busy} onClick={save}>{draft.id?'Update Quest':'Create Quest'}</button>{draft.id?<button onClick={reset}>Cancel Edit</button>:null}</div><SectionStatus message={message}/>
     </Panel>
     <Panel title="Quest Ledger" eyebrow="Live Quest Control" action={<StatusPill>{quests.length} quests</StatusPill>}>
       <div className="react-recipient-actions"><button onClick={()=>setRecipients(Object.keys(characters))}>Select All Players</button><button onClick={()=>setRecipients([])}>Clear</button><span>{recipients.length} recipients</span></div>
       <div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={recipients.includes(character.id)} onChange={event=>setRecipients(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div>
-      <div className="react-record-list">{quests.map(quest=><article key={quest.id}><div className="react-record-heading"><div><StatusPill tone={quest.status==='Active'?'success':''}>{quest.status}</StatusPill><h3>{quest.title}</h3></div><small>{quest.visibility}</small></div><p>{quest.objective||'No objective recorded.'}</p>{quest.reward?<small><b>Reward:</b> {quest.reward}</small>:null}<div className="react-action-row"><button className="primary" disabled={busy||quest.visibility==='GM Only'} onClick={()=>assign(quest)}>Send to Selected Players</button><RecordActions onEdit={()=>setDraft({...quest})} onDelete={()=>saveSection('quests',quests.filter(item=>item.id!==quest.id))}/></div></article>)}{!quests.length?<EmptyState title="No campaign quests">Create the first objective, then send it to selected character dashboards.</EmptyState>:null}</div>
+      <div className="react-record-list">{quests.map(quest=><article key={quest.id}><div className="react-record-heading"><div><StatusPill tone={quest.status==='Active'?'success':''}>{quest.status}</StatusPill><h3>{quest.title}</h3></div><small>{quest.visibility}</small></div><p>{quest.objective||'No objective recorded.'}</p>{questRewardSummary(quest.reward)?<small><b>Reward:</b> {questRewardSummary(quest.reward)}</small>:null}<div className="react-action-row"><button className="primary" disabled={busy||quest.visibility==='GM Only'} onClick={()=>assign(quest)}>Send to Selected Players</button><RecordActions onEdit={()=>setDraft({...quest,reward:normalizeQuestReward(quest.reward)})} onDelete={()=>saveSection('quests',quests.filter(item=>item.id!==quest.id))}/></div></article>)}{!quests.length?<EmptyState title="No campaign quests">Create the first objective, then send it to selected character dashboards.</EmptyState>:null}</div>
     </Panel>
   </div>;
 }

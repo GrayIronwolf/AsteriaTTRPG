@@ -46,6 +46,10 @@ export function xpNoticeEvent(events = [], acknowledged = new Set()) {
   return sortEvents(events).find(event => event.type === 'xp-reward' && !event.acknowledged && !acknowledged.has(event.id)) || null;
 }
 
+export function questNoticeEvent(events = [], acknowledged = new Set()) {
+  return sortEvents(events).find(event => event.type === 'quest-assigned' && !event.acknowledged && !acknowledged.has(event.id)) || null;
+}
+
 export function nextSessionState(current = {}, action) {
   const type = typeof action === 'string' ? action : action?.type;
   if(type === 'start') return Object.assign({}, current, { status: 'active' });

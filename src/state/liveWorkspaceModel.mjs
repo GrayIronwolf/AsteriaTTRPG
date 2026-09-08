@@ -97,8 +97,11 @@ export function applyCharacteristicPoints(character, key, amount) {
   next.cp = available - applied;
   const resourceKey = { constitution:'hp', endurance:'sp', wisdom:'mp' }[key];
   if(resourceKey) {
-    const pair = Array.isArray(next[resourceKey]) ? next[resourceKey] : [0, 0];
-    next[resourceKey] = [Number(pair[0] || 0), Number(pair[1] || 0) + applied * 10];
+    const pair = next[resourceKey];
+    if(!Array.isArray(pair) || pair.length < 2 || !Number.isFinite(Number(pair[0])) || !Number.isFinite(Number(pair[1])) || Number(pair[1]) < 0) {
+      throw new Error(`${resourceKey.toUpperCase()} data is missing or invalid. Refresh before applying Characteristic Points.`);
+    }
+    next[resourceKey] = [Math.max(0,Math.min(Number(pair[1]),Number(pair[0]))), Math.max(0,Number(pair[1])) + applied * 10];
   }
   return { character:next, applied };
 }
@@ -263,9 +266,11 @@ export function normalizeLiveItem(item = {}, index = 0, character = {}) {
   const storages = normalizeCharacterStorages(character);
   const identified = item.identified !== false;
   const storedSlot = Number(item.storageSlot ?? item.bagSlot);
+  const stableId = String(item.instanceId || item.id || item.catalogId || slug(item.name || item.title) || `item-${index}`);
   return normalizeMarketPricing({
     ...structuredCloneSafe(item),
-    id:String(item.id || item.instanceId || item.catalogId || slug(item.name || item.title) || `item-${index}`),
+    id:stableId,
+    instanceId:String(item.instanceId || stableId),
     name:unidentifiedItemName(item),
     trueName:String(item.trueName || item.name || item.title || 'Unknown Item'),
     basicName:String(item.basicName || unidentifiedItemName({ ...item, identified:false })),
@@ -275,6 +280,31 @@ export function normalizeLiveItem(item = {}, index = 0, character = {}) {
     isSpellbook:Boolean(item.isSpellbook || /spellbook|grimoire|tome/i.test(`${item.type || ''} ${item.category || ''}`)),
     spell:item.spell || item.spellData || null
   }, { legacy:true, removeLegacy:true, migratedRecord:true });
+}
+
+export function stableInventoryItemId(item = {}, index = 0) {
+  return String(item.instanceId || item.id || item.catalogId || slug(item.name || item.title) || `item-${index}`);
+}
+
+export function normalizeInventoryItems(items = [], character = {}) {
+  const seen = new Set();
+  return (Array.isArray(items) ? items : []).map((source, index) => {
+    const normalized = normalizeLiveItem(typeof source === 'string' ? { name:source } : source || {}, index, character);
+    const base = stableInventoryItemId(normalized, index);
+    let unique = base;
+    let occurrence = 1;
+    while(seen.has(unique)) {
+      occurrence += 1;
+      unique = `${base}-${occurrence}`;
+    }
+    seen.add(unique);
+    if(unique !== normalized.id || unique !== normalized.instanceId) {
+      normalized.catalogId = normalized.catalogId || normalized.id || base;
+      normalized.id = unique;
+      normalized.instanceId = unique;
+    }
+    return normalized;
+  });
 }
 
 export function slug(value) {

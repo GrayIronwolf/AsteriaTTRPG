@@ -80,6 +80,7 @@ export function installDevFixtures() {
       coins: { Copper: 12, Silver: 31, Gold: 4 }
     }
   };
+  const ownedCharacters = clone(characters);
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
@@ -164,6 +165,11 @@ export function installDevFixtures() {
     isReady: () => true,
     getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
     getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
+    saveOwnedCharacterSnapshot: async (characterId,character) => {
+      if(!characterId || !character) return false;
+      ownedCharacters[characterId] = { ...(ownedCharacters[characterId] || {}), ...clone(character), id:characterId };
+      return true;
+    },
     loadCharacters: async () => clone(characters),
     loadCampaigns: async () => [clone(campaign)],
     loadState: async () => ({}),

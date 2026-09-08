@@ -75,6 +75,13 @@
     setVar("--asteria-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
     setVar("--asteria-accent-soft", rgba(next.accent, .22));
     setVar("--asteria-accent-faint", rgba(next.accent, .10));
+    setVar("--asteria-border", rgba(next.accent, .34));
+    setVar("--asteria-border-subtle", rgba(next.accent, .20));
+    setVar("--asteria-border-active", next.accent);
+    setVar("--asteria-border-highlight", rgba(next.accent, .76));
+    setVar("--asteria-divider", rgba(next.accent, .18));
+    setVar("--asteria-focus", `0 0 0 3px ${rgba(next.accent, .42)}`);
+    setVar("--asteria-button-active-bg", rgba(next.accent, .18));
     setVar("--asteria-text", next.text);
     setVar("--asteria-text-rgb", `${textRgb.r}, ${textRgb.g}, ${textRgb.b}`);
     setVar("--text", next.text);

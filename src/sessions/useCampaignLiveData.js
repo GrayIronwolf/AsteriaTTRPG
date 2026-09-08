@@ -50,6 +50,15 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     if(!campaignId) return undefined;
     let active = true;
     const unsubscribers = [];
+    setCampaign(null);
+    setCharacters({});
+    setSession({ status:'idle', id:'' });
+    setEvents([]);
+    setEncounter({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] });
+    setPresence({});
+    setPartyWorkspace({ sharedNotes:'', questLog:[] });
+    setPartyChat([]);
+    setItemEcosystem({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
     setLoading(true);
     if(mode === 'gm') { setGMWorkspace(null); setGMWorkspaceLoaded(false); }
     setError('');
@@ -72,7 +81,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
         setCustomItems(nextItems);
         publishCustomItems(nextItems);
       }));
-      unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(previous => mergeEvents(previous, value || [])), {
+      unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(mergeEvents([], value || [])), {
         mode,
         targetOwnerUid: mode === 'character' ? uid : '',
         characterId

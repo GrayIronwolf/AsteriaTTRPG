@@ -4,6 +4,7 @@ import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
+import { encounterResourcePair, encounterSourceResources } from '../state/encounterResourceModel.mjs';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
@@ -96,11 +97,42 @@ function encounterSources() {
   const npcStores = [window.npcs, window.NPCS, window.ASTERIA_NPC_DATA, window.ASTERIA_NPCS].filter(Boolean);
   const npcs = npcStores.flatMap(store => Array.isArray(store) ? store : Object.entries(store).map(([id, value]) => Object.assign({ id }, value)));
   const records = [
-    ...codex.map(entry => ({ id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, type:entry.creatureType || entry.type || entry.category || 'Creature', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative || 10), hp:Number(entry.hp || entry.health || 50), source:'Creature Compendium', compendiumSlug:entry.slug || entry.id })),
-    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative || 10), hp:Number(entry.hp || entry.health || 50), source:'NPC', compendiumSlug:entry.slug || entry.id }))
+    ...codex.map(entry => ({ id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, type:entry.creatureType || entry.type || entry.category || 'Creature', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...encounterSourceResources(entry), source:'Creature Compendium', compendiumSlug:entry.slug || entry.id })),
+    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...encounterSourceResources(entry), source:'NPC', compendiumSlug:entry.slug || entry.id }))
   ].filter(entry => entry.name);
   const seen = new Set();
   return records.filter(entry => { const key=slug(entry.name); if(seen.has(key)) return false; seen.add(key); return true; });
+}
+
+function EncounterInitiativeInput({ entry, disabled, onCommit }) {
+  const [value,setValue]=useState(String(Number(entry.initiative ?? 0)));
+  useEffect(()=>setValue(String(Number(entry.initiative ?? 0))),[entry.id,entry.initiative]);
+  const commit=()=>{
+    const next=Number(value);
+    if(!Number.isFinite(next)) return setValue(String(Number(entry.initiative ?? 0)));
+    if(next!==Number(entry.initiative ?? 0)) onCommit(next);
+  };
+  return <input aria-label={`${entry.name} initiative`} type="number" disabled={disabled} value={value} onChange={event=>setValue(event.target.value)} onBlur={commit} onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();if(event.key==='Escape'){setValue(String(Number(entry.initiative??0)));event.currentTarget.blur();}}}/>;
+}
+
+function EncounterResourceControl({ campaignId, entry, resource, disabled, onMessage }) {
+  const pair=encounterResourcePair(entry,resource);
+  const [current,setCurrent]=useState(pair?String(pair[0]):'');
+  const [maximum,setMaximum]=useState(pair?String(pair[1]):'');
+  const [busy,setBusy]=useState(false);
+  useEffect(()=>{setCurrent(pair?String(pair[0]):'');setMaximum(pair?String(pair[1]):'');},[entry.id,resource,pair?.[0],pair?.[1]]);
+  const save=async()=>{
+    setBusy(true);
+    onMessage(`Saving ${entry.name} ${resource.toUpperCase()}...`);
+    const result=await firebaseService.updateEncounterResource(campaignId,entry.id,resource,current,maximum);
+    onMessage(result?.ok?`${entry.name} ${resource.toUpperCase()} synchronized.`:result?.error||`${resource.toUpperCase()} could not be saved.`);
+    setBusy(false);
+  };
+  return <div className={`react-encounter-resource ${pair?'':'missing'}`}>
+    <header><b>{resource.toUpperCase()}</b><small>{pair?`${pair[0]} / ${pair[1]}`:'Not recorded'}</small></header>
+    {pair?<ResourceBar compact label="" kind={resource} value={pair[0]} maximum={pair[1]} reserved={resource==='hp'?soulDamageValue(entry):0}/>:null}
+    <div><input aria-label={`${entry.name} current ${resource.toUpperCase()}`} type="number" min="0" placeholder="Current" disabled={disabled||busy} value={current} onChange={event=>setCurrent(event.target.value)}/><input aria-label={`${entry.name} maximum ${resource.toUpperCase()}`} type="number" min="1" placeholder="Maximum" disabled={disabled||busy} value={maximum} onChange={event=>setMaximum(event.target.value)}/><button disabled={disabled||busy||current===''||maximum===''} onClick={save}>{pair?'Apply':'Set'}</button></div>
+  </div>;
 }
 
 function CampaignEncounter({ campaignId, characters, encounter }) {
@@ -123,7 +155,8 @@ function CampaignEncounter({ campaignId, characters, encounter }) {
   };
   const start = () => save({ ...state, status:'active', round:Math.max(1, Number(state.round || 1)), turnIndex:0, combatants:ensurePlayers(state.combatants || []) });
   const addEnemy = source => {
-    const added = Array.from({ length:Math.max(1, Math.min(20, Number(quantity || 1))) }, (_, index) => ({ id:`enemy-${Date.now()}-${index}`, sourceId:source.id, compendiumSlug:source.compendiumSlug || '', name:Number(quantity) > 1 ? `${source.name} ${index + 1}` : source.name, kind:'enemy', type:source.type, threatTier:source.threatTier, initiative:source.initiative, hp:[source.hp, source.hp], defeated:false }));
+    const resources=Object.fromEntries(['hp','sp','mp'].filter(key=>Array.isArray(source[key])).map(key=>[key,[...source[key]]]));
+    const added = Array.from({ length:Math.max(1, Math.min(20, Number(quantity || 1))) }, (_, index) => ({ id:`enemy-${Date.now()}-${index}`, sourceId:source.id, compendiumSlug:source.compendiumSlug || '', name:Number(quantity) > 1 ? `${source.name} ${index + 1}` : source.name, kind:'enemy', type:source.type, threatTier:source.threatTier, initiative:source.initiative, ...resources, defeated:false }));
     save({ ...state, enemies:[...(state.enemies || []), ...added], combatants:[...(state.combatants || []), ...added] });
     setSearch('');
   };
@@ -141,7 +174,7 @@ function CampaignEncounter({ campaignId, characters, encounter }) {
     <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{Object.keys(characters).length} players</StatusPill><span>{message}</span></div>
     <div className="react-encounter-builder">
       <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<input type="number" min="1" max="20" value={quantity} onChange={event => setQuantity(Math.max(1, Number(event.target.value || 1)))} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>
-      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small>{entry.kind === 'enemy' && Array.isArray(entry.hp) ? <ResourceBar compact label="HP" kind="hp" value={entry.hp[0]} maximum={entry.hp[1]} reserved={soulDamageValue(entry)} /> : null}</div><input aria-label={`${entry.name} initiative`} type="number" value={Number(entry.initiative || 0)} onChange={event => updateCombatant(entry.id, { initiative:Number(event.target.value || 0) })} />{entry.kind === 'enemy' ? <button title="Toggle defeated" onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
+      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div className="react-encounter-combatant"><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small>{entry.kind === 'enemy'?<div className="react-encounter-resources">{['hp','sp','mp'].map(resource=><EncounterResourceControl key={resource} campaignId={campaignId} entry={entry} resource={resource} disabled={busy} onMessage={setMessage}/>)}</div>:null}</div><EncounterInitiativeInput entry={entry} disabled={busy} onCommit={initiative=>updateCombatant(entry.id,{initiative})}/>{entry.kind === 'enemy' ? <button title="Toggle defeated" disabled={busy} onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} disabled={busy} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
     </div>
   </Panel>;
 }

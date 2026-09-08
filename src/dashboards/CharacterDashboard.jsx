@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AsteriaAppShell, DashboardNavigation, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { DashboardInformationRow } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { pendingLootEvent, pendingMagicRewardEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
+import { pendingLootEvent, pendingMagicRewardEvent, questNoticeEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
+import { questRewardSummary } from '../state/questRewardModel.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { mirrorCharacterSnapshot } from '../app/legacyBridge.js';
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
@@ -74,6 +75,14 @@ function XPModal({ event, onClose }) {
   return <Modal title="XP Received" eyebrow="Campaign Progression" onClose={onClose} footer={<button className="primary" onClick={onClose}>Continue</button>}><div className="react-xp-reward"><strong>+{Number(event.payload?.amount || 0).toLocaleString()} XP</strong><p>{event.payload?.reason || 'Campaign reward'}</p>{event.payload?.leveled ? <StatusPill tone="success">Level {event.payload?.toLevel}</StatusPill> : null}</div></Modal>;
 }
 
+function QuestAssignmentModal({ event, onClose, onOpen }) {
+  const reward=questRewardSummary(event.payload?.reward||{});
+  return <Modal title={event.payload?.title||'New Quest'} eyebrow="Quest Assigned" onClose={onClose} footer={<div className="react-modal-actions"><button onClick={onClose}>Dismiss</button><button className="primary" onClick={onOpen}>Open Quest Log</button></div>}>
+    <p>{event.payload?.objective||'The GM assigned a new quest to this character.'}</p>
+    {reward?<p className="react-quest-assignment-reward"><b>Reward:</b> {reward}</p>:null}
+  </Modal>;
+}
+
 function MagicRewardModal({ campaignId, character, event, onResolved }) {
   const [busy, setBusy] = useState(false);
   const magicType = event.payload?.magicType || 'Unknown Magic';
@@ -97,20 +106,37 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const processedMagic = useRef(new Set());
   const character = live.character;
   useEffect(()=>{
+    setAcknowledged(new Set());
+    processedLoot.current.clear();
+    processedMagic.current.clear();
+  },[campaignId,characterId]);
+  useEffect(()=>{
     const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab))setTab(event.detail.tab);};
     window.addEventListener('asteria:open-character-tab',openTab);
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[]);
   useEffect(() => {
     mirrorCharacterSnapshot(character);
+    if(character?.id) {
+      Promise.resolve()
+        .then(() => firebaseService.mirrorOwnedCharacter(character.sourceCharacterId||character.id,character))
+        .catch(() => {});
+    }
   }, [character]);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
+  const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
   const magicEvent = pendingMagicRewardEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedMagic.current.has(event.id)));
   const closeXP = async () => {
     if(!xpEvent) return;
     setAcknowledged(previous => new Set([...previous, xpEvent.id]));
     await firebaseService.acknowledgeEvent(campaignId, xpEvent.id, { status: 'acknowledged' }).catch(() => {});
+  };
+  const closeQuest = async openQuest => {
+    if(!questEvent) return;
+    setAcknowledged(previous => new Set([...previous, questEvent.id]));
+    if(openQuest) setTab('quest');
+    await firebaseService.acknowledgeEvent(campaignId, questEvent.id, { status:'acknowledged' }).catch(() => {});
   };
   const resolvedLoot = () => { if(lootEvent) processedLoot.current.add(lootEvent.id); };
   const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
@@ -136,8 +162,6 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     <PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />
-    {xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
-    {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : null}
-    {editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : null}
+    {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
   </AsteriaAppShell>;
 }
