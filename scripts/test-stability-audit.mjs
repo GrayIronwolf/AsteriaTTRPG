@@ -238,6 +238,23 @@ test('31. Canonical owner mirroring cannot synchronously crash the dashboard or 
   assert.match(fixtures,/saveOwnedCharacterSnapshot:[\s\S]*?ownedCharacters\[characterId\]/);
 });
 
+test('32. Generated compendium content paths exist with exact casing',()=>{
+  const indexes=['js/race-compendium-data.js','js/class-compendium-data.js','js/universal-compendium-index.js','data/compendium-index-clean.json'];
+  const directories=new Map();
+  for(const index of indexes){
+    const paths=[...new Set([...read(index).matchAll(/"(?:sourcePath|sourceFolder|contentPath)":\s*"(content\/[^"\n]+)"/g)].map(match=>match[1]))];
+    assert.ok(paths.length>0,`${index}: no content paths checked`);
+    for(const contentPath of paths){
+      let directory=root;
+      for(const segment of contentPath.split('/')){
+        if(!directories.has(directory)) directories.set(directory,fs.readdirSync(directory));
+        assert.ok(directories.get(directory).includes(segment),`${index}: missing or incorrectly cased ${contentPath}`);
+        directory=path.join(directory,segment);
+      }
+    }
+  }
+});
+
 let failed=0;
 for(const record of cases){
   try{await record.action();console.log(`PASS ${record.name}`);}
