@@ -12,6 +12,11 @@ document.documentElement.dataset.asteriaLiveCharacterDashboard = 'active';
 window.AsteriaArmour = Object.freeze({ ...armourSystem });
 
 function openRoute(route) {
+  // Normal owner/navigation entry must not inherit a previous GM visit.
+  if(window.history.state?.gmReturn) {
+    const { gmReturn, ...state } = window.history.state;
+    window.history.replaceState(state, '');
+  }
   activateReactDashboard();
   return navigateReactRoute(route);
 }

@@ -185,7 +185,9 @@
         window.loadAccountState?.();
         window.accountUsers = window.accountUsers || {};
         window.accountUsers[accountKey] = window.accountUsers[accountKey] || { characters: [] };
-        list.forEach(record=>{
+        const owned = list.filter(record => record.ownerUid === accountKey);
+        window.accountUsers[accountKey].characters = owned.map(record => record.id);
+        owned.forEach(record=>{
           const id = record.id || normaliseId(record.name || 'character');
           chars[id] = Object.assign(chars[id] || {}, record, { id });
           if(!window.accountUsers[accountKey].characters.includes(id)) window.accountUsers[accountKey].characters.push(id);

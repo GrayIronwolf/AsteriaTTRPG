@@ -191,21 +191,12 @@
     return Array.from(new Set(keys.length ? keys : ['local-player']));
   }
   function accountCharacterIds(){
-    window.loadAccountState?.();
-    const keys = currentAccountKeys();
-    const ids = new Set();
-    keys.forEach(key => array(window.accountUsers?.[key]?.characters).forEach(id => {
-      if(window.chars?.[id]) ids.add(id);
-    }));
-    Object.entries(window.chars || {}).forEach(([id, character]) => {
-      if(keys.includes(character?.ownerUid) || keys.includes(character?.accountId) || keys.includes(character?.uid)) ids.add(id);
-    });
-    if(window.session?.character && window.chars?.[window.session.character]) {
-      const character = window.chars[window.session.character];
-      if(ids.has(window.session.character) || keys.includes(character?.ownerUid) || keys.includes(character?.accountId) || keys.includes(character?.uid)) ids.add(window.session.character);
-    }
-    return Array.from(ids);
+    if(window.AsteriaFirebase && !window.AsteriaFirebase.isReady?.()) return [];
+    const uid = window.AsteriaFirebase?.getUser?.()?.uid ||
+      (!window.AsteriaFirebase ? window.session?.uid : '');
+    return window.AsteriaCharacterAccess?.ownedIds(window.chars, uid) || [];
   }
+
   function activeCampaign(){
     const index = Number(window.activeCampaign || 0);
     return (window.campaigns || [])[index] || (window.campaigns || [])[0] || null;
@@ -1323,6 +1314,8 @@
     });
     return true;
   }
+
+  window.addEventListener('asteria:owned-characters-loaded', () => { if(forgeMode === 'hub' && activeSystem === 'characterCreator') render(); });
 
   function renderCharacterForgeHub(){
     const ids = accountCharacterIds();
@@ -2806,6 +2799,7 @@
     }
     const name = String(d.details.name || '').trim() || 'New Character';
     const editingId = d.editCharacterId && window.chars?.[d.editCharacterId] ? d.editCharacterId : '';
+    if(d.editCharacterId && !accountCharacterIds().includes(d.editCharacterId)) { window.toast?.('Only the character owner can edit this character.'); return false; }
     const existingCharacter = editingId ? window.chars[editingId] : null;
     const id = editingId || uniqueCharacterId(name);
     const raceEntry = entryBySlug('race', d.raceSlug);
@@ -3209,6 +3203,7 @@
   }
 
   function setCharacterCardColour(id, colour){
+    if(!accountCharacterIds().includes(id)) { window.toast?.('Only the character owner can use Character Forge controls.'); return false; }
     const character = window.chars?.[id];
     if(!character) return false;
     character.cardColour = safeCardColour(colour);
@@ -3221,6 +3216,7 @@
   }
 
   function editForgedCharacter(id){
+    if(!accountCharacterIds().includes(id)) { window.toast?.('Only the character owner can use Character Forge controls.'); return false; }
     const character = window.chars?.[id];
     if(!character){
       window.toast?.('Character not found.');
@@ -3271,6 +3267,7 @@
   }
 
   function deleteForgedCharacter(id){
+    if(!accountCharacterIds().includes(id)) { window.toast?.('Only the character owner can use Character Forge controls.'); return false; }
     const character = window.chars?.[id];
     if(!character) {
       window.toast?.('Character not found.');
@@ -3305,6 +3302,7 @@
   }
 
   function openCharacterDashboardFromForge(id){
+    if(!accountCharacterIds().includes(id)) { window.toast?.('Only the character owner can use Character Forge controls.'); return false; }
     if(!window.chars?.[id]) {
       window.toast?.('Character not found.');
       return false;
@@ -3360,7 +3358,7 @@
     window.saveAccountState?.();
     window.saveAsteriaState?.();
     const user = window.AsteriaFirebase?.getUser?.();
-    if(!character.ownerUid || character.ownerUid === user?.uid) window.AsteriaFirebase?.saveCharacter?.(id, character);
+    if(character.ownerUid === user?.uid) window.AsteriaFirebase?.saveCharacter?.(id, character);
     array(window.campaigns).filter(campaign => campaign?.characters?.[id] || campaignMagicCharacterIds(campaign).includes(id)).forEach(campaign => {
       if(campaign?.id) window.AsteriaFirebase?.saveCampaignCharacter?.(campaign.id, id, character);
     });

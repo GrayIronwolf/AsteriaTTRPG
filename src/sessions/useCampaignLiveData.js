@@ -6,6 +6,13 @@ import { publishCustomItems } from '../app/legacyBridge.js';
 import { LIVE_SYNC_STATES } from '../types/asteriaContracts.mjs';
 
 export function useCampaignLiveData(campaignId, { mode = 'character', characterId = '' } = {}) {
+  const [authUid, setAuthUid] = useState(() => firebaseService.currentUser()?.uid || '');
+  useEffect(() => {
+    const update = () => setAuthUid(firebaseService.currentUser()?.uid || '');
+    window.addEventListener('asteria:firebase-ready', update);
+    window.addEventListener('asteria:firebase-signed-out', update);
+    return () => { window.removeEventListener('asteria:firebase-ready', update); window.removeEventListener('asteria:firebase-signed-out', update); };
+  }, []);
   const [campaign, setCampaign] = useState(null);
   const [characters, setCharacters] = useState({});
   const [session, setSession] = useState({ status: 'idle', id: '' });
@@ -68,6 +75,8 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     };
     const signedOut=()=>{
       failed=true;
+      setCharacters({});
+      setCampaign(null);
       setError('You have signed out. Sign in to reconnect.');
       setLoading(false);
       setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
@@ -120,7 +129,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       window.removeEventListener('asteria:firebase-signed-out',signedOut);
       unsubscribers.forEach(unsubscribe => { try { unsubscribe?.(); } catch {} });
     };
-  }, [campaignId, characterId, mode, online]);
+  }, [campaignId, characterId, mode, online, authUid]);
 
   useEffect(() => {
     const timer=window.setInterval(()=>setClock(Date.now()),1000);

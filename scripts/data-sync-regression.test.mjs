@@ -22,6 +22,7 @@ function harness(overrides={}) {
     localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)},
     console:{log:noop,warn:noop},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},
     setTimeout:(callback,ms)=>{timers.set(++id,{callback,ms});return id;},clearTimeout:key=>timers.delete(key)};
+  vm.runInNewContext(fs.readFileSync('js/character-access.js','utf8'),context);
   vm.runInNewContext(fs.readFileSync('js/data-sync.js','utf8'),context);
   domListeners.get('DOMContentLoaded')();
   return {window,counts,status,timers,listeners,remote:values=>accountCallback(values),setUser:value=>{user=value;},
@@ -62,4 +63,16 @@ test('logout disposes subscriptions and ignores late callbacks from the previous
   h.setUser({uid:'bob'});h.remote([{id:'old-account',ownerUid:'alice'}]);
   assert.equal(h.window.campaigns.length,0);assert.ok(h.counts.unsubscribed>0);
   assert.equal([...h.timers.values()].filter(timer=>timer.ms===900).length,0);
+});
+
+
+test('viewing another account character never exports or saves it as owned',async()=>{
+  const saved=[];
+  const h=harness({saveCharacter:async(id,record)=>{saved.push([id,record.ownerUid]);return true;}});
+  h.window.chars.b={id:'b',ownerUid:'bob',accountId:'alice'};
+  h.window.session={uid:'alice',character:'b'};
+  h.window.accountUsers={alice:{characters:['a','b']}};
+  h.window.AsteriaAuthBridge.getSession=()=>({uid:'alice',account:'alice',character:'b',profile:{characters:['a','b']}});
+  assert.equal(await h.window.AsteriaDataSync.save(),true);
+  assert.deepEqual(saved,[['a','alice']]);
 });

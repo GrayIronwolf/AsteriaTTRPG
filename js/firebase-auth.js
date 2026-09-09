@@ -1,3 +1,4 @@
+import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
 /* =========================
    Asteria v1.7.2.3 Firebase Account + Data Sync Foundation
@@ -35,6 +36,7 @@ const firebaseConfig = firebaseMode === 'emulator' ? {
   storageBucket:'demo-asteria.appspot.com', appId:'demo-app'
 } : productionFirebaseConfig;
 let app, auth, db, storage, functionsClient, currentUser = null, currentProfile = null;
+let ownershipReadyUid = '';
 try {
   if(reactDevFixture) throw new Error('React development fixture active.');
   if(!['emulator','production'].includes(firebaseMode) || (!localHost && firebaseMode === 'emulator')) throw new Error('Invalid Firebase environment.');
@@ -154,7 +156,7 @@ function galleryUploadError(error){
 function linkedCampaignIdsFromOwnedCharacters(uid){
   const ids = new Set();
   Object.values(window.chars || {}).forEach(character=>{
-    if(!character || character.ownerUid && character.ownerUid !== uid) return;
+    if(!character || character.ownerUid !== uid) return;
     uniqueValues(
       character.linkedCampaignIds,
       character.sharedCampaignId ? [character.sharedCampaignId] : []
@@ -461,10 +463,33 @@ async function ensureProfile(user, defaults={}){
 async function loadCharacters(user){
   if(!db || !user) return;
   try{
-    const snap = await getDocs(collection(db, 'users', user.uid, 'characters'));
-    const chars = [];
-    snap.forEach(d=>chars.push(Object.assign({ id:d.id }, d.data())));
-    if(currentUser?.uid===user.uid && chars.length) window.AsteriaAuthBridge?.importCharacters(user.uid, chars);
+    const snap = await getDocs(query(collection(db, 'users', user.uid, 'characters'), where('ownerUid', '==', user.uid)));
+    const chars = [], excluded = [];
+    await Promise.all(snap.docs.map(async d => {
+      const record = Object.assign({}, d.data(), { id:d.id });
+      try {
+        const valid = await validateOwnedRecord(record, user.uid, async (campaignId, characterId) => {
+          const shared = await getDoc(doc(db, 'campaigns', campaignId, 'characters', characterId));
+          return shared.exists() ? Object.assign({}, shared.data(), { id:shared.id }) : null;
+        });
+        if(valid) chars.push(record); else excluded.push(d.id);
+      } catch(error) {
+        // Unverifiable links are quarantined, never adopted as private characters.
+        excluded.push(d.id);
+        console.warn('Character ownership could not be verified.', d.id, error.code);
+      }
+    }));
+    if(currentUser?.uid !== user.uid) return;
+    const validIds = new Set(chars.map(character => character.id));
+    // Remove stale private cache entries; campaign listeners separately hydrate GM-visible sheets.
+    Object.entries(window.chars || {}).forEach(([id, character]) => {
+      if(character.ownerUid === user.uid && !validIds.has(id)) delete window.chars[id];
+    });
+    ownershipReadyUid = user.uid;
+    currentProfile = Object.assign({}, currentProfile || {}, { characters:[...validIds] });
+    window.AsteriaAuthBridge?.importCharacters(user.uid, chars);
+    window.dispatchEvent(new CustomEvent('asteria:owned-characters-loaded', { detail:{ uid:user.uid, excluded } }));
+    if(excluded.length) console.warn('Excluded unverified private character copies; no cloud records were changed.', excluded);
   }catch(err){ reportSyncError('character-load',err); throw err; }
 }
 function openAccountHome(profile, user){
@@ -630,7 +655,7 @@ window.firebaseResetPassword = async function(inputValue = ''){
 
 window.firebaseLogout = async function(){
   try{ if(auth) await signOut(auth); }catch(e){ console.warn(e); }
-  currentUser = null; currentProfile = null;
+  currentUser = null; ownershipReadyUid = ''; currentProfile = null;
   window.AsteriaAuthBridge?.logoutLocal();
   notice('Logged out.');
 };
@@ -694,7 +719,7 @@ function appendActivity(character,entry){
 }
 
 const firebasePublicApi = {
-  isReady:()=>Boolean(db && currentUser),
+  isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
   getProfile:()=>currentProfile,
   subscribeLiveSession: function(campaignId, onChange){
@@ -1578,7 +1603,7 @@ const firebasePublicApi = {
     }
   },
   saveCharacter: async function(id, character){
-    if(!db || !currentUser || !id || !character) return false;
+    if(!db || !currentUser || !id || !character || character.ownerUid !== currentUser.uid) return false;
     const uid=currentUser.uid;
     try{
       const clean = JSON.parse(JSON.stringify(character));
@@ -1853,7 +1878,7 @@ const firebasePublicApi = {
   },
   saveOwnedCharacterProgress: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
-    if(character.ownerUid && character.ownerUid !== currentUser.uid) return false;
+    if(character.ownerUid !== currentUser.uid) return false;
     try{
       await setDoc(
         doc(db, 'users', currentUser.uid, 'characters', characterId),
@@ -1880,7 +1905,7 @@ const firebasePublicApi = {
   },
   saveOwnedCharacterSnapshot: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
-    if(character.ownerUid && character.ownerUid !== currentUser.uid) return false;
+    if(character.ownerUid !== currentUser.uid) return false;
     try{
       const clean = cleanData(character);
       await setDoc(
@@ -2022,7 +2047,7 @@ if(auth && !reactDevFixture){
   onAuthStateChanged(auth, async user=>{
     if(!user){
       const hadSession = Boolean(currentUser || window.AsteriaAuthBridge?.isLoggedIn?.());
-      currentUser = null;
+      currentUser = null; ownershipReadyUid = '';
       currentProfile = null;
       window.AsteriaDataSync?.stopWatching?.();
       window.dispatchEvent(new CustomEvent('asteria:firebase-signed-out'));

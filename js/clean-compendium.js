@@ -1246,17 +1246,10 @@
   }
 
   function ownedCharacterIds() {
-    const s = sessionInfo();
-    const record = ensureAccountRecord();
-    const ids = [
-      ...(record.characters || []),
-      ...arrayValue(s.profile?.characters)
-    ];
-    Object.entries(window.chars || {}).forEach(([id, character]) => {
-      if ([character?.ownerUid, character?.accountId, character?.uid, character?.ownerAccount].includes(accountKey())) ids.push(id);
-    });
-    if (s.character && ids.includes(s.character)) ids.push(s.character);
-    return Array.from(new Set(ids)).filter(id => window.chars?.[id]);
+    if(window.AsteriaFirebase && !window.AsteriaFirebase.isReady?.()) return [];
+    const uid = window.AsteriaFirebase?.getUser?.()?.uid ||
+      (!window.AsteriaFirebase ? sessionInfo().uid : '');
+    return window.AsteriaCharacterAccess?.ownedIds(window.chars, uid) || [];
   }
 
   function ownedCharacters() {

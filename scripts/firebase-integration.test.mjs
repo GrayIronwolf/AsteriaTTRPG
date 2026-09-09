@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
 import {ref,uploadBytes,getBytes,deleteObject} from 'firebase/storage';
-import {doc,setDoc,getDoc,updateDoc,getDocs,collection,onSnapshot,writeBatch,Timestamp} from 'firebase/firestore';
+import {doc,setDoc,getDoc,updateDoc,getDocs,collection,onSnapshot,writeBatch,Timestamp,deleteDoc,query,where} from 'firebase/firestore';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
@@ -56,7 +56,7 @@ test('cosmetic owner edits work but cannot change ownership or class',async()=>{
   await assertFails(updateDoc(doc(user('alice'),'campaigns/c/characters/a'),{klass:'Mage'}));
 });
 test('character-link hijacking is denied even with a forged private copy',async()=>{
-  await setDoc(doc(user('alice'),'users/alice/characters/b'),sheet('b','alice'));
+  await assertFails(setDoc(doc(user('alice'),'users/alice/characters/b'),sheet('b','alice')));
   await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{lastLinkedCharacterId:'b','playerCharacterLinks.b':'alice','characters.b.ownerUid':'alice','players.alice.characterIds':['a','b']}));
   await assertFails(setDoc(doc(user('eve'),'campaigns/c/characters/evil'),sheet('evil','eve')));
 });
@@ -201,4 +201,48 @@ test('CP, talents, currency, rest, and organization commands execute against can
     ['createPartyOrganization',['c','a',{name:'Party'}]],
     ['updateCharacterInventory',['c','a',{type:'create-storage',name:'Pack',rows:2,cols:2}]]
   ]) {const result=await action('alice',name,args);assert.equal(result.ok,true,name+': '+result.error);}
+});
+
+
+test('Forge owner query returns own sheet while GM retains linked campaign access',async()=>{
+  await db.doc('users/gm/characters/own').set({id:'own',ownerUid:'gm'});
+  await db.doc('users/gm/characters/stale').set({id:'stale',ownerUid:'alice'});
+  const own=await assertSucceeds(getDocs(query(collection(user('gm'),'users/gm/characters'),where('ownerUid','==','gm'))));
+  assert.deepEqual(own.docs.map(record=>record.id),['own']);
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/characters/a')));
+  await assertFails(getDoc(doc(user('gm'),'users/alice/characters/a')));
+  const player=await assertSucceeds(getDocs(query(collection(user('alice'),'users/alice/characters'),where('ownerUid','==','alice'))));
+  assert.deepEqual(player.docs.map(record=>record.id),['a']);
+});
+test('GM cannot read an unrelated character using either private or campaign path',async()=>{
+  await db.doc('campaigns/other').set({...campaign,ownerUid:'other-gm',gmUids:[],roles:{eve:'player'},playerUids:['eve']});
+  await db.doc('campaigns/other/characters/e').set(sheet('e','eve'));
+  await db.doc('users/eve/characters/e').set(sheet('e','eve'));
+  await assertFails(getDoc(doc(user('gm'),'campaigns/other/characters/e')));
+  await assertFails(getDoc(doc(user('gm'),'users/eve/characters/e')));
+});
+test('private Forge writes and deletion are owner only; recursive rules cannot bypass owner validation',async()=>{
+  await assertFails(setDoc(doc(user('gm'),'users/gm/characters/foreign'),{id:'foreign',ownerUid:'alice'}));
+  await assertFails(setDoc(doc(user('gm'),'users/gm/characters/a'),sheet('a','gm')));
+  await assertFails(updateDoc(doc(user('gm'),'users/alice/characters/a'),{name:'Hijacked'}));
+  await assertFails(deleteDoc(doc(user('gm'),'users/alice/characters/a')));
+  await assertSucceeds(updateDoc(doc(user('alice'),'users/alice/characters/a'),{name:'My character'}));
+  await assertFails(updateDoc(doc(user('alice'),'users/alice/characters/a'),{ownerUid:'gm'}));
+  await assertSucceeds(deleteDoc(doc(user('alice'),'users/alice/characters/a')));
+});
+test('GM campaign edits preserve ownership and callable actions cannot impersonate a player',async()=>{
+  await assertSucceeds(updateDoc(doc(user('gm'),'campaigns/c/characters/a'),{hp:[9,10]}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/characters/a'),{ownerUid:'gm'}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/characters/a'),{sourceCharacterId:'other'}));
+  assert.equal((await action('gm','updateCampaignCharacterResource',['c','a','hp',1])).ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().ownerUid,'alice');
+});
+
+
+test('unlinked owner sheets and existing account settings still save normally',async()=>{
+  const own=user('gm');
+  await assertSucceeds(setDoc(doc(own,'users/gm/characters/own'),{id:'own',ownerUid:'gm',name:'New Character'}));
+  await assertSucceeds(updateDoc(doc(own,'users/gm/characters/own'),{name:'Updated'}));
+  await assertSucceeds(setDoc(doc(own,'users/gm/settings/appState'),{selected:'own'}));
+  await assertSucceeds(setDoc(doc(own,'users/gm'),{characters:['own']}));
 });

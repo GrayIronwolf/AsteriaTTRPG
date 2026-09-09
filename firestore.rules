@@ -115,11 +115,34 @@ service cloud.firestore {
         request.resource.data.playerCharacterLinks[characterId] == request.auth.uid;
     }
 
+    function matchingLinkedOwner(data, characterId, uid) {
+      let campaignId = data.get('sharedCampaignId', '');
+      let path = /databases/$(database)/documents/campaigns/$(campaignId)/characters/$(characterId);
+      return campaignId == '' || !exists(path) || (
+        get(path).data.ownerUid == uid &&
+        get(path).data.get('sourceCharacterId', characterId) == data.get('sourceCharacterId', characterId)
+      );
+    }
+
+    function sameCharacterIdentity() {
+      return request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.get('sourceCharacterId', '') == resource.data.get('sourceCharacterId', '') &&
+        request.resource.data.get('id', '') == resource.data.get('id', '');
+    }
+
     match /users/{uid} {
       allow read, write: if ownsUserData(uid);
 
-      match /{document=**} {
-        allow read, write: if ownsUserData(uid);
+      match /characters/{characterId} {
+        allow read: if ownsUserData(uid);
+        allow create: if ownsUserData(uid) && request.resource.data.ownerUid == uid &&
+          matchingLinkedOwner(request.resource.data, characterId, uid);
+        allow update: if ownsUserData(uid) && resource.data.ownerUid == uid &&
+          request.resource.data.ownerUid == uid && matchingLinkedOwner(request.resource.data, characterId, uid);
+        allow delete: if ownsUserData(uid);
+      }
+      match /{collectionId}/{document=**} {
+        allow read, write: if collectionId != 'characters' && ownsUserData(uid);
       }
     }
 
@@ -153,7 +176,7 @@ service cloud.firestore {
           request.resource.data.ownerUid == request.auth.uid &&
           exists(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId))
         );
-        allow update: if isCampaignGM(campaignId) || safeCharacterEdit(campaignId);
+        allow update: if (isCampaignGM(campaignId) && sameCharacterIdentity()) || safeCharacterEdit(campaignId);
         allow delete: if isCampaignGM(campaignId);
       }
 
