@@ -48,18 +48,7 @@ service cloud.firestore {
     }
 
     function canWriteCampaignCharacter(campaignId, ownerUid) {
-      return signedIn() && (
-        ownerUid == request.auth.uid ||
-        isCampaignOwner(sharedCampaign(campaignId)) ||
-        (
-          sharedCampaign(campaignId).keys().hasAll(['gmUids']) &&
-          request.auth.uid in sharedCampaign(campaignId).gmUids
-        ) ||
-        (
-          sharedCampaign(campaignId).keys().hasAll(['roles']) &&
-          sharedCampaign(campaignId).roles[request.auth.uid] == 'gm'
-        )
-      );
+      return canReadCampaignCharacter(campaignId) && (ownerUid == request.auth.uid || isCampaignGM(campaignId));
     }
 
     function isLinkedCharacterOwner(campaignId, characterId) {
@@ -73,15 +62,22 @@ service cloud.firestore {
       return isCampaignMember(sharedCampaign(campaignId));
     }
 
-    function canTransferLiveItems(campaignId) {
-      return canUseCampaignSystems(campaignId) &&
-        exists(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current) &&
-        get(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current).data.status == 'active' &&
+    function activeSession(campaignId) {
+      let session = get(/databases/$(database)/documents/campaigns/$(campaignId)/liveSession/current).data;
+      return session.status == 'active' && session.expiresAt is timestamp && request.time < session.expiresAt;
+    }
+    function safeCharacterEdit(campaignId) {
+      return canWriteCampaignCharacter(campaignId, resource.data.ownerUid) &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'inventory', 'equipment', 'quickSlots', 'coins', 'coinPouch',
-          'storages', 'storageLimit', 'actionLog', 'updatedAt'
-        ]);
+          'name', 'initial', 'pronouns', 'age', 'appearance', 'origin', 'backstory',
+          'family_tree', 'biography', 'description', 'gallery', 'image', 'portrait',
+          'characterImage', 'dashboardPreferences', 'journal', 'updatedAt', 'status',
+          'linkedCampaignIds', 'sharedCampaignId', 'sourceCharacterId', 'id'
+        ]) &&
+        request.resource.data.get('id', '') == resource.data.get('id', '') &&
+        request.resource.data.get('sourceCharacterId', '') == resource.data.get('sourceCharacterId', '') &&
+        request.resource.data.get('sharedCampaignId', '') == resource.data.get('sharedCampaignId', '');
     }
 
     function isCampaignGM(campaignId) {
@@ -93,35 +89,16 @@ service cloud.firestore {
       );
     }
 
-    function hasActiveInvite(data, campaignId) {
-      return signedIn() &&
-        data.keys().hasAll(['ucn']) &&
-        exists(/databases/$(database)/documents/campaignInvites/$(data.ucn)) &&
-        get(/databases/$(database)/documents/campaignInvites/$(data.ucn)).data.status == 'active' &&
-        get(/databases/$(database)/documents/campaignInvites/$(data.ucn)).data.campaignId == campaignId;
-    }
 
-    function joinsCampaignAsSelf(campaignId) {
-      return signedIn() &&
-        hasActiveInvite(resource.data, campaignId) &&
-        request.resource.data.ownerUid == resource.data.ownerUid &&
-        request.resource.data.ucn == resource.data.ucn &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'playerUids', 'roles', 'players', 'activity', 'updatedAt'
-        ]) &&
-        request.resource.data.playerUids.hasAll(resource.data.playerUids) &&
-        request.resource.data.playerUids.size() <= resource.data.playerUids.size() + 1 &&
-        request.auth.uid in request.resource.data.playerUids &&
-        request.resource.data.roles.diff(resource.data.roles).affectedKeys().hasOnly([request.auth.uid]) &&
-        request.resource.data.players.diff(resource.data.players).affectedKeys().hasOnly([request.auth.uid]) &&
-        request.resource.data.roles[request.auth.uid] == 'player' &&
-        request.resource.data.players[request.auth.uid].uid == request.auth.uid &&
-        request.resource.data.players[request.auth.uid].role == 'player';
-    }
 
-    function linksOwnedCharacter() {
+
+
+    function linksOwnedCharacter(campaignId) {
       let characterId = request.resource.data.lastLinkedCharacterId;
+      let linked = getAfter(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(characterId)).data;
       return isCampaignMember(resource.data) &&
+        linked.ownerUid == request.auth.uid &&
+        resource.data.get('playerCharacterLinks', {}).get(characterId, request.auth.uid) == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'party', 'players', 'characters', 'playerCharacterLinks',
@@ -147,37 +124,43 @@ service cloud.firestore {
     }
 
     match /usernames/{username} {
-      allow read: if true;
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-      allow update: if signedIn() && resource.data.uid == request.auth.uid && request.resource.data.uid == resource.data.uid;
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
       allow delete: if false;
     }
 
     match /campaignInvites/{ucn} {
       allow get: if signedIn();
       allow list: if false;
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid && isCampaignOwner(sharedCampaign(request.resource.data.campaignId));
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.campaignId == resource.data.campaignId;
       allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
     }
 
     match /campaigns/{campaignId} {
-      allow read: if isCampaignMember(resource.data) || hasActiveInvite(resource.data, campaignId);
+      allow read: if isCampaignMember(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || joinsCampaignAsSelf(campaignId) || linksOwnedCharacter();
+      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || linksOwnedCharacter(campaignId);
       allow delete: if isCampaignOwner(resource.data);
 
       match /characters/{characterId} {
         allow read: if canReadCampaignCharacter(campaignId);
-        allow create: if canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId);
-        allow update: if (request.resource.data.ownerUid == resource.data.ownerUid && (canWriteCampaignCharacter(campaignId, resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId))) || canTransferLiveItems(campaignId);
-        allow delete: if canWriteCampaignCharacter(campaignId, resource.data.ownerUid) || isLinkedCharacterOwner(campaignId, characterId);
+        // Players import a sheet once. Live gameplay mutations use authenticated Functions.
+        allow create: if isCampaignGM(campaignId) || (
+          canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid) &&
+          request.resource.data.ownerUid == request.auth.uid &&
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId))
+        );
+        allow update: if isCampaignGM(campaignId) || safeCharacterEdit(campaignId);
+        allow delete: if isCampaignGM(campaignId);
       }
 
       match /systems/{systemId} {
-        allow read: if canUseCampaignSystems(campaignId);
-        allow create, update: if ((systemId == 'encounter' || systemId == 'gmWorkspace') && isCampaignGM(campaignId)) ||
-          (systemId != 'encounter' && systemId != 'gmWorkspace' && canUseCampaignSystems(campaignId));
+        allow read: if canUseCampaignSystems(campaignId) && (systemId != 'gmWorkspace' || isCampaignGM(campaignId));
+        allow create: if isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.keys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid);
+        allow update: if isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid);
         allow delete: if isCampaignOwner(sharedCampaign(campaignId));
       }
 
@@ -194,24 +177,28 @@ service cloud.firestore {
 
         match /presence/{uid} {
           allow read: if canUseCampaignSystems(campaignId);
-          allow create, update: if ownsUserData(uid) || isCampaignGM(campaignId);
-          allow delete: if ownsUserData(uid) || isCampaignGM(campaignId);
+          allow create, update: if canUseCampaignSystems(campaignId) && (ownsUserData(uid) || isCampaignGM(campaignId));
+          allow delete: if canUseCampaignSystems(campaignId) && (ownsUserData(uid) || isCampaignGM(campaignId));
         }
       }
 
       match /events/{eventId} {
         allow read: if isCampaignGM(campaignId) ||
-          (signedIn() && resource.data.targetOwnerUid == request.auth.uid);
+          (canUseCampaignSystems(campaignId) && resource.data.targetOwnerUid == request.auth.uid);
         allow create: if isCampaignGM(campaignId);
         allow update: if isCampaignGM(campaignId) || (
-          signedIn() &&
+          canUseCampaignSystems(campaignId) &&
+          !(resource.data.type in ['loot-reward','magic-element-reward']) &&
+          request.resource.data.status == 'acknowledged' &&
+          request.resource.data.acknowledged == true &&
+          request.resource.data.acknowledgedBy == request.auth.uid &&
           resource.data.targetOwnerUid == request.auth.uid &&
           request.resource.data.targetOwnerUid == resource.data.targetOwnerUid &&
           request.resource.data.targetCharacterId == resource.data.targetCharacterId &&
           request.resource.data.type == resource.data.type &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'status', 'deliveryStatus', 'acknowledged', 'acknowledgedBy',
-            'acknowledgedAt', 'resolvedAt', 'updatedAt'
+            'acknowledgedAt', 'updatedAt'
           ])
         );
         allow delete: if isCampaignOwner(sharedCampaign(campaignId));
@@ -219,7 +206,9 @@ service cloud.firestore {
 
       match /partyChat/{messageId} {
         allow read: if canUseCampaignSystems(campaignId);
-        allow create: if canUseCampaignSystems(campaignId) &&
+        allow create: if canUseCampaignSystems(campaignId) && activeSession(campaignId) &&
+          get(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(request.resource.data.characterId)).data.ownerUid == request.auth.uid &&
+          request.resource.data.createdAt == request.time &&
           request.resource.data.ownerUid == request.auth.uid &&
           request.resource.data.text is string &&
           request.resource.data.text.size() <= 2000;

@@ -5,5 +5,57 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": ".",
+      "codebase": "asteria",
+      "runtime": "nodejs22",
+      "ignore": [
+        ".git",
+        "node_modules",
+        ".firebase",
+        "**/.env",
+        "**/.env.*",
+        "**/*debug.log",
+        "**/*.log",
+        "**/*serviceAccount*.json",
+        "**/*service-account*.json",
+        "**/*firebase-adminsdk*.json",
+        "**/credentials*.json",
+        "**/*.pem",
+        "**/*.key",
+        "react-dist",
+        "upload",
+        "media",
+        "images",
+        "assets",
+        "docs",
+        "scripts",
+        ".github",
+        "**/*service_account*.json",
+        "**/application_default_credentials.json",
+        "**/gha-creds-*.json"
+      ]
+    }
+  ],
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "functions": {
+      "port": 5001
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
+    "singleProjectMode": true
   }
 }

@@ -8,6 +8,10 @@
   let syncTimer = null;
   let cloudLoadedForUid = null;
   let saveInProgress = false;
+  let applyingRemote = 0;
+  let saveQueued = false;
+  let syncGeneration = 0;
+  let cloudLoadPromise = null;
   let lastCampaignRefresh = 0;
   let realtimeUid = null;
   let accountCampaignUnsubscribe = null;
@@ -98,6 +102,10 @@
       lastLocalSave: Date.now()
     };
   }
+  function applyRemote(callback){
+    applyingRemote += 1;
+    try { return callback(); } finally { applyingRemote -= 1; }
+  }
   function mergeCloudState(state){
     if(!state) return;
     try{
@@ -105,7 +113,7 @@
       if(typeof state.activeCampaign === 'number') window.activeCampaign = state.activeCampaign;
       if(state.selected && window.chars?.[state.selected]) window.selected = state.selected;
       if(state.appSystemState) localStorage.setItem(APP_SYSTEM_STATE_KEY, JSON.stringify(state.appSystemState));
-      window.saveAsteriaState?.();
+      applyRemote(()=>window.saveAsteriaState?.());
       window.renderCampaigns?.();
       window.renderPlayerHome?.();
       window.refreshSyncedViews?.();
@@ -124,7 +132,7 @@
       const activeIndex = window.campaigns.findIndex(campaign=>campaign?.id === activeId);
       if(activeIndex >= 0) window.activeCampaign = activeIndex;
     }
-    window.saveAsteriaState?.();
+    applyRemote(()=>window.saveAsteriaState?.());
     window.renderCampaigns?.();
     if(document.getElementById('gm')?.classList.contains('show')) window.renderGM?.();
     window.refreshSyncedViews?.();
@@ -136,6 +144,13 @@
     accountCampaignUnsubscribe = null;
     stopCampaignRealtimeSubscriptions();
     realtimeUid = null;
+    syncGeneration += 1;
+    cloudLoadedForUid = null;
+    cloudLoadPromise = null;
+    clearTimeout(syncTimer);
+    saveQueued = false;
+    persistedProgressionSignatures.clear();
+    persistedCharacterSignatures.clear();
   }
   function stopCampaignRealtimeSubscriptions(){
     realtimeSubscriptions.forEach(unsubscribe=>{
@@ -428,7 +443,9 @@
     if(realtimeUid && realtimeUid!==user.uid) stopRealtimeCampaignSync();
     realtimeUid=user.uid;
     if(accountCampaignUnsubscribe) return;
+    const generation=syncGeneration;
     accountCampaignUnsubscribe=window.AsteriaFirebase.subscribeAccountCampaigns(campaigns=>{
+      if(generation!==syncGeneration || window.AsteriaFirebase?.getUser?.()?.uid!==user.uid) return;
       mergeCloudCampaigns(campaigns || []);
       setupRealtimeCampaignSync(window.campaigns || []);
       lastCampaignRefresh=Date.now();
@@ -490,7 +507,13 @@
       return [];
     }
   }
-  async function loadCloudData(reason='login'){
+  function loadCloudData(reason='login'){
+    if(cloudLoadPromise) return cloudLoadPromise;
+    const pending=performCloudLoad(reason).finally(()=>{if(cloudLoadPromise===pending) cloudLoadPromise=null;});
+    cloudLoadPromise=pending;
+    return pending;
+  }
+  async function performCloudLoad(reason='login'){
     const user = window.AsteriaFirebase?.getUser?.();
     if(!user) return;
     startAccountCampaignDiscovery();
@@ -498,13 +521,15 @@
       setupRealtimeCampaignSync(window.campaigns || []);
       return;
     }
-    cloudLoadedForUid = user.uid;
+    const generation=syncGeneration;
     setSyncStatus('Cloud sync: loading account data...', 'info');
     try{
       await window.AsteriaFirebase?.loadCharacters?.();
       startAccountCampaignDiscovery();
       const campaigns = await window.AsteriaFirebase?.loadCampaigns?.();
       const state = await window.AsteriaFirebase?.loadState?.();
+      if(generation!==syncGeneration || window.AsteriaFirebase?.getUser?.()?.uid!==user.uid) return;
+      cloudLoadedForUid = user.uid;
       mergeCloudState(state);
       mergeCloudCampaigns(campaigns);
       lastCampaignRefresh = Date.now();
@@ -517,22 +542,30 @@
     }
   }
   async function saveCloudData(reason='change'){
-    if(saveInProgress || !isAuthed()) return false;
+    if(!isAuthed()) return false;
+    if(saveInProgress){saveQueued=true;return false;}
+    const uid=window.AsteriaFirebase.getUser().uid;
+    const generation=syncGeneration;
+    const stillCurrent=()=>generation===syncGeneration && window.AsteriaFirebase?.getUser?.()?.uid===uid;
     saveInProgress = true;
     setSyncStatus('Cloud sync: saving...', 'info');
     try{
       const owned = exportOwnedCharacters();
       if(!reactOwnsSharedMutations()){
         for(const [id, character] of Object.entries(owned)){
-          await window.AsteriaFirebase.saveCharacter(id, character);
+          if(!stillCurrent()) return false;
+          if(!await window.AsteriaFirebase.saveCharacter(id, character)) throw new Error('A character save was not confirmed.');
         }
         const user = window.AsteriaFirebase?.getUser?.();
         for(const campaign of (window.campaigns || [])){
           if(!campaign?.id || !user || (campaign.ownerUid !== user.uid && campaign.gmId !== user.uid && !(campaign.gmUids || []).includes(user.uid))) continue;
-          await window.AsteriaFirebase.saveCampaign(campaign.id, campaign);
+          if(!stillCurrent()) return false;
+          if(!await window.AsteriaFirebase.saveCampaign(campaign.id, campaign)) throw new Error('A campaign save was not confirmed.');
         }
       }
-      await window.AsteriaFirebase.saveState(exportCloudState());
+      if(!stillCurrent()) return false;
+      if(!await window.AsteriaFirebase.saveState(exportCloudState())) throw new Error('The account save was not confirmed.');
+      if(!stillCurrent()) return false;
       localMeta({ lastSave:Date.now(), reason, characterCount:Object.keys(owned).length });
       setSyncStatus('Cloud sync: saved', 'success');
       return true;
@@ -542,9 +575,11 @@
       return false;
     }finally{
       saveInProgress = false;
+      if(saveQueued && stillCurrent()){saveQueued=false;scheduleCloudSave('queued-change');}
     }
   }
   function scheduleCloudSave(reason='change'){
+    if(applyingRemote) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(()=>saveCloudData(reason), 900);
   }
@@ -592,6 +627,7 @@
   };
   window.asteriaDataSync = window.AsteriaDataSync;
 
+  window.addEventListener('asteria:firebase-signed-out', stopRealtimeCampaignSync);
   window.addEventListener('asteria:firebase-ready', e=>{
     loadCloudData(e.detail?.source || 'auth');
     setTimeout(()=>scheduleCloudSave('auth-ready'), 1200);
@@ -602,11 +638,11 @@
     setSyncStatus(
       permissionDenied
         ? 'Cloud delivery blocked by Firestore rules'
-        : 'Cloud delivery interrupted - retrying',
+        : detail.message || 'Cloud delivery interrupted. Refresh to reconnect.',
       'warn'
     );
     if(permissionDenied){
-      toast('Firebase blocked campaign delivery. Deploy the included firestore.rules, then refresh both accounts.');
+      toast('Firebase blocked campaign delivery. Ask the campaign owner to check the deployed rules and your membership.');
     }
   });
   window.addEventListener('focus', ()=>{

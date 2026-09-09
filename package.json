@@ -12,13 +12,25 @@
     "test:react": "node scripts/test-react-live-session.mjs",
     "test:stability": "node scripts/test-stability-audit.mjs",
     "test:smoke": "node scripts/smoke-test.js",
-    "test": "npm run test:armour && npm run test:market-pricing && npm run test:react && npm run test:stability && npm run test:smoke"
+    "test": "npm run test:armour && npm run test:market-pricing && npm run test:react && npm run test:stability && npm run test:smoke",
+    "test:firebase": "firebase emulators:exec --project demo-asteria --only firestore,auth,storage \"node --test scripts/firebase-integration.test.mjs\"",
+    "emulators": "firebase emulators:start --project demo-asteria"
   },
   "dependencies": {
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.4.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "express": "^4.22.2",
+    "firebase": "^11.10.0",
+    "firebase-tools": "^14.12.1",
     "vite": "5.4.14"
+  },
+  "main": "functions/index.mjs",
+  "engines": {
+    "node": "22"
   }
 }

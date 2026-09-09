@@ -1,6 +1,5 @@
 const PROFILE_SYNC_FIELDS = [
-  'name', 'initial', 'race', 'klass', 'class', 'classes', 'classNames', 'classKeys',
-  'subclass', 'pronouns', 'age', 'appearance', 'origin', 'backstory', 'family_tree',
+  'name', 'initial', 'pronouns', 'age', 'appearance', 'origin', 'backstory', 'family_tree',
   'biography', 'description'
 ];
 
