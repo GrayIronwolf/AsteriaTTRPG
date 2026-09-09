@@ -14,8 +14,8 @@ function AsteriaRouteOutlet() {
   if(!route) return null;
   return <Suspense fallback={<div className="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>}>
     {route.type === 'gm'
-      ? <GMDashboard campaignId={route.campaignId} />
-      : <CharacterDashboard campaignId={route.campaignId} characterId={route.characterId} />}
+      ? <GMDashboard key={route.campaignId} campaignId={route.campaignId} />
+      : <CharacterDashboard key={`${route.campaignId}/${route.characterId}`} campaignId={route.campaignId} characterId={route.characterId} />}
   </Suspense>;
 }
 

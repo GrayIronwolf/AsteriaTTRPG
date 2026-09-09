@@ -17,6 +17,7 @@ export function installDevFixtures() {
     name: 'Shadows of Elarion',
     ucn: '204015717454',
     gmId: 'gm-demo', ownerUid:'player-demo', gmUids:['player-demo'],
+    playerCharacterLinks:{kael:'player-demo',lyra:'player-lyra'},
     party: ['kael', 'lyra']
   };
   const characters = {

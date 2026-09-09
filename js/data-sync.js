@@ -73,19 +73,10 @@
     }
   }
   function ownedCharacterIds(){
-    const s = getSession();
-    const account = s.account || s.uid || s.user;
-    const rec = window.accountUsers?.[account];
-    const uid=window.AsteriaFirebase?.getUser?.()?.uid || '';
-    const ids=new Set();
-    if(Array.isArray(rec?.characters)) rec.characters.forEach(id=>ids.add(id));
-    if(Array.isArray(s.profile?.characters)) s.profile.characters.forEach(id=>ids.add(id));
-    if(s.character) ids.add(s.character);
-    Object.entries(window.chars || {}).forEach(([id,character])=>{
-      if(uid && character?.ownerUid === uid) ids.add(id);
-    });
-    return Array.from(ids).filter(id=>window.chars?.[id]);
+    const uid = window.AsteriaFirebase?.getUser?.()?.uid || '';
+    return window.AsteriaCharacterAccess?.ownedIds(window.chars, uid) || [];
   }
+
   function exportOwnedCharacters(){
     const out = {};
     ownedCharacterIds().forEach(id=>{ out[id] = safeClone(Object.assign({ id }, window.chars[id])); });

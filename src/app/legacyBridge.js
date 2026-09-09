@@ -1,3 +1,4 @@
+import '../../js/character-access.js';
 /**
  * Temporary boundary between the canonical React dashboards and static routes
  * that have not yet migrated. Keep all legacy DOM/global writes in this file.
@@ -36,6 +37,8 @@ export function mirrorCharacterSnapshot(character) {
     : JSON.parse(JSON.stringify(character));
   window.chars = window.chars || {};
   window.chars[character.id] = Object.assign({}, window.chars[character.id] || {}, snapshot);
-  window.selected = character.id;
-  window.session = Object.assign({}, window.session || {}, { character: character.id });
+  if(window.AsteriaCharacterAccess.owns(character, window.AsteriaFirebase?.getUser?.()?.uid)) {
+    window.selected = character.id;
+    window.session = Object.assign({}, window.session || {}, { character: character.id });
+  }
 }

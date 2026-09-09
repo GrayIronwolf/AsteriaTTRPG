@@ -1,3 +1,4 @@
+import { gmReturnContext, returnToGM } from '../app/gmCharacterNavigation.mjs';
 import React, { useEffect, useRef, useState } from 'react';
 import { AsteriaAppShell, DashboardNavigation, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { DashboardInformationRow } from '../components/DashboardInformation.jsx';
@@ -105,6 +106,9 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const processedLoot = useRef(new Set());
   const processedMagic = useRef(new Set());
   const character = live.character;
+  const uid = firebaseService.currentUser()?.uid;
+  const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
+  const gmReturn = gmReturnContext(live.campaign, character, uid);
   useEffect(()=>{
     setAcknowledged(new Set());
     processedLoot.current.clear();
@@ -117,12 +121,12 @@ export function CharacterDashboard({ campaignId, characterId }) {
   },[]);
   useEffect(() => {
     mirrorCharacterSnapshot(character);
-    if(character?.id) {
+    if(character?.id && isOwner) {
       Promise.resolve()
         .then(() => firebaseService.mirrorOwnedCharacter(character.sourceCharacterId||character.id,character))
         .catch(() => {});
     }
-  }, [character]);
+  }, [character, isOwner]);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
@@ -143,12 +147,14 @@ export function CharacterDashboard({ campaignId, characterId }) {
   if(live.error && !character) return <div className="react-route-state" role="alert">{live.error}</div>;
   if(live.loading) return <div className="react-route-state">Connecting Character Dashboard...</div>;
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
-  const editable = Boolean(live.session?.editable);
+  if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
+  const editable = Boolean(isOwner && live.session?.editable);
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD' });
   return <AsteriaAppShell
     className="react-character-dashboard"
     showHeader={false}
   >
+    {gmReturn ? <button type="button" className="react-gm-return" onClick={() => returnToGM(gmReturn)}>← Back to GM Dashboard</button> : null}
     <DashboardInformationRow campaign={live.campaign} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error} loading={live.loading} />
     <SessionGate session={live.session} />
     <DashboardNavigation tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
@@ -164,6 +170,6 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     <PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />
-    {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
+    {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : isOwner && questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : isOwner && xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
   </AsteriaAppShell>;
 }

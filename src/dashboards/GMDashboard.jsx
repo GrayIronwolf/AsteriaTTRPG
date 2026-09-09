@@ -1,3 +1,4 @@
+import { openGMCharacter, restoredGMView } from '../app/gmCharacterNavigation.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { AsteriaAppShell, DashboardNavigation, EmptyState, LiveSyncStatus, Panel, ResourceBar, StatusPill } from '../components/WorkspaceUI.jsx';
@@ -41,7 +42,7 @@ function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }
   </button>;
 }
 
-function PartySidebar({ campaign, characters, selectedId, setSelectedId, presence }) {
+function PartySidebar({ campaign, characters, selectedId, setSelectedId, presence, onOpen }) {
   const partyIds = campaign?.party?.length ? campaign.party : Object.keys(characters);
   return <Panel title="Party Stats" className="react-party-sidebar">
     <p>{campaign?.name || 'Campaign'} party</p>
@@ -52,7 +53,7 @@ function PartySidebar({ campaign, characters, selectedId, setSelectedId, presenc
         selected={selectedId === character.id}
         presence={presence}
         onSelect={() => setSelectedId(character.id)}
-        onOpen={() => window.AsteriaReactMigration?.openCharacter?.(campaign.id, character.id)}
+        onOpen={() => onOpen(character)}
       />)}
       {!partyIds.length ? <EmptyState title="No linked characters">Characters appear here as soon as they join this campaign.</EmptyState> : null}
     </div>
@@ -429,8 +430,10 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
 
 export function GMDashboard({ campaignId }) {
   const live = useCampaignLiveData(campaignId, { mode: 'gm' });
-  const [tab, setTab] = useState('main');
-  const [selectedId, setSelectedId] = useState('');
+  const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
+  const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
+  const [selectedId, setSelectedId] = useState(restored.selectedId || '');
+  useEffect(() => { if(!live.loading && restored.scrollY) window.scrollTo(0, restored.scrollY); }, [live.loading]);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
   const migrationStarted = useRef(false);
@@ -453,12 +456,13 @@ export function GMDashboard({ campaignId }) {
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const run = async operation => { setBusy(true); setActionError(''); try { await operation(); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
+  if(!window.AsteriaCharacterAccess.isGM(live.campaign, firebaseService.currentUser()?.uid)) return <div className="react-route-state" role="alert">You do not have GM access to this campaign.</div>;
   return <AsteriaAppShell
     className="react-gm-dashboard"
     eyebrow="GM Dashboard"
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
-    sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} />}
+    sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} onOpen={character => openGMCharacter(live.campaign, character, { tab })} />}
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
