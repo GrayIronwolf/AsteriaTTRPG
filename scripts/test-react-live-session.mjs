@@ -97,7 +97,7 @@ test('9. React uses the existing Firebase singleton service', () => {
 });
 
 test('10. Firebase exposes transactional session, XP, loot, resource, and acknowledgement APIs', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   ['startLiveSession','pauseLiveSession','endLiveSession','grantCampaignXP','createLootReward','updateCampaignCharacterResource','acknowledgeCampaignEvent'].forEach(name => assert.match(firebase, new RegExp(name)));
   assert.match(firebase, /runTransaction/);
 });
@@ -185,7 +185,7 @@ test('18. All character workspace systems render natively in React', () => {
 });
 
 test('19. Firebase gates live mutations and exposes the party workspace', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   ['spendCharacteristicAllocations','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCampaignCharacterCurrency','updateCharacterInventory','buyLiveShopItem','sellLiveShopItem','createLiveTrade','respondLiveTrade','updateCharacterQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(firebase, new RegExp(name)));
   assert.match(firebase, /requireLiveSession/);
   assert.match(read('firestore.rules'), /match \/partyChat\/\{messageId\}/);
@@ -214,7 +214,7 @@ test('22. Dashboard preferences preserve valid ordering and visibility choices',
 });
 
 test('23. Gallery, organizations, titles, custom items, and player item requests use the shared Firebase service', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const service = read('src/firebase/asteriaFirebaseService.js');
   const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/InventoryWorkspace.jsx') + read('src/dashboards/PlayerItemExchange.jsx') + read('src/dashboards/CharacterGallerySettings.jsx');
   ['uploadCharacterGalleryImage','refreshCharacterGalleryImage','setCharacterGalleryPortrait','createPartyOrganization','grantCharacterTitle','grantCharacterStorageSlots','createCustomItem','createLiveItemRequest','respondLiveItemRequest','cancelLiveItemRequest','acknowledgeLiveItemRequest'].forEach(name => assert.match(firebase, new RegExp(name)));
@@ -253,7 +253,7 @@ test('26. Storage grids preserve dimensions, legacy bags, and occupied cells', (
 });
 
 test('27. Linked owners can use gallery and item workflows without trusting stale owner metadata', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const rules = read('firestore.rules');
   assert.match(firebase, /verifyOwnedLiveCharacter/);
   assert.match(firebase, /syncOwnedCharacterGalleryMedia/);
@@ -285,7 +285,7 @@ test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage he
 });
 
 test('30. Player item requests use one canonical live record collection', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const fixture = read('src/devFixtures.js');
   assert.match(firebase, /ecosystem\.playerItemRequests/);
   assert.match(fixture, /playerItemRequests:\[\]/);
@@ -545,7 +545,7 @@ test('55. Inventory uses the requested four-column support, equipment, storage, 
 });
 
 test('56. Titles can be granted, selected, edited, and revoked through shared services', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const service = read('src/firebase/asteriaFirebaseService.js');
   const settings = read('src/dashboards/CharacterGallerySettings.jsx');
   const gm = read('src/dashboards/GMDashboard.jsx');
@@ -557,7 +557,7 @@ test('56. Titles can be granted, selected, edited, and revoked through shared se
 });
 
 test('57. Player trades require recipient acceptance and sender final confirmation', () => {
-  const firebase = read('js/firebase-auth.js');
+  const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const exchange = read('src/dashboards/PlayerItemExchange.jsx');
   const fixture = read('src/devFixtures.js');
   assert.match(firebase, /status='awaiting-sender'/);
@@ -641,7 +641,7 @@ test('62. Soul Damage seals HP and recovers only through the long-rest flow', ()
   assert.deepEqual(long.entity.hp,[80,100]);
   assert.deepEqual(long.entity.sp,[100,100]);
   assert.deepEqual(long.entity.mp,[60,100]);
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const service=read('src/firebase/asteriaFirebaseService.js');
   const player=read('src/dashboards/PlayerDashboardOverview.jsx');
   const gm=read('src/dashboards/GMDashboard.jsx');

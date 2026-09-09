@@ -25,22 +25,17 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [error, setError] = useState('');
 
   useEffect(() => {
-    let reconnectTimer = 0;
     const connected = () => {
       setOnline(true);
       setConnectionState(LIVE_SYNC_STATES.RECONNECTING);
-      window.clearTimeout(reconnectTimer);
-      reconnectTimer = window.setTimeout(() => setConnectionState(LIVE_SYNC_STATES.CONNECTED), 400);
     };
     const disconnected = () => {
-      window.clearTimeout(reconnectTimer);
       setOnline(false);
       setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
     };
     window.addEventListener('online', connected);
     window.addEventListener('offline', disconnected);
     return () => {
-      window.clearTimeout(reconnectTimer);
       window.removeEventListener('online', connected);
       window.removeEventListener('offline', disconnected);
     };
@@ -50,6 +45,36 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     if(!campaignId) return undefined;
     let active = true;
     const unsubscribers = [];
+    const required=new Set(['campaign','characters','session','partyWorkspace','partyChat','ecosystem','customItems','events',...(mode==='gm'?['encounter','gmWorkspace']:[])]);
+    let failed=false;
+    const serverReady=new Set();
+    const accept=(name,callback)=>(value,metadata)=>{
+      if(!active) return;
+      callback(value);
+      if(['campaign','characters'].includes(name)) {
+        if(metadata?.fromCache) {serverReady.delete(name);if(!failed)setConnectionState(LIVE_SYNC_STATES.RECONNECTING);}
+        else serverReady.add(name);
+      }
+      required.delete(name);
+      if(!required.has('campaign') && !required.has('characters')) setLoading(false);
+      if(!failed && !required.size && serverReady.size===2 && navigator.onLine) setConnectionState(LIVE_SYNC_STATES.CONNECTED);
+    };
+    const syncError=event=>{
+      if(!active || (event.detail?.campaignId && event.detail.campaignId!==campaignId)) return;
+      failed=true;
+      setError(event.detail?.message || 'Firebase synchronization failed. Refresh to reconnect.');
+      setLoading(false);
+      setConnectionState(LIVE_SYNC_STATES.ERROR);
+    };
+    const signedOut=()=>{
+      failed=true;
+      setError('You have signed out. Sign in to reconnect.');
+      setLoading(false);
+      setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
+      unsubscribers.forEach(unsubscribe=>unsubscribe?.());
+    };
+    window.addEventListener('asteria:firebase-sync-error',syncError);
+    window.addEventListener('asteria:firebase-signed-out',signedOut);
     setCampaign(null);
     setCharacters({});
     setSession({ status:'idle', id:'' });
@@ -59,6 +84,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     setPartyWorkspace({ sharedNotes:'', questLog:[] });
     setPartyChat([]);
     setItemEcosystem({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
+    setCustomItems([]);
     setLoading(true);
     if(mode === 'gm') { setGMWorkspace(null); setGMWorkspaceLoaded(false); }
     setError('');
@@ -66,28 +92,21 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     waitForFirebase().then(() => {
       if(!active) return;
       const uid = firebaseService.currentUser()?.uid || '';
-      unsubscribers.push(firebaseService.subscribeCampaign(campaignId, value => {
+      unsubscribers.push(firebaseService.subscribeCampaign(campaignId, accept('campaign', value=>{
         setCampaign(value);
-        setLoading(false);
-        setConnectionState(LIVE_SYNC_STATES.CONNECTED);
-      }));
-      unsubscribers.push(firebaseService.subscribeCharacters(campaignId, value => { setCharacters(value || {}); setLoading(false); }));
-      unsubscribers.push(firebaseService.subscribeSession(campaignId, value => setSession(effectiveSession(value || { status: 'idle', id: '' }))));
-      unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, value => setPartyWorkspace(value || { sharedNotes:'', questLog:[] })));
-      unsubscribers.push(firebaseService.subscribePartyChat(campaignId, value => setPartyChat(value || [])));
-      unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, value => setItemEcosystem(value || { shops:[], directTrades:[] })));
-      unsubscribers.push(firebaseService.subscribeCustomItems(value => {
-        const nextItems = value || [];
-        setCustomItems(nextItems);
-        publishCustomItems(nextItems);
-      }));
-      unsubscribers.push(firebaseService.subscribeEvents(campaignId, value => setEvents(mergeEvents([], value || [])), {
-        mode,
-        targetOwnerUid: mode === 'character' ? uid : '',
-        characterId
-      }));
-      if(mode === 'gm') unsubscribers.push(firebaseService.subscribeEncounter(campaignId, value => setEncounter(value || { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })));
-      if(mode === 'gm') unsubscribers.push(firebaseService.subscribeGMWorkspace(campaignId, value => { setGMWorkspace(value); setGMWorkspaceLoaded(true); }));
+        if(!value) syncError({detail:{message:'This campaign is unavailable or has been removed.'}});
+      })));
+      unsubscribers.push(firebaseService.subscribeCharacters(campaignId, accept('characters', value=>setCharacters(value||{}))));
+      unsubscribers.push(firebaseService.subscribeSession(campaignId, accept('session', value=>setSession(effectiveSession(value||{status:'idle',id:''})))));
+      unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, accept('partyWorkspace',value=>setPartyWorkspace(value||{sharedNotes:'',questLog:[]}))));
+      unsubscribers.push(firebaseService.subscribePartyChat(campaignId, accept('partyChat',value=>setPartyChat(value||[]))));
+      unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, accept('ecosystem',value=>setItemEcosystem(value||{shops:[],directTrades:[]}))));
+      unsubscribers.push(firebaseService.subscribeCustomItems(accept('customItems',value=>{setCustomItems(value||[]);publishCustomItems(value||[]);})));
+      unsubscribers.push(firebaseService.subscribeEvents(campaignId,accept('events',value=>setEvents(mergeEvents([],value||[]))),{mode,targetOwnerUid:mode==='character'?uid:'',characterId}));
+      if(mode==='gm') {
+        unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));
+        unsubscribers.push(firebaseService.subscribeGMWorkspace(campaignId,accept('gmWorkspace',value=>{setGMWorkspace(value);setGMWorkspaceLoaded(true);})));
+      }
     }).catch(reason => {
       if(active){
         setError(reason.message || String(reason));
@@ -97,9 +116,11 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     });
     return () => {
       active = false;
+      window.removeEventListener('asteria:firebase-sync-error',syncError);
+      window.removeEventListener('asteria:firebase-signed-out',signedOut);
       unsubscribers.forEach(unsubscribe => { try { unsubscribe?.(); } catch {} });
     };
-  }, [campaignId, characterId, mode]);
+  }, [campaignId, characterId, mode, online]);
 
   useEffect(() => {
     const timer=window.setInterval(()=>setClock(Date.now()),1000);
@@ -121,13 +142,19 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     if(!user) return undefined;
     try {
       unsubscribe = firebaseService.subscribePresence(campaignId, liveSession.id, setPresence);
-      const publish = () => firebaseService.setPresence(campaignId, liveSession.id, {
+      const publish = () => {
+        if(document.hidden || !navigator.onLine) return;
+        return firebaseService.setPresence(campaignId, liveSession.id, {
         state: document.hidden ? 'away' : 'online',
         mode,
         characterId
-      }).catch(() => {});
+      }).catch(reason=>{setError(reason.message||String(reason));setConnectionState(LIVE_SYNC_STATES.ERROR);});
+      };
       publish();
-      timer = window.setInterval(publish, 25000);
+      document.addEventListener('visibilitychange',publish);
+      timer = window.setInterval(publish, 60000);
+      const stop=unsubscribe;
+      unsubscribe=()=>{document.removeEventListener('visibilitychange',publish);stop?.();};
     } catch(reason) {
       setError(reason.message || String(reason));
     }
@@ -138,5 +165,10 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, liveSession?.id, liveSession?.status]);
 
   const character = useMemo(() => characters[characterId] || null, [characters, characterId]);
-  return { campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
+  const currentPresence=useMemo(()=>Object.fromEntries(Object.entries(presence).filter(([,record])=>{
+    const value=record.updatedAt;
+    const at=typeof value?.toMillis==='function'?value.toMillis():Number(value?.seconds||0)*1000||new Date(value||0).getTime();
+    return at>0 && clock-at<150000;
+  })),[presence,clock]);
+  return { campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
 }

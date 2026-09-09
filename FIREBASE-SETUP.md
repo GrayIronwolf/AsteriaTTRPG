@@ -1,109 +1,61 @@
-# Asteria Firebase Setup
+# Asteria Firebase setup
 
-Asteria uses one Firebase Authentication account per user. GM and Player are campaign roles, not separate account types.
+This version adds authenticated Cloud Functions for player gameplay and campaign invitations. **Deploy the backend and indexes before releasing this frontend. Do not merge this PR into an automatically published website until the production rollout is ready.** Repository changes do not change deployed Firebase rules.
 
-## Required Firebase Features
+## Local development without production access
 
-1. In Firebase Console, select the `asteria-ttrpg` project.
-2. Under Authentication, enable Email/Password sign-in.
-3. Under Authentication > Settings > Authorized domains, add the deployed website domain and local test domains you use.
-4. Create a Cloud Firestore database if the project does not already have one.
-5. Create or enable Firebase Storage for the project.
-6. Publish the included `firestore.rules` and `storage.rules` before testing cross-account UCN joins, rewards, character galleries, or item transfers.
+Use Node.js 22 and Java 21, then:
 
-The Test Login is browser-only. It cannot create or join campaigns across separate accounts or devices. Use two real Firebase accounts for UCN testing.
-
-## Publish Firestore Rules
-
-### Firebase Console
-
-1. Open Firestore Database > Rules.
-2. Replace the current rules with the contents of `firestore.rules`.
-3. Click Publish.
-
-### Firebase CLI
-
-From the website folder:
-
-```powershell
-firebase login
-firebase use asteria-ttrpg
-firebase deploy --only firestore:rules,storage
+```sh
+npm ci
+npm run emulators
 ```
 
-The included `.firebaserc`, `firebase.json`, and `firestore.indexes.json` already point the CLI at the Asteria project. No custom Firestore index is needed because UCNs are direct document IDs.
+In another terminal run `npm run dev`. Localhost, including a locally served static build, defaults to the `demo-asteria` emulators: Auth 9099, Firestore 8080, Storage 9199, Functions 5001. The Emulator UI is at `http://127.0.0.1:4000`. Create disposable accounts and campaigns there. No production credentials are needed. The existing `?reactFixture=1` mode remains an offline UI fixture; it does not test Firebase.
 
-## Campaign Collections
+`.firebaserc` defaults to `demo-asteria`; `production` aliases `asteria-ttrpg`. `.env.example` documents `VITE_FIREBASE_MODE=emulator`. An explicit local `VITE_FIREBASE_MODE=production` opts into the real project when running Vite. Public static hosting uses the public production configuration in `js/firebase-auth.js`. Native static modules do not load `.env` files. Never put secrets in `VITE_` variables: they are browser-visible.
 
-- `campaigns/{campaignId}` stores the shared campaign.
-- `campaigns/{campaignId}.characters[characterId]` stores the campaign-visible roster and dashboard summary used by the GM immediately after a player links a character.
-- `campaigns/{campaignId}/characters/{characterId}` is the canonical live character record used for XP, levels, resources, dashboard notices, inventory rewards, and full-sheet hydration.
-- `campaigns/{campaignId}/liveSession/current` stores the active, paused, or ended live-session pointer.
-- `campaigns/{campaignId}/sessions/{sessionId}` stores preserved session state and timestamps.
-- `campaigns/{campaignId}/sessions/{sessionId}/presence/{uid}` stores lightweight online/away presence for connected GM and Character dashboards.
-- `campaigns/{campaignId}/events/{eventId}` is the single campaign event stream for XP, loot, resources, notifications, and session lifecycle events. Gameplay rewards and mutations require an active live session.
-- `campaigns/{campaignId}/systems/party-workspace` stores the shared party notes and campaign quest workspace.
-- `campaigns/{campaignId}/partyChat/{messageId}` stores the live party chat stream for campaign members.
-- `campaigns/{campaignId}/systems/itemEcosystem` stores shared party loot, loot tables, shops, direct trades, marketplace listings, shared storage, settings, and the item audit log.
-- `campaignInvites/{ucn}` stores the active 12-digit UCN lookup record.
-- `users/{uid}/campaigns/{campaignId}` stores that account's campaign copy.
-- `users/{uid}/characters/{characterId}` stores an owned character.
-- `users/{uid}/settings/appState` stores account workspace state.
-- `usernames/{usernameLower}` supports username login lookup.
-- `customItems/{itemId}` stores session-created item definitions shared by the live item catalog and Item Compendium.
-- Firebase Storage path `users/{uid}/characters/{characterId}/gallery/` stores character gallery images. Owners may upload images up to 8 MB; signed-in users can read them for linked dashboards.
+```sh
+npm test
+node scripts/test-xp-realtime-sync.js
+node --test scripts/data-sync-regression.test.mjs
+npm run test:firebase
+npm run build
+```
 
-When a GM creates or saves a campaign, the website creates both the shared campaign document and its `campaignInvites/{ucn}` record. A player joining by UCN is added as a player while `ownerUid` remains unchanged.
+The Firebase suite uses disposable Auth, Firestore and Storage emulators. It exercises the real callable handler over local HTTP, including Firebase Auth token verification, without requiring the Functions emulator's Unix socket transport. The full Functions emulator remains configured for local development. No test uses the production project. Emulator tests do not establish whether production indexes have finished building.
 
-When a player links a character, Asteria commits the member, character ID, owner link, and dashboard summary to the shared campaign, then writes the full record to `campaigns/{campaignId}/characters/{characterId}`. All live XP and direct item-reward updates use that same character document. The player subscribes to it through both campaign membership and the character's saved campaign links, so a stale account workspace cannot prevent delivery.
+## Architecture and trust
 
-The older `campaigns/{campaignId}/systems/progression` document is no longer part of the active sync path. Keeping XP, notices, resources, and inventory on the same canonical character stream prevents late autosaves from racing a second progression system.
+`js/firebase-auth.js` initializes the browser SDK once and exposes `window.AsteriaFirebase`. React uses `src/firebase/asteriaFirebaseService.js` and `src/sessions/useCampaignLiveData.js`. Players call `asteriaAction` for live resources, progression, inventory, shops, trades, rewards, rests and organizations. `functions/handler.mjs` checks authenticated membership, canonical ownership, input boundaries and request IDs inside transactions. `functions/commands.mjs` is the canonical implementation of those mutations and reuses the existing model code. `asteriaInvite` checks the supplied invitation code and returns a limited preview before membership is granted.
 
-The React milestone does not initialize another Firebase application. `src/firebase/asteriaFirebaseService.js` adapts the existing `window.AsteriaFirebase` singleton from `js/firebase-auth.js`. XP, loot, resources, encounter state, and magic reward resolution use the shared Firebase service; React components contain no raw Firestore calls. Deploy the included rules so only the campaign GM can write `campaigns/{campaignId}/systems/encounter`, while campaign members can read it and targeted players can accept or decline their own reward events.
+GM-authorized commands continue to use Firestore transactions governed by GM rules. Player cosmetic edits, party notes and chat use narrowly scoped rules. GM notes are in `campaigns/{id}/systems/gmWorkspace` and are GM-only. Rules deny direct player progression and shared trade writes; there is no permissive fallback when Functions are unavailable.
 
-Characters linked by an older build are repaired automatically the next time that player signs in to this updated build. Asteria compares the player's private campaign copy and saved character campaign name, then backfills the shared party, player membership, owner link, and character summary. After that repair, the GM can reopen or refresh the campaign dashboard.
+Asteria remains a cooperative TTRPG: owners import their initial sheet and can report their own resource changes, skill successes, currency adjustments and rests during an active session. These are not GM approval workflows or anti-cheat guarantees. Race and class changes after linking require a GM. Unknown talent/spell metadata must be corrected rather than accepted from a submitted payload. Older legacy dashboards cannot bypass the new live-state rules; use React for live gameplay.
 
-The item ecosystem uses a dedicated real-time campaign system document. This is the canonical campaign-wide record for Need/Greed/Pass responses, shop stock, trade offers, listings, loot tables, and the audit log. It is not a second item database: item definitions still come from the Asteria Item Compendium, while character-owned item instances remain on character records.
+## Production rollout — project owner action required
 
-## Testing UCN Join
+The current website is served independently of Firebase Hosting. This configuration deliberately does not introduce Firebase Hosting or change DNS.
 
-1. Sign in with a real Firebase account and create a campaign.
-2. Wait for the cloud-save confirmation, then copy the 12-digit UCN.
-3. Sign out and sign in with a different real Firebase account.
-4. Open Campaign Forge, enter the UCN, and choose Join Campaign.
-5. Link an existing character or forge a new character for that campaign.
-6. Return to the GM account and reopen the campaign card. The linked character should appear with HP, SP, MP, and XP bars; double-click it to open the full Character Dashboard.
+1. Confirm the correct project is `asteria-ttrpg`; inspect Firestore Usage, billing, Authentication providers/authorized domains, and the deployed rule/index versions. Cloud Functions deployment requires the project's applicable billing/APIs and IAM setup. Set billing alerts; these do not enforce a spending cap.
+2. Enable Email/Password authentication if not already enabled. Authorize `asteriattrpg.com` and only the other domains actually used. Login now uses email addresses. Usernames remain display names; the application no longer publishes an email lookup directory or guarantees globally unique display names. Existing Auth accounts do not need new passwords.
+3. Back up Firestore through the project's authorized administrative workflow. Inspect existing character `ownerUid`/`sourceCharacterId` values and campaign membership. Do not bulk overwrite or infer missing owners from a browser's private character copy.
+4. With authorized Firebase CLI access, deploy Functions first: `npx firebase deploy --project asteria-ttrpg --only functions`. This packages the shared server model code from the repository root. Functions use managed application credentials, not committed keys.
+5. Deploy indexes: `npx firebase deploy --project asteria-ttrpg --only firestore:indexes`. Wait until both `events` indexes are ready. The new queries use target owner + creation time and target owner + acknowledgement status.
+6. Coordinate a maintenance window for the rule and frontend change. Deploy `firestore:rules,storage` explicitly to `asteria-ttrpg`, then release the tested frontend through the website's existing deployment process. Older player clients will lose direct gameplay write access as soon as the rules tighten. Refresh both GM and player browsers.
+7. Verify with two disposable production test accounts: invitation, character linking, start/pause/end session, resource change, GM XP, loot, shop purchase, item exchange, chat, gallery, reconnect, and logout. Remove only the test data you created.
+8. Inspect existing `usernames` documents containing emails and delete/sanitize them through an authorized admin session. New rules block public/other-user reads, but cannot retract data that was previously downloaded. Similarly, existing Storage download-token URLs remain bearer links; rules do not revoke those tokens. Review exposed media URLs separately if needed.
 
-Campaigns created before this update gain their UCN lookup record the next time their GM signs in and the campaign is saved. Opening Campaign Forge and making any saved campaign change will trigger that migration.
+Do not deploy earlier permissive rules to make a failed write pass. If rollout fails, pause live play and diagnose the specific error. Roll back to a reviewed compatible frontend/backend pair without reopening cross-account writes.
 
-## Testing Live XP And Item Delivery
+## GitHub and Codex
 
-1. Publish the included `firestore.rules`.
-2. Refresh the website on both the GM and player devices so both load the current cache-busted scripts.
-3. Open the linked campaign on the GM account and the linked Character Dashboard on the player account.
-4. Apply an XP award. The GM success message must say the XP was delivered to the live player dashboards.
-5. Confirm the player's XP bar and notification update without refreshing.
-6. Send a direct item reward. The GM success message must say the reward was delivered, and the player's reward window should open without refreshing.
-7. Accept, equip, or decline the reward. Refresh the Character Dashboard and confirm that the resolved popup does not return.
-8. Start a live session and confirm that both dashboards show the same active session, countdown, and online presence.
-9. End the session and confirm CP, TP, spells, resources, inventory, shops, trades, quests, journal, party notes, and chat controls are locked.
-10. Leave a test session active and confirm it becomes read-only when its 10-hour limit is reached.
+Keep browser configuration (public Firebase web API key/project IDs), source, Functions, rules, indexes, emulator configuration, `.env.example`, package lock, tests and workflows in GitHub. The web API key identifies the project; authorization comes from Auth/rules/server checks. It is not an Admin key.
 
-If Firebase rejects a listener or write, Asteria now shows `Cloud delivery blocked by Firestore rules` instead of reporting a false delivery. Re-publish `firestore.rules`, then refresh both devices.
+Never commit service-account JSON, Firebase CLI refresh tokens, application-default credential files, private keys, passwords, `.env` files, emulator exports containing real users, or downloaded user data. `.gitignore` and the Functions deployment ignore list protect common names; they cannot detect every arbitrarily named secret. Review `git diff --cached` and enable GitHub secret scanning/push protection if available. If an actual private credential is ever found in history, revoke/rotate it first, review its use, then clean history with repository-owner coordination. Removing a file alone does not revoke its credential.
 
-## Security Model
+The checks workflow needs no Firebase secrets. For deployment, configure Workload Identity Federation bound to this repository and the protected `firebase-production` GitHub environment; restrict it to the intended branch/environment. Add environment **variables** `FIREBASE_WORKLOAD_IDENTITY_PROVIDER` and `FIREBASE_DEPLOY_SERVICE_ACCOUNT` (resource identifiers, not private keys). Assign the deployment identity only the IAM roles needed for Functions/rules/index deployment and service-account use; avoid Owner/Editor. Configure required reviewers and deployment branch restrictions in GitHub. The manual workflow cannot create those protections itself.
 
-- Users can read and write only their own account data.
-- Campaign owners can update or delete their shared campaign.
-- Authenticated users with an active UCN can add only themselves as a player.
-- Campaign members can link only characters owned by their own account.
-- Campaign members can read linked character snapshots; players can update only their own snapshots, while the campaign GM can update campaign-linked snapshots through GM controls.
-- Campaign members can read live-session and presence records. Only campaign GMs can start, pause, resume, or end sessions.
-- Live sessions have a fixed 10-hour wall-clock expiry. The Character Dashboard derives its lock from the shared session record, and an expired session is finalized when a GM dashboard is connected.
-- Campaign GMs create campaign events. Target players can read only events addressed to their own Firebase UID and may update only acknowledgement/resolution fields.
-- Campaign members can read and update the shared item ecosystem used by multiplayer loot, shops, storage, and trade workflows. GM-only controls remain hidden and permission-checked by the application.
-- A joining player cannot replace the campaign `ownerUid` or grant themselves GM access.
+Use GitHub Actions Secrets or Google Secret Manager only for genuine server secrets introduced later. Prefer workload federation over long-lived JSON keys. Local administrative work should use secure CLI sign-in/Application Default Credentials outside the repository. Codex should work on branches with demo emulators, tests and PR review. GitHub repository access alone does not grant Firebase Console, billing or deployment access. Do not give Codex production Admin credentials merely to edit frontend code.
 
-For a public production release, route high-value marketplace settlement and GM-only stock mutations through trusted Cloud Functions or another server authority. The current static build validates roles in the application, restricts the shared document to campaign members, and records every mutation in the campaign audit log.
-
-Firebase config remains in `js/firebase-auth.js`. Replace that object only if Asteria moves to a different Firebase project.
+References: [Firebase emulator projects](https://firebase.google.com/docs/emulator-suite/connect_and_prototype), [Google GitHub authentication action](https://github.com/google-github-actions/auth), [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials).

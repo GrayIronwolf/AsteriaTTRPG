@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "asteria-ttrpg"
+    "default": "demo-asteria",
+    "production": "asteria-ttrpg"
   }
 }

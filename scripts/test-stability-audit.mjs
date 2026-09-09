@@ -37,7 +37,7 @@ test('1. Linked profile updates preserve canonical XP, level, CP, and inventory'
 
 test('2. Safe linked-character patches never contain live gameplay state',()=>{
   const patch=safeLinkedCharacterPatch({name:'Mako',race:'Pixie',hp:[0,100],xp:0,inventory:[],titles:[]});
-  assert.deepEqual(patch,{name:'Mako',race:'Pixie'});
+  assert.deepEqual(patch,{name:'Mako'}); // Race and class are locked once linked.
 });
 
 test('3. Older or undated client snapshots are rejected as stale',()=>{
@@ -77,12 +77,12 @@ test('8. Duplicate legacy inventory IDs are deterministically separated',()=>{
 });
 
 test('9. Trade creation escrows the sender item inside the shared transaction',()=>{
-  const source=read('js/firebase-auth.js');
+  const source=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.match(source,/createLiveItemRequest:[\s\S]*?if\(action!=='identify'\) item\.qty=Number\(item\.qty\|\|1\)-quantity;[\s\S]*?writeLiveCharacter\(transaction,refs,character\);[\s\S]*?transaction\.set\(ecosystemRef/);
 });
 
 test('10. Trade acceptance and final confirmation are guarded against replay',()=>{
-  const source=read('js/firebase-auth.js');
+  const source=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.match(source,/request\.status!=='pending'/);
   assert.match(source,/request\.status!=='awaiting-sender'/);
   assert.match(source,/request\.status=accepted\?'accepted':'declined'/);
@@ -90,7 +90,7 @@ test('10. Trade acceptance and final confirmation are guarded against replay',()
 
 test('11. Received loot resolves once and terminal events do not reopen',()=>{
   assert.equal(pendingLootEvent([{id:'loot-1',type:'loot-reward',status:'accepted',resolvedAt:'2026-09-08'}]),null);
-  const source=read('js/firebase-auth.js');
+  const source=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.match(source,/resolvedItemRewardIds=uniqueValues\(character\.resolvedItemRewardIds,\[eventId\]\)/);
 });
 
@@ -171,7 +171,7 @@ test('21. Whole encounter saves preserve newer canonical resources',()=>{
 });
 
 test('22. Gallery uploads enforce permanent Firebase URLs and exact image types',()=>{
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const storageRules=read('storage.rules');
   assert.match(firebase,/image\/png','image\/jpeg','image\/webp','image\/gif/);
   assert.match(firebase,/\^https:\\\/\\\//i);
@@ -180,13 +180,13 @@ test('22. Gallery uploads enforce permanent Firebase URLs and exact image types'
 });
 
 test('23. Title revoke and storage grants use GM-authorized transactions',()=>{
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.match(firebase,/manageCharacterTitle:[\s\S]*?requireCampaignGM[\s\S]*?titles\.splice\(index,1\)/);
   assert.match(firebase,/grantCharacterStorageSlots:[\s\S]*?requireCampaignGM[\s\S]*?storageLimit:Math\.max\(3/);
 });
 
 test('24. Encounter resources use a narrow GM-only transactional endpoint',()=>{
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.match(firebase,/updateCampaignEncounterResource:[\s\S]*?runTransaction[\s\S]*?requireCampaignGM[\s\S]*?setEncounterResource/);
   assert.match(read('src/firebase/asteriaFirebaseService.js'),/updateEncounterResource/);
 });
@@ -199,13 +199,13 @@ test('25. Theme changes update shared border, focus, and selected-state tokens',
 
 test('26. Live event snapshots replace old query results and subscriptions clean up',()=>{
   const hook=read('src/sessions/useCampaignLiveData.js');
-  assert.match(hook,/setEvents\(mergeEvents\(\[\], value \|\| \[\]\)\)/);
+  assert.match(hook,/setEvents\(mergeEvents\(\[\],\s*value\s*\|\|\s*\[\]\)\)/);
   assert.match(hook,/unsubscribers\.forEach\(unsubscribe/);
   assert.doesNotMatch(hook,/setEvents\(previous => mergeEvents/);
 });
 
 test('27. Player mutations verify the linked character owner',()=>{
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   ['spendCharacteristicPoints','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCharacterInventory','updateCharacterQuest','addJournalEntry'].forEach(name=>{
     const start=firebase.indexOf(`${name}:`);
     assert.notEqual(start,-1,`${name} is missing`);
@@ -227,7 +227,7 @@ test('29. Firebase security roles agree with runtime GM and member authorization
 });
 
 test('30. Production code contains no database wipe or destructive reset path',()=>{
-  const firebase=read('js/firebase-auth.js');
+  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   assert.doesNotMatch(firebase,/deleteCollection|recursiveDelete|resetDatabase|wipeAllCharacters/);
 });
 

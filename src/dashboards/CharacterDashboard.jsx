@@ -140,7 +140,9 @@ export function CharacterDashboard({ campaignId, characterId }) {
   };
   const resolvedLoot = () => { if(lootEvent) processedLoot.current.add(lootEvent.id); };
   const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
-  if(live.loading || !character) return <div className="react-route-state">Connecting Character Dashboard...</div>;
+  if(live.error && !character) return <div className="react-route-state" role="alert">{live.error}</div>;
+  if(live.loading) return <div className="react-route-state">Connecting Character Dashboard...</div>;
+  if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   const editable = Boolean(live.session?.editable);
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD' });
   return <AsteriaAppShell

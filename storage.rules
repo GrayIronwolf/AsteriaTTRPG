@@ -1,11 +1,19 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
+    function campaignMember(campaignId) {
+      let campaign = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)).data;
+      return request.auth != null && (
+        campaign.ownerUid == request.auth.uid ||
+        request.auth.uid in campaign.get('gmUids', []) ||
+        request.auth.uid in campaign.get('playerUids', []) ||
+        campaign.get('roles', {}).get(request.auth.uid, '') in ['gm','player']
+      );
+    }
     match /users/{uid}/characters/{characterId}/gallery/{fileName} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null &&
-        request.auth.uid == uid &&
+      allow read: if request.auth != null && (request.auth.uid == uid ||
+        ('campaignId' in resource.metadata && campaignMember(resource.metadata.campaignId)));
+      allow create, update: if request.auth != null && request.auth.uid == uid &&
         request.resource.size <= 8 * 1024 * 1024 &&
         request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
       allow delete: if request.auth != null && request.auth.uid == uid;
