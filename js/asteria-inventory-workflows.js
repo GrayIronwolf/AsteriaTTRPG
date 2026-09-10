@@ -487,7 +487,8 @@
   async function sendGMReward(){
     const campaign = activeCampaign();
     const ids = Array.from(document.querySelectorAll('[data-reward-character]:checked')).map(input => input.value);
-    const quantity = Math.max(1, Number(document.getElementById('gmRewardQuantity')?.value || 1));
+    const quantity = Number(document.getElementById('gmRewardQuantity')?.value);
+    if(!Number.isSafeInteger(quantity)||quantity<1){window.toast?.('Enter a whole quantity of at least 1.');return;}
     const message = document.getElementById('gmRewardMessage')?.value || 'The GM awarded an item.';
     if(!campaign?.id || !ids.length || !rewardPickerEntry){
       window.toast?.('Select at least one linked character and one item.');
@@ -536,7 +537,7 @@
         <div><h4>Recipients</h4><div class="workflow-character-list">${rewardCharactersHtml(campaign)}</div></div>
         <div><label>Search Item Compendium<input id="gmRewardItemSearch" type="search" placeholder="Search exact item..."></label><div id="gmRewardSelectedItem">${rewardSelectedHtml()}</div><div id="gmRewardSearchResults" class="workflow-item-grid compact"></div></div>
       </div>
-      <div class="workflow-form-row"><label>Quantity<input id="gmRewardQuantity" type="number" min="1" value="1"></label><label class="wide">Player message<input id="gmRewardMessage" value="The GM awarded an item."></label><button type="button" class="primary" id="gmSendItemReward">Send Reward</button></div>`;
+      <div class="workflow-form-row"><label>Quantity<input id="gmRewardQuantity" type="number" min="1" value=""></label><label class="wide">Player message<input id="gmRewardMessage" value="The GM awarded an item."></label><button type="button" class="primary" id="gmSendItemReward">Send Reward</button></div>`;
     host.appendChild(panel);
     panel.querySelector('#gmRewardItemSearch').addEventListener('input', event => renderRewardSearch(event.target.value));
     panel.querySelector('#gmSendItemReward').addEventListener('click', sendGMReward);
@@ -674,7 +675,8 @@
   }
   function addShopStock(){
     if(!shopPickerEntry){window.toast?.('Select an item first.');return;}
-    const quantity = Math.max(1, Number(document.getElementById('gmShopStockQty')?.value || 1));
+    const quantity = Number(document.getElementById('gmShopStockQty')?.value);
+    if(!Number.isSafeInteger(quantity)||quantity<1){window.toast?.('Enter a whole quantity of at least 1.');return;}
     const item = itemSnapshot(shopPickerEntry, 1);
     const priceCopper = pricing ? pricing.getPlayerPurchasePriceCopper(item) : null;
     if(priceCopper === null){window.toast?.(`${item.name} needs a Market Price before it can be stocked.`);return;}
@@ -723,7 +725,7 @@
       <div class="section-head"><div><p class="eyebrow">GM Economy Tool</p><h3>Campaign Shop</h3></div><span class="pill">${campaign?.activeShop?.status === 'open' ? 'Open' : 'Closed'}</span></div>
       <div class="workflow-two-column">
         <div><h4>Visiting Characters</h4><div class="workflow-character-list">${campaignCharacterIds(campaign).map(id => {const item=getCampaignCharacter(id,campaign);return `<label class="workflow-check-card"><input type="checkbox" value="${esc(id)}" data-shop-character><span><b>${esc(item?.name || id)}</b><small>${esc(item?.race || '')}</small></span></label>`;}).join('') || '<p>No linked characters.</p>'}</div><label>Shop name<input id="gmShopName" value="${esc(campaign?.activeShop?.name || 'Campaign Store')}"></label><label>Background image path<input id="gmShopImage" placeholder="Optional image URL or asset path"></label></div>
-        <div><label>Search Item Compendium<input id="gmShopItemSearch" type="search" placeholder="Search stock..."></label><div id="gmShopSelectedItem">${shopSelectedHtml()}</div><div class="workflow-form-row"><label>Market Price <span id="gmShopStockPrice">Select an item</span></label><label>Stock<input id="gmShopStockQty" type="number" min="1" value="1"></label><button type="button" id="gmAddShopStock">Add Stock</button></div><div id="gmShopSearchResults" class="workflow-item-grid compact"></div></div>
+        <div><label>Search Item Compendium<input id="gmShopItemSearch" type="search" placeholder="Search stock..."></label><div id="gmShopSelectedItem">${shopSelectedHtml()}</div><div class="workflow-form-row"><label>Market Price <span id="gmShopStockPrice">Select an item</span></label><label>Stock<input id="gmShopStockQty" type="number" min="1" value=""></label><button type="button" id="gmAddShopStock">Add Stock</button></div><div id="gmShopSearchResults" class="workflow-item-grid compact"></div></div>
       </div>
       <h4>Shop Stock</h4><div id="gmShopDraftStock"></div>
       <div class="workflow-modal-actions"><button type="button" id="gmCloseShop">Close Shop</button><button type="button" class="primary" id="gmOpenShop">Open Shop for Selected Players</button></div>`;

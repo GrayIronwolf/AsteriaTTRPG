@@ -28,7 +28,8 @@ test('GM dashboard render includes return button only for validated GM entry and
   const html=render();
   assert.match(html,/← Back to GM Dashboard/);
   assert.match(html,/Player B/);
-  assert.match(html,/<button aria-label="Add 1 HP" disabled=""/);
+  assert.match(html,/<input aria-label="HP change amount" disabled=""/);
+  assert.match(html,/<button aria-label="Add amount to HP" disabled=""/);
   window.history.state=null;
   assert.doesNotMatch(render(),/Back to GM Dashboard/);
 });
@@ -38,5 +39,7 @@ test('normal owner render never inherits a GM return button from another account
   const html=render();
   assert.match(html,/Player B/);
   assert.doesNotMatch(html,/Back to GM Dashboard/);
-  assert.match(html,/<button aria-label="Add 1 HP" type="button"/);
+  assert.match(html,/<input aria-label="HP change amount" type="text"/);
+  // Owner may enter an amount; applying a blank amount is deliberately disabled.
+  assert.match(html,/<button aria-label="Add amount to HP" disabled=""/);
 });

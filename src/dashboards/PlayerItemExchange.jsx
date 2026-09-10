@@ -1,9 +1,10 @@
+import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
+import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
-import { getPlayerSaleValueCopper } from '../systems/items/marketPricing.mjs';
 
 const ACTIONS = {
   trade: { label:'Trade', eyebrow:'Player Trade', action:'Send Trade Request', description:'Offer this item and let the other player choose an item to exchange.' },
@@ -64,8 +65,8 @@ function ExchangeItem({ item, quantity, caption = '' }) {
 export function SendPlayerItemModal({ campaignId, character, target, item, mode = 'give', editable, onClose }) {
   const action = ACTIONS[mode] || ACTIONS.give;
   const maximum = mode === 'identify' ? 1 : Math.max(1, Number(item?.qty || 1));
-  const [quantity, setQuantity] = useState(1);
-  const [priceCopper, setPriceCopper] = useState(getPlayerSaleValueCopper(item));
+  const [quantity, setQuantity] = useState('');
+  const [priceCopper, setPriceCopper] = useState('');
   const [requestedItem, setRequestedItem] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -73,9 +74,11 @@ export function SendPlayerItemModal({ campaignId, character, target, item, mode 
   if(!target || !item) return null;
   const invalidIdentify = mode === 'identify' && item.identified !== false;
   const send = async () => {
+    if(mode!=='identify'&&!isManualNumber(quantity,{min:1,max:maximum}))return setMessage('Enter a whole quantity within the available stack.');
+    if(mode==='sell'&&!isManualNumber(priceCopper,{min:0}))return setMessage('Enter a sale price, including 0 for a free item.');
     setBusy(true);
     setMessage('Sending request...');
-    const result = await firebaseService.createItemRequest(campaignId, character.id, target.id, item.id, mode, { quantity, priceCopper, requestedItem, note });
+    const result = await firebaseService.createItemRequest(campaignId, character.id, target.id, item.id, mode, { quantity:mode==='identify'?1:manualNumber(quantity), priceCopper:manualNumber(priceCopper), requestedItem, note });
     setMessage(resultMessage(result, `${action.label} request sent to ${target.name}.`));
     setBusy(false);
     if(result?.ok) window.setTimeout(onClose, 650);
@@ -84,8 +87,8 @@ export function SendPlayerItemModal({ campaignId, character, target, item, mode 
     <div className="react-exchange-route"><CharacterIdentity character={character} direction="From" /><span aria-hidden="true">&gt;</span><CharacterIdentity character={target} direction="To" /></div>
     <p className="react-exchange-description">{action.description}</p>
     <ExchangeItem item={item} quantity={quantity} />
-    {mode !== 'identify' ? <label>Quantity<input type="number" min="1" max={maximum} value={quantity} onChange={event => setQuantity(Math.max(1, Math.min(maximum, Number(event.target.value || 1))))} /></label> : null}
-    {mode === 'sell' ? <label>Price in Copper<input type="number" min="0" value={priceCopper} onChange={event => setPriceCopper(Math.max(0, Number(event.target.value || 0)))} /></label> : null}
+    {mode !== 'identify' ? <label>Quantity<ManualNumberInput min="1" max={maximum} value={quantity} onChange={event => setQuantity(event.target.value)} /></label> : null}
+    {mode === 'sell' ? <label>Price in Copper<ManualNumberInput min="0" value={priceCopper} onChange={event => setPriceCopper(event.target.value)} /></label> : null}
     {mode === 'trade' ? <label>Requested Item or Terms<input value={requestedItem} onChange={event => setRequestedItem(event.target.value)} placeholder="Optional, for example: healing potion or similar value" /></label> : null}
     <label>Message<textarea rows="3" value={note} onChange={event => setNote(event.target.value)} placeholder="Optional message for the other player" /></label>
     {invalidIdentify ? <p className="react-warning">This item is already identified.</p> : null}
@@ -100,7 +103,7 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
   const [storageId, setStorageId] = useState(storages[0]?.id || '');
   const [exchangeItemId, setExchangeItemId] = useState(exchangeItems[0]?.id || '');
   const selectedExchange = exchangeItems.find(item => String(item.id) === String(exchangeItemId));
-  const [exchangeQuantity, setExchangeQuantity] = useState(1);
+  const [exchangeQuantity, setExchangeQuantity] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [revealed, setRevealed] = useState(null);
@@ -108,9 +111,10 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
   const canIdentify = characterKnowsIdentify(character);
   const insufficientFunds = request.mode === 'sell' && currencyTotal(character) < Number(request.priceCopper || 0);
   const respond = async accepted => {
+    if(accepted&&request.mode==='trade'&&!isManualNumber(exchangeQuantity,{min:1,max:Number(selectedExchange?.qty||0)}))return setMessage('Enter a whole exchange quantity within the available stack.');
     setBusy(true);
     setMessage(accepted ? 'Completing transaction...' : 'Declining request...');
-    const result = await firebaseService.respondItemRequest(campaignId, character.id, request.id, accepted, { storageId, exchangeItemId, exchangeQuantity });
+    const result = await firebaseService.respondItemRequest(campaignId, character.id, request.id, accepted, { storageId, exchangeItemId, exchangeQuantity:manualNumber(exchangeQuantity) });
     setMessage(resultMessage(result, result?.awaitingSender ? 'Your offer is ready for the other player\'s final confirmation.' : accepted ? `${action.label} completed.` : 'Request declined.'));
     setBusy(false);
     if(result?.revealedItem) setRevealed(result.revealedItem);
@@ -123,7 +127,7 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
     <ExchangeItem item={request.item} quantity={request.quantity} caption={`${action.label} offer`} />
     {request.note ? <blockquote>{request.note}</blockquote> : null}
     {request.mode === 'sell' ? <div className="react-exchange-price"><span>Sale price</span><strong>{Number(request.priceCopper || 0).toLocaleString()} Copper</strong><small>Your available currency: {currencyTotal(character).toLocaleString()} Copper equivalent</small></div> : null}
-    {request.mode === 'trade' ? <div className="react-trade-response"><p><b>Requested terms:</b> {request.requestedItem || 'Choose an item you consider a fair exchange.'}</p><label>Your Item<select value={exchangeItemId} onChange={event => { setExchangeItemId(event.target.value); setExchangeQuantity(1); }}><option value="">Choose an item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}</select></label>{selectedExchange ? <><label>Quantity<input type="number" min="1" max={Math.max(1, Number(selectedExchange.qty || 1))} value={exchangeQuantity} onChange={event => setExchangeQuantity(Math.max(1, Math.min(Number(selectedExchange.qty || 1), Number(event.target.value || 1))))} /></label><ExchangeItem item={selectedExchange} quantity={exchangeQuantity} caption="Your exchange" /></> : null}</div> : null}
+    {request.mode === 'trade' ? <div className="react-trade-response"><p><b>Requested terms:</b> {request.requestedItem || 'Choose an item you consider a fair exchange.'}</p><label>Your Item<select value={exchangeItemId} onChange={event => { setExchangeItemId(event.target.value); setExchangeQuantity(''); }}><option value="">Choose an item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}</select></label>{selectedExchange ? <><label>Quantity<ManualNumberInput min="1" max={Math.max(1, Number(selectedExchange.qty || 1))} value={exchangeQuantity} onChange={event => setExchangeQuantity(event.target.value)} /></label><ExchangeItem item={selectedExchange} quantity={exchangeQuantity} caption="Your exchange" /></> : null}</div> : null}
     {needsStorage ? <label>Receive Into<select value={storageId} disabled={!storages.length} onChange={event => setStorageId(event.target.value)}>{!storages.length ? <option value="">Create a storage container first</option> : null}{storages.map(storage => <option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label> : null}
     {request.mode === 'identify' && !canIdentify ? <p className="react-warning">This character does not know the Identify spell.</p> : null}
     {insufficientFunds ? <p className="react-warning">You do not have enough currency for this purchase.</p> : null}

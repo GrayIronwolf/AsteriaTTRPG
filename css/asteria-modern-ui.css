@@ -1080,3 +1080,8 @@ th { color: var(--asteria-gold); }
 
   th, td { padding: 7px; }
 }
+
+/* Manual amounts should never have browser stepper controls. */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
