@@ -80,6 +80,8 @@
   function notify(title, message, options){ api.notify(title, message, options); }
   function unique(values){ return Array.from(new Set(values.filter(Boolean))); }
   function number(value, fallback = 0){
+    // Optional blank configuration fields retain their established default.
+    if(value === '' || value == null) return fallback;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
   }
@@ -334,7 +336,7 @@
     const item = api.normalizeItem(stock.item || {});
     const available = Math.max(0, number(stock.qty, 0));
     const price = pricing?.getPlayerPurchasePriceCopper(item,shop.buyModifier??1);
-    return `<article class="ecosystem-shop-stock ${rarityClass(item)}"><span class="ecosystem-item-art">${itemImage(item)}</span><b>${esc(item.name)}</b><small>${available} in stock</small><strong>${price === null ? 'Needs Market Price' : `${number(price).toLocaleString()} cp`}</strong><div><input type="number" min="1" max="${available}" value="1" data-shop-qty="${esc(shop.id)}:${index}"><button type="button" data-shop-buy="${esc(shop.id)}:${index}" ${available && price !== null && price > 0 ? '' : 'disabled'}>Buy</button></div></article>`;
+    return `<article class="ecosystem-shop-stock ${rarityClass(item)}"><span class="ecosystem-item-art">${itemImage(item)}</span><b>${esc(item.name)}</b><small>${available} in stock</small><strong>${price === null ? 'Needs Market Price' : `${number(price).toLocaleString()} cp`}</strong><div><input type="number" min="1" max="${available}" value="" data-shop-qty="${esc(shop.id)}:${index}"><button type="button" data-shop-buy="${esc(shop.id)}:${index}" ${available && price !== null && price > 0 ? '' : 'disabled'}>Buy</button></div></article>`;
   }
   function renderShopsView(){
     const shops = array(ecosystem()?.shops).filter(shop => shop.visibility !== 'hidden' && shopAccessible(shop));
@@ -354,7 +356,7 @@
     const tradeable = api.items(id).filter(item => !item.equipped && !item.locked && !item.bound && !item.questItem && item.tradeAvailable);
     return `
       <div class="ecosystem-two-column">
-        <section class="ecosystem-form-card"><h3>Secure Trade Request</h3><label>Trade with<select id="ecoTradeRecipient"><option value="">Choose character</option>${peers.map(entry => `<option value="${esc(entry.id)}">${esc(entry.record.name)}</option>`).join('')}</select></label><label>Offer item<select id="ecoTradeItem"><option value="">No item</option>${tradeable.map(item => `<option value="${esc(item.id)}">${esc(item.name)} ×${item.qty}</option>`).join('')}</select></label><label>Quantity<input id="ecoTradeQty" type="number" min="1" value="1"></label><label>Offer currency (copper equivalent)<input id="ecoTradeCurrency" type="number" min="0" value="0"></label><label>Request / note<textarea id="ecoTradeNote" placeholder="Optional requested item or message"></textarea></label><button type="button" class="primary" data-trade-create>Send Trade Request</button></section>
+        <section class="ecosystem-form-card"><h3>Secure Trade Request</h3><label>Trade with<select id="ecoTradeRecipient"><option value="">Choose character</option>${peers.map(entry => `<option value="${esc(entry.id)}">${esc(entry.record.name)}</option>`).join('')}</select></label><label>Offer item<select id="ecoTradeItem"><option value="">No item</option>${tradeable.map(item => `<option value="${esc(item.id)}">${esc(item.name)} ×${item.qty}</option>`).join('')}</select></label><label>Quantity<input id="ecoTradeQty" type="number" min="1" value=""></label><label>Offer currency (copper equivalent)<input id="ecoTradeCurrency" type="number" min="0" value=""></label><label>Request / note<textarea id="ecoTradeNote" placeholder="Optional requested item or message"></textarea></label><button type="button" class="primary" data-trade-create>Send Trade Request</button></section>
         <section><h3>Open Trades</h3><div class="ecosystem-trade-list">${trades.map(trade => tradeCard(trade,id)).join('') || emptyState('No open trades', 'Send a request to another linked campaign character.')}</div></section>
       </div>`;
   }
@@ -379,7 +381,7 @@
     return `
       <div class="ecosystem-section-head"><div><h3>Player Marketplace</h3><p>Campaign listings remain reserved, auditable, and available across player logins.</p></div></div>
       <div class="ecosystem-market-layout">
-        <section class="ecosystem-form-card"><h3>Create Listing</h3><label>Item<select id="ecoListingItem"><option value="">Choose item</option>${listable.map(item => `<option value="${esc(item.id)}">${esc(item.name)} ×${item.qty}</option>`).join('')}</select></label><label>Quantity<input id="ecoListingQty" type="number" min="1" value="1"></label><label>Fixed price (copper)<input id="ecoListingPrice" type="number" min="0" value="0"></label><label>Duration<select id="ecoListingDuration"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label><label>Requested trade / note<input id="ecoListingRequest" placeholder="Optional requested item"></label><button type="button" class="primary" data-listing-create>Create Listing</button></section>
+        <section class="ecosystem-form-card"><h3>Create Listing</h3><label>Item<select id="ecoListingItem"><option value="">Choose item</option>${listable.map(item => `<option value="${esc(item.id)}">${esc(item.name)} ×${item.qty}</option>`).join('')}</select></label><label>Quantity<input id="ecoListingQty" type="number" min="1" value=""></label><label>Fixed price (copper)<input id="ecoListingPrice" type="number" min="0" value=""></label><label>Duration<select id="ecoListingDuration"><option value="24">24 hours</option><option value="72">3 days</option><option value="168">7 days</option></select></label><label>Requested trade / note<input id="ecoListingRequest" placeholder="Optional requested item"></label><button type="button" class="primary" data-listing-create>Create Listing</button></section>
         <div class="ecosystem-market-grid">${listings.map(listing => listingCard(listing,id)).join('') || emptyState('No active listings', 'Campaign members can list tradeable items here.')}</div>
       </div>`;
   }
@@ -457,9 +459,9 @@
           <h3>Issue Loot Reward</h3>
           <label>Recipients<div class="ecosystem-character-checks">${campaignCharacters().map(entry => `<label><input type="checkbox" data-gm-reward-character value="${esc(entry.id)}"><span>${esc(entry.record.name)}</span></label>`).join('') || '<p>No linked characters.</p>'}</div></label>
           <label>Destination<select id="gmEcoRewardDestination"><option value="character">Selected inventories</option><option value="party">Party Loot pool</option><option value="choice">Player reward choice</option></select></label>
-          <label>Quantity<input id="gmEcoRewardQty" type="number" min="1" value="1"></label>
+          <label>Quantity<input id="gmEcoRewardQty" type="number" min="1" value=""></label>
           <label>Quality<select id="gmEcoRewardQuality">${['Trash','Poor','Average','Well Crafted','Exceptional','Superb','Exquisite','Masterwork'].map(value => `<option>${value}</option>`).join('')}</select></label>
-          <label>Condition<input id="gmEcoRewardCondition" type="number" min="0" max="100" value="100"></label>
+          <label>Condition<input id="gmEcoRewardCondition" type="number" min="0" max="100" value=""></label>
           <label>Enchantment / note<input id="gmEcoRewardNote" placeholder="Optional enchantment, source, or GM note"></label>
           <label><input id="gmEcoRewardIdentified" type="checkbox" checked> Identified</label>
           <button type="button" class="primary" data-gm-reward-preview>Preview & Issue Reward</button>
@@ -487,17 +489,17 @@
   function renderLootTableEditor(){
     const table = ecosystem()?.lootTables?.find(candidate => candidate.id === ui.gmSelectedLootTableId);
     if(!table) return '';
-    return `<section class="ecosystem-loot-table-editor"><div class="ecosystem-section-head"><div><h3>${esc(table.name)}</h3><p>Guaranteed, percentage, weighted, quantity, rarity, region, and unique drop foundations.</p></div></div><div class="ecosystem-form-inline"><select id="gmLootEntryItem"><option value="">Choose compendium item</option>${catalogEntries().map(entry => `<option value="${esc(entry.slug || slug(entry.title))}">${esc(entry.title)}</option>`).join('')}</select><input id="gmLootEntryChance" type="number" min="0" max="100" value="100" title="Drop chance %"><input id="gmLootEntryMin" type="number" min="1" value="1" title="Minimum quantity"><input id="gmLootEntryMax" type="number" min="1" value="1" title="Maximum quantity"><label><input id="gmLootEntryUnique" type="checkbox"> Unique</label><button type="button" data-loot-entry-add>Add Drop</button></div><div class="ecosystem-audit-table">${array(table.entries).map((entry,index) => `<div><span>${esc(entry.itemName)}</span><span>${entry.chance}%</span><span>${entry.minQty}-${entry.maxQty}</span><span>${entry.unique ? 'Unique' : 'Repeatable'}</span><button type="button" data-loot-entry-remove="${index}">Remove</button></div>`).join('') || '<p>No entries yet.</p>'}</div></section>`;
+    return `<section class="ecosystem-loot-table-editor"><div class="ecosystem-section-head"><div><h3>${esc(table.name)}</h3><p>Guaranteed, percentage, weighted, quantity, rarity, region, and unique drop foundations.</p></div></div><div class="ecosystem-form-inline"><select id="gmLootEntryItem"><option value="">Choose compendium item</option>${catalogEntries().map(entry => `<option value="${esc(entry.slug || slug(entry.title))}">${esc(entry.title)}</option>`).join('')}</select><input id="gmLootEntryChance" type="number" min="0" max="100" value="" title="Drop chance %"><input id="gmLootEntryMin" type="number" min="1" value="" title="Minimum quantity"><input id="gmLootEntryMax" type="number" min="1" value="" title="Maximum quantity"><label><input id="gmLootEntryUnique" type="checkbox"> Unique</label><button type="button" data-loot-entry-add>Add Drop</button></div><div class="ecosystem-audit-table">${array(table.entries).map((entry,index) => `<div><span>${esc(entry.itemName)}</span><span>${entry.chance}%</span><span>${entry.minQty}-${entry.maxQty}</span><span>${entry.unique ? 'Unique' : 'Repeatable'}</span><button type="button" data-loot-entry-remove="${index}">Remove</button></div>`).join('') || '<p>No entries yet.</p>'}</div></section>`;
   }
   function renderGMLootDrop(){
     const tables = array(ecosystem()?.lootTables);
-    return `<section class="ecosystem-form-card wide"><h3>Loot Drop Generator</h3><p>Roll a table, inspect the generated items, then send them to Party Loot for Need / Greed distribution.</p><div class="ecosystem-form-inline"><select id="gmLootRollTable"><option value="">Choose loot table</option>${tables.map(table => `<option value="${esc(table.id)}">${esc(table.name)}</option>`).join('')}</select><label>Difficulty scale<input id="gmLootDifficulty" type="number" min=".1" max="5" step=".1" value="1"></label><label>Party scale<input id="gmLootPartyScale" type="number" min="1" max="20" value="${Math.max(1,campaignCharacters().length)}"></label><button type="button" class="primary" data-loot-generator-roll>Roll Shared Loot</button></div><div id="gmLootGeneratedPreview" class="ecosystem-item-gallery compact"></div></section>`;
+    return `<section class="ecosystem-form-card wide"><h3>Loot Drop Generator</h3><p>Roll a table, inspect the generated items, then send them to Party Loot for Need / Greed distribution.</p><div class="ecosystem-form-inline"><select id="gmLootRollTable"><option value="">Choose loot table</option>${tables.map(table => `<option value="${esc(table.id)}">${esc(table.name)}</option>`).join('')}</select><label>Difficulty scale<input id="gmLootDifficulty" type="number" min=".1" max="5" step=".1" value=""></label><label>Party scale<input id="gmLootPartyScale" type="number" min="1" max="20" value="${Math.max(1,campaignCharacters().length)}"></label><button type="button" class="primary" data-loot-generator-roll>Roll Shared Loot</button></div><div id="gmLootGeneratedPreview" class="ecosystem-item-gallery compact"></div></section>`;
   }
   function renderGMShops(){
     const shops = array(ecosystem()?.shops);
     return `
       <div class="ecosystem-two-column">
-        <section class="ecosystem-form-card"><h3>Shop Creator</h3><label>Shop name<input id="gmEcoShopName" placeholder="Greystone Forge"></label><label>Type<select id="gmEcoShopType">${SHOP_TYPES.map(type => `<option>${type}</option>`).join('')}</select></label><label>Owner / NPC<input id="gmEcoShopOwner" placeholder="Merchant name"></label><label>Description<textarea id="gmEcoShopDescription"></textarea></label><label>Map location<input id="gmEcoShopLocation" placeholder="Settlement or location slug"></label><label>Region<input id="gmEcoShopRegion" placeholder="Region"></label><label>Opening hours<input id="gmEcoShopHours" value="GM controlled"></label><div class="ecosystem-form-inline"><label>Purchase modifier<input id="gmEcoShopBuyMod" type="number" min="0" step=".05" value="1"></label><label>Sale modifier<input id="gmEcoShopSellMod" type="number" min="0" step=".05" value="1"></label></div><label>Restock<select id="gmEcoShopRestock"><option>Manual</option><option>No Restocking</option><option>In-game Days</option><option>Party Leaves Region</option><option>Random Item Table</option><option>Local Resources</option><option>World Events</option></select></label><button type="button" class="primary" data-shop-create>Create Shop & Map Marker</button></section>
+        <section class="ecosystem-form-card"><h3>Shop Creator</h3><label>Shop name<input id="gmEcoShopName" placeholder="Greystone Forge"></label><label>Type<select id="gmEcoShopType">${SHOP_TYPES.map(type => `<option>${type}</option>`).join('')}</select></label><label>Owner / NPC<input id="gmEcoShopOwner" placeholder="Merchant name"></label><label>Description<textarea id="gmEcoShopDescription"></textarea></label><label>Map location<input id="gmEcoShopLocation" placeholder="Settlement or location slug"></label><label>Region<input id="gmEcoShopRegion" placeholder="Region"></label><label>Opening hours<input id="gmEcoShopHours" value="GM controlled"></label><div class="ecosystem-form-inline"><label>Purchase modifier<input id="gmEcoShopBuyMod" type="number" min="0" step=".05" value=""></label><label>Sale modifier<input id="gmEcoShopSellMod" type="number" min="0" step=".05" value=""></label></div><label>Restock<select id="gmEcoShopRestock"><option>Manual</option><option>No Restocking</option><option>In-game Days</option><option>Party Leaves Region</option><option>Random Item Table</option><option>Local Resources</option><option>World Events</option></select></label><button type="button" class="primary" data-shop-create>Create Shop & Map Marker</button></section>
         <section><h3>Campaign Shops</h3><div class="ecosystem-shop-admin-list">${shops.map(shop => `<article><div><small>${esc(shop.type)} · ${esc(shop.region || 'No region')}</small><h4>${esc(shop.name)}</h4><p>${array(shop.stock).length} stock lines · ${esc(shop.status || 'closed')}</p></div><div><button type="button" data-shop-admin-open="${esc(shop.id)}">${shop.status === 'open' ? 'Close' : 'Open'}</button><button type="button" data-shop-admin-restock="${esc(shop.id)}">Restock</button><button type="button" data-shop-admin-stock="${esc(shop.id)}">Add Selected Item</button></div></article>`).join('') || emptyState('No shops', 'Create a campaign merchant and connect it to the existing map.')}</div></section>
       </div>`;
   }
@@ -575,7 +577,7 @@
         <section><h3>Quick Actions</h3><div class="ecosystem-detail-actions">
           ${slots.length ? `<select id="ecoDetailEquipSlot">${slots.map(slot => `<option>${esc(slot)}</option>`).join('')}</select><button type="button" data-detail-equip="${esc(item.id)}">${item.equipped ? 'Unequip' : 'Equip'}</button>` : ''}
           ${item.type.toLowerCase().includes('consum') || item.effect ? `<button type="button" data-detail-use="${esc(item.id)}">Use / Consume</button>` : ''}
-          ${item.qty > 1 ? `<input id="ecoDetailSplitQty" type="number" min="1" max="${item.qty - 1}" value="1"><button type="button" data-detail-split="${esc(item.id)}">Split Stack</button>` : ''}
+          ${item.qty > 1 ? `<input id="ecoDetailSplitQty" type="number" min="1" max="${item.qty - 1}" value=""><button type="button" data-detail-split="${esc(item.id)}">Split Stack</button>` : ''}
           ${bagOptions ? `<select id="ecoDetailBag">${bagOptions}</select><button type="button" data-detail-bag="${esc(item.id)}">Add to Bag</button>` : ''}
           ${storageOptions && !item.equipped ? `<select id="ecoDetailStorage">${storageOptions}</select><button type="button" data-detail-store="${esc(item.id)}">Store</button>` : ''}
           ${item.location === 'storage' ? `<button type="button" data-detail-retrieve="${esc(item.id)}">Retrieve</button>` : ''}
@@ -688,7 +690,8 @@
     const stock = shop?.stock?.[stockIndex];
     const record = activeCharacter();
     if(!shop || !stock || !record || !shopAccessible(shop)) return false;
-    const qty = Math.max(1, Math.min(number(quantity,1), number(stock.qty,0)));
+    const qty = Number(quantity);
+    if(!Number.isSafeInteger(qty)||qty<1||qty>number(stock.qty,0)){window.toast?.('Enter a whole quantity within the available stock.');return false;}
     const item = api.normalizeItem(Object.assign({}, stock.item, { qty }), { newInstance:true });
     const unitPrice = pricing?.getPlayerPurchasePriceCopper(item,number(shop.buyModifier,1));
     if(unitPrice === null){ notify('Purchase Failed',`${item.name} needs a Market Price.`,{type:'warning'}); return false; }
@@ -730,7 +733,8 @@
   function createDirectTrade(){
     const toId = document.getElementById('ecoTradeRecipient')?.value;
     const itemId = document.getElementById('ecoTradeItem')?.value;
-    const qty = Math.max(1, number(document.getElementById('ecoTradeQty')?.value,1));
+    const qty = Number(document.getElementById('ecoTradeQty')?.value);
+    if(itemId && (!Number.isSafeInteger(qty)||qty<1)){window.toast?.('Enter a whole quantity of at least 1.');return false;}
     const currency = Math.max(0, number(document.getElementById('ecoTradeCurrency')?.value,0));
     const note = document.getElementById('ecoTradeNote')?.value || '';
     const fromId = activeId();
@@ -839,7 +843,8 @@
     const id = activeId();
     const itemId = document.getElementById('ecoListingItem')?.value;
     const item = api.find(itemId,id);
-    const qty = Math.max(1,number(document.getElementById('ecoListingQty')?.value,1));
+    const qty = Number(document.getElementById('ecoListingQty')?.value);
+    if((!Number.isSafeInteger(qty)||qty<1)){window.toast?.('Enter a whole quantity of at least 1.');return false;}
     const priceCopper = Math.max(0,number(document.getElementById('ecoListingPrice')?.value,0));
     const hours = Math.max(1,number(document.getElementById('ecoListingDuration')?.value,24));
     if(!item || item.equipped || item.locked || item.bound || item.questItem || item.listingId || qty > item.qty) return false;
@@ -1000,7 +1005,8 @@
   function issueGMReward(){
     const recipients = Array.from(document.querySelectorAll('[data-gm-reward-character]:checked')).map(input => input.value);
     const destination = document.getElementById('gmEcoRewardDestination')?.value || 'character';
-    const quantity = Math.max(1,number(document.getElementById('gmEcoRewardQty')?.value,1));
+    const quantity = Number(document.getElementById('gmEcoRewardQty')?.value);
+    if((!Number.isSafeInteger(quantity)||quantity<1)){window.toast?.('Enter a whole quantity of at least 1.');return false;}
     const snapshot = catalogSnapshot(ui.gmSelectedCatalogId,quantity);
     if(!snapshot || destination !== 'party' && !recipients.length) return false;
     snapshot.quality = document.getElementById('gmEcoRewardQuality')?.value || 'Average';
@@ -1177,7 +1183,7 @@
       if(item?.equipped) api.unequipItem?.(id);
       else api.equipItem?.(id,document.getElementById('ecoDetailEquipSlot')?.value);
     }else if(button.dataset.detailUse) window.useInventoryItem?.(id);
-    else if(button.dataset.detailSplit) api.splitStack(id,document.getElementById('ecoDetailSplitQty')?.value);
+    else if(button.dataset.detailSplit) { const qty=Number(document.getElementById('ecoDetailSplitQty')?.value);if(!Number.isSafeInteger(qty)||qty<1)return window.toast?.('Enter a whole quantity to split.');api.splitStack(id,qty); }
     else if(button.dataset.detailBag){
       const bagId=document.getElementById('ecoDetailBag')?.value;
       const record=activeCharacter();

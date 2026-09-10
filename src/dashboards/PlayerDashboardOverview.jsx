@@ -1,3 +1,5 @@
+import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
+import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
@@ -206,26 +208,27 @@ function SpecialDamagePanel({ character, style }) {
 function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }) {
   const soulDamage = soulDamageValue(character);
   const [showRecovery, setShowRecovery] = useState(false);
-  const [recovery, setRecovery] = useState(0);
+  const [recovery, setRecovery] = useState('');
   const takeRest = async (type, soulRecovery = 0) => run(() => firebaseService.takeRest(campaignId, character.id, type, { soulRecovery, source:'Character Dashboard' }));
   const requestLongRest = () => {
     if(!soulDamage) return takeRest('long');
-    setRecovery(0);
+    setRecovery('');
     setShowRecovery(true);
   };
   const applyLongRest = async () => {
-    const result = await takeRest('long', Math.max(0, Math.min(soulDamage, Number(recovery || 0))));
+    if(!isManualNumber(recovery,{min:0,max:soulDamage,optional:true}))return;
+    const result = await takeRest('long', manualNumber(recovery));
     if(result?.ok) setShowRecovery(false);
   };
   return <DashboardPanel icon="rest" title="Rest & Recovery" compact className="react-overview-rest" style={style}>
     <div className="react-rest-actions"><button disabled={!editable || busy} type="button" onClick={() => takeRest('short')}>Short Rest</button><button className="primary" disabled={!editable || busy} type="button" onClick={requestLongRest}>Long Rest</button></div>
     <p className="react-special-damage-copy">Short Rest restores 35% SP. Long Rest restores 50% HP and MP, plus all SP. Remaining Soul Damage continues to cap HP.</p>
     {soulDamage ? <StatusPill tone="pending">{soulDamage} Soul Damage requires time</StatusPill> : <StatusPill tone="success">No Soul recovery required</StatusPill>}
-    {showRecovery ? <Modal title="Long Rest Soul Recovery" eyebrow="Natural Recovery" busy={busy} onClose={() => setShowRecovery(false)} footer={<><button disabled={busy} type="button" onClick={() => setShowRecovery(false)}>Cancel</button><button className="primary" disabled={busy} type="button" onClick={applyLongRest}>Apply Long Rest</button></>}>
+    {showRecovery ? <Modal title="Long Rest Soul Recovery" eyebrow="Natural Recovery" busy={busy} onClose={() => setShowRecovery(false)} footer={<><button disabled={busy} type="button" onClick={() => setShowRecovery(false)}>Cancel</button><button className="primary" disabled={busy||!isManualNumber(recovery,{min:0,max:soulDamage,optional:true})} type="button" onClick={applyLongRest}>Apply Long Rest</button></>}>
       <div className="react-soul-recovery-form">
         <p>Soul Damage can recover only through the natural passage of time. Enter the amount recovered during this long rest.</p>
         <ResourceBar label="Current Soul Damage" kind="hp" value={resourcePair(character.hp)[0]} maximum={resourcePair(character.hp)[1]} reserved={soulDamage} />
-        <label>Soul Damage Recovered<input autoFocus type="number" min="0" max={soulDamage} value={recovery} onChange={event => setRecovery(Math.max(0, Math.min(soulDamage, Number(event.target.value || 0))))} /></label>
+        <label>Soul Damage Recovered<ManualNumberInput autoFocus min="0" max={soulDamage} value={recovery} onChange={event => setRecovery(event.target.value)} /></label>
         <small>{soulDamage} Soul Damage currently recorded. The Soul Damage System or GM determines the natural recovery amount.</small>
       </div>
     </Modal> : null}

@@ -391,7 +391,7 @@
           <div class="phase4-form-grid">
             <label>Item or Resource<input id="phase4PriceItem" placeholder="Iron Ore"></label>
             <label>Region<input id="phase4PriceRegion" placeholder="Northern Region"></label>
-            <label>Modifier %<input id="phase4PriceModifier" type="number" value="10"></label>
+            <label>Modifier %<input id="phase4PriceModifier" type="number" value=""></label>
             <label>Reason<input id="phase4PriceReason" placeholder="Mine collapse"></label>
           </div>
         </article>

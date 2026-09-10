@@ -1,3 +1,5 @@
+import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
+import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useState } from 'react';
 import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar } from './WorkspaceUI.jsx';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
@@ -110,21 +112,21 @@ function resourcePair(value) {
 }
 
 function ResourceControl({ label, resource, value, editable, onResourceChange, reserved = 0 }) {
-  const [amount, setAmount] = useState(1);
+  const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const pair = resourcePair(value);
   const update = async direction => {
-    if(!onResourceChange) return;
+    if(!onResourceChange || !isManualNumber(amount,{min:1})) return;
     setBusy(true);
-    try { await onResourceChange(resource, direction * Math.max(1, Number(amount || 1))); }
+    try { await onResourceChange(resource, direction * manualNumber(amount)); }
     finally { setBusy(false); }
   };
   return <div className="react-player-resource-row">
     <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact reserved={reserved} />
     <div className="react-player-resource-controls" aria-label={`${label} manual adjustment`}>
-      <input aria-label={`${label} change amount`} disabled={!editable || busy} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} />
-      <button aria-label={`Remove ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(-1)} type="button">-</button>
-      <button aria-label={`Add ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(1)} type="button">+</button>
+      <ManualNumberInput aria-label={`${label} change amount`} disabled={!editable || busy} min="1" value={amount} onChange={event => setAmount(event.target.value)} />
+      <button aria-label={`Remove ${amount || 'amount from'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(-1)} type="button">-</button>
+      <button aria-label={`Add ${amount || 'amount to'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(1)} type="button">+</button>
     </div>
   </div>;
 }
@@ -216,12 +218,12 @@ export function CampaignInformationPanel({ campaign = {}, session = {}, characte
 }
 
 function CurrencyControl({ label, currencyKey, value, definition, editable, onCurrencyChange }) {
-  const [amount, setAmount] = useState(1);
+  const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const update = async direction => {
-    if(!onCurrencyChange) return;
+    if(!onCurrencyChange || !isManualNumber(amount,{min:1})) return;
     setBusy(true);
-    try { await onCurrencyChange(currencyKey, direction * Math.max(1, Number(amount || 1))); }
+    try { await onCurrencyChange(currencyKey, direction * manualNumber(amount)); }
     finally { setBusy(false); }
   };
   return <div className="react-player-currency-row">
@@ -234,9 +236,9 @@ function CurrencyControl({ label, currencyKey, value, definition, editable, onCu
       tone={definition?.id === 'gold' || definition?.id === 'royal-crown' ? 'gold' : 'arcane'}
     />
     <div className="react-player-currency-controls" aria-label={`${label} manual adjustment`}>
-      <input aria-label={`${label} change amount`} disabled={!editable || busy} type="number" min="1" value={amount} onChange={event => setAmount(Math.max(1, Number(event.target.value || 1)))} />
-      <button aria-label={`Remove ${amount} ${label}`} disabled={!editable || busy || Number(value) <= 0} onClick={() => update(-1)} type="button">-</button>
-      <button aria-label={`Add ${amount} ${label}`} disabled={!editable || busy} onClick={() => update(1)} type="button">+</button>
+      <ManualNumberInput aria-label={`${label} change amount`} disabled={!editable || busy} min="1" value={amount} onChange={event => setAmount(event.target.value)} />
+      <button aria-label={`Remove ${amount || 'amount from'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1}) || Number(value) <= 0} onClick={() => update(-1)} type="button">-</button>
+      <button aria-label={`Add ${amount || 'amount to'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(1)} type="button">+</button>
     </div>
   </div>;
 }

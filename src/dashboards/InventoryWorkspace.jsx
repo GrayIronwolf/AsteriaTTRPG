@@ -1,3 +1,5 @@
+import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
+import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useMemo, useState } from 'react';
 import { EmptyState, FilterControl, IconButton, Modal, Panel, SearchField, StatusPill, Tabs, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
@@ -147,15 +149,16 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
 }
 
 function CustomItemModal({ campaignId, character, storageId, onClose }) {
-  const [form, setForm] = useState({ name: '', type: 'Item', itemClass: 'Common', description: '', marketValue: 0, marketPrice: 0, isSpellbook: false, spellName: '', element: '', identified: true });
+  const [form, setForm] = useState({ name: '', type: 'Item', itemClass: 'Common', description: '', marketValue: '', marketPrice: '', isSpellbook: false, spellName: '', element: '', identified: true });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
-  const pricing = validateMarketPricing(form);
+  const pricing = validateMarketPricing({...form,marketValue:manualNumber(form.marketValue),marketPrice:manualNumber(form.marketPrice)});
   const save = async () => {
+    if(!isManualNumber(form.marketValue,{min:0,integer:false,optional:true})||!isManualNumber(form.marketPrice,{min:0,integer:false,optional:true}))return setMessage('Enter valid market prices, or leave blank for zero.');
     if(!pricing.valid) { setMessage(pricing.errors[0]); return; }
     setBusy(true);
-    const item = createAsteriaItem({ ...form, spell: form.isSpellbook ? { name: form.spellName || form.name, element: form.element, rank: 'Rank I' } : null, basicName: form.isSpellbook ? 'Book' : form.type || 'Item' });
+    const item = createAsteriaItem({ ...form, marketValue:manualNumber(form.marketValue),marketPrice:manualNumber(form.marketPrice),spell: form.isSpellbook ? { name: form.spellName || form.name, element: form.element, rank: 'Rank I' } : null, basicName: form.isSpellbook ? 'Book' : form.type || 'Item' });
     const created = await firebaseService.createCustomItem(campaignId, item);
     if (created?.ok) {
       const added = await firebaseService.updateInventory(campaignId, character.id, { type: 'add-item', item: created.item, storageId });
@@ -170,8 +173,8 @@ function CustomItemModal({ campaignId, character, storageId, onClose }) {
       <label>Item Class<select value={form.itemClass} onChange={event => set('itemClass', event.target.value)}>{['Common', 'Uncommon', 'Unusual', 'Rare', 'Epic', 'Mythic', 'Legendary', 'Relic'].map(value => <option key={value}>{value}</option>)}</select></label>
     </div>
     <fieldset className="react-market-form"><legend>Market Information</legend><div className="react-form-grid">
-      <label>Market Value <small>Marks received when selling</small><input type="number" min="0" step="0.01" value={form.marketValue} onChange={event => set('marketValue', Number(event.target.value || 0))} /></label>
-      <label>Market Price <small>Marks paid when purchasing</small><input type="number" min="0" step="0.01" value={form.marketPrice} onChange={event => set('marketPrice', Number(event.target.value || 0))} /></label>
+      <label>Market Value <small>Marks received when selling</small><ManualNumberInput min="0" step="0.01" value={form.marketValue} onChange={event => set('marketValue', event.target.value)} /></label>
+      <label>Market Price <small>Marks paid when purchasing</small><ManualNumberInput min="0" step="0.01" value={form.marketPrice} onChange={event => set('marketPrice', event.target.value)} /></label>
     </div>{!pricing.valid ? <p className="react-storage-warning">{pricing.errors[0]}</p> : form.marketValue === 0 && form.marketPrice === 0 ? <p className="react-help">0 / 0 marks this item as Not Normally Tradeable.</p> : null}</fieldset>
     <label>Description<textarea rows="5" value={form.description} onChange={event => set('description', event.target.value)} /></label>
     <label className="react-check-row"><input type="checkbox" checked={form.isSpellbook} onChange={event => set('isSpellbook', event.target.checked)} />This item is a spellbook</label>
@@ -305,8 +308,8 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   const [sort, setSort] = useState('name');
   const [view, setView] = useState('grid');
   const [newStorage, setNewStorage] = useState('');
-  const [newRows, setNewRows] = useState(4);
-  const [newCols, setNewCols] = useState(4);
+  const [newRows, setNewRows] = useState('');
+  const [newCols, setNewCols] = useState('');
   const [draggedStorageId, setDraggedStorageId] = useState('');
   const storageLimit = Math.max(3, Number(character.storageLimit || 3), storages.length);
   const storage = storages.find(value => value.id === activeStorage) || storages[0] || null;
@@ -318,8 +321,9 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   const carryCapacity = Number(character.carryCapacity ?? character.maxCarryWeight ?? character.encumbrance?.maximum ?? 0);
   const matches = item => !query.trim() || `${item.name} ${item.type} ${item.rarity}`.toLowerCase().includes(query.trim().toLowerCase());
   const createStorage = async () => {
-    const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage, rows:newRows, cols:newCols }), 'Storage created.');
-    if (result?.ok) setNewStorage('');
+    if(!isManualNumber(newRows,{min:1,max:20})||!isManualNumber(newCols,{min:1,max:20}))return;
+    const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage, rows:manualNumber(newRows), cols:manualNumber(newCols) }), 'Storage created.');
+    if (result?.ok) { setNewStorage('');setNewRows('');setNewCols(''); }
   };
   const reorderStorage = (sourceId, targetId) => {
     if(!sourceId || !targetId || sourceId === targetId) return;
@@ -371,7 +375,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
       </div></div>
     </> : <EmptyState title="No storage container equipped">Create a bag, pouch, chest, or other container in one of the available storage slots.</EmptyState>}
     {unassignedItems.length ? <p className="react-storage-warning">{unassignedItems.length} existing item{unassignedItems.length === 1 ? ' is' : 's are'} waiting for a container. They will fill the first available slots when storage is created.</p> : null}
-    {storages.length < storageLimit ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="Bag or container name" /><label>Rows<input type="number" min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><label>Columns<input type="number" min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(Math.max(1,Math.min(20,Number(event.target.value||1))))}/></label><button disabled={!editable || busy || !newStorage.trim()} onClick={createStorage}>Create Container</button></div> : null}
+    {storages.length < storageLimit ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="Bag or container name" /><label>Rows<ManualNumberInput min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(event.target.value)}/></label><label>Columns<ManualNumberInput min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(event.target.value)}/></label><button disabled={!editable || busy || !newStorage.trim() || !isManualNumber(newRows,{min:1,max:20}) || !isManualNumber(newCols,{min:1,max:20})} onClick={createStorage}>Create Container</button></div> : null}
   </Panel>;
 }
 

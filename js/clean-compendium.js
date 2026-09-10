@@ -1597,7 +1597,7 @@
         <header class="clean-page-head"><span class="clean-tag">GM</span><div><p class="eyebrow">Campaign Forge</p><h2>Forge Campaign</h2><p>Creating a campaign grants this account GM permissions for that campaign only.</p></div></header>
         <div class="workspace-form-grid">
           <label>Campaign Name<input id="workspaceCampaignName" placeholder="Campaign name"></label>
-          <label>Party Size<input id="workspaceCampaignPartySize" type="number" min="1" max="12" value="4"></label>
+          <label>Party Size<input id="workspaceCampaignPartySize" type="number" min="1" max="12" value=""></label>
           <label>Description<textarea id="workspaceCampaignDescription" placeholder="Short campaign premise"></textarea></label>
         </div>
         <button class="primary" id="workspaceCreateCampaignBtn" type="button">Forge Campaign</button>
