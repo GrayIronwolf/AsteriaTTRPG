@@ -7,6 +7,7 @@ secondaryCategory: "Fish & Amphibian Races"
 tertiaryCategory: "Fish Races"
 playable: true
 naturalAC: 1
+naturalACSource: fallback
 size: 
 movement: 
 languages: []

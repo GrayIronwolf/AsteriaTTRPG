@@ -1,0 +1,844 @@
+{
+  "recovered": [
+    {
+      "race": "Cavarin Avian",
+      "naturalAC": 1,
+      "original": "0"
+    },
+    {
+      "race": "Cavern Sprite",
+      "naturalAC": 5,
+      "original": "+5"
+    },
+    {
+      "race": "Chirolin",
+      "naturalAC": 1,
+      "original": "0"
+    },
+    {
+      "race": "Craglin",
+      "naturalAC": 1,
+      "original": "+1"
+    },
+    {
+      "race": "Flowborn Undien",
+      "naturalAC": 6,
+      "original": "+6"
+    },
+    {
+      "race": "Frostborn Undien",
+      "naturalAC": 12,
+      "original": "12"
+    },
+    {
+      "race": "Polaris Ursa",
+      "naturalAC": 2,
+      "original": "+2"
+    },
+    {
+      "race": "Tempestborn Undien",
+      "naturalAC": 11,
+      "original": "11"
+    },
+    {
+      "race": "Tideborn Undien",
+      "naturalAC": 11,
+      "original": "11"
+    }
+  ],
+  "missing": [
+    {
+      "race": "Aarakocra Avian",
+      "slug": "aarakocra-avian"
+    },
+    {
+      "race": "Aasimar",
+      "slug": "aasimar"
+    },
+    {
+      "race": "Abyssborn Undien",
+      "slug": "abyssborn-undien"
+    },
+    {
+      "race": "Ailura Ursa",
+      "slug": "ailura-ursa"
+    },
+    {
+      "race": "Air Pixie",
+      "slug": "air-pixie"
+    },
+    {
+      "race": "Anibin",
+      "slug": "anibin"
+    },
+    {
+      "race": "Ar'Zari",
+      "slug": "ar-zari"
+    },
+    {
+      "race": "Aranid",
+      "slug": "aranid"
+    },
+    {
+      "race": "Arcane Gnome",
+      "slug": "arcane-gnome"
+    },
+    {
+      "race": "Arcane Hobbit",
+      "slug": "arcane-hobbit"
+    },
+    {
+      "race": "Arcgar - Arcane Dwarf",
+      "slug": "arcgar-arcane-dwarf"
+    },
+    {
+      "race": "Arctura Ursa",
+      "slug": "arctura-ursa"
+    },
+    {
+      "race": "Artic Human",
+      "slug": "artic-human"
+    },
+    {
+      "race": "Artic Vulpin",
+      "slug": "artic-vulpin"
+    },
+    {
+      "race": "Ashbold",
+      "slug": "ashbold"
+    },
+    {
+      "race": "Attari",
+      "slug": "attari"
+    },
+    {
+      "race": "Axolari",
+      "slug": "axolari"
+    },
+    {
+      "race": "Batlin",
+      "slug": "batlin"
+    },
+    {
+      "race": "Blood Elf",
+      "slug": "blood-elf"
+    },
+    {
+      "race": "Brek'Oth/Castoth",
+      "slug": "brek-oth-castoth"
+    },
+    {
+      "race": "Brownie",
+      "slug": "brownie"
+    },
+    {
+      "race": "Bugbear",
+      "slug": "bugbear"
+    },
+    {
+      "race": "Builder Gnome",
+      "slug": "builder-gnome"
+    },
+    {
+      "race": "Buren",
+      "slug": "buren"
+    },
+    {
+      "race": "Carnin",
+      "slug": "carnin"
+    },
+    {
+      "race": "Cave Gnome",
+      "slug": "cave-gnome"
+    },
+    {
+      "race": "Celestial Elf",
+      "slug": "celestial-elf"
+    },
+    {
+      "race": "Centaur",
+      "slug": "centaur"
+    },
+    {
+      "race": "Ceren",
+      "slug": "ceren"
+    },
+    {
+      "race": "Chamaris",
+      "slug": "chamaris"
+    },
+    {
+      "race": "Changeling",
+      "slug": "changeling"
+    },
+    {
+      "race": "Cheexi",
+      "slug": "cheexi"
+    },
+    {
+      "race": "Chrypin",
+      "slug": "chrypin"
+    },
+    {
+      "race": "Cingudun",
+      "slug": "cingudun"
+    },
+    {
+      "race": "Coastal Human",
+      "slug": "coastal-human"
+    },
+    {
+      "race": "Cobaxi",
+      "slug": "cobaxi"
+    },
+    {
+      "race": "Dapin",
+      "slug": "dapin"
+    },
+    {
+      "race": "Dark Elf",
+      "slug": "dark-elf"
+    },
+    {
+      "race": "Dark Pixie",
+      "slug": "dark-pixie"
+    },
+    {
+      "race": "Death Pixie",
+      "slug": "death-pixie"
+    },
+    {
+      "race": "Demi-Demon",
+      "slug": "demi-demon"
+    },
+    {
+      "race": "Demi-God",
+      "slug": "demi-god"
+    },
+    {
+      "race": "Desert Human",
+      "slug": "desert-human"
+    },
+    {
+      "race": "Dhampir",
+      "slug": "dhampir"
+    },
+    {
+      "race": "Drakan",
+      "slug": "drakan"
+    },
+    {
+      "race": "Drakilin",
+      "slug": "drakilin"
+    },
+    {
+      "race": "Drow",
+      "slug": "drow"
+    },
+    {
+      "race": "Drownedborn Undien",
+      "slug": "drownedborn-undien"
+    },
+    {
+      "race": "Duergar - Dark Dwarf",
+      "slug": "duergar-dark-dwarf"
+    },
+    {
+      "race": "Earth Pixie",
+      "slug": "earth-pixie"
+    },
+    {
+      "race": "Eereth",
+      "slug": "eereth"
+    },
+    {
+      "race": "Equine",
+      "slug": "equine"
+    },
+    {
+      "race": "Fae Elf",
+      "slug": "fae-elf"
+    },
+    {
+      "race": "Fairy",
+      "slug": "fairy"
+    },
+    {
+      "race": "Faun",
+      "slug": "faun"
+    },
+    {
+      "race": "Felaxi",
+      "slug": "felaxi"
+    },
+    {
+      "race": "Fentra",
+      "slug": "fentra"
+    },
+    {
+      "race": "Field Gnome",
+      "slug": "field-gnome"
+    },
+    {
+      "race": "Firbold",
+      "slug": "firbold"
+    },
+    {
+      "race": "Fire Pixie",
+      "slug": "fire-pixie"
+    },
+    {
+      "race": "Folodun",
+      "slug": "folodun"
+    },
+    {
+      "race": "Forest Gnome",
+      "slug": "forest-gnome"
+    },
+    {
+      "race": "Forest Sprite",
+      "slug": "forest-sprite"
+    },
+    {
+      "race": "Forrest Hobbit",
+      "slug": "forrest-hobbit"
+    },
+    {
+      "race": "Fosgar - Artic Dwarf",
+      "slug": "fosgar-artic-dwarf"
+    },
+    {
+      "race": "Frost Gnome",
+      "slug": "frost-gnome"
+    },
+    {
+      "race": "Gallari Avian",
+      "slug": "gallari-avian"
+    },
+    {
+      "race": "Gekaris",
+      "slug": "gekaris"
+    },
+    {
+      "race": "Ghoslin",
+      "slug": "ghoslin"
+    },
+    {
+      "race": "Ghoul",
+      "slug": "ghoul"
+    },
+    {
+      "race": "Giant",
+      "slug": "giant"
+    },
+    {
+      "race": "Gnoll",
+      "slug": "gnoll"
+    },
+    {
+      "race": "Goliath",
+      "slug": "goliath"
+    },
+    {
+      "race": "Goradon",
+      "slug": "goradon"
+    },
+    {
+      "race": "Gorgon",
+      "slug": "gorgon"
+    },
+    {
+      "race": "Gray Goblin",
+      "slug": "gray-goblin"
+    },
+    {
+      "race": "Green Goblin",
+      "slug": "green-goblin"
+    },
+    {
+      "race": "Grummock",
+      "slug": "grummock"
+    },
+    {
+      "race": "Grung",
+      "slug": "grung"
+    },
+    {
+      "race": "Half Elf",
+      "slug": "half-elf"
+    },
+    {
+      "race": "Half Orc",
+      "slug": "half-orc"
+    },
+    {
+      "race": "Halfling",
+      "slug": "halfling"
+    },
+    {
+      "race": "Halkan Avian",
+      "slug": "halkan-avian"
+    },
+    {
+      "race": "Harengon",
+      "slug": "harengon"
+    },
+    {
+      "race": "Harpy",
+      "slug": "harpy"
+    },
+    {
+      "race": "High Elf",
+      "slug": "high-elf"
+    },
+    {
+      "race": "Hilgar - Hill Dwarf",
+      "slug": "hilgar-hill-dwarf"
+    },
+    {
+      "race": "Hill Hobbit",
+      "slug": "hill-hobbit"
+    },
+    {
+      "race": "Hill Sprite",
+      "slug": "hill-sprite"
+    },
+    {
+      "race": "Hobgoblin",
+      "slug": "hobgoblin"
+    },
+    {
+      "race": "Hybaran",
+      "slug": "hybaran"
+    },
+    {
+      "race": "Ice Elf",
+      "slug": "ice-elf"
+    },
+    {
+      "race": "Jabaxi",
+      "slug": "jabaxi"
+    },
+    {
+      "race": "Jinn",
+      "slug": "jinn"
+    },
+    {
+      "race": "Jungle Human",
+      "slug": "jungle-human"
+    },
+    {
+      "race": "Kaftar",
+      "slug": "kaftar"
+    },
+    {
+      "race": "Kenku Avian",
+      "slug": "kenku-avian"
+    },
+    {
+      "race": "Kinder",
+      "slug": "kinder"
+    },
+    {
+      "race": "Kitsuna",
+      "slug": "kitsuna"
+    },
+    {
+      "race": "Kobold",
+      "slug": "kobold"
+    },
+    {
+      "race": "Korvari",
+      "slug": "korvari"
+    },
+    {
+      "race": "Krakari",
+      "slug": "krakari"
+    },
+    {
+      "race": "Lamia",
+      "slug": "lamia"
+    },
+    {
+      "race": "Latrin",
+      "slug": "latrin"
+    },
+    {
+      "race": "Lazari",
+      "slug": "lazari"
+    },
+    {
+      "race": "Leprechaun",
+      "slug": "leprechaun"
+    },
+    {
+      "race": "Life Pixie",
+      "slug": "life-pixie"
+    },
+    {
+      "race": "Light Elf",
+      "slug": "light-elf"
+    },
+    {
+      "race": "Light Pixie",
+      "slug": "light-pixie"
+    },
+    {
+      "race": "Locthri",
+      "slug": "locthri"
+    },
+    {
+      "race": "Loxodon",
+      "slug": "loxodon"
+    },
+    {
+      "race": "Lupin",
+      "slug": "lupin"
+    },
+    {
+      "race": "Lutetra",
+      "slug": "lutetra"
+    },
+    {
+      "race": "Lyaxi",
+      "slug": "lyaxi"
+    },
+    {
+      "race": "Lynaxi",
+      "slug": "lynaxi"
+    },
+    {
+      "race": "Ma'kori",
+      "slug": "ma-kori"
+    },
+    {
+      "race": "Magar - Fire Dwarf",
+      "slug": "magar-fire-dwarf"
+    },
+    {
+      "race": "Mammoren",
+      "slug": "mammoren"
+    },
+    {
+      "race": "Meletra",
+      "slug": "meletra"
+    },
+    {
+      "race": "Menphin",
+      "slug": "menphin"
+    },
+    {
+      "race": "Mermaid/Merman",
+      "slug": "mermaid-merman"
+    },
+    {
+      "race": "Minotaur",
+      "slug": "minotaur"
+    },
+    {
+      "race": "Moon Elf",
+      "slug": "moon-elf"
+    },
+    {
+      "race": "Mossling",
+      "slug": "mossling"
+    },
+    {
+      "race": "Mountain Human",
+      "slug": "mountain-human"
+    },
+    {
+      "race": "Musran",
+      "slug": "musran"
+    },
+    {
+      "race": "Myconiod",
+      "slug": "myconiod"
+    },
+    {
+      "race": "Myrmodun",
+      "slug": "myrmodun"
+    },
+    {
+      "race": "Naga",
+      "slug": "naga"
+    },
+    {
+      "race": "Nautri",
+      "slug": "nautri"
+    },
+    {
+      "race": "Night Goblin",
+      "slug": "night-goblin"
+    },
+    {
+      "race": "Nythri",
+      "slug": "nythri"
+    },
+    {
+      "race": "Oger",
+      "slug": "oger"
+    },
+    {
+      "race": "Orakai",
+      "slug": "orakai"
+    },
+    {
+      "race": "Orc",
+      "slug": "orc"
+    },
+    {
+      "race": "Owlin Avian",
+      "slug": "owlin-avian"
+    },
+    {
+      "race": "Pabaxi",
+      "slug": "pabaxi"
+    },
+    {
+      "race": "Pavari Avian",
+      "slug": "pavari-avian"
+    },
+    {
+      "race": "Phyllilin",
+      "slug": "phyllilin"
+    },
+    {
+      "race": "Planes Human",
+      "slug": "planes-human"
+    },
+    {
+      "race": "Porcine",
+      "slug": "porcine"
+    },
+    {
+      "race": "Psittin Avian",
+      "slug": "psittin-avian"
+    },
+    {
+      "race": "Pux",
+      "slug": "pux"
+    },
+    {
+      "race": "Ramren",
+      "slug": "ramren"
+    },
+    {
+      "race": "Rattaran",
+      "slug": "rattaran"
+    },
+    {
+      "race": "Raynari",
+      "slug": "raynari"
+    },
+    {
+      "race": "Red Goblin",
+      "slug": "red-goblin"
+    },
+    {
+      "race": "Rhadon",
+      "slug": "rhadon"
+    },
+    {
+      "race": "River Sprite",
+      "slug": "river-sprite"
+    },
+    {
+      "race": "Salthri",
+      "slug": "salthri"
+    },
+    {
+      "race": "Sandbold",
+      "slug": "sandbold"
+    },
+    {
+      "race": "Satyr",
+      "slug": "satyr"
+    },
+    {
+      "race": "Sauriss",
+      "slug": "sauriss"
+    },
+    {
+      "race": "Sea Elf",
+      "slug": "sea-elf"
+    },
+    {
+      "race": "Seabold",
+      "slug": "seabold"
+    },
+    {
+      "race": "Sealgar - Sea Dwarf",
+      "slug": "sealgar-sea-dwarf"
+    },
+    {
+      "race": "Skeleton",
+      "slug": "skeleton"
+    },
+    {
+      "race": "Skornid",
+      "slug": "skornid"
+    },
+    {
+      "race": "Sky Elf",
+      "slug": "sky-elf"
+    },
+    {
+      "race": "Snowbold",
+      "slug": "snowbold"
+    },
+    {
+      "race": "Sobekai",
+      "slug": "sobekai"
+    },
+    {
+      "race": "Solara Ursa",
+      "slug": "solara-ursa"
+    },
+    {
+      "race": "Sphenis Avian",
+      "slug": "sphenis-avian"
+    },
+    {
+      "race": "Storm Sprite",
+      "slug": "storm-sprite"
+    },
+    {
+      "race": "Strigon Avian",
+      "slug": "strigon-avian"
+    },
+    {
+      "race": "Sun Elf",
+      "slug": "sun-elf"
+    },
+    {
+      "race": "Swamp Hobbit",
+      "slug": "swamp-hobbit"
+    },
+    {
+      "race": "Tabaxi",
+      "slug": "tabaxi"
+    },
+    {
+      "race": "Terkari",
+      "slug": "terkari"
+    },
+    {
+      "race": "Terra Ursa",
+      "slug": "terra-ursa"
+    },
+    {
+      "race": "Theskar",
+      "slug": "theskar"
+    },
+    {
+      "race": "Tiefling",
+      "slug": "tiefling"
+    },
+    {
+      "race": "Titan",
+      "slug": "titan"
+    },
+    {
+      "race": "Titikan Avian",
+      "slug": "titikan-avian"
+    },
+    {
+      "race": "Tortle",
+      "slug": "tortle"
+    },
+    {
+      "race": "Troll",
+      "slug": "troll"
+    },
+    {
+      "race": "Urgel",
+      "slug": "urgel"
+    },
+    {
+      "race": "Vampbold",
+      "slug": "vampbold"
+    },
+    {
+      "race": "Vampire",
+      "slug": "vampire"
+    },
+    {
+      "race": "Vespari",
+      "slug": "vespari"
+    },
+    {
+      "race": "Vexari",
+      "slug": "vexari"
+    },
+    {
+      "race": "Vorakai",
+      "slug": "vorakai"
+    },
+    {
+      "race": "Vulkan Avian",
+      "slug": "vulkan-avian"
+    },
+    {
+      "race": "Vulontra",
+      "slug": "vulontra"
+    },
+    {
+      "race": "Vulpin",
+      "slug": "vulpin"
+    },
+    {
+      "race": "Water Pixie",
+      "slug": "water-pixie"
+    },
+    {
+      "race": "White Goblin",
+      "slug": "white-goblin"
+    },
+    {
+      "race": "Wolgar - Wood Dwarf",
+      "slug": "wolgar-wood-dwarf"
+    },
+    {
+      "race": "Wood Elf",
+      "slug": "wood-elf"
+    },
+    {
+      "race": "Wood Spring",
+      "slug": "wood-spring"
+    },
+    {
+      "race": "Zhakar",
+      "slug": "zhakar"
+    },
+    {
+      "race": "Zynari",
+      "slug": "zynari"
+    }
+  ],
+  "conflicts": [
+    {
+      "race": "Batlin",
+      "values": [
+        "0",
+        "+3"
+      ],
+      "sources": [
+        "Batlin Sheet.md",
+        "Untitled(1).md"
+      ]
+    },
+    {
+      "race": "Drakilin",
+      "values": [
+        "+1",
+        "+2"
+      ],
+      "sources": [
+        "Drakilin Race Sheet.md",
+        "Untitled(6).md"
+      ]
+    }
+  ],
+  "note": "Missing values are explicit fallback 1, not authored race statistics. Original +0 is clamped to the existing minimum 1. No Firestore documents are modified."
+}

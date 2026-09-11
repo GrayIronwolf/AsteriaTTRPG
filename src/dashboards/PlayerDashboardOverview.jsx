@@ -117,6 +117,7 @@ function ArmourPanel({ character, onNavigate, style }) {
         <div><span>Modifiers</span><strong>{signed(armour.modifierTotal)}</strong><small>{armour.modifiers.filter(entry => entry.active && !entry.conditional).length} active</small></div>
       </div>
       <div className="react-ac-equation"><span>{decimal(armour.naturalAC)} + {decimal(armour.armourAC)} + {decimal(armour.armourTypeSetBonus)} + {decimal(armour.modifierTotal)}</span><b>Raw {decimal(armour.rawAC)}</b><strong>Final AC {armour.finalAC}</strong></div>
+      <p className="react-help">Minimum AC: {armour.naturalAC} (racial NAC).</p>
       {armour.armourPieces.length ? <div className="react-ac-piece-list">{armour.armourPieces.map(piece => <article className={piece.valid ? '' : 'is-invalid'} key={piece.itemId}>
         <div><b>{piece.name}</b><small>{piece.piece?.name || 'Unknown piece'} | {piece.materialName} | {piece.quality.name}</small></div>
         <span>{decimal(piece.modifiedBaseAC)} x {Math.round(piece.percentile * 100)}%</span>

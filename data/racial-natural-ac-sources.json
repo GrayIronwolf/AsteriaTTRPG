@@ -1,0 +1,53 @@
+{
+  "verified": [
+    {
+      "race": "Flowborn Undien",
+      "raw": "+6",
+      "source": "🌊 Flowborn Undien.md"
+    },
+    {
+      "race": "Cavarin Avian",
+      "raw": "0",
+      "source": "Cavarin Race Sheet.md"
+    },
+    {
+      "race": "Chirolin",
+      "raw": "0",
+      "source": "Chirolin Race Sheet.md"
+    },
+    {
+      "race": "Craglin",
+      "raw": "+1",
+      "source": "Craglin Race Sheet.md"
+    },
+    {
+      "race": "Spectrin",
+      "raw": "+1",
+      "source": "Spectrin Race Sheet.md"
+    }
+  ],
+  "conflicts": [
+    {
+      "race": "Batlin",
+      "values": [
+        "0",
+        "+3"
+      ],
+      "sources": [
+        "Batlin Sheet.md",
+        "Untitled(1).md"
+      ]
+    },
+    {
+      "race": "Drakilin",
+      "values": [
+        "+1",
+        "+2"
+      ],
+      "sources": [
+        "Drakilin Race Sheet.md",
+        "Untitled(6).md"
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ secondaryCategory:
 tertiaryCategory: 
 playable: true
 naturalAC: 1
+naturalACSource: fallback
 traitSlots: 4
 size: "Small"
 movement: "6m (Walking) - 18m (Flying)"

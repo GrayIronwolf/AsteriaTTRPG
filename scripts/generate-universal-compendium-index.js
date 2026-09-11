@@ -267,6 +267,9 @@ function slugify(value) {
 }
 
 function normalizeKey(value) {
+  const compact = String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if(['naturalac','nac','neutralac','naturalarmourclass','naturalarmorclass'].includes(compact)) return 'naturalAC';
+  if(compact === 'naturalacsource') return 'naturalACSource';
   return slugify(value).replace(/-([a-z0-9])/g, (_, char) => char.toUpperCase());
 }
 

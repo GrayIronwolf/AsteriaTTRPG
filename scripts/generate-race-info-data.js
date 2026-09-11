@@ -204,6 +204,7 @@ function buildRaceInfo(file) {
   const info = {
     title: raceName,
     sourcePath: path.relative(sourceRoot, file).replace(/\\/g, '/'),
+    naturalAC: frontmatter.naturalAC ?? frontmatter.natural_ac ?? frontmatter.NAC ?? frontmatter['Natural Armour Class'] ?? frontmatter['Natural Armor Class'] ?? frontmatter['Neutral AC'] ?? '',
     size: frontmatter.Size || '',
     movement: frontmatter['Movement Speed'] || '',
     senses: frontmatter.Senses || '',

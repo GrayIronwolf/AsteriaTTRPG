@@ -1,3 +1,5 @@
+import { resolveRacialNaturalAC, readNaturalAC } from './naturalAC.mjs';
+export { readNaturalAC };
 import {
   ARMOUR_LOCATIONS,
   ARMOUR_PIECES,
@@ -131,20 +133,7 @@ export function resolveMaterialBaseAC(item = {}, options = {}) {
     : { value:0, material:material || 'Missing', source:'missing', configured:false, entry:null };
 }
 
-export function resolveNaturalAC(character = {}, options = {}) {
-  const direct = read(character, ['naturalAC','natural_ac']);
-  if(finite(direct)) return { value:Math.max(1,Math.min(12,Number(direct))), source:'character-snapshot', configured:true };
-  const raceSnapshot = character.raceData || character.raceInfo || character.racial_info || (typeof character.race === 'object' ? character.race : character.character?.race);
-  const snapshotValue = read(raceSnapshot || {}, ['naturalAC','natural_ac']);
-  if(finite(snapshotValue)) return { value:Math.max(1,Math.min(12,Number(snapshotValue))), source:'race-snapshot', configured:true };
-  const raceName = typeof character.race === 'string' ? character.race : character.race?.title || character.race?.name || character.character?.race?.title || character.raceSlug || character.character?.race?.slug;
-  const key = compact(raceName);
-  const race = catalogEntries(options, 'races').find(entry => [entry.title,entry.name,entry.slug].some(value => compact(value) === key));
-  const catalogValue = read(race || {}, ['naturalAC','natural_ac']);
-  return finite(catalogValue)
-    ? { value:Math.max(1,Math.min(12,Number(catalogValue))), source:'race-compendium', configured:true, entry:race }
-    : { value:1, source:'fallback', configured:false, entry:race || null };
-}
+export const resolveNaturalAC = resolveRacialNaturalAC;
 
 export function craftArmourBaseAC(materialBaseAC, quality) {
   const qualityResult = typeof quality === 'object' && quality.modifier !== undefined ? quality : resolveQuality({ quality });
@@ -295,7 +284,7 @@ export function calculateCharacterAC(character = {}, options = {}) {
   const modifiers = collectACModifiers(character,armourPieces);
   const modifierTotal = modifiers.filter(modifier => modifier.active && !modifier.conditional).reduce((total,modifier)=>total+number(modifier.value),0);
   const rawAC = number(natural.value,1) + armourAC + armourTypeSetBonus + modifierTotal;
-  const finalAC = Math.max(1,Math.floor(rawAC));
+  const finalAC = Math.max(natural.value,Math.floor(rawAC));
   return {
     naturalAC:natural.value,
     naturalACSource:natural.source,

@@ -470,7 +470,8 @@
       senses:pick('senses'),
       languages:pick('languages'),
       magicAffinity:pick('magicAffinity','magic_affinity'),
-      naturalAC:Math.max(1, Math.min(12, Number(pick('naturalAC','natural_ac') || 1)))
+      naturalAC:window.AsteriaArmour?.resolveNaturalAC?.({race:entry})?.value ?? Math.max(1,Math.min(12,Number(pick('naturalAC','natural_ac','NAC','Neutral AC') || 1))),
+      naturalACSource:window.AsteriaArmour?.resolveNaturalAC?.({race:entry})?.source || pick('naturalACSource') || 'fallback'
     };
   }
 
@@ -491,14 +492,14 @@
 
   function armourPreviewForDraft(d = draft()){
     const raceEntry=entryBySlug('race',d.raceSlug);
-    const naturalAC=Math.max(1,Math.min(12,Number(metadataValue(raceEntry,['naturalAC','natural_ac'])||1)));
+    const naturalAC=raceInfoPayloadForEntry(raceEntry).naturalAC;
     const pack=EQUIPMENT_PACKS.find(value=>value.slug===d.equipmentPackSlug);
     const inventory=(pack?resolveEquipmentPack(pack):[]).map(entry=>forgeInventoryItem(entry,entry.slug));
     inventory.forEach(item=>{
       const piece=window.AsteriaArmour?.resolveArmourPiece?.(item);
       if(piece){item.equipped=true;item.equippedSlot=piece.location;item.slot=piece.location;}
     });
-    const character={naturalAC,raceData:{naturalAC},inventory,equipment:{}};
+    const character={race:raceEntry,naturalAC,raceData:raceInfoPayloadForEntry(raceEntry),inventory,equipment:{}};
     return window.AsteriaArmour?.calculateCharacterAC?.(character)||{naturalAC,armourAC:0,armourTypeSetBonus:0,modifierTotal:0,rawAC:naturalAC,finalAC:naturalAC,validation:{errors:[],warnings:[]}};
   }
 
@@ -2868,6 +2869,7 @@
         bonusesMarkdown:racialInfo.bonusesMarkdown
       },
       naturalAC:racialInfo.naturalAC,
+      naturalACSource:racialInfo.naturalACSource,
       class:{
         slug:classSlugs[0] || d.classSlug,
         title:klass,
@@ -2954,6 +2956,7 @@
       characteristicRules,
       raceInfo:racialInfo,
       naturalAC:racialInfo.naturalAC,
+      naturalACSource:racialInfo.naturalACSource,
       racialFeatures:racialInfo.featuresMarkdown,
       racialTraits:racialInfo.traits,
       racialTraitsMarkdown:racialInfo.traitsMarkdown,

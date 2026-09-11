@@ -7,6 +7,7 @@ secondaryCategory: "Undien Races"
 tertiaryCategory: 
 playable: true
 naturalAC: 1
+naturalACSource: fallback
 size: 
 movement: "12m (Walking) - 30m (Swimming)"
 languages:

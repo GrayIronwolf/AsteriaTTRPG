@@ -38,7 +38,10 @@ for(const entry of fs.readdirSync(raceRoot, { withFileTypes:true })) {
   if(!fs.existsSync(file)) continue;
   const source = fs.readFileSync(file,'utf8');
   if(/^naturalAC\s*:/mi.test(source)) continue;
-  const next = source.replace(/^(playable\s*:\s*.*)$/mi, '$1\nnaturalAC: 1');
+  const metadata = frontmatter(source);
+  const raw = metadata.natural_ac ?? metadata.NAC ?? metadata['Natural Armour Class'] ?? metadata['Natural Armor Class'] ?? metadata['Neutral AC'];
+  const valid = raw !== undefined && /^[+-]?\d+(?:\.\d+)?$/.test(String(raw).trim());
+  const next = source.replace(/^(playable\s*:\s*.*)$/mi, `$1\nnaturalAC: ${valid ? Math.max(1,Math.min(12,Math.floor(Number(raw)))) : 1}\nnaturalACSource: ${valid ? 'authored' : 'fallback'}`);
   if(next !== source) { fs.writeFileSync(file,next,'utf8'); racesUpdated += 1; }
 }
 
@@ -76,7 +79,7 @@ async function writeReport(){
     const file=path.join(raceRoot,entry.name,'index.md');
     const metadata=fs.existsSync(file)?frontmatter(fs.readFileSync(file,'utf8')):{};
     const value=Number(metadata.naturalAC??metadata.natural_ac);
-    return {slug:entry.name,naturalAC:Number.isFinite(value)?value:null,valid:Number.isFinite(value)&&value>=1&&value<=12};
+    return {slug:entry.name,naturalAC:Number.isFinite(value)?value:null,valid:metadata.naturalACSource!=='fallback'&&Number.isFinite(value)&&value>=1&&value<=12};
   });
   const report={
     version:'asteria-armour-class-migration-v1',

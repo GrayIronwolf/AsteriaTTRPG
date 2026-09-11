@@ -6,7 +6,8 @@ raceCategory: "Beastkin Races"
 secondaryCategory: "Ursa Races"
 tertiaryCategory: 
 playable: true
-naturalAC: 1
+naturalAC: 2
+naturalACSource: race-notes
 size: 
 movement: "15m (Walking) - 30m (Swimming)"
 languages:

@@ -6,7 +6,8 @@ raceCategory: "Demi Races"
 secondaryCategory: "Undien Races"
 tertiaryCategory: 
 playable: true
-naturalAC: 1
+naturalAC: 12
+naturalACSource: race-notes
 size: 
 movement: "9m"
 languages: []
