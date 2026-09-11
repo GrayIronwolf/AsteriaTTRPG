@@ -1,3 +1,4 @@
+import { questDetails } from './questWorkflowModel.mjs';
 export const QUEST_CURRENCIES = Object.freeze([
   { key:'copper', label:'Penny (Copper)' },
   { key:'silver', label:'Mark (Silver)' },
@@ -54,7 +55,7 @@ export function markQuestRewardClaimed(quest = {}, transactionId, claimedAt = ne
 export function normalizeAssignedQuest(quest = {}, assignment = {}) {
   const title = String(quest.title || quest.name || 'Quest').trim().slice(0, 160);
   return {
-    ...clone(quest),
+    ...questDetails(quest),
     id:String(quest.id || quest.slug || assignment.id || ''),
     title,
     name:title,

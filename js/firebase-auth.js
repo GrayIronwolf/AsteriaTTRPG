@@ -1,3 +1,4 @@
+import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
 /* =========================
@@ -900,35 +901,29 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId) return {ok:false};
     const ids=Array.from(new Set((characterIds||[]).map(String).filter(Boolean)));
     if(!ids.length) return {ok:false,error:'Choose at least one character.'};
+    if(quest.visibility==='GM Only')return {ok:false,error:'Make the quest visible to players before assigning it.'};
     const questId=String(quest.id||quest.slug||`quest-${Date.now()}-${Math.random().toString(36).slice(2,7)}`);
     try{
       const campaignRef=doc(db,'campaigns',campaignId);
       const characterRefs=ids.map(id=>doc(db,'campaigns',campaignId,'characters',id));
-      const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',`quest-${liveSlug(questId)}-${liveSlug(id)}`));
+      const eventRefs=ids.map(id=>doc(collection(db,'campaigns',campaignId,'events')));
       await runTransaction(db,async transaction=>{
         const campaignSnapshot=await transaction.get(campaignRef);
         if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can assign quests.');
         const characterSnapshots=[];
         for(const characterRef of characterRefs) characterSnapshots.push(await transaction.get(characterRef));
         characterSnapshots.forEach((snapshot,index)=>{
-          if(!snapshot.exists()) return;
+          if(!snapshot.exists()) throw new Error('An assigned character is no longer available.');
           const character=Object.assign({},snapshot.data());
           const quests=Array.isArray(character.quests||character.questLog) ? (character.quests||character.questLog).slice() : [];
           const nextQuest=normalizeAssignedQuest(quest,{id:questId,assignedAt:new Date().toISOString(),assignedBy:currentUser.uid});
           const existing=quests.findIndex(value=>String(value?.id||value?.slug||'')===questId);
-          if(existing>=0) {
-            const previous=quests[existing];
-            quests[existing]=Object.assign({},previous,nextQuest,{
-              rewardClaimedAt:previous.rewardClaimedAt||null,
-              rewardTransactionId:previous.rewardTransactionId||'',
-              rewardStatus:previous.rewardStatus||''
-            });
-          }
-          else quests.push(nextQuest);
+          if(existing>=0) quests[existing]=mergeQuestAssignment(quests[existing],nextQuest);
+          else quests.push(mergeQuestAssignment(null,nextQuest));
           transaction.set(characterRefs[index],{quests:cleanData(quests),updatedAt:serverTimestamp()},{merge:true});
           transaction.set(eventRefs[index],{
             id:eventRefs[index].id,campaignId,targetCharacterId:ids[index],targetOwnerUid:character.ownerUid||'',type:'quest-assigned',
-            payload:{questId,title:nextQuest.title,objective:nextQuest.objective,reward:cleanData(nextQuest.reward)},
+            payload:{questId,title:nextQuest.title,objective:nextQuest.objective,reward:cleanData(nextQuest.reward),questGiver:nextQuest.questGiver,deadline:nextQuest.deadline},
             status:'delivered',deliveryStatus:'delivered',acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:null
           },{merge:true});
         });
@@ -1270,6 +1265,8 @@ const firebasePublicApi = {
   acknowledgeLiveItemRequest: (...args) => callTrustedAction('acknowledgeLiveItemRequest', args),
   acknowledgeLiveItemRecipientUpdate: (...args) => callTrustedAction('acknowledgeLiveItemRecipientUpdate', args),
   updateCharacterQuest: (...args) => callTrustedAction('updateCharacterQuest', args),
+  updateQuestProgress: (...args) => callTrustedAction('updateQuestProgress', args),
+  reviewCharacterQuest: (...args) => callTrustedAction('reviewCharacterQuest', args),
   addJournalEntry: async function(campaignId,characterId,entry={}){
     const refs=liveCharacterRefs(campaignId,characterId);
     try{

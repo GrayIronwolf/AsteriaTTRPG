@@ -1,3 +1,6 @@
+import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
+import { QuestAssignments } from './QuestAssignments.jsx';
+import { questDetails } from '../state/questWorkflowModel.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -17,19 +20,24 @@ function RecordActions({ onEdit, onDelete }) {
   return <div className="react-record-actions"><button type="button" onClick={onEdit}>Edit</button><button type="button" className="danger" onClick={onDelete}>Delete</button></div>;
 }
 
-const emptyQuestDraft=()=>({id:'',title:'',objective:'',reward:{...normalizeQuestReward(),xp:'',currency:{key:'gold',amount:''}},status:'Draft',visibility:'Party'});
+const emptyQuestDraft=()=>({id:'',title:'',objective:'',reward:{...normalizeQuestReward(),xp:'',currency:{key:'gold',amount:''}},status:'Draft',visibility:'Party',...questDetails(),requiresGMApproval:true,gmNotes:''});
 
 export function QuestWorkspace({ campaignId, workspace, characters, saveSection }) {
   const quests=array(workspace.quests);
   const [draft,setDraft]=useState(emptyQuestDraft);
   const [recipients,setRecipients]=useState([]);
+  const [objectiveText,setObjectiveText]=useState('');
+  const [objectiveTarget,setObjectiveTarget]=useState('');
+  const [objectiveOptional,setObjectiveOptional]=useState(false);
+  const [query,setQuery]=useState('');
+  const [showArchived,setShowArchived]=useState(false);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const [itemSearch,setItemSearch]=useState('');
   const [itemQuantity,setItemQuantity]=useState('');
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.()||[],[]);
   const itemResults=itemSearch?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(itemSearch.toLowerCase())).slice(0,8):[];
-  const reset=()=>{setDraft(emptyQuestDraft());setItemSearch('');setItemQuantity('');};
+  const reset=()=>{setDraft(emptyQuestDraft());setItemSearch('');setItemQuantity('');setObjectiveText('');setObjectiveTarget('');setObjectiveOptional(false);};
   const updateReward=patch=>setDraft(value=>({...value,reward:{...value.reward,...patch}}));
   const addRewardItem=item=>{
     if(!isManualNumber(itemQuantity,{min:1}))return setMessage('Enter a whole item quantity of at least 1.');
@@ -42,7 +50,7 @@ export function QuestWorkspace({ campaignId, workspace, characters, saveSection 
   const save=async()=>{
     if(!draft.title.trim())return setMessage('Enter a quest title.');
     if(!isManualNumber(draft.reward.xp,{min:0,optional:true})||!isManualNumber(draft.reward.currency.amount,{min:0,optional:true}))return setMessage('Enter whole, non-negative reward amounts, or leave them blank for no reward.');
-    const record={...draft,reward:normalizeQuestReward(draft.reward),id:draft.id||uid('quest'),title:draft.title.trim(),updatedAt:new Date().toISOString()};
+    const record={...draft,...questDetails(draft),reward:normalizeQuestReward(draft.reward),id:draft.id||uid('quest'),title:draft.title.trim(),updatedAt:new Date().toISOString()};
     const next=draft.id?quests.map(item=>item.id===draft.id?record:item):[record,...quests];
     setBusy(true);const result=await saveSection('quests',next);setBusy(false);
     setMessage(result?.ok?'Quest saved to the live campaign workspace.':result?.error||'Quest could not be saved.');
@@ -53,10 +61,32 @@ export function QuestWorkspace({ campaignId, workspace, characters, saveSection 
     setBusy(true);const result=await firebaseService.assignQuest(campaignId,quest,recipients);setBusy(false);
     setMessage(result?.ok?`${quest.title} sent to ${recipients.length} character${recipients.length===1?'':'s'}.`:result?.error||'Quest could not be assigned.');
   };
+  const addObjective=()=>{
+    if(!objectiveText.trim())return setMessage('Enter an objective.');
+    if(!isManualNumber(objectiveTarget,{min:1,max:1000000,optional:true}))return setMessage('Enter a whole objective target.');
+    if(draft.objectives.length>=20)return setMessage('A quest can have up to 20 objectives.');
+    setDraft(value=>({...value,objectives:[...value.objectives,{id:uid('objective'),text:objectiveText.trim(),target:objectiveTarget===''?1:Number(objectiveTarget),optional:objectiveOptional}]}));
+    setObjectiveText('');setObjectiveTarget('');setObjectiveOptional(false);
+  };
+  const filtered=quests.filter(quest=>(showArchived||quest.status!=='Archived')&&`${quest.title} ${quest.questGiver||''} ${quest.location||''}`.toLowerCase().includes(query.toLowerCase()));
+  const archive=async quest=>{
+    setBusy(true);
+    try {
+      const result=await saveSection('quests',quests.map(row=>row.id===quest.id?{...row,status:'Archived'}:row));
+      setMessage(result?.ok?'Quest archived. Player assignments and history are preserved.':result?.error||'Quest could not be archived.');
+    } catch(error){setMessage(error.message||'Quest could not be archived.');} finally{setBusy(false);}
+  };
   return <div className="react-gm-workspace-grid quests">
     <Panel title="Quest Builder" eyebrow="Campaign Objectives">
       <div className="react-form-grid"><label>Quest Title<input value={draft.title} onChange={event=>setDraft(value=>({...value,title:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Draft','Active','Completed','Failed','Archived'].map(value=><option key={value}>{value}</option>)}</select></label><label>Visibility<select value={draft.visibility} onChange={event=>setDraft(value=>({...value,visibility:event.target.value}))}><option>Party</option><option>GM Only</option></select></label></div>
       <label>Objective<textarea rows="5" value={draft.objective} onChange={event=>setDraft(value=>({...value,objective:event.target.value}))}/></label>
+      <div className="react-form-grid">{[['questGiver','Quest Giver'],['location','Location'],['category','Category'],['deadline','In-world Deadline']].map(([key,label])=><label key={key}>{label}<input maxLength={key==='deadline'?500:160} value={draft[key]||''} placeholder={key==='deadline'?'e.g. Within seven in-world days':''} onChange={event=>setDraft(value=>({...value,[key]:event.target.value}))}/></label>)}</div>
+      <p className="react-help">The GM decides when an in-world deadline has passed.</p>
+      <label>Success Outcome<textarea rows="2" maxLength={2000} value={draft.successOutcome||''} onChange={event=>setDraft(value=>({...value,successOutcome:event.target.value}))}/></label>
+      <label>Failure Consequences (visible to players)<textarea rows="2" maxLength={2000} value={draft.failureConsequences||''} onChange={event=>setDraft(value=>({...value,failureConsequences:event.target.value}))}/></label>
+      <label>Private GM Notes<textarea rows="2" maxLength={5000} value={draft.gmNotes||''} onChange={event=>setDraft(value=>({...value,gmNotes:event.target.value}))}/></label>
+      <fieldset><legend>Objective Checklist</legend><label>New Objective<input maxLength={500} value={objectiveText} onChange={event=>setObjectiveText(event.target.value)}/></label><label>Target Count (blank means one)<ManualNumberInput min="1" max="1000000" value={objectiveTarget} onChange={event=>setObjectiveTarget(event.target.value)}/></label><label><input type="checkbox" checked={objectiveOptional} onChange={event=>setObjectiveOptional(event.target.checked)}/>Optional objective</label><button type="button" onClick={addObjective}>Add Objective</button><ol>{(draft.objectives||[]).map(row=><li key={row.id}>{row.text} · {row.target}{row.optional?' · Optional':''}<button type="button" aria-label={`Remove ${row.text}`} onClick={()=>setDraft(value=>({...value,objectives:value.objectives.filter(item=>item.id!==row.id)}))}>Remove</button></li>)}</ol></fieldset>
+      <label><input type="checkbox" checked={draft.requiresGMApproval===true} onChange={event=>setDraft(value=>({...value,requiresGMApproval:event.target.checked}))}/>Require GM approval before completion and rewards</label>
       <fieldset className="react-quest-reward-builder"><legend>Quest Rewards</legend><p className="react-help">Leave XP or currency blank for no reward of that type.</p>
         <div className="react-form-grid"><label>XP<ManualNumberInput min="0" value={draft.reward.xp} onChange={event=>updateReward({xp:event.target.value})}/></label><label>Currency<select value={normalizeQuestReward(draft.reward).currency.key} onChange={event=>updateReward({currency:{...draft.reward.currency,key:event.target.value}})}>{QUEST_CURRENCIES.map(currency=><option value={currency.key} key={currency.key}>{currency.label}</option>)}</select></label><label>Currency Amount<ManualNumberInput min="0" value={draft.reward.currency.amount} onChange={event=>updateReward({currency:{...draft.reward.currency,amount:event.target.value}})}/></label></div>
         <div className="react-form-grid"><label>Search Item Compendium<input type="search" value={itemSearch} onChange={event=>setItemSearch(event.target.value)} placeholder="Add an item reward..."/></label><label>Quantity<ManualNumberInput min="1" value={itemQuantity} onChange={event=>setItemQuantity(event.target.value)}/></label></div>
@@ -67,9 +97,10 @@ export function QuestWorkspace({ campaignId, workspace, characters, saveSection 
       <div className="react-action-row"><button className="primary" disabled={busy} onClick={save}>{draft.id?'Update Quest':'Create Quest'}</button>{draft.id?<button onClick={reset}>Cancel Edit</button>:null}</div><SectionStatus message={message}/>
     </Panel>
     <Panel title="Quest Ledger" eyebrow="Live Quest Control" action={<StatusPill>{quests.length} quests</StatusPill>}>
+      <p className="react-help">Save template edits, then send them to selected players. Re-sending preserves each player's progress and claimed rewards.</p>
       <div className="react-recipient-actions"><button onClick={()=>setRecipients(Object.keys(characters))}>Select All Players</button><button onClick={()=>setRecipients([])}>Clear</button><span>{recipients.length} recipients</span></div>
       <div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={recipients.includes(character.id)} onChange={event=>setRecipients(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div>
-      <div className="react-record-list">{quests.map(quest=><article key={quest.id}><div className="react-record-heading"><div><StatusPill tone={quest.status==='Active'?'success':''}>{quest.status}</StatusPill><h3>{quest.title}</h3></div><small>{quest.visibility}</small></div><p>{quest.objective||'No objective recorded.'}</p>{questRewardSummary(quest.reward)?<small><b>Reward:</b> {questRewardSummary(quest.reward)}</small>:null}<div className="react-action-row"><button className="primary" disabled={busy||quest.visibility==='GM Only'} onClick={()=>assign(quest)}>Send to Selected Players</button><RecordActions onEdit={()=>setDraft({...quest,reward:normalizeQuestReward(quest.reward)})} onDelete={()=>saveSection('quests',quests.filter(item=>item.id!==quest.id))}/></div></article>)}{!quests.length?<EmptyState title="No campaign quests">Create the first objective, then send it to selected character dashboards.</EmptyState>:null}</div>
+      <label>Search Quests<input type="search" value={query} onChange={event=>setQuery(event.target.value)}/></label><label><input type="checkbox" checked={showArchived} onChange={event=>setShowArchived(event.target.checked)}/>Show archived quests</label><div className="react-record-list">{filtered.map(quest=><article key={quest.id}><div className="react-record-heading"><div><StatusPill tone={quest.status==='Active'?'success':''}>{quest.status}</StatusPill><h3>{quest.title}</h3></div><small>{quest.visibility}</small></div><p>{quest.objective||'No objective recorded.'}</p><QuestDetails quest={quest}/><QuestObjectives quest={quest}/>{questRewardSummary(quest.reward)?<small><b>Reward:</b> {questRewardSummary(quest.reward)}</small>:null}<div className="react-action-row"><button className="primary" disabled={busy||quest.visibility==='GM Only'||['Archived','Completed','Failed'].includes(quest.status)} onClick={()=>assign(quest)}>Send to Selected Players</button><button onClick={()=>setDraft({...quest,...questDetails(quest),reward:normalizeQuestReward(quest.reward)})}>Edit</button><button onClick={()=>{reset();setDraft({...emptyQuestDraft(),...quest,...questDetails(quest),id:'',title:`${quest.title} (copy)`,status:'Draft'});}}>Duplicate</button><button disabled={busy||quest.status==='Archived'} onClick={()=>archive(quest)}>Archive</button></div><QuestAssignments campaignId={campaignId} questId={quest.id} characters={characters}/></article>)}{!quests.length?<EmptyState title="No campaign quests">Create the first objective, then send it to selected character dashboards.</EmptyState>:null}</div>
     </Panel>
   </div>;
 }

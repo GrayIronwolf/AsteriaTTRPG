@@ -2141,3 +2141,22 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-world-tabs { justify-content:flex-start; }
   .react-gm-notebook { min-height:280px; }
 }
+
+/* Quest workflow: keep objectives and review controls usable on small screens. */
+.react-quest-details dl { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.react-quest-details dt { opacity:.7; font-size:.85em; }
+.react-quest-details dd { margin:4px 0 0; overflow-wrap:anywhere; }
+.react-quest-details p, .react-quest-list p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.react-quest-objectives ul { list-style:none; padding:0; }
+.react-quest-objectives li { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #ffffff20; }
+.react-quest-objectives li>span { flex:1 1 180px; overflow-wrap:anywhere; }
+.react-quest-objectives li>span>b { display:block; font-size:.85em; margin-top:4px; }
+.react-objective-update { display:flex; gap:8px; flex:0 1 240px; }
+.react-objective-update input { min-width:0; width:90px; }
+.react-quest-assignments { margin-top:20px; border-top:1px solid #ffffff30; padding-top:12px; }
+.react-quest-assignments article { display:block; padding:12px 0; }
+.react-quest-assignments header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
+.react-quest-list>article>div { width:100%; min-width:0; }
+.react-quest-list .react-action-row, .react-quest-assignments .react-action-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.react-quest-list .status-awaiting-review { border-color:#d6ac5b; }
+@media(max-width:600px){ .react-objective-update { flex-basis:100%; } .react-quest-assignments button { min-height:44px; } }

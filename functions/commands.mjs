@@ -1,3 +1,4 @@
+import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
@@ -136,6 +137,64 @@ function placeCharacterItem(character,source,options={}){
   return received;
 }
 
+
+function applyQuestRewards(character,quest,questId,characterId) {
+  let rewardApplied=false;
+  let summary='';
+  if(quest.status==='Completed'&&!questRewardClaimed(quest)){
+    const reward=normalizeQuestReward(quest.reward);
+    summary=questRewardSummary(reward);
+    if(reward.xp){
+      if(!window.AsteriaProgression?.grantXP) throw new Error('The XP progression service is unavailable. The quest was not completed.');
+      window.AsteriaProgression.grantXP(character,reward.xp);
+    }
+    if(reward.currency.amount){
+      character.coins={...(character.coins||character.coinPouch||{})};
+      character.coins[reward.currency.key]=Math.max(0,Number(character.coins[reward.currency.key]||0)+reward.currency.amount);
+    }
+    reward.items.forEach(item=>placeCharacterItem(character,item,{}));
+    const claimed=markQuestRewardClaimed(quest,`quest-reward-${questId}-${characterId}`);
+    Object.assign(quest,claimed.quest);
+    rewardApplied=claimed.applied;
+    appendActivity(character,{type:'quest-reward',message:`Completed ${quest.title||quest.name||'quest'}${summary?` and received ${summary}`:''}.`});
+  }
+  return {rewardApplied,rewardSummary:summary};
+}
+async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,note='',award=false}={}) {
+  const refs=liveCharacterRefs(campaignId,characterId);
+  const eventRef=gm?doc(collection(db,'campaigns',campaignId,'events')):null;
+  try {
+    const result=await runTransaction(db,async transaction=>{
+      if(gm) await requireCampaignGM(transaction,campaignId);
+      else await requireLiveSession(transaction,campaignId);
+      const snapshot=await transaction.get(refs.campaign);
+      if(!snapshot.exists()) throw new Error('Character not found.');
+      const character={...snapshot.data(),id:characterId};
+      let ownerSnapshot=null;
+      if(gm) {
+        refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
+        ownerSnapshot=await transaction.get(refs.private);
+        if(ownerSnapshot.exists() && ownerSnapshot.data().ownerUid!==character.ownerUid) throw new Error('The owner record needs review before this quest can be changed.');
+      } else await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+      const quests=Array.isArray(character.quests||character.questLog)?structuredCloneSafe(character.quests||character.questLog):[];
+      const index=quests.findIndex((quest,index)=>String(quest?.id||quest?.slug||index)===String(questId));
+      if(index<0) throw new Error('Quest not found.');
+      const quest=operation(quests[index]);
+      const outcome=award?applyQuestRewards(character,quest,questId,characterId):{rewardApplied:false,rewardSummary:''};
+      quests[index]=quest;character.quests=quests;
+      if(gm) {
+        const clean=structuredCloneSafe(character);
+        clean.inventory=normalizeInventoryItems(clean.inventory,clean);
+        transaction.set(refs.campaign,{...clean,updatedAt:serverTimestamp()},{merge:true});
+        // Never create a GM-owned copy or change the player's canonical UID.
+        if(ownerSnapshot.exists()) transaction.set(refs.private,{...clean,id:ownedCharacterSourceId(characterId,character),ownerUid:character.ownerUid,updatedAt:serverTimestamp()},{merge:true});
+        transaction.set(eventRef,{id:eventRef.id,campaignId,targetCharacterId:characterId,targetOwnerUid:character.ownerUid,type:'quest-updated',payload:{questId,title:quest.title||quest.name||'Quest',objective:quest.objective||quest.description||'',status:quest.status,note:String(note||'').slice(0,1000),rewardSummary:outcome.rewardSummary},acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp()});
+      } else writeLiveCharacter(transaction,refs,character);
+      return {...outcome,status:quest.status};
+    });
+    return {ok:true,...result};
+  } catch(error) {return {ok:false,error:error.message||String(error)};}
+}
 
 const commands = {
   identifyLootReward: async function(campaignId,characterId,eventId){
@@ -694,45 +753,14 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   updateCharacterQuest: async function(campaignId,characterId,questId,status){
-    const refs=liveCharacterRefs(campaignId,characterId);
-    try{
-      const result=await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        const snapshot=await transaction.get(refs.campaign);
-        if(!snapshot.exists()) throw new Error('Character not found.');
-        const character=Object.assign({id:characterId},snapshot.data());
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const quests=Array.isArray(character.quests||character.questLog)?structuredCloneSafe(character.quests||character.questLog):[];
-        const index=quests.findIndex((quest,index)=>String(quest?.id||quest?.slug||index)===String(questId));
-        if(index<0) throw new Error('Quest not found.');
-        const quest=typeof quests[index]==='object'?quests[index]:{name:String(quests[index])};
-        quest.status=String(status||'Active');
-        let rewardApplied=false;
-        let summary='';
-        if(quest.status==='Completed'&&!questRewardClaimed(quest)){
-          const reward=normalizeQuestReward(quest.reward);
-          summary=questRewardSummary(reward);
-          if(reward.xp){
-            if(!window.AsteriaProgression?.grantXP) throw new Error('The XP progression service is unavailable. The quest was not completed.');
-            window.AsteriaProgression.grantXP(character,reward.xp);
-          }
-          if(reward.currency.amount){
-            character.coins={...(character.coins||character.coinPouch||{})};
-            character.coins[reward.currency.key]=Math.max(0,Number(character.coins[reward.currency.key]||0)+reward.currency.amount);
-          }
-          reward.items.forEach(item=>placeCharacterItem(character,item,{}));
-          const claimed=markQuestRewardClaimed(quest,`quest-reward-${questId}-${characterId}`);
-          Object.assign(quest,claimed.quest);
-          rewardApplied=claimed.applied;
-          appendActivity(character,{type:'quest-reward',message:`Completed ${quest.title||quest.name||'quest'}${summary?` and received ${summary}`:''}.`});
-        }
-        quests[index]=quest;
-        character.quests=quests;
-        writeLiveCharacter(transaction,refs,character);
-        return {rewardApplied,rewardSummary:summary};
-      });
-      return {ok:true,...result};
-    }catch(error){return {ok:false,error:error.message||String(error)};}
+    return mutateQuest(campaignId,characterId,questId,quest=>changeQuestStatus(quest,status,{uid:currentUser.uid}),{award:status==='Completed'});
+  },
+  updateQuestProgress: async function(campaignId,characterId,questId,patch){
+    return mutateQuest(campaignId,characterId,questId,quest=>changeQuestProgress(quest,patch));
+  },
+  reviewCharacterQuest: async function(campaignId,characterId,questId,status,note=''){
+    if(!['Completed','Failed','Active','On Hold'].includes(status)) return {ok:false,error:'Choose a valid review outcome.'};
+    return mutateQuest(campaignId,characterId,questId,quest=>changeQuestStatus(quest,status,{gm:true,uid:currentUser.uid,note}),{gm:true,note,award:status==='Completed'});
   },
   resolveLootReward: async function(campaignId,characterId,eventId,action='inventory',destination=''){
     if(!db || !currentUser || !campaignId || !characterId || !eventId) return {ok:false};

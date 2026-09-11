@@ -78,8 +78,13 @@ function XPModal({ event, onClose }) {
 
 function QuestAssignmentModal({ event, onClose, onOpen }) {
   const reward=questRewardSummary(event.payload?.reward||{});
-  return <Modal title={event.payload?.title||'New Quest'} eyebrow="Quest Assigned" onClose={onClose} footer={<div className="react-modal-actions"><button onClick={onClose}>Dismiss</button><button className="primary" onClick={onOpen}>Open Quest Log</button></div>}>
+  return <Modal title={event.payload?.title||'New Quest'} eyebrow={event.type==='quest-updated'?'Quest Updated':'Quest Assigned'} onClose={onClose} footer={<div className="react-modal-actions"><button onClick={onClose}>Dismiss</button><button className="primary" onClick={onOpen}>Open Quest Log</button></div>}>
     <p>{event.payload?.objective||'The GM assigned a new quest to this character.'}</p>
+    {event.payload?.status?<p><b>Status:</b> {event.payload.status}</p>:null}
+    {event.payload?.questGiver?<p><b>Quest giver:</b> {event.payload.questGiver}</p>:null}
+    {event.payload?.deadline?<p><b>In-world deadline:</b> {event.payload.deadline}</p>:null}
+    {event.payload?.note?<p>{event.payload.note}</p>:null}
+    {event.payload?.rewardSummary?<p><b>Rewards received:</b> {event.payload.rewardSummary}</p>:null}
     {reward?<p className="react-quest-assignment-reward"><b>Reward:</b> {reward}</p>:null}
   </Modal>;
 }
