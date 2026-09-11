@@ -47,7 +47,16 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const campaign=campaignSnapshot.data();
     const character=characterSnapshot.data();
     // Character ownership comes from Firestore, never a caller-supplied private copy.
-    if(character.ownerUid!==uid) throw new Error('This character belongs to another account.');
+    const link=campaign.playerCharacterLinks?.[args[1]];
+    const summaryOwner=campaign.characters?.[args[1]]?.ownerUid;
+    const linked=typeof character.ownerUid==='string' && character.ownerUid.length>0
+      && (!character.sharedCampaignId || character.sharedCampaignId===campaignId)
+      && (!link || link===character.ownerUid) && (!summaryOwner || summaryOwner===character.ownerUid)
+      && (link===character.ownerUid || summaryOwner===character.ownerUid || (campaign.players?.[character.ownerUid]?.characterIds||[]).includes(args[1]));
+    // Only this specific review action can operate on a linked player's sheet.
+    const gmQuestReview=action==='reviewCharacterQuest' && gm(campaign,uid) && linked;
+    if(action==='reviewCharacterQuest' && !gmQuestReview) throw new Error('Only the GM of this linked character can review the quest.');
+    if(character.ownerUid!==uid && !gmQuestReview) throw new Error('This character belongs to another account.');
     if(receipt.exists){
       if(receipt.data().action!==action || receipt.data().input!==JSON.stringify(args)) throw new Error('Request ID has already been used.');
       return receipt.data().result;

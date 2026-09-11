@@ -246,3 +246,69 @@ test('unlinked owner sheets and existing account settings still save normally',a
   await assertSucceeds(setDoc(doc(own,'users/gm/settings/appState'),{selected:'own'}));
   await assertSucceeds(setDoc(doc(own,'users/gm'),{characters:['own']}));
 });
+
+const reviewQuest=(patch={})=>({id:'rescue',title:'Rescue villagers',status:'Active',requiresGMApproval:true,objectives:[{id:'villagers',text:'Rescue villagers',target:3}],progress:{},reward:{xp:2000,currency:{key:'gold',amount:2},items:[{name:'Quest Potion',qty:1}]},...patch});
+const seedQuest=async quest=>{
+ await db.doc('campaigns/c/characters/a').update({quests:[quest]});
+ await db.doc('users/alice/characters/a').update({quests:[quest]});
+};
+const liveSheet=async()=>(await db.doc('campaigns/c/characters/a').get()).data();
+// A 2,000 XP reward takes the level-one fixture to level two with 0 XP remaining.
+const assertQuestXP=character=>{assert.equal(character.level,2);assert.equal(character.xp,0);assert.equal(character.cp,5);assert.equal(character.tp,5);};
+test('quest submission gives no rewards; concurrent GM approvals award once to the real owner and notify listeners',async()=>{
+ await seedQuest(reviewQuest());
+ assert.equal((await action('alice','updateCharacterQuest',['c','a','rescue','Completed'])).ok,false);
+ assert.equal((await action('alice','updateCharacterQuest',['c','a','rescue','Awaiting Review'])).ok,false);
+ assert.equal((await action('bob','updateQuestProgress',['c','a','rescue',{objectiveId:'villagers',current:3}])).ok,false);
+ await assertFails(updateDoc(doc(user('alice'),'campaigns/c/characters/a'),{quests:[reviewQuest({status:'Completed'})]}));
+ const progress=await action('alice','updateQuestProgress',['c','a','rescue',{objectiveId:'villagers',current:3}]);assert.equal(progress.ok,true,progress.error);
+ const submit=await action('alice','updateCharacterQuest',['c','a','rescue','Awaiting Review']);assert.equal(submit.ok,true,submit.error);
+ const submitted=await liveSheet();assert.equal(submitted.xp,0);assert.equal(submitted.coins.gold,undefined);assert.equal(submitted.inventory.length,1);
+ const observed=new Promise((resolve,reject)=>{const timer=setTimeout(()=>{unsubscribe();reject(new Error('Quest snapshot timed out'));},10000);const unsubscribe=onSnapshot(doc(user('alice'),'campaigns/c/characters/a'),snapshot=>{if(snapshot.data()?.quests?.[0]?.status==='Completed'){clearTimeout(timer);unsubscribe();resolve(snapshot.data());}},reject);});
+ const results=await Promise.all([action('gm','reviewCharacterQuest',['c','a','rescue','Completed','Village saved']),action('gm','reviewCharacterQuest',['c','a','rescue','Completed','Village saved'])]);
+ assert.ok(results.every(result=>result.ok),JSON.stringify(results));assert.equal(results.filter(result=>result.rewardApplied).length,1);
+ const live=await observed;const own=(await db.doc('users/alice/characters/a').get()).data();
+ assertQuestXP(live);assert.equal(live.coins.gold,2);assert.equal(live.inventory.filter(item=>item.name==='Quest Potion').reduce((n,item)=>n+item.qty,0),1);
+ assert.equal(live.quests[0].rewardStatus,'claimed');assert.equal(live.ownerUid,'alice');assert.deepEqual(own.quests,live.quests);assert.equal(own.xp,live.xp);
+ assert.equal((await db.doc('users/gm/characters/a').get()).exists,false);
+ const events=await db.collection('campaigns/c/events').where('type','==','quest-updated').get();assert.ok(events.size>0);assert.equal(events.docs[0].data().targetOwnerUid,'alice');
+});
+test('GM review requires an actual character link and never unlocks other player actions',async()=>{
+ await seedQuest(reviewQuest({status:'Awaiting Review',progress:{villagers:3}}));
+ for(const uid of ['alice','bob','eve'])assert.equal((await action(uid,'reviewCharacterQuest',['c','a','rescue','Completed'])).ok,false);
+ assert.equal((await action('gm','updateCampaignCharacterResource',['c','a','hp',1])).ok,false);
+ await db.doc('campaigns/c').update({'playerCharacterLinks.a':FieldValue.delete(),'characters.a':FieldValue.delete(),'players.alice.characterIds':[]});
+ assert.equal((await action('gm','reviewCharacterQuest',['c','a','rescue','Completed'])).ok,false);assert.equal((await liveSheet()).xp,0);
+ await db.doc('campaigns/c').update({'playerCharacterLinks.a':'bob','characters.a.ownerUid':'alice'});
+ assert.equal((await action('gm','reviewCharacterQuest',['c','a','rescue','Completed'])).ok,false);
+});
+test('invalid progress, reward injection, closed edits and inactive-session player edits are rejected',async()=>{
+ await seedQuest(reviewQuest());
+ for(const patch of [{objectiveId:'villagers',current:4},{objectiveId:'villagers',current:1.5},{objectiveId:'villagers',current:3,reward:{xp:99999}},{tracked:true,status:'Completed'}])assert.equal((await action('alice','updateQuestProgress',['c','a','rescue',patch])).ok,false);
+ await db.doc('campaigns/c/liveSession/current').update({status:'paused'});
+ assert.equal((await action('alice','updateQuestProgress',['c','a','rescue',{tracked:true}])).ok,false);
+ const fail=await action('gm','reviewCharacterQuest',['c','a','rescue','Failed','The second dawn has passed']);assert.equal(fail.ok,true,fail.error);assert.equal((await liveSheet()).xp,0);
+ const reopen=await action('gm','reviewCharacterQuest',['c','a','rescue','Active','Try a different route']);assert.equal(reopen.ok,true,reopen.error);
+});
+test('legacy self completion still awards once, and tracking alone cannot claim an old reward',async()=>{
+ await seedQuest(reviewQuest({requiresGMApproval:false,status:'Completed',objectives:[]}));
+ const tracked=await action('alice','updateQuestProgress',['c','a','rescue',{tracked:true}]);assert.equal(tracked.ok,true,tracked.error);assert.equal((await liveSheet()).xp,0);
+ const first=await action('alice','updateCharacterQuest',['c','a','rescue','Completed']);assert.equal(first.ok,true,first.error);assert.equal(first.rewardApplied,true);
+ const second=await action('alice','updateCharacterQuest',['c','a','rescue','Completed']);assert.equal(second.ok,true,second.error);assert.equal(second.rewardApplied,false);assertQuestXP(await liveSheet());
+});
+test('full inventory aborts all quest rewards and approval; retry succeeds after making room',async()=>{
+ await seedQuest(reviewQuest({status:'Awaiting Review',progress:{villagers:3}}));
+ await db.doc('campaigns/c/characters/a').update({storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}]});
+ const failed=await action('gm','reviewCharacterQuest',['c','a','rescue','Completed']);assert.equal(failed.ok,false);assert.match(failed.error,/full|space/i);
+ const unchanged=await liveSheet();assert.equal(unchanged.xp,0);assert.equal(unchanged.coins.gold,undefined);assert.equal(unchanged.quests[0].status,'Awaiting Review');assert.equal(unchanged.quests[0].rewardStatus,undefined);
+ await db.doc('campaigns/c/characters/a').update({inventory:[]});
+ const retry=await action('gm','reviewCharacterQuest',['c','a','rescue','Completed']);assert.equal(retry.ok,true,retry.error);assertQuestXP(await liveSheet());
+});
+test('GM review rejects a mismatched private owner and does not create deleted private characters',async()=>{
+ await seedQuest(reviewQuest({status:'Awaiting Review',progress:{villagers:3}}));
+ await db.doc('users/alice/characters/a').update({ownerUid:'bob'});
+ assert.equal((await action('gm','reviewCharacterQuest',['c','a','rescue','Completed'])).ok,false);
+ await db.doc('users/alice/characters/a').delete();
+ const result=await action('gm','reviewCharacterQuest',['c','a','rescue','Completed']);assert.equal(result.ok,true,result.error);
+ assert.equal((await db.doc('users/alice/characters/a').get()).exists,false);assert.equal((await db.doc('users/gm/characters/a').get()).exists,false);
+});

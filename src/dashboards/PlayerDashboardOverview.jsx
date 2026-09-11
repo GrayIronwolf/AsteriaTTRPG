@@ -236,7 +236,7 @@ function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }
 }
 
 function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
-  const currentQuests = selectQuests(character, partyWorkspace).filter(quest => String(quest.status || 'Active').toLowerCase() === 'active').slice(0, 3);
+  const currentQuests = selectQuests(character, partyWorkspace).filter(quest => ['Active','Awaiting Review','On Hold'].includes(quest.status || 'Active')).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked))).slice(0, 3);
   const journals = values(character.journal).slice().sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)).slice(0, 3);
   const party = Object.values(characters || {}).filter(member => member.id !== character.id).slice(0, 4);
   return <div className="react-dashboard-summary-grid">

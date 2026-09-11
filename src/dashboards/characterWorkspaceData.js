@@ -118,7 +118,7 @@ export function raceTraits(character = {}) {
 }
 
 export function quests(character = {}, partyWorkspace = {}) {
-  const rows=[...list(character.quests || character.questLog),...list(partyWorkspace.questLog)];
+  const rows=[...list(partyWorkspace.questLog),...list(character.quests || character.questLog)];
   const map=new Map();
   rows.forEach((quest,index)=>{
     const record=quest && typeof quest==='object' ? quest : {};

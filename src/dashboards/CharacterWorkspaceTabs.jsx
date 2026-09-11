@@ -1,3 +1,5 @@
+import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
+import { QUEST_STATUSES, questIsClosed, questProgress } from '../state/questWorkflowModel.mjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
@@ -213,12 +215,32 @@ export function SpellsTab({ campaignId, character, editable }) {
 export function QuestTab({ campaignId, character, partyWorkspace, editable }) {
   const rows=quests(character,partyWorkspace);const action=useAction();
   const [query,setQuery]=useState('');const [status,setStatus]=useState('All');
-  const visible=rows.filter(quest=>(status==='All'||String(quest.status||'Active')===status)&&`${quest.name} ${quest.description||''}`.toLowerCase().includes(query.toLowerCase()));
+  const ownedAssignments=new Set((Array.isArray(character.quests||character.questLog)?character.quests||character.questLog:[]).map(quest=>String(quest.id||quest.slug||'')));
+  const visible=rows.filter(quest=>(status==='All'||quest.status===status)&&`${quest.name} ${quest.description||''} ${quest.questGiver||''} ${quest.location||''}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked)));
   const updateStatus=async(quest,nextStatus)=>{
-    const result=await action.run(()=>firebaseService.updateQuest(campaignId,character.id,quest.id,nextStatus),nextStatus==='Completed'?'Quest completed.':'Quest status updated.');
-    if(result?.ok&&result.rewardApplied) action.setMessage(result.rewardSummary?`Quest completed. Rewards received: ${result.rewardSummary}`:'Quest completed and rewards received.');
+    const result=await action.run(()=>firebaseService.updateQuest(campaignId,character.id,quest.id,nextStatus),nextStatus==='Awaiting Review'?'Submitted to the GM for review.':'Quest status updated.');
+    if(result?.ok&&result.rewardApplied) action.setMessage(result.rewardSummary?`Rewards received: ${result.rewardSummary}`:'Quest completed.');
   };
-  return <Panel title="Quest Log" action={<StatusPill>{visible.length} of {rows.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search quests..."/><FilterControl label="Status" value={status} onChange={setStatus}>{['All','Active','Completed','Failed','On Hold'].map(value=><option key={value}>{value}</option>)}</FilterControl></div><div className="react-quest-list">{visible.map(quest=>{const reward=questRewardSummary(quest.reward);const claimed=questRewardClaimed(quest);return <article key={quest.id} className={`status-${String(quest.status||'active').toLowerCase().replaceAll(' ','-')} ${quest.tracked?'tracked':''}`}><div><header><b>{quest.name}</b><StatusPill tone={quest.status==='Completed'?'success':quest.status==='Failed'?'danger':quest.status==='On Hold'?'warning':'info'}>{quest.status||'Active'}</StatusPill>{quest.tracked?<StatusPill>Tracked</StatusPill>:null}{claimed?<StatusPill tone="success">Reward Claimed</StatusPill>:null}</header><p>{quest.description||'No quest description recorded.'}</p>{reward?<small className="react-quest-reward"><b>Reward:</b> {reward}</small>:null}</div><select aria-label={`Status for ${quest.name}`} disabled={!editable||action.busy} value={quest.status||'Active'} onChange={event=>updateStatus(quest,event.target.value)}><option>Active</option><option>Completed</option><option>Failed</option><option>On Hold</option></select></article>;})}{!visible.length?<EmptyState title={rows.length?'No matching quests':'No quests recorded'}/>:null}</div><p>{action.message}</p></Panel>;
+  const progress=(quest,patch)=>action.run(()=>firebaseService.updateQuestProgress(campaignId,character.id,quest.id,patch),'Quest progress saved.');
+  return <Panel title="Quest Log" action={<StatusPill>{visible.length} of {rows.length}</StatusPill>}>
+    <div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search quests, givers or locations..."/><FilterControl label="Status" value={status} onChange={setStatus}>{['All',...QUEST_STATUSES].map(value=><option key={value}>{value}</option>)}</FilterControl></div>
+    <div className="react-quest-list">{visible.map(quest=>{
+      const reward=questRewardSummary(quest.reward);const claimed=questRewardClaimed(quest);const canEdit=editable&&ownedAssignments.has(quest.id);const open=!questIsClosed(quest);
+      return <article key={quest.id} className={`status-${String(quest.status||'active').toLowerCase().replaceAll(' ','-')} ${quest.tracked?'tracked':''}`}>
+        <div><header><b>{quest.name}</b><StatusPill tone={quest.status==='Completed'?'success':quest.status==='Failed'?'danger':'info'}>{quest.status||'Active'}</StatusPill>{quest.tracked?<StatusPill>Tracked</StatusPill>:null}{claimed?<StatusPill tone="success">Reward Claimed</StatusPill>:null}</header>
+          <p>{quest.description||'No quest description recorded.'}</p><QuestDetails quest={quest}/>
+          <QuestObjectives quest={quest} editable={canEdit&&open&&quest.status!=='Awaiting Review'} busy={action.busy} onProgress={patch=>progress(quest,patch)}/>
+          {reward?<p className="react-quest-reward"><b>Reward:</b> {reward}</p>:null}
+          {quest.requiresGMApproval&&open?<p className="react-help">{quest.status==='Awaiting Review'?'The GM is reviewing your completion.':'Complete the required objectives, then submit this quest to the GM.'}</p>:null}
+          {canEdit?<div className="react-action-row"><button disabled={action.busy} onClick={()=>progress(quest,{tracked:!quest.tracked})}>{quest.tracked?'Untrack':'Track Quest'}</button>
+            {open&&quest.status!=='Awaiting Review'?<><button disabled={action.busy} onClick={()=>updateStatus(quest,quest.status==='On Hold'?'Active':'On Hold')}>{quest.status==='On Hold'?'Resume':'Put On Hold'}</button><button className="primary" disabled={action.busy||!questProgress(quest).ready} onClick={()=>updateStatus(quest,quest.requiresGMApproval?'Awaiting Review':'Completed')}>{quest.requiresGMApproval?'Submit for GM Review':'Complete & Claim Reward'}</button></>:null}
+            {quest.status==='Awaiting Review'?<button disabled={action.busy} onClick={()=>updateStatus(quest,'Active')}>Withdraw Submission</button>:null}
+          </div>:null}
+          {Array.isArray(quest.history)&&quest.history.length?<details><summary>Quest History</summary><ul>{quest.history.map((entry,index)=><li key={index}>{entry.status}{entry.at?` · ${new Date(entry.at).toLocaleString()}`:''}{entry.note?` — ${entry.note}`:''}</li>)}</ul></details>:null}
+        </div>
+      </article>;
+    })}{!visible.length?<EmptyState title={rows.length?'No matching quests':'No quests recorded'}/>:null}</div><p role="status">{action.message}</p>
+  </Panel>;
 }
 
 export function JournalTab({ campaignId, character, editable }) {

@@ -72,7 +72,7 @@ test('new quest fields start truly blank; 2000 has no leading zero, clears and s
 test('editing a saved quest preserves its actual values, including zero; blank optional rewards save as zero',async()=>{
   const writes=[];const quest={id:'q',title:'Existing',reward:{xp:0,currency:{key:'gold',amount:150}},status:'Draft'};
   const view=mount(modules.QuestWorkspace,questProps(async(section,value)=>{writes.push(value);return {ok:true};},[quest]));
-  nodes(view.tree).find(n=>n.props.onEdit).props.onEdit();view.render();
+  button(view,'Edit').props.onClick();view.render();
   assert.equal(field(view,'XP').props.value,0);assert.equal(field(view,'Currency Amount').props.value,150);
   input(view,'Currency Amount','');await button(view,'Update Quest').props.onClick();
   assert.equal(writes[0][0].reward.currency.amount,0);

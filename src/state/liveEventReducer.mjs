@@ -47,7 +47,7 @@ export function xpNoticeEvent(events = [], acknowledged = new Set()) {
 }
 
 export function questNoticeEvent(events = [], acknowledged = new Set()) {
-  return sortEvents(events).find(event => event.type === 'quest-assigned' && !event.acknowledged && !acknowledged.has(event.id)) || null;
+  return sortEvents(events).find(event => ['quest-assigned','quest-updated'].includes(event.type) && !event.acknowledged && !acknowledged.has(event.id)) || null;
 }
 
 export function nextSessionState(current = {}, action) {
