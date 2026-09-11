@@ -13054,7 +13054,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13069,7 +13068,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 71
+        "sourceorder": 71,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13140,7 +13141,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13154,7 +13154,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 166
+        "sourceorder": 166,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13224,7 +13226,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "12m (Walking) - 30m (Swimming)",
         "languages": [
@@ -13243,7 +13244,9 @@
         "male": "assets/races/abyssborn-undien/abyssborn-undien-male-adult.png",
         "female": "assets/races/abyssborn-undien/abyssborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 177
+        "sourceorder": 177,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13315,7 +13318,6 @@
         "secondarycategory": "Ursa Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13330,7 +13332,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 154
+        "sourceorder": 154,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13417,7 +13421,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -13447,7 +13450,9 @@
         "primarypercent": 100,
         "opposite": "Earth Magic",
         "oppositepercent": 0,
-        "sourceorder": 187
+        "sourceorder": 187,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13522,7 +13527,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13538,7 +13542,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 83
+        "sourceorder": 83,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13610,7 +13616,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13626,7 +13631,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 124
+        "sourceorder": 124,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13698,7 +13705,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Arachnid Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13714,7 +13720,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 123
+        "sourceorder": 123,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13786,7 +13794,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13801,7 +13808,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 1
+        "sourceorder": 1,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13872,7 +13881,6 @@
         "secondarycategory": "Hobbit Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13887,7 +13895,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 13
+        "sourceorder": 13,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -13958,7 +13968,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -13973,7 +13982,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 33
+        "sourceorder": 33,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14044,7 +14055,6 @@
         "secondarycategory": "Ursa Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14059,7 +14069,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 155
+        "sourceorder": 155,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14130,7 +14142,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14145,7 +14156,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 53
+        "sourceorder": 53,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14216,7 +14229,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Fox Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14232,7 +14244,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 89
+        "sourceorder": 89,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14304,7 +14318,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14319,7 +14332,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 18
+        "sourceorder": 18,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14390,7 +14405,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14405,7 +14419,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 94
+        "sourceorder": 94,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14476,7 +14492,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Amphibian Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14492,7 +14507,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 114
+        "sourceorder": 114,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14564,7 +14581,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14579,7 +14595,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 65
+        "sourceorder": 65,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14650,7 +14668,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14665,7 +14682,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 40
+        "sourceorder": 40,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14736,7 +14755,6 @@
         "secondarycategory": "Lagomor & Rodent Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14751,7 +14769,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 133
+        "sourceorder": 133,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14822,7 +14842,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14836,7 +14855,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 184
+        "sourceorder": 184,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14906,7 +14927,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -14920,7 +14940,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 196
+        "sourceorder": 196,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -14990,7 +15012,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15005,7 +15026,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 2
+        "sourceorder": 2,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15076,7 +15099,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15091,7 +15113,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 121
+        "sourceorder": 121,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15162,7 +15186,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15178,7 +15201,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 84
+        "sourceorder": 84,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15250,7 +15275,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15265,7 +15289,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 72
+        "sourceorder": 72,
+        "naturalAC": 1,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -15336,7 +15362,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15351,7 +15376,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 3
+        "sourceorder": 3,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15427,7 +15454,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "8m (Walking)",
         "languages": [
@@ -15446,7 +15472,9 @@
         "male": "assets/races/cavern-sprite/cavern-sprite-male-adult.png",
         "female": "assets/races/cavern-sprite/cavern-sprite-female-adult.png",
         "visibility": "public",
-        "sourceorder": 27
+        "sourceorder": 27,
+        "naturalAC": 5,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -15518,7 +15546,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15533,7 +15560,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 41
+        "sourceorder": 41,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15604,7 +15633,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15618,7 +15646,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 197
+        "sourceorder": 197,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15688,7 +15718,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15703,7 +15732,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 115
+        "sourceorder": 115,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15774,7 +15805,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15789,7 +15819,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 147
+        "sourceorder": 147,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15860,7 +15892,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15874,7 +15905,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 162
+        "sourceorder": 162,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -15944,7 +15977,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -15959,7 +15991,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 95
+        "sourceorder": 95,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16030,7 +16064,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16045,7 +16078,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 66
+        "sourceorder": 66,
+        "naturalAC": 1,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -16116,7 +16151,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16132,7 +16166,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 85
+        "sourceorder": 85,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16204,7 +16240,6 @@
         "secondarycategory": "Xenarthra Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16219,7 +16254,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 159
+        "sourceorder": 159,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16290,7 +16327,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16305,7 +16341,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 54
+        "sourceorder": 54,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16376,7 +16414,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16391,7 +16428,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 96
+        "sourceorder": 96,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16462,7 +16501,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16477,7 +16515,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 67
+        "sourceorder": 67,
+        "naturalAC": 1,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -16548,7 +16588,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16564,7 +16603,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 86
+        "sourceorder": 86,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16636,7 +16677,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16651,7 +16691,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 42
+        "sourceorder": 42,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16738,7 +16780,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -16768,7 +16809,9 @@
         "primarypercent": 100,
         "opposite": "Light Magic",
         "oppositepercent": 0,
-        "sourceorder": 194
+        "sourceorder": 194,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16859,7 +16902,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -16889,7 +16931,9 @@
         "primarypercent": 100,
         "opposite": "Life Magic",
         "oppositepercent": 0,
-        "sourceorder": 192
+        "sourceorder": 192,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -16964,7 +17008,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -16978,7 +17021,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 167
+        "sourceorder": 167,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17048,7 +17093,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17062,7 +17106,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 168
+        "sourceorder": 168,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17132,7 +17178,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17147,7 +17192,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 55
+        "sourceorder": 55,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17218,7 +17265,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17232,7 +17278,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 169
+        "sourceorder": 169,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17302,7 +17350,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17316,7 +17363,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 170
+        "sourceorder": 170,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17386,7 +17435,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17401,7 +17449,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 68
+        "sourceorder": 68,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17472,7 +17522,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17487,7 +17536,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 43
+        "sourceorder": 43,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17558,7 +17609,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "12m (Walking) - 30m (Swimming)",
         "languages": [
@@ -17577,7 +17627,9 @@
         "male": "assets/races/drownedborn-undien/drownedborn-undien-male-adult.png",
         "female": "assets/races/drownedborn-undien/drownedborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 179
+        "sourceorder": 179,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17649,7 +17701,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17664,7 +17715,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 34
+        "sourceorder": 34,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17751,7 +17804,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -17781,7 +17833,9 @@
         "primarypercent": 100,
         "opposite": "Air Magic",
         "oppositepercent": 0,
-        "sourceorder": 188
+        "sourceorder": 188,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17856,7 +17910,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17872,7 +17925,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 103
+        "sourceorder": 103,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -17944,7 +17999,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -17959,7 +18013,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 116
+        "sourceorder": 116,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18030,7 +18086,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18045,7 +18100,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 44
+        "sourceorder": 44,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18116,7 +18173,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18130,7 +18186,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 185
+        "sourceorder": 185,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18200,7 +18258,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18215,7 +18272,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 117
+        "sourceorder": 117,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18286,7 +18345,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18301,7 +18359,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 97
+        "sourceorder": 97,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18372,7 +18432,6 @@
         "secondarycategory": "Mustelidae Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18387,7 +18446,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 143
+        "sourceorder": 143,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18458,7 +18519,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18473,7 +18533,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 4
+        "sourceorder": 4,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18544,7 +18606,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18559,7 +18620,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 19
+        "sourceorder": 19,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18646,7 +18709,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -18676,7 +18738,9 @@
         "primarypercent": 100,
         "opposite": "Water Magic",
         "oppositepercent": 0,
-        "sourceorder": 189
+        "sourceorder": 189,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18751,7 +18815,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "9m",
         "languages": [
@@ -18770,7 +18833,9 @@
         "male": "assets/races/flowborn-undien/flowborn-undien-male-adult.png",
         "female": "assets/races/flowborn-undien/flowborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 180
+        "sourceorder": 180,
+        "naturalAC": 6,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -18842,7 +18907,6 @@
         "secondarycategory": "Xenarthra Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18857,7 +18921,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 160
+        "sourceorder": 160,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -18928,7 +18994,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -18943,7 +19008,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 5
+        "sourceorder": 5,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19014,7 +19081,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19029,7 +19095,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 28
+        "sourceorder": 28,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19100,7 +19168,6 @@
         "secondarycategory": "Hobbit Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19115,7 +19182,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 14
+        "sourceorder": 14,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19186,7 +19255,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19201,7 +19269,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 35
+        "sourceorder": 35,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19272,7 +19342,6 @@
         "secondarycategory": "Gnome Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19287,7 +19356,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 6
+        "sourceorder": 6,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19358,7 +19429,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "9m",
         "languages": [],
@@ -19377,7 +19447,9 @@
         "male": "assets/races/frostborn-undien/frostborn-undien-male-adult.png",
         "female": "assets/races/frostborn-undien/frostborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 181
+        "sourceorder": 181,
+        "naturalAC": 12,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -19448,7 +19520,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19463,7 +19534,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 73
+        "sourceorder": 73,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19534,7 +19607,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19549,7 +19621,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 148
+        "sourceorder": 148,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19620,7 +19694,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19635,7 +19708,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 69
+        "sourceorder": 69,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19706,7 +19781,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19720,7 +19794,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 203
+        "sourceorder": 203,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19790,7 +19866,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19804,7 +19879,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 62
+        "sourceorder": 62,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19874,7 +19951,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Hyena Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19890,7 +19966,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 92
+        "sourceorder": 92,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -19962,7 +20040,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -19976,7 +20053,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 171
+        "sourceorder": 171,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20046,7 +20125,6 @@
         "secondarycategory": "Megafaun Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20061,7 +20139,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 141
+        "sourceorder": 141,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20132,7 +20212,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20146,7 +20225,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 163
+        "sourceorder": 163,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20216,7 +20297,6 @@
         "secondarycategory": "Goblin Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20231,7 +20311,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 8
+        "sourceorder": 8,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20302,7 +20384,6 @@
         "secondarycategory": "Goblin Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20317,7 +20398,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 7
+        "sourceorder": 7,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20388,7 +20471,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Amphibian Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20404,7 +20486,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 111
+        "sourceorder": 111,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20476,7 +20560,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Amphibian Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20492,7 +20575,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 110
+        "sourceorder": 110,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20564,7 +20649,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20578,7 +20662,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 172
+        "sourceorder": 172,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20648,7 +20734,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20662,7 +20747,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 173
+        "sourceorder": 173,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20732,7 +20819,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20746,7 +20832,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 12
+        "sourceorder": 12,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20816,7 +20904,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20831,7 +20918,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 74
+        "sourceorder": 74,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20902,7 +20991,6 @@
         "secondarycategory": "Lagomor & Rodent Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -20917,7 +21005,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 134
+        "sourceorder": 134,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -20988,7 +21078,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21002,7 +21091,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 198
+        "sourceorder": 198,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21072,7 +21163,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21087,7 +21177,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 45
+        "sourceorder": 45,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21158,7 +21250,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21173,7 +21264,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 36
+        "sourceorder": 36,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21244,7 +21337,6 @@
         "secondarycategory": "Hobbit Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21259,7 +21351,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 15
+        "sourceorder": 15,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21330,7 +21424,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21345,7 +21438,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 29
+        "sourceorder": 29,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21416,7 +21511,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21430,7 +21524,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 174
+        "sourceorder": 174,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21500,7 +21596,6 @@
         "secondarycategory": "Lagomor & Rodent Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21515,7 +21610,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 135
+        "sourceorder": 135,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21586,7 +21683,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21601,7 +21697,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 46
+        "sourceorder": 46,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21672,7 +21770,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21687,7 +21784,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 98
+        "sourceorder": 98,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21758,7 +21857,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21772,7 +21870,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 164
+        "sourceorder": 164,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21842,7 +21942,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21857,7 +21956,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 56
+        "sourceorder": 56,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -21928,7 +22029,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Hyena Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -21944,7 +22044,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 93
+        "sourceorder": 93,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22016,7 +22118,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22031,7 +22132,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 75
+        "sourceorder": 75,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22102,7 +22205,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22116,7 +22218,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 17
+        "sourceorder": 17,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22186,7 +22290,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Fox Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22202,7 +22305,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 90
+        "sourceorder": 90,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22274,7 +22379,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22289,7 +22393,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 20
+        "sourceorder": 20,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22360,7 +22466,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22376,7 +22481,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 125
+        "sourceorder": 125,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22448,7 +22555,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22464,7 +22570,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 104
+        "sourceorder": 104,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22536,7 +22644,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22550,7 +22657,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 199
+        "sourceorder": 199,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22620,7 +22729,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22636,7 +22744,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 87
+        "sourceorder": 87,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22708,7 +22818,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22724,7 +22833,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 126
+        "sourceorder": 126,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22796,7 +22907,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -22810,7 +22920,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 186
+        "sourceorder": 186,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -22896,7 +23008,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -22926,7 +23037,9 @@
         "primarypercent": 100,
         "opposite": "Death Magic",
         "oppositepercent": 0,
-        "sourceorder": 191
+        "sourceorder": 191,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23001,7 +23114,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23016,7 +23128,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 47
+        "sourceorder": 47,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23103,7 +23217,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -23133,7 +23246,9 @@
         "primarypercent": 100,
         "opposite": "Dark Magic",
         "oppositepercent": 0,
-        "sourceorder": 193
+        "sourceorder": 193,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23208,7 +23323,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23224,7 +23338,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 105
+        "sourceorder": 105,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23296,7 +23412,6 @@
         "secondarycategory": "Megafaun Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23311,7 +23426,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 138
+        "sourceorder": 138,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23382,7 +23499,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Dog Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23398,7 +23514,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 88
+        "sourceorder": 88,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23470,7 +23588,6 @@
         "secondarycategory": "Mustelidae Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23485,7 +23602,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 144
+        "sourceorder": 144,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23556,7 +23675,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23571,7 +23689,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 99
+        "sourceorder": 99,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23642,7 +23762,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23657,7 +23776,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 100
+        "sourceorder": 100,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23728,7 +23849,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23744,7 +23864,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 106
+        "sourceorder": 106,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23816,7 +23938,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23831,7 +23952,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 37
+        "sourceorder": 37,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23902,7 +24025,6 @@
         "secondarycategory": "Megafaun Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -23917,7 +24039,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 139
+        "sourceorder": 139,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -23988,7 +24112,6 @@
         "secondarycategory": "Mustelidae Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24003,7 +24126,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 145
+        "sourceorder": 145,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24074,7 +24199,6 @@
         "secondarycategory": "Mephitidae Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24089,7 +24213,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 142
+        "sourceorder": 142,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24160,7 +24286,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24174,7 +24299,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 200
+        "sourceorder": 200,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24244,7 +24371,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24259,7 +24385,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 118
+        "sourceorder": 118,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24330,7 +24458,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24345,7 +24472,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 48
+        "sourceorder": 48,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24416,7 +24545,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24430,7 +24558,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 25
+        "sourceorder": 25,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24500,7 +24630,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24515,7 +24644,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 57
+        "sourceorder": 57,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24586,7 +24717,6 @@
         "secondarycategory": "Lagomor & Rodent Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24601,7 +24731,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 136
+        "sourceorder": 136,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24672,7 +24804,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24686,7 +24817,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 26
+        "sourceorder": 26,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24756,7 +24889,6 @@
         "secondarycategory": "Xenarthra Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24771,7 +24903,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 161
+        "sourceorder": 161,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24842,7 +24976,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24857,7 +24990,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 149
+        "sourceorder": 149,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -24928,7 +25063,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -24944,7 +25078,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 107
+        "sourceorder": 107,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25016,7 +25152,6 @@
         "secondarycategory": "Goblin Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25031,7 +25166,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 9
+        "sourceorder": 9,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25102,7 +25239,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Amphibian Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25118,7 +25254,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 113
+        "sourceorder": 113,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25190,7 +25328,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25204,7 +25341,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 59
+        "sourceorder": 59,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25274,7 +25413,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25290,7 +25428,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 127
+        "sourceorder": 127,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25362,7 +25502,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25376,7 +25515,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 60
+        "sourceorder": 60,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25446,7 +25587,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25461,7 +25601,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 76
+        "sourceorder": 76,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25532,7 +25674,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25547,7 +25688,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 101
+        "sourceorder": 101,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25618,7 +25761,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25633,7 +25775,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 77
+        "sourceorder": 77,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25704,7 +25848,6 @@
         "secondarycategory": "Bat Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25719,7 +25862,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 70
+        "sourceorder": 70,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25790,7 +25935,6 @@
         "secondarycategory": "Human Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25805,7 +25949,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 58
+        "sourceorder": 58,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -25881,7 +26027,6 @@
         "secondarycategory": "Ursa Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "15m (Walking) - 30m (Swimming)",
         "languages": [
@@ -25900,7 +26045,9 @@
         "male": "assets/races/polaris-ursa/polaris-ursa-male-adult.png",
         "female": "assets/races/polaris-ursa/polaris-ursa-female-adult.png",
         "visibility": "public",
-        "sourceorder": 156
+        "sourceorder": 156,
+        "naturalAC": 2,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -25972,7 +26119,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -25987,7 +26133,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 119
+        "sourceorder": 119,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26058,7 +26206,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26073,7 +26220,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 78
+        "sourceorder": 78,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26144,7 +26293,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26158,7 +26306,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 195
+        "sourceorder": 195,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26228,7 +26378,6 @@
         "secondarycategory": "Hooved Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26243,7 +26392,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 120
+        "sourceorder": 120,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26314,7 +26465,6 @@
         "secondarycategory": "Lagomor & Rodent Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26329,7 +26479,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 137
+        "sourceorder": 137,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26400,7 +26552,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26416,7 +26567,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 108
+        "sourceorder": 108,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26488,7 +26641,6 @@
         "secondarycategory": "Goblin Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26503,7 +26655,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 10
+        "sourceorder": 10,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26574,7 +26728,6 @@
         "secondarycategory": "Megafaun Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26589,7 +26742,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 140
+        "sourceorder": 140,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26660,7 +26815,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26675,7 +26829,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 30
+        "sourceorder": 30,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26746,7 +26902,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Amphibian Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26762,7 +26917,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 112
+        "sourceorder": 112,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26834,7 +26991,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26849,7 +27005,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 21
+        "sourceorder": 21,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -26920,7 +27078,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -26934,7 +27091,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 201
+        "sourceorder": 201,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27004,7 +27163,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27019,7 +27177,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 150
+        "sourceorder": 150,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27090,7 +27250,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27105,7 +27264,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 49
+        "sourceorder": 49,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27176,7 +27337,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27191,7 +27351,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 22
+        "sourceorder": 22,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27262,7 +27424,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27277,7 +27438,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 38
+        "sourceorder": 38,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27348,7 +27511,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27362,7 +27524,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 202
+        "sourceorder": 202,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27432,7 +27596,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Arachnid Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27448,7 +27611,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 122
+        "sourceorder": 122,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27520,7 +27685,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27535,7 +27699,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 50
+        "sourceorder": 50,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27606,7 +27772,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27621,7 +27786,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 23
+        "sourceorder": 23,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27692,7 +27859,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27707,7 +27873,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 151
+        "sourceorder": 151,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27778,7 +27946,6 @@
         "secondarycategory": "Ursa Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27793,7 +27960,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 157
+        "sourceorder": 157,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27864,7 +28033,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27879,7 +28047,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 79
+        "sourceorder": 79,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -27950,7 +28120,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -27965,7 +28134,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 31
+        "sourceorder": 31,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28036,7 +28207,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28051,7 +28221,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 80
+        "sourceorder": 80,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28122,7 +28294,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28137,7 +28308,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 51
+        "sourceorder": 51,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28208,7 +28381,6 @@
         "secondarycategory": "Hobbit Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28223,7 +28395,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 16
+        "sourceorder": 16,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28294,7 +28468,6 @@
         "secondarycategory": "Feline Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28309,7 +28482,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 102
+        "sourceorder": 102,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28385,7 +28560,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "9m",
         "languages": [],
@@ -28404,7 +28578,9 @@
         "male": "assets/races/tempestborn-undien/tempestborn-undien-male-adult.png",
         "female": "assets/races/tempestborn-undien/tempestborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 182
+        "sourceorder": 182,
+        "naturalAC": 11,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -28475,7 +28651,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28491,7 +28666,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 128
+        "sourceorder": 128,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28563,7 +28740,6 @@
         "secondarycategory": "Ursa Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28578,7 +28754,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 158
+        "sourceorder": 158,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28649,7 +28827,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28665,7 +28842,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 129
+        "sourceorder": 129,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28737,7 +28916,6 @@
         "secondarycategory": "Undien Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "9m",
         "languages": [],
@@ -28756,7 +28934,9 @@
         "male": "assets/races/tideborn-undien/tideborn-undien-male-adult.png",
         "female": "assets/races/tideborn-undien/tideborn-undien-female-adult.png",
         "visibility": "public",
-        "sourceorder": 183
+        "sourceorder": 183,
+        "naturalAC": 11,
+        "naturalACSource": "race-notes"
       },
       "tags": [
         "race",
@@ -28827,7 +29007,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28841,7 +29020,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 175
+        "sourceorder": 175,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28911,7 +29092,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -28925,7 +29105,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 63
+        "sourceorder": 63,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -28995,7 +29177,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29010,7 +29191,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 81
+        "sourceorder": 81,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29081,7 +29264,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29096,7 +29278,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 152
+        "sourceorder": 152,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29167,7 +29351,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29181,7 +29364,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 64
+        "sourceorder": 64,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29251,7 +29436,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29265,7 +29449,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 61
+        "sourceorder": 61,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29335,7 +29521,6 @@
         "secondarycategory": "Kobold Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29350,7 +29535,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 24
+        "sourceorder": 24,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29421,7 +29608,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29435,7 +29621,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 165
+        "sourceorder": 165,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29505,7 +29693,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29521,7 +29708,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 130
+        "sourceorder": 130,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29593,7 +29782,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29609,7 +29797,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 131
+        "sourceorder": 131,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29681,7 +29871,6 @@
         "secondarycategory": "Reptilian Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29696,7 +29885,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 153
+        "sourceorder": 153,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29767,7 +29958,6 @@
         "secondarycategory": "Bird Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29782,7 +29972,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 82
+        "sourceorder": 82,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29853,7 +30045,6 @@
         "secondarycategory": "Mustelidae Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29868,7 +30059,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 146
+        "sourceorder": 146,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -29939,7 +30132,6 @@
         "secondarycategory": "Canine Races",
         "tertiarycategory": "Fox Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -29955,7 +30147,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 91
+        "sourceorder": 91,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30043,7 +30237,6 @@
         "secondarycategory": "",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "traitslots": 4,
         "size": "Small",
         "movement": "6m (Walking) - 18m (Flying)",
@@ -30073,7 +30266,9 @@
         "primarypercent": 100,
         "opposite": "Fire Magic",
         "oppositepercent": 0,
-        "sourceorder": 190
+        "sourceorder": 190,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30148,7 +30343,6 @@
         "secondarycategory": "Goblin Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30163,7 +30357,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 11
+        "sourceorder": 11,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30234,7 +30430,6 @@
         "secondarycategory": "Dwarf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30249,7 +30444,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 39
+        "sourceorder": 39,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30320,7 +30517,6 @@
         "secondarycategory": "Elf Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30335,7 +30531,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 52
+        "sourceorder": 52,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30406,7 +30604,6 @@
         "secondarycategory": "Sprite Races",
         "tertiarycategory": "",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30421,7 +30618,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 32
+        "sourceorder": 32,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30492,7 +30691,6 @@
         "secondarycategory": "Insect & Arachnid Races",
         "tertiarycategory": "Insect Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30508,7 +30706,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 132
+        "sourceorder": 132,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",
@@ -30580,7 +30780,6 @@
         "secondarycategory": "Fish & Amphibian Races",
         "tertiarycategory": "Fish Races",
         "playable": true,
-        "naturalac": 1,
         "size": "",
         "movement": "",
         "languages": [],
@@ -30596,7 +30795,9 @@
         "male": "",
         "female": "",
         "visibility": "public",
-        "sourceorder": 109
+        "sourceorder": 109,
+        "naturalAC": 1,
+        "naturalACSource": "fallback"
       },
       "tags": [
         "race",

@@ -7,6 +7,7 @@ secondaryCategory: "Elf Races"
 tertiaryCategory: 
 playable: true
 naturalAC: 1
+naturalACSource: fallback
 size: 
 movement: 
 languages: []

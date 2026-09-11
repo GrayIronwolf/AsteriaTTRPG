@@ -131,6 +131,8 @@
             availability:node.availability || (node.playable === false ? 'non-playable' : 'playable'),
             visibility:node.visibility || 'public',
             summary:node.summary || info.summary || firstMarkdownParagraph(info.overviewMarkdown || info.loreMarkdown) || '',
+            naturalAC:node.naturalAC ?? info.naturalAC ?? info.stats?.['Neutral AC'],
+            naturalACSource:node.naturalACSource || (info.stats?.['Neutral AC'] !== undefined ? 'race-notes' : 'fallback'),
             movement:node.movement || info.movement || info.stats?.Movement || '',
             senses:node.senses || info.senses || info.stats?.Senses || '',
             languages:node.languages || info.languages || info.stats?.Languages || '',
@@ -519,8 +521,14 @@
       </section>
     `;
   }
+  function raceNaturalACLabel(race){
+    const result=window.AsteriaArmour?.resolveNaturalAC?.({race});
+    if(result) return result.configured ? String(result.value) : 'Not recorded (fallback 1)';
+    return race.naturalACSource !== 'fallback' && race.naturalAC !== undefined ? String(Math.max(1,Math.min(12,Number(race.naturalAC)))) : 'Not recorded (fallback 1)';
+  }
   function RaceOverviewPanel(race){
     const quickRows = [
+      ['Natural Armour Class (NAC)', raceNaturalACLabel(race)],
       ['Size', race.size || 'Information coming soon'],
       ['Movement', race.movement || overviewValue(race, ['Movement']) || 'Information coming soon'],
       ['Passive Perception', overviewValue(race, ['Passive Perception','Senses']) || race.senses || 'Information coming soon'],
@@ -665,6 +673,7 @@
   }
   function RaceSheetContent(race){
     const sections = [
+      `<section class="race-info-section"><h3>Natural Armour Class (NAC)</h3><p>${escapeHtml(raceNaturalACLabel(race))}</p><p>Your racial base and minimum Armour Class. Armour and active modifiers are calculated on top.</p></section>`,
       RaceCharacteristicRulesPanel(race),
       RaceFeaturePanel(race),
       RaceTraitCards(race),

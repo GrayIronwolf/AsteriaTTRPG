@@ -193,6 +193,8 @@ function raceMarkdown(race, info, order) {
     ...normalizeArray(info.tags)
   ].filter(Boolean)));
 
+  const rawNAC = [node.naturalAC, info.naturalAC, info.stats?.['Neutral AC']].find(value => value !== undefined && value !== null && /^[+-]?\d+(?:\.\d+)?$/.test(String(value).trim()));
+  const naturalAC = rawNAC === undefined ? 1 : Math.max(1,Math.min(12,Math.floor(Number(rawNAC))));
   const frontmatter = [
     '---',
     `title: ${yamlString(name)}`,
@@ -202,7 +204,8 @@ function raceMarkdown(race, info, order) {
     `secondaryCategory: ${yamlString(secondaryCategory)}`,
     `tertiaryCategory: ${yamlString(tertiaryCategory)}`,
     `playable: ${node.playable === false ? 'false' : 'true'}`,
-    `naturalAC: ${Math.max(1, Math.min(12, Number(node.naturalAC || info.naturalAC || 1)))}`,
+    `naturalAC: ${naturalAC}`,
+    `naturalACSource: ${node.naturalACSource || (rawNAC !== undefined ? 'authored' : 'fallback')}`,
     `traitSlots: ${Math.max(1, Math.min(5, Number(node.traitSlots || info.traitSlots || 5)))}`,
     `size: ${yamlString(size)}`,
     `movement: ${yamlString(movement)}`,
@@ -475,6 +478,8 @@ function raceFromFile(file) {
     secondaryCategory: metadata.secondaryCategory || '',
     tertiaryCategory: metadata.tertiaryCategory || '',
     playable: metadata.playable !== false,
+    naturalAC: metadata.naturalAC ?? metadata.natural_ac ?? metadata.NAC ?? metadata['Neutral AC'] ?? 1,
+    naturalACSource: metadata.naturalACSource || ((metadata.naturalAC ?? metadata.natural_ac ?? metadata.NAC ?? metadata['Neutral AC']) !== undefined ? 'authored' : 'fallback'),
     traitSlots: Math.max(1, Math.min(5, Number(metadata.traitSlots || 5))),
     availability: metadata.playable === false ? 'non-playable' : 'playable',
     size: metadata.size || '',
