@@ -177,7 +177,7 @@ test('17. Talent and skill progression match the existing Asteria costs', () => 
 
 test('18. All character workspace systems render natively in React', () => {
   const dashboard = read('src/dashboards/CharacterDashboard.jsx');
-  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx') + read('src/dashboards/ClassTalentTree.jsx');
   const inventory = read('src/dashboards/InventoryWorkspace.jsx');
   ['CharacterTab','TalentsTab','SkillsTab','SpellsTab','InventoryWorkspace','QuestTab','JournalTab','PartyTab'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
   ['spendCPBatch','purchaseTalent','recordSkillSuccess','castSpell','updateInventory','updateQuest','addJournalEntry','sendPartyMessage'].forEach(name => assert.match(dashboard + tabs + inventory, new RegExp(name)));
@@ -413,7 +413,7 @@ test('41. Inventory has responsive Equipment, Inventory, and Party workspaces wi
 });
 
 test('42. Dashboard routes expose search, content states, party presence, and an accessible gallery lightbox', () => {
-  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx') + read('src/dashboards/ClassTalentTree.jsx');
   const gallery = read('src/dashboards/CharacterGallerySettings.jsx');
   const dashboard = read('src/dashboards/CharacterDashboard.jsx') + read('src/dashboards/PlayerDashboardOverview.jsx');
   assert.match(tabs, /SearchField/);
@@ -570,7 +570,7 @@ test('57. Player trades require recipient acceptance and sender final confirmati
 
 test('58. Character profile uses the compact HUD and Forge-backed information panels', () => {
   const information = read('src/components/DashboardInformation.jsx');
-  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx');
+  const tabs = read('src/dashboards/CharacterWorkspaceTabs.jsx') + read('src/dashboards/ClassTalentTree.jsx');
   const styles = read('src/styles/asteria-react.css');
   assert.match(information, /<span>\{characterClass\(character\)\}<\/span>/);
   assert.doesNotMatch(information, /characterClass\(character\)\} \/ \{character\.race/);

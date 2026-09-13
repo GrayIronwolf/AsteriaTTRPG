@@ -1,3 +1,5 @@
+import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, resetTalentRest, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
+import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
@@ -54,11 +56,14 @@ async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,chara
   if(character.ownerUid !== currentUser.uid) throw new Error('This character belongs to another account.');
   refs.private=doc(db,'users',currentUser.uid,'characters',ownedCharacterSourceId(characterId,character));
   refs.verifiedOwner=true;
+  const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
+  refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
+  Object.assign(character,reconcileTalentEffects(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
   return {privateRef:refs.private,privateSnapshot:null};
 }
 
 function writeLiveCharacter(transaction,refs,character){
-  const clean=structuredCloneSafe(character);
+  const clean=reconcileTalentEffects(character,buildTalentCatalog(character,context.catalog),{encounter:refs.encounter});
   clean.inventory=normalizeInventoryItems(clean.inventory,clean);
   if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
     slot,
@@ -66,6 +71,24 @@ function writeLiveCharacter(transaction,refs,character){
   ]));
   transaction.set(refs.campaign,Object.assign({},clean,{updatedAt:serverTimestamp()}),{merge:true});
   if(character.ownerUid === currentUser.uid || refs.verifiedOwner) transaction.set(refs.private,Object.assign({},clean,{id:ownedCharacterSourceId(character.id,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+}
+async function talentAction(campaignId,characterId,operation){
+  if(!db || !currentUser || !campaignId || !characterId) return {ok:false,error:'Sign in and choose a linked character.'};
+  const refs=liveCharacterRefs(campaignId,characterId);
+  try{
+    const result=await runTransaction(db,async transaction=>{
+      const session=await requireLiveSession(transaction,campaignId);
+      const snapshot=await transaction.get(refs.campaign);
+      if(!snapshot.exists()) throw new Error('Character not found.');
+      const character={id:characterId,...snapshot.data()};
+      await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+      const catalog=buildTalentCatalog(character,context.catalog);
+      const result=await operation({character,catalog,refs,transaction,session});
+      writeLiveCharacter(transaction,refs,character);
+      return result;
+    });
+    return {ok:true,...result};
+  }catch(error){return {ok:false,error:error.message||String(error)};}
 }
 function characterInventory(character){
   return normalizeInventoryItems((Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>
@@ -258,40 +281,65 @@ const commands = {
       return {ok:true,applied:result.applied,total:result.total};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
-  purchaseTalentRank: async function(campaignId,characterId,talent={}){
-    if(!db || !currentUser || !campaignId || !characterId || !talent.name) return {ok:false};
-    const refs=liveCharacterRefs(campaignId,characterId);
-    try{
-      const result=await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        const snapshot=await transaction.get(refs.campaign);
-        if(!snapshot.exists()) throw new Error('Character not found.');
-        const character=Object.assign({id:characterId},snapshot.data());
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const classes=[character.klass,character.class,character.primaryClass,...(character.classNames||[]),...(character.classes||[]).map(value=>value?.name||value),...(character.secondaryClasses||[]).map(value=>value?.name||value)].filter(Boolean).map(liveSlug);
-        const canonical=context.catalog.find(entry=>entry.type==='talent' && liveSlug(entry.title)===liveSlug(talent.name) && classes.includes(liveSlug(entry.metadata?.classname||entry.metadata?.className)));
-        if(!canonical) throw new Error('Talent is not in the supported compendium.');
-        talent={name:canonical.title,tier:Number(String(canonical.metadata?.tier||'').replace(/\D/g,'')),maxRank:Number(canonical.metadata?.ranks||5)};
-        const tier=talent.tier;
-        if(!Number.isInteger(tier)||tier<1||tier>5) throw new Error('Talent metadata is invalid.');
-        if(!talentTierUnlocked(character.level,tier)) throw new Error(`Tier ${tier} unlocks at Level ${[0,1,10,20,30,40][tier]}.`);
-        character.talents=Array.isArray(character.talents) ? Object.fromEntries(character.talents.map(value=>[value.name||value.title||value,{rank:Number(value.rank||1)}])) : Object.assign({},character.talents||{});
-        const existing=character.talents[talent.name]||{};
-        const rank=Math.max(0,Number(existing.rank||0));
-        const maximum=Math.max(1,Number(talent.maxRank||talent.max||talent.ranks||5));
-        if(rank>=maximum) throw new Error('Talent is already at maximum rank.');
-        const cost=talentRankCost(rank+1);
-        if(Number(character.tp||0)<cost) throw new Error(`Rank ${rank+1} costs ${cost} TP.`);
-        character.tp=Number(character.tp||0)-cost;
-        character.talents[talent.name]=Object.assign({},existing,structuredCloneSafe(talent),{name:talent.name,rank:rank+1,tier,maxRank:maximum,unlocked:true});
-        character.unlockedTalents=Object.values(character.talents).filter(value=>Number(value.rank||0)>0);
-        appendActivity(character,{type:'talent-rank',message:`Unlocked ${talent.name} Rank ${rank+1} for ${cost} TP.`});
-        writeLiveCharacter(transaction,refs,character);
-        return {rank:rank+1,cost};
-      });
-      return {ok:true,...result};
-    }catch(error){return {ok:false,error:error.message||String(error)};}
-  },
+  purchaseTalentRank: (campaignId,characterId,input={})=>talentAction(campaignId,characterId,async({character,catalog,refs})=>{
+    const matches=catalog.filter(row=>input.id?row.id===input.id:liveSlug(row.name)===liveSlug(input.name) && (!input.className || liveSlug(row.className)===liveSlug(input.className)));
+    if(matches.length!==1) throw new Error('Choose a talent from this character’s class tree.');
+    const talent=matches[0], rank=talentRank(character,talent,catalog);
+    if(input.expectedRank!==undefined && input.expectedRank!==rank) throw new Error('Talent rank changed. Refresh before purchasing again.');
+    if(rank>=talent.maxRank) throw new Error('Talent is already at maximum rank.');
+    if(!talentTierUnlocked(character.level,talent.tier)) throw new Error(`Tier ${talent.tier} is locked at this level.`);
+    const prerequisite=prerequisiteProblem(character,talent,catalog);
+    if(prerequisite) throw new Error(prerequisite);
+    if(!rankDefined(talent,rank+1)) throw new Error('This rank has not been written yet. No TP was spent.');
+    const cost=talentRankCost(rank+1,talent.tier);
+    if(!Number.isFinite(Number(character.tp)) || Number(character.tp)<cost) throw new Error(`Rank ${rank+1} costs ${cost} TP.`);
+    character.tp=Number(character.tp)-cost;
+    Object.assign(character,reconcileTalentEffects(saveTalentRank(character,talent,rank+1,catalog),catalog,{grantIncrease:true,encounter:refs.encounter}));
+    appendActivity(character,{type:'talent-rank',message:`Unlocked ${talent.name} Rank ${rank+1} for ${cost} TP.`});
+    return {rank:rank+1,cost};
+  }),
+  useCharacterTalent: (campaignId,characterId,input={},selection={})=>talentAction(campaignId,characterId,async({character,catalog,refs,transaction,session})=>{
+    const talent=catalog.find(row=>row.id===input.id);
+    if(!talent) throw new Error('Choose a talent from this character’s class tree.');
+    const rank=talentRank(character,talent,catalog);
+    if(input.expectedRank!==undefined && input.expectedRank!==rank) throw new Error('Talent rank changed. Reopen the talent before using it.');
+    let spellCosts;
+    if(talentRules(talent,rank).needsSpell){
+      const source=character.spells||character.activeSpells||character.knownSpells||[];
+      const rows=Array.isArray(source)?source:Object.entries(source).map(([name,value])=>({name,...(typeof value==='object'?value:{})}));
+      const known=rows.find(row=>liveSlug(row.name||row.title||row)===liveSlug(selection.spell));
+      const entry=context.catalog.find(row=>row.type==='spell' && liveSlug(row.title)===liveSlug(selection.spell));
+      const cost=known && (known.costs??known.resourceCosts??known.cost??known.manaCost??entry?.metadata?.manaCost??entry?.metadata?.cost);
+      if(cost===undefined || cost===false) throw new Error('Choose a known spell with a recorded resource cost.');
+      spellCosts=parseResourceCost(cost);
+    }
+    const used=useLearnedTalent(character,talent,selection,{catalog,encounter:refs.encounter,sessionId:session.id||String(timestampMs(session.startedAt)),spellCosts});
+    if(selection.targetId && selection.targetId!==characterId){
+      if(!talentRules(talent,rank).targetChoice || !used.effect) throw new Error('This talent cannot apply a sheet effect to another character.');
+      const campaignSnapshot=await transaction.get(doc(db,'campaigns',campaignId));
+      const targetRef=doc(db,'campaigns',campaignId,'characters',selection.targetId);
+      const targetSnapshot=await transaction.get(targetRef);
+      if(!targetSnapshot.exists()) throw new Error('Target character not found.');
+      const target={id:selection.targetId,...targetSnapshot.data()}, campaign=campaignSnapshot.data();
+      if(!target.ownerUid || !(campaign.playerCharacterLinks?.[selection.targetId]===target.ownerUid || campaign.characters?.[selection.targetId]?.ownerUid===target.ownerUid || (campaign.players?.[target.ownerUid]?.characterIds||[]).includes(selection.targetId))) throw new Error('Target is not linked to this campaign.');
+      target.talentEffects=[...(target.talentEffects||[]).filter(row=>row.id!==used.effect.id),{...used.effect,sourceCharacterId:characterId}];
+      const clean=reconcileTalentEffects(target,buildTalentCatalog(target,context.catalog),{grantIncrease:true,encounter:refs.encounter});
+      transaction.set(targetRef,{...clean,updatedAt:serverTimestamp()},{merge:true});
+      transaction.set(doc(db,'users',target.ownerUid,'characters',ownedCharacterSourceId(target.id,target)),{...clean,id:ownedCharacterSourceId(target.id,target),updatedAt:serverTimestamp()},{merge:true});
+      used.character.talentEffects=(used.character.talentEffects||[]).filter(row=>row.id!==used.effect.id);
+    }
+    Object.assign(character,used.character);
+    appendActivity(character,{type:'talent-use',message:`Used ${talent.name} Rank ${rank}.`,costs:used.costs,bpGain:used.bpGain,restored:used.restored,choice:selection.choice||'',targetId:selection.targetId||characterId});
+    return {costs:used.costs,bpGain:used.bpGain,restored:used.restored};
+  }),
+  endCharacterTalentEffect: (campaignId,characterId,effectId)=>talentAction(campaignId,characterId,async({character})=>{
+    const effect=(character.talentEffects||[]).find(row=>row.id===effectId);
+    if(!effect) throw new Error('Effect not found.');
+    effect.ended=true;
+    appendActivity(character,{type:'talent-end',message:`Ended ${effect.name}.`});
+    return {};
+  }),
+  refreshCharacterTalents: (campaignId,characterId)=>talentAction(campaignId,characterId,async()=>({})),
   recordSkillSuccess: async function(campaignId,characterId,skill={}){
     if(!db || !currentUser || !campaignId || !characterId || !skill.name) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
@@ -925,7 +973,7 @@ const commands = {
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         if(restType==='short') strictResourcePair(character.sp,'sp');
         else ['hp','sp','mp'].forEach(resource=>strictResourcePair(character[resource],resource));
-        const rested=applyRest(character,restType,restType==='long'?Number(metadata.soulRecovery||0):0);
+        const rested=applyRest(resetTalentRest(character,restType),restType,restType==='long'?Number(metadata.soulRecovery||0):0);
         appendActivity(rested.entity,{type:`${restType}-rest`,message:`${restType==='long'?'Long':'Short'} Rest completed${rested.recoveredSoul?`; ${rested.recoveredSoul} Soul Damage recovered naturally`:''}.`});
         writeLiveCharacter(transaction,refs,rested.entity);
         return {type:restType,recoveredSoul:rested.recoveredSoul,soulDamage:rested.soulDamage,hp:rested.entity.hp,sp:rested.entity.sp,mp:rested.entity.mp};

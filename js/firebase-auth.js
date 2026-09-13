@@ -1241,6 +1241,9 @@ const firebasePublicApi = {
   spendCharacteristicPoints: (...args) => callTrustedAction('spendCharacteristicPoints', args),
   spendCharacteristicAllocations: (...args) => callTrustedAction('spendCharacteristicAllocations', args),
   purchaseTalentRank: (...args) => callTrustedAction('purchaseTalentRank', args),
+  useCharacterTalent: (...args) => callTrustedAction('useCharacterTalent', args),
+  endCharacterTalentEffect: (...args) => callTrustedAction('endCharacterTalentEffect', args),
+  refreshCharacterTalents: (...args) => callTrustedAction('refreshCharacterTalents', args),
   recordSkillSuccess: (...args) => callTrustedAction('recordSkillSuccess', args),
   castCharacterSpell: (...args) => callTrustedAction('castCharacterSpell', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
@@ -1293,6 +1296,7 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(encounterRef);
         const persisted=snapshot.exists()?snapshot.data():{};
         const next=structuredCloneSafe(encounter);
+        next.combatId=next.status==='active' ? (persisted.status==='active' && persisted.combatId ? persisted.combatId : `combat-${Date.now()}-${Math.random().toString(36).slice(2,8)}`) : persisted.combatId || '';
         next.combatants=preserveEncounterResources(next.combatants,persisted.combatants);
         next.enemies=preserveEncounterResources(next.enemies,persisted.enemies);
         transaction.set(encounterRef,Object.assign({},cleanData(next),{campaignId,updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});

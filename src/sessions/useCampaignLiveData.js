@@ -112,8 +112,8 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, accept('ecosystem',value=>setItemEcosystem(value||{shops:[],directTrades:[]}))));
       unsubscribers.push(firebaseService.subscribeCustomItems(accept('customItems',value=>{setCustomItems(value||[]);publishCustomItems(value||[]);})));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId,accept('events',value=>setEvents(mergeEvents([],value||[]))),{mode,targetOwnerUid:mode==='character'?uid:'',characterId}));
+      unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));
       if(mode==='gm') {
-        unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));
         unsubscribers.push(firebaseService.subscribeGMWorkspace(campaignId,accept('gmWorkspace',value=>{setGMWorkspace(value);setGMWorkspaceLoaded(true);})));
       }
     }).catch(reason => {
@@ -179,5 +179,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     const at=typeof value?.toMillis==='function'?value.toMillis():Number(value?.seconds||0)*1000||new Date(value||0).getTime();
     return at>0 && clock-at<150000;
   })),[presence,clock]);
-  return { campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
+  return { clock, campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
 }

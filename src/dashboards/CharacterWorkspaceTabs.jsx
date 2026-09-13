@@ -4,8 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { questRewardClaimed, questRewardSummary } from '../state/questRewardModel.mjs';
-import { CHARACTERISTICS, TALENT_TIER_LEVELS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs, talentRankCost, talentTierUnlocked } from '../state/liveWorkspaceModel.mjs';
-import { characterClasses, classTalentGroups, knownMagic, knownSpells, quests, raceTraits, selectedSkills, talentRank } from './characterWorkspaceData.js';
+import { CHARACTERISTICS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs } from '../state/liveWorkspaceModel.mjs';
+import { characterClasses, knownMagic, knownSpells, quests, raceTraits, selectedSkills } from './characterWorkspaceData.js';
 
 function resultMessage(result, fallback='Saved.') { return result?.ok ? fallback : result?.error || 'That change could not be saved.'; }
 function formatDuration(milliseconds) {
@@ -160,34 +160,7 @@ export function CharacterTab({ campaignId, character, editable }) {
   </div>;
 }
 
-function TalentCard({ campaignId, character, talent, editable }) {
-  const action=useAction();
-  const [details,setDetails]=useState(false);
-  const rank=talentRank(character,talent);
-  const maximum=Number(talent.maxRank||5);
-  const cost=rank<maximum?talentRankCost(rank+1):0;
-  const state=rank?'purchased':Number(character.tp||0)>=cost?'available':'locked';
-  return <article className={`react-talent-card ${state}`} onDoubleClick={()=>setDetails(true)}>
-    <b>{talent.name}</b><div className="react-small-card-image">{talent.image?<img src={talent.image} alt=""/>:<span>{talent.name.charAt(0)}</span>}</div>
-    <small>Tier {talent.tier} | Rank {rank}/{maximum}</small><small>{talent.type}</small><StatusPill tone={state==='purchased'?'success':state==='available'?'info':'warning'}>{state}</StatusPill>
-    <button disabled={!editable||action.busy||rank>=maximum||Number(character.tp||0)<cost} onClick={event=>{event.stopPropagation();action.run(()=>firebaseService.purchaseTalent(campaignId,character.id,talent),`${talent.name} advanced to Rank ${rank+1}.`);}}>{rank?`Buy Rank ${rank+1} (${cost} TP)`:`Unlock (${cost} TP)`}</button>
-    {action.message?<em>{action.message}</em>:null}<InfoModal record={details?talent:null} eyebrow={`Tier ${talent.tier} Talent | Rank ${Math.max(1,rank)}`} onClose={()=>setDetails(false)}/>
-  </article>;
-}
-
-export function TalentsTab({ campaignId, character, editable }) {
-  const [tier,setTier]=useState(1);
-  const groups=classTalentGroups(character);
-  return <div className="react-talent-workspaces">
-    <Panel title="Class Talent Trees" action={<StatusPill>{Number(character.tp||0)} TP</StatusPill>}>
-      <div className="react-tier-tabs">{[1,2,3,4,5].map(value=>{const unlocked=talentTierUnlocked(character.level,value);return <button key={value} className={tier===value?'active':''} onClick={()=>setTier(value)}><b>Tier {value}</b><small>{unlocked?'Available':`Level ${TALENT_TIER_LEVELS[value]}`}</small></button>;})}</div>
-    </Panel>
-    {groups.map(group=><Panel key={group.className} title={`${group.className} Talent Tree`} action={<StatusPill>{group.talents.filter(talent=>talent.tier===tier).length} talents</StatusPill>}>
-      {!talentTierUnlocked(character.level,tier)?<EmptyState title={`Tier ${tier} is locked`}>Reach Level {TALENT_TIER_LEVELS[tier]} to purchase talents from this tier.</EmptyState>:<div className="react-card-gallery">{group.talents.filter(talent=>talent.tier===tier).map(talent=><TalentCard key={talent.id||talent.name} campaignId={campaignId} character={character} talent={talent} editable={editable}/>)}</div>}
-    </Panel>)}
-    {!groups.length?<Panel><EmptyState title="Talent tree data coming soon">This character's selected class has no linked talent records yet.</EmptyState></Panel>:null}
-  </div>;
-}
+export { TalentsTab } from './ClassTalentTree.jsx';
 
 export function SkillsTab({ campaignId, character, editable }) {
   const skills=selectedSkills(character);

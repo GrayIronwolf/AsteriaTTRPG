@@ -1,5 +1,7 @@
+import { reconcileTalentEffects } from '../state/talentModel.mjs';
+import { talentCatalog } from './characterWorkspaceData.js';
 import { gmReturnContext, returnToGM } from '../app/gmCharacterNavigation.mjs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AsteriaAppShell, DashboardNavigation, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { DashboardInformationRow } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
@@ -110,7 +112,9 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const [acknowledged, setAcknowledged] = useState(() => new Set());
   const processedLoot = useRef(new Set());
   const processedMagic = useRef(new Set());
-  const character = live.character;
+  const rawCharacter = live.character;
+  const catalog = useMemo(()=>rawCharacter?talentCatalog(rawCharacter):[],[rawCharacter]);
+  const character = useMemo(()=>rawCharacter?reconcileTalentEffects(rawCharacter,catalog,{grantIncrease:true,encounter:live.encounter,now:live.clock}):null,[rawCharacter,catalog,live.encounter,live.clock]);
   const uid = firebaseService.currentUser()?.uid;
   const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
   const gmReturn = gmReturnContext(live.campaign, character, uid);
@@ -125,13 +129,21 @@ export function CharacterDashboard({ campaignId, characterId }) {
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[]);
   useEffect(() => {
-    mirrorCharacterSnapshot(character);
-    if(character?.id && isOwner) {
+    mirrorCharacterSnapshot(rawCharacter);
+    if(rawCharacter?.id && isOwner) {
       Promise.resolve()
-        .then(() => firebaseService.mirrorOwnedCharacter(character.sourceCharacterId||character.id,character))
+        .then(() => firebaseService.mirrorOwnedCharacter(rawCharacter.sourceCharacterId||rawCharacter.id,rawCharacter))
         .catch(() => {});
     }
-  }, [character, isOwner]);
+  }, [rawCharacter, isOwner]);
+  const talentSyncAttempt=useRef('');
+  useEffect(()=>{
+    if(!rawCharacter?.id || !isOwner || !live.session?.editable) return;
+    const key=`${rawCharacter.id}:${rawCharacter.talentStateVersion || 0}`;
+    if(rawCharacter.talentStateVersion===1 || talentSyncAttempt.current===key) return;
+    talentSyncAttempt.current=key;
+    firebaseService.refreshTalents(campaignId,rawCharacter.id).catch(()=>{});
+  },[campaignId,rawCharacter,isOwner,live.session?.editable]);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
@@ -165,7 +177,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
     <DashboardNavigation tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
     {tab === 'dashboard' ? <><PlayerDashboardOverview campaignId={campaignId} campaign={live.campaign} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
     {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}

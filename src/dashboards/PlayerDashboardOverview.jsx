@@ -1,3 +1,4 @@
+import { TalentDetails } from './ClassTalentTree.jsx';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -8,7 +9,7 @@ import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
-import { knownSpells, quests as selectQuests } from './characterWorkspaceData.js';
+import { knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
 
 function values(value) {
   return Array.isArray(value) ? value : [];
@@ -157,7 +158,7 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   const cost = costText(entry.costs || entry.cost);
   const activate = () => { if(!disabled) onActivate?.(entry); };
   return <Tooltip label={`${title}${meta ? ` - ${meta}` : ''}${cost ? ` - ${cost}` : ''}`}>
-    <button className={`react-ability-card ${type} ${disabled ? 'is-disabled' : ''}`} disabled={disabled} onDoubleClick={activate} onKeyDown={event => { if(event.key === 'Enter'){ event.preventDefault(); activate(); } }} type="button">
+    <button className={`react-ability-card ${type} ${disabled ? 'is-disabled' : ''}`} disabled={disabled} onClick={type==='talent'?activate:undefined} onDoubleClick={type==='talent'?undefined:activate} onKeyDown={event => { if(event.key === 'Enter' && type!=='talent'){ event.preventDefault(); activate(); } }} type="button">
       <span className="react-ability-art">{image ? <img src={image} alt="" loading="lazy" decoding="async" /> : <AsteriaIcon name={type === 'talent' ? 'talents' : 'spells'} size={25} />}</span>
       <b>{title}</b>
       {meta ? <small>{meta}</small> : null}
@@ -166,9 +167,11 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   </Tooltip>;
 }
 
-function TalentSummary({ talents, onNavigate, style }) {
+function TalentSummary({ talents, onNavigate, style, campaignId, character, editable }) {
+  const [selected,setSelected]=useState(null);
   return <DashboardPanel icon="talents" title="Class Talents" action={<button type="button" onClick={() => onNavigate('talents')}>Open Talent Tree</button>} className="react-overview-talents" style={style}>
-    {talents.length ? <div className="react-ability-grid">{talents.slice(0, 8).map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={() => onNavigate('talents')} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
+    {talents.length ? <div className="react-ability-grid">{talents.map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={()=>setSelected(talent)} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
+    {selected?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} onClose={()=>setSelected(null)}/>:null}
   </DashboardPanel>;
 }
 
@@ -250,7 +253,7 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
 export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, onNavigate }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const talents = values(character.unlockedTalents || character.talents).map(record).filter(talent => talent.unlocked !== false);
+  const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
   const conditions = values(character.conditions).map(record);
@@ -274,7 +277,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   return <>
     <div className="react-player-overview-grid">
       {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
-      {visible('talents') ? <TalentSummary talents={talents} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
+      {visible('talents') ? <TalentSummary talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
       {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
       {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
       {visible('conditions') ? <ConditionsSummary conditions={conditions} style={{ order:order('conditions') }} /> : null}

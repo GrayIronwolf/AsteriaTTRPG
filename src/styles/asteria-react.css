@@ -2160,3 +2160,33 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-quest-list .react-action-row, .react-quest-assignments .react-action-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
 .react-quest-list .status-awaiting-review { border-color:#d6ac5b; }
 @media(max-width:600px){ .react-objective-update { flex-basis:100%; } .react-quest-assignments button { min-height:44px; } }
+
+/* Class talent graph: native scrolling keeps every rank reachable on touch. */
+.react-talent-workspaces{display:grid;gap:20px;min-width:0}
+.react-talent-class-tabs,.react-talent-rank-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.react-talent-class-tabs button[aria-pressed="true"],.react-talent-rank-tabs button[aria-pressed="true"]{border-color:#d6b879;background:#332d24;color:#ffe2a5}
+.react-talent-legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0;color:#a8b7c9;font-size:12px}
+.react-talent-legend span:first-child{color:#e8c17b}.react-talent-legend span:nth-child(2){color:#80c9da}
+.react-talent-graph-scroll{width:100%;overflow:auto;border:1px solid #354455;border-radius:16px;background:radial-gradient(ellipse at 12% 50%,#233446 0,transparent 53%),radial-gradient(#94a7bd22 1px,transparent 1px),#101b29;background-size:auto,24px 24px;scrollbar-color:#60758c #152130}
+.react-talent-graph{position:relative;min-width:860px;width:860px;min-height:260px;margin:auto}
+.react-talent-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:#5b728a;stroke-width:1.5;opacity:.75}
+.react-talent-root{position:absolute;left:40px;width:100px;height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;border:1px solid #c6a46a;border-radius:50%;background:radial-gradient(circle,#394053,#192435);box-shadow:0 0 0 9px #dab7790a,0 0 35px #d7b37722;text-align:center;color:#ffe1a6}
+.react-talent-root span{font-size:24px}.react-talent-root strong{font-size:13px}.react-talent-root small{color:#b7c3d2}
+.react-talent-branch{position:absolute;left:210px;right:36px;display:flex;align-items:center;gap:24px;height:58px}
+.react-talent-branch .react-talent-name{flex:0 0 180px;min-height:62px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:5px;padding:12px 15px;background:#1b2a3c;border:1px solid #526276;border-radius:14px;color:#e7edf6;box-shadow:0 8px 20px #0002}
+.react-talent-name small{font-size:11px;color:#a9b9cc}.react-talent-nodes{display:flex;flex:1;justify-content:space-between;gap:20px}
+.react-talent-nodes .react-talent-node{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid #617187;background:#172436;color:#b2c0d1;font-weight:700;box-shadow:0 0 0 5px #101b29}
+.react-talent-node small{position:absolute;top:49px;left:-10px;right:-10px;color:#9bacbf;white-space:nowrap;font-size:11px;font-weight:400}
+.react-talent-nodes .react-talent-node.learned{color:#172335;background:#dfbd7d;border-color:#ffe4b0;box-shadow:0 0 0 5px #101b29,0 0 22px #dbb77833}
+.react-talent-nodes .react-talent-node.available{color:#a5e9f7;border-color:#85cddd;background:#1d3949;box-shadow:0 0 0 5px #101b29,0 0 16px #82d0e029}
+.react-talent-node:hover,.react-talent-name:hover{filter:brightness(1.18)}.react-talent-node:focus-visible,.react-talent-name:focus-visible{outline:3px solid #a2dfef;outline-offset:5px}
+.react-talent-detail-summary,.react-talent-rank-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.react-talent-rank-heading span{font-size:12px;color:#a9b8cc}.react-talent-facts{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;border:1px solid #405064;border-radius:12px;background:#172331}
+.react-talent-facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a3b4c9;margin-bottom:5px}.react-talent-facts dd{margin:0;font-size:13px}
+.react-talent-purchase,.react-talent-use{margin:18px 0;padding:16px;border:1px solid #544b3b;border-radius:12px;background:#c3a87909}
+.react-talent-purchase p,.react-talent-use p{font-size:13px;line-height:1.6}.react-talent-use label{display:grid;gap:6px;margin:12px 0}.react-talent-use select{width:100%}
+.react-talent-prose{overflow-wrap:anywhere;line-height:1.75;font-size:14px;color:#c3cddd}.react-talent-prose h3{color:#edd3a1;font-size:16px;margin:26px 0 10px}.react-talent-prose ul{padding-left:22px}.react-talent-prose li{margin:8px 0}
+.react-talent-prose blockquote{margin:20px 0;padding:8px 18px;border-left:2px solid #9a845d;color:#acbacb;font-style:italic}
+.react-talent-effects article{display:flex;gap:16px;flex-wrap:wrap;align-items:center;border-top:1px solid #344456;padding:14px 0}.react-talent-effects article>div{display:grid;gap:6px;flex:1}.react-talent-effects small{color:#a9bbcd}.react-talent-effects details{flex-basis:100%;order:3}
+.react-talent-bonus-list p{font-size:13px}.react-talent-bonus-list b{color:#e5c990;margin-right:10px}
+@media(max-width:600px){.react-talent-facts{grid-template-columns:1fr}.react-talent-rank-tabs{gap:5px}.react-talent-rank-tabs button{padding:9px 10px}.react-talent-legend{gap:10px}.react-talent-workspaces .react-tier-tabs{display:flex;overflow-x:auto}.react-talent-workspaces .react-tier-tabs button{min-width:75px}.react-talent-purchase .primary,.react-talent-use .primary{width:100%}}

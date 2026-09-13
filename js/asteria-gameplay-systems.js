@@ -2966,7 +2966,7 @@
       affinityRolls,
       magicAffinities:affinityRolls.magic,
       skillAffinities:affinityRolls.skills,
-      talents:Object.assign({}, existingCharacter?.talents || {}, Object.fromEntries(startingTalentNames.map(name => [name, { rank:1, source:'Character Forge' }]))),
+      talents:Object.assign({}, existingCharacter?.talents || {}, Object.fromEntries(startingTalentNames.map(name => [name, existingCharacter?.talents?.[name] || { rank:1, source:'Character Forge' }]))),
       classTalents:startingTalentNames.slice(),
       talentClass:talentClassKey,
       talentClasses,
@@ -2996,6 +2996,7 @@
     };
     window.AsteriaCharacterDashboards = window.AsteriaCharacterDashboards || {};
     window.AsteriaCharacterDashboards[id] = window.ensureCharacterDashboardLink?.(id) || dashboard;
+    if(window.AsteriaTalents) window.chars[id]=window.AsteriaTalents.prepareForgeTalents(existingCharacter,window.chars[id],window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries || []);
     characterSchema.dashboard = window.chars[id].dashboard || dashboard;
     const accountKey = currentUserKey();
     window.accountUsers = window.accountUsers || {};
