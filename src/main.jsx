@@ -1,3 +1,4 @@
+import * as talentSystem from './state/talentModel.mjs';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { AsteriaReactRoot } from './app/AsteriaReactRoot.jsx';
@@ -10,6 +11,7 @@ const host = document.getElementById('asteriaReactRoot');
 if(host) createRoot(host).render(<AsteriaReactRoot />);
 document.documentElement.dataset.asteriaLiveCharacterDashboard = 'active';
 window.AsteriaArmour = Object.freeze({ ...armourSystem });
+window.AsteriaTalents = Object.freeze({ ...talentSystem });
 
 function openRoute(route) {
   // Normal owner/navigation entry must not inherit a previous GM visit.

@@ -94,12 +94,13 @@ export function applyRest(entity = {}, type = 'short', soulRecovery = 0) {
   const hp = existingResourcePair(next.hp);
   const sp = existingResourcePair(next.sp);
   const mp = existingResourcePair(next.mp);
+  const regeneration = 1 + Math.max(0, Math.min(.5, Number(next.talentRestBonus || 0)));
   if(restType === 'short') {
-    if(sp) next.sp = [Math.min(sp[1], sp[0] + Math.ceil(sp[1] * 0.35)), sp[1]];
+    if(sp) next.sp = [Math.min(sp[1], sp[0] + Math.ceil(sp[1] * 0.35 * regeneration)), sp[1]];
   } else {
-    if(hp) next.hp = [clampHpForSoulDamage(next, hp[0] + Math.ceil(hp[1] * 0.5)), hp[1]];
+    if(hp) next.hp = [clampHpForSoulDamage(next, hp[0] + Math.ceil(hp[1] * 0.5 * regeneration)), hp[1]];
     if(sp) next.sp = [sp[1], sp[1]];
-    if(mp) next.mp = [Math.min(mp[1], mp[0] + Math.ceil(mp[1] * 0.5)), mp[1]];
+    if(mp) next.mp = [Math.min(mp[1], mp[0] + Math.ceil(mp[1] * 0.5 * regeneration)), mp[1]];
   }
   return { entity:next, type:restType, recoveredSoul, soulDamage:soulDamageValue(next) };
 }

@@ -123,8 +123,8 @@ export function applyCharacteristicAllocations(character, allocations = {}) {
   return { character:next, applied, total:Object.values(applied).reduce((sum, amount) => sum + amount, 0) };
 }
 
-export function talentRankCost(nextRank) {
-  return Math.max(1, Math.floor(Number(nextRank || 1))) * 3;
+export function talentRankCost(nextRank, tier = 1) {
+  return (Math.max(1, Math.min(5, Math.floor(Number(nextRank || 1)))) + Math.max(1, Math.min(5, Math.floor(Number(tier || 1)))) - 1) * 3;
 }
 
 export function talentTierUnlocked(level, tier) {
