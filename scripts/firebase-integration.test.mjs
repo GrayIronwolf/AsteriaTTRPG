@@ -312,3 +312,57 @@ test('GM review rejects a mismatched private owner and does not create deleted p
  const result=await action('gm','reviewCharacterQuest',['c','a','rescue','Completed']);assert.equal(result.ok,true,result.error);
  assert.equal((await db.doc('users/alice/characters/a').get()).exists,false);assert.equal((await db.doc('users/gm/characters/a').get()).exists,false);
 });
+
+test('class talent purchases normalize Forge classes, charge once under concurrency, and mirror Mana Well',async()=>{
+  await db.doc('campaigns/c/characters/a').update({klass:{title:'Spellblade'},tp:50,mp:[50,100]});
+  const args=['c','a',{id:'spellblade:mana-well',expectedRank:0,cost:0,maxRank:100}];
+  const results=await Promise.all([action('alice','purchaseTalentRank',args,'talent-once'),action('alice','purchaseTalentRank',args,'talent-once')]);
+  results.forEach(r=>assert.equal(r.ok,true,r.error));
+  const saved=(await db.doc('campaigns/c/characters/a').get()).data(),mirror=(await db.doc('users/alice/characters/a').get()).data();
+  assert.equal(saved.tp,47);assert.equal(saved.talents['Mana Well'].rank,1);assert.deepEqual(saved.mp,[250,300]);assert.deepEqual(mirror.mp,saved.mp);
+  assert.equal((await action('alice','purchaseTalentRank',args,'stale-rank')).ok,false);
+  await action('alice','refreshCharacterTalents',['c','a']);assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data().mp,[250,300]);
+});
+test('different simultaneous purchase requests cannot buy an unintended second rank',async()=>{
+  await db.doc('campaigns/c/characters/a').update({classInfo:{classes:[{slug:'spellblade'}]},tp:50});
+  const args=['c','a',{id:'spellblade:arcane-edge',expectedRank:0}];
+  const results=await Promise.all([action('alice','purchaseTalentRank',args,'first-click'),action('alice','purchaseTalentRank',args,'second-click')]);
+  assert.equal(results.filter(r=>r.ok).length,1);assert.equal((await db.doc('campaigns/c/characters/a').get()).data().tp,47);
+});
+test('active talents debit trusted rank costs atomically and respect ownership, session and cooldown',async()=>{
+  const ref=db.doc('campaigns/c/characters/a');
+  await ref.update({klass:'Bloodhunter',talents:{'Blood Shield':{rank:2}},mp:[100,100],hp:[7,100],bp:[0,20]});
+  await db.doc('campaigns/c/systems/encounter').set({status:'active',combatId:'fight',round:1});
+  const args=['c','a',{id:'bloodhunter:blood-shield',expectedRank:2},{costs:{mp:0,hp:0}}];
+  assert.equal((await action('alice','useCharacterTalent',args)).ok,false);assert.deepEqual((await ref.get()).data().mp,[100,100]);
+  await ref.update({hp:[100,100]});assert.equal((await action('bob','useCharacterTalent',args)).ok,false);
+  const used=await action('alice','useCharacterTalent',args,'shield-once');assert.equal(used.ok,true,used.error);
+  assert.equal((await action('alice','useCharacterTalent',args,'shield-once')).ok,true);
+  const saved=(await ref.get()).data();assert.deepEqual(saved.mp,[75,100]);assert.deepEqual(saved.hp,[92,100]);assert.deepEqual(saved.bp,[10,20]);assert.equal(saved.acModifiers[0].value,2);
+  assert.equal((await action('alice','useCharacterTalent',args)).ok,false);
+  await db.doc('campaigns/c/liveSession/current').update({status:'paused'});assert.equal((await action('alice','purchaseTalentRank',['c','a',{id:'bloodhunter:blood-control'}])).ok,false);
+});
+test('Sacred Aegis affects a linked ally and their private sheet without adding AC to the caster',async()=>{
+  await db.doc('campaigns/c/characters/a').update({klass:'Cleric',mp:[100,100],talents:{'Sacred Aegis':{rank:1}}});
+  await db.doc('campaigns/c/systems/encounter').set({status:'active',combatId:'fight',round:1});
+  const used=await action('alice','useCharacterTalent',['c','a',{id:'cleric:sacred-aegis'},{targetId:'b'}]);assert.equal(used.ok,true,used.error);
+  const caster=(await db.doc('campaigns/c/characters/a').get()).data(),target=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.deepEqual(caster.mp,[80,100]);assert.equal(caster.acModifiers.length,0);assert.equal(target.acModifiers[0].value,2);
+  assert.equal((await db.doc('users/bob/characters/b').get()).data().acModifiers[0].value,2);
+  await db.doc('campaigns/c/systems/encounter').update({round:4});await action('bob','refreshCharacterTalents',['c','b']);assert.equal((await db.doc('campaigns/c/characters/b').get()).data().acModifiers.length,0);
+});
+test('unwritten and foreign-class talents cannot consume TP, and spell weaving requires a known spell',async()=>{
+  const ref=db.doc('campaigns/c/characters/a');await ref.update({klass:'Fighter',tp:50});
+  assert.equal((await action('alice','purchaseTalentRank',['c','a',{id:'fighter:guarded-stance'}])).ok,false);
+  assert.equal((await action('alice','purchaseTalentRank',['c','a',{id:'cleric:mana-well'}])).ok,false);assert.equal((await ref.get()).data().tp,50);
+  await ref.update({klass:'Spellblade',talents:{'Spell Weaving':{rank:1}},mp:[100,100]});
+  assert.equal((await action('alice','useCharacterTalent',['c','a',{id:'spellblade:spell-weaving'},{spell:'Unknown'}])).ok,false);
+  const result=await action('alice','useCharacterTalent',['c','a',{id:'spellblade:spell-weaving'},{spell:'Spark'}]);assert.equal(result.ok,true,result.error);assert.deepEqual((await ref.get()).data().mp,[87,100]);
+});
+test('targeted talent effects cannot overwrite a mismatched or deleted private character',async()=>{
+  const ref=db.doc('campaigns/c/characters/a');await ref.update({klass:'Cleric',mp:[100,100],talents:{'Sacred Aegis':{rank:1}}});
+  await db.doc('users/bob/characters/b').update({ownerUid:'eve'});
+  const args=['c','a',{id:'cleric:sacred-aegis'},{targetId:'b'}];
+  assert.equal((await action('alice','useCharacterTalent',args)).ok,false);assert.deepEqual((await ref.get()).data().mp,[100,100]);
+  await db.doc('users/bob/characters/b').delete();assert.equal((await action('alice','useCharacterTalent',args)).ok,false);assert.equal((await db.doc('users/bob/characters/b').get()).exists,false);
+});

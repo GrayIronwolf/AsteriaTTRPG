@@ -77,3 +77,14 @@ test('passive BP limits, recovery and rest counters apply without replenishing u
   const counts={talentUsage:{a:{reset:'short-rest',count:2},b:{reset:'long-rest',count:2},c:{reset:'session',count:1}}};
   assert.equal(resetTalentRest(counts,'short').talentUsage.b.count,2);assert.equal(resetTalentRest(counts,'long').talentUsage.c.count,1);
 });
+test('React renders connected rank buttons, both class selectors, and legacy owned talents',async()=>{
+  const {createServer}=await import('vite'),React=await import('react'),{renderToStaticMarkup}=await import('react-dom/server');
+  globalThis.window={ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:{entries},AsteriaFirebase:{},AsteriaInventory:{catalogEntries:()=>[]}};
+  const server=await createServer({configFile:false,server:{middlewareMode:true}});
+  try{
+    const {TalentsTab}=await server.ssrLoadModule('/src/dashboards/ClassTalentTree.jsx');
+    const html=renderToStaticMarkup(React.createElement(TalentsTab,{campaignId:'c',character:{...sheet('spellblade:mana-well',3),klass:'Spellblade / Cleric'},editable:false}));
+    assert.match(html,/<svg/);assert.match(html,/<path d="M/);assert.match(html,/Mana Well, Rank 3, learned/);assert.match(html,/Cleric/);assert.match(html,/aria-pressed="true"/);
+    const data=await server.ssrLoadModule('/src/dashboards/characterWorkspaceData.js');assert.equal(data.unlockedClassTalents(sheet('bloodhunter:blood-shield',2))[0].rank,2);
+  }finally{await server.close();delete globalThis.window;}
+});

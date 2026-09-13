@@ -1,4 +1,4 @@
-import { talentMeta, talentKey, plainTalentText as plain, rankEffects, rankDefined, talentRank, talentEffectActive } from './talentModel.mjs';
+import { talentMeta, talentKey, plainTalentText as plain, rankEffects, rankDefined, talentRank } from './talentModel.mjs';
 import { resourcePair, clampHpForSoulDamage } from './specialDamageModel.mjs';
 import { strictResourcePair } from './characterIntegrityModel.mjs';
 function numbers(text) {

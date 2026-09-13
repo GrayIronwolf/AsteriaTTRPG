@@ -322,10 +322,13 @@ const commands = {
       if(!targetSnapshot.exists()) throw new Error('Target character not found.');
       const target={id:selection.targetId,...targetSnapshot.data()}, campaign=campaignSnapshot.data();
       if(!target.ownerUid || !(campaign.playerCharacterLinks?.[selection.targetId]===target.ownerUid || campaign.characters?.[selection.targetId]?.ownerUid===target.ownerUid || (campaign.players?.[target.ownerUid]?.characterIds||[]).includes(selection.targetId))) throw new Error('Target is not linked to this campaign.');
+      const privateRef=doc(db,'users',target.ownerUid,'characters',ownedCharacterSourceId(target.id,target));
+      const privateSnapshot=await transaction.get(privateRef);
+      if(!privateSnapshot.exists() || privateSnapshot.data().ownerUid!==target.ownerUid) throw new Error('The target’s saved character is unavailable or has a different owner.');
       target.talentEffects=[...(target.talentEffects||[]).filter(row=>row.id!==used.effect.id),{...used.effect,sourceCharacterId:characterId}];
       const clean=reconcileTalentEffects(target,buildTalentCatalog(target,context.catalog),{grantIncrease:true,encounter:refs.encounter});
       transaction.set(targetRef,{...clean,updatedAt:serverTimestamp()},{merge:true});
-      transaction.set(doc(db,'users',target.ownerUid,'characters',ownedCharacterSourceId(target.id,target)),{...clean,id:ownedCharacterSourceId(target.id,target),updatedAt:serverTimestamp()},{merge:true});
+      transaction.set(privateRef,{...clean,id:ownedCharacterSourceId(target.id,target),updatedAt:serverTimestamp()},{merge:true});
       used.character.talentEffects=(used.character.talentEffects||[]).filter(row=>row.id!==used.effect.id);
     }
     Object.assign(character,used.character);

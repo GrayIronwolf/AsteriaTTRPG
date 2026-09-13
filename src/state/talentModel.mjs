@@ -87,6 +87,8 @@ export function reconcileTalentEffects(character,catalog=[],options={}) {
   const bloodRank=owned.find(row=>row.id==='bloodhunter:blood-control')?.rank || 0;
   for(const [key,mult,addition] of [['mp',multiplier,0],['bp',1,bloodRank*5]]) {
     if(character[key]===undefined) continue;
+    const value=character[key], rawCurrent=Array.isArray(value)?value[0]:value?.current ?? value?.value, rawMax=Array.isArray(value)?value[1]:value?.maximum ?? value?.max;
+    if(!Number.isFinite(Number(rawCurrent)) || !Number.isFinite(Number(rawMax)) || Number(rawMax)<0) continue;
     const [current,maximum]=resourcePair(character[key]), previous=state[key];
     // CP and equipment change the base maximum. Keep those deltas separate from
     // the talent multiplier so recalculation never compounds it or refills mana.

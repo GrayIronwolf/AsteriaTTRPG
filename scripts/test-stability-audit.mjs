@@ -215,7 +215,7 @@ test('27. Player mutations verify the linked character owner',()=>{
 
 test('28. The owning dashboard mirrors canonical cross-account updates to the source character ID',()=>{
   const dashboard=read('src/dashboards/CharacterDashboard.jsx');
-  assert.match(dashboard,/mirrorOwnedCharacter\(character\.sourceCharacterId\|\|character\.id,character\)/);
+  assert.match(dashboard,/mirrorOwnedCharacter\(rawCharacter\.sourceCharacterId\|\|rawCharacter\.id,rawCharacter\)/);
   assert.match(read('js/data-sync.js'),/const sourceId=character\.sourceCharacterId \|\| id;/);
 });
 
