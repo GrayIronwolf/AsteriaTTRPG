@@ -246,8 +246,12 @@ function entryFromFile(file) {
   const structuredPlacement = structuredItemPlacement(parts, metadata, title);
   if (structuredPlacement?.skip) return null;
   let categoryPath = structuredPlacement?.categoryPath || parts.slice(0, -1);
+  // Item folders hold one index page and its artwork; the folder slug is not a category.
+  if (!structuredPlacement && top.toLowerCase() === 'items' && path.basename(file).toLowerCase() === 'index.md') {
+    categoryPath = parts.slice(0, -2);
+  }
   const section = structuredPlacement?.section || sectionFromCategory(categoryPath.join('/'), metadata);
-  const type = structuredPlacement?.type || metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
+  const type = structuredPlacement?.type || (section === 'Items' && metadata.itemType) || metadata.type || (section === 'Items' ? 'Item' : section.replace(/s$/, ''));
   const itemClass = metadata.itemClass || metadata.item_class || metadata.rarity || '';
   const raceCategory = metadata.raceCategory || metadata.racecategory || (section === 'Races' ? 'Humanoid' : '');
   if (section === 'Races') {

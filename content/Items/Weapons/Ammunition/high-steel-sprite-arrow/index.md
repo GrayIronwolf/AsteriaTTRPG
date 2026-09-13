@@ -1,4 +1,15 @@
 ---
+title: "High Steel Sprite Arrow"
+slug: high-steel-sprite-arrow
+type: item
+item_type: Weapon
+category: "Weapons"
+subcategory: "Ammunition"
+visibility: public
+market_value: 0
+market_price: null
+pricing_status: needs-completion
+image: image.png
 tags:
   - "#Item"
   - Weapon
@@ -10,9 +21,22 @@ Style: Arrow
 Weight: 0.011 kg
 Damage: 2D6 + 3 [[Piercing Damage]]
 Enchantment: None
-Purchase Price:
-Selling Price:
 ---
+
+## Properties
+
+| Property | Value |
+| --- | --- |
+| Item Class | Unusual |
+| Item Quality | Not specified |
+| Durability | Very High |
+| Material | High Steel |
+| Style | Arrow |
+| Weight | 0.011 kg |
+| Damage | 2D6 + 3 [[Piercing Damage]] |
+| Enchantment | None |
+| Purchase Price | Not specified |
+| Selling Price | Not specified |
 
 ## 📝 Description
 A durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. Its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical enchantments.
@@ -45,5 +69,3 @@ High steel arrows are favoured by skilled archers seeking dependable ammunition 
 - **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.
 - **Oil/Upkeep Needed:** Light oiling recommended during prolonged storage.
 - **Durability Loss per Use:** Low; high steel arrowheads resist deformation and repeated impacts exceptionally well.
-
-![[Pasted image 20260825230226.png]]

@@ -2,7 +2,7 @@
 (function(){
   window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX = {
   "version": "asteria-phase-2-content-database-expansion",
-  "generatedAt": "2026-09-02T14:22:00.837Z",
+  "generatedAt": "2026-09-13T00:54:14.084Z",
   "domains": {
     "race": "Race Compendium",
     "class": "Class Compendium",
@@ -4049,6 +4049,2287 @@
       "searchTerms": "longsword item  {\"type\":\"weapon\",\"itemclass\":\"common\",\"marketvalue\":60,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"visibility\":\"public\",\"tags\":[\"item\",\"weapon\",\"sword\",\"test\"],\"damage\":\"1d10 slashing\"} # longsword\n\na standard one-handed blade used by soldiers, guards, adventurers, and trained duelists.\n\n## weapon data\n\n- damage: 1d10 slashing\n- base material: metal\n- ingot requirement: 3 ingots\n\n## test note\n\nthis is a clean test weapon page used to verify item cards and page opening."
     },
     {
+      "id": "item:content-items-consumables-food-and-drink-extra-large-xl-food-ration-index",
+      "title": "Extra Large (XL) Food Ration",
+      "slug": "extra-large-xl-food-ration",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Consumables",
+        "Food & Drink"
+      ],
+      "category": "Food & Drink",
+      "route": "/compendium/item/consumables/food-and-drink/extra-large-xl-food-ration",
+      "sourcePath": "content/Items/Consumables/Food & Drink/extra-large-xl-food-ration/index.md",
+      "sourceFolder": "content/Items/Consumables/Food & Drink/extra-large-xl-food-ration",
+      "content": "---\ntitle: \"Extra Large (XL) Food Ration\"\nslug: extra-large-xl-food-ration\ntype: item\nitem_type: Consumable\ncategory: \"Consumables\"\nsubcategory: \"Food & Drink\"\nvisibility: public\nmarket_value: 0.12\nmarket_price: 0.24\nmarket_value_source_text: \"12 Pennies\"\nmarket_price_source_text: \"24 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Consumable\n  - Food\nItem Class: Common\nItem Quality: Average\nDurability: Low\nMaterial: Hard Bread / Jerky / Dried Fruit\nStyle: Travel Ration\nWeight: 2.0 kg\nRation Size: Extra Large (XL)\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 2.0 kg |\n| Ration Size | Extra Large (XL) |\n| Enchantment | None |\n| Market Value | 12 Pennies |\n| Market Price | 24 Pennies |\n\n## Description\nA heavy travelling meal consisting of large portions of dense hard bread, salted and dried jerky, and preserved dried fruit. Sized specifically for Extra Large creatures and humanoids, the ration provides a substantial meal while remaining suitably preserved for travel.\nA standard Extra Large Food Ration contains:\n\n- **Hard Bread** — An extra large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — An extra large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — An extra large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## Lore\nA sizeable provision prepared for the great-bodied peoples and creatures of Asteria, often transported in bulk by expeditions travelling with unusually large companions.\n\n### Sustenance\nOne complete **Extra Large (XL) Food Ration provides enough food for one Extra Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nExtra Large Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Extra Large Portion of [[Hard Bread]]\n- 1x Extra Large Portion of [[Jerky]]\n- 1x Extra Large Portion of [[Dried Fruit]]\n- 1x Extra Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 2.0 kg |\n| Ration Size | Extra Large (XL) |\n| Enchantment | None |\n| Market Value | 12 Pennies |\n| Market Price | 24 Pennies |\n\n## Description\nA heavy travelling meal consisting of large portions of dense hard bread, salted and dried jerky, and preserved dried fruit. Sized specifically for Extra Large creatures and humanoids, the ration provides a substantial meal while remaining suitably preserved for travel.\nA standard Extra Large Food Ration contains:\n\n- **Hard Bread** — An extra large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — An extra large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — An extra large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## Lore\nA sizeable provision prepared for the great-bodied peoples and creatures of Asteria, often transported in bulk by expeditions travelling with unusually large companions.\n\n### Sustenance\nOne complete **Extra Large (XL) Food Ration provides enough food for one Extra Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nExtra Large Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Extra Large Portion of [[Hard Bread]]\n- 1x Extra Large Portion of [[Jerky]]\n- 1x Extra Large Portion of [[Dried Fruit]]\n- 1x Extra Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 2.0 kg |\n| Ration Size | Extra Large (XL) |\n| Enchantment | None |\n| Market Value | 12 Pennies |\n| Market Price | 24 Pennies |",
+        "Description": "A heavy travelling meal consisting of large portions of dense hard bread, salted and dried jerky, and preserved dried fruit. Sized specifically for Extra Large creatures and humanoids, the ration provides a substantial meal while remaining suitably preserved for travel.\nA standard Extra Large Food Ration contains:\n\n- **Hard Bread** — An extra large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — An extra large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — An extra large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.",
+        "Lore": "A sizeable provision prepared for the great-bodied peoples and creatures of Asteria, often transported in bulk by expeditions travelling with unusually large companions.\n\n### Sustenance\nOne complete **Extra Large (XL) Food Ration provides enough food for one Extra Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nExtra Large Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x Extra Large Portion of [[Hard Bread]]\n- 1x Extra Large Portion of [[Jerky]]\n- 1x Extra Large Portion of [[Dried Fruit]]\n- 1x Extra Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A heavy travelling meal consisting of large portions of dense hard bread, salted and dried jerky, and preserved dried fruit. Sized specifically for Extra Large creatures and humanoids, the ration provides a substantial meal while remaining suitably preserved f",
+      "metadata": {
+        "title": "Extra Large (XL) Food Ration",
+        "slug": "extra-large-xl-food-ration",
+        "type": "item",
+        "itemType": "Consumable",
+        "category": "Consumables",
+        "subcategory": "Food & Drink",
+        "visibility": "public",
+        "marketValue": 0.12,
+        "marketPrice": 0.24,
+        "marketValueSourceText": "12 Pennies",
+        "marketPriceSourceText": "24 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Consumable",
+          "Food"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Low",
+        "material": "Hard Bread / Jerky / Dried Fruit",
+        "style": "Travel Ration",
+        "weight": "2.0 kg",
+        "rationSize": "Extra Large (XL)",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Consumable",
+        "Food"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Consumables/Food & Drink/extra-large-xl-food-ration/image.png"
+      },
+      "imagePath": "content/Items/Consumables/Food & Drink/extra-large-xl-food-ration/image.png",
+      "related": [],
+      "filters": {
+        "category": "Food & Drink",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Consumable",
+        "craftingCategory": "Consumables",
+        "visibility": "public"
+      },
+      "searchTerms": "extra large (xl) food ration item consumables food & drink {\"title\":\"extra large (xl) food ration\",\"slug\":\"extra-large-xl-food-ration\",\"type\":\"item\",\"itemtype\":\"consumable\",\"category\":\"consumables\",\"subcategory\":\"food & drink\",\"visibility\":\"public\",\"marketvalue\":0.12,\"marketprice\":0.24,\"marketvaluesourcetext\":\"12 pennies\",\"marketpricesourcetext\":\"24 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"consumable\",\"food\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"low\",\"material\":\"hard bread / jerky / dried fruit\",\"style\":\"travel ration\",\"weight\":\"2.0 kg\",\"rationsize\":\"extra large (xl)\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | low |\n| material | hard bread / jerky / dried fruit |\n| style | travel ration |\n| weight | 2.0 kg |\n| ration size | extra large (xl) |\n| enchantment | none |\n| market value | 12 pennies |\n| market price | 24 pennies |\n\n## description\na heavy travelling meal consisting of large portions of dense hard bread, salted and dried jerky, and preserved dried fruit. sized specifically for extra large creatures and humanoids, the ration provides a substantial meal while remaining suitably preserved for travel.\na standard extra large food ration contains:\n\n- **hard bread** — an extra large portion of dense baked bread designed to remain edible during extended travel.\n- **jerky** — an extra large portion of salted and dried meat providing the main protein portion of the meal.\n- **dried fruit** — an extra large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## lore\na sizeable provision prepared for the great-bodied peoples and creatures of asteria, often transported in bulk by expeditions travelling with unusually large companions.\n\n### sustenance\none complete **extra large (xl) food ration provides enough food for one extra large-sized creature or humanoid for one meal**.\n\n### storage & spoilage\nextra large food rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nexposure to the following can reduce their usable lifespan:\n\n- water or excessive moisture\n- extreme heat\n- insects and vermin\n- contaminated storage\n- damaged packaging\n- magical or environmental corruption\n\na ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x extra large portion of [[hard bread]]\n- 1x extra large portion of [[jerky]]\n- 1x extra large portion of [[dried fruit]]\n- 1x extra large wrapping cloth or food pouch\n\n### tools required\n- cooking utensils\n- drying rack or oven\n- cutting knife\n- food storage containers\n\n### crafting difficulty\n- **skill check:** cooking\n- **required profession & rank:** cook — novice\n- **failure consequences:** improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+    },
+    {
+      "id": "item:content-items-consumables-food-and-drink-large-food-ration-index",
+      "title": "Large Food Ration",
+      "slug": "large-food-ration",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Consumables",
+        "Food & Drink"
+      ],
+      "category": "Food & Drink",
+      "route": "/compendium/item/consumables/food-and-drink/large-food-ration",
+      "sourcePath": "content/Items/Consumables/Food & Drink/large-food-ration/index.md",
+      "sourceFolder": "content/Items/Consumables/Food & Drink/large-food-ration",
+      "content": "---\ntitle: \"Large Food Ration\"\nslug: large-food-ration\ntype: item\nitem_type: Consumable\ncategory: \"Consumables\"\nsubcategory: \"Food & Drink\"\nvisibility: public\nmarket_value: 0.06\nmarket_price: 0.12\nmarket_value_source_text: \"6 Pennies\"\nmarket_price_source_text: \"12 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Consumable\n  - Food\nItem Class: Common\nItem Quality: Average\nDurability: Low\nMaterial: Hard Bread / Jerky / Dried Fruit\nStyle: Travel Ration\nWeight: 1.0 kg\nRation Size: Large\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 1.0 kg |\n| Ration Size | Large |\n| Enchantment | None |\n| Market Value | 6 Pennies |\n| Market Price | 12 Pennies |\n\n## Description\nA substantial travelling meal consisting of dense hard bread, generous strips of salted and dried jerky, and a large portion of dried fruit. Sized specifically for Large creatures and humanoids, the ration provides a filling meal while remaining durable enough for extended travel.\nA standard Large Food Ration contains:\n\n- **Hard Bread** — A large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## Lore\nA heavy travelling provision prepared for the larger peoples and creatures of Asteria, commonly stocked by expeditions expecting sizeable companions.\n\n### Sustenance\nOne complete **Large Food Ration provides enough food for one Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nLarge Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Large Portion of [[Hard Bread]]\n- 1x Large Portion of [[Jerky]]\n- 1x Large Portion of [[Dried Fruit]]\n- 1x Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 1.0 kg |\n| Ration Size | Large |\n| Enchantment | None |\n| Market Value | 6 Pennies |\n| Market Price | 12 Pennies |\n\n## Description\nA substantial travelling meal consisting of dense hard bread, generous strips of salted and dried jerky, and a large portion of dried fruit. Sized specifically for Large creatures and humanoids, the ration provides a filling meal while remaining durable enough for extended travel.\nA standard Large Food Ration contains:\n\n- **Hard Bread** — A large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## Lore\nA heavy travelling provision prepared for the larger peoples and creatures of Asteria, commonly stocked by expeditions expecting sizeable companions.\n\n### Sustenance\nOne complete **Large Food Ration provides enough food for one Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nLarge Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Large Portion of [[Hard Bread]]\n- 1x Large Portion of [[Jerky]]\n- 1x Large Portion of [[Dried Fruit]]\n- 1x Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 1.0 kg |\n| Ration Size | Large |\n| Enchantment | None |\n| Market Value | 6 Pennies |\n| Market Price | 12 Pennies |",
+        "Description": "A substantial travelling meal consisting of dense hard bread, generous strips of salted and dried jerky, and a large portion of dried fruit. Sized specifically for Large creatures and humanoids, the ration provides a filling meal while remaining durable enough for extended travel.\nA standard Large Food Ration contains:\n\n- **Hard Bread** — A large portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A large portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.",
+        "Lore": "A heavy travelling provision prepared for the larger peoples and creatures of Asteria, commonly stocked by expeditions expecting sizeable companions.\n\n### Sustenance\nOne complete **Large Food Ration provides enough food for one Large-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nLarge Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x Large Portion of [[Hard Bread]]\n- 1x Large Portion of [[Jerky]]\n- 1x Large Portion of [[Dried Fruit]]\n- 1x Large Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A substantial travelling meal consisting of dense hard bread, generous strips of salted and dried jerky, and a large portion of dried fruit. Sized specifically for Large creatures and humanoids, the ration provides a filling meal while remaining durable enough",
+      "metadata": {
+        "title": "Large Food Ration",
+        "slug": "large-food-ration",
+        "type": "item",
+        "itemType": "Consumable",
+        "category": "Consumables",
+        "subcategory": "Food & Drink",
+        "visibility": "public",
+        "marketValue": 0.06,
+        "marketPrice": 0.12,
+        "marketValueSourceText": "6 Pennies",
+        "marketPriceSourceText": "12 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Consumable",
+          "Food"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Low",
+        "material": "Hard Bread / Jerky / Dried Fruit",
+        "style": "Travel Ration",
+        "weight": "1.0 kg",
+        "rationSize": "Large",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Consumable",
+        "Food"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Consumables/Food & Drink/large-food-ration/image.png"
+      },
+      "imagePath": "content/Items/Consumables/Food & Drink/large-food-ration/image.png",
+      "related": [],
+      "filters": {
+        "category": "Food & Drink",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Consumable",
+        "craftingCategory": "Consumables",
+        "visibility": "public"
+      },
+      "searchTerms": "large food ration item consumables food & drink {\"title\":\"large food ration\",\"slug\":\"large-food-ration\",\"type\":\"item\",\"itemtype\":\"consumable\",\"category\":\"consumables\",\"subcategory\":\"food & drink\",\"visibility\":\"public\",\"marketvalue\":0.06,\"marketprice\":0.12,\"marketvaluesourcetext\":\"6 pennies\",\"marketpricesourcetext\":\"12 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"consumable\",\"food\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"low\",\"material\":\"hard bread / jerky / dried fruit\",\"style\":\"travel ration\",\"weight\":\"1.0 kg\",\"rationsize\":\"large\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | low |\n| material | hard bread / jerky / dried fruit |\n| style | travel ration |\n| weight | 1.0 kg |\n| ration size | large |\n| enchantment | none |\n| market value | 6 pennies |\n| market price | 12 pennies |\n\n## description\na substantial travelling meal consisting of dense hard bread, generous strips of salted and dried jerky, and a large portion of dried fruit. sized specifically for large creatures and humanoids, the ration provides a filling meal while remaining durable enough for extended travel.\na standard large food ration contains:\n\n- **hard bread** — a large portion of dense baked bread designed to remain edible during extended travel.\n- **jerky** — a large portion of salted and dried meat providing the main protein portion of the meal.\n- **dried fruit** — a large portion of preserved fruit providing sweetness and variety while remaining suitable for long-term travel.\n\n## lore\na heavy travelling provision prepared for the larger peoples and creatures of asteria, commonly stocked by expeditions expecting sizeable companions.\n\n### sustenance\none complete **large food ration provides enough food for one large-sized creature or humanoid for one meal**.\n\n### storage & spoilage\nlarge food rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nexposure to the following can reduce their usable lifespan:\n\n- water or excessive moisture\n- extreme heat\n- insects and vermin\n- contaminated storage\n- damaged packaging\n- magical or environmental corruption\n\na ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x large portion of [[hard bread]]\n- 1x large portion of [[jerky]]\n- 1x large portion of [[dried fruit]]\n- 1x large wrapping cloth or food pouch\n\n### tools required\n- cooking utensils\n- drying rack or oven\n- cutting knife\n- food storage containers\n\n### crafting difficulty\n- **skill check:** cooking\n- **required profession & rank:** cook — novice\n- **failure consequences:** improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+    },
+    {
+      "id": "item:content-items-consumables-food-and-drink-medium-food-ration-index",
+      "title": "Medium Food Ration",
+      "slug": "medium-food-ration",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Consumables",
+        "Food & Drink"
+      ],
+      "category": "Food & Drink",
+      "route": "/compendium/item/consumables/food-and-drink/medium-food-ration",
+      "sourcePath": "content/Items/Consumables/Food & Drink/medium-food-ration/index.md",
+      "sourceFolder": "content/Items/Consumables/Food & Drink/medium-food-ration",
+      "content": "---\ntitle: \"Medium Food Ration\"\nslug: medium-food-ration\ntype: item\nitem_type: Consumable\ncategory: \"Consumables\"\nsubcategory: \"Food & Drink\"\nvisibility: public\nmarket_value: 0.03\nmarket_price: 0.06\nmarket_value_source_text: \"3 Pennies\"\nmarket_price_source_text: \"6 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Consumable\n  - Food\nItem Class: Common\nItem Quality: Average\nDurability: Low\nMaterial: Hard Bread / Jerky / Dried Fruit\nStyle: Travel Ration\nWeight: 0.5 kg\nRation Size: Medium\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.5 kg |\n| Ration Size | Medium |\n| Enchantment | None |\n| Market Value | 3 Pennies |\n| Market Price | 6 Pennies |\n\n## Description\nA compact travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized for a Medium creature or humanoid, the ration provides a simple, dependable meal while remaining easy to pack and carry during extended travel.\nA standard Medium Food Ration contains:\n- **Hard Bread** — Dense baked bread designed to remain edible during extended travel.\n- **Jerky** — Salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — Preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA staple provision carried by travellers, soldiers, merchants, hunters, explorers, and adventurers throughout Asteria.\n\n### Sustenance\nOne complete **Medium Food Ration provides enough food for one Medium-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nFood Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Hard Bread]]\n- 1x [[Jerky]]\n- 1x [[Dried Fruit]]\n- 1x Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.5 kg |\n| Ration Size | Medium |\n| Enchantment | None |\n| Market Value | 3 Pennies |\n| Market Price | 6 Pennies |\n\n## Description\nA compact travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized for a Medium creature or humanoid, the ration provides a simple, dependable meal while remaining easy to pack and carry during extended travel.\nA standard Medium Food Ration contains:\n- **Hard Bread** — Dense baked bread designed to remain edible during extended travel.\n- **Jerky** — Salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — Preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA staple provision carried by travellers, soldiers, merchants, hunters, explorers, and adventurers throughout Asteria.\n\n### Sustenance\nOne complete **Medium Food Ration provides enough food for one Medium-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nFood Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Hard Bread]]\n- 1x [[Jerky]]\n- 1x [[Dried Fruit]]\n- 1x Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.5 kg |\n| Ration Size | Medium |\n| Enchantment | None |\n| Market Value | 3 Pennies |\n| Market Price | 6 Pennies |",
+        "Description": "A compact travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized for a Medium creature or humanoid, the ration provides a simple, dependable meal while remaining easy to pack and carry during extended travel.\nA standard Medium Food Ration contains:\n- **Hard Bread** — Dense baked bread designed to remain edible during extended travel.\n- **Jerky** — Salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — Preserved fruit providing sweetness and variety while remaining lightweight and easy to store.",
+        "Lore": "A staple provision carried by travellers, soldiers, merchants, hunters, explorers, and adventurers throughout Asteria.\n\n### Sustenance\nOne complete **Medium Food Ration provides enough food for one Medium-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nFood Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x [[Hard Bread]]\n- 1x [[Jerky]]\n- 1x [[Dried Fruit]]\n- 1x Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A compact travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized for a Medium creature or humanoid, the ration provides a simple, dependable meal while remaining easy to pack and carry during exten",
+      "metadata": {
+        "title": "Medium Food Ration",
+        "slug": "medium-food-ration",
+        "type": "item",
+        "itemType": "Consumable",
+        "category": "Consumables",
+        "subcategory": "Food & Drink",
+        "visibility": "public",
+        "marketValue": 0.03,
+        "marketPrice": 0.06,
+        "marketValueSourceText": "3 Pennies",
+        "marketPriceSourceText": "6 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Consumable",
+          "Food"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Low",
+        "material": "Hard Bread / Jerky / Dried Fruit",
+        "style": "Travel Ration",
+        "weight": "0.5 kg",
+        "rationSize": "Medium",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Consumable",
+        "Food"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Consumables/Food & Drink/medium-food-ration/image.png"
+      },
+      "imagePath": "content/Items/Consumables/Food & Drink/medium-food-ration/image.png",
+      "related": [],
+      "filters": {
+        "category": "Food & Drink",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Consumable",
+        "craftingCategory": "Consumables",
+        "visibility": "public"
+      },
+      "searchTerms": "medium food ration item consumables food & drink {\"title\":\"medium food ration\",\"slug\":\"medium-food-ration\",\"type\":\"item\",\"itemtype\":\"consumable\",\"category\":\"consumables\",\"subcategory\":\"food & drink\",\"visibility\":\"public\",\"marketvalue\":0.03,\"marketprice\":0.06,\"marketvaluesourcetext\":\"3 pennies\",\"marketpricesourcetext\":\"6 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"consumable\",\"food\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"low\",\"material\":\"hard bread / jerky / dried fruit\",\"style\":\"travel ration\",\"weight\":\"0.5 kg\",\"rationsize\":\"medium\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | low |\n| material | hard bread / jerky / dried fruit |\n| style | travel ration |\n| weight | 0.5 kg |\n| ration size | medium |\n| enchantment | none |\n| market value | 3 pennies |\n| market price | 6 pennies |\n\n## description\na compact travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. sized for a medium creature or humanoid, the ration provides a simple, dependable meal while remaining easy to pack and carry during extended travel.\na standard medium food ration contains:\n- **hard bread** — dense baked bread designed to remain edible during extended travel.\n- **jerky** — salted and dried meat providing the main protein portion of the meal.\n- **dried fruit** — preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## lore\na staple provision carried by travellers, soldiers, merchants, hunters, explorers, and adventurers throughout asteria.\n\n### sustenance\none complete **medium food ration provides enough food for one medium-sized creature or humanoid for one meal**.\n\n### storage & spoilage\nfood rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nexposure to the following can reduce their usable lifespan:\n- water or excessive moisture\n- extreme heat\n- insects and vermin\n- contaminated storage\n- damaged packaging\n- magical or environmental corruption\n\na ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x [[hard bread]]\n- 1x [[jerky]]\n- 1x [[dried fruit]]\n- 1x wrapping cloth or food pouch\n\n### tools required\n- cooking utensils\n- drying rack or oven\n- cutting knife\n- food storage containers\n\n### crafting difficulty\n- **skill check:** cooking\n- **required profession & rank:** cook — novice\n- **failure consequences:** improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+    },
+    {
+      "id": "item:content-items-consumables-food-and-drink-small-food-ration-index",
+      "title": "Small Food Ration",
+      "slug": "small-food-ration",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Consumables",
+        "Food & Drink"
+      ],
+      "category": "Food & Drink",
+      "route": "/compendium/item/consumables/food-and-drink/small-food-ration",
+      "sourcePath": "content/Items/Consumables/Food & Drink/small-food-ration/index.md",
+      "sourceFolder": "content/Items/Consumables/Food & Drink/small-food-ration",
+      "content": "---\ntitle: \"Small Food Ration\"\nslug: small-food-ration\ntype: item\nitem_type: Consumable\ncategory: \"Consumables\"\nsubcategory: \"Food & Drink\"\nvisibility: public\nmarket_value: 0.02\nmarket_price: 0.04\nmarket_value_source_text: \"2 Pennies\"\nmarket_price_source_text: \"4 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Consumable\n  - Food\nItem Class: Common\nItem Quality: Average\nDurability: Low\nMaterial: Hard Bread / Jerky / Dried Fruit\nStyle: Travel Ration\nWeight: 0.25 kg\nRation Size: Small\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.25 kg |\n| Ration Size | Small |\n| Enchantment | None |\n| Market Value | 2 Pennies |\n| Market Price | 4 Pennies |\n\n## Description\nA small travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized specifically for Small creatures and humanoids, the ration provides a dependable meal while remaining compact and lightweight for travel.\nA standard Small Food Ration contains:\n\n- **Hard Bread** — A small portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A small portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A small portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA common provision prepared for the smaller peoples and creatures of Asteria, particularly those travelling far from settled lands.\n\n### Sustenance\nOne complete **Small Food Ration provides enough food for one Small-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nSmall Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Small Portion of [[Hard Bread]]\n- 1x Small Portion of [[Jerky]]\n- 1x Small Portion of [[Dried Fruit]]\n- 1x Small Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.25 kg |\n| Ration Size | Small |\n| Enchantment | None |\n| Market Value | 2 Pennies |\n| Market Price | 4 Pennies |\n\n## Description\nA small travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized specifically for Small creatures and humanoids, the ration provides a dependable meal while remaining compact and lightweight for travel.\nA standard Small Food Ration contains:\n\n- **Hard Bread** — A small portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A small portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A small portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA common provision prepared for the smaller peoples and creatures of Asteria, particularly those travelling far from settled lands.\n\n### Sustenance\nOne complete **Small Food Ration provides enough food for one Small-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nSmall Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Small Portion of [[Hard Bread]]\n- 1x Small Portion of [[Jerky]]\n- 1x Small Portion of [[Dried Fruit]]\n- 1x Small Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.25 kg |\n| Ration Size | Small |\n| Enchantment | None |\n| Market Value | 2 Pennies |\n| Market Price | 4 Pennies |",
+        "Description": "A small travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized specifically for Small creatures and humanoids, the ration provides a dependable meal while remaining compact and lightweight for travel.\nA standard Small Food Ration contains:\n\n- **Hard Bread** — A small portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A small portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A small portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.",
+        "Lore": "A common provision prepared for the smaller peoples and creatures of Asteria, particularly those travelling far from settled lands.\n\n### Sustenance\nOne complete **Small Food Ration provides enough food for one Small-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nSmall Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x Small Portion of [[Hard Bread]]\n- 1x Small Portion of [[Jerky]]\n- 1x Small Portion of [[Dried Fruit]]\n- 1x Small Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A small travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. Sized specifically for Small creatures and humanoids, the ration provides a dependable meal while remaining compact and lightweight for trav",
+      "metadata": {
+        "title": "Small Food Ration",
+        "slug": "small-food-ration",
+        "type": "item",
+        "itemType": "Consumable",
+        "category": "Consumables",
+        "subcategory": "Food & Drink",
+        "visibility": "public",
+        "marketValue": 0.02,
+        "marketPrice": 0.04,
+        "marketValueSourceText": "2 Pennies",
+        "marketPriceSourceText": "4 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Consumable",
+          "Food"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Low",
+        "material": "Hard Bread / Jerky / Dried Fruit",
+        "style": "Travel Ration",
+        "weight": "0.25 kg",
+        "rationSize": "Small",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Consumable",
+        "Food"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Consumables/Food & Drink/small-food-ration/image.png"
+      },
+      "imagePath": "content/Items/Consumables/Food & Drink/small-food-ration/image.png",
+      "related": [],
+      "filters": {
+        "category": "Food & Drink",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Consumable",
+        "craftingCategory": "Consumables",
+        "visibility": "public"
+      },
+      "searchTerms": "small food ration item consumables food & drink {\"title\":\"small food ration\",\"slug\":\"small-food-ration\",\"type\":\"item\",\"itemtype\":\"consumable\",\"category\":\"consumables\",\"subcategory\":\"food & drink\",\"visibility\":\"public\",\"marketvalue\":0.02,\"marketprice\":0.04,\"marketvaluesourcetext\":\"2 pennies\",\"marketpricesourcetext\":\"4 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"consumable\",\"food\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"low\",\"material\":\"hard bread / jerky / dried fruit\",\"style\":\"travel ration\",\"weight\":\"0.25 kg\",\"rationsize\":\"small\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | low |\n| material | hard bread / jerky / dried fruit |\n| style | travel ration |\n| weight | 0.25 kg |\n| ration size | small |\n| enchantment | none |\n| market value | 2 pennies |\n| market price | 4 pennies |\n\n## description\na small travelling meal consisting of dense hard bread, strips of salted and dried jerky, and a portion of dried fruit. sized specifically for small creatures and humanoids, the ration provides a dependable meal while remaining compact and lightweight for travel.\na standard small food ration contains:\n\n- **hard bread** — a small portion of dense baked bread designed to remain edible during extended travel.\n- **jerky** — a small portion of salted and dried meat providing the main protein portion of the meal.\n- **dried fruit** — a small portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## lore\na common provision prepared for the smaller peoples and creatures of asteria, particularly those travelling far from settled lands.\n\n### sustenance\none complete **small food ration provides enough food for one small-sized creature or humanoid for one meal**.\n\n### storage & spoilage\nsmall food rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nexposure to the following can reduce their usable lifespan:\n\n- water or excessive moisture\n- extreme heat\n- insects and vermin\n- contaminated storage\n- damaged packaging\n- magical or environmental corruption\n\na ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x small portion of [[hard bread]]\n- 1x small portion of [[jerky]]\n- 1x small portion of [[dried fruit]]\n- 1x small wrapping cloth or food pouch\n\n### tools required\n- cooking utensils\n- drying rack or oven\n- cutting knife\n- food storage containers\n\n### crafting difficulty\n- **skill check:** cooking\n- **required profession & rank:** cook — novice\n- **failure consequences:** improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+    },
+    {
+      "id": "item:content-items-consumables-food-and-drink-tiny-food-ration-index",
+      "title": "Tiny Food Ration",
+      "slug": "tiny-food-ration",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Consumables",
+        "Food & Drink"
+      ],
+      "category": "Food & Drink",
+      "route": "/compendium/item/consumables/food-and-drink/tiny-food-ration",
+      "sourcePath": "content/Items/Consumables/Food & Drink/tiny-food-ration/index.md",
+      "sourceFolder": "content/Items/Consumables/Food & Drink/tiny-food-ration",
+      "content": "---\ntitle: \"Tiny Food Ration\"\nslug: tiny-food-ration\ntype: item\nitem_type: Consumable\ncategory: \"Consumables\"\nsubcategory: \"Food & Drink\"\nvisibility: public\nmarket_value: 0.01\nmarket_price: 0.02\nmarket_value_source_text: \"1 Penny\"\nmarket_price_source_text: \"2 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Consumable\n  - Food\nItem Class: Common\nItem Quality: Average\nDurability: Low\nMaterial: Hard Bread / Jerky / Dried Fruit\nStyle: Travel Ration\nWeight: 0.125 kg\nRation Size: Tiny\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.125 kg |\n| Ration Size | Tiny |\n| Enchantment | None |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## Description\nA miniature travelling meal consisting of small pieces of dense hard bread, salted and dried jerky, and dried fruit. Sized specifically for Tiny creatures and humanoids, the ration provides a complete meal while remaining exceptionally compact and lightweight for travel.\nA standard Tiny Food Ration contains:\n\n- **Hard Bread** — A tiny portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A tiny portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A tiny portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA specialised provision commonly prepared for the smallest peoples and creatures of Asteria, allowing them to travel without carrying unnecessarily large supplies.\n\n### Sustenance\nOne complete **Tiny Food Ration provides enough food for one Tiny-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nTiny Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Tiny Portion of [[Hard Bread]]\n- 1x Tiny Portion of [[Jerky]]\n- 1x Tiny Portion of [[Dried Fruit]]\n- 1x Tiny Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.125 kg |\n| Ration Size | Tiny |\n| Enchantment | None |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## Description\nA miniature travelling meal consisting of small pieces of dense hard bread, salted and dried jerky, and dried fruit. Sized specifically for Tiny creatures and humanoids, the ration provides a complete meal while remaining exceptionally compact and lightweight for travel.\nA standard Tiny Food Ration contains:\n\n- **Hard Bread** — A tiny portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A tiny portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A tiny portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## Lore\nA specialised provision commonly prepared for the smallest peoples and creatures of Asteria, allowing them to travel without carrying unnecessarily large supplies.\n\n### Sustenance\nOne complete **Tiny Food Ration provides enough food for one Tiny-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nTiny Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x Tiny Portion of [[Hard Bread]]\n- 1x Tiny Portion of [[Jerky]]\n- 1x Tiny Portion of [[Dried Fruit]]\n- 1x Tiny Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Low |\n| Material | Hard Bread / Jerky / Dried Fruit |\n| Style | Travel Ration |\n| Weight | 0.125 kg |\n| Ration Size | Tiny |\n| Enchantment | None |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |",
+        "Description": "A miniature travelling meal consisting of small pieces of dense hard bread, salted and dried jerky, and dried fruit. Sized specifically for Tiny creatures and humanoids, the ration provides a complete meal while remaining exceptionally compact and lightweight for travel.\nA standard Tiny Food Ration contains:\n\n- **Hard Bread** — A tiny portion of dense baked bread designed to remain edible during extended travel.\n- **Jerky** — A tiny portion of salted and dried meat providing the main protein portion of the meal.\n- **Dried Fruit** — A tiny portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.",
+        "Lore": "A specialised provision commonly prepared for the smallest peoples and creatures of Asteria, allowing them to travel without carrying unnecessarily large supplies.\n\n### Sustenance\nOne complete **Tiny Food Ration provides enough food for one Tiny-sized creature or humanoid for one meal**.\n\n### Storage & Spoilage\nTiny Food Rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nExposure to the following can reduce their usable lifespan:\n\n- Water or excessive moisture\n- Extreme heat\n- Insects and vermin\n- Contaminated storage\n- Damaged packaging\n- Magical or environmental corruption\n\nA ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x Tiny Portion of [[Hard Bread]]\n- 1x Tiny Portion of [[Jerky]]\n- 1x Tiny Portion of [[Dried Fruit]]\n- 1x Tiny Wrapping Cloth or Food Pouch\n\n### Tools Required\n- Cooking Utensils\n- Drying Rack or Oven\n- Cutting Knife\n- Food Storage Containers\n\n### Crafting Difficulty\n- **Skill Check:** Cooking\n- **Required Profession & Rank:** Cook — Novice\n- **Failure Consequences:** Improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A miniature travelling meal consisting of small pieces of dense hard bread, salted and dried jerky, and dried fruit. Sized specifically for Tiny creatures and humanoids, the ration provides a complete meal while remaining exceptionally compact and lightweight ",
+      "metadata": {
+        "title": "Tiny Food Ration",
+        "slug": "tiny-food-ration",
+        "type": "item",
+        "itemType": "Consumable",
+        "category": "Consumables",
+        "subcategory": "Food & Drink",
+        "visibility": "public",
+        "marketValue": 0.01,
+        "marketPrice": 0.02,
+        "marketValueSourceText": "1 Penny",
+        "marketPriceSourceText": "2 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Consumable",
+          "Food"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Low",
+        "material": "Hard Bread / Jerky / Dried Fruit",
+        "style": "Travel Ration",
+        "weight": "0.125 kg",
+        "rationSize": "Tiny",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Consumable",
+        "Food"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Consumables/Food & Drink/tiny-food-ration/image.png"
+      },
+      "imagePath": "content/Items/Consumables/Food & Drink/tiny-food-ration/image.png",
+      "related": [],
+      "filters": {
+        "category": "Food & Drink",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Consumable",
+        "craftingCategory": "Consumables",
+        "visibility": "public"
+      },
+      "searchTerms": "tiny food ration item consumables food & drink {\"title\":\"tiny food ration\",\"slug\":\"tiny-food-ration\",\"type\":\"item\",\"itemtype\":\"consumable\",\"category\":\"consumables\",\"subcategory\":\"food & drink\",\"visibility\":\"public\",\"marketvalue\":0.01,\"marketprice\":0.02,\"marketvaluesourcetext\":\"1 penny\",\"marketpricesourcetext\":\"2 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"consumable\",\"food\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"low\",\"material\":\"hard bread / jerky / dried fruit\",\"style\":\"travel ration\",\"weight\":\"0.125 kg\",\"rationsize\":\"tiny\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | low |\n| material | hard bread / jerky / dried fruit |\n| style | travel ration |\n| weight | 0.125 kg |\n| ration size | tiny |\n| enchantment | none |\n| market value | 1 penny |\n| market price | 2 pennies |\n\n## description\na miniature travelling meal consisting of small pieces of dense hard bread, salted and dried jerky, and dried fruit. sized specifically for tiny creatures and humanoids, the ration provides a complete meal while remaining exceptionally compact and lightweight for travel.\na standard tiny food ration contains:\n\n- **hard bread** — a tiny portion of dense baked bread designed to remain edible during extended travel.\n- **jerky** — a tiny portion of salted and dried meat providing the main protein portion of the meal.\n- **dried fruit** — a tiny portion of preserved fruit providing sweetness and variety while remaining lightweight and easy to store.\n\n## lore\na specialised provision commonly prepared for the smallest peoples and creatures of asteria, allowing them to travel without carrying unnecessarily large supplies.\n\n### sustenance\none complete **tiny food ration provides enough food for one tiny-sized creature or humanoid for one meal**.\n\n### storage & spoilage\ntiny food rations are specifically prepared for travel and remain edible considerably longer than fresh food when properly stored.\n\nexposure to the following can reduce their usable lifespan:\n\n- water or excessive moisture\n- extreme heat\n- insects and vermin\n- contaminated storage\n- damaged packaging\n- magical or environmental corruption\n\na ration that becomes sufficiently spoiled or contaminated is no longer safe to consume.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x tiny portion of [[hard bread]]\n- 1x tiny portion of [[jerky]]\n- 1x tiny portion of [[dried fruit]]\n- 1x tiny wrapping cloth or food pouch\n\n### tools required\n- cooking utensils\n- drying rack or oven\n- cutting knife\n- food storage containers\n\n### crafting difficulty\n- **skill check:** cooking\n- **required profession & rank:** cook — novice\n- **failure consequences:** improperly preserved ingredients, reduced shelf life, spoiled food, or an inedible ration."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-extra-large-xl-cooking-pot-index",
+      "title": "Extra Large (XL) Cooking Pot",
+      "slug": "extra-large-xl-cooking-pot",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/extra-large-xl-cooking-pot",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/extra-large-xl-cooking-pot/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/extra-large-xl-cooking-pot",
+      "content": "---\ntitle: \"Extra Large (XL) Cooking Pot\"\nslug: extra-large-xl-cooking-pot\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.6\nmarket_price: 1.2\nmarket_value_source_text: \"60 Pennies\"\nmarket_price_source_text: \"120 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\nItem Class: Common\nItem Quality: Average\nDurability: High\nMaterial: Iron\nStyle: Camp Cooking Equipment\nWeight: 8.0 kg\nCapacity: 12 L\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 8.0 kg |\n| Capacity | 12 L |\n| Enchantment | None |\n| Market Value | 60 Pennies |\n| Market Price | 120 Pennies |\n\n## 📝 Description\n\nA massive iron cooking pot with a deep, broad body and heavily reinforced carrying handle for suspension over a large cooking fire. Designed for substantial group cooking, its considerable capacity makes it ideal for large adventuring parties, caravans, military camps, and expeditions.\n\n## 📜 Lore\n\nThese imposing cooking pots are commonly found in large camps where feeding many hungry travellers quickly is more important than travelling light.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Heavy Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove all food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Extra Large (XL)\n- **Capacity:** 12 L\n- **Typical Servings:** 12–16\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nAn Extra Large Cooking Pot can be placed over or suspended above a substantial heat source to prepare large quantities of food.\n\nIt can be used for:\n\n- Cooking large stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling large quantities of water\n- Preparing hot drinks\n- Cooking meals for large adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **12 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **12–16 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Extra Large Cooking Pot can be used to boil up to approximately **12 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires a substantial and sustained source of heat, such as:\n\n- Large campfire\n- Dedicated cooking fire\n- Large stove\n- Large bed of hot coals\n- Suitable magical heat source\n\nDue to its considerable size and volume, a small campfire may be insufficient to heat a fully loaded XL Cooking Pot effectively.\n\n### Transport\n\nAn XL Cooking Pot is technically portable but is significantly heavier and bulkier than smaller cooking pots.\n\nIt is most practical when transported using:\n\n- Pack animals\n- Carts\n- Wagons\n- Expedition equipment\n- Multiple party members\n- Creatures capable of carrying heavy loads\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nAn Extra Large Cooking Pot provides exceptional cooking capacity at the cost of considerable weight and bulk.\n\nIt is best suited to large adventuring parties, caravans, expedition camps, military groups, and semi-permanent camps where feeding many creatures outweighs the difficulty of transporting the pot.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 8.0 kg |\n| Capacity | 12 L |\n| Enchantment | None |\n| Market Value | 60 Pennies |\n| Market Price | 120 Pennies |\n\n## 📝 Description\n\nA massive iron cooking pot with a deep, broad body and heavily reinforced carrying handle for suspension over a large cooking fire. Designed for substantial group cooking, its considerable capacity makes it ideal for large adventuring parties, caravans, military camps, and expeditions.\n\n## 📜 Lore\n\nThese imposing cooking pots are commonly found in large camps where feeding many hungry travellers quickly is more important than travelling light.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Heavy Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove all food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Extra Large (XL)\n- **Capacity:** 12 L\n- **Typical Servings:** 12–16\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nAn Extra Large Cooking Pot can be placed over or suspended above a substantial heat source to prepare large quantities of food.\n\nIt can be used for:\n\n- Cooking large stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling large quantities of water\n- Preparing hot drinks\n- Cooking meals for large adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **12 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **12–16 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Extra Large Cooking Pot can be used to boil up to approximately **12 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires a substantial and sustained source of heat, such as:\n\n- Large campfire\n- Dedicated cooking fire\n- Large stove\n- Large bed of hot coals\n- Suitable magical heat source\n\nDue to its considerable size and volume, a small campfire may be insufficient to heat a fully loaded XL Cooking Pot effectively.\n\n### Transport\n\nAn XL Cooking Pot is technically portable but is significantly heavier and bulkier than smaller cooking pots.\n\nIt is most practical when transported using:\n\n- Pack animals\n- Carts\n- Wagons\n- Expedition equipment\n- Multiple party members\n- Creatures capable of carrying heavy loads\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nAn Extra Large Cooking Pot provides exceptional cooking capacity at the cost of considerable weight and bulk.\n\nIt is best suited to large adventuring parties, caravans, expedition camps, military groups, and semi-permanent camps where feeding many creatures outweighs the difficulty of transporting the pot.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 8.0 kg |\n| Capacity | 12 L |\n| Enchantment | None |\n| Market Value | 60 Pennies |\n| Market Price | 120 Pennies |",
+        "📝 Description": "A massive iron cooking pot with a deep, broad body and heavily reinforced carrying handle for suspension over a large cooking fire. Designed for substantial group cooking, its considerable capacity makes it ideal for large adventuring parties, caravans, military camps, and expeditions.",
+        "📜 Lore": "These imposing cooking pots are commonly found in large camps where feeding many hungry travellers quickly is more important than travelling light.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Heavy Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove all food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---",
+        "🍲 Equipment Use": "- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Extra Large (XL)\n- **Capacity:** 12 L\n- **Typical Servings:** 12–16\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nAn Extra Large Cooking Pot can be placed over or suspended above a substantial heat source to prepare large quantities of food.\n\nIt can be used for:\n\n- Cooking large stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling large quantities of water\n- Preparing hot drinks\n- Cooking meals for large adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **12 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **12–16 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Extra Large Cooking Pot can be used to boil up to approximately **12 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires a substantial and sustained source of heat, such as:\n\n- Large campfire\n- Dedicated cooking fire\n- Large stove\n- Large bed of hot coals\n- Suitable magical heat source\n\nDue to its considerable size and volume, a small campfire may be insufficient to heat a fully loaded XL Cooking Pot effectively.\n\n### Transport\n\nAn XL Cooking Pot is technically portable but is significantly heavier and bulkier than smaller cooking pots.\n\nIt is most practical when transported using:\n\n- Pack animals\n- Carts\n- Wagons\n- Expedition equipment\n- Multiple party members\n- Creatures capable of carrying heavy loads\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nAn Extra Large Cooking Pot provides exceptional cooking capacity at the cost of considerable weight and bulk.\n\nIt is best suited to large adventuring parties, caravans, expedition camps, military groups, and semi-permanent camps where feeding many creatures outweighs the difficulty of transporting the pot."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A massive iron cooking pot with a deep, broad body and heavily reinforced carrying handle for suspension over a large cooking fire. Designed for substantial group cooking, its considerable capacity makes it ideal for large adventuring parties, caravans, milita",
+      "metadata": {
+        "title": "Extra Large (XL) Cooking Pot",
+        "slug": "extra-large-xl-cooking-pot",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.6,
+        "marketPrice": 1.2,
+        "marketValueSourceText": "60 Pennies",
+        "marketPriceSourceText": "120 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "High",
+        "material": "Iron",
+        "style": "Camp Cooking Equipment",
+        "weight": "8.0 kg",
+        "capacity": "12 L",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/extra-large-xl-cooking-pot/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/extra-large-xl-cooking-pot/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "extra large (xl) cooking pot item equipment adventuring gear {\"title\":\"extra large (xl) cooking pot\",\"slug\":\"extra-large-xl-cooking-pot\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.6,\"marketprice\":1.2,\"marketvaluesourcetext\":\"60 pennies\",\"marketpricesourcetext\":\"120 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"high\",\"material\":\"iron\",\"style\":\"camp cooking equipment\",\"weight\":\"8.0 kg\",\"capacity\":\"12 l\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | high |\n| material | iron |\n| style | camp cooking equipment |\n| weight | 8.0 kg |\n| capacity | 12 l |\n| enchantment | none |\n| market value | 60 pennies |\n| market price | 120 pennies |\n\n## 📝 description\n\na massive iron cooking pot with a deep, broad body and heavily reinforced carrying handle for suspension over a large cooking fire. designed for substantial group cooking, its considerable capacity makes it ideal for large adventuring parties, caravans, military camps, and expeditions.\n\n## 📜 lore\n\nthese imposing cooking pots are commonly found in large camps where feeding many hungry travellers quickly is more important than travelling light.\n\n## ⚒️ crafting information\n\n### materials needed\n- iron\n- reinforced iron handle\n- heavy metal rivets\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- metalworking tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 maintenance\n- **cleaning requirement:** clean thoroughly after cooking and remove all food residue before storage.\n- **upkeep needed:** keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **durability loss per use:** minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 equipment use\n\n- **primary use:** cooking / heating\n- **item category:** camp cooking equipment\n- **pot size:** extra large (xl)\n- **capacity:** 12 l\n- **typical servings:** 12–16\n- **portable:** yes\n- **reusable:** yes\n- **open flame safe:** yes\n- **can boil water:** yes\n\n### cooking\n\nan extra large cooking pot can be placed over or suspended above a substantial heat source to prepare large quantities of food.\n\nit can be used for:\n\n- cooking large stews\n- cooking soups\n- boiling vegetables\n- heating prepared food\n- preparing grains\n- making broth\n- boiling large quantities of water\n- preparing hot drinks\n- cooking meals for large adventuring parties\n- preparing large batches of food\n\n### capacity\n\nthe pot can hold approximately **12 litres** of liquid or food.\n\nunder normal circumstances, this is sufficient to prepare approximately **12–16 standard medium-sized servings**, depending on the food being prepared.\n\nthe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### water boiling\n\nthe extra large cooking pot can be used to boil up to approximately **12 litres of water** when an appropriate heat source is available.\n\nboiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- poisons\n- chemical contamination\n- heavy metals\n- magical contamination\n- curses\n- other supernatural effects\n\n### heat source\n\nthe pot requires a substantial and sustained source of heat, such as:\n\n- large campfire\n- dedicated cooking fire\n- large stove\n- large bed of hot coals\n- suitable magical heat source\n\ndue to its considerable size and volume, a small campfire may be insufficient to heat a fully loaded xl cooking pot effectively.\n\n### transport\n\nan xl cooking pot is technically portable but is significantly heavier and bulkier than smaller cooking pots.\n\nit is most practical when transported using:\n\n- pack animals\n- carts\n- wagons\n- expedition equipment\n- multiple party members\n- creatures capable of carrying heavy loads\n\n### environmental limitations\n\ncooking may become more difficult when exposed to:\n\n- heavy rain\n- strong wind\n- extreme cold\n- insufficient fuel\n- unstable terrain\n- poorly maintained fires\n\nshelter or specialised cooking equipment may be required in severe conditions.\n\n### limitations\n\nan extra large cooking pot provides exceptional cooking capacity at the cost of considerable weight and bulk.\n\nit is best suited to large adventuring parties, caravans, expedition camps, military groups, and semi-permanent camps where feeding many creatures outweighs the difficulty of transporting the pot."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-flint-and-steel-index",
+      "title": "Flint & Steel",
+      "slug": "flint-and-steel",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/flint-and-steel",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/flint-and-steel/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/flint-and-steel",
+      "content": "---\ntitle: \"Flint & Steel\"\nslug: flint-and-steel\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.8\nmarket_price: 1\nmarket_value_source_text: \"80 Copper\"\nmarket_price_source_text: \"1 Mark\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\n  - Adventuring Gear\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Flint / Steel\nStyle: Fire-Starting Tool\nWeight: 0.1 kg\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Flint / Steel |\n| Style | Fire-Starting Tool |\n| Weight | 0.1 kg |\n| Enchantment | None |\n| Market Value | 80 Copper |\n| Market Price | 1 Mark |\n\n## Description\nA simple fire-starting kit consisting of a shaped piece of flint and a hardened steel striker. Striking the steel firmly against the flint produces hot sparks capable of igniting dry tinder, making the kit an essential tool for travellers, explorers, and adventurers.\n\n## Lore\nA simple and dependable tool carried wherever travellers need fire without relying upon magic.\n\n### Fire Starting\nThe sparks can be directed onto suitable **dry tinder**, which can then be carefully developed into a larger fire using kindling and fuel.\n\nSuitable tinder may include:\n\n- Dry grass\n- Bark fibres\n- Wood shavings\n- Dry moss\n- Prepared tinder\n- Other easily ignited materials\n\n### Environmental Conditions\nStarting a fire becomes more difficult when the user, tinder, or surrounding materials are exposed to adverse conditions such as:\n\n- Rain\n- Strong wind\n- High humidity\n- Wet tinder\n- Snow\n- Extreme cold\n\nShelter, prepared tinder, appropriate survival techniques, or magical assistance may be required in particularly severe conditions.\n\n### Limitations\nFlint and Steel does **not** create fire directly.\n\nIt produces sparks capable of igniting suitable tinder and therefore cannot normally ignite wet materials, solid logs, or other materials that require sustained heat to burn.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Flint]]\n- 1x Small Piece of [[Steel]]\n- 1x [[Leather Cord]]\n\n### Tools Required\n- Smithing Hammer\n- Anvil\n- Grinding Stone\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Poorly shaped striker, damaged flint, weak sparks, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Flint / Steel |\n| Style | Fire-Starting Tool |\n| Weight | 0.1 kg |\n| Enchantment | None |\n| Market Value | 80 Copper |\n| Market Price | 1 Mark |\n\n## Description\nA simple fire-starting kit consisting of a shaped piece of flint and a hardened steel striker. Striking the steel firmly against the flint produces hot sparks capable of igniting dry tinder, making the kit an essential tool for travellers, explorers, and adventurers.\n\n## Lore\nA simple and dependable tool carried wherever travellers need fire without relying upon magic.\n\n### Fire Starting\nThe sparks can be directed onto suitable **dry tinder**, which can then be carefully developed into a larger fire using kindling and fuel.\n\nSuitable tinder may include:\n\n- Dry grass\n- Bark fibres\n- Wood shavings\n- Dry moss\n- Prepared tinder\n- Other easily ignited materials\n\n### Environmental Conditions\nStarting a fire becomes more difficult when the user, tinder, or surrounding materials are exposed to adverse conditions such as:\n\n- Rain\n- Strong wind\n- High humidity\n- Wet tinder\n- Snow\n- Extreme cold\n\nShelter, prepared tinder, appropriate survival techniques, or magical assistance may be required in particularly severe conditions.\n\n### Limitations\nFlint and Steel does **not** create fire directly.\n\nIt produces sparks capable of igniting suitable tinder and therefore cannot normally ignite wet materials, solid logs, or other materials that require sustained heat to burn.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Flint]]\n- 1x Small Piece of [[Steel]]\n- 1x [[Leather Cord]]\n\n### Tools Required\n- Smithing Hammer\n- Anvil\n- Grinding Stone\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Poorly shaped striker, damaged flint, weak sparks, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Flint / Steel |\n| Style | Fire-Starting Tool |\n| Weight | 0.1 kg |\n| Enchantment | None |\n| Market Value | 80 Copper |\n| Market Price | 1 Mark |",
+        "Description": "A simple fire-starting kit consisting of a shaped piece of flint and a hardened steel striker. Striking the steel firmly against the flint produces hot sparks capable of igniting dry tinder, making the kit an essential tool for travellers, explorers, and adventurers.",
+        "Lore": "A simple and dependable tool carried wherever travellers need fire without relying upon magic.\n\n### Fire Starting\nThe sparks can be directed onto suitable **dry tinder**, which can then be carefully developed into a larger fire using kindling and fuel.\n\nSuitable tinder may include:\n\n- Dry grass\n- Bark fibres\n- Wood shavings\n- Dry moss\n- Prepared tinder\n- Other easily ignited materials\n\n### Environmental Conditions\nStarting a fire becomes more difficult when the user, tinder, or surrounding materials are exposed to adverse conditions such as:\n\n- Rain\n- Strong wind\n- High humidity\n- Wet tinder\n- Snow\n- Extreme cold\n\nShelter, prepared tinder, appropriate survival techniques, or magical assistance may be required in particularly severe conditions.\n\n### Limitations\nFlint and Steel does **not** create fire directly.\n\nIt produces sparks capable of igniting suitable tinder and therefore cannot normally ignite wet materials, solid logs, or other materials that require sustained heat to burn.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x [[Flint]]\n- 1x Small Piece of [[Steel]]\n- 1x [[Leather Cord]]\n\n### Tools Required\n- Smithing Hammer\n- Anvil\n- Grinding Stone\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Poorly shaped striker, damaged flint, weak sparks, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A simple fire-starting kit consisting of a shaped piece of flint and a hardened steel striker. Striking the steel firmly against the flint produces hot sparks capable of igniting dry tinder, making the kit an essential tool for travellers, explorers, and adven",
+      "metadata": {
+        "title": "Flint & Steel",
+        "slug": "flint-and-steel",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.8,
+        "marketPrice": 1,
+        "marketValueSourceText": "80 Copper",
+        "marketPriceSourceText": "1 Mark",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment",
+          "Adventuring Gear"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Flint / Steel",
+        "style": "Fire-Starting Tool",
+        "weight": "0.1 kg",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/flint-and-steel/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/flint-and-steel/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "flint & steel item equipment adventuring gear {\"title\":\"flint & steel\",\"slug\":\"flint-and-steel\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.8,\"marketprice\":1,\"marketvaluesourcetext\":\"80 copper\",\"marketpricesourcetext\":\"1 mark\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\",\"adventuring gear\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"flint / steel\",\"style\":\"fire-starting tool\",\"weight\":\"0.1 kg\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | flint / steel |\n| style | fire-starting tool |\n| weight | 0.1 kg |\n| enchantment | none |\n| market value | 80 copper |\n| market price | 1 mark |\n\n## description\na simple fire-starting kit consisting of a shaped piece of flint and a hardened steel striker. striking the steel firmly against the flint produces hot sparks capable of igniting dry tinder, making the kit an essential tool for travellers, explorers, and adventurers.\n\n## lore\na simple and dependable tool carried wherever travellers need fire without relying upon magic.\n\n### fire starting\nthe sparks can be directed onto suitable **dry tinder**, which can then be carefully developed into a larger fire using kindling and fuel.\n\nsuitable tinder may include:\n\n- dry grass\n- bark fibres\n- wood shavings\n- dry moss\n- prepared tinder\n- other easily ignited materials\n\n### environmental conditions\nstarting a fire becomes more difficult when the user, tinder, or surrounding materials are exposed to adverse conditions such as:\n\n- rain\n- strong wind\n- high humidity\n- wet tinder\n- snow\n- extreme cold\n\nshelter, prepared tinder, appropriate survival techniques, or magical assistance may be required in particularly severe conditions.\n\n### limitations\nflint and steel does **not** create fire directly.\n\nit produces sparks capable of igniting suitable tinder and therefore cannot normally ignite wet materials, solid logs, or other materials that require sustained heat to burn.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x [[flint]]\n- 1x small piece of [[steel]]\n- 1x [[leather cord]]\n\n### tools required\n- smithing hammer\n- anvil\n- grinding stone\n- metalworking tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** poorly shaped striker, damaged flint, weak sparks, or reduced durability."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-hemp-rope-15m-index",
+      "title": "Hemp Rope - 15m",
+      "slug": "hemp-rope-15m",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/hemp-rope-15m",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/hemp-rope-15m/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/hemp-rope-15m",
+      "content": "---\ntitle: \"Hemp Rope - 15m\"\nslug: hemp-rope-15m\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.05\nmarket_price: 0.1\nmarket_value_source_text: \"5 Pennies\"\nmarket_price_source_text: \"10 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\n  - Adventuring Gear\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Hemp Fibre\nStyle: Utility Equipment\nWeight: 3.0 kg\nLength: 15 m\nEnchantment: None\nWeight Limit: 150 kg\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 3.0 kg |\n| Length | 15 m |\n| Enchantment | None |\n| Market Value | 5 Pennies |\n| Market Price | 10 Pennies |\n| Weight Limit | 150 kg |\n\n## Description\nA 15-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its coarse construction provides excellent grip and dependable strength, making it useful for climbing, securing equipment, constructing shelters, tying loads, and countless other tasks encountered while travelling.\n\n- **Safe Weight Limit:** 250 kg\n- **Overloaded:** Above 250 kg\n- **Load Type:** Static / Climbing / Hauling\n\n## Lore\nOne of Asteria's simplest and most versatile tools, hemp rope is carried by travellers, sailors, labourers, explorers, and adventurers.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 3.0 kg |\n| Length | 15 m |\n| Enchantment | None |\n| Market Value | 5 Pennies |\n| Market Price | 10 Pennies |\n| Weight Limit | 150 kg |\n\n## Description\nA 15-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its coarse construction provides excellent grip and dependable strength, making it useful for climbing, securing equipment, constructing shelters, tying loads, and countless other tasks encountered while travelling.\n\n- **Safe Weight Limit:** 250 kg\n- **Overloaded:** Above 250 kg\n- **Load Type:** Static / Climbing / Hauling\n\n## Lore\nOne of Asteria's simplest and most versatile tools, hemp rope is carried by travellers, sailors, labourers, explorers, and adventurers.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 3.0 kg |\n| Length | 15 m |\n| Enchantment | None |\n| Market Value | 5 Pennies |\n| Market Price | 10 Pennies |\n| Weight Limit | 150 kg |",
+        "Description": "A 15-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its coarse construction provides excellent grip and dependable strength, making it useful for climbing, securing equipment, constructing shelters, tying loads, and countless other tasks encountered while travelling.\n\n- **Safe Weight Limit:** 250 kg\n- **Overloaded:** Above 250 kg\n- **Load Type:** Static / Climbing / Hauling",
+        "Lore": "One of Asteria's simplest and most versatile tools, hemp rope is carried by travellers, sailors, labourers, explorers, and adventurers.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A 15-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its coarse construction provides excellent grip and dependable strength, making it useful for climbing, securing equipment, constructing shelters, tying loads, and countless ot",
+      "metadata": {
+        "title": "Hemp Rope - 15m",
+        "slug": "hemp-rope-15m",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.05,
+        "marketPrice": 0.1,
+        "marketValueSourceText": "5 Pennies",
+        "marketPriceSourceText": "10 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment",
+          "Adventuring Gear"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Hemp Fibre",
+        "style": "Utility Equipment",
+        "weight": "3.0 kg",
+        "length": "15 m",
+        "enchantment": "None",
+        "weightLimit": "150 kg"
+      },
+      "tags": [
+        "#Item",
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/hemp-rope-15m/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/hemp-rope-15m/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "hemp rope - 15m item equipment adventuring gear {\"title\":\"hemp rope - 15m\",\"slug\":\"hemp-rope-15m\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.05,\"marketprice\":0.1,\"marketvaluesourcetext\":\"5 pennies\",\"marketpricesourcetext\":\"10 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\",\"adventuring gear\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"hemp fibre\",\"style\":\"utility equipment\",\"weight\":\"3.0 kg\",\"length\":\"15 m\",\"enchantment\":\"none\",\"weightlimit\":\"150 kg\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | hemp fibre |\n| style | utility equipment |\n| weight | 3.0 kg |\n| length | 15 m |\n| enchantment | none |\n| market value | 5 pennies |\n| market price | 10 pennies |\n| weight limit | 150 kg |\n\n## description\na 15-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. its coarse construction provides excellent grip and dependable strength, making it useful for climbing, securing equipment, constructing shelters, tying loads, and countless other tasks encountered while travelling.\n\n- **safe weight limit:** 250 kg\n- **overloaded:** above 250 kg\n- **load type:** static / climbing / hauling\n\n## lore\none of asteria's simplest and most versatile tools, hemp rope is carried by travellers, sailors, labourers, explorers, and adventurers.\n\n### common uses\nhemp rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- climbing\n- descending\n- securing equipment\n- tying loads\n- creating basic shelters\n- constructing temporary structures\n- making basic traps\n- tethering animals\n- hauling equipment\n- crossing difficult terrain\n- creating rope lines\n- binding objects\n\n### environmental limitations\nhemp rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\npotential hazards include:\n\n- prolonged water exposure\n- fire\n- extreme heat\n- sharp surfaces\n- heavy abrasion\n- excessive loads\n- rot\n- chemical damage\n- magical or environmental corruption\n\nwet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### limitations\n\nhemp rope is strong and dependable but is not indestructible.\n\ndamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ crafting information\n\n### materials needed\n- hemp fibre\n- binding thread\n\n### tools required\n- spindle\n- rope-making tools\n- cutting knife\n- measuring tools\n\n### crafting difficulty\n- **skill check:** rope making\n- **required profession & rank:** rope maker — novice\n- **failure consequences:** uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-hemp-rope-30-m-index",
+      "title": "Hemp Rope - 30 m",
+      "slug": "hemp-rope-30-m",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/hemp-rope-30-m",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/hemp-rope-30-m/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/hemp-rope-30-m",
+      "content": "---\ntitle: \"Hemp Rope - 30 m\"\nslug: hemp-rope-30-m\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.1\nmarket_price: 0.2\nmarket_value_source_text: \"10 Pennies\"\nmarket_price_source_text: \"20 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\n  - Adventuring Gear\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Hemp Fibre\nStyle: Utility Equipment\nWeight: 6.0 kg\nLength: 30 m\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 6.0 kg |\n| Length | 30 m |\n| Enchantment | None |\n| Market Value | 10 Pennies |\n| Market Price | 20 Pennies |\n\n## Description\nA 30-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its extended length makes it particularly useful for climbing, hauling, securing large loads, constructing shelters, and navigating difficult terrain where shorter ropes may be insufficient.\n\n## Lore\nLong coils of hemp rope are favoured by explorers, sailors, climbers, labourers, and adventurers expecting difficult or unpredictable terrain.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\n\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 6.0 kg |\n| Length | 30 m |\n| Enchantment | None |\n| Market Value | 10 Pennies |\n| Market Price | 20 Pennies |\n\n## Description\nA 30-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its extended length makes it particularly useful for climbing, hauling, securing large loads, constructing shelters, and navigating difficult terrain where shorter ropes may be insufficient.\n\n## Lore\nLong coils of hemp rope are favoured by explorers, sailors, climbers, labourers, and adventurers expecting difficult or unpredictable terrain.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\n\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Hemp Fibre |\n| Style | Utility Equipment |\n| Weight | 6.0 kg |\n| Length | 30 m |\n| Enchantment | None |\n| Market Value | 10 Pennies |\n| Market Price | 20 Pennies |",
+        "Description": "A 30-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its extended length makes it particularly useful for climbing, hauling, securing large loads, constructing shelters, and navigating difficult terrain where shorter ropes may be insufficient.",
+        "Lore": "Long coils of hemp rope are favoured by explorers, sailors, climbers, labourers, and adventurers expecting difficult or unpredictable terrain.\n\n### Common Uses\nHemp Rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- Climbing\n- Descending\n- Securing equipment\n- Tying loads\n- Creating basic shelters\n- Constructing temporary structures\n- Making basic traps\n- Tethering animals\n- Hauling equipment\n- Crossing difficult terrain\n- Creating rope lines\n- Binding objects\n\n### Environmental Limitations\n\nHemp Rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\nPotential hazards include:\n\n- Prolonged water exposure\n- Fire\n- Extreme heat\n- Sharp surfaces\n- Heavy abrasion\n- Excessive loads\n- Rot\n- Chemical damage\n- Magical or environmental corruption\n\nWet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### Limitations\n\nHemp Rope is strong and dependable but is not indestructible.\n\nDamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Hemp Fibre\n- Binding Thread\n\n### Tools Required\n- Spindle\n- Rope-Making Tools\n- Cutting Knife\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Rope Making\n- **Required Profession & Rank:** Rope Maker — Novice\n- **Failure Consequences:** Uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A 30-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. Its extended length makes it particularly useful for climbing, hauling, securing large loads, constructing shelters, and navigating difficult terrain where shorter ropes may be",
+      "metadata": {
+        "title": "Hemp Rope - 30 m",
+        "slug": "hemp-rope-30-m",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.1,
+        "marketPrice": 0.2,
+        "marketValueSourceText": "10 Pennies",
+        "marketPriceSourceText": "20 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment",
+          "Adventuring Gear"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Hemp Fibre",
+        "style": "Utility Equipment",
+        "weight": "6.0 kg",
+        "length": "30 m",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/hemp-rope-30-m/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/hemp-rope-30-m/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "hemp rope - 30 m item equipment adventuring gear {\"title\":\"hemp rope - 30 m\",\"slug\":\"hemp-rope-30-m\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.1,\"marketprice\":0.2,\"marketvaluesourcetext\":\"10 pennies\",\"marketpricesourcetext\":\"20 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\",\"adventuring gear\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"hemp fibre\",\"style\":\"utility equipment\",\"weight\":\"6.0 kg\",\"length\":\"30 m\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | hemp fibre |\n| style | utility equipment |\n| weight | 6.0 kg |\n| length | 30 m |\n| enchantment | none |\n| market value | 10 pennies |\n| market price | 20 pennies |\n\n## description\na 30-metre length of tightly twisted hemp fibre woven into a strong, flexible rope. its extended length makes it particularly useful for climbing, hauling, securing large loads, constructing shelters, and navigating difficult terrain where shorter ropes may be insufficient.\n\n## lore\nlong coils of hemp rope are favoured by explorers, sailors, climbers, labourers, and adventurers expecting difficult or unpredictable terrain.\n\n### common uses\nhemp rope can be used for a wide variety of adventuring and everyday tasks, including:\n\n- climbing\n- descending\n- securing equipment\n- tying loads\n- creating basic shelters\n- constructing temporary structures\n- making basic traps\n- tethering animals\n- hauling equipment\n- crossing difficult terrain\n- creating rope lines\n- binding objects\n\n### environmental limitations\n\nhemp rope is a natural fibre product and can deteriorate when repeatedly exposed to poor conditions.\n\npotential hazards include:\n\n- prolonged water exposure\n- fire\n- extreme heat\n- sharp surfaces\n- heavy abrasion\n- excessive loads\n- rot\n- chemical damage\n- magical or environmental corruption\n\nwet hemp rope should be properly dried before long-term storage to reduce the risk of deterioration.\n\n### limitations\n\nhemp rope is strong and dependable but is not indestructible.\n\ndamaged, heavily frayed, burned, rotten, or overloaded rope may weaken or break and should be repaired or replaced before being relied upon for climbing or load-bearing tasks.\n\n## ⚒️ crafting information\n\n### materials needed\n- hemp fibre\n- binding thread\n\n### tools required\n- spindle\n- rope-making tools\n- cutting knife\n- measuring tools\n\n### crafting difficulty\n- **skill check:** rope making\n- **required profession & rank:** rope maker — novice\n- **failure consequences:** uneven twisting, weak sections, fraying fibres, reduced load capacity, or reduced durability."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-large-cooking-pot-index",
+      "title": "Large Cooking Pot",
+      "slug": "large-cooking-pot",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/large-cooking-pot",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/large-cooking-pot/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/large-cooking-pot",
+      "content": "---\ntitle: \"Large Cooking Pot\"\nslug: large-cooking-pot\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.3\nmarket_price: 0.6\nmarket_value_source_text: \"30 Pennies\"\nmarket_price_source_text: \"60 Pennies\"\ntags:\n  - \"#Item\"\n  - Equipment\nItem Class: Common\nItem Quality: Average\nDurability: High\nMaterial: Iron\nStyle: Camp Cooking Equipment\nWeight: 4.0 kg\nCapacity: 6 L\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 4.0 kg |\n| Capacity | 6 L |\n| Enchantment | None |\n| Market Value | 30 Pennies |\n| Market Price | 60 Pennies |\n\n## Description\nA large iron cooking pot with a deep, broad body and reinforced carrying handle for suspending it over a campfire. Built for group cooking, its generous capacity allows substantial meals to be prepared for adventuring parties, expedition camps, military groups, and travelling communities.\n\n## Lore\nA familiar sight around larger camps, these sturdy pots have fed countless adventurers, soldiers, labourers, and travellers throughout Asteria.\n\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Large\n- **Capacity:** 6 L\n- **Typical Servings:** 6–8\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Large Cooking Pot can be placed over or suspended above a suitable heat source to prepare substantial quantities of food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **6 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **6–8 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Large Cooking Pot can be used to boil up to approximately **6 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\nDue to its larger size, a **stronger and more sustained heat source** may be required compared with smaller cooking pots.\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Large Cooking Pot provides substantial cooking capacity but is considerably heavier and bulkier than Small or Medium Cooking Pots.\n\nIt is best suited to adventuring parties, expedition camps, caravans, and other groups where its increased capacity outweighs the additional carrying weight.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 4.0 kg |\n| Capacity | 6 L |\n| Enchantment | None |\n| Market Value | 30 Pennies |\n| Market Price | 60 Pennies |\n\n## Description\nA large iron cooking pot with a deep, broad body and reinforced carrying handle for suspending it over a campfire. Built for group cooking, its generous capacity allows substantial meals to be prepared for adventuring parties, expedition camps, military groups, and travelling communities.\n\n## Lore\nA familiar sight around larger camps, these sturdy pots have fed countless adventurers, soldiers, labourers, and travellers throughout Asteria.\n\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Large\n- **Capacity:** 6 L\n- **Typical Servings:** 6–8\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Large Cooking Pot can be placed over or suspended above a suitable heat source to prepare substantial quantities of food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **6 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **6–8 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Large Cooking Pot can be used to boil up to approximately **6 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\nDue to its larger size, a **stronger and more sustained heat source** may be required compared with smaller cooking pots.\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Large Cooking Pot provides substantial cooking capacity but is considerably heavier and bulkier than Small or Medium Cooking Pots.\n\nIt is best suited to adventuring parties, expedition camps, caravans, and other groups where its increased capacity outweighs the additional carrying weight.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 4.0 kg |\n| Capacity | 6 L |\n| Enchantment | None |\n| Market Value | 30 Pennies |\n| Market Price | 60 Pennies |",
+        "Description": "A large iron cooking pot with a deep, broad body and reinforced carrying handle for suspending it over a campfire. Built for group cooking, its generous capacity allows substantial meals to be prepared for adventuring parties, expedition camps, military groups, and travelling communities.",
+        "Lore": "A familiar sight around larger camps, these sturdy pots have fed countless adventurers, soldiers, labourers, and travellers throughout Asteria.\n\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean thoroughly after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---",
+        "🍲 Equipment Use": "- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Large\n- **Capacity:** 6 L\n- **Typical Servings:** 6–8\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Large Cooking Pot can be placed over or suspended above a suitable heat source to prepare substantial quantities of food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for adventuring parties\n- Preparing large batches of food\n\n### Capacity\n\nThe pot can hold approximately **6 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **6–8 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Large Cooking Pot can be used to boil up to approximately **6 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\nDue to its larger size, a **stronger and more sustained heat source** may be required compared with smaller cooking pots.\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Large Cooking Pot provides substantial cooking capacity but is considerably heavier and bulkier than Small or Medium Cooking Pots.\n\nIt is best suited to adventuring parties, expedition camps, caravans, and other groups where its increased capacity outweighs the additional carrying weight.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Iron\n- Reinforced Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A large iron cooking pot with a deep, broad body and reinforced carrying handle for suspending it over a campfire. Built for group cooking, its generous capacity allows substantial meals to be prepared for adventuring parties, expedition camps, military groups",
+      "metadata": {
+        "title": "Large Cooking Pot",
+        "slug": "large-cooking-pot",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.3,
+        "marketPrice": 0.6,
+        "marketValueSourceText": "30 Pennies",
+        "marketPriceSourceText": "60 Pennies",
+        "tags": [
+          "#Item",
+          "Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "High",
+        "material": "Iron",
+        "style": "Camp Cooking Equipment",
+        "weight": "4.0 kg",
+        "capacity": "6 L",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "large cooking pot item equipment adventuring gear {\"title\":\"large cooking pot\",\"slug\":\"large-cooking-pot\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.3,\"marketprice\":0.6,\"marketvaluesourcetext\":\"30 pennies\",\"marketpricesourcetext\":\"60 pennies\",\"tags\":[\"#item\",\"equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"high\",\"material\":\"iron\",\"style\":\"camp cooking equipment\",\"weight\":\"4.0 kg\",\"capacity\":\"6 l\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | high |\n| material | iron |\n| style | camp cooking equipment |\n| weight | 4.0 kg |\n| capacity | 6 l |\n| enchantment | none |\n| market value | 30 pennies |\n| market price | 60 pennies |\n\n## description\na large iron cooking pot with a deep, broad body and reinforced carrying handle for suspending it over a campfire. built for group cooking, its generous capacity allows substantial meals to be prepared for adventuring parties, expedition camps, military groups, and travelling communities.\n\n## lore\na familiar sight around larger camps, these sturdy pots have fed countless adventurers, soldiers, labourers, and travellers throughout asteria.\n\n\n### 🔧 maintenance\n- **cleaning requirement:** clean thoroughly after cooking and remove food residue before storage.\n- **upkeep needed:** keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **durability loss per use:** minimal during normal cooking; increased by severe overheating, heavy impacts, corrosion, or improper use.\n\n---\n\n## 🍲 equipment use\n\n- **primary use:** cooking / heating\n- **item category:** camp cooking equipment\n- **pot size:** large\n- **capacity:** 6 l\n- **typical servings:** 6–8\n- **portable:** yes\n- **reusable:** yes\n- **open flame safe:** yes\n- **can boil water:** yes\n\n### cooking\n\na large cooking pot can be placed over or suspended above a suitable heat source to prepare substantial quantities of food while travelling or camping.\n\nit can be used for:\n\n- cooking stews\n- cooking soups\n- boiling vegetables\n- heating prepared food\n- preparing grains\n- making broth\n- boiling water\n- preparing hot drinks\n- cooking meals for adventuring parties\n- preparing large batches of food\n\n### capacity\n\nthe pot can hold approximately **6 litres** of liquid or food.\n\nunder normal circumstances, this is sufficient to prepare approximately **6–8 standard medium-sized servings**, depending on the food being prepared.\n\nthe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### water boiling\n\nthe large cooking pot can be used to boil up to approximately **6 litres of water** when an appropriate heat source is available.\n\nboiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- poisons\n- chemical contamination\n- heavy metals\n- magical contamination\n- curses\n- other supernatural effects\n\n### heat source\n\nthe pot requires an appropriate source of heat, such as:\n\n- campfire\n- cooking fire\n- stove\n- hot coals\n- suitable magical heat source\n\ndue to its larger size, a **stronger and more sustained heat source** may be required compared with smaller cooking pots.\n\n### environmental limitations\n\ncooking may become more difficult when exposed to:\n\n- heavy rain\n- strong wind\n- extreme cold\n- insufficient fuel\n- unstable terrain\n- poorly maintained fires\n\nshelter or specialised cooking equipment may be required in severe conditions.\n\n### limitations\n\na large cooking pot provides substantial cooking capacity but is considerably heavier and bulkier than small or medium cooking pots.\n\nit is best suited to adventuring parties, expedition camps, caravans, and other groups where its increased capacity outweighs the additional carrying weight.\n\n## ⚒️ crafting information\n\n### materials needed\n- iron\n- reinforced iron handle\n- metal rivets\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- metalworking tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-medium-cooking-pot-index",
+      "title": "Medium Cooking Pot",
+      "slug": "medium-cooking-pot",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/medium-cooking-pot",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/medium-cooking-pot/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/medium-cooking-pot",
+      "content": "---\ntitle: \"Medium Cooking Pot\"\nslug: medium-cooking-pot\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.15\nmarket_price: 0.3\nmarket_value_source_text: \"15 Pennies\"\nmarket_price_source_text: \"30 Pennies\"\ntags:\n  - \"#Item\"\n  - Equipment\nItem Class: Common\nItem Quality: Average\nDurability: High\nMaterial: Iron\nStyle: Camp Cooking Equipment\nWeight: 2.0 kg\nCapacity: 3 L\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 2.0 kg |\n| Capacity | 3 L |\n| Enchantment | None |\n| Market Value | 15 Pennies |\n| Market Price | 30 Pennies |\n\n## Description\n\nA sturdy iron cooking pot with a broad body and reinforced carrying handle for suspending it over a campfire. Its moderate capacity provides enough room for preparing meals for several travellers while remaining practical to carry as part of an adventuring group's camp equipment.\n\n## 📜 Lore\n\nA dependable piece of cookware commonly carried by adventuring parties, travelling families, merchants, soldiers, hunters, and expedition camps throughout Asteria.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Medium\n- **Capacity:** 3 L\n- **Typical Servings:** 3–4\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Medium Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for small groups\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **3 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **3–4 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Medium Cooking Pot can be used to boil up to approximately **3 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Medium Cooking Pot provides a practical balance between **cooking capacity and portability**.\n\nIt is well suited to small adventuring groups but may require multiple batches when preparing meals for larger parties or Large-sized creatures.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 2.0 kg |\n| Capacity | 3 L |\n| Enchantment | None |\n| Market Value | 15 Pennies |\n| Market Price | 30 Pennies |\n\n## Description\n\nA sturdy iron cooking pot with a broad body and reinforced carrying handle for suspending it over a campfire. Its moderate capacity provides enough room for preparing meals for several travellers while remaining practical to carry as part of an adventuring group's camp equipment.\n\n## 📜 Lore\n\nA dependable piece of cookware commonly carried by adventuring parties, travelling families, merchants, soldiers, hunters, and expedition camps throughout Asteria.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Medium\n- **Capacity:** 3 L\n- **Typical Servings:** 3–4\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Medium Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for small groups\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **3 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **3–4 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Medium Cooking Pot can be used to boil up to approximately **3 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Medium Cooking Pot provides a practical balance between **cooking capacity and portability**.\n\nIt is well suited to small adventuring groups but may require multiple batches when preparing meals for larger parties or Large-sized creatures.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 2.0 kg |\n| Capacity | 3 L |\n| Enchantment | None |\n| Market Value | 15 Pennies |\n| Market Price | 30 Pennies |",
+        "Description": "A sturdy iron cooking pot with a broad body and reinforced carrying handle for suspending it over a campfire. Its moderate capacity provides enough room for preparing meals for several travellers while remaining practical to carry as part of an adventuring group's camp equipment.",
+        "📜 Lore": "A dependable piece of cookware commonly carried by adventuring parties, travelling families, merchants, soldiers, hunters, and expedition camps throughout Asteria.\n\n---",
+        "⚒️ Crafting Information": "### Materials Needed\n- Iron\n- Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---",
+        "🍲 Equipment Use": "- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Medium\n- **Capacity:** 3 L\n- **Typical Servings:** 3–4\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Medium Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Cooking meals for small groups\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **3 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **3–4 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Medium Cooking Pot can be used to boil up to approximately **3 litres of water** when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Medium Cooking Pot provides a practical balance between **cooking capacity and portability**.\n\nIt is well suited to small adventuring groups but may require multiple batches when preparing meals for larger parties or Large-sized creatures."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A sturdy iron cooking pot with a broad body and reinforced carrying handle for suspending it over a campfire. Its moderate capacity provides enough room for preparing meals for several travellers while remaining practical to carry as part of an adventuring gro",
+      "metadata": {
+        "title": "Medium Cooking Pot",
+        "slug": "medium-cooking-pot",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.15,
+        "marketPrice": 0.3,
+        "marketValueSourceText": "15 Pennies",
+        "marketPriceSourceText": "30 Pennies",
+        "tags": [
+          "#Item",
+          "Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "High",
+        "material": "Iron",
+        "style": "Camp Cooking Equipment",
+        "weight": "2.0 kg",
+        "capacity": "3 L",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "medium cooking pot item equipment adventuring gear {\"title\":\"medium cooking pot\",\"slug\":\"medium-cooking-pot\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.15,\"marketprice\":0.3,\"marketvaluesourcetext\":\"15 pennies\",\"marketpricesourcetext\":\"30 pennies\",\"tags\":[\"#item\",\"equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"high\",\"material\":\"iron\",\"style\":\"camp cooking equipment\",\"weight\":\"2.0 kg\",\"capacity\":\"3 l\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | high |\n| material | iron |\n| style | camp cooking equipment |\n| weight | 2.0 kg |\n| capacity | 3 l |\n| enchantment | none |\n| market value | 15 pennies |\n| market price | 30 pennies |\n\n## description\n\na sturdy iron cooking pot with a broad body and reinforced carrying handle for suspending it over a campfire. its moderate capacity provides enough room for preparing meals for several travellers while remaining practical to carry as part of an adventuring group's camp equipment.\n\n## 📜 lore\n\na dependable piece of cookware commonly carried by adventuring parties, travelling families, merchants, soldiers, hunters, and expedition camps throughout asteria.\n\n---\n\n## ⚒️ crafting information\n\n### materials needed\n- iron\n- iron handle\n- metal rivets\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- metalworking tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 maintenance\n- **cleaning requirement:** clean after cooking and remove food residue before storage.\n- **upkeep needed:** keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **durability loss per use:** minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 equipment use\n\n- **primary use:** cooking / heating\n- **item category:** camp cooking equipment\n- **pot size:** medium\n- **capacity:** 3 l\n- **typical servings:** 3–4\n- **portable:** yes\n- **reusable:** yes\n- **open flame safe:** yes\n- **can boil water:** yes\n\n### cooking\n\na medium cooking pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nit can be used for:\n\n- cooking stews\n- cooking soups\n- boiling vegetables\n- heating prepared food\n- preparing grains\n- making broth\n- boiling water\n- preparing hot drinks\n- cooking meals for small groups\n- other basic camp cooking\n\n### capacity\n\nthe pot can hold approximately **3 litres** of liquid or food.\n\nunder normal circumstances, this is sufficient to prepare approximately **3–4 standard medium-sized servings**, depending on the food being prepared.\n\nthe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### water boiling\n\nthe medium cooking pot can be used to boil up to approximately **3 litres of water** when an appropriate heat source is available.\n\nboiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- poisons\n- chemical contamination\n- heavy metals\n- magical contamination\n- curses\n- other supernatural effects\n\n### heat source\n\nthe pot requires an appropriate source of heat, such as:\n\n- campfire\n- cooking fire\n- stove\n- hot coals\n- suitable magical heat source\n\n### environmental limitations\n\ncooking may become more difficult when exposed to:\n\n- heavy rain\n- strong wind\n- extreme cold\n- insufficient fuel\n- unstable terrain\n- poorly maintained fires\n\nshelter or specialised cooking equipment may be required in severe conditions.\n\n### limitations\n\na medium cooking pot provides a practical balance between **cooking capacity and portability**.\n\nit is well suited to small adventuring groups but may require multiple batches when preparing meals for larger parties or large-sized creatures."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-silver-cup-index",
+      "title": "Silver Cup",
+      "slug": "silver-cup",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/silver-cup",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/silver-cup/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/silver-cup",
+      "content": "---\ntitle: \"Silver Cup\"\nslug: silver-cup\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 30\nmarket_price: 60\nmarket_value_source_text: \"30 Marks\"\nmarket_price_source_text: \"60 Marks\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\n  - Tableware\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Silver\nStyle: Tableware\nWeight: 0.3 kg\nCapacity: 300 mL\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Silver |\n| Style | Tableware |\n| Weight | 0.3 kg |\n| Capacity | 300 mL |\n| Enchantment | None |\n| Market Value | 30 Marks |\n| Market Price | 60 Marks |\n\n# 🥛 Silver Cup\n\n## 📝 Description\n\nA solid silver drinking cup with a smooth polished surface, gently flared rim, and weighted base. Simple shaping and restrained detailing make it suitable for everyday use among wealthy households while remaining elegant enough for feasts, ceremonies, and formal occasions.\n\n## 📜 Lore\n\nSilver cups are common symbols of comfortable wealth, frequently found in noble households, prosperous taverns, temples, and ceremonial collections.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Silver\n- Polishing Compound\n\n### Tools Required\n- Forge\n- Crucible\n- Casting Mould\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n- Polishing Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, cracks, excessive material loss, poor balance, cosmetic defects, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n\n- **Cleaning Requirement:** Wash after use and remove residue before storage.\n- **Upkeep Needed:** Periodically polish the silver to remove tarnishing and maintain its appearance.\n- **Durability Loss per Use:** Negligible during normal use; increased by heavy impacts, crushing, extreme heat, or improper handling.\n\n---\n\n## 🥛 Item Use\n\n- **Primary Use:** Drinking Vessel\n- **Item Category:** Tableware\n- **Material:** Silver\n- **Capacity:** 300 mL\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Food Safe:** Yes\n\n### Drinking Vessel\n\nA Silver Cup can hold approximately **300 mL of liquid** and is suitable for serving:\n\n- Water\n- Ale\n- Wine\n- Mead\n- Milk\n- Juice\n- Herbal drinks\n- Other consumable liquids\n\nThe cup provides no inherent benefit to the liquid it contains unless modified through craftsmanship, alchemy, magic, or enchantment.\n\n---\n\n## ✨ Enchantment Use\n\nAs a crafted metal object, a Silver Cup may be used as the target item for compatible enchantments.\n\nPotential enchanted cups could be created for purposes such as:\n\n- Purifying liquids\n- Maintaining liquid temperature\n- Detecting contaminants\n- Ceremonial rituals\n- Magical drinking effects\n- Religious or arcane functions\n\nAny enchantment applied to the cup must follow the normal **Asteria Enchanting System**, including the enchantment limitations of the material used.\n\n---\n\n## 💰 Material Value\n\nA significant portion of a Silver Cup's value comes from the silver used in its construction.\n\nDamaged or unwanted cups may therefore still retain value as recyclable silver and can potentially be melted down and reforged into other silver items.\n\nThe amount of usable silver recovered depends upon the item's condition and the effectiveness of the recycling or smithing process.\n\n---\n\n## ⚠️ Limitations\n\nA Silver Cup is more resistant to normal wear than wooden or ceramic drinking vessels but may still:\n\n- Dent under heavy impacts\n- Scratch during rough handling\n- Tarnish over time\n- Bend under excessive force\n- Melt when exposed to sufficient heat\n\nDamage that does not destroy the cup may potentially be repaired by a suitable metalworker.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Silver |\n| Style | Tableware |\n| Weight | 0.3 kg |\n| Capacity | 300 mL |\n| Enchantment | None |\n| Market Value | 30 Marks |\n| Market Price | 60 Marks |\n\n# 🥛 Silver Cup\n\n## 📝 Description\n\nA solid silver drinking cup with a smooth polished surface, gently flared rim, and weighted base. Simple shaping and restrained detailing make it suitable for everyday use among wealthy households while remaining elegant enough for feasts, ceremonies, and formal occasions.\n\n## 📜 Lore\n\nSilver cups are common symbols of comfortable wealth, frequently found in noble households, prosperous taverns, temples, and ceremonial collections.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Silver\n- Polishing Compound\n\n### Tools Required\n- Forge\n- Crucible\n- Casting Mould\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n- Polishing Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, cracks, excessive material loss, poor balance, cosmetic defects, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n\n- **Cleaning Requirement:** Wash after use and remove residue before storage.\n- **Upkeep Needed:** Periodically polish the silver to remove tarnishing and maintain its appearance.\n- **Durability Loss per Use:** Negligible during normal use; increased by heavy impacts, crushing, extreme heat, or improper handling.\n\n---\n\n## 🥛 Item Use\n\n- **Primary Use:** Drinking Vessel\n- **Item Category:** Tableware\n- **Material:** Silver\n- **Capacity:** 300 mL\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Food Safe:** Yes\n\n### Drinking Vessel\n\nA Silver Cup can hold approximately **300 mL of liquid** and is suitable for serving:\n\n- Water\n- Ale\n- Wine\n- Mead\n- Milk\n- Juice\n- Herbal drinks\n- Other consumable liquids\n\nThe cup provides no inherent benefit to the liquid it contains unless modified through craftsmanship, alchemy, magic, or enchantment.\n\n---\n\n## ✨ Enchantment Use\n\nAs a crafted metal object, a Silver Cup may be used as the target item for compatible enchantments.\n\nPotential enchanted cups could be created for purposes such as:\n\n- Purifying liquids\n- Maintaining liquid temperature\n- Detecting contaminants\n- Ceremonial rituals\n- Magical drinking effects\n- Religious or arcane functions\n\nAny enchantment applied to the cup must follow the normal **Asteria Enchanting System**, including the enchantment limitations of the material used.\n\n---\n\n## 💰 Material Value\n\nA significant portion of a Silver Cup's value comes from the silver used in its construction.\n\nDamaged or unwanted cups may therefore still retain value as recyclable silver and can potentially be melted down and reforged into other silver items.\n\nThe amount of usable silver recovered depends upon the item's condition and the effectiveness of the recycling or smithing process.\n\n---\n\n## ⚠️ Limitations\n\nA Silver Cup is more resistant to normal wear than wooden or ceramic drinking vessels but may still:\n\n- Dent under heavy impacts\n- Scratch during rough handling\n- Tarnish over time\n- Bend under excessive force\n- Melt when exposed to sufficient heat\n\nDamage that does not destroy the cup may potentially be repaired by a suitable metalworker.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Silver |\n| Style | Tableware |\n| Weight | 0.3 kg |\n| Capacity | 300 mL |\n| Enchantment | None |\n| Market Value | 30 Marks |\n| Market Price | 60 Marks |\n\n# 🥛 Silver Cup",
+        "📝 Description": "A solid silver drinking cup with a smooth polished surface, gently flared rim, and weighted base. Simple shaping and restrained detailing make it suitable for everyday use among wealthy households while remaining elegant enough for feasts, ceremonies, and formal occasions.",
+        "📜 Lore": "Silver cups are common symbols of comfortable wealth, frequently found in noble households, prosperous taverns, temples, and ceremonial collections.\n\n---",
+        "⚒️ Crafting Information": "### Materials Needed\n- Silver\n- Polishing Compound\n\n### Tools Required\n- Forge\n- Crucible\n- Casting Mould\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n- Polishing Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, cracks, excessive material loss, poor balance, cosmetic defects, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n\n- **Cleaning Requirement:** Wash after use and remove residue before storage.\n- **Upkeep Needed:** Periodically polish the silver to remove tarnishing and maintain its appearance.\n- **Durability Loss per Use:** Negligible during normal use; increased by heavy impacts, crushing, extreme heat, or improper handling.\n\n---",
+        "🥛 Item Use": "- **Primary Use:** Drinking Vessel\n- **Item Category:** Tableware\n- **Material:** Silver\n- **Capacity:** 300 mL\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Food Safe:** Yes\n\n### Drinking Vessel\n\nA Silver Cup can hold approximately **300 mL of liquid** and is suitable for serving:\n\n- Water\n- Ale\n- Wine\n- Mead\n- Milk\n- Juice\n- Herbal drinks\n- Other consumable liquids\n\nThe cup provides no inherent benefit to the liquid it contains unless modified through craftsmanship, alchemy, magic, or enchantment.\n\n---",
+        "✨ Enchantment Use": "As a crafted metal object, a Silver Cup may be used as the target item for compatible enchantments.\n\nPotential enchanted cups could be created for purposes such as:\n\n- Purifying liquids\n- Maintaining liquid temperature\n- Detecting contaminants\n- Ceremonial rituals\n- Magical drinking effects\n- Religious or arcane functions\n\nAny enchantment applied to the cup must follow the normal **Asteria Enchanting System**, including the enchantment limitations of the material used.\n\n---",
+        "💰 Material Value": "A significant portion of a Silver Cup's value comes from the silver used in its construction.\n\nDamaged or unwanted cups may therefore still retain value as recyclable silver and can potentially be melted down and reforged into other silver items.\n\nThe amount of usable silver recovered depends upon the item's condition and the effectiveness of the recycling or smithing process.\n\n---",
+        "⚠️ Limitations": "A Silver Cup is more resistant to normal wear than wooden or ceramic drinking vessels but may still:\n\n- Dent under heavy impacts\n- Scratch during rough handling\n- Tarnish over time\n- Bend under excessive force\n- Melt when exposed to sufficient heat\n\nDamage that does not destroy the cup may potentially be repaired by a suitable metalworker."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A solid silver drinking cup with a smooth polished surface, gently flared rim, and weighted base. Simple shaping and restrained detailing make it suitable for everyday use among wealthy households while remaining elegant enough for feasts, ceremonies, and form",
+      "metadata": {
+        "title": "Silver Cup",
+        "slug": "silver-cup",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 30,
+        "marketPrice": 60,
+        "marketValueSourceText": "30 Marks",
+        "marketPriceSourceText": "60 Marks",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment",
+          "Tableware"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Silver",
+        "style": "Tableware",
+        "weight": "0.3 kg",
+        "capacity": "300 mL",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment",
+        "Tableware"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/silver-cup/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/silver-cup/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "silver cup item equipment adventuring gear {\"title\":\"silver cup\",\"slug\":\"silver-cup\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":30,\"marketprice\":60,\"marketvaluesourcetext\":\"30 marks\",\"marketpricesourcetext\":\"60 marks\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\",\"tableware\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"silver\",\"style\":\"tableware\",\"weight\":\"0.3 kg\",\"capacity\":\"300 ml\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | silver |\n| style | tableware |\n| weight | 0.3 kg |\n| capacity | 300 ml |\n| enchantment | none |\n| market value | 30 marks |\n| market price | 60 marks |\n\n# 🥛 silver cup\n\n## 📝 description\n\na solid silver drinking cup with a smooth polished surface, gently flared rim, and weighted base. simple shaping and restrained detailing make it suitable for everyday use among wealthy households while remaining elegant enough for feasts, ceremonies, and formal occasions.\n\n## 📜 lore\n\nsilver cups are common symbols of comfortable wealth, frequently found in noble households, prosperous taverns, temples, and ceremonial collections.\n\n---\n\n## ⚒️ crafting information\n\n### materials needed\n- silver\n- polishing compound\n\n### tools required\n- forge\n- crucible\n- casting mould\n- smithing hammer\n- tongs\n- metalworking tools\n- polishing tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** uneven shaping, cracks, excessive material loss, poor balance, cosmetic defects, or reduced durability.\n\n---\n\n### 🔧 maintenance\n\n- **cleaning requirement:** wash after use and remove residue before storage.\n- **upkeep needed:** periodically polish the silver to remove tarnishing and maintain its appearance.\n- **durability loss per use:** negligible during normal use; increased by heavy impacts, crushing, extreme heat, or improper handling.\n\n---\n\n## 🥛 item use\n\n- **primary use:** drinking vessel\n- **item category:** tableware\n- **material:** silver\n- **capacity:** 300 ml\n- **portable:** yes\n- **reusable:** yes\n- **food safe:** yes\n\n### drinking vessel\n\na silver cup can hold approximately **300 ml of liquid** and is suitable for serving:\n\n- water\n- ale\n- wine\n- mead\n- milk\n- juice\n- herbal drinks\n- other consumable liquids\n\nthe cup provides no inherent benefit to the liquid it contains unless modified through craftsmanship, alchemy, magic, or enchantment.\n\n---\n\n## ✨ enchantment use\n\nas a crafted metal object, a silver cup may be used as the target item for compatible enchantments.\n\npotential enchanted cups could be created for purposes such as:\n\n- purifying liquids\n- maintaining liquid temperature\n- detecting contaminants\n- ceremonial rituals\n- magical drinking effects\n- religious or arcane functions\n\nany enchantment applied to the cup must follow the normal **asteria enchanting system**, including the enchantment limitations of the material used.\n\n---\n\n## 💰 material value\n\na significant portion of a silver cup's value comes from the silver used in its construction.\n\ndamaged or unwanted cups may therefore still retain value as recyclable silver and can potentially be melted down and reforged into other silver items.\n\nthe amount of usable silver recovered depends upon the item's condition and the effectiveness of the recycling or smithing process.\n\n---\n\n## ⚠️ limitations\n\na silver cup is more resistant to normal wear than wooden or ceramic drinking vessels but may still:\n\n- dent under heavy impacts\n- scratch during rough handling\n- tarnish over time\n- bend under excessive force\n- melt when exposed to sufficient heat\n\ndamage that does not destroy the cup may potentially be repaired by a suitable metalworker."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-small-cooking-pot-index",
+      "title": "Small Cooking Pot",
+      "slug": "small-cooking-pot",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/small-cooking-pot",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/small-cooking-pot/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/small-cooking-pot",
+      "content": "---\ntitle: \"Small Cooking Pot\"\nslug: small-cooking-pot\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.08\nmarket_price: 0.15\nmarket_value_source_text: \"8 Pennies\"\nmarket_price_source_text: \"15 Pennies\"\ntags:\n  - \"#Item\"\n  - Equipment\n  - Adventuring Gear\n  - Cooking Equipment\nItem Class: Common\nItem Quality: Average\nDurability: High\nMaterial: Iron\nStyle: Camp Cooking Equipment\nWeight: 1.0 kg\nCapacity: 1.5 L\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 1.0 kg |\n| Capacity | 1.5 L |\n| Enchantment | None |\n| Market Value | 8 Pennies |\n| Market Price | 15 Pennies |\n\n## Description\nA compact iron cooking pot with a sturdy body and curved carrying handle for suspending it over a campfire. Its small capacity makes it ideal for preparing individual meals, heating water, cooking simple stews, and travelling without the weight of larger cookware.\n\n## Lore\nA practical piece of cookware commonly carried by lone travellers, scouts, hunters, small adventuring parties, and wandering cooks throughout Asteria.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Small Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Small\n- **Capacity:** 1.5 L\n- **Typical Servings:** 1–2\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Small Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **1.5 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **1–2 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Small Cooking Pot can be used to boil water when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Small Cooking Pot is designed primarily for lightweight camp cooking.\n\nIts limited capacity makes it unsuitable for preparing large quantities of food for sizeable groups without cooking multiple batches.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 1.0 kg |\n| Capacity | 1.5 L |\n| Enchantment | None |\n| Market Value | 8 Pennies |\n| Market Price | 15 Pennies |\n\n## Description\nA compact iron cooking pot with a sturdy body and curved carrying handle for suspending it over a campfire. Its small capacity makes it ideal for preparing individual meals, heating water, cooking simple stews, and travelling without the weight of larger cookware.\n\n## Lore\nA practical piece of cookware commonly carried by lone travellers, scouts, hunters, small adventuring parties, and wandering cooks throughout Asteria.\n\n---\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Small Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 Equipment Use\n\n- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Small\n- **Capacity:** 1.5 L\n- **Typical Servings:** 1–2\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Small Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **1.5 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **1–2 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Small Cooking Pot can be used to boil water when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Small Cooking Pot is designed primarily for lightweight camp cooking.\n\nIts limited capacity makes it unsuitable for preparing large quantities of food for sizeable groups without cooking multiple batches.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | High |\n| Material | Iron |\n| Style | Camp Cooking Equipment |\n| Weight | 1.0 kg |\n| Capacity | 1.5 L |\n| Enchantment | None |\n| Market Value | 8 Pennies |\n| Market Price | 15 Pennies |",
+        "Description": "A compact iron cooking pot with a sturdy body and curved carrying handle for suspending it over a campfire. Its small capacity makes it ideal for preparing individual meals, heating water, cooking simple stews, and travelling without the weight of larger cookware.",
+        "Lore": "A practical piece of cookware commonly carried by lone travellers, scouts, hunters, small adventuring parties, and wandering cooks throughout Asteria.\n\n---",
+        "⚒️ Crafting Information": "### Materials Needed\n- Iron\n- Small Iron Handle\n- Metal Rivets\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Metalworking Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Profession & Rank:** Blacksmith — Novice\n- **Failure Consequences:** Uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 Maintenance\n- **Cleaning Requirement:** Clean after cooking and remove food residue before storage.\n- **Upkeep Needed:** Keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **Durability Loss per Use:** Minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---",
+        "🍲 Equipment Use": "- **Primary Use:** Cooking / Heating\n- **Item Category:** Camp Cooking Equipment\n- **Pot Size:** Small\n- **Capacity:** 1.5 L\n- **Typical Servings:** 1–2\n- **Portable:** Yes\n- **Reusable:** Yes\n- **Open Flame Safe:** Yes\n- **Can Boil Water:** Yes\n\n### Cooking\n\nA Small Cooking Pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nIt can be used for:\n\n- Cooking stews\n- Cooking soups\n- Boiling vegetables\n- Heating prepared food\n- Preparing grains\n- Making broth\n- Boiling water\n- Preparing hot drinks\n- Other basic camp cooking\n\n### Capacity\n\nThe pot can hold approximately **1.5 litres** of liquid or food.\n\nUnder normal circumstances, this is sufficient to prepare approximately **1–2 standard Medium-sized servings**, depending on the food being prepared.\n\nThe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### Water Boiling\n\nThe Small Cooking Pot can be used to boil water when an appropriate heat source is available.\n\nBoiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- Poisons\n- Chemical contamination\n- Heavy metals\n- Magical contamination\n- Curses\n- Other supernatural effects\n\n### Heat Source\n\nThe pot requires an appropriate source of heat, such as:\n\n- Campfire\n- Cooking fire\n- Stove\n- Hot coals\n- Suitable magical heat source\n\n### Environmental Limitations\n\nCooking may become more difficult when exposed to:\n\n- Heavy rain\n- Strong wind\n- Extreme cold\n- Insufficient fuel\n- Unstable terrain\n- Poorly maintained fires\n\nShelter or specialised cooking equipment may be required in severe conditions.\n\n### Limitations\n\nA Small Cooking Pot is designed primarily for lightweight camp cooking.\n\nIts limited capacity makes it unsuitable for preparing large quantities of food for sizeable groups without cooking multiple batches."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A compact iron cooking pot with a sturdy body and curved carrying handle for suspending it over a campfire. Its small capacity makes it ideal for preparing individual meals, heating water, cooking simple stews, and travelling without the weight of larger cookw",
+      "metadata": {
+        "title": "Small Cooking Pot",
+        "slug": "small-cooking-pot",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.08,
+        "marketPrice": 0.15,
+        "marketValueSourceText": "8 Pennies",
+        "marketPriceSourceText": "15 Pennies",
+        "tags": [
+          "#Item",
+          "Equipment",
+          "Adventuring Gear",
+          "Cooking Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "High",
+        "material": "Iron",
+        "style": "Camp Cooking Equipment",
+        "weight": "1.0 kg",
+        "capacity": "1.5 L",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment",
+        "Adventuring Gear",
+        "Cooking Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "small cooking pot item equipment adventuring gear {\"title\":\"small cooking pot\",\"slug\":\"small-cooking-pot\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.08,\"marketprice\":0.15,\"marketvaluesourcetext\":\"8 pennies\",\"marketpricesourcetext\":\"15 pennies\",\"tags\":[\"#item\",\"equipment\",\"adventuring gear\",\"cooking equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"high\",\"material\":\"iron\",\"style\":\"camp cooking equipment\",\"weight\":\"1.0 kg\",\"capacity\":\"1.5 l\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | high |\n| material | iron |\n| style | camp cooking equipment |\n| weight | 1.0 kg |\n| capacity | 1.5 l |\n| enchantment | none |\n| market value | 8 pennies |\n| market price | 15 pennies |\n\n## description\na compact iron cooking pot with a sturdy body and curved carrying handle for suspending it over a campfire. its small capacity makes it ideal for preparing individual meals, heating water, cooking simple stews, and travelling without the weight of larger cookware.\n\n## lore\na practical piece of cookware commonly carried by lone travellers, scouts, hunters, small adventuring parties, and wandering cooks throughout asteria.\n\n---\n\n## ⚒️ crafting information\n\n### materials needed\n- iron\n- small iron handle\n- metal rivets\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- metalworking tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required profession & rank:** blacksmith — novice\n- **failure consequences:** uneven shaping, weak handle fittings, cracks, poor heat distribution, or reduced durability.\n\n---\n\n### 🔧 maintenance\n- **cleaning requirement:** clean after cooking and remove food residue before storage.\n- **upkeep needed:** keep dry when stored and periodically oil exposed iron surfaces to reduce rust.\n- **durability loss per use:** minimal during normal cooking; increased by severe overheating, impacts, corrosion, or improper use.\n\n---\n\n## 🍲 equipment use\n\n- **primary use:** cooking / heating\n- **item category:** camp cooking equipment\n- **pot size:** small\n- **capacity:** 1.5 l\n- **typical servings:** 1–2\n- **portable:** yes\n- **reusable:** yes\n- **open flame safe:** yes\n- **can boil water:** yes\n\n### cooking\n\na small cooking pot can be placed over or suspended above a suitable heat source to prepare food while travelling or camping.\n\nit can be used for:\n\n- cooking stews\n- cooking soups\n- boiling vegetables\n- heating prepared food\n- preparing grains\n- making broth\n- boiling water\n- preparing hot drinks\n- other basic camp cooking\n\n### capacity\n\nthe pot can hold approximately **1.5 litres** of liquid or food.\n\nunder normal circumstances, this is sufficient to prepare approximately **1–2 standard medium-sized servings**, depending on the food being prepared.\n\nthe actual number of servings may vary according to creature size, recipe, ingredients, and portion requirements.\n\n### water boiling\n\nthe small cooking pot can be used to boil water when an appropriate heat source is available.\n\nboiling may make naturally sourced water safer to consume where heat treatment is sufficient, but it does **not** automatically remove:\n\n- poisons\n- chemical contamination\n- heavy metals\n- magical contamination\n- curses\n- other supernatural effects\n\n### heat source\n\nthe pot requires an appropriate source of heat, such as:\n\n- campfire\n- cooking fire\n- stove\n- hot coals\n- suitable magical heat source\n\n### environmental limitations\n\ncooking may become more difficult when exposed to:\n\n- heavy rain\n- strong wind\n- extreme cold\n- insufficient fuel\n- unstable terrain\n- poorly maintained fires\n\nshelter or specialised cooking equipment may be required in severe conditions.\n\n### limitations\n\na small cooking pot is designed primarily for lightweight camp cooking.\n\nits limited capacity makes it unsuitable for preparing large quantities of food for sizeable groups without cooking multiple batches."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-standard-bedroll-index",
+      "title": "Standard Bedroll",
+      "slug": "standard-bedroll",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/standard-bedroll",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/standard-bedroll/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/standard-bedroll",
+      "content": "---\ntitle: \"Standard Bedroll\"\nslug: standard-bedroll\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.45\nmarket_price: 0.55\nmarket_value_source_text: \"45 Pennies\"\nmarket_price_source_text: \"55 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Wool / Linen / Leather\nStyle: Travel Equipment\nWeight: 2.5 kg\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Wool / Linen / Leather |\n| Style | Travel Equipment |\n| Weight | 2.5 kg |\n| Enchantment | None |\n| Market Value | 45 Pennies |\n| Market Price | 55 Pennies |\n\n## 📝 Description\nA tightly rolled travelling bed made from layered wool and linen, with a durable outer covering and leather securing straps. Designed to provide basic insulation and comfort when sleeping outdoors, the bedroll can be quickly unpacked at camp and rolled tightly for transport.\n\n## 📜 Lore\nA simple but essential travelling companion carried by adventurers, merchants, soldiers, hunters, and wandering craftsmen throughout Asteria.\n\n### Rest Benefit\nProvides suitable bedding for resting while travelling or camping outdoors.\n\nA bedroll protects the sleeper from direct contact with cold or rough ground and provides basic insulation during normal environmental conditions.\n\n### Environmental Limitations\nA standard bedroll does **not** provide complete protection against:\n- Extreme cold\n- Heavy rain\n- Flooding\n- Snow accumulation\n- Dangerous terrain\n- Severe environmental hazards\n\nAdditional shelter, specialised equipment, magic, or appropriate survival preparations may still be required.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 2x [[Wool Cloth]]\n- 1x [[Linen Cloth]]\n- 2x [[Leather Strap]]\n- Thread\n\n### Tools Required\n- Sewing Needle\n- Scissors\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Tailoring\n- **Required Profession & Rank:** Tailor — Novice\n- **Failure Consequences:** Poor stitching, uneven padding, damaged material, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Wool / Linen / Leather |\n| Style | Travel Equipment |\n| Weight | 2.5 kg |\n| Enchantment | None |\n| Market Value | 45 Pennies |\n| Market Price | 55 Pennies |\n\n## 📝 Description\nA tightly rolled travelling bed made from layered wool and linen, with a durable outer covering and leather securing straps. Designed to provide basic insulation and comfort when sleeping outdoors, the bedroll can be quickly unpacked at camp and rolled tightly for transport.\n\n## 📜 Lore\nA simple but essential travelling companion carried by adventurers, merchants, soldiers, hunters, and wandering craftsmen throughout Asteria.\n\n### Rest Benefit\nProvides suitable bedding for resting while travelling or camping outdoors.\n\nA bedroll protects the sleeper from direct contact with cold or rough ground and provides basic insulation during normal environmental conditions.\n\n### Environmental Limitations\nA standard bedroll does **not** provide complete protection against:\n- Extreme cold\n- Heavy rain\n- Flooding\n- Snow accumulation\n- Dangerous terrain\n- Severe environmental hazards\n\nAdditional shelter, specialised equipment, magic, or appropriate survival preparations may still be required.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 2x [[Wool Cloth]]\n- 1x [[Linen Cloth]]\n- 2x [[Leather Strap]]\n- Thread\n\n### Tools Required\n- Sewing Needle\n- Scissors\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Tailoring\n- **Required Profession & Rank:** Tailor — Novice\n- **Failure Consequences:** Poor stitching, uneven padding, damaged material, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Wool / Linen / Leather |\n| Style | Travel Equipment |\n| Weight | 2.5 kg |\n| Enchantment | None |\n| Market Value | 45 Pennies |\n| Market Price | 55 Pennies |",
+        "📝 Description": "A tightly rolled travelling bed made from layered wool and linen, with a durable outer covering and leather securing straps. Designed to provide basic insulation and comfort when sleeping outdoors, the bedroll can be quickly unpacked at camp and rolled tightly for transport.",
+        "📜 Lore": "A simple but essential travelling companion carried by adventurers, merchants, soldiers, hunters, and wandering craftsmen throughout Asteria.\n\n### Rest Benefit\nProvides suitable bedding for resting while travelling or camping outdoors.\n\nA bedroll protects the sleeper from direct contact with cold or rough ground and provides basic insulation during normal environmental conditions.\n\n### Environmental Limitations\nA standard bedroll does **not** provide complete protection against:\n- Extreme cold\n- Heavy rain\n- Flooding\n- Snow accumulation\n- Dangerous terrain\n- Severe environmental hazards\n\nAdditional shelter, specialised equipment, magic, or appropriate survival preparations may still be required.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 2x [[Wool Cloth]]\n- 1x [[Linen Cloth]]\n- 2x [[Leather Strap]]\n- Thread\n\n### Tools Required\n- Sewing Needle\n- Scissors\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Tailoring\n- **Required Profession & Rank:** Tailor — Novice\n- **Failure Consequences:** Poor stitching, uneven padding, damaged material, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A tightly rolled travelling bed made from layered wool and linen, with a durable outer covering and leather securing straps. Designed to provide basic insulation and comfort when sleeping outdoors, the bedroll can be quickly unpacked at camp and rolled tightly",
+      "metadata": {
+        "title": "Standard Bedroll",
+        "slug": "standard-bedroll",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.45,
+        "marketPrice": 0.55,
+        "marketValueSourceText": "45 Pennies",
+        "marketPriceSourceText": "55 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Wool / Linen / Leather",
+        "style": "Travel Equipment",
+        "weight": "2.5 kg",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/standard-bedroll/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/standard-bedroll/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "standard bedroll item equipment adventuring gear {\"title\":\"standard bedroll\",\"slug\":\"standard-bedroll\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.45,\"marketprice\":0.55,\"marketvaluesourcetext\":\"45 pennies\",\"marketpricesourcetext\":\"55 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"wool / linen / leather\",\"style\":\"travel equipment\",\"weight\":\"2.5 kg\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | wool / linen / leather |\n| style | travel equipment |\n| weight | 2.5 kg |\n| enchantment | none |\n| market value | 45 pennies |\n| market price | 55 pennies |\n\n## 📝 description\na tightly rolled travelling bed made from layered wool and linen, with a durable outer covering and leather securing straps. designed to provide basic insulation and comfort when sleeping outdoors, the bedroll can be quickly unpacked at camp and rolled tightly for transport.\n\n## 📜 lore\na simple but essential travelling companion carried by adventurers, merchants, soldiers, hunters, and wandering craftsmen throughout asteria.\n\n### rest benefit\nprovides suitable bedding for resting while travelling or camping outdoors.\n\na bedroll protects the sleeper from direct contact with cold or rough ground and provides basic insulation during normal environmental conditions.\n\n### environmental limitations\na standard bedroll does **not** provide complete protection against:\n- extreme cold\n- heavy rain\n- flooding\n- snow accumulation\n- dangerous terrain\n- severe environmental hazards\n\nadditional shelter, specialised equipment, magic, or appropriate survival preparations may still be required.\n\n## ⚒️ crafting information\n\n### materials needed\n- 2x [[wool cloth]]\n- 1x [[linen cloth]]\n- 2x [[leather strap]]\n- thread\n\n### tools required\n- sewing needle\n- scissors\n- measuring tools\n\n### crafting difficulty\n- **skill check:** tailoring\n- **required profession & rank:** tailor — novice\n- **failure consequences:** poor stitching, uneven padding, damaged material, or reduced durability."
+    },
+    {
+      "id": "item:content-items-equipment-adventuring-gear-waterskin-index",
+      "title": "Waterskin",
+      "slug": "waterskin",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Equipment",
+        "Adventuring Gear"
+      ],
+      "category": "Adventuring Gear",
+      "route": "/compendium/item/equipment/adventuring-gear/waterskin",
+      "sourcePath": "content/Items/Equipment/Adventuring Gear/waterskin/index.md",
+      "sourceFolder": "content/Items/Equipment/Adventuring Gear/waterskin",
+      "content": "---\ntitle: \"Waterskin\"\nslug: waterskin\ntype: item\nitem_type: Equipment\ncategory: \"Equipment\"\nsubcategory: \"Adventuring Gear\"\nvisibility: public\nmarket_value: 0.2\nmarket_price: 0.25\nmarket_value_source_text: \"20 Pennies\"\nmarket_price_source_text: \"25 Pennies\"\nimage: image.png\ntags:\n  - \"#Item\"\n  - Equipment\nItem Class: Common\nItem Quality: Average\nDurability: Moderate\nMaterial: Leather / Cork\nStyle: Travel Equipment\nWeight: 0.2 kg (Empty) / 1.2 kg (Full)\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Leather / Cork |\n| Style | Travel Equipment |\n| Weight | 0.2 kg (Empty) / 1.2 kg (Full) |\n| Enchantment | None |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |\n\n## Description\nA lightweight leather drinking container made from treated hide, fitted with a narrow neck and secure stopper. Its flexible construction allows it to be carried easily while travelling, while an attached leather strap allows the waterskin to be secured to a belt, pack, or saddle.\n\n## Lore\nA common travelling essential carried by adventurers, soldiers, merchants, hunters, pilgrims, and travellers throughout Asteria.\n\n### Water Storage\nA standard waterskin can carry up to **1 litre of liquid**.\n\nIts treated leather construction helps prevent leakage during normal travel and protects the contents from dirt and minor environmental exposure.\n\n### Environmental Limitations\nA standard waterskin does **not**:\n- Purify contaminated water\n- Remove poisons or toxins\n- Prevent liquids from freezing\n- Prevent liquids from overheating\n- Protect against magical contamination\n- Preserve perishable liquids indefinitely\n\nSpecialised equipment, survival techniques, alchemy, or magic may be required for these purposes.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Leather]]\n- 1x [[Leather Strap]]\n- 1x [[Cork]]\n- Thread\n\n### Tools Required\n- Leatherworking Needle\n- Cutting Knife\n- Awl\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Leatherworking\n- **Required Profession & Rank:** Leatherworker — Novice\n- **Failure Consequences:** Poor sealing, leaking seams, damaged leather, or reduced durability.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Leather / Cork |\n| Style | Travel Equipment |\n| Weight | 0.2 kg (Empty) / 1.2 kg (Full) |\n| Enchantment | None |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |\n\n## Description\nA lightweight leather drinking container made from treated hide, fitted with a narrow neck and secure stopper. Its flexible construction allows it to be carried easily while travelling, while an attached leather strap allows the waterskin to be secured to a belt, pack, or saddle.\n\n## Lore\nA common travelling essential carried by adventurers, soldiers, merchants, hunters, pilgrims, and travellers throughout Asteria.\n\n### Water Storage\nA standard waterskin can carry up to **1 litre of liquid**.\n\nIts treated leather construction helps prevent leakage during normal travel and protects the contents from dirt and minor environmental exposure.\n\n### Environmental Limitations\nA standard waterskin does **not**:\n- Purify contaminated water\n- Remove poisons or toxins\n- Prevent liquids from freezing\n- Prevent liquids from overheating\n- Protect against magical contamination\n- Preserve perishable liquids indefinitely\n\nSpecialised equipment, survival techniques, alchemy, or magic may be required for these purposes.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 1x [[Leather]]\n- 1x [[Leather Strap]]\n- 1x [[Cork]]\n- Thread\n\n### Tools Required\n- Leatherworking Needle\n- Cutting Knife\n- Awl\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Leatherworking\n- **Required Profession & Rank:** Leatherworker — Novice\n- **Failure Consequences:** Poor sealing, leaking seams, damaged leather, or reduced durability.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Average |\n| Durability | Moderate |\n| Material | Leather / Cork |\n| Style | Travel Equipment |\n| Weight | 0.2 kg (Empty) / 1.2 kg (Full) |\n| Enchantment | None |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |",
+        "Description": "A lightweight leather drinking container made from treated hide, fitted with a narrow neck and secure stopper. Its flexible construction allows it to be carried easily while travelling, while an attached leather strap allows the waterskin to be secured to a belt, pack, or saddle.",
+        "Lore": "A common travelling essential carried by adventurers, soldiers, merchants, hunters, pilgrims, and travellers throughout Asteria.\n\n### Water Storage\nA standard waterskin can carry up to **1 litre of liquid**.\n\nIts treated leather construction helps prevent leakage during normal travel and protects the contents from dirt and minor environmental exposure.\n\n### Environmental Limitations\nA standard waterskin does **not**:\n- Purify contaminated water\n- Remove poisons or toxins\n- Prevent liquids from freezing\n- Prevent liquids from overheating\n- Protect against magical contamination\n- Preserve perishable liquids indefinitely\n\nSpecialised equipment, survival techniques, alchemy, or magic may be required for these purposes.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 1x [[Leather]]\n- 1x [[Leather Strap]]\n- 1x [[Cork]]\n- Thread\n\n### Tools Required\n- Leatherworking Needle\n- Cutting Knife\n- Awl\n- Measuring Tools\n\n### Crafting Difficulty\n- **Skill Check:** Leatherworking\n- **Required Profession & Rank:** Leatherworker — Novice\n- **Failure Consequences:** Poor sealing, leaking seams, damaged leather, or reduced durability."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A lightweight leather drinking container made from treated hide, fitted with a narrow neck and secure stopper. Its flexible construction allows it to be carried easily while travelling, while an attached leather strap allows the waterskin to be secured to a be",
+      "metadata": {
+        "title": "Waterskin",
+        "slug": "waterskin",
+        "type": "item",
+        "itemType": "Equipment",
+        "category": "Equipment",
+        "subcategory": "Adventuring Gear",
+        "visibility": "public",
+        "marketValue": 0.2,
+        "marketPrice": 0.25,
+        "marketValueSourceText": "20 Pennies",
+        "marketPriceSourceText": "25 Pennies",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Equipment"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "Average",
+        "durability": "Moderate",
+        "material": "Leather / Cork",
+        "style": "Travel Equipment",
+        "weight": "0.2 kg (Empty) / 1.2 kg (Full)",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Equipment"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Equipment/Adventuring Gear/waterskin/image.png"
+      },
+      "imagePath": "content/Items/Equipment/Adventuring Gear/waterskin/image.png",
+      "related": [],
+      "filters": {
+        "category": "Adventuring Gear",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Equipment",
+        "craftingCategory": "Equipment",
+        "visibility": "public"
+      },
+      "searchTerms": "waterskin item equipment adventuring gear {\"title\":\"waterskin\",\"slug\":\"waterskin\",\"type\":\"item\",\"itemtype\":\"equipment\",\"category\":\"equipment\",\"subcategory\":\"adventuring gear\",\"visibility\":\"public\",\"marketvalue\":0.2,\"marketprice\":0.25,\"marketvaluesourcetext\":\"20 pennies\",\"marketpricesourcetext\":\"25 pennies\",\"image\":\"image.png\",\"tags\":[\"#item\",\"equipment\"],\"itemclass\":\"common\",\"itemquality\":\"average\",\"durability\":\"moderate\",\"material\":\"leather / cork\",\"style\":\"travel equipment\",\"weight\":\"0.2 kg (empty) / 1.2 kg (full)\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | average |\n| durability | moderate |\n| material | leather / cork |\n| style | travel equipment |\n| weight | 0.2 kg (empty) / 1.2 kg (full) |\n| enchantment | none |\n| market value | 20 pennies |\n| market price | 25 pennies |\n\n## description\na lightweight leather drinking container made from treated hide, fitted with a narrow neck and secure stopper. its flexible construction allows it to be carried easily while travelling, while an attached leather strap allows the waterskin to be secured to a belt, pack, or saddle.\n\n## lore\na common travelling essential carried by adventurers, soldiers, merchants, hunters, pilgrims, and travellers throughout asteria.\n\n### water storage\na standard waterskin can carry up to **1 litre of liquid**.\n\nits treated leather construction helps prevent leakage during normal travel and protects the contents from dirt and minor environmental exposure.\n\n### environmental limitations\na standard waterskin does **not**:\n- purify contaminated water\n- remove poisons or toxins\n- prevent liquids from freezing\n- prevent liquids from overheating\n- protect against magical contamination\n- preserve perishable liquids indefinitely\n\nspecialised equipment, survival techniques, alchemy, or magic may be required for these purposes.\n\n## ⚒️ crafting information\n\n### materials needed\n- 1x [[leather]]\n- 1x [[leather strap]]\n- 1x [[cork]]\n- thread\n\n### tools required\n- leatherworking needle\n- cutting knife\n- awl\n- measuring tools\n\n### crafting difficulty\n- **skill check:** leatherworking\n- **required profession & rank:** leatherworker — novice\n- **failure consequences:** poor sealing, leaking seams, damaged leather, or reduced durability."
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-alpha-rat-beast-core-index",
+      "title": "Alpha Rat Beast Core",
+      "slug": "alpha-rat-beast-core",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/alpha-rat-beast-core",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-core/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-core",
+      "content": "---\ntitle: \"Alpha Rat Beast Core\"\nslug: alpha-rat-beast-core\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 5\nmarket_price: 10\nmarket_value_source_text: \"5 Marks\"\nmarket_price_source_text: \"10 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Beast Core\nMaterial Form: Core\nWeight: 0.5kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Beast Core |\n| Material Form | Core |\n| Weight | 0.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Marks |\n| Market Price | 10 Marks |\n\n## 📝 Description\nAlpha Rat Beast Core is a dense organic core found within an Alpha Rat Beast. Firm and unusually resilient, the core retains concentrated essence from the creature even after harvesting, making it a highly valued material among alchemists, spellcasters, and Beast Tamers.\n\n## ✨ Material Properties\n- Dense and unusually resilient.\n- Retains concentrated beast essence after harvesting.\n- More stable than most harvested organic materials.\n- Can be preserved for extended periods when properly prepared.\n- Valuable for specialised alchemical and magical applications.\n- Particularly useful to practitioners of Beast Taming.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Specialised alchemical preparations.\n- Specialised magical preparations.\n- Beast Tamer crafting and class-related uses.\n\n## 🧪 Processing\n- **Processing Required:** Carefully extract, clean, and preserve without damaging the core.\n- **Tools Required:** Harvesting Knife, Extraction Tools, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Core\n- **Processing Yield:** 1x Alpha Rat Beast Core → 1x Preserved Alpha Rat Beast Core\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 15\n\n## 💬 Quote\n\n*\"The beast may be dead, but something of its strength remains concentrated within its core.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Beast Core |\n| Material Form | Core |\n| Weight | 0.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Marks |\n| Market Price | 10 Marks |\n\n## 📝 Description\nAlpha Rat Beast Core is a dense organic core found within an Alpha Rat Beast. Firm and unusually resilient, the core retains concentrated essence from the creature even after harvesting, making it a highly valued material among alchemists, spellcasters, and Beast Tamers.\n\n## ✨ Material Properties\n- Dense and unusually resilient.\n- Retains concentrated beast essence after harvesting.\n- More stable than most harvested organic materials.\n- Can be preserved for extended periods when properly prepared.\n- Valuable for specialised alchemical and magical applications.\n- Particularly useful to practitioners of Beast Taming.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Specialised alchemical preparations.\n- Specialised magical preparations.\n- Beast Tamer crafting and class-related uses.\n\n## 🧪 Processing\n- **Processing Required:** Carefully extract, clean, and preserve without damaging the core.\n- **Tools Required:** Harvesting Knife, Extraction Tools, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Core\n- **Processing Yield:** 1x Alpha Rat Beast Core → 1x Preserved Alpha Rat Beast Core\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 15\n\n## 💬 Quote\n\n*\"The beast may be dead, but something of its strength remains concentrated within its core.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Beast Core |\n| Material Form | Core |\n| Weight | 0.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Marks |\n| Market Price | 10 Marks |",
+        "📝 Description": "Alpha Rat Beast Core is a dense organic core found within an Alpha Rat Beast. Firm and unusually resilient, the core retains concentrated essence from the creature even after harvesting, making it a highly valued material among alchemists, spellcasters, and Beast Tamers.",
+        "✨ Material Properties": "- Dense and unusually resilient.\n- Retains concentrated beast essence after harvesting.\n- More stable than most harvested organic materials.\n- Can be preserved for extended periods when properly prepared.\n- Valuable for specialised alchemical and magical applications.\n- Particularly useful to practitioners of Beast Taming.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Specialised alchemical preparations.\n- Specialised magical preparations.\n- Beast Tamer crafting and class-related uses.",
+        "🧪 Processing": "- **Processing Required:** Carefully extract, clean, and preserve without damaging the core.\n- **Tools Required:** Harvesting Knife, Extraction Tools, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Core\n- **Processing Yield:** 1x Alpha Rat Beast Core → 1x Preserved Alpha Rat Beast Core",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.",
+        "🐾 Resource Source": "- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 15",
+        "💬 Quote": "*\"The beast may be dead, but something of its strength remains concentrated within its core.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Alpha Rat Beast Core is a dense organic core found within an Alpha Rat Beast. Firm and unusually resilient, the core retains concentrated essence from the creature even after harvesting, making it a highly valued material among alchemists, spellcasters, and Be",
+      "metadata": {
+        "title": "Alpha Rat Beast Core",
+        "slug": "alpha-rat-beast-core",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 5,
+        "marketPrice": 10,
+        "marketValueSourceText": "5 Marks",
+        "marketPriceSourceText": "10 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Beast Core",
+        "materialForm": "Core",
+        "weight": "0.5kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-core/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-core/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Beast Core",
+        "visibility": "public"
+      },
+      "searchTerms": "alpha rat beast core item resources & materials creature parts {\"title\":\"alpha rat beast core\",\"slug\":\"alpha-rat-beast-core\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":5,\"marketprice\":10,\"marketvaluesourcetext\":\"5 marks\",\"marketpricesourcetext\":\"10 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"beast core\",\"materialform\":\"core\",\"weight\":\"0.5kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | beast core |\n| material form | core |\n| weight | 0.5kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 5 marks |\n| market price | 10 marks |\n\n## 📝 description\nalpha rat beast core is a dense organic core found within an alpha rat beast. firm and unusually resilient, the core retains concentrated essence from the creature even after harvesting, making it a highly valued material among alchemists, spellcasters, and beast tamers.\n\n## ✨ material properties\n- dense and unusually resilient.\n- retains concentrated beast essence after harvesting.\n- more stable than most harvested organic materials.\n- can be preserved for extended periods when properly prepared.\n- valuable for specialised alchemical and magical applications.\n- particularly useful to practitioners of beast taming.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- beast tamer component.\n- specialised alchemical preparations.\n- specialised magical preparations.\n- beast tamer crafting and class-related uses.\n\n## 🧪 processing\n- **processing required:** carefully extract, clean, and preserve without damaging the core.\n- **tools required:** harvesting knife, extraction tools, and preservation equipment.\n- **required crafting rank:** apprentice\n- **processed into:** preserved alpha rat beast core\n- **processing yield:** 1x alpha rat beast core → 1x preserved alpha rat beast core\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component, spell component, or beast tamer component.\n\n## 🐾 resource source\n- **obtained from:** alpha rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 15\n\n## 💬 quote\n\n*\"the beast may be dead, but something of its strength remains concentrated within its core.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-alpha-rat-beast-fang-index",
+      "title": "Alpha Rat Beast Fang",
+      "slug": "alpha-rat-beast-fang",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/alpha-rat-beast-fang",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-fang/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-fang",
+      "content": "---\ntitle: \"Alpha Rat Beast Fang\"\nslug: alpha-rat-beast-fang\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.75\nmarket_price: 0.85\nmarket_value_source_text: \"75 Copper\"\nmarket_price_source_text: \"85 Copper\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Bone\nMaterial Form: Fang\nWeight: 0.25kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.25kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |\n\n## 📝 Description\nAlpha Rat Beast Fang is a large, heavily curved fang harvested from an Alpha Rat Beast. Dense, yellowed, and exceptionally hard, these formidable teeth retain potent organic properties and are prized by alchemists, spellcasters, craftsmen, and collectors.\n\n## ✨ Material Properties\n- Large, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping.\n- Stronger and more durable than [[Dire Rat Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains potent organic properties after harvesting.\n- Remains stable for long periods once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Advanced jewellery and pendants.\n- Charms and trinkets.\n- Carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Prepared Alpha Rat Beast Fang\n- **Processing Yield:** 1x Alpha Rat Beast Fang → 1x Prepared Alpha Rat Beast Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 13\n\n## 💬 Quote\n\n*\"The fang of an alpha is valuable long after the beast that carried it is gone.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.25kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |\n\n## 📝 Description\nAlpha Rat Beast Fang is a large, heavily curved fang harvested from an Alpha Rat Beast. Dense, yellowed, and exceptionally hard, these formidable teeth retain potent organic properties and are prized by alchemists, spellcasters, craftsmen, and collectors.\n\n## ✨ Material Properties\n- Large, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping.\n- Stronger and more durable than [[Dire Rat Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains potent organic properties after harvesting.\n- Remains stable for long periods once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Advanced jewellery and pendants.\n- Charms and trinkets.\n- Carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Prepared Alpha Rat Beast Fang\n- **Processing Yield:** 1x Alpha Rat Beast Fang → 1x Prepared Alpha Rat Beast Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 13\n\n## 💬 Quote\n\n*\"The fang of an alpha is valuable long after the beast that carried it is gone.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.25kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |",
+        "📝 Description": "Alpha Rat Beast Fang is a large, heavily curved fang harvested from an Alpha Rat Beast. Dense, yellowed, and exceptionally hard, these formidable teeth retain potent organic properties and are prized by alchemists, spellcasters, craftsmen, and collectors.",
+        "✨ Material Properties": "- Large, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping.\n- Stronger and more durable than [[Dire Rat Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains potent organic properties after harvesting.\n- Remains stable for long periods once properly cleaned.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Advanced jewellery and pendants.\n- Charms and trinkets.\n- Carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Prepared Alpha Rat Beast Fang\n- **Processing Yield:** 1x Alpha Rat Beast Fang → 1x Prepared Alpha Rat Beast Fang",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.",
+        "🐾 Resource Source": "- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 13",
+        "💬 Quote": "*\"The fang of an alpha is valuable long after the beast that carried it is gone.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Alpha Rat Beast Fang is a large, heavily curved fang harvested from an Alpha Rat Beast. Dense, yellowed, and exceptionally hard, these formidable teeth retain potent organic properties and are prized by alchemists, spellcasters, craftsmen, and collectors. *\"Th",
+      "metadata": {
+        "title": "Alpha Rat Beast Fang",
+        "slug": "alpha-rat-beast-fang",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.75,
+        "marketPrice": 0.85,
+        "marketValueSourceText": "75 Copper",
+        "marketPriceSourceText": "85 Copper",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Bone",
+        "materialForm": "Fang",
+        "weight": "0.25kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-fang/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-fang/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "alpha rat beast fang item resources & materials creature parts {\"title\":\"alpha rat beast fang\",\"slug\":\"alpha-rat-beast-fang\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.75,\"marketprice\":0.85,\"marketvaluesourcetext\":\"75 copper\",\"marketpricesourcetext\":\"85 copper\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"bone\",\"materialform\":\"fang\",\"weight\":\"0.25kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | bone |\n| material form | fang |\n| weight | 0.25kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 75 copper |\n| market price | 85 copper |\n\n## 📝 description\nalpha rat beast fang is a large, heavily curved fang harvested from an alpha rat beast. dense, yellowed, and exceptionally hard, these formidable teeth retain potent organic properties and are prized by alchemists, spellcasters, craftsmen, and collectors.\n\n## ✨ material properties\n- large, dense, and naturally pointed.\n- exceptionally hard and resistant to chipping.\n- stronger and more durable than [[dire rat fang]].\n- can be polished, drilled, carved, ground, or engraved.\n- retains potent organic properties after harvesting.\n- remains stable for long periods once properly cleaned.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- advanced jewellery and pendants.\n- charms and trinkets.\n- carved ornaments.\n- trophy decorations.\n- decorative additions to weapons, armour, and equipment.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **tools required:** knife, file, hand drill, or carving tools.\n- **required crafting rank:** apprentice\n- **processed into:** prepared alpha rat beast fang\n- **processing yield:** 1x alpha rat beast fang → 1x prepared alpha rat beast fang\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component or spell component.\n\n## 🐾 resource source\n- **obtained from:** alpha rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 13\n\n## 💬 quote\n\n*\"the fang of an alpha is valuable long after the beast that carried it is gone.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-alpha-rat-beast-tail-index",
+      "title": "Alpha Rat Beast Tail",
+      "slug": "alpha-rat-beast-tail",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/alpha-rat-beast-tail",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-tail/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-tail",
+      "content": "---\ntitle: \"Alpha Rat Beast Tail\"\nslug: alpha-rat-beast-tail\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.7\nmarket_price: 0.8\nmarket_value_source_text: \"70 Copper\"\nmarket_price_source_text: \"80 Copper\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Organic\nMaterial Form: Tail\nWeight: 1.2kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 1.2kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 70 Copper |\n| Market Price | 80 Copper |\n\n## 📝 Description\nAlpha Rat Beast Tail is a long, exceptionally thick tail harvested from an Alpha Rat Beast. Its heavily segmented skin is covered in sparse coarse hairs and is considerably tougher than the tails of lesser rats, retaining potent organic properties valued by alchemists and spellcasters.\n\n## ✨ Material Properties\n- Exceptionally long, thick, and flexible.\n- Covered with sparse, coarse hairs.\n- Tougher and more durable than [[Dire Rat Tail]].\n- Can be dried and preserved for long-term storage.\n- Retains potent organic properties after harvesting.\n- Provides no meaningful armour or weapon modifier.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Advanced charms and trinkets.\n- Trophy decorations.\n- Decorative additions to equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Tail\n- **Processing Yield:** 1x Alpha Rat Beast Tail → 1x Preserved Alpha Rat Beast Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12\n\n## 💬 Quote\n\n*\"An alpha's tail is more than a trophy; practitioners know better than to waste one.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 1.2kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 70 Copper |\n| Market Price | 80 Copper |\n\n## 📝 Description\nAlpha Rat Beast Tail is a long, exceptionally thick tail harvested from an Alpha Rat Beast. Its heavily segmented skin is covered in sparse coarse hairs and is considerably tougher than the tails of lesser rats, retaining potent organic properties valued by alchemists and spellcasters.\n\n## ✨ Material Properties\n- Exceptionally long, thick, and flexible.\n- Covered with sparse, coarse hairs.\n- Tougher and more durable than [[Dire Rat Tail]].\n- Can be dried and preserved for long-term storage.\n- Retains potent organic properties after harvesting.\n- Provides no meaningful armour or weapon modifier.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Advanced charms and trinkets.\n- Trophy decorations.\n- Decorative additions to equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Tail\n- **Processing Yield:** 1x Alpha Rat Beast Tail → 1x Preserved Alpha Rat Beast Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12\n\n## 💬 Quote\n\n*\"An alpha's tail is more than a trophy; practitioners know better than to waste one.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 1.2kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 70 Copper |\n| Market Price | 80 Copper |",
+        "📝 Description": "Alpha Rat Beast Tail is a long, exceptionally thick tail harvested from an Alpha Rat Beast. Its heavily segmented skin is covered in sparse coarse hairs and is considerably tougher than the tails of lesser rats, retaining potent organic properties valued by alchemists and spellcasters.",
+        "✨ Material Properties": "- Exceptionally long, thick, and flexible.\n- Covered with sparse, coarse hairs.\n- Tougher and more durable than [[Dire Rat Tail]].\n- Can be dried and preserved for long-term storage.\n- Retains potent organic properties after harvesting.\n- Provides no meaningful armour or weapon modifier.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Advanced charms and trinkets.\n- Trophy decorations.\n- Decorative additions to equipment.",
+        "🧪 Processing": "- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Tail\n- **Processing Yield:** 1x Alpha Rat Beast Tail → 1x Preserved Alpha Rat Beast Tail",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.",
+        "🐾 Resource Source": "- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12",
+        "💬 Quote": "*\"An alpha's tail is more than a trophy; practitioners know better than to waste one.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Alpha Rat Beast Tail is a long, exceptionally thick tail harvested from an Alpha Rat Beast. Its heavily segmented skin is covered in sparse coarse hairs and is considerably tougher than the tails of lesser rats, retaining potent organic properties valued by al",
+      "metadata": {
+        "title": "Alpha Rat Beast Tail",
+        "slug": "alpha-rat-beast-tail",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.7,
+        "marketPrice": 0.8,
+        "marketValueSourceText": "70 Copper",
+        "marketPriceSourceText": "80 Copper",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Organic",
+        "materialForm": "Tail",
+        "weight": "1.2kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-tail/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-beast-tail/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Organic",
+        "visibility": "public"
+      },
+      "searchTerms": "alpha rat beast tail item resources & materials creature parts {\"title\":\"alpha rat beast tail\",\"slug\":\"alpha-rat-beast-tail\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.7,\"marketprice\":0.8,\"marketvaluesourcetext\":\"70 copper\",\"marketpricesourcetext\":\"80 copper\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"organic\",\"materialform\":\"tail\",\"weight\":\"1.2kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | organic |\n| material form | tail |\n| weight | 1.2kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 70 copper |\n| market price | 80 copper |\n\n## 📝 description\nalpha rat beast tail is a long, exceptionally thick tail harvested from an alpha rat beast. its heavily segmented skin is covered in sparse coarse hairs and is considerably tougher than the tails of lesser rats, retaining potent organic properties valued by alchemists and spellcasters.\n\n## ✨ material properties\n- exceptionally long, thick, and flexible.\n- covered with sparse, coarse hairs.\n- tougher and more durable than [[dire rat tail]].\n- can be dried and preserved for long-term storage.\n- retains potent organic properties after harvesting.\n- provides no meaningful armour or weapon modifier.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- advanced charms and trinkets.\n- trophy decorations.\n- decorative additions to equipment.\n\n## 🧪 processing\n- **processing required:** clean and thoroughly dry or preserve.\n- **tools required:** skinning knife and preservation equipment.\n- **required crafting rank:** apprentice\n- **processed into:** preserved alpha rat beast tail\n- **processing yield:** 1x alpha rat beast tail → 1x preserved alpha rat beast tail\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component or spell component.\n\n## 🐾 resource source\n- **obtained from:** alpha rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 12\n\n## 💬 quote\n\n*\"an alpha's tail is more than a trophy; practitioners know better than to waste one.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-alpha-rat-gland-index",
+      "title": "Alpha Rat Gland",
+      "slug": "alpha-rat-gland",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/alpha-rat-gland",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-gland/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/alpha-rat-gland",
+      "content": "---\ntitle: \"Alpha Rat Gland\"\nslug: alpha-rat-gland\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 2\nmarket_price: 4\nmarket_value_source_text: \"2 Marks\"\nmarket_price_source_text: \"4 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Organic\nMaterial Form: Gland\nWeight: 0.3kg\nDurability: Perishable\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Gland |\n| Weight | 0.3kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Marks |\n| Market Price | 4 Marks |\n\n## 📝 Description\nAlpha Rat Beast Gland is a dense organic gland harvested from an Alpha Rat Beast. Dark reddish-purple in colour and surrounded by tough connective tissue, it contains concentrated biological compounds that make it a valuable component for alchemists and spellcasters.\n\n## ✨ Material Properties\n- Dense, soft organic tissue.\n- Dark reddish-purple in colour.\n- Contains concentrated biological compounds.\n- Highly perishable without proper preservation.\n- Retains useful properties when carefully extracted and preserved.\n- More valuable for specialised crafting than ordinary animal tissue.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Ingredient for specialised alchemical recipes.\n- Ingredient for specialised magical preparations.\n\n## 🧪 Processing\n- **Processing Required:** Carefully clean and preserve immediately after harvesting.\n- **Tools Required:** Harvesting Knife, Glass Container, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Gland\n- **Processing Yield:** 1x Alpha Rat Beast Gland → 1x Preserved Alpha Rat Beast Gland\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 14\n\n## 💬 Quote\n\n*\"Worthless to most hunters. To the right practitioner, it's one of the beast's most valuable organs.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Gland |\n| Weight | 0.3kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Marks |\n| Market Price | 4 Marks |\n\n## 📝 Description\nAlpha Rat Beast Gland is a dense organic gland harvested from an Alpha Rat Beast. Dark reddish-purple in colour and surrounded by tough connective tissue, it contains concentrated biological compounds that make it a valuable component for alchemists and spellcasters.\n\n## ✨ Material Properties\n- Dense, soft organic tissue.\n- Dark reddish-purple in colour.\n- Contains concentrated biological compounds.\n- Highly perishable without proper preservation.\n- Retains useful properties when carefully extracted and preserved.\n- More valuable for specialised crafting than ordinary animal tissue.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Ingredient for specialised alchemical recipes.\n- Ingredient for specialised magical preparations.\n\n## 🧪 Processing\n- **Processing Required:** Carefully clean and preserve immediately after harvesting.\n- **Tools Required:** Harvesting Knife, Glass Container, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Gland\n- **Processing Yield:** 1x Alpha Rat Beast Gland → 1x Preserved Alpha Rat Beast Gland\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 14\n\n## 💬 Quote\n\n*\"Worthless to most hunters. To the right practitioner, it's one of the beast's most valuable organs.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Organic |\n| Material Form | Gland |\n| Weight | 0.3kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Marks |\n| Market Price | 4 Marks |",
+        "📝 Description": "Alpha Rat Beast Gland is a dense organic gland harvested from an Alpha Rat Beast. Dark reddish-purple in colour and surrounded by tough connective tissue, it contains concentrated biological compounds that make it a valuable component for alchemists and spellcasters.",
+        "✨ Material Properties": "- Dense, soft organic tissue.\n- Dark reddish-purple in colour.\n- Contains concentrated biological compounds.\n- Highly perishable without proper preservation.\n- Retains useful properties when carefully extracted and preserved.\n- More valuable for specialised crafting than ordinary animal tissue.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Ingredient for specialised alchemical recipes.\n- Ingredient for specialised magical preparations.",
+        "🧪 Processing": "- **Processing Required:** Carefully clean and preserve immediately after harvesting.\n- **Tools Required:** Harvesting Knife, Glass Container, and preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Preserved Alpha Rat Beast Gland\n- **Processing Yield:** 1x Alpha Rat Beast Gland → 1x Preserved Alpha Rat Beast Gland",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.",
+        "🐾 Resource Source": "- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 14",
+        "💬 Quote": "*\"Worthless to most hunters. To the right practitioner, it's one of the beast's most valuable organs.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Alpha Rat Beast Gland is a dense organic gland harvested from an Alpha Rat Beast. Dark reddish-purple in colour and surrounded by tough connective tissue, it contains concentrated biological compounds that make it a valuable component for alchemists and spellc",
+      "metadata": {
+        "title": "Alpha Rat Gland",
+        "slug": "alpha-rat-gland",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 2,
+        "marketPrice": 4,
+        "marketValueSourceText": "2 Marks",
+        "marketPriceSourceText": "4 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Organic",
+        "materialForm": "Gland",
+        "weight": "0.3kg",
+        "durability": "Perishable",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/alpha-rat-gland/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/alpha-rat-gland/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Organic",
+        "visibility": "public"
+      },
+      "searchTerms": "alpha rat gland item resources & materials creature parts {\"title\":\"alpha rat gland\",\"slug\":\"alpha-rat-gland\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":2,\"marketprice\":4,\"marketvaluesourcetext\":\"2 marks\",\"marketpricesourcetext\":\"4 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"organic\",\"materialform\":\"gland\",\"weight\":\"0.3kg\",\"durability\":\"perishable\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | organic |\n| material form | gland |\n| weight | 0.3kg |\n| durability | perishable |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 2 marks |\n| market price | 4 marks |\n\n## 📝 description\nalpha rat beast gland is a dense organic gland harvested from an alpha rat beast. dark reddish-purple in colour and surrounded by tough connective tissue, it contains concentrated biological compounds that make it a valuable component for alchemists and spellcasters.\n\n## ✨ material properties\n- dense, soft organic tissue.\n- dark reddish-purple in colour.\n- contains concentrated biological compounds.\n- highly perishable without proper preservation.\n- retains useful properties when carefully extracted and preserved.\n- more valuable for specialised crafting than ordinary animal tissue.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- ingredient for specialised alchemical recipes.\n- ingredient for specialised magical preparations.\n\n## 🧪 processing\n- **processing required:** carefully clean and preserve immediately after harvesting.\n- **tools required:** harvesting knife, glass container, and preservation equipment.\n- **required crafting rank:** apprentice\n- **processed into:** preserved alpha rat beast gland\n- **processing yield:** 1x alpha rat beast gland → 1x preserved alpha rat beast gland\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component or spell component.\n\n## 🐾 resource source\n- **obtained from:** alpha rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 14\n\n## 💬 quote\n\n*\"worthless to most hunters. to the right practitioner, it's one of the beast's most valuable organs.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-dire-rat-fang-index",
+      "title": "Dire Rat Fang",
+      "slug": "dire-rat-fang",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/dire-rat-fang",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/dire-rat-fang/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/dire-rat-fang",
+      "content": "---\ntitle: \"Dire Rat Fang\"\nslug: dire-rat-fang\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.1\nmarket_price: 0.15\nmarket_value_source_text: \"10 Pennies\"\nmarket_price_source_text: \"15 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Uncommon\nMaterial Type: Bone\nMaterial Form: Fang\nWeight: 0.1kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |\n\n## 📝 Description\nDire Rat Fang is a large, curved tooth harvested from a Dire Rat. Considerably harder and more imposing than a Great Rat Fang, its dense structure makes it useful for decoration and carving, while its retained organic properties make it valuable as an alchemy or spell component.\n\n## ✨ Material Properties\n- Large, hard, and naturally pointed.\n- Stronger and more durable than [[Great Rat Fang]].\n- Can be polished, drilled, carved, or engraved.\n- Retains useful organic properties after harvesting.\n- Suitable for long-term storage once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Jewellery and pendants.\n- Charms and trinkets.\n- Trophy decorations.\n- Carved ornaments and equipment decorations.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, drilling, carving, or grinding is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None\n- **Processed Into:** Prepared Dire Rat Fang\n- **Processing Yield:** 1x Dire Rat Fang → 1x Prepared Dire Rat Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8\n\n## 💬 Quote\n\n*\"Large enough to make a trophy, useful enough that an alchemist might actually pay for it.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |\n\n## 📝 Description\nDire Rat Fang is a large, curved tooth harvested from a Dire Rat. Considerably harder and more imposing than a Great Rat Fang, its dense structure makes it useful for decoration and carving, while its retained organic properties make it valuable as an alchemy or spell component.\n\n## ✨ Material Properties\n- Large, hard, and naturally pointed.\n- Stronger and more durable than [[Great Rat Fang]].\n- Can be polished, drilled, carved, or engraved.\n- Retains useful organic properties after harvesting.\n- Suitable for long-term storage once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Jewellery and pendants.\n- Charms and trinkets.\n- Trophy decorations.\n- Carved ornaments and equipment decorations.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, drilling, carving, or grinding is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None\n- **Processed Into:** Prepared Dire Rat Fang\n- **Processing Yield:** 1x Dire Rat Fang → 1x Prepared Dire Rat Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8\n\n## 💬 Quote\n\n*\"Large enough to make a trophy, useful enough that an alchemist might actually pay for it.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |",
+        "📝 Description": "Dire Rat Fang is a large, curved tooth harvested from a Dire Rat. Considerably harder and more imposing than a Great Rat Fang, its dense structure makes it useful for decoration and carving, while its retained organic properties make it valuable as an alchemy or spell component.",
+        "✨ Material Properties": "- Large, hard, and naturally pointed.\n- Stronger and more durable than [[Great Rat Fang]].\n- Can be polished, drilled, carved, or engraved.\n- Retains useful organic properties after harvesting.\n- Suitable for long-term storage once properly cleaned.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Jewellery and pendants.\n- Charms and trinkets.\n- Trophy decorations.\n- Carved ornaments and equipment decorations.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing, drilling, carving, or grinding is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None\n- **Processed Into:** Prepared Dire Rat Fang\n- **Processing Yield:** 1x Dire Rat Fang → 1x Prepared Dire Rat Fang",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component or Spell Component.",
+        "🐾 Resource Source": "- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8",
+        "💬 Quote": "*\"Large enough to make a trophy, useful enough that an alchemist might actually pay for it.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Dire Rat Fang is a large, curved tooth harvested from a Dire Rat. Considerably harder and more imposing than a Great Rat Fang, its dense structure makes it useful for decoration and carving, while its retained organic properties make it valuable as an alchemy ",
+      "metadata": {
+        "title": "Dire Rat Fang",
+        "slug": "dire-rat-fang",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.1,
+        "marketPrice": 0.15,
+        "marketValueSourceText": "10 Pennies",
+        "marketPriceSourceText": "15 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Uncommon",
+        "materialType": "Bone",
+        "materialForm": "Fang",
+        "weight": "0.1kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/dire-rat-fang/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/dire-rat-fang/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "dire rat fang item resources & materials creature parts {\"title\":\"dire rat fang\",\"slug\":\"dire-rat-fang\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.1,\"marketprice\":0.15,\"marketvaluesourcetext\":\"10 pennies\",\"marketpricesourcetext\":\"15 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"uncommon\",\"materialtype\":\"bone\",\"materialform\":\"fang\",\"weight\":\"0.1kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| material type | bone |\n| material form | fang |\n| weight | 0.1kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 10 pennies |\n| market price | 15 pennies |\n\n## 📝 description\ndire rat fang is a large, curved tooth harvested from a dire rat. considerably harder and more imposing than a great rat fang, its dense structure makes it useful for decoration and carving, while its retained organic properties make it valuable as an alchemy or spell component.\n\n## ✨ material properties\n- large, hard, and naturally pointed.\n- stronger and more durable than [[great rat fang]].\n- can be polished, drilled, carved, or engraved.\n- retains useful organic properties after harvesting.\n- suitable for long-term storage once properly cleaned.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- jewellery and pendants.\n- charms and trinkets.\n- trophy decorations.\n- carved ornaments and equipment decorations.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing, drilling, carving, or grinding is optional.\n- **tools required:** small knife, file, hand drill, or carving tools.\n- **required profession & rank:** none\n- **processed into:** prepared dire rat fang\n- **processing yield:** 1x dire rat fang → 1x prepared dire rat fang\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component or spell component.\n\n## 🐾 resource source\n- **obtained from:** dire rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 8\n\n## 💬 quote\n\n*\"large enough to make a trophy, useful enough that an alchemist might actually pay for it.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-dire-rat-tail-index",
+      "title": "Dire Rat Tail",
+      "slug": "dire-rat-tail",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/dire-rat-tail",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/dire-rat-tail/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/dire-rat-tail",
+      "content": "---\ntitle: \"Dire Rat Tail\"\nslug: dire-rat-tail\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.08\nmarket_price: 0.1\nmarket_value_source_text: \"8 Pennies\"\nmarket_price_source_text: \"10 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Uncommon\nMaterial Type: Organic\nMaterial Form: Tail\nWeight: 0.4kg\nDurability: Moderate\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.4kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 8 Pennies |\n| Market Price | 10 Pennies |\n\n## 📝 Description\nDire Rat Tail is a thick, muscular tail harvested from a Dire Rat. Dark grey and heavily segmented, it is considerably tougher than the tails of lesser rats. Its unusual biological properties make it useful to alchemists and spellcasters as a component.\n\n## ✨ Material Properties\n- Thick, muscular, and highly flexible.\n- Tougher and more durable than [[Great Rat Tail]].\n- Retains useful biological properties after harvesting.\n- Can be dried or preserved for long-term storage.\n- Valued as both an alchemical and spellcasting component.\n\n## ⚒️ Crafting Use\n- Alchemy Component.\n- Spell Component.\n- Can be preserved for use in alchemical preparations.\n- Can be prepared for use in spellcasting.\n- May also be used for trophies, charms, and decorative crafting.\n\n## 🧪 Processing\n- **Processing Required:** Clean and preserve or thoroughly dry depending on its intended use.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None for basic preparation.\n- **Processed Into:** Preserved Dire Rat Tail or Dried Dire Rat Tail.\n- **Processing Yield:** 1x Dire Rat Tail → 1x Prepared Dire Rat Tail.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as a Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8\n\n## 💬 Quote\n\n*\"Where lesser rats provide scraps, a Dire Rat provides ingredients.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.4kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 8 Pennies |\n| Market Price | 10 Pennies |\n\n## 📝 Description\nDire Rat Tail is a thick, muscular tail harvested from a Dire Rat. Dark grey and heavily segmented, it is considerably tougher than the tails of lesser rats. Its unusual biological properties make it useful to alchemists and spellcasters as a component.\n\n## ✨ Material Properties\n- Thick, muscular, and highly flexible.\n- Tougher and more durable than [[Great Rat Tail]].\n- Retains useful biological properties after harvesting.\n- Can be dried or preserved for long-term storage.\n- Valued as both an alchemical and spellcasting component.\n\n## ⚒️ Crafting Use\n- Alchemy Component.\n- Spell Component.\n- Can be preserved for use in alchemical preparations.\n- Can be prepared for use in spellcasting.\n- May also be used for trophies, charms, and decorative crafting.\n\n## 🧪 Processing\n- **Processing Required:** Clean and preserve or thoroughly dry depending on its intended use.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None for basic preparation.\n- **Processed Into:** Preserved Dire Rat Tail or Dried Dire Rat Tail.\n- **Processing Yield:** 1x Dire Rat Tail → 1x Prepared Dire Rat Tail.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as a Spell Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8\n\n## 💬 Quote\n\n*\"Where lesser rats provide scraps, a Dire Rat provides ingredients.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.4kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 8 Pennies |\n| Market Price | 10 Pennies |",
+        "📝 Description": "Dire Rat Tail is a thick, muscular tail harvested from a Dire Rat. Dark grey and heavily segmented, it is considerably tougher than the tails of lesser rats. Its unusual biological properties make it useful to alchemists and spellcasters as a component.",
+        "✨ Material Properties": "- Thick, muscular, and highly flexible.\n- Tougher and more durable than [[Great Rat Tail]].\n- Retains useful biological properties after harvesting.\n- Can be dried or preserved for long-term storage.\n- Valued as both an alchemical and spellcasting component.",
+        "⚒️ Crafting Use": "- Alchemy Component.\n- Spell Component.\n- Can be preserved for use in alchemical preparations.\n- Can be prepared for use in spellcasting.\n- May also be used for trophies, charms, and decorative crafting.",
+        "🧪 Processing": "- **Processing Required:** Clean and preserve or thoroughly dry depending on its intended use.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None for basic preparation.\n- **Processed Into:** Preserved Dire Rat Tail or Dried Dire Rat Tail.\n- **Processing Yield:** 1x Dire Rat Tail → 1x Prepared Dire Rat Tail.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as a Spell Component.",
+        "🐾 Resource Source": "- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 8",
+        "💬 Quote": "*\"Where lesser rats provide scraps, a Dire Rat provides ingredients.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Dire Rat Tail is a thick, muscular tail harvested from a Dire Rat. Dark grey and heavily segmented, it is considerably tougher than the tails of lesser rats. Its unusual biological properties make it useful to alchemists and spellcasters as a component. *\"Wher",
+      "metadata": {
+        "title": "Dire Rat Tail",
+        "slug": "dire-rat-tail",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.08,
+        "marketPrice": 0.1,
+        "marketValueSourceText": "8 Pennies",
+        "marketPriceSourceText": "10 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Uncommon",
+        "materialType": "Organic",
+        "materialForm": "Tail",
+        "weight": "0.4kg",
+        "durability": "Moderate",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/dire-rat-tail/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/dire-rat-tail/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Organic",
+        "visibility": "public"
+      },
+      "searchTerms": "dire rat tail item resources & materials creature parts {\"title\":\"dire rat tail\",\"slug\":\"dire-rat-tail\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.08,\"marketprice\":0.1,\"marketvaluesourcetext\":\"8 pennies\",\"marketpricesourcetext\":\"10 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"uncommon\",\"materialtype\":\"organic\",\"materialform\":\"tail\",\"weight\":\"0.4kg\",\"durability\":\"moderate\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| material type | organic |\n| material form | tail |\n| weight | 0.4kg |\n| durability | moderate |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 8 pennies |\n| market price | 10 pennies |\n\n## 📝 description\ndire rat tail is a thick, muscular tail harvested from a dire rat. dark grey and heavily segmented, it is considerably tougher than the tails of lesser rats. its unusual biological properties make it useful to alchemists and spellcasters as a component.\n\n## ✨ material properties\n- thick, muscular, and highly flexible.\n- tougher and more durable than [[great rat tail]].\n- retains useful biological properties after harvesting.\n- can be dried or preserved for long-term storage.\n- valued as both an alchemical and spellcasting component.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- can be preserved for use in alchemical preparations.\n- can be prepared for use in spellcasting.\n- may also be used for trophies, charms, and decorative crafting.\n\n## 🧪 processing\n- **processing required:** clean and preserve or thoroughly dry depending on its intended use.\n- **tools required:** small knife and basic preservation equipment.\n- **required profession & rank:** none for basic preparation.\n- **processed into:** preserved dire rat tail or dried dire rat tail.\n- **processing yield:** 1x dire rat tail → 1x prepared dire rat tail.\n\n## 🔮 enchantment use\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as a spell component.\n\n## 🐾 resource source\n- **obtained from:** dire rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 8\n\n## 💬 quote\n\n*\"where lesser rats provide scraps, a dire rat provides ingredients.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-elder-rat-beast-fang-index",
+      "title": "Elder Rat Beast Fang",
+      "slug": "elder-rat-beast-fang",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/elder-rat-beast-fang",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-fang/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-fang",
+      "content": "---\ntitle: \"Elder Rat Beast Fang\"\nslug: elder-rat-beast-fang\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.75\nmarket_price: 0.85\nmarket_value_source_text: \"75 Copper\"\nmarket_price_source_text: \"85 Copper\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Epic\nMaterial Type: Bone\nMaterial Form: Fang\nWeight: 0.4kg\nDurability: Very High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.4kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |\n\n## 📝 Description\nElder Rat Beast Fang is an enormous, heavily curved fang harvested from an Elder Rat Beast. Dense, aged, and exceptionally hard, the fang retains concentrated beast essence and is highly valued by alchemists, spellcasters, Beast Tamers, and specialised craftsmen.\n\n## ✨ Material Properties\n- Enormous, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping or cracking.\n- Stronger and more durable than [[Alpha Rat Beast Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains concentrated beast essence after harvesting.\n- Remains stable for extended periods once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and talismans.\n- Jewellery and carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and preserve; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Prepared Elder Rat Beast Fang\n- **Processing Yield:** 1x Elder Rat Beast Fang → 1x Prepared Elder Rat Beast Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 17\n\n## 💬 Quote\n\n*\"An elder's fang carries the strength of a predator that survived long enough to rule its kind.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.4kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |\n\n## 📝 Description\nElder Rat Beast Fang is an enormous, heavily curved fang harvested from an Elder Rat Beast. Dense, aged, and exceptionally hard, the fang retains concentrated beast essence and is highly valued by alchemists, spellcasters, Beast Tamers, and specialised craftsmen.\n\n## ✨ Material Properties\n- Enormous, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping or cracking.\n- Stronger and more durable than [[Alpha Rat Beast Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains concentrated beast essence after harvesting.\n- Remains stable for extended periods once properly cleaned.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and talismans.\n- Jewellery and carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and preserve; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Prepared Elder Rat Beast Fang\n- **Processing Yield:** 1x Elder Rat Beast Fang → 1x Prepared Elder Rat Beast Fang\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 17\n\n## 💬 Quote\n\n*\"An elder's fang carries the strength of a predator that survived long enough to rule its kind.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.4kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 75 Copper |\n| Market Price | 85 Copper |",
+        "📝 Description": "Elder Rat Beast Fang is an enormous, heavily curved fang harvested from an Elder Rat Beast. Dense, aged, and exceptionally hard, the fang retains concentrated beast essence and is highly valued by alchemists, spellcasters, Beast Tamers, and specialised craftsmen.",
+        "✨ Material Properties": "- Enormous, dense, and naturally pointed.\n- Exceptionally hard and resistant to chipping or cracking.\n- Stronger and more durable than [[Alpha Rat Beast Fang]].\n- Can be polished, drilled, carved, ground, or engraved.\n- Retains concentrated beast essence after harvesting.\n- Remains stable for extended periods once properly cleaned.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and talismans.\n- Jewellery and carved ornaments.\n- Trophy decorations.\n- Decorative additions to weapons, armour, and equipment.",
+        "🧪 Processing": "- **Processing Required:** Clean and preserve; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **Tools Required:** Knife, File, Hand Drill, or Carving Tools.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Prepared Elder Rat Beast Fang\n- **Processing Yield:** 1x Elder Rat Beast Fang → 1x Prepared Elder Rat Beast Fang",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.",
+        "🐾 Resource Source": "- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 17",
+        "💬 Quote": "*\"An elder's fang carries the strength of a predator that survived long enough to rule its kind.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Elder Rat Beast Fang is an enormous, heavily curved fang harvested from an Elder Rat Beast. Dense, aged, and exceptionally hard, the fang retains concentrated beast essence and is highly valued by alchemists, spellcasters, Beast Tamers, and specialised craftsm",
+      "metadata": {
+        "title": "Elder Rat Beast Fang",
+        "slug": "elder-rat-beast-fang",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.75,
+        "marketPrice": 0.85,
+        "marketValueSourceText": "75 Copper",
+        "marketPriceSourceText": "85 Copper",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Epic",
+        "materialType": "Bone",
+        "materialForm": "Fang",
+        "weight": "0.4kg",
+        "durability": "Very High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-fang/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-fang/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Epic",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "elder rat beast fang item resources & materials creature parts {\"title\":\"elder rat beast fang\",\"slug\":\"elder-rat-beast-fang\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.75,\"marketprice\":0.85,\"marketvaluesourcetext\":\"75 copper\",\"marketpricesourcetext\":\"85 copper\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"epic\",\"materialtype\":\"bone\",\"materialform\":\"fang\",\"weight\":\"0.4kg\",\"durability\":\"very high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | epic |\n| material type | bone |\n| material form | fang |\n| weight | 0.4kg |\n| durability | very high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 75 copper |\n| market price | 85 copper |\n\n## 📝 description\nelder rat beast fang is an enormous, heavily curved fang harvested from an elder rat beast. dense, aged, and exceptionally hard, the fang retains concentrated beast essence and is highly valued by alchemists, spellcasters, beast tamers, and specialised craftsmen.\n\n## ✨ material properties\n- enormous, dense, and naturally pointed.\n- exceptionally hard and resistant to chipping or cracking.\n- stronger and more durable than [[alpha rat beast fang]].\n- can be polished, drilled, carved, ground, or engraved.\n- retains concentrated beast essence after harvesting.\n- remains stable for extended periods once properly cleaned.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- beast tamer component.\n- advanced charms and talismans.\n- jewellery and carved ornaments.\n- trophy decorations.\n- decorative additions to weapons, armour, and equipment.\n\n## 🧪 processing\n- **processing required:** clean and preserve; polishing, carving, drilling, or grinding may be performed depending on its intended use.\n- **tools required:** knife, file, hand drill, or carving tools.\n- **required crafting rank:** journeyman\n- **processed into:** prepared elder rat beast fang\n- **processing yield:** 1x elder rat beast fang → 1x prepared elder rat beast fang\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component, spell component, or beast tamer component.\n\n## 🐾 resource source\n- **obtained from:** elder rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 17\n\n## 💬 quote\n\n*\"an elder's fang carries the strength of a predator that survived long enough to rule its kind.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-elder-rat-beast-tail-index",
+      "title": "Elder Rat Beast Tail",
+      "slug": "elder-rat-beast-tail",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/elder-rat-beast-tail",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-tail/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-tail",
+      "content": "---\ntitle: \"Elder Rat Beast Tail\"\nslug: elder-rat-beast-tail\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 3\nmarket_price: 6\nmarket_value_source_text: \"3 Marks\"\nmarket_price_source_text: \"6 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Epic\nMaterial Type: Organic\nMaterial Form: Tail\nWeight: 2kg\nDurability: Very High\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 2kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |\n\n## 📝 Description\nElder Rat Beast Tail is an enormous, heavy tail harvested from an Elder Rat Beast. Thick hide, powerful connective tissue, and a covering of coarse grey-black hairs make it remarkably durable, while the accumulated beast essence within makes it valuable to specialised practitioners.\n\n## ✨ Material Properties\n- Exceptionally long, thick, and heavy.\n- Covered in sparse, coarse grey-black hairs.\n- Extremely tough while retaining natural flexibility.\n- More durable than [[Alpha Rat Beast Tail]].\n- Retains concentrated beast essence after harvesting.\n- Can be preserved for extended periods when properly prepared.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and trinkets.\n- Specialised magical preparations.\n- Trophy and equipment decoration.\n\n## 🧪 Processing\n- **Processing Required:** Thoroughly clean, treat, and preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Preserved Elder Rat Beast Tail\n- **Processing Yield:** 1x Elder Rat Beast Tail → 1x Preserved Elder Rat Beast Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16\n\n## 💬 Quote\n\n*\"Age leaves its mark on every beast. In an elder's tail, even those marks have value.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 2kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |\n\n## 📝 Description\nElder Rat Beast Tail is an enormous, heavy tail harvested from an Elder Rat Beast. Thick hide, powerful connective tissue, and a covering of coarse grey-black hairs make it remarkably durable, while the accumulated beast essence within makes it valuable to specialised practitioners.\n\n## ✨ Material Properties\n- Exceptionally long, thick, and heavy.\n- Covered in sparse, coarse grey-black hairs.\n- Extremely tough while retaining natural flexibility.\n- More durable than [[Alpha Rat Beast Tail]].\n- Retains concentrated beast essence after harvesting.\n- Can be preserved for extended periods when properly prepared.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and trinkets.\n- Specialised magical preparations.\n- Trophy and equipment decoration.\n\n## 🧪 Processing\n- **Processing Required:** Thoroughly clean, treat, and preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Preserved Elder Rat Beast Tail\n- **Processing Yield:** 1x Elder Rat Beast Tail → 1x Preserved Elder Rat Beast Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16\n\n## 💬 Quote\n\n*\"Age leaves its mark on every beast. In an elder's tail, even those marks have value.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 2kg |\n| Durability | Very High |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |",
+        "📝 Description": "Elder Rat Beast Tail is an enormous, heavy tail harvested from an Elder Rat Beast. Thick hide, powerful connective tissue, and a covering of coarse grey-black hairs make it remarkably durable, while the accumulated beast essence within makes it valuable to specialised practitioners.",
+        "✨ Material Properties": "- Exceptionally long, thick, and heavy.\n- Covered in sparse, coarse grey-black hairs.\n- Extremely tough while retaining natural flexibility.\n- More durable than [[Alpha Rat Beast Tail]].\n- Retains concentrated beast essence after harvesting.\n- Can be preserved for extended periods when properly prepared.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Spell component.\n- Beast Tamer component.\n- Advanced charms and trinkets.\n- Specialised magical preparations.\n- Trophy and equipment decoration.",
+        "🧪 Processing": "- **Processing Required:** Thoroughly clean, treat, and preserve.\n- **Tools Required:** Skinning Knife and preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Preserved Elder Rat Beast Tail\n- **Processing Yield:** 1x Elder Rat Beast Tail → 1x Preserved Elder Rat Beast Tail",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component, Spell Component, or Beast Tamer Component.",
+        "🐾 Resource Source": "- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16",
+        "💬 Quote": "*\"Age leaves its mark on every beast. In an elder's tail, even those marks have value.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Elder Rat Beast Tail is an enormous, heavy tail harvested from an Elder Rat Beast. Thick hide, powerful connective tissue, and a covering of coarse grey-black hairs make it remarkably durable, while the accumulated beast essence within makes it valuable to spe",
+      "metadata": {
+        "title": "Elder Rat Beast Tail",
+        "slug": "elder-rat-beast-tail",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 3,
+        "marketPrice": 6,
+        "marketValueSourceText": "3 Marks",
+        "marketPriceSourceText": "6 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Epic",
+        "materialType": "Organic",
+        "materialForm": "Tail",
+        "weight": "2kg",
+        "durability": "Very High",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-tail/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/elder-rat-beast-tail/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Epic",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Organic",
+        "visibility": "public"
+      },
+      "searchTerms": "elder rat beast tail item resources & materials creature parts {\"title\":\"elder rat beast tail\",\"slug\":\"elder-rat-beast-tail\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":3,\"marketprice\":6,\"marketvaluesourcetext\":\"3 marks\",\"marketpricesourcetext\":\"6 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"epic\",\"materialtype\":\"organic\",\"materialform\":\"tail\",\"weight\":\"2kg\",\"durability\":\"very high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | epic |\n| material type | organic |\n| material form | tail |\n| weight | 2kg |\n| durability | very high |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 3 marks |\n| market price | 6 marks |\n\n## 📝 description\nelder rat beast tail is an enormous, heavy tail harvested from an elder rat beast. thick hide, powerful connective tissue, and a covering of coarse grey-black hairs make it remarkably durable, while the accumulated beast essence within makes it valuable to specialised practitioners.\n\n## ✨ material properties\n- exceptionally long, thick, and heavy.\n- covered in sparse, coarse grey-black hairs.\n- extremely tough while retaining natural flexibility.\n- more durable than [[alpha rat beast tail]].\n- retains concentrated beast essence after harvesting.\n- can be preserved for extended periods when properly prepared.\n\n## ⚒️ crafting use\n- alchemy component.\n- spell component.\n- beast tamer component.\n- advanced charms and trinkets.\n- specialised magical preparations.\n- trophy and equipment decoration.\n\n## 🧪 processing\n- **processing required:** thoroughly clean, treat, and preserve.\n- **tools required:** skinning knife and preservation equipment.\n- **required crafting rank:** journeyman\n- **processed into:** preserved elder rat beast tail\n- **processing yield:** 1x elder rat beast tail → 1x preserved elder rat beast tail\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component, spell component, or beast tamer component.\n\n## 🐾 resource source\n- **obtained from:** elder rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 16\n\n## 💬 quote\n\n*\"age leaves its mark on every beast. in an elder's tail, even those marks have value.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-great-rat-fang-index",
+      "title": "Great Rat Fang",
+      "slug": "great-rat-fang",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/great-rat-fang",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/great-rat-fang/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/great-rat-fang",
+      "content": "---\ntitle: \"Great Rat Fang\"\nslug: great-rat-fang\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.05\nmarket_price: 0.07\nmarket_value_source_text: \"5 Pennies\"\nmarket_price_source_text: \"7 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Bone\nMaterial Form: Fang\nWeight: 0.05kg\nDurability: Moderate\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.05kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 7 Pennies |\n\n## 📝 Description\nGreat Rat Fang is a large, curved tooth harvested from a Great Rat. Yellowed and sharply pointed from constant gnawing, the fang is considerably larger and tougher than ordinary rat teeth, making it a popular material for trophies, jewellery, ornaments, and simple carvings.\n\n## ✨ Material Properties\n- Hard and naturally pointed.\n- Larger and tougher than ordinary [[Rat Teeth]].\n- Can be polished, drilled, carved, or engraved.\n- Retains its shape well when properly cleaned.\n- Too brittle for reliable use as a weapon component.\n\n## ⚒️ Crafting Use\n- Necklaces, pendants, and jewellery.\n- Decorative charms and trinkets.\n- Hunting trophies.\n- Carved ornaments.\n- Decorative additions to weapons, armour, clothing, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, drilling, or carving is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished items.\n- **Processed Into:** Polished or Carved Great Rat Fang.\n- **Processing Yield:** 1x Great Rat Fang → 1x Prepared Great Rat Fang.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Not much of a weapon, but it makes a fine trophy.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.05kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 7 Pennies |\n\n## 📝 Description\nGreat Rat Fang is a large, curved tooth harvested from a Great Rat. Yellowed and sharply pointed from constant gnawing, the fang is considerably larger and tougher than ordinary rat teeth, making it a popular material for trophies, jewellery, ornaments, and simple carvings.\n\n## ✨ Material Properties\n- Hard and naturally pointed.\n- Larger and tougher than ordinary [[Rat Teeth]].\n- Can be polished, drilled, carved, or engraved.\n- Retains its shape well when properly cleaned.\n- Too brittle for reliable use as a weapon component.\n\n## ⚒️ Crafting Use\n- Necklaces, pendants, and jewellery.\n- Decorative charms and trinkets.\n- Hunting trophies.\n- Carved ornaments.\n- Decorative additions to weapons, armour, clothing, and equipment.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing, drilling, or carving is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished items.\n- **Processed Into:** Polished or Carved Great Rat Fang.\n- **Processing Yield:** 1x Great Rat Fang → 1x Prepared Great Rat Fang.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Not much of a weapon, but it makes a fine trophy.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Fang |\n| Weight | 0.05kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 7 Pennies |",
+        "📝 Description": "Great Rat Fang is a large, curved tooth harvested from a Great Rat. Yellowed and sharply pointed from constant gnawing, the fang is considerably larger and tougher than ordinary rat teeth, making it a popular material for trophies, jewellery, ornaments, and simple carvings.",
+        "✨ Material Properties": "- Hard and naturally pointed.\n- Larger and tougher than ordinary [[Rat Teeth]].\n- Can be polished, drilled, carved, or engraved.\n- Retains its shape well when properly cleaned.\n- Too brittle for reliable use as a weapon component.",
+        "⚒️ Crafting Use": "- Necklaces, pendants, and jewellery.\n- Decorative charms and trinkets.\n- Hunting trophies.\n- Carved ornaments.\n- Decorative additions to weapons, armour, clothing, and equipment.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing, drilling, or carving is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Carving Tools.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished items.\n- **Processed Into:** Polished or Carved Great Rat Fang.\n- **Processing Yield:** 1x Great Rat Fang → 1x Prepared Great Rat Fang.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5",
+        "💬 Quote": "*\"Not much of a weapon, but it makes a fine trophy.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Great Rat Fang is a large, curved tooth harvested from a Great Rat. Yellowed and sharply pointed from constant gnawing, the fang is considerably larger and tougher than ordinary rat teeth, making it a popular material for trophies, jewellery, ornaments, and si",
+      "metadata": {
+        "title": "Great Rat Fang",
+        "slug": "great-rat-fang",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.05,
+        "marketPrice": 0.07,
+        "marketValueSourceText": "5 Pennies",
+        "marketPriceSourceText": "7 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Bone",
+        "materialForm": "Fang",
+        "weight": "0.05kg",
+        "durability": "Moderate",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/great-rat-fang/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/great-rat-fang/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "great rat fang item resources & materials creature parts {\"title\":\"great rat fang\",\"slug\":\"great-rat-fang\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.05,\"marketprice\":0.07,\"marketvaluesourcetext\":\"5 pennies\",\"marketpricesourcetext\":\"7 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"bone\",\"materialform\":\"fang\",\"weight\":\"0.05kg\",\"durability\":\"moderate\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | bone |\n| material form | fang |\n| weight | 0.05kg |\n| durability | moderate |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 5 pennies |\n| market price | 7 pennies |\n\n## 📝 description\ngreat rat fang is a large, curved tooth harvested from a great rat. yellowed and sharply pointed from constant gnawing, the fang is considerably larger and tougher than ordinary rat teeth, making it a popular material for trophies, jewellery, ornaments, and simple carvings.\n\n## ✨ material properties\n- hard and naturally pointed.\n- larger and tougher than ordinary [[rat teeth]].\n- can be polished, drilled, carved, or engraved.\n- retains its shape well when properly cleaned.\n- too brittle for reliable use as a weapon component.\n\n## ⚒️ crafting use\n- necklaces, pendants, and jewellery.\n- decorative charms and trinkets.\n- hunting trophies.\n- carved ornaments.\n- decorative additions to weapons, armour, clothing, and equipment.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing, drilling, or carving is optional.\n- **tools required:** small knife, file, hand drill, or carving tools.\n- **required profession & rank:** none for basic preparation; appropriate crafting profession for finished items.\n- **processed into:** polished or carved great rat fang.\n- **processing yield:** 1x great rat fang → 1x prepared great rat fang.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** great rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 5\n\n## 💬 quote\n\n*\"not much of a weapon, but it makes a fine trophy.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-great-rat-tail-index",
+      "title": "Great Rat Tail",
+      "slug": "great-rat-tail",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/great-rat-tail",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/great-rat-tail/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/great-rat-tail",
+      "content": "---\ntitle: \"Great Rat Tail\"\nslug: great-rat-tail\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.03\nmarket_price: 0.05\nmarket_value_source_text: \"3 Pennies\"\nmarket_price_source_text: \"5 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Organic\nMaterial Form: Tail\nWeight: 0.15kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.15kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Pennies |\n| Market Price | 5 Pennies |\n\n## 📝 Description\nGreat Rat Tail is a long, thick, pinkish-grey tail harvested from a Great Rat. Tougher and considerably larger than an ordinary rat's tail, it has little practical value beyond decoration, trophies, curiosities, and simple handmade trinkets.\n\n## ✨ Material Properties\n- Long, thick, and flexible.\n- Tougher than an ordinary [[Rat Tail]].\n- Distinctive segmented appearance.\n- Deteriorates unless dried or preserved.\n- Provides no meaningful protection or structural strength.\n\n## ⚒️ Crafting Use\n- Trophy decorations.\n- Charms and simple trinkets.\n- Primitive jewellery and accessories.\n- Decorative additions to clothing or equipment.\n- Display pieces and curiosities.\n\n## 🧪 Processing\n- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None\n- **Processed Into:** Dried Great Rat Tail\n- **Processing Yield:** 1x Great Rat Tail → 1x Dried Great Rat Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 4\n\n## 💬 Quote\n\n*\"Mostly a trophy, though some folk will decorate just about anything.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.15kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Pennies |\n| Market Price | 5 Pennies |\n\n## 📝 Description\nGreat Rat Tail is a long, thick, pinkish-grey tail harvested from a Great Rat. Tougher and considerably larger than an ordinary rat's tail, it has little practical value beyond decoration, trophies, curiosities, and simple handmade trinkets.\n\n## ✨ Material Properties\n- Long, thick, and flexible.\n- Tougher than an ordinary [[Rat Tail]].\n- Distinctive segmented appearance.\n- Deteriorates unless dried or preserved.\n- Provides no meaningful protection or structural strength.\n\n## ⚒️ Crafting Use\n- Trophy decorations.\n- Charms and simple trinkets.\n- Primitive jewellery and accessories.\n- Decorative additions to clothing or equipment.\n- Display pieces and curiosities.\n\n## 🧪 Processing\n- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None\n- **Processed Into:** Dried Great Rat Tail\n- **Processing Yield:** 1x Great Rat Tail → 1x Dried Great Rat Tail\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 4\n\n## 💬 Quote\n\n*\"Mostly a trophy, though some folk will decorate just about anything.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Organic |\n| Material Form | Tail |\n| Weight | 0.15kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 3 Pennies |\n| Market Price | 5 Pennies |",
+        "📝 Description": "Great Rat Tail is a long, thick, pinkish-grey tail harvested from a Great Rat. Tougher and considerably larger than an ordinary rat's tail, it has little practical value beyond decoration, trophies, curiosities, and simple handmade trinkets.",
+        "✨ Material Properties": "- Long, thick, and flexible.\n- Tougher than an ordinary [[Rat Tail]].\n- Distinctive segmented appearance.\n- Deteriorates unless dried or preserved.\n- Provides no meaningful protection or structural strength.",
+        "⚒️ Crafting Use": "- Trophy decorations.\n- Charms and simple trinkets.\n- Primitive jewellery and accessories.\n- Decorative additions to clothing or equipment.\n- Display pieces and curiosities.",
+        "🧪 Processing": "- **Processing Required:** Clean and thoroughly dry or preserve.\n- **Tools Required:** Small Knife and basic preservation equipment.\n- **Required Profession & Rank:** None\n- **Processed Into:** Dried Great Rat Tail\n- **Processing Yield:** 1x Great Rat Tail → 1x Dried Great Rat Tail",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 4",
+        "💬 Quote": "*\"Mostly a trophy, though some folk will decorate just about anything.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Great Rat Tail is a long, thick, pinkish-grey tail harvested from a Great Rat. Tougher and considerably larger than an ordinary rat's tail, it has little practical value beyond decoration, trophies, curiosities, and simple handmade trinkets. *\"Mostly a trophy,",
+      "metadata": {
+        "title": "Great Rat Tail",
+        "slug": "great-rat-tail",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.03,
+        "marketPrice": 0.05,
+        "marketValueSourceText": "3 Pennies",
+        "marketPriceSourceText": "5 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Organic",
+        "materialForm": "Tail",
+        "weight": "0.15kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/great-rat-tail/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/great-rat-tail/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Organic",
+        "visibility": "public"
+      },
+      "searchTerms": "great rat tail item resources & materials creature parts {\"title\":\"great rat tail\",\"slug\":\"great-rat-tail\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.03,\"marketprice\":0.05,\"marketvaluesourcetext\":\"3 pennies\",\"marketpricesourcetext\":\"5 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"organic\",\"materialform\":\"tail\",\"weight\":\"0.15kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | organic |\n| material form | tail |\n| weight | 0.15kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 3 pennies |\n| market price | 5 pennies |\n\n## 📝 description\ngreat rat tail is a long, thick, pinkish-grey tail harvested from a great rat. tougher and considerably larger than an ordinary rat's tail, it has little practical value beyond decoration, trophies, curiosities, and simple handmade trinkets.\n\n## ✨ material properties\n- long, thick, and flexible.\n- tougher than an ordinary [[rat tail]].\n- distinctive segmented appearance.\n- deteriorates unless dried or preserved.\n- provides no meaningful protection or structural strength.\n\n## ⚒️ crafting use\n- trophy decorations.\n- charms and simple trinkets.\n- primitive jewellery and accessories.\n- decorative additions to clothing or equipment.\n- display pieces and curiosities.\n\n## 🧪 processing\n- **processing required:** clean and thoroughly dry or preserve.\n- **tools required:** small knife and basic preservation equipment.\n- **required profession & rank:** none\n- **processed into:** dried great rat tail\n- **processing yield:** 1x great rat tail → 1x dried great rat tail\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** great rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 4\n\n## 💬 quote\n\n*\"mostly a trophy, though some folk will decorate just about anything.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-rat-tail-index",
+      "title": "Rat Tail",
+      "slug": "rat-tail",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/rat-tail",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/rat-tail/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/rat-tail",
+      "content": "---\ntitle: \"Rat Tail\"\nslug: rat-tail\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.01\nmarket_price: 0.02\nmarket_value_source_text: \"1 Penny\"\nmarket_price_source_text: \"2 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Bone\nMaterial Form: Teeth\nWeight: 0.01kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |",
+        "📝 Description": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.",
+        "✨ Material Properties": "- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.",
+        "⚒️ Crafting Use": "- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3",
+        "💬 Quote": "*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and orn",
+      "metadata": {
+        "title": "Rat Tail",
+        "slug": "rat-tail",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.01,
+        "marketPrice": 0.02,
+        "marketValueSourceText": "1 Penny",
+        "marketPriceSourceText": "2 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Bone",
+        "materialForm": "Teeth",
+        "weight": "0.01kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/rat-tail/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/rat-tail/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "rat tail item resources & materials creature parts {\"title\":\"rat tail\",\"slug\":\"rat-tail\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.01,\"marketprice\":0.02,\"marketvaluesourcetext\":\"1 penny\",\"marketpricesourcetext\":\"2 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"bone\",\"materialform\":\"teeth\",\"weight\":\"0.01kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | bone |\n| material form | teeth |\n| weight | 0.01kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 1 penny |\n| market price | 2 pennies |\n\n## 📝 description\nrat teeth are small, pale-yellow incisors harvested from common rats. their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ material properties\n- small, lightweight, and naturally hard.\n- usually pale yellow or off-white in colour.\n- too small and brittle for practical armour or weapon construction.\n- can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ crafting use\n- necklaces, bracelets, and simple jewellery.\n- decorative charms and trinkets.\n- trophy ornaments.\n- clothing and equipment embellishments.\n- decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing or drilling is optional.\n- **tools required:** small knife, file, hand drill, or polishing tools depending on the intended decoration.\n- **required profession & rank:** none for basic preparation; appropriate crafting profession for finished decorative items.\n- **processed into:** polished or carved rat teeth.\n- **processing yield:** 1x rat tooth → 1x prepared rat tooth.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 3\n\n## 💬 quote\n\n*\"worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-creature-parts-rat-teeth-index",
+      "title": "Rat Teeth",
+      "slug": "rat-teeth",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Creature Parts"
+      ],
+      "category": "Creature Parts",
+      "route": "/compendium/item/resources-and-materials/creature-parts/rat-teeth",
+      "sourcePath": "content/Items/Resources & Materials/Creature Parts/rat-teeth/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Creature Parts/rat-teeth",
+      "content": "---\ntitle: \"Rat Teeth\"\nslug: rat-teeth\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Creature Parts\"\nvisibility: public\nmarket_value: 0.01\nmarket_price: 0.02\nmarket_value_source_text: \"1 Penny\"\nmarket_price_source_text: \"2 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Bone\nMaterial Form: Teeth\nWeight: 0.01kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Penny |\n| Market Price | 2 Pennies |",
+        "📝 Description": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.",
+        "✨ Material Properties": "- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.",
+        "⚒️ Crafting Use": "- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3",
+        "💬 Quote": "*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and orn",
+      "metadata": {
+        "title": "Rat Teeth",
+        "slug": "rat-teeth",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Creature Parts",
+        "visibility": "public",
+        "marketValue": 0.01,
+        "marketPrice": 0.02,
+        "marketValueSourceText": "1 Penny",
+        "marketPriceSourceText": "2 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Bone",
+        "materialForm": "Teeth",
+        "weight": "0.01kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Creature Parts/rat-teeth/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Creature Parts/rat-teeth/image.png",
+      "related": [],
+      "filters": {
+        "category": "Creature Parts",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "rat teeth item resources & materials creature parts {\"title\":\"rat teeth\",\"slug\":\"rat-teeth\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"creature parts\",\"visibility\":\"public\",\"marketvalue\":0.01,\"marketprice\":0.02,\"marketvaluesourcetext\":\"1 penny\",\"marketpricesourcetext\":\"2 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"bone\",\"materialform\":\"teeth\",\"weight\":\"0.01kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | bone |\n| material form | teeth |\n| weight | 0.01kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 1 penny |\n| market price | 2 pennies |\n\n## 📝 description\nrat teeth are small, pale-yellow incisors harvested from common rats. their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ material properties\n- small, lightweight, and naturally hard.\n- usually pale yellow or off-white in colour.\n- too small and brittle for practical armour or weapon construction.\n- can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ crafting use\n- necklaces, bracelets, and simple jewellery.\n- decorative charms and trinkets.\n- trophy ornaments.\n- clothing and equipment embellishments.\n- decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing or drilling is optional.\n- **tools required:** small knife, file, hand drill, or polishing tools depending on the intended decoration.\n- **required profession & rank:** none for basic preparation; appropriate crafting profession for finished decorative items.\n- **processed into:** polished or carved rat teeth.\n- **processing yield:** 1x rat tooth → 1x prepared rat tooth.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 3\n\n## 💬 quote\n\n*\"worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
+    },
+    {
       "id": "item:content-flora-1-common-flowers-rose-index",
       "title": "Rose",
       "slug": "rose",
@@ -4152,6 +6433,1035 @@
         "essenceAffinity": "Life"
       },
       "searchTerms": "rose item resources & materials herbalist & plants {\"title\":\"rose\",\"slug\":\"rose\",\"kingdom\":\"flora\",\"itemclass\":\"common\",\"category\":\"flower\",\"subcategory\":\"\",\"habitats\":[\"plains\",\"gardens\"],\"climate\":\"temperate\",\"regions\":[],\"harvestseason\":[\"spring\",\"summer\"],\"manadensity\":\"very low\",\"toxicity\":\"none\",\"growthdifficulty\":\"easy\",\"affinities\":[\"life\"],\"craftinguses\":[\"perfume\",\"minor healing potions\"],\"alchemyuses\":[],\"culinaryuses\":[],\"image\":\"rose.png\",\"marketvalue\":0,\"marketprice\":null,\"marketvaluesourcetext\":\"low\",\"pricingstatus\":\"needs-completion\",\"tags\":[\"flora\",\"common\",\"flower\"]} # rose\n\n## overview\nroses are common flowering plants found in tended gardens, old courtyards, hedgerows, and temperate plains near settled roads. in asteria, they are valued as a simple fragrant ingredient and a low-grade life-aspected reagent.\n\n## appearance\na rose grows as a thorned green stem with layered petals ranging from pale blush to deep crimson. healthy plants carry a clean floral scent, glossy leaves, and sharp hooked thorns that can catch cloth or skin.\n\n## habitat\nroses prefer temperate soil, steady sunlight, and places where water does not stagnate. they grow naturally in plains and hedges, but the finest blooms are usually cultivated in gardens, temple grounds, estates, and healer courtyards.\n\n## harvesting\nflowers are clipped just below the bloom to preserve the petals and oil. thorns make careless gathering uncomfortable, but the plant is otherwise easy to harvest. spring and summer blooms are most abundant, with small yields possible in sheltered gardens.\n\n## uses\nrose petals are used for perfume, ceremonial offerings, scented oils, poultices, and basic trade bundles. dried petals are easy to transport and are often sold by herbalists and village markets.\n\n## alchemy uses\nrose petals can soften the scent of harsh brews and serve as a minor stabilizer in gentle restorative mixtures. they are too weak for major healing on their own, but they are useful in early potion practice.\n\n## crafting uses\nroses can be processed into perfume, pressed dyes, incense blends, decorative garlands, and minor healing potion additives. thorns may be used as small natural pins or ritual markers.\n\n## culinary uses\npetals may be candied, steeped into mild tea, or used sparingly in sweet syrups where the plant has been grown away from toxins or grave soil.\n\n## magical affinities\nroses carry a faint life affinity linked to renewal, beauty, memory, and gentle restoration. certain regional variants may develop stronger affinities when grown near shrines, leyline gardens, or enchanted groves.\n\n## market value\nroses are low-value and widely available in settled regions. fresh blooms are cheapest near gardens and towns, while preserved petals and oils carry slightly higher value for crafters and alchemists.\n\n## related items\n- minor healing potions\n- perfume\n- garden biomes\n- herbalist profession"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-dire-rat-hide-index",
+      "title": "Dire Rat Hide",
+      "slug": "dire-rat-hide",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/dire-rat-hide",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/dire-rat-hide/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/dire-rat-hide",
+      "content": "---\ntitle: \"Dire Rat Hide\"\nslug: dire-rat-hide\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.3\nmarket_price: 0.4\nmarket_value_source_text: \"30 Pennies\"\nmarket_price_source_text: \"40 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Uncommon\nMaterial Type: Leather\nMaterial Form: Hide\nWeight: 2.5kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"1\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 2.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 30 Pennies |\n| Market Price | 40 Pennies |\n\n## 📝 Description\n\nDire Rat Hide is an exceptionally thick, dark reddish-brown pelt covered in coarse, dense fur. Its tough underlying skin is naturally resistant to tearing and puncturing, providing considerably greater protection than the hides harvested from ordinary or Great Rats.\n\n---\n\n## ✨ Material Properties\n\n- Thick, dense hide with strong natural resistance to tearing.\n- Tougher and more durable than [[Great Rat Hide]].\n- Provides **+2 Armour Modifier** when used as the protective material of crafted armour.\n- Remains reasonably flexible despite its considerable thickness.\n- Well suited to rugged equipment exposed to frequent wear.\n\n---\n\n## ⚒️ Crafting Use\n\n- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Heavy-duty straps, harnesses, packs, and equipment components.\n- Can be processed into [[Dire Rat Leather]].\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Clean, scrape, cure, and thoroughly tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Apprentice.\n- **Processed Into:** [[Dire Rat Leather]]\n- **Processing Yield:** 1x Dire Rat Hide → 1x Dire Rat Leather.\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive and reinforcement enchantments.\n- **Special Properties:** Its dense structure provides a more stable enchanting base than lesser rat hides.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 12\n\n---\n\n## 💬 Quote\n\n*\"What protects the beast in life protects the hunter in death.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 2.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 30 Pennies |\n| Market Price | 40 Pennies |\n\n## 📝 Description\n\nDire Rat Hide is an exceptionally thick, dark reddish-brown pelt covered in coarse, dense fur. Its tough underlying skin is naturally resistant to tearing and puncturing, providing considerably greater protection than the hides harvested from ordinary or Great Rats.\n\n---\n\n## ✨ Material Properties\n\n- Thick, dense hide with strong natural resistance to tearing.\n- Tougher and more durable than [[Great Rat Hide]].\n- Provides **+2 Armour Modifier** when used as the protective material of crafted armour.\n- Remains reasonably flexible despite its considerable thickness.\n- Well suited to rugged equipment exposed to frequent wear.\n\n---\n\n## ⚒️ Crafting Use\n\n- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Heavy-duty straps, harnesses, packs, and equipment components.\n- Can be processed into [[Dire Rat Leather]].\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Clean, scrape, cure, and thoroughly tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Apprentice.\n- **Processed Into:** [[Dire Rat Leather]]\n- **Processing Yield:** 1x Dire Rat Hide → 1x Dire Rat Leather.\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive and reinforcement enchantments.\n- **Special Properties:** Its dense structure provides a more stable enchanting base than lesser rat hides.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 12\n\n---\n\n## 💬 Quote\n\n*\"What protects the beast in life protects the hunter in death.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 2.5kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 30 Pennies |\n| Market Price | 40 Pennies |",
+        "📝 Description": "Dire Rat Hide is an exceptionally thick, dark reddish-brown pelt covered in coarse, dense fur. Its tough underlying skin is naturally resistant to tearing and puncturing, providing considerably greater protection than the hides harvested from ordinary or Great Rats.\n\n---",
+        "✨ Material Properties": "- Thick, dense hide with strong natural resistance to tearing.\n- Tougher and more durable than [[Great Rat Hide]].\n- Provides **+2 Armour Modifier** when used as the protective material of crafted armour.\n- Remains reasonably flexible despite its considerable thickness.\n- Well suited to rugged equipment exposed to frequent wear.\n\n---",
+        "⚒️ Crafting Use": "- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Heavy-duty straps, harnesses, packs, and equipment components.\n- Can be processed into [[Dire Rat Leather]].\n\n---",
+        "🧪 Processing": "- **Processing Required:** Clean, scrape, cure, and thoroughly tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Apprentice.\n- **Processed Into:** [[Dire Rat Leather]]\n- **Processing Yield:** 1x Dire Rat Hide → 1x Dire Rat Leather.\n\n---",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive and reinforcement enchantments.\n- **Special Properties:** Its dense structure provides a more stable enchanting base than lesser rat hides.\n\n---",
+        "🐾 Resource Source": "- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 12\n\n---",
+        "💬 Quote": "*\"What protects the beast in life protects the hunter in death.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Dire Rat Hide is an exceptionally thick, dark reddish-brown pelt covered in coarse, dense fur. Its tough underlying skin is naturally resistant to tearing and puncturing, providing considerably greater protection than the hides harvested from ordinary or Great",
+      "metadata": {
+        "title": "Dire Rat Hide",
+        "slug": "dire-rat-hide",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.3,
+        "marketPrice": 0.4,
+        "marketValueSourceText": "30 Pennies",
+        "marketPriceSourceText": "40 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Uncommon",
+        "materialType": "Leather",
+        "materialForm": "Hide",
+        "weight": "2.5kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "1"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/dire-rat-hide/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/dire-rat-hide/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "dire rat hide item resources & materials leather work {\"title\":\"dire rat hide\",\"slug\":\"dire-rat-hide\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.3,\"marketprice\":0.4,\"marketvaluesourcetext\":\"30 pennies\",\"marketpricesourcetext\":\"40 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"uncommon\",\"materialtype\":\"leather\",\"materialform\":\"hide\",\"weight\":\"2.5kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"1\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| material type | leather |\n| material form | hide |\n| weight | 2.5kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 1 |\n| market value | 30 pennies |\n| market price | 40 pennies |\n\n## 📝 description\n\ndire rat hide is an exceptionally thick, dark reddish-brown pelt covered in coarse, dense fur. its tough underlying skin is naturally resistant to tearing and puncturing, providing considerably greater protection than the hides harvested from ordinary or great rats.\n\n---\n\n## ✨ material properties\n\n- thick, dense hide with strong natural resistance to tearing.\n- tougher and more durable than [[great rat hide]].\n- provides **+2 armour modifier** when used as the protective material of crafted armour.\n- remains reasonably flexible despite its considerable thickness.\n- well suited to rugged equipment exposed to frequent wear.\n\n---\n\n## ⚒️ crafting use\n\n- leather armour.\n- reinforced protective clothing.\n- bracers, boots, gloves, and other protective equipment.\n- heavy-duty straps, harnesses, packs, and equipment components.\n- can be processed into [[dire rat leather]].\n\n---\n\n## 🧪 processing\n\n- **processing required:** clean, scrape, cure, and thoroughly tan the hide.\n- **tools required:** skinning knife, scraping knife, tanning rack.\n- **required profession & rank:** leatherworking — apprentice.\n- **processed into:** [[dire rat leather]]\n- **processing yield:** 1x dire rat hide → 1x dire rat leather.\n\n---\n\n## 🔮 enchantment use\n\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** basic defensive and reinforcement enchantments.\n- **special properties:** its dense structure provides a more stable enchanting base than lesser rat hides.\n\n---\n\n## 🐾 resource source\n\n- **obtained from:** dire rat\n- **harvesting skill:** skinning\n- **harvesting difficulty:** dc 12\n\n---\n\n## 💬 quote\n\n*\"what protects the beast in life protects the hunter in death.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-dire-rat-leather-index",
+      "title": "Dire Rat Leather",
+      "slug": "dire-rat-leather",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/dire-rat-leather",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/dire-rat-leather/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/dire-rat-leather",
+      "content": "---\ntitle: \"Dire Rat Leather\"\nslug: dire-rat-leather\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.4\nmarket_price: 0.5\nmarket_value_source_text: \"40 Pennies\"\nmarket_price_source_text: \"50 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Uncommon\nMaterial Type: Leather\nMaterial Form: Processed Leather\nWeight: 1.8kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"1\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 1.8kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 40 Pennies |\n| Market Price | 50 Pennies |\n\n## 📝 Description\nDire Rat Leather is a thick, dark reddish-brown leather produced from carefully tanned Dire Rat Hide. Tougher than lesser rat leathers while retaining good flexibility, it provides a durable protective material suitable for reliable armour and rugged adventuring equipment.\n\n## ✨ Material Properties\n- Thick, tough, and naturally resilient.\n- Provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Resistant to tearing, puncturing, and general wear.\n- More flexible and workable than unprocessed [[Dire Rat Hide]].\n- Maintains good durability when shaped into fitted equipment.\n\n## ⚒️ Crafting Use\n- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Durable packs, harnesses, straps, and adventuring equipment.\n- Reinforced components for Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, durability, and physical-resistance enchantments.\n- **Special Properties:** Its dense structure provides a stable foundation for defensive enchantments.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Dire Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n\n*\"Properly worked, even vermin hide can turn aside a blade.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 1.8kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 40 Pennies |\n| Market Price | 50 Pennies |\n\n## 📝 Description\nDire Rat Leather is a thick, dark reddish-brown leather produced from carefully tanned Dire Rat Hide. Tougher than lesser rat leathers while retaining good flexibility, it provides a durable protective material suitable for reliable armour and rugged adventuring equipment.\n\n## ✨ Material Properties\n- Thick, tough, and naturally resilient.\n- Provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Resistant to tearing, puncturing, and general wear.\n- More flexible and workable than unprocessed [[Dire Rat Hide]].\n- Maintains good durability when shaped into fitted equipment.\n\n## ⚒️ Crafting Use\n- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Durable packs, harnesses, straps, and adventuring equipment.\n- Reinforced components for Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, durability, and physical-resistance enchantments.\n- **Special Properties:** Its dense structure provides a stable foundation for defensive enchantments.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Dire Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n\n*\"Properly worked, even vermin hide can turn aside a blade.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 1.8kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 40 Pennies |\n| Market Price | 50 Pennies |",
+        "📝 Description": "Dire Rat Leather is a thick, dark reddish-brown leather produced from carefully tanned Dire Rat Hide. Tougher than lesser rat leathers while retaining good flexibility, it provides a durable protective material suitable for reliable armour and rugged adventuring equipment.",
+        "✨ Material Properties": "- Thick, tough, and naturally resilient.\n- Provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Resistant to tearing, puncturing, and general wear.\n- More flexible and workable than unprocessed [[Dire Rat Hide]].\n- Maintains good durability when shaped into fitted equipment.",
+        "⚒️ Crafting Use": "- Leather armour.\n- Reinforced protective clothing.\n- Bracers, boots, gloves, and other protective equipment.\n- Durable packs, harnesses, straps, and adventuring equipment.\n- Reinforced components for Leatherworking projects.",
+        "🧪 Processing": "- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, durability, and physical-resistance enchantments.\n- **Special Properties:** Its dense structure provides a stable foundation for defensive enchantments.",
+        "🐾 Resource Source": "- **Obtained From:** [[Dire Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —",
+        "💬 Quote": "*\"Properly worked, even vermin hide can turn aside a blade.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Dire Rat Leather is a thick, dark reddish-brown leather produced from carefully tanned Dire Rat Hide. Tougher than lesser rat leathers while retaining good flexibility, it provides a durable protective material suitable for reliable armour and rugged adventuri",
+      "metadata": {
+        "title": "Dire Rat Leather",
+        "slug": "dire-rat-leather",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.4,
+        "marketPrice": 0.5,
+        "marketValueSourceText": "40 Pennies",
+        "marketPriceSourceText": "50 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Uncommon",
+        "materialType": "Leather",
+        "materialForm": "Processed Leather",
+        "weight": "1.8kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "1"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/dire-rat-leather/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/dire-rat-leather/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "dire rat leather item resources & materials leather work {\"title\":\"dire rat leather\",\"slug\":\"dire-rat-leather\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.4,\"marketprice\":0.5,\"marketvaluesourcetext\":\"40 pennies\",\"marketpricesourcetext\":\"50 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"uncommon\",\"materialtype\":\"leather\",\"materialform\":\"processed leather\",\"weight\":\"1.8kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"1\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| material type | leather |\n| material form | processed leather |\n| weight | 1.8kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 1 |\n| market value | 40 pennies |\n| market price | 50 pennies |\n\n## 📝 description\ndire rat leather is a thick, dark reddish-brown leather produced from carefully tanned dire rat hide. tougher than lesser rat leathers while retaining good flexibility, it provides a durable protective material suitable for reliable armour and rugged adventuring equipment.\n\n## ✨ material properties\n- thick, tough, and naturally resilient.\n- provides **+1 armour modifier** when used as the protective material of crafted armour.\n- resistant to tearing, puncturing, and general wear.\n- more flexible and workable than unprocessed [[dire rat hide]].\n- maintains good durability when shaped into fitted equipment.\n\n## ⚒️ crafting use\n- leather armour.\n- reinforced protective clothing.\n- bracers, boots, gloves, and other protective equipment.\n- durable packs, harnesses, straps, and adventuring equipment.\n- reinforced components for leatherworking projects.\n\n## 🧪 processing\n- **processing required:** none — processed material.\n- **tools required:** none\n- **required profession & rank:** none\n- **processed into:** —\n- **processing yield:** —\n\n## 🔮 enchantment use\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** basic defensive, reinforcement, durability, and physical-resistance enchantments.\n- **special properties:** its dense structure provides a stable foundation for defensive enchantments.\n\n## 🐾 resource source\n- **obtained from:** [[dire rat hide]]\n- **harvesting skill:** —\n- **harvesting difficulty:** —\n\n## 💬 quote\n\n*\"properly worked, even vermin hide can turn aside a blade.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-great-rat-hide-index",
+      "title": "Great Rat Hide",
+      "slug": "great-rat-hide",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/great-rat-hide",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/great-rat-hide/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/great-rat-hide",
+      "content": "---\ntitle: \"Great Rat Hide\"\nslug: great-rat-hide\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.2\nmarket_price: 0.25\nmarket_value_source_text: \"20 Pennies\"\nmarket_price_source_text: \"25 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Leather\nMaterial Form: Hide\nWeight: 1.2kg\nDurability: Moderate\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 1.2kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |\n\n## 📝 Description\n\nGreat Rat Hide is a large, thick pelt covered in coarse dark brown fur. Considerably tougher and heavier than ordinary rat hide, its dense skin provides natural protection while remaining flexible enough to be processed into durable leather.\n\n---\n\n## ✨ Material Properties\n\n- Thick and considerably tougher than ordinary [[Rat Hide]].\n- Dense hide provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Flexible enough for leatherworking despite its increased thickness.\n\n---\n\n## ⚒️ Crafting Use\n\n- Light and medium leather armour.\n- Reinforced clothing and protective equipment.\n- Heavy pouches, straps, bindings, and equipment components.\n- Can be processed into [[Great Rat Leather]].\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Great Rat Leather]]\n- **Processing Yield:** 1x Great Rat Hide → 1x Great Rat Leather.\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for hides and leather.\n- **Special Properties:** Its increased thickness provides a more stable base for enchantment than ordinary Rat Hide.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC \n\n---\n\n## 💬 Quote\n\n*\"Bigger vermin make tougher leather.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 1.2kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |\n\n## 📝 Description\n\nGreat Rat Hide is a large, thick pelt covered in coarse dark brown fur. Considerably tougher and heavier than ordinary rat hide, its dense skin provides natural protection while remaining flexible enough to be processed into durable leather.\n\n---\n\n## ✨ Material Properties\n\n- Thick and considerably tougher than ordinary [[Rat Hide]].\n- Dense hide provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Flexible enough for leatherworking despite its increased thickness.\n\n---\n\n## ⚒️ Crafting Use\n\n- Light and medium leather armour.\n- Reinforced clothing and protective equipment.\n- Heavy pouches, straps, bindings, and equipment components.\n- Can be processed into [[Great Rat Leather]].\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Great Rat Leather]]\n- **Processing Yield:** 1x Great Rat Hide → 1x Great Rat Leather.\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for hides and leather.\n- **Special Properties:** Its increased thickness provides a more stable base for enchantment than ordinary Rat Hide.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC \n\n---\n\n## 💬 Quote\n\n*\"Bigger vermin make tougher leather.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 1.2kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 20 Pennies |\n| Market Price | 25 Pennies |",
+        "📝 Description": "Great Rat Hide is a large, thick pelt covered in coarse dark brown fur. Considerably tougher and heavier than ordinary rat hide, its dense skin provides natural protection while remaining flexible enough to be processed into durable leather.\n\n---",
+        "✨ Material Properties": "- Thick and considerably tougher than ordinary [[Rat Hide]].\n- Dense hide provides **+1 Armour Modifier** when used as the protective material of crafted armour.\n- Flexible enough for leatherworking despite its increased thickness.\n\n---",
+        "⚒️ Crafting Use": "- Light and medium leather armour.\n- Reinforced clothing and protective equipment.\n- Heavy pouches, straps, bindings, and equipment components.\n- Can be processed into [[Great Rat Leather]].\n\n---",
+        "🧪 Processing": "- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Great Rat Leather]]\n- **Processing Yield:** 1x Great Rat Hide → 1x Great Rat Leather.\n\n---",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for hides and leather.\n- **Special Properties:** Its increased thickness provides a more stable base for enchantment than ordinary Rat Hide.\n\n---",
+        "🐾 Resource Source": "- **Obtained From:** Great Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC \n\n---",
+        "💬 Quote": "*\"Bigger vermin make tougher leather.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Great Rat Hide is a large, thick pelt covered in coarse dark brown fur. Considerably tougher and heavier than ordinary rat hide, its dense skin provides natural protection while remaining flexible enough to be processed into durable leather. *\"Bigger vermin ma",
+      "metadata": {
+        "title": "Great Rat Hide",
+        "slug": "great-rat-hide",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.2,
+        "marketPrice": 0.25,
+        "marketValueSourceText": "20 Pennies",
+        "marketPriceSourceText": "25 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Leather",
+        "materialForm": "Hide",
+        "weight": "1.2kg",
+        "durability": "Moderate",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/great-rat-hide/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/great-rat-hide/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "great rat hide item resources & materials leather work {\"title\":\"great rat hide\",\"slug\":\"great-rat-hide\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.2,\"marketprice\":0.25,\"marketvaluesourcetext\":\"20 pennies\",\"marketpricesourcetext\":\"25 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"leather\",\"materialform\":\"hide\",\"weight\":\"1.2kg\",\"durability\":\"moderate\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | leather |\n| material form | hide |\n| weight | 1.2kg |\n| durability | moderate |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 20 pennies |\n| market price | 25 pennies |\n\n## 📝 description\n\ngreat rat hide is a large, thick pelt covered in coarse dark brown fur. considerably tougher and heavier than ordinary rat hide, its dense skin provides natural protection while remaining flexible enough to be processed into durable leather.\n\n---\n\n## ✨ material properties\n\n- thick and considerably tougher than ordinary [[rat hide]].\n- dense hide provides **+1 armour modifier** when used as the protective material of crafted armour.\n- flexible enough for leatherworking despite its increased thickness.\n\n---\n\n## ⚒️ crafting use\n\n- light and medium leather armour.\n- reinforced clothing and protective equipment.\n- heavy pouches, straps, bindings, and equipment components.\n- can be processed into [[great rat leather]].\n\n---\n\n## 🧪 processing\n\n- **processing required:** clean, scrape, cure, and tan the hide.\n- **tools required:** skinning knife, scraping knife, tanning rack.\n- **required profession & rank:** leatherworking — novice.\n- **processed into:** [[great rat leather]]\n- **processing yield:** 1x great rat hide → 1x great rat leather.\n\n---\n\n## 🔮 enchantment use\n\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** basic enchantments suitable for hides and leather.\n- **special properties:** its increased thickness provides a more stable base for enchantment than ordinary rat hide.\n\n---\n\n## 🐾 resource source\n\n- **obtained from:** great rat\n- **harvesting skill:** skinning\n- **harvesting difficulty:** dc \n\n---\n\n## 💬 quote\n\n*\"bigger vermin make tougher leather.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-great-rat-leather-index",
+      "title": "Great Rat Leather",
+      "slug": "great-rat-leather",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/great-rat-leather",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/great-rat-leather/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/great-rat-leather",
+      "content": "---\ntitle: \"Great Rat Leather\"\nslug: great-rat-leather\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.3\nmarket_price: 0.35\nmarket_value_source_text: \"30 Pennies\"\nmarket_price_source_text: \"35 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Leather\nMaterial Form: Processed Leather\nWeight: 0.9kg\nDurability: Moderate\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.9kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 30 Pennies |\n| Market Price | 35 Pennies |\n\n## 📝 Description\nGreat Rat Leather is a thick, reddish-brown leather produced from carefully tanned Great Rat Hide. Stronger and more durable than ordinary Rat Leather, it remains flexible and easy to work while providing enough natural protection for basic armour and rugged equipment.\n\n## ✨ Material Properties\n- Thicker and stronger than ordinary [[Rat Leather]].\n- Moderately resistant to tearing, puncturing, and everyday wear.\n- More flexible and workable than unprocessed [[Great Rat Hide]].\n- Reliable material for basic protective equipment.\n\n## ⚒️ Crafting Use\n- Basic leather armour.\n- Reinforced clothing and protective equipment.\n- Bracers, boots, gloves, and other leather equipment.\n- Pouches, packs, harnesses, straps, and bindings.\n- Reinforced components for Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, and durability enchantments.\n- **Special Properties:** Its thicker structure provides a more stable enchanting base than ordinary Rat Leather.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Great Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n\n*\"Common material, uncommon resilience.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.9kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 30 Pennies |\n| Market Price | 35 Pennies |\n\n## 📝 Description\nGreat Rat Leather is a thick, reddish-brown leather produced from carefully tanned Great Rat Hide. Stronger and more durable than ordinary Rat Leather, it remains flexible and easy to work while providing enough natural protection for basic armour and rugged equipment.\n\n## ✨ Material Properties\n- Thicker and stronger than ordinary [[Rat Leather]].\n- Moderately resistant to tearing, puncturing, and everyday wear.\n- More flexible and workable than unprocessed [[Great Rat Hide]].\n- Reliable material for basic protective equipment.\n\n## ⚒️ Crafting Use\n- Basic leather armour.\n- Reinforced clothing and protective equipment.\n- Bracers, boots, gloves, and other leather equipment.\n- Pouches, packs, harnesses, straps, and bindings.\n- Reinforced components for Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, and durability enchantments.\n- **Special Properties:** Its thicker structure provides a more stable enchanting base than ordinary Rat Leather.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Great Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n\n*\"Common material, uncommon resilience.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.9kg |\n| Durability | Moderate |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 30 Pennies |\n| Market Price | 35 Pennies |",
+        "📝 Description": "Great Rat Leather is a thick, reddish-brown leather produced from carefully tanned Great Rat Hide. Stronger and more durable than ordinary Rat Leather, it remains flexible and easy to work while providing enough natural protection for basic armour and rugged equipment.",
+        "✨ Material Properties": "- Thicker and stronger than ordinary [[Rat Leather]].\n- Moderately resistant to tearing, puncturing, and everyday wear.\n- More flexible and workable than unprocessed [[Great Rat Hide]].\n- Reliable material for basic protective equipment.",
+        "⚒️ Crafting Use": "- Basic leather armour.\n- Reinforced clothing and protective equipment.\n- Bracers, boots, gloves, and other leather equipment.\n- Pouches, packs, harnesses, straps, and bindings.\n- Reinforced components for Leatherworking projects.",
+        "🧪 Processing": "- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic defensive, reinforcement, and durability enchantments.\n- **Special Properties:** Its thicker structure provides a more stable enchanting base than ordinary Rat Leather.",
+        "🐾 Resource Source": "- **Obtained From:** [[Great Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —",
+        "💬 Quote": "*\"Common material, uncommon resilience.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Great Rat Leather is a thick, reddish-brown leather produced from carefully tanned Great Rat Hide. Stronger and more durable than ordinary Rat Leather, it remains flexible and easy to work while providing enough natural protection for basic armour and rugged e",
+      "metadata": {
+        "title": "Great Rat Leather",
+        "slug": "great-rat-leather",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.3,
+        "marketPrice": 0.35,
+        "marketValueSourceText": "30 Pennies",
+        "marketPriceSourceText": "35 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Leather",
+        "materialForm": "Processed Leather",
+        "weight": "0.9kg",
+        "durability": "Moderate",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/great-rat-leather/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/great-rat-leather/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "great rat leather item resources & materials leather work {\"title\":\"great rat leather\",\"slug\":\"great-rat-leather\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.3,\"marketprice\":0.35,\"marketvaluesourcetext\":\"30 pennies\",\"marketpricesourcetext\":\"35 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"leather\",\"materialform\":\"processed leather\",\"weight\":\"0.9kg\",\"durability\":\"moderate\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | leather |\n| material form | processed leather |\n| weight | 0.9kg |\n| durability | moderate |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 30 pennies |\n| market price | 35 pennies |\n\n## 📝 description\ngreat rat leather is a thick, reddish-brown leather produced from carefully tanned great rat hide. stronger and more durable than ordinary rat leather, it remains flexible and easy to work while providing enough natural protection for basic armour and rugged equipment.\n\n## ✨ material properties\n- thicker and stronger than ordinary [[rat leather]].\n- moderately resistant to tearing, puncturing, and everyday wear.\n- more flexible and workable than unprocessed [[great rat hide]].\n- reliable material for basic protective equipment.\n\n## ⚒️ crafting use\n- basic leather armour.\n- reinforced clothing and protective equipment.\n- bracers, boots, gloves, and other leather equipment.\n- pouches, packs, harnesses, straps, and bindings.\n- reinforced components for leatherworking projects.\n\n## 🧪 processing\n- **processing required:** none — processed material.\n- **tools required:** none\n- **required profession & rank:** none\n- **processed into:** —\n- **processing yield:** —\n\n## 🔮 enchantment use\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** basic defensive, reinforcement, and durability enchantments.\n- **special properties:** its thicker structure provides a more stable enchanting base than ordinary rat leather.\n\n## 🐾 resource source\n- **obtained from:** [[great rat hide]]\n- **harvesting skill:** —\n- **harvesting difficulty:** —\n\n## 💬 quote\n\n*\"common material, uncommon resilience.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-hardened-rat-beast-leather-index",
+      "title": "Hardened Rat Beast Leather",
+      "slug": "hardened-rat-beast-leather",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/hardened-rat-beast-leather",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/hardened-rat-beast-leather/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/hardened-rat-beast-leather",
+      "content": "---\ntitle: \"Hardened Rat Beast Leather\"\nslug: hardened-rat-beast-leather\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 3\nmarket_price: 6\nmarket_value_source_text: \"3 Marks\"\nmarket_price_source_text: \"6 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Leather\nMaterial Form: Hardened Leather\nWeight: 1kg\nDurability: High\nDamage Modifier: \"0\"\nArmour Modifier: \"1\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Leather |\n| Material Form | Hardened Leather |\n| Weight | 1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |\n\n## 📝 Description\n\nHardened Beast Rat Leather is armour-grade leather produced from the treated leather of Alpha or Elder Rat Beasts. Through additional hardening, the thick leather becomes considerably more rigid and resistant to impact while retaining enough flexibility for protective equipment.\n\n---\n\n## ✨ Material Properties\n\n- Thick, tough armour-grade leather.\n- Provides **+1 Armour Modifier** when used as an armour material.\n- More rigid and impact-resistant than untreated Beast Rat Leather.\n- Retains enough flexibility for fitted armour and protective equipment.\n- Resistant to tearing, splitting, and general wear.\n- Can be cut, shaped, layered, and reinforced during crafting.\n- Can be produced from either Alpha or Elder Rat Beast Leather.\n\n---\n\n## ⚒️ Crafting Use\n\n- Leather armour.\n- Reinforced clothing.\n- Bracers and greaves.\n- Protective gloves and boots.\n- Armour reinforcement.\n- Shields and protective coverings.\n- Durable equipment components.\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Beast Rat Leather must be soaked, treated, shaped, hardened, and thoroughly dried.\n- **Tools Required:** Leatherworking Tools, Hardening Solution, Moulds or Forms, and Drying Equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Hardened Beast Rat Leather\n- **Processing Yield:** 1x suitable Beast Rat Leather → 1x Hardened Beast Rat Leather\n\n### Suitable Materials\n\n- [[Alpha Rat Beast Leather]]\n- [[Elder Rat Beast Leather]]\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Neutral\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Armour and equipment enchantments.\n- **Special Properties:** Retains the natural durability of Beast Rat Leather while providing an armour-grade surface suitable for protective equipment.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Processing suitable Beast Rat Leather.\n- **Harvesting Skill:** N/A\n- **Harvesting Difficulty:** N/A\n\n---\n\n## 💬 Quote\n\n*\"Ordinary rat leather makes equipment. Properly hardened beast leather makes armour.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Leather |\n| Material Form | Hardened Leather |\n| Weight | 1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |\n\n## 📝 Description\n\nHardened Beast Rat Leather is armour-grade leather produced from the treated leather of Alpha or Elder Rat Beasts. Through additional hardening, the thick leather becomes considerably more rigid and resistant to impact while retaining enough flexibility for protective equipment.\n\n---\n\n## ✨ Material Properties\n\n- Thick, tough armour-grade leather.\n- Provides **+1 Armour Modifier** when used as an armour material.\n- More rigid and impact-resistant than untreated Beast Rat Leather.\n- Retains enough flexibility for fitted armour and protective equipment.\n- Resistant to tearing, splitting, and general wear.\n- Can be cut, shaped, layered, and reinforced during crafting.\n- Can be produced from either Alpha or Elder Rat Beast Leather.\n\n---\n\n## ⚒️ Crafting Use\n\n- Leather armour.\n- Reinforced clothing.\n- Bracers and greaves.\n- Protective gloves and boots.\n- Armour reinforcement.\n- Shields and protective coverings.\n- Durable equipment components.\n\n---\n\n## 🧪 Processing\n\n- **Processing Required:** Beast Rat Leather must be soaked, treated, shaped, hardened, and thoroughly dried.\n- **Tools Required:** Leatherworking Tools, Hardening Solution, Moulds or Forms, and Drying Equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Hardened Beast Rat Leather\n- **Processing Yield:** 1x suitable Beast Rat Leather → 1x Hardened Beast Rat Leather\n\n### Suitable Materials\n\n- [[Alpha Rat Beast Leather]]\n- [[Elder Rat Beast Leather]]\n\n---\n\n## 🔮 Enchantment Use\n\n- **Enchantment Affinity:** Neutral\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Armour and equipment enchantments.\n- **Special Properties:** Retains the natural durability of Beast Rat Leather while providing an armour-grade surface suitable for protective equipment.\n\n---\n\n## 🐾 Resource Source\n\n- **Obtained From:** Processing suitable Beast Rat Leather.\n- **Harvesting Skill:** N/A\n- **Harvesting Difficulty:** N/A\n\n---\n\n## 💬 Quote\n\n*\"Ordinary rat leather makes equipment. Properly hardened beast leather makes armour.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Leather |\n| Material Form | Hardened Leather |\n| Weight | 1kg |\n| Durability | High |\n| Damage Modifier | 0 |\n| Armour Modifier | 1 |\n| Market Value | 3 Marks |\n| Market Price | 6 Marks |",
+        "📝 Description": "Hardened Beast Rat Leather is armour-grade leather produced from the treated leather of Alpha or Elder Rat Beasts. Through additional hardening, the thick leather becomes considerably more rigid and resistant to impact while retaining enough flexibility for protective equipment.\n\n---",
+        "✨ Material Properties": "- Thick, tough armour-grade leather.\n- Provides **+1 Armour Modifier** when used as an armour material.\n- More rigid and impact-resistant than untreated Beast Rat Leather.\n- Retains enough flexibility for fitted armour and protective equipment.\n- Resistant to tearing, splitting, and general wear.\n- Can be cut, shaped, layered, and reinforced during crafting.\n- Can be produced from either Alpha or Elder Rat Beast Leather.\n\n---",
+        "⚒️ Crafting Use": "- Leather armour.\n- Reinforced clothing.\n- Bracers and greaves.\n- Protective gloves and boots.\n- Armour reinforcement.\n- Shields and protective coverings.\n- Durable equipment components.\n\n---",
+        "🧪 Processing": "- **Processing Required:** Beast Rat Leather must be soaked, treated, shaped, hardened, and thoroughly dried.\n- **Tools Required:** Leatherworking Tools, Hardening Solution, Moulds or Forms, and Drying Equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Hardened Beast Rat Leather\n- **Processing Yield:** 1x suitable Beast Rat Leather → 1x Hardened Beast Rat Leather\n\n### Suitable Materials\n\n- [[Alpha Rat Beast Leather]]\n- [[Elder Rat Beast Leather]]\n\n---",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Neutral\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Armour and equipment enchantments.\n- **Special Properties:** Retains the natural durability of Beast Rat Leather while providing an armour-grade surface suitable for protective equipment.\n\n---",
+        "🐾 Resource Source": "- **Obtained From:** Processing suitable Beast Rat Leather.\n- **Harvesting Skill:** N/A\n- **Harvesting Difficulty:** N/A\n\n---",
+        "💬 Quote": "*\"Ordinary rat leather makes equipment. Properly hardened beast leather makes armour.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Hardened Beast Rat Leather is armour-grade leather produced from the treated leather of Alpha or Elder Rat Beasts. Through additional hardening, the thick leather becomes considerably more rigid and resistant to impact while retaining enough flexibility for pr",
+      "metadata": {
+        "title": "Hardened Rat Beast Leather",
+        "slug": "hardened-rat-beast-leather",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 3,
+        "marketPrice": 6,
+        "marketValueSourceText": "3 Marks",
+        "marketPriceSourceText": "6 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Leather",
+        "materialForm": "Hardened Leather",
+        "weight": "1kg",
+        "durability": "High",
+        "damageModifier": "0",
+        "armourModifier": "1"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/hardened-rat-beast-leather/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/hardened-rat-beast-leather/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "hardened rat beast leather item resources & materials leather work {\"title\":\"hardened rat beast leather\",\"slug\":\"hardened-rat-beast-leather\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":3,\"marketprice\":6,\"marketvaluesourcetext\":\"3 marks\",\"marketpricesourcetext\":\"6 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"leather\",\"materialform\":\"hardened leather\",\"weight\":\"1kg\",\"durability\":\"high\",\"damagemodifier\":\"0\",\"armourmodifier\":\"1\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | leather |\n| material form | hardened leather |\n| weight | 1kg |\n| durability | high |\n| damage modifier | 0 |\n| armour modifier | 1 |\n| market value | 3 marks |\n| market price | 6 marks |\n\n## 📝 description\n\nhardened beast rat leather is armour-grade leather produced from the treated leather of alpha or elder rat beasts. through additional hardening, the thick leather becomes considerably more rigid and resistant to impact while retaining enough flexibility for protective equipment.\n\n---\n\n## ✨ material properties\n\n- thick, tough armour-grade leather.\n- provides **+1 armour modifier** when used as an armour material.\n- more rigid and impact-resistant than untreated beast rat leather.\n- retains enough flexibility for fitted armour and protective equipment.\n- resistant to tearing, splitting, and general wear.\n- can be cut, shaped, layered, and reinforced during crafting.\n- can be produced from either alpha or elder rat beast leather.\n\n---\n\n## ⚒️ crafting use\n\n- leather armour.\n- reinforced clothing.\n- bracers and greaves.\n- protective gloves and boots.\n- armour reinforcement.\n- shields and protective coverings.\n- durable equipment components.\n\n---\n\n## 🧪 processing\n\n- **processing required:** beast rat leather must be soaked, treated, shaped, hardened, and thoroughly dried.\n- **tools required:** leatherworking tools, hardening solution, moulds or forms, and drying equipment.\n- **required crafting rank:** journeyman\n- **processed into:** hardened beast rat leather\n- **processing yield:** 1x suitable beast rat leather → 1x hardened beast rat leather\n\n### suitable materials\n\n- [[alpha rat beast leather]]\n- [[elder rat beast leather]]\n\n---\n\n## 🔮 enchantment use\n\n- **enchantment affinity:** neutral\n- **elemental alignment:** none\n- **compatible enchantments:** armour and equipment enchantments.\n- **special properties:** retains the natural durability of beast rat leather while providing an armour-grade surface suitable for protective equipment.\n\n---\n\n## 🐾 resource source\n\n- **obtained from:** processing suitable beast rat leather.\n- **harvesting skill:** n/a\n- **harvesting difficulty:** n/a\n\n---\n\n## 💬 quote\n\n*\"ordinary rat leather makes equipment. properly hardened beast leather makes armour.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-rat-hide-index",
+      "title": "Rat Hide",
+      "slug": "rat-hide",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/rat-hide",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/rat-hide/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/rat-hide",
+      "content": "---\ntitle: \"Rat Hide\"\nslug: rat-hide\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.15\nmarket_price: 0.2\nmarket_value_source_text: \"15 Pennies\"\nmarket_price_source_text: \"20 Pennies\"\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Leather\nMaterial Form: Hide\nWeight: 0.3kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 0.3kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 15 Pennies |\n| Market Price | 20 Pennies |\n\n## 📝 Description\nRat Hide is a small, reddish-brown pelt with short coarse fur and thin, flexible skin. Though relatively fragile compared with larger animal hides, it is easy to work and useful for producing basic leather goods, patches, bindings, and lightweight components.\n\n## ✨ Material Properties\n- Thin and highly flexible.\n- Lightweight and easy to cut or stitch.\n- Provides little protection without additional layers or reinforcement.\n\n## ⚒️ Crafting Use\n- Basic leatherworking.\n- Small pouches, bindings, patches, grips, and lightweight leather components.\n- Can be processed into [[Rat Leather]] for use in more refined crafting.\n\n## 🧪 Processing\n- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Rat Leather]]\n- **Processing Yield:** 1x Rat Hide → 1x Rat Leather.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments after processing.\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Small hides still have their uses.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 0.3kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 15 Pennies |\n| Market Price | 20 Pennies |\n\n## 📝 Description\nRat Hide is a small, reddish-brown pelt with short coarse fur and thin, flexible skin. Though relatively fragile compared with larger animal hides, it is easy to work and useful for producing basic leather goods, patches, bindings, and lightweight components.\n\n## ✨ Material Properties\n- Thin and highly flexible.\n- Lightweight and easy to cut or stitch.\n- Provides little protection without additional layers or reinforcement.\n\n## ⚒️ Crafting Use\n- Basic leatherworking.\n- Small pouches, bindings, patches, grips, and lightweight leather components.\n- Can be processed into [[Rat Leather]] for use in more refined crafting.\n\n## 🧪 Processing\n- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Rat Leather]]\n- **Processing Yield:** 1x Rat Hide → 1x Rat Leather.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments after processing.\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Small hides still have their uses.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Hide |\n| Weight | 0.3kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 15 Pennies |\n| Market Price | 20 Pennies |",
+        "📝 Description": "Rat Hide is a small, reddish-brown pelt with short coarse fur and thin, flexible skin. Though relatively fragile compared with larger animal hides, it is easy to work and useful for producing basic leather goods, patches, bindings, and lightweight components.",
+        "✨ Material Properties": "- Thin and highly flexible.\n- Lightweight and easy to cut or stitch.\n- Provides little protection without additional layers or reinforcement.",
+        "⚒️ Crafting Use": "- Basic leatherworking.\n- Small pouches, bindings, patches, grips, and lightweight leather components.\n- Can be processed into [[Rat Leather]] for use in more refined crafting.",
+        "🧪 Processing": "- **Processing Required:** Clean, scrape, cure, and tan the hide.\n- **Tools Required:** Skinning Knife, Scraping Knife, Tanning Rack.\n- **Required Profession & Rank:** Leatherworking — Novice.\n- **Processed Into:** [[Rat Leather]]\n- **Processing Yield:** 1x Rat Hide → 1x Rat Leather.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments after processing.\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Rat\n- **Harvesting Skill:** Skinning\n- **Harvesting Difficulty:** DC 5",
+        "💬 Quote": "*\"Small hides still have their uses.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Rat Hide is a small, reddish-brown pelt with short coarse fur and thin, flexible skin. Though relatively fragile compared with larger animal hides, it is easy to work and useful for producing basic leather goods, patches, bindings, and lightweight components. ",
+      "metadata": {
+        "title": "Rat Hide",
+        "slug": "rat-hide",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.15,
+        "marketPrice": 0.2,
+        "marketValueSourceText": "15 Pennies",
+        "marketPriceSourceText": "20 Pennies",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Leather",
+        "materialForm": "Hide",
+        "weight": "0.3kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "rat hide item resources & materials leather work {\"title\":\"rat hide\",\"slug\":\"rat-hide\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.15,\"marketprice\":0.2,\"marketvaluesourcetext\":\"15 pennies\",\"marketpricesourcetext\":\"20 pennies\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"leather\",\"materialform\":\"hide\",\"weight\":\"0.3kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | leather |\n| material form | hide |\n| weight | 0.3kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 15 pennies |\n| market price | 20 pennies |\n\n## 📝 description\nrat hide is a small, reddish-brown pelt with short coarse fur and thin, flexible skin. though relatively fragile compared with larger animal hides, it is easy to work and useful for producing basic leather goods, patches, bindings, and lightweight components.\n\n## ✨ material properties\n- thin and highly flexible.\n- lightweight and easy to cut or stitch.\n- provides little protection without additional layers or reinforcement.\n\n## ⚒️ crafting use\n- basic leatherworking.\n- small pouches, bindings, patches, grips, and lightweight leather components.\n- can be processed into [[rat leather]] for use in more refined crafting.\n\n## 🧪 processing\n- **processing required:** clean, scrape, cure, and tan the hide.\n- **tools required:** skinning knife, scraping knife, tanning rack.\n- **required profession & rank:** leatherworking — novice.\n- **processed into:** [[rat leather]]\n- **processing yield:** 1x rat hide → 1x rat leather.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** basic enchantments after processing.\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** rat\n- **harvesting skill:** skinning\n- **harvesting difficulty:** dc 5\n\n## 💬 quote\n\n*\"small hides still have their uses.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-leather-work-rat-leather-index",
+      "title": "Rat Leather",
+      "slug": "rat-leather",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Leather Work"
+      ],
+      "category": "Leather Work",
+      "route": "/compendium/item/resources-and-materials/leather-work/rat-leather",
+      "sourcePath": "content/Items/Resources & Materials/Leather Work/rat-leather/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Leather Work/rat-leather",
+      "content": "---\ntitle: \"Rat Leather\"\nslug: rat-leather\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Leather Work\"\nvisibility: public\nmarket_value: 0.25\nmarket_price: 0.3\nmarket_value_source_text: \"25 Pennies\"\nmarket_price_source_text: \"30 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Leather\nMaterial Form: Processed Leather\nWeight: 0.2kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.2kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 25 Pennies |\n| Market Price | 30 Pennies |\n\n## 📝 Description\nRat Leather is a thin, reddish-brown leather produced from carefully cleaned and tanned rat hide. Lightweight and highly flexible, it is easy to cut, stitch, and shape, making it useful for small leather goods and inexpensive crafting components.\n\n## ✨ Material Properties\n- Lightweight, thin, and highly flexible.\n- Easy to cut, stitch, wrap, and shape.\n- Limited durability makes it unsuitable for substantial protective equipment without reinforcement.\n\n## ⚒️ Crafting Use\n- Pouches, straps, bindings, and small leather goods.\n- Weapon and tool grips.\n- Patches and lightweight equipment components.\n- Basic Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for leather equipment.\n- **Special Properties:** Its thin construction provides limited capacity for complex enchantments.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n*\"Even the smallest scraps find purpose in skilled hands.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.2kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 25 Pennies |\n| Market Price | 30 Pennies |\n\n## 📝 Description\nRat Leather is a thin, reddish-brown leather produced from carefully cleaned and tanned rat hide. Lightweight and highly flexible, it is easy to cut, stitch, and shape, making it useful for small leather goods and inexpensive crafting components.\n\n## ✨ Material Properties\n- Lightweight, thin, and highly flexible.\n- Easy to cut, stitch, wrap, and shape.\n- Limited durability makes it unsuitable for substantial protective equipment without reinforcement.\n\n## ⚒️ Crafting Use\n- Pouches, straps, bindings, and small leather goods.\n- Weapon and tool grips.\n- Patches and lightweight equipment components.\n- Basic Leatherworking projects.\n\n## 🧪 Processing\n- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for leather equipment.\n- **Special Properties:** Its thin construction provides limited capacity for complex enchantments.\n\n## 🐾 Resource Source\n- **Obtained From:** [[Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —\n\n## 💬 Quote\n*\"Even the smallest scraps find purpose in skilled hands.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Leather |\n| Material Form | Processed Leather |\n| Weight | 0.2kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 25 Pennies |\n| Market Price | 30 Pennies |",
+        "📝 Description": "Rat Leather is a thin, reddish-brown leather produced from carefully cleaned and tanned rat hide. Lightweight and highly flexible, it is easy to cut, stitch, and shape, making it useful for small leather goods and inexpensive crafting components.",
+        "✨ Material Properties": "- Lightweight, thin, and highly flexible.\n- Easy to cut, stitch, wrap, and shape.\n- Limited durability makes it unsuitable for substantial protective equipment without reinforcement.",
+        "⚒️ Crafting Use": "- Pouches, straps, bindings, and small leather goods.\n- Weapon and tool grips.\n- Patches and lightweight equipment components.\n- Basic Leatherworking projects.",
+        "🧪 Processing": "- **Processing Required:** None — processed material.\n- **Tools Required:** None\n- **Required Profession & Rank:** None\n- **Processed Into:** —\n- **Processing Yield:** —",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** Low\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** Basic enchantments suitable for leather equipment.\n- **Special Properties:** Its thin construction provides limited capacity for complex enchantments.",
+        "🐾 Resource Source": "- **Obtained From:** [[Rat Hide]]\n- **Harvesting Skill:** —\n- **Harvesting Difficulty:** —",
+        "💬 Quote": "*\"Even the smallest scraps find purpose in skilled hands.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Rat Leather is a thin, reddish-brown leather produced from carefully cleaned and tanned rat hide. Lightweight and highly flexible, it is easy to cut, stitch, and shape, making it useful for small leather goods and inexpensive crafting components. *\"Even the sm",
+      "metadata": {
+        "title": "Rat Leather",
+        "slug": "rat-leather",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Leather Work",
+        "visibility": "public",
+        "marketValue": 0.25,
+        "marketPrice": 0.3,
+        "marketValueSourceText": "25 Pennies",
+        "marketPriceSourceText": "30 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Leather",
+        "materialForm": "Processed Leather",
+        "weight": "0.2kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Leather Work/rat-leather/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Leather Work/rat-leather/image.png",
+      "related": [],
+      "filters": {
+        "category": "Leather Work",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Leather",
+        "visibility": "public"
+      },
+      "searchTerms": "rat leather item resources & materials leather work {\"title\":\"rat leather\",\"slug\":\"rat-leather\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"leather work\",\"visibility\":\"public\",\"marketvalue\":0.25,\"marketprice\":0.3,\"marketvaluesourcetext\":\"25 pennies\",\"marketpricesourcetext\":\"30 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"leather\",\"materialform\":\"processed leather\",\"weight\":\"0.2kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | leather |\n| material form | processed leather |\n| weight | 0.2kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 25 pennies |\n| market price | 30 pennies |\n\n## 📝 description\nrat leather is a thin, reddish-brown leather produced from carefully cleaned and tanned rat hide. lightweight and highly flexible, it is easy to cut, stitch, and shape, making it useful for small leather goods and inexpensive crafting components.\n\n## ✨ material properties\n- lightweight, thin, and highly flexible.\n- easy to cut, stitch, wrap, and shape.\n- limited durability makes it unsuitable for substantial protective equipment without reinforcement.\n\n## ⚒️ crafting use\n- pouches, straps, bindings, and small leather goods.\n- weapon and tool grips.\n- patches and lightweight equipment components.\n- basic leatherworking projects.\n\n## 🧪 processing\n- **processing required:** none — processed material.\n- **tools required:** none\n- **required profession & rank:** none\n- **processed into:** —\n- **processing yield:** —\n\n## 🔮 enchantment use\n- **enchantment affinity:** low\n- **elemental alignment:** none\n- **compatible enchantments:** basic enchantments suitable for leather equipment.\n- **special properties:** its thin construction provides limited capacity for complex enchantments.\n\n## 🐾 resource source\n- **obtained from:** [[rat hide]]\n- **harvesting skill:** —\n- **harvesting difficulty:** —\n\n## 💬 quote\n*\"even the smallest scraps find purpose in skilled hands.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-meat-alpha-rat-beast-meat-index",
+      "title": "Alpha Rat Beast Meat",
+      "slug": "alpha-rat-beast-meat",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Meat"
+      ],
+      "category": "Meat",
+      "route": "/compendium/item/resources-and-materials/meat/alpha-rat-beast-meat",
+      "sourcePath": "content/Items/Resources & Materials/Meat/alpha-rat-beast-meat/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Meat/alpha-rat-beast-meat",
+      "content": "---\ntitle: \"Alpha Rat Beast Meat\"\nslug: alpha-rat-beast-meat\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Meat\"\nvisibility: public\nmarket_value: 1\nmarket_price: 2\nmarket_value_source_text: \"1 Mark\"\nmarket_price_source_text: \"2 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Rare\nMaterial Type: Food\nMaterial Form: Raw Meat\nWeight: 2.5kg\nDurability: Perishable\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Mark |\n| Market Price | 2 Marks |\n\n## 📝 Description\nAlpha Rat Beast Meat is a heavy portion of dense, dark red meat harvested from an Alpha Rat Beast. Tough and strongly flavoured, the flesh retains potent organic properties that make properly preserved cuts useful to alchemists as well as cooks.\n\n## ✨ Material Properties\n- Dense, tough, and strongly flavoured.\n- Considerably more substantial than [[Dire Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains potent organic properties useful in alchemy.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Cooked Alpha Rat Beast Meat, Preserved Alpha Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Alpha Rat Beast Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12\n\n## 💬 Quote\n\n*\"Most see a questionable meal. An experienced alchemist sees something considerably more useful.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Mark |\n| Market Price | 2 Marks |\n\n## 📝 Description\nAlpha Rat Beast Meat is a heavy portion of dense, dark red meat harvested from an Alpha Rat Beast. Tough and strongly flavoured, the flesh retains potent organic properties that make properly preserved cuts useful to alchemists as well as cooks.\n\n## ✨ Material Properties\n- Dense, tough, and strongly flavoured.\n- Considerably more substantial than [[Dire Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains potent organic properties useful in alchemy.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Cooked Alpha Rat Beast Meat, Preserved Alpha Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Alpha Rat Beast Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12\n\n## 💬 Quote\n\n*\"Most see a questionable meal. An experienced alchemist sees something considerably more useful.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Rare |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Mark |\n| Market Price | 2 Marks |",
+        "📝 Description": "Alpha Rat Beast Meat is a heavy portion of dense, dark red meat harvested from an Alpha Rat Beast. Tough and strongly flavoured, the flesh retains potent organic properties that make properly preserved cuts useful to alchemists as well as cooks.",
+        "✨ Material Properties": "- Dense, tough, and strongly flavoured.\n- Considerably more substantial than [[Dire Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains potent organic properties useful in alchemy.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.",
+        "🧪 Processing": "- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Apprentice\n- **Processed Into:** Cooked Alpha Rat Beast Meat, Preserved Alpha Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Alpha Rat Beast Meat → 1x prepared portion.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.",
+        "🐾 Resource Source": "- **Obtained From:** Alpha Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 12",
+        "💬 Quote": "*\"Most see a questionable meal. An experienced alchemist sees something considerably more useful.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Alpha Rat Beast Meat is a heavy portion of dense, dark red meat harvested from an Alpha Rat Beast. Tough and strongly flavoured, the flesh retains potent organic properties that make properly preserved cuts useful to alchemists as well as cooks. *\"Most see a q",
+      "metadata": {
+        "title": "Alpha Rat Beast Meat",
+        "slug": "alpha-rat-beast-meat",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Meat",
+        "visibility": "public",
+        "marketValue": 1,
+        "marketPrice": 2,
+        "marketValueSourceText": "1 Mark",
+        "marketPriceSourceText": "2 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Rare",
+        "materialType": "Food",
+        "materialForm": "Raw Meat",
+        "weight": "2.5kg",
+        "durability": "Perishable",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Meat/alpha-rat-beast-meat/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Meat/alpha-rat-beast-meat/image.png",
+      "related": [],
+      "filters": {
+        "category": "Meat",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Rare",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Food",
+        "visibility": "public"
+      },
+      "searchTerms": "alpha rat beast meat item resources & materials meat {\"title\":\"alpha rat beast meat\",\"slug\":\"alpha-rat-beast-meat\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"meat\",\"visibility\":\"public\",\"marketvalue\":1,\"marketprice\":2,\"marketvaluesourcetext\":\"1 mark\",\"marketpricesourcetext\":\"2 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"rare\",\"materialtype\":\"food\",\"materialform\":\"raw meat\",\"weight\":\"2.5kg\",\"durability\":\"perishable\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | rare |\n| material type | food |\n| material form | raw meat |\n| weight | 2.5kg |\n| durability | perishable |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 1 mark |\n| market price | 2 marks |\n\n## 📝 description\nalpha rat beast meat is a heavy portion of dense, dark red meat harvested from an alpha rat beast. tough and strongly flavoured, the flesh retains potent organic properties that make properly preserved cuts useful to alchemists as well as cooks.\n\n## ✨ material properties\n- dense, tough, and strongly flavoured.\n- considerably more substantial than [[dire rat meat]].\n- highly perishable when left untreated.\n- requires thorough cleaning and cooking before consumption.\n- can be dried, smoked, salted, or otherwise preserved.\n- retains potent organic properties useful in alchemy.\n\n## ⚒️ crafting use\n- alchemy component.\n- cooked meat dishes.\n- stews, soups, and broths.\n- dried or smoked travel rations.\n- ingredient for cooking recipes.\n- animal feed where appropriate.\n\n## 🧪 processing\n- **processing required:** clean and cook, dry, smoke, salt, or otherwise preserve.\n- **tools required:** knife and appropriate cooking or preservation equipment.\n- **required crafting rank:** apprentice\n- **processed into:** cooked alpha rat beast meat, preserved alpha rat beast meat, or appropriate food recipes.\n- **processing yield:** 1x alpha rat beast meat → 1x prepared portion.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component.\n\n## 🐾 resource source\n- **obtained from:** alpha rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 12\n\n## 💬 quote\n\n*\"most see a questionable meal. an experienced alchemist sees something considerably more useful.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-meat-dire-rat-meat-index",
+      "title": "Dire Rat Meat",
+      "slug": "dire-rat-meat",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Meat"
+      ],
+      "category": "Meat",
+      "route": "/compendium/item/resources-and-materials/meat/dire-rat-meat",
+      "sourcePath": "content/Items/Resources & Materials/Meat/dire-rat-meat/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Meat/dire-rat-meat",
+      "content": "---\ntitle: \"Dire Rat Meat\"\nslug: dire-rat-meat\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Meat\"\nvisibility: public\nmarket_value: 0.1\nmarket_price: 0.15\nmarket_value_source_text: \"10 Pennies\"\nmarket_price_source_text: \"15 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Uncommon\nMaterial Type: Food\nMaterial Form: Raw Meat\nWeight: 1kg\nDurability: Perishable\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 1kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |\n\n## 📝 Description\nDire Rat Meat is a dense portion of dark red meat harvested from a Dire Rat. Tough and strongly flavoured, it requires careful preparation before eating. The unusual properties retained within the flesh also make it useful as a component in certain alchemical preparations.\n\n## ✨ Material Properties\n- Dense, tough raw meat.\n- More substantial than [[Great Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains useful organic properties for alchemical applications.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for Cooking recipes.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Dire Rat Meat, Dried Dire Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Dire Rat Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 7\n\n## 💬 Quote\n\n*\"Questionable for dinner. Considerably more interesting to an alchemist.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 1kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |\n\n## 📝 Description\nDire Rat Meat is a dense portion of dark red meat harvested from a Dire Rat. Tough and strongly flavoured, it requires careful preparation before eating. The unusual properties retained within the flesh also make it useful as a component in certain alchemical preparations.\n\n## ✨ Material Properties\n- Dense, tough raw meat.\n- More substantial than [[Great Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains useful organic properties for alchemical applications.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for Cooking recipes.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Dire Rat Meat, Dried Dire Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Dire Rat Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 7\n\n## 💬 Quote\n\n*\"Questionable for dinner. Considerably more interesting to an alchemist.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 1kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 10 Pennies |\n| Market Price | 15 Pennies |",
+        "📝 Description": "Dire Rat Meat is a dense portion of dark red meat harvested from a Dire Rat. Tough and strongly flavoured, it requires careful preparation before eating. The unusual properties retained within the flesh also make it useful as a component in certain alchemical preparations.",
+        "✨ Material Properties": "- Dense, tough raw meat.\n- More substantial than [[Great Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains useful organic properties for alchemical applications.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for Cooking recipes.",
+        "🧪 Processing": "- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Dire Rat Meat, Dried Dire Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Dire Rat Meat → 1x prepared portion.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.",
+        "🐾 Resource Source": "- **Obtained From:** Dire Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 7",
+        "💬 Quote": "*\"Questionable for dinner. Considerably more interesting to an alchemist.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Dire Rat Meat is a dense portion of dark red meat harvested from a Dire Rat. Tough and strongly flavoured, it requires careful preparation before eating. The unusual properties retained within the flesh also make it useful as a component in certain alchemical ",
+      "metadata": {
+        "title": "Dire Rat Meat",
+        "slug": "dire-rat-meat",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Meat",
+        "visibility": "public",
+        "marketValue": 0.1,
+        "marketPrice": 0.15,
+        "marketValueSourceText": "10 Pennies",
+        "marketPriceSourceText": "15 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Uncommon",
+        "materialType": "Food",
+        "materialForm": "Raw Meat",
+        "weight": "1kg",
+        "durability": "Perishable",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Meat/dire-rat-meat/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Meat/dire-rat-meat/image.png",
+      "related": [],
+      "filters": {
+        "category": "Meat",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Food",
+        "visibility": "public"
+      },
+      "searchTerms": "dire rat meat item resources & materials meat {\"title\":\"dire rat meat\",\"slug\":\"dire-rat-meat\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"meat\",\"visibility\":\"public\",\"marketvalue\":0.1,\"marketprice\":0.15,\"marketvaluesourcetext\":\"10 pennies\",\"marketpricesourcetext\":\"15 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"uncommon\",\"materialtype\":\"food\",\"materialform\":\"raw meat\",\"weight\":\"1kg\",\"durability\":\"perishable\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| material type | food |\n| material form | raw meat |\n| weight | 1kg |\n| durability | perishable |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 10 pennies |\n| market price | 15 pennies |\n\n## 📝 description\ndire rat meat is a dense portion of dark red meat harvested from a dire rat. tough and strongly flavoured, it requires careful preparation before eating. the unusual properties retained within the flesh also make it useful as a component in certain alchemical preparations.\n\n## ✨ material properties\n- dense, tough raw meat.\n- more substantial than [[great rat meat]].\n- highly perishable when left untreated.\n- requires thorough cleaning and cooking before consumption.\n- can be dried, smoked, salted, or otherwise preserved.\n- retains useful organic properties for alchemical applications.\n\n## ⚒️ crafting use\n- alchemy component.\n- cooked meat dishes.\n- stews, soups, and broths.\n- dried or smoked travel rations.\n- animal feed where appropriate.\n- ingredient for cooking recipes.\n\n## 🧪 processing\n- **processing required:** clean and cook, dry, smoke, salt, or otherwise preserve.\n- **tools required:** knife and appropriate cooking or preservation equipment.\n- **required profession & rank:** cooking — novice\n- **processed into:** cooked dire rat meat, dried dire rat meat, or appropriate food recipes.\n- **processing yield:** 1x dire rat meat → 1x prepared portion.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component.\n\n## 🐾 resource source\n- **obtained from:** dire rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 7\n\n## 💬 quote\n\n*\"questionable for dinner. considerably more interesting to an alchemist.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-meat-elder-rat-beast-meat-index",
+      "title": "Elder Rat Beast Meat",
+      "slug": "elder-rat-beast-meat",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Meat"
+      ],
+      "category": "Meat",
+      "route": "/compendium/item/resources-and-materials/meat/elder-rat-beast-meat",
+      "sourcePath": "content/Items/Resources & Materials/Meat/elder-rat-beast-meat/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Meat/elder-rat-beast-meat",
+      "content": "---\ntitle: \"Elder Rat Beast Meat\"\nslug: elder-rat-beast-meat\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Meat\"\nvisibility: public\nmarket_value: 1\nmarket_price: 2\nmarket_value_source_text: \"1 Marks\"\nmarket_price_source_text: \"2 Marks\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Epic\nMaterial Type: Food\nMaterial Form: Raw Meat\nWeight: 2.5kg\nDurability: Perishable\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Marks |\n| Market Price | 2 Marks |\n\n## 📝 Description\nElder Rat Beast Meat is a heavy portion of dense, dark red flesh harvested from an Elder Rat Beast. Exceptionally tough and strongly flavoured, the meat retains concentrated organic properties accumulated throughout the creature's long life, making it valuable to both experienced cooks and alchemists.\n\n## ✨ Material Properties\n- Dense, heavy, and exceptionally tough.\n- Dark red in colour with a strong flavour.\n- More substantial than [[Alpha Rat Beast Meat]].\n- Highly perishable when left untreated.\n- Requires thorough preparation before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains concentrated organic properties useful in alchemy.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Advanced cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Cooked Elder Rat Beast Meat, Preserved Elder Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Elder Rat Beast Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16\n\n## 💬 Quote\n\n*\"Tough enough to test a cook's patience, valuable enough that an alchemist won't complain.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Marks |\n| Market Price | 2 Marks |\n\n## 📝 Description\nElder Rat Beast Meat is a heavy portion of dense, dark red flesh harvested from an Elder Rat Beast. Exceptionally tough and strongly flavoured, the meat retains concentrated organic properties accumulated throughout the creature's long life, making it valuable to both experienced cooks and alchemists.\n\n## ✨ Material Properties\n- Dense, heavy, and exceptionally tough.\n- Dark red in colour with a strong flavour.\n- More substantial than [[Alpha Rat Beast Meat]].\n- Highly perishable when left untreated.\n- Requires thorough preparation before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains concentrated organic properties useful in alchemy.\n\n## ⚒️ Crafting Use\n- Alchemy component.\n- Advanced cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Cooked Elder Rat Beast Meat, Preserved Elder Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Elder Rat Beast Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.\n\n## 🐾 Resource Source\n- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16\n\n## 💬 Quote\n\n*\"Tough enough to test a cook's patience, valuable enough that an alchemist won't complain.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Epic |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 2.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 1 Marks |\n| Market Price | 2 Marks |",
+        "📝 Description": "Elder Rat Beast Meat is a heavy portion of dense, dark red flesh harvested from an Elder Rat Beast. Exceptionally tough and strongly flavoured, the meat retains concentrated organic properties accumulated throughout the creature's long life, making it valuable to both experienced cooks and alchemists.",
+        "✨ Material Properties": "- Dense, heavy, and exceptionally tough.\n- Dark red in colour with a strong flavour.\n- More substantial than [[Alpha Rat Beast Meat]].\n- Highly perishable when left untreated.\n- Requires thorough preparation before consumption.\n- Can be dried, smoked, salted, or otherwise preserved.\n- Retains concentrated organic properties useful in alchemy.",
+        "⚒️ Crafting Use": "- Alchemy component.\n- Advanced cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Ingredient for Cooking recipes.\n- Animal feed where appropriate.",
+        "🧪 Processing": "- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Crafting Rank:** Journeyman\n- **Processed Into:** Cooked Elder Rat Beast Meat, Preserved Elder Rat Beast Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Elder Rat Beast Meat → 1x prepared portion.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** Can be used as an Alchemy Component.",
+        "🐾 Resource Source": "- **Obtained From:** Elder Rat Beast\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 16",
+        "💬 Quote": "*\"Tough enough to test a cook's patience, valuable enough that an alchemist won't complain.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Elder Rat Beast Meat is a heavy portion of dense, dark red flesh harvested from an Elder Rat Beast. Exceptionally tough and strongly flavoured, the meat retains concentrated organic properties accumulated throughout the creature's long life, making it valuable",
+      "metadata": {
+        "title": "Elder Rat Beast Meat",
+        "slug": "elder-rat-beast-meat",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Meat",
+        "visibility": "public",
+        "marketValue": 1,
+        "marketPrice": 2,
+        "marketValueSourceText": "1 Marks",
+        "marketPriceSourceText": "2 Marks",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Epic",
+        "materialType": "Food",
+        "materialForm": "Raw Meat",
+        "weight": "2.5kg",
+        "durability": "Perishable",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Meat/elder-rat-beast-meat/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Meat/elder-rat-beast-meat/image.png",
+      "related": [],
+      "filters": {
+        "category": "Meat",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Epic",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Food",
+        "visibility": "public"
+      },
+      "searchTerms": "elder rat beast meat item resources & materials meat {\"title\":\"elder rat beast meat\",\"slug\":\"elder-rat-beast-meat\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"meat\",\"visibility\":\"public\",\"marketvalue\":1,\"marketprice\":2,\"marketvaluesourcetext\":\"1 marks\",\"marketpricesourcetext\":\"2 marks\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"epic\",\"materialtype\":\"food\",\"materialform\":\"raw meat\",\"weight\":\"2.5kg\",\"durability\":\"perishable\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | epic |\n| material type | food |\n| material form | raw meat |\n| weight | 2.5kg |\n| durability | perishable |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 1 marks |\n| market price | 2 marks |\n\n## 📝 description\nelder rat beast meat is a heavy portion of dense, dark red flesh harvested from an elder rat beast. exceptionally tough and strongly flavoured, the meat retains concentrated organic properties accumulated throughout the creature's long life, making it valuable to both experienced cooks and alchemists.\n\n## ✨ material properties\n- dense, heavy, and exceptionally tough.\n- dark red in colour with a strong flavour.\n- more substantial than [[alpha rat beast meat]].\n- highly perishable when left untreated.\n- requires thorough preparation before consumption.\n- can be dried, smoked, salted, or otherwise preserved.\n- retains concentrated organic properties useful in alchemy.\n\n## ⚒️ crafting use\n- alchemy component.\n- advanced cooked meat dishes.\n- stews, soups, and broths.\n- dried or smoked travel rations.\n- ingredient for cooking recipes.\n- animal feed where appropriate.\n\n## 🧪 processing\n- **processing required:** clean and cook, dry, smoke, salt, or otherwise preserve.\n- **tools required:** knife and appropriate cooking or preservation equipment.\n- **required crafting rank:** journeyman\n- **processed into:** cooked elder rat beast meat, preserved elder rat beast meat, or appropriate food recipes.\n- **processing yield:** 1x elder rat beast meat → 1x prepared portion.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** can be used as an alchemy component.\n\n## 🐾 resource source\n- **obtained from:** elder rat beast\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 16\n\n## 💬 quote\n\n*\"tough enough to test a cook's patience, valuable enough that an alchemist won't complain.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-meat-great-rat-meat-index",
+      "title": "Great Rat Meat",
+      "slug": "great-rat-meat",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Meat"
+      ],
+      "category": "Meat",
+      "route": "/compendium/item/resources-and-materials/meat/great-rat-meat",
+      "sourcePath": "content/Items/Resources & Materials/Meat/great-rat-meat/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Meat/great-rat-meat",
+      "content": "---\ntitle: \"Great Rat Meat\"\nslug: great-rat-meat\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Meat\"\nvisibility: public\nmarket_value: 0.05\nmarket_price: 0.08\nmarket_value_source_text: \"5 Pennies\"\nmarket_price_source_text: \"8 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Food\nMaterial Form: Raw Meat\nWeight: 0.5kg\nDurability: Perishable\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 0.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 8 Pennies |\n\n## 📝 Description\nGreat Rat Meat is a sizeable portion of dark red meat harvested from a Great Rat. Tougher and stronger in flavour than ordinary rat meat, it is rarely considered desirable fare, though proper preparation can turn it into a filling and inexpensive meal.\n\n## ✨ Material Properties\n- Dense, tough raw meat.\n- Provides a larger portion than ordinary [[Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be preserved through drying, smoking, or salting.\n\n## ⚒️ Crafting Use\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for basic Cooking recipes.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve the meat.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Great Rat Meat, Dried Great Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Great Rat Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Still rat, but at least there's enough of it for a proper meal.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 0.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 8 Pennies |\n\n## 📝 Description\nGreat Rat Meat is a sizeable portion of dark red meat harvested from a Great Rat. Tougher and stronger in flavour than ordinary rat meat, it is rarely considered desirable fare, though proper preparation can turn it into a filling and inexpensive meal.\n\n## ✨ Material Properties\n- Dense, tough raw meat.\n- Provides a larger portion than ordinary [[Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be preserved through drying, smoking, or salting.\n\n## ⚒️ Crafting Use\n- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for basic Cooking recipes.\n\n## 🧪 Processing\n- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve the meat.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Great Rat Meat, Dried Great Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Great Rat Meat → 1x prepared portion.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5\n\n## 💬 Quote\n\n*\"Still rat, but at least there's enough of it for a proper meal.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Food |\n| Material Form | Raw Meat |\n| Weight | 0.5kg |\n| Durability | Perishable |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 5 Pennies |\n| Market Price | 8 Pennies |",
+        "📝 Description": "Great Rat Meat is a sizeable portion of dark red meat harvested from a Great Rat. Tougher and stronger in flavour than ordinary rat meat, it is rarely considered desirable fare, though proper preparation can turn it into a filling and inexpensive meal.",
+        "✨ Material Properties": "- Dense, tough raw meat.\n- Provides a larger portion than ordinary [[Rat Meat]].\n- Highly perishable when left untreated.\n- Requires thorough cleaning and cooking before consumption.\n- Can be preserved through drying, smoking, or salting.",
+        "⚒️ Crafting Use": "- Cooked meat dishes.\n- Stews, soups, and broths.\n- Dried or smoked travel rations.\n- Animal feed where appropriate.\n- Ingredient for basic Cooking recipes.",
+        "🧪 Processing": "- **Processing Required:** Clean and cook, dry, smoke, salt, or otherwise preserve the meat.\n- **Tools Required:** Knife and appropriate cooking or preservation equipment.\n- **Required Profession & Rank:** Cooking — Novice\n- **Processed Into:** Cooked Great Rat Meat, Dried Great Rat Meat, or appropriate food recipes.\n- **Processing Yield:** 1x Great Rat Meat → 1x prepared portion.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Great Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 5",
+        "💬 Quote": "*\"Still rat, but at least there's enough of it for a proper meal.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Great Rat Meat is a sizeable portion of dark red meat harvested from a Great Rat. Tougher and stronger in flavour than ordinary rat meat, it is rarely considered desirable fare, though proper preparation can turn it into a filling and inexpensive meal. *\"Still",
+      "metadata": {
+        "title": "Great Rat Meat",
+        "slug": "great-rat-meat",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Meat",
+        "visibility": "public",
+        "marketValue": 0.05,
+        "marketPrice": 0.08,
+        "marketValueSourceText": "5 Pennies",
+        "marketPriceSourceText": "8 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Food",
+        "materialForm": "Raw Meat",
+        "weight": "0.5kg",
+        "durability": "Perishable",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Meat/great-rat-meat/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Meat/great-rat-meat/image.png",
+      "related": [],
+      "filters": {
+        "category": "Meat",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Food",
+        "visibility": "public"
+      },
+      "searchTerms": "great rat meat item resources & materials meat {\"title\":\"great rat meat\",\"slug\":\"great-rat-meat\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"meat\",\"visibility\":\"public\",\"marketvalue\":0.05,\"marketprice\":0.08,\"marketvaluesourcetext\":\"5 pennies\",\"marketpricesourcetext\":\"8 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"food\",\"materialform\":\"raw meat\",\"weight\":\"0.5kg\",\"durability\":\"perishable\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | food |\n| material form | raw meat |\n| weight | 0.5kg |\n| durability | perishable |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 5 pennies |\n| market price | 8 pennies |\n\n## 📝 description\ngreat rat meat is a sizeable portion of dark red meat harvested from a great rat. tougher and stronger in flavour than ordinary rat meat, it is rarely considered desirable fare, though proper preparation can turn it into a filling and inexpensive meal.\n\n## ✨ material properties\n- dense, tough raw meat.\n- provides a larger portion than ordinary [[rat meat]].\n- highly perishable when left untreated.\n- requires thorough cleaning and cooking before consumption.\n- can be preserved through drying, smoking, or salting.\n\n## ⚒️ crafting use\n- cooked meat dishes.\n- stews, soups, and broths.\n- dried or smoked travel rations.\n- animal feed where appropriate.\n- ingredient for basic cooking recipes.\n\n## 🧪 processing\n- **processing required:** clean and cook, dry, smoke, salt, or otherwise preserve the meat.\n- **tools required:** knife and appropriate cooking or preservation equipment.\n- **required profession & rank:** cooking — novice\n- **processed into:** cooked great rat meat, dried great rat meat, or appropriate food recipes.\n- **processing yield:** 1x great rat meat → 1x prepared portion.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** great rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 5\n\n## 💬 quote\n\n*\"still rat, but at least there's enough of it for a proper meal.\"*"
+    },
+    {
+      "id": "item:content-items-resources-and-materials-meat-rat-meat-index",
+      "title": "Rat Meat",
+      "slug": "rat-meat",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Resources & Materials",
+        "Meat"
+      ],
+      "category": "Meat",
+      "route": "/compendium/item/resources-and-materials/meat/rat-meat",
+      "sourcePath": "content/Items/Resources & Materials/Meat/rat-meat/index.md",
+      "sourceFolder": "content/Items/Resources & Materials/Meat/rat-meat",
+      "content": "---\ntitle: \"Rat Meat\"\nslug: rat-meat\ntype: item\nitem_type: Resource\ncategory: \"Resources & Materials\"\nsubcategory: \"Meat\"\nvisibility: public\nmarket_value: 0.02\nmarket_price: 0.03\nmarket_value_source_text: \"2 Pennies\"\nmarket_price_source_text: \"3 Pennies\"\nimage: image.png\ntags:\n  - Item\n  - Resource\nItem Class: Common\nMaterial Type: Bone\nMaterial Form: Teeth\nWeight: 0.01kg\nDurability: Low\nDamage Modifier: \"0\"\nArmour Modifier: \"0\"\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Pennies |\n| Market Price | 3 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Pennies |\n| Market Price | 3 Pennies |\n\n## 📝 Description\nRat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ Material Properties\n- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ Crafting Use\n- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 Processing\n- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.\n\n## 🔮 Enchantment Use\n- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None\n\n## 🐾 Resource Source\n- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3\n\n## 💬 Quote\n\n*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Material Type | Bone |\n| Material Form | Teeth |\n| Weight | 0.01kg |\n| Durability | Low |\n| Damage Modifier | 0 |\n| Armour Modifier | 0 |\n| Market Value | 2 Pennies |\n| Market Price | 3 Pennies |",
+        "📝 Description": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.",
+        "✨ Material Properties": "- Small, lightweight, and naturally hard.\n- Usually pale yellow or off-white in colour.\n- Too small and brittle for practical armour or weapon construction.\n- Can be cleaned, polished, drilled, carved, or engraved for decorative use.",
+        "⚒️ Crafting Use": "- Necklaces, bracelets, and simple jewellery.\n- Decorative charms and trinkets.\n- Trophy ornaments.\n- Clothing and equipment embellishments.\n- Decorative additions to weapons, armour, tools, and accessories.",
+        "🧪 Processing": "- **Processing Required:** Clean and dry before use; polishing or drilling is optional.\n- **Tools Required:** Small Knife, File, Hand Drill, or Polishing Tools depending on the intended decoration.\n- **Required Profession & Rank:** None for basic preparation; appropriate crafting profession for finished decorative items.\n- **Processed Into:** Polished or Carved Rat Teeth.\n- **Processing Yield:** 1x Rat Tooth → 1x Prepared Rat Tooth.",
+        "🔮 Enchantment Use": "- **Enchantment Affinity:** None\n- **Elemental Alignment:** None\n- **Compatible Enchantments:** None\n- **Special Properties:** None",
+        "🐾 Resource Source": "- **Obtained From:** Rat\n- **Harvesting Skill:** Harvesting\n- **Harvesting Difficulty:** DC 3",
+        "💬 Quote": "*\"Worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Rat Teeth are small, pale-yellow incisors harvested from common rats. Their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and orn",
+      "metadata": {
+        "title": "Rat Meat",
+        "slug": "rat-meat",
+        "type": "item",
+        "itemType": "Resource",
+        "category": "Resources & Materials",
+        "subcategory": "Meat",
+        "visibility": "public",
+        "marketValue": 0.02,
+        "marketPrice": 0.03,
+        "marketValueSourceText": "2 Pennies",
+        "marketPriceSourceText": "3 Pennies",
+        "image": "image.png",
+        "tags": [
+          "Item",
+          "Resource"
+        ],
+        "itemClass": "Common",
+        "materialType": "Bone",
+        "materialForm": "Teeth",
+        "weight": "0.01kg",
+        "durability": "Low",
+        "damageModifier": "0",
+        "armourModifier": "0"
+      },
+      "tags": [
+        "Item",
+        "Resource"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Resources & Materials/Meat/rat-meat/image.png"
+      },
+      "imagePath": "content/Items/Resources & Materials/Meat/rat-meat/image.png",
+      "related": [],
+      "filters": {
+        "category": "Meat",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Resource",
+        "craftingCategory": "Resources & Materials",
+        "materialType": "Bone",
+        "visibility": "public"
+      },
+      "searchTerms": "rat meat item resources & materials meat {\"title\":\"rat meat\",\"slug\":\"rat-meat\",\"type\":\"item\",\"itemtype\":\"resource\",\"category\":\"resources & materials\",\"subcategory\":\"meat\",\"visibility\":\"public\",\"marketvalue\":0.02,\"marketprice\":0.03,\"marketvaluesourcetext\":\"2 pennies\",\"marketpricesourcetext\":\"3 pennies\",\"image\":\"image.png\",\"tags\":[\"item\",\"resource\"],\"itemclass\":\"common\",\"materialtype\":\"bone\",\"materialform\":\"teeth\",\"weight\":\"0.01kg\",\"durability\":\"low\",\"damagemodifier\":\"0\",\"armourmodifier\":\"0\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| material type | bone |\n| material form | teeth |\n| weight | 0.01kg |\n| durability | low |\n| damage modifier | 0 |\n| armour modifier | 0 |\n| market value | 2 pennies |\n| market price | 3 pennies |\n\n## 📝 description\nrat teeth are small, pale-yellow incisors harvested from common rats. their curved shape and naturally hard surface make them unsuitable as structural crafting materials, but they are commonly collected for inexpensive decorations, trophies, jewellery, and ornamental detailing.\n\n## ✨ material properties\n- small, lightweight, and naturally hard.\n- usually pale yellow or off-white in colour.\n- too small and brittle for practical armour or weapon construction.\n- can be cleaned, polished, drilled, carved, or engraved for decorative use.\n\n## ⚒️ crafting use\n- necklaces, bracelets, and simple jewellery.\n- decorative charms and trinkets.\n- trophy ornaments.\n- clothing and equipment embellishments.\n- decorative additions to weapons, armour, tools, and accessories.\n\n## 🧪 processing\n- **processing required:** clean and dry before use; polishing or drilling is optional.\n- **tools required:** small knife, file, hand drill, or polishing tools depending on the intended decoration.\n- **required profession & rank:** none for basic preparation; appropriate crafting profession for finished decorative items.\n- **processed into:** polished or carved rat teeth.\n- **processing yield:** 1x rat tooth → 1x prepared rat tooth.\n\n## 🔮 enchantment use\n- **enchantment affinity:** none\n- **elemental alignment:** none\n- **compatible enchantments:** none\n- **special properties:** none\n\n## 🐾 resource source\n- **obtained from:** rat\n- **harvesting skill:** harvesting\n- **harvesting difficulty:** dc 3\n\n## 💬 quote\n\n*\"worth little to a merchant, but plenty to someone with an eye for decoration.\"*"
     },
     {
       "id": "item:content-materials-5-epic-metals-abyssal-steel-ingot-index",
@@ -12398,6 +15708,489 @@
         "visibility": "public"
       },
       "searchTerms": "zinc ore item resources & materials metal metal ores {\"title\":\"zinc ore\",\"slug\":\"zinc-ore\",\"type\":\"item\",\"kingdom\":\"mineral\",\"itemclass\":\"common\",\"category\":\"ore\",\"subcategory\":\"metal\",\"materialtype\":\"metal\",\"materialform\":\"ore\",\"materialfamily\":\"zinc\",\"sourceitems\":[],\"refinesinto\":\"zinc ingot\",\"refinementratio\":\"4:1\",\"weightclass\":\"light\",\"durability\":\"low\",\"enchantmentaffinity\":\"10% (+0 dice)\",\"marketvalue\":2,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"tags\":[\"items\",\"minerals\",\"metal\",\"ore\",\"common\"],\"visibility\":\"public\"} # zinc ore\n\n## effect\nzinc ore is a reactive and volatile material that plays a critical role in alloy creation. while weak on its own, it enhances flexibility, resonance, and thermal response when combined with other metals.\n\n---\n\n## lore\nknown as the *“breath of the forge,”* zinc was discovered not for its strength, but for how it transformed other metals. ancient artificers prized it for its ability to “awaken” dormant properties within alloys.\n\n---\n\n## material & crafting traits\n- low structural strength  \n- highly reactive when heated  \n- vaporises at high temperatures if mishandled  \n- essential for alloy crafting  \n\n---\n\n## refinement\n- smelts into: [[zinc ingot]]\n- ratio: 4 ore → 1 ingot\n- notes: requires controlled heat to prevent material loss\n\n---\n\n## alloy use\n- [[brass ingot]]\n\n---\n\n## enchantment use\n- minimal direct use  \n- enhances resonance in alloys  \n\n---\n\n## quote\n*\"it is not the strength of zinc, but what it awakens in others.\"*"
+    },
+    {
+      "id": "item:content-items-weapons-ammunition-cobalt-pixie-arrow-index",
+      "title": "Cobalt Pixie Arrow",
+      "slug": "cobalt-pixie-arrow",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Ammunition"
+      ],
+      "category": "Ammunition",
+      "route": "/compendium/item/weapons/ammunition/cobalt-pixie-arrow",
+      "sourcePath": "content/Items/Weapons/Ammunition/cobalt-pixie-arrow/index.md",
+      "sourceFolder": "content/Items/Weapons/Ammunition/cobalt-pixie-arrow",
+      "content": "---\ntitle: \"Cobalt Pixie Arrow\"\nslug: cobalt-pixie-arrow\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Ammunition\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\npricing_status: needs-completion\nimage: image.png\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Unusual\nItem Quality: Well Crafted\nDurability: High\nMaterial: Cobalt\nStyle: Arrow\nWeight: 0.004 kg\nDamage: 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Cobalt |\n| Style | Arrow |\n| Weight | 0.004 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. Cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with Air and Water magic.\n\n## 📜 Lore\nCobalt arrows are prized by enchanted archers for their unusual metal and strong affinity with elemental magic.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Cobalt\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:** \n- **Failure Consequences:** Poorly shaped arrowheads may reduce accuracy, damage, or overall durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling of the cobalt arrowhead when stored for extended periods.\n- **Durability Loss per Use:** Normal; increased if the arrow strikes stone, armour, or another hard surface.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Cobalt |\n| Style | Arrow |\n| Weight | 0.004 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. Cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with Air and Water magic.\n\n## 📜 Lore\nCobalt arrows are prized by enchanted archers for their unusual metal and strong affinity with elemental magic.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Cobalt\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:** \n- **Failure Consequences:** Poorly shaped arrowheads may reduce accuracy, damage, or overall durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling of the cobalt arrowhead when stored for extended periods.\n- **Durability Loss per Use:** Normal; increased if the arrow strikes stone, armour, or another hard surface.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Cobalt |\n| Style | Arrow |\n| Weight | 0.004 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |",
+        "📝 Description": "A finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. Cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with Air and Water magic.",
+        "📜 Lore": "Cobalt arrows are prized by enchanted archers for their unusual metal and strong affinity with elemental magic.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Cobalt\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:** \n- **Failure Consequences:** Poorly shaped arrowheads may reduce accuracy, damage, or overall durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling of the cobalt arrowhead when stored for extended periods.\n- **Durability Loss per Use:** Normal; increased if the arrow strikes stone, armour, or another hard surface."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. Cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with Air a",
+      "metadata": {
+        "title": "Cobalt Pixie Arrow",
+        "slug": "cobalt-pixie-arrow",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Ammunition",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "pricingStatus": "needs-completion",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Unusual",
+        "itemQuality": "Well Crafted",
+        "durability": "High",
+        "material": "Cobalt",
+        "style": "Arrow",
+        "weight": "0.004 kg",
+        "damage": "2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Weapons/Ammunition/cobalt-pixie-arrow/image.png"
+      },
+      "imagePath": "content/Items/Weapons/Ammunition/cobalt-pixie-arrow/image.png",
+      "related": [],
+      "filters": {
+        "category": "Ammunition",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Unusual",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "cobalt pixie arrow item weapons ammunition {\"title\":\"cobalt pixie arrow\",\"slug\":\"cobalt-pixie-arrow\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"ammunition\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"image\":\"image.png\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"unusual\",\"itemquality\":\"well crafted\",\"durability\":\"high\",\"material\":\"cobalt\",\"style\":\"arrow\",\"weight\":\"0.004 kg\",\"damage\":\"2d6 (base damage) + 2 (metal damage) + 1 (item quality)\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | unusual |\n| item quality | well crafted |\n| durability | high |\n| material | cobalt |\n| style | arrow |\n| weight | 0.004 kg |\n| damage | 2d6 (base damage) + 2 (metal damage) + 1 (item quality) |\n| enchantment | none |\n| purchase price | not specified |\n| selling price | not specified |\n\n## 📝 description\na finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with air and water magic.\n\n## 📜 lore\ncobalt arrows are prized by enchanted archers for their unusual metal and strong affinity with elemental magic.\n\n## ⚒️ crafting information\n\n### materials needed\n- cobalt\n- wooden arrow shaft\n- fletching\n- binding material\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- grinding stone\n- fletching tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required smithing rank:** \n- **failure consequences:** poorly shaped arrowheads may reduce accuracy, damage, or overall durability.\n\n### 🔧 maintenance\n- **sharpening requirement:** arrowhead should be inspected and resharpened after repeated use.\n- **oil/upkeep needed:** light oiling of the cobalt arrowhead when stored for extended periods.\n- **durability loss per use:** normal; increased if the arrow strikes stone, armour, or another hard surface."
+    },
+    {
+      "id": "item:content-items-weapons-ammunition-high-steel-sprite-arrow-index",
+      "title": "High Steel Sprite Arrow",
+      "slug": "high-steel-sprite-arrow",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Ammunition"
+      ],
+      "category": "Ammunition",
+      "route": "/compendium/item/weapons/ammunition/high-steel-sprite-arrow",
+      "sourcePath": "content/Items/Weapons/Ammunition/high-steel-sprite-arrow/index.md",
+      "sourceFolder": "content/Items/Weapons/Ammunition/high-steel-sprite-arrow",
+      "content": "---\ntitle: \"High Steel Sprite Arrow\"\nslug: high-steel-sprite-arrow\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Ammunition\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\npricing_status: needs-completion\nimage: image.png\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Unusual\nItem Quality:\nDurability: Very High\nMaterial: High Steel\nStyle: Arrow\nWeight: 0.011 kg\nDamage: 2D6 + 3 [[Piercing Damage]]\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Not specified |\n| Durability | Very High |\n| Material | High Steel |\n| Style | Arrow |\n| Weight | 0.011 kg |\n| Damage | 2D6 + 3 [[Piercing Damage]] |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. Its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical enchantments.\n\n## 📜 Lore\nHigh steel arrows are favoured by skilled archers seeking dependable ammunition capable of surviving demanding battles.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- High Steel\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging may produce an unbalanced or brittle arrowhead, reducing its damage, accuracy, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended during prolonged storage.\n- **Durability Loss per Use:** Low; high steel arrowheads resist deformation and repeated impacts exceptionally well.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Not specified |\n| Durability | Very High |\n| Material | High Steel |\n| Style | Arrow |\n| Weight | 0.011 kg |\n| Damage | 2D6 + 3 [[Piercing Damage]] |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. Its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical enchantments.\n\n## 📜 Lore\nHigh steel arrows are favoured by skilled archers seeking dependable ammunition capable of surviving demanding battles.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- High Steel\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging may produce an unbalanced or brittle arrowhead, reducing its damage, accuracy, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended during prolonged storage.\n- **Durability Loss per Use:** Low; high steel arrowheads resist deformation and repeated impacts exceptionally well.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Not specified |\n| Durability | Very High |\n| Material | High Steel |\n| Style | Arrow |\n| Weight | 0.011 kg |\n| Damage | 2D6 + 3 [[Piercing Damage]] |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |",
+        "📝 Description": "A durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. Its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical enchantments.",
+        "📜 Lore": "High steel arrows are favoured by skilled archers seeking dependable ammunition capable of surviving demanding battles.",
+        "⚒️ Crafting Information": "### Materials Needed\n- High Steel\n- Wooden Arrow Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging may produce an unbalanced or brittle arrowhead, reducing its damage, accuracy, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended during prolonged storage.\n- **Durability Loss per Use:** Low; high steel arrowheads resist deformation and repeated impacts exceptionally well."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. Its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical",
+      "metadata": {
+        "title": "High Steel Sprite Arrow",
+        "slug": "high-steel-sprite-arrow",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Ammunition",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "pricingStatus": "needs-completion",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Unusual",
+        "itemQuality": "",
+        "durability": "Very High",
+        "material": "High Steel",
+        "style": "Arrow",
+        "weight": "0.011 kg",
+        "damage": "2D6 + 3 [[Piercing Damage]]",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Weapons/Ammunition/high-steel-sprite-arrow/image.png"
+      },
+      "imagePath": "content/Items/Weapons/Ammunition/high-steel-sprite-arrow/image.png",
+      "related": [],
+      "filters": {
+        "category": "Ammunition",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Unusual",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "high steel sprite arrow item weapons ammunition {\"title\":\"high steel sprite arrow\",\"slug\":\"high-steel-sprite-arrow\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"ammunition\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"image\":\"image.png\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"unusual\",\"itemquality\":\"\",\"durability\":\"very high\",\"material\":\"high steel\",\"style\":\"arrow\",\"weight\":\"0.011 kg\",\"damage\":\"2d6 + 3 [[piercing damage]]\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | unusual |\n| item quality | not specified |\n| durability | very high |\n| material | high steel |\n| style | arrow |\n| weight | 0.011 kg |\n| damage | 2d6 + 3 [[piercing damage]] |\n| enchantment | none |\n| purchase price | not specified |\n| selling price | not specified |\n\n## 📝 description\na durable arrow fitted with a precisely forged high steel arrowhead, offering exceptional strength and resistance to deformation. its reinforced alloy construction provides excellent penetration and reliability, while remaining stable enough to support magical enchantments.\n\n## 📜 lore\nhigh steel arrows are favoured by skilled archers seeking dependable ammunition capable of surviving demanding battles.\n\n## ⚒️ crafting information\n\n### materials needed\n- high steel\n- wooden arrow shaft\n- fletching\n- binding material\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- grinding stone\n- fletching tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required smithing rank:**\n- **failure consequences:** poor forging may produce an unbalanced or brittle arrowhead, reducing its damage, accuracy, or durability.\n\n### 🔧 maintenance\n- **sharpening requirement:** arrowhead should be inspected and resharpened after repeated use.\n- **oil/upkeep needed:** light oiling recommended during prolonged storage.\n- **durability loss per use:** low; high steel arrowheads resist deformation and repeated impacts exceptionally well."
+    },
+    {
+      "id": "item:content-items-weapons-ammunition-iron-crossbow-bolt-index",
+      "title": "Iron Crossbow Bolt",
+      "slug": "iron-crossbow-bolt",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Ammunition"
+      ],
+      "category": "Ammunition",
+      "route": "/compendium/item/weapons/ammunition/iron-crossbow-bolt",
+      "sourcePath": "content/Items/Weapons/Ammunition/iron-crossbow-bolt/index.md",
+      "sourceFolder": "content/Items/Weapons/Ammunition/iron-crossbow-bolt",
+      "content": "---\ntitle: \"Iron Crossbow Bolt\"\nslug: iron-crossbow-bolt\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Ammunition\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\npricing_status: needs-completion\nimage: image.png\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Common\nItem Quality:\nDurability: Moderate\nMaterial: Iron\nStyle: Crossbow Bolt\nWeight: 0.010 kg\nDamage: 2D6 (Base Damage)\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Not specified |\n| Durability | Moderate |\n| Material | Iron |\n| Style | Crossbow Bolt |\n| Weight | 0.010 kg |\n| Damage | 2D6 (Base Damage) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA simple crossbow bolt fitted with a forged iron head, providing reliable penetration at an affordable cost. Its straightforward construction makes it easy to manufacture and maintain, though the iron head is more susceptible to wear and deformation than advanced metals.\n\n## 📜 Lore\nIron crossbow bolts are common ammunition used by hunters, guards, soldiers, and adventurers throughout Asteria.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may produce a misshapen or unbalanced bolt, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Iron bolt head should be inspected and resharpened regularly.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the iron head from corrosion during storage.\n- **Durability Loss per Use:** Moderate; impacts against armour, stone, or other hard surfaces may bend or damage the bolt head.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Not specified |\n| Durability | Moderate |\n| Material | Iron |\n| Style | Crossbow Bolt |\n| Weight | 0.010 kg |\n| Damage | 2D6 (Base Damage) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA simple crossbow bolt fitted with a forged iron head, providing reliable penetration at an affordable cost. Its straightforward construction makes it easy to manufacture and maintain, though the iron head is more susceptible to wear and deformation than advanced metals.\n\n## 📜 Lore\nIron crossbow bolts are common ammunition used by hunters, guards, soldiers, and adventurers throughout Asteria.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Iron\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may produce a misshapen or unbalanced bolt, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Iron bolt head should be inspected and resharpened regularly.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the iron head from corrosion during storage.\n- **Durability Loss per Use:** Moderate; impacts against armour, stone, or other hard surfaces may bend or damage the bolt head.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Common |\n| Item Quality | Not specified |\n| Durability | Moderate |\n| Material | Iron |\n| Style | Crossbow Bolt |\n| Weight | 0.010 kg |\n| Damage | 2D6 (Base Damage) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |",
+        "📝 Description": "A simple crossbow bolt fitted with a forged iron head, providing reliable penetration at an affordable cost. Its straightforward construction makes it easy to manufacture and maintain, though the iron head is more susceptible to wear and deformation than advanced metals.",
+        "📜 Lore": "Iron crossbow bolts are common ammunition used by hunters, guards, soldiers, and adventurers throughout Asteria.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Iron\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may produce a misshapen or unbalanced bolt, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Iron bolt head should be inspected and resharpened regularly.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the iron head from corrosion during storage.\n- **Durability Loss per Use:** Moderate; impacts against armour, stone, or other hard surfaces may bend or damage the bolt head."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A simple crossbow bolt fitted with a forged iron head, providing reliable penetration at an affordable cost. Its straightforward construction makes it easy to manufacture and maintain, though the iron head is more susceptible to wear and deformation than advan",
+      "metadata": {
+        "title": "Iron Crossbow Bolt",
+        "slug": "iron-crossbow-bolt",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Ammunition",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "pricingStatus": "needs-completion",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Common",
+        "itemQuality": "",
+        "durability": "Moderate",
+        "material": "Iron",
+        "style": "Crossbow Bolt",
+        "weight": "0.010 kg",
+        "damage": "2D6 (Base Damage)",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Weapons/Ammunition/iron-crossbow-bolt/image.png"
+      },
+      "imagePath": "content/Items/Weapons/Ammunition/iron-crossbow-bolt/image.png",
+      "related": [],
+      "filters": {
+        "category": "Ammunition",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Common",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "iron crossbow bolt item weapons ammunition {\"title\":\"iron crossbow bolt\",\"slug\":\"iron-crossbow-bolt\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"ammunition\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"image\":\"image.png\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"common\",\"itemquality\":\"\",\"durability\":\"moderate\",\"material\":\"iron\",\"style\":\"crossbow bolt\",\"weight\":\"0.010 kg\",\"damage\":\"2d6 (base damage)\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | common |\n| item quality | not specified |\n| durability | moderate |\n| material | iron |\n| style | crossbow bolt |\n| weight | 0.010 kg |\n| damage | 2d6 (base damage) |\n| enchantment | none |\n| purchase price | not specified |\n| selling price | not specified |\n\n## 📝 description\na simple crossbow bolt fitted with a forged iron head, providing reliable penetration at an affordable cost. its straightforward construction makes it easy to manufacture and maintain, though the iron head is more susceptible to wear and deformation than advanced metals.\n\n## 📜 lore\niron crossbow bolts are common ammunition used by hunters, guards, soldiers, and adventurers throughout asteria.\n\n## ⚒️ crafting information\n\n### materials needed\n- iron\n- wooden bolt shaft\n- fletching\n- binding material\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- grinding stone\n- fletching tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required smithing rank:**\n- **failure consequences:** poor forging or assembly may produce a misshapen or unbalanced bolt, reducing its accuracy, damage, or durability.\n\n### 🔧 maintenance\n- **sharpening requirement:** iron bolt head should be inspected and resharpened regularly.\n- **oil/upkeep needed:** light oiling recommended to protect the iron head from corrosion during storage.\n- **durability loss per use:** moderate; impacts against armour, stone, or other hard surfaces may bend or damage the bolt head."
+    },
+    {
+      "id": "item:content-items-weapons-ammunition-steel-crossbow-bolt-index",
+      "title": "Steel Crossbow Bolt",
+      "slug": "steel-crossbow-bolt",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Ammunition"
+      ],
+      "category": "Ammunition",
+      "route": "/compendium/item/weapons/ammunition/steel-crossbow-bolt",
+      "sourcePath": "content/Items/Weapons/Ammunition/steel-crossbow-bolt/index.md",
+      "sourceFolder": "content/Items/Weapons/Ammunition/steel-crossbow-bolt",
+      "content": "---\ntitle: \"Steel Crossbow Bolt\"\nslug: steel-crossbow-bolt\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Ammunition\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\npricing_status: needs-completion\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Uncommon\nItem Quality: Well Crafted\nDurability: High\nMaterial: Steel\nStyle: Crossbow Bolt\nWeight: 0.015 kg\nDamage: 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)\nEnchantment: None\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Steel |\n| Style | Crossbow Bolt |\n| Weight | 0.015 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. The steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility with basic enchantments.\n\n## 📜 Lore\nSteel crossbow bolts are dependable ammunition widely used by soldiers, hunters, mercenaries, and experienced crossbowmen.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Steel\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may leave the bolt unbalanced, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Bolt head should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the steel head during storage.\n- **Durability Loss per Use:** Normal; increased when striking armour, stone, or other hard surfaces.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Steel |\n| Style | Crossbow Bolt |\n| Weight | 0.015 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n\n## 📝 Description\nA sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. The steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility with basic enchantments.\n\n## 📜 Lore\nSteel crossbow bolts are dependable ammunition widely used by soldiers, hunters, mercenaries, and experienced crossbowmen.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Steel\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may leave the bolt unbalanced, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Bolt head should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the steel head during storage.\n- **Durability Loss per Use:** Normal; increased when striking armour, stone, or other hard surfaces.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Uncommon |\n| Item Quality | Well Crafted |\n| Durability | High |\n| Material | Steel |\n| Style | Crossbow Bolt |\n| Weight | 0.015 kg |\n| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |",
+        "📝 Description": "A sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. The steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility with basic enchantments.",
+        "📜 Lore": "Steel crossbow bolts are dependable ammunition widely used by soldiers, hunters, mercenaries, and experienced crossbowmen.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Steel\n- Wooden Bolt Shaft\n- Fletching\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Grinding Stone\n- Fletching Tools\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor forging or assembly may leave the bolt unbalanced, reducing its accuracy, damage, or durability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Bolt head should be inspected and resharpened after repeated use.\n- **Oil/Upkeep Needed:** Light oiling recommended to protect the steel head during storage.\n- **Durability Loss per Use:** Normal; increased when striking armour, stone, or other hard surfaces."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. The steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility wit",
+      "metadata": {
+        "title": "Steel Crossbow Bolt",
+        "slug": "steel-crossbow-bolt",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Ammunition",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "pricingStatus": "needs-completion",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Uncommon",
+        "itemQuality": "Well Crafted",
+        "durability": "High",
+        "material": "Steel",
+        "style": "Crossbow Bolt",
+        "weight": "0.015 kg",
+        "damage": "2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)",
+        "enchantment": "None"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Ammunition",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Uncommon",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "steel crossbow bolt item weapons ammunition {\"title\":\"steel crossbow bolt\",\"slug\":\"steel-crossbow-bolt\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"ammunition\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"uncommon\",\"itemquality\":\"well crafted\",\"durability\":\"high\",\"material\":\"steel\",\"style\":\"crossbow bolt\",\"weight\":\"0.015 kg\",\"damage\":\"2d6 (base damage) + 2 (metal damage) + 1 (item quality)\",\"enchantment\":\"none\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | uncommon |\n| item quality | well crafted |\n| durability | high |\n| material | steel |\n| style | crossbow bolt |\n| weight | 0.015 kg |\n| damage | 2d6 (base damage) + 2 (metal damage) + 1 (item quality) |\n| enchantment | none |\n| purchase price | not specified |\n| selling price | not specified |\n\n## 📝 description\na sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. the steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility with basic enchantments.\n\n## 📜 lore\nsteel crossbow bolts are dependable ammunition widely used by soldiers, hunters, mercenaries, and experienced crossbowmen.\n\n## ⚒️ crafting information\n\n### materials needed\n- steel\n- wooden bolt shaft\n- fletching\n- binding material\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- grinding stone\n- fletching tools\n\n### crafting difficulty\n- **skill check:** smithing\n- **required smithing rank:**\n- **failure consequences:** poor forging or assembly may leave the bolt unbalanced, reducing its accuracy, damage, or durability.\n\n### 🔧 maintenance\n- **sharpening requirement:** bolt head should be inspected and resharpened after repeated use.\n- **oil/upkeep needed:** light oiling recommended to protect the steel head during storage.\n- **durability loss per use:** normal; increased when striking armour, stone, or other hard surfaces."
+    },
+    {
+      "id": "item:content-items-weapons-melee-weapons-cobalt-warhammer-index",
+      "title": "Cobalt Warhammer",
+      "slug": "cobalt-warhammer",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Melee Weapons"
+      ],
+      "category": "Melee Weapons",
+      "route": "/compendium/item/weapons/melee-weapons/cobalt-warhammer",
+      "sourcePath": "content/Items/Weapons/Melee Weapons/cobalt-warhammer/index.md",
+      "sourceFolder": "content/Items/Weapons/Melee Weapons/cobalt-warhammer",
+      "content": "---\ntitle: \"Cobalt Warhammer\"\nslug: cobalt-warhammer\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Melee Weapons\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\nmarket_value_source_text: \"5 to 6 Gold\"\nmarket_price_source_text: \"5 Gold\"\npricing_status: needs-completion\nimage: image.png\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Unusual\nItem Quality: Well Crafted\nDurability: N/A\nMaterial: \"[[Cobalt]]\"\nStyle: \"[[Pike Headed Warhammer]]\"\nWeight: 6.1kg\nDamage: 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)\nEnchantment: N/A\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | N/A |\n| Material | [[Cobalt]] |\n| Style | [[Pike Headed Warhammer]] |\n| Weight | 6.1kg |\n| Damage | 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | N/A |\n| Purchase Price | 5 Gold |\n| Selling Price | 5 to 6 Gold |\n\n## 📝 Description\nForged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. Its natural cobalt properties make it exceptionally suited to Air and Water enchantments, while the reinforced hardwood shaft provides exceptional reach, balance, and devastating power on the battlefield.\n\n## 📜 Lore\nCrafted by adept blacksmith [[Korem Hildrem]], this well crafted cobalt warhammer reflects remarkable skill, marking the work of a smith on the threshold of true mastery.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 4 × Cobalt Ingots (Warhammer Head)\n- 1 × Reinforced Hardwood Pole (5–6 ft)\n- 2 × Steel Reinforcing Bands\n- 1 × Dire Rat Leather Grip\n- 3 × Iron Rivets\n- High-Grade Weapon Oil\n\n### Tools Required\n- Masterwork Forge\n- Smithing Hammer\n- Weapon Anvil\n- Tongs\n- Grindstone\n- Rivet Set\n- Leatherworking Tools\n\n### Crafting Difficulty\n- **Skill Check:**  DC 22 Smithing\n- **Required Smithing Rank:**  \n- **Failure Consequences:** Materials are not destroyed, but the weapon suffers reduced balance, lowering damage by 1 until reforged. A critical failure cracks the cobalt head, requiring replacement before another crafting attempt.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Hone the pick after every 10–15 combat encounters or heavy mining use.\n- **Oil/Upkeep Needed:** Apply weapon oil every 20 combat encounters to preserve the wooden shaft and prevent corrosion around the fittings.\n- **Durability Loss per Use:** 1 durability per successful strike; 2 durability when striking stone, armour, or other hardened materials.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | N/A |\n| Material | [[Cobalt]] |\n| Style | [[Pike Headed Warhammer]] |\n| Weight | 6.1kg |\n| Damage | 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | N/A |\n| Purchase Price | 5 Gold |\n| Selling Price | 5 to 6 Gold |\n\n## 📝 Description\nForged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. Its natural cobalt properties make it exceptionally suited to Air and Water enchantments, while the reinforced hardwood shaft provides exceptional reach, balance, and devastating power on the battlefield.\n\n## 📜 Lore\nCrafted by adept blacksmith [[Korem Hildrem]], this well crafted cobalt warhammer reflects remarkable skill, marking the work of a smith on the threshold of true mastery.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- 4 × Cobalt Ingots (Warhammer Head)\n- 1 × Reinforced Hardwood Pole (5–6 ft)\n- 2 × Steel Reinforcing Bands\n- 1 × Dire Rat Leather Grip\n- 3 × Iron Rivets\n- High-Grade Weapon Oil\n\n### Tools Required\n- Masterwork Forge\n- Smithing Hammer\n- Weapon Anvil\n- Tongs\n- Grindstone\n- Rivet Set\n- Leatherworking Tools\n\n### Crafting Difficulty\n- **Skill Check:**  DC 22 Smithing\n- **Required Smithing Rank:**  \n- **Failure Consequences:** Materials are not destroyed, but the weapon suffers reduced balance, lowering damage by 1 until reforged. A critical failure cracks the cobalt head, requiring replacement before another crafting attempt.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Hone the pick after every 10–15 combat encounters or heavy mining use.\n- **Oil/Upkeep Needed:** Apply weapon oil every 20 combat encounters to preserve the wooden shaft and prevent corrosion around the fittings.\n- **Durability Loss per Use:** 1 durability per successful strike; 2 durability when striking stone, armour, or other hardened materials.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Well Crafted |\n| Durability | N/A |\n| Material | [[Cobalt]] |\n| Style | [[Pike Headed Warhammer]] |\n| Weight | 6.1kg |\n| Damage | 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |\n| Enchantment | N/A |\n| Purchase Price | 5 Gold |\n| Selling Price | 5 to 6 Gold |",
+        "📝 Description": "Forged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. Its natural cobalt properties make it exceptionally suited to Air and Water enchantments, while the reinforced hardwood shaft provides exceptional reach, balance, and devastating power on the battlefield.",
+        "📜 Lore": "Crafted by adept blacksmith [[Korem Hildrem]], this well crafted cobalt warhammer reflects remarkable skill, marking the work of a smith on the threshold of true mastery.",
+        "⚒️ Crafting Information": "### Materials Needed\n- 4 × Cobalt Ingots (Warhammer Head)\n- 1 × Reinforced Hardwood Pole (5–6 ft)\n- 2 × Steel Reinforcing Bands\n- 1 × Dire Rat Leather Grip\n- 3 × Iron Rivets\n- High-Grade Weapon Oil\n\n### Tools Required\n- Masterwork Forge\n- Smithing Hammer\n- Weapon Anvil\n- Tongs\n- Grindstone\n- Rivet Set\n- Leatherworking Tools\n\n### Crafting Difficulty\n- **Skill Check:**  DC 22 Smithing\n- **Required Smithing Rank:**  \n- **Failure Consequences:** Materials are not destroyed, but the weapon suffers reduced balance, lowering damage by 1 until reforged. A critical failure cracks the cobalt head, requiring replacement before another crafting attempt.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** Hone the pick after every 10–15 combat encounters or heavy mining use.\n- **Oil/Upkeep Needed:** Apply weapon oil every 20 combat encounters to preserve the wooden shaft and prevent corrosion around the fittings.\n- **Durability Loss per Use:** 1 durability per successful strike; 2 durability when striking stone, armour, or other hardened materials."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "Forged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. Its natural cobalt properties make it exceptionally suited to Air and Water enchantments, while the reinforced hardwood sha",
+      "metadata": {
+        "title": "Cobalt Warhammer",
+        "slug": "cobalt-warhammer",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Melee Weapons",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "marketValueSourceText": "5 to 6 Gold",
+        "marketPriceSourceText": "5 Gold",
+        "pricingStatus": "needs-completion",
+        "image": "image.png",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Unusual",
+        "itemQuality": "Well Crafted",
+        "durability": "N/A",
+        "material": "[[Cobalt]]",
+        "style": "[[Pike Headed Warhammer]]",
+        "weight": "6.1kg",
+        "damage": "2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)",
+        "enchantment": "N/A"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {
+        "image": "content/Items/Weapons/Melee Weapons/cobalt-warhammer/image.png"
+      },
+      "imagePath": "content/Items/Weapons/Melee Weapons/cobalt-warhammer/image.png",
+      "related": [],
+      "filters": {
+        "category": "Melee Weapons",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Unusual",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "cobalt warhammer item weapons melee weapons {\"title\":\"cobalt warhammer\",\"slug\":\"cobalt-warhammer\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"melee weapons\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"marketvaluesourcetext\":\"5 to 6 gold\",\"marketpricesourcetext\":\"5 gold\",\"pricingstatus\":\"needs-completion\",\"image\":\"image.png\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"unusual\",\"itemquality\":\"well crafted\",\"durability\":\"n/a\",\"material\":\"[[cobalt]]\",\"style\":\"[[pike headed warhammer]]\",\"weight\":\"6.1kg\",\"damage\":\"2d12 (base damage) + 2 (metal damage) + 1 (item quality)\",\"enchantment\":\"n/a\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | unusual |\n| item quality | well crafted |\n| durability | n/a |\n| material | [[cobalt]] |\n| style | [[pike headed warhammer]] |\n| weight | 6.1kg |\n| damage | 2d12 (base damage) + 2 (metal damage) + 1 (item quality) |\n| enchantment | n/a |\n| purchase price | 5 gold |\n| selling price | 5 to 6 gold |\n\n## 📝 description\nforged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. its natural cobalt properties make it exceptionally suited to air and water enchantments, while the reinforced hardwood shaft provides exceptional reach, balance, and devastating power on the battlefield.\n\n## 📜 lore\ncrafted by adept blacksmith [[korem hildrem]], this well crafted cobalt warhammer reflects remarkable skill, marking the work of a smith on the threshold of true mastery.\n\n## ⚒️ crafting information\n\n### materials needed\n- 4 × cobalt ingots (warhammer head)\n- 1 × reinforced hardwood pole (5–6 ft)\n- 2 × steel reinforcing bands\n- 1 × dire rat leather grip\n- 3 × iron rivets\n- high-grade weapon oil\n\n### tools required\n- masterwork forge\n- smithing hammer\n- weapon anvil\n- tongs\n- grindstone\n- rivet set\n- leatherworking tools\n\n### crafting difficulty\n- **skill check:**  dc 22 smithing\n- **required smithing rank:**  \n- **failure consequences:** materials are not destroyed, but the weapon suffers reduced balance, lowering damage by 1 until reforged. a critical failure cracks the cobalt head, requiring replacement before another crafting attempt.\n\n### 🔧 maintenance\n- **sharpening requirement:** hone the pick after every 10–15 combat encounters or heavy mining use.\n- **oil/upkeep needed:** apply weapon oil every 20 combat encounters to preserve the wooden shaft and prevent corrosion around the fittings.\n- **durability loss per use:** 1 durability per successful strike; 2 durability when striking stone, armour, or other hardened materials."
+    },
+    {
+      "id": "item:content-items-weapons-ranged-weapons-reinforced-hand-crossbow-index",
+      "title": "Reinforced Hand Crossbow",
+      "slug": "reinforced-hand-crossbow",
+      "type": "item",
+      "domain": "item",
+      "compendium": "Item Compendium",
+      "workspaceSection": "Items",
+      "categoryPath": [
+        "Weapons",
+        "Ranged Weapons"
+      ],
+      "category": "Ranged Weapons",
+      "route": "/compendium/item/weapons/ranged-weapons/reinforced-hand-crossbow",
+      "sourcePath": "content/Items/Weapons/Ranged Weapons/reinforced-hand-crossbow/index.md",
+      "sourceFolder": "content/Items/Weapons/Ranged Weapons/reinforced-hand-crossbow",
+      "content": "---\ntitle: \"Reinforced Hand Crossbow\"\nslug: reinforced-hand-crossbow\ntype: item\nitem_type: Weapon\ncategory: \"Weapons\"\nsubcategory: \"Ranged Weapons\"\nvisibility: public\nmarket_value: 0\nmarket_price: null\npricing_status: needs-completion\ntags:\n  - \"#Item\"\n  - Weapon\nItem Class: Unusual\nItem Quality: Exceptional\nDurability: High\nMaterial: Oak (frame) & High Steel (bow & trigger)\nStyle: Hand Crossbow\nWeight: 1.1 kg\nDamage: 1D6 (base Damage) + 3 (Item Quality)\nEnchantment: None\nCrafted By: Mako Valencourt\n---\n\n## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Exceptional |\n| Durability | High |\n| Material | Oak (frame) & High Steel (bow & trigger) |\n| Style | Hand Crossbow |\n| Weight | 1.1 kg |\n| Damage | 1D6 (base Damage) + 3 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n| Crafted By | Mako Valencourt |\n\n## 📝 Description\nA compact hand crossbow reinforced with steel components, built for reliable one-handed use at close to medium range. Its sturdy frame and firing mechanism provide dependable performance, while the steel construction offers excellent durability and stable compatibility with basic enchantments.\n\n## 📜 Lore\nSteel hand crossbows are dependable sidearms favoured by scouts, adventurers, guards, and travellers needing compact ranged protection.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Steel\n- Hardwood\n- Bowstring\n- Trigger Mechanism\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Woodworking Tools\n- Bowyer's Tools\n- Grinding Stone\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor construction may weaken the frame or firing mechanism, reducing accuracy, durability, or reliability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** None.\n- **Oil/Upkeep Needed:** Firing mechanism and steel components require occasional cleaning and light oiling.\n- **Durability Loss per Use:** Normal; increased by damaged strings, poorly fitted bolts, or repeated heavy impacts.\n",
+      "body": "## Properties\n\n| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Exceptional |\n| Durability | High |\n| Material | Oak (frame) & High Steel (bow & trigger) |\n| Style | Hand Crossbow |\n| Weight | 1.1 kg |\n| Damage | 1D6 (base Damage) + 3 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n| Crafted By | Mako Valencourt |\n\n## 📝 Description\nA compact hand crossbow reinforced with steel components, built for reliable one-handed use at close to medium range. Its sturdy frame and firing mechanism provide dependable performance, while the steel construction offers excellent durability and stable compatibility with basic enchantments.\n\n## 📜 Lore\nSteel hand crossbows are dependable sidearms favoured by scouts, adventurers, guards, and travellers needing compact ranged protection.\n\n## ⚒️ Crafting Information\n\n### Materials Needed\n- Steel\n- Hardwood\n- Bowstring\n- Trigger Mechanism\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Woodworking Tools\n- Bowyer's Tools\n- Grinding Stone\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor construction may weaken the frame or firing mechanism, reducing accuracy, durability, or reliability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** None.\n- **Oil/Upkeep Needed:** Firing mechanism and steel components require occasional cleaning and light oiling.\n- **Durability Loss per Use:** Normal; increased by damaged strings, poorly fitted bolts, or repeated heavy impacts.",
+      "sections": {
+        "Overview": "",
+        "Properties": "| Property | Value |\n| --- | --- |\n| Item Class | Unusual |\n| Item Quality | Exceptional |\n| Durability | High |\n| Material | Oak (frame) & High Steel (bow & trigger) |\n| Style | Hand Crossbow |\n| Weight | 1.1 kg |\n| Damage | 1D6 (base Damage) + 3 (Item Quality) |\n| Enchantment | None |\n| Purchase Price | Not specified |\n| Selling Price | Not specified |\n| Crafted By | Mako Valencourt |",
+        "📝 Description": "A compact hand crossbow reinforced with steel components, built for reliable one-handed use at close to medium range. Its sturdy frame and firing mechanism provide dependable performance, while the steel construction offers excellent durability and stable compatibility with basic enchantments.",
+        "📜 Lore": "Steel hand crossbows are dependable sidearms favoured by scouts, adventurers, guards, and travellers needing compact ranged protection.",
+        "⚒️ Crafting Information": "### Materials Needed\n- Steel\n- Hardwood\n- Bowstring\n- Trigger Mechanism\n- Binding Material\n\n### Tools Required\n- Forge\n- Anvil\n- Smithing Hammer\n- Tongs\n- Woodworking Tools\n- Bowyer's Tools\n- Grinding Stone\n\n### Crafting Difficulty\n- **Skill Check:** Smithing\n- **Required Smithing Rank:**\n- **Failure Consequences:** Poor construction may weaken the frame or firing mechanism, reducing accuracy, durability, or reliability.\n\n### 🔧 Maintenance\n- **Sharpening Requirement:** None.\n- **Oil/Upkeep Needed:** Firing mechanism and steel components require occasional cleaning and light oiling.\n- **Durability Loss per Use:** Normal; increased by damaged strings, poorly fitted bolts, or repeated heavy impacts."
+      },
+      "tabs": [
+        "Overview",
+        "Properties",
+        "Crafting",
+        "Lore",
+        "Sources",
+        "Gallery",
+        "GM Notes"
+      ],
+      "summary": "A compact hand crossbow reinforced with steel components, built for reliable one-handed use at close to medium range. Its sturdy frame and firing mechanism provide dependable performance, while the steel construction offers excellent durability and stable comp",
+      "metadata": {
+        "title": "Reinforced Hand Crossbow",
+        "slug": "reinforced-hand-crossbow",
+        "type": "item",
+        "itemType": "Weapon",
+        "category": "Weapons",
+        "subcategory": "Ranged Weapons",
+        "visibility": "public",
+        "marketValue": 0,
+        "marketPrice": null,
+        "pricingStatus": "needs-completion",
+        "tags": [
+          "#Item",
+          "Weapon"
+        ],
+        "itemClass": "Unusual",
+        "itemQuality": "Exceptional",
+        "durability": "High",
+        "material": "Oak (frame) & High Steel (bow & trigger)",
+        "style": "Hand Crossbow",
+        "weight": "1.1 kg",
+        "damage": "1D6 (base Damage) + 3 (Item Quality)",
+        "enchantment": "None",
+        "craftedBy": "Mako Valencourt"
+      },
+      "tags": [
+        "#Item",
+        "Weapon"
+      ],
+      "visibility": "public",
+      "gmOnly": false,
+      "images": {},
+      "imagePath": "",
+      "related": [],
+      "filters": {
+        "category": "Ranged Weapons",
+        "loreStatus": "Common Knowledge",
+        "rarity": "Unusual",
+        "itemType": "Weapon",
+        "craftingCategory": "Weapons",
+        "visibility": "public"
+      },
+      "searchTerms": "reinforced hand crossbow item weapons ranged weapons {\"title\":\"reinforced hand crossbow\",\"slug\":\"reinforced-hand-crossbow\",\"type\":\"item\",\"itemtype\":\"weapon\",\"category\":\"weapons\",\"subcategory\":\"ranged weapons\",\"visibility\":\"public\",\"marketvalue\":0,\"marketprice\":null,\"pricingstatus\":\"needs-completion\",\"tags\":[\"#item\",\"weapon\"],\"itemclass\":\"unusual\",\"itemquality\":\"exceptional\",\"durability\":\"high\",\"material\":\"oak (frame) & high steel (bow & trigger)\",\"style\":\"hand crossbow\",\"weight\":\"1.1 kg\",\"damage\":\"1d6 (base damage) + 3 (item quality)\",\"enchantment\":\"none\",\"craftedby\":\"mako valencourt\"} ## properties\n\n| property | value |\n| --- | --- |\n| item class | unusual |\n| item quality | exceptional |\n| durability | high |\n| material | oak (frame) & high steel (bow & trigger) |\n| style | hand crossbow |\n| weight | 1.1 kg |\n| damage | 1d6 (base damage) + 3 (item quality) |\n| enchantment | none |\n| purchase price | not specified |\n| selling price | not specified |\n| crafted by | mako valencourt |\n\n## 📝 description\na compact hand crossbow reinforced with steel components, built for reliable one-handed use at close to medium range. its sturdy frame and firing mechanism provide dependable performance, while the steel construction offers excellent durability and stable compatibility with basic enchantments.\n\n## 📜 lore\nsteel hand crossbows are dependable sidearms favoured by scouts, adventurers, guards, and travellers needing compact ranged protection.\n\n## ⚒️ crafting information\n\n### materials needed\n- steel\n- hardwood\n- bowstring\n- trigger mechanism\n- binding material\n\n### tools required\n- forge\n- anvil\n- smithing hammer\n- tongs\n- woodworking tools\n- bowyer's tools\n- grinding stone\n\n### crafting difficulty\n- **skill check:** smithing\n- **required smithing rank:**\n- **failure consequences:** poor construction may weaken the frame or firing mechanism, reducing accuracy, durability, or reliability.\n\n### 🔧 maintenance\n- **sharpening requirement:** none.\n- **oil/upkeep needed:** firing mechanism and steel components require occasional cleaning and light oiling.\n- **durability loss per use:** normal; increased by damaged strings, poorly fitted bolts, or repeated heavy impacts."
     },
     {
       "id": "item:items-weapons-swords-iron-longsword-iron-longsword",

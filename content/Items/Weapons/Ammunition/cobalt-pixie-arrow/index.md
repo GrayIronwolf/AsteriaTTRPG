@@ -1,4 +1,15 @@
 ---
+title: "Cobalt Pixie Arrow"
+slug: cobalt-pixie-arrow
+type: item
+item_type: Weapon
+category: "Weapons"
+subcategory: "Ammunition"
+visibility: public
+market_value: 0
+market_price: null
+pricing_status: needs-completion
+image: image.png
 tags:
   - "#Item"
   - Weapon
@@ -10,9 +21,22 @@ Style: Arrow
 Weight: 0.004 kg
 Damage: 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)
 Enchantment: None
-Purchase Price:
-Selling Price:
 ---
+
+## Properties
+
+| Property | Value |
+| --- | --- |
+| Item Class | Unusual |
+| Item Quality | Well Crafted |
+| Durability | High |
+| Material | Cobalt |
+| Style | Arrow |
+| Weight | 0.004 kg |
+| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |
+| Enchantment | None |
+| Purchase Price | Not specified |
+| Selling Price | Not specified |
 
 ## 📝 Description
 A finely crafted arrow tipped with a sharpened cobalt arrowhead, giving it a distinctive cool metallic appearance. Cobalt's natural magical conductivity makes the arrow particularly well suited for elemental enchantments, especially those associated with Air and Water magic.
@@ -45,5 +69,3 @@ Cobalt arrows are prized by enchanted archers for their unusual metal and strong
 - **Sharpening Requirement:** Arrowhead should be inspected and resharpened after repeated use.
 - **Oil/Upkeep Needed:** Light oiling of the cobalt arrowhead when stored for extended periods.
 - **Durability Loss per Use:** Normal; increased if the arrow strikes stone, armour, or another hard surface.
-
-![[Pasted image 20260825230447.png]]

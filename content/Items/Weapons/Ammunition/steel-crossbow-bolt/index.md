@@ -1,4 +1,14 @@
 ---
+title: "Steel Crossbow Bolt"
+slug: steel-crossbow-bolt
+type: item
+item_type: Weapon
+category: "Weapons"
+subcategory: "Ammunition"
+visibility: public
+market_value: 0
+market_price: null
+pricing_status: needs-completion
 tags:
   - "#Item"
   - Weapon
@@ -10,9 +20,22 @@ Style: Crossbow Bolt
 Weight: 0.015 kg
 Damage: 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)
 Enchantment: None
-Purchase Price:
-Selling Price:
 ---
+
+## Properties
+
+| Property | Value |
+| --- | --- |
+| Item Class | Uncommon |
+| Item Quality | Well Crafted |
+| Durability | High |
+| Material | Steel |
+| Style | Crossbow Bolt |
+| Weight | 0.015 kg |
+| Damage | 2D6 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |
+| Enchantment | None |
+| Purchase Price | Not specified |
+| Selling Price | Not specified |
 
 ## 📝 Description
 A sturdy crossbow bolt fitted with a hardened steel head designed for reliable penetration and repeated battlefield use. The steel construction provides an excellent balance of strength, durability, and edge retention while maintaining stable compatibility with basic enchantments.

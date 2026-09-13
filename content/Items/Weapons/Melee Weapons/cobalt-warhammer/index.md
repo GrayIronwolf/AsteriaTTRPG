@@ -1,4 +1,17 @@
 ---
+title: "Cobalt Warhammer"
+slug: cobalt-warhammer
+type: item
+item_type: Weapon
+category: "Weapons"
+subcategory: "Melee Weapons"
+visibility: public
+market_value: 0
+market_price: null
+market_value_source_text: "5 to 6 Gold"
+market_price_source_text: "5 Gold"
+pricing_status: needs-completion
+image: image.png
 tags:
   - "#Item"
   - Weapon
@@ -10,9 +23,23 @@ Style: "[[Pike Headed Warhammer]]"
 Weight: 6.1kg
 Damage: 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality)
 Enchantment: N/A
-Purchase Price: 5 Gold
-Selling Price: 5 to 6 Gold
 ---
+
+## Properties
+
+| Property | Value |
+| --- | --- |
+| Item Class | Unusual |
+| Item Quality | Well Crafted |
+| Durability | N/A |
+| Material | [[Cobalt]] |
+| Style | [[Pike Headed Warhammer]] |
+| Weight | 6.1kg |
+| Damage | 2D12 (Base Damage) + 2 (Metal Damage) + 1 (Item Quality) |
+| Enchantment | N/A |
+| Purchase Price | 5 Gold |
+| Selling Price | 5 to 6 Gold |
+
 ## 📝 Description
 Forged from refined cobalt, this imposing long-handled warhammer combines a crushing hammer face with a reinforced armour-piercing pick. Its natural cobalt properties make it exceptionally suited to Air and Water enchantments, while the reinforced hardwood shaft provides exceptional reach, balance, and devastating power on the battlefield.
 
@@ -47,5 +74,3 @@ Crafted by adept blacksmith [[Korem Hildrem]], this well crafted cobalt warhamme
 - **Sharpening Requirement:** Hone the pick after every 10–15 combat encounters or heavy mining use.
 - **Oil/Upkeep Needed:** Apply weapon oil every 20 combat encounters to preserve the wooden shaft and prevent corrosion around the fittings.
 - **Durability Loss per Use:** 1 durability per successful strike; 2 durability when striking stone, armour, or other hardened materials.
-
-![[Pasted image 20260825214140.png]]
