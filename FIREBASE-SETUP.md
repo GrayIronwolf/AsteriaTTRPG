@@ -59,3 +59,21 @@ The checks workflow needs no Firebase secrets. For deployment, configure Workloa
 Use GitHub Actions Secrets or Google Secret Manager only for genuine server secrets introduced later. Prefer workload federation over long-lived JSON keys. Local administrative work should use secure CLI sign-in/Application Default Credentials outside the repository. Codex should work on branches with demo emulators, tests and PR review. GitHub repository access alone does not grant Firebase Console, billing or deployment access. Do not give Codex production Admin credentials merely to edit frontend code.
 
 References: [Firebase emulator projects](https://firebase.google.com/docs/emulator-suite/connect_and_prototype), [Google GitHub authentication action](https://github.com/google-github-actions/auth), [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials).
+
+## Existing-index deployment errors
+
+The deployment CLI is pinned to Firebase Tools 14.15.0. Version 14.12.1 can fail
+with HTTP 409 `index already exists` because its index comparison treats omitted
+settings differently from the defaults returned by Firestore. Version 14.15.0
+includes the [upstream fix](https://github.com/firebase/firebase-tools/pull/9003)
+for [issue #8859](https://github.com/firebase/firebase-tools/issues/8859).
+
+Use `npm ci` to install the reviewed version. `npm run test:deployment` exercises
+the installed CLI against both event indexes with simulated Firestore responses,
+including a repeated deployment and a genuinely missing index. It does not
+contact production. Keep the index definitions; deleting live indexes or adding
+`--force` is not a remedy for this CLI bug.
+
+After merging a tooling fix, start a new **Deploy Firebase backend (manual)**
+workflow on **main**. Re-running an older failed workflow uses that run's original
+commit and package lock, so it will not include the fix.
