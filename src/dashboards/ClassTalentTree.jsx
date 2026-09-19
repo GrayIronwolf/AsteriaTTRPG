@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
+import React, { useEffect, useState } from 'react';
 import { EmptyState, Modal, Panel, SearchField, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { TALENT_TIER_LEVELS, talentRankCost, talentTierUnlocked } from '../state/liveWorkspaceModel.mjs';
@@ -18,17 +19,7 @@ export function TalentText({text=''}) {
 }
 const priceText=costs=>Object.entries(costs || {}).filter(([,n])=>n>0).map(([key,n])=>`${n} ${key.toUpperCase()}`).join(' · ') || 'No resource cost';
 const reference=(talent,rank)=>({id:talent.id,name:talent.name,className:talent.className,expectedRank:rank});
-function useAction() {
-  const pending=useRef(false),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
-  const run=async(operation,success)=>{
-    if(pending.current)return;
-    pending.current=true;setBusy(true);setMessage('Saving…');
-    try{const result=await operation();setMessage(result?.ok?success:result?.error || 'The action could not be saved.');}
-    catch(error){setMessage(error.message || 'The connection was interrupted. Refresh to check whether the action was saved.');}
-    finally{pending.current=false;setBusy(false);}
-  };
-  return {busy,message,run};
-}
+
 export function TalentDetails({campaignId,character,talent,initialRank,editable,characters={},onClose}) {
   const learned=talentRank(character,talent),[rank,setRank]=useState(initialRank || Math.max(1,learned));
   const [choice,setChoice]=useState(''),[spell,setSpell]=useState(''),[targetId,setTargetId]=useState(character.id),[trigger,setTrigger]=useState(false);
@@ -43,7 +34,7 @@ export function TalentDetails({campaignId,character,talent,initialRank,editable,
     <nav className="react-talent-rank-tabs" aria-label={`${talent.name} ranks`}>{Array.from({length:maximum},(_,i)=>i+1).map(value=><button type="button" key={value} aria-pressed={rank===value} onClick={()=>setRank(value)}>Rank {value}{value<=learned?' ✓':''}</button>)}</nav>
     <div className="react-talent-rank-heading"><h2>Rank {rank}</h2><span>{talentRankCost(rank,talent.tier)} TP · {rank<=learned?'Learned':rank===learned+1?'Next rank':'Learn earlier ranks first'}</span></div>
     <dl className="react-talent-facts"><div><dt>Resource cost</dt><dd>{rules.choices.length?'Choose an option below':priceText(rules.costs)}{rules.bpGain?` · Gain ${rules.bpGain} BP`:''}{rules.needsSpell?' + the woven spell’s cost':''}</dd></div><div><dt>Cooldown</dt><dd>{rules.cooldown}</dd></div><div><dt>Duration</dt><dd>{rules.duration}</dd></div><div><dt>Prerequisites</dt><dd>{talent.prerequisite || 'None'}</dd></div></dl>
-    {learned<maximum?<div className="react-talent-purchase"><button className="primary" type="button" disabled={action.busy || Boolean(buyReason)} onClick={()=>action.run(()=>firebaseService.purchaseTalent(campaignId,character.id,reference(talent,learned)),`Purchased ${talent.name} Rank ${learned+1}.`)}>Buy Rank {learned+1} · {nextCost} TP</button>{buyReason?<p>{buyReason}</p>:null}</div>:<p>All ranks learned.</p>}
+    {learned<maximum?<div className="react-talent-purchase"><button className="primary" type="button" disabled={action.busy || Boolean(buyReason)} onClick={()=>action.run(()=>firebaseService.purchaseTalent(campaignId,character.id,{...reference(talent,learned),expectedCoreRevision:Number(character.coreRevision || 0)}),`Purchased ${talent.name} Rank ${learned+1}.`)}>Buy Rank {learned+1} · {nextCost} TP</button>{buyReason?<p>{buyReason}</p>:null}</div>:<p>All ranks learned.</p>}
     {learned>0?<section className="react-talent-use"><h3>{learnedRules.activation?`Use learned Rank ${learned}`:'Passive benefits'}</h3>{!learnedRules.activation?<p>Sheet bonuses appear in Talent Effects. Apply the remaining passive benefits below when relevant.</p>:<>
       {learnedRules.blocked?<p>{learnedRules.blocked}</p>:null}
       {learnedRules.choices.length?<label>Talent option<select value={choice} onChange={e=>setChoice(e.target.value)}><option value="">Choose an option</option>{learnedRules.choices.map(option=><option key={option.id} value={option.id}>{option.label}</option>)}</select></label>:null}
@@ -51,7 +42,7 @@ export function TalentDetails({campaignId,character,talent,initialRank,editable,
       {learnedRules.targetChoice?<label>Aegis target<select value={targetId} onChange={e=>setTargetId(e.target.value)}><option value={character.id}>Self · {character.name}</option>{Object.values(characters).filter(row=>row.id!==character.id && row.ownerUid).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>:null}
       {learnedRules.requiresTrigger?<label><input type="checkbox" checked={trigger} onChange={e=>setTrigger(e.target.checked)}/> The GM confirmed an eligible trigger.</label>:null}
       <p>{priceText(chosen?.costs || learnedRules.costs)}{(chosen?.bpGain ?? learnedRules.bpGain)?` · Gain ${chosen?.bpGain ?? learnedRules.bpGain} BP`:''}{learnedRules.needsSpell?' + spell cost':''}{learnedRules.uses?` · ${usage?.count || 0}/${learnedRules.uses} uses recorded`:''}</p>
-      <button className="primary" type="button" disabled={action.busy || !canUse} onClick={()=>action.run(()=>firebaseService.useTalent(campaignId,character.id,reference(talent,learned),{choice,spell,targetId,triggerConfirmed:trigger}),`Used ${talent.name}. Resources and effects saved.`)}>Use {talent.name}</button>
+      <button className="primary" type="button" disabled={action.busy || !canUse} onClick={()=>action.run(()=>firebaseService.useTalent(campaignId,character.id,{...reference(talent,learned),expectedCoreRevision:Number(character.coreRevision || 0)},{choice,spell,targetId,triggerConfirmed:trigger}),`Used ${talent.name}. Resources and effects saved.`)}>Use {talent.name}</button>
       <p className="react-help">Resource costs and tracked effects are applied on use. Resolve attacks, saves, range and conditional effects with the GM.</p>
     </>}</section>:null}
     <TalentText text={rules.body || talent.summary || 'This rank has not been written yet.'}/>

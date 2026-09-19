@@ -59,7 +59,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       if(!active) return;
       callback(value);
       if(['campaign','characters'].includes(name)) {
-        if(metadata?.fromCache) {serverReady.delete(name);if(!failed)setConnectionState(LIVE_SYNC_STATES.RECONNECTING);}
+        if(metadata?.fromCache || metadata?.hasPendingWrites) {serverReady.delete(name);if(!failed)setConnectionState(LIVE_SYNC_STATES.RECONNECTING);}
         else serverReady.add(name);
       }
       required.delete(name);

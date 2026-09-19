@@ -1,17 +1,18 @@
-import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, resetTalentRest, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
+import { isDeepStrictEqual } from 'node:util';
+import { createCoreCommands } from './coreCommands.mjs';
+import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
+import { applyResourceChanges, parseResourceCosts, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
+import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
-import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
-import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
-import { addGrantedMagicElement, incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
-import { markQuestRewardClaimed, normalizeAssignedQuest, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
-import { encounterResourcePair, preserveEncounterResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
+import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
+import { getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
+import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 
 // Canonical player mutations. Executed only by the authenticated callable handler.
 export function createCommands(context) {
 const {db,currentUser,doc,collection,runTransaction,serverTimestamp,window,reportSyncError}=context;
-const cleanData=value=>JSON.parse(JSON.stringify(value));
 const uniqueValues=(...lists)=>[...new Set(lists.flatMap(value=>Array.isArray(value)?value:[]).filter(Boolean))];
 function liveSessionState(value={}){
   const expiresAt=timestampMs(value.expiresAt);
@@ -45,32 +46,34 @@ function liveCharacterRefs(campaignId,characterId){
 function ownedCharacterSourceId(characterId,character={}){
   return String(character.sourceCharacterId || character.id || characterId || '');
 }
-function campaignLinksCurrentUser(campaign={},characterId=''){
-  const uid=currentUser?.uid || '';
-  if(!uid) return false;
-  if(String(campaign.playerCharacterLinks?.[characterId] || '')===uid) return true;
-  if((campaign.players?.[uid]?.characterIds || []).map(String).includes(String(characterId))) return true;
-  return String(campaign.characters?.[characterId]?.ownerUid || '')===uid;
-}
 async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs={}){
   if(character.ownerUid !== currentUser.uid) throw new Error('This character belongs to another account.');
   refs.private=doc(db,'users',currentUser.uid,'characters',ownedCharacterSourceId(characterId,character));
   refs.verifiedOwner=true;
+  refs.original=structuredCloneSafe(character);
+  const privateSnapshot=await transaction.get(refs.private);
+  refs.privateExists=privateSnapshot.exists();
+  if(refs.privateExists && privateSnapshot.data().ownerUid!==character.ownerUid) throw new Error('Character ownership does not match.');
   const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
   refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
-  Object.assign(character,reconcileTalentEffects(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
+  Object.assign(character,reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
   return {privateRef:refs.private,privateSnapshot:null};
 }
 
 function writeLiveCharacter(transaction,refs,character){
-  const clean=reconcileTalentEffects(character,buildTalentCatalog(character,context.catalog),{encounter:refs.encounter});
+  const clean=reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{encounter:refs.encounter});
   clean.inventory=normalizeInventoryItems(clean.inventory,clean);
   if(clean.equipment&&typeof clean.equipment==='object') clean.equipment=Object.fromEntries(Object.entries(clean.equipment).map(([slot,item],index)=>[
     slot,
     item&&typeof item==='object'?normalizeLiveItem(Object.assign({},item,{equipped:true,equippedSlot:item.equippedSlot||slot}),index,clean):item
   ]));
-  transaction.set(refs.campaign,Object.assign({},clean,{updatedAt:serverTimestamp()}),{merge:true});
-  if(character.ownerUid === currentUser.uid || refs.verifiedOwner) transaction.set(refs.private,Object.assign({},clean,{id:ownedCharacterSourceId(character.id,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+  const patch={};
+  for(const [key,value] of Object.entries(clean)) if(!['id','ownerUid','sourceCharacterId','updatedAt'].includes(key) && !isDeepStrictEqual(refs.original?.[key],value)) patch[key]=value;
+  if(!Object.keys(patch).length) return;
+  patch.coreRevision=Number(refs.original?.coreRevision || 0)+1;
+  patch.updatedAt=serverTimestamp();
+  transaction.update(refs.campaign,patch);
+  if(refs.privateExists) transaction.update(refs.private,patch);
 }
 async function talentAction(campaignId,characterId,operation){
   if(!db || !currentUser || !campaignId || !characterId) return {ok:false,error:'Sign in and choose a linked character.'};
@@ -195,8 +198,10 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
       const character={...snapshot.data(),id:characterId};
       let ownerSnapshot=null;
       if(gm) {
+        refs.original=structuredCloneSafe(character);
         refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
         ownerSnapshot=await transaction.get(refs.private);
+        refs.privateExists=ownerSnapshot.exists();
         if(ownerSnapshot.exists() && ownerSnapshot.data().ownerUid!==character.ownerUid) throw new Error('The owner record needs review before this quest can be changed.');
       } else await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
       const quests=Array.isArray(character.quests||character.questLog)?structuredCloneSafe(character.quests||character.questLog):[];
@@ -206,11 +211,7 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
       const outcome=award?applyQuestRewards(character,quest,questId,characterId):{rewardApplied:false,rewardSummary:''};
       quests[index]=quest;character.quests=quests;
       if(gm) {
-        const clean=structuredCloneSafe(character);
-        clean.inventory=normalizeInventoryItems(clean.inventory,clean);
-        transaction.set(refs.campaign,{...clean,updatedAt:serverTimestamp()},{merge:true});
-        // Never create a GM-owned copy or change the player's canonical UID.
-        if(ownerSnapshot.exists()) transaction.set(refs.private,{...clean,id:ownedCharacterSourceId(characterId,character),ownerUid:character.ownerUid,updatedAt:serverTimestamp()},{merge:true});
+        writeLiveCharacter(transaction,refs,character);
         transaction.set(eventRef,{id:eventRef.id,campaignId,targetCharacterId:characterId,targetOwnerUid:character.ownerUid,type:'quest-updated',payload:{questId,title:quest.title||quest.name||'Quest',objective:quest.objective||quest.description||'',status:quest.status,note:String(note||'').slice(0,1000),rewardSummary:outcome.rewardSummary},acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp()});
       } else writeLiveCharacter(transaction,refs,character);
       return {...outcome,status:quest.status};
@@ -311,7 +312,7 @@ const commands = {
       const entry=context.catalog.find(row=>row.type==='spell' && liveSlug(row.title)===liveSlug(selection.spell));
       const cost=known && (known.costs??known.resourceCosts??known.cost??known.manaCost??entry?.metadata?.manaCost??entry?.metadata?.cost);
       if(cost===undefined || cost===false) throw new Error('Choose a known spell with a recorded resource cost.');
-      spellCosts=parseResourceCost(cost);
+      spellCosts=parseResourceCosts(cost,'mp',true);
     }
     const used=useLearnedTalent(character,talent,selection,{catalog,encounter:refs.encounter,sessionId:session.id||String(timestampMs(session.startedAt)),spellCosts});
     if(selection.targetId && selection.targetId!==characterId){
@@ -325,10 +326,9 @@ const commands = {
       const privateRef=doc(db,'users',target.ownerUid,'characters',ownedCharacterSourceId(target.id,target));
       const privateSnapshot=await transaction.get(privateRef);
       if(!privateSnapshot.exists() || privateSnapshot.data().ownerUid!==target.ownerUid) throw new Error('The target’s saved character is unavailable or has a different owner.');
+      const targetOriginal=structuredCloneSafe(target);
       target.talentEffects=[...(target.talentEffects||[]).filter(row=>row.id!==used.effect.id),{...used.effect,sourceCharacterId:characterId}];
-      const clean=reconcileTalentEffects(target,buildTalentCatalog(target,context.catalog),{grantIncrease:true,encounter:refs.encounter});
-      transaction.set(targetRef,{...clean,updatedAt:serverTimestamp()},{merge:true});
-      transaction.set(privateRef,{...clean,id:ownedCharacterSourceId(target.id,target),updatedAt:serverTimestamp()},{merge:true});
+      writeLiveCharacter(transaction,{campaign:targetRef,private:privateRef,privateExists:true,original:targetOriginal,encounter:refs.encounter},target);
       used.character.talentEffects=(used.character.talentEffects||[]).filter(row=>row.id!==used.effect.id);
     }
     Object.assign(character,used.character);
@@ -387,17 +387,9 @@ const commands = {
         const canonical=context.catalog.find(entry=>entry.type==='spell' && liveSlug(entry.title)===liveSlug(spell.name));
         const savedCost=known.costs??known.resourceCosts??known.cost??known.manaCost??canonical?.metadata?.manaCost??canonical?.metadata?.cost;
         if(savedCost===undefined) throw new Error('Spell cost is missing from this character sheet. Ask the GM to correct it.');
-        costs=parseResourceCost(savedCost);
-        const paid={};
-        Object.entries(costs||{}).forEach(([resource,raw])=>{
-          if(!['hp','sp','mp','bp'].includes(resource)) return;
-          const amount=Math.max(0,Number(raw||0));
-          if(!amount) return;
-          const pair=strictResourcePair(character[resource],resource);
-          if(pair[0]<amount) throw new Error(`Not enough ${resource.toUpperCase()} to cast ${spell.name}.`);
-          character[resource]=[pair[0]-amount,pair[1]];
-          paid[resource]=amount;
-        });
+        costs=parseResourceCosts(savedCost,'mp',true);
+        const paid=costs;
+        Object.assign(character,applyResourceChanges(character,{costs,restore:known.restoreResources || known.resourceRestoration || {}}));
         appendActivity(character,{type:'spell-cast',message:`Cast ${spell.name}.`,costs:paid});
         writeLiveCharacter(transaction,refs,character);
         return paid;
@@ -479,9 +471,9 @@ const commands = {
         }else if(operation.type==='use'){
           const effect=item.effect||item.effects||{};
           const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
-          const changes=Object.entries(parsed).filter(([resource,amount])=>['hp','sp','mp','bp'].includes(resource)&&Number(amount)>0);
+          const changes=Object.entries(parsed).filter(([,amount])=>Number(amount)>0);
           if(!changes.length) throw new Error('This item does not have a usable resource effect.');
-          changes.forEach(([resource,amount])=>{const pair=strictResourcePair(character[resource],resource);const requested=pair[0]+Number(amount);character[resource]=[resource==='hp'?clampHpForSoulDamage(character,requested):Math.min(pair[1],requested),pair[1]];});
+          Object.assign(character,applyResourceChanges(character,{restore:Object.fromEntries(changes)}));
           item.qty=Math.max(0,Number(item.qty||1)-1);
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
@@ -903,8 +895,7 @@ const commands = {
   },
   updateCampaignCharacterResource: async function(campaignId, characterId, key, amount, metadata={}){
     if(!db || !currentUser || !campaignId || !characterId) return { ok:false };
-    const resource=String(key || '').toLowerCase();
-    if(!['hp','sp','mp','bp'].includes(resource)) throw new Error('Unsupported character resource.');
+    const resource=resourceId(key);
     const refs=liveCharacterRefs(campaignId,characterId);
     const characterRef=refs.campaign;
     const eventRef=doc(collection(db, 'campaigns', campaignId, 'events'));
@@ -915,12 +906,8 @@ const commands = {
         if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
         const character=Object.assign({ id:characterId }, snapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const pair=strictResourcePair(character[resource],resource);
-        const maximum=pair[1];
-        const requested=pair[0] + Number(amount || 0);
-        const current=resource==='hp' ? clampHpForSoulDamage(character,requested) : Math.max(0,Math.min(maximum,requested));
-        const next=[current,maximum];
-        character[resource]=next;
+        Object.assign(character,applyResourceChanges(character,{delta:{[resource]:Number(amount || 0)}}));
+        const state=resourceSnapshot(character,resource),next=[state.current,state.maximum];
         writeLiveCharacter(transaction,refs,character);
         transaction.set(eventRef, {
           id:eventRef.id, campaignId, sessionId:live.id || '', targetCharacterId:characterId, targetOwnerUid:character.ownerUid || '',
@@ -962,31 +949,6 @@ const commands = {
       return {ok:false,applied:false,error:error.message||String(error)};
     }
   },
-  takeCampaignCharacterRest: async function(campaignId,characterId,type='short',metadata={}){
-    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
-    const restType=String(type||'short').toLowerCase();
-    if(!['short','long'].includes(restType)) return {ok:false,error:'Choose a short or long rest.'};
-    const refs=liveCharacterRefs(campaignId,characterId);
-    try{
-      const result=await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        const snapshot=await transaction.get(refs.campaign);
-        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
-        const character=Object.assign({id:characterId},snapshot.data());
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        if(restType==='short') strictResourcePair(character.sp,'sp');
-        else ['hp','sp','mp'].forEach(resource=>strictResourcePair(character[resource],resource));
-        const rested=applyRest(resetTalentRest(character,restType),restType,restType==='long'?Number(metadata.soulRecovery||0):0);
-        appendActivity(rested.entity,{type:`${restType}-rest`,message:`${restType==='long'?'Long':'Short'} Rest completed${rested.recoveredSoul?`; ${rested.recoveredSoul} Soul Damage recovered naturally`:''}.`});
-        writeLiveCharacter(transaction,refs,rested.entity);
-        return {type:restType,recoveredSoul:rested.recoveredSoul,soulDamage:rested.soulDamage,hp:rested.entity.hp,sp:rested.entity.sp,mp:rested.entity.mp};
-      });
-      return {ok:true,...result};
-    }catch(error){
-      reportSyncError('campaign-character-rest',error,{campaignId,characterId,type:restType});
-      return {ok:false,error:error.message||String(error)};
-    }
-  },
   createPartyOrganization: async function(campaignId,characterId,details={}){
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
     const workspaceRef=doc(db,'campaigns',campaignId,'systems','party-workspace');
@@ -1010,5 +972,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return commands;
+return {...commands,...createCoreCommands(context)};
 }

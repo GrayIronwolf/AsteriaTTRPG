@@ -1,4 +1,5 @@
-import { reconcileTalentEffects } from '../state/talentModel.mjs';
+import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
+import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { gmReturnContext, returnToGM } from '../app/gmCharacterNavigation.mjs';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -114,7 +115,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
   const processedMagic = useRef(new Set());
   const rawCharacter = live.character;
   const catalog = useMemo(()=>rawCharacter?talentCatalog(rawCharacter):[],[rawCharacter]);
-  const character = useMemo(()=>rawCharacter?reconcileTalentEffects(rawCharacter,catalog,{grantIncrease:true,encounter:live.encounter,now:live.clock}):null,[rawCharacter,catalog,live.encounter,live.clock]);
+  const character = useMemo(()=>rawCharacter?reconcileCharacterSystems(rawCharacter,catalog,{grantIncrease:true,encounter:live.encounter,now:live.clock}):null,[rawCharacter,catalog,live.encounter,live.clock]);
   const uid = firebaseService.currentUser()?.uid;
   const isOwner = window.AsteriaCharacterAccess.owns(character, uid);
   const gmReturn = gmReturnContext(live.campaign, character, uid);
@@ -136,14 +137,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
         .catch(() => {});
     }
   }, [rawCharacter, isOwner]);
-  const talentSyncAttempt=useRef('');
-  useEffect(()=>{
-    if(!rawCharacter?.id || !isOwner || !live.session?.editable) return;
-    const key=`${rawCharacter.id}:${rawCharacter.talentStateVersion || 0}`;
-    if(rawCharacter.talentStateVersion===1 || talentSyncAttempt.current===key) return;
-    talentSyncAttempt.current=key;
-    firebaseService.refreshTalents(campaignId,rawCharacter.id).catch(()=>{});
-  },[campaignId,rawCharacter,isOwner,live.session?.editable]);
+  const coreSyncError=useCharacterSystemsSync(campaignId,isOwner&&rawCharacter?{[characterId]:rawCharacter}:{},live.encounter,live.session?.editable);
   const xpEvent = xpNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
@@ -166,19 +160,19 @@ export function CharacterDashboard({ campaignId, characterId }) {
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
   const editable = Boolean(isOwner && live.session?.editable);
-  const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD' });
+  const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
   return <AsteriaAppShell
     className="react-character-dashboard"
     showHeader={false}
   >
     {gmReturn ? <button type="button" className="react-gm-return" onClick={() => returnToGM(gmReturn)}>← Back to GM Dashboard</button> : null}
-    <DashboardInformationRow campaign={live.campaign} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error} loading={live.loading} />
+    <DashboardInformationRow campaign={live.campaign} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
     <SessionGate session={live.session} />
     <DashboardNavigation tabs={CHARACTER_TABS} active={tab} onChange={setTab} ariaLabel="Character Dashboard menu" />
-    {tab === 'dashboard' ? <><PlayerDashboardOverview campaignId={campaignId} campaign={live.campaign} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
+    {tab === 'dashboard' ? <><PlayerDashboardOverview isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={setTab} /><ActivityLog character={character} /></> : null}
     {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
-    {tab === 'skills' ? <SkillsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {tab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}
     {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}

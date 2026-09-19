@@ -1,4 +1,6 @@
-import { resourcePair } from './specialDamageModel.mjs';
+import { resourcePair } from './resourceValues.mjs';
+import { reconcileResources } from './resourceEngine.mjs';
+import { effectIsActive } from './effectsEngine.mjs';
 export const talentKey = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const identity = value => talentKey(value).replaceAll('-','');
 export const talentMeta = (entry,key) => Object.entries(entry.metadata || entry).find(([name])=>identity(name)===identity(key))?.[1];
@@ -74,30 +76,25 @@ export function prerequisiteProblem(character,talent,catalog) {
   return required && talentRank(character,required,catalog)>=(Number(match[2]) || roman[match[2].toUpperCase()])?'':`Requires ${text}.`;
 }
 export function talentEffectActive(effect,clock={}) {
-  if(effect.ended || effect.expired) return false;
-  if(effect.encounterId) {
-    if(clock.encounter && (clock.encounter.status!=='active' || (clock.encounter.combatId || 'legacy-combat')!==effect.encounterId)) return false;
-    if(effect.untilRound && Number(clock.encounter?.round)>=effect.untilRound) return false;
-  } else if(effect.expiresAt && (clock.now || Date.now())>=effect.expiresAt) return false;
-  return true;
+  return effectIsActive(effect,clock);
 }
+
 export function reconcileTalentEffects(character,catalog=[],options={}) {
-  const next=clone(character), owned=ownedTalents(character,catalog), state={...character.talentResourceState};
+  let next=clone(character);
+  const owned=ownedTalents(character,catalog);
   const multiplier=Math.max(1,...owned.filter(row=>['cleric:mana-well','spellblade:mana-well'].includes(row.id)).map(row=>row.rank*3));
   const bloodRank=owned.find(row=>row.id==='bloodhunter:blood-control')?.rank || 0;
-  for(const [key,mult,addition] of [['mp',multiplier,0],['bp',1,bloodRank*5]]) {
-    if(character[key]===undefined) continue;
-    const value=character[key], rawCurrent=Array.isArray(value)?value[0]:value?.current ?? value?.value, rawMax=Array.isArray(value)?value[1]:value?.maximum ?? value?.max;
-    if(!Number.isFinite(Number(rawCurrent)) || !Number.isFinite(Number(rawMax)) || Number(rawMax)<0) continue;
-    const [current,maximum]=resourcePair(character[key]), previous=state[key];
-    // CP and equipment change the base maximum. Keep those deltas separate from
-    // the talent multiplier so recalculation never compounds it or refills mana.
-    const base=Math.max(0,previous?previous.baseMaximum+maximum-previous.maximum:maximum), max=Math.floor(base*mult+addition);
-    const increase=options.grantIncrease && key==='mp'?Math.max(0,base*(mult-(previous?.multiplier || 1))):0;
-    next[key]=[key==='bp'?current:Math.min(max,current+increase),max];
-    state[key]={baseMaximum:base,multiplier:mult,addition,maximum:max};
+  const zealRank=owned.find(row=>['paladin:paladin-s-zeal','paladin:zeal'].includes(row.id))?.rank || 0;
+  if(zealRank && next.zp===undefined) next.zp=[0,zealRank>=4?15:10];
+  next.talentResourceEffects=[{id:'talent:mana-well',name:'Mana Well',target:'mp.maximum',operation:'MULTIPLY',value:multiplier},{id:'talent:blood-control',name:'Blood Control',target:'bp.maximum',operation:'ADD',value:bloodRank*5},...(zealRank?[{id:'talent:zeal',name:'Zeal',target:'zp.maximum',operation:'SET',value:zealRank>=4?15:10}]:[])];
+  next=reconcileResources(next,options);
+  if(options.grantIncrease && next.mp) {
+    const base=next.resourceState.mp?.baseMaximum || 0;
+    const increase=Math.max(0,base*(multiplier-(character.talentResourceState?.mp?.multiplier || 1)));
+    next.mp=[Math.min(resourcePair(next.mp)[1],resourcePair(next.mp)[0]+increase),resourcePair(next.mp)[1]];
   }
-  next.talentResourceState=state;
+  next.talentResourceState={...next.talentResourceState};
+  for(const [key,mult,addition] of [['mp',multiplier,0],['bp',1,bloodRank*5]]) if(next.resourceState[key]) next.talentResourceState[key]={...next.resourceState[key],multiplier:mult,addition};
   next.talentEffects=(character.talentEffects || []).map(effect=>({...effect,expired:!talentEffectActive(effect,options)}));
   next.acModifiers=[...(Array.isArray(character.acModifiers)?character.acModifiers:[]).filter(row=>row.sourceType!=='class-talent'),...next.talentEffects.filter(effect=>!effect.expired && effect.ac).map(effect=>({id:`talent:${effect.id}`,name:effect.name,source:effect.name,sourceType:'class-talent',type:'AC_MODIFIER',value:effect.ac,active:true}))];
   next.talentRestBonus=(owned.find(row=>row.id==='spellblade:mystic-recovery')?.rank || 0)*.1;
@@ -108,17 +105,19 @@ export function reconcileTalentEffects(character,catalog=[],options={}) {
 }
 export function resetTalentRest(character,type) {
   const next=clone(character);
-  next.talentUsage=Object.fromEntries(Object.entries(next.talentUsage || {}).map(([id,use])=>[id,use.reset==='short-rest' || type==='long' && use.reset==='long-rest'?{...use,count:0}:use]));
-  next.talentEffects=(next.talentEffects || []).map(effect=>({...effect,ended:true}));
+  next.talentUsage=Object.fromEntries(Object.entries(next.talentUsage || {}).map(([id,use])=>[id,use.reset==='short-rest' || type==='long' && use.reset==='long-rest'?{...use,count:0,readyAt:0,readyRound:0}:use]));
+  next.talentEffects=(next.talentEffects || []).map(effect=>(effect.encounterId || effect.duration==='short-rest' || type==='long'&&effect.duration==='long-rest'?{...effect,ended:true}:effect));
   return next;
 }
 export function prepareForgeTalents(existing,next,entries) {
-  const result={...next,talentEffects:existing?.talentEffects || [],talentUsage:existing?.talentUsage || {},talentResourceState:{}};
+  const result={...next,talentEffects:existing?.talentEffects || [],talentUsage:existing?.talentUsage || {},talentResourceState:{},resourceState:{...existing?.resourceState},resourceDefinitions:{...existing?.resourceDefinitions},resources:{...existing?.resources},conditions:existing?.conditions || [],activeEffects:existing?.activeEffects || []};
+  for(const key of ['effects','acModifiers','specialDamage','soulDamage','restState','coreRevision','coreStateVersion','zp','patronEffects','campaignEffects']) if(existing?.[key]!==undefined) result[key]=clone(existing[key]);
   const catalog=buildTalentCatalog(result,entries);
   for(const row of ownedTalents(existing || {},catalog)) Object.assign(result,saveTalentRank(result,row,row.rank,catalog));
-  for(const key of ['mp','bp']) if(existing?.talentResourceState?.[key] && result[key]) {
+  for(const key of ['hp','sp','mp','bp']) if((existing?.resourceState?.[key] || existing?.talentResourceState?.[key]) && result[key]) {
     const maximum=resourcePair(result[key])[1];
-    result.talentResourceState[key]={...existing.talentResourceState[key],baseMaximum:maximum,maximum};
+    if(existing?.talentResourceState?.[key]) result.talentResourceState[key]={...existing.talentResourceState[key],baseMaximum:maximum,maximum};
+    result.resourceState[key]={...result.resourceState[key],baseMaximum:maximum,maximum};
     result[key]=[resourcePair(existing[key])[0],maximum];
   }
   return reconcileTalentEffects(result,catalog,{grantIncrease:true});

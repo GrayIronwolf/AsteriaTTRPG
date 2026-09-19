@@ -1,3 +1,4 @@
+import { collectCharacterEffects, evaluateEffects } from '../../state/effectsEngine.mjs';
 import { resolveRacialNaturalAC, readNaturalAC } from './naturalAC.mjs';
 export { readNaturalAC };
 import {
@@ -192,51 +193,8 @@ function equippedItems(character = {}) {
   return output;
 }
 
-function modifierRecords(source, sourceType, output, seen) {
-  list(source).forEach((modifier,index) => {
-    if(!modifier || typeof modifier !== 'object') return;
-    const type = String(modifier.type || modifier.effectType || '').toUpperCase();
-    if(['AC_MODIFIER','AC_MODIFIER_CONDITIONAL'].includes(type)) {
-      const active = modifier.active !== false && !modifier.expired && (!modifier.expiresAt || new Date(modifier.expiresAt).getTime() > Date.now());
-      const id = String(modifier.id || `${sourceType}-${index}-${modifier.sourceId || modifier.name || modifier.source || ''}`);
-      if(!seen.has(id)) {
-        seen.add(id);
-        output.push({
-          id,
-          sourceType:String(modifier.sourceType || sourceType || 'other'),
-          sourceId:modifier.sourceId || '',
-          name:String(modifier.name || modifier.source || `${sourceType} AC modifier`),
-          value:number(modifier.value),
-          active,
-          temporary:Boolean(modifier.temporary || modifier.duration || modifier.expiresAt),
-          conditional:type === 'AC_MODIFIER_CONDITIONAL' || Boolean(modifier.condition),
-          condition:modifier.condition || ''
-        });
-      }
-    }
-    const parentName=modifier.name || modifier.source || '';
-    [...list(modifier.effects),...list(modifier.modifiers)].forEach((effect,nestedIndex)=>{
-      if(!effect || typeof effect!=='object')return;
-      modifierRecords([{...effect,id:effect.id||`${modifier.id||sourceType}-${nestedIndex}`,name:effect.name||parentName,sourceId:effect.sourceId||modifier.id||modifier.sourceId}],modifier.sourceType||sourceType,output,seen);
-    });
-  });
-}
-
-export function collectACModifiers(character = {}, armourPieces = []) {
-  const output = [];
-  const seen = new Set();
-  modifierRecords(character.acModifiers || character.armourModifiers || character.armorModifiers, 'other', output, seen);
-  modifierRecords(character.enchantments, 'enchantment', output, seen);
-  modifierRecords(character.activeEffects || character.effects, 'other', output, seen);
-  modifierRecords(character.spells || character.activeSpells, 'spell', output, seen);
-  modifierRecords(character.talents || character.unlockedTalents, 'talent', output, seen);
-  modifierRecords(character.racialTraits || character.raceTraits, 'racial_trait', output, seen);
-  modifierRecords(character.conditions || character.statusEffects, 'status_effect', output, seen);
-  armourPieces.forEach(piece => {
-    modifierRecords(piece.item.enchantments, 'enchantment', output, seen);
-    modifierRecords(piece.item.effects, 'item', output, seen);
-  });
-  return output;
+export function collectACModifiers(character = {}) {
+  return collectCharacterEffects(character).filter(effect=>effect.target==='ac');
 }
 
 function determineArmourType(character, pieces) {
@@ -282,8 +240,9 @@ export function calculateCharacterAC(character = {}, options = {}) {
   const armourType = validation.armourType;
   const armourTypeSetBonus = armourType && armourPieces.some(piece => piece.valid && piece.piece?.location !== 'Off-Hand') ? armourType.setBonusAC : 0;
   const modifiers = collectACModifiers(character,armourPieces);
-  const modifierTotal = modifiers.filter(modifier => modifier.active && !modifier.conditional).reduce((total,modifier)=>total+number(modifier.value),0);
-  const rawAC = number(natural.value,1) + armourAC + armourTypeSetBonus + modifierTotal;
+  const baseAC = number(natural.value,1) + armourAC + armourTypeSetBonus;
+  const rawAC = evaluateEffects(baseAC,'ac',modifiers).value;
+  const modifierTotal = rawAC - baseAC;
   const finalAC = Math.max(natural.value,Math.floor(rawAC));
   return {
     naturalAC:natural.value,

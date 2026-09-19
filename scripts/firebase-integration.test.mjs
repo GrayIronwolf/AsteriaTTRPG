@@ -366,3 +366,74 @@ test('targeted talent effects cannot overwrite a mismatched or deleted private c
   assert.equal((await action('alice','useCharacterTalent',args)).ok,false);assert.deepEqual((await ref.get()).data().mp,[100,100]);
   await db.doc('users/bob/characters/b').delete();assert.equal((await action('alice','useCharacterTalent',args)).ok,false);assert.equal((await db.doc('users/bob/characters/b').get()).exists,false);
 });
+
+test('core fields cannot be forged through direct player Firestore writes',async()=>{
+  for(const patch of [{resources:{zeal:[999,999]}},{resourceDefinitions:{hp:{minimum:99}}},{conditions:[]},{restState:{request:{status:'approved'}}},{coreRevision:999}]) await assertFails(updateDoc(doc(user('alice'),'campaigns/c/characters/a'),patch));
+});
+test('GM conditions apply mechanics to the owner mirror while protecting private profile data',async()=>{
+  await db.doc('users/alice/characters/a').update({name:'Private name',journal:['Private journal']});
+  const added=await action('gm','manageCharacterCondition',['c','a',{template:'concussion'}]);assert.equal(added.ok,true,added.error);
+  const live=await liveSheet(),owner=(await db.doc('users/alice/characters/a').get()).data();
+  assert.deepEqual(live.mp,[8,8]);assert.deepEqual(owner.mp,[8,8]);assert.equal(owner.name,'Private name');assert.deepEqual(owner.journal,['Private journal']);
+  assert.equal((await db.doc('users/gm/characters/a').get()).exists,false);
+  assert.equal((await action('alice','manageCharacterCondition',['c','a',{action:'remove',id:added.id}])).ok,false);
+  assert.equal((await action('alice','manageCharacterCondition',['c','a',{name:'Free bonus'}])).ok,false);
+  assert.equal((await action('gm','manageCharacterCondition',['c','a',{action:'remove',id:added.id}])).ok,true);
+  assert.deepEqual((await liveSheet()).mp,[8,10]);
+});
+test('allowed player condition removal and refresh are persistent without repeat character writes',async()=>{
+  const added=await action('gm','manageCharacterCondition',['c','a',{name:'Blessing',allowPlayerRemoval:true,effects:[{target:'mp.maximum',operation:'ADD',value:10}]}]);assert.equal(added.ok,true,added.error);
+  assert.equal((await action('alice','manageCharacterCondition',['c','a',{action:'remove',id:added.id}])).ok,true);
+  await action('alice','refreshCharacterSystems',['c','a']);const before=await liveSheet();
+  assert.equal((await action('alice','refreshCharacterSystems',['c','a'])).ok,true);const after=await liveSheet();
+  assert.equal(after.coreRevision,before.coreRevision);assert.equal(after.updatedAt.toMillis(),before.updatedAt.toMillis());
+});
+test('custom resources use canonical spell costs and concurrent stale activations spend once',async()=>{
+  const configured=await action('gm','configureCharacterResource',['c','a',{id:'focus',name:'Focus',minimum:0,maximum:6,recovery:{long:{mode:'full'}}}]);assert.equal(configured.ok,true,configured.error);
+  await action('alice','updateCampaignCharacterResource',['c','a','focus',6]);await db.doc('campaigns/c/characters/a').update({spells:[{name:'Spark',costs:{focus:4}}]});
+  const revision=(await liveSheet()).coreRevision,args=['c','a',{name:'Spark',expectedCoreRevision:revision},{focus:0}];
+  const result=await Promise.all([action('alice','castCharacterSpell',args),action('alice','castCharacterSpell',args)]);assert.equal(result.filter(row=>row.ok).length,1);
+  assert.deepEqual((await liveSheet()).resources.focus,[2,6]);assert.equal((await action('alice','castCharacterSpell',['c','a',{name:'Spark'},{}])).ok,false);
+});
+test('Long Rest requests recover nothing until one GM approval expires conditions and resets uses',async()=>{
+  await db.doc('campaigns/c/characters/a').update({hp:[1,10],mp:[1,10],sp:[1,10],talentUsage:{rest:{reset:'long-rest',count:2},session:{reset:'session',count:1}}});
+  await action('gm','manageCharacterCondition',['c','a',{name:'Weakened',duration:{unit:'long-rest'},effects:[{target:'mp.maximum',operation:'MULTIPLY',value:.5}]}]);
+  const requested=await action('alice','requestCharacterRest',['c','a','long',{expectedSequence:0}]);assert.equal(requested.ok,true,requested.error);
+  assert.deepEqual((await liveSheet()).hp,[1,10]);assert.equal((await action('alice','requestCharacterRest',['c','a','long',{expectedSequence:0}])).request.id,requested.request.id);
+  assert.equal((await action('alice','reviewCharacterRest',['c','a',{id:requested.request.id,status:'approved'}])).ok,false);
+  const reviews=await Promise.all([action('gm','reviewCharacterRest',['c','a',{id:requested.request.id,status:'approved'}]),action('gm','reviewCharacterRest',['c','a',{id:requested.request.id,status:'approved'}])]);reviews.forEach(row=>assert.equal(row.ok,true,row.error));
+  const live=await liveSheet();assert.deepEqual(live.hp,[6,10]);assert.deepEqual(live.mp,[6,10]);assert.deepEqual(live.sp,[10,10]);assert.equal(live.conditions[0].expired,true);assert.equal(live.talentUsage.rest.count,0);assert.equal(live.talentUsage.session.count,1);
+  assert.equal((await db.collection('campaigns/c/events').where('type','==','long-rest-review').get()).size,1);
+});
+test('denied rest cannot later be approved or restore resources',async()=>{
+  await db.doc('campaigns/c/characters/a').update({hp:[1,10]});
+  const request=(await action('alice','requestCharacterRest',['c','a','long',{expectedSequence:0}])).request;
+  assert.equal((await action('gm','reviewCharacterRest',['c','a',{id:request.id,status:'denied',note:'Unsafe camp'}])).ok,true);
+  const again=await action('gm','reviewCharacterRest',['c','a',{id:request.id,status:'approved'}]);assert.equal(again.request.status,'denied');assert.deepEqual((await liveSheet()).hp,[1,10]);
+});
+test('Short Rest sequence rejects rapid duplicate requests and pending Long Rest blocks recovery',async()=>{
+  await db.doc('campaigns/c/characters/a').update({sp:[0,100],bp:[20,20]});
+  const args=['c','a','short',{expectedSequence:0}],results=await Promise.all([action('alice','requestCharacterRest',args),action('alice','requestCharacterRest',args)]);assert.equal(results.filter(row=>row.ok).length,1);
+  assert.deepEqual((await liveSheet()).sp,[35,100]);assert.deepEqual((await liveSheet()).bp,[15,20]);
+  await action('alice','requestCharacterRest',['c','a','long',{expectedSequence:1}]);assert.equal((await action('alice','requestCharacterRest',['c','a','short',{expectedSequence:2}])).ok,false);
+});
+test('core commands reject outsiders, other players and unlinked GM access',async()=>{
+  for(const uid of ['eve','bob']) assert.equal((await action(uid,'manageCharacterCondition',['c','a',{name:'Bad'}])).ok,false);
+  await db.doc('campaigns/c').update({'playerCharacterLinks.a':FieldValue.delete(),'characters.a':FieldValue.delete(),'players.alice.characterIds':[]});
+  assert.equal((await action('gm','configureCharacterResource',['c','a',{id:'focus',maximum:10}])).ok,false);
+});
+test('resource updates preserve unrelated private fields and reject stale revisions',async()=>{
+  await db.doc('users/alice/characters/a').update({name:'Owner private name',appearance:{portrait:'private'},journal:['private']});
+  const result=await action('alice','updateCampaignCharacterResource',['c','a','mp',-2,{expectedCoreRevision:0}]);assert.equal(result.ok,true,result.error);
+  const privateData=(await db.doc('users/alice/characters/a').get()).data();assert.equal(privateData.name,'Owner private name');assert.deepEqual(privateData.journal,['private']);
+  assert.equal((await action('alice','updateCampaignCharacterResource',['c','a','mp',-2,{expectedCoreRevision:0}])).ok,false);assert.deepEqual((await liveSheet()).mp,[8,10]);
+});
+test('resource rule replacement removes old resets instead of recursively merging them back',async()=>{
+  await action('gm','configureCharacterResource',['c','a',{id:'focus',maximum:10,reset:{'combat-start':0}}]);
+  const result=await action('gm','configureCharacterResource',['c','a',{id:'focus',maximum:10,reset:{}}]);assert.equal(result.ok,true,result.error);
+  assert.deepEqual((await liveSheet()).resourceDefinitions.focus.reset,{});assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().resourceDefinitions.focus.reset,{});
+});
+test('canonical restoration respects Soul Damage and never trusts injected spell restoration',async()=>{
+  await db.doc('campaigns/c/characters/a').update({hp:[1,10],specialDamage:{soul:4},spells:[{name:'Spark',cost:'3 MP',restoreResources:{hp:10}}]});
+  const result=await action('alice','castCharacterSpell',['c','a',{name:'Spark',restoreResources:{mp:999}},{}]);assert.equal(result.ok,true,result.error);assert.deepEqual((await liveSheet()).hp,[6,10]);assert.deepEqual((await liveSheet()).mp,[7,10]);
+});

@@ -10,11 +10,11 @@ import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebase
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, orderBy, limit, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
-import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
-import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage, soulDamageValue } from '../src/state/specialDamageModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
-import { addGrantedMagicElement, incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
-import { markQuestRewardClaimed, normalizeAssignedQuest, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
+import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
+import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
+import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
+import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
 import { encounterResourcePair, preserveEncounterResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 
 const productionFirebaseConfig = {
@@ -56,18 +56,21 @@ try {
 } catch (err) {
   if(!reactDevFixture) console.warn('Firebase failed to initialise. Account login requires Firebase setup.', err);
 }
-async function callTrustedAction(action, args) {
-  if(!functionsClient || !currentUser) return {ok:false,error:'Sign in before making changes.'};
-  // One ID per user gesture; never automatically replay an uncertain mutation.
+const trustedActionsInFlight=new Map();
+function callTrustedAction(action,args) {
+  if(!functionsClient || !currentUser) return Promise.resolve({ok:false,error:'Sign in before making changes.'});
+  const key=JSON.stringify([currentUser.uid,action,args]);
+  if(trustedActionsInFlight.has(key)) return trustedActionsInFlight.get(key);
   const requestId=crypto.randomUUID();
-  try {
-    const result=await httpsCallable(functionsClient, 'asteriaAction')({action,args:args.map(value=>value===undefined?null:value),requestId});
-    if(result.data?.ok === false) reportSyncError('player-action', new Error(result.data.error || 'Action rejected.'), {campaignId:args[0]});
+  const promise=Promise.resolve().then(()=>httpsCallable(functionsClient,'asteriaAction')({action,args:args.map(value=>value===undefined?null:value),requestId})).then(result=>{
+    if(result.data?.ok===false) reportSyncError('player-action',new Error(result.data.error || 'Action rejected.'),{campaignId:args[0]});
     return result.data;
-  } catch(error) {
+  }).catch(error=>{
     reportSyncError('player-action',error,{campaignId:args[0]});
     return {ok:false,error:error.message || 'The change could not be confirmed. Refresh before retrying.'};
-  }
+  }).finally(()=>trustedActionsInFlight.delete(key));
+  trustedActionsInFlight.set(key,promise);
+  return promise;
 }
 
 function $(id){ return document.getElementById(id); }
@@ -79,7 +82,6 @@ function saveLocalUsername(username, data){ try{ const map=localUsernameMap(); m
 function localProfileStore(){ try{return JSON.parse(localStorage.getItem('asteriaFirebaseProfiles')||'{}')}catch(e){return {}} }
 function saveLocalProfile(uid, profile){ try{ const map=localProfileStore(); map[uid]=profile; localStorage.setItem('asteriaFirebaseProfiles', JSON.stringify(map)); }catch(e){} }
 function getLocalProfile(uid){ return localProfileStore()[uid] || null; }
-function setText(id, text){ const el=$(id); if(el) el.textContent=text; }
 function cleanData(value){ return JSON.parse(JSON.stringify(value)); }
 function campaignCode(value){ return String(value || '').replace(/\D/g, '').slice(0, 12); }
 function campaignOwner(campaign){
@@ -124,10 +126,10 @@ function mergeSharedCampaign(localCampaign={}, sharedCampaign={}){
   return Object.assign({}, local, shared, {
     id:shared.id || local.id,
     ownerUid:shared.ownerUid || local.ownerUid || '',
-    gmUids:uniqueValues(local.gmUids, shared.gmUids),
-    playerUids:uniqueValues(local.playerUids, shared.playerUids),
+    gmUids:shared.gmUids || [],
+    playerUids:shared.playerUids || [],
     party:uniqueValues(local.party, shared.party, playerCharacterIds, Object.keys(characters), Object.keys(playerCharacterLinks)),
-    roles:Object.assign({}, local.roles || {}, shared.roles || {}),
+    roles:shared.roles || {},
     players,
     characters,
     playerCharacterLinks,
@@ -570,7 +572,6 @@ window.firebaseCreateAccountPage = async function(){
     notice('Account created.');
     openAccountHome(currentProfile, cred.user);
     window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: cred.user.uid, source:'login' }}));
-    window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: cred.user.uid, source:'create' }}));
   }catch(err){
     const msg = friendlyFirebaseError(err, 'create');
     showCreateHint(msg, 'error');
@@ -1243,6 +1244,10 @@ const firebasePublicApi = {
   purchaseTalentRank: (...args) => callTrustedAction('purchaseTalentRank', args),
   useCharacterTalent: (...args) => callTrustedAction('useCharacterTalent', args),
   endCharacterTalentEffect: (...args) => callTrustedAction('endCharacterTalentEffect', args),
+  refreshCharacterSystems: (...args) => callTrustedAction('refreshCharacterSystems', args),
+  manageCharacterCondition: (...args) => callTrustedAction('manageCharacterCondition', args),
+  configureCharacterResource: (...args) => callTrustedAction('configureCharacterResource', args),
+  reviewCharacterRest: (...args) => callTrustedAction('reviewCharacterRest', args),
   refreshCharacterTalents: (...args) => callTrustedAction('refreshCharacterTalents', args),
   recordSkillSuccess: (...args) => callTrustedAction('recordSkillSuccess', args),
   castCharacterSpell: (...args) => callTrustedAction('castCharacterSpell', args),
@@ -1556,7 +1561,7 @@ const firebasePublicApi = {
       return {ok:false,error:error.message||String(error)};
     }
   },
-  takeCampaignCharacterRest: (...args) => callTrustedAction('takeCampaignCharacterRest', args),
+  takeCampaignCharacterRest: (...args) => callTrustedAction('requestCharacterRest', args),
   updateCampaignCharacterCurrency: (...args) => callTrustedAction('updateCampaignCharacterCurrency', args),
   setCharacterACModifier: async function(campaignId,characterId,modifier={}){
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
@@ -1880,44 +1885,25 @@ const firebasePublicApi = {
   saveOwnedCharacterProgress: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
     if(character.ownerUid !== currentUser.uid) return false;
-    try{
-      await setDoc(
-        doc(db, 'users', currentUser.uid, 'characters', characterId),
-        {
-          id:characterId,
-          ownerUid:currentUser.uid,
-          level:Number(character.level || 0),
-          xp:Number(character.xp || 0),
-          xpMax:Number(character.xpMax || 1000),
-          cp:Number(character.cp || 0),
-          tp:Number(character.tp || 0),
-          pendingSkillChoices:Number(character.pendingSkillChoices || 0),
-          dashboardNotifications:cleanData(character.dashboardNotifications || []),
-          progressionSync:cleanData(character.progressionSync || {}),
-          updatedAt:serverTimestamp()
-        },
-        { merge:true }
-      );
-      return true;
-    }catch(err){
-      console.warn('Could not persist the received character progression.', err);
-      return false;
-    }
+    return firebasePublicApi.saveOwnedCharacterSnapshot(characterId, character);
   },
   saveOwnedCharacterSnapshot: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
     if(character.ownerUid !== currentUser.uid) return false;
     try{
-      const clean = cleanData(character);
-      await setDoc(
-        doc(db, 'users', currentUser.uid, 'characters', characterId),
-        Object.assign({}, clean, {
-          id:characterId,
-          ownerUid:currentUser.uid,
-          updatedAt:serverTimestamp()
-        }),
-        { merge:true }
-      );
+      const uid = currentUser.uid, campaignId = character.sharedCampaignId || character.campaignId;
+      if(!campaignId) return true;
+      const sharedId = character.id || characterId;
+      await runTransaction(db, async transaction => {
+        const privateRef = doc(db, 'users', uid, 'characters', characterId);
+        const [privateSnapshot, sharedSnapshot] = await Promise.all([
+          transaction.get(privateRef),
+          transaction.get(doc(db, 'campaigns', campaignId, 'characters', sharedId))
+        ]);
+        if(!privateSnapshot.exists() || !sharedSnapshot.exists()) return;
+        const patch = ownedGameplayMirrorPatch(privateSnapshot.data(), {id:sharedId, ...sharedSnapshot.data()}, uid, characterId);
+        if(Object.keys(patch).length) transaction.update(privateRef, {...patch, updatedAt:serverTimestamp()});
+      });
       return true;
     }catch(error){
       reportSyncError('owned-character-receive', error, { characterId });
@@ -2027,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(panel) panel.innerHTML = authPanelHtml();
   const title = document.querySelector('title'); if(title) title.textContent = 'Asteria TTRPG';
   const oldLogout = window.logout;
-  window.logout = function(){ firebaseLogout(); if(!auth && oldLogout) oldLogout(); };
+  window.logout = function(){ window.firebaseLogout(); if(!auth && oldLogout) oldLogout(); };
   window.requestPasswordReset = function(){ return window.firebaseResetPassword(); };
 
   $('firebaseLoginBtn')?.addEventListener('click', e=>{ e.preventDefault(); window.firebaseLogin(); });

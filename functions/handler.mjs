@@ -1,3 +1,4 @@
+import { isCampaignGM as gm, isCampaignMember as member, isLinkedCharacter, GM_CHARACTER_ACTIONS, GM_ONLY_ACTIONS } from './characterPermissions.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createCommands } from './commands.mjs';
@@ -9,8 +10,7 @@ const progressionContext={window:{}};
 vm.runInNewContext(fs.readFileSync(new URL('../js/asteria-progression.js',import.meta.url),'utf8'),progressionContext);
 const catalog=[...JSON.parse(fs.readFileSync(new URL('../data/compendium-index-clean.json',import.meta.url),'utf8')).entries,...JSON.parse(fs.readFileSync(new URL('../data/universal-compendium-index.json',import.meta.url),'utf8')).entries];
 const id=value=>typeof value==='string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
-const gm=(campaign,uid)=>campaign.ownerUid===uid || (campaign.gmUids||[]).includes(uid) || campaign.roles?.[uid]==='gm';
-const member=(campaign,uid)=>gm(campaign,uid) || (campaign.playerUids||[]).includes(uid) || campaign.roles?.[uid]==='player';
+
 
 export function validateRequest(data) {
   if(!data || !Array.isArray(data.args) || data.args.length>8 || !id(data.args[0]) || !id(data.args[1]) || !id(data.requestId)) throw new Error('Invalid action request.');
@@ -47,19 +47,16 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const campaign=campaignSnapshot.data();
     const character=characterSnapshot.data();
     // Character ownership comes from Firestore, never a caller-supplied private copy.
-    const link=campaign.playerCharacterLinks?.[args[1]];
-    const summaryOwner=campaign.characters?.[args[1]]?.ownerUid;
-    const linked=typeof character.ownerUid==='string' && character.ownerUid.length>0
-      && (!character.sharedCampaignId || character.sharedCampaignId===campaignId)
-      && (!link || link===character.ownerUid) && (!summaryOwner || summaryOwner===character.ownerUid)
-      && (link===character.ownerUid || summaryOwner===character.ownerUid || (campaign.players?.[character.ownerUid]?.characterIds||[]).includes(args[1]));
-    // Only this specific review action can operate on a linked player's sheet.
-    const gmQuestReview=action==='reviewCharacterQuest' && gm(campaign,uid) && linked;
-    if(action==='reviewCharacterQuest' && !gmQuestReview) throw new Error('Only the GM of this linked character can review the quest.');
-    if(character.ownerUid!==uid && !gmQuestReview) throw new Error('This character belongs to another account.');
+    const linked=isLinkedCharacter(campaign,args[1],character,campaignId);
+    const gmAccess=GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid) && linked;
+    if(GM_ONLY_ACTIONS.has(action) && !gmAccess) throw new Error('Only the GM of this linked character can make this change.');
+    if(character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
     if(receipt.exists){
       if(receipt.data().action!==action || receipt.data().input!==JSON.stringify(args)) throw new Error('Request ID has already been used.');
       return receipt.data().result;
+    }
+    for(const detail of args.slice(2)) if(detail && typeof detail==='object' && detail.expectedCoreRevision!==undefined) {
+      if(!Number.isSafeInteger(detail.expectedCoreRevision) || detail.expectedCoreRevision!==Number(character.coreRevision || 0)) throw new Error('The character changed. Wait for live sync before trying again.');
     }
     if(action==='updateCharacterInventory' && args[2]?.type==='add-item' && !gm(campaign,uid)) throw new Error('Ask the GM to grant new items.');
     if(action==='updateCampaignCharacterCurrency' && (!Number.isSafeInteger(args[3]) || Math.abs(args[3])>1e9)) throw new Error('Choose a whole currency amount within range.');
@@ -67,12 +64,12 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     for(const detail of args.slice(2)) if(detail && typeof detail==='object') for(const key of ['quantity','exchangeQuantity','priceCopper','rows','cols','soulRecovery']) {
       if(detail[key]!==undefined && (!Number.isSafeInteger(detail[key]) || detail[key]<0 || detail[key]>1e9)) throw new Error('Invalid '+key+'.');
     }
-    const adapter={get:async ref=>wrapSnapshot(await transaction.get(ref)),set:(...values)=>transaction.set(...values)};
+    const adapter={get:async ref=>wrapSnapshot(await transaction.get(ref)),set:(...values)=>transaction.set(...values),update:(...values)=>transaction.update(...values)};
     const result=await callback(adapter);
     transaction.set(receiptRef,{action,input:JSON.stringify(args),result:result===undefined?null:JSON.parse(JSON.stringify(result)),createdAt:serverTimestamp()});
     return result;
   });
-  const commands=createCommands({db,currentUser:{uid},doc,collection,runTransaction,serverTimestamp,
+  const commands=createCommands({db,currentUser:{uid},requestId,doc,collection,runTransaction,serverTimestamp,
     window:{AsteriaProgression:progressionContext.window.AsteriaProgression,AsteriaArmour:{validateEquipmentChange}},
     reportSyncError:()=>{},catalog});
   if(!Object.hasOwn(commands,action)) throw new Error('Unsupported action.');
