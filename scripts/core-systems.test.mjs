@@ -5,13 +5,43 @@ import {collectCharacterEffects,evaluateEffects,characterCheck,effectiveCharacte
 import {applyResourceChanges,reconcileResources,resourceSnapshot,parseResourceCosts,validateResourceDefinition} from '../src/state/resourceEngine.mjs';
 import {makeCondition,applyCondition,activeConditions,removeCondition} from '../src/state/conditionModel.mjs';
 import {reconcileCharacterSystems,processCharacterRest} from '../src/state/characterSystems.mjs';
-import {buildTalentCatalog} from '../src/state/talentModel.mjs';
+import {buildTalentCatalog,prepareForgeTalents} from '../src/state/talentModel.mjs';
 import {talentRules,useLearnedTalent} from '../src/state/talentMechanics.mjs';
 import {calculateCharacterAC} from '../src/systems/armour/armourSystem.mjs';
+import {ownedGameplayMirrorPatch} from '../src/state/characterIntegrityModel.mjs';
+import vm from 'node:vm';
 const entries=JSON.parse(fs.readFileSync('data/universal-compendium-index.json','utf8')).entries;
 const sheet=patch=>({id:'a',name:'Aster',ownerUid:'alice',hp:[50,100],sp:[20,100],mp:[50,100],bp:[20,20],...patch});
 const clock={now:100000,encounter:{status:'active',combatId:'fight',round:1}};
 const condition=(patch={})=>makeCondition({name:'Test condition',...patch},'gm',clock,'condition');
+test('canonical client mirror preserves private details, replaces maps, and skips unchanged snapshots',async()=>{
+  const existing=sheet({name:'Private name',journal:['Private note'],resourceDefinitions:{focus:{reset:{longRest:0}}}});
+  const shared=sheet({sharedCampaignId:'c',name:'Old name',journal:[],mp:[30,100],resourceDefinitions:{focus:{}}});
+  const patch=ownedGameplayMirrorPatch(existing,shared,'alice','a');
+  assert.deepEqual(patch,{mp:[30,100],resourceDefinitions:{focus:{}}});
+  assert.deepEqual(ownedGameplayMirrorPatch({...existing,...patch},shared,'alice','a'),{});
+  assert.deepEqual(ownedGameplayMirrorPatch(existing,shared,'gm','a'),{});
+  assert.deepEqual(ownedGameplayMirrorPatch({...existing,updatedAt:{seconds:2}},{...shared,updatedAt:{seconds:1}},'alice','a'),{});
+  const source=fs.readFileSync('js/firebase-auth.js','utf8'),start=source.indexOf('  saveOwnedCharacterSnapshot: async function('),end=source.indexOf('\n  },',start)+4;
+  let writes=0;const privateRecord=structuredClone(existing);
+  const api=vm.runInNewContext(`({${source.slice(start,end)}})`,{
+    db:{},currentUser:{uid:'alice'},ownedGameplayMirrorPatch,doc:(_db,...path)=>path.join('/'),serverTimestamp:()=>123,
+    runTransaction:async(_db,callback)=>callback({get:async path=>({exists:()=>true,data:()=>path.startsWith('users/')?privateRecord:shared}),update:(_ref,value)=>{writes++;Object.assign(privateRecord,value);}}),
+    reportSyncError:(_scope,error)=>{throw error;}
+  });
+  // A stale caller cannot overwrite the canonical resource value.
+  assert.equal(await api.saveOwnedCharacterSnapshot('a',{...shared,mp:[99,100]}),true);
+  assert.deepEqual(privateRecord.mp,[30,100]);assert.equal(privateRecord.name,'Private name');assert.deepEqual(privateRecord.journal,['Private note']);
+  assert.equal(await api.saveOwnedCharacterSnapshot('a',shared),true);assert.equal(writes,1);
+});
+test('structured talents spend and restore custom resources using authored metadata only',()=>{
+  const talent={id:'mage:focus',name:'Focus',type:'Active',ranks:{1:'### Effect\nRestore energy.'},metadata:{resourceCosts:{focus:2},restoreResources:{mp:5}}};
+  const character=sheet({talents:{Focus:{rank:1}},resources:{focus:[4,8]},resourceDefinitions:{focus:{name:'Focus'}}});
+  const used=useLearnedTalent(character,talent,{costs:{focus:0}},clock);
+  assert.equal(used.character.resources.focus[0],2);assert.deepEqual(used.character.mp,[55,100]);
+  assert.throws(()=>useLearnedTalent({...character,resources:{focus:[1,8]}},talent,{},clock),/Not enough/);
+  assert.match(talentRules({...talent,metadata:{resourceCosts:'Variable'}}).blocked,/Invalid authored/);
+});
 test('effect operations are deterministic; strongest groups and advantage cancel correctly',()=>{
   const effects=[['SET',10],['ADD',4],['SUBTRACT',2],['MULTIPLY',2],['MIN',20],['MAX',5]].map(([operation,value],index)=>({id:String(index),target:'AC',operation,value}));
   assert.equal(evaluateEffects(1,'ac',effects).value,20);
@@ -53,6 +83,7 @@ test('spending is atomic across resources; custom minimums, overflow, and restor
 test('cost and rule validation reject malformed or untrusted resource data',()=>{
   assert.deepEqual(parseResourceCosts('2 Zeal Points + 3 MP','mp',true),{zp:2,mp:3});
   assert.deepEqual(parseResourceCosts('0 MP','mp',true),{});
+  assert.deepEqual(parseResourceCosts({mp:'Variable',description:'GM review'}),{});
   assert.throws(()=>parseResourceCosts('variable MP','mp',true));assert.throws(()=>applyResourceChanges(sheet(),{costs:{unknown:2}}));
   assert.throws(()=>validateResourceDefinition({id:'focus',maximum:4,minimum:5}));
   assert.throws(()=>validateResourceDefinition({id:'focus',maximum:4,recovery:{short:{mode:'fraction',value:2}}}));
@@ -120,4 +151,26 @@ test('shared action hook coalesces immediate clicks and clears loading on failur
     await renderer.act(async()=>{finish({ok:true});await first;});assert.equal(action.busy,false);
     await renderer.act(async()=>{await action.run(()=>{throw new Error('Offline');});});assert.equal(action.busy,false);assert.equal(action.message,'Offline');root.unmount();
   } finally {await server.close();}
+});
+
+test('Forge edits rebase all core maxima while preserving effects, spent resources and rest state',()=>{
+  const existing=reconcileCharacterSystems(sheet({activeEffects:[{id:'hp-buff',target:'hp.maximum',value:20}],restState:{sequence:3},zp:[4,10],specialDamage:{soul:10}}),[],clock);
+  existing.zp=[4,10];
+  assert.equal(existing.hp[1],120);
+  const next=prepareForgeTalents(existing,sheet({hp:[100,100],mp:[100,100],sp:[100,100]}),entries);
+  assert.deepEqual(next.hp,[50,120]);assert.deepEqual(next.mp,[50,100]);assert.equal(next.restState.sequence,3);assert.deepEqual(next.zp,[4,10]);assert.equal(next.specialDamage.soul,10);
+});
+test('core synchronization hook does not create a refresh loop on repeated snapshots',async()=>{
+  const {createServer}=await import('vite'),React=await import('react'),renderer=await import('react-test-renderer');
+  const server=await createServer({configFile:false,server:{middlewareMode:true}});
+  let calls=0;globalThis.window={AsteriaFirebase:{refreshCharacterSystems:async()=>{calls++;return {ok:true};}}};
+  try {
+    const {useCharacterSystemsSync}=await server.ssrLoadModule('/src/sessions/useCharacterSystemsSync.js');
+    function Probe({characters,encounter}){useCharacterSystemsSync('c',characters,encounter,true);return null;}
+    const character=sheet();let root;
+    await renderer.act(async()=>{root=renderer.create(React.createElement(Probe,{characters:{a:character},encounter:clock.encounter}));});assert.equal(calls,1);
+    await renderer.act(async()=>{root.update(React.createElement(Probe,{characters:{a:{...character}},encounter:{...clock.encounter}}));});assert.equal(calls,1);
+    await renderer.act(async()=>{root.update(React.createElement(Probe,{characters:{a:{...character,coreStateVersion:1}},encounter:{...clock.encounter,round:2}}));});assert.equal(calls,1);
+    await renderer.act(async()=>{root.unmount();});
+  } finally {await server.close();delete globalThis.window;}
 });

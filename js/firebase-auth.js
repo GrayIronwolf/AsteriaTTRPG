@@ -13,7 +13,7 @@ import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, get
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
-import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
+import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
 import { encounterResourcePair, preserveEncounterResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 
@@ -1885,44 +1885,25 @@ const firebasePublicApi = {
   saveOwnedCharacterProgress: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
     if(character.ownerUid !== currentUser.uid) return false;
-    try{
-      await setDoc(
-        doc(db, 'users', currentUser.uid, 'characters', characterId),
-        {
-          id:characterId,
-          ownerUid:currentUser.uid,
-          level:Number(character.level || 0),
-          xp:Number(character.xp || 0),
-          xpMax:Number(character.xpMax || 1000),
-          cp:Number(character.cp || 0),
-          tp:Number(character.tp || 0),
-          pendingSkillChoices:Number(character.pendingSkillChoices || 0),
-          dashboardNotifications:cleanData(character.dashboardNotifications || []),
-          progressionSync:cleanData(character.progressionSync || {}),
-          updatedAt:serverTimestamp()
-        },
-        { merge:true }
-      );
-      return true;
-    }catch(err){
-      console.warn('Could not persist the received character progression.', err);
-      return false;
-    }
+    return firebasePublicApi.saveOwnedCharacterSnapshot(characterId, character);
   },
   saveOwnedCharacterSnapshot: async function(characterId, character){
     if(!db || !currentUser || !characterId || !character) return false;
     if(character.ownerUid !== currentUser.uid) return false;
     try{
-      const clean = cleanData(character);
-      await setDoc(
-        doc(db, 'users', currentUser.uid, 'characters', characterId),
-        Object.assign({}, clean, {
-          id:characterId,
-          ownerUid:currentUser.uid,
-          updatedAt:serverTimestamp()
-        }),
-        { merge:true }
-      );
+      const uid = currentUser.uid, campaignId = character.sharedCampaignId || character.campaignId;
+      if(!campaignId) return true;
+      const sharedId = character.id || characterId;
+      await runTransaction(db, async transaction => {
+        const privateRef = doc(db, 'users', uid, 'characters', characterId);
+        const [privateSnapshot, sharedSnapshot] = await Promise.all([
+          transaction.get(privateRef),
+          transaction.get(doc(db, 'campaigns', campaignId, 'characters', sharedId))
+        ]);
+        if(!privateSnapshot.exists() || !sharedSnapshot.exists()) return;
+        const patch = ownedGameplayMirrorPatch(privateSnapshot.data(), {id:sharedId, ...sharedSnapshot.data()}, uid, characterId);
+        if(Object.keys(patch).length) transaction.update(privateRef, {...patch, updatedAt:serverTimestamp()});
+      });
       return true;
     }catch(error){
       reportSyncError('owned-character-receive', error, { characterId });

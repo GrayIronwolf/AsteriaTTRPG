@@ -106,16 +106,17 @@ export function reconcileTalentEffects(character,catalog=[],options={}) {
 export function resetTalentRest(character,type) {
   const next=clone(character);
   next.talentUsage=Object.fromEntries(Object.entries(next.talentUsage || {}).map(([id,use])=>[id,use.reset==='short-rest' || type==='long' && use.reset==='long-rest'?{...use,count:0,readyAt:0,readyRound:0}:use]));
-  next.talentEffects=(next.talentEffects || []).map(effect=>(effect.encounterId || effect.expiresAt || effect.duration==='short-rest' || type==='long'&&effect.duration==='long-rest'?{...effect,ended:true}:effect));
+  next.talentEffects=(next.talentEffects || []).map(effect=>(effect.encounterId || effect.duration==='short-rest' || type==='long'&&effect.duration==='long-rest'?{...effect,ended:true}:effect));
   return next;
 }
 export function prepareForgeTalents(existing,next,entries) {
   const result={...next,talentEffects:existing?.talentEffects || [],talentUsage:existing?.talentUsage || {},talentResourceState:{},resourceState:{...existing?.resourceState},resourceDefinitions:{...existing?.resourceDefinitions},resources:{...existing?.resources},conditions:existing?.conditions || [],activeEffects:existing?.activeEffects || []};
+  for(const key of ['effects','acModifiers','specialDamage','soulDamage','restState','coreRevision','coreStateVersion','zp','patronEffects','campaignEffects']) if(existing?.[key]!==undefined) result[key]=clone(existing[key]);
   const catalog=buildTalentCatalog(result,entries);
   for(const row of ownedTalents(existing || {},catalog)) Object.assign(result,saveTalentRank(result,row,row.rank,catalog));
-  for(const key of ['mp','bp']) if(existing?.talentResourceState?.[key] && result[key]) {
+  for(const key of ['hp','sp','mp','bp']) if((existing?.resourceState?.[key] || existing?.talentResourceState?.[key]) && result[key]) {
     const maximum=resourcePair(result[key])[1];
-    result.talentResourceState[key]={...existing.talentResourceState[key],baseMaximum:maximum,maximum};
+    if(existing?.talentResourceState?.[key]) result.talentResourceState[key]={...existing.talentResourceState[key],baseMaximum:maximum,maximum};
     result.resourceState[key]={...result.resourceState[key],baseMaximum:maximum,maximum};
     result[key]=[resourcePair(existing[key])[0],maximum];
   }

@@ -86,4 +86,30 @@ export function incomingSnapshotIsStale(canonical = {}, incoming = {}) {
   return canonicalTime > 0 && (!incomingTime || incomingTime < canonicalTime);
 }
 
+// Shared gameplay can flow back to the owner's Forge record. Profile and private
+// fields are intentionally excluded, and complete map values replace old maps.
+const GAMEPLAY_MIRROR_FIELDS = [
+  'level', 'xp', 'xpMax', 'cp', 'tp', 'pendingSkillChoices', 'progressionSync',
+  'dashboardNotifications', 'hp', 'sp', 'mp', 'bp', 'zp', 'resources',
+  'resourceDefinitions', 'resourceState', 'conditions', 'activeEffects', 'effects',
+  'talentResourceEffects', 'talentResourceState', 'talentStateVersion', 'talentEffects',
+  'talentRestBonus', 'talentSavingThrows', 'talentUsage', 'talents', 'unlockedTalents',
+  'acModifiers', 'specialDamage', 'soulDamage', 'restState', 'coreStateVersion',
+  'coreRevision', 'actionLog', 'inventory', 'equipment', 'coins', 'coinPouch',
+  'quickSlots', 'bags', 'storages', 'storageLimit', 'pendingItemRewards',
+  'resolvedItemRewardIds', 'characteristics', 'skills', 'selectedSkills',
+  'skillProgress', 'spells', 'quests', 'questLog', 'titles', 'gmGrantedMagicTypes',
+  'magic', 'patronEffects', 'campaignEffects'
+];
+export function ownedGameplayMirrorPatch(existing, shared, uid, characterId) {
+  if(!existing || !shared || existing.ownerUid !== uid || shared.ownerUid !== uid ||
+    String(shared.sourceCharacterId || shared.id) !== String(characterId) ||
+    incomingSnapshotIsStale(existing, shared)) return {};
+  const patch = {};
+  for(const key of GAMEPLAY_MIRROR_FIELDS) {
+    if(own(shared, key) && JSON.stringify(existing[key]) !== JSON.stringify(shared[key])) patch[key] = clone(shared[key]);
+  }
+  return patch;
+}
+
 export const LINKED_PROFILE_SYNC_FIELDS = Object.freeze(PROFILE_SYNC_FIELDS.slice());

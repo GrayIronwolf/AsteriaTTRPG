@@ -27,8 +27,8 @@ export function PanelHeader({ title, eyebrow, action, icon }) {
   return <header className="react-panel-header"><div className="react-panel-title-group">{icon ? <AsteriaIcon name={icon} /> : null}<div>{eyebrow ? <p className="react-eyebrow">{eyebrow}</p> : null}{title ? <h2>{title}</h2> : null}</div></div>{action}</header>;
 }
 
-export function Panel({ title, eyebrow, action, icon, children, className = '' }) {
-  return <section className={`asteria-react-panel ${className}`}>
+export function Panel({ title, eyebrow, action, icon, children, className = '', style }) {
+  return <section className={`asteria-react-panel ${className}`} style={style}>
     <PanelHeader title={title} eyebrow={eyebrow} action={action} icon={icon} />
     {children}
   </section>;

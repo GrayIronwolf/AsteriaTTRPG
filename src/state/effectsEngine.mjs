@@ -13,7 +13,7 @@ export function effectRows(value) {
 }
 export function effectTimeMs(value) {
   if(typeof value?.toMillis==='function') return value.toMillis();
-  if(value?.seconds!==undefined) return finite(value.seconds)*1000+finite(value.nanoseconds)/1e6;
+  if(value?.seconds!==undefined || value?._seconds!==undefined) return finite(value.seconds ?? value._seconds)*1000+finite(value.nanoseconds ?? value._nanoseconds)/1e6;
   if(typeof value==='number') return value;
   return value ? new Date(value).getTime() || 0 : 0;
 }

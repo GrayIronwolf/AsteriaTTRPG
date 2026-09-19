@@ -11,7 +11,7 @@ import { resourcePair } from '../state/resourceValues.mjs';
 const effectText=effect=>`${effect.target}: ${effect.operation || 'ADD'} ${['ADVANTAGE','DISADVANTAGE'].includes(effect.operation)?'':effect.value}`;
 export function ConditionsPanel({campaignId,character,isGM=false,editable=false,clock={},style}) {
   const action=useAsyncAction(),conditions=activeConditions(character,clock);
-  return <Panel title="Conditions" className="react-core-conditions react-overview-conditions" style={style} action={<StatusPill>{conditions.length} active</StatusPill>}>
+  return <Panel title="Conditions" className="react-dashboard-panel react-core-conditions react-overview-conditions" style={style} action={<StatusPill>{conditions.length} active</StatusPill>}>
     {!conditions.length?<p className="react-quiet-state">No active conditions.</p>:conditions.map(condition=><details className="react-core-condition" key={condition.id}>
       <summary><b>{condition.name}</b><small>{conditionDurationLabel(condition,clock)}</small></summary>
       <p>{condition.description}</p><small>Source: {condition.source || 'Character sheet'}</small>
@@ -55,7 +55,7 @@ function GMConditionEditor({campaignId,character,editable}) {
 export function EffectsSummary({character,clock={},style}) {
   const effects=collectCharacterEffects(character,clock).filter(effect=>effectIsActive(effect,clock) && (effect.value!==0 || ['SET','ADVANTAGE','DISADVANTAGE'].includes(effect.operation)) && !(effect.operation==='MULTIPLY'&&effect.value===1));
   const check=characterCheck(character,'skills',0,clock);
-  return <Panel title="Character Effects" className="react-core-effects" style={style}>
+  return <Panel title="Character Effects" className="react-dashboard-panel react-core-effects" style={style}>
     <p>Skill check modifier: {check.value>=0?'+':''}{check.value}{check.advantage?' · Advantage':check.disadvantage?' · Disadvantage':''}</p>
     {effects.length?<ul className="react-core-effect-list">{effects.map(effect=><li key={effect.id}><b>{effect.name}</b><span>{effectText(effect)}{effect.conditional?' · Conditional':''}</span></li>)}</ul>:<p>No mechanical modifiers are active.</p>}
   </Panel>;
@@ -79,7 +79,7 @@ export function ResourceRulesPanel({campaignId,character,editable}) {
   const action=useAsyncAction(),[draft,setDraft]=useState(null);
   const choose=id=>{
     const rule=resourceDefinitions(character).find(row=>row.id===id);
-    setDraft(rule?{...rule,maximum:character.resourceState?.[id]?.baseMaximum ?? resourcePair(storedResource(character,id))[1]}:{id:'',name:'',minimum:0,maximum:'',recovery:{},reset:{},regeneration:null});
+    setDraft(rule?{...rule,maximum:character.resourceState?.[id]?.baseMaximum ?? resourcePair(storedResource(character,id))[1]}:{id:'',name:'',minimum:'',maximum:'',recovery:{},reset:{},regeneration:null});
   };
   const set=(key,value)=>setDraft(previous=>({...previous,[key]:value}));
   const submit=async event=>{event.preventDefault();await action.run(()=>firebaseService.configureResource(campaignId,character.id,draft));};

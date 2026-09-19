@@ -74,7 +74,7 @@ export function reconcileResources(character={},clock={}) {
 }
 export function parseResourceCosts(input,fallback='mp',strict=false) {
   const result={};
-  const add=(key,value)=>{const id=resourceId(key),amount=Number(value);if(!Number.isFinite(amount)||amount<0||amount>1e9)throw new Error('Invalid resource cost.');if(amount)result[id]=(result[id] || 0)+amount;};
+  const add=(key,value)=>{const id=resourceId(key),amount=Number(value);if(!Number.isFinite(amount)||amount<0||amount>1e9){if(strict)throw new Error('Invalid resource cost.');return;}if(amount)result[id]=(result[id] || 0)+amount;};
   if(input && typeof input==='object') {
     if(Array.isArray(input)) input.forEach(row=>add(row.resource || row.id,row.amount ?? row.value));
     else if(input.resource) add(input.resource,input.amount ?? input.value);
