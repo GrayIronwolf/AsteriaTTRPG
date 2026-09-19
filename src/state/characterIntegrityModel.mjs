@@ -29,24 +29,7 @@ export function mergeLinkedCharacter(existing, incoming = {}, metadata = {}) {
   };
 }
 
-export function strictResourcePair(value, resource = 'resource') {
-  let current;
-  let maximum;
-  if(Array.isArray(value) && value.length >= 2) {
-    [current, maximum] = value;
-  } else if(value && typeof value === 'object') {
-    current = value.current ?? value.value;
-    maximum = value.maximum ?? value.max;
-  } else {
-    throw new Error(`${String(resource).toUpperCase()} data is missing or invalid. Refresh before trying again.`);
-  }
-  current = Number(current);
-  maximum = Number(maximum);
-  if(!Number.isFinite(current) || !Number.isFinite(maximum) || maximum < 0) {
-    throw new Error(`${String(resource).toUpperCase()} data is missing or invalid. Refresh before trying again.`);
-  }
-  return [Math.max(0, Math.min(maximum, current)), maximum];
-}
+export { strictResourcePair } from './resourceValues.mjs';
 
 function magicName(value) {
   return String(value || '').trim().replace(/\s+Magic$/i, '');

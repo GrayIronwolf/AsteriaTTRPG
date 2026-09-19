@@ -1,6 +1,5 @@
 import { talentMeta, talentKey, plainTalentText as plain, rankEffects, rankDefined, talentRank } from './talentModel.mjs';
-import { resourcePair, clampHpForSoulDamage } from './specialDamageModel.mjs';
-import { strictResourcePair } from './characterIntegrityModel.mjs';
+import { applyResourceChanges } from './resourceEngine.mjs';
 function numbers(text) {
   const aliases={mp:'mp',sp:'sp',hp:'hp',bp:'bp',mana:'mp',stamina:'sp',health:'hp',blood:'bp'};
   return [...plain(text).matchAll(/([+-]?\d+)\s*(Mana(?: Points?)?|Stamina(?: Points?)?|Health(?: Points?)?|Blood Points?|MP|SP|HP|BP)\b/gi)].map(m=>[aliases[m[2].split(' ')[0].toLowerCase()],Number(m[1])]);
@@ -88,21 +87,7 @@ export function useLearnedTalent(character,talent,selection={},clock={}) {
   if(rules.uses && count>=rules.uses) throw new Error(`No uses remaining until the next ${rules.reset.replaceAll('-',' ')}.`);
   if(previous?.encounterId && previous.encounterId===combatId && Number(encounter?.round)<previous.readyRound) throw new Error(`Available in round ${previous.readyRound}.`);
   if(!previous?.encounterId && now<Number(previous?.readyAt || 0)) throw new Error('This talent is cooling down.');
-  const next=JSON.parse(JSON.stringify(character));
-  for(const [key,amount] of Object.entries(costs)) {
-    if(!['hp','mp','sp','bp'].includes(key) || !Number.isFinite(amount) || amount<0) throw new Error('Invalid talent cost.');
-    if(!amount) continue;
-    const pair=key==='bp'?resourcePair(character.bp):strictResourcePair(character[key],key);
-    if(pair[0]<amount || key==='hp' && pair[0]-amount<1) throw new Error(`Not enough ${key.toUpperCase()}${key==='hp'?'; sacrifices must leave at least 1 HP':''}.`);
-    next[key]=[pair[0]-amount,pair[1]];
-  }
-  if(bpGain) {
-    if(character.bp===undefined) throw new Error('BP is missing from the character sheet.');
-    const [current,max]=resourcePair(next.bp);next.bp=[current+bpGain,max];
-  }
-  for(const [key,amount] of Object.entries(restored)) {
-    const [current,max]=strictResourcePair(next[key],key);next[key]=[key==='hp'?clampHpForSoulDamage(next,current+amount):Math.min(max,current+amount),max];
-  }
+  const next=applyResourceChanges(character,{costs,restore:{...restored,...(bpGain?{bp:bpGain}:{})},keepAlive:true});
   next.talentUsage={...next.talentUsage,[talent.id]:{count:count+1,scope,reset:rules.reset,encounterId:combatId,readyRound:encounter?Number(encounter.round || 1)+Math.max(rules.cooldownRounds,Math.ceil(rules.cooldownMs/6000)):0,readyAt:now+Math.max(rules.cooldownMs,rules.cooldownRounds*6000),usedAt:now}};
   const durationMs=Math.max(rules.durationMs,rules.durationRounds*6000), sustained=durationMs || !/^(instant|none|n\/a|passive)$/i.test(rules.duration);
   const effect=sustained?{id:talent.id,talentId:talent.id,name:talent.name,rank,description:rules.effects,ac:rules.selfAC,encounterId:combatId,untilRound:encounter && durationMs?Number(encounter.round || 1)+Math.ceil(durationMs/6000):0,expiresAt:!encounter && durationMs?now+durationMs:0,ended:false,expired:false}:null;

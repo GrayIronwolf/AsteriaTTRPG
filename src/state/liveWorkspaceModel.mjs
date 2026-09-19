@@ -1,3 +1,5 @@
+import { baseCharacteristicValue } from './effectsEngine.mjs';
+import { parseResourceCosts } from './resourceEngine.mjs';
 import { normalizeMarketPricing } from '../systems/items/marketPricing.mjs';
 
 export const SESSION_LIMIT_MS = 10 * 60 * 60 * 1000;
@@ -56,14 +58,7 @@ export function sessionRemainingMs(session, now = Date.now()) {
 }
 
 export function characteristicValue(character = {}, key) {
-  const source = character.characteristics || {};
-  const aliases = {
-    strength:['strength','str'], dexterity:['dexterity','dex'], agility:['agility','agi'],
-    constitution:['constitution','con'], endurance:['endurance','end'], intelligence:['intelligence','int'],
-    wisdom:['wisdom','wis'], charisma:['charisma','cha'], luck:['luck','lck']
-  }[key] || [key];
-  const raw = aliases.map(alias => source[alias]).find(value => value !== undefined);
-  return Number(raw?.value ?? raw ?? 0);
+  return baseCharacteristicValue(character,key);
 }
 
 export function characteristicTier(score) {
@@ -151,18 +146,7 @@ export function nextSkillProgress(current = {}) {
 }
 
 export function parseResourceCost(value, fallbackResource = 'mp') {
-  if(value && typeof value === 'object') {
-    return ['hp','sp','mp','bp'].reduce((result, key) => {
-      const amount = Number(value[key] ?? value[key.toUpperCase()] ?? 0);
-      if(amount > 0) result[key] = amount;
-      return result;
-    }, {});
-  }
-  const text = String(value ?? '').trim();
-  const result = {};
-  for(const match of text.matchAll(/(\d+(?:\.\d+)?)\s*(HP|SP|MP|BP)/gi)) result[match[2].toLowerCase()] = Number(match[1]);
-  if(!Object.keys(result).length && Number.isFinite(Number(value)) && Number(value) > 0) result[fallbackResource] = Number(value);
-  return result;
+  return parseResourceCosts(value,fallbackResource);
 }
 
 export function structuredCloneSafe(value) {
