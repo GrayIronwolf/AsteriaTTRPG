@@ -16,7 +16,8 @@ window.AsteriaTalents = Object.freeze({ ...talentSystem });
 function openRoute(route) {
   // Normal owner/navigation entry must not inherit a previous GM visit.
   if(window.history.state?.gmReturn) {
-    const { gmReturn, ...state } = window.history.state;
+    const state = {...window.history.state};
+    delete state.gmReturn;
     window.history.replaceState(state, '');
   }
   activateReactDashboard();

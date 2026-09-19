@@ -646,7 +646,8 @@ test('62. Soul Damage seals HP and recovers only through the long-rest flow', ()
   const player=read('src/dashboards/PlayerDashboardOverview.jsx');
   const gm=read('src/dashboards/GMDashboard.jsx');
   const ui=read('src/components/WorkspaceUI.jsx');
-  ['updateCampaignSpecialDamage','takeCampaignCharacterRest','clampHpForSoulDamage'].forEach(name=>assert.match(firebase,new RegExp(name)));
+  ['updateCampaignSpecialDamage','takeCampaignCharacterRest'].forEach(name=>assert.match(firebase,new RegExp(name)));
+  assert.match(fs.readFileSync('src/state/resourceEngine.mjs','utf8'),/maximum-soulDamageValue/);
   assert.match(service,/updateSpecialDamage/);
   assert.match(service,/takeRest/);
   assert.match(player,/Long Rest Soul Recovery/);

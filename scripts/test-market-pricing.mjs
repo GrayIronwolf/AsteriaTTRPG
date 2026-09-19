@@ -129,7 +129,7 @@ test('database and transaction boundaries enforce shared market pricing', () => 
   assert.match(rules, /hasValidMarketPricing\(request\.resource\.data\)/);
   assert.match(firebase, /createAsteriaItem/);
   assert.match(firebase, /getPlayerPurchasePriceCopper/);
-  assert.match(firebase, /getPlayerSaleValueCopper/);
+  assert.match(fs.readFileSync('functions/commands.mjs','utf8'), /getPlayerSaleValueCopper/);
   assert.match(crafting, /marketValue:Number\(p\.marketValue/);
   assert.match(crafting, /marketPrice:Number\(p\.marketPrice/);
   assert.doesNotMatch(crafting.slice(crafting.indexOf('function finalItemSnapshot'), crafting.indexOf('function serializeProjectForm')), /craftedValue|craftedPrice|sellingPrice|purchasePrice/);

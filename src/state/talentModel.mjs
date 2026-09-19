@@ -84,7 +84,7 @@ export function reconcileTalentEffects(character,catalog=[],options={}) {
   const owned=ownedTalents(character,catalog);
   const multiplier=Math.max(1,...owned.filter(row=>['cleric:mana-well','spellblade:mana-well'].includes(row.id)).map(row=>row.rank*3));
   const bloodRank=owned.find(row=>row.id==='bloodhunter:blood-control')?.rank || 0;
-  const zealRank=owned.find(row=>row.id==='paladin:zeal')?.rank || 0;
+  const zealRank=owned.find(row=>['paladin:paladin-s-zeal','paladin:zeal'].includes(row.id))?.rank || 0;
   if(zealRank && next.zp===undefined) next.zp=[0,zealRank>=4?15:10];
   next.talentResourceEffects=[{id:'talent:mana-well',name:'Mana Well',target:'mp.maximum',operation:'MULTIPLY',value:multiplier},{id:'talent:blood-control',name:'Blood Control',target:'bp.maximum',operation:'ADD',value:bloodRank*5},...(zealRank?[{id:'talent:zeal',name:'Zeal',target:'zp.maximum',operation:'SET',value:zealRank>=4?15:10}]:[])];
   next=reconcileResources(next,options);

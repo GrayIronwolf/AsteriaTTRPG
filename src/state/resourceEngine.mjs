@@ -86,7 +86,7 @@ export function parseResourceCosts(input,fallback='mp',strict=false) {
   if(Number.isFinite(Number(text))) {add(fallback,Number(text));return result;}
   const pattern=/(\d+(?:\.\d+)?)\s*(HP|SP|MP|BP|ZP|Health(?: Points?)?|Stamina(?: Points?)?|Mana(?: Points?)?|Blood Points?|Zeal Points?)\b/gi;
   for(const match of text.matchAll(pattern)) add(match[2],match[1]);
-  if(strict && (!Object.keys(result).length || text.replace(pattern,'').replace(/[\s,+/&]/g,''))) throw new Error('This resource cost needs a structured rule from the GM.');
+  if(strict && (!pattern.test(text) || text.replace(pattern,'').replace(/[\s,+/&]/g,''))) throw new Error('This resource cost needs a structured rule from the GM.');
   return result;
 }
 export function applyResourceChanges(character,{costs={},restore={},delta={},keepAlive=false}={}) {

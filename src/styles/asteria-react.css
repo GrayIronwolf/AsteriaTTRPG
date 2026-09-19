@@ -2190,3 +2190,26 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-talent-effects article{display:flex;gap:16px;flex-wrap:wrap;align-items:center;border-top:1px solid #344456;padding:14px 0}.react-talent-effects article>div{display:grid;gap:6px;flex:1}.react-talent-effects small{color:#a9bbcd}.react-talent-effects details{flex-basis:100%;order:3}
 .react-talent-bonus-list p{font-size:13px}.react-talent-bonus-list b{color:#e5c990;margin-right:10px}
 @media(max-width:600px){.react-talent-facts{grid-template-columns:1fr}.react-talent-rank-tabs{gap:5px}.react-talent-rank-tabs button{padding:9px 10px}.react-talent-legend{gap:10px}.react-talent-workspaces .react-tier-tabs{display:flex;overflow-x:auto}.react-talent-workspaces .react-tier-tabs button{min-width:75px}.react-talent-purchase .primary,.react-talent-use .primary{width:100%}}
+/* Integrated character systems use the existing panel/grid visual language. */
+.react-core-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; border:0; padding:12px 0; min-width:0; }
+.react-core-form label, .react-core-rest-request label { display:grid; gap:6px; min-width:0; }
+.react-core-form input, .react-core-form select, .react-core-form textarea, .react-core-rest-request input { width:100%; min-width:0; box-sizing:border-box; }
+.react-core-form small, .react-core-effect-row { grid-column:1 / -1; }
+.react-core-effect-row { display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:end; }
+.react-core-form .react-core-checkbox { display:flex; align-items:center; gap:8px; }
+.react-core-checkbox input { width:auto; }
+.react-core-condition, .react-core-rest-request { padding:12px 0; border-bottom:1px solid rgba(255,255,255,.12); }
+.react-core-condition summary { cursor:pointer; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.react-core-editor summary { cursor:pointer; padding:12px 0; }
+.react-core-condition li, .react-core-effect-list li { overflow-wrap:anywhere; }
+.react-core-effect-list { display:grid; gap:8px; padding-left:18px; }
+.react-core-effect-list li span { display:block; opacity:.8; }
+.react-core-table { overflow-x:auto; margin:12px 0; }
+.react-core-table table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.react-core-table caption { text-align:left; padding:6px 0; }
+.react-core-table th, .react-core-table td { text-align:left; padding:8px; border-bottom:1px solid rgba(255,255,255,.12); }
+.react-player-overview-grid > .react-core-effects { grid-column:span 6; }
+.react-gm-tools-grid > .react-core-conditions { grid-column:auto; }
+.react-core-rest-request { display:grid; gap:10px; }
+@container (max-width:900px) { .react-player-overview-grid > .react-core-effects { grid-column:1 / -1; } }
+@media (max-width:640px) { .react-core-form { grid-template-columns:1fr; } .react-core-effect-row { grid-template-columns:1fr 1fr; } .react-core-condition summary { display:grid; } }

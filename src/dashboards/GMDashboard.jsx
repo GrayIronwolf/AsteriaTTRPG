@@ -1,3 +1,8 @@
+import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './CharacterSystemsPanels.jsx';
+import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
+import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
+import { talentCatalog } from './characterWorkspaceData.js';
+import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { openGMCharacter, restoredGMView } from '../app/gmCharacterNavigation.mjs';
@@ -36,10 +41,7 @@ function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }
   const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
   return <button className={`react-party-card ${selected ? 'active' : ''}`} type="button" onClick={onSelect} onDoubleClick={onOpen}>
     <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
-    <ResourceBar compact label="HP" kind="hp" value={character.hp?.[0]} maximum={character.hp?.[1]} reserved={soulDamage} />
-    <ResourceBar compact label="SP" kind="sp" value={character.sp?.[0]} maximum={character.sp?.[1]} />
-    <ResourceBar compact label="MP" kind="mp" value={character.mp?.[0]} maximum={character.mp?.[1]} />
-    {Array.isArray(character.bp) ? <ResourceBar compact label="BP" kind="bp" value={character.bp[0]} maximum={character.bp[1]} /> : null}
+    {resourceDefinitions(character).map(row=>{const [value,maximum]=resourcePair(storedResource(character,row.id));return <ResourceBar key={row.id} compact label={row.name} kind={row.id} value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;})}
     <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
   </button>;
 }
@@ -442,7 +444,10 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
 }
 
 export function GMDashboard({ campaignId }) {
-  const live = useCampaignLiveData(campaignId, { mode: 'gm' });
+  const rawLive = useCampaignLiveData(campaignId, { mode: 'gm' });
+  const derivedCharacters=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,reconcileCharacterSystems(character,talentCatalog(character),{encounter:rawLive.encounter,now:rawLive.clock})])),[rawLive.characters,rawLive.encounter,rawLive.clock]);
+  const live={...rawLive,characters:derivedCharacters};
+  const coreSyncError=useCharacterSystemsSync(campaignId,rawLive.characters,rawLive.encounter,rawLive.session?.editable);
   const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
@@ -467,7 +472,7 @@ export function GMDashboard({ campaignId }) {
   },[campaignId,live.campaign,live.gmWorkspace,live.gmWorkspaceLoaded,live.itemEcosystem,live.partyWorkspace]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
-  const run = async operation => { setBusy(true); setActionError(''); try { await operation(); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
+  const run = async operation => { setBusy(true); setActionError(''); try { const result=await operation(); if(result?.ok===false) setActionError(result.error || 'The change could not be saved.'); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
   if(!window.AsteriaCharacterAccess.isGM(live.campaign, firebaseService.currentUser()?.uid)) return <div className="react-route-state" role="alert">You do not have GM access to this campaign.</div>;
   return <AsteriaAppShell
@@ -476,11 +481,11 @@ export function GMDashboard({ campaignId }) {
     title={live.campaign?.name || 'Campaign'}
     subtitle="Live campaign control, party resources, rewards, encounters, and session tools."
     sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} onOpen={character => openGMCharacter(live.campaign, character, { tab })} />}
-    actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError} loading={live.loading} session={live.session} /></>}
+    actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'main' ? <div className="react-gm-main-grid">
-      <CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
+      <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/><CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
       <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
     </div> : null}
@@ -488,7 +493,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
     {tab === 'economy' ? <EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/> : null}
     {tab === 'crafting' ? <CraftingWorkspace workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
-    {tab === 'tools' ? <div className="react-gm-tools-grid"><CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
+    {tab === 'tools' ? <div className="react-gm-tools-grid">{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
   </AsteriaAppShell>;

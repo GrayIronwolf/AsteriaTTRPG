@@ -24,9 +24,11 @@ export function AsteriaAppProvider({ children }) {
     const updateAccount = () => setAccount(accountSnapshot());
     window.addEventListener('asteria:firebase-ready', updateAccount);
     window.addEventListener('asteria:auth-changed', updateAccount);
+    window.addEventListener('asteria:firebase-signed-out', updateAccount);
     return () => {
       window.removeEventListener('asteria:firebase-ready', updateAccount);
       window.removeEventListener('asteria:auth-changed', updateAccount);
+      window.removeEventListener('asteria:firebase-signed-out', updateAccount);
     };
   }, []);
 

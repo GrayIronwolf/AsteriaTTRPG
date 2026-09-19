@@ -1,9 +1,13 @@
+import { characterClasses } from '../state/talentModel.mjs';
+import { useAsyncAction } from './useAsyncAction.js';
+import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
+import { effectiveCharacteristicValue } from '../state/effectsEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useState } from 'react';
 import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel, ResourceBar } from './WorkspaceUI.jsx';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
-import { CHARACTERISTICS, characteristicTier, characteristicValue, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
+import { CHARACTERISTICS, characteristicTier, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 import { soulDamageValue } from '../state/specialDamageModel.mjs';
 import { ASTERIA_CURRENCIES, currencyDefinitionFor } from '../systems/currency/currencyConfig.mjs';
 
@@ -68,25 +72,8 @@ export function selectCurrencies(character = {}, campaign = {}) {
   return [...canonical, ...additional];
 }
 
-function characterClasses(character = {}) {
-  const values = [
-    character.klass,
-    typeof character.class === 'string' ? character.class : character.class?.title || character.class?.name,
-    character.character?.class?.title,
-    ...(Array.isArray(character.classNames) ? character.classNames : []),
-    ...(Array.isArray(character.classes) ? character.classes.map(value => value?.title || value?.name || value) : []),
-    ...(Array.isArray(character.secondaryClasses) ? character.secondaryClasses.map(value => value?.title || value?.name || value) : [])
-  ].filter(Boolean).map(String);
-  return [...new Set(values)];
-}
-
 function characterClass(character = {}) {
   return characterClasses(character).join(' / ') || 'Unselected Class';
-}
-
-function isBloodhunter(character = {}) {
-  const classes = [characterClass(character), ...(character.classNames || []), ...(character.classKeys || [])];
-  return classes.some(value => String(value || '').toLowerCase().includes('bloodhunter'));
 }
 
 function progression(character = {}) {
@@ -113,13 +100,11 @@ function resourcePair(value) {
 
 function ResourceControl({ label, resource, value, editable, onResourceChange, reserved = 0 }) {
   const [amount, setAmount] = useState('');
-  const [busy, setBusy] = useState(false);
+  const {busy,message,run}=useAsyncAction();
   const pair = resourcePair(value);
-  const update = async direction => {
+  const update = direction => {
     if(!onResourceChange || !isManualNumber(amount,{min:1})) return;
-    setBusy(true);
-    try { await onResourceChange(resource, direction * manualNumber(amount)); }
-    finally { setBusy(false); }
+    return run(()=>onResourceChange(resource,direction*manualNumber(amount)));
   };
   return <div className="react-player-resource-row">
     <ResourceBar label={label} kind={resource} value={pair[0]} maximum={pair[1]} compact reserved={reserved} />
@@ -128,6 +113,7 @@ function ResourceControl({ label, resource, value, editable, onResourceChange, r
       <button aria-label={`Remove ${amount || 'amount from'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(-1)} type="button">-</button>
       <button aria-label={`Add ${amount || 'amount to'} ${label}`} disabled={!editable || busy || !isManualNumber(amount,{min:1})} onClick={() => update(1)} type="button">+</button>
     </div>
+    {message?<small role="status">{message}</small>:null}
   </div>;
 }
 
@@ -173,12 +159,7 @@ export function ExperienceBar({ character = {} }) {
 
 export function ResourceBarGroup({ character = {}, editable, onResourceChange }) {
   const soulDamage = soulDamageValue(character);
-  const resources = [
-    ['HP', 'hp', character.hp || [0, 0], soulDamage],
-    ['MP', 'mp', character.mp || [0, 0], 0],
-    ['SP', 'sp', character.sp || [0, 0], 0]
-  ];
-  if(isBloodhunter(character) || Array.isArray(character.bp)) resources.push(['BP', 'bp', character.bp || [0, 20], 0]);
+  const resources=resourceDefinitions(character).map(row=>[row.name,row.id,storedResource(character,row.id),row.id==='hp'?soulDamage:0]);
   return <section className="react-player-topbar-section react-player-resources" aria-label="Character resources">
     <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="use" /><span>Core Resources</span></div>
     <div className="react-player-resource-list">{resources.map(([label, resource, value, reserved]) => <ResourceControl key={resource} label={label} resource={resource} value={value} reserved={reserved} editable={editable} onResourceChange={onResourceChange} />)}</div>
@@ -190,7 +171,7 @@ export function CharacteristicSummary({ character = {} }) {
     <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="character" /><span>Characteristics</span></div>
     <div className="react-player-characteristic-grid">
       {CHARACTERISTICS.map(stat => {
-        const score = characteristicValue(character, stat.key);
+        const score = effectiveCharacteristicValue(character, stat.key);
         const tier = characteristicTier(score);
         const modifier = Number(tier.modifier || 0);
         return <article key={stat.key} title={`${stat.label}: ${score}, ${tier.label}${modifier ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`}>

@@ -1,3 +1,5 @@
+import { useAsyncAction } from '../components/useAsyncAction.js';
+import { ConditionsPanel, EffectsSummary, RestRules } from './CharacterSystemsPanels.jsx';
 import { TalentDetails } from './ClassTalentTree.jsx';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
@@ -142,7 +144,7 @@ function WeaponsPanel({ character, onNavigate, style }) {
 
 function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style }) {
   const quickSlots = values(character.quickSlots).slice(0, 4).map(record);
-  const useItem = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'use', itemId:item.id }));
+  const useItem = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'use', itemId:item.id, expectedCoreRevision:Number(character.coreRevision || 0) }));
   return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style}>
     <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={!editable || busy} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? useItem : undefined} />)}</div>
   </DashboardPanel>;
@@ -179,7 +181,7 @@ function SpellSummary({ campaignId, character, spells, editable, busy, onNavigat
   const elements = useMemo(() => [...new Set(spells.map(spell => record(spell).element || record(spell).magicType).filter(Boolean))], [spells]);
   const [filter, setFilter] = useState('All');
   const visible = filter === 'All' ? spells : spells.filter(spell => (record(spell).element || record(spell).magicType) === filter);
-  const cast = spell => run(() => firebaseService.castSpell(campaignId, character.id, spell, parseResourceCost(spell.costs || spell.cost)));
+  const cast = spell => run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
   return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className="react-overview-spells" style={style}>
     {elements.length ? <div className="react-ability-filters" aria-label="Spell element filters">{['All', ...elements].map(element => <button className={filter === element ? 'active' : ''} aria-pressed={filter === element} key={element} onClick={() => setFilter(element)} type="button">{element}</button>)}</div> : null}
     {visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={cast} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
@@ -190,10 +192,6 @@ function SkillsSummary({ skills, onNavigate, style }) {
   return <DashboardPanel icon="skills" title="Skills" compact className="react-overview-skills" style={style}>
     {skills.length ? <div className="react-dashboard-skill-grid">{skills.slice(0, 8).map((skill, index) => { const entry = record(skill); return <button key={entry.id || entry.name || index} type="button" onClick={() => onNavigate('skills')}><AsteriaIcon name="skills" /><span><b>{entry.name || entry.title}</b><small>{entry.rankName || entry.rank || 'Novice'}</small></span></button>; })}</div> : <DashboardEmpty title="No Selected Skills" description="Starting skills selected in the Character Forge will appear here." actionLabel="Open Skills" onAction={() => onNavigate('skills')} />}
   </DashboardPanel>;
-}
-
-function ConditionsSummary({ conditions, style }) {
-  return <DashboardPanel icon="info" title="Conditions" compact className="react-overview-conditions" style={style}><div className="react-condition-list">{conditions.map((condition, index) => { const entry = record(condition); return <StatusPill key={entry.id || entry.name || index}>{entry.name}</StatusPill>; })}{!conditions.length ? <p className="react-quiet-state">No active conditions.</p> : null}</div></DashboardPanel>;
 }
 
 function SpecialDamagePanel({ character, style }) {
@@ -213,7 +211,7 @@ function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }
   const soulDamage = soulDamageValue(character);
   const [showRecovery, setShowRecovery] = useState(false);
   const [recovery, setRecovery] = useState('');
-  const takeRest = async (type, soulRecovery = 0) => run(() => firebaseService.takeRest(campaignId, character.id, type, { soulRecovery, source:'Character Dashboard' }));
+  const takeRest = async (type, soulRecovery = 0) => run(() => firebaseService.takeRest(campaignId, character.id, type, { soulRecovery, source:'Character Dashboard',expectedSequence:Number(character.restState?.sequence || 0) }));
   const requestLongRest = () => {
     if(!soulDamage) return takeRest('long');
     setRecovery('');
@@ -225,10 +223,10 @@ function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }
     if(result?.ok) setShowRecovery(false);
   };
   return <DashboardPanel icon="rest" title="Rest & Recovery" compact className="react-overview-rest" style={style}>
-    <div className="react-rest-actions"><button disabled={!editable || busy} type="button" onClick={() => takeRest('short')}>Short Rest</button><button className="primary" disabled={!editable || busy} type="button" onClick={requestLongRest}>Long Rest</button></div>
-    <p className="react-special-damage-copy">Short Rest restores 35% SP. Long Rest restores 50% HP and MP, plus all SP. Remaining Soul Damage continues to cap HP.</p>
+    <div className="react-rest-actions"><button disabled={!editable || busy || character.restState?.request?.status==='pending'} type="button" onClick={() => takeRest('short')}>Short Rest</button><button className="primary" disabled={!editable || busy || character.restState?.request?.status==='pending'} type="button" onClick={requestLongRest}>Request Long Rest</button></div>
+    <p className="react-special-damage-copy">Long Rest requires GM approval. Remaining Soul Damage continues to cap HP.</p><RestRules character={character}/>{character.restState?.request?<p role="status">Long Rest: {character.restState.request.status}{character.restState.request.note?` — ${character.restState.request.note}`:''}</p>:null}
     {soulDamage ? <StatusPill tone="pending">{soulDamage} Soul Damage requires time</StatusPill> : <StatusPill tone="success">No Soul recovery required</StatusPill>}
-    {showRecovery ? <Modal title="Long Rest Soul Recovery" eyebrow="Natural Recovery" busy={busy} onClose={() => setShowRecovery(false)} footer={<><button disabled={busy} type="button" onClick={() => setShowRecovery(false)}>Cancel</button><button className="primary" disabled={busy||!isManualNumber(recovery,{min:0,max:soulDamage,optional:true})} type="button" onClick={applyLongRest}>Apply Long Rest</button></>}>
+    {showRecovery ? <Modal title="Long Rest Soul Recovery" eyebrow="Natural Recovery" busy={busy} onClose={() => setShowRecovery(false)} footer={<><button disabled={busy} type="button" onClick={() => setShowRecovery(false)}>Cancel</button><button className="primary" disabled={busy||!isManualNumber(recovery,{min:0,max:soulDamage,optional:true})} type="button" onClick={applyLongRest}>Request Long Rest</button></>}>
       <div className="react-soul-recovery-form">
         <p>Soul Damage can recover only through the natural passage of time. Enter the amount recovered during this long rest.</p>
         <ResourceBar label="Current Soul Damage" kind="hp" value={resourcePair(character.hp)[0]} maximum={resourcePair(character.hp)[1]} reserved={soulDamage} />
@@ -250,37 +248,22 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
   </div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, onNavigate }) {
-  const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, isGM=false, sessionEditable=editable, clock={}, onNavigate }) {
+  const {message,busy,run}=useAsyncAction();
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
-  const conditions = values(character.conditions).map(record);
   const preferences = normalizeDashboardPreferences(character);
   const visible = key => !preferences.hiddenPanels.includes(key);
   const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
-  const run = async operation => {
-    setBusy(true);
-    setMessage('Saving...');
-    try {
-      const result = await operation();
-      setMessage(result?.ok ? 'Dashboard updated.' : result?.error || 'That action could not be completed.');
-      return result;
-    } catch(error) {
-      setMessage(error.message || String(error));
-      return { ok:false };
-    } finally {
-      setBusy(false);
-    }
-  };
   return <>
     <div className="react-player-overview-grid">
       {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
       {visible('talents') ? <TalentSummary talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
       {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
       {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
-      {visible('conditions') ? <ConditionsSummary conditions={conditions} style={{ order:order('conditions') }} /> : null}
+      {visible('conditions') ? <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock} style={{ order:order('conditions') }} /> : null}
+      <EffectsSummary character={character} clock={clock} style={{order:order('conditions')+4}}/>
       <SpecialDamagePanel character={character} style={{ order:order('conditions') + 1 }} />
       <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run} style={{ order:order('conditions') + 2 }} />
       {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 3 }} /> : null}

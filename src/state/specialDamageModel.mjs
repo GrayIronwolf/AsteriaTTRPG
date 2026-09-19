@@ -1,3 +1,4 @@
+const number=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 import { resourcePair, soulDamageValue, clampHpForSoulDamage } from './resourceValues.mjs';
 import { recoverRestResources } from './resourceEngine.mjs';
 export { resourcePair, soulDamageValue, soulHealingCap, clampHpForSoulDamage } from './resourceValues.mjs';

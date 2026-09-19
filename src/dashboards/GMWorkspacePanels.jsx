@@ -16,10 +16,6 @@ function SectionStatus({ message }) {
   return message ? <p className="react-action-message" role="status">{message}</p> : null;
 }
 
-function RecordActions({ onEdit, onDelete }) {
-  return <div className="react-record-actions"><button type="button" onClick={onEdit}>Edit</button><button type="button" className="danger" onClick={onDelete}>Delete</button></div>;
-}
-
 const emptyQuestDraft=()=>({id:'',title:'',objective:'',reward:{...normalizeQuestReward(),xp:'',currency:{key:'gold',amount:''}},status:'Draft',visibility:'Party',...questDetails(),requiresGMApproval:true,gmNotes:''});
 
 export function QuestWorkspace({ campaignId, workspace, characters, saveSection }) {

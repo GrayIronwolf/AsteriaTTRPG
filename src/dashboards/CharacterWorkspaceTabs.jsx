@@ -1,13 +1,14 @@
+import { characterCheck } from '../state/effectsEngine.mjs';
+import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
 import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
 import { QUEST_STATUSES, questIsClosed, questProgress } from '../state/questWorkflowModel.mjs';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EmptyState, FilterControl, Modal, Panel, ResourceBar, SearchField, StatusPill, Tabs } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { questRewardClaimed, questRewardSummary } from '../state/questRewardModel.mjs';
 import { CHARACTERISTICS, characteristicCap, characteristicTier, characteristicValue, parseResourceCost, sessionRemainingMs } from '../state/liveWorkspaceModel.mjs';
 import { characterClasses, knownMagic, knownSpells, quests, raceTraits, selectedSkills } from './characterWorkspaceData.js';
 
-function resultMessage(result, fallback='Saved.') { return result?.ok ? fallback : result?.error || 'That change could not be saved.'; }
 function formatDuration(milliseconds) {
   const seconds=Math.max(0,Math.floor(milliseconds/1000));
   return `${String(Math.floor(seconds/3600)).padStart(2,'0')}:${String(Math.floor(seconds%3600/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
@@ -22,12 +23,7 @@ export function SessionGate({ session }) {
   </div>;
 }
 
-function useAction() {
-  const [busy,setBusy]=useState(false);
-  const [message,setMessage]=useState('');
-  const run=async (operation,success='Saved.')=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(resultMessage(result,success));return result;}catch(error){setMessage(error.message||String(error));return {ok:false,error:error.message};}finally{setBusy(false);}};
-  return {busy,message,run,setMessage};
-}
+
 
 function InfoModal({ record, title, eyebrow, onClose }) {
   if(!record) return null;
@@ -162,7 +158,7 @@ export function CharacterTab({ campaignId, character, editable }) {
 
 export { TalentsTab } from './ClassTalentTree.jsx';
 
-export function SkillsTab({ campaignId, character, editable }) {
+export function SkillsTab({ campaignId, character, editable, clock={} }) {
   const skills=selectedSkills(character);
   const [details,setDetails]=useState(null);
   const [query,setQuery]=useState('');
@@ -170,7 +166,7 @@ export function SkillsTab({ campaignId, character, editable }) {
   const action=useAction();
   const categories=['All',...new Set(skills.map(skill=>skill.category).filter(Boolean))];
   const visible=skills.filter(skill=>(category==='All'||skill.category===category)&&`${skill.name} ${skill.rankName} ${skill.category} ${skill.description||''}`.toLowerCase().includes(query.toLowerCase()));
-  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/><FilterControl label="Category" value={category} onChange={setCategory}>{categories.map(value=><option key={value}>{value}</option>)}</FilterControl></div><div className="react-card-gallery">{visible.map(skill=><article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}><b>{skill.name}</b><strong>{skill.rankName}</strong><small>{skill.category}</small><div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div><small>{skill.target?`${skill.successes}/${skill.target} successful checks`:'Maximum rank'}</small><button disabled={!editable||action.busy||!skill.target} onClick={()=>action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,skill),`${skill.name} success recorded.`)}>Successful Check</button><button onClick={()=>setDetails(skill)}>Techniques</button></article>)}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/></Panel>;
+  return <Panel title="Character Skills" action={<StatusPill>{visible.length} of {skills.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search selected skills..."/><FilterControl label="Category" value={category} onChange={setCategory}>{categories.map(value=><option key={value}>{value}</option>)}</FilterControl></div><div className="react-card-gallery">{visible.map(skill=><article key={skill.id} className="react-skill-card" onDoubleClick={()=>setDetails(skill)}><b>{skill.name}</b><strong>{skill.rankName}</strong><small>Check modifier {characterCheck(character,`skills.${skill.id}`,0,clock).value}{characterCheck(character,`skills.${skill.id}`,0,clock).advantage?' · Advantage':characterCheck(character,`skills.${skill.id}`,0,clock).disadvantage?' · Disadvantage':''}</small><small>{skill.category}</small><div className="react-skill-meter"><i style={{width:`${skill.target?Math.min(100,skill.successes/skill.target*100):100}%`}}/></div><small>{skill.target?`${skill.successes}/${skill.target} successful checks`:'Maximum rank'}</small><button disabled={!editable||action.busy||!skill.target} onClick={()=>action.run(()=>firebaseService.recordSkillSuccess(campaignId,character.id,skill),`${skill.name} success recorded.`)}>Successful Check</button><button onClick={()=>setDetails(skill)}>Techniques</button></article>)}{!visible.length?<EmptyState title={skills.length?'No matching skills':'No selected skills'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.rankName||''} Skill Techniques`} onClose={()=>setDetails(null)}/></Panel>;
 }
 
 export function SpellsTab({ campaignId, character, editable }) {
@@ -181,7 +177,7 @@ export function SpellsTab({ campaignId, character, editable }) {
   const [details,setDetails]=useState(null);
   const action=useAction();
   const visible=spells.filter(spell=>(filter==='All'||spell.element.toLowerCase().includes(filter.toLowerCase()))&&`${spell.name} ${spell.element} ${spell.rank} ${spell.description||''}`.toLowerCase().includes(query.toLowerCase()));
-  const cast=spell=>action.run(()=>firebaseService.castSpell(campaignId,character.id,spell,parseResourceCost(spell.costs||spell.cost)),`${spell.name} cast once.`);
+  const cast=spell=>action.run(()=>firebaseService.castSpell(campaignId,character.id,{...spell,expectedCoreRevision:Number(character.coreRevision || 0)},parseResourceCost(spell.costs||spell.cost)),`${spell.name} cast once.`);
   return <Panel title="Spells" action={<StatusPill>{visible.length} of {spells.length}</StatusPill>}><div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search known spells..."/></div><div className="react-filter-tabs"><button className={filter==='All'?'active':''} onClick={()=>setFilter('All')}>All</button>{elements.map(element=><button key={element} className={filter===element?'active':''} onClick={()=>setFilter(element)}>{element}</button>)}</div><div className="react-card-gallery">{visible.map(spell=><article className="react-spell-card" key={spell.id} onDoubleClick={()=>editable&&cast(spell)}><b>{spell.name}</b><div className="react-small-card-image">{spell.image?<img src={spell.image} alt="" loading="lazy"/>:<span>{spell.name.charAt(0)}</span>}</div><small>{spell.element} | {spell.rank}</small><small>{Object.entries(parseResourceCost(spell.costs||spell.cost)).map(([key,value])=>`${value} ${key.toUpperCase()}`).join(' | ')||'No resource cost'}</small><div><button onClick={()=>setDetails(spell)}>Details</button><button className="primary" disabled={!editable||action.busy} onClick={()=>cast(spell)}>Cast</button></div></article>)}{!visible.length?<EmptyState title={spells.length?'No matching spells':'No known spells'}/>:null}</div><p>{action.message}</p><InfoModal record={details} eyebrow={`${details?.element||''} Spell`} onClose={()=>setDetails(null)}/></Panel>;
 }
 
