@@ -1,27 +1,35 @@
 ---
-title: "Sorcerer"
-slug: "sorcerer"
+title: Sorcerer
+slug: sorcerer
 type: class
-classCategory: "Magical Classes"
-role: "Innate power caster"
-primary_stat: "CHA"
-secondary_stat: "END"
-combat_style: "Raw spell force"
-magic_type: "Innate Arcane"
-difficulty: "Intermediate"
-class_colour: "#a855f7"
-symbol: "S"
+classCategory: Magical Classes
+role: Innate power caster
+primaryStat: CHA
+secondaryStat: END
+combatStyle: Raw spell force
+magicType: Innate Arcane
+difficulty: Intermediate
+classColour: '#a855f7'
+symbol: S
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "innate"
-  - "arcane"
+  - class
+  - magical-classes
+  - magical
+  - innate
+  - arcane
 visibility: public
 sourceOrder: 8
+id: 'class:content-classes-sorcerer-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-sorcerer-index'
+  - /compendium/class/classes/sorcerer
+  - content/classes/sorcerer/index.md
 ---
 
 # Sorcerer

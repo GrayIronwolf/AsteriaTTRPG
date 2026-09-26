@@ -1,0 +1,64 @@
+---
+title: Sentinel Technique
+slug: sentinel-technique
+type: talent
+className: Sentinel
+classSlug: sentinel
+classCategory: Religious Classes
+talentTier: Tier 2
+tier: Tier 2
+ranks: 5
+prerequisite: Sentinel Foundation Rank 2
+cost: 1 Talent Point
+cooldown: Passive
+scaling: Improves by rank
+synergy: Information coming soon
+tags:
+  - talent
+  - sentinel
+  - tier-2
+visibility: public
+sourceOrder: 3
+id: 'talent:content-classes-sentinel-talents-tier-2-sentinel-technique-index'
+domain: talent
+categoryPath:
+  - Religious Classes
+  - Sentinel
+  - Tier 2
+aliases:
+  - 'talent:content-classes-sentinel-talents-tier-2-sentinel-technique-index'
+  - /compendium/talent/classes/talent-tree/talent-tree/sentinel-technique
+  - content/classes/sentinel/talents/tier-2/sentinel-technique/index.md
+---
+
+# Sentinel Technique
+
+## Overview
+Improves by rank
+
+## Rank 1
+Information coming soon.
+
+## Rank 2
+Information coming soon.
+
+## Rank 3
+Information coming soon.
+
+## Rank 4
+Information coming soon.
+
+## Rank 5
+Information coming soon.
+
+## Prerequisites
+Sentinel Foundation Rank 2
+
+## Scaling
+Improves by rank
+
+## Synergy
+Information coming soon
+
+## GM Notes
+Information coming soon

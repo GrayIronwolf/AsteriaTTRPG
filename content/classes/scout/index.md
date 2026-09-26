@@ -1,27 +1,35 @@
 ---
-title: "Scout"
-slug: "scout"
+title: Scout
+slug: scout
 type: class
-classCategory: "Ranger Classes"
-role: "Recon and ambush specialist"
-primary_stat: "AGI"
-secondary_stat: "DEX"
-combat_style: "Mobility and ambush"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#9bd96b"
-symbol: "S"
+classCategory: Ranger Classes
+role: Recon and ambush specialist
+primaryStat: AGI
+secondaryStat: DEX
+combatStyle: Mobility and ambush
+magicType: None
+difficulty: Beginner
+classColour: '#9bd96b'
+symbol: S
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "ranger-classes"
-  - "ranger"
-  - "scout"
-  - "ambush"
+  - class
+  - ranger-classes
+  - ranger
+  - scout
+  - ambush
 visibility: public
 sourceOrder: 20
+id: 'class:content-classes-scout-index'
+domain: class
+categoryPath:
+  - Ranger Classes
+aliases:
+  - 'class:content-classes-scout-index'
+  - /compendium/class/classes/scout
+  - content/classes/scout/index.md
 ---
 
 # Scout

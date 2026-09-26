@@ -1,28 +1,38 @@
 ---
-title: "Artic Vulpin"
-slug: "artic-vulpin"
+title: Artic Vulpin
+slug: artic-vulpin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Canine Races"
-tertiaryCategory: "Fox Races"
+raceCategory: Beastkin Races
+secondaryCategory: Canine Races
+tertiaryCategory: Fox Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "canine-races"
-  - "fox-races"
+  - race
+  - beastkin-races
+  - canine-races
+  - fox-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 89
+id: 'race:content-races-artic-vulpin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Canine Races
+  - Fox Races
+aliases:
+  - 'race:content-races-artic-vulpin-index'
+  - /compendium/race/artic-vulpin
+  - content/races/artic-vulpin/index.md
 ---
 
 # Artic Vulpin

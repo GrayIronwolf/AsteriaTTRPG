@@ -1,27 +1,35 @@
 ---
-title: "Druid"
-slug: "druid"
+title: Druid
+slug: druid
 type: class
-classCategory: "Magical Classes"
-role: "Nature caster and shapeshifter"
-primary_stat: "WIS"
-secondary_stat: "END"
-combat_style: "Nature magic and forms"
-magic_type: "Nature"
-difficulty: "Intermediate"
-class_colour: "#35dd86"
-symbol: "D"
+classCategory: Magical Classes
+role: Nature caster and shapeshifter
+primaryStat: WIS
+secondaryStat: END
+combatStyle: Nature magic and forms
+magicType: Nature
+difficulty: Intermediate
+classColour: '#35dd86'
+symbol: D
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "nature"
-  - "forms"
+  - class
+  - magical-classes
+  - magical
+  - nature
+  - forms
 visibility: public
 sourceOrder: 5
+id: 'class:content-classes-druid-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-druid-index'
+  - /compendium/class/classes/druid
+  - content/classes/druid/index.md
 ---
 
 # Druid

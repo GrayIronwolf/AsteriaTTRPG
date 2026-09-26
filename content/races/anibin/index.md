@@ -1,28 +1,38 @@
 ---
-title: "Anibin"
-slug: "anibin"
+title: Anibin
+slug: anibin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Canine Races"
-tertiaryCategory: "Dog Races"
+raceCategory: Beastkin Races
+secondaryCategory: Canine Races
+tertiaryCategory: Dog Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "canine-races"
-  - "dog-races"
+  - race
+  - beastkin-races
+  - canine-races
+  - dog-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 83
+id: 'race:content-races-anibin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Canine Races
+  - Dog Races
+aliases:
+  - 'race:content-races-anibin-index'
+  - /compendium/race/anibin
+  - content/races/anibin/index.md
 ---
 
 # Anibin

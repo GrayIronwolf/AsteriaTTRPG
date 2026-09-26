@@ -1,27 +1,36 @@
 ---
-title: "Forest Gnome"
-slug: "forest-gnome"
+title: Forest Gnome
+slug: forest-gnome
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Gnome Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Gnome Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "gnome-races"
+  - race
+  - small-races
+  - gnome-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 5
+id: 'race:content-races-forest-gnome-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Gnome Races
+aliases:
+  - 'race:content-races-forest-gnome-index'
+  - /compendium/race/forest-gnome
+  - content/races/forest-gnome/index.md
 ---
 
 # Forest Gnome

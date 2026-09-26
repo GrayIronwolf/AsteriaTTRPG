@@ -1,21 +1,29 @@
 ---
-title: "Imeriel"
-slug: "imeriel"
+title: Imeriel
+slug: imeriel
 type: theology
-category: "The Nethyros Pantheon"
-pantheon: "The Nethyros Pantheon"
-court: ""
-deity_title: "God of the Veil"
-divine_domain: "God of the Veil"
-domain: "God of the Veil"
-source_path: "2. Devine Pantheons/4. The Nethyros Pantheon/Imeriel - God of the Veil.md"
-image: ""
+category: The Nethyros Pantheon
+pantheon: The Nethyros Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-nethyros-pantheon"
+  - theology
+  - deity
+  - the-nethyros-pantheon
 visibility: public
+deityTitle: God of the Veil
+divineDomain: God of the Veil
+sourcePath: 2. Devine Pantheons/4. The Nethyros Pantheon/Imeriel - God of the Veil.md
+id: 'religion:content-theology-imeriel-index'
+categoryPath:
+  - The Nethyros Pantheon
+aliases:
+  - 'religion:content-theology-imeriel-index'
+  - /compendium/religion/the-nethyros-pantheon/imeriel
+  - content/theology/imeriel/index.md
 ---
+
 # Imeriel
 
 ## Overview

@@ -1,26 +1,34 @@
 ---
-title: "Brownie"
-slug: "brownie"
+title: Brownie
+slug: brownie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "fae-races"
+  - race
+  - fae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 184
+id: 'race:content-races-brownie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-brownie-index'
+  - /compendium/race/brownie
+  - content/races/brownie/index.md
 ---
 
 # Brownie

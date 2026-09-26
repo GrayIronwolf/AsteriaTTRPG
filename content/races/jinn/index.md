@@ -1,26 +1,34 @@
 ---
-title: "Jinn"
-slug: "jinn"
+title: Jinn
+slug: jinn
 type: race
-raceCategory: "Dark Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Dark Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "dark-races"
+  - race
+  - dark-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 164
+id: 'race:content-races-jinn-index'
+domain: race
+categoryPath:
+  - Dark Races
+aliases:
+  - 'race:content-races-jinn-index'
+  - /compendium/race/jinn
+  - content/races/jinn/index.md
 ---
 
 # Jinn

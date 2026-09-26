@@ -477,8 +477,10 @@
 
   function forgeInventoryItem(entry, fallbackSlug){
     const metadata=Object.assign({},entry?.metadata||{});
-    const id=entry?.slug||fallbackSlug||slug(entry?.title||entry?.name||'item');
-    return Object.assign({},metadata,entry||{}, {
+    const snapshot=entry?.id ? window.AsteriaInventory?.itemSnapshot?.(entry,1) : null;
+    const definition=JSON.parse(JSON.stringify(entry||{}));
+    const id=snapshot?.id||entry?.slug||fallbackSlug||slug(entry?.title||entry?.name||'item');
+    return Object.assign({},metadata,definition,snapshot||{}, {
       id,
       catalogId:id,
       name:entry?.title||entry?.name||titleCase(fallbackSlug),
@@ -486,7 +488,7 @@
       qty:1,
       equipped:false,
       equippedSlot:'',
-      raw:Object.assign({},metadata,entry||{})
+      raw:Object.assign({},metadata,definition)
     });
   }
 
@@ -591,6 +593,7 @@
   }
 
   function entryBySlug(domain, slugValue){
+    if(domain === 'item' && window.AsteriaContent) return window.AsteriaContent.item(slugValue);
     const key = slug(slugValue);
     const source = domain === 'race' || domain === 'class' ? forgeDatabaseEntries(domain) : databaseEntries(domain);
     return source.find(entry => entry.slug === key || slug(entry.title || entry.name) === key) || null;
@@ -1973,7 +1976,7 @@
   }
 
   function resolveEquipmentPack(pack){
-    const items = databaseEntries('item');
+    const items = databaseEntries('item').filter(item => !item.metadata?.custom);
     return array(pack?.items).map(name => {
       const key = slug(name);
       const entry = items.find(item => item.slug === key || slug(item.title) === key || slug(item.name) === key);
@@ -2652,7 +2655,7 @@
     if(!pack) return;
     const d = draft();
     d.equipmentPackSlug = pack.slug;
-    d.equipment = resolveEquipmentPack(pack).map(item => item.slug || slug(item.title));
+    d.equipment = resolveEquipmentPack(pack).map(item => item.id || item.slug || slug(item.title));
     saveState('creator-equipment-pack');
     render();
   }

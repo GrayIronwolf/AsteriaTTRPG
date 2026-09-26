@@ -1,28 +1,38 @@
 ---
-title: "Raynari"
-slug: "raynari"
+title: Raynari
+slug: raynari
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Fish & Amphibian Races"
-tertiaryCategory: "Fish Races"
+raceCategory: Beastkin Races
+secondaryCategory: Fish & Amphibian Races
+tertiaryCategory: Fish Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "fish-and-amphibian-races"
-  - "fish-races"
+  - race
+  - beastkin-races
+  - fish-and-amphibian-races
+  - fish-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 108
+id: 'race:content-races-raynari-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Fish & Amphibian Races
+  - Fish Races
+aliases:
+  - 'race:content-races-raynari-index'
+  - /compendium/race/raynari
+  - content/races/raynari/index.md
 ---
 
 # Raynari

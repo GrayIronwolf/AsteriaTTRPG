@@ -1,27 +1,36 @@
 ---
-title: "Musran"
-slug: "musran"
+title: Musran
+slug: musran
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Lagomor & Rodent Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Lagomor & Rodent Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "lagomor-and-rodent-races"
+  - race
+  - beastkin-races
+  - lagomor-and-rodent-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 136
+id: 'race:content-races-musran-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Lagomor & Rodent Races
+aliases:
+  - 'race:content-races-musran-index'
+  - /compendium/race/musran
+  - content/races/musran/index.md
 ---
 
 # Musran

@@ -1,28 +1,38 @@
 ---
-title: "Nautri"
-slug: "nautri"
+title: Nautri
+slug: nautri
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Fish & Amphibian Races"
-tertiaryCategory: "Fish Races"
+raceCategory: Beastkin Races
+secondaryCategory: Fish & Amphibian Races
+tertiaryCategory: Fish Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "fish-and-amphibian-races"
-  - "fish-races"
+  - race
+  - beastkin-races
+  - fish-and-amphibian-races
+  - fish-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 107
+id: 'race:content-races-nautri-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Fish & Amphibian Races
+  - Fish Races
+aliases:
+  - 'race:content-races-nautri-index'
+  - /compendium/race/nautri
+  - content/races/nautri/index.md
 ---
 
 # Nautri

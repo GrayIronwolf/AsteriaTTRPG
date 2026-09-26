@@ -1,0 +1,429 @@
+{
+  "entries": 886,
+  "errors": [],
+  "warnings": [
+    {
+      "source": "content/items/rose/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/cobalt-pixie-arrow/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/high-steel-sprite-arrow/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/iron-crossbow-bolt/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/steel-crossbow-bolt/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/longsword/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/cobalt-warhammer/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/reinforced-hand-crossbow/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/antimony-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/brass-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/bronze-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/copper-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/gold-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/iron-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/lead-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/nickel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/pewter-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/silver-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/tin-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/zinc-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/aluminum-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/cast-iron-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/chromium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/mercury/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/platinum-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/cobalt-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/gallium/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/high-steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/thorium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/bismuth-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/celestial-bronze-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/dark-silver-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/glass-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/infernal-bronze-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/moonstone-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/pure-silver-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/quicksilver-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/tungsten-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/abyssal-steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/arricallium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/celestial-steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/dark-stone-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/duranium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/ebony-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/ice-glass-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/infernal-steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/light-stone-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/titan-steel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/adamantium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/dragon-glass-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/elementium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/meteorite-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/necronium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/red-duranium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/voidsteel-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/mythril-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/netherite-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/orichalcum-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/starite-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/vibranium-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/primordrite-ingot/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/antimony-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/copper-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/gold-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/iron-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/lead-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/nickel-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/silver-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/tin-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/zinc-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/aluminum-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/chromium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/platinum-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/cobalt-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/thorium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/bismuth-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/dark-silver-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/moonstone-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/pure-silver-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/quicksilver-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/tungsten-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/arricallium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/duranium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/ebony-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/adamantium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/elementium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/meteorite-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/necronium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/red-duranium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/mythril-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/netherite-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/orichalcum-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/starite-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/vibranium-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/primordrite-ore/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/items/iron-longsword/index.md",
+      "problem": "Authored pricing incomplete"
+    },
+    {
+      "source": "content/races/cavern-sprite/index.md",
+      "problem": "Unresolved source attachment",
+      "reference": "Pasted image 20260525214029.png"
+    }
+  ],
+  "ambiguousLegacyAliases": [
+    {
+      "alias": "/compendium/talent/classes/talent-tree/talent-tree/mana-well",
+      "targets": [
+        "talent:content-classes-cleric-talents-tier-1-mana-well-index",
+        "talent:content-classes-spellblade-talents-tier-1-mana-well-index"
+      ]
+    },
+    {
+      "alias": "/compendium/talent/classes/talent-tree/talent-tree/blessed-resilience",
+      "targets": [
+        "talent:content-classes-cleric-talents-tier-2-blessed-resilience-index",
+        "talent:content-classes-paladin-talents-tier-2-blessed-resilience-index"
+      ]
+    },
+    {
+      "alias": "/compendium/talent/classes/talent-tree/talent-tree/divine-aegis",
+      "targets": [
+        "talent:content-classes-cleric-talents-tier-4-divine-aegis-index",
+        "talent:content-classes-paladin-talents-tier-4-divine-aegis-index"
+      ]
+    },
+    {
+      "alias": "/compendium/talent/classes/talent-tree/talent-tree/sacred-judgement",
+      "targets": [
+        "talent:content-classes-cleric-talents-tier-5-sacred-judgement-index",
+        "talent:content-classes-paladin-talents-tier-5-sacred-judgement-index"
+      ]
+    }
+  ]
+}

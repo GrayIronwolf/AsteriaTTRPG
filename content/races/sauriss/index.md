@@ -1,27 +1,36 @@
 ---
-title: "Sauriss"
-slug: "sauriss"
+title: Sauriss
+slug: sauriss
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Reptilian Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Reptilian Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "reptilian-races"
+  - race
+  - beastkin-races
+  - reptilian-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 150
+id: 'race:content-races-sauriss-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Reptilian Races
+aliases:
+  - 'race:content-races-sauriss-index'
+  - /compendium/race/sauriss
+  - content/races/sauriss/index.md
 ---
 
 # Sauriss

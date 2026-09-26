@@ -1,26 +1,34 @@
 ---
-title: "Gorgon"
-slug: "gorgon"
+title: Gorgon
+slug: gorgon
 type: race
-raceCategory: "Dark Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Dark Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "dark-races"
+  - race
+  - dark-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 163
+id: 'race:content-races-gorgon-index'
+domain: race
+categoryPath:
+  - Dark Races
+aliases:
+  - 'race:content-races-gorgon-index'
+  - /compendium/race/gorgon
+  - content/races/gorgon/index.md
 ---
 
 # Gorgon

@@ -1,39 +1,47 @@
 ---
-title: "Light Pixie"
-slug: "light-pixie"
+title: Light Pixie
+slug: light-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Light Magic 100%"
-  - "Dark Magic 0%"
+  - Light Magic 100%
+  - Dark Magic 0%
 essenceAffinity:
-  - "Light"
+  - Light
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "light-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - light-magic
 images:
-  male: "assets/races/light-pixie/light-pixie-male-adult.png"
-  female: "assets/races/light-pixie/light-pixie-female-adult.png"
+  male: assets/races/light-pixie/light-pixie-male-adult.png
+  female: assets/races/light-pixie/light-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Light Magic"
+  primary: Light Magic
   primaryPercent: 100
-  opposite: "Dark Magic"
+  opposite: Dark Magic
   oppositePercent: 0
 sourceOrder: 193
+id: 'race:content-races-light-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-light-pixie-index'
+  - /compendium/race/light-pixie
+  - content/races/light-pixie/index.md
 ---
 
 # Light Pixie

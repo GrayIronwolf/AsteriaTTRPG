@@ -1,21 +1,29 @@
 ---
-title: "Varos"
-slug: "varos"
+title: Varos
+slug: varos
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of Autumn"
-divine_domain: "God of Autumn"
-domain: "God of Autumn"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Varos - God of Autumn.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of Autumn
+divineDomain: God of Autumn
+sourcePath: 2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Varos - God of Autumn.md
+id: 'religion:content-theology-varos-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-varos-index'
+  - /compendium/religion/aetherion-pantheon/varos
+  - content/theology/varos/index.md
 ---
+
 # Varos
 
 ## Overview

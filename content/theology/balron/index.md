@@ -1,21 +1,29 @@
 ---
-title: "Balron"
-slug: "balron"
+title: Balron
+slug: balron
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Earth"
-divine_domain: "Essence of Earth"
-domain: "Essence of Earth"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/2. Balron - Essence of Earth.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Earth
+divineDomain: Essence of Earth
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/2. Balron - Essence of Earth.md
+id: 'religion:content-theology-balron-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-balron-index'
+  - /compendium/religion/pantheon-of-elements/balron
+  - content/theology/balron/index.md
 ---
+
 # Balron
 
 ## Overview

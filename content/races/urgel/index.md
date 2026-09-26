@@ -1,26 +1,34 @@
 ---
-title: "Urgel"
-slug: "urgel"
+title: Urgel
+slug: urgel
 type: race
-raceCategory: "Large Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Large Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "large-races"
+  - race
+  - large-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 61
+id: 'race:content-races-urgel-index'
+domain: race
+categoryPath:
+  - Large Races
+aliases:
+  - 'race:content-races-urgel-index'
+  - /compendium/race/urgel
+  - content/races/urgel/index.md
 ---
 
 # Urgel

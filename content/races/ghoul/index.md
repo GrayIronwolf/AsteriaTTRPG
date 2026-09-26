@@ -1,26 +1,34 @@
 ---
-title: "Ghoul"
-slug: "ghoul"
+title: Ghoul
+slug: ghoul
 type: race
-raceCategory: "Undead Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Undead Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "undead-races"
+  - race
+  - undead-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 203
+id: 'race:content-races-ghoul-index'
+domain: race
+categoryPath:
+  - Undead Races
+aliases:
+  - 'race:content-races-ghoul-index'
+  - /compendium/race/ghoul
+  - content/races/ghoul/index.md
 ---
 
 # Ghoul

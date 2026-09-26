@@ -1,27 +1,36 @@
 ---
-title: "Lutetra"
-slug: "lutetra"
+title: Lutetra
+slug: lutetra
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Mustelidae Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Mustelidae Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "mustelidae-races"
+  - race
+  - beastkin-races
+  - mustelidae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 144
+id: 'race:content-races-lutetra-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Mustelidae Races
+aliases:
+  - 'race:content-races-lutetra-index'
+  - /compendium/race/lutetra
+  - content/races/lutetra/index.md
 ---
 
 # Lutetra

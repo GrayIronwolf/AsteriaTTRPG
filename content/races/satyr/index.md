@@ -1,26 +1,34 @@
 ---
-title: "Satyr"
-slug: "satyr"
+title: Satyr
+slug: satyr
 type: race
-raceCategory: "Hybrid Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Hybrid Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "hybrid-races"
+  - race
+  - hybrid-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 201
+id: 'race:content-races-satyr-index'
+domain: race
+categoryPath:
+  - Hybrid Races
+aliases:
+  - 'race:content-races-satyr-index'
+  - /compendium/race/satyr
+  - content/races/satyr/index.md
 ---
 
 # Satyr

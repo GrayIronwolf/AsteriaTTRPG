@@ -1,27 +1,36 @@
 ---
-title: "Craglin"
-slug: "craglin"
+title: Craglin
+slug: craglin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bat Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bat Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: race-notes
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bat-races"
+  - race
+  - beastkin-races
+  - bat-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 67
+id: 'race:content-races-craglin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bat Races
+aliases:
+  - 'race:content-races-craglin-index'
+  - /compendium/race/craglin
+  - content/races/craglin/index.md
 ---
 
 # Craglin

@@ -1,26 +1,34 @@
 ---
-title: "Giant"
-slug: "giant"
+title: Giant
+slug: giant
 type: race
-raceCategory: "Extra Large Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Extra Large Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "extra-large-races"
+  - race
+  - extra-large-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 62
+id: 'race:content-races-giant-index'
+domain: race
+categoryPath:
+  - Extra Large Races
+aliases:
+  - 'race:content-races-giant-index'
+  - /compendium/race/giant
+  - content/races/giant/index.md
 ---
 
 # Giant

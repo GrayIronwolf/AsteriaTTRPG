@@ -1,26 +1,34 @@
 ---
-title: "Troll"
-slug: "troll"
+title: Troll
+slug: troll
 type: race
-raceCategory: "Extra Large Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Extra Large Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "extra-large-races"
+  - race
+  - extra-large-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 64
+id: 'race:content-races-troll-index'
+domain: race
+categoryPath:
+  - Extra Large Races
+aliases:
+  - 'race:content-races-troll-index'
+  - /compendium/race/troll
+  - content/races/troll/index.md
 ---
 
 # Troll

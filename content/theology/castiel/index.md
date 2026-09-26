@@ -1,21 +1,29 @@
 ---
-title: "Castiel"
-slug: "castiel"
+title: Castiel
+slug: castiel
 type: theology
-category: "Light Court"
-pantheon: "Light Court"
-court: "Light Court"
-deity_title: "God of the Celestial"
-divine_domain: "God of the Celestial"
-domain: "God of the Celestial"
-source_path: "3. Courts/2. Light Court - Empyrean/2. Castiel - God of the Celestial.md"
-image: ""
+category: Light Court
+pantheon: Light Court
+court: Light Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "light-court"
+  - theology
+  - deity
+  - light-court
 visibility: public
+deityTitle: God of the Celestial
+divineDomain: God of the Celestial
+sourcePath: 3. Courts/2. Light Court - Empyrean/2. Castiel - God of the Celestial.md
+id: 'religion:content-theology-castiel-index'
+categoryPath:
+  - Light Court
+aliases:
+  - 'religion:content-theology-castiel-index'
+  - /compendium/religion/light-court/castiel
+  - content/theology/castiel/index.md
 ---
+
 # Castiel
 
 ## Overview

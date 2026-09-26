@@ -1,42 +1,50 @@
 ---
-title: "Artificer"
-slug: "artificer"
+title: Artificer
+slug: artificer
 type: class
-classCategory: "Magical Classes"
-role: "Inventor, enchanter, researcher, and magical engineer"
-primary_stat: "INT"
-secondary_stat: "DEX"
-combat_style: "Tools, devices, constructs, alchemy, and engineered magic"
-magic_type: "Artifice"
-difficulty: "Advanced"
-class_colour: "#f59e0b"
-symbol: "A"
+classCategory: Magical Classes
+role: 'Inventor, enchanter, researcher, and magical engineer'
+primaryStat: INT
+secondaryStat: DEX
+combatStyle: 'Tools, devices, constructs, alchemy, and engineered magic'
+magicType: Artifice
+difficulty: Advanced
+classColour: '#f59e0b'
+symbol: A
 playable: true
-starting_equipment:
-  - "Artificer tools"
-  - "Field notebook"
-  - "Basic crafting kit"
-  - "Mana vial"
-  - "Iron rations"
-recommended_professions:
-  - "Artificer"
-  - "Blacksmith"
-  - "Alchemist"
-  - "Enchanter"
-  - "Engineer"
+startingEquipment:
+  - Artificer tools
+  - Field notebook
+  - Basic crafting kit
+  - Mana vial
+  - Iron rations
+recommendedProfessions:
+  - Artificer
+  - Blacksmith
+  - Alchemist
+  - Enchanter
+  - Engineer
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "artifice"
-  - "crafting"
-  - "constructs"
-  - "alchemy"
-  - "enchanting"
-  - "soul-stones"
-  - "engineer"
+  - class
+  - magical-classes
+  - magical
+  - artifice
+  - crafting
+  - constructs
+  - alchemy
+  - enchanting
+  - soul-stones
+  - engineer
 visibility: public
 sourceOrder: 4
+id: 'class:content-classes-artificer-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-artificer-index'
+  - /compendium/class/classes/artificer
+  - content/classes/artificer/index.md
 ---
 
 # Artificer

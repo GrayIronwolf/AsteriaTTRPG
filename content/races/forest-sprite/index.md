@@ -1,27 +1,36 @@
 ---
-title: "Forest Sprite"
-slug: "forest-sprite"
+title: Forest Sprite
+slug: forest-sprite
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Sprite Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Sprite Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "sprite-races"
+  - race
+  - small-races
+  - sprite-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 28
+id: 'race:content-races-forest-sprite-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Sprite Races
+aliases:
+  - 'race:content-races-forest-sprite-index'
+  - /compendium/race/forest-sprite
+  - content/races/forest-sprite/index.md
 ---
 
 # Forest Sprite

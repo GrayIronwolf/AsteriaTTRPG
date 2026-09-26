@@ -1,21 +1,29 @@
 ---
-title: "Nerris"
-slug: "nerris"
+title: Nerris
+slug: nerris
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Water"
-divine_domain: "Essence of Water"
-domain: "Essence of Water"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/4. Nerris - Essence of Water.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Water
+divineDomain: Essence of Water
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/4. Nerris - Essence of Water.md
+id: 'religion:content-theology-nerris-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-nerris-index'
+  - /compendium/religion/pantheon-of-elements/nerris
+  - content/theology/nerris/index.md
 ---
+
 # Nerris
 
 ## Overview

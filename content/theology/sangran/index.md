@@ -1,21 +1,29 @@
 ---
-title: "Sangran"
-slug: "sangran"
+title: Sangran
+slug: sangran
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Blood"
-divine_domain: "Essence of Blood"
-domain: "Essence of Blood"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/1. Sangran - Essence of Blood.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Blood
+divineDomain: Essence of Blood
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/1. Sangran - Essence of Blood.md
+id: 'religion:content-theology-sangran-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-sangran-index'
+  - /compendium/religion/pantheon-of-elements/sangran
+  - content/theology/sangran/index.md
 ---
+
 # Sangran
 
 ## Overview

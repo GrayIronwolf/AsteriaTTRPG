@@ -1,26 +1,34 @@
 ---
-title: "Halfling"
-slug: "halfling"
+title: Halfling
+slug: halfling
 type: race
-raceCategory: "Small Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
+  - race
+  - small-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 12
+id: 'race:content-races-halfling-index'
+domain: race
+categoryPath:
+  - Small Races
+aliases:
+  - 'race:content-races-halfling-index'
+  - /compendium/race/halfling
+  - content/races/halfling/index.md
 ---
 
 # Halfling

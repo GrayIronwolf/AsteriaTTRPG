@@ -1,21 +1,29 @@
 ---
-title: "Tobias"
-slug: "tobias"
+title: Tobias
+slug: tobias
 type: theology
-category: "The Nethyros Pantheon"
-pantheon: "The Nethyros Pantheon"
-court: ""
-deity_title: "God of the Underworld"
-divine_domain: "God of the Underworld"
-domain: "God of the Underworld"
-source_path: "2. Devine Pantheons/4. The Nethyros Pantheon/Tobias - God of the Underworld.md"
-image: ""
+category: The Nethyros Pantheon
+pantheon: The Nethyros Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-nethyros-pantheon"
+  - theology
+  - deity
+  - the-nethyros-pantheon
 visibility: public
+deityTitle: God of the Underworld
+divineDomain: God of the Underworld
+sourcePath: 2. Devine Pantheons/4. The Nethyros Pantheon/Tobias - God of the Underworld.md
+id: 'religion:content-theology-tobias-index'
+categoryPath:
+  - The Nethyros Pantheon
+aliases:
+  - 'religion:content-theology-tobias-index'
+  - /compendium/religion/the-nethyros-pantheon/tobias
+  - content/theology/tobias/index.md
 ---
+
 # Tobias
 
 ## Overview

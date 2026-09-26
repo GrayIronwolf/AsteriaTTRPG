@@ -239,7 +239,7 @@ test('31. Canonical owner mirroring cannot synchronously crash the dashboard or 
 });
 
 test('32. Generated compendium content paths exist with exact casing',()=>{
-  const indexes=['js/race-compendium-data.js','js/class-compendium-data.js','js/universal-compendium-index.js','data/compendium-index-clean.json'];
+  const indexes=['data/compendium.js'];
   const directories=new Map();
   for(const index of indexes){
     const paths=[...new Set([...read(index).matchAll(/"(?:sourcePath|sourceFolder|contentPath)":\s*"(content\/[^"\n]+)"/g)].map(match=>match[1]))];

@@ -1,26 +1,34 @@
 ---
-title: "Skeleton"
-slug: "skeleton"
+title: Skeleton
+slug: skeleton
 type: race
-raceCategory: "Undead Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Undead Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "undead-races"
+  - race
+  - undead-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 202
+id: 'race:content-races-skeleton-index'
+domain: race
+categoryPath:
+  - Undead Races
+aliases:
+  - 'race:content-races-skeleton-index'
+  - /compendium/race/skeleton
+  - content/races/skeleton/index.md
 ---
 
 # Skeleton

@@ -1,27 +1,36 @@
 ---
-title: "Chamaris"
-slug: "chamaris"
+title: Chamaris
+slug: chamaris
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Reptilian Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Reptilian Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "reptilian-races"
+  - race
+  - beastkin-races
+  - reptilian-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 147
+id: 'race:content-races-chamaris-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Reptilian Races
+aliases:
+  - 'race:content-races-chamaris-index'
+  - /compendium/race/chamaris
+  - content/races/chamaris/index.md
 ---
 
 # Chamaris

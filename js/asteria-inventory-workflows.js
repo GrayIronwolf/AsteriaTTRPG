@@ -98,38 +98,11 @@
     window.AsteriaDataSync?.scheduleSave?.(reason);
   }
 
-  function catalogEntries(){
-    const source = window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX?.entries || window.ASTERIA_CONTENT_MANIFEST?.entries || [];
-    const custom = array(window.ASTERIA_CUSTOM_ITEMS).map(item => ({
-      ...item,
-      title:item.title || item.name,
-      type:'item',
-      domain:'items',
-      category:item.category || item.type || 'Custom Items',
-      summary:item.summary || item.description || item.desc || 'Custom campaign item.',
-      metadata:{
-        ...(item.metadata || {}),
-        type:'item',
-        category:item.category || item.type || 'Custom Items',
-        itemClass:item.itemClass || item.rarity || 'Common',
-        image:item.image || ''
-      }
-    }));
-    const seen = new Set();
-    return [...array(source), ...custom].filter(entry => {
-      const type = String(entry.type || entry.domain || entry.metadata?.type || '').toLowerCase();
-      const path = String(entry.path || entry.sourcePath || '').toLowerCase();
-      return type === 'item' || type === 'items' || path.includes('/items/');
-    }).filter(entry => !/index$/i.test(String(entry.title || ''))).filter(entry => {
-      const key = slug(entry.slug || entry.title || entry.name);
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+  function catalogEntries(customItems){
+    return window.AsteriaContent?.items(customItems) || [];
   }
   function entryBySlug(value){
-    const key = slug(value);
-    return catalogEntries().find(entry => slug(entry.slug || entry.title) === key) || null;
+    return window.AsteriaContent?.item(value) || null;
   }
   function entryImage(entry){
     return entry?.imagePath || entry?.image || entry?.metadata?.image || entry?.metadata?.images?.card || '';
@@ -139,7 +112,11 @@
     const rarity = meta.itemClass || meta.item_class || meta.rarity || entry?.rarity || 'Common';
     const type = meta.itemType || meta.item_type || meta.type || entry?.subcategory || entry?.category || 'Item';
     const snapshot = {
-      id:slug(entry?.slug || entry?.title || `item-${Date.now()}`),
+      ...clone(meta),
+      id:entry?.customId ? `custom-item-${entry.customId}` : slug(entry?.slug || entry?.title || `item-${Date.now()}`),
+      definitionId:entry?.id,
+      catalogId:entry?.slug,
+      definitionVersion:window.AsteriaContent?.version,
       slug:slug(entry?.slug || entry?.title),
       name:entry?.title || entry?.name || 'Unknown Item',
       type:String(type),
@@ -299,7 +276,7 @@
   function addSnapshot(snapshot, id = currentId(), bagId, slotNumber, options = {}){
     const record = ensureInventory(id);
     if(!record || !snapshot) return null;
-    let item = record.inventory.find(existing => existing.id === snapshot.id && !existing.equipped);
+    let item = record.inventory.find(existing => existing.id === snapshot.id && (!existing.definitionId || !snapshot.definitionId || existing.definitionId === snapshot.definitionId) && !existing.equipped);
     const quantity = Math.max(1, Number(snapshot.qty || 1));
     let destination = null;
     if(bagId && slotNumber){
@@ -381,7 +358,7 @@
   function itemCard(entry, action, label){
     const rarity = entry.metadata?.itemClass || entry.metadata?.item_class || entry.metadata?.rarity || 'Common';
     const image = entryImage(entry);
-    return `<button type="button" class="workflow-item-card" data-workflow-${action}="${esc(entry.slug || slug(entry.title))}">
+    return `<button type="button" class="workflow-item-card" data-workflow-${action}="${esc(entry.id)}">
       <span class="workflow-rarity">${esc(rarity)}</span>
       <span class="workflow-item-image">${image ? `<img src="${esc(image)}" alt="">` : esc(String(entry.title || '?').charAt(0))}</span>
       <b>${esc(entry.title)}</b><small>${esc(label)}</small>
@@ -681,7 +658,7 @@
     const priceCopper = pricing ? pricing.getPlayerPurchasePriceCopper(item) : null;
     if(priceCopper === null){window.toast?.(`${item.name} needs a Market Price before it can be stocked.`);return;}
     if(priceCopper === 0 && pricing?.marketPricingStatus(item).id === 'not-tradeable'){window.toast?.(`${item.name} is not normally tradeable.`);return;}
-    const existing = shopDraftStock.find(stock => stock.item.id === slug(shopPickerEntry.slug || shopPickerEntry.title));
+    const existing = shopDraftStock.find(stock => stock.item.definitionId === shopPickerEntry.id);
     if(existing){existing.qty += quantity;existing.priceCopper = priceCopper;}
     else shopDraftStock.push({item, qty:quantity, priceCopper});
     renderShopDraft();

@@ -1,39 +1,47 @@
 ---
-title: "Air Pixie"
-slug: "air-pixie"
+title: Air Pixie
+slug: air-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Air Magic 100%"
-  - "Earth Magic 0%"
+  - Air Magic 100%
+  - Earth Magic 0%
 essenceAffinity:
-  - "Air"
+  - Air
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "air-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - air-magic
 images:
-  male: "assets/races/air-pixie/air-pixie-male-adult.png"
-  female: "assets/races/air-pixie/air-pixie-female-adult.png"
+  male: assets/races/air-pixie/air-pixie-male-adult.png
+  female: assets/races/air-pixie/air-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Air Magic"
+  primary: Air Magic
   primaryPercent: 100
-  opposite: "Earth Magic"
+  opposite: Earth Magic
   oppositePercent: 0
 sourceOrder: 187
+id: 'race:content-races-air-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-air-pixie-index'
+  - /compendium/race/air-pixie
+  - content/races/air-pixie/index.md
 ---
 
 # Air Pixie

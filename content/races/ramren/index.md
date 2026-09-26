@@ -1,27 +1,36 @@
 ---
-title: "Ramren"
-slug: "ramren"
+title: Ramren
+slug: ramren
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Hooved Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Hooved Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "hooved-races"
+  - race
+  - beastkin-races
+  - hooved-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 120
+id: 'race:content-races-ramren-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Hooved Races
+aliases:
+  - 'race:content-races-ramren-index'
+  - /compendium/race/ramren
+  - content/races/ramren/index.md
 ---
 
 # Ramren

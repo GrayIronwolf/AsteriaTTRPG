@@ -1,21 +1,31 @@
 ---
-title: "Lady Meredith Azagar"
-slug: "lady-meredith-azagar"
+title: Lady Meredith Azagar
+slug: lady-meredith-azagar
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/3. House of Malice/1. Regent of Malice/Lady Meredith Azagar.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/3. House of Malice/1. Regent of Malice/Lady Meredith
+  Azagar.md
+id: 'religion:content-theology-lady-meredith-azagar-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lady-meredith-azagar-index'
+  - /compendium/religion/dark-court/lady-meredith-azagar
+  - content/theology/lady-meredith-azagar/index.md
 ---
+
 # Lady Meredith Azagar
 
 ## Overview

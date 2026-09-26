@@ -1,21 +1,31 @@
 ---
-title: "Caelion"
-slug: "caelion"
+title: Caelion
+slug: caelion
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of Summer"
-divine_domain: "God of Summer"
-domain: "God of Summer"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Caelion - God of Summer.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of Summer
+divineDomain: God of Summer
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Caelion - God of
+  Summer.md
+id: 'religion:content-theology-caelion-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-caelion-index'
+  - /compendium/religion/aetherion-pantheon/caelion
+  - content/theology/caelion/index.md
 ---
+
 # Caelion
 
 ## Overview

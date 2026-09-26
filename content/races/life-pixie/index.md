@@ -1,39 +1,47 @@
 ---
-title: "Life Pixie"
-slug: "life-pixie"
+title: Life Pixie
+slug: life-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Life Magic 100%"
-  - "Death Magic 0%"
+  - Life Magic 100%
+  - Death Magic 0%
 essenceAffinity:
-  - "Life"
+  - Life
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "life-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - life-magic
 images:
-  male: "assets/races/life-pixie/life-pixie-male-adult.png"
-  female: "assets/races/life-pixie/life-pixie-female-adult.png"
+  male: assets/races/life-pixie/life-pixie-male-adult.png
+  female: assets/races/life-pixie/life-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Life Magic"
+  primary: Life Magic
   primaryPercent: 100
-  opposite: "Death Magic"
+  opposite: Death Magic
   oppositePercent: 0
 sourceOrder: 191
+id: 'race:content-races-life-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-life-pixie-index'
+  - /compendium/race/life-pixie
+  - content/races/life-pixie/index.md
 ---
 
 # Life Pixie

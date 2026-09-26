@@ -1,21 +1,31 @@
 ---
-title: "Neraya"
-slug: "neraya"
+title: Neraya
+slug: neraya
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Jewelry and Ornamentals"
-divine_domain: "Goddess of Jewelry and Ornamentals"
-domain: "Goddess of Jewelry and Ornamentals"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Neraya - Goddess of Jewelry and Ornamentals.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Jewelry and Ornamentals
+divineDomain: Goddess of Jewelry and Ornamentals
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Neraya - Goddess of Jewelry
+  and Ornamentals.md
+id: 'religion:content-theology-neraya-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-neraya-index'
+  - /compendium/religion/aetherion-pantheon/neraya
+  - content/theology/neraya/index.md
 ---
+
 # Neraya
 
 ## Overview

@@ -1,27 +1,35 @@
 ---
-title: "Warden"
-slug: "warden"
+title: Warden
+slug: warden
 type: class
-classCategory: "Ranger Classes"
-role: "Nature defender"
-primary_stat: "END"
-secondary_stat: "WIS"
-combat_style: "Weapon and nature magic"
-magic_type: "Nature"
-difficulty: "Intermediate"
-class_colour: "#4ade80"
-symbol: "W"
+classCategory: Ranger Classes
+role: Nature defender
+primaryStat: END
+secondaryStat: WIS
+combatStyle: Weapon and nature magic
+magicType: Nature
+difficulty: Intermediate
+classColour: '#4ade80'
+symbol: W
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "ranger-classes"
-  - "ranger"
-  - "nature"
-  - "defender"
+  - class
+  - ranger-classes
+  - ranger
+  - nature
+  - defender
 visibility: public
 sourceOrder: 21
+id: 'class:content-classes-warden-index'
+domain: class
+categoryPath:
+  - Ranger Classes
+aliases:
+  - 'class:content-classes-warden-index'
+  - /compendium/class/classes/warden
+  - content/classes/warden/index.md
 ---
 
 # Warden

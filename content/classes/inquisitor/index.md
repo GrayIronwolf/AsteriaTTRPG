@@ -1,27 +1,35 @@
 ---
-title: "Inquisitor"
-slug: "inquisitor"
+title: Inquisitor
+slug: inquisitor
 type: class
-classCategory: "Religious Classes"
-role: "Faith hunter and investigator"
-primary_stat: "WIS"
-secondary_stat: "DEX"
-combat_style: "Judgement, weapons, and pursuit"
-magic_type: "Divine"
-difficulty: "Intermediate"
-class_colour: "#f59e0b"
-symbol: "I"
+classCategory: Religious Classes
+role: Faith hunter and investigator
+primaryStat: WIS
+secondaryStat: DEX
+combatStyle: 'Judgement, weapons, and pursuit'
+magicType: Divine
+difficulty: Intermediate
+classColour: '#f59e0b'
+symbol: I
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "religious-classes"
-  - "religious"
-  - "hunter"
-  - "judgement"
+  - class
+  - religious-classes
+  - religious
+  - hunter
+  - judgement
 visibility: public
 sourceOrder: 24
+id: 'class:content-classes-inquisitor-index'
+domain: class
+categoryPath:
+  - Religious Classes
+aliases:
+  - 'class:content-classes-inquisitor-index'
+  - /compendium/class/classes/inquisitor
+  - content/classes/inquisitor/index.md
 ---
 
 # Inquisitor

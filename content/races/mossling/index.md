@@ -1,26 +1,34 @@
 ---
-title: "Mossling"
-slug: "mossling"
+title: Mossling
+slug: mossling
 type: race
-raceCategory: "Small Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
+  - race
+  - small-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 25
+id: 'race:content-races-mossling-index'
+domain: race
+categoryPath:
+  - Small Races
+aliases:
+  - 'race:content-races-mossling-index'
+  - /compendium/race/mossling
+  - content/races/mossling/index.md
 ---
 
 # Mossling

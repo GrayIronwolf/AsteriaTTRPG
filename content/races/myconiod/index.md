@@ -1,26 +1,34 @@
 ---
-title: "Myconiod"
-slug: "myconiod"
+title: Myconiod
+slug: myconiod
 type: race
-raceCategory: "Small Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
+  - race
+  - small-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 26
+id: 'race:content-races-myconiod-index'
+domain: race
+categoryPath:
+  - Small Races
+aliases:
+  - 'race:content-races-myconiod-index'
+  - /compendium/race/myconiod
+  - content/races/myconiod/index.md
 ---
 
 # Myconiod

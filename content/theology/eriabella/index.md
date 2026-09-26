@@ -1,21 +1,29 @@
 ---
-title: "Eriabella"
-slug: "eriabella"
+title: Eriabella
+slug: eriabella
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Air"
-divine_domain: "Essence of Air"
-domain: "Essence of Air"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/1. Eriabella - Essence of Air.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Air
+divineDomain: Essence of Air
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/1. Eriabella - Essence of Air.md
+id: 'religion:content-theology-eriabella-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-eriabella-index'
+  - /compendium/religion/pantheon-of-elements/eriabella
+  - content/theology/eriabella/index.md
 ---
+
 # Eriabella
 
 ## Overview

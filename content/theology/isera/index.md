@@ -1,21 +1,31 @@
 ---
-title: "Isera"
-slug: "isera"
+title: Isera
+slug: isera
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Writing and Calligraphy"
-divine_domain: "Goddess of Writing and Calligraphy"
-domain: "Goddess of Writing and Calligraphy"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Isera - Goddess of Writing and Calligraphy.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Writing and Calligraphy
+divineDomain: Goddess of Writing and Calligraphy
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Isera - Goddess of Writing
+  and Calligraphy.md
+id: 'religion:content-theology-isera-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-isera-index'
+  - /compendium/religion/aetherion-pantheon/isera
+  - content/theology/isera/index.md
 ---
+
 # Isera
 
 ## Overview

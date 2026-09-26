@@ -1,28 +1,38 @@
 ---
-title: "Theskar"
-slug: "theskar"
+title: Theskar
+slug: theskar
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Insect & Arachnid Races"
-tertiaryCategory: "Insect Races"
+raceCategory: Beastkin Races
+secondaryCategory: Insect & Arachnid Races
+tertiaryCategory: Insect Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "insect-and-arachnid-races"
-  - "insect-races"
+  - race
+  - beastkin-races
+  - insect-and-arachnid-races
+  - insect-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 129
+id: 'race:content-races-theskar-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Insect & Arachnid Races
+  - Insect Races
+aliases:
+  - 'race:content-races-theskar-index'
+  - /compendium/race/theskar
+  - content/races/theskar/index.md
 ---
 
 # Theskar

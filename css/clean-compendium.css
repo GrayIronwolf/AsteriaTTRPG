@@ -1208,3 +1208,38 @@
   background: linear-gradient(90deg, transparent, rgba(var(--asteria-accent-rgb, 31,125,255), .68), transparent);
   opacity: .75;
 }
+
+/* The same compendium shell and viewer are used for every domain. */
+.universal-compendium-shell { width:100%; min-width:0; }
+.universal-compendium-shell .codex-main-display { min-width:0; }
+.universal-compendium-shell .codex-card-grid { grid-template-columns:repeat(auto-fill,minmax(165px,1fr)); }
+.universal-compendium-shell .codex-card h3 a { color:inherit; text-decoration:none; }
+.compendium-properties { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:12px; margin:0 0 20px; }
+.compendium-properties > div { padding:12px; border:1px solid var(--border,#344052); border-radius:10px; }
+.compendium-properties dt { font-size:.8rem; opacity:.75; margin-bottom:6px; }
+.compendium-properties dd { margin:0; overflow-wrap:anywhere; }
+.universal-compendium-shell .codex-detail-tabs { display:flex; flex-wrap:wrap; }
+.universal-compendium-shell .table-wrap { max-width:100%; overflow-x:auto; }
+.universal-compendium-shell button:focus-visible,.universal-compendium-shell a:focus-visible { outline:2px solid var(--accent,#71b9ff); outline-offset:3px; }
+.universal-compendium-shell .codex-talent-map { display:grid; grid-template-columns:repeat(5,minmax(150px,1fr)); overflow-x:auto; }
+.universal-compendium-shell .codex-talent-card { display:flex; flex-direction:column; gap:6px; width:100%; margin:8px 0; }
+.compendium-message { padding:12px; border:1px solid var(--border,#344052); border-radius:10px; }
+@media(max-width:800px) {
+ .universal-compendium-shell .codex-compendium-body { grid-template-columns:minmax(0,1fr); }
+ .universal-compendium-shell .codex-sidebar { width:auto; max-height:240px; overflow:auto; }
+ .universal-compendium-shell .codex-search-filter-bar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .universal-compendium-shell .codex-search-filter-bar label:first-child { grid-column:1/-1; }
+ .universal-compendium-shell .codex-detail-head { grid-template-columns:90px minmax(0,1fr); }
+ .universal-compendium-shell .codex-detail-art { width:90px; height:110px; }
+ .universal-compendium-shell .codex-talent-map { grid-template-columns:minmax(0,1fr); }
+}
+
+.compendium-gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:1rem; }
+.compendium-gallery figure { margin:0; }
+.compendium-gallery img,.compendium-inline-art { max-width:100%; max-height:600px; object-fit:contain; }
+.compendium-gallery figcaption,.compendium-missing-art { color:var(--muted,#c4b99d); }
+.compendium-traits details { border:1px solid #665d47; border-radius:8px; padding:1rem; margin:.6rem 0; }
+.compendium-traits summary { cursor:pointer; font-weight:700; }
+.compendium-traits summary:focus-visible { outline:2px solid #d9bb73; outline-offset:4px; }
+
+#universalBackToCards { display:inline-flex !important; justify-self:start; margin-bottom:1rem; }

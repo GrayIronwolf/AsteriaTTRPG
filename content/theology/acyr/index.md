@@ -1,21 +1,29 @@
 ---
-title: "Acyr"
-slug: "acyr"
+title: Acyr
+slug: acyr
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of War, Fury & Battle"
-divine_domain: "God of War, Fury & Battle"
-domain: "God of War, Fury & Battle"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Acyr - God of War, Fury & Battle.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: 'God of War, Fury & Battle'
+divineDomain: 'God of War, Fury & Battle'
+sourcePath: '2. Devine Pantheons/2. Aetherion Pantheon/3. People, Placing and Things/Acyr - God of War, Fury & Battle.md'
+id: 'religion:content-theology-acyr-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-acyr-index'
+  - /compendium/religion/aetherion-pantheon/acyr
+  - content/theology/acyr/index.md
 ---
+
 # Acyr
 
 ## Overview

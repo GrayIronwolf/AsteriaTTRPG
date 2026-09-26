@@ -1,27 +1,36 @@
 ---
-title: "Storm Sprite"
-slug: "storm-sprite"
+title: Storm Sprite
+slug: storm-sprite
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Sprite Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Sprite Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "sprite-races"
+  - race
+  - small-races
+  - sprite-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 31
+id: 'race:content-races-storm-sprite-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Sprite Races
+aliases:
+  - 'race:content-races-storm-sprite-index'
+  - /compendium/race/storm-sprite
+  - content/races/storm-sprite/index.md
 ---
 
 # Storm Sprite

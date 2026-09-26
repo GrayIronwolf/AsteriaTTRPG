@@ -1,21 +1,31 @@
 ---
-title: "Lythera"
-slug: "lythera"
+title: Lythera
+slug: lythera
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Glasswork"
-divine_domain: "Goddess of Glasswork"
-domain: "Goddess of Glasswork"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lythera - Goddess of Glasswork.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Glasswork
+divineDomain: Goddess of Glasswork
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lythera - Goddess of
+  Glasswork.md
+id: 'religion:content-theology-lythera-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-lythera-index'
+  - /compendium/religion/aetherion-pantheon/lythera
+  - content/theology/lythera/index.md
 ---
+
 # Lythera
 
 ## Overview

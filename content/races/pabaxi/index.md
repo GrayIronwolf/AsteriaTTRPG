@@ -1,27 +1,36 @@
 ---
-title: "Pabaxi"
-slug: "pabaxi"
+title: Pabaxi
+slug: pabaxi
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Feline Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Feline Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "feline-races"
+  - race
+  - beastkin-races
+  - feline-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 101
+id: 'race:content-races-pabaxi-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Feline Races
+aliases:
+  - 'race:content-races-pabaxi-index'
+  - /compendium/race/pabaxi
+  - content/races/pabaxi/index.md
 ---
 
 # Pabaxi

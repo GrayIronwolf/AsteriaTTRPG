@@ -1,21 +1,29 @@
 ---
-title: "Eldryssa"
-slug: "eldryssa"
+title: Eldryssa
+slug: eldryssa
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Spirit"
-divine_domain: "Essence of Spirit"
-domain: "Essence of Spirit"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/6. Eldryssa - Essence of  Spirit.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Spirit
+divineDomain: Essence of Spirit
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/6. Eldryssa - Essence of  Spirit.md
+id: 'religion:content-theology-eldryssa-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-eldryssa-index'
+  - /compendium/religion/pantheon-of-elements/eldryssa
+  - content/theology/eldryssa/index.md
 ---
+
 # Eldryssa
 
 ## Overview

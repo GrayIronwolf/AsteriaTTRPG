@@ -1,27 +1,36 @@
 ---
-title: "Ice Elf"
-slug: "ice-elf"
+title: Ice Elf
+slug: ice-elf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Elf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Elf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "elf-races"
+  - race
+  - medium-races
+  - elf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 46
+id: 'race:content-races-ice-elf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Elf Races
+aliases:
+  - 'race:content-races-ice-elf-index'
+  - /compendium/race/ice-elf
+  - content/races/ice-elf/index.md
 ---
 
 # Ice Elf

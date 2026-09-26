@@ -1,27 +1,36 @@
 ---
-title: "Gekaris"
-slug: "gekaris"
+title: Gekaris
+slug: gekaris
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Reptilian Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Reptilian Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "reptilian-races"
+  - race
+  - beastkin-races
+  - reptilian-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 148
+id: 'race:content-races-gekaris-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Reptilian Races
+aliases:
+  - 'race:content-races-gekaris-index'
+  - /compendium/race/gekaris
+  - content/races/gekaris/index.md
 ---
 
 # Gekaris

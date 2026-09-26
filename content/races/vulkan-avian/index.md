@@ -1,27 +1,36 @@
 ---
-title: "Vulkan Avian"
-slug: "vulkan-avian"
+title: Vulkan Avian
+slug: vulkan-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 82
+id: 'race:content-races-vulkan-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-vulkan-avian-index'
+  - /compendium/race/vulkan-avian
+  - content/races/vulkan-avian/index.md
 ---
 
 # Vulkan Avian

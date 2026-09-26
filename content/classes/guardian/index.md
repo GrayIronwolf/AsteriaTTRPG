@@ -1,27 +1,35 @@
 ---
-title: "Guardian"
-slug: "guardian"
+title: Guardian
+slug: guardian
 type: class
-classCategory: "Martial Classes"
-role: "Defender and protector"
-primary_stat: "END"
-secondary_stat: "STR"
-combat_style: "Shield and control"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#7ab3ff"
-symbol: "G"
+classCategory: Martial Classes
+role: Defender and protector
+primaryStat: END
+secondaryStat: STR
+combatStyle: Shield and control
+magicType: None
+difficulty: Beginner
+classColour: '#7ab3ff'
+symbol: G
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "shield"
-  - "defender"
+  - class
+  - martial-classes
+  - martial
+  - shield
+  - defender
 visibility: public
 sourceOrder: 16
+id: 'class:content-classes-guardian-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-guardian-index'
+  - /compendium/class/classes/guardian
+  - content/classes/guardian/index.md
 ---
 
 # Guardian

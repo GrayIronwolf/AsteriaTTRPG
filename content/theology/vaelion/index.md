@@ -1,21 +1,29 @@
 ---
-title: "Vaelion"
-slug: "vaelion"
+title: Vaelion
+slug: vaelion
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Time"
-divine_domain: "Essence of Time"
-domain: "Essence of Time"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/8. Vaelion - Essence of Time.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Time
+divineDomain: Essence of Time
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/8. Vaelion - Essence of Time.md
+id: 'religion:content-theology-vaelion-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-vaelion-index'
+  - /compendium/religion/pantheon-of-elements/vaelion
+  - content/theology/vaelion/index.md
 ---
+
 # Vaelion
 
 ## Overview

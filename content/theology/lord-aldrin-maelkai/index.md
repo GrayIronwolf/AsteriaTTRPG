@@ -1,21 +1,31 @@
 ---
-title: "Lord Aldrin Maelkai"
-slug: "lord-aldrin-maelkai"
+title: Lord Aldrin Maelkai
+slug: lord-aldrin-maelkai
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/11. House of Conquest/1. Regent of Conquest/Lord Aldrin Maelkai.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/11. House of Conquest/1. Regent of Conquest/Lord Aldrin
+  Maelkai.md
+id: 'religion:content-theology-lord-aldrin-maelkai-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lord-aldrin-maelkai-index'
+  - /compendium/religion/dark-court/lord-aldrin-maelkai
+  - content/theology/lord-aldrin-maelkai/index.md
 ---
+
 # Lord Aldrin Maelkai
 
 ## Overview

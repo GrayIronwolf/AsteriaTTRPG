@@ -1,0 +1,64 @@
+---
+title: Sorcerer Technique
+slug: sorcerer-technique
+type: talent
+className: Sorcerer
+classSlug: sorcerer
+classCategory: Magical Classes
+talentTier: Tier 2
+tier: Tier 2
+ranks: 5
+prerequisite: Sorcerer Foundation Rank 2
+cost: 1 Talent Point
+cooldown: Passive
+scaling: Improves by rank
+synergy: Information coming soon
+tags:
+  - talent
+  - sorcerer
+  - tier-2
+visibility: public
+sourceOrder: 3
+id: 'talent:content-classes-sorcerer-talents-tier-2-sorcerer-technique-index'
+domain: talent
+categoryPath:
+  - Magical Classes
+  - Sorcerer
+  - Tier 2
+aliases:
+  - 'talent:content-classes-sorcerer-talents-tier-2-sorcerer-technique-index'
+  - /compendium/talent/classes/talent-tree/talent-tree/sorcerer-technique
+  - content/classes/sorcerer/talents/tier-2/sorcerer-technique/index.md
+---
+
+# Sorcerer Technique
+
+## Overview
+Improves by rank
+
+## Rank 1
+Information coming soon.
+
+## Rank 2
+Information coming soon.
+
+## Rank 3
+Information coming soon.
+
+## Rank 4
+Information coming soon.
+
+## Rank 5
+Information coming soon.
+
+## Prerequisites
+Sorcerer Foundation Rank 2
+
+## Scaling
+Improves by rank
+
+## Synergy
+Information coming soon
+
+## GM Notes
+Information coming soon

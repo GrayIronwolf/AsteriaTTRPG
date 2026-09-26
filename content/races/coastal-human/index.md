@@ -1,27 +1,36 @@
 ---
-title: "Coastal Human"
-slug: "coastal-human"
+title: Coastal Human
+slug: coastal-human
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Human Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Human Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "human-races"
+  - race
+  - medium-races
+  - human-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 54
+id: 'race:content-races-coastal-human-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Human Races
+aliases:
+  - 'race:content-races-coastal-human-index'
+  - /compendium/race/coastal-human
+  - content/races/coastal-human/index.md
 ---
 
 # Coastal Human

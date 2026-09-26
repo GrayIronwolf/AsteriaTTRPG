@@ -1,21 +1,29 @@
 ---
-title: "Solyren"
-slug: "solyren"
+title: Solyren
+slug: solyren
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Light"
-divine_domain: "Essence of Light"
-domain: "Essence of Light"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/5. Solyren - Essence of Light.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Light
+divineDomain: Essence of Light
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/5. Solyren - Essence of Light.md
+id: 'religion:content-theology-solyren-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-solyren-index'
+  - /compendium/religion/pantheon-of-elements/solyren
+  - content/theology/solyren/index.md
 ---
+
 # Solyren
 
 ## Overview

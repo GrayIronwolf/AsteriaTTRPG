@@ -1,12 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import canonicalCompendium from '../data/compendium.js';
 import {fileURLToPath} from 'node:url';
 import {readNaturalAC} from '../src/systems/armour/naturalAC.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const context={window:{}};
-vm.runInNewContext(fs.readFileSync(path.join(root,'js/race-info-data.js'),'utf8'),context);
-const imported=context.window.ASTERIA_RACE_INFO_DATA;
+const imported=Object.fromEntries(canonicalCompendium.entries.filter(entry=>entry.domain==='race'&&entry.metadata.raceInfo).map(entry=>[entry.title,entry.metadata.raceInfo]));
 const supplemental=JSON.parse(fs.readFileSync(path.join(root,'data/racial-natural-ac-sources.json'),'utf8'));
 const recovered=[];const missing=[];
 for(const entry of fs.readdirSync(path.join(root,'content/races'),{withFileTypes:true})) {

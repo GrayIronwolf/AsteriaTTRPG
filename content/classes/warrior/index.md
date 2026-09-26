@@ -1,27 +1,35 @@
 ---
-title: "Warrior"
-slug: "warrior"
+title: Warrior
+slug: warrior
 type: class
-classCategory: "Martial Classes"
-role: "Versatile combatant"
-primary_stat: "STR"
-secondary_stat: "CON"
-combat_style: "Arms and battlefield grit"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#b88445"
-symbol: "W"
+classCategory: Martial Classes
+role: Versatile combatant
+primaryStat: STR
+secondaryStat: CON
+combatStyle: Arms and battlefield grit
+magicType: None
+difficulty: Beginner
+classColour: '#b88445'
+symbol: W
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "weapon"
-  - "versatile"
+  - class
+  - martial-classes
+  - martial
+  - weapon
+  - versatile
 visibility: public
 sourceOrder: 18
+id: 'class:content-classes-warrior-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-warrior-index'
+  - /compendium/class/classes/warrior
+  - content/classes/warrior/index.md
 ---
 
 # Warrior

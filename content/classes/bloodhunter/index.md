@@ -1,32 +1,40 @@
 ---
-title: "Bloodhunter"
-slug: "bloodhunter"
+title: Bloodhunter
+slug: bloodhunter
 type: class
-classCategory: "Dark Classes"
-role: "Blood rite monster hunter"
-primary_stat: "END"
-secondary_stat: "DEX"
-combat_style: "Blood rites and weapons"
-magic_type: "Hemomancy"
-difficulty: "Advanced"
-class_colour: "#bf2747"
-symbol: "BH"
+classCategory: Dark Classes
+role: Blood rite monster hunter
+primaryStat: END
+secondaryStat: DEX
+combatStyle: Blood rites and weapons
+magicType: Hemomancy
+difficulty: Advanced
+classColour: '#bf2747'
+symbol: BH
 playable: true
-starting_equipment:
-  - "Ritual blade"
-  - "Hunter coat"
-  - "Blood rite kit"
-recommended_professions:
-  - "Monster Hunter"
-  - "Occult Investigator"
+startingEquipment:
+  - Ritual blade
+  - Hunter coat
+  - Blood rite kit
+recommendedProfessions:
+  - Monster Hunter
+  - Occult Investigator
 tags:
-  - "class"
-  - "dark-classes"
-  - "dark"
-  - "blood"
-  - "hunter"
+  - class
+  - dark-classes
+  - dark
+  - blood
+  - hunter
 visibility: public
 sourceOrder: 1
+id: 'class:content-classes-bloodhunter-index'
+domain: class
+categoryPath:
+  - Dark Classes
+aliases:
+  - 'class:content-classes-bloodhunter-index'
+  - /compendium/class/classes/bloodhunter
+  - content/classes/bloodhunter/index.md
 ---
 
 # Bloodhunter

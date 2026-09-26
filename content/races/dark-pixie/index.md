@@ -1,39 +1,47 @@
 ---
-title: "Dark Pixie"
-slug: "dark-pixie"
+title: Dark Pixie
+slug: dark-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Dark Magic 100%"
-  - "Light Magic 0%"
+  - Dark Magic 100%
+  - Light Magic 0%
 essenceAffinity:
-  - "Dark"
+  - Dark
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "dark-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - dark-magic
 images:
-  male: "assets/races/dark-pixie/dark-pixie-male-adult.png"
-  female: "assets/races/dark-pixie/dark-pixie-female-adult.png"
+  male: assets/races/dark-pixie/dark-pixie-male-adult.png
+  female: assets/races/dark-pixie/dark-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Dark Magic"
+  primary: Dark Magic
   primaryPercent: 100
-  opposite: "Light Magic"
+  opposite: Light Magic
   oppositePercent: 0
 sourceOrder: 194
+id: 'race:content-races-dark-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-dark-pixie-index'
+  - /compendium/race/dark-pixie
+  - content/races/dark-pixie/index.md
 ---
 
 # Dark Pixie

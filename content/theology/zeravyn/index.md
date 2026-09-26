@@ -1,21 +1,29 @@
 ---
-title: "Zeravyn"
-slug: "zeravyn"
+title: Zeravyn
+slug: zeravyn
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Fate"
-divine_domain: "Essence of Fate"
-domain: "Essence of Fate"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/7. Zeravyn - Essence of Fate.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Fate
+divineDomain: Essence of Fate
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/7. Zeravyn - Essence of Fate.md
+id: 'religion:content-theology-zeravyn-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-zeravyn-index'
+  - /compendium/religion/pantheon-of-elements/zeravyn
+  - content/theology/zeravyn/index.md
 ---
+
 # Zeravyn
 
 ## Overview

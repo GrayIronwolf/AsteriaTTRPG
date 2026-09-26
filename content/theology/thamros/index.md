@@ -1,21 +1,29 @@
 ---
-title: "Thamros"
-slug: "thamros"
+title: Thamros
+slug: thamros
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of Mountains"
-divine_domain: "God of Mountains"
-domain: "God of Mountains"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Thamros - God of Mountains.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of Mountains
+divineDomain: God of Mountains
+sourcePath: 2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Thamros - God of Mountains.md
+id: 'religion:content-theology-thamros-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-thamros-index'
+  - /compendium/religion/aetherion-pantheon/thamros
+  - content/theology/thamros/index.md
 ---
+
 # Thamros
 
 ## Overview

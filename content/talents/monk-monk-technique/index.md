@@ -1,0 +1,64 @@
+---
+title: Monk Technique
+slug: monk-technique
+type: talent
+className: Monk
+classSlug: monk
+classCategory: Martial Classes
+talentTier: Tier 2
+tier: Tier 2
+ranks: 5
+prerequisite: Monk Foundation Rank 2
+cost: 1 Talent Point
+cooldown: Passive
+scaling: Improves by rank
+synergy: Information coming soon
+tags:
+  - talent
+  - monk
+  - tier-2
+visibility: public
+sourceOrder: 3
+id: 'talent:content-classes-monk-talents-tier-2-monk-technique-index'
+domain: talent
+categoryPath:
+  - Martial Classes
+  - Monk
+  - Tier 2
+aliases:
+  - 'talent:content-classes-monk-talents-tier-2-monk-technique-index'
+  - /compendium/talent/classes/talent-tree/talent-tree/monk-technique
+  - content/classes/monk/talents/tier-2/monk-technique/index.md
+---
+
+# Monk Technique
+
+## Overview
+Improves by rank
+
+## Rank 1
+Information coming soon.
+
+## Rank 2
+Information coming soon.
+
+## Rank 3
+Information coming soon.
+
+## Rank 4
+Information coming soon.
+
+## Rank 5
+Information coming soon.
+
+## Prerequisites
+Monk Foundation Rank 2
+
+## Scaling
+Improves by rank
+
+## Synergy
+Information coming soon
+
+## GM Notes
+Information coming soon

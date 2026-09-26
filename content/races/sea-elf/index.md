@@ -1,27 +1,36 @@
 ---
-title: "Sea Elf"
-slug: "sea-elf"
+title: Sea Elf
+slug: sea-elf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Elf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Elf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "elf-races"
+  - race
+  - medium-races
+  - elf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 49
+id: 'race:content-races-sea-elf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Elf Races
+aliases:
+  - 'race:content-races-sea-elf-index'
+  - /compendium/race/sea-elf
+  - content/races/sea-elf/index.md
 ---
 
 # Sea Elf

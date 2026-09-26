@@ -1,26 +1,34 @@
 ---
-title: "Oger"
-slug: "oger"
+title: Oger
+slug: oger
 type: race
-raceCategory: "Large Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Large Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "large-races"
+  - race
+  - large-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 59
+id: 'race:content-races-oger-index'
+domain: race
+categoryPath:
+  - Large Races
+aliases:
+  - 'race:content-races-oger-index'
+  - /compendium/race/oger
+  - content/races/oger/index.md
 ---
 
 # Oger

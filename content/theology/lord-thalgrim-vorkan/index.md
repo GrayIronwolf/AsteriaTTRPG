@@ -1,21 +1,31 @@
 ---
-title: "Lord Thalgrim Vorkan"
-slug: "lord-thalgrim-vorkan"
+title: Lord Thalgrim Vorkan
+slug: lord-thalgrim-vorkan
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/5. House of Shadows/1. Regent of Shadows/Lord Thalgrim Vorkan.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/5. House of Shadows/1. Regent of Shadows/Lord Thalgrim
+  Vorkan.md
+id: 'religion:content-theology-lord-thalgrim-vorkan-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lord-thalgrim-vorkan-index'
+  - /compendium/religion/dark-court/lord-thalgrim-vorkan
+  - content/theology/lord-thalgrim-vorkan/index.md
 ---
+
 # Lord Thalgrim Vorkan
 
 ## Overview

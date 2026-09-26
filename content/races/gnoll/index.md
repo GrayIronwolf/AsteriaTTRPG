@@ -1,28 +1,38 @@
 ---
-title: "Gnoll"
-slug: "gnoll"
+title: Gnoll
+slug: gnoll
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Canine Races"
-tertiaryCategory: "Hyena Races"
+raceCategory: Beastkin Races
+secondaryCategory: Canine Races
+tertiaryCategory: Hyena Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "canine-races"
-  - "hyena-races"
+  - race
+  - beastkin-races
+  - canine-races
+  - hyena-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 92
+id: 'race:content-races-gnoll-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Canine Races
+  - Hyena Races
+aliases:
+  - 'race:content-races-gnoll-index'
+  - /compendium/race/gnoll
+  - content/races/gnoll/index.md
 ---
 
 # Gnoll

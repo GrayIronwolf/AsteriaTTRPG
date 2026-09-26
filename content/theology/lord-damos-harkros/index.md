@@ -1,21 +1,31 @@
 ---
-title: "Lord Damos Harkros"
-slug: "lord-damos-harkros"
+title: Lord Damos Harkros
+slug: lord-damos-harkros
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/2. House of Hallows/1. Regent of Hallows/Lord Damos Harkros.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/2. House of Hallows/1. Regent of Hallows/Lord Damos
+  Harkros.md
+id: 'religion:content-theology-lord-damos-harkros-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lord-damos-harkros-index'
+  - /compendium/religion/dark-court/lord-damos-harkros
+  - content/theology/lord-damos-harkros/index.md
 ---
+
 # Lord Damos Harkros
 
 ## Overview

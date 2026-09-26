@@ -1,27 +1,36 @@
 ---
-title: "Hill Sprite"
-slug: "hill-sprite"
+title: Hill Sprite
+slug: hill-sprite
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Sprite Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Sprite Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "sprite-races"
+  - race
+  - small-races
+  - sprite-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 29
+id: 'race:content-races-hill-sprite-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Sprite Races
+aliases:
+  - 'race:content-races-hill-sprite-index'
+  - /compendium/race/hill-sprite
+  - content/races/hill-sprite/index.md
 ---
 
 # Hill Sprite

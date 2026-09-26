@@ -1,27 +1,36 @@
 ---
-title: "Arcane Hobbit"
-slug: "arcane-hobbit"
+title: Arcane Hobbit
+slug: arcane-hobbit
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Hobbit Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Hobbit Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "hobbit-races"
+  - race
+  - small-races
+  - hobbit-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 13
+id: 'race:content-races-arcane-hobbit-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Hobbit Races
+aliases:
+  - 'race:content-races-arcane-hobbit-index'
+  - /compendium/race/arcane-hobbit
+  - content/races/arcane-hobbit/index.md
 ---
 
 # Arcane Hobbit

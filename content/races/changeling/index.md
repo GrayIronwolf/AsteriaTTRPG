@@ -1,26 +1,34 @@
 ---
-title: "Changeling"
-slug: "changeling"
+title: Changeling
+slug: changeling
 type: race
-raceCategory: "Dark Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Dark Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "dark-races"
+  - race
+  - dark-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 162
+id: 'race:content-races-changeling-index'
+domain: race
+categoryPath:
+  - Dark Races
+aliases:
+  - 'race:content-races-changeling-index'
+  - /compendium/race/changeling
+  - content/races/changeling/index.md
 ---
 
 # Changeling

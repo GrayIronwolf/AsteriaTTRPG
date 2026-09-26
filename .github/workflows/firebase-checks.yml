@@ -20,6 +20,7 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci
+      - run: npm run content:check
       - run: npm run lint
       - run: npm test
       - run: node scripts/test-xp-realtime-sync.js
@@ -27,4 +28,4 @@ jobs:
       - run: npm run test:firebase
       - run: npm run build
       - name: Verify committed website bundle matches source
-        run: git diff --exit-code -- react-dist
+        run: git diff --exit-code -- react-dist data/compendium.js

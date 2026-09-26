@@ -1,27 +1,36 @@
 ---
-title: "Goradon"
-slug: "goradon"
+title: Goradon
+slug: goradon
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Megafaun Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Megafaun Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "megafaun-races"
+  - race
+  - beastkin-races
+  - megafaun-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 141
+id: 'race:content-races-goradon-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Megafaun Races
+aliases:
+  - 'race:content-races-goradon-index'
+  - /compendium/race/goradon
+  - content/races/goradon/index.md
 ---
 
 # Goradon

@@ -1,26 +1,34 @@
 ---
-title: "Half Orc"
-slug: "half-orc"
+title: Half Orc
+slug: half-orc
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 173
+id: 'race:content-races-half-orc-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-half-orc-index'
+  - /compendium/race/half-orc
+  - content/races/half-orc/index.md
 ---
 
 # Half Orc

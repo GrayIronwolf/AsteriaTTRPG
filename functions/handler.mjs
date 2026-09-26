@@ -8,7 +8,9 @@ import { validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs'
 // text is evaluated and this context has no network, filesystem or credentials.
 const progressionContext={window:{}};
 vm.runInNewContext(fs.readFileSync(new URL('../js/asteria-progression.js',import.meta.url),'utf8'),progressionContext);
-const catalog=[...JSON.parse(fs.readFileSync(new URL('../data/compendium-index-clean.json',import.meta.url),'utf8')).entries,...JSON.parse(fs.readFileSync(new URL('../data/universal-compendium-index.json',import.meta.url),'utf8')).entries];
+const catalogContext={module:{exports:{}}};
+vm.runInNewContext(fs.readFileSync(new URL('../data/compendium.js',import.meta.url),'utf8'),catalogContext);
+const catalog=catalogContext.module.exports.entries;
 const id=value=>typeof value==='string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
 
 

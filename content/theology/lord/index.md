@@ -1,21 +1,31 @@
 ---
-title: "Lord"
-slug: "lord"
+title: Lord
+slug: lord
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/12. House of the Unfortune/1. Regent of Unfortune/Lord.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/12. House of the Unfortune/1. Regent of
+  Unfortune/Lord.md
+id: 'religion:content-theology-lord-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lord-index'
+  - /compendium/religion/dark-court/lord
+  - content/theology/lord/index.md
 ---
+
 # Lord
 
 ## Overview

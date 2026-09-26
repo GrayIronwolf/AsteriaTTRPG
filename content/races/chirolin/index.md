@@ -1,27 +1,36 @@
 ---
-title: "Chirolin"
-slug: "chirolin"
+title: Chirolin
+slug: chirolin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bat Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bat Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: race-notes
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bat-races"
+  - race
+  - beastkin-races
+  - bat-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 66
+id: 'race:content-races-chirolin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bat Races
+aliases:
+  - 'race:content-races-chirolin-index'
+  - /compendium/race/chirolin
+  - content/races/chirolin/index.md
 ---
 
 # Chirolin

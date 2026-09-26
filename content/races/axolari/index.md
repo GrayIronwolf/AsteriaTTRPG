@@ -1,28 +1,38 @@
 ---
-title: "Axolari"
-slug: "axolari"
+title: Axolari
+slug: axolari
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Fish & Amphibian Races"
-tertiaryCategory: "Amphibian Races"
+raceCategory: Beastkin Races
+secondaryCategory: Fish & Amphibian Races
+tertiaryCategory: Amphibian Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "fish-and-amphibian-races"
-  - "amphibian-races"
+  - race
+  - beastkin-races
+  - fish-and-amphibian-races
+  - amphibian-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 114
+id: 'race:content-races-axolari-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Fish & Amphibian Races
+  - Amphibian Races
+aliases:
+  - 'race:content-races-axolari-index'
+  - /compendium/race/axolari
+  - content/races/axolari/index.md
 ---
 
 # Axolari

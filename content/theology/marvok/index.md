@@ -1,21 +1,29 @@
 ---
-title: "Marvok"
-slug: "marvok"
+title: Marvok
+slug: marvok
 type: theology
-category: "The Outsiders"
-pantheon: "The Outsiders"
-court: ""
-deity_title: "God of the Unbond Grave"
-divine_domain: "God of the Unbond Grave"
-domain: "God of the Unbond Grave"
-source_path: "2. Devine Pantheons/3. The Outsiders/Marvok - God of the Unbond Grave.md"
-image: ""
+category: The Outsiders
+pantheon: The Outsiders
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-outsiders"
+  - theology
+  - deity
+  - the-outsiders
 visibility: public
+deityTitle: God of the Unbond Grave
+divineDomain: God of the Unbond Grave
+sourcePath: 2. Devine Pantheons/3. The Outsiders/Marvok - God of the Unbond Grave.md
+id: 'religion:content-theology-marvok-index'
+categoryPath:
+  - The Outsiders
+aliases:
+  - 'religion:content-theology-marvok-index'
+  - /compendium/religion/the-outsiders/marvok
+  - content/theology/marvok/index.md
 ---
+
 # Marvok
 
 ## Overview

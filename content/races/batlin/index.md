@@ -1,27 +1,36 @@
 ---
-title: "Batlin"
-slug: "batlin"
+title: Batlin
+slug: batlin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bat Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bat Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bat-races"
+  - race
+  - beastkin-races
+  - bat-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 65
+id: 'race:content-races-batlin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bat Races
+aliases:
+  - 'race:content-races-batlin-index'
+  - /compendium/race/batlin
+  - content/races/batlin/index.md
 ---
 
 # Batlin

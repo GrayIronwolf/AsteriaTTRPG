@@ -1,27 +1,35 @@
 ---
-title: "Summoner"
-slug: "summoner"
+title: Summoner
+slug: summoner
 type: class
-classCategory: "Magical Classes"
-role: "Conjuration and companion caster"
-primary_stat: "INT"
-secondary_stat: "CHA"
-combat_style: "Summons and battlefield control"
-magic_type: "Conjuration"
-difficulty: "Advanced"
-class_colour: "#67e8f9"
-symbol: "SU"
+classCategory: Magical Classes
+role: Conjuration and companion caster
+primaryStat: INT
+secondaryStat: CHA
+combatStyle: Summons and battlefield control
+magicType: Conjuration
+difficulty: Advanced
+classColour: '#67e8f9'
+symbol: SU
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "summon"
-  - "control"
+  - class
+  - magical-classes
+  - magical
+  - summon
+  - control
 visibility: public
 sourceOrder: 10
+id: 'class:content-classes-summoner-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-summoner-index'
+  - /compendium/class/classes/summoner
+  - content/classes/summoner/index.md
 ---
 
 # Summoner

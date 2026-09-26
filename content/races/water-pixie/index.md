@@ -1,39 +1,47 @@
 ---
-title: "Water Pixie"
-slug: "water-pixie"
+title: Water Pixie
+slug: water-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Water Magic 100%"
-  - "Fire Magic 0%"
+  - Water Magic 100%
+  - Fire Magic 0%
 essenceAffinity:
-  - "Water"
+  - Water
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "water-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - water-magic
 images:
-  male: "assets/races/water-pixie/water-pixie-male-adult.png"
-  female: "assets/races/water-pixie/water-pixie-female-adult.png"
+  male: assets/races/water-pixie/water-pixie-male-adult.png
+  female: assets/races/water-pixie/water-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Water Magic"
+  primary: Water Magic
   primaryPercent: 100
-  opposite: "Fire Magic"
+  opposite: Fire Magic
   oppositePercent: 0
 sourceOrder: 190
+id: 'race:content-races-water-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-water-pixie-index'
+  - /compendium/race/water-pixie
+  - content/races/water-pixie/index.md
 ---
 
 # Water Pixie

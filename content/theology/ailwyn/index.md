@@ -1,21 +1,29 @@
 ---
-title: "Ailwyn"
-slug: "ailwyn"
+title: Ailwyn
+slug: ailwyn
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Life"
-divine_domain: "Essence of Life"
-domain: "Essence of Life"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/7. Ailwyn - Essence of Life.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Life
+divineDomain: Essence of Life
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/7. Ailwyn - Essence of Life.md
+id: 'religion:content-theology-ailwyn-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-ailwyn-index'
+  - /compendium/religion/pantheon-of-elements/ailwyn
+  - content/theology/ailwyn/index.md
 ---
+
 # Ailwyn
 
 ## Overview

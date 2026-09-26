@@ -1,27 +1,36 @@
 ---
-title: "Cave Gnome"
-slug: "cave-gnome"
+title: Cave Gnome
+slug: cave-gnome
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Gnome Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Gnome Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "gnome-races"
+  - race
+  - small-races
+  - gnome-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 3
+id: 'race:content-races-cave-gnome-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Gnome Races
+aliases:
+  - 'race:content-races-cave-gnome-index'
+  - /compendium/race/cave-gnome
+  - content/races/cave-gnome/index.md
 ---
 
 # Cave Gnome

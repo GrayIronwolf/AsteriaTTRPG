@@ -1,39 +1,47 @@
 ---
-title: "Death Pixie"
-slug: "death-pixie"
+title: Death Pixie
+slug: death-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Death Magic 100%"
-  - "Life Magic 0%"
+  - Death Magic 100%
+  - Life Magic 0%
 essenceAffinity:
-  - "Death"
+  - Death
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "death-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - death-magic
 images:
-  male: "assets/races/death-pixie/death-pixie-male-adult.png"
-  female: "assets/races/death-pixie/death-pixie-female-adult.png"
+  male: assets/races/death-pixie/death-pixie-male-adult.png
+  female: assets/races/death-pixie/death-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Death Magic"
+  primary: Death Magic
   primaryPercent: 100
-  opposite: "Life Magic"
+  opposite: Life Magic
   oppositePercent: 0
 sourceOrder: 192
+id: 'race:content-races-death-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-death-pixie-index'
+  - /compendium/race/death-pixie
+  - content/races/death-pixie/index.md
 ---
 
 # Death Pixie

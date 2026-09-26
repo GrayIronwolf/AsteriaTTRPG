@@ -1,26 +1,34 @@
 ---
-title: "Fairy"
-slug: "fairy"
+title: Fairy
+slug: fairy
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "fae-races"
+  - race
+  - fae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 185
+id: 'race:content-races-fairy-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-fairy-index'
+  - /compendium/race/fairy
+  - content/races/fairy/index.md
 ---
 
 # Fairy

@@ -1,21 +1,31 @@
 ---
-title: "Lady Cordelia Roth"
-slug: "lady-cordelia-roth"
+title: Lady Cordelia Roth
+slug: lady-cordelia-roth
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/1. House of Faces/1. Regent of Faces/Lady Cordelia Roth.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/1. House of Faces/1. Regent of Faces/Lady Cordelia
+  Roth.md
+id: 'religion:content-theology-lady-cordelia-roth-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lady-cordelia-roth-index'
+  - /compendium/religion/dark-court/lady-cordelia-roth
+  - content/theology/lady-cordelia-roth/index.md
 ---
+
 # Lady Cordelia Roth
 
 ## Overview

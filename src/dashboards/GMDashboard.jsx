@@ -274,16 +274,7 @@ function MagicElementRewards({ campaignId, characters, events }) {
 }
 
 function LootRewards({ campaignId, characters, events, customItems }) {
-  const catalog = useMemo(() => {
-    const source = [...(window.AsteriaInventory?.catalogEntries?.() || []), ...(customItems || [])];
-    const seen = new Set();
-    return source.filter(item => {
-      const key = String(item.slug || item.id || item.title || item.name || '').toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [customItems]);
+  const catalog = useMemo(() => window.AsteriaInventory?.catalogEntries?.(customItems) || [], [customItems]);
   const [target, setTarget] = useState('');
   const [search, setSearch] = useState('');
   const [item, setItem] = useState(null);
@@ -365,7 +356,7 @@ function LootRewards({ campaignId, characters, events, customItems }) {
       <label>Search Item Compendium<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search exact item..." /></label>
       <label>Quantity<ManualNumberInput min="1" value={quantity} onChange={event => setQuantity(event.target.value)} /></label>
     </div>
-    {search ? <div className="react-search-results">{results.map(entry => <button key={entry.slug || entry.id || entry.title} onClick={() => setItem(entry)} className={item === entry ? 'active' : ''}>{entry.title || entry.name}</button>)}</div> : null}
+    {search ? <div className="react-search-results">{results.map(entry => <button key={entry.id || entry.slug || entry.title} onClick={() => setItem(entry)} className={item === entry ? 'active' : ''}>{entry.title || entry.name}</button>)}</div> : null}
     <div className="react-action-row"><button className="primary" disabled={busy || !item || !target} onClick={send}>{busy ? 'Sending...' : `Send ${item?.title || item?.name || 'Reward'}`}</button><button disabled={busy} onClick={()=>setCustomMode(value=>!value)}>{customMode?'Cancel Custom Item':'Create Custom Item / Spellbook'}</button></div>
     {customMode?<div className="react-custom-loot-form">
       <div className="react-custom-loot-heading"><h3>{custom.isSpellbook?'Create Spellbook':'Create Custom Item'}</h3><label className="react-check-row"><input type="checkbox" checked={custom.isSpellbook} onChange={event=>toggleSpellbook(event.target.checked)}/>Spellbook from Spell Compendium</label></div>

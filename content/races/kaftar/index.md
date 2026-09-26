@@ -1,28 +1,38 @@
 ---
-title: "Kaftar"
-slug: "kaftar"
+title: Kaftar
+slug: kaftar
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Canine Races"
-tertiaryCategory: "Hyena Races"
+raceCategory: Beastkin Races
+secondaryCategory: Canine Races
+tertiaryCategory: Hyena Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "canine-races"
-  - "hyena-races"
+  - race
+  - beastkin-races
+  - canine-races
+  - hyena-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 93
+id: 'race:content-races-kaftar-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Canine Races
+  - Hyena Races
+aliases:
+  - 'race:content-races-kaftar-index'
+  - /compendium/race/kaftar
+  - content/races/kaftar/index.md
 ---
 
 # Kaftar

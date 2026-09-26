@@ -1,21 +1,31 @@
 ---
-title: "Regent Esmur Yin"
-slug: "regent-esmur-yin"
+title: Regent Esmur Yin
+slug: regent-esmur-yin
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/7. House of Deception/1. Regent of Deception/Regent Esmur Yin.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/7. House of Deception/1. Regent of Deception/Regent
+  Esmur Yin.md
+id: 'religion:content-theology-regent-esmur-yin-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-regent-esmur-yin-index'
+  - /compendium/religion/dark-court/regent-esmur-yin
+  - content/theology/regent-esmur-yin/index.md
 ---
+
 # Regent Esmur Yin
 
 ## Overview

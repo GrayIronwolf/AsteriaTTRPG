@@ -1,21 +1,29 @@
 ---
-title: "Osiron"
-slug: "osiron"
+title: Osiron
+slug: osiron
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Death"
-divine_domain: "Essence of Death"
-domain: "Essence of Death"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/8. Osiron - Essence of Death.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Death
+divineDomain: Essence of Death
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/8. Osiron - Essence of Death.md
+id: 'religion:content-theology-osiron-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-osiron-index'
+  - /compendium/religion/pantheon-of-elements/osiron
+  - content/theology/osiron/index.md
 ---
+
 # Osiron
 
 ## Overview

@@ -1,21 +1,29 @@
 ---
-title: "Malthera"
-slug: "malthera"
+title: Malthera
+slug: malthera
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: "Goddess of the Hellish"
-divine_domain: "Goddess of the Hellish"
-domain: "Goddess of the Hellish"
-source_path: "3. Courts/1. Dark Court - Netherworld/High God and Goddess of Netherworld/5. Malthera - Goddess of the Hellish.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: Goddess of the Hellish
+divineDomain: Goddess of the Hellish
+sourcePath: 3. Courts/1. Dark Court - Netherworld/High God and Goddess of Netherworld/5. Malthera - Goddess of the Hellish.md
+id: 'religion:content-theology-malthera-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-malthera-index'
+  - /compendium/religion/dark-court/malthera
+  - content/theology/malthera/index.md
 ---
+
 # Malthera
 
 ## Overview

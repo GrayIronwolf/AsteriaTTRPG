@@ -1,21 +1,31 @@
 ---
-title: "Nevara"
-slug: "nevara"
+title: Nevara
+slug: nevara
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Winter"
-divine_domain: "Goddess of Winter"
-domain: "Goddess of Winter"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Nevara - Goddess of Winter.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Winter
+divineDomain: Goddess of Winter
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Nevara - Goddess of
+  Winter.md
+id: 'religion:content-theology-nevara-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-nevara-index'
+  - /compendium/religion/aetherion-pantheon/nevara
+  - content/theology/nevara/index.md
 ---
+
 # Nevara
 
 ## Overview

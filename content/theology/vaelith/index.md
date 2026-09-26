@@ -1,21 +1,29 @@
 ---
-title: "Vaelith"
-slug: "vaelith"
+title: Vaelith
+slug: vaelith
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Dark"
-divine_domain: "Essence of Dark"
-domain: "Essence of Dark"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/6. Vaelith - Essence of Dark.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Dark
+divineDomain: Essence of Dark
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/6. Vaelith - Essence of Dark.md
+id: 'religion:content-theology-vaelith-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-vaelith-index'
+  - /compendium/religion/pantheon-of-elements/vaelith
+  - content/theology/vaelith/index.md
 ---
+
 # Vaelith
 
 ## Overview

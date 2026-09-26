@@ -93,8 +93,7 @@
     return typeof api.catalogEntries === 'function' ? api.catalogEntries() : [];
   }
   function catalogEntry(id){
-    const key = slug(id);
-    return catalogEntries().find(entry => slug(entry.slug || entry.title) === key) || null;
+    return window.AsteriaContent?.item(id) || null;
   }
   function catalogSnapshot(id, quantity = 1){
     const entry = catalogEntry(id);
@@ -470,8 +469,8 @@
           <div class="ecosystem-section-head"><div><h3>Asteria Item Database</h3><p>Search uses the existing compendium source.</p></div></div>
           <input type="search" data-gm-catalog-search value="${esc(ui.gmCatalogQuery)}" placeholder="Search category, rarity, region, or item...">
           <div class="ecosystem-item-gallery compact">${gmCatalogSelect().map(entry => {
-            const snapshot = catalogSnapshot(entry.slug || entry.title);
-            return snapshot ? itemCard(snapshot, { actions:`<button type="button" data-gm-catalog-select="${esc(entry.slug || slug(entry.title))}">${ui.gmSelectedCatalogId === slug(entry.slug || entry.title) ? 'Selected' : 'Select'}</button>` }) : '';
+            const snapshot = catalogSnapshot(entry.id);
+            return snapshot ? itemCard(snapshot, { actions:`<button type="button" data-gm-catalog-select="${esc(entry.id)}">${ui.gmSelectedCatalogId === entry.id ? 'Selected' : 'Select'}</button>` }) : '';
           }).join('')}</div>
           ${selected ? `<div class="ecosystem-selected-callout"><b>Selected: ${esc(selected.title)}</b><span>${esc(selected.category || '')}</span></div>` : ''}
         </section>
@@ -489,7 +488,7 @@
   function renderLootTableEditor(){
     const table = ecosystem()?.lootTables?.find(candidate => candidate.id === ui.gmSelectedLootTableId);
     if(!table) return '';
-    return `<section class="ecosystem-loot-table-editor"><div class="ecosystem-section-head"><div><h3>${esc(table.name)}</h3><p>Guaranteed, percentage, weighted, quantity, rarity, region, and unique drop foundations.</p></div></div><div class="ecosystem-form-inline"><select id="gmLootEntryItem"><option value="">Choose compendium item</option>${catalogEntries().map(entry => `<option value="${esc(entry.slug || slug(entry.title))}">${esc(entry.title)}</option>`).join('')}</select><input id="gmLootEntryChance" type="number" min="0" max="100" value="" title="Drop chance %"><input id="gmLootEntryMin" type="number" min="1" value="" title="Minimum quantity"><input id="gmLootEntryMax" type="number" min="1" value="" title="Maximum quantity"><label><input id="gmLootEntryUnique" type="checkbox"> Unique</label><button type="button" data-loot-entry-add>Add Drop</button></div><div class="ecosystem-audit-table">${array(table.entries).map((entry,index) => `<div><span>${esc(entry.itemName)}</span><span>${entry.chance}%</span><span>${entry.minQty}-${entry.maxQty}</span><span>${entry.unique ? 'Unique' : 'Repeatable'}</span><button type="button" data-loot-entry-remove="${index}">Remove</button></div>`).join('') || '<p>No entries yet.</p>'}</div></section>`;
+    return `<section class="ecosystem-loot-table-editor"><div class="ecosystem-section-head"><div><h3>${esc(table.name)}</h3><p>Guaranteed, percentage, weighted, quantity, rarity, region, and unique drop foundations.</p></div></div><div class="ecosystem-form-inline"><select id="gmLootEntryItem"><option value="">Choose compendium item</option>${catalogEntries().map(entry => `<option value="${esc(entry.id)}">${esc(entry.title)}</option>`).join('')}</select><input id="gmLootEntryChance" type="number" min="0" max="100" value="" title="Drop chance %"><input id="gmLootEntryMin" type="number" min="1" value="" title="Minimum quantity"><input id="gmLootEntryMax" type="number" min="1" value="" title="Maximum quantity"><label><input id="gmLootEntryUnique" type="checkbox"> Unique</label><button type="button" data-loot-entry-add>Add Drop</button></div><div class="ecosystem-audit-table">${array(table.entries).map((entry,index) => `<div><span>${esc(entry.itemName)}</span><span>${entry.chance}%</span><span>${entry.minQty}-${entry.maxQty}</span><span>${entry.unique ? 'Unique' : 'Repeatable'}</span><button type="button" data-loot-entry-remove="${index}">Remove</button></div>`).join('') || '<p>No entries yet.</p>'}</div></section>`;
   }
   function renderGMLootDrop(){
     const tables = array(ecosystem()?.lootTables);
@@ -720,7 +719,7 @@
     const snapshot = api.normalizeItem(Object.assign({}, clone(item), { qty:1 }), { newInstance:true });
     if(!api.remove(item.id, activeId(), 1, { action:'shop-sale', source:shop.name })) return false;
     api.adjustCurrency(activeId(), value, { action:'shop-sale-payment', source:shop.name });
-    const stock = array(shop.stock).find(line => slug(line.item?.catalogId || line.item?.name) === slug(snapshot.catalogId || snapshot.name));
+    const stock = array(shop.stock).find(line => (line.item?.definitionId || slug(line.item?.catalogId || line.item?.name)) === (snapshot.definitionId || slug(snapshot.catalogId || snapshot.name)));
     if(stock) stock.qty += 1;
     else shop.stock.push({ item:snapshot, qty:1, priceCopper:pricing?.getPlayerPurchasePriceCopper(snapshot,number(shop.buyModifier,1)) });
     shop.currencyCopper = Math.max(0, number(shop.currencyCopper,0) - value);
@@ -987,11 +986,11 @@
     if(!shop) return false;
     const candidates = catalogEntries().sort(() => Math.random()-.5).slice(0,8);
     candidates.forEach(entry => {
-      const item = catalogSnapshot(entry.slug || entry.title,1);
+      const item = catalogSnapshot(entry.id,1);
       if(!item) return;
       const priceCopper = pricing?.getPlayerPurchasePriceCopper(item,number(shop.buyModifier,1));
       if(priceCopper === null || priceCopper === 0) return;
-      const existing = array(shop.stock).find(line => slug(line.item?.catalogId || line.item?.name) === slug(item.catalogId || item.name));
+      const existing = array(shop.stock).find(line => (line.item?.definitionId || slug(line.item?.catalogId || line.item?.name)) === (item.definitionId || slug(item.catalogId || item.name)));
       const quantity = Math.floor(Math.random()*4)+1;
       if(existing) existing.qty += quantity;
       else shop.stock.push({ item, qty:quantity, priceCopper });

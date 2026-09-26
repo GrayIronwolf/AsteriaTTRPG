@@ -1,27 +1,36 @@
 ---
-title: "Ghoslin"
-slug: "ghoslin"
+title: Ghoslin
+slug: ghoslin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bat Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bat Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bat-races"
+  - race
+  - beastkin-races
+  - bat-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 69
+id: 'race:content-races-ghoslin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bat Races
+aliases:
+  - 'race:content-races-ghoslin-index'
+  - /compendium/race/ghoslin
+  - content/races/ghoslin/index.md
 ---
 
 # Ghoslin

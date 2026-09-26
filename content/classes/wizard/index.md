@@ -1,27 +1,35 @@
 ---
-title: "Wizard"
-slug: "wizard"
+title: Wizard
+slug: wizard
 type: class
-classCategory: "Magical Classes"
-role: "Prepared arcane scholar"
-primary_stat: "INT"
-secondary_stat: "WIS"
-combat_style: "Prepared spells and rituals"
-magic_type: "Arcane"
-difficulty: "Intermediate"
-class_colour: "#1f7dff"
-symbol: "WZ"
+classCategory: Magical Classes
+role: Prepared arcane scholar
+primaryStat: INT
+secondaryStat: WIS
+combatStyle: Prepared spells and rituals
+magicType: Arcane
+difficulty: Intermediate
+classColour: '#1f7dff'
+symbol: WZ
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "wizard"
-  - "arcane"
+  - class
+  - magical-classes
+  - magical
+  - wizard
+  - arcane
 visibility: public
 sourceOrder: 12
+id: 'class:content-classes-wizard-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-wizard-index'
+  - /compendium/class/classes/wizard
+  - content/classes/wizard/index.md
 ---
 
 # Wizard

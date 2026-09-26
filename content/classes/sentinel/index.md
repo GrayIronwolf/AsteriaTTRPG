@@ -1,27 +1,35 @@
 ---
-title: "Sentinel"
-slug: "sentinel"
+title: Sentinel
+slug: sentinel
 type: class
-classCategory: "Religious Classes"
-role: "Sacred defender"
-primary_stat: "END"
-secondary_stat: "WIS"
-combat_style: "Protection and warding"
-magic_type: "Divine"
-difficulty: "Beginner"
-class_colour: "#eab308"
-symbol: "S"
+classCategory: Religious Classes
+role: Sacred defender
+primaryStat: END
+secondaryStat: WIS
+combatStyle: Protection and warding
+magicType: Divine
+difficulty: Beginner
+classColour: '#eab308'
+symbol: S
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "religious-classes"
-  - "religious"
-  - "defender"
-  - "ward"
+  - class
+  - religious-classes
+  - religious
+  - defender
+  - ward
 visibility: public
 sourceOrder: 26
+id: 'class:content-classes-sentinel-index'
+domain: class
+categoryPath:
+  - Religious Classes
+aliases:
+  - 'class:content-classes-sentinel-index'
+  - /compendium/class/classes/sentinel
+  - content/classes/sentinel/index.md
 ---
 
 # Sentinel

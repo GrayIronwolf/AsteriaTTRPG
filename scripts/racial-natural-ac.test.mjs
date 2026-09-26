@@ -1,3 +1,4 @@
+import canonicalCompendium from '../data/compendium.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -5,9 +6,10 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 import {calculateCharacterAC,resolveNaturalAC,readNaturalAC,previewEquipmentChange} from '../src/systems/armour/armourSystem.mjs';
-const loadGlobal=(file,name)=>{const context={window:{}};vm.runInNewContext(fs.readFileSync(file,'utf8'),context);return context.window[name];};
-const index=JSON.parse(fs.readFileSync('data/universal-compendium-index.json','utf8'));
-const options={races:index.entries.filter(entry=>entry.domain==='race'),raceInfo:loadGlobal('js/race-info-data.js','ASTERIA_RACE_INFO_DATA')};
+const context={window:{ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:structuredClone(canonicalCompendium)}};
+vm.runInNewContext(fs.readFileSync('js/compendium-registry.js','utf8'),context);
+const index=canonicalCompendium;
+const options={races:index.entries.filter(entry=>entry.domain==='race'),raceInfo:context.window.ASTERIA_RACE_INFO_DATA};
 const expected={'Cavern Sprite':5,'Polaris Ursa':2,'Frostborn Undien':12,'Tempestborn Undien':11,'Tideborn Undien':11,'Flowborn Undien':6,'Chirolin':1,'Craglin':1,'Cavarin Avian':1};
 
 test('all supported source spellings preserve numbers without treating total AC as NAC',()=>{
@@ -36,25 +38,14 @@ test('unknown races stay flagged and valid personal snapshots still work',()=>{
  assert.equal(resolveNaturalAC({naturalAC:8},{races:[],raceInfo:{}}).value,8);
  assert.equal(resolveNaturalAC({race:'Frostborn Undien',naturalAC:3},options).value,12);
 });
-test('both browser indexes and source pages retain restored NAC and provenance',()=>{
- const jsIndex=loadGlobal('js/universal-compendium-index.js','ASTERIA_UNIVERSAL_COMPENDIUM_INDEX');
- const raceTree=loadGlobal('js/race-compendium-data.js','ASTERIA_RACE_COMPENDIUM_DATA');const records=[];
- const walk=node=>{if(node&&typeof node==='object'){if(node.type==='race')records.push(node);Object.values(node).forEach(v=>{if(v&&typeof v==='object')walk(v);});}};walk(raceTree);
- const manifest=loadGlobal('js/content-manifest.js','ASTERIA_CONTENT');
+test('browser registry and source pages retain restored NAC and provenance',()=>{
  for(const [race,nac] of Object.entries(expected)){
-  const slug=race.toLowerCase().replaceAll(' ','-');assert.equal(jsIndex.entries.find(row=>row.domain==='race'&&row.slug===slug).metadata.naturalAC,nac);assert.equal(records.find(row=>row.slug===slug).naturalAC,nac);
-  const source=fs.readFileSync(`content/races/${slug}/index.md`,'utf8');assert.match(source,new RegExp(`naturalAC: ${nac}\\n`));
-  const page=manifest.pages.find(row=>row.slug===slug);if(page)assert.match(page.content,new RegExp(`naturalAC: ${nac}\\n`));
+  const entry=context.window.AsteriaContent.resolve(race,'race');
+  assert.equal(entry.metadata.naturalAC,nac);assert.equal(entry.naturalAC,nac);
+  assert.match(fs.readFileSync(entry.sourcePath,'utf8'),new RegExp('naturalAC: '+nac+'\\n'));
  }
 });
-test('racial overview and sheet both display NAC; unknown values are labelled',()=>{
- const context={window:{addEventListener(){},AsteriaArmour:{resolveNaturalAC:character=>resolveNaturalAC(character,options)}},document:{readyState:'loading',addEventListener(){}}};
- const code=fs.readFileSync('js/race-compendium.js','utf8').replace(/\}\)\(\);\s*$/, 'window.testNAC={RaceOverviewPanel,RaceSheetContent};})();');vm.runInNewContext(code,context);
- const race={name:'Cavern Sprite',title:'Cavern Sprite',naturalAC:1,racialTraits:[]};
- assert.match(context.window.testNAC.RaceOverviewPanel(race),/Natural Armour Class \(NAC\).*?<b>5<\/b>/s);
- assert.match(context.window.testNAC.RaceSheetContent(race),/Natural Armour Class \(NAC\)<\/h3><p>5<\/p>/);
- assert.match(context.window.testNAC.RaceOverviewPanel({name:'Aasimar'}),/Not recorded \(fallback 1\)/);
-});
+// Overview, sheet and fallback labels are exercised by the shared viewer in compendium.test.mjs.
 test('Forge payload uses the same NAC as the dashboard and records fallback provenance',()=>{
  const context={window:{addEventListener(){},AsteriaArmour:{resolveNaturalAC:character=>resolveNaturalAC(character,options)}},document:{readyState:'loading',addEventListener(){}}};
  const code=fs.readFileSync('js/asteria-gameplay-systems.js','utf8').replace(/\}\)\(\);\s*$/, 'window.testNAC={raceInfoPayloadForEntry};})();');vm.runInNewContext(code,context);

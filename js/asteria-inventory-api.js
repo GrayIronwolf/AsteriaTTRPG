@@ -104,7 +104,7 @@
   }
 
   function itemKey(item){
-    return slug(item?.catalogId || item?.slug || item?.name || item?.id);
+    return item?.definitionId || window.AsteriaContent?.item(item?.catalogId || item?.slug)?.id || slug(item?.catalogId || item?.slug || item?.name || item?.id);
   }
   function rarity(item){
     return String(item?.itemClass || item?.rarity || item?.metadata?.itemClass || 'Common');

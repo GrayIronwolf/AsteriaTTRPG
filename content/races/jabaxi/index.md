@@ -1,27 +1,36 @@
 ---
-title: "Jabaxi"
-slug: "jabaxi"
+title: Jabaxi
+slug: jabaxi
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Feline Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Feline Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "feline-races"
+  - race
+  - beastkin-races
+  - feline-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 98
+id: 'race:content-races-jabaxi-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Feline Races
+aliases:
+  - 'race:content-races-jabaxi-index'
+  - /compendium/race/jabaxi
+  - content/races/jabaxi/index.md
 ---
 
 # Jabaxi

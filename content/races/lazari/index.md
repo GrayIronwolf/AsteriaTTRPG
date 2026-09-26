@@ -1,28 +1,38 @@
 ---
-title: "Lazari"
-slug: "lazari"
+title: Lazari
+slug: lazari
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Insect & Arachnid Races"
-tertiaryCategory: "Insect Races"
+raceCategory: Beastkin Races
+secondaryCategory: Insect & Arachnid Races
+tertiaryCategory: Insect Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "insect-and-arachnid-races"
-  - "insect-races"
+  - race
+  - beastkin-races
+  - insect-and-arachnid-races
+  - insect-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 126
+id: 'race:content-races-lazari-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Insect & Arachnid Races
+  - Insect Races
+aliases:
+  - 'race:content-races-lazari-index'
+  - /compendium/race/lazari
+  - content/races/lazari/index.md
 ---
 
 # Lazari

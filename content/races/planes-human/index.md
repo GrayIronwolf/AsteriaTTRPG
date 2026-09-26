@@ -1,27 +1,36 @@
 ---
-title: "Planes Human"
-slug: "planes-human"
+title: Planes Human
+slug: planes-human
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Human Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Human Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "human-races"
+  - race
+  - medium-races
+  - human-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 58
+id: 'race:content-races-planes-human-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Human Races
+aliases:
+  - 'race:content-races-planes-human-index'
+  - /compendium/race/planes-human
+  - content/races/planes-human/index.md
 ---
 
 # Planes Human

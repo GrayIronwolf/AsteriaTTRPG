@@ -1,27 +1,35 @@
 ---
-title: "Barbarian"
-slug: "barbarian"
+title: Barbarian
+slug: barbarian
 type: class
-classCategory: "Martial Classes"
-role: "Rage-driven melee striker"
-primary_stat: "STR"
-secondary_stat: "END"
-combat_style: "Heavy melee and endurance"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#bf2747"
-symbol: "B"
+classCategory: Martial Classes
+role: Rage-driven melee striker
+primaryStat: STR
+secondaryStat: END
+combatStyle: Heavy melee and endurance
+magicType: None
+difficulty: Beginner
+classColour: '#bf2747'
+symbol: B
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "rage"
-  - "melee"
+  - class
+  - martial-classes
+  - martial
+  - rage
+  - melee
 visibility: public
 sourceOrder: 13
+id: 'class:content-classes-barbarian-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-barbarian-index'
+  - /compendium/class/classes/barbarian
+  - content/classes/barbarian/index.md
 ---
 
 # Barbarian
