@@ -1,21 +1,29 @@
 ---
-title: "Aurion"
-slug: "aurion"
+title: Aurion
+slug: aurion
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of the Sky"
-divine_domain: "God of the Sky"
-domain: "God of the Sky"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Aurion - God of the Sky.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of the Sky
+divineDomain: God of the Sky
+sourcePath: 2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Aurion - God of the Sky.md
+id: 'religion:content-theology-aurion-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-aurion-index'
+  - /compendium/religion/aetherion-pantheon/aurion
+  - content/theology/aurion/index.md
 ---
+
 # Aurion
 
 ## Overview

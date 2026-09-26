@@ -1,27 +1,35 @@
 ---
-title: "Paladin"
-slug: "paladin"
+title: Paladin
+slug: paladin
 type: class
-classCategory: "Religious Classes"
-role: "Holy warrior"
-primary_stat: "STR"
-secondary_stat: "CHA"
-combat_style: "Weapon and oath magic"
-magic_type: "Divine"
-difficulty: "Intermediate"
-class_colour: "#f5c542"
-symbol: "P"
+classCategory: Religious Classes
+role: Holy warrior
+primaryStat: STR
+secondaryStat: CHA
+combatStyle: Weapon and oath magic
+magicType: Divine
+difficulty: Intermediate
+classColour: '#f5c542'
+symbol: P
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "religious-classes"
-  - "religious"
-  - "martial"
-  - "oath"
+  - class
+  - religious-classes
+  - religious
+  - martial
+  - oath
 visibility: public
 sourceOrder: 25
+id: 'class:content-classes-paladin-index'
+domain: class
+categoryPath:
+  - Religious Classes
+aliases:
+  - 'class:content-classes-paladin-index'
+  - /compendium/class/classes/paladin
+  - content/classes/paladin/index.md
 ---
 
 # Paladin

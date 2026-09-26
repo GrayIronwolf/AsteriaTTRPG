@@ -1,27 +1,36 @@
 ---
-title: "Desert Human"
-slug: "desert-human"
+title: Desert Human
+slug: desert-human
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Human Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Human Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "human-races"
+  - race
+  - medium-races
+  - human-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 55
+id: 'race:content-races-desert-human-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Human Races
+aliases:
+  - 'race:content-races-desert-human-index'
+  - /compendium/race/desert-human
+  - content/races/desert-human/index.md
 ---
 
 # Desert Human

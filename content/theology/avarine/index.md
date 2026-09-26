@@ -1,21 +1,29 @@
 ---
-title: "Avarine"
-slug: "avarine"
+title: Avarine
+slug: avarine
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Space"
-divine_domain: "Essence of Space"
-domain: "Essence of Space"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/10. Avarine - Essence of Space.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Space
+divineDomain: Essence of Space
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/10. Avarine - Essence of Space.md
+id: 'religion:content-theology-avarine-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-avarine-index'
+  - /compendium/religion/pantheon-of-elements/avarine
+  - content/theology/avarine/index.md
 ---
+
 # Avarine
 
 ## Overview

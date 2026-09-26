@@ -1,27 +1,35 @@
 ---
-title: "Rogue"
-slug: "rogue"
+title: Rogue
+slug: rogue
 type: class
-classCategory: "Rogue Classes"
-role: "Skillful infiltrator"
-primary_stat: "DEX"
-secondary_stat: "LCK"
-combat_style: "Precision and tools"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#35dd86"
-symbol: "R"
+classCategory: Rogue Classes
+role: Skillful infiltrator
+primaryStat: DEX
+secondaryStat: LCK
+combatStyle: Precision and tools
+magicType: None
+difficulty: Beginner
+classColour: '#35dd86'
+symbol: R
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "rogue-classes"
-  - "rogue"
-  - "tools"
-  - "precision"
+  - class
+  - rogue-classes
+  - rogue
+  - tools
+  - precision
 visibility: public
 sourceOrder: 29
+id: 'class:content-classes-rogue-index'
+domain: class
+categoryPath:
+  - Rogue Classes
+aliases:
+  - 'class:content-classes-rogue-index'
+  - /compendium/class/classes/rogue
+  - content/classes/rogue/index.md
 ---
 
 # Rogue

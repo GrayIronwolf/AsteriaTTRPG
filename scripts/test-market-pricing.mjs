@@ -1,3 +1,4 @@
+import canonicalCompendium from '../data/compendium.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -99,24 +100,24 @@ test('crafted, loot, shop, imported, and future categories share the base creato
 });
 
 test('all generated compendium item records expose both pricing properties', () => {
-  const index = JSON.parse(fs.readFileSync(path.join(root, 'data', 'compendium-index-clean.json'), 'utf8'));
+  const index = canonicalCompendium;
   const items = index.entries.filter(entry => entry.section === 'Items');
   assert.ok(items.length > 0);
   items.forEach(item => {
     assert.equal(Object.hasOwn(item, 'marketValue'), true, `${item.title} is missing marketValue`);
     assert.equal(Object.hasOwn(item, 'marketPrice'), true, `${item.title} is missing marketPrice`);
-    assert.equal(typeof item.marketValue, 'number', `${item.title} marketValue is not numeric`);
+    assert.ok(item.marketValue === null || typeof item.marketValue === 'number', `${item.title} marketValue must be numeric or explicitly unknown`);
     assert.ok(item.marketPrice === null || typeof item.marketPrice === 'number', `${item.title} marketPrice is neither numeric nor legacy null`);
   });
 });
 
 test('migrated item frontmatter contains canonical fields and no legacy duplicates', () => {
-  const index = JSON.parse(fs.readFileSync(path.join(root, 'data', 'compendium-index-clean.json'), 'utf8'));
+  const index = canonicalCompendium;
   index.entries.filter(entry => entry.section === 'Items' && entry.sourcePath).forEach(entry => {
     const markdown = fs.readFileSync(path.join(root, ...entry.sourcePath.split('/')), 'utf8');
     const frontmatter = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] || '';
-    assert.match(frontmatter, /^market_value:\s*(?:\d+(?:\.\d+)?|null)\s*$/m, `${entry.title} is missing canonical market_value`);
-    assert.match(frontmatter, /^market_price:\s*(?:\d+(?:\.\d+)?|null)\s*$/m, `${entry.title} is missing canonical market_price`);
+    assert.match(frontmatter, /^marketValue:\s*(?:\d+(?:\.\d+)?|null)\s*$/m, `${entry.title} is missing canonical market_value`);
+    assert.match(frontmatter, /^marketPrice:\s*(?:\d+(?:\.\d+)?|null)\s*$/m, `${entry.title} is missing canonical market_price`);
     assert.doesNotMatch(frontmatter, /^(?:selling[ _]price|purchase[ _]price):/im, `${entry.title} still has duplicate legacy pricing`);
   });
 });

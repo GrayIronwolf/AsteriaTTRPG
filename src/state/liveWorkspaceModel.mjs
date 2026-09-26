@@ -218,6 +218,8 @@ export function stackableStorageItem(items = [], incoming = {}, storageId = '') 
   return items.find(item => {
     if(item.equipped || String(item.storageId || item.bagId || '') !== String(storageId)) return false;
     if(item.stackable === false || Number(item.maxStack || 0) === 1 || item.identified !== incoming.identified) return false;
+    if(item.definitionId && incoming.definitionId) return item.definitionId === incoming.definitionId;
+    if(String(item.definitionId || incoming.definitionId || '').startsWith('custom-item:')) return false;
     return String(item.catalogId || item.trueName || item.name || item.title || '').trim().toLowerCase() === identity;
   }) || null;
 }

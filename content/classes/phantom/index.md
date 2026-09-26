@@ -1,27 +1,35 @@
 ---
-title: "Phantom"
-slug: "phantom"
+title: Phantom
+slug: phantom
 type: class
-classCategory: "Rogue Classes"
-role: "Evasion and apparition specialist"
-primary_stat: "AGI"
-secondary_stat: "LCK"
-combat_style: "Mobility and misdirection"
-magic_type: "Spectral"
-difficulty: "Advanced"
-class_colour: "#64748b"
-symbol: "P"
+classCategory: Rogue Classes
+role: Evasion and apparition specialist
+primaryStat: AGI
+secondaryStat: LCK
+combatStyle: Mobility and misdirection
+magicType: Spectral
+difficulty: Advanced
+classColour: '#64748b'
+symbol: P
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "rogue-classes"
-  - "rogue"
-  - "phantom"
-  - "evasion"
+  - class
+  - rogue-classes
+  - rogue
+  - phantom
+  - evasion
 visibility: public
 sourceOrder: 28
+id: 'class:content-classes-phantom-index'
+domain: class
+categoryPath:
+  - Rogue Classes
+aliases:
+  - 'class:content-classes-phantom-index'
+  - /compendium/class/classes/phantom
+  - content/classes/phantom/index.md
 ---
 
 # Phantom

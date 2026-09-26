@@ -1,27 +1,36 @@
 ---
-title: "Cavarin Avian"
-slug: "cavarin-avian"
+title: Cavarin Avian
+slug: cavarin-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: race-notes
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 72
+id: 'race:content-races-cavarin-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-cavarin-avian-index'
+  - /compendium/race/cavarin-avian
+  - content/races/cavarin-avian/index.md
 ---
 
 # Cavarin Avian

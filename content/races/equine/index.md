@@ -1,27 +1,36 @@
 ---
-title: "Equine"
-slug: "equine"
+title: Equine
+slug: equine
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Hooved Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Hooved Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "hooved-races"
+  - race
+  - beastkin-races
+  - hooved-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 116
+id: 'race:content-races-equine-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Hooved Races
+aliases:
+  - 'race:content-races-equine-index'
+  - /compendium/race/equine
+  - content/races/equine/index.md
 ---
 
 # Equine

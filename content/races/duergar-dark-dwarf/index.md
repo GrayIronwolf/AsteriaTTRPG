@@ -1,27 +1,36 @@
 ---
-title: "Duergar - Dark Dwarf"
-slug: "duergar-dark-dwarf"
+title: Duergar - Dark Dwarf
+slug: duergar-dark-dwarf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Dwarf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Dwarf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "dwarf-races"
+  - race
+  - medium-races
+  - dwarf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 34
+id: 'race:content-races-duergar-dark-dwarf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Dwarf Races
+aliases:
+  - 'race:content-races-duergar-dark-dwarf-index'
+  - /compendium/race/duergar-dark-dwarf
+  - content/races/duergar-dark-dwarf/index.md
 ---
 
 # Duergar - Dark Dwarf

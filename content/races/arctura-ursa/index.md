@@ -1,27 +1,36 @@
 ---
-title: "Arctura Ursa"
-slug: "arctura-ursa"
+title: Arctura Ursa
+slug: arctura-ursa
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Ursa Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Ursa Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "ursa-races"
+  - race
+  - beastkin-races
+  - ursa-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 155
+id: 'race:content-races-arctura-ursa-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Ursa Races
+aliases:
+  - 'race:content-races-arctura-ursa-index'
+  - /compendium/race/arctura-ursa
+  - content/races/arctura-ursa/index.md
 ---
 
 # Arctura Ursa

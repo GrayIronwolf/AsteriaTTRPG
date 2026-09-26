@@ -1,26 +1,34 @@
 ---
-title: "Hobgoblin"
-slug: "hobgoblin"
+title: Hobgoblin
+slug: hobgoblin
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 174
+id: 'race:content-races-hobgoblin-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-hobgoblin-index'
+  - /compendium/race/hobgoblin
+  - content/races/hobgoblin/index.md
 ---
 
 # Hobgoblin

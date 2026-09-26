@@ -1,21 +1,29 @@
 ---
-title: "Orris"
-slug: "orris"
+title: Orris
+slug: orris
 type: theology
-category: "The Nethyros Pantheon"
-pantheon: "The Nethyros Pantheon"
-court: ""
-deity_title: "God of Funerals & Burial Rites"
-divine_domain: "God of Funerals & Burial Rites"
-domain: "God of Funerals & Burial Rites"
-source_path: "2. Devine Pantheons/4. The Nethyros Pantheon/Orris - God of Funerals & Burial Rites.md"
-image: ""
+category: The Nethyros Pantheon
+pantheon: The Nethyros Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-nethyros-pantheon"
+  - theology
+  - deity
+  - the-nethyros-pantheon
 visibility: public
+deityTitle: God of Funerals & Burial Rites
+divineDomain: God of Funerals & Burial Rites
+sourcePath: 2. Devine Pantheons/4. The Nethyros Pantheon/Orris - God of Funerals & Burial Rites.md
+id: 'religion:content-theology-orris-index'
+categoryPath:
+  - The Nethyros Pantheon
+aliases:
+  - 'religion:content-theology-orris-index'
+  - /compendium/religion/the-nethyros-pantheon/orris
+  - content/theology/orris/index.md
 ---
+
 # Orris
 
 ## Overview

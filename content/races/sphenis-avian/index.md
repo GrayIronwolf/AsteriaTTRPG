@@ -1,27 +1,36 @@
 ---
-title: "Sphenis Avian"
-slug: "sphenis-avian"
+title: Sphenis Avian
+slug: sphenis-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 79
+id: 'race:content-races-sphenis-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-sphenis-avian-index'
+  - /compendium/race/sphenis-avian
+  - content/races/sphenis-avian/index.md
 ---
 
 # Sphenis Avian

@@ -1,21 +1,29 @@
 ---
-title: "Ethona"
-slug: "ethona"
+title: Ethona
+slug: ethona
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Celestial"
-divine_domain: "Essence of Celestial"
-domain: "Essence of Celestial"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/2. Ethona - Essence of Celestial.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Celestial
+divineDomain: Essence of Celestial
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/2. Ethona - Essence of Celestial.md
+id: 'religion:content-theology-ethona-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-ethona-index'
+  - /compendium/religion/pantheon-of-elements/ethona
+  - content/theology/ethona/index.md
 ---
+
 # Ethona
 
 ## Overview

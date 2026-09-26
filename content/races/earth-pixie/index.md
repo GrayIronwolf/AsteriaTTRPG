@@ -1,39 +1,47 @@
 ---
-title: "Earth Pixie"
-slug: "earth-pixie"
+title: Earth Pixie
+slug: earth-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Earth Magic 100%"
-  - "Air Magic 0%"
+  - Earth Magic 100%
+  - Air Magic 0%
 essenceAffinity:
-  - "Earth"
+  - Earth
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "earth-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - earth-magic
 images:
-  male: "assets/races/earth-pixie/earth-pixie-male-adult.png"
-  female: "assets/races/earth-pixie/earth-pixie-female-adult.png"
+  male: assets/races/earth-pixie/earth-pixie-male-adult.png
+  female: assets/races/earth-pixie/earth-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Earth Magic"
+  primary: Earth Magic
   primaryPercent: 100
-  opposite: "Air Magic"
+  opposite: Air Magic
   oppositePercent: 0
 sourceOrder: 188
+id: 'race:content-races-earth-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-earth-pixie-index'
+  - /compendium/race/earth-pixie
+  - content/races/earth-pixie/index.md
 ---
 
 # Earth Pixie

@@ -1,27 +1,36 @@
 ---
-title: "Fae Elf"
-slug: "fae-elf"
+title: Fae Elf
+slug: fae-elf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Elf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Elf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "elf-races"
+  - race
+  - medium-races
+  - elf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 44
+id: 'race:content-races-fae-elf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Elf Races
+aliases:
+  - 'race:content-races-fae-elf-index'
+  - /compendium/race/fae-elf
+  - content/races/fae-elf/index.md
 ---
 
 # Fae Elf

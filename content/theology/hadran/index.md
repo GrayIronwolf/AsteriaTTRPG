@@ -1,21 +1,29 @@
 ---
-title: "Hadran"
-slug: "hadran"
+title: Hadran
+slug: hadran
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of smithing"
-divine_domain: "God of smithing"
-domain: "God of smithing"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Hadran - God of smithing.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of smithing
+divineDomain: God of smithing
+sourcePath: 2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Hadran - God of smithing.md
+id: 'religion:content-theology-hadran-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-hadran-index'
+  - /compendium/religion/aetherion-pantheon/hadran
+  - content/theology/hadran/index.md
 ---
+
 # Hadran
 
 ## Overview

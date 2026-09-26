@@ -1,27 +1,35 @@
 ---
-title: "Reaper"
-slug: "reaper"
+title: Reaper
+slug: reaper
 type: class
-classCategory: "Dark Classes"
-role: "Execution and death-mark striker"
-primary_stat: "DEX"
-secondary_stat: "WIS"
-combat_style: "Scythes, marks, and finishers"
-magic_type: "Death"
-difficulty: "Advanced"
-class_colour: "#6b1026"
-symbol: "R"
+classCategory: Dark Classes
+role: Execution and death-mark striker
+primaryStat: DEX
+secondaryStat: WIS
+combatStyle: 'Scythes, marks, and finishers'
+magicType: Death
+difficulty: Advanced
+classColour: '#6b1026'
+symbol: R
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "dark-classes"
-  - "dark"
-  - "death"
-  - "execution"
+  - class
+  - dark-classes
+  - dark
+  - death
+  - execution
 visibility: public
 sourceOrder: 3
+id: 'class:content-classes-reaper-index'
+domain: class
+categoryPath:
+  - Dark Classes
+aliases:
+  - 'class:content-classes-reaper-index'
+  - /compendium/class/classes/reaper
+  - content/classes/reaper/index.md
 ---
 
 # Reaper

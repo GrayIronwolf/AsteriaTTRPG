@@ -1,21 +1,29 @@
 ---
-title: "Ravenna"
-slug: "ravenna"
+title: Ravenna
+slug: ravenna
 type: theology
-category: "The Nethyros Pantheon"
-pantheon: "The Nethyros Pantheon"
-court: ""
-deity_title: "Goddess of the Souls final Path and Ravens"
-divine_domain: "Goddess of the Souls final Path and Ravens"
-domain: "Goddess of the Souls final Path and Ravens"
-source_path: "2. Devine Pantheons/4. The Nethyros Pantheon/Ravenna - Goddess of the Souls final Path and Ravens.md"
-image: ""
+category: The Nethyros Pantheon
+pantheon: The Nethyros Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-nethyros-pantheon"
+  - theology
+  - deity
+  - the-nethyros-pantheon
 visibility: public
+deityTitle: Goddess of the Souls final Path and Ravens
+divineDomain: Goddess of the Souls final Path and Ravens
+sourcePath: 2. Devine Pantheons/4. The Nethyros Pantheon/Ravenna - Goddess of the Souls final Path and Ravens.md
+id: 'religion:content-theology-ravenna-index'
+categoryPath:
+  - The Nethyros Pantheon
+aliases:
+  - 'religion:content-theology-ravenna-index'
+  - /compendium/religion/the-nethyros-pantheon/ravenna
+  - content/theology/ravenna/index.md
 ---
+
 # Ravenna
 
 ## Overview

@@ -1,27 +1,36 @@
 ---
-title: "Builder Gnome"
-slug: "builder-gnome"
+title: Builder Gnome
+slug: builder-gnome
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Gnome Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Gnome Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "gnome-races"
+  - race
+  - small-races
+  - gnome-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 2
+id: 'race:content-races-builder-gnome-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Gnome Races
+aliases:
+  - 'race:content-races-builder-gnome-index'
+  - /compendium/race/builder-gnome
+  - content/races/builder-gnome/index.md
 ---
 
 # Builder Gnome

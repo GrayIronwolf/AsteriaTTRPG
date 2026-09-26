@@ -1,28 +1,38 @@
 ---
-title: "Kitsuna"
-slug: "kitsuna"
+title: Kitsuna
+slug: kitsuna
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Canine Races"
-tertiaryCategory: "Fox Races"
+raceCategory: Beastkin Races
+secondaryCategory: Canine Races
+tertiaryCategory: Fox Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "canine-races"
-  - "fox-races"
+  - race
+  - beastkin-races
+  - canine-races
+  - fox-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 90
+id: 'race:content-races-kitsuna-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Canine Races
+  - Fox Races
+aliases:
+  - 'race:content-races-kitsuna-index'
+  - /compendium/race/kitsuna
+  - content/races/kitsuna/index.md
 ---
 
 # Kitsuna

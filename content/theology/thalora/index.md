@@ -1,21 +1,31 @@
 ---
-title: "Thalora"
-slug: "thalora"
+title: Thalora
+slug: thalora
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Spring"
-divine_domain: "Goddess of Spring"
-domain: "Goddess of Spring"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Thalora - Goddess of Spring.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Spring
+divineDomain: Goddess of Spring
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Gods of the 4 seasons/Thalora - Goddess of
+  Spring.md
+id: 'religion:content-theology-thalora-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-thalora-index'
+  - /compendium/religion/aetherion-pantheon/thalora
+  - content/theology/thalora/index.md
 ---
+
 # Thalora
 
 ## Overview

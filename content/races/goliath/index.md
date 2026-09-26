@@ -1,26 +1,34 @@
 ---
-title: "Goliath"
-slug: "goliath"
+title: Goliath
+slug: goliath
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 171
+id: 'race:content-races-goliath-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-goliath-index'
+  - /compendium/race/goliath
+  - content/races/goliath/index.md
 ---
 
 # Goliath

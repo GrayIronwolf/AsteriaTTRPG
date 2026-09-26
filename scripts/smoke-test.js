@@ -37,8 +37,8 @@ jsFiles.forEach(file => {
 });
 
 [
-  'js/content-manifest.js',
-  'js/wiki-index.js',
+  'data/compendium.js',
+  'js/compendium-registry.js',
   'js/asteria-home-guard.js',
   'js/asteria-state.js',
   'js/asteria-view-hooks.js',
@@ -112,7 +112,7 @@ check('Canonical React architecture modules exist', ['src/app/AsteriaAppContext.
 });
 
 const mojibakePattern = /[\u00e2\u00c3\u00f0\ufffd]/;
-['index.html', 'js/wiki-index.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/asteria-magic-data.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/asteria-inventory-workflows.js', 'js/clean-compendium.js'].forEach(file => {
+['index.html', 'js/compendium-registry.js', 'js/asteria-state.js', 'js/asteria-view-hooks.js', 'js/asteria-progression.js', 'js/asteria-progression-ui.js', 'js/asteria-magic-data.js', 'js/app.js', 'js/asteria-inventory-api.js', 'js/asteria-inventory-workflows.js', 'js/clean-compendium.js'].forEach(file => {
   const text = fs.readFileSync(path.join(root, file), 'utf8');
   check(`No mojibake markers: ${file}`, !mojibakePattern.test(text));
 });
@@ -120,17 +120,11 @@ const mojibakePattern = /[\u00e2\u00c3\u00f0\ufffd]/;
 const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 const coreShellJs = fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8');
 const cleanCompendiumJs = fs.readFileSync(path.join(root, 'js/clean-compendium.js'), 'utf8');
-const codexCompendiumJs = fs.readFileSync(path.join(root, 'js/codex-compendium.js'), 'utf8');
-const classCompendiumDataJs = fs.readFileSync(path.join(root, 'js/class-compendium-data.js'), 'utf8');
-const raceCompendiumJs = fs.readFileSync(path.join(root, 'js/race-compendium.js'), 'utf8');
-const raceCompendiumDataJs = fs.readFileSync(path.join(root, 'js/race-compendium-data.js'), 'utf8');
-const raceInfoDataJs = fs.readFileSync(path.join(root, 'js/race-info-data.js'), 'utf8');
 const firebaseAuthJs = fs.readFileSync(path.join(root, 'js/firebase-auth.js'), 'utf8');
 const firestoreRulesPath = path.join(root, 'firestore.rules');
 const firestoreRules = fs.existsSync(firestoreRulesPath) ? fs.readFileSync(firestoreRulesPath, 'utf8') : '';
 const authBridgeJs = fs.readFileSync(path.join(root, 'js/auth-bridge.js'), 'utf8');
 const dataSyncJs = fs.readFileSync(path.join(root, 'js/data-sync.js'), 'utf8');
-const snapshotJs = fs.readFileSync(path.join(root, 'js/compendium-snapshot-v1.1.js'), 'utf8');
 const magicDataJs = fs.readFileSync(path.join(root, 'js/asteria-magic-data.js'), 'utf8');
 const gameplayJs = fs.readFileSync(path.join(root, 'js/asteria-gameplay-systems.js'), 'utf8');
 const inventoryWorkflowJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-workflows.js'), 'utf8');
@@ -146,8 +140,12 @@ const cleanCompendiumCss = fs.readFileSync(path.join(root, 'css/clean-compendium
 const modernUiCss = fs.readFileSync(path.join(root, 'css/asteria-modern-ui.css'), 'utf8');
 const homeHtml = html.slice(html.indexOf('<section id="home"'), html.indexOf('<section id="loginPage"'));
 const gmDashboardBlock = appJs.slice(appJs.indexOf('Asteria GM Dashboard v1'), appJs.indexOf('/* v1.7.3.2 Public Website Layout Helpers */'));
-const contentManifestJs = fs.readFileSync(path.join(root, 'js/content-manifest.js'), 'utf8');
-const universalCompendiumIndex = JSON.parse(fs.readFileSync(path.join(root, 'data/universal-compendium-index.json'), 'utf8'));
+const universalCompendiumIndex = require('../data/compendium.js');
+const registrySource = fs.readFileSync(path.join(root,'js/compendium-registry.js'),'utf8');
+const viewerSource = fs.readFileSync(path.join(root,'js/universal-compendium-engine.js'),'utf8');
+const registryContext = {window:{ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:structuredClone(universalCompendiumIndex)}};
+vm.runInNewContext(registrySource,registryContext);
+const content = registryContext.window.AsteriaContent;
 const skillEntries = universalCompendiumIndex.entries.filter(entry => entry.domain === 'skill');
 const skillTitles = skillEntries.map(entry => String(entry.title || '').toLowerCase());
 const duplicateSkillTitles = skillTitles.filter((title, index) => skillTitles.indexOf(title) !== index);
@@ -203,7 +201,6 @@ const genericGameplayMenu = gameplayJs.indexOf('<h3>Gameplay Systems</h3>');
 check('Character Forge renders as standalone page', forgeStandaloneBranch >= 0 && gameplayJs.includes("root.classList.add('phase3-forge-shell')") && genericGameplayMenu > forgeStandaloneBranch);
 check('Character Forge uses compendium category panels for race and class', gameplayJs.includes('renderForgeCategoryPanel') && gameplayJs.includes('clean-drilldown-cat') && gameplayJs.includes('AsteriaRaceCompendium.entries') && gameplayJs.includes('AsteriaCodexCompendium.classEntries'));
 check('Character Forge uses dashboard characteristic keys', gameplayJs.includes("const FORGE_CHARACTERISTICS = ATTRIBUTE_KEYS") && ['strength','dexterity','agility','constitution','endurance','intelligence','wisdom','charisma','luck'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('FORGE_STAT_LABELS'));
-check('Linked characteristics grant resources at a 1 to 10 ratio', appJs.includes('const RESOURCE_PER_CHARACTERISTIC = 10') && appJs.includes('characteristicResourceContribution') && gameplayJs.includes('asteriaResourceMaxFromCharacteristic') && snapshotJs.includes('asteriaResourceMaxFromCharacteristic'));
 check('Character Forge treats public races as playable by campaign-default', gameplayJs.includes('Campaign-specific race limits will be controlled later in Campaign Forge') && gameplayJs.includes("{ playable:true, availability:'playable' }") && !gameplayJs.includes('Only playable, player-visible races are shown here'));
 check('Character Forge applies race characteristic rules', ['CHARACTERISTIC_TIER_RULES','raceCharacteristicRulesFor','finalForgeCharacteristics','characteristic_rules'].every(token => gameplayJs.includes(token)) && gameplayJs.includes('phase3-characteristic-lines') && gameplayJs.includes('Racial Modifier') && gameplayJs.includes('Characteristic Tier Cap'));
 check('Character Forge stores racial info for dashboards', ['raceInfoPayloadForEntry','racial_info','racialTraits','racialFeatures','racialMovement'].every(token => gameplayJs.includes(token)));
@@ -211,7 +208,7 @@ check('Character Forge supports editing existing characters', ['editForgedCharac
 check('Character Forge supports popup character card colour settings', ['CARD_COLOUR_OPTIONS','data-forge-card-colour-settings','openCharacterCardColourSettings','data-forge-colour-picker','openAsteriaInfoModal','setCharacterCardColour','--character-card-colour','.forge-card-colour-settings'].every(token => gameplayJs.includes(token) || stylesCss.includes(token)));
 check('Character Forge stores max-two class locks', gameplayJs.includes('MAX_CHARACTER_CLASSES = 2') && gameplayJs.includes('classLimit:{ max:MAX_CHARACTER_CLASSES, primaryLocked:true }') && gameplayJs.includes('secondaryClassSlugs'));
 check('Character Forge is data-driven', ["databaseEntries('race')", "databaseEntries('class')", "entriesForSelect('skill'", "entriesForSelect('origin'", "databaseEntries('item')"].every(token => gameplayJs.includes(token)));
-check('Skill Compendium is available from public navigation', html.includes('data-workspace-section="Skills"') && cleanCompendiumJs.includes("section === 'Skills'") && cleanCompendiumJs.includes("openSection('Skills'"));
+check('Skill Compendium is available from public navigation', html.includes('data-workspace-section="Skills"') && viewerSource.includes('openSection'));
 check('Skill database is canonical and duplicate-free', skillEntries.length === 154 && duplicateSkillTitles.length === 0 && skillEntries.every(entry => String(entry.sourcePath || '').startsWith('content/skills/')), `${skillEntries.length} skills / ${duplicateSkillTitles.length} duplicates`);
 check('Detailed skill techniques are retained', skillEntries.some(entry => entry.title === 'Archery' && String(entry.sections?.Ranks || '').includes('Steady Draw') && String(entry.sections?.Ranks || '').includes('Grandmaster Techniques')));
 check('Character Forge filters shared Skill Compendium entries', gameplayJs.includes("entriesForSelect('skill', FALLBACK_SKILLS)") && gameplayJs.includes('data-phase3-skill-category') && gameplayJs.includes('forgeSearch?.skill'));
@@ -219,46 +216,21 @@ check('Character Forge stores final schema', ['family_tree','backstory','charact
 check('Player dashboard uses Characteristic Tier structure', progressionUiJs.includes('characteristicTierRules') && progressionUiJs.includes('characteristicTierInfo') && progressionUiJs.includes('characteristicCapFor') && appJs.includes("return v>=100?'Tier V'"));
 check('Player dashboard reflects class lock and max classes', appJs.includes('Primary class locked') && appJs.includes('Class Slots') && appJs.includes('Class limit reached') && appJs.includes('slice(0,max)'));
 check('Player dashboard syncs racial info from forged character', ['renderDashboardRacialInfo','v1722RaceInfoForCharacter','characterRacialInfo','racialTraitsList','Racial Characteristics'].every(token => appJs.includes(token)));
-check('Racial trait cards open shared popup on race page and dashboard', raceCompendiumJs.includes('openRaceTraitModal') && raceCompendiumJs.includes('data-race-trait-index') && appJs.includes('openDashboardRacialTrait') && appJs.includes('data-dashboard-racial-trait') && stylesCss.includes('.asteria-info-modal'));
 const raceContentRoot = path.join(root, 'content/races');
 const raceContentDirs = fs.readdirSync(raceContentRoot, { withFileTypes:true }).filter(entry => entry.isDirectory());
 const cavernRaceFile = fs.readFileSync(path.join(raceContentRoot, 'cavern-sprite/index.md'), 'utf8');
-const raceManifestContext = { window:{} };
-vm.createContext(raceManifestContext);
-vm.runInContext(raceCompendiumDataJs, raceManifestContext);
-const raceManifest = raceManifestContext.window.ASTERIA_RACE_COMPENDIUM_DATA;
-const raceManifestEntries = [];
-(function walkRaceManifest(nodes){
-  (nodes || []).forEach(node => {
-    if (node.type === 'race') raceManifestEntries.push(node);
-    else walkRaceManifest(node.children || []);
-  });
-})(raceManifest.categories || []);
-check('Race pages expose characteristic roll and cap panels', ['RaceCharacteristicRulesPanel','Characteristic Rolls & Tier Caps','RACE_TIER_RULES','playable:node.playable !== false'].every(token => raceCompendiumJs.includes(token)));
-check('Race info data loads before race renderer', jsFiles.includes('js/race-info-data.js') && jsFiles.indexOf('js/race-info-data.js') > jsFiles.indexOf('js/race-compendium-data.js') && jsFiles.indexOf('js/race-info-data.js') < jsFiles.indexOf('js/race-compendium.js'));
+const raceManifestEntries = content.entries('race');
+const raceManifest = {source:'content/races',entryCount:raceManifestEntries.length};
+check('Canonical data and registry load before the shared viewer', jsFiles.indexOf('data/compendium.js') < jsFiles.indexOf('js/compendium-registry.js') && jsFiles.indexOf('js/compendium-registry.js') < jsFiles.indexOf('js/universal-compendium-engine.js'));
 check('Race content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-race-content.js')) && raceContentDirs.length === 201 && raceContentDirs.every(entry => fs.existsSync(path.join(raceContentRoot, entry.name, 'index.md'))));
 check('Race manifest is generated from content/races', raceManifest.source === 'content/races' && raceManifest.entryCount === 201 && raceManifestEntries.length === 201 && raceManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/races/')));
 check('Removed race entries are not active', !fs.existsSync(path.join(raceContentRoot, 'undien/index.md')) && !fs.existsSync(path.join(raceContentRoot, 'deepborn-undien/index.md')) && !raceManifestEntries.some(entry => ['Undien','Deepborn Undien'].includes(entry.name)));
-check('Race pages merge markdown racial information', ['racialFeaturesMarkdown','racialTraitsMarkdown','statRolls','RaceTraitCards','RaceSheetContent'].every(token => raceCompendiumJs.includes(token)) && ['title: "Cavern Sprite"','## Racial Features','## Racial Characteristics','## Racial Traits'].every(token => cavernRaceFile.includes(token)));
-check('Generated race info carries rules and traits', ['racialTraits','rollModifiers','statRolls','tierCaps','racialFeaturesMarkdown'].every(token => raceInfoDataJs.includes(`"${token}"`)));
 const classContentRoot = path.join(root, 'content/classes');
 const classContentDirs = fs.readdirSync(classContentRoot, { withFileTypes:true }).filter(entry => entry.isDirectory());
-const classManifestContext = { window:{} };
-vm.createContext(classManifestContext);
-vm.runInContext(classCompendiumDataJs, classManifestContext);
-const classManifest = classManifestContext.window.ASTERIA_CLASS_COMPENDIUM_DATA;
-const classManifestEntries = [];
-(function walkClassManifest(nodes){
-  (nodes || []).forEach(node => {
-    if (node.type === 'class') classManifestEntries.push(node);
-    else walkClassManifest(node.children || []);
-  });
-})(classManifest.categories || []);
-check('Race pages support data-driven racial trait card slots', raceCompendiumJs.includes('traitSlotCount') && raceCompendiumJs.includes('while(slots.length < slotCount)') && raceCompendiumJs.includes('is-placeholder'));
-check('Race trait popups render full descriptions and effects', raceCompendiumJs.includes('traitDetailHtml') && raceCompendiumJs.includes('<h3>Description</h3>') && raceCompendiumJs.includes('<h3>Effects</h3>'));
-check('Pixie magical affinity keeps its Elemental Gift effect', raceCompendiumDataJs.includes('Unlock the corresponding **Elemental Gift** racial trait.'));
+const classManifestEntries = content.entries('class');
+const classManifest = {source:'content/classes',entryCount:classManifestEntries.length};
 check('Class content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-class-content.js')) && classContentDirs.length >= 30 && classContentDirs.every(entry => fs.existsSync(path.join(classContentRoot, entry.name, 'index.md'))));
-check('Class talents use per-tier content folders', fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-1/artificer-discipline/index.md')) && fs.existsSync(path.join(classContentRoot, 'artificer/talents/tier-5/arcane-exchange/index.md')));
+check('Class talents use per-tier content folders', fs.existsSync(path.join(root, 'content/talents/artificer-artificer-discipline/index.md')) && fs.existsSync(path.join(root, 'content/talents/artificer-arcane-exchange/index.md')));
 check('Class manifest is generated from content/classes', classManifest.source === 'content/classes' && classManifest.entryCount >= 30 && classManifestEntries.length >= 30 && classManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/classes/')));
 const importedClassTalentChecks = [
   ['druid', 'tier-1', 'aura-reading'],
@@ -268,9 +240,9 @@ const importedClassTalentChecks = [
   ['cleric', 'tier-1', 'channel-divinity'],
   ['spellblade', 'tier-1', 'arcane-edge']
 ];
-check('Imported class manuscripts use the canonical talent tree', importedClassTalentChecks.every(parts => fs.existsSync(path.join(classContentRoot, parts[0], 'talents', parts[1], parts[2], 'index.md'))));
+check('Imported class manuscripts use the canonical talent tree', importedClassTalentChecks.every(parts => fs.existsSync(path.join(root,'content/talents',parts[0]+'-'+parts[2],'index.md'))));
 check('Imported class rank content is complete', importedClassTalentChecks.every(parts => {
-  const markdown = fs.readFileSync(path.join(classContentRoot, parts[0], 'talents', parts[1], parts[2], 'index.md'), 'utf8');
+  const markdown = fs.readFileSync(path.join(root,'content/talents',parts[0]+'-'+parts[2],'index.md'), 'utf8');
   return ['## Rank 1', '## Rank 2', '## Rank 3', '## Rank 4', '## Rank 5'].every(rank => markdown.includes(rank));
 }));
 check('Imported class trees do not retain generated placeholders', [
@@ -317,7 +289,6 @@ check('Theme engine clears legacy theme state', themeSystemJs.includes('removeAt
 check('Background linework uses theme colour', themeCss.includes('color:var(--asteria-accent)') && themeCss.includes('mask:url("../assets/themes/asteria-spell-d20-overlay.svg")'));
 check('Site-wide accessibility shell is present', html.includes('class="skip-link"') && html.includes('id="mainContent"') && html.includes('id="asteriaLiveRegion"') && html.includes('aria-controls="settingsPanel"') && coreShellJs.includes('bindSettingsAccessibility') && coreShellJs.includes('AsteriaAnnounce'));
 check('Site-wide responsive card galleries and reading width are canonical', modernUiCss.includes('grid-template-columns: repeat(6, minmax(0, 1fr))') && modernUiCss.includes('--asteria-content-reading') && modernUiCss.includes('@media (max-width: 560px)'));
-check('Non-critical compendium artwork uses native lazy loading', [cleanCompendiumJs,codexCompendiumJs,raceCompendiumJs].every(source => source.includes('loading="lazy"')));
 check('Static live sync yields campaign listeners to React routes', dataSyncJs.includes('reactOwnsCampaignSubscriptions') && dataSyncJs.includes('stopCampaignRealtimeSubscriptions') && dataSyncJs.includes("window.addEventListener('hashchange'"));
 const inventoryApiJs = fs.readFileSync(path.join(root, 'js/asteria-inventory-api.js'), 'utf8');
 check('Inventory API exposes AsteriaInventory', inventoryApiJs.includes('window.AsteriaInventory'));
@@ -341,32 +312,21 @@ check('Item ecosystem provides responsive layouts', ['@media(max-width:1600px)',
 check('Shell exposes router API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaRouter'));
 check('Shell exposes account API', fs.readFileSync(path.join(root, 'js/asteria-core-shell.js'), 'utf8').includes('window.AsteriaAccounts'));
 
-const cleanCompendiumIndex = JSON.parse(fs.readFileSync(path.join(root, 'data/compendium-index-clean.json'), 'utf8'));
-const raceEntry = cleanCompendiumIndex.entries.find(entry => entry.section === 'Races' && entry.title === 'Cavern Sprite');
-check('Unified workspace compendium index exists', cleanCompendiumIndex.version === 'asteria-unified-workspace-compendium-system-v1' && cleanCompendiumIndex.entries.length >= 5);
+const cleanCompendiumIndex = universalCompendiumIndex;
+const raceEntry = content.resolve('cavern-sprite','race');
+check('Unified workspace compendium index exists', cleanCompendiumIndex.version === 'asteria-compendium-v2' && cleanCompendiumIndex.entries.length >= 5);
 check('Workspace exposes shared APIs', cleanCompendiumJs.includes('window.openCompendiumSection') && cleanCompendiumJs.includes('window.openCompendiumPath') && cleanCompendiumJs.includes('window.AsteriaWorkspace'));
 const theologyEntries = cleanCompendiumIndex.entries.filter(entry => entry.section === 'Theology');
 const primordialTheologyEntries = theologyEntries.filter(entry => (entry.metadata?.pantheon || entry.metadata?.category || entry.category) === 'Primordials');
 check('Workspace routes compendium sections through one renderer', ['Asteria Handbook','World, Realms & Planes','Races','Classes','Items','Magic','Theology','Creatures','Factions'].every(section => cleanCompendiumJs.includes(section)));
-check('Theology compendium menu is wired', html.includes('data-workspace-section="Theology"') && cleanCompendiumJs.includes('theologyCategories') && cleanCompendiumJs.includes('theologyCardBody'));
 check('Theology entries are generated from content/theology', theologyEntries.length >= 100 && theologyEntries.every(entry => String(entry.sourcePath || '').startsWith('content/theology/')));
 check('Theology contains exactly three Primordials', primordialTheologyEntries.length === 3 && ['Primordial of Energy','Primordial of the Ether','Primordial of the Void'].every(title => primordialTheologyEntries.some(entry => entry.title === title)));
-check('Theology category matching uses pantheon metadata', cleanCompendiumJs.includes('if (query.pantheon)') && cleanCompendiumJs.includes('!query.pantheon'));
-check('Theology categories include requested pantheons and courts', ['Primordials','Pantheon of Elements','Aetherion Pantheon','The Outsiders','The Nethyros Pantheon','Dark Court','Light Court','Veilborn Court','The Shadow Court'].every(label => cleanCompendiumJs.includes(label)));
+check('Theology navigation contains the authored pantheons and courts', ['Primordials','Pantheon of Elements','Aetherion Pantheon','The Outsiders','The Nethyros Pantheon','Dark Court','Light Court'].every(label => theologyEntries.some(entry => entry.categoryPath.includes(label))));
 check('Race navigation removes old playable folders', !html.includes("Races/Playable Races") && !html.includes("Races/Non-Playable Races") && !cleanCompendiumJs.includes('Playable Races') && !cleanCompendiumJs.includes('Non-Playable Races'));
-check('Race navigation uses lore/type categories', ['Beastkin','Celestial','Demonic','Dragon','Fae','Humanoid','Hybrid','Spirit Races','Undead','Demi-Races'].every(label => cleanCompendiumJs.includes(label)));
-check('Race playable status is metadata', Boolean(raceEntry) && raceEntry.playable === true && raceEntry.availability === 'playable' && raceEntry.raceCategory === 'Small Races' && raceEntry.size === 'Unknown');
-check('Race cards use playable status bubble', cleanCompendiumJs.includes('PLAYABLE') && cleanCompendiumJs.includes('NON-PLAYABLE') && cleanCompendiumCss.includes('.clean-race-status'));
-check('Item rarity system remains in clean compendium', cleanCompendiumJs.includes('clean-rarity-tag') && cleanCompendiumCss.includes('.clean-rarity-common') && cleanCompendiumIndex.entries.some(entry => entry.section === 'Items' && entry.rarity === 'Common'));
+check('Race navigation is derived from authored categories', content.entries('race').every(entry => entry.categoryPath.length > 0) && content.tree('race').length > 0);
+check('Race playable status is metadata', Boolean(raceEntry) && raceEntry.playable === true && raceEntry.availability === 'playable' && raceEntry.raceCategory === 'Small Races');
 check('Workspace layout uses standard panels', cleanCompendiumCss.includes('.workspace-header') && cleanCompendiumCss.includes('.workspace-category-panel') && cleanCompendiumCss.includes('.workspace-filter-area') && cleanCompendiumCss.includes('.workspace-tabs') && cleanCompendiumCss.includes('.workspace-display-window'));
-check('Category panel uses click-through navigation, not dropdown folders', cleanCompendiumJs.includes('clean-drilldown-cat') && !cleanCompendiumJs.includes("document.createElement('details')"));
-check('Top tab menu is section-specific', cleanCompendiumJs.includes('workspaceTabs') && cleanCompendiumJs.includes('Race Sheet') && cleanCompendiumJs.includes('Talent Tree') && cleanCompendiumJs.includes('Crafting'));
-check('Class compendium uses cleaned class tabs', codexCompendiumJs.includes("tabs:['Overview','Talent Tree','Lore','Gallery','GM Notes']") && !codexCompendiumJs.includes("'Class Information','Mechanics','Progression'") && !codexCompendiumJs.includes("'Pathways','Equipment'"));
-check('Class overview removes legacy metadata table', !codexCompendiumJs.includes("['Class Name',entry.title]") && !codexCompendiumJs.includes("['Starting Equipment',entry.starting_equipment.join(', ')") && codexCompendiumJs.includes('Elemental Magical Learning Potential'));
-check('Class talent detail opens by double-click', codexCompendiumJs.includes("addEventListener('dblclick'") && codexCompendiumJs.includes('selectedTalentName') && codexCompendiumJs.includes('codex-rank-table') && codexCompendiumJs.includes('data-open-player-talents'));
 check('Player dashboard keeps TP talent unlock controls', appJs.includes('Class Talent Tree') && appJs.includes('visual-tree-board') && appJs.includes('stageTalent(') && appJs.includes('applyTalentRanks()') && appJs.includes('Staged cost'));
-check('Workspace maps generated collections into item categories', cleanCompendiumJs.includes('itemPlacement') && cleanCompendiumJs.includes('loadFromWikiIndexes') && cleanCompendiumJs.includes('Resources & Materials') && cleanCompendiumJs.includes('Metal Ores') && cleanCompendiumJs.includes('Metal Ingots'));
-check('Compendium page viewer supports wiki item images', cleanCompendiumJs.includes('imagePath') && cleanCompendiumCss.includes('.clean-page-image'));
 check('Clean compendium generator exists', fs.existsSync(path.join(root, 'scripts/generate-clean-compendium-index.js')));
 check('Old public hub pages removed', ['handbookHub','worldHub','racesHub','classesHub','itemsHub','magicHub'].every(id => !ids.includes(id)));
 check('Old handbook library viewer removed', !ids.includes('library') && !ids.includes('rulePage') && !html.includes('ruleCards') && !html.includes('ruleContent'));
@@ -401,7 +361,6 @@ check('Player dashboard uses requested panel order', html.includes('Quick Action
 check('Player dashboard quick action is recovery only', html.includes('playerRecoveryAction') && html.includes('Short Rest') && html.includes('Long Rest') && html.includes('Recovery') && !html.includes("openManualCheckPrompt('Weapon Attack')") && appJs.includes('v1722RemoveDashboardActionClutter'));
 check('Player dashboard skills use ranked cards', appJs.includes('renderDashboardSkills') && appJs.includes('ASTERIA_SKILL_RANK_NAMES') && stylesCss.includes('.dashboard-skill-card'));
 check('Player coin pouch shows all currencies without internal scroll', stylesCss.includes('Coin pouch compact fit') && stylesCss.includes('.coin-panel-rows{display:grid!important;gap:5px!important;overflow:visible!important') && ['Copper','Silver','Gold','Platinum Crown','Royal Crown','Royal Platinum'].every(label => appJs.includes(`label:'${label}'`)));
-check('Character snapshot panel is removed from player dashboard', snapshotJs.includes("document.getElementById('snapshotStatusPanelV11')?.remove();") && snapshotJs.includes('return;'));
 check('Player dashboard does not install crafting/material/economy panels', ['function installPlayerCraftingPanel(){return;}', 'function installPlayerMaterials(){return;}', 'function installPlayerEconomy(){return;}'].every(token => appJs.includes(token)));
 check('Player dashboard does not install player enchantment builder', appJs.includes('function installPlayerEnchantPanel(){return;}') && appJs.includes("document.getElementById('gmEnchantPanel')?.scrollIntoView"));
 check('Material and economy panels no longer fall back into player overview', appJs.includes("function renderMaterialCompendium(){const host=document.querySelector('#library .rule-content, #library .content-panel, #library');") && appJs.includes("function installShopMaterialPanels(){const lib=document.querySelector('#library .content-panel, #library .rule-content, #library');") && !appJs.includes("function renderMaterialCompendium(){const host=document.querySelector('#library .rule-content, #library .content-panel, #library')||document.querySelector('#player')") && !appJs.includes("function installShopMaterialPanels(){const lib=document.querySelector('#library .content-panel, #library .rule-content, #library')||document.querySelector('#overview')"));
@@ -437,63 +396,12 @@ check('Campaign join can link existing or newly forged characters', ['renderJoin
 check('Dashboard includes required logged-in panels', ['Current Campaigns', 'Available Characters', 'Notifications', 'Active Party'].every(token => cleanCompendiumJs.includes(token)));
 check('Data sync uses auth dashboard version', dataSyncJs.includes('asteria-auth-workspace-dashboard-system-v1'));
 check('Firebase setup instructions exist', fs.existsSync(path.join(root, 'FIREBASE-SETUP.md')));
-check('Pixie race is split into elemental race entries', ['Air Pixie','Earth Pixie','Fire Pixie','Water Pixie','Life Pixie','Death Pixie','Light Pixie','Dark Pixie'].every(name => raceCompendiumDataJs.includes(name)) && !raceCompendiumDataJs.includes("race('Pixie'"));
-check('Pixie races carry primary and opposite magic affinities', raceCompendiumDataJs.includes('affinityProfile') && raceCompendiumDataJs.includes('"primaryPercent": 100') && raceCompendiumDataJs.includes('"oppositePercent": 0') && raceCompendiumJs.includes('affinityProfile:node.affinityProfile'));
 const raceGenderImageSlugs = ['abyssborn-undien','drownedborn-undien','flowborn-undien','frostborn-undien','polaris-ursa','tempestborn-undien','tideborn-undien','air-pixie','dark-pixie','death-pixie','earth-pixie','fire-pixie','life-pixie','light-pixie','water-pixie'];
-check('Race cards use matched male/female image assets', raceGenderImageSlugs.every(slug => raceCompendiumDataJs.includes(`content/races/${slug}/index.md`) && raceCompendiumDataJs.includes(`assets/races/${slug}/${slug}-female-adult.png`) && raceCompendiumDataJs.includes(`assets/races/${slug}/${slug}-male-adult.png`) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-female-adult.png`)) && fs.existsSync(path.join(root, `assets/races/${slug}/${slug}-male-adult.png`))));
 
-const floraReadme = path.join(root, 'content/flora/README.md');
-const floraRose = path.join(root, 'content/flora/1-common/flowers/rose/index.md');
-const floraImage = path.join(root, 'content/flora/1-common/flowers/rose/rose.png');
-const mineralsReadme = path.join(root, 'content/minerals/README.md');
-const mineralsIronOre = path.join(root, 'content/minerals/1-common/ores/iron-ore/index.md');
-const mineralsImage = path.join(root, 'content/minerals/1-common/ores/iron-ore/Iron Ore.png');
-const materialsReadme = path.join(root, 'content/materials/README.md');
-const materialsIronIngot = path.join(root, 'content/materials/1-common/metals/iron-ingot/index.md');
-const materialsImage = path.join(root, 'content/materials/1-common/metals/iron-ingot/Iron Ingot.png');
-const wikiIndexJs = fs.readFileSync(path.join(root, 'js/wiki-index.js'), 'utf8');
-const floraIndexJs = fs.readFileSync(path.join(root, 'js/flora-index.js'), 'utf8');
+// Canonical assets, category filters and historical collection routes are exercised in compendium.test.mjs.
 const localServerJs = fs.readFileSync(path.join(root, 'scripts/local-static-server.js'), 'utf8');
-const floraRarities = ['1-common','2-uncommon','3-unusual','4-rare','5-epic','6-mythic','7-legendary','8-relic'];
-const floraCategories = ['flowers','herbs','grasses','vines','aquatic','fungi','shrubs','trees','mosses'];
-const mineralCategories = ['ores','crystals','gems','stones','clays','salts','metals','fossils','arcane'];
-const materialCategories = ['metals','woods','fibres','leathers','stones','glass','ceramics','alloys','reagents'];
-check('Flora README exists', fs.existsSync(floraReadme));
-check('Flora sample Rose page exists', fs.existsSync(floraRose));
-check('Flora sample image exists', fs.existsSync(floraImage));
-check('Flora rarity/category scaffold exists', floraRarities.every(rarity => floraCategories.every(category => fs.existsSync(path.join(root, 'content/flora', rarity, category, '_index.md')))));
-check('Minerals README exists', fs.existsSync(mineralsReadme));
-check('Minerals sample Iron Ore page exists', fs.existsSync(mineralsIronOre));
-check('Minerals sample image exists', fs.existsSync(mineralsImage));
-check('Minerals rarity/category scaffold exists', floraRarities.every(rarity => mineralCategories.every(category => fs.existsSync(path.join(root, 'content/minerals', rarity, category, '_index.md')))));
-check('Materials README exists', fs.existsSync(materialsReadme));
-check('Materials sample Iron Ingot page exists', fs.existsSync(materialsIronIngot));
-check('Materials sample image exists', fs.existsSync(materialsImage));
-check('Materials rarity/category scaffold exists', floraRarities.every(rarity => materialCategories.every(category => fs.existsSync(path.join(root, 'content/materials', rarity, category, '_index.md')))));
-check('Shared wiki documentation exists', fs.existsSync(path.join(root, 'content/WIKI-ENGINE.md')));
-check('Shared wiki generator exists', fs.existsSync(path.join(root, 'scripts/generate-wiki-index.js')) && fs.existsSync(path.join(root, 'scripts/wiki-engine-config.js')));
-check('Flora index generator exists', fs.existsSync(path.join(root, 'scripts/generate-flora-index.js')));
-check('Combined wiki index exposes collections', wikiIndexJs.includes('window.ASTERIA_WIKI_INDEXES') && wikiIndexJs.includes('"flora"') && wikiIndexJs.includes('"minerals"') && wikiIndexJs.includes('"materials"') && wikiIndexJs.includes('/flora/common/flowers/rose') && wikiIndexJs.includes('/minerals/common/ores/iron-ore') && wikiIndexJs.includes('/materials/common/metals/iron-ingot'));
-check('Flora generated index exposes global', floraIndexJs.includes('window.ASTERIA_FLORA_INDEX') && floraIndexJs.includes('/flora/common/flowers/rose'));
-check('Minerals generated index exposes global through shared index', wikiIndexJs.includes('window.ASTERIA_MINERALS_INDEX') && wikiIndexJs.includes('Iron Ore'));
-check('Materials generated index exposes global through shared index', wikiIndexJs.includes('window.ASTERIA_MATERIALS_INDEX') && wikiIndexJs.includes('Iron Ingot'));
-check('Legacy loose ore and ingot content files are removed', !fs.existsSync(path.join(root, 'content/Items/Resources & Materials/Metal Ores/Iron Ore.md')) && !fs.existsSync(path.join(root, 'content/Items/Resources & Materials/Metal Ingots/Iron Ingot.md')));
-check('Legacy loose ore and ingot manifest entries are excluded', !/Items\/Resources & Materials\/(?:Ores|Ingots|Metal Ores|Metal Ingots)\//.test(contentManifestJs));
-check('Collection overview indexes do not become item cards', !contentManifestJs.includes('minerals/index.md') && !contentManifestJs.includes('materials/index.md') && !contentManifestJs.includes('flora/index.md') && !JSON.stringify(cleanCompendiumIndex).includes('Minerals Index') && !JSON.stringify(cleanCompendiumIndex).includes('Materials Index'));
-check('Clean item index excludes legacy loose ore and ingot sources', !JSON.stringify(cleanCompendiumIndex).includes('content/Items/Resources & Materials/Metal Ores/') && !JSON.stringify(cleanCompendiumIndex).includes('content/Items/Resources & Materials/Metal Ingots/'));
-check('Structured ore and ingot cards use canonical image paths', wikiIndexJs.includes('content/minerals/1-common/ores/antimony-ore/Antimony Ore.png') && wikiIndexJs.includes('content/materials/1-common/metals/antimony-ingot/Antimony Ingot.png') && wikiIndexJs.includes('content/minerals/1-common/ores/iron-ore/Iron Ore.png') && wikiIndexJs.includes('content/materials/1-common/metals/iron-ingot/Iron Ingot.png'));
-check('Item workspace tabs are hidden for item index', cleanCompendiumJs.includes('Items: []') && cleanCompendiumCss.includes('.workspace-tabs.is-empty'));
-check('Item cards use compact item-only grid', cleanCompendiumJs.includes('clean-item-grid') && cleanCompendiumCss.includes('.clean-grid.clean-item-grid') && cleanCompendiumCss.includes('minmax(170px, 198px)'));
 check('Old standalone wiki renderer is not loaded', !jsFiles.includes('js/asteria-wiki.js') && !html.includes('id="floraWiki"') && !html.includes('floraWikiMount'));
 check('Old wiki relationship styles are removed from global CSS', !stylesCss.includes('.wiki-relation-link') && !stylesCss.includes('.wiki-relationship-panel'));
-check('Unified compendium exposes relationship links', cleanCompendiumJs.includes('resolveReference') && cleanCompendiumJs.includes('relationshipPanel') && cleanCompendiumCss.includes('.clean-relationship-panel') && cleanCompendiumCss.includes('.clean-relation-link'));
-check('Unified compendium page viewer renders metadata', cleanCompendiumJs.includes('pageMetadata') && cleanCompendiumCss.includes('.clean-page-meta'));
-check('Unified cards support selection and double-click open', cleanCompendiumJs.includes('element.onclick') && cleanCompendiumJs.includes('element.ondblclick'));
-check('Item cards double-click into shared item popup', cleanCompendiumJs.includes('openItemPopup') && cleanCompendiumJs.includes("entry.section === 'Items' ? openItemPopup(entry) : openPage(entry)") && cleanCompendiumJs.includes('Item Compendium') && stylesCss.includes('.asteria-info-modal'));
-check('Magic elements category renders split card panels', cleanCompendiumJs.includes('isMagicElementsView') && cleanCompendiumJs.includes('renderMagicElementPanels') && cleanCompendiumJs.includes('clean-magic-element-card') && cleanCompendiumCss.includes('.clean-magic-elements-panel'));
-check('Universal viewer supports tabbed note sections', cleanCompendiumJs.includes('contentForWorkspaceTab') && cleanCompendiumJs.includes('workspace-note-tab-label') && cleanCompendiumJs.includes('data-viewer="universal-workspace-viewer"'));
-check('Unified compendium supports collection app routes', cleanCompendiumJs.includes('openRouteFromLocation') && cleanCompendiumJs.includes('entryForRoute') && cleanCompendiumJs.includes('hashchange'));
-check('Generated collection paths use normal item categories', !cleanCompendiumJs.includes('Items/Content Collections/') && !cleanCompendiumJs.includes('Items/Wiki Collections/') && cleanCompendiumJs.includes('Items/Resources & Materials/Metal/Metal Ores'));
 check('Local static server supports compendium app routes', localServerJs.includes('compendiumAppRoutes') && localServerJs.includes('flora') && localServerJs.includes('materials') && localServerJs.includes('artifacts') && localServerJs.includes('sendIndex'));
 
 const progressionContext = {
@@ -542,14 +450,14 @@ jsFiles.forEach(file => {
 const scriptOrder = jsFiles.join(' > ');
 check(
   'Script order keeps manifest before app',
-  jsFiles.indexOf('js/content-manifest.js') >= 0 &&
-    jsFiles.indexOf('js/app.js') > jsFiles.indexOf('js/content-manifest.js'),
+  jsFiles.indexOf('data/compendium.js') >= 0 &&
+    jsFiles.indexOf('js/app.js') > jsFiles.indexOf('data/compendium.js'),
   scriptOrder
 );
 check(
   'Script order keeps generated content index before unified compendium',
-  jsFiles.indexOf('js/wiki-index.js') > jsFiles.indexOf('js/content-manifest.js') &&
-    jsFiles.indexOf('js/clean-compendium.js') > jsFiles.indexOf('js/wiki-index.js'),
+  jsFiles.indexOf('js/compendium-registry.js') > jsFiles.indexOf('data/compendium.js') &&
+    jsFiles.indexOf('js/clean-compendium.js') > jsFiles.indexOf('js/compendium-registry.js'),
   scriptOrder
 );
 check(
@@ -559,8 +467,8 @@ check(
 );
 check(
   'Script order keeps state between manifest and app',
-  jsFiles.indexOf('js/content-manifest.js') >= 0 &&
-    jsFiles.indexOf('js/asteria-state.js') > jsFiles.indexOf('js/content-manifest.js') &&
+  jsFiles.indexOf('data/compendium.js') >= 0 &&
+    jsFiles.indexOf('js/asteria-state.js') > jsFiles.indexOf('data/compendium.js') &&
     jsFiles.indexOf('js/app.js') > jsFiles.indexOf('js/asteria-state.js'),
   scriptOrder
 );

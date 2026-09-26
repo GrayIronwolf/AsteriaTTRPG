@@ -1,27 +1,35 @@
 ---
-title: "Spellblade"
-slug: "spellblade"
+title: Spellblade
+slug: spellblade
 type: class
-classCategory: "Magical Classes"
-role: "Blade and spell hybrid"
-primary_stat: "DEX"
-secondary_stat: "INT"
-combat_style: "Weapon and spell weaving"
-magic_type: "Arcane"
-difficulty: "Intermediate"
-class_colour: "#22d3ee"
-symbol: "SB"
+classCategory: Magical Classes
+role: Blade and spell hybrid
+primaryStat: DEX
+secondaryStat: INT
+combatStyle: Weapon and spell weaving
+magicType: Arcane
+difficulty: Intermediate
+classColour: '#22d3ee'
+symbol: SB
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "blade"
-  - "hybrid"
+  - class
+  - magical-classes
+  - magical
+  - blade
+  - hybrid
 visibility: public
 sourceOrder: 9
+id: 'class:content-classes-spellblade-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-spellblade-index'
+  - /compendium/class/classes/spellblade
+  - content/classes/spellblade/index.md
 ---
 
 # Spellblade

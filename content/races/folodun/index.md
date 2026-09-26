@@ -1,27 +1,36 @@
 ---
-title: "Folodun"
-slug: "folodun"
+title: Folodun
+slug: folodun
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Xenarthra Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Xenarthra Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "xenarthra-races"
+  - race
+  - beastkin-races
+  - xenarthra-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 160
+id: 'race:content-races-folodun-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Xenarthra Races
+aliases:
+  - 'race:content-races-folodun-index'
+  - /compendium/race/folodun
+  - content/races/folodun/index.md
 ---
 
 # Folodun

@@ -1,27 +1,36 @@
 ---
-title: "Sun Elf"
-slug: "sun-elf"
+title: Sun Elf
+slug: sun-elf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Elf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Elf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "elf-races"
+  - race
+  - medium-races
+  - elf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 51
+id: 'race:content-races-sun-elf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Elf Races
+aliases:
+  - 'race:content-races-sun-elf-index'
+  - /compendium/race/sun-elf
+  - content/races/sun-elf/index.md
 ---
 
 # Sun Elf

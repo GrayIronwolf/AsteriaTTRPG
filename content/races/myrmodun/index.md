@@ -1,27 +1,36 @@
 ---
-title: "Myrmodun"
-slug: "myrmodun"
+title: Myrmodun
+slug: myrmodun
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Xenarthra Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Xenarthra Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "xenarthra-races"
+  - race
+  - beastkin-races
+  - xenarthra-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 161
+id: 'race:content-races-myrmodun-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Xenarthra Races
+aliases:
+  - 'race:content-races-myrmodun-index'
+  - /compendium/race/myrmodun
+  - content/races/myrmodun/index.md
 ---
 
 # Myrmodun

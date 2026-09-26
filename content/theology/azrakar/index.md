@@ -1,21 +1,29 @@
 ---
-title: "Azrakar"
-slug: "azrakar"
+title: Azrakar
+slug: azrakar
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Infernal"
-divine_domain: "Essence of Infernal"
-domain: "Essence of Infernal"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/5. Azrakar - Essence of  Infernal.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Infernal
+divineDomain: Essence of Infernal
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/5. Azrakar - Essence of  Infernal.md
+id: 'religion:content-theology-azrakar-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-azrakar-index'
+  - /compendium/religion/pantheon-of-elements/azrakar
+  - content/theology/azrakar/index.md
 ---
+
 # Azrakar
 
 ## Overview

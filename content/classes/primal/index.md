@@ -1,27 +1,35 @@
 ---
-title: "Primal"
-slug: "primal"
+title: Primal
+slug: primal
 type: class
-classCategory: "Dark Classes"
-role: "Savage dark channeler"
-primary_stat: "STR"
-secondary_stat: "END"
-combat_style: "Feral pressure"
-magic_type: "Primal"
-difficulty: "Intermediate"
-class_colour: "#7f1d1d"
-symbol: "P"
+classCategory: Dark Classes
+role: Savage dark channeler
+primaryStat: STR
+secondaryStat: END
+combatStyle: Feral pressure
+magicType: Primal
+difficulty: Intermediate
+classColour: '#7f1d1d'
+symbol: P
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "dark-classes"
-  - "dark"
-  - "primal"
-  - "feral"
+  - class
+  - dark-classes
+  - dark
+  - primal
+  - feral
 visibility: public
 sourceOrder: 2
+id: 'class:content-classes-primal-index'
+domain: class
+categoryPath:
+  - Dark Classes
+aliases:
+  - 'class:content-classes-primal-index'
+  - /compendium/class/classes/primal
+  - content/classes/primal/index.md
 ---
 
 # Primal

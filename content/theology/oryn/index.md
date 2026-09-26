@@ -1,21 +1,31 @@
 ---
-title: "Oryn"
-slug: "oryn"
+title: Oryn
+slug: oryn
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of sailing, fishing, shipbuilding & Ports"
-divine_domain: "God of sailing, fishing, shipbuilding & Ports"
-domain: "God of sailing, fishing, shipbuilding & Ports"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Oryn - God of sailing, fishing, shipbuilding & Ports.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: 'God of sailing, fishing, shipbuilding & Ports'
+divineDomain: 'God of sailing, fishing, shipbuilding & Ports'
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Oryn - God of sailing,
+  fishing, shipbuilding & Ports.md
+id: 'religion:content-theology-oryn-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-oryn-index'
+  - /compendium/religion/aetherion-pantheon/oryn
+  - content/theology/oryn/index.md
 ---
+
 # Oryn
 
 ## Overview

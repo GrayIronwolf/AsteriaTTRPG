@@ -1,27 +1,36 @@
 ---
-title: "River Sprite"
-slug: "river-sprite"
+title: River Sprite
+slug: river-sprite
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Sprite Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Sprite Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "sprite-races"
+  - race
+  - small-races
+  - sprite-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 30
+id: 'race:content-races-river-sprite-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Sprite Races
+aliases:
+  - 'race:content-races-river-sprite-index'
+  - /compendium/race/river-sprite
+  - content/races/river-sprite/index.md
 ---
 
 # River Sprite

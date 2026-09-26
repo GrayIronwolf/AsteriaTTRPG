@@ -1,26 +1,34 @@
 ---
-title: "Half Elf"
-slug: "half-elf"
+title: Half Elf
+slug: half-elf
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 172
+id: 'race:content-races-half-elf-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-half-elf-index'
+  - /compendium/race/half-elf
+  - content/races/half-elf/index.md
 ---
 
 # Half Elf

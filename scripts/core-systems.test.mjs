@@ -1,3 +1,4 @@
+import canonicalCompendium from '../data/compendium.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,7 +11,7 @@ import {talentRules,useLearnedTalent} from '../src/state/talentMechanics.mjs';
 import {calculateCharacterAC} from '../src/systems/armour/armourSystem.mjs';
 import {ownedGameplayMirrorPatch} from '../src/state/characterIntegrityModel.mjs';
 import vm from 'node:vm';
-const entries=JSON.parse(fs.readFileSync('data/universal-compendium-index.json','utf8')).entries;
+const entries=canonicalCompendium.entries;
 const sheet=patch=>({id:'a',name:'Aster',ownerUid:'alice',hp:[50,100],sp:[20,100],mp:[50,100],bp:[20,20],...patch});
 const clock={now:100000,encounter:{status:'active',combatId:'fight',round:1}};
 const condition=(patch={})=>makeCondition({name:'Test condition',...patch},'gm',clock,'condition');

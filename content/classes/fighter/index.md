@@ -1,33 +1,44 @@
 ---
-title: "Fighter"
-slug: "fighter"
+title: Fighter
+slug: fighter
 type: class
-classCategory: "Martial Classes"
-role: "Frontline weapon specialist"
-primary_stat: "STR"
-secondary_stat: "END"
-combat_style: "Weapon mastery"
-magic_type: "None"
-difficulty: "Beginner"
-class_colour: "#d4a24a"
-symbol: "F"
+classCategory: Martial Classes
+role: Frontline weapon specialist
+primaryStat: STR
+secondaryStat: END
+combatStyle: Weapon mastery
+magicType: None
+difficulty: Beginner
+classColour: '#d4a24a'
+symbol: F
 playable: true
-starting_equipment:
-  - "Training weapon"
-  - "Light armour"
-  - "Adventuring kit"
-recommended_professions:
-  - "Soldier"
-  - "Guard"
-  - "Mercenary"
+startingEquipment:
+  - Training weapon
+  - Light armour
+  - Adventuring kit
+recommendedProfessions:
+  - Soldier
+  - Guard
+  - Mercenary
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "weapon"
-  - "frontline"
+  - class
+  - martial-classes
+  - martial
+  - weapon
+  - frontline
 visibility: public
 sourceOrder: 15
+id: 'class:content-classes-fighter-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-fighter-index'
+  - /compendium/class/classes/fighter
+  - content/classes/fighter/index.md
+  - 'class:classes-martial-classes-fighter-fighter'
+  - /compendium/class/martial-classes/fighter
+  - classes/martial-classes/fighter/fighter.md
 ---
 
 # Fighter

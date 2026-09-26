@@ -1,27 +1,36 @@
 ---
-title: "Night Goblin"
-slug: "night-goblin"
+title: Night Goblin
+slug: night-goblin
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Goblin Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Goblin Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "goblin-races"
+  - race
+  - small-races
+  - goblin-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 9
+id: 'race:content-races-night-goblin-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Goblin Races
+aliases:
+  - 'race:content-races-night-goblin-index'
+  - /compendium/race/night-goblin
+  - content/races/night-goblin/index.md
 ---
 
 # Night Goblin

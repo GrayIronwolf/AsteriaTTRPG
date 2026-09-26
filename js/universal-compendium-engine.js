@@ -1,13 +1,9 @@
-/* Asteria Phase 1 Universal Compendium Engine.
-   Normalizes structured content, generated indexes, and current manifest data into one shared API. */
+/* Shared compendium search, navigation and viewer, backed by AsteriaContent. */
 (function(){
   'use strict';
 
   const INDEX = window.ASTERIA_UNIVERSAL_COMPENDIUM_INDEX || { entries:[], domains:{}, databases:{}, tabTemplates:{}, filterFields:{} };
-  const LORE_LEVELS = ['Common Knowledge','Discovered Lore','Rare Lore','Forbidden Lore','GM Only'];
-  const UNIVERSAL_ROUTE_SECTIONS = new Set(['Talents','Talent Compendium','Professions','Profession Compendium','Skills','Skill Compendium','Locations','Location Compendium','Theology','Theology Compendium','Religions','Religion & Gods Compendium','Gods','Factions','Faction Compendium','Lore','Lore Compendium']);
 
-  let cachedEntries = null;
   let activeDomain = 'item';
   let activePath = [];
   let drillPath = [];
@@ -19,23 +15,17 @@
   let activeSort = 'name';
   let activeIncludeGM = false;
   let categoryClickTimer = null;
-  let originalWorkspaceEntries = null;
-  let originalWorkspaceOpenSection = null;
-  let originalOpenEntryBySlug = null;
+  let activeLimit = 60;
+  let readingRoute = false;
+  let routeMessage = '';
+  let routeChoices = null;
 
   function byId(id){ return document.getElementById(id); }
   function qsa(selector, root=document){ return Array.from(root.querySelectorAll(selector)); }
   function lower(value){ return String(value || '').toLowerCase(); }
   function array(value){ return Array.isArray(value) ? value.filter(Boolean) : (value ? [value] : []); }
-  function firstValue(object, keys){
-    for(const key of keys){
-      if(object && object[key] !== undefined && object[key] !== null && object[key] !== '') return object[key];
-    }
-    return '';
-  }
-  function joinedValue(object, keys){ return array(firstValue(object, keys)).join(', '); }
   function escapeHtml(value){
-    return String(value || '').replace(/[&<>"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]));
+    return String(value ?? '').replace(/[&<>"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]));
   }
   function slug(value){
     return String(value || '').trim().toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'entry';
@@ -60,7 +50,7 @@
     spell:'spell', spells:'spell', magic:'spell',
     talent:'talent', talents:'talent',
     profession:'profession', professions:'profession',
-    skill:'skill', skills:'skill',
+    skill:'skill', skills:'skill', origin:'origin', origins:'origin', backgrounds:'origin',
     location:'location', locations:'location', world:'location', worlds:'location', realms:'location', planes:'location',
     religion:'religion', religions:'religion', theology:'religion', theologies:'religion', god:'religion', gods:'religion', deity:'religion', deities:'religion', pantheon:'religion', court:'religion', courts:'religion',
     faction:'faction', factions:'faction', guild:'faction', guilds:'faction', organization:'faction', organizations:'faction',
@@ -68,32 +58,8 @@
     handbook:'handbook', rules:'handbook'
   };
 
-  const domainLabels = Object.assign({
-    race:'Race Compendium',
-    class:'Class Compendium',
-    creature:'Creature Compendium',
-    item:'Item Compendium',
-    spell:'Spell Compendium',
-    talent:'Talent Compendium',
-    profession:'Profession Compendium',
-    skill:'Skill Compendium',
-    location:'Location Compendium',
-    religion:'Theology Compendium',
-    faction:'Faction Compendium',
-    lore:'Lore Compendium',
-    handbook:'Asteria Handbook'
-  }, INDEX.domains || {});
-
-  const databaseRegistry = Object.assign({}, INDEX.databases || {});
-
-  const baseFilterKeys = [
-    'category','rarity','itemType','craftingCategory','materialType','role','size','biome','habitat','region',
-    'faction','pantheon','deity','divineDomain','spellSchool','element','damageType','castingType','rank','talentTier',
-    'professionType','skillRank','locationType','settlementType','factionType','alignment','influence','era',
-    'availability','playable','climate','language','threatTier','levelRange','hostility','magical','boss','soulTier',
-    'encounterRole','magicType','essenceAffinity','primaryStat','secondaryStat','className','difficulty','toolType',
-    'trainingType','loreStatus','status','visibility'
-  ];
+  const domainLabels = INDEX.domains;
+  const databaseRegistry = INDEX.databases;
 
   const filterLabels = {
     rarity:'Rarity',
@@ -147,21 +113,7 @@
     visibility:'Visibility'
   };
 
-  const tabTemplates = Object.assign({
-    race:['Overview','Racial Sheet','Lore','Culture','Historical Figures','Settlements','Relations','Traits & Biology','Gallery','GM Notes'],
-    class:['Overview','Talent Tree','Lore','Gallery','GM Notes'],
-    creature:['Overview','Stat Sheet','Lore','Habitat','Behaviour','Combat','Loot & Drops','Soul Information','Variants','Encounter Use','Gallery','GM Notes'],
-    item:['Overview','Properties','Crafting','Lore','Sources','Gallery','GM Notes'],
-    spell:['Overview','Casting','Scaling','Lore','Sources','GM Notes'],
-    talent:['Overview','Ranks','Prerequisites','Scaling','Synergy','GM Notes'],
-    profession:['Overview','Progression','Tools','Recipes','Lore','GM Notes'],
-    skill:['Overview','Ranks','Checks','Training','Lore','GM Notes'],
-    location:['Overview','Map Notes','Regions','Factions','Lore','Encounters','GM Notes'],
-    religion:['Overview','Domains','Worship','Lore','Followers','Rituals','GM Notes'],
-    faction:['Overview','Influence','Members','Relations','Holdings','History','Hooks','GM Notes'],
-    lore:['Overview','Chronicle','People','Places','Artifacts','Related','GM Notes'],
-    handbook:['Overview','Rules','Examples','Related','GM Notes']
-  }, INDEX.tabTemplates || {});
+  const tabTemplates = INDEX.tabTemplates;
 
   function normalizeDomain(value){
     const key = slug(value).replace(/-compendium$/, '');
@@ -181,9 +133,30 @@
     return 'handbook';
   }
 
-  function markdownToHtml(markdown){
-    if(typeof window.mdToHtml === 'function') return window.mdToHtml(markdown || '');
-    const lines = String(markdown || '').split(/\r?\n/);
+  function markdownToHtml(markdown, entry = selectedEntry){
+    const tokens = [];
+    const token = html => { const id=tokens.push(html)-1; return `\uE000${id}\uE001`; };
+    function artwork(reference,label){
+      const src=entry?.imageReferences?.[reference];
+      return token(src ? `<img class="compendium-inline-art" src="${escapeHtml(src)}" alt="${escapeHtml(label || entry?.title || 'Artwork')}" loading="lazy">` : `<span class="compendium-missing-art">Artwork unavailable: ${escapeHtml(label || reference)}</span>`);
+    }
+    function link(reference,label){
+      if(/^https?:\/\//i.test(reference)) return token(`<a href="${escapeHtml(reference)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`);
+      let candidates=[reference,reference.replace(/\.md$/i,'')];
+      if(entry && !reference.startsWith('#')) for(const source of [entry.sourcePath,...array(entry.aliases).filter(value => value.endsWith('.md'))]) {
+        try { candidates.push(decodeURI(new URL(reference,`https://asteria.invalid/${source}`).pathname).slice(1)); } catch { /* Invalid links remain readable text. */ }
+      }
+      const target=candidates.find(value => window.AsteriaContent.resolveAll(value).some(item => !item.gmOnly || isGMMode()));
+      return token(target ? `<button type="button" class="universal-wiki-link" data-universal-link="${escapeHtml(target)}">${escapeHtml(label)}</button>` : `<span title="Unresolved reference: ${escapeHtml(reference)}">${escapeHtml(label)}</span>`);
+    }
+    const prepared=String(markdown || '')
+      .replace(/!\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,(_,ref,label) => artwork(ref,label))
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g,(_,label,ref) => artwork(ref,label))
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]*))?\]\]/g,(_,ref,label) => link(ref,label || ref))
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g,(_,label,ref) => link(ref,label));
+    const restore=html => html.replace(/\uE000(\d+)\uE001/g,(_,index) => tokens[Number(index)]);
+    if(typeof window.mdToHtml === 'function') return restore(window.mdToHtml(prepared));
+    const lines = prepared.split(/\r?\n/);
     let inList = false;
     const html = [];
     function inline(value){
@@ -214,253 +187,13 @@
       html.push(`<p>${inline(line)}</p>`);
     });
     if(inList) html.push('</ul>');
-    return html.join('');
+    return restore(html.join(''));
   }
 
-  function sectionsFromMarkdown(markdown){
-    const sections = {};
-    let current = 'Overview';
-    sections[current] = [];
-    String(markdown || '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '').split(/\r?\n/).forEach(line => {
-      const heading = line.match(/^##\s+(.+)$/);
-      if(heading){
-        current = heading[1].trim();
-        sections[current] = sections[current] || [];
-        return;
-      }
-      sections[current] = sections[current] || [];
-      sections[current].push(line);
-    });
-    return Object.fromEntries(Object.entries(sections).map(([key, lines]) => [key, lines.join('\n').trim()]));
-  }
-
-  function normalizeEntry(entry, source = 'generated'){
-    const domain = normalizeDomain(entry.domain || entry.type || entry.section || entry.workspaceSection);
-    const title = entry.title || entry.name || 'Untitled';
-    const categoryPath = array(entry.categoryPath).length
-      ? array(entry.categoryPath)
-      : array(entry.path).length
-        ? array(entry.path)
-        : [entry.category || domainLabels[domain] || 'Entries'].filter(Boolean);
-    const metadata = entry.metadata || {};
-    const content = entry.content || entry.body || '';
-    const sections = entry.sections || sectionsFromMarkdown(content);
-    const tabs = array(entry.tabs).length ? array(entry.tabs) : (tabTemplates[domain] || tabTemplates.handbook);
-    const imagePath = entry.imagePath || entry.image || entry.images?.female || entry.images?.male || entry.images?.image || entry.symbol || '';
-    const metadataFilters = {
-      category: categoryPath[categoryPath.length - 1] || '',
-      rarity: joinedValue(entry, ['rarity','item_class']).replace(/^$/, joinedValue(metadata, ['itemClass','item_class','rarity'])),
-      itemType: joinedValue(metadata, ['itemType','item_type']),
-      craftingCategory: joinedValue(metadata, ['craftingCategory','crafting_category']),
-      materialType: joinedValue(metadata, ['materialType','material_type']),
-      role: joinedValue(entry, ['role','encounter_role']).replace(/^$/, joinedValue(metadata, ['role','partyRole','party_role','encounterRole','encounter_role'])),
-      size: joinedValue(entry, ['size']).replace(/^$/, joinedValue(metadata, ['size'])),
-      biome: joinedValue(entry, ['biome']).replace(/^$/, joinedValue(metadata, ['biome','biomes'])),
-      habitat: joinedValue(metadata, ['habitat','habitats']),
-      region: joinedValue(metadata, ['region','regions']),
-      faction: joinedValue(metadata, ['faction','factions','relatedFactions','related_factions']),
-      pantheon: joinedValue(metadata, ['pantheon','pantheons']),
-      deity: joinedValue(metadata, ['deity','god','gods']),
-      divineDomain: joinedValue(metadata, ['divineDomain','divine_domain','domain','domains']),
-      spellSchool: joinedValue(metadata, ['spellSchool','spell_school','school','magicSchool','magic_school']),
-      element: joinedValue(metadata, ['element','elements','affinity','affinities']),
-      damageType: joinedValue(metadata, ['damageType','damage_type']),
-      castingType: joinedValue(metadata, ['castingType','casting_type']),
-      rank: joinedValue(metadata, ['rank','spellRank','spell_rank']),
-      talentTier: joinedValue(metadata, ['talentTier','talent_tier','tier']),
-      professionType: joinedValue(metadata, ['professionType','profession_type']),
-      skillRank: joinedValue(metadata, ['skillRank','skill_rank','rank']),
-      locationType: joinedValue(metadata, ['locationType','location_type']),
-      settlementType: joinedValue(metadata, ['settlementType','settlement_type']),
-      factionType: joinedValue(metadata, ['factionType','faction_type']),
-      alignment: joinedValue(metadata, ['alignment']),
-      influence: joinedValue(metadata, ['influence','influenceLevel','influence_level']),
-      era: joinedValue(metadata, ['era','age','timeline']),
-      availability: joinedValue(metadata, ['availability','playable']),
-      playable: joinedValue(metadata, ['playable']),
-      climate: joinedValue(metadata, ['climate']),
-      language: joinedValue(metadata, ['language','languages']),
-      threatTier: joinedValue(entry, ['threatTier','threat_tier']).replace(/^$/, joinedValue(metadata, ['threatTier','threat_tier'])),
-      levelRange: joinedValue(metadata, ['levelRange','level_range']),
-      hostility: joinedValue(metadata, ['hostility']),
-      magical: joinedValue(metadata, ['magical']),
-      boss: joinedValue(metadata, ['boss']),
-      soulTier: joinedValue(metadata, ['soulTier','soul_tier']),
-      encounterRole: joinedValue(metadata, ['encounterRole','encounter_role']),
-      magicType: joinedValue(entry, ['magicType','magic_type']).replace(/^$/, joinedValue(metadata, ['magicType','magic_type'])),
-      essenceAffinity: joinedValue(metadata, ['essenceAffinity','essence_affinity','affinity','affinities']),
-      primaryStat: joinedValue(metadata, ['primaryStat','primary_stat']),
-      secondaryStat: joinedValue(metadata, ['secondaryStat','secondary_stat']),
-      className: joinedValue(metadata, ['className','class_name','class']),
-      difficulty: joinedValue(metadata, ['difficulty']),
-      toolType: joinedValue(metadata, ['toolType','tool_type']),
-      trainingType: joinedValue(metadata, ['trainingType','training_type']),
-      loreStatus: joinedValue(entry, ['loreStatus','lore_status']).replace(/^$/, joinedValue(metadata, ['loreStatus','lore_status','loreVisibility','lore_visibility']) || 'Common Knowledge'),
-      status: joinedValue(metadata, ['status']),
-      visibility: joinedValue(metadata, ['visibility'])
-    };
-    const filters = Object.fromEntries(Object.entries(Object.assign({}, metadataFilters, entry.filters || {})).filter(([, value]) => value !== undefined && value !== null && value !== ''));
-    const slugValue = entry.slug || slug(title);
-    const route = entry.route || entry.wikiRoute || `/compendium/${domain}/${categoryPath.map(slug).join('/')}${categoryPath.length ? '/' : ''}${slugValue}`;
-    const gmOnly = Boolean(entry.gmOnly || String(entry.visibility || metadata.visibility || '').toLowerCase().includes('gm'));
-    return {
-      id: entry.id || `${source}:${domain}:${slugValue}`,
-      title,
-      name: title,
-      slug: slugValue,
-      domain,
-      type: domain,
-      section: entry.section || entry.workspaceSection || workspaceSection(domain),
-      workspaceSection: entry.workspaceSection || entry.section || workspaceSection(domain),
-      compendium: entry.compendium || domainLabels[domain],
-      categoryPath,
-      path: categoryPath,
-      pathId: pathId(categoryPath),
-      category: categoryPath[categoryPath.length - 1] || domainLabels[domain],
-      route,
-      sourcePath: entry.sourcePath || entry.contentPath || '',
-      sourceFolder: entry.sourceFolder || '',
-      content,
-      body: entry.body || content,
-      sections,
-      tabs,
-      activeTabs: tabs,
-      summary: entry.summary || entry.description || Object.values(sections).find(Boolean) || 'Information coming soon.',
-      description: entry.description || entry.summary || 'Information coming soon.',
-      metadata,
-      tags: array(entry.tags),
-      visibility: gmOnly ? 'gm-only' : (entry.visibility || 'public'),
-      gmOnly,
-      images: entry.images || {},
-      imagePath,
-      related: array(entry.related),
-      filters,
-      source,
-      searchTerms: lower([title, domain, categoryPath.join(' '), entry.searchTerms, content, JSON.stringify(metadata), JSON.stringify(filters), array(entry.tags).join(' ')].join(' '))
-    };
-  }
-
-  function workspaceSection(domain){
-    return {
-      race:'Races',
-      class:'Classes',
-      creature:'Creatures',
-      item:'Items',
-      spell:'Magic',
-      talent:'Classes',
-      profession:'Asteria Handbook',
-      skill:'Asteria Handbook',
-      location:'World, Realms & Planes',
-      religion:'Theology',
-      faction:'Factions',
-      lore:'Asteria Handbook',
-      handbook:'Asteria Handbook'
-    }[domain] || 'Asteria Handbook';
-  }
-
-  function traverseManifest(data, domain, nodeToEntry){
-    const entries = [];
-    function walk(nodes, path){
-      array(nodes).forEach(node => {
-        if(node && node.type === 'category') return walk(node.children || [], path.concat(node.name));
-        entries.push(nodeToEntry(node, path));
-      });
-    }
-    walk(data?.categories || [], []);
-    return entries.map(entry => normalizeEntry(entry, `${domain}-manifest`));
-  }
-
-  function manifestRaceEntries(){
-    return traverseManifest(window.ASTERIA_RACE_COMPENDIUM_DATA, 'race', (node, path) => ({
-      title: node.name,
-      slug: slug(node.slug || node.name),
-      domain:'race',
-      section:'Races',
-      categoryPath:path,
-      images:node.images || {},
-      imagePath:node.image || node.images?.female || node.images?.male || '',
-      metadata:node,
-      tags:array(node.tags),
-      tabs:tabTemplates.race
-    }));
-  }
-
-  function manifestClassEntries(){
-    return traverseManifest(window.ASTERIA_CLASS_COMPENDIUM_DATA, 'class', (node, path) => ({
-      title: node.name,
-      slug: slug(node.slug || node.name),
-      domain:'class',
-      section:'Classes',
-      categoryPath:path,
-      metadata:node,
-      tags:array(node.tags),
-      summary:node.role || 'Information coming soon.',
-      tabs:tabTemplates.class,
-      filters:{ role:node.role, magicType:node.magic_type, category:path[0] || '' }
-    }));
-  }
-
-  function manifestCreatureEntries(){
-    return traverseManifest(window.ASTERIA_CREATURE_COMPENDIUM_DATA, 'creature', (node, path) => ({
-      title: node.name,
-      slug: slug(node.slug || node.name),
-      domain:'creature',
-      section:'Creatures',
-      categoryPath:path,
-      metadata:node,
-      tags:array(node.tags),
-      summary:node.notes || 'Information coming soon.',
-      tabs:tabTemplates.creature,
-      filters:{ threatTier:node.threat_tier, role:node.encounter_role, size:node.size, biome:node.biome, category:path[0] || '' }
-    }));
-  }
-
-  function wikiEntries(){
-    const indexes = window.ASTERIA_WIKI_INDEXES || {};
-    return Object.values(indexes).flatMap(index => (index.items || []).map(item => normalizeEntry({
-      id:`wiki:${item.collection || index.id}:${item.slug}`,
-      title:item.title,
-      slug:item.slug,
-      domain:'item',
-      section:'Items',
-      compendium:index.title || 'Item Compendium',
-      categoryPath:['Content Collections', index.title || item.collection || 'Collection', item.categoryLabel || item.category || 'Entries'],
-      route:item.route,
-      sourcePath:item.contentPath,
-      imagePath:item.imagePath,
-      content:item.body || '',
-      body:item.body || '',
-      metadata:item.metadata || {},
-      tags:item.tags || [],
-      filters:{ rarity:item.item_class, category:item.categoryLabel || item.category, affinity:array(item.affinities).join(', ') }
-    }, 'wiki-index')));
-  }
-
-  function generatedEntries(){
-    return array(INDEX.entries).map(entry => normalizeEntry(entry, 'universal-index'));
-  }
-
-  function allEntries(){
-    if(cachedEntries) return cachedEntries.slice();
-    const combined = [
-      ...generatedEntries(),
-      ...wikiEntries(),
-      ...manifestRaceEntries(),
-      ...manifestClassEntries(),
-      ...manifestCreatureEntries()
-    ];
-    const seen = new Set();
-    cachedEntries = combined.filter(entry => {
-      const key = `${entry.domain}:${entry.slug}:${entry.categoryPath.join('/')}`;
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).sort((a,b) => a.domain.localeCompare(b.domain) || a.categoryPath.join('/').localeCompare(b.categoryPath.join('/')) || a.title.localeCompare(b.title));
-    return cachedEntries.slice();
-  }
+  function allEntries(){ return window.AsteriaContent.entries(); }
 
   function visibleEntries(includeGM = false){
-    return allEntries().filter(entry => !entry.gmOnly || includeGM || isGMMode());
+    return allEntries().filter(entry => !entry.gmOnly || (includeGM && isGMMode()));
   }
 
   function search(query = '', filters = {}){
@@ -473,13 +206,13 @@
       if(filters.category && !entry.categoryPath.map(lower).includes(lower(filters.category))) return false;
       if(filters.route && entry.route !== filters.route) return false;
       if(q && !entry.searchTerms.includes(q)) return false;
-      return Object.entries(filters.metadata || {}).every(([key, value]) => !value || lower(entry.filters?.[key] || entry.metadata?.[key]).includes(lower(value)));
+      return Object.entries(filters.metadata || {}).every(([key, value]) => !value || lower(entry.filters?.[key] ?? entry.metadata?.[key]) === lower(value));
     });
   }
 
   function filters(domainValue){
     const domain = domainValue ? normalizeDomain(domainValue) : '';
-    const scoped = domain ? allEntries().filter(entry => entry.domain === domain) : allEntries();
+    const scoped = visibleEntries(activeIncludeGM).filter(entry => !domain || entry.domain === domain);
     const result = { categories:[], tags:[], visibility:[], routes:[] };
     filterKeysForDomain(domain || activeDomain).forEach(key => result[key] = result[key] || []);
     scoped.forEach(entry => {
@@ -500,7 +233,7 @@
     const normalized = normalizeDomain(domain || activeDomain);
     const registryKeys = array(databaseRegistry[normalized]?.filterFields);
     const indexKeys = array(INDEX.filterFields?.[normalized]);
-    return [...new Set(registryKeys.concat(indexKeys, baseFilterKeys))];
+    return [...new Set(registryKeys.concat(indexKeys))];
   }
 
   function filterLabel(key){
@@ -510,7 +243,7 @@
   function tree(domainValue){
     const domain = normalizeDomain(domainValue || activeDomain);
     const root = { label:domainLabels[domain] || 'Compendium', path:[], children:{}, entries:[] };
-    allEntries().filter(entry => entry.domain === domain).forEach(entry => {
+    visibleEntries(activeIncludeGM).filter(entry => entry.domain === domain).forEach(entry => {
       let cursor = root;
       entry.categoryPath.forEach(part => {
         cursor.children[part] = cursor.children[part] || { label:part, path:cursor.path.concat(part), children:{}, entries:[] };
@@ -530,28 +263,27 @@
     return finish(root);
   }
 
-  function getBySlug(slugValue){
-    const key = slug(slugValue);
-    return allEntries().find(entry => entry.slug === key || slug(entry.title) === key || entry.id === slugValue || slug(entry.route) === key) || null;
-  }
+  function getBySlug(value, domain){ return window.AsteriaContent.resolve(value, domain); }
 
-  function getByRoute(route){
-    return allEntries().find(entry => entry.route === route) || null;
-  }
+  function getByRoute(value){ return window.AsteriaContent.resolve(value); }
 
   function related(entryOrSlug){
     const entry = typeof entryOrSlug === 'string' ? getBySlug(entryOrSlug) : entryOrSlug;
     if(!entry) return [];
-    const requested = array(entry.related).map(slug);
+    const referenceFields=['sourceItems','relatedItems','craftingUses','alchemyUses','culinaryUses','recipes','recipeLinks','ingredients','materials','outputs','requires','upgradesFrom','upgradesTo'];
+    const references=[...array(entry.related),...referenceFields.flatMap(key => array(entry.metadata[key]))];
+    for(const match of entry.body.matchAll(/(?<!!)\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g))references.push(match[1]);
+    const requested = new Set(references.flatMap(value => window.AsteriaContent.resolveAll(typeof value==='object' ? value.id || value.name || value.title : value)).map(value => value.id));
     const tagSet = new Set(entry.tags.map(slug));
-    return allEntries().filter(candidate => {
+    return visibleEntries(activeIncludeGM).filter(candidate => {
       if(candidate.id === entry.id) return false;
-      if(requested.includes(candidate.slug) || requested.includes(slug(candidate.title))) return true;
+      if(requested.has(candidate.id)) return true;
       return candidate.tags.some(tag => tagSet.has(slug(tag)));
     }).slice(0, 8);
   }
 
   function workspaceView(){
+    window.setView?.('workspace');
     let view = byId('workspace');
     if(!view){
       view = document.createElement('section');
@@ -576,11 +308,10 @@
   }
 
   function currentEntries(){
-    const q = byId('universalSearch')?.value || activeQuery || '';
+    const q = activeQuery || '';
     const categoryId = pathId(activePath);
     activeQuery = q;
-    const gmToggle = byId('universalGMToggle');
-    activeIncludeGM = gmToggle ? Boolean(gmToggle.checked) : Boolean(activeIncludeGM);
+    activeIncludeGM = Boolean(activeIncludeGM && isGMMode());
     const metadata = {};
     if(activeFilterField && activeFilterValue) metadata[activeFilterField] = activeFilterValue;
     let list = search(q, { domain:activeDomain, includeGM:activeIncludeGM, metadata });
@@ -634,11 +365,11 @@
     if(activeFilterValue && !filterValues.includes(activeFilterValue)) activeFilterValue = '';
     return `
       <section class="codex-search-filter-bar universal-search-filter-bar">
-        <label>Search<input id="universalSearch" value="${escapeHtml(activeQuery)}" placeholder="Search ${escapeHtml(domainLabels[activeDomain] || 'Asteria')}..."></label>
+        <label>Search<input type="search" id="universalSearch" value="${escapeHtml(activeQuery)}" placeholder="Search ${escapeHtml(domainLabels[activeDomain] || 'Asteria')}..."></label>
         <label>Domain<select id="universalDomain">${Object.keys(domainLabels).map(domain => `<option value="${escapeHtml(domain)}" ${domain === activeDomain ? 'selected' : ''}>${escapeHtml(domainLabels[domain])}</option>`).join('')}</select></label>
         <label>Filter<select id="universalFilterField"><option value="">All Metadata</option>${filterFields.map(key => `<option value="${escapeHtml(key)}" ${key === activeFilterField ? 'selected' : ''}>${escapeHtml(filterLabel(key))}</option>`).join('')}</select></label>
         <label>Value<select id="universalFilterValue" ${activeFilterField ? '' : 'disabled'}><option value="">All Values</option>${filterValues.map(value => `<option value="${escapeHtml(value)}" ${value === activeFilterValue ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}</select></label>
-        <label class="codex-toggle-label"><input id="universalGMToggle" type="checkbox" ${activeIncludeGM ? 'checked' : ''}> Show GM-only</label>
+        ${isGMMode() ? `<label class="codex-toggle-label"><input id="universalGMToggle" type="checkbox" ${activeIncludeGM ? 'checked' : ''}> Show GM-only</label>` : ''}
         <label>Sort<select id="universalSort"><option value="name" ${activeSort === 'name' ? 'selected' : ''}>Sort: Name</option><option value="category" ${activeSort === 'category' ? 'selected' : ''}>Sort: Category</option></select></label>
       </section>
     `;
@@ -648,15 +379,15 @@
     return `
       <article class="codex-card universal-card" data-universal-entry="${escapeHtml(entry.id)}" tabindex="0">
         <div class="codex-card-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
-        <h3>${escapeHtml(entry.title)}</h3>
-        <span class="universal-card-type">${escapeHtml(entry.category || entry.compendium)}</span>
+        <h3><a href="#${escapeHtml(entry.route)}" tabindex="-1">${escapeHtml(entry.title)}</a></h3>
+        <span class="universal-card-type">${escapeHtml((entry.domain === 'talent' ? (entry.metadata.className || '')+' / ' : '')+(entry.category || entry.compendium))}</span>
       </article>
     `;
   }
 
   function grid(){
-    let list = currentEntries();
-    const sort = byId('universalSort')?.value || activeSort || 'name';
+    let list = routeChoices || currentEntries();
+    const sort = activeSort || 'name';
     activeSort = sort;
     list = list.sort((a,b) => sort === 'category'
       ? a.categoryPath.join('/').localeCompare(b.categoryPath.join('/')) || a.title.localeCompare(b.title)
@@ -664,27 +395,39 @@
     );
     return `
       <section class="codex-card-grid-panel">
-        <div class="codex-display-status"><span>${escapeHtml(activePath[activePath.length - 1] || 'All Entries')}</span><b>${list.length} entries</b></div>
-        <div class="codex-card-grid">${list.length ? list.map(card).join('') : '<div class="codex-empty"><h3>Information coming soon</h3><p>No entries match this category or filter yet.</p></div>'}</div>
+        ${routeMessage ? `<p class="compendium-message" role="status">${escapeHtml(routeMessage)}</p>` : ''}
+        <div class="codex-display-status"><span>${escapeHtml(activePath[activePath.length - 1] || 'All Entries')}</span><b aria-live="polite">${list.length} entries</b></div>
+        <div class="codex-card-grid">${list.length ? list.slice(0,activeLimit).map(card).join('') : '<div class="codex-empty"><h3>No matching entries</h3><p>Try another search or clear the filters.</p><button type="button" id="universalClearFilters">Clear filters</button></div>'}</div>
+        ${list.length > activeLimit ? '<button type="button" id="universalLoadMore">Show more entries</button>' : ''}
       </section>
     `;
   }
 
   function tabContent(entry){
     if(activeTab === 'GM Notes' && !isGMMode()) return '<section class="codex-gm-notes locked"><h3>GM Notes</h3><p>Hidden from player view.</p></section>';
-    if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="codex-gallery-slot">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" loading="lazy" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div></section>`;
+    if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="compendium-gallery">${Object.entries(entry.images || {}).filter(([key,src],index,images) => images.findIndex(([,value]) => value===src)===index).map(([label,src]) => `<figure><img src="${escapeHtml(src)}" alt="${escapeHtml(entry.title+' — '+label)}" loading="lazy" decoding="async"><figcaption>${escapeHtml(titleCase(label))}</figcaption></figure>`).join('') || '<p>No artwork recorded.</p>'}</div>${markdownToHtml(entry.sections.Gallery,entry)}</section>`;
     if(activeTab === 'Related') return `<section class="codex-info-panel"><h3>Related Content</h3>${related(entry).map(item => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>`).join('') || '<p>Information coming soon.</p>'}</section>`;
     if(entry.domain === 'class' && activeTab === 'Overview'){
       const content = sectionBundle(entry, ['Overview','Class Information','Class Features']);
-      return `<section class="codex-info-panel markdown-body"><h3>Overview</h3>${markdownToHtml(content || 'Information coming soon.')}</section>`;
+      return `<section class="codex-info-panel markdown-body"><h3>Overview</h3>${markdownToHtml(content || 'Information coming soon.',entry)}</section>`;
     }
     if(entry.domain === 'class' && activeTab === 'Talent Tree'){
-      const content = sectionBundle(entry, ['Talent Tree','Talent Trees','Talents','Pathways','Class Talents']);
-      return `<section class="codex-info-panel markdown-body"><h3>Talent Tree</h3>${markdownToHtml(content || 'Talent branches, pathways, ranks, and unlock requirements will appear here.')}</section>`;
+      return `<section class="codex-info-panel"><h3>Talent Tree</h3><div class="codex-talent-map">${[1,2,3,4,5].map(tier => `<section class="codex-talent-tier"><h4>Tier ${tier}</h4>${allEntries().filter(talent => talent.domain === 'talent' && slug(talent.metadata.className || talent.metadata.classname) === entry.slug && Number(String(talent.metadata.talentTier || talent.metadata.talenttier || talent.metadata.tier || '').match(/\d+/)?.[0]) === tier).map(talent => `<button type="button" class="codex-talent-card" data-universal-entry="${escapeHtml(talent.id)}"><b>${escapeHtml(talent.title)}</b><span>View ranks 1–5</span></button>`).join('')}</section>`).join('')}</div></section>`;
     }
-    const content = entry.sections?.[activeTab] || entry.sections?.Overview || entry.body || entry.content || entry.summary;
-    return `<section class="codex-info-panel markdown-body"><h3>${escapeHtml(activeTab)}</h3>${markdownToHtml(content || 'Information coming soon.')}</section>`;
+    if(entry.domain === 'talent' && activeTab === 'Ranks') return `<section class="codex-info-panel markdown-body">${[1,2,3,4,5].map(rank => `<h3>Rank ${rank}</h3>${markdownToHtml(entry.sections?.[`Rank ${rank}`] || 'Information coming soon.',entry)}`).join('')}</section>`;
+    if(entry.domain === 'race' && activeTab === 'Racial Sheet') return `<section class="codex-info-panel markdown-body"><h3>Natural Armour Class (NAC): ${escapeHtml(naturalACLabel(entry))}</h3>${markdownToHtml(sectionBundle(entry,['Racial Features','Racial Characteristics']),entry)}<h3>Racial Traits</h3><div class="compendium-traits">${array(entry.racialTraits || entry.metadata.racialTraits).map((trait,index) => `<details><summary>${escapeHtml(trait.name || 'Trait '+(index+1))}</summary>${markdownToHtml(trait.text || trait.description,entry)}</details>`).join('') || '<p>No racial traits recorded.</p>'}</div>${markdownToHtml(entry.sections['Traits & Biology'],entry)}</section>`;
+    if(entry.domain === 'creature' && activeTab === 'Stat Sheet') return properties(entry,['hp','sp','mp','armour','threatTier','levelRange','size','attacks']);
+    const content = entry.sections?.[activeTab] || (activeTab === 'Overview' ? entry.summary : '');
+    const stats = activeTab === 'Overview' ? properties(entry, entry.domain === 'item' ? ['itemType','itemClass','weight','durability','damage','marketValue','marketPrice'] : entry.domain === 'race' ? ['naturalAC','size','movement','languages','magicAffinity'] : []) : activeTab === 'Properties' ? properties(entry) : '';
+    return `${stats}<section class="codex-info-panel markdown-body"><h3>${escapeHtml(activeTab)}</h3>${markdownToHtml(content || 'Information coming soon.',entry)}</section>`;
   }
+
+  function properties(entry, keys){
+    const hidden = /^(id|title|name|slug|type|domain|categoryPath|aliases|source|visibility|images|image|symbol|raceInfo|.*Markdown|.*Details|tags|sections|body|content)/;
+    const rows = (keys || Object.keys(entry.metadata).filter(key => !hidden.test(key))).map(key => [filterLabel(key),entry.metadata[key] ?? entry[key]]).filter(([,value]) => value !== undefined && value !== null && value !== '' && (typeof value !== 'object' || Array.isArray(value) && value.every(item => typeof item !== 'object')));
+    return rows.length ? `<dl class="compendium-properties">${rows.map(([key,value]) => `<div><dt>${escapeHtml(key === 'Natural AC' ? 'Natural Armour Class (NAC)' : key)}</dt><dd>${escapeHtml(key === 'Natural AC' ? naturalACLabel(entry) : Array.isArray(value) ? value.join(', ') : value)}</dd></div>`).join('')}</dl>` : '';
+  }
+  function naturalACLabel(entry){ return entry.metadata.naturalACSource === 'fallback' ? 'Not recorded (fallback 1)' : entry.metadata.naturalAC ?? 1; }
 
   function sectionBundle(entry, names){
     return names
@@ -694,7 +437,7 @@
   }
 
   function detail(entry){
-    const tabs = array(entry.tabs).length ? entry.tabs : (tabTemplates[entry.domain] || tabTemplates.handbook);
+    const tabs = [...new Set([...(entry.tabs || tabTemplates[entry.domain] || tabTemplates.handbook),...Object.keys(entry.sections || {})])].filter(tab => tab !== 'GM Notes' || isGMMode());
     if(!tabs.includes('Related')) tabs.push('Related');
     return `
       <article class="codex-detail-page universal-detail-page">
@@ -728,9 +471,15 @@
   }
 
   function render(){
+    const focused = document.activeElement;
+    const focusId = focused?.id;
+    const selection = typeof focused?.selectionStart === 'number' ? [focused.selectionStart,focused.selectionEnd] : null;
     const root = shell();
     root.innerHTML = layout();
     bind();
+    const next = focusId ? byId(focusId) : null;
+    if(next){ next.focus({preventScroll:true}); if(selection) next.setSelectionRange?.(...selection); }
+    writeRoute(false);
   }
 
   function openSection(name, options = {}){
@@ -738,32 +487,91 @@
     activePath = options.path ? String(options.path).split('/').filter(Boolean) : [];
     drillPath = activePath.slice(0, Math.max(0, activePath.length - 1));
     selectedEntry = null;
+    activeQuery = options.query || '';
+    activeLimit = 60;
+    routeChoices = null;
+    routeMessage = '';
     activeFilterField = '';
     activeFilterValue = '';
     activeTab = (tabTemplates[activeDomain] || tabTemplates.handbook)[0];
+    writeRoute(true);
     render();
     window.scrollTo?.({ top:0, left:0, behavior:'auto' });
     return true;
   }
 
   function openEntry(entry){
-    selectedEntry = typeof entry === 'string' ? getBySlug(entry) : entry;
-    if(!selectedEntry) return false;
+    const target = typeof entry === 'string' ? getBySlug(entry) : entry;
+    if(!target || (target.gmOnly && !isGMMode())) return false;
+    selectedEntry = target;
+    routeChoices = null;
+    routeMessage = '';
     activeDomain = selectedEntry.domain;
     activePath = selectedEntry.categoryPath.slice();
     drillPath = selectedEntry.categoryPath.slice(0, -1);
     activeTab = (selectedEntry.tabs || tabTemplates[activeDomain] || tabTemplates.handbook)[0];
+    writeRoute(true);
     render();
     window.scrollTo?.({ top:0, left:0, behavior:'auto' });
     return true;
   }
 
   function openEntryBySlug(slugValue){
-    const entry = getBySlug(slugValue) || getByRoute(slugValue);
-    return entry ? openEntry(entry) : false;
+    const matches = window.AsteriaContent.resolveAll(slugValue).filter(entry => !entry.gmOnly || isGMMode());
+    if(matches.length === 1) return openEntry(matches[0]);
+    if(matches.length > 1){
+      activeDomain = matches[0].domain; selectedEntry = null; routeChoices = matches;
+      routeMessage = 'This older link matches more than one entry. Choose the class or category you need.';
+      render(); return true;
+    }
+    return false;
+  }
+
+  function writeRoute(push){
+    if(readingRoute || !window.history?.replaceState) return;
+    const params = new URLSearchParams();
+    if(activeQuery) params.set('q',activeQuery);
+    if(activePath.length && !selectedEntry) params.set('category',activePath.join('/'));
+    if(activeFilterField) params.set('filter',activeFilterField);
+    if(activeFilterValue) params.set('value',activeFilterValue);
+    if(activeSort !== 'name') params.set('sort',activeSort);
+    if(selectedEntry && activeTab !== 'Overview') params.set('tab',activeTab);
+    const hash = '#' + (selectedEntry?.route || `/compendium/${activeDomain}`) + (params.size ? '?' + params : '');
+    if(window.location.hash !== hash) window.history[push ? 'pushState' : 'replaceState'](window.history.state,'',hash);
+  }
+  function readRoute(){
+    const hash = (window.location.hash || '').replace(/^#/,'');
+    const [pathname,query=''] = hash.split('?');
+    const segments = pathname.replace(/^\//,'').split('/');
+    const legacyCollection = ['flora','minerals','materials'].includes(segments[0]);
+    const matches = window.AsteriaContent.resolveAll(pathname);
+    if(segments[0] !== 'compendium' && !legacyCollection && !matches.length) return false;
+    readingRoute = true;
+    try {
+      if(matches.length) {
+        if(!openEntryBySlug(pathname)) { openSection(matches[0].domain); routeMessage='This entry is unavailable in the current view.'; }
+      }
+      else {
+        openSection(legacyCollection ? 'item' : segments[1]);
+        if(legacyCollection) { activeFilterField='collection'; activeFilterValue=segments[0]; }
+        else if(segments.length > 2) routeMessage='This entry could not be found. Search the compendium below.';
+      }
+      const params = new URLSearchParams(query);
+      activeQuery=params.get('q') || '';
+      if(params.has('category'))activePath=params.get('category').split('/').filter(Boolean);
+      if(params.has('filter'))activeFilterField=params.get('filter');
+      if(params.has('value'))activeFilterValue=params.get('value');
+      activeSort=params.get('sort') || 'name';
+      if(params.has('tab'))activeTab=params.get('tab');
+      render();
+    } finally { readingRoute=false; }
+    if(matches.length===1 || legacyCollection) writeRoute(false);
+    return true;
   }
 
   function bind(){
+    byId('universalLoadMore')?.addEventListener('click', () => { activeLimit+=60; render(); });
+    byId('universalClearFilters')?.addEventListener('click', () => openSection(activeDomain));
     byId('universalAllBtn')?.addEventListener('click', () => {
       activePath = [];
       drillPath = [];
@@ -779,6 +587,7 @@
     byId('universalDomain')?.addEventListener('change', event => openSection(event.target.value));
     byId('universalSearch')?.addEventListener('input', event => {
       activeQuery = event.target.value || '';
+      activeLimit = 60; routeChoices = null; routeMessage = '';
       selectedEntry = null;
       render();
     });
@@ -859,31 +668,11 @@
     });
   }
 
-  function workspaceEntries(){
-    const base = typeof originalWorkspaceEntries === 'function' ? originalWorkspaceEntries() : [];
-    const universal = allEntries().map(entry => Object.assign({}, entry, {
-      section:entry.workspaceSection,
-      type:titleCase(entry.domain),
-      metadata:Object.assign({}, entry.metadata, { universalEntry:true, universalDomain:entry.domain }),
-      categoryPath:entry.categoryPath,
-      searchTerms:entry.searchTerms
-    }));
-    const seen = new Set();
-    return base.concat(universal).filter(entry => {
-      const key = `${entry.section || entry.workspaceSection}:${entry.id || entry.slug || entry.title}:${entry.sourcePath || ''}`;
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
+  function workspaceEntries(){ return allEntries(); }
 
   function publish(){
-    originalWorkspaceEntries = originalWorkspaceEntries || window.AsteriaWorkspace?.entries;
-    originalWorkspaceOpenSection = originalWorkspaceOpenSection || window.AsteriaWorkspace?.openSection || window.openCompendiumSection || window.openSection;
-    originalOpenEntryBySlug = originalOpenEntryBySlug || window.AsteriaWorkspace?.openEntryBySlug || window.openWorkspaceEntry;
-
     const api = {
-      version:'asteria-phase-2-content-database-expansion',
+      version:'asteria-compendium-v2',
       entries:allEntries,
       visibleEntries,
       search,
@@ -895,20 +684,19 @@
       openSection,
       openEntry,
       openEntryBySlug,
-      normalizeEntry,
+      openRoute:readRoute,
       tabsFor:domain => tabTemplates[normalizeDomain(domain)] || tabTemplates.handbook,
       domains:() => Object.assign({}, domainLabels),
       databases:() => Object.assign({}, databaseRegistry),
       filterFields:domain => filterKeysForDomain(domain),
-      invalidate(){ cachedEntries = null; return allEntries(); }
+      invalidate(){ return allEntries(); }
     };
 
     function routedOpenSection(name, options){
-      if(UNIVERSAL_ROUTE_SECTIONS.has(name) || options?.universalCompendium) return openSection(name, options || {});
-      return originalWorkspaceOpenSection?.(name, options);
+      return openSection(name, options || {});
     }
     function routedOpenEntryBySlug(slugValue){
-      return originalOpenEntryBySlug?.(slugValue) || openEntryBySlug(slugValue);
+      return openEntryBySlug(slugValue);
     }
 
     window.AsteriaUniversalCompendium = api;
@@ -927,12 +715,25 @@
       universalEntries:allEntries,
       searchAll:search,
       openUniversalSection:openSection,
-      openUniversalEntry:openEntryBySlug
+      openUniversalEntry:openEntryBySlug,
+      openSection, openEntry, openEntryBySlug, entries:allEntries
     });
+    window.openSection = openSection;
+    window.openCompendiumSection = openSection;
+    window.openWorkspaceEntry = openEntryBySlug;
   }
 
   function boot(){
     publish();
+    window.addEventListener('hashchange',readRoute);
+    window.addEventListener('popstate',readRoute);
+    window.addEventListener('asteria:custom-items-updated',() => {
+      if(byId('universal-compendium-shell') && byId('workspace')?.classList.contains('show')) {
+        if(selectedEntry) selectedEntry = getBySlug(selectedEntry.id);
+        render();
+      }
+    });
+    readRoute();
   }
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();

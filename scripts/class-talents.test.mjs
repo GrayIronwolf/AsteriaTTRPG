@@ -1,3 +1,4 @@
+import canonicalCompendium from '../data/compendium.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,7 +7,7 @@ import {talentRules,useLearnedTalent} from '../src/state/talentMechanics.mjs';
 import {applyCharacteristicPoints,talentRankCost} from '../src/state/liveWorkspaceModel.mjs';
 import {applyRest} from '../src/state/specialDamageModel.mjs';
 import {calculateCharacterAC} from '../src/systems/armour/armourSystem.mjs';
-const entries=JSON.parse(fs.readFileSync('data/universal-compendium-index.json')).entries;
+const entries=canonicalCompendium.entries;
 const catalog=buildTalentCatalog({classes:['Spellblade','Cleric','Bloodhunter','Ranger','Paladin','Artificer','Fighter']},entries);
 const talent=id=>catalog.find(t=>t.id===id);
 const sheet=(id,rank=1,patch={})=>({id:'a',classInfo:{classes:[{title:talent(id).className}]},level:50,tp:100,hp:[100,100],mp:[100,100],sp:[100,100],bp:[0,20],talents:{[talent(id).name]:{rank}},...patch});

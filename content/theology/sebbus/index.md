@@ -1,21 +1,29 @@
 ---
-title: "Sebbus"
-slug: "sebbus"
+title: Sebbus
+slug: sebbus
 type: theology
-category: "The Outsiders"
-pantheon: "The Outsiders"
-court: ""
-deity_title: "God of the Eldritch"
-divine_domain: "God of the Eldritch"
-domain: "God of the Eldritch"
-source_path: "2. Devine Pantheons/3. The Outsiders/Sebbus - God of the Eldritch.md"
-image: ""
+category: The Outsiders
+pantheon: The Outsiders
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-outsiders"
+  - theology
+  - deity
+  - the-outsiders
 visibility: public
+deityTitle: God of the Eldritch
+divineDomain: God of the Eldritch
+sourcePath: 2. Devine Pantheons/3. The Outsiders/Sebbus - God of the Eldritch.md
+id: 'religion:content-theology-sebbus-index'
+categoryPath:
+  - The Outsiders
+aliases:
+  - 'religion:content-theology-sebbus-index'
+  - /compendium/religion/the-outsiders/sebbus
+  - content/theology/sebbus/index.md
 ---
+
 # Sebbus
 
 ## Overview

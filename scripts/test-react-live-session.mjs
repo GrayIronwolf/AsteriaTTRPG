@@ -1,3 +1,4 @@
+import canonicalCompendium from '../data/compendium.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -609,7 +610,7 @@ test('61. Element symbols power Compendium and player spell artwork without chan
   assert.equal(MAGIC_ELEMENT_SYMBOL_SLUGS.length,18);
   assert.equal(magicElementImage('Life Magic'),'assets/magic-elements/life-spells.png');
   MAGIC_ELEMENT_SYMBOL_SLUGS.forEach(element=>assert.equal(fs.existsSync(path.join(root,magicElementImage(element))),true));
-  const index=JSON.parse(read('data/universal-compendium-index.json'));
+  const index=canonicalCompendium;
   const spells=index.entries.filter(entry=>entry.domain==='spell' && ['Heal — Weak','Heal — Minor'].includes(entry.title));
   assert.equal(spells.length,2);
   spells.forEach(spell=>{
@@ -617,7 +618,7 @@ test('61. Element symbols power Compendium and player spell artwork without chan
     assert.equal(spell.imagePath,'assets/magic-elements/life-spells.png');
   });
   assert.match(read('src/dashboards/PlayerDashboardOverview.jsx'),/const spells = knownSpells\(character\)/);
-  assert.match(read('js/clean-compendium.js'),/clean-magic-element-symbol/);
+  assert.match(read('js/universal-compendium-engine.js'),/entry.imagePath/);
   assert.match(read('css/styles.css'),/\.magic-life\{--spell-colour:#ffd84d\}/);
 });
 
@@ -658,7 +659,7 @@ test('62. Soul Damage seals HP and recovers only through the long-rest flow', ()
 });
 
 test('63. GM Loot Reward creates spellbooks from canonical Compendium spells', () => {
-  const index=JSON.parse(read('data/universal-compendium-index.json'));
+  const index=canonicalCompendium;
   const spells=normalizeSpellCompendiumEntries(index.entries.filter(entry=>entry.domain==='spell'));
   assert.equal(spells.length>=3,true);
   const heal=spells.find(spell=>spell.name==='Heal — Weak');

@@ -1,27 +1,36 @@
 ---
-title: "Sandbold"
-slug: "sandbold"
+title: Sandbold
+slug: sandbold
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Kobold Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Kobold Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "kobold-races"
+  - race
+  - small-races
+  - kobold-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 21
+id: 'race:content-races-sandbold-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Kobold Races
+aliases:
+  - 'race:content-races-sandbold-index'
+  - /compendium/race/sandbold
+  - content/races/sandbold/index.md
 ---
 
 # Sandbold

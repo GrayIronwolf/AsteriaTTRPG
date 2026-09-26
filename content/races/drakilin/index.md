@@ -1,27 +1,36 @@
 ---
-title: "Drakilin"
-slug: "drakilin"
+title: Drakilin
+slug: drakilin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bat Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bat Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bat-races"
+  - race
+  - beastkin-races
+  - bat-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 68
+id: 'race:content-races-drakilin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bat Races
+aliases:
+  - 'race:content-races-drakilin-index'
+  - /compendium/race/drakilin
+  - content/races/drakilin/index.md
 ---
 
 # Drakilin

@@ -1,27 +1,36 @@
 ---
-title: "Rattaran"
-slug: "rattaran"
+title: Rattaran
+slug: rattaran
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Lagomor & Rodent Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Lagomor & Rodent Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "lagomor-and-rodent-races"
+  - race
+  - beastkin-races
+  - lagomor-and-rodent-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 137
+id: 'race:content-races-rattaran-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Lagomor & Rodent Races
+aliases:
+  - 'race:content-races-rattaran-index'
+  - /compendium/race/rattaran
+  - content/races/rattaran/index.md
 ---
 
 # Rattaran

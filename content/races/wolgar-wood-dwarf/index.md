@@ -1,27 +1,36 @@
 ---
-title: "Wolgar - Wood Dwarf"
-slug: "wolgar-wood-dwarf"
+title: Wolgar - Wood Dwarf
+slug: wolgar-wood-dwarf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Dwarf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Dwarf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "dwarf-races"
+  - race
+  - medium-races
+  - dwarf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 39
+id: 'race:content-races-wolgar-wood-dwarf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Dwarf Races
+aliases:
+  - 'race:content-races-wolgar-wood-dwarf-index'
+  - /compendium/race/wolgar-wood-dwarf
+  - content/races/wolgar-wood-dwarf/index.md
 ---
 
 # Wolgar - Wood Dwarf

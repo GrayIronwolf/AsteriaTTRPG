@@ -1,27 +1,36 @@
 ---
-title: "Hill Hobbit"
-slug: "hill-hobbit"
+title: Hill Hobbit
+slug: hill-hobbit
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Hobbit Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Hobbit Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "hobbit-races"
+  - race
+  - small-races
+  - hobbit-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 15
+id: 'race:content-races-hill-hobbit-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Hobbit Races
+aliases:
+  - 'race:content-races-hill-hobbit-index'
+  - /compendium/race/hill-hobbit
+  - content/races/hill-hobbit/index.md
 ---
 
 # Hill Hobbit

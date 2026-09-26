@@ -1,27 +1,36 @@
 ---
-title: "Pavari Avian"
-slug: "pavari-avian"
+title: Pavari Avian
+slug: pavari-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 77
+id: 'race:content-races-pavari-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-pavari-avian-index'
+  - /compendium/race/pavari-avian
+  - content/races/pavari-avian/index.md
 ---
 
 # Pavari Avian

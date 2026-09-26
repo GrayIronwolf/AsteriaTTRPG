@@ -1,27 +1,35 @@
 ---
-title: "Mancer"
-slug: "mancer"
+title: Mancer
+slug: mancer
 type: class
-classCategory: "Magical Classes"
-role: "Focused school caster"
-primary_stat: "INT"
-secondary_stat: "WIS"
-combat_style: "Specialised spellcasting"
-magic_type: "Arcane"
-difficulty: "Intermediate"
-class_colour: "#36d7ff"
-symbol: "M"
+classCategory: Magical Classes
+role: Focused school caster
+primaryStat: INT
+secondaryStat: WIS
+combatStyle: Specialised spellcasting
+magicType: Arcane
+difficulty: Intermediate
+classColour: '#36d7ff'
+symbol: M
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "caster"
-  - "school"
+  - class
+  - magical-classes
+  - magical
+  - caster
+  - school
 visibility: public
 sourceOrder: 6
+id: 'class:content-classes-mancer-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-mancer-index'
+  - /compendium/class/classes/mancer
+  - content/classes/mancer/index.md
 ---
 
 # Mancer

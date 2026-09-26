@@ -1,28 +1,38 @@
 ---
-title: "Terkari"
-slug: "terkari"
+title: Terkari
+slug: terkari
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Insect & Arachnid Races"
-tertiaryCategory: "Insect Races"
+raceCategory: Beastkin Races
+secondaryCategory: Insect & Arachnid Races
+tertiaryCategory: Insect Races
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "insect-and-arachnid-races"
-  - "insect-races"
+  - race
+  - beastkin-races
+  - insect-and-arachnid-races
+  - insect-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 128
+id: 'race:content-races-terkari-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Insect & Arachnid Races
+  - Insect Races
+aliases:
+  - 'race:content-races-terkari-index'
+  - /compendium/race/terkari
+  - content/races/terkari/index.md
 ---
 
 # Terkari

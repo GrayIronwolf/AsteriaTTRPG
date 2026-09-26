@@ -1,27 +1,36 @@
 ---
-title: "Magar - Fire Dwarf"
-slug: "magar-fire-dwarf"
+title: Magar - Fire Dwarf
+slug: magar-fire-dwarf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Dwarf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Dwarf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "dwarf-races"
+  - race
+  - medium-races
+  - dwarf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 37
+id: 'race:content-races-magar-fire-dwarf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Dwarf Races
+aliases:
+  - 'race:content-races-magar-fire-dwarf-index'
+  - /compendium/race/magar-fire-dwarf
+  - content/races/magar-fire-dwarf/index.md
 ---
 
 # Magar - Fire Dwarf

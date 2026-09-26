@@ -1,21 +1,29 @@
 ---
-title: "Serwyn"
-slug: "serwyn"
+title: Serwyn
+slug: serwyn
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of the Harvest"
-divine_domain: "Goddess of the Harvest"
-domain: "Goddess of the Harvest"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Serwyn - Goddess of the Harvest.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of the Harvest
+divineDomain: Goddess of the Harvest
+sourcePath: 2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/Serwyn - Goddess of the Harvest.md
+id: 'religion:content-theology-serwyn-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-serwyn-index'
+  - /compendium/religion/aetherion-pantheon/serwyn
+  - content/theology/serwyn/index.md
 ---
+
 # Serwyn
 
 ## Overview

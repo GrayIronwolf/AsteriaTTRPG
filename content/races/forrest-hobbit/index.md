@@ -1,27 +1,36 @@
 ---
-title: "Forrest Hobbit"
-slug: "forrest-hobbit"
+title: Forrest Hobbit
+slug: forrest-hobbit
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Hobbit Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Hobbit Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "hobbit-races"
+  - race
+  - small-races
+  - hobbit-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 14
+id: 'race:content-races-forrest-hobbit-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Hobbit Races
+aliases:
+  - 'race:content-races-forrest-hobbit-index'
+  - /compendium/race/forrest-hobbit
+  - content/races/forrest-hobbit/index.md
 ---
 
 # Forrest Hobbit

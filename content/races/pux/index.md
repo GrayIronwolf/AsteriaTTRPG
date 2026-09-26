@@ -1,26 +1,34 @@
 ---
-title: "Pux"
-slug: "pux"
+title: Pux
+slug: pux
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "fae-races"
+  - race
+  - fae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 195
+id: 'race:content-races-pux-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-pux-index'
+  - /compendium/race/pux
+  - content/races/pux/index.md
 ---
 
 # Pux

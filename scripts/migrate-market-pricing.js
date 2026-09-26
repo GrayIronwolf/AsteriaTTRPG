@@ -3,7 +3,7 @@ const path = require('path');
 const pricing = require('../js/asteria-market-pricing.js');
 
 const root = path.resolve(__dirname, '..');
-const indexPath = path.join(root, 'data', 'compendium-index-clean.json');
+const indexPath = path.join(root, 'data', 'compendium.js');
 const reportPath = path.join(root, 'data', 'market-pricing-migration-report.json');
 const dryRun = process.argv.includes('--dry-run');
 
@@ -46,12 +46,12 @@ function migrateFile(filePath){
   const remaining = lines.filter(line => !removeKeys.has(key(line)));
   const insertAt = Math.max(0, remaining.findIndex(line => ['tags','visibility'].includes(key(line))));
   const pricingLines = [
-    `market_value: ${yaml(migrated.marketValue)}`,
-    `market_price: ${yaml(migrated.marketPrice)}`
+    `marketValue: ${yaml(migrated.marketValue)}`,
+    `marketPrice: ${yaml(migrated.marketPrice)}`
   ];
-  if(migrated.marketValueSourceText) pricingLines.push(`market_value_source_text: ${yaml(migrated.marketValueSourceText)}`);
-  if(migrated.marketPriceSourceText) pricingLines.push(`market_price_source_text: ${yaml(migrated.marketPriceSourceText)}`);
-  if(migrated.pricingNeedsCompletion) pricingLines.push('pricing_status: needs-completion');
+  if(migrated.marketValueSourceText) pricingLines.push(`marketValueSourceText: ${yaml(migrated.marketValueSourceText)}`);
+  if(migrated.marketPriceSourceText) pricingLines.push(`marketPriceSourceText: ${yaml(migrated.marketPriceSourceText)}`);
+  if(migrated.pricingNeedsCompletion) pricingLines.push('pricingStatus: needs-completion');
   remaining.splice(insertAt < 0 ? remaining.length : insertAt, 0, ...pricingLines);
   const newline = markdown.includes('\r\n') ? '\r\n' : '\n';
   const frontmatter = `---${newline}${remaining.join(newline)}${newline}---${newline}`;
@@ -68,8 +68,8 @@ function migrateFile(filePath){
   };
 }
 
-if(!fs.existsSync(indexPath)) throw new Error('Generate data/compendium-index-clean.json before migrating market pricing.');
-const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+if(!fs.existsSync(indexPath)) throw new Error('Run npm run content:build before migrating market pricing.');
+const index = require(indexPath);
 const items = (index.entries || []).filter(entry => entry.section === 'Items' && entry.sourcePath);
 const records = items.map(entry => {
   const filePath = path.join(root, ...String(entry.sourcePath).split('/'));

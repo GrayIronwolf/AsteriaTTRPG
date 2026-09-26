@@ -1,27 +1,35 @@
 ---
-title: "Monk"
-slug: "monk"
+title: Monk
+slug: monk
 type: class
-classCategory: "Martial Classes"
-role: "Discipline and unarmed combatant"
-primary_stat: "AGI"
-secondary_stat: "WIS"
-combat_style: "Unarmed techniques"
-magic_type: "Ki"
-difficulty: "Intermediate"
-class_colour: "#f2d78a"
-symbol: "M"
+classCategory: Martial Classes
+role: Discipline and unarmed combatant
+primaryStat: AGI
+secondaryStat: WIS
+combatStyle: Unarmed techniques
+magicType: Ki
+difficulty: Intermediate
+classColour: '#f2d78a'
+symbol: M
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "unarmed"
-  - "discipline"
+  - class
+  - martial-classes
+  - martial
+  - unarmed
+  - discipline
 visibility: public
 sourceOrder: 17
+id: 'class:content-classes-monk-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-monk-index'
+  - /compendium/class/classes/monk
+  - content/classes/monk/index.md
 ---
 
 # Monk

@@ -1,26 +1,34 @@
 ---
-title: "Orc"
-slug: "orc"
+title: Orc
+slug: orc
 type: race
-raceCategory: "Large Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Large Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "large-races"
+  - race
+  - large-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 60
+id: 'race:content-races-orc-index'
+domain: race
+categoryPath:
+  - Large Races
+aliases:
+  - 'race:content-races-orc-index'
+  - /compendium/race/orc
+  - content/races/orc/index.md
 ---
 
 # Orc

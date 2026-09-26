@@ -1,27 +1,36 @@
 ---
-title: "Vulontra"
-slug: "vulontra"
+title: Vulontra
+slug: vulontra
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Mustelidae Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Mustelidae Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "mustelidae-races"
+  - race
+  - beastkin-races
+  - mustelidae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 146
+id: 'race:content-races-vulontra-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Mustelidae Races
+aliases:
+  - 'race:content-races-vulontra-index'
+  - /compendium/race/vulontra
+  - content/races/vulontra/index.md
 ---
 
 # Vulontra

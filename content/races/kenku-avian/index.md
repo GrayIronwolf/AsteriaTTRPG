@@ -1,27 +1,36 @@
 ---
-title: "Kenku Avian"
-slug: "kenku-avian"
+title: Kenku Avian
+slug: kenku-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 75
+id: 'race:content-races-kenku-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-kenku-avian-index'
+  - /compendium/race/kenku-avian
+  - content/races/kenku-avian/index.md
 ---
 
 # Kenku Avian

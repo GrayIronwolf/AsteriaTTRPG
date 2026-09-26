@@ -1,21 +1,31 @@
 ---
-title: "Nalthus"
-slug: "nalthus"
+title: Nalthus
+slug: nalthus
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Guardian God of the Dead Sea"
-divine_domain: "Guardian God of the Dead Sea"
-domain: "Guardian God of the Dead Sea"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalthus - Guardian God of the Dead Sea.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Guardian God of the Dead Sea
+divineDomain: Guardian God of the Dead Sea
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/1. Nature God's and Goddess'/God's & Goddess' Oceans & Seas/Seas/Nalthus -
+  Guardian God of the Dead Sea.md
+id: 'religion:content-theology-nalthus-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-nalthus-index'
+  - /compendium/religion/aetherion-pantheon/nalthus
+  - content/theology/nalthus/index.md
 ---
+
 # Nalthus
 
 ## Overview

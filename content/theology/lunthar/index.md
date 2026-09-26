@@ -1,21 +1,31 @@
 ---
-title: "Lunthar"
-slug: "lunthar"
+title: Lunthar
+slug: lunthar
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of Wood Craft - Carpentry"
-divine_domain: "God of Wood Craft - Carpentry"
-domain: "God of Wood Craft - Carpentry"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lunthar - God of Wood Craft - Carpentry.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of Wood Craft - Carpentry
+divineDomain: God of Wood Craft - Carpentry
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Lunthar - God of Wood Craft -
+  Carpentry.md
+id: 'religion:content-theology-lunthar-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-lunthar-index'
+  - /compendium/religion/aetherion-pantheon/lunthar
+  - content/theology/lunthar/index.md
 ---
+
 # Lunthar
 
 ## Overview

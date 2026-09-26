@@ -1,27 +1,35 @@
 ---
-title: "Creed"
-slug: "creed"
+title: Creed
+slug: creed
 type: class
-classCategory: "Religious Classes"
-role: "Doctrine-bound divine specialist"
-primary_stat: "WIS"
-secondary_stat: "CHA"
-combat_style: "Oaths and doctrine rites"
-magic_type: "Divine"
-difficulty: "Intermediate"
-class_colour: "#d8b4fe"
-symbol: "CR"
+classCategory: Religious Classes
+role: Doctrine-bound divine specialist
+primaryStat: WIS
+secondaryStat: CHA
+combatStyle: Oaths and doctrine rites
+magicType: Divine
+difficulty: Intermediate
+classColour: '#d8b4fe'
+symbol: CR
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "religious-classes"
-  - "religious"
-  - "creed"
-  - "rite"
+  - class
+  - religious-classes
+  - religious
+  - creed
+  - rite
 visibility: public
 sourceOrder: 23
+id: 'class:content-classes-creed-index'
+domain: class
+categoryPath:
+  - Religious Classes
+aliases:
+  - 'class:content-classes-creed-index'
+  - /compendium/class/classes/creed
+  - content/classes/creed/index.md
 ---
 
 # Creed

@@ -1,27 +1,36 @@
 ---
-title: "Frost Gnome"
-slug: "frost-gnome"
+title: Frost Gnome
+slug: frost-gnome
 type: race
-raceCategory: "Small Races"
-secondaryCategory: "Gnome Races"
-tertiaryCategory: 
+raceCategory: Small Races
+secondaryCategory: Gnome Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "small-races"
-  - "gnome-races"
+  - race
+  - small-races
+  - gnome-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 6
+id: 'race:content-races-frost-gnome-index'
+domain: race
+categoryPath:
+  - Small Races
+  - Gnome Races
+aliases:
+  - 'race:content-races-frost-gnome-index'
+  - /compendium/race/frost-gnome
+  - content/races/frost-gnome/index.md
 ---
 
 # Frost Gnome

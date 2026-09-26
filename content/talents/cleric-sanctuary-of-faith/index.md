@@ -1,0 +1,65 @@
+---
+title: Sanctuary of Faith
+slug: sanctuary-of-faith
+type: talent
+className: Cleric
+classSlug: cleric
+classCategory: Religious Classes
+talentTier: Tier 3
+tier: Tier 3
+ranks: 5
+prerequisite: None
+cost: 1 Talent Point
+cooldown: Passive
+scaling: See individual rank details.
+synergy: Information coming soon.
+tags:
+  - talent
+  - cleric
+  - tier-3
+visibility: public
+sourceOrder: 14
+importSource: Asteria class manuscript
+id: 'talent:content-classes-cleric-talents-tier-3-sanctuary-of-faith-index'
+domain: talent
+categoryPath:
+  - Religious Classes
+  - Cleric
+  - Tier 3
+aliases:
+  - 'talent:content-classes-cleric-talents-tier-3-sanctuary-of-faith-index'
+  - /compendium/talent/classes/talent-tree/talent-tree/sanctuary-of-faith
+  - content/classes/cleric/talents/tier-3/sanctuary-of-faith/index.md
+---
+
+# Sanctuary of Faith
+
+## Overview
+Information coming soon.
+
+## Rank 1
+Information coming soon.
+
+## Rank 2
+Information coming soon.
+
+## Rank 3
+Information coming soon.
+
+## Rank 4
+Information coming soon.
+
+## Rank 5
+Information coming soon.
+
+## Prerequisites
+None
+
+## Scaling
+See individual rank details.
+
+## Synergy
+Information coming soon.
+
+## GM Notes
+GM-only information coming soon.

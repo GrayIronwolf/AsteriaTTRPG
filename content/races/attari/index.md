@@ -1,27 +1,36 @@
 ---
-title: "Attari"
-slug: "attari"
+title: Attari
+slug: attari
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Feline Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Feline Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "feline-races"
+  - race
+  - beastkin-races
+  - feline-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 94
+id: 'race:content-races-attari-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Feline Races
+aliases:
+  - 'race:content-races-attari-index'
+  - /compendium/race/attari
+  - content/races/attari/index.md
 ---
 
 # Attari

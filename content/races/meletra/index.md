@@ -1,27 +1,36 @@
 ---
-title: "Meletra"
-slug: "meletra"
+title: Meletra
+slug: meletra
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Mustelidae Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Mustelidae Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "mustelidae-races"
+  - race
+  - beastkin-races
+  - mustelidae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 145
+id: 'race:content-races-meletra-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Mustelidae Races
+aliases:
+  - 'race:content-races-meletra-index'
+  - /compendium/race/meletra
+  - content/races/meletra/index.md
 ---
 
 # Meletra

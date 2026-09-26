@@ -1,21 +1,29 @@
 ---
-title: "Tharvax"
-slug: "tharvax"
+title: Tharvax
+slug: tharvax
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Chaos"
-divine_domain: "Essence of Chaos"
-domain: "Essence of Chaos"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/3. Tharvax - Essence of Chaos.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Chaos
+divineDomain: Essence of Chaos
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/2. Higher Element Gods/3. Tharvax - Essence of Chaos.md
+id: 'religion:content-theology-tharvax-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-tharvax-index'
+  - /compendium/religion/pantheon-of-elements/tharvax
+  - content/theology/tharvax/index.md
 ---
+
 # Tharvax
 
 ## Overview

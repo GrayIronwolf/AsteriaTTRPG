@@ -1,26 +1,34 @@
 ---
-title: "Aasimar"
-slug: "aasimar"
+title: Aasimar
+slug: aasimar
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 166
+id: 'race:content-races-aasimar-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-aasimar-index'
+  - /compendium/race/aasimar
+  - content/races/aasimar/index.md
 ---
 
 # Aasimar

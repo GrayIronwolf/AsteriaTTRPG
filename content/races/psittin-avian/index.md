@@ -1,27 +1,36 @@
 ---
-title: "Psittin Avian"
-slug: "psittin-avian"
+title: Psittin Avian
+slug: psittin-avian
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Bird Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Bird Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "bird-races"
+  - race
+  - beastkin-races
+  - bird-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 78
+id: 'race:content-races-psittin-avian-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Bird Races
+aliases:
+  - 'race:content-races-psittin-avian-index'
+  - /compendium/race/psittin-avian
+  - content/races/psittin-avian/index.md
 ---
 
 # Psittin Avian

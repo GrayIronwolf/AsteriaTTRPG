@@ -1,26 +1,34 @@
 ---
-title: "Drakan"
-slug: "drakan"
+title: Drakan
+slug: drakan
 type: race
-raceCategory: "Demi Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Demi Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "demi-races"
+  - race
+  - demi-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 170
+id: 'race:content-races-drakan-index'
+domain: race
+categoryPath:
+  - Demi Races
+aliases:
+  - 'race:content-races-drakan-index'
+  - /compendium/race/drakan
+  - content/races/drakan/index.md
 ---
 
 # Drakan

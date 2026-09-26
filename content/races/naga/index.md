@@ -1,27 +1,36 @@
 ---
-title: "Naga"
-slug: "naga"
+title: Naga
+slug: naga
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Reptilian Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Reptilian Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "reptilian-races"
+  - race
+  - beastkin-races
+  - reptilian-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 149
+id: 'race:content-races-naga-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Reptilian Races
+aliases:
+  - 'race:content-races-naga-index'
+  - /compendium/race/naga
+  - content/races/naga/index.md
 ---
 
 # Naga

@@ -1,27 +1,35 @@
 ---
-title: "Warlock"
-slug: "warlock"
+title: Warlock
+slug: warlock
 type: class
-classCategory: "Magical Classes"
-role: "Pact magic caster"
-primary_stat: "CHA"
-secondary_stat: "WIS"
-combat_style: "Pacts, curses, and invocations"
-magic_type: "Pact"
-difficulty: "Intermediate"
-class_colour: "#9333ea"
-symbol: "W"
+classCategory: Magical Classes
+role: Pact magic caster
+primaryStat: CHA
+secondaryStat: WIS
+combatStyle: 'Pacts, curses, and invocations'
+magicType: Pact
+difficulty: Intermediate
+classColour: '#9333ea'
+symbol: W
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "magical-classes"
-  - "magical"
-  - "pact"
-  - "curse"
+  - class
+  - magical-classes
+  - magical
+  - pact
+  - curse
 visibility: public
 sourceOrder: 11
+id: 'class:content-classes-warlock-index'
+domain: class
+categoryPath:
+  - Magical Classes
+aliases:
+  - 'class:content-classes-warlock-index'
+  - /compendium/class/classes/warlock
+  - content/classes/warlock/index.md
 ---
 
 # Warlock

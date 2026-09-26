@@ -1,21 +1,29 @@
 ---
-title: "Ignaros"
-slug: "ignaros"
+title: Ignaros
+slug: ignaros
 type: theology
-category: "Pantheon of Elements"
-pantheon: "Pantheon of Elements"
-court: ""
-deity_title: "Essence of Fire"
-divine_domain: "Essence of Fire"
-domain: "Essence of Fire"
-source_path: "2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/3. Ignaros - Essence of Fire.md"
-image: ""
+category: Pantheon of Elements
+pantheon: Pantheon of Elements
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "pantheon-of-elements"
+  - theology
+  - deity
+  - pantheon-of-elements
 visibility: public
+deityTitle: Essence of Fire
+divineDomain: Essence of Fire
+sourcePath: 2. Devine Pantheons/1. Pantheon of Elements/1. Basic Element Gods/3. Ignaros - Essence of Fire.md
+id: 'religion:content-theology-ignaros-index'
+categoryPath:
+  - Pantheon of Elements
+aliases:
+  - 'religion:content-theology-ignaros-index'
+  - /compendium/religion/pantheon-of-elements/ignaros
+  - content/theology/ignaros/index.md
 ---
+
 # Ignaros
 
 ## Overview

@@ -1,21 +1,31 @@
 ---
-title: "Kaelun"
-slug: "kaelun"
+title: Kaelun
+slug: kaelun
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "God of Craft and Creation"
-divine_domain: "God of Craft and Creation"
-domain: "God of Craft and Creation"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Kaelun - God of Craft and Creation.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: God of Craft and Creation
+divineDomain: God of Craft and Creation
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Kaelun - God of Craft and
+  Creation.md
+id: 'religion:content-theology-kaelun-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-kaelun-index'
+  - /compendium/religion/aetherion-pantheon/kaelun
+  - content/theology/kaelun/index.md
 ---
+
 # Kaelun
 
 ## Overview

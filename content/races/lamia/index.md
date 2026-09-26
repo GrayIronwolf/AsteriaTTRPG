@@ -1,26 +1,34 @@
 ---
-title: "Lamia"
-slug: "lamia"
+title: Lamia
+slug: lamia
 type: race
-raceCategory: "Hybrid Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Hybrid Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "hybrid-races"
+  - race
+  - hybrid-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 199
+id: 'race:content-races-lamia-index'
+domain: race
+categoryPath:
+  - Hybrid Races
+aliases:
+  - 'race:content-races-lamia-index'
+  - /compendium/race/lamia
+  - content/races/lamia/index.md
 ---
 
 # Lamia

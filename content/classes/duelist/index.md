@@ -1,27 +1,35 @@
 ---
-title: "Duelist"
-slug: "duelist"
+title: Duelist
+slug: duelist
 type: class
-classCategory: "Martial Classes"
-role: "Precision weapon striker"
-primary_stat: "DEX"
-secondary_stat: "AGI"
-combat_style: "Finesse weapons"
-magic_type: "None"
-difficulty: "Intermediate"
-class_colour: "#35dd86"
-symbol: "D"
+classCategory: Martial Classes
+role: Precision weapon striker
+primaryStat: DEX
+secondaryStat: AGI
+combatStyle: Finesse weapons
+magicType: None
+difficulty: Intermediate
+classColour: '#35dd86'
+symbol: D
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "martial-classes"
-  - "martial"
-  - "duel"
-  - "precision"
+  - class
+  - martial-classes
+  - martial
+  - duel
+  - precision
 visibility: public
 sourceOrder: 14
+id: 'class:content-classes-duelist-index'
+domain: class
+categoryPath:
+  - Martial Classes
+aliases:
+  - 'class:content-classes-duelist-index'
+  - /compendium/class/classes/duelist
+  - content/classes/duelist/index.md
 ---
 
 # Duelist

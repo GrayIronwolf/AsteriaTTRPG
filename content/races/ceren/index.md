@@ -1,27 +1,36 @@
 ---
-title: "Ceren"
-slug: "ceren"
+title: Ceren
+slug: ceren
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Hooved Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Hooved Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "hooved-races"
+  - race
+  - beastkin-races
+  - hooved-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 115
+id: 'race:content-races-ceren-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Hooved Races
+aliases:
+  - 'race:content-races-ceren-index'
+  - /compendium/race/ceren
+  - content/races/ceren/index.md
 ---
 
 # Ceren

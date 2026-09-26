@@ -1,27 +1,36 @@
 ---
-title: "Sealgar - Sea Dwarf"
-slug: "sealgar-sea-dwarf"
+title: Sealgar - Sea Dwarf
+slug: sealgar-sea-dwarf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Dwarf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Dwarf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "dwarf-races"
+  - race
+  - medium-races
+  - dwarf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 38
+id: 'race:content-races-sealgar-sea-dwarf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Dwarf Races
+aliases:
+  - 'race:content-races-sealgar-sea-dwarf-index'
+  - /compendium/race/sealgar-sea-dwarf
+  - content/races/sealgar-sea-dwarf/index.md
 ---
 
 # Sealgar - Sea Dwarf

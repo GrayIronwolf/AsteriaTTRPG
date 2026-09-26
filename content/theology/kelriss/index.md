@@ -1,21 +1,29 @@
 ---
-title: "Kelriss"
-slug: "kelriss"
+title: Kelriss
+slug: kelriss
 type: theology
-category: "The Nethyros Pantheon"
-pantheon: "The Nethyros Pantheon"
-court: ""
-deity_title: "God of Bone-Sower"
-divine_domain: "God of Bone-Sower"
-domain: "God of Bone-Sower"
-source_path: "2. Devine Pantheons/4. The Nethyros Pantheon/Kelriss - God of Bone-Sower.md"
-image: ""
+category: The Nethyros Pantheon
+pantheon: The Nethyros Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "the-nethyros-pantheon"
+  - theology
+  - deity
+  - the-nethyros-pantheon
 visibility: public
+deityTitle: God of Bone-Sower
+divineDomain: God of Bone-Sower
+sourcePath: 2. Devine Pantheons/4. The Nethyros Pantheon/Kelriss - God of Bone-Sower.md
+id: 'religion:content-theology-kelriss-index'
+categoryPath:
+  - The Nethyros Pantheon
+aliases:
+  - 'religion:content-theology-kelriss-index'
+  - /compendium/religion/the-nethyros-pantheon/kelriss
+  - content/theology/kelriss/index.md
 ---
+
 # Kelriss
 
 ## Overview

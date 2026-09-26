@@ -1,27 +1,36 @@
 ---
-title: "Hilgar - Hill Dwarf"
-slug: "hilgar-hill-dwarf"
+title: Hilgar - Hill Dwarf
+slug: hilgar-hill-dwarf
 type: race
-raceCategory: "Medium Races"
-secondaryCategory: "Dwarf Races"
-tertiaryCategory: 
+raceCategory: Medium Races
+secondaryCategory: Dwarf Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "medium-races"
-  - "dwarf-races"
+  - race
+  - medium-races
+  - dwarf-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 36
+id: 'race:content-races-hilgar-hill-dwarf-index'
+domain: race
+categoryPath:
+  - Medium Races
+  - Dwarf Races
+aliases:
+  - 'race:content-races-hilgar-hill-dwarf-index'
+  - /compendium/race/hilgar-hill-dwarf
+  - content/races/hilgar-hill-dwarf/index.md
 ---
 
 # Hilgar - Hill Dwarf

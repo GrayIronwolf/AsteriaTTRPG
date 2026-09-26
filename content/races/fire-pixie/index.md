@@ -1,39 +1,47 @@
 ---
-title: "Fire Pixie"
-slug: "fire-pixie"
+title: Fire Pixie
+slug: fire-pixie
 type: race
-raceCategory: "Fae Races"
-secondaryCategory: 
-tertiaryCategory: 
+raceCategory: Fae Races
+secondaryCategory: null
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
 traitSlots: 4
-size: "Small"
-movement: "6m (Walking) - 18m (Flying)"
+size: Small
+movement: 6m (Walking) - 18m (Flying)
 languages:
-  - "Fae Tongue - Common"
+  - Fae Tongue - Common
 magicAffinity:
-  - "Fire Magic 100%"
-  - "Water Magic 0%"
+  - Fire Magic 100%
+  - Water Magic 0%
 essenceAffinity:
-  - "Fire"
+  - Fire
 tags:
-  - "race"
-  - "fae-races"
-  - "pixie"
-  - "fae"
-  - "fire-magic"
+  - race
+  - fae-races
+  - pixie
+  - fae
+  - fire-magic
 images:
-  male: "assets/races/fire-pixie/fire-pixie-male-adult.png"
-  female: "assets/races/fire-pixie/fire-pixie-female-adult.png"
+  male: assets/races/fire-pixie/fire-pixie-male-adult.png
+  female: assets/races/fire-pixie/fire-pixie-female-adult.png
 visibility: public
 affinityProfile:
-  primary: "Fire Magic"
+  primary: Fire Magic
   primaryPercent: 100
-  opposite: "Water Magic"
+  opposite: Water Magic
   oppositePercent: 0
 sourceOrder: 189
+id: 'race:content-races-fire-pixie-index'
+domain: race
+categoryPath:
+  - Fae Races
+aliases:
+  - 'race:content-races-fire-pixie-index'
+  - /compendium/race/fire-pixie
+  - content/races/fire-pixie/index.md
 ---
 
 # Fire Pixie

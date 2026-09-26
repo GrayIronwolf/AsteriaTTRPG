@@ -1,27 +1,35 @@
 ---
-title: "Shadow Blade"
-slug: "shadow-blade"
+title: Shadow Blade
+slug: shadow-blade
 type: class
-classCategory: "Rogue Classes"
-role: "Assassin and shadow striker"
-primary_stat: "DEX"
-secondary_stat: "CHA"
-combat_style: "Blades and shadow arts"
-magic_type: "Shadow"
-difficulty: "Intermediate"
-class_colour: "#7c3aed"
-symbol: "SB"
+classCategory: Rogue Classes
+role: Assassin and shadow striker
+primaryStat: DEX
+secondaryStat: CHA
+combatStyle: Blades and shadow arts
+magicType: Shadow
+difficulty: Intermediate
+classColour: '#7c3aed'
+symbol: SB
 playable: true
-starting_equipment: []
-recommended_professions: []
+startingEquipment: []
+recommendedProfessions: []
 tags:
-  - "class"
-  - "rogue-classes"
-  - "rogue"
-  - "blade"
-  - "shadow"
+  - class
+  - rogue-classes
+  - rogue
+  - blade
+  - shadow
 visibility: public
 sourceOrder: 30
+id: 'class:content-classes-shadow-blade-index'
+domain: class
+categoryPath:
+  - Rogue Classes
+aliases:
+  - 'class:content-classes-shadow-blade-index'
+  - /compendium/class/classes/shadow-blade
+  - content/classes/shadow-blade/index.md
 ---
 
 # Shadow Blade

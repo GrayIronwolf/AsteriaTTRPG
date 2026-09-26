@@ -1,21 +1,31 @@
 ---
-title: "Veloria"
-slug: "veloria"
+title: Veloria
+slug: veloria
 type: theology
-category: "Aetherion Pantheon"
-pantheon: "Aetherion Pantheon"
-court: ""
-deity_title: "Goddess of Fabric Weaving"
-divine_domain: "Goddess of Fabric Weaving"
-domain: "Goddess of Fabric Weaving"
-source_path: "2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veloria - Goddess of Fabric Weaving.md"
-image: ""
+category: Aetherion Pantheon
+pantheon: Aetherion Pantheon
+court: ''
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "aetherion-pantheon"
+  - theology
+  - deity
+  - aetherion-pantheon
 visibility: public
+deityTitle: Goddess of Fabric Weaving
+divineDomain: Goddess of Fabric Weaving
+sourcePath: >-
+  2. Devine Pantheons/2. Aetherion Pantheon/2. Crafting and Professions God's and Goddess'/Veloria - Goddess of Fabric
+  Weaving.md
+id: 'religion:content-theology-veloria-index'
+categoryPath:
+  - Aetherion Pantheon
+aliases:
+  - 'religion:content-theology-veloria-index'
+  - /compendium/religion/aetherion-pantheon/veloria
+  - content/theology/veloria/index.md
 ---
+
 # Veloria
 
 ## Overview

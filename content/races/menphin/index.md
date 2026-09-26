@@ -1,27 +1,36 @@
 ---
-title: "Menphin"
-slug: "menphin"
+title: Menphin
+slug: menphin
 type: race
-raceCategory: "Beastkin Races"
-secondaryCategory: "Mephitidae Races"
-tertiaryCategory: 
+raceCategory: Beastkin Races
+secondaryCategory: Mephitidae Races
+tertiaryCategory: null
 playable: true
 naturalAC: 1
 naturalACSource: fallback
-size: 
-movement: 
+size: null
+movement: null
 languages: []
 magicAffinity: []
 essenceAffinity: []
 tags:
-  - "race"
-  - "beastkin-races"
-  - "mephitidae-races"
+  - race
+  - beastkin-races
+  - mephitidae-races
 images:
-  male: 
-  female: 
+  male: null
+  female: null
 visibility: public
 sourceOrder: 142
+id: 'race:content-races-menphin-index'
+domain: race
+categoryPath:
+  - Beastkin Races
+  - Mephitidae Races
+aliases:
+  - 'race:content-races-menphin-index'
+  - /compendium/race/menphin
+  - content/races/menphin/index.md
 ---
 
 # Menphin

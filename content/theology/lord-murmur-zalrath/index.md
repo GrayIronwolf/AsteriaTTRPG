@@ -1,21 +1,31 @@
 ---
-title: "Lord Murmur Zalrath"
-slug: "lord-murmur-zalrath"
+title: Lord Murmur Zalrath
+slug: lord-murmur-zalrath
 type: theology
-category: "Dark Court"
-pantheon: "Dark Court"
-court: "Dark Court"
-deity_title: ""
-divine_domain: ""
-domain: ""
-source_path: "3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/4. House of Nightmares/1. Regent of Nightmares/Lord Murmur Zalrath.md"
-image: ""
+category: Dark Court
+pantheon: Dark Court
+court: Dark Court
+domain: religion
+image: ''
 tags:
-  - "theology"
-  - "deity"
-  - "dark-court"
+  - theology
+  - deity
+  - dark-court
 visibility: public
+deityTitle: ''
+divineDomain: ''
+sourcePath: >-
+  3. Courts/1. Dark Court - Netherworld/Netherworld Noble Houses/4. House of Nightmares/1. Regent of Nightmares/Lord
+  Murmur Zalrath.md
+id: 'religion:content-theology-lord-murmur-zalrath-index'
+categoryPath:
+  - Dark Court
+aliases:
+  - 'religion:content-theology-lord-murmur-zalrath-index'
+  - /compendium/religion/dark-court/lord-murmur-zalrath
+  - content/theology/lord-murmur-zalrath/index.md
 ---
+
 # Lord Murmur Zalrath
 
 ## Overview
