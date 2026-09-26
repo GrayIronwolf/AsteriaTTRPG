@@ -12,7 +12,7 @@ import {calculateCharacterAC} from '../src/systems/armour/armourSystem.mjs';
 import {ownedGameplayMirrorPatch} from '../src/state/characterIntegrityModel.mjs';
 import vm from 'node:vm';
 const entries=canonicalCompendium.entries;
-const sheet=patch=>({id:'a',name:'Aster',ownerUid:'alice',hp:[50,100],sp:[20,100],mp:[50,100],bp:[20,20],...patch});
+const sheet=patch=>({id:'a',name:'Aster',klass:'Bloodhunter',ownerUid:'alice',hp:[50,100],sp:[20,100],mp:[50,100],bp:[20,20],...patch});
 const clock={now:100000,encounter:{status:'active',combatId:'fight',round:1}};
 const condition=(patch={})=>makeCondition({name:'Test condition',...patch},'gm',clock,'condition');
 test('canonical client mirror preserves private details, replaces maps, and skips unchanged snapshots',async()=>{

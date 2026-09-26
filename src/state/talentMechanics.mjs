@@ -1,26 +1,15 @@
 import { talentMeta, talentKey, plainTalentText as plain, rankEffects, rankDefined, talentRank } from './talentModel.mjs';
 import { effectiveCharacteristicValue } from './effectsEngine.mjs';
-import { applyResourceChanges, parseResourceCosts } from './resourceEngine.mjs';
+import { applyResourceChanges, parseResourceCosts, resourceId } from './resourceEngine.mjs';
 function numbers(text) {
-  const aliases={mp:'mp',sp:'sp',hp:'hp',bp:'bp',mana:'mp',stamina:'sp',health:'hp',blood:'bp'};
-  return [...plain(text).matchAll(/([+-]?\d+)\s*(Mana(?: Points?)?|Stamina(?: Points?)?|Health(?: Points?)?|Blood Points?|MP|SP|HP|BP)\b/gi)].map(m=>[aliases[m[2].split(' ')[0].toLowerCase()],Number(m[1])]);
+  return [...plain(text).matchAll(/([+-]?\d+)\s*(Mana(?: Points?)?|Stamina(?: Points?)?|Health(?: Points?)?|Blood Points?|Zeal Points?|MP|SP|HP|BP|ZP)\b/gi)].map(m=>[resourceId(m[2]),Number(m[1])]);
 }
-// Reviewed exceptions: optional outcomes and sacrifices aren't general costs.
-const tables={
-  'bloodhunter:blood-rite':{hp:[5,8,12,16,20],bpGain:[5,6,8,10,15]},
-  'bloodhunter:blood-tithe':{hp:[10,15,20,25,30],bp:[5,10,15,20,25]},
-  'bloodhunter:blood-control':{bpGain:[10,10,15,20,25]},
-  'bloodhunter:blood-scent':{mp:[10,10,10,10,10],bpGain:[5,6,8,10,15]},
-  'bloodhunter:hardened-soul':{bpGain:[5,10,15,20,25]},
-  'bloodhunter:mark-of-the-quarry':{bpGain:[5,10,15,20,25]},
-  'spellblade:arcane-pursuit':{mp:[20,25,30,35,40]},
-  'spellblade:mana-infusion':{mp:[12,12,12,35,40],sp:[5,5,5,0,0]}
-};
+const clear=object=>Object.keys(object).forEach(key=>delete object[key]);
 export function talentRules(talent,rank=1) {
   const body=talent.ranks?.[rank] || '', effects=rankEffects(body), text=plain(effects), costs={};
   const passive=/^passive(?:\s*\(|$)/i.test(talent.type) || /^passive$/i.test(talentMeta(talent,'cooldown'));
   let variable=false,bpGain=0;
-  for(const [field,key] of [['manaCost','mp'],['staminaCost','sp'],['hpCost','hp'],['bloodPointCost','bp']]) {
+  for(const [field,key] of [['manaCost','mp'],['staminaCost','sp'],['hpCost','hp'],['bloodPointCost','bp'],['zealPointCost','zp']]) {
     const value=plain(talentMeta(talent,field));
     if(/variable|varies|GM-defined/i.test(value)) variable=true;
     const amount=/^\d+$/.test(value)?Number(value):numbers(value).find(([resource])=>resource===key)?.[1];
@@ -33,33 +22,37 @@ export function talentRules(talent,rank=1) {
     if(/(?:^|[-\s])(?:If |When |On a |For example)/i.test(line)) continue;
     const spend=line.match(/(?:\bspend\b|\bexpend\b|\bsacrific(?:e|ing)\b)(.*?)(?=\b(?:to restore|and gain|to regain)\b|$)/i);
     const labelled=line.match(/^(?:-\s*)?(?:Mana|Stamina|HP|Mana and Stamina) Cost:\s*(.*)/i);
+    if(spend && /to activate/i.test(line)) clear(costs);
     if(spend || labelled) for(const [key,amount] of numbers((spend || labelled)[1])) if(amount>=0) costs[key]=amount;
     const change=line.match(/(?:increase|reduce) (?:the |its |your )?(Mana|Stamina|HP) Cost to\s*(\d+)/i);
     if(change) costs[{mana:'mp',stamina:'sp',hp:'hp'}[change[1].toLowerCase()]]=Number(change[2]);
+    const reduction=line.match(/Reduce your current (Blood Points?|Zeal Points?)(?: \(\w+\))? by (\d+)/i);
+    if(reduction) costs[resourceId(reduction[1])]=Number(reduction[2]);
+    if(/^\s+- \d+ (?:HP|SP|MP|BP|ZP)\s*$/i.test(line)) for(const [key,amount] of numbers(line)) costs[key]=amount;
     const gain=line.match(/(?:gain|generates?)\s+(\d+)\s+(?:Blood Points?|BP)/i);
     if(gain) bpGain=Number(gain[1]);
   }
-  for(const [key,values] of Object.entries(tables[talent.id] || {})) {if(key==='bpGain')bpGain=values[rank-1];else costs[key]=values[rank-1];}
+  if(talent.id==='bloodhunter:hardened-soul') bpGain=Number(text.match(/gain (\d+) Blood Points/i)?.[1] || 0);
   // Explicit canonical mechanics allow new class resources without another
   // per-class cost parser. Never interpret the talent's TP purchase cost here.
   let restore={}, mechanicsError='';
   try {
-    const declaredCost=talentMeta(talent,'resourceCosts') ?? talentMeta(talent,'activationCost');
+    const rankMechanics=talentMeta(talent,'rankMechanics')?.[rank] || {};
+    const declaredCost=rankMechanics.resourceCosts ?? rankMechanics.activationCost ?? talentMeta(talent,'resourceCosts') ?? talentMeta(talent,'activationCost');
     if(declaredCost!==undefined) {
       const parsed=parseResourceCosts(declaredCost,'mp',true);
       for(const key of Object.keys(costs)) delete costs[key];
       Object.assign(costs,parsed);variable=false;
     }
-    const declaredRestoration=talentMeta(talent,'restoreResources') ?? talentMeta(talent,'resourceRestoration');
+    const declaredRestoration=rankMechanics.restoreResources ?? talentMeta(talent,'restoreResources') ?? talentMeta(talent,'resourceRestoration');
     if(declaredRestoration!==undefined) restore=parseResourceCosts(declaredRestoration,'mp',true);
   } catch(error) {mechanicsError=`Invalid authored resource rule: ${error.message}`;}
   let choices=[];
-  if(talent.id==='bloodhunter:blood-tithe') choices=['mp','sp'].map(key=>({id:key,label:`Restore ${[15,25,40,60,80][rank-1]} ${key.toUpperCase()}`,costs,restore:{[key]:[15,25,40,60,80][rank-1]}}));
-  if(talent.id==='spellblade:arcane-pursuit') choices=[{id:'success',label:'Pursuit succeeds',costs},{id:'failure',label:'Pursuit fails · half MP (rounded down)',costs:{mp:Math.floor(costs.mp/2)}}];
-  if(talent.id==='bloodhunter:hardened-soul' && rank===5) choices=[{id:'embrace',label:'Embrace the Darkness · gain 25 BP',costs:{},bpGain:25},{id:'stand-firm',label:'Stand Firm · no BP gain',costs:{},bpGain:0}];
+  if(talent.id==='bloodhunter:blood-tithe') choices=[...text.matchAll(/Restore (\d+) (Mana Points?|Stamina Points?)/gi)].map(([,amount,name])=>({id:resourceId(name),label:`Restore ${amount} ${resourceId(name).toUpperCase()}`,costs,restore:{[resourceId(name)]:Number(amount)}}));
+  if(talent.id==='spellblade:arcane-pursuit') choices=[{id:'success',label:'Pursuit succeeds',costs},{id:'failure',label:'Pursuit fails · half MP (rounded down)',costs:{mp:Number(text.match(/If Arcane Pursuit fails, you still spend (\d+) MP/i)?.[1] ?? Math.floor(costs.mp/2))}}];
+  if(talent.id==='bloodhunter:hardened-soul' && rank===5) choices=[{id:'embrace',label:`Embrace the Darkness · gain ${bpGain} BP`,costs:{},bpGain},{id:'stand-firm',label:'Stand Firm · no BP gain',costs:{},bpGain:0}];
   if(talent.id==='spellblade:mystic-recovery') {
-    const paid=[3,2,1,1,1][rank-1], gained=[1,1,1,2,3][rank-1];
-    choices=[['hp','mp'],['mp','sp'],['sp','hp']].map(([from,to])=>({id:`${from}-${to}`,label:`${paid} ${from.toUpperCase()} → ${gained} ${to.toUpperCase()}`,costs:{[from]:paid},restore:{[to]:gained}}));
+    choices=[...text.matchAll(/Spend (\d+) (HP|MP|SP) to restore (\d+) (HP|MP|SP)/gi)].map(([,paid,from,gained,to])=>({id:`${from.toLowerCase()}-${to.toLowerCase()}`,label:`${paid} ${from} → ${gained} ${to}`,costs:{[from.toLowerCase()]:Number(paid)},restore:{[to.toLowerCase()]:Number(gained)}}));
   }
   if(talent.id==='ranger:hunting-shots') for(let level=1;level<=rank;level++) for(const m of (talent.ranks[level] || '').matchAll(/^#### (?:Hunting Shot|Trick Shot)\s*[—–-]\s*([^\n]+)\n([\s\S]*?)(?=^#### |^### |$(?![\s\S]))/gm)) {
     const amount=numbers(m[2]).find(([key])=>key==='sp')?.[1];

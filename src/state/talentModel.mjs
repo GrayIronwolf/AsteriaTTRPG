@@ -1,3 +1,5 @@
+import { characterClasses } from './characterClasses.mjs';
+export { characterClasses } from './characterClasses.mjs';
 import { resourcePair } from './resourceValues.mjs';
 import { reconcileResources } from './resourceEngine.mjs';
 import { effectIsActive } from './effectsEngine.mjs';
@@ -8,17 +10,6 @@ export const plainTalentText = value => String(value || '').replace(/\*|`/g,'').
 const clone = value => JSON.parse(JSON.stringify(value));
 const roman = {I:1,II:2,III:3,IV:4,V:5};
 
-export function characterClasses(character = {}) {
-  const found=new Map();
-  const visit=value=>{
-    if(Array.isArray(value)) return value.forEach(visit);
-    if(value && typeof value==='object') return visit(value.classes?.length?value.classes:value.title || value.name || value.className || value.slug || value.key);
-    if(typeof value!=='string') return;
-    value.split(/\s*[/,|+]\s*/).filter(Boolean).forEach(name=>{if(!found.has(identity(name)))found.set(identity(name),name.replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()));});
-  };
-  for(const source of [character,character.character || {}]) for(const field of ['classInfo','classes','primaryClass','klass','class','classNames','secondaryClasses','classSlugs','primaryClassSlug','secondaryClassSlugs','classSlug','talentClasses','talentClass']) visit(source[field]);
-  return [...found.values()];
-}
 export function rankSections(body='') {
   return Object.fromEntries([...String(body).matchAll(/^##\s+Rank\s+(\d+|IV|III|II|I|V)\b[^\n]*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/gm)].map(m=>[Number(m[1])||roman[m[1]],m[2].trim()]));
 }
@@ -51,7 +42,8 @@ function savedRows(value) {
 export function ownedTalents(character={},catalog=[]) {
   const found=new Map();
   for(const source of [character,character.character || {}]) for(const field of ['talents','unlockedTalents','classTalents','selectedTalents']) for(const row of savedRows(source[field])) {
-    const rank=Math.min(5,Math.max(0,Math.floor(Number(row.rank ?? row.currentRank ?? (row.unlocked===false?0:1)) || 0)));
+    if(row.unlocked===false || row.purchased===false || row.locked===true) continue;
+    const rank=Math.min(5,Math.max(0,Math.floor(Number(row.rank ?? row.currentRank ?? row.highestRank ?? 1) || 0)));
     if(!rank) continue;
     // A legacy unqualified name belongs to the first matching class, not every
     // class in a multiclass character. This prevents free duplicate Mana Wells.

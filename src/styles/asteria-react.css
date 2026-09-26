@@ -2213,3 +2213,23 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-core-rest-request { display:grid; gap:10px; }
 @container (max-width:900px) { .react-player-overview-grid > .react-core-effects { grid-column:1 / -1; } }
 @media (max-width:640px) { .react-core-form { grid-template-columns:1fr; } .react-core-effect-row { grid-template-columns:1fr 1fr; } .react-core-condition summary { display:grid; } }
+
+/* One responsive tree, using the existing canonical rank actions. */
+.react-tree-controls { display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1rem 0; }
+.react-tree-controls label { display:flex;align-items:center;gap:.4rem; }
+.react-tree-controls select { max-width:12rem; }
+.react-unified-tree { height:min(72vh,760px);min-height:380px;overflow:hidden;position:relative;touch-action:none;border:1px solid var(--asteria-divider,var(--border));border-radius:12px;cursor:grab; }
+.react-unified-tree:active { cursor:grabbing; }
+.react-unified-tree-canvas { position:absolute;transform-origin:0 0; }
+.react-tree-edges { position:absolute;inset:0;pointer-events:none;fill:none;stroke:var(--asteria-dashboard-primary,var(--accent));stroke-width:2; }
+.react-tree-tier { position:absolute;left:0;border-bottom:2px solid var(--asteria-divider,var(--border));margin:0;padding:0 14px 12px; }
+.react-tree-tier small { font-weight:normal;font-size:.875rem;margin-left:12px; }
+.react-tree-class { position:absolute;margin:0;font-size:1rem; }
+.react-tree-talent { position:absolute;padding:10px 14px;background:var(--asteria-panel-background,var(--panel));border:1px solid var(--asteria-panel-border,var(--border));border-radius:12px; }
+.react-tree-name { border:0!important;background:transparent!important;text-align:left;width:100%;padding:0 0 9px!important; }
+.react-tree-name small { display:block;font-size:.8rem; }
+.react-tree-ranks { display:flex;justify-content:space-between;position:relative;gap:10px; }
+.react-tree-ranks:before { content:'';position:absolute;left:20px;right:20px;top:20px;border-top:2px solid var(--asteria-divider,var(--border)); }
+.react-tree-ranks .react-talent-node { position:relative;min-width:40px;width:40px;height:40px;padding:0;border-radius:50%; }
+.react-tree-talent.dimmed { opacity:.4; }
+.react-tree-search-results { display:flex;flex-wrap:wrap;gap:6px; }

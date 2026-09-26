@@ -1,3 +1,4 @@
+import { talentRules } from '../state/talentMechanics.mjs';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { ConditionsPanel, EffectsSummary, RestRules } from './CharacterSystemsPanels.jsx';
 import { TalentDetails } from './ClassTalentTree.jsx';
@@ -154,10 +155,11 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   const entry = record(ability);
   const title = entry.name || entry.title || 'Unknown';
   const image = entry.image || entry.icon || '';
-  const talentMeta = `Tier ${Number(entry.tier || 1)} | Rank ${Number(entry.rank || 1)}`;
+  const talentMeta = `${entry.className || 'Class'} | Tier ${Number(entry.tier || 1)} | Rank ${Number(entry.rank || 1)}`;
   const spellMeta = entry.element || entry.magicType || entry.school || '';
   const meta = type === 'talent' ? talentMeta : spellMeta;
-  const cost = costText(entry.costs || entry.cost);
+  const rules=type==='talent'?talentRules(entry,entry.rank):null;
+  const cost = rules ? (rules.choices.length?'Choose resource option':costText(rules.costs)) : costText(entry.costs || entry.cost);
   const activate = () => { if(!disabled) onActivate?.(entry); };
   return <Tooltip label={`${title}${meta ? ` - ${meta}` : ''}${cost ? ` - ${cost}` : ''}`}>
     <button className={`react-ability-card ${type} ${disabled ? 'is-disabled' : ''}`} disabled={disabled} onClick={type==='talent'?activate:undefined} onDoubleClick={type==='talent'?undefined:activate} onKeyDown={event => { if(event.key === 'Enter' && type!=='talent'){ event.preventDefault(); activate(); } }} type="button">
