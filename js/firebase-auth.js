@@ -864,9 +864,14 @@ const firebasePublicApi = {
     return ()=>unsubscribers.forEach(unsubscribe=>unsubscribe());
   },
   fetchCampaignEventHistory: async function(campaignId,characterId,beforeId){
-    const before=await getDoc(doc(db,'campaigns',campaignId,'events',beforeId));
-    if(!before.exists())return {events:[],more:false};
-    const snapshot=await getDocs(query(collection(db,'campaigns',campaignId,'events'),where('targetOwnerUid','==',currentUser.uid),orderBy('createdAt','desc'),startAfter(before),limit(200)));
+    if(!db || !currentUser || !campaignId)return {events:[],more:false};
+    const constraints=[where('targetOwnerUid','==',currentUser.uid),orderBy('createdAt','desc')];
+    if(beforeId){
+      const before=await getDoc(doc(db,'campaigns',campaignId,'events',beforeId));
+      if(!before.exists())return {events:[],more:false};
+      constraints.push(startAfter(before));
+    }
+    const snapshot=await getDocs(query(collection(db,'campaigns',campaignId,'events'),...constraints,limit(200)));
     return {events:snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.targetCharacterId===characterId),cursor:snapshot.docs.at(-1)?.id || '',more:snapshot.size===200};
   },
   subscribeCampaignEncounter: function(campaignId, onChange){

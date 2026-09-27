@@ -80,3 +80,20 @@ test('legacy rank names and Roman ranks combine without changing stored purchase
   const c={classes:['Ranger'],talents:[{name:"Hunter's Mark Rank I",rank:'I'},{name:"Hunter's Mark Rank III",rank:'III'}]};
   const before=JSON.stringify(c),rows=ownedTalents(c);assert.equal(rows.length,1);assert.equal(rows[0].rank,3);assert.equal(rows[0].name,"Hunter's Mark");assert.equal(JSON.stringify(c),before);
 });
+
+import fs from 'node:fs';
+import vm from 'node:vm';
+test('each theme area changes independently and legacy colour choices migrate',()=>{
+  const tokens={},storage=new Map(),document={documentElement:{style:{setProperty:(key,value)=>{tokens[key]=value;}}},getElementById:()=>null,body:{dataset:{},removeAttribute:()=>{}},readyState:'loading',addEventListener:()=>{}};
+  const window={dispatchEvent:()=>{}},localStorage={setItem:(key,value)=>storage.set(key,value),getItem:key=>storage.get(key),removeItem:key=>storage.delete(key)};
+  vm.runInNewContext(fs.readFileSync('js/asteria-ui-theme-system.js','utf8'),{window,document,localStorage,CustomEvent:class {},console});
+  const system=window.AsteriaThemeSystem;system.applyTheme({accent:'#123456'},true);
+  assert.equal(system.getSettings().areas.dashboardPrimary,'#123456');
+  const mapping={panelBorder:'panel-border',panelBackground:'panel-background',menuButton:'menu-button',topMenuButton:'top-menu-button',dashboardPrimary:'dashboard-primary',dashboardTab:'dashboard-tab',divider:'divider'};
+  for(const [key,token] of Object.entries(mapping)) {
+    const before={...tokens},settings=system.getSettings();system.applyTheme({...settings,areas:{...settings.areas,[key]:'#ab4567'}},true);
+    assert.notEqual(tokens[`--asteria-${token}`],before[`--asteria-${token}`]);
+    for(const [other,otherToken] of Object.entries(mapping)) if(other!==key)assert.equal(tokens[`--asteria-${otherToken}`],before[`--asteria-${otherToken}`]);
+  }
+  assert.equal(JSON.parse(storage.get('asteria-ui-theme-v1')).areas.dashboardTab,'#ab4567');
+});

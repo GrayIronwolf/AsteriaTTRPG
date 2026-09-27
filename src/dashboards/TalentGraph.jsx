@@ -3,12 +3,23 @@ import { talentGraph } from '../state/talentGraph.mjs';
 import { talentRank, prerequisiteProblem, rankDefined } from '../state/talentModel.mjs';
 import { TALENT_TIER_LEVELS, talentTierUnlocked, talentRankCost } from '../state/liveWorkspaceModel.mjs';
 
+function zoomCamera(camera,scale,width) {
+  const next=Math.min(2.5,Math.max(.08,scale)),ratio=next/camera.scale;
+  return {x:width/2-(width/2-camera.x)*ratio,y:200-(200-camera.y)*ratio,scale:next};
+}
+
 export function TalentGraph({catalog,character,query,onSelect}) {
   const frame=useRef(null),drag=useRef(null),[width,setWidth]=useState(700),[camera,setCamera]=useState({x:0,y:0,scale:1});
   const graph=useMemo(()=>talentGraph(catalog,width<700),[catalog,width<700]);
   useEffect(()=>{const observer=new ResizeObserver(entries=>setWidth(entries[0].contentRect.width));observer.observe(frame.current);return()=>observer.disconnect();},[]);
   useEffect(()=>setCamera({x:0,y:0,scale:Math.min(1,width/graph.width)}),[graph.width,width]);
-  const zoom=scale=>setCamera(old=>{const next=Math.min(2.5,Math.max(.08,scale)),ratio=next/old.scale;return {x:width/2-(width/2-old.x)*ratio,y:200-(200-old.y)*ratio,scale:next};});
+  const zoom=scale=>setCamera(old=>zoomCamera(old,scale,width));
+  useEffect(()=>{
+    const element=frame.current;
+    const wheel=event=>{if(event.ctrlKey || event.metaKey){event.preventDefault();setCamera(old=>zoomCamera(old,old.scale*(event.deltaY<0?1.12:.89),width));}};
+    element.addEventListener('wheel',wheel,{passive:false});
+    return()=>element.removeEventListener('wheel',wheel);
+  },[width]);
   const jump=(x,y)=>setCamera({x:-x*Math.min(1,width/350),y:24-y*Math.min(1,width/350),scale:Math.min(1,width/350)});
   const matches=graph.nodes.filter(n=>n.talent.name.toLowerCase().includes(query.toLowerCase()));
   return <>
@@ -23,7 +34,6 @@ export function TalentGraph({catalog,character,query,onSelect}) {
     <p className="react-help">Drag the background to pan. Use zoom controls or Ctrl + scroll. Arrow keys move the view. Select a rank to inspect or purchase it.</p>
     <div className="react-unified-tree" ref={frame} tabIndex={0} role="region" aria-label="Character talent tree, all classes and tiers"
       onKeyDown={e=>{if(e.target!==e.currentTarget)return;const movement={ArrowDown:[0,-80],ArrowUp:[0,80],ArrowLeft:[80,0],ArrowRight:[-80,0]}[e.key];if(movement){e.preventDefault();setCamera(c=>({...c,x:c.x+movement[0],y:c.y+movement[1]}));}}}
-      onWheel={e=>{if(e.ctrlKey || e.metaKey){e.preventDefault();zoom(camera.scale*(e.deltaY<0?1.12:.89));}}}
       onPointerDown={e=>{if(e.target.closest('button,select'))return;drag.current={x:e.clientX,y:e.clientY,camera};e.currentTarget.setPointerCapture(e.pointerId);}}
       onPointerMove={e=>{if(drag.current)setCamera({...drag.current.camera,x:drag.current.camera.x+e.clientX-drag.current.x,y:drag.current.camera.y+e.clientY-drag.current.y});}}
       onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>

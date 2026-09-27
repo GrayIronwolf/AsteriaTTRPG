@@ -2230,7 +2230,10 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-tree-name small { display:block;font-size:.8rem; }
 .react-tree-ranks { display:flex;justify-content:space-between;position:relative;gap:10px; }
 .react-tree-ranks:before { content:'';position:absolute;left:20px;right:20px;top:20px;border-top:2px solid var(--asteria-divider,var(--border)); }
-.react-tree-ranks .react-talent-node { position:relative;min-width:40px;width:40px;height:40px;padding:0;border-radius:50%; }
+.react-tree-ranks .react-talent-node { position:relative;display:grid;place-items:center;min-width:40px;width:40px;height:40px;padding:0;border-radius:50%!important;border:2px solid var(--asteria-panel-border); }
+.react-tree-ranks .react-talent-node.learned { background:var(--asteria-dashboard-primary)!important;border-color:var(--asteria-dashboard-primary)!important;font-weight:800; }
+.react-tree-ranks .react-talent-node.available { background:var(--asteria-panel-background)!important;border-color:var(--asteria-dashboard-primary)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--asteria-dashboard-primary) 35%,transparent); }
+.react-tree-ranks .react-talent-node.unlearned { border-style:dashed!important;opacity:.65; }
 .react-tree-talent.dimmed { opacity:.4; }
 .react-tree-search-results { display:flex;flex-wrap:wrap;gap:6px; }
 .react-gm-dashboard .react-party-sidebar { max-height:none;align-self:start; }
