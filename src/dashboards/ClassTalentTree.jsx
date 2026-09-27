@@ -1,3 +1,4 @@
+import { TalentGraph } from './TalentGraph.jsx';
 import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
 import React, { useEffect, useState } from 'react';
 import { EmptyState, Modal, Panel, SearchField, StatusPill } from '../components/WorkspaceUI.jsx';
@@ -58,24 +59,14 @@ export function TalentEffects({campaignId,character,editable,encounter}) {
     </div>{effects.length?effects.map(effect=><article key={effect.id}><div><b>{effect.name}</b><small>{effect.ac?`+${effect.ac} AC · `:''}{effect.untilRound?`Until round ${effect.untilRound}`:effect.expiresAt?`Ends ${new Date(effect.expiresAt).toLocaleTimeString()}`:'Active until dismissed'}</small></div><details><summary>Effect details</summary><TalentText text={effect.description}/></details><button type="button" disabled={!editable || action.busy} onClick={()=>action.run(()=>firebaseService.endTalentEffect(campaignId,character.id,effect.id),`Ended ${effect.name}.`)}>End effect</button></article>):<p className="react-help">No temporary talent effects are active.</p>}<p role="status">{action.message}</p></Panel>;
 }
 export function TalentsTab({campaignId,character,editable,characters={},encounter}) {
-  const catalog=talentCatalog(character),classes=[...new Set(catalog.map(t=>t.className))];
-  const [chosenClass,setClass]=useState(''),[tier,setTier]=useState(1),[query,setQuery]=useState(''),[selected,setSelected]=useState(null);
-  const className=classes.includes(chosenClass)?chosenClass:classes[0],visible=catalog.filter(t=>t.className===className && t.tier===tier && t.name.toLowerCase().includes(query.toLowerCase()));
-  useEffect(()=>{setSelected(null);setClass('');setTier(1);setQuery('');},[character.id]);
-  const height=Math.max(260,visible.length*116+100);
-  return <div className="react-talent-workspaces"><Panel title="Class Talent Trees" eyebrow="Choose your path" action={<StatusPill>{Number(character.tp || 0)} TP available</StatusPill>}>
-    <p className="react-help">Open any talent or rank bubble to read its effects. Learn ranks in order using Talent Points.</p>
-    <div className="react-talent-class-tabs" aria-label="Class trees">{classes.map(name=><button type="button" key={name} aria-pressed={className===name} onClick={()=>{setClass(name);setQuery('');}}>{name}</button>)}</div>
-    <div className="react-tier-tabs">{[1,2,3,4,5].map(value=><button type="button" key={value} aria-pressed={tier===value} className={tier===value?'active':''} onClick={()=>setTier(value)}><b>Tier {value}</b><small>{talentTierUnlocked(character.level,value)?'Available':`Level ${TALENT_TIER_LEVELS[value]}`}</small></button>)}</div>
-    <SearchField value={query} onChange={setQuery} placeholder="Find a talent in this tier…"/>
-    <div className="react-talent-legend"><span>● Learned</span><span>◉ Next rank</span><span>○ Unlearned · open to inspect</span></div>
-    {!talentTierUnlocked(character.level,tier)?<p className="react-help">Tier {tier} unlocks at Level {TALENT_TIER_LEVELS[tier]}. You can preview its talents now.</p>:null}
-    {visible.length?<div className="react-talent-graph-scroll" tabIndex={0} role="region" aria-label={`${className} Tier ${tier} talent graph. Scroll horizontally to explore ranks.`}><div className="react-talent-graph" style={{height}}>
-      <svg aria-hidden="true" className="react-talent-links" viewBox={`0 0 860 ${height}`} preserveAspectRatio="none">{visible.map((talent,i)=><g key={talent.id}><path d={`M 90 ${height/2} C 175 ${height/2}, 160 ${100+i*116}, 240 ${100+i*116}`}/><path d={`M 340 ${100+i*116} H 794`}/></g>)}</svg>
-      <div className="react-talent-root" style={{top:height/2-49}}><span>✦</span><strong>{className}</strong><small>Tier {tier}</small></div>
-      {visible.map((talent,i)=>{const learned=talentRank(character,talent);return <div className="react-talent-branch" key={talent.id} style={{top:100+i*116-29}}><button type="button" className="react-talent-name" onClick={()=>setSelected({talent,rank:Math.max(1,learned)})}><strong>{talent.name}</strong><small>{talent.type} · {learned}/{talent.maxRank} ranks</small></button><div className="react-talent-nodes">{Array.from({length:talent.maxRank},(_,j)=>j+1).map(rank=><button type="button" key={rank} className={`react-talent-node ${rank<=learned?'learned':rank===learned+1 && talentTierUnlocked(character.level,tier)?'available':'unlearned'}`} aria-label={`${talent.name}, Rank ${rank}, ${rank<=learned?'learned':`${talentRankCost(rank,tier)} TP`}`} onClick={()=>setSelected({talent,rank})}><span>{rank<=learned?'✓':rank}</span><small>Rank {rank}</small></button>)}</div></div>;})}
-    </div></div>:<EmptyState title={catalog.length?'No talents in this selection':'No class talents found'}>{catalog.length?'Choose another tier or change the search.':'Check the character’s selected classes and refresh the compendium.'}</EmptyState>}
+  const catalog=talentCatalog(character);
+  const [query,setQuery]=useState(''),[selected,setSelected]=useState(null);
+  useEffect(()=>{setSelected(null);setQuery('');},[character.id]);
+  return <div className="react-talent-workspaces"><Panel title="Character Talent Tree" action={<StatusPill>{Number(character.tp || 0)} TP available</StatusPill>}>
+    <SearchField value={query} onChange={setQuery} placeholder="Find a talent across all classes and tiers…"/>
+    <div className="react-talent-legend"><span>● Purchased</span><span>◉ Available</span><span>○ Locked · open to inspect</span></div>
+    {catalog.length?<TalentGraph catalog={catalog} character={character} query={query} onSelect={setSelected}/>:<EmptyState title="No class talents found">Check the character’s selected classes.</EmptyState>}
     </Panel><TalentEffects campaignId={campaignId} character={character} editable={editable} encounter={encounter}/>
-    {selected?<TalentDetails key={selected.talent.id} campaignId={campaignId} character={character} characters={characters} talent={selected.talent} initialRank={selected.rank} editable={editable} onClose={()=>setSelected(null)}/>:null}
+    {selected?<TalentDetails key={`${selected.talent.id}-${selected.rank}`} campaignId={campaignId} character={character} characters={characters} talent={selected.talent} initialRank={selected.rank} editable={editable} onClose={()=>setSelected(null)}/>:null}
   </div>;
 }

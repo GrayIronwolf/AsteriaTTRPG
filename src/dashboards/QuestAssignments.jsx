@@ -20,7 +20,8 @@ export function QuestAssignments({campaignId,questId,characters}) {
     {quest.status==='Awaiting Review'?<p><b>Review reward:</b> {questRewardSummary(quest.reward)||'No XP, currency or items.'}</p>:null}
     {quest.status!=='Completed'?<><label>Response to {character.name}<input maxLength={1000} value={notes[character.id]||''} onChange={event=>setNotes(value=>({...value,[character.id]:event.target.value}))} placeholder="Feedback or reason for the outcome"/></label><div className="react-action-row">
       {(quest.status==='Awaiting Review'||(!quest.requiresGMApproval&&!questIsClosed(quest)))?<button className="primary" disabled={busy||!questProgress(quest).ready} onClick={()=>review(character,quest,'Completed')}>Approve &amp; Award</button>:null}
-      {['Awaiting Review','Failed','On Hold'].includes(quest.status)?<button disabled={busy} onClick={()=>review(character,quest,'Active')}>Return to Active</button>:null}
+      {['Awaiting Review','Failed','Declined','Expired','On Hold'].includes(quest.status)?<button disabled={busy} onClick={()=>review(character,quest,'Active')}>Return to Active</button>:null}
+      {!questIsClosed(quest)?<button disabled={busy} onClick={()=>review(character,quest,'Expired')}>Mark Expired</button>:null}
       {!questIsClosed(quest)?<button className="danger" disabled={busy} onClick={()=>review(character,quest,'Failed')}>Mark Failed</button>:null}
     </div></>:null}
   </article>):<p className="react-help">Not assigned yet.</p>}<p role="status">{message}</p></section>;

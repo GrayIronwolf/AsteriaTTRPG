@@ -412,7 +412,7 @@ test('denied rest cannot later be approved or restore resources',async()=>{
   const again=await action('gm','reviewCharacterRest',['c','a',{id:request.id,status:'approved'}]);assert.equal(again.request.status,'denied');assert.deepEqual((await liveSheet()).hp,[1,10]);
 });
 test('Short Rest sequence rejects rapid duplicate requests and pending Long Rest blocks recovery',async()=>{
-  await db.doc('campaigns/c/characters/a').update({sp:[0,100],bp:[20,20]});
+  await db.doc('campaigns/c/characters/a').update({klass:'Bloodhunter',sp:[0,100],bp:[20,20]});
   const args=['c','a','short',{expectedSequence:0}],results=await Promise.all([action('alice','requestCharacterRest',args),action('alice','requestCharacterRest',args)]);assert.equal(results.filter(row=>row.ok).length,1);
   assert.deepEqual((await liveSheet()).sp,[35,100]);assert.deepEqual((await liveSheet()).bp,[15,20]);
   await action('alice','requestCharacterRest',['c','a','long',{expectedSequence:1}]);assert.equal((await action('alice','requestCharacterRest',['c','a','short',{expectedSequence:2}])).ok,false);
@@ -436,4 +436,42 @@ test('resource rule replacement removes old resets instead of recursively mergin
 test('canonical restoration respects Soul Damage and never trusts injected spell restoration',async()=>{
   await db.doc('campaigns/c/characters/a').update({hp:[1,10],specialDamage:{soul:4},spells:[{name:'Spark',cost:'3 MP',restoreResources:{hp:10}}]});
   const result=await action('alice','castCharacterSpell',['c','a',{name:'Spark',restoreResources:{mp:999}},{}]);assert.equal(result.ok,true,result.error);assert.deepEqual((await liveSheet()).hp,[6,10]);assert.deepEqual((await liveSheet()).mp,[7,10]);
+});
+
+test('GM inventory management updates the owner mirror and never grants ownership',async()=>{
+  const result=await action('gm','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:5,expectedQuantity:2}]);assert.equal(result.ok,true,result.error);
+  const shared=(await db.doc('campaigns/c/characters/a').get()).data(),owned=(await db.doc('users/alice/characters/a').get()).data();
+  assert.equal(shared.ownerUid,'alice');assert.equal(owned.inventory[0].qty,5);assert.equal(shared.inventory[0].qty,5);
+  assert.equal((await db.doc('users/gm/characters/a').get()).exists,false);
+  const stale=await action('gm','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:6,expectedQuantity:2}]);assert.equal(stale.ok,false);
+  const player=await action('alice','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:6,expectedQuantity:5}]);assert.equal(player.ok,false);
+  const other=await action('bob','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:6,expectedQuantity:5}]);assert.equal(other.ok,false);
+  await db.doc('campaigns/c').update({playerCharacterLinks:{},characters:{},players:{}});
+  assert.equal((await action('gm','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:0,expectedQuantity:5}])).ok,false);
+});
+test('GM notices are private and read state is independent of reward acknowledgement',async()=>{
+  const args=['c','a',{title:'A rumour',message:'Ask at the docks'}];
+  assert.equal((await action('gm','sendCharacterNotification',args,'notice')).ok,true);
+  assert.equal((await action('gm','sendCharacterNotification',args,'notice')).ok,true);
+  assert.equal((await db.collection('campaigns/c/events').get()).size,1);
+  const event='notice-notice';
+  await assertSucceeds(getDoc(doc(user('alice'),`campaigns/c/events/${event}`)));
+  await assertFails(getDoc(doc(user('bob'),`campaigns/c/events/${event}`)));
+  assert.equal((await action('alice','sendCharacterNotification',args)).ok,false);
+  await db.doc('campaigns/c/liveSession/current').update({status:'ended'});
+  assert.equal((await action('alice','markNotificationRead',['c','a','event',event,true])).ok,true);
+  assert.equal((await db.doc(`campaigns/c/events/${event}`).get()).data().acknowledged,false);
+  assert.equal((await db.doc('users/alice/characters/a').get()).data().notificationRead[`event:${event}`],true);
+  assert.equal((await action('alice','markNotificationRead',['c','a','event',event,false])).ok,true);
+  assert.equal((await action('gm','markNotificationRead',['c','a','event',event,true])).ok,false);
+});
+test('published information is readable while drafts and publication controls stay GM-only',async()=>{
+  await db.doc('campaigns/c/systems/gmWorkspace').set({world:{news:[{id:'draft',title:'Secret'}]}});
+  const ref=doc(user('gm'),'campaigns/c/systems/party-workspace');
+  await assertSucceeds(setDoc(ref,{information:{news:{id:'published',title:'Public announcement',published:true}},updatedBy:'gm'}));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/systems/party-workspace')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/systems/party-workspace'),{information:{forged:{published:true}}}));
+  await assertSucceeds(updateDoc(ref,{information:{}}));
+  assert.deepEqual((await getDoc(doc(user('alice'),'campaigns/c/systems/party-workspace'))).data().information,{});
 });

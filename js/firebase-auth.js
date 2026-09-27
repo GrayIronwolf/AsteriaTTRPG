@@ -1,3 +1,4 @@
+import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
@@ -8,7 +9,7 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
    ========================= */
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, connectFirestoreEmulator, orderBy, limit, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
@@ -862,6 +863,17 @@ const firebasePublicApi = {
     if(options.mode==='character') unsubscribers.push(watch('pending',query(eventsRef,...ownerFilters,where('acknowledged','==',false))));
     return ()=>unsubscribers.forEach(unsubscribe=>unsubscribe());
   },
+  fetchCampaignEventHistory: async function(campaignId,characterId,beforeId){
+    if(!db || !currentUser || !campaignId)return {events:[],more:false};
+    const constraints=[where('targetOwnerUid','==',currentUser.uid),orderBy('createdAt','desc')];
+    if(beforeId){
+      const before=await getDoc(doc(db,'campaigns',campaignId,'events',beforeId));
+      if(!before.exists())return {events:[],more:false};
+      constraints.push(startAfter(before));
+    }
+    const snapshot=await getDocs(query(collection(db,'campaigns',campaignId,'events'),...constraints,limit(200)));
+    return {events:snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.targetCharacterId===characterId),cursor:snapshot.docs.at(-1)?.id || '',more:snapshot.size===200};
+  },
   subscribeCampaignEncounter: function(campaignId, onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(
@@ -897,6 +909,28 @@ const firebasePublicApi = {
       reportSyncError('gm-workspace-write',error,{campaignId});
       return {ok:false,error:error.message||String(error)};
     }
+  },
+  saveCampaignInformation: async function(campaignId,kind,input={}){
+    if(!db || !currentUser || !campaignId)return {ok:false,error:'Sign in first.'};
+    try {
+      await runTransaction(db,async transaction=>{
+        const campaign=await requireCampaignGM(transaction,campaignId);
+        const gmRef=doc(db,'campaigns',campaignId,'systems','gmWorkspace'),partyRef=doc(db,'campaigns',campaignId,'systems','party-workspace');
+        const [gmSnapshot,partySnapshot]=await Promise.all([transaction.get(gmRef),transaction.get(partyRef)]);
+        const entry=normalizeInformation(input,kind,campaign);
+        if(!/^[a-zA-Z0-9_-]{1,100}$/.test(entry.id))throw new Error('Invalid information entry.');
+        const world=gmSnapshot.exists()?gmSnapshot.data().world || {}:{};
+        const records=Array.isArray(world[kind])?world[kind]:[],existing=records.find(row=>row.id===entry.id);
+        if(existing && Number(existing.revision||0)!==Number(input.revision||0))throw new Error('This entry changed. Reopen it before saving.');
+        const saved={...existing,...entry,revision:Number(existing?.revision||0)+1,updatedAt:new Date().toISOString(),updatedBy:currentUser.uid};
+        const information={...(partySnapshot.exists()?partySnapshot.data().information:{})};
+        const key=`${kind}-${entry.id}`;
+        if(entry.published)information[key]=publicInformation(saved);else delete information[key];
+        transaction.set(gmRef,{world:{[kind]:[...records.filter(row=>row.id!==entry.id),saved]},updatedAt:serverTimestamp()},{merge:true});
+        const patch={information,updatedBy:currentUser.uid,updatedAt:serverTimestamp()};
+        if(partySnapshot.exists())transaction.update(partyRef,patch);else transaction.set(partyRef,patch);
+      });return {ok:true};
+    }catch(error){return {ok:false,error:error.message || String(error)};}
   },
   assignCampaignQuest: async function(campaignId,quest={},characterIds=[]){
     if(!db || !currentUser || !campaignId) return {ok:false};
@@ -1251,6 +1285,8 @@ const firebasePublicApi = {
   refreshCharacterTalents: (...args) => callTrustedAction('refreshCharacterTalents', args),
   recordSkillSuccess: (...args) => callTrustedAction('recordSkillSuccess', args),
   castCharacterSpell: (...args) => callTrustedAction('castCharacterSpell', args),
+  markNotificationRead: (...args) => callTrustedAction('markNotificationRead', args),
+  sendCharacterNotification: (...args) => callTrustedAction('sendCharacterNotification', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
   buyLiveShopItem: (...args) => callTrustedAction('buyLiveShopItem', args),
   sellLiveShopItem: (...args) => callTrustedAction('sellLiveShopItem', args),

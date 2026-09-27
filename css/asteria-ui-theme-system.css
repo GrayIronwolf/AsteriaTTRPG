@@ -572,3 +572,47 @@ body textarea {
     transition-duration: .001ms !important;
   }
 }
+
+/* Independent colour areas. These override the older global accent selectors. */
+:root {
+  --asteria-dashboard-primary:var(--asteria-accent);
+  --asteria-panel-background:var(--panel-bg);
+  --asteria-panel-border:var(--panel-border);
+  --asteria-menu-button:var(--asteria-accent);
+  --asteria-top-menu-button:var(--asteria-accent);
+  --asteria-dashboard-tab:var(--asteria-accent);
+}
+body :is(.panel,.card,.settings-panel,.clean-display,.clean-nav,.asteria-react-panel,.react-player-topbar,.react-tree-talent,.react-party-card) {
+  border-color:var(--asteria-panel-border)!important;
+  background:var(--asteria-panel-background)!important;
+}
+body :is(.panel,.card,.asteria-react-panel,.react-tree-talent,.react-party-card):hover { border-color:var(--asteria-panel-border)!important; }
+body .topbar :is(button,.toplink,.account-top-btn),body .toplink {
+  border-color:var(--asteria-top-menu-button)!important;
+  background:color-mix(in srgb,var(--asteria-top-menu-button) 25%,#061011)!important;
+  box-shadow:none!important;
+}
+body :is(.clean-nav,.compendium-nav,.compendium-sidebar) button,body .clean-nav button.cat.active {
+  border-color:var(--asteria-menu-button)!important;
+  background:color-mix(in srgb,var(--asteria-menu-button) 25%,#061011)!important;
+  box-shadow:none!important;
+}
+body .react-workspace-shell { --asteria-accent:var(--asteria-dashboard-primary);--accent:var(--asteria-dashboard-primary); }
+body .react-workspace-shell button.primary {
+  background:var(--asteria-dashboard-primary)!important;
+  border-color:var(--asteria-dashboard-primary)!important;
+  box-shadow:none!important;
+}
+body .react-workspace-shell :is(.react-dashboard-nav,.react-tabs,.react-filter-tabs,.react-storage-tabs) button {
+  border-color:var(--asteria-dashboard-tab)!important;
+  background:color-mix(in srgb,var(--asteria-dashboard-tab) 20%,#061011)!important;
+  box-shadow:none!important;
+}
+body .react-workspace-shell :is(.react-dashboard-nav,.react-tabs,.react-filter-tabs,.react-storage-tabs) button:is(.active,[aria-selected=true],[aria-pressed=true]) {
+  background:color-mix(in srgb,var(--asteria-dashboard-tab) 55%,#061011)!important;
+  border-color:var(--asteria-dashboard-tab)!important;
+}
+body :is(hr,.react-panel-header,.react-tree-tier) { border-color:var(--asteria-divider)!important; }
+.asteria-independent-colours,.react-theme-colours { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px; }
+.react-theme-colours label { display:grid;gap:8px; }
+.react-theme-colours input[type=color] { min-height:44px;width:100%; }

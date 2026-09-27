@@ -95,7 +95,7 @@ const GAMEPLAY_MIRROR_FIELDS = [
   'talentResourceEffects', 'talentResourceState', 'talentStateVersion', 'talentEffects',
   'talentRestBonus', 'talentSavingThrows', 'talentUsage', 'talents', 'unlockedTalents',
   'acModifiers', 'specialDamage', 'soulDamage', 'restState', 'coreStateVersion',
-  'coreRevision', 'actionLog', 'inventory', 'equipment', 'coins', 'coinPouch',
+  'coreRevision', 'actionLog', 'notificationRead', 'inventory', 'equipment', 'coins', 'coinPouch',
   'quickSlots', 'bags', 'storages', 'storageLimit', 'pendingItemRewards',
   'resolvedItemRewardIds', 'characteristics', 'skills', 'selectedSkills',
   'skillProgress', 'spells', 'quests', 'questLog', 'titles', 'gmGrantedMagicTypes',

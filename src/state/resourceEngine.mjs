@@ -1,3 +1,4 @@
+import { characterClasses } from './characterClasses.mjs';
 import { resourcePair, strictResourcePair, soulDamageValue } from './resourceValues.mjs';
 import { collectCharacterEffects, evaluateEffects, baseCharacteristicValue, effectiveCharacteristicValue } from './effectsEngine.mjs';
 
@@ -7,8 +8,8 @@ const builtins={
   hp:{name:'HP',recovery:{long:{mode:'fraction',value:.5}}},
   sp:{name:'SP',recovery:{short:{mode:'fraction',value:.35},long:{mode:'full'}}},
   mp:{name:'MP',recovery:{long:{mode:'fraction',value:.5}}},
-  bp:{name:'Blood Points',allowOverflow:true,recovery:{short:{mode:'reduce-fraction',value:.25},long:{mode:'set',value:0}}},
-  zp:{name:'Zeal Points',recovery:{short:{mode:'set',value:0},long:{mode:'set',value:0}},reset:{'combat-start':0,'combat-end':0,unconscious:0}}
+  bp:{name:'Blood Points',classes:['bloodhunter'],allowOverflow:true,recovery:{short:{mode:'reduce-fraction',value:.25},long:{mode:'set',value:0}}},
+  zp:{name:'Zeal Points',classes:['paladin'],recovery:{short:{mode:'set',value:0},long:{mode:'set',value:0}},reset:{'combat-start':0,'combat-end':0,unconscious:0}}
 };
 export function resourceId(value) {
   const key=String(value || '').trim().toLowerCase().replace(/\s+/g,'-');
@@ -16,7 +17,12 @@ export function resourceId(value) {
 }
 export function resourceDefinitions(character={}) {
   const ids=new Set([...Object.keys(builtins).filter(id=>character[id]!==undefined),...Object.keys(character.resources || {}),...Object.keys(character.resourceDefinitions || {})]);
-  return [...ids].filter(id=>/^[a-z][a-z0-9-]{0,39}$/.test(id) && !['constructor','prototype','__proto__'].includes(id)).map(id=>({minimum:0,allowOverflow:false,...builtins[id],...character.resourceDefinitions?.[id],id,name:character.resourceDefinitions?.[id]?.name || builtins[id]?.name || id}));
+  const classes=characterClasses(character).map(value=>value.toLowerCase().replace(/[^a-z0-9]/g,''));
+  const possesses=id=>{
+    const required=builtins[id]?.classes || character.resourceDefinitions?.[id]?.classes;
+    return character.kind==='enemy' || !required?.length || required.some(value=>classes.includes(String(value).toLowerCase().replace(/[^a-z0-9]/g,'')));
+  };
+  return [...ids].filter(possesses).filter(id=>/^[a-z][a-z0-9-]{0,39}$/.test(id) && !['constructor','prototype','__proto__'].includes(id)).map(id=>({minimum:0,allowOverflow:false,...builtins[id],...character.resourceDefinitions?.[id],id,name:character.resourceDefinitions?.[id]?.name || builtins[id]?.name || id}));
 }
 export const storedResource=(character,id)=>Object.hasOwn(builtins,id)?character[id]:character.resources?.[id];
 export function writeResource(character,id,current,maximum) {
