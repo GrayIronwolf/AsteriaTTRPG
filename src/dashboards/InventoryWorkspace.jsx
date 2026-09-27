@@ -67,9 +67,10 @@ function ItemImage({ item, className = '' }) {
   </div>;
 }
 
-function ItemDetailModal({ campaignId, character, item, editable, onClose, onAction }) {
+export function ItemDetailModal({ campaignId, character, item, editable, onClose, onAction, isGM=false }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [quantity,setQuantity]=useState('');
   if (!item) return null;
   const detail = itemDetails(item);
   const pricing = item.identified === false ? null : marketPricingStatus(item);
@@ -92,13 +93,13 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
     busy={busy}
     onClose={onClose}
     footer={<div className="react-modal-actions">
-      {item.identified === false ? <button
+      {!isGM && item.identified === false ? <button
         className="primary"
         disabled={!editable || !characterKnowsIdentify(character)}
         title={characterKnowsIdentify(character) ? 'Cast Identify' : 'This character does not know Identify'}
         onClick={() => run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'identify', itemId: item.id }), 'Item identified.')}
       >Identify</button> : null}
-      {item.isSpellbook && item.identified !== false ? <button
+      {!isGM && item.isSpellbook && item.identified !== false ? <button
         className="primary"
         disabled={!editable}
         onClick={() => run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'read-spellbook', itemId: item.id }), `Learned ${item.spell?.name || item.trueName}.`)}
@@ -119,6 +120,7 @@ function ItemDetailModal({ campaignId, character, item, editable, onClose, onAct
         <div><dt>Quantity</dt><dd>{item.qty}</dd></div>
       </dl></div>
     </div>
+    {isGM?<section className="react-form-grid"><label>New quantity (zero removes the item)<ManualNumberInput min="0" max="1000000" value={quantity} onChange={e=>setQuantity(e.target.value)}/></label><button disabled={!editable||busy||!isManualNumber(quantity,{min:0,max:1000000})} onClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'set-quantity',itemId:item.id,quantity:Number(quantity),expectedQuantity:item.qty,expectedCoreRevision:Number(character.coreRevision||0)}),'Inventory updated.')}>Apply quantity</button>{item.equipped?<button disabled={!editable||busy} onClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'unequip',itemId:item.id}),'Item unequipped.')}>Unequip</button>:null}</section>:null}
     <section className="react-market-information">
       <header><div><p className="react-eyebrow">Market Information</p><h3>{pricing?.label || 'Market Information'}</h3></div>{pricing ? <StatusPill tone={pricing.id === 'tradeable' ? 'success' : pricing.id === 'invalid' ? 'warning' : 'pending'}>{pricing.label}</StatusPill> : null}</header>
       {pricing?.id === 'not-tradeable' ? <p>Not Normally Tradeable</p> : <dl className="react-detail-list">

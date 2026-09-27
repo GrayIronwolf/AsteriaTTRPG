@@ -1,3 +1,4 @@
+import { ThemeControls } from '../components/ThemeControls.jsx';
 import React, { useMemo, useState } from 'react';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
@@ -120,7 +121,7 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
     rows.splice(targetIndex,0,draggedPanel);
     return {...current,panelOrder:rows};
   });
-  return <div className="react-settings-workspace">
+  return <div className="react-settings-workspace"><ThemeControls/>
     <Panel title="Dashboard Layout" action={<StatusPill>{DEFAULT_DASHBOARD_PANELS.length-preferences.hiddenPanels.length} visible</StatusPill>}>
       <p className="react-help">Choose which dashboard panels are visible and arrange their display order.</p>
       <div className="react-panel-order-list">{preferences.panelOrder.map((key,index)=><article key={key} draggable={editable} className={draggedPanel===key?'dragging':''} onDragStart={()=>setDraggedPanel(key)} onDragEnd={()=>setDraggedPanel('')} onDragOver={event=>editable&&event.preventDefault()} onDrop={()=>dropPanel(key)}><label><input type="checkbox" disabled={!editable} checked={!preferences.hiddenPanels.includes(key)} onChange={()=>toggle(key)}/><b>{PANEL_LABELS[key]}</b></label><div><button title="Move up" disabled={!editable||index===0} onClick={()=>move(index,-1)}>Up</button><button title="Move down" disabled={!editable||index===preferences.panelOrder.length-1} onClick={()=>move(index,1)}>Down</button></div></article>)}</div>

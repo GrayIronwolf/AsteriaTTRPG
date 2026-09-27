@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ManualNumberInput } from './ManualNumberInput.jsx';
 import { isManualNumber } from '../state/manualNumber.mjs';
-import { objectiveProgress, questObjectives, questProgress } from '../state/questWorkflowModel.mjs';
+import { objectiveProgress, questObjectives, questProgress, questType } from '../state/questWorkflowModel.mjs';
 
 export function QuestDetails({quest}) {
   return <div className="react-quest-details">
-    <dl>{[['Quest giver',quest.questGiver],['Location',quest.location],['Category',quest.category],['In-world deadline',quest.deadline]].filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <dl>{[['Quest giver',quest.questGiver],['Location',quest.location],['Type',questType(quest)],['In-world deadline',quest.deadline]].filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     {quest.successOutcome?<p><b>On success:</b> {quest.successOutcome}</p>:null}
     {quest.failureConsequences?<p><b>Failure consequences:</b> {quest.failureConsequences}</p>:null}
     {quest.resolutionNote?<p><b>GM response:</b> {quest.resolutionNote}</p>:null}

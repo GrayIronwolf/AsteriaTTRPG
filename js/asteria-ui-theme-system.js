@@ -1,5 +1,8 @@
 (function(){
   const STORAGE_KEY = "asteria-ui-theme-v1";
+  const AREA_LABELS={panelBorder:'Panel box outline',panelBackground:'Panel background',menuButton:'Compendium menu buttons',topMenuButton:'Top menu buttons',dashboardPrimary:'Dashboard primary colour',dashboardTab:'Dashboard menu tabs',divider:'Divider / line colour'};
+  let appliedSettings=null;
+  const validColour=value=>/^#[0-9a-f]{6}$/i.test(value || '');
   const DEFAULT_TEXT = "#f7ead1";
   const themes = {
     bloodhunter:{accent:"#b51f2e",text:DEFAULT_TEXT,glow:.34,overlay:.44,panel:.78},
@@ -41,6 +44,7 @@
     const overlay = document.getElementById("asteriaOverlaySlider");
     const panel = document.getElementById("asteriaPanelOpacitySlider");
 
+    Object.keys(AREA_LABELS).forEach(key=>{const input=document.getElementById(`asteriaArea-${key}`);if(input)input.value=settings.areas[key];});
     if(theme) theme.value = settings.theme || "spellblade";
     if(colour) colour.value = settings.accent || "#1f7dff";
     if(text) text.value = settings.text || DEFAULT_TEXT;
@@ -54,6 +58,7 @@
     const preset = themes[key] || themes.spellblade;
     return {
       theme:key,
+      areas:Object.fromEntries(Object.keys(AREA_LABELS).map(area=>[area,validColour(settings.areas?.[area])?settings.areas[area]:area==='panelBackground'?'#040e10':settings.accent || preset.accent])),
       accent:settings.accent || preset.accent,
       text:settings.text || preset.text || DEFAULT_TEXT,
       glow:clamp(typeof settings.glow === "number" ? settings.glow : preset.glow),
@@ -64,6 +69,7 @@
 
   function applyTheme(settings, persist=false){
     const next = normalise(settings);
+    appliedSettings=next;
     const rgb = hexToRgb(next.accent);
     const textRgb = hexToRgb(next.text);
     const inverseVisibility = 1 - next.overlay;
@@ -99,6 +105,12 @@
     setVar("--panel-bg", `rgba(4,14,16,${next.panel})`);
     setVar("--panel-border", rgba(next.accent, .46));
 
+    const areaTokens={panelBorder:'panel-border',panelBackground:'panel-background',menuButton:'menu-button',topMenuButton:'top-menu-button',dashboardPrimary:'dashboard-primary',dashboardTab:'dashboard-tab',divider:'divider'};
+    for(const [key,token] of Object.entries(areaTokens))setVar(`--asteria-${token}`,key==='panelBackground'?rgba(next.areas[key],next.panel):next.areas[key]);
+    setVar('--panel-bg',rgba(next.areas.panelBackground,next.panel));
+    setVar('--panel-border',next.areas.panelBorder);
+    setVar('--asteria-divider',rgba(next.areas.divider,.46));
+    window.dispatchEvent(new CustomEvent('asteria:theme-change',{detail:next}));
     document.body.dataset.asteriaTheme = next.theme;
     document.body.removeAttribute("data-theme");
     document.body.removeAttribute("data-accent");
@@ -110,6 +122,8 @@
     const theme = document.getElementById("asteriaThemeSelect")?.value || document.body.dataset.asteriaTheme || "spellblade";
     const preset = themes[theme] || themes.spellblade;
     return normalise({
+      ...appliedSettings,
+      areas:Object.fromEntries(Object.keys(AREA_LABELS).map(key=>[key,document.getElementById(`asteriaArea-${key}`)?.value || appliedSettings?.areas[key]])),
       theme,
       accent:document.getElementById("asteriaColourWheel")?.value || preset.accent,
       text:document.getElementById("asteriaTextColourWheel")?.value || preset.text || DEFAULT_TEXT,
@@ -129,6 +143,12 @@
     const save = document.getElementById("asteriaThemeSave");
     const reset = document.getElementById("asteriaThemeReset");
 
+    for(const key of Object.keys(AREA_LABELS)) {
+      const input=document.getElementById(`asteriaArea-${key}`);
+      if(!input || input.dataset.bound)continue;
+      input.dataset.bound='1';
+      input.addEventListener('input',()=>applyTheme({...current(),areas:{...appliedSettings.areas,[key]:input.value}},true));
+    }
     if(theme && !theme.dataset.bound){
       theme.dataset.bound = "1";
       theme.addEventListener("change", () => {
@@ -222,6 +242,8 @@
 
   window.AsteriaThemeSystem = {
     themes,
+    areas:AREA_LABELS,
+    getSettings:()=>normalise(appliedSettings || {}),
     applyTheme,
     refreshControls:bind,
     reset(){

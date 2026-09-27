@@ -1,3 +1,4 @@
+import { PlayerInformation } from './PlayerInformation.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -20,7 +21,6 @@ import {
   CharacterTab,
   JournalTab,
   PartyTab,
-  QuestTab,
   SessionGate,
   SkillsTab,
   SpellsTab,
@@ -34,7 +34,8 @@ const CHARACTER_TABS = [
   { id: 'skills', label: 'Skills', icon: 'skills' },
   { id: 'spells', label: 'Spells', icon: 'spells' },
   { id: 'inventory', label: 'Inventory', icon: 'inventory' },
-  { id: 'quest', label: 'Quest', icon: 'quest' },
+  { id: 'quest', label: 'Quests', icon: 'quest' },
+  { id: 'information', label: 'News / Events / History', icon: 'journal' },
   { id: 'journal', label: 'Journal', icon: 'journal' },
   { id: 'party', label: 'Party', icon: 'party' },
   { id: 'gallery', label: 'Gallery', icon: 'gallery' },
@@ -175,7 +176,7 @@ export function CharacterDashboard({ campaignId, characterId }) {
     {tab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}
-    {tab === 'quest' ? <QuestTab campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} editable={editable} /> : null}
+    {['information','quest'].includes(tab) ? <PlayerInformation key={`${character.id}-${tab}`} campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} events={live.events} editable={editable} isOwner={isOwner} initialTab={tab==='quest'?'quests':'news'}/> : null}
     {tab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {tab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}

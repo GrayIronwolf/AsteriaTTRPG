@@ -62,7 +62,7 @@ export function normalizeAssignedQuest(quest = {}, assignment = {}) {
     objective:String(quest.objective || quest.description || '').slice(0, 12000),
     description:String(quest.description || quest.objective || '').slice(0, 12000),
     reward:normalizeQuestReward(quest.reward),
-    status:quest.status === 'Draft' ? 'Active' : String(quest.status || 'Active'),
+    status:quest.offerRequired ? 'Pending' : quest.status === 'Draft' ? 'Active' : String(quest.status || 'Active'),
     assignedAt:assignment.assignedAt || new Date().toISOString(),
     assignedBy:String(assignment.assignedBy || '')
   };

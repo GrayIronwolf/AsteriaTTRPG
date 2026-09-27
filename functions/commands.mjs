@@ -1,3 +1,4 @@
+import { createInformationCommands } from './informationCommands.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
@@ -46,9 +47,12 @@ function liveCharacterRefs(campaignId,characterId){
 function ownedCharacterSourceId(characterId,character={}){
   return String(character.sourceCharacterId || character.id || characterId || '');
 }
-async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs={}){
-  if(character.ownerUid !== currentUser.uid) throw new Error('This character belongs to another account.');
-  refs.private=doc(db,'users',currentUser.uid,'characters',ownedCharacterSourceId(characterId,character));
+async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs={},allowGM=false){
+  if(character.ownerUid !== currentUser.uid) {
+    if(!allowGM) throw new Error('This character belongs to another account.');
+    await requireCampaignGM(transaction,campaignId);
+  }
+  refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
   refs.verifiedOwner=true;
   refs.original=structuredCloneSafe(character);
   const privateSnapshot=await transaction.get(refs.private);
@@ -72,6 +76,12 @@ function writeLiveCharacter(transaction,refs,character){
   if(!Object.keys(patch).length) return;
   patch.coreRevision=Number(refs.original?.coreRevision || 0)+1;
   patch.updatedAt=serverTimestamp();
+  // Archive new activity in the existing targeted campaign event stream.
+  const previousIds=new Set((refs.original?.actionLog || []).map(row=>row.id));
+  for(const row of clean.actionLog || []) if(row.id && !previousIds.has(row.id)) {
+    const id=`activity-${clean.id}-${row.id}`;
+    transaction.set(doc(db,'campaigns',refs.campaign.path.split('/')[1],'events',id),{id,type:row.type || 'activity',targetCharacterId:clean.id,targetOwnerUid:clean.ownerUid,payload:{message:row.message || '',activityId:row.id},acknowledged:false,createdAt:serverTimestamp(),createdBy:currentUser.uid});
+  }
   transaction.update(refs.campaign,patch);
   if(refs.privateExists) transaction.update(refs.private,patch);
 }
@@ -188,7 +198,7 @@ function applyQuestRewards(character,quest,questId,characterId) {
 }
 async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,note='',award=false}={}) {
   const refs=liveCharacterRefs(campaignId,characterId);
-  const eventRef=gm?doc(collection(db,'campaigns',campaignId,'events')):null;
+  const eventRef=doc(collection(db,'campaigns',campaignId,'events'));
   try {
     const result=await runTransaction(db,async transaction=>{
       if(gm) await requireCampaignGM(transaction,campaignId);
@@ -210,10 +220,8 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
       const quest=operation(quests[index]);
       const outcome=award?applyQuestRewards(character,quest,questId,characterId):{rewardApplied:false,rewardSummary:''};
       quests[index]=quest;character.quests=quests;
-      if(gm) {
-        writeLiveCharacter(transaction,refs,character);
-        transaction.set(eventRef,{id:eventRef.id,campaignId,targetCharacterId:characterId,targetOwnerUid:character.ownerUid,type:'quest-updated',payload:{questId,title:quest.title||quest.name||'Quest',objective:quest.objective||quest.description||'',status:quest.status,note:String(note||'').slice(0,1000),rewardSummary:outcome.rewardSummary},acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp()});
-      } else writeLiveCharacter(transaction,refs,character);
+      writeLiveCharacter(transaction,refs,character);
+      transaction.set(eventRef,{id:eventRef.id,campaignId,targetCharacterId:characterId,targetOwnerUid:character.ownerUid,type:'quest-updated',payload:{questId,title:quest.title||quest.name||'Quest',objective:quest.objective||quest.description||'',status:quest.status,note:String(note||'').slice(0,1000),rewardSummary:outcome.rewardSummary},acknowledged:false,createdBy:currentUser.uid,createdAt:serverTimestamp()});
       return {...outcome,status:quest.status};
     });
     return {ok:true,...result};
@@ -406,7 +414,9 @@ const commands = {
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
         const character=Object.assign({id:characterId},snapshot.data());
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs,true);
+        const gmManagement=character.ownerUid!==currentUser.uid;
+        if(gmManagement && !['equip','unequip','move-storage','set-quantity'].includes(operation.type)) throw new Error('This action is reserved for the character owner.');
         const inventory=characterInventory(character);
         character.storageLimit=Math.max(3,Number(character.storageLimit||3));
         character.storages=normalizeCharacterStorages(character);
@@ -446,7 +456,18 @@ const commands = {
         }
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(operation.itemId||''));
         if(!item) throw new Error('Inventory item not found.');
-        if(operation.type==='equip'){
+        if(operation.type==='set-quantity'){
+          await requireCampaignGM(transaction,campaignId);
+          const quantity=Number(operation.quantity);
+          if(!Number.isSafeInteger(quantity)||quantity<0||quantity>1000000) throw new Error('Enter a whole quantity from 0 to 1000000.');
+          if(Number(operation.expectedQuantity)!==Number(item.qty)) throw new Error('This stack changed. Reopen the item before adjusting it.');
+          item.qty=quantity;
+          if(character.equipment) for(const [slot,equipped] of Object.entries(character.equipment)) if(equipped?.id===item.id) {
+            if(quantity===0) delete character.equipment[slot]; else character.equipment[slot]={...equipped,qty:quantity};
+          }
+          if(quantity===0 && Array.isArray(character.quickSlots)) character.quickSlots=character.quickSlots.map(slot=>(slot===item.id || slot?.itemId===item.id)?null:slot);
+          appendActivity(character,{type:'inventory-adjusted',message:`GM changed ${item.name} quantity to ${quantity}.`});
+        }else if(operation.type==='equip'){
           const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
           if(!slot) throw new Error('Choose an equipment slot.');
           const armourValidation=window.AsteriaArmour?.validateEquipmentChange?.(character,item,slot);
@@ -972,5 +993,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context)};
+return {...commands,...createCoreCommands(context),...createInformationCommands(context)};
 }

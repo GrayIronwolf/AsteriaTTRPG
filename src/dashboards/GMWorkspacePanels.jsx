@@ -1,6 +1,6 @@
 import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
 import { QuestAssignments } from './QuestAssignments.jsx';
-import { questDetails } from '../state/questWorkflowModel.mjs';
+import { questDetails, QUEST_TYPES } from '../state/questWorkflowModel.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -76,7 +76,9 @@ export function QuestWorkspace({ campaignId, workspace, characters, saveSection 
     <Panel title="Quest Builder" eyebrow="Campaign Objectives">
       <div className="react-form-grid"><label>Quest Title<input value={draft.title} onChange={event=>setDraft(value=>({...value,title:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Draft','Active','Completed','Failed','Archived'].map(value=><option key={value}>{value}</option>)}</select></label><label>Visibility<select value={draft.visibility} onChange={event=>setDraft(value=>({...value,visibility:event.target.value}))}><option>Party</option><option>GM Only</option></select></label></div>
       <label>Objective<textarea rows="5" value={draft.objective} onChange={event=>setDraft(value=>({...value,objective:event.target.value}))}/></label>
-      <div className="react-form-grid">{[['questGiver','Quest Giver'],['location','Location'],['category','Category'],['deadline','In-world Deadline']].map(([key,label])=><label key={key}>{label}<input maxLength={key==='deadline'?500:160} value={draft[key]||''} placeholder={key==='deadline'?'e.g. Within seven in-world days':''} onChange={event=>setDraft(value=>({...value,[key]:event.target.value}))}/></label>)}</div>
+      <div className="react-form-grid">{[['questGiver','Quest Giver'],['location','Location'],['deadline','In-world Deadline']].map(([key,label])=><label key={key}>{label}<input maxLength={key==='deadline'?500:160} value={draft[key]||''} placeholder={key==='deadline'?'e.g. Within seven in-world days':''} onChange={event=>setDraft(value=>({...value,[key]:event.target.value}))}/></label>)}</div>
+      <label>Quest Type<input list="asteria-quest-types" maxLength={80} value={draft.questType||draft.category||''} onChange={e=>setDraft(d=>({...d,questType:e.target.value}))}/><datalist id="asteria-quest-types">{[...new Set([...QUEST_TYPES,...quests.map(q=>q.questType||q.category).filter(Boolean)])].map(value=><option key={value} value={value}/>)}</datalist></label>
+      <label><input type="checkbox" checked={draft.offerRequired===true} onChange={e=>setDraft(d=>({...d,offerRequired:e.target.checked}))}/>Offer to players for acceptance</label>
       <p className="react-help">The GM decides when an in-world deadline has passed.</p>
       <label>Success Outcome<textarea rows="2" maxLength={2000} value={draft.successOutcome||''} onChange={event=>setDraft(value=>({...value,successOutcome:event.target.value}))}/></label>
       <label>Failure Consequences (visible to players)<textarea rows="2" maxLength={2000} value={draft.failureConsequences||''} onChange={event=>setDraft(value=>({...value,failureConsequences:event.target.value}))}/></label>
@@ -182,7 +184,6 @@ export function GameplayWorkspace({ campaignId, workspace, partyWorkspace, saveS
 const WORLD_SCHEMAS={
   regions:[['name','Region Name'],['status','Status'],['resources','Resources'],['travelSafety','Travel Safety']],
   factions:[['name','Faction Name'],['status','Standing'],['score','Reputation Score'],['notes','Notes']],
-  events:[['title','Event Title'],['type','Event Type'],['region','Region'],['status','Status']],
   settlements:[['name','Settlement Name'],['region','Region'],['population','Population'],['state','State']],
   merchants:[['name','Merchant Name'],['type','Type'],['region','Region'],['wealth','Wealth']],
   timeline:[['title','Event Title'],['era','Era'],['type','Type'],['region','Region']],

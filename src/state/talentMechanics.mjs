@@ -21,7 +21,7 @@ export function talentRules(talent,rank=1) {
     // the activation's payment. They use explicit options below when supported.
     if(/(?:^|[-\s])(?:If |When |On a |For example)/i.test(line)) continue;
     const spend=line.match(/(?:\bspend\b|\bexpend\b|\bsacrific(?:e|ing)\b)(.*?)(?=\b(?:to restore|and gain|to regain)\b|$)/i);
-    const labelled=line.match(/^(?:-\s*)?(?:Mana|Stamina|HP|Mana and Stamina) Cost:\s*(.*)/i);
+    const labelled=line.match(/^(?:-\s*)?(?:(?:Mana|Stamina|Health|Blood Points?|Zeal Points?|HP|SP|MP|BP|ZP|Resource|Mana and Stamina) )?Cost:\s*(.*)/i);
     if(spend && /to activate/i.test(line)) clear(costs);
     if(spend || labelled) for(const [key,amount] of numbers((spend || labelled)[1])) if(amount>=0) costs[key]=amount;
     const change=line.match(/(?:increase|reduce) (?:the |its |your )?(Mana|Stamina|HP) Cost to\s*(\d+)/i);

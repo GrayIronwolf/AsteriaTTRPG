@@ -1,3 +1,4 @@
+import { questType } from '../state/questWorkflowModel.mjs';
 import { characterCheck } from '../state/effectsEngine.mjs';
 import { useAsyncAction as useAction } from '../components/useAsyncAction.js';
 import { QuestDetails, QuestObjectives } from '../components/QuestDetails.jsx';
@@ -182,27 +183,29 @@ export function SpellsTab({ campaignId, character, editable }) {
 }
 
 export function QuestTab({ campaignId, character, partyWorkspace, editable }) {
+  const [type,setType]=useState('All');
   const rows=quests(character,partyWorkspace);const action=useAction();
   const [query,setQuery]=useState('');const [status,setStatus]=useState('All');
   const ownedAssignments=new Set((Array.isArray(character.quests||character.questLog)?character.quests||character.questLog:[]).map(quest=>String(quest.id||quest.slug||'')));
-  const visible=rows.filter(quest=>(status==='All'||quest.status===status)&&`${quest.name} ${quest.description||''} ${quest.questGiver||''} ${quest.location||''}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked)));
+  const visible=rows.filter(quest=>(status==='All'||quest.status===status)&&(type==='All'||questType(quest)===type)&&`${quest.name} ${quest.description||''} ${quest.questGiver||''} ${quest.location||''}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked)));
   const updateStatus=async(quest,nextStatus)=>{
     const result=await action.run(()=>firebaseService.updateQuest(campaignId,character.id,quest.id,nextStatus),nextStatus==='Awaiting Review'?'Submitted to the GM for review.':'Quest status updated.');
     if(result?.ok&&result.rewardApplied) action.setMessage(result.rewardSummary?`Rewards received: ${result.rewardSummary}`:'Quest completed.');
   };
   const progress=(quest,patch)=>action.run(()=>firebaseService.updateQuestProgress(campaignId,character.id,quest.id,patch),'Quest progress saved.');
-  return <Panel title="Quest Log" action={<StatusPill>{visible.length} of {rows.length}</StatusPill>}>
-    <div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search quests, givers or locations..."/><FilterControl label="Status" value={status} onChange={setStatus}>{['All',...QUEST_STATUSES].map(value=><option key={value}>{value}</option>)}</FilterControl></div>
+  return <Panel title="Quests & History" action={<StatusPill>{visible.length} of {rows.length}</StatusPill>}>
+    <div className="react-content-toolbar"><SearchField value={query} onChange={setQuery} placeholder="Search quests, givers or locations..."/><FilterControl label="Status" value={status} onChange={setStatus}>{['All',...QUEST_STATUSES].map(value=><option key={value}>{value}</option>)}</FilterControl><FilterControl label="Quest Type" value={type} onChange={setType}>{['All',...new Set(rows.map(questType))].map(value=><option key={value}>{value}</option>)}</FilterControl></div>
     <div className="react-quest-list">{visible.map(quest=>{
-      const reward=questRewardSummary(quest.reward);const claimed=questRewardClaimed(quest);const canEdit=editable&&ownedAssignments.has(quest.id);const open=!questIsClosed(quest);
+      const reward=questRewardSummary(quest.reward);const claimed=questRewardClaimed(quest);const canEdit=editable&&ownedAssignments.has(quest.id);const open=!questIsClosed(quest) && quest.status!=='Pending';
       return <article key={quest.id} className={`status-${String(quest.status||'active').toLowerCase().replaceAll(' ','-')} ${quest.tracked?'tracked':''}`}>
         <div><header><b>{quest.name}</b><StatusPill tone={quest.status==='Completed'?'success':quest.status==='Failed'?'danger':'info'}>{quest.status||'Active'}</StatusPill>{quest.tracked?<StatusPill>Tracked</StatusPill>:null}{claimed?<StatusPill tone="success">Reward Claimed</StatusPill>:null}</header>
           <p>{quest.description||'No quest description recorded.'}</p><QuestDetails quest={quest}/>
           <QuestObjectives quest={quest} editable={canEdit&&open&&quest.status!=='Awaiting Review'} busy={action.busy} onProgress={patch=>progress(quest,patch)}/>
           {reward?<p className="react-quest-reward"><b>Reward:</b> {reward}</p>:null}
           {quest.requiresGMApproval&&open?<p className="react-help">{quest.status==='Awaiting Review'?'The GM is reviewing your completion.':'Complete the required objectives, then submit this quest to the GM.'}</p>:null}
+          {canEdit&&quest.status==='Pending'?<div className="react-action-row"><button className="primary" disabled={action.busy} onClick={()=>updateStatus(quest,'Accepted')}>Accept Quest</button><button disabled={action.busy} onClick={()=>updateStatus(quest,'Declined')}>Decline Quest</button></div>:null}
           {canEdit?<div className="react-action-row"><button disabled={action.busy} onClick={()=>progress(quest,{tracked:!quest.tracked})}>{quest.tracked?'Untrack':'Track Quest'}</button>
-            {open&&quest.status!=='Awaiting Review'?<><button disabled={action.busy} onClick={()=>updateStatus(quest,quest.status==='On Hold'?'Active':'On Hold')}>{quest.status==='On Hold'?'Resume':'Put On Hold'}</button><button className="primary" disabled={action.busy||!questProgress(quest).ready} onClick={()=>updateStatus(quest,quest.requiresGMApproval?'Awaiting Review':'Completed')}>{quest.requiresGMApproval?'Submit for GM Review':'Complete & Claim Reward'}</button></>:null}
+            {quest.status==='Accepted'?<button disabled={action.busy} onClick={()=>updateStatus(quest,'Active')}>Begin Quest</button>:null}{open&&quest.status!=='Awaiting Review'?<><button disabled={action.busy} onClick={()=>updateStatus(quest,quest.status==='On Hold'?'Active':'On Hold')}>{quest.status==='On Hold'?'Resume':'Put On Hold'}</button><button className="primary" disabled={action.busy||!questProgress(quest).ready} onClick={()=>updateStatus(quest,quest.requiresGMApproval?'Awaiting Review':'Completed')}>{quest.requiresGMApproval?'Submit for GM Review':'Complete & Claim Reward'}</button></>:null}
             {quest.status==='Awaiting Review'?<button disabled={action.busy} onClick={()=>updateStatus(quest,'Active')}>Withdraw Submission</button>:null}
           </div>:null}
           {Array.isArray(quest.history)&&quest.history.length?<details><summary>Quest History</summary><ul>{quest.history.map((entry,index)=><li key={index}>{entry.status}{entry.at?` · ${new Date(entry.at).toLocaleString()}`:''}{entry.note?` — ${entry.note}`:''}</li>)}</ul></details>:null}

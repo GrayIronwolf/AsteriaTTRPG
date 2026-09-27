@@ -1,6 +1,8 @@
 const text = (value, limit = 500) => String(value ?? '').trim().slice(0, limit);
-export const QUEST_STATUSES = ['Active', 'On Hold', 'Awaiting Review', 'Completed', 'Failed'];
-export const questIsClosed = quest => ['Completed', 'Failed'].includes(quest.status);
+export const QUEST_TYPES = ['Hide Quest','Guild Quest','NPC Quest','World Quest','God/Goddess Quest'];
+export const questType = quest => quest.questType || quest.category || 'Side Quest';
+export const QUEST_STATUSES = ['Pending','Accepted','Declined','Active','On Hold','Awaiting Review','Completed','Failed','Expired'];
+export const questIsClosed = quest => ['Completed', 'Failed', 'Declined', 'Expired'].includes(quest.status);
 export function questObjectives(quest = {}) {
   const seen = new Set();
   return (Array.isArray(quest.objectives) ? quest.objectives : []).slice(0, 20).map((value, index) => {
@@ -15,7 +17,7 @@ export function questObjectives(quest = {}) {
   }).filter(row => row.text);
 }
 export function questDetails(quest = {}) {
-  return {questGiver:text(quest.questGiver,160), location:text(quest.location,160), category:text(quest.category || 'Side Quest',80), deadline:text(quest.deadline), successOutcome:text(quest.successOutcome,2000), failureConsequences:text(quest.failureConsequences,2000), objectives:questObjectives(quest), requiresGMApproval:quest.requiresGMApproval === true};
+  return {questGiver:text(quest.questGiver,160), location:text(quest.location,160), category:text(quest.category || quest.questType || 'Side Quest',80), questType:text(questType(quest),80),offerRequired:quest.offerRequired===true, deadline:text(quest.deadline), successOutcome:text(quest.successOutcome,2000), failureConsequences:text(quest.failureConsequences,2000), objectives:questObjectives(quest), requiresGMApproval:quest.requiresGMApproval === true};
 }
 export function objectiveProgress(quest, objective) {
   const value = Number(quest.progress?.[objective.id] || 0);
@@ -27,7 +29,7 @@ export function questProgress(quest) {
   return {completed, total:required.length, ready:completed === required.length};
 }
 export function mergeQuestAssignment(previous, next) {
-  if(!previous) return {...next, progress:{}, tracked:false};
+  if(!previous) return {...next, progress:{}, tracked:false,history:[{status:next.status || 'Active',at:next.assignedAt,by:next.assignedBy || ''}]};
   // Updating the definition is not a new reward entitlement or a status reset.
   const merged = {...previous, ...next, status:previous.status || 'Active', tracked:previous.tracked === true,
     assignedAt:previous.assignedAt || next.assignedAt, progress:{}, history:previous.history || [],
@@ -42,7 +44,7 @@ export function changeQuestProgress(quest, patch) {
   const keys=Object.keys(patch);
   if(keys.length===1 && keys[0]==='tracked' && typeof patch.tracked==='boolean') return {...quest,tracked:patch.tracked};
   if(keys.length!==2 || !keys.includes('objectiveId') || !keys.includes('current')) throw new Error('Only objective progress or tracking can be changed.');
-  if(questIsClosed(quest) || quest.status==='Awaiting Review') throw new Error('This quest is not open for progress changes.');
+  if(questIsClosed(quest) || ['Pending','Awaiting Review'].includes(quest.status)) throw new Error('This quest is not open for progress changes.');
   const objective=questObjectives(quest).find(row=>row.id===patch.objectiveId);
   if(!objective || !Number.isSafeInteger(patch.current) || patch.current<0 || patch.current>objective.target) throw new Error('Enter progress within the objective target.');
   return {...quest,progress:{...(quest.progress || {}),[objective.id]:patch.current}};
@@ -53,7 +55,10 @@ export function changeQuestStatus(quest, status, {gm=false, uid='', note='', at=
   if(status===quest.status) return {...quest};
   if(quest.status==='Completed') throw new Error('Completed quests stay in the history. Duplicate the quest for a new adventure.');
   if(!gm) {
-    if(quest.status==='Failed') throw new Error('Ask the GM to reopen this quest.');
+    if(questIsClosed(quest)) throw new Error('Ask the GM to reopen this quest.');
+    if(status==='Expired' || status==='Pending') throw new Error('Only the GM can set this status.');
+    if(quest.status==='Pending' && !['Accepted','Declined'].includes(status)) throw new Error('Accept or decline this quest offer first.');
+    if(['Accepted','Declined'].includes(status) && quest.status!=='Pending') throw new Error('This quest is not awaiting a response.');
     if(status==='Awaiting Review' && !quest.requiresGMApproval) throw new Error('This quest does not require GM review.');
   }
   if(['Completed','Awaiting Review'].includes(status) && !questProgress(quest).ready) throw new Error('Finish the required objectives first.');

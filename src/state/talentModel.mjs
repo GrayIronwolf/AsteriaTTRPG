@@ -42,14 +42,17 @@ function savedRows(value) {
 export function ownedTalents(character={},catalog=[]) {
   const found=new Map();
   for(const source of [character,character.character || {}]) for(const field of ['talents','unlockedTalents','classTalents','selectedTalents']) for(const row of savedRows(source[field])) {
-    if(row.unlocked===false || row.purchased===false || row.locked===true) continue;
-    const rank=Math.min(5,Math.max(0,Math.floor(Number(row.rank ?? row.currentRank ?? row.highestRank ?? 1) || 0)));
+    if(row.unlocked===false || row.purchased===false || row.locked===true || ['locked','available','unpurchased'].includes(row.state)) continue;
+    const suffix=String(row.name || row.title || '').match(/\s+(?:[-–—]\s*)?Rank\s+(IV|III|II|I|V|[1-5])$/i);
+    const ownedName=suffix?String(row.name || row.title).slice(0,suffix.index).trim():row.name || row.title;
+    const rankValue=row.rank ?? row.currentRank ?? row.highestRank ?? suffix?.[1] ?? 1;
+    const rank=Math.min(5,Math.max(0,Math.floor(Number(rankValue) || roman[String(rankValue).toUpperCase()] || 0)));
     if(!rank) continue;
     // A legacy unqualified name belongs to the first matching class, not every
     // class in a multiclass character. This prevents free duplicate Mana Wells.
-    const talent=catalog.find(t=>(row.id===t.id || row.id===t.sourceId || identity(row.name || row.title)===identity(t.name)) && (!row.className || identity(row.className)===identity(t.className)));
-    const id=talent?.id || row.id || `${talentKey(row.className || characterClasses(character)[0] || 'legacy')}:${talentKey(row.name || row.title)}`;
-    if(!found.has(id) || found.get(id).rank<rank) found.set(id,{...row,...talent,id,rank,unlocked:true,name:talent?.name || row.name || row.title});
+    const talent=catalog.find(t=>(row.id===t.id || row.id===t.sourceId || identity(ownedName)===identity(t.name)) && (!row.className || identity(row.className)===identity(t.className)));
+    const id=talent?.id || row.id || `${talentKey(row.className || characterClasses(character)[0] || 'legacy')}:${talentKey(ownedName)}`;
+    if(!found.has(id) || found.get(id).rank<rank) found.set(id,{...row,...talent,id,rank,unlocked:true,name:talent?.name || ownedName});
   }
   return [...found.values()];
 }
