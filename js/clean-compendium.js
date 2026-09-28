@@ -608,7 +608,7 @@
         <section class="workspace-link-panel">
           <h3>Link Existing Character</h3>
           <p class="muted">Players can link a character they own to this campaign. A full approval flow can be added later.</p>
-          <label>Character<select id="workspaceLinkCharacter">${characters.map(character => `<option value="${escapeHtml(character.id)}">${escapeHtml(character.name || character.id)}</option>`).join('')}</select></label>
+          <label>Character<select id="workspaceLinkCharacter">${characters.map(character => `<option value="${escapeHtml(character.id)}" ${character.id === (window.session?.character || window.selected) ? 'selected' : ''}>${escapeHtml(character.name || character.id)}</option>`).join('')}</select></label>
           <button class="primary" type="button" id="workspaceLinkCharacterBtn" ${characters.length ? '' : 'disabled'}>Link Character</button>
         </section>
       </article>
@@ -806,7 +806,7 @@
     try { localStorage.removeItem('asteriaPendingCampaignJoin'); } catch {}
   }
 
-  function consumePendingCampaignJoin(characterId) {
+  async function consumePendingCampaignJoin(characterId) {
     const pending = readPendingCampaignJoin();
     if (!pending?.campaignId || !characterId) return null;
     const campaign = findCampaign(pending.campaignId);
@@ -814,9 +814,8 @@
       clearPendingCampaignJoin();
       return null;
     }
-    addCampaignPlayer(campaign);
-    const linkedCampaign = linkCharacterToCampaign(pending.campaignId, characterId, { silent:true, skipRender:true });
-    clearPendingCampaignJoin();
+    const linkedCampaign = await linkCharacterToCampaign(pending.campaignId, characterId, { silent:true, skipRender:true });
+    if (linkedCampaign) clearPendingCampaignJoin();
     return linkedCampaign;
   }
 
@@ -970,11 +969,47 @@
   }
 
   async function linkCharacterToCampaign(campaignIdValue, characterIdValue = '', options = {}) {
-    const campaign = findCampaign(campaignIdValue);
+    let campaign = findCampaign(campaignIdValue);
     const characterId = characterIdValue || byId('workspaceLinkCharacter')?.value;
-    if (!campaign || !characterId || !window.chars?.[characterId]) return;
+    if (!campaign || !characterId || !window.chars?.[characterId]) return null;
+    const api = window.AsteriaFirebase;
+    const uid = api?.getUser?.()?.uid || accountKey();
+    if (window.chars[characterId].ownerUid !== uid) {
+      window.toast?.('Only the character owner can link this character.');
+      return null;
+    }
+    if (api) {
+      if (!api.isReady?.() || !api.linkCharacterToCampaign) {
+        window.toast?.('Wait for Firebase to connect before linking this character.');
+        return null;
+      }
+      const button = byId('workspaceLinkCharacterBtn');
+      if (button) { button.disabled = true; button.textContent = 'Linking…'; }
+      try {
+        // Commit first. Optimistic roster edits used to trigger background saves
+        // and destructive rollback even when an earlier link already existed.
+        const linked = await api.linkCharacterToCampaign(campaign.id, { ...window.chars[characterId], id:characterId });
+        if (!linked) throw new Error('The campaign is unavailable. Refresh your campaigns and try again.');
+        campaign = storeAccountCampaign(linked);
+        window.chars[characterId] = { ...window.chars[characterId], campaign:campaign.name,
+          sharedCampaignId:campaign.id,
+          linkedCampaignIds:Array.from(new Set([...(window.chars[characterId].linkedCampaignIds || []), campaign.id])) };
+        persistWorkspaceChange('workspace-character-linked');
+        if (!options.silent) window.toast?.(`${window.chars[characterId].name} linked to ${campaign.name}.`);
+        if (!options.skipRender) renderCampaignDetail(campaign);
+        return campaign;
+      } catch (error) {
+        console.warn('Could not link character to the shared campaign.', error);
+        const reason = error?.code === 'permission-denied'
+          ? 'Firebase denied the link. Check campaign membership and that the current Firestore rules are deployed.'
+          : error?.message || 'The character could not be linked. Please try again.';
+        window.toast?.(reason);
+        return null;
+      } finally {
+        if (button) { button.disabled = false; button.textContent = 'Link Character'; }
+      }
+    }
     ensureCampaignInviteFields(campaign);
-    const uid = accountKey();
     campaign.party = Array.from(new Set([...(campaign.party || []), characterId]));
     campaign.playerUids = Array.from(new Set([...(campaign.playerUids || []), uid]));
     campaign.roles = Object.assign({}, campaign.roles || {});
@@ -1007,29 +1042,6 @@
     window.chars[characterId].sharedCampaignId = campaign.id;
     window.chars[characterId].linkedCampaignIds = Array.from(new Set([...(window.chars[characterId].linkedCampaignIds || []), campaign.id]));
     persistWorkspaceChange('workspace-character-linked');
-    if (window.AsteriaFirebase?.isReady?.() && window.AsteriaFirebase?.linkCharacterToCampaign) {
-      try {
-        const sharedCampaign = await window.AsteriaFirebase.linkCharacterToCampaign(campaign.id, Object.assign({ id:characterId }, window.chars[characterId]));
-        if (!sharedCampaign) throw new Error('shared-campaign-link-failed');
-        storeAccountCampaign(sharedCampaign);
-      } catch (error) {
-        console.warn('Could not link character to the shared campaign.', error);
-        campaign.party = arrayValue(campaign.party).filter(id => id !== characterId);
-        if (campaign.players?.[uid]) campaign.players[uid].characterIds = arrayValue(campaign.players[uid].characterIds).filter(id => id !== characterId);
-        if (campaign.characters) delete campaign.characters[characterId];
-        if (campaign.playerCharacterLinks) delete campaign.playerCharacterLinks[characterId];
-        window.chars[characterId].linkedCampaignIds = arrayValue(window.chars[characterId].linkedCampaignIds).filter(id => id !== campaign.id);
-        if (window.chars[characterId].sharedCampaignId === campaign.id) delete window.chars[characterId].sharedCampaignId;
-        window.chars[characterId].campaign = 'Unassigned';
-        persistWorkspaceChange('workspace-character-link-rollback');
-        window.toast?.('Firebase could not link this character. It has not been added to the campaign party.');
-        if (!options.skipRender) renderCampaignDetail(campaign);
-        return null;
-      }
-    } else {
-      window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
-    }
-    window.AsteriaFirebase?.saveCharacter?.(characterId, window.chars[characterId]);
     if (!options.silent) window.toast?.(`${window.chars[characterId].name} linked to ${campaign.name}.`);
     if (!options.skipRender) renderCampaignDetail(campaign);
     return campaign;

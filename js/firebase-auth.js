@@ -326,18 +326,24 @@ async function linkedCampaignIdsForCharacter(characterId, character){
 async function upsertSharedCampaignCharacter(campaignId, characterId, character){
   if(!db || !currentUser || !campaignId || !characterId || !character) return null;
   const uid = currentUser.uid;
+  if(character.ownerUid !== uid) throw new Error('Only the character owner can link this character.');
   const merged = await runTransaction(db, async transaction=>{
     const campaignRef = doc(db, 'campaigns', campaignId);
     const characterRef = doc(db, 'campaigns', campaignId, 'characters', characterId);
-    const [campaignSnap, characterSnap] = await Promise.all([transaction.get(campaignRef), transaction.get(characterRef)]);
+    const privateId = character.sourceCharacterId || characterId;
+    const privateRef = doc(db, 'users', uid, 'characters', privateId);
+    const [campaignSnap, characterSnap, privateSnap] = await Promise.all([transaction.get(campaignRef), transaction.get(characterRef), transaction.get(privateRef)]);
     if(!campaignSnap.exists()) return null;
     const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
     const roles = Object.assign({}, campaign.roles || {});
     const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
     if(!isMember) throw new Error('campaign-membership-required');
 
-    const submitted = campaignCharacterSnapshot(Object.assign({}, character, { id:characterId }), campaignId, character.ownerUid || uid);
+    if(privateSnap.exists() && privateSnap.data().ownerUid !== uid) throw new Error('The saved character belongs to another account.');
+    const source = privateSnap.exists() ? Object.assign({}, privateSnap.data(), safeLinkedCharacterPatch(character)) : character;
+    const submitted = campaignCharacterSnapshot(Object.assign({}, source, { id:characterId }), campaignId, uid);
     const existing = characterSnap.exists() ? Object.assign({ id:characterId }, characterSnap.data()) : null;
+    if(existing?.sourceCharacterId && existing.sourceCharacterId !== privateId) throw new Error('The campaign character points to a different saved character.');
     const ownerUid = existing?.ownerUid || submitted.ownerUid || uid;
     if(ownerUid !== uid || (campaign.playerCharacterLinks?.[characterId] && campaign.playerCharacterLinks[characterId] !== uid)) throw new Error('This character is already linked to another account.');
     const linkMetadata = {
@@ -380,6 +386,11 @@ async function upsertSharedCampaignCharacter(campaignId, characterId, character)
       Object.assign({}, existing ? safeLinkedCharacterPatch(submitted) : cleanData(linkedCharacter), linkMetadata, { updatedAt:serverTimestamp() }),
       { merge:true }
     );
+    // A Forge save can still be in flight. Create the private record and campaign
+    // link together, and never replace an existing owner's gameplay snapshot.
+    transaction.set(privateRef, Object.assign({}, privateSnap.exists() ? {} : cleanData(linkedCharacter), linkMetadata, {
+      id:privateId, campaign:campaign.name || character.campaign || 'Linked Campaign', updatedAt:serverTimestamp()
+    }), { merge:true });
     transaction.set(doc(db, 'users', uid, 'campaigns', campaignId), Object.assign({}, result, { updatedAt:serverTimestamp() }), { merge:true });
     return { campaign:result, character:linkedCharacter };
   });
@@ -1726,11 +1737,9 @@ const firebasePublicApi = {
   },
   linkCharacterToCampaign: async function(campaignId, character){
     if(!db || !currentUser || !campaignId || !character?.id) return null;
-    const uid = currentUser.uid;
     const characterId = String(character.id);
     const linked = await upsertSharedCampaignCharacter(campaignId, characterId, character);
     if(!linked) return null;
-    await setDoc(doc(db, 'users', uid, 'characters', linked.character.sourceCharacterId || characterId), Object.assign({}, linked.character, { id:linked.character.sourceCharacterId || characterId, updatedAt:serverTimestamp() }), { merge:true });
     return linked.campaign;
   },
   loadCampaigns: async function(){
@@ -1891,6 +1900,23 @@ const firebasePublicApi = {
       await setDoc(doc(db,'customItems',id),record);
       return {ok:true,item:Object.assign({},record,{createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})};
     }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  subscribeOwnedCharacter: function(characterId, onChange, onError){
+    if(!db || !currentUser || !characterId) return ()=>{};
+    const uid=currentUser.uid;
+    let active=true,version=0;
+    const unsubscribe=onSnapshot(doc(db,'users',uid,'characters',characterId),{includeMetadataChanges:true},async snapshot=>{
+      const revision=++version;
+      try {
+        const record=snapshot.exists()?Object.assign({},snapshot.data(),{id:snapshot.id}):null;
+        const valid=record && await validateOwnedRecord(record,uid,async (campaignId,id)=>{
+          const linked=await getDoc(doc(db,'campaigns',campaignId,'characters',id));
+          return linked.exists()?Object.assign({id:linked.id},linked.data()):null;
+        });
+        if(active && revision===version && currentUser?.uid===uid) onChange(valid?record:null,snapshot.metadata);
+      } catch(error) { if(active && revision===version) onError?.(error); }
+    },error=>{if(active)onError?.(error);});
+    return()=>{active=false;unsubscribe();};
   },
   subscribeCampaignCharacters: function(campaignId, onChange){
     let previous={};

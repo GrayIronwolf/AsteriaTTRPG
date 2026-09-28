@@ -7,7 +7,8 @@
 
 export const REACT_ROUTE_TYPES = Object.freeze({
   GM: 'gm',
-  CHARACTER: 'character'
+  CHARACTER: 'character',
+  OWNED_CHARACTER: 'owned-character'
 });
 
 export const SESSION_STATES = Object.freeze({
@@ -38,7 +39,7 @@ export const LIVE_SYNC_STATES = Object.freeze({
  * @property {number|null} marketPrice Standard amount the player normally pays when purchasing, in Marks. Null is legacy-only.
  */
 
-/** @typedef {'gm'|'character'} AsteriaReactRouteType */
+/** @typedef {'gm'|'character'|'owned-character'} AsteriaReactRouteType */
 /**
  * @typedef {Object} AsteriaReactRoute
  * @property {AsteriaReactRouteType} type

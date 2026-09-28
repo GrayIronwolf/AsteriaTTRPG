@@ -270,6 +270,7 @@
     window.session = window.session || {};
     window.session.character = id;
     window.selected = id;
+    if(window.AsteriaReactMigration?.available) return window.AsteriaReactMigration.openCurrentCharacter(id);
     const character=window.chars?.[id] || {};
     const campaignId=character.sharedCampaignId || character.linkedCampaignIds?.[0] ||
       (window.campaigns || []).find(campaign => (campaign.party || []).includes(id))?.id || '';

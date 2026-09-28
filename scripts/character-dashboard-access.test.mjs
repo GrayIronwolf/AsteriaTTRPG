@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import '../js/character-access.js';
 
-let server, CharacterDashboard;
+let server, CharacterDashboard, OwnedCharacterDashboard;
 const campaign = {id:'c', ownerUid:'gm', name:'Campaign', playerCharacterLinks:{b:'player'}};
 const character = {id:'b',ownerUid:'player',sharedCampaignId:'c',name:'Player B',hp:[8,10],sp:[8,10],mp:[8,10],inventory:[],storages:[]};
 before(async()=>{
@@ -17,9 +17,10 @@ before(async()=>{
     name:'ownership-test-live-data',
     transform(code,id){
       if(id.endsWith('/src/sessions/useCampaignLiveData.js')) return 'export function useCampaignLiveData(){return window.__ownershipTestLive;}';
+      if(id.endsWith('/src/sessions/useOwnedCharacterData.js')) return 'export function useOwnedCharacterData(){return window.__ownershipTestLive;}';
     }
   }]});
-  ({CharacterDashboard} = await server.ssrLoadModule('/src/dashboards/CharacterDashboard.jsx'));
+  ({CharacterDashboard,OwnedCharacterDashboard} = await server.ssrLoadModule('/src/dashboards/CharacterDashboard.jsx'));
 });
 after(async()=>{await server?.close();delete globalThis.window;});
 const render = ()=>renderToStaticMarkup(React.createElement(CharacterDashboard,{campaignId:'c',characterId:'b'}));
@@ -42,4 +43,18 @@ test('normal owner render never inherits a GM return button from another account
   assert.match(html,/<input aria-label="HP change amount" type="text"/);
   // Owner may enter an amount; applying a blank amount is deliberately disabled.
   assert.match(html,/<button aria-label="Add amount to HP" disabled=""/);
+});
+test('unassigned owner can inspect the same dashboard without enabling gameplay or campaign controls',()=>{
+  window.AsteriaFirebase.getUser=()=>({uid:'player'});
+  window.__ownershipTestLive={...window.__ownershipTestLive,campaign:null,character:{...character,id:'ty',name:'Ty',sharedCampaignId:'',klass:'Artificer / Bloodhunter'},session:{status:'idle',editable:false}};
+  const html=renderToStaticMarkup(React.createElement(OwnedCharacterDashboard,{characterId:'ty'}));
+  assert.match(html,/Ty/);assert.match(html,/Unassigned character/);assert.match(html,/Link a campaign/);
+  assert.match(html,/<input aria-label="HP change amount" disabled=""/);
+  assert.doesNotMatch(html,/Back to GM Dashboard/);
+  assert.doesNotMatch(html,/id="character-dashboard-menu-tab-party"/);
+});
+test('an unassigned sheet cannot render for a different signed-in owner',()=>{
+  window.AsteriaFirebase.getUser=()=>({uid:'someone-else'});
+  const html=renderToStaticMarkup(React.createElement(OwnedCharacterDashboard,{characterId:'ty'}));
+  assert.match(html,/Only the owner/);assert.doesNotMatch(html,/Artificer/);
 });
