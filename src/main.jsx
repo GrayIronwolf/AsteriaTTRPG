@@ -33,7 +33,7 @@ function linkedCharacterRoute(characterId = '') {
   const character = window.chars?.[id] || {};
   const campaignId = character.sharedCampaignId || character.campaignId || character.linkedCampaignIds?.[0] ||
     (window.campaigns || []).find(campaign => (campaign.party || []).includes(id))?.id || '';
-  return id && campaignId ? { id, campaignId } : null;
+  return id ? { id, campaignId } : null;
 }
 
 window.AsteriaReactMigration = Object.assign(window.AsteriaReactMigration || {}, {
@@ -44,9 +44,9 @@ window.AsteriaReactMigration = Object.assign(window.AsteriaReactMigration || {},
   openLegacyGM: () => restoreLegacy('gm', () => window.renderGM?.()),
   openCurrentCharacter: characterId => {
     const route = linkedCharacterRoute(characterId);
-    if(route) return openRoute({ type:'character', campaignId:route.campaignId, characterId:route.id });
+    if(route) return openRoute({ type:route.campaignId?'character':'owned-character', campaignId:route.campaignId, characterId:route.id });
     window.AsteriaGameplay?.openCharacterForgeHub?.() || window.AsteriaWorkspace?.openCharacterForge?.();
-    window.toast?.('Link this character to a campaign to open its live dashboard.');
+    window.toast?.('Choose a character to open its dashboard.');
   },
   isDashboardActive: () => Boolean(parseReactRoute(window.location.hash))
 });

@@ -1113,6 +1113,7 @@ window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{buildVersionBadge
    ========================================================= */
 function forceOpenPlayerDashboard(id){
   if(!chars[id]){ toast('Character not found.'); return; }
+  if(window.AsteriaReactMigration?.available) return window.AsteriaReactMigration.openCurrentCharacter(id);
   ensureCharacterDashboardLink(id);
   session.character=id;
   selected=id;

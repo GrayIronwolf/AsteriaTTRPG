@@ -29,6 +29,7 @@ export const firebaseService = {
   currentProfile: () => api()?.getProfile?.() || null,
   mirrorOwnedCharacter: (characterId, character) => requireMethod('saveOwnedCharacterSnapshot')(characterId, character),
   loadCampaigns: () => requireMethod('loadCampaigns')(),
+  subscribeOwnedCharacter: (...args) => requireMethod('subscribeOwnedCharacter')(...args),
   subscribeCampaign: (campaignId, onChange) => requireMethod('subscribeCampaign')(campaignId, onChange),
   subscribeCharacters: (campaignId, onChange) => requireMethod('subscribeCampaignCharacters')(campaignId, onChange),
   subscribeSession: (campaignId, onChange) => requireMethod('subscribeLiveSession')(campaignId, onChange),

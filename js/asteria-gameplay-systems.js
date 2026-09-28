@@ -2748,7 +2748,7 @@
     render();
   }
 
-  function saveCharacterFromDraft(){
+  async function saveCharacterFromDraft(){
     const d = draft();
     if(!d.raceSlug){
       activeTab = 'Race';
@@ -2944,6 +2944,7 @@
       originTitle:originEntry?.title || '',
       originNotes:d.origin.notes || d.origin.backstory || '',
       ownerUid:existingCharacter?.ownerUid || currentUserKey(),
+      ...(existingCharacter ? {sourceCharacterId:existingCharacter.sourceCharacterId,sharedCampaignId:existingCharacter.sharedCampaignId,linkedCampaignIds:existingCharacter.linkedCampaignIds} : {}),
       level:Number(existingCharacter?.level ?? 0),
       hp:existingCharacter?.hp ? [Math.min(Number(existingCharacter.hp[0] || 0), hpMax), hpMax] : [hpMax, hpMax],
       sp:existingCharacter?.sp ? [Math.min(Number(existingCharacter.sp[0] || 0), spMax), spMax] : [spMax, spMax],
@@ -3011,10 +3012,21 @@
     window.selected = id;
     window.saveAccountState?.();
     state.characters[id] = { id, createdAt:created, dashboard:characterSchema.dashboard, character:characterSchema, build:d };
-    state.drafts.characterCreator = defaultState().drafts.characterCreator;
+    // Keep the draft's identity for retry if Firebase rejects the save.
+    d.editCharacterId = id;
     saveState(editingId ? 'phase3a-character-updated' : 'phase3a-character-forged');
-    window.AsteriaFirebase?.saveCharacter?.(id, window.chars[id]);
-    const joinedCampaign = window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    try {
+      if(window.AsteriaFirebase && !await window.AsteriaFirebase.saveCharacter(id, window.chars[id])) {
+        window.toast?.('Character kept locally, but Firebase could not save it. Check the connection and retry Save.');
+        return false;
+      }
+    } catch(error) {
+      window.toast?.(`Character kept locally. Save failed: ${error.message || error}`);
+      return false;
+    }
+    const joinedCampaign = await window.AsteriaWorkspace?.consumePendingCampaignJoin?.(id);
+    state.drafts.characterCreator = defaultState().drafts.characterCreator;
+    saveState('phase3a-character-save-confirmed');
     window.ensureProgressionData?.();
     window.ensureTalentData?.(id);
     window.renderPlayerHome?.();
@@ -3318,6 +3330,7 @@
     window.session = window.session || {};
     window.session.character = id;
     window.selected = id;
+    if(window.AsteriaReactMigration?.available && window.AsteriaReactMigration.openCurrentCharacter) return window.AsteriaReactMigration.openCurrentCharacter(id);
     const character=window.chars[id];
     const campaignId=character.sharedCampaignId || array(character.linkedCampaignIds)[0] ||
       array(window.campaigns).find(campaign => array(campaign?.party).includes(id))?.id || '';

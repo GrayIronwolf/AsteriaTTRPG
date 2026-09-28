@@ -8,6 +8,7 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
+import {browserCampaignLink,browserOwnedSubscription} from './helpers/campaign-link-harness.mjs';
 const projectId='demo-asteria';
 let env,adminApp,db;
 const campaign={ownerUid:'gm',gmUids:['gm'],playerUids:['alice','bob'],roles:{gm:'gm',alice:'player',bob:'player'},players:{alice:{uid:'alice',role:'player',characterIds:['a']},bob:{uid:'bob',role:'player',characterIds:['b']}},party:['a','b'],characters:{a:{ownerUid:'alice'},b:{ownerUid:'bob'}},playerCharacterLinks:{a:'alice',b:'bob'},ucn:'123456789012'};
@@ -149,6 +150,54 @@ test('owner can link a new private character atomically; cannot delete and reimp
   batch.update(doc(own,'campaigns/c'),{lastLinkedCharacterId:'new',party:['a','b','new'],'players.alice.characterIds':['a','new'],'characters.new':{ownerUid:'alice'},'playerCharacterLinks.new':'alice'});
   await assertSucceeds(batch.commit());
   const deletion=writeBatch(own);deletion.delete(doc(own,'campaigns/c/characters/new'));await assertFails(deletion.commit());
+});
+test('browser link imports a newly forged second character for a player and a GM',async()=>{
+  for(const uid of ['alice','gm']) {
+    const own=user(uid),character={...sheet(`ty-${uid}`,uid),sharedCampaignId:'',linkedCampaignIds:[],name:'Ty',klass:'Artificer / Bloodhunter',campaign:'Unassigned'};
+    await setDoc(doc(own,`users/${uid}/characters/${character.id}`),character);
+    const linked=await browserCampaignLink(own,uid)('c',character);
+    assert.ok(linked.party.includes(character.id));
+    assert.equal((await getDoc(doc(own,`campaigns/c/characters/${character.id}`))).data().ownerUid,uid);
+  }
+});
+test('browser link handles a Forge save still pending when campaign linking starts',async()=>{
+  const own=user('alice'),character={...sheet('ty','alice'),sharedCampaignId:'',linkedCampaignIds:[],name:'Ty'};
+  const linked=await browserCampaignLink(own,'alice')('c',character);
+  assert.ok(linked.party.includes('ty'));
+  assert.equal((await getDoc(doc(own,'users/alice/characters/ty'))).data().sharedCampaignId,'c');
+});
+test('browser link supports older campaigns without optional roster maps',async()=>{
+  await db.doc('campaigns/c').update({players:FieldValue.delete(),characters:FieldValue.delete(),playerCharacterLinks:FieldValue.delete()});
+  const own=user('alice'),character={...sheet('ty','alice'),sharedCampaignId:'',linkedCampaignIds:[],name:'Ty'};
+  await setDoc(doc(own,'users/alice/characters/ty'),character);
+  assert.ok((await browserCampaignLink(own,'alice')('c',character)).party.includes('ty'));
+});
+test('browser link is idempotent, preserves the first PC and refuses foreign ownership',async()=>{
+  const own=user('alice'),link=browserCampaignLink(own,'alice');
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  const character={...sheet('ty','alice'),sharedCampaignId:'',linkedCampaignIds:[],name:'Ty'};
+  await link('c',character);
+  await db.doc('users/alice/characters/ty').update({hp:[4,10],inventory:[{id:'gift',qty:3}]});
+  await link('c',character);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),before);
+  assert.deepEqual((await db.doc('users/alice/characters/ty').get()).data().hp,[4,10]);
+  assert.equal((await db.doc('users/alice/characters/ty').get()).data().inventory[0].id,'gift');
+  assert.equal((await db.doc('campaigns/c').get()).data().party.filter(id=>id==='ty').length,1);
+  await assert.rejects(browserCampaignLink(user('gm'),'gm')('c',character),/Only the character owner/);
+  await assert.rejects(browserCampaignLink(user('eve'),'eve')('c',{...character,ownerUid:'eve'}));
+});
+test('unassigned dashboard subscription reads only its authenticated owner and rejects stale foreign mirrors',async()=>{
+  await db.doc('users/alice/characters/ty').set({id:'ty',ownerUid:'alice',name:'Ty'});
+  await db.doc('users/gm/characters/a').set({...sheet('a','gm')});
+  const read=(uid,id)=>new Promise((resolve,reject)=>{
+    let stop=()=>{};
+    const timeout=setTimeout(()=>{stop();reject(new Error('Owner subscription timed out'));},5000);
+    stop=browserOwnedSubscription(user(uid),uid)(id,value=>{stop();clearTimeout(timeout);resolve(value);},error=>{stop();clearTimeout(timeout);reject(error);});
+  });
+  assert.equal((await read('alice','ty')).name,'Ty');
+  assert.equal(await read('bob','ty'),null);
+  assert.equal(await read('gm','ty'),null);
+  assert.equal(await read('gm','a'),null);
 });
 test('loot rewards cannot be acknowledged or claimed twice directly',async()=>{
   await db.doc('campaigns/c/events/loot').set({type:'loot-reward',targetCharacterId:'a',targetOwnerUid:'alice',acknowledged:false,status:'delivered',payload:{item:{name:'Gem',qty:1,marketPrice:100,marketValue:50}}});

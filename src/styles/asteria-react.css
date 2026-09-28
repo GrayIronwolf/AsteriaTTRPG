@@ -2256,3 +2256,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-information-card time { font-size:.875rem;opacity:.8; }
 .react-information-copy { white-space:pre-wrap;overflow-wrap:anywhere; }
 .react-information-card button { margin:8px 8px 0 0; }
+
+.react-unassigned-dashboard { padding:16px;border:1px solid var(--asteria-panel-border);border-radius:var(--asteria-radius);background:var(--asteria-panel-background); }
+.react-unassigned-dashboard p { margin:8px 0; }

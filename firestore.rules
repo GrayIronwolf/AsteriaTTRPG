@@ -104,14 +104,14 @@ service cloud.firestore {
           'party', 'players', 'characters', 'playerCharacterLinks',
           'activity', 'lastLinkedCharacterId', 'updatedAt'
         ]) &&
-        request.resource.data.party.hasAll(resource.data.party) &&
-        request.resource.data.party.size() <= resource.data.party.size() + 1 &&
+        request.resource.data.party.hasAll(resource.data.get('party', [])) &&
+        request.resource.data.party.size() <= resource.data.get('party', []).size() + 1 &&
         characterId in request.resource.data.party &&
-        request.resource.data.players.diff(resource.data.players).affectedKeys().hasOnly([request.auth.uid]) &&
+        request.resource.data.players.diff(resource.data.get('players', {})).affectedKeys().hasOnly([request.auth.uid]) &&
         characterId in request.resource.data.players[request.auth.uid].characterIds &&
-        request.resource.data.characters.diff(resource.data.characters).affectedKeys().hasOnly([characterId]) &&
+        request.resource.data.characters.diff(resource.data.get('characters', {})).affectedKeys().hasOnly([characterId]) &&
         request.resource.data.characters[characterId].ownerUid == request.auth.uid &&
-        request.resource.data.playerCharacterLinks.diff(resource.data.playerCharacterLinks).affectedKeys().hasOnly([characterId]) &&
+        request.resource.data.playerCharacterLinks.diff(resource.data.get('playerCharacterLinks', {})).affectedKeys().hasOnly([characterId]) &&
         request.resource.data.playerCharacterLinks[characterId] == request.auth.uid;
     }
 
@@ -174,7 +174,8 @@ service cloud.firestore {
         allow create: if isCampaignGM(campaignId) || (
           canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid) &&
           request.resource.data.ownerUid == request.auth.uid &&
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId))
+          existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId)) &&
+          getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId)).data.ownerUid == request.auth.uid
         );
         allow update: if (isCampaignGM(campaignId) && sameCharacterIdentity()) || safeCharacterEdit(campaignId);
         allow delete: if isCampaignGM(campaignId);
