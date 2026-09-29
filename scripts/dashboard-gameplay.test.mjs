@@ -30,7 +30,7 @@ test('canonical authored costs support every resource and multiple costs without
 test('one graph retains all classes, all five tiers, and prerequisite edges on mobile',()=>{
   const catalog=buildTalentCatalog({classes:['Mage','Warrior']},['Mage','Warrior'].flatMap(className=>[1,2,3,4,5].map(tier=>({type:'talent',title:`Talent ${tier}`,className,metadata:{tier,prerequisite:tier===2?'Talent 1 Rank I':'None'},body:'## Rank 1\n### Effects\nEffect'}))));
   for(const compact of [false,true]) {
-    const g=talentGraph(catalog,compact);assert.equal(g.nodes.length,10);assert.equal(g.tiers.length,5);assert.equal(g.edges.length,2);if(compact)assert.equal(g.width,350);
+    const g=talentGraph(catalog,compact);assert.equal(g.nodes.length,10);assert.equal(g.tiers.length,5);assert.equal(g.edges.filter(e=>e.kind==='prerequisite').length,2);if(compact)assert.equal(g.width,350);
   }
 });
 

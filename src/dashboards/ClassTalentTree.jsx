@@ -64,7 +64,7 @@ export function TalentsTab({campaignId,character,editable,characters={},encounte
   useEffect(()=>{setSelected(null);setQuery('');},[character.id]);
   return <div className="react-talent-workspaces"><Panel title="Character Talent Tree" action={<StatusPill>{Number(character.tp || 0)} TP available</StatusPill>}>
     <SearchField value={query} onChange={setQuery} placeholder="Find a talent across all classes and tiers…"/>
-    <div className="react-talent-legend"><span>● Purchased</span><span>◉ Available</span><span>○ Locked · open to inspect</span></div>
+    <div className="react-talent-legend"><span>● ✓ Purchased</span><span>◉ Available</span><span>○ Locked · open to inspect</span><span className="react-prerequisite-key">Prerequisite</span></div>
     {catalog.length?<TalentGraph catalog={catalog} character={character} query={query} onSelect={setSelected}/>:<EmptyState title="No class talents found">Check the character’s selected classes.</EmptyState>}
     </Panel><TalentEffects campaignId={campaignId} character={character} editable={editable} encounter={encounter}/>
     {selected?<TalentDetails key={`${selected.talent.id}-${selected.rank}`} campaignId={campaignId} character={character} characters={characters} talent={selected.talent} initialRank={selected.rank} editable={editable} onClose={()=>setSelected(null)}/>:null}

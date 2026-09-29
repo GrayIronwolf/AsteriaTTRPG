@@ -2161,25 +2161,12 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-quest-list .status-awaiting-review { border-color:#d6ac5b; }
 @media(max-width:600px){ .react-objective-update { flex-basis:100%; } .react-quest-assignments button { min-height:44px; } }
 
-/* Class talent graph: native scrolling keeps every rank reachable on touch. */
+/* Shared talent details and purchase controls. */
 .react-talent-workspaces{display:grid;gap:20px;min-width:0}
 .react-talent-class-tabs,.react-talent-rank-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
 .react-talent-class-tabs button[aria-pressed="true"],.react-talent-rank-tabs button[aria-pressed="true"]{border-color:#d6b879;background:#332d24;color:#ffe2a5}
 .react-talent-legend{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0;color:#a8b7c9;font-size:12px}
 .react-talent-legend span:first-child{color:#e8c17b}.react-talent-legend span:nth-child(2){color:#80c9da}
-.react-talent-graph-scroll{width:100%;overflow:auto;border:1px solid #354455;border-radius:16px;background:radial-gradient(ellipse at 12% 50%,#233446 0,transparent 53%),radial-gradient(#94a7bd22 1px,transparent 1px),#101b29;background-size:auto,24px 24px;scrollbar-color:#60758c #152130}
-.react-talent-graph{position:relative;min-width:860px;width:860px;min-height:260px;margin:auto}
-.react-talent-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:#5b728a;stroke-width:1.5;opacity:.75}
-.react-talent-root{position:absolute;left:40px;width:100px;height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;border:1px solid #c6a46a;border-radius:50%;background:radial-gradient(circle,#394053,#192435);box-shadow:0 0 0 9px #dab7790a,0 0 35px #d7b37722;text-align:center;color:#ffe1a6}
-.react-talent-root span{font-size:24px}.react-talent-root strong{font-size:13px}.react-talent-root small{color:#b7c3d2}
-.react-talent-branch{position:absolute;left:210px;right:36px;display:flex;align-items:center;gap:24px;height:58px}
-.react-talent-branch .react-talent-name{flex:0 0 180px;min-height:62px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:5px;padding:12px 15px;background:#1b2a3c;border:1px solid #526276;border-radius:14px;color:#e7edf6;box-shadow:0 8px 20px #0002}
-.react-talent-name small{font-size:11px;color:#a9b9cc}.react-talent-nodes{display:flex;flex:1;justify-content:space-between;gap:20px}
-.react-talent-nodes .react-talent-node{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid #617187;background:#172436;color:#b2c0d1;font-weight:700;box-shadow:0 0 0 5px #101b29}
-.react-talent-node small{position:absolute;top:49px;left:-10px;right:-10px;color:#9bacbf;white-space:nowrap;font-size:11px;font-weight:400}
-.react-talent-nodes .react-talent-node.learned{color:#172335;background:#dfbd7d;border-color:#ffe4b0;box-shadow:0 0 0 5px #101b29,0 0 22px #dbb77833}
-.react-talent-nodes .react-talent-node.available{color:#a5e9f7;border-color:#85cddd;background:#1d3949;box-shadow:0 0 0 5px #101b29,0 0 16px #82d0e029}
-.react-talent-node:hover,.react-talent-name:hover{filter:brightness(1.18)}.react-talent-node:focus-visible,.react-talent-name:focus-visible{outline:3px solid #a2dfef;outline-offset:5px}
 .react-talent-detail-summary,.react-talent-rank-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .react-talent-rank-heading span{font-size:12px;color:#a9b8cc}.react-talent-facts{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;border:1px solid #405064;border-radius:12px;background:#172331}
 .react-talent-facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a3b4c9;margin-bottom:5px}.react-talent-facts dd{margin:0;font-size:13px}
@@ -2214,28 +2201,87 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @container (max-width:900px) { .react-player-overview-grid > .react-core-effects { grid-column:1 / -1; } }
 @media (max-width:640px) { .react-core-form { grid-template-columns:1fr; } .react-core-effect-row { grid-template-columns:1fr 1fr; } .react-core-condition summary { display:grid; } }
 
-/* One responsive tree, using the existing canonical rank actions. */
-.react-tree-controls { display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1rem 0; }
-.react-tree-controls label { display:flex;align-items:center;gap:.4rem; }
-.react-tree-controls select { max-width:12rem; }
-.react-unified-tree { height:min(72vh,760px);min-height:380px;overflow:hidden;position:relative;touch-action:none;border:1px solid var(--asteria-divider,var(--border));border-radius:12px;cursor:grab; }
+/* Canonical talents presented as connected class / tier / talent / rank bubbles. */
+.react-talent-workspaces {
+  --tree-accent:var(--asteria-dashboard-primary,var(--asteria-accent,#80c9da));
+  --tree-surface:var(--asteria-panel-background,var(--asteria-surface,#101b29));
+  --tree-border:var(--asteria-panel-border,var(--asteria-border,#718393));
+  --tree-text:var(--asteria-text,#f7ead1);
+  --tree-divider:var(--asteria-divider,var(--asteria-border,#354455));
+}
+.react-tree-controls { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0; }
+.react-tree-controls button,.react-tree-controls select { min-height:42px; }
+.react-tree-controls label { display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px; }
+.react-tree-controls label+label { margin-left:0; }
+.react-tree-controls select { max-width:13rem;min-width:0; }
+.react-tree-zoom { display:flex;align-items:center;gap:4px; }
+.react-tree-zoom button { width:42px;padding:0;font-size:22px; }
+.react-tree-zoom output { min-width:44px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums; }
+.react-tree-context { display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:66px;padding:12px 16px;border:1px solid var(--tree-divider);border-bottom:0;border-radius:12px 12px 0 0;background:var(--tree-surface); }
+.react-tree-context>div { display:grid;gap:4px; }
+.react-tree-context small { color:var(--tree-accent);font-size:10px;letter-spacing:.15em;text-transform:uppercase; }
+.react-tree-context strong { font-size:15px; }
+.react-tree-context>span { font-size:12px;opacity:.8; }
+.react-unified-tree { height:clamp(480px,72dvh,820px);overflow:hidden;position:relative;touch-action:none;isolation:isolate;border:1px solid var(--tree-divider);border-radius:0 0 12px 12px;cursor:grab;color:var(--tree-text);background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--tree-accent) 9%,transparent),transparent 65%),radial-gradient(color-mix(in srgb,var(--tree-accent) 20%,transparent) .7px,transparent 1px),var(--tree-surface);background-size:auto,26px 26px,auto; }
 .react-unified-tree:active { cursor:grabbing; }
-.react-unified-tree-canvas { position:absolute;transform-origin:0 0; }
-.react-tree-edges { position:absolute;inset:0;pointer-events:none;fill:none;stroke:var(--asteria-dashboard-primary,var(--accent));stroke-width:2; }
-.react-tree-tier { position:absolute;left:0;border-bottom:2px solid var(--asteria-divider,var(--border));margin:0;padding:0 14px 12px; }
-.react-tree-tier small { font-weight:normal;font-size:.875rem;margin-left:12px; }
-.react-tree-class { position:absolute;margin:0;font-size:1rem; }
-.react-tree-talent { position:absolute;padding:10px 14px;background:var(--asteria-panel-background,var(--panel));border:1px solid var(--asteria-panel-border,var(--border));border-radius:12px; }
-.react-tree-name { border:0!important;background:transparent!important;text-align:left;width:100%;padding:0 0 9px!important; }
-.react-tree-name small { display:block;font-size:.8rem; }
-.react-tree-ranks { display:flex;justify-content:space-between;position:relative;gap:10px; }
-.react-tree-ranks:before { content:'';position:absolute;left:20px;right:20px;top:20px;border-top:2px solid var(--asteria-divider,var(--border)); }
-.react-tree-ranks .react-talent-node { position:relative;display:grid;place-items:center;min-width:40px;width:40px;height:40px;padding:0;border-radius:50%!important;border:2px solid var(--asteria-panel-border); }
-.react-tree-ranks .react-talent-node.learned { background:var(--asteria-dashboard-primary)!important;border-color:var(--asteria-dashboard-primary)!important;font-weight:800; }
-.react-tree-ranks .react-talent-node.available { background:var(--asteria-panel-background)!important;border-color:var(--asteria-dashboard-primary)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--asteria-dashboard-primary) 35%,transparent); }
-.react-tree-ranks .react-talent-node.unlearned { border-style:dashed!important;opacity:.65; }
-.react-tree-talent.dimmed { opacity:.4; }
-.react-tree-search-results { display:flex;flex-wrap:wrap;gap:6px; }
+.react-unified-tree:focus-visible { outline:2px solid var(--tree-accent);outline-offset:4px; }
+.react-unified-tree-canvas { position:absolute;transform-origin:0 0;user-select:none; }
+.react-tree-edges { position:absolute;inset:0;pointer-events:none;fill:none; }
+.react-tree-edge { stroke:var(--tree-border);stroke-width:2;opacity:.7; }
+.react-tree-edge.class-tier { stroke:var(--tree-accent);stroke-width:2.5; }
+.react-tree-edge.rank { stroke-width:3; }
+.react-tree-edge.state-learned,.react-tree-edge.state-available,.react-tree-edge.highlighted { stroke:var(--tree-accent);opacity:1; }
+.react-tree-edge.prerequisite { stroke:var(--tree-accent);stroke-dasharray:7 7;opacity:.45;stroke-width:2; }
+.react-tree-edge.prerequisite.highlighted { opacity:1;stroke-width:3; }
+.react-tree-edges marker path { fill:var(--tree-accent);stroke:none; }
+.react-tree-orbits { stroke:var(--tree-divider);stroke-width:1;opacity:.45; }
+.react-tree-orbits circle:nth-child(2) { stroke-dasharray:3 14; }
+.react-unified-tree .react-graph-node { position:absolute;box-sizing:border-box;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:8px;border:2px solid var(--tree-border)!important;border-radius:50%!important;background:radial-gradient(circle at 35% 25%,color-mix(in srgb,var(--tree-accent) 13%,var(--tree-surface)),var(--tree-surface)),var(--asteria-bg,#071018)!important;color:var(--tree-text)!important;text-align:center;line-height:1.15;cursor:pointer;box-shadow:0 0 0 5px var(--tree-surface);transition:border-color .15s,box-shadow .15s; }
+.react-graph-node strong { overflow-wrap:normal;word-break:normal;max-width:100%; }
+.react-unified-tree .react-graph-node:hover,.react-unified-tree .react-graph-node:focus-visible { border-color:var(--tree-accent)!important;box-shadow:0 0 0 5px var(--tree-surface),0 0 0 8px var(--tree-accent),0 0 28px color-mix(in srgb,var(--tree-accent) 30%,transparent);outline:0;z-index:3; }
+.react-unified-tree .class-node { padding:18px;border:3px solid var(--tree-accent)!important;box-shadow:0 0 0 7px var(--tree-surface),0 0 0 9px var(--tree-border),0 0 75px color-mix(in srgb,var(--tree-accent) 16%,transparent); }
+.react-graph-node.class-node::before { content:'';position:absolute;inset:-17px;border:1px dashed var(--tree-border);border-radius:50%;pointer-events:none; }
+.class-node .react-graph-sigil { font-size:42px;color:var(--tree-accent);line-height:1; }
+.class-node strong { font-size:30px;font-family:Georgia,serif;font-weight:600; }
+.class-node small,.tier-node>small:first-child { font-size:14px;letter-spacing:.22em;color:var(--tree-accent); }
+.class-node>span:last-child { font-size:15px;opacity:.85;margin-top:6px; }
+.react-unified-tree .tier-node { gap:4px;padding:18px;box-shadow:0 0 0 5px var(--tree-surface),0 0 0 7px var(--tree-border); }
+.tier-node strong { font-size:44px;font-family:Georgia,serif;font-weight:400; }
+.tier-node span { font-size:15px; }
+.tier-node small:last-child { font-size:11px; }
+.react-unified-tree .talent-node { gap:6px;padding:8px; }
+.talent-node strong { font-size:13px;font-weight:600; }
+.talent-node small { font-size:12px;opacity:.7; }
+.react-unified-tree .rank-node { padding:0;font-size:16px;font-family:Georgia,serif; }
+.rank-node small { position:absolute;right:-3px;bottom:-2px;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;background:var(--tree-accent);color:var(--tree-surface);font:700 11px sans-serif; }
+.react-unified-tree .react-graph-node.state-learned { border-color:var(--tree-accent)!important;background:linear-gradient(color-mix(in srgb,var(--tree-accent) 35%,var(--tree-surface)),color-mix(in srgb,var(--tree-accent) 35%,var(--tree-surface))),var(--asteria-bg,#071018)!important; }
+.react-unified-tree .react-graph-node.state-available { border-color:var(--tree-accent)!important;box-shadow:0 0 0 5px var(--tree-surface),0 0 15px color-mix(in srgb,var(--tree-accent) 35%,transparent); }
+.react-unified-tree .react-graph-node.state-locked { border-style:dashed!important;color:color-mix(in srgb,var(--tree-text) 75%,var(--tree-surface))!important; }
+.react-tree-talent-group.dimmed { opacity:.25; }
+.react-tree-search-results { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;max-height:180px;overflow:auto; }
+.react-tree-search-results button { display:grid;gap:4px;text-align:left; }
+.react-tree-search-results small { font-size:11px;opacity:.75; }
+.react-tree-help { margin:12px 0 0;line-height:1.6; }
+.react-talent-legend span:first-child,.react-talent-legend span:nth-child(2) { color:var(--tree-accent); }
+.react-talent-legend .react-prerequisite-key::before { content:'';display:inline-block;width:22px;border-top:2px dashed var(--tree-accent);margin:0 6px 3px 0; }
+.compact .class-node strong { font-size:26px; }
+.compact .class-node .react-graph-sigil { font-size:30px; }
+.compact .class-node>span:last-child { font-size:12px; }
+.compact .class-node small { font-size:11px; }
+.compact .tier-node { padding:10px; }
+.compact .tier-node strong { font-size:34px; }
+.compact .tier-node span { font-size:12px; }
+.compact .talent-node { padding:8px; }
+.compact .talent-node strong { font-size:13px; }
+@media(max-width:640px) {
+  .react-tree-controls { gap:6px; }
+  .react-tree-controls>button { font-size:12px;padding:8px; }
+  .react-tree-controls label,.react-tree-controls label+label { flex:1 1 40%;margin-left:0; }
+  .react-tree-controls select { width:100%; }
+  .react-tree-context { padding:10px 12px;gap:6px; }
+  .react-tree-context>span { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce) { .react-unified-tree .react-graph-node { transition:none; } }
 .react-gm-dashboard .react-party-sidebar { max-height:none;align-self:start; }
 .react-gm-dashboard .react-party-list { overflow:visible;min-height:0; }
 .react-gm-dashboard .react-party-card { height:auto;min-height:0;padding:16px;gap:12px; }
