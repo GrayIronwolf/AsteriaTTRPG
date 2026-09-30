@@ -3,9 +3,31 @@ import assert from 'node:assert/strict';
 import compendium from '../data/compendium.js';
 import {buildTalentCatalog} from '../src/state/talentModel.mjs';
 import {fitGraphCamera,graphBounds,graphEdgePath,talentGraph,zoomGraphCamera} from '../src/state/talentGraph.mjs';
+import {talentDiskLayout} from '../src/state/talentDisk.mjs';
 
 const catalog=buildTalentCatalog({classes:['Bloodhunter','Paladin']},compendium.entries);
 const allNodes=g=>[...g.classNodes,...g.tierNodes,...g.nodes,...g.rankNodes];
+test('responsive disks keep canonical branches, independent rank lines and mirrored coordinates',()=>{
+  for(const width of [260,320,390,800,1000,1240]) for(const tier of [1,2,3,4,5]) {
+    const talents=catalog.filter(t=>t.className==='Bloodhunter' && t.tier===tier),first=talentDiskLayout(talents,width),seen=[];
+    for(let page=0;page<first.pages;page++) {
+      const bottom=talentDiskLayout(talents,width,'bottom',page),top=talentDiskLayout(talents,width,'top',page);
+      bottom.nodes.forEach((node,i)=>{
+        seen.push(node.talent);assert.equal(node.talent,talents.find(t=>t.id===node.talent.id));
+        assert.equal(node.ranks.length,node.talent.maxRank);assert.equal(node.x,top.nodes[i].x);
+        assert.ok(Math.abs(node.y+top.nodes[i].y-bottom.height)<1e-8);
+        node.ranks.forEach((rank,j)=>{
+          assert.equal(rank.rank,j+1);assert.ok(rank.x>=22 && rank.x<=width-22);assert.ok(rank.y>=22 && rank.y<=bottom.height-22);
+          const previous=j?node.ranks[j-1]:node;
+          assert.ok(Math.hypot(rank.x-previous.x,rank.y-previous.y)>=47.9,'Rank targets must not overlap');
+          assert.ok(Math.abs(rank.y+top.nodes[i].ranks[j].y-bottom.height)<1e-8);
+        });
+      });
+    }
+    assert.deepEqual(seen,talents);
+  }
+  assert.deepEqual(talentDiskLayout([],320).nodes,[]);
+});
 test('bubble hierarchy retains canonical talents and every rank in single and multiclass views',()=>{
   for(const classes of [['Bloodhunter'],['Bloodhunter','Paladin'],['Fighter']]) for(const compact of [false,true]) {
     const source=buildTalentCatalog({classes},compendium.entries),before=JSON.stringify(source),g=talentGraph([...source,...source],compact);

@@ -1,153 +1,91 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { fitGraphCamera, graphBounds, graphEdgePath, talentGraph, TIER_LABELS, zoomGraphCamera } from '../state/talentGraph.mjs';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { talentDiskLayout, DISK_TIERS } from '../state/talentDisk.mjs';
 import { talentRank, prerequisiteProblem, rankDefined } from '../state/talentModel.mjs';
 import { TALENT_TIER_LEVELS, talentTierUnlocked, talentRankCost } from '../state/liveWorkspaceModel.mjs';
+import '../styles/talent-disk.css';
 
-const nodeStyle = node => ({left:node.x-node.radius,top:node.y-node.radius,width:node.radius*2,height:node.radius*2});
-const midpoint = points => ({x:(points[0].x+points[1].x)/2,y:(points[0].y+points[1].y)/2});
-const distance = points => Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);
+const position = node => ({left:node.x,top:node.y});
 
-export function TalentGraph({catalog,character,query='',onSelect}) {
-  const frame=useRef(null),pointers=useRef(new Map()),gesture=useRef(null),blockClick=useRef(false);
-  const [viewport,setViewport]=useState({width:700,height:650}),[camera,setCamera]=useState({x:0,y:0,scale:1});
-  const cameraRef=useRef(camera),[activeClass,setActiveClass]=useState(catalog[0]?.className || ''),[hoveredNode,setHovered]=useState(null);
-  const compact=viewport.width<640,graph=useMemo(()=>talentGraph(catalog,compact),[catalog,compact]);
-  const markerId=useId(),layoutKey=catalog.map(t=>t.id).join('|');
-  const moveCamera=next=>{cameraRef.current=next;setCamera(next);};
-  const focusClass=name=>{
-    const node=graph.classNodes.find(n=>n.className===name);
-    if(!node)return;
-    setActiveClass(name);setHovered(null);
-    if(compact) {
-      const scale=Math.min(1,viewport.width/350);
-      moveCamera({scale,x:(viewport.width-350*scale)/2,y:24-(node.y-node.radius)*scale});
-    } else moveCamera(fitGraphCamera(node.bounds,viewport));
-  };
-  const focusTier=(tier,className=activeClass)=>{
-    const node=graph.tierNodes.find(n=>n.className===className && n.tier===Number(tier));
-    if(!node)return;
-    setActiveClass(className);setHovered(node);
-    if(compact) {
-      const scale=Math.min(1,viewport.width/350);
-      moveCamera({scale,x:(viewport.width-350*scale)/2,y:24-(node.y-node.radius)*scale});
-    } else moveCamera(fitGraphCamera(node.bounds,viewport));
-  };
-  const focusTalent=node=>{
-    setActiveClass(node.className);setHovered(node);
-    moveCamera(fitGraphCamera(graphBounds([node,...node.ranks],24),viewport,1.25));
-  };
-  const fitAll=()=>{setHovered(null);moveCamera(fitGraphCamera({x:0,y:0,width:graph.width,height:graph.height},viewport));};
-  const zoom=scale=>moveCamera(zoomGraphCamera(cameraRef.current,scale,{x:viewport.width/2,y:viewport.height/2}));
+export function TalentDisk({className,catalog,character,selectedTier,onTierChange,orientation='bottom',onSelect,focusedTalentId}) {
+  const frame=useRef(null),previousTier=useRef(selectedTier);
+  const [width,setWidth]=useState(1000),[page,setPage]=useState(0),[selection,setSelection]=useState(null);
+  const [turn,setTurn]=useState({angle:0,direction:1});
+  const unlocked=talentTierUnlocked(character.level,selectedTier);
+  const talents=useMemo(()=>catalog.filter(t=>t.className===className && t.tier===selectedTier),[catalog,className,selectedTier]);
+  const layout=talentDiskLayout(talents,width,orientation,page);
   useEffect(()=>{
-    const observer=new ResizeObserver(entries=>setViewport({width:entries[0].contentRect.width,height:entries[0].contentRect.height}));
+    const observer=new ResizeObserver(entries=>{const value=Math.round(entries[0].contentRect.width);if(value>0)setWidth(value);});
     observer.observe(frame.current);return()=>observer.disconnect();
   },[]);
-  // Purchasing changes rank state without resetting the user's position.
-  useEffect(()=>{focusClass(graph.classes.includes(activeClass)?activeClass:graph.classes[0]);},[layoutKey,compact,viewport.width,viewport.height,character.id]);
   useEffect(()=>{
-    const element=frame.current;
-    const wheel=event=>{
-      if(!event.ctrlKey && !event.metaKey)return;
-      event.preventDefault();
-      const rect=element.getBoundingClientRect(),old=cameraRef.current;
-      moveCamera(zoomGraphCamera(old,old.scale*Math.exp(-event.deltaY*.008),{x:event.clientX-rect.left,y:event.clientY-rect.top}));
-    };
-    element.addEventListener('wheel',wheel,{passive:false});
-    return()=>element.removeEventListener('wheel',wheel);
-  },[]);
-  const states=useMemo(()=>new Map(catalog.map(talent=>[talent.id,{learned:talentRank(character,talent,catalog),problem:prerequisiteProblem(character,talent,catalog)}])),[catalog,character]);
-  // A character switch renders before the camera-reset effect. Do not read a
-  // previous character's hovered talent from the new catalog during that render.
-  const hovered=hoveredNode && graph.classes.includes(hoveredNode.className) && (!hoveredNode.talent || states.has(hoveredNode.talent.id))?hoveredNode:null;
+    const delta=selectedTier-previousTier.current;
+    if(delta){setTurn(old=>({angle:old.angle+delta*72,direction:Math.sign(delta)}));setPage(0);setSelection(null);}
+    previousTier.current=selectedTier;
+  },[selectedTier]);
+  useEffect(()=>{
+    const index=talents.findIndex(t=>t.id===focusedTalentId);
+    if(index>=0)setPage(Math.floor(index/layout.pageSize));
+  },[focusedTalentId,talents,layout.pageSize]);
+  const states=new Map(talents.map(talent=>[talent.id,{learned:talentRank(character,talent,catalog),problem:prerequisiteProblem(character,talent,catalog)}]));
   const rankState=(talent,rank)=>{
     const {learned,problem}=states.get(talent.id),cost=talentRankCost(rank,talent.tier);
     if(rank<=learned)return {state:'learned',label:'purchased',reason:`${cost} TP · Purchased`};
-    const reason=!talentTierUnlocked(character.level,talent.tier)?`Unlocks at Level ${TALENT_TIER_LEVELS[talent.tier]}`:
-      problem || (rank!==learned+1?'Learn the earlier ranks first':!rankDefined(talent,rank)?'This rank has not been written yet':Number(character.tp || 0)<cost?`Requires ${cost} TP`:'');
+    const reason=problem || (rank!==learned+1?'Learn the earlier ranks first':!rankDefined(talent,rank)?'This rank has not been written yet':Number(character.tp || 0)<cost?`Requires ${cost} TP`:'');
     return {state:reason?'locked':'available',label:reason?'locked':'available',reason:reason || `${cost} TP · Available to learn`};
   };
-  const matches=graph.nodes.filter(n=>`${n.talent.name} ${n.className}`.toLowerCase().includes(query.trim().toLowerCase()));
-  const pointerPosition=event=>{const rect=frame.current.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};};
-  const startGesture=()=>{
-    const points=[...pointers.current.values()];
-    gesture.current=points.length>1?{camera:cameraRef.current,center:midpoint(points),distance:distance(points)}:{camera:cameraRef.current,origin:points[0]};
-  };
-  const pointerDown=event=>{
-    if(event.pointerType==='mouse' && event.button!==0)return;
-    if(!pointers.current.size)blockClick.current=false;
-    pointers.current.set(event.pointerId,pointerPosition(event));startGesture();
-    if(pointers.current.size>1) {
-      blockClick.current=true;
-      for(const id of pointers.current.keys())event.currentTarget.setPointerCapture(id);
-    }
-  };
-  const pointerMove=event=>{
-    if(!pointers.current.has(event.pointerId))return;
-    pointers.current.set(event.pointerId,pointerPosition(event));
-    const points=[...pointers.current.values()],start=gesture.current;
-    if(points.length>1 && start.distance) {
-      const center=midpoint(points),next=zoomGraphCamera(start.camera,start.camera.scale*distance(points)/start.distance,start.center);
-      moveCamera({...next,x:next.x+center.x-start.center.x,y:next.y+center.y-start.center.y});
-    } else if(start.origin) {
-      const dx=points[0].x-start.origin.x,dy=points[0].y-start.origin.y;
-      if(Math.hypot(dx,dy)>5) {blockClick.current=true;event.currentTarget.setPointerCapture(event.pointerId);}
-      if(blockClick.current)moveCamera({...start.camera,x:start.camera.x+dx,y:start.camera.y+dy});
-    }
-  };
-  const pointerEnd=event=>{pointers.current.delete(event.pointerId);if(pointers.current.size)startGesture();else gesture.current=null;};
-  const revealFocus=(event,node)=>{
-    setHovered(node);
-    if(!event.target.matches(':focus-visible'))return;
-    const current=cameraRef.current,x=node.x*current.scale+current.x,y=node.y*current.scale+current.y;
-    if(x<40 || y<40 || x>viewport.width-40 || y>viewport.height-40 || current.scale<.65) {
-      const scale=Math.max(.85,current.scale);
-      moveCamera({scale,x:viewport.width/2-node.x*scale,y:viewport.height/2-node.y*scale});
-    }
-  };
-  const interactive=node=>({style:nodeStyle(node),'data-node-id':node.id,onPointerEnter:()=>setHovered(node),onFocus:event=>revealFocus(event,node)});
-  const context=hovered?.talent?`${hovered.talent.name}${hovered.rank?` · Rank ${TIER_LABELS[hovered.rank-1]}`:''}`:hovered?.tier?`Tier ${TIER_LABELS[hovered.tier-1]}`:'Class constellation';
-  return <>
-    <div className="react-tree-controls" aria-label="Talent tree navigation">
-      <div className="react-tree-zoom"><button type="button" onClick={()=>zoom(cameraRef.current.scale/1.25)} aria-label="Zoom out">−</button><output aria-label="Graph zoom">{Math.round(camera.scale*100)}%</output><button type="button" onClick={()=>zoom(cameraRef.current.scale*1.25)} aria-label="Zoom in">+</button></div>
-      <button type="button" onClick={fitAll}>Fit to view</button><button type="button" onClick={()=>focusClass(activeClass)}>Reset view</button>
-      <label>Class<select aria-label="Jump to class" value={activeClass} onChange={e=>focusClass(e.target.value)}>{graph.classes.map(name=><option key={name}>{name}</option>)}</select></label>
-      <label>Tier<select aria-label="Jump to tier" value="" onChange={e=>focusTier(e.target.value)}><option value="">Choose tier</option>{graph.tiers.map(t=><option key={t.tier} value={t.tier}>Tier {t.label}</option>)}</select></label>
-    </div>
-    {query.trim()?<div className="react-tree-search-results" aria-label="Matching talents">{matches.map(n=><button type="button" key={n.id} onClick={()=>focusTalent(n)}>{n.talent.name}<small>{n.className} · Tier {TIER_LABELS[n.tier-1]}</small></button>)}{!matches.length?<p>No matching talents.</p>:null}</div>:null}
-    <div className="react-tree-context"><div><small>{hovered?.className || activeClass}</small><strong>{context}</strong></div><span>{hovered?.rank?rankState(hovered.talent,hovered.rank).reason:hovered?.talent?`${states.get(hovered.talent.id).learned} / ${hovered.talent.maxRank} ranks learned`:'Class → Tier → Talent → Ranks'}</span></div>
-    <div className={`react-unified-tree ${compact?'compact':''}`} ref={frame} tabIndex={0} role="region" aria-label="Character talent tree, all classes and tiers"
-      onKeyDown={event=>{
-        if(event.target!==event.currentTarget)return;
-        const movement={ArrowDown:[0,-80],ArrowUp:[0,80],ArrowLeft:[80,0],ArrowRight:[-80,0]}[event.key];
-        if(movement){event.preventDefault();const c=cameraRef.current;moveCamera({...c,x:c.x+movement[0],y:c.y+movement[1]});}
-        else if(['+','=','-','Home'].includes(event.key)){event.preventDefault();if(event.key==='Home')focusClass(activeClass);else zoom(cameraRef.current.scale*(event.key==='-'?.8:1.25));}
-      }}
-      onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerEnd} onPointerCancel={pointerEnd}
-      onClickCapture={event=>{if(blockClick.current){event.preventDefault();event.stopPropagation();blockClick.current=false;}}}>
-      <div className="react-unified-tree-canvas" style={{width:graph.width,height:graph.height,transform:`translate(${camera.x}px,${camera.y}px) scale(${camera.scale})`}}>
-        <svg className="react-tree-edges" width={graph.width} height={graph.height} aria-hidden="true">
-          <defs><marker id={markerId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
-          {!compact?graph.classNodes.map(node=><g className="react-tree-orbits" key={node.id}><circle cx={node.x} cy={node.y} r="200"/><circle cx={node.x} cy={node.y} r="400"/><circle cx={node.x} cy={node.y} r="650"/></g>):null}
-          {graph.edges.map(edge=>{
-            const learned=edge.kind==='rank'?rankState(edge.talent,edge.to.rank).state:edge.kind==='prerequisite' && states.get(edge.from.talent.id).learned>=edge.rank?'learned':'';
-            const related=hovered?.talent && (edge.from.talent?.id===hovered.talent.id || edge.to.talent?.id===hovered.talent.id);
-            return <path key={`${edge.kind}:${edge.from.id}:${edge.to.id}`} className={`react-tree-edge ${edge.kind} state-${learned} ${related?'highlighted':''}`} d={graphEdgePath(edge)} markerEnd={edge.kind==='prerequisite'?`url(#${markerId})`:undefined}/>;
-          })}
+  const select=(talent,rank)=>{setSelection({id:talent.id,rank});onSelect({talent,rank});};
+  const controls=<nav className="react-disk-controls" aria-label={`${className} tier rotation`}>
+    <button type="button" aria-label={`${className}: rotate backward`} disabled={selectedTier===1} onClick={()=>onTierChange(selectedTier-1)}>←</button>
+    {DISK_TIERS.map((label,i)=><button type="button" key={label} aria-label={`${className}: Tier ${label}`} aria-pressed={selectedTier===i+1} onClick={()=>onTierChange(i+1)}>{label}</button>)}
+    <button type="button" aria-label={`${className}: rotate forward`} disabled={selectedTier===5} onClick={()=>onTierChange(selectedTier+1)}>→</button>
+  </nav>;
+  const direction=(orientation==='top'?-1:1)*turn.direction;
+  return <section className={`react-talent-disk orientation-${orientation}`} aria-label={`${className} talent disk`} data-class={className} data-tier={selectedTier}>
+    {orientation==='top'?controls:null}
+    <div ref={frame} className={`react-disk-stage ${unlocked?'tier-unlocked':'tier-fogged'}`} style={{height:layout.height,'--disk-height':`${layout.height}px`,'--disk-turn':`${turn.angle*(orientation==='top'?-1:1)}deg`,'--disk-entry':`${-direction*65}deg`}}>
+      <div className="react-disk-rotor" aria-hidden="true"><div/><span>✦</span></div>
+      <div className="react-disk-rim" aria-hidden="true"/>
+      {unlocked?<div className="react-disk-branches" key={`${selectedTier}-${layout.page}`}>
+        <svg width={width} height={layout.height} aria-hidden="true" className="react-disk-lines">
+          {layout.nodes.map(node=><g key={node.talent.id}>
+            <line x1={node.root.x} y1={node.root.y} x2={node.x} y2={node.y}/>
+            {node.ranks.map((rank,i)=>{const from=i?node.ranks[i-1]:node;return <line key={rank.rank} className={rank.rank<=states.get(node.talent.id).learned?'state-learned':''} x1={from.x} y1={from.y} x2={rank.x} y2={rank.y}/>;})}
+          </g>)}
         </svg>
-        {graph.classNodes.map(node=><button type="button" className="react-graph-node class-node" key={node.id} {...interactive(node)} aria-label={`${node.className} class, ${node.count} talents. Focus class`} onClick={()=>focusClass(node.className)}><span className="react-graph-sigil" aria-hidden="true">✧</span><small>CLASS</small><strong>{node.className}</strong><span>{node.count} talents · 5 tiers</span></button>)}
-        {graph.tierNodes.map(node=><button type="button" className={`react-graph-node tier-node ${talentTierUnlocked(character.level,node.tier)?'state-unlocked':'state-locked'}`} key={node.id} {...interactive(node)} aria-label={`${node.className}, Tier ${node.tier}, ${node.count} talents. Focus tier`} onClick={()=>focusTier(node.tier,node.className)}><small>TIER</small><strong>{TIER_LABELS[node.tier-1]}</strong><span>{talentTierUnlocked(character.level,node.tier)?`${node.count} talents`:`Level ${TALENT_TIER_LEVELS[node.tier]}`}</span>{!node.count?<small>Not yet written</small>:null}</button>)}
-        {graph.nodes.map(node=>{
-          const {talent}=node,learned=states.get(talent.id).learned,dimmed=query.trim()&&!matches.includes(node);
-          return <div className={`react-tree-talent-group ${dimmed?'dimmed':''}`} key={node.id}>
-            <button type="button" className={`react-graph-node talent-node state-${learned?'learned':rankState(talent,1).state}`} {...interactive(node)} aria-label={`${talent.className}, ${talent.name}, ${learned} of ${talent.maxRank} ranks learned. Open talent`} onClick={()=>onSelect({talent,rank:Math.max(1,learned)})}><strong>{talent.name}</strong><small>{learned}/{talent.maxRank}</small></button>
-            <div className="react-tree-ranks" role="group" aria-label={`${talent.className}, ${talent.name} ranks`}>{node.ranks.map(rankNode=>{
-              const status=rankState(talent,rankNode.rank);
-              return <button type="button" key={rankNode.id} className={`react-graph-node rank-node state-${status.state}`} {...interactive(rankNode)} title={`${talent.name} · Rank ${rankNode.rank} · ${status.reason}`} aria-label={`${talent.className}, ${talent.name}, Rank ${rankNode.rank}, ${status.label}`} onClick={()=>onSelect({talent,rank:rankNode.rank})}><span>{TIER_LABELS[rankNode.rank-1]}</span>{status.state==='learned'?<small aria-hidden="true">✓</small>:null}</button>;
+        {layout.nodes.map(node=>{
+          const {talent}=node,learned=states.get(talent.id).learned;
+          return <div key={talent.id} className="react-disk-branch">
+            <button type="button" style={{...position(node),width:layout.talentWidth}} data-node-id={`talent:${talent.id}`} className={`react-disk-node disk-talent state-${learned?'learned':rankState(talent,1).state} ${selection?.id===talent.id?'is-selected':''}`} aria-label={`${className}, ${talent.name}, ${learned} of ${talent.maxRank} ranks learned. Open talent`} onClick={()=>select(talent,Math.max(1,learned))}><strong>{talent.name}</strong><small>{learned}/{talent.maxRank}</small></button>
+            <div className="react-tree-ranks" role="group" aria-label={`${className}, ${talent.name} ranks`}>{node.ranks.map(rank=>{
+              const status=rankState(talent,rank.rank),selected=selection?.id===talent.id && selection.rank===rank.rank;
+              return <button type="button" key={rank.rank} style={position(rank)} data-node-id={`rank:${talent.id}:${rank.rank}`} className={`react-disk-node disk-rank state-${status.state} ${selected?'is-selected':''}`} aria-pressed={selected} title={`${talent.name} · Rank ${rank.rank} · ${status.reason}`} aria-label={`${className}, ${talent.name}, Rank ${rank.rank}, ${status.label}`} onClick={()=>select(talent,rank.rank)}>{DISK_TIERS[rank.rank-1]}{status.state==='learned'?<small aria-hidden="true">✓</small>:null}</button>;
             })}</div>
           </div>;
         })}
-      </div>
+        {!talents.length?<p className="react-disk-empty">No talents have been written for this tier yet.</p>:null}
+      </div>:null}
+      <div className="react-disk-fog" aria-hidden="true"/>
+      {!unlocked?<div className="react-disk-lock" role="status"><span aria-hidden="true">◇</span><strong>Tier {DISK_TIERS[selectedTier-1]} · Locked</strong><span>Unlocks at Level {TALENT_TIER_LEVELS[selectedTier]}</span></div>:null}
+      <div className="react-disk-hub" data-node-id={`class:${className.toLowerCase().replace(/\s+/g,'-')}`}><small>Tier {DISK_TIERS[selectedTier-1]}</small><span aria-hidden="true">✧</span><strong>{className}</strong></div>
     </div>
-    <p className="react-help react-tree-help">Select a class or tier bubble to focus its branch. Select a talent or rank for details. Drag to pan; pinch, use + / −, or Ctrl + scroll to zoom. Keyboard: Tab to nodes, arrows to pan, Home to reset.</p>
+    {orientation==='bottom'?controls:null}
+    {unlocked && layout.pages>1?<nav className="react-disk-branch-controls" aria-label={`${className} talent branches`}><button type="button" disabled={!layout.page} onClick={()=>setPage(layout.page-1)} aria-label={`${className}: previous talent branches`}>←</button><span>Talents {layout.page*layout.pageSize+1}–{Math.min((layout.page+1)*layout.pageSize,talents.length)} of {talents.length}</span><button type="button" disabled={layout.page===layout.pages-1} onClick={()=>setPage(layout.page+1)} aria-label={`${className}: next talent branches`}>→</button></nav>:null}
+  </section>;
+}
+
+export function TalentGraph({catalog,character,query='',onSelect}) {
+  const canonical=useMemo(()=>[...new Map(catalog.map(t=>[t.id,t])).values()],[catalog]);
+  const classes=[...new Set(canonical.map(t=>t.className))].slice(0,2);
+  const [tiers,setTiers]=useState({}),[focus,setFocus]=useState({}),[swapped,setSwapped]=useState(false);
+  const ordered=classes.length===2?(swapped?classes:[classes[1],classes[0]]):classes;
+  const matches=canonical.filter(t=>classes.includes(t.className) && talentTierUnlocked(character.level,t.tier) && `${t.name} ${t.className}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const tierChange=(className,tier)=>{setTiers(old=>({...old,[className]:tier}));setFocus(old=>({...old,[className]:null}));};
+  return <>
+    {classes.length===2?<div className="react-disk-toolbar"><span>Top: {ordered[0]} · Bottom: {ordered[1]}</span><button type="button" onClick={()=>setSwapped(value=>!value)}>Swap Positions</button></div>:null}
+    {query.trim()?<div className="react-tree-search-results" aria-label="Matching unlocked talents">{matches.map(talent=><button type="button" key={talent.id} onClick={()=>{setTiers(old=>({...old,[talent.className]:talent.tier}));setFocus(old=>({...old,[talent.className]:talent.id}));onSelect({talent,rank:Math.max(1,talentRank(character,talent,canonical))});}}>{talent.name}<small>{talent.className} · Tier {DISK_TIERS[talent.tier-1]}</small></button>)}{!matches.length?<p>No matching talents in unlocked tiers.</p>:null}</div>:null}
+    <div className={`react-talent-disks ${classes.length===2?'is-multiclass':''}`}>
+      {ordered.map((className,i)=><TalentDisk key={`${character.id}:${className}`} className={className} catalog={canonical} character={character} selectedTier={tiers[className] || 1} orientation={classes.length===2 && i===0?'top':'bottom'} onTierChange={tier=>tierChange(className,tier)} onSelect={onSelect} focusedTalentId={focus[className]}/>)}
+    </div>
+    <p className="react-help react-tree-help">Rotate each class independently with its arrows or tier buttons. Select a talent or rank for details and purchases. Fog conceals tiers until their required level.</p>
   </>;
 }
