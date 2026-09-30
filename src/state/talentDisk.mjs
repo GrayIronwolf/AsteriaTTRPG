@@ -1,13 +1,25 @@
 export const DISK_TIERS=['I','II','III','IV','V'];
 
+// Presentation only: the class page remains the source of its colour and symbol.
+export function talentDiskAppearance(className,entries=[]) {
+  const key=value=>String(value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const entry=entries.find(row=>String(row.type || row.metadata?.type).toLowerCase()==='class' &&
+    [row.title,row.name,row.slug].some(value=>key(value)===key(className)));
+  const colour=entry?.metadata?.classColour || entry?.classColour;
+  return {
+    colour:/^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i.test(colour || '')?colour:undefined,
+    symbol:entry?.metadata?.symbol || entry?.symbol || String(className || '').slice(0,2).toUpperCase()
+  };
+}
+
 // Narrow viewports page branches so each rank keeps its own 44px touch target.
 // Both orientations use this same elliptical fan and canonical talent references.
 export function talentDiskLayout(talents,width=1000,orientation='bottom',page=0) {
   const w=Math.max(220,width),compact=w<900,pageSize=compact?3:Math.max(5,Math.floor(w/180));
   const pages=Math.max(1,Math.ceil(talents.length/pageSize)),current=Math.max(0,Math.min(page,pages-1));
   const visible=talents.slice(current*pageSize,(current+1)*pageSize),count=visible.length;
-  const span=(count<=1?0:count===2?40:count===3?55:60)*Math.PI/180;
-  const innerX=Math.min(230,w*.27),outerX=w/2-30,innerY=compact?136:164;
+  const span=(count<=1?0:count===2?40:count===3?(compact?45:55):60)*Math.PI/180;
+  const innerX=Math.min(230,w*.27),outerX=w/2-30,innerY=compact?184:164;
   const stepX=(outerX-innerX)/5.35;
   const stepY=Math.max(48,Math.sqrt(Math.max(0,48**2-(stepX*Math.sin(span))**2))/Math.cos(span));
   const height=Math.ceil(innerY+stepY*5.35+30),origin={x:w/2,y:orientation==='top'?0:height};
