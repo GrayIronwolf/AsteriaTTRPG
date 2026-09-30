@@ -19,7 +19,7 @@
     "test:inputs": "node --test scripts/manual-number-inputs.test.mjs",
     "test:quests": "node --test scripts/quest-workflow.test.mjs",
     "test:nac": "node --test scripts/racial-natural-ac.test.mjs",
-    "test:talents": "node --test scripts/class-talents.test.mjs",
+    "test:talents": "node --test scripts/class-talents.test.mjs scripts/talent-graph.test.mjs",
     "test:deployment": "node --test scripts/firestore-index-deploy.test.mjs",
     "lint": "eslint src functions js/firebase-auth.js",
     "test:core": "node --test scripts/core-systems.test.mjs",
