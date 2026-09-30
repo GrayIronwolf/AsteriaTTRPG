@@ -2,10 +2,11 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import TestRenderer, { act } from 'react-test-renderer';
 import { createServer } from 'vite';
 import '../js/character-access.js';
 
-let server, CharacterDashboard, OwnedCharacterDashboard;
+let server, CharacterDashboard, OwnedCharacterDashboard, DashboardErrorBoundary;
 const campaign = {id:'c', ownerUid:'gm', name:'Campaign', playerCharacterLinks:{b:'player'}};
 const character = {id:'b',ownerUid:'player',sharedCampaignId:'c',name:'Player B',hp:[8,10],sp:[8,10],mp:[8,10],inventory:[],storages:[]};
 before(async()=>{
@@ -21,6 +22,7 @@ before(async()=>{
     }
   }]});
   ({CharacterDashboard,OwnedCharacterDashboard} = await server.ssrLoadModule('/src/dashboards/CharacterDashboard.jsx'));
+  ({DashboardErrorBoundary} = await server.ssrLoadModule('/src/app/AsteriaReactRoot.jsx'));
 });
 after(async()=>{await server?.close();delete globalThis.window;});
 const render = ()=>renderToStaticMarkup(React.createElement(CharacterDashboard,{campaignId:'c',characterId:'b'}));
@@ -57,4 +59,30 @@ test('an unassigned sheet cannot render for a different signed-in owner',()=>{
   window.AsteriaFirebase.getUser=()=>({uid:'someone-else'});
   const html=renderToStaticMarkup(React.createElement(OwnedCharacterDashboard,{characterId:'ty'}));
   assert.match(html,/Only the owner/);assert.doesNotMatch(html,/Artificer/);
+});
+
+test('a rejected dashboard import shows recovery controls and does not block another route',async t=>{
+  t.mock.method(console,'error',()=>{});
+  let rejectImport, reloads=0, renderer;
+  window.location={reload:()=>reloads++};
+  const Dashboard=React.lazy(()=>new Promise((_resolve,reject)=>{rejectImport=reject;}));
+  try {
+    await act(async()=>{
+      renderer=TestRenderer.create(React.createElement(DashboardErrorBoundary,{key:'character/a'},
+        React.createElement(React.Suspense,{fallback:'Loading dashboard'},React.createElement(Dashboard))));
+    });
+    assert.equal(renderer.toJSON(),'Loading dashboard');
+    await act(async()=>{rejectImport(new Error('Unable to preload CSS for /asteria-react2.css'));});
+    assert.match(renderer.root.findByProps({role:'alert'}).findByType('p').children.join(''),/dashboard could not load/);
+    const reload=renderer.root.findByType('button');
+    assert.equal(reload.children.join(''),'Reload dashboard');
+    act(()=>reload.props.onClick());
+    assert.equal(reloads,1);
+    act(()=>renderer.update(React.createElement(DashboardErrorBoundary,{key:'gm/c'},React.createElement('p',null,'GM dashboard'))));
+    assert.equal(renderer.root.findByType('p').children.join(''),'GM dashboard');
+    assert.equal(renderer.root.findAllByProps({role:'alert'}).length,0);
+  } finally {
+    act(()=>renderer?.unmount());
+    delete window.location;
+  }
 });
