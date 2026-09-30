@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import compendium from '../data/compendium.js';
 import {buildTalentCatalog} from '../src/state/talentModel.mjs';
-import {fitGraphCamera,graphBounds,talentGraph,zoomGraphCamera} from '../src/state/talentGraph.mjs';
+import {fitGraphCamera,graphBounds,graphEdgePath,talentGraph,zoomGraphCamera} from '../src/state/talentGraph.mjs';
 
 const catalog=buildTalentCatalog({classes:['Bloodhunter','Paladin']},compendium.entries);
 const allNodes=g=>[...g.classNodes,...g.tierNodes,...g.nodes,...g.rankNodes];
@@ -25,12 +25,15 @@ test('bubble hierarchy retains canonical talents and every rank in single and mu
   }
 });
 test('authored prerequisites connect the required rank to its dependent talent in the same class',()=>{
-  const g=talentGraph(buildTalentCatalog({classes:['Artificer','Cleric']},compendium.entries));
+  for(const compact of [false,true]) {
+  const g=talentGraph(buildTalentCatalog({classes:['Artificer','Cleric']},compendium.entries),compact);
   assert.ok(g.edges.some(e=>e.kind==='prerequisite'));
   for(const edge of g.edges.filter(e=>e.kind==='prerequisite')) {
     assert.equal(edge.from.kind,'rank');assert.equal(edge.from.rank,edge.rank);
     assert.equal(edge.from.className,edge.to.className);
+    assert.doesNotMatch(graphEdgePath(edge),/\s-\d/,'Prerequisite connectors should stay inside the canvas');
     assert.match(edge.to.talent.prerequisite,new RegExp(edge.from.talent.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  }
   }
 });
 test('dense class constellations and mobile branches keep every bubble separate and inside the canvas',()=>{

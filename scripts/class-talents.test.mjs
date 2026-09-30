@@ -89,3 +89,24 @@ test('React renders all tiers and classes together with rank actions and legacy 
     const data=await server.ssrLoadModule('/src/dashboards/characterWorkspaceData.js');assert.equal(data.unlockedClassTalents(sheet('bloodhunter:blood-shield',2))[0].rank,2);
   }finally{await server.close();delete globalThis.window;}
 });
+
+test('switching characters while a rank is highlighted does not retain stale talent state',async()=>{
+  const {createServer}=await import('vite'),React=await import('react'),Renderer=await import('react-test-renderer');
+  const originalObserver=globalThis.ResizeObserver;
+  globalThis.ResizeObserver=class {constructor(callback){this.callback=callback;}observe(){this.callback([{contentRect:{width:800,height:600}}]);}disconnect(){}};
+  const server=await createServer({configFile:false,server:{middlewareMode:true}});
+  let view;
+  try {
+    const {TalentGraph}=await server.ssrLoadModule('/src/dashboards/TalentGraph.jsx');
+    const props=classes=>({catalog:buildTalentCatalog({classes},entries),character:{id:classes.join('/'),classes,level:50,tp:100},onSelect:()=>{}});
+    await Renderer.act(async()=>{view=Renderer.create(React.createElement(TalentGraph,props(['Bloodhunter'])),{createNodeMock:()=>({addEventListener(){},removeEventListener(){}})});});
+    await Renderer.act(async()=>{view.root.findByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).props.onPointerEnter();});
+    await Renderer.act(async()=>{view.update(React.createElement(TalentGraph,props(['Spellblade','Cleric'])));});
+    assert.equal(view.root.findAllByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).length,0);
+    assert.equal(view.root.findAllByProps({'data-node-id':'class:spellblade'}).length,1);
+    assert.equal(view.root.findAllByProps({'data-node-id':'class:cleric'}).length,1);
+  } finally {
+    if(view)await Renderer.act(async()=>view.unmount());
+    await server.close();globalThis.ResizeObserver=originalObserver;
+  }
+});

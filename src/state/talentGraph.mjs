@@ -62,7 +62,7 @@ export function talentGraph(catalog, compact=false) {
     const rank=Number(match[2]) || TIER_LABELS.indexOf(match[2].toUpperCase())+1;
     const source=nodes.find(n=>n.className===node.className && talentKey(n.talent.name)===talentKey(match[1]));
     const from=source?.ranks.find(n=>n.rank===rank);
-    if(from)edges.push({kind:'prerequisite',from,to:node,rank});
+    if(from)edges.push({kind:'prerequisite',from,to:node,rank,compact});
   }
   const bounds=graphBounds([...classNodes,...tierNodes,...nodes,...rankNodes],32);
   return {classes,classNodes,tierNodes,nodes,rankNodes,edges,compact,
@@ -84,8 +84,9 @@ export function graphEdgePath({from,to,kind,compact}) {
   if(compact && kind==='class-tier') return `M ${from.x} ${from.y} H 340 V ${to.y} H ${to.x}`;
   if(compact && kind==='tier-talent') return `M ${from.x} ${from.y} H 14 V ${to.y} H ${to.x}`;
   if(kind==='prerequisite') {
+    if(compact) return `M ${from.x} ${from.y} H 6 V ${to.y} H ${to.x-to.radius-5}`;
     const bend=Math.max(80,Math.abs(to.y-from.y)*.3);
-    return `M ${from.x} ${from.y} C ${from.x-bend} ${from.y}, ${to.x-bend} ${to.y}, ${to.x-to.radius-5} ${to.y}`;
+    return `M ${from.x} ${from.y} C ${Math.max(8,from.x-bend)} ${from.y}, ${Math.max(8,to.x-bend)} ${to.y}, ${to.x-to.radius-5} ${to.y}`;
   }
   return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
 }

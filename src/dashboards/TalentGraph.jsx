@@ -10,7 +10,7 @@ const distance = points => Math.hypot(points[0].x-points[1].x,points[0].y-points
 export function TalentGraph({catalog,character,query='',onSelect}) {
   const frame=useRef(null),pointers=useRef(new Map()),gesture=useRef(null),blockClick=useRef(false);
   const [viewport,setViewport]=useState({width:700,height:650}),[camera,setCamera]=useState({x:0,y:0,scale:1});
-  const cameraRef=useRef(camera),[activeClass,setActiveClass]=useState(catalog[0]?.className || ''),[hovered,setHovered]=useState(null);
+  const cameraRef=useRef(camera),[activeClass,setActiveClass]=useState(catalog[0]?.className || ''),[hoveredNode,setHovered]=useState(null);
   const compact=viewport.width<640,graph=useMemo(()=>talentGraph(catalog,compact),[catalog,compact]);
   const markerId=useId(),layoutKey=catalog.map(t=>t.id).join('|');
   const moveCamera=next=>{cameraRef.current=next;setCamera(next);};
@@ -56,6 +56,9 @@ export function TalentGraph({catalog,character,query='',onSelect}) {
     return()=>element.removeEventListener('wheel',wheel);
   },[]);
   const states=useMemo(()=>new Map(catalog.map(talent=>[talent.id,{learned:talentRank(character,talent,catalog),problem:prerequisiteProblem(character,talent,catalog)}])),[catalog,character]);
+  // A character switch renders before the camera-reset effect. Do not read a
+  // previous character's hovered talent from the new catalog during that render.
+  const hovered=hoveredNode && graph.classes.includes(hoveredNode.className) && (!hoveredNode.talent || states.has(hoveredNode.talent.id))?hoveredNode:null;
   const rankState=(talent,rank)=>{
     const {learned,problem}=states.get(talent.id),cost=talentRankCost(rank,talent.tier);
     if(rank<=learned)return {state:'learned',label:'purchased',reason:`${cost} TP · Purchased`};
