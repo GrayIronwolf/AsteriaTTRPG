@@ -15,6 +15,7 @@
   let lastCampaignRefresh = 0;
   let realtimeUid = null;
   let accountCampaignUnsubscribe = null;
+  let discoveredCampaignIds = null;
   const realtimeSubscriptions = new Map();
   const persistedProgressionSignatures = new Map();
   const persistedCharacterSignatures = new Map();
@@ -133,6 +134,7 @@
   function stopRealtimeCampaignSync(){
     try{ accountCampaignUnsubscribe?.(); }catch(e){}
     accountCampaignUnsubscribe = null;
+    discoveredCampaignIds = null;
     stopCampaignRealtimeSubscriptions();
     realtimeUid = null;
     syncGeneration += 1;
@@ -420,11 +422,13 @@
     });
     return Array.from(targets.values()).filter(campaign=>{
       if(!campaign?.id) return false;
+      if(discoveredCampaignIds && !discoveredCampaignIds.has(String(campaign.id))) return false;
       if(!campaign.ownerUid && !campaign.gmUids && !campaign.playerUids && !campaign.players) return true;
       return campaign.ownerUid===user.uid
         || campaign.gmId===user.uid
         || (campaign.gmUids||[]).includes(user.uid)
         || (campaign.playerUids||[]).includes(user.uid)
+        || ['gm','player'].includes(campaign.roles?.[user.uid])
         || campaign.players?.[user.uid];
     });
   }
@@ -435,8 +439,10 @@
     realtimeUid=user.uid;
     if(accountCampaignUnsubscribe) return;
     const generation=syncGeneration;
+    discoveredCampaignIds=new Set();
     accountCampaignUnsubscribe=window.AsteriaFirebase.subscribeAccountCampaigns(campaigns=>{
       if(generation!==syncGeneration || window.AsteriaFirebase?.getUser?.()?.uid!==user.uid) return;
+      discoveredCampaignIds=new Set((campaigns || []).map(campaign=>String(campaign.id)));
       mergeCloudCampaigns(campaigns || []);
       setupRealtimeCampaignSync(window.campaigns || []);
       lastCampaignRefresh=Date.now();
@@ -633,7 +639,9 @@
       'warn'
     );
     if(permissionDenied){
-      toast('Firebase blocked campaign delivery. Ask the campaign owner to check the deployed rules and your membership.');
+      const campaign=(window.campaigns || []).find(row=>row?.id===detail.campaignId);
+      const area=detail.scope==='custom-item-listener'?'the custom item catalog':detail.scope?.startsWith('campaign-membership')?'the campaign list':detail.scope==='campaign-events-listener'?'campaign notifications':detail.scope==='gm-workspace-listener'?'the GM workspace':'campaign data';
+      toast(`Firebase denied access to ${area}${campaign?.name?` for “${campaign.name}”`:''}. Check membership and deployed Firestore rules.`);
     }
   });
   window.addEventListener('focus', ()=>{

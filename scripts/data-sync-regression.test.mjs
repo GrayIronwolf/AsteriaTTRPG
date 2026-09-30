@@ -76,3 +76,97 @@ test('viewing another account character never exports or saves it as owned',asyn
   assert.equal(await h.window.AsteriaDataSync.save(),true);
   assert.deepEqual(saved,[['a','alice']]);
 });
+
+test('cached campaigns and character links do not start streams before access is confirmed',async()=>{
+  const watched=[];
+  const h=harness({subscribeCampaign:id=>{watched.push(id);return ()=>{};}});
+  h.window.campaigns=[{id:'removed',ownerUid:'alice'}];
+  h.window.chars.a.sharedCampaignId='removed';
+  await h.window.AsteriaDataSync.load();
+  assert.deepEqual(watched,[]);
+  h.remote([{id:'current',ownerUid:'gm',roles:{alice:'player'}}]);
+  assert.deepEqual(watched,['current']);
+  assert.ok(h.window.campaigns.some(c=>c.id==='removed'),'A stale cache must not be destructively deleted');
+});
+
+function campaignBrowserMethod(name,dependencies,functions=[]) {
+  const source=fs.readFileSync('js/firebase-auth.js','utf8');
+  const declarations=functions.map(name=>{
+    const start=source.search(new RegExp(`(?:async )?function ${name}\\(`));
+    const end=source.slice(start+1).search(/\n(?:async )?function /);
+    return source.slice(start,start+1+end);
+  }).join('\n');
+  const start=source.indexOf(`  ${name}:`),end=source.indexOf('\n  },',start)+4;
+  return Function(...Object.keys(dependencies),`${declarations}\nreturn ${start<0?name:`({${source.slice(start,end)}}).${name}`};`)(...Object.values(dependencies));
+}
+
+test('unreadable and removed saved campaigns do not trigger roster reads or false delivery errors',async()=>{
+  const calls=[],errors=[];
+  let result='denied';
+  const load=campaignBrowserMethod('loadSharedCampaignDetails',{
+    db:{},doc:(_db,...parts)=>parts.join('/'),collection:(_db,...parts)=>parts.join('/'),
+    getDoc:async path=>{calls.push(path);if(result==='denied')throw Object.assign(new Error('Denied'),{code:'permission-denied'});return {exists:()=>false};},
+    getDocs:async()=>{throw Error('Roster read should not be attempted');},
+    reportSyncError:(...args)=>errors.push(args),mergeSharedCampaign:()=>{throw Error('An inaccessible campaign must not be promoted');}
+  },['loadSharedCampaignDetails']);
+  assert.equal(await load('stale',{ownerUid:'alice'}),null);
+  result='removed';assert.equal(await load('deleted',{ownerUid:'alice'}),null);
+  assert.deepEqual(calls,['campaigns/stale','campaigns/deleted']);assert.deepEqual(errors,[]);
+});
+
+test('discovery publishes only verified campaign records and retains authorized legacy role links',()=>{
+  const watchers=new Map(),emissions=[],errors=[];let stopped=0;
+  const subscribe=campaignBrowserMethod('subscribeAccountCampaigns',{
+    db:{},currentUser:{uid:'alice'},doc:(_db,...parts)=>parts.join('/'),collection:(_db,...parts)=>parts.join('/'),
+    campaignMembershipQueries:()=>['owner-query','gm-query','player-query'],linkedCampaignIdsFromOwnedCharacters:()=>['stale'],
+    onSnapshot:(path,_options,success,failure)=>{watchers.set(path,{success,failure});return ()=>{stopped++;};},
+    reportSyncError:(...args)=>errors.push(args),mergeSharedCampaign:(a,b)=>({...a,...b})
+  });
+  const unsubscribe=subscribe(campaigns=>emissions.push(campaigns));
+  const collectionSnapshot=(rows,fromCache=false)=>({metadata:{fromCache},forEach:callback=>rows.forEach(row=>callback({id:row.id,data:()=>row}))});
+  const documentSnapshot=(record,fromCache=false)=>({metadata:{fromCache},exists:()=>Boolean(record),data:()=>record});
+  watchers.get('users/alice/campaigns').success(collectionSnapshot([{id:'stale',ownerUid:'alice'},{id:'legacy',ownerUid:'gm'}]));
+  assert.deepEqual(emissions.at(-1),[]);
+  watchers.get('owner-query').success(collectionSnapshot([{id:'cached-only',ownerUid:'alice'}],true));
+  assert.deepEqual(emissions.at(-1),[]);
+  watchers.get('campaigns/stale').failure({code:'permission-denied'});
+  assert.deepEqual(errors,[]);
+  watchers.get('campaigns/legacy').success(documentSnapshot({id:'legacy',ownerUid:'gm',roles:{alice:'player'}}));
+  watchers.get('player-query').success(collectionSnapshot([{id:'current',ownerUid:'gm',playerUids:['alice']} ]));
+  assert.deepEqual(emissions.at(-1).map(c=>c.id).sort(),['current','legacy']);
+  watchers.get('campaigns/legacy').failure({code:'permission-denied'});
+  assert.deepEqual(emissions.at(-1).map(c=>c.id),['current']);
+  const count=emissions.length;unsubscribe();
+  watchers.get('player-query').success(collectionSnapshot([{id:'late'}]));
+  assert.equal(emissions.length,count);assert.equal(stopped,6);
+});
+
+test('background discovery errors do not break an open dashboard; its actual stream errors still surface',async()=>{
+  const {createServer}=await import('vite'),React=await import('react'),Renderer=await import('react-test-renderer');
+  const originalNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator'),originalWindow=globalThis.window;
+  const target=new EventTarget(),noop=()=>{},emit=value=>(_id,callback)=>{callback(value,{fromCache:false});return noop;};
+  globalThis.window=Object.assign(target,{setInterval,clearInterval,AsteriaFirebase:{isReady:()=>true,getUser:()=>({uid:'alice'}),
+    subscribeCampaign:emit({id:'current'}),subscribeCampaignCharacters:emit({a:{id:'a',ownerUid:'alice'}}),subscribeLiveSession:emit({status:'idle'}),
+    subscribePartyWorkspace:emit({}),subscribePartyChat:emit([]),subscribeCampaignItemEcosystem:emit({}),subscribeCampaignEvents:emit([]),subscribeCampaignEncounter:emit({}),
+    subscribeCustomItems:callback=>{callback([]);return noop;}}});
+  Object.defineProperty(globalThis,'navigator',{value:{onLine:true},configurable:true});
+  const server=await createServer({configFile:false,server:{middlewareMode:true}});let view,latest;
+  try {
+    const {useCampaignLiveData}=await server.ssrLoadModule('/src/sessions/useCampaignLiveData.js');
+    function Probe(){latest=useCampaignLiveData('current',{characterId:'a'});return null;}
+    await Renderer.act(async()=>{view=Renderer.create(React.createElement(Probe));});
+    assert.equal(latest.error,'');assert.equal(latest.loading,false);
+    const fail=detail=>Renderer.act(async()=>target.dispatchEvent(new CustomEvent('asteria:firebase-sync-error',{detail:{code:'permission-denied',message:'Denied',...detail}})));
+    await fail({scope:'campaign-membership-listener',uid:'alice'});
+    await fail({scope:'campaign-discovery-link',campaignId:'current',uid:'alice'});
+    await fail({scope:'campaign-listener',campaignId:'other'});
+    await fail({scope:'campaign-listener',campaignId:'current',uid:'previous-account'});
+    assert.equal(latest.error,'');assert.ok(latest.character);
+    await fail({scope:'campaign-listener',campaignId:'current'});
+    assert.equal(latest.error,'Denied');assert.equal(latest.connectionState,'error');
+  } finally {
+    if(view)await Renderer.act(async()=>view.unmount());await server.close();
+    if(originalNavigator)Object.defineProperty(globalThis,'navigator',originalNavigator);else delete globalThis.navigator;
+    if(originalWindow)globalThis.window=originalWindow;else delete globalThis.window;
+  }
+});

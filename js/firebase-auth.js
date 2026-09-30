@@ -175,10 +175,14 @@ async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=nul
       const sharedSnap = await getDoc(doc(db, 'campaigns', id));
       if(sharedSnap.exists()) shared = Object.assign({}, sharedSnap.data(), { id });
     }catch(error){
-      reportSyncError('campaign-read', error, { campaignId:id });
+      // Account copies and character links can outlive membership or the campaign.
+      // Discovery must not treat them as authorization to read its subcollections.
+      if(!String(error?.code || '').includes('permission-denied')) reportSyncError('campaign-read', error, { campaignId:id });
+      return null;
     }
   }
-  let campaign = mergeSharedCampaign(accountCampaign, shared || { id });
+  if(!shared) return null;
+  let campaign = mergeSharedCampaign(accountCampaign, shared);
   try{
     const ecosystemSnap = await getDoc(doc(db, 'campaigns', id, 'systems', 'itemEcosystem'));
     if(ecosystemSnap.exists()) campaign.itemEcosystem = ecosystemSnap.data();
@@ -1771,11 +1775,12 @@ const firebasePublicApi = {
       ]);
       const campaigns = [];
       for(const id of campaignIds){
-        campaigns.push(await loadSharedCampaignDetails(
+        const campaign=await loadSharedCampaignDetails(
           id,
           accountCampaigns.get(id) || {},
           sharedCampaigns.get(id) || null
-        ));
+        );
+        if(campaign) campaigns.push(campaign);
       }
       return campaigns;
     }catch(err){
@@ -1787,41 +1792,68 @@ const firebasePublicApi = {
     if(!db || !currentUser || typeof onChange !== 'function') return ()=>{};
     const uid = currentUser.uid;
     const sources = new Map();
+    const linked = new Map(), linkSubscriptions = new Map();
+    let active=true;
     const emit = ()=>{
+      if(!active || currentUser?.uid!==uid) return;
       const account = sources.get('account') || new Map();
-      const shared = new Map();
+      const shared = new Map(linked);
       ['owner','gm','player'].forEach(key=>{
         (sources.get(key) || new Map()).forEach((campaign,id)=>{
           shared.set(id, Object.assign({}, shared.get(id) || {}, campaign));
         });
       });
-      const ids = new Set([
-        ...account.keys(),
-        ...shared.keys(),
-        ...linkedCampaignIdsFromOwnedCharacters(uid)
-      ]);
-      onChange(Array.from(ids).map(id=>mergeSharedCampaign(
+      onChange(Array.from(shared.keys()).map(id=>mergeSharedCampaign(
         account.get(id) || { id },
-        shared.get(id) || { id }
+        shared.get(id)
       )));
     };
+    const watchLinkedCampaigns=()=>{
+      const candidates=new Set([...(sources.get('account') || new Map()).keys(),...linkedCampaignIdsFromOwnedCharacters(uid)]);
+      linkSubscriptions.forEach((unsubscribe,id)=>{
+        if(candidates.has(id)) return;
+        unsubscribe();linkSubscriptions.delete(id);linked.delete(id);
+      });
+      candidates.forEach(id=>{
+        if(linkSubscriptions.has(id)) return;
+        const unsubscribe=onSnapshot(doc(db,'campaigns',id),{includeMetadataChanges:true},snapshot=>{
+          if(!active || currentUser?.uid!==uid || snapshot.metadata?.fromCache) return;
+          if(snapshot.exists()) linked.set(id,Object.assign({},snapshot.data(),{id}));
+          else linked.delete(id);
+          emit();
+        },error=>{
+          if(!active || currentUser?.uid!==uid) return;
+          linked.delete(id);emit();
+          if(!String(error?.code || '').includes('permission-denied')) reportSyncError('campaign-discovery-link',error,{uid,campaignId:id});
+        });
+        linkSubscriptions.set(id,unsubscribe);
+      });
+    };
     const watch = (key, reference)=>{
-      return onSnapshot(reference, snapshot=>{
+      return onSnapshot(reference, {includeMetadataChanges:true}, snapshot=>{
+        if(!active || currentUser?.uid!==uid || (key!=='account' && snapshot.metadata?.fromCache)) return;
         const records = new Map();
         snapshot.forEach(item=>{
           records.set(item.id, Object.assign({}, item.data(), { id:item.id }));
         });
         sources.set(key, records);
+        if(key==='account') watchLinkedCampaigns();
         emit();
-      }, error=>reportSyncError('campaign-membership-listener', error, { uid, source:key }));
+      }, error=>{
+        if(!active || currentUser?.uid!==uid) return;
+        sources.delete(key);emit();
+        reportSyncError('campaign-membership-listener', error, { uid, source:key });
+      });
     };
     const unsubscribers = [
       watch('account', collection(db, 'users', uid, 'campaigns')),
       ...campaignMembershipQueries(uid).map((campaignQuery,index)=>watch(['owner','gm','player'][index], campaignQuery))
     ];
-    return ()=>unsubscribers.forEach(unsubscribe=>{
-      try{ unsubscribe?.(); }catch(error){}
-    });
+    watchLinkedCampaigns();
+    return ()=>{
+      active=false;
+      [...unsubscribers,...linkSubscriptions.values()].forEach(unsubscribe=>{try{unsubscribe?.();}catch(error){}});
+    };
   },
   subscribeCampaign: function(campaignId, onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
