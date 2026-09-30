@@ -1,0 +1,53 @@
+/* Shared, mirrored talent disks; all colours follow the dashboard theme. */
+.react-talent-disks { min-width:0;overflow:hidden;border:1px solid var(--tree-border);border-radius:16px;background:var(--asteria-bg,#071018);color:var(--tree-text); }
+.react-talent-disk { min-width:0;position:relative; }
+.react-disk-toolbar { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:12px; }
+.react-disk-toolbar button { min-height:44px; }
+.react-disk-stage { position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--tree-accent) 9%,transparent),transparent 70%),radial-gradient(color-mix(in srgb,var(--tree-text) 16%,transparent) .6px,transparent 1px);background-size:auto,27px 27px; }
+.react-disk-rotor { position:absolute;left:50%;top:100%;width:min(calc(100% - 28px),calc(var(--disk-height)*2 - 24px));aspect-ratio:1;border-radius:50%;border:2px solid var(--tree-border);box-sizing:border-box;transform:translate(-50%,-50%) rotate(var(--disk-turn));transition:transform .55s cubic-bezier(.2,.7,.2,1);pointer-events:none;background:repeating-conic-gradient(from 0deg,transparent 0deg 14deg,color-mix(in srgb,var(--tree-border) 36%,transparent) 14deg 14.2deg,transparent 14.2deg 30deg),radial-gradient(circle,transparent 0 27%,color-mix(in srgb,var(--tree-accent) 12%,transparent) 27.2% 27.7%,transparent 28% 57%,color-mix(in srgb,var(--tree-border) 24%,transparent) 57.2% 57.5%,transparent 58% 66%,color-mix(in srgb,var(--tree-accent) 15%,transparent) 67% 69%,transparent 70%),var(--tree-surface);box-shadow:inset 0 0 0 6px var(--asteria-bg,#071018),inset 0 0 0 8px var(--tree-border),inset 0 0 32px color-mix(in srgb,var(--tree-accent) 20%,transparent),0 0 28px color-mix(in srgb,var(--tree-accent) 15%,transparent); }
+.react-disk-rotor>div { position:absolute;inset:18px;border:2px dashed color-mix(in srgb,var(--tree-border) 60%,transparent);border-radius:50%; }
+.react-disk-rotor>span { position:absolute;top:0;left:50%;transform:translate(-50%,-45%);font-size:34px;color:var(--tree-accent);text-shadow:0 0 14px var(--tree-accent); }
+.orientation-top .react-disk-rotor { top:0; }
+.react-disk-rim { position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--tree-border),var(--tree-accent),var(--tree-border),transparent);z-index:5; }
+.orientation-top .react-disk-rim { top:0;bottom:auto; }
+.react-disk-branches { position:absolute;inset:0;z-index:2;transform-origin:50% 100%;animation:asteria-disk-arrive .5s cubic-bezier(.2,.7,.2,1) both; }
+.orientation-top .react-disk-branches { transform-origin:50% 0; }
+.react-disk-lines { position:absolute;inset:0;pointer-events:none;stroke:var(--tree-border);stroke-width:1.5; }
+.react-disk-lines .state-learned { stroke:var(--tree-accent);stroke-width:2.5; }
+.react-talent-disk .react-disk-node { position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;min-width:0;min-height:0;border:1px solid var(--tree-border)!important;background:radial-gradient(circle at 35% 20%,color-mix(in srgb,var(--tree-accent) 14%,var(--tree-surface)),var(--tree-surface)),var(--asteria-bg,#071018)!important;color:var(--tree-text)!important;padding:3px;line-height:1.2;text-align:center;cursor:pointer;box-shadow:0 0 0 3px var(--asteria-bg,#071018); }
+.react-talent-disk .disk-talent { height:56px;border-radius:16px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px; }
+.disk-talent strong { font-size:11px;font-weight:600;overflow-wrap:normal;word-break:normal; }
+.disk-talent small { font-size:10px;opacity:.7; }
+.react-talent-disk .disk-rank { width:44px;height:44px;border-radius:50%!important;font:16px Georgia,serif; }
+.disk-rank small { position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;display:grid;place-items:center;border-radius:50%;background:var(--tree-accent);color:var(--asteria-bg,#071018);font:700 10px sans-serif; }
+.react-talent-disk .state-learned { border-color:var(--tree-accent)!important;background:linear-gradient(color-mix(in srgb,var(--tree-accent) 32%,var(--tree-surface)),var(--tree-surface)),var(--asteria-bg,#071018)!important; }
+.react-talent-disk .state-available { border:2px solid var(--tree-accent)!important;box-shadow:0 0 0 3px var(--asteria-bg,#071018),0 0 18px color-mix(in srgb,var(--tree-accent) 38%,transparent); }
+.react-talent-disk .state-locked { border-style:dashed!important;color:color-mix(in srgb,var(--tree-text) 70%,var(--tree-surface))!important; }
+.react-talent-disk .react-disk-node.is-selected,.react-talent-disk .react-disk-node:hover,.react-talent-disk .react-disk-node:focus-visible { outline:2px solid var(--tree-text);outline-offset:4px;z-index:2; }
+.react-disk-hub { position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:clamp(148px,30%,240px);height:108px;box-sizing:border-box;border:2px solid var(--tree-accent);border-bottom:0;border-radius:240px 240px 0 0;background:radial-gradient(ellipse at bottom,color-mix(in srgb,var(--tree-accent) 20%,var(--tree-surface)),var(--tree-surface)),var(--asteria-bg,#071018);box-shadow:0 0 0 5px var(--asteria-bg,#071018),0 0 0 6px var(--tree-border),0 0 30px color-mix(in srgb,var(--tree-accent) 20%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:15px 10px 6px;z-index:5;text-align:center; }
+.react-disk-hub small { text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--tree-accent); }
+.react-disk-hub>span { font-size:26px;line-height:1;color:var(--tree-accent); }
+.react-disk-hub strong { font:clamp(17px,2vw,23px) Georgia,serif; }
+.orientation-top .react-disk-hub { top:0;bottom:auto;border:2px solid var(--tree-accent);border-top:0;border-radius:0 0 240px 240px;flex-direction:column-reverse;padding:6px 10px 15px; }
+.react-disk-controls { display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;gap:6px;width:min(100%,390px);padding:12px 8px;box-sizing:border-box;margin:0 auto; }
+.react-disk-controls button { min-width:0;min-height:44px;padding:0!important;font:18px Georgia,serif;border:1px solid var(--tree-border);border-radius:50%;background:var(--tree-surface);color:var(--tree-text); }
+.react-disk-controls button[aria-pressed="true"] { border-color:var(--tree-accent);color:var(--tree-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--tree-accent) 25%,transparent),0 0 20px color-mix(in srgb,var(--tree-accent) 30%,transparent); }
+.react-disk-controls button:focus-visible,.react-disk-branch-controls button:focus-visible { outline:2px solid var(--tree-text);outline-offset:2px; }
+.react-disk-controls button:disabled { opacity:.3; }
+.react-disk-branch-controls { display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 8px 12px;font-size:12px; }
+.react-disk-branch-controls button { width:44px;min-height:44px;padding:0; }
+.react-disk-empty { position:absolute;left:15%;right:15%;top:30%;text-align:center;line-height:1.7;color:var(--tree-text); }
+.react-disk-fog { position:absolute;inset:-18px;z-index:3;opacity:0;pointer-events:none;transition:opacity .35s;background:radial-gradient(ellipse at 10% 30%,#889aa8 0,transparent 52%),radial-gradient(ellipse at 80% 70%,#627583 0,transparent 55%),linear-gradient(160deg,#293846,#758795 47%,#314452);filter:blur(8px); }
+.tier-fogged .react-disk-fog { opacity:1; }
+.react-disk-fog::before,.react-disk-fog::after { content:'';position:absolute;inset:-8%;background:radial-gradient(ellipse at 25% 45%,#c7d2d985,transparent 45%),radial-gradient(ellipse at 75% 65%,#d2dce570,transparent 38%),radial-gradient(ellipse at 60% 10%,#aabac770,transparent 45%);animation:asteria-fog-drift 12s ease-in-out infinite alternate;animation-play-state:paused; }
+.react-disk-fog::after { transform:rotate(180deg);animation-delay:-6s;opacity:.7; }
+.tier-fogged .react-disk-fog::before,.tier-fogged .react-disk-fog::after { animation-play-state:running; }
+.react-disk-lock { position:absolute;inset:25% 12%;z-index:4;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;color:#fff;text-align:center;text-shadow:0 2px 8px #071018; }
+.react-disk-lock>span:first-child { font-size:38px; }
+.react-disk-lock strong { font:24px Georgia,serif; }
+.react-disk-lock>span:last-child { font-size:13px; }
+.is-multiclass .orientation-top::after { content:'✧';display:block;text-align:center;color:var(--tree-border);padding:8px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--tree-accent) 8%,transparent),transparent); }
+@keyframes asteria-disk-arrive { from { transform:rotate(var(--disk-entry));opacity:0; } to { transform:rotate(0);opacity:1; } }
+@keyframes asteria-fog-drift { from { translate:-3% -2%; } to { translate:3% 2%; } }
+@media(max-width:640px) { .react-disk-controls { gap:2px;padding:10px 4px; } .react-disk-controls button { font-size:16px; } .react-disk-hub strong { font-size:18px; } .react-disk-toolbar { gap:8px; } }
+@media(prefers-reduced-motion:reduce) { .react-disk-rotor,.react-disk-fog { transition:none; } .react-disk-branches,.react-disk-fog::before,.react-disk-fog::after { animation:none; } }

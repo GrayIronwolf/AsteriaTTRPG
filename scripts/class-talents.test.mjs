@@ -78,33 +78,60 @@ test('passive BP limits, recovery and rest counters apply without replenishing u
   const counts={talentUsage:{a:{reset:'short-rest',count:2},b:{reset:'long-rest',count:2},c:{reset:'session',count:1}}};
   assert.equal(resetTalentRest(counts,'short').talentUsage.b.count,2);assert.equal(resetTalentRest(counts,'long').talentUsage.c.count,1);
 });
-test('React renders all tiers and classes together with rank actions and legacy owned talents',async()=>{
+test('React renders mirrored disks with all tier controls and existing owned rank actions',async()=>{
   const {createServer}=await import('vite'),React=await import('react'),{renderToStaticMarkup}=await import('react-dom/server');
   globalThis.window={ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:{entries},AsteriaFirebase:{},AsteriaInventory:{catalogEntries:()=>[]}};
   const server=await createServer({configFile:false,server:{middlewareMode:true}});
   try{
     const {TalentsTab}=await server.ssrLoadModule('/src/dashboards/ClassTalentTree.jsx');
     const html=renderToStaticMarkup(React.createElement(TalentsTab,{campaignId:'c',character:{...sheet('spellblade:mana-well',3),klass:'Spellblade / Cleric'},editable:false}));
-    assert.match(html,/<svg/);assert.match(html,/react-tree-ranks/);assert.match(html,/Mana Well, Rank 3, purchased/);assert.match(html,/Cleric/);assert.match(html,/Tier 5/);assert.match(html,/Fit to view/);
+    assert.match(html,/<svg/);assert.match(html,/react-tree-ranks/);assert.match(html,/Mana Well, Rank 3, purchased/);assert.match(html,/Cleric: Tier V/);assert.match(html,/orientation-top/);assert.match(html,/orientation-bottom/);assert.doesNotMatch(html,/Fit to view/);
     const data=await server.ssrLoadModule('/src/dashboards/characterWorkspaceData.js');assert.equal(data.unlockedClassTalents(sheet('bloodhunter:blood-shield',2))[0].rank,2);
   }finally{await server.close();delete globalThis.window;}
 });
 
-test('switching characters while a rank is highlighted does not retain stale talent state',async()=>{
+test('disks rotate and conceal tiers independently, retain rank selection, and survive character changes',async()=>{
   const {createServer}=await import('vite'),React=await import('react'),Renderer=await import('react-test-renderer');
   const originalObserver=globalThis.ResizeObserver;
-  globalThis.ResizeObserver=class {constructor(callback){this.callback=callback;}observe(){this.callback([{contentRect:{width:800,height:600}}]);}disconnect(){}};
+  globalThis.ResizeObserver=class {constructor(callback){this.callback=callback;}observe(){this.callback([{contentRect:{width:1000,height:600}}]);}disconnect(){}};
   const server=await createServer({configFile:false,server:{middlewareMode:true}});
   let view;
   try {
     const {TalentGraph}=await server.ssrLoadModule('/src/dashboards/TalentGraph.jsx');
-    const props=classes=>({catalog:buildTalentCatalog({classes},entries),character:{id:classes.join('/'),classes,level:50,tp:100},onSelect:()=>{}});
-    await Renderer.act(async()=>{view=Renderer.create(React.createElement(TalentGraph,props(['Bloodhunter'])),{createNodeMock:()=>({addEventListener(){},removeEventListener(){}})});});
-    await Renderer.act(async()=>{view.root.findByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).props.onPointerEnter();});
+    let selected;
+    const props=classes=>({catalog:buildTalentCatalog({classes},entries),character:{id:classes.join('/'),classes,level:20,tp:100},onSelect:value=>{selected=value;}});
+    const click=label=>Renderer.act(async()=>{view.root.findByProps({'aria-label':label}).props.onClick();});
+    const disk=name=>view.root.findByProps({'aria-label':`${name} talent disk`});
+    const ranks=name=>disk(name).findAll(node=>node.type==='button' && node.props['data-node-id']?.startsWith('rank:'));
+    await Renderer.act(async()=>{view=Renderer.create(React.createElement(TalentGraph,props(['Bloodhunter','Paladin'])),{createNodeMock:()=>({})});});
+    assert.match(disk('Paladin').props.className,/orientation-top/);
+    assert.match(disk('Bloodhunter').props.className,/orientation-bottom/);
+    await click('Paladin: Tier III');
+    await click('Bloodhunter: Tier IV');
+    assert.equal(disk('Paladin').props['data-tier'],3);assert.equal(disk('Bloodhunter').props['data-tier'],4);
+    assert.equal(ranks('Bloodhunter').length,0);assert.equal(ranks('Paladin').length,20);
+    const hidden=props(['Bloodhunter']).catalog.find(t=>t.tier===4).name;
+    await Renderer.act(async()=>{view.update(React.createElement(TalentGraph,{...props(['Bloodhunter','Paladin']),query:hidden}));});
+    assert.equal(view.root.findAll(node=>node.type==='button' && node.props['aria-label']?.includes(hidden)).length,0);
+    assert.equal(view.root.findByProps({'aria-label':'Matching unlocked talents'}).findAllByType('button').length,0);
+    await click('Bloodhunter: Tier I');
+    await click('Bloodhunter, Blood Rite, Rank 3, locked');
+    assert.equal(selected.talent.id,'bloodhunter:blood-rite');assert.equal(selected.rank,3);
+    assert.equal(view.root.findByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).props['aria-pressed'],true);
+    const original=props(['Bloodhunter','Paladin']);
+    const purchased=saveTalentRank(original.character,selected.talent,2,original.catalog);
+    await Renderer.act(async()=>{view.update(React.createElement(TalentGraph,{...original,character:purchased}));});
+    assert.match(view.root.findByProps({'data-node-id':'rank:bloodhunter:blood-rite:2'}).props['aria-label'],/purchased/);
+    assert.match(view.root.findByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).props['aria-label'],/available/);
+    assert.equal(disk('Paladin').props['data-tier'],3);
+    await Renderer.act(async()=>{view.root.findAllByType('button').find(b=>b.children.includes('Swap Positions')).props.onClick();});
+    assert.match(disk('Paladin').props.className,/orientation-bottom/);assert.equal(disk('Paladin').props['data-tier'],3);
     await Renderer.act(async()=>{view.update(React.createElement(TalentGraph,props(['Spellblade','Cleric'])));});
     assert.equal(view.root.findAllByProps({'data-node-id':'rank:bloodhunter:blood-rite:3'}).length,0);
     assert.equal(view.root.findAllByProps({'data-node-id':'class:spellblade'}).length,1);
     assert.equal(view.root.findAllByProps({'data-node-id':'class:cleric'}).length,1);
+    await Renderer.act(async()=>{view.update(React.createElement(TalentGraph,props(['Spellblade'])));});
+    assert.equal(view.root.findAllByType('section').length,1);assert.match(disk('Spellblade').props.className,/orientation-bottom/);
   } finally {
     if(view)await Renderer.act(async()=>view.unmount());
     await server.close();globalThis.ResizeObserver=originalObserver;
