@@ -68,6 +68,11 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     };
     const syncError=event=>{
       if(!active || (event.detail?.campaignId && event.detail.campaignId!==campaignId)) return;
+      // Background account discovery is not a failure of this dashboard's streams.
+      const scope=event.detail?.scope;
+      if(scope?.startsWith('campaign-membership') || scope==='campaign-load' || scope==='campaign-discovery-link') return;
+      if(scope && !event.detail?.campaignId && scope!=='custom-item-listener') return;
+      if(event.detail?.uid && event.detail.uid!==authUid) return;
       failed=true;
       setError(event.detail?.message || 'Firebase synchronization failed. Refresh to reconnect.');
       setLoading(false);
