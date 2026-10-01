@@ -3,10 +3,19 @@ import assert from 'node:assert/strict';
 import compendium from '../data/compendium.js';
 import {buildTalentCatalog} from '../src/state/talentModel.mjs';
 import {fitGraphCamera,graphBounds,graphEdgePath,talentGraph,zoomGraphCamera} from '../src/state/talentGraph.mjs';
-import {talentDiskLayout} from '../src/state/talentDisk.mjs';
+import {talentDiskAppearance,talentDiskLayout} from '../src/state/talentDisk.mjs';
 
 const catalog=buildTalentCatalog({classes:['Bloodhunter','Paladin']},compendium.entries);
 const allNodes=g=>[...g.classNodes,...g.tierNodes,...g.nodes,...g.rankNodes];
+test('disk colours and symbols come from canonical class pages with a safe theme fallback',()=>{
+  for(const name of ['Bloodhunter','Paladin','Artificer','Druid']) {
+    const entry=compendium.entries.find(row=>row.type==='class' && row.title===name);
+    assert.deepEqual(talentDiskAppearance(name.toUpperCase(),compendium.entries),{colour:entry.metadata.classColour,symbol:entry.metadata.symbol});
+  }
+  const custom=[{type:'class',title:'Future Class',metadata:{classColour:'#789abc',symbol:'FC'}}];
+  assert.deepEqual(talentDiskAppearance('future-class',custom),{colour:'#789abc',symbol:'FC'});
+  assert.equal(talentDiskAppearance('Unknown',custom).colour,undefined);
+});
 test('responsive disks keep canonical branches, independent rank lines and mirrored coordinates',()=>{
   for(const width of [260,320,390,800,1000,1240]) for(const tier of [1,2,3,4,5]) {
     const talents=catalog.filter(t=>t.className==='Bloodhunter' && t.tier===tier),first=talentDiskLayout(talents,width),seen=[];
