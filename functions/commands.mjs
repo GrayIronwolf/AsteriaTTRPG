@@ -1,4 +1,5 @@
 import { createInformationCommands } from './informationCommands.mjs';
+import { createCombatCommands } from './combatCommands.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
@@ -993,5 +994,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context),...createInformationCommands(context)};
+return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context)};
 }

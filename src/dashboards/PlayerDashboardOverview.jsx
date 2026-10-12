@@ -1,4 +1,5 @@
 import { talentRules } from '../state/talentMechanics.mjs';
+import { CombatPanel, useCombatPanel } from './CombatPanel.jsx';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { ConditionsPanel, EffectsSummary, RestRules } from './CharacterSystemsPanels.jsx';
 import { TalentDetails } from './ClassTalentTree.jsx';
@@ -171,27 +172,32 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   </Tooltip>;
 }
 
-function TalentSummary({ talents, onNavigate, style, campaignId, character, editable }) {
+function TalentSummary({ talents, onNavigate, style, campaignId, character, editable, combat }) {
   const [selected,setSelected]=useState(null);
-  return <DashboardPanel icon="talents" title="Class Talents" action={<button type="button" onClick={() => onNavigate('talents')}>Open Talent Tree</button>} className="react-overview-talents" style={style}>
-    {talents.length ? <div className="react-ability-grid">{talents.map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={()=>setSelected(talent)} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
+  return <DashboardPanel icon="talents" title="Class Talents" action={<button type="button" onClick={() => onNavigate('talents')}>Open Talent Tree</button>} className={`react-overview-talents ${combat?.selector==='talent'?'combat-selector-open':''}`} style={style}>
+    {combat?.selector==='talent'?<SelectorHeading combat={combat}/>:null}
+    {combat?.active?<div className="react-ability-grid">{combat.options.filter(option=>option.kind==='talent').map(option=><button className="combat-selection-card" key={option.id} onClick={()=>combat.select(option)}><b>{option.name}</b><small>{option.ap} AP · {costText(option.costs)}</small></button>)}{!combat.options.some(option=>option.kind==='talent')?<p>No unlocked active talents.</p>:null}</div>:talents.length ? <div className="react-ability-grid">{talents.map((talent, index) => <AbilityCard key={talent.id || talent.name || index} ability={talent} type="talent" onActivate={()=>setSelected(talent)} />)}</div> : <DashboardEmpty title="No Talents Unlocked" description="Spend Talent Points in the Class/Talent Tree to unlock talents." actionLabel="Open Talent Tree" onAction={() => onNavigate('talents')} />}
     {selected?<TalentDetails campaignId={campaignId} character={character} talent={selected} editable={editable} onClose={()=>setSelected(null)}/>:null}
   </DashboardPanel>;
 }
 
-function SpellSummary({ campaignId, character, spells, editable, busy, onNavigate, run, style }) {
+function SpellSummary({ campaignId, character, spells, editable, busy, onNavigate, run, style, combat }) {
   const elements = useMemo(() => [...new Set(spells.map(spell => record(spell).element || record(spell).magicType).filter(Boolean))], [spells]);
   const [filter, setFilter] = useState('All');
   const visible = filter === 'All' ? spells : spells.filter(spell => (record(spell).element || record(spell).magicType) === filter);
-  const cast = spell => run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
-  return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className="react-overview-spells" style={style}>
+  const cast = spell => combat?.active?combat.select(combat.options.find(row=>row.kind==='spell'&&row.name===spell.name)):run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
+  return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className={`react-overview-spells ${combat?.selector==='spell'?'combat-selector-open':''}`} style={style}>
+    {combat?.selector==='spell'?<SelectorHeading combat={combat}/>:null}
     {elements.length ? <div className="react-ability-filters" aria-label="Spell element filters">{['All', ...elements].map(element => <button className={filter === element ? 'active' : ''} aria-pressed={filter === element} key={element} onClick={() => setFilter(element)} type="button">{element}</button>)}</div> : null}
-    {visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={cast} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
+    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><button className="combat-selection-card" key={option.id} onClick={()=>combat.select(option)} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></button>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={cast} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
   </DashboardPanel>;
 }
 
-function SkillsSummary({ skills, onNavigate, style }) {
-  return <DashboardPanel icon="skills" title="Skills" compact className="react-overview-skills" style={style}>
+function SelectorHeading({combat}) {return <div className="combat-selector-close"><p>Select an owned action to preview. No costs are spent here.</p><button autoFocus onClick={()=>combat.setSelector('')}>Close · Esc</button></div>;}
+function SkillsSummary({ skills, onNavigate, style, combat }) {
+  const expanded=['skill','technique'].includes(combat?.selector);
+  return <DashboardPanel icon="skills" title={combat?.selector==='technique'?'Skill Techniques':'Skills'} compact className={`react-overview-skills ${expanded?'combat-selector-open':''}`} style={style}>
+    {expanded?<><SelectorHeading combat={combat}/><div className="react-dashboard-skill-grid">{combat.options.filter(option=>option.kind===combat.selector).map(option=><button className="combat-selection-card" key={option.id} onClick={()=>combat.select(option)}><b>{option.name}</b><small>{option.ap} AP · {costText(option.costs)}</small></button>)}{!combat.options.some(option=>option.kind===combat.selector)?<p>No learned techniques with defined rules are recorded.</p>:null}</div></>:null}
     {skills.length ? <div className="react-dashboard-skill-grid">{skills.slice(0, 8).map((skill, index) => { const entry = record(skill); return <button key={entry.id || entry.name || index} type="button" onClick={() => onNavigate('skills')}><AsteriaIcon name="skills" /><span><b>{entry.name || entry.title}</b><small>{entry.rankName || entry.rank || 'Novice'}</small></span></button>; })}</div> : <DashboardEmpty title="No Selected Skills" description="Starting skills selected in the Character Forge will appear here." actionLabel="Open Skills" onAction={() => onNavigate('skills')} />}
   </DashboardPanel>;
 }
@@ -252,6 +258,7 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
 
 export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, isGM=false, sessionEditable=editable, clock={}, onNavigate }) {
   const {message,busy,run}=useAsyncAction();
+  const combat=useCombatPanel(campaignId,character,clock.encounter,editable);
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
@@ -259,11 +266,12 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const visible = key => !preferences.hiddenPanels.includes(key);
   const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
   return <>
+    <CombatPanel combat={combat}/>
     <div className="react-player-overview-grid">
       {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
-      {visible('talents') ? <TalentSummary talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
-      {visible('spells') ? <SpellSummary campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
-      {visible('skills') ? <SkillsSummary skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
+      {visible('talents')||combat.selector==='talent' ? <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
+      {visible('spells')||combat.selector==='spell' ? <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('spells') }} /> : null}
+      {visible('skills')||['skill','technique'].includes(combat.selector) ? <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate} style={{ order:order('skills') }} /> : null}
       {visible('conditions') ? <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock} style={{ order:order('conditions') }} /> : null}
       <EffectsSummary character={character} clock={clock} style={{order:order('conditions')+4}}/>
       <SpecialDamagePanel character={character} style={{ order:order('conditions') + 1 }} />

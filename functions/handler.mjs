@@ -45,17 +45,24 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const receiptRef=db.doc(`campaigns/${campaignId}/actionReceipts/${uid}_${requestId}`);
     const [campaignSnapshot,characterSnapshot,receipt]=await Promise.all([transaction.get(campaignRef),transaction.get(characterRef),transaction.get(receiptRef)]);
     if(!campaignSnapshot.exists || !member(campaignSnapshot.data(),uid)) throw new Error('Campaign membership is required.');
-    if(!characterSnapshot.exists) throw new Error('Character not found.');
+    const combatAction=action==='combatCommand';
+    if(!combatAction&&!characterSnapshot.exists) throw new Error('Character not found.');
     const campaign=campaignSnapshot.data();
-    const character=characterSnapshot.data();
+    const character=characterSnapshot.data()||{};
     // Character ownership comes from Firestore, never a caller-supplied private copy.
     const linked=isLinkedCharacter(campaign,args[1],character,campaignId);
     const gmAccess=GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid) && linked;
     if(GM_ONLY_ACTIONS.has(action) && !gmAccess) throw new Error('Only the GM of this linked character can make this change.');
-    if(character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
+    if(!combatAction&&character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
     if(receipt.exists){
       if(receipt.data().action!==action || receipt.data().input!==JSON.stringify(args)) throw new Error('Request ID has already been used.');
       return receipt.data().result;
+    }
+    if(!combatAction&&['castCharacterSpell','useCharacterTalent','updateCharacterInventory','updateCampaignCharacterResource','requestCharacterRest','takeCampaignCharacterRest'].includes(action)) {
+      const encounterSnapshot=await transaction.get(db.doc(`campaigns/${campaignId}/systems/encounter`));
+      const encounter=encounterSnapshot.data()||{};
+      const combatInventory=action!=='updateCharacterInventory'||['use','equip','unequip','move-storage','quick'].includes(args[2]?.type);
+      if(combatInventory&&encounter.status==='active'&&(encounter.combatants||[]).some(row=>row.characterId===args[1])) throw new Error('Use the Combat Panel while participating in an encounter.');
     }
     for(const detail of args.slice(2)) if(detail && typeof detail==='object' && detail.expectedCoreRevision!==undefined) {
       if(!Number.isSafeInteger(detail.expectedCoreRevision) || detail.expectedCoreRevision!==Number(character.coreRevision || 0)) throw new Error('The character changed. Wait for live sync before trying again.');
