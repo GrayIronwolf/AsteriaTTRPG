@@ -99,10 +99,10 @@ export function useLearnedTalent(character,talent,selection={},clock={}) {
   if(previous?.encounterId && previous.encounterId===combatId && Number(encounter?.round)<previous.readyRound) throw new Error(`Available in round ${previous.readyRound}.`);
   if(!previous?.encounterId && now<Number(previous?.readyAt || 0)) throw new Error('This talent is cooling down.');
   if(choice?.id==='holy-restoration') restored.hp=2*Number(character.level || 0)+Math.min(5,Math.max(0,Math.floor(effectiveCharacteristicValue(character,'charisma',clock)/20)));
-  const next=applyResourceChanges(character,{costs,restore:{...restored,...(bpGain?{bp:bpGain}:{})},keepAlive:true});
+  const next=applyResourceChanges(character,{costs,restore:clock.deferEffects?{}:{...restored,...(bpGain?{bp:bpGain}:{})},keepAlive:true});
   next.talentUsage={...next.talentUsage,[talent.id]:{count:count+1,scope,reset:rules.reset,encounterId:combatId,readyRound:encounter?Number(encounter.round || 1)+Math.max(rules.cooldownRounds,Math.ceil(rules.cooldownMs/6000)):0,readyAt:now+Math.max(rules.cooldownMs,rules.cooldownRounds*6000),usedAt:now}};
   const durationMs=Math.max(rules.durationMs,rules.durationRounds*6000), sustained=durationMs || !/^(instant|none|n\/a|passive)$/i.test(rules.duration);
   const effect=sustained?{id:talent.id,talentId:talent.id,name:talent.name,rank,description:choice?.description || rules.effects,ac:choice?.id==='divine-guard'?2:rules.selfAC,encounterId:combatId,untilRound:choice?.id==='divine-guard'&&encounter?Number(encounter.round || 1)+1:encounter && durationMs?Number(encounter.round || 1)+Math.ceil(durationMs/6000):0,expiresAt:!encounter && durationMs?now+durationMs:0,ended:false,expired:false}:null;
-  if(effect) next.talentEffects=[...(next.talentEffects || []).filter(row=>row.id!==effect.id),effect];
+  if(effect&&!clock.deferEffects) next.talentEffects=[...(next.talentEffects || []).filter(row=>row.id!==effect.id),effect];
   return {character:next,costs,bpGain,restored,effect,rank};
 }

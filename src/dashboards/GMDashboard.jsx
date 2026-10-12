@@ -15,6 +15,7 @@ import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { encounterResourcePair, encounterSourceResources, encounterResourceKeys, encounterXP, customEncounterCreature } from '../state/encounterResourceModel.mjs';
+import { GMCombatPanel } from './CombatPanel.jsx';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
@@ -145,7 +146,7 @@ function EncounterResourceControl({ campaignId, entry, resource, disabled, onMes
   </div>;
 }
 
-function CampaignEncounter({ campaignId, characters, encounter }) {
+function CampaignEncounter({ campaignId, characters, encounter, combatState }) {
   const [search, setSearch] = useState('');
   const [custom,setCustom]=useState({name:'',hp:'',sp:'',mp:'',xpReward:'',ac:'',initiative:''});
   const [quantity, setQuantity] = useState('');
@@ -159,12 +160,14 @@ function CampaignEncounter({ campaignId, characters, encounter }) {
     const result = await firebaseService.saveEncounter(campaignId, next);
     setMessage(result?.ok ? 'Encounter synchronized.' : result?.error || 'Encounter could not be saved.');
     setBusy(false);
+    return result;
   };
   const ensurePlayers = combatants => {
     const existing = new Set(combatants.filter(entry => entry.kind === 'player').map(entry => entry.characterId));
     return [...combatants, ...Object.values(characters).filter(character => !existing.has(character.id)).map(character => ({ id:`player-${character.id}`, characterId:character.id, name:character.name || 'Character', kind:'player', initiative:Number(character.initiative || 10), defeated:false }))];
   };
-  const start = () => save({ ...state, status:'active', round:Math.max(1, Number(state.round || 1)), turnIndex:0, combatants:ensurePlayers(state.combatants || []) });
+  const command=async(operation,extra={})=>{setBusy(true);try{const result=await firebaseService.combatCommand(campaignId,'encounter',{operation,revision:Number(state.combat?.revision||0),...extra});setMessage(result?.ok?'Combat synchronized.':result?.error||'Combat change failed.');return result;}finally{setBusy(false);}};
+  const start = async () => {const result=await save({...state,combatants:ensurePlayers(state.combatants||[])});if(result?.ok&&(state.status!=='active'||state.combat?.version!==1))await command('start',{revision:result.revision});};
   const addEnemy = source => {
     if(!isManualNumber(quantity,{min:1,max:20}))return setMessage('Enter a whole creature quantity from 1 to 20.');
     const resources=encounterSourceResources(source);
@@ -174,19 +177,14 @@ function CampaignEncounter({ campaignId, characters, encounter }) {
   };
   const updateCombatant = (id, patch) => save({ ...state, combatants:(state.combatants || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry), enemies:(state.enemies || []).map(entry => entry.id === id ? { ...entry, ...patch } : entry) });
   const removeCombatant = id => save({ ...state, combatants:(state.combatants || []).filter(entry => entry.id !== id), enemies:(state.enemies || []).filter(entry => entry.id !== id), turnIndex:0 });
-  const sortInitiative = () => save({ ...state, combatants:[...(state.combatants || [])].sort((a,b) => Number(b.initiative || 0) - Number(a.initiative || 0)), turnIndex:0 });
-  const nextTurn = () => {
-    const count=(state.combatants || []).length;
-    if(!count) return;
-    const nextIndex=(Number(state.turnIndex || 0)+1)%count;
-    save({ ...state, turnIndex:nextIndex, round:nextIndex === 0 ? Number(state.round || 1)+1 : Number(state.round || 1) });
-  };
+  const nextTurn = () => command('next');
   return <Panel title="Campaign Encounters" eyebrow="Initiative & Encounter Tracker" className="react-encounter-panel" action={<StatusPill tone={state.status === 'active' ? 'success' : ''}>{state.status}</StatusPill>}>
-    <div className="react-encounter-toolbar"><button className="primary" disabled={busy} onClick={start}>{state.status === 'active' ? 'Refresh Players' : 'Start Encounter'}</button><button disabled={busy || !(state.combatants || []).length} onClick={sortInitiative}>Sort Initiative</button><button disabled={busy || state.status !== 'active'} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy} onClick={() => save({ ...state, status:'ended' })}>End</button><button disabled={busy} onClick={() => save({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] })}>Clear</button></div>
+    <div className="react-encounter-toolbar"><button disabled={busy} onClick={()=>save({...state,combatants:ensurePlayers(state.combatants||[])})}>Add linked players</button><button className="primary" disabled={busy} onClick={start}>{state.status === 'active' ? state.combat?.version===1?'Refresh Players':'Enable Combat Actions' : 'Roll Initiative & Start'}</button><button disabled={busy || state.status !== 'active'} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy} onClick={() => command('end')}>End</button><button disabled={busy} onClick={() => command('clear')}>Clear</button></div>
     <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{Object.keys(characters).length} players</StatusPill><span>{message}</span></div>
+    <GMCombatPanel campaignId={campaignId} encounter={state} characters={characters} combatState={combatState}/>
     <div className="react-encounter-builder">
       <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<ManualNumberInput min="1" max="20" value={quantity} onChange={event => setQuantity(event.target.value)} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>
-      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div className="react-encounter-combatant"><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small></div><EncounterInitiativeInput entry={entry} disabled={busy} onCommit={initiative=>updateCombatant(entry.id,{initiative})}/>{entry.kind === 'enemy' ? <button title="Toggle defeated" disabled={busy} onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} disabled={busy} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
+      <section><h3>Initiative Order</h3><div className="react-initiative-list">{(state.combatants || []).map((entry,index) => <article key={entry.id} className={`${index === Number(state.turnIndex || 0) && state.status === 'active' ? 'active' : ''} ${entry.defeated ? 'defeated' : ''}`}><span>{index + 1}</span><div className="react-encounter-combatant"><b>{entry.name}</b><small>{entry.kind === 'player' ? 'Player Character' : entry.type || 'Enemy'}</small></div><EncounterInitiativeInput entry={entry} disabled onCommit={initiative=>updateCombatant(entry.id,{initiative})}/>{entry.kind === 'enemy' ? <button title="Toggle defeated" disabled={busy} onClick={() => updateCombatant(entry.id, { defeated:!entry.defeated })}>{entry.defeated ? 'Restore' : 'Defeat'}</button> : null}<button aria-label={`Remove ${entry.name}`} disabled={busy} onClick={() => removeCombatant(entry.id)}>X</button></article>)}{!(state.combatants || []).length ? <EmptyState title="No initiative entries">Start the encounter to add every linked character.</EmptyState> : null}</div></section>
       <section className="react-creature-resources"><h3>Creature Resources</h3>{(state.enemies || []).map(entry=><article key={entry.id}><header><b>{entry.name}</b><StatusPill>{entry.defeated?'Defeated':'In encounter'}</StatusPill></header><p>XP Reward: {encounterXP(entry)===null?'Not configured':encounterXP(entry).toLocaleString()}</p>{entry.ac!==undefined?<small>AC {entry.ac}</small>:null}<div className="react-encounter-resources">{encounterResourceKeys(entry).map(resource=><EncounterResourceControl key={resource} campaignId={campaignId} entry={entry} resource={resource} disabled={busy} onMessage={setMessage}/>)}</div></article>)}{!(state.enemies || []).length?<EmptyState title="No creatures in this encounter"/>:null}</section>
       <section><h3>Create Custom Creature</h3><div className="react-form-grid">{[['name','Name'],['hp','HP'],['sp','SP (optional)'],['mp','MP (optional)'],['xpReward','XP Reward'],['ac','AC (optional)'],['initiative','Initiative (optional)']].map(([key,label])=><label key={key}>{label}{key==='name'?<input maxLength={120} value={custom[key]} onChange={e=>setCustom(c=>({...c,[key]:e.target.value}))}/>:<ManualNumberInput min="0" value={custom[key]} onChange={e=>setCustom(c=>({...c,[key]:e.target.value}))}/>}</label>)}</div><button disabled={busy} className="primary" onClick={()=>{try{const entry=customEncounterCreature(custom,`enemy-${crypto.randomUUID()}`);save({...state,enemies:[...(state.enemies||[]),entry],combatants:[...(state.combatants||[]),entry]});}catch(error){setMessage(error.message);}}}>Add to Encounter</button><p className="react-help">This creature belongs to this encounter only.</p></section>
     </div>
@@ -483,7 +481,7 @@ export function GMDashboard({ campaignId }) {
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'main' ? <div className="react-gm-main-grid">
-      <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/><CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
+      <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/><CampaignEncounter campaignId={campaignId} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState} />
       <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
       <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
     </div> : null}

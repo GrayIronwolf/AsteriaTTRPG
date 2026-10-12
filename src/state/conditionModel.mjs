@@ -29,8 +29,10 @@ export function makeCondition(input,uid,clock={},id='condition') {
   if(!['refresh','replace','stack','strongest'].includes(row.stacking || 'refresh')) throw new Error('Choose a stacking rule.');
   const now=clock.now ?? Date.now(),stackGroup=String(row.stackGroup || name.toLowerCase()).slice(0,100);
   const effects=effectRows(row.effects);
+  const rank=row.rank===undefined?null:Number(row.rank);
+  if(rank!==null&&(!Number.isSafeInteger(rank)||rank<1||rank>100))throw new Error('Enter the condition’s source-defined positive rank.');
   if(effects.length>20) throw new Error('A condition supports at most 20 mechanical effects.');
-  return {id,name,description:String(row.description || '').slice(0,4000),source:String(row.source || 'GM').slice(0,200),appliedBy:uid,appliedAt:now,active:true,
+  return {id,name,description:String(row.description || '').slice(0,4000),source:String(row.source || 'GM').slice(0,200),appliedBy:uid,appliedAt:now,active:true,...(rank!==null?{rank}:{}),
     duration:timed?{unit:duration.unit,value:amount}:{unit:duration.unit},stacking:row.stacking || 'refresh',stackGroup,allowPlayerRemoval:row.allowPlayerRemoval===true,
     effects:effects.map((effect,index)=>({...validateEffectInput(effect),id:`${id}:effect:${index}`,name,sourceType:'condition',sourceId:id,stacking:row.stacking || 'refresh',stackGroup:`${stackGroup}:${effect.target}`})),
     ...(duration.unit==='rounds'?{encounterId:clock.encounter.combatId || 'legacy-combat',untilRound:Number(clock.encounter.round || 1)+amount}:{}),

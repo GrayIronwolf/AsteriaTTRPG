@@ -54,6 +54,7 @@ export const firebaseService = {
   createMagicReward: (campaignId, characterId, magicType, metadata) => requireMethod('createMagicElementReward')(campaignId, characterId, magicType, metadata),
   respondMagicReward: (campaignId, characterId, eventId, accepted) => requireMethod('respondMagicElementReward')(campaignId, characterId, eventId, accepted),
   saveEncounter: (campaignId, encounter) => requireMethod('saveCampaignEncounter')(campaignId, encounter),
+  combatCommand: (campaignId, actorId, input) => requireMethod('combatCommand')(campaignId, actorId, input),
   updateEncounterResource: (campaignId, combatantId, resource, current, maximum) => requireMethod('updateCampaignEncounterResource')(campaignId, combatantId, resource, current, maximum),
   saveInformation: (...args) => requireMethod('saveCampaignInformation')(...args),
   markNotificationRead: (...args) => requireMethod('markNotificationRead')(...args),

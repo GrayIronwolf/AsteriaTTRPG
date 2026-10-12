@@ -16,7 +16,7 @@ import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageMo
 import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
-import { encounterResourcePair, preserveEncounterResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
+import { encounterResourcePair, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 
 const productionFirebaseConfig = {
   apiKey: 'AIzaSyBCFapadl9W4WCouRsKuMPWOZPHQuNjea0',
@@ -1342,26 +1342,9 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  combatCommand: (...args) => callTrustedAction('combatCommand', args),
   saveCampaignEncounter: async function(campaignId, encounter={}){
-    if(!db || !currentUser || !campaignId) return { ok:false };
-    try{
-      const encounterRef=doc(db, 'campaigns', campaignId, 'systems', 'encounter');
-      await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        await requireCampaignGM(transaction,campaignId);
-        const snapshot=await transaction.get(encounterRef);
-        const persisted=snapshot.exists()?snapshot.data():{};
-        const next=structuredCloneSafe(encounter);
-        next.combatId=next.status==='active' ? (persisted.status==='active' && persisted.combatId ? persisted.combatId : `combat-${Date.now()}-${Math.random().toString(36).slice(2,8)}`) : persisted.combatId || '';
-        next.combatants=preserveEncounterResources(next.combatants,persisted.combatants);
-        next.enemies=preserveEncounterResources(next.enemies,persisted.enemies);
-        transaction.set(encounterRef,Object.assign({},cleanData(next),{campaignId,updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
-      });
-      return { ok:true };
-    }catch(error){
-      reportSyncError('campaign-encounter-save', error, { campaignId });
-      return { ok:false, error:error.message || String(error) };
-    }
+    return callTrustedAction('combatCommand',[campaignId,'encounter',{operation:'save',encounter,revision:Number(encounter.combat?.revision||0)}]);
   },
   updateCampaignEncounterResource: async function(campaignId,combatantId,resource,current,maximum){
     if(!db || !currentUser || !campaignId || !combatantId) return {ok:false};
