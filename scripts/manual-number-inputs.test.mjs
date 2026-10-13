@@ -117,6 +117,13 @@ test('saved initiative stays visible; clearing does not write zero, negative ini
   view.tree.props.onBlur();view.render();assert.equal(view.tree.props.value,'12');assert.equal(writes.length,0);
   view.tree.props.onChange({target:{value:'-2'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[-2]);
 });
+test('saved zero initiative remains visible while an explicitly unrolled participant starts blank',()=>{
+  const writes=[];
+  assert.equal(mount(modules.EncounterInitiativeInput,{entry:{id:'old',initiative:0},onCommit:value=>writes.push(value)}).tree.props.value,'0');
+  const view=mount(modules.EncounterInitiativeInput,{entry:{id:'new',initiative:0,initiativeSet:false},onCommit:value=>writes.push(value)});
+  assert.equal(view.tree.props.value,'');view.tree.props.onBlur();assert.equal(writes.length,0);
+  view.tree.props.onChange({target:{value:'0'}});view.render();view.tree.props.onBlur();assert.deepEqual(writes,[0]);
+});
 test('player item transfer requires an explicit quantity and sends a numeric amount',async()=>{
   const writes=[];window.AsteriaFirebase.createLiveItemRequest=async(...args)=>{writes.push(args);return {ok:true};};
   const view=mount(modules.SendPlayerItemModal,{campaignId:'c',character:{id:'a'},target:{id:'b',name:'B'},item:{id:'i',name:'Potion',qty:5},editable:true,onClose:()=>{}});

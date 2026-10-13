@@ -116,7 +116,7 @@ function encounterSources() {
 }
 
 function EncounterInitiativeInput({ entry, disabled, onCommit }) {
-  const displayed=entry.initiativeSet||entry.initiativeRoll?String(Number(entry.initiative??0)):'';
+  const displayed=entry.initiativeSet===false&&!entry.initiativeRoll?'':entry.initiative===undefined||entry.initiative===null?'':String(Number(entry.initiative));
   const [value,setValue]=useState(displayed);
   useEffect(()=>setValue(displayed),[entry.id,displayed]);
   const commit=()=>{

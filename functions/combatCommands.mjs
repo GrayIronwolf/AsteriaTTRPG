@@ -197,6 +197,7 @@ export function createCombatCommands(context) {
         encounter.combatants=nextRows;
         for(const row of nextRows)if(!oldIds.has(row.id)){
           if(encounter.status==='active'&&!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
+          if(row.initiativeSet===undefined&&!row.initiativeRoll)row.initiativeSet=false;
           setState(row.id,{ap:0,bonus:false,turns:0});
         }
         if(encounter.status==='active'){
