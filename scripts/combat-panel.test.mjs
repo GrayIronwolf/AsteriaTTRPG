@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {executeAction} from '../functions/handler.mjs';
-import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck} from '../src/state/combatRules.mjs';
+import {tierBonus,spellAP,rollD20,checkResult,attackResult,counterspellResult,feedback,deathSave,changeCombatHP,mixedDamage,combatOptions,skillCheck,combatActive,currentCombatant} from '../src/state/combatRules.mjs';
 import compendium from '../data/compendium.js';
 
 const sheet=(id,ownerUid,patch={})=>({id,ownerUid,sourceCharacterId:id,sharedCampaignId:'c',name:id,klass:'Warrior',hp:[100,100],sp:[100,100],mp:[100,100],characteristics:{agility:20,strength:40,wisdom:20},skills:[{name:'Athletics',rank:3},{name:'Dodging',rank:3}],inventory:[],...patch});
@@ -110,4 +110,40 @@ test('late arrivals preserve the current turn and ending preserves damage and Do
   assert.equal((await h.command('gm','encounter','save',{encounter:{combatants}})).ok,true);assert.equal(h.encounter().combatants[h.encounter().turnIndex].id,current);assert.equal(h.encounter().combat.participants.late.ap,0);
   assert.equal((await h.command('gm','player-a','correct',{resource:'hp',amount:100,damage:true,reason:'Confirmed combat damage'})).ok,true);
   assert.equal((await h.command('gm','encounter','end')).ok,true);assert.equal(h.character('a').hp[0],0);assert.equal(h.character('a').downed.failures,0);assert.deepEqual(h.encounter().combat.participants,{});
+});
+
+test('encounter setup stays inactive, manual initiative survives Start Combat, and repeated starts are rejected',async()=>{
+  const h=database();
+  assert.equal((await h.command('gm','encounter','save',{encounter:{status:'active',combatants:[{id:'player-a',characterId:'a'},{id:'player-b',characterId:'b'}]}})).ok,true);
+  assert.equal(h.encounter().status,'ready');assert.equal(combatActive(h.encounter(),'a'),false);assert.equal(currentCombatant(h.encounter()),undefined);
+  await h.command('gm','encounter','save',{encounter:{combatants:h.encounter().combatants.map(row=>({...row,initiative:row.id==='player-a'?31:12,initiativeSet:true}))}});
+  assert.equal((await h.command('gm','encounter','start')).ok,true);
+  assert.equal(currentCombatant(h.encounter()).id,'player-a');assert.equal(currentCombatant(h.encounter()).initiative,31);
+  assert.equal(combatActive(h.encounter(),'a'),true);assert.equal(combatActive(h.encounter(),'b'),true);assert.equal(combatActive(h.encounter(),'missing'),false);assert.equal(combatActive(h.encounter(),undefined),false);
+  const before=structuredClone(h.encounter());assert.match((await h.command('gm','encounter','start')).error,/already active/);assert.deepEqual(h.encounter(),before);
+});
+test('Player End Turn signals the GM, preserves held AP and preparation, and prevents further ordinary actions',async()=>{
+  const h=database();await h.setup();const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  await h.command(uid,actor.id,'prepare',{optionId:'basic:dash',trigger:'The gate opens',response:'Move through the gate'});
+  const before=structuredClone(h.encounter().combat.participants[actor.id]);
+  assert.equal((await h.command(uid,actor.id,'end-turn')).ok,true);
+  const after=h.encounter().combat.participants[actor.id];assert.equal(after.turnComplete,true);assert.equal(after.ap,before.ap);assert.equal(after.bonus,before.bonus);assert.deepEqual(after.prepared,before.prepared);assert.equal(currentCombatant(h.encounter()).id,actor.id);
+  assert.match((await h.command(uid,actor.id,'declare',{optionId:'basic:dash'})).error,/completed/);
+  assert.match((await h.command(uid,actor.id,'end-turn')).error,/already complete/);
+  assert.equal((await h.command('gm','encounter','next')).ok,true);assert.notEqual(currentCombatant(h.encounter()).id,actor.id);assert.equal(h.encounter().combat.participants[actor.id].ap,before.ap);assert.equal(h.encounter().combat.participants[currentCombatant(h.encounter()).id].turnComplete,false);
+});
+test('End Combat closes a begun casting reaction window and preparations, stops timers, and preserves committed MP',async()=>{
+  const h=database();h.store.set('campaigns/c/characters/a',sheet('a','alice',{spells:[{name:'Heal — Weak',rank:'Weak'}]}));await h.setup();if(currentCombatant(h.encounter()).id!=='player-a')await h.command('gm','encounter','next');
+  await h.command('alice','player-a','prepare',{optionId:'basic:dash',trigger:'The gate opens',response:'Move through the gate'});
+  const spell=combatOptions(h.character('a'),compendium.entries).find(row=>row.kind==='spell');
+  await h.command('alice','player-a','declare',{optionId:spell.id,targetIds:['player-a']});
+  assert.match((await h.command('alice','player-a','end-turn')).error,/pending/);
+  assert.equal((await h.command('gm','player-a','approve',{approval:{checkType:'none',castingMethod:'mancer',rankEligible:true,feasible:true}})).ok,true);
+  h.encounter().turnTimer={enabled:true,endsAt:Date.now()+30000};h.encounter().timer={enabled:true,endsAt:Date.now()+30000};
+  const mp=h.character('a').mp[0];assert.equal(h.encounter().combat.pending.reactionWindow,true);
+  assert.equal((await h.command('gm','encounter','end')).ok,true);
+  assert.equal(h.encounter().status,'ended');assert.equal(h.encounter().turnIndex,null);assert.equal(currentCombatant(h.encounter()),undefined);assert.equal(combatActive(h.encounter(),'a'),false);assert.equal(h.encounter().combat.pending,null);assert.deepEqual(h.encounter().combat.participants,{});
+  assert.equal(h.encounter().turnTimer.enabled,false);assert.equal(h.encounter().timer.endsAt,null);assert.equal(h.character('a').mp[0],mp);
+  const privateCombat=h.store.get('campaigns/c/systems/gmWorkspace').combatState;assert.equal(privateCombat.pending,null);assert.deepEqual(privateCombat.preparations,{});
+  assert.match((await h.command('gm','encounter','end')).error,/not active/);assert.match((await h.command('alice','player-a','declare',{optionId:spell.id})).error,/not active/);
 });

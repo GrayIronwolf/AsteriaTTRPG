@@ -12,9 +12,9 @@ export const SPELL_SKILL_ACCESS=['Novice','Apprentice','Journeyman','Adept','Exp
 const copy=value=>JSON.parse(JSON.stringify(value));
 export const rows=value=>Array.isArray(value)?value.map(row=>typeof row==='string'?{name:row}:row):Object.entries(value||{}).map(([name,row])=>typeof row==='object'?{name,...row}:{name,rank:row});
 export const tierBonus=value=>Math.min(4,Math.max(0,Math.floor(Math.min(100,Number(value)||0)/20)));
-export const currentCombatant=encounter=>(encounter?.combatants||[])[Number(encounter?.turnIndex||0)];
-export const participantFor=(encounter,characterId)=>(encounter?.combatants||[]).find(row=>row.characterId===characterId);
-export const combatActive=(encounter,characterId)=>encounter?.status==='active'&&Boolean(participantFor(encounter,characterId));
+export const currentCombatant=encounter=>encounter?.status==='active'&&encounter.turnIndex!==null?(encounter.combatants||[])[Number(encounter.turnIndex||0)]:undefined;
+export const participantFor=(encounter,characterId)=>characterId?(encounter?.combatants||[]).find(row=>row.characterId===characterId&&row.active!==false):undefined;
+export const combatActive=(encounter,characterId)=>encounter?.status==='active'&&encounter.combat?.version===1&&Boolean(participantFor(encounter,characterId));
 export const apState=(encounter,id)=>({ap:0,bonus:false,turns:0,...encounter?.combat?.participants?.[id]});
 export const spellAP=rank=>{const index=SPELL_RANKS.findIndex(row=>slug(row)===slug(rank));if(index<0)throw new Error('Spell rank is not recorded.');return index<4?1:index<6?2:3;};
 export function combatRestriction(character,clock={}) {
@@ -135,6 +135,7 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(!reaction&&currentCombatant(encounter)?.id!==actorId)return 'Wait for your turn.';
   if(reaction&&!encounter.combat?.pending?.reactionWindow)return 'No eligible reaction window.';
   const state=apState(encounter,actorId);
+  if(!reaction&&state.turnComplete)return 'Turn complete. Waiting for the GM to advance.';
   if(option.key==='stand'&&!activeConditions(character,{encounter}).some(row=>/prone/i.test(row.name)))return 'Not prone.';
   if(option.key==='escape'&&!state.grappledBy)return 'Not grappled.';
   if(option.key==='drag'&&!state.grappleTarget)return 'No established hold.';
