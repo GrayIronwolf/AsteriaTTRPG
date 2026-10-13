@@ -44,3 +44,43 @@
 .combat-selector-close{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}
 .combat-selector-open .react-ability-grid,.combat-selector-open .react-dashboard-skill-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 @media(max-width:600px){.combat-header{gap:.4rem}.combat-badge>small{font-size:.54rem;letter-spacing:.04em}.combat-badge strong{font-size:1.35rem}.combat-actions{grid-template-columns:repeat(2,minmax(0,1fr));max-height:320px}.combat-action-tabs button{flex-basis:28%;font-size:.65rem}.combat-source-buttons button{flex-basis:42%}.combat-preview,.combat-gm-review{padding:.7rem}.combat-selector-open{inset:3vh 3vw;max-height:94vh}.combat-source-facts{grid-template-columns:80px 1fr}}
+
+.combat-mode-layout{--combat-sidebar-width:clamp(260px,23vw,310px);display:grid;grid-template-columns:0px minmax(0,1fr);column-gap:0;align-items:start;transition:grid-template-columns 300ms ease,column-gap 300ms ease;min-width:0}
+.combat-mode-layout.is-combat-mode{grid-template-columns:var(--combat-sidebar-width) minmax(0,1fr);column-gap:12px}
+.combat-dashboard-main{grid-column:2;min-width:0;container:combat-dashboard / inline-size}
+.combat-sidebar-slot{grid-column:1;grid-row:1;align-self:stretch;min-width:0;overflow:clip}
+.combat-sidebar{position:sticky;top:12px;width:var(--combat-sidebar-width);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;transform:translateX(-100%);opacity:0;transition:transform 300ms ease,opacity 300ms ease}
+.is-combat-mode .combat-sidebar{transform:translateX(0);opacity:1;animation:combat-sidebar-enter 300ms ease}
+.combat-sidebar .combat-panel{margin:0;padding:12px;min-width:0}
+.combat-sidebar .react-panel-header{flex-wrap:wrap}
+.combat-sidebar .combat-header{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin:.9rem 0}
+.combat-sidebar .combat-badge>div{max-width:82px}
+.combat-sidebar .combat-badge>small{font-size:.6rem;letter-spacing:.04em}
+.combat-sidebar .combat-turn-summary{justify-content:flex-start;gap:.5rem;font-size:.78rem}
+.combat-sidebar .combat-actions{grid-template-columns:minmax(0,1fr);max-height:none;overflow:visible;padding:0}
+.combat-sidebar .combat-action-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem}
+.combat-sidebar .combat-action-tabs button:last-child{grid-column:1 / -1}
+.combat-sidebar .combat-source-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.combat-sidebar .react-form-grid{grid-template-columns:minmax(0,1fr)}
+.combat-sidebar .combat-preview,.combat-sidebar .combat-pending,.combat-sidebar .combat-reactions{padding:.65rem;overflow-wrap:anywhere}
+.combat-sidebar .combat-preview-title{flex-wrap:wrap;gap:.5rem}
+.combat-sidebar select,.combat-sidebar input,.combat-sidebar textarea,.combat-sidebar button{max-width:100%;min-width:0}
+.combat-end-turn{display:grid;gap:.5rem;padding-top:1rem;margin-top:1rem;border-top:1px solid var(--asteria-panel-border,#435c76)}
+.combat-end-turn button{min-height:44px;width:100%}
+.combat-end-turn small{font-size:.72rem;line-height:1.4;color:var(--asteria-text-secondary,#afc1ce)}
+.is-combat-mode .combat-selector-open{position:relative!important;inset:auto;grid-column:1 / -1;max-height:75dvh;z-index:1;box-shadow:0 8px 30px #0004!important}
+.combat-mobile-tab,.combat-drawer-close,.combat-drawer-backdrop{display:none}
+@keyframes combat-sidebar-enter{from{transform:translateX(-100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@container combat-dashboard (max-width:900px){.is-combat-mode .react-player-overview-grid>.react-overview-armour,.is-combat-mode .react-player-overview-grid>.react-overview-weapons,.is-combat-mode .react-player-overview-grid>.react-overview-quick{grid-column:1 / -1}}
+@media(max-width:900px){
+  .combat-mode-layout,.combat-mode-layout.is-combat-mode{grid-template-columns:0px minmax(0,1fr);column-gap:0}
+  .combat-sidebar-slot{overflow:visible}
+  .combat-mobile-tab{display:block;position:fixed;left:0;top:45%;z-index:1000;writing-mode:vertical-rl;padding:14px 8px;border-radius:0 6px 6px 0;border:1px solid var(--asteria-dashboard-primary,#d0ad68);background:var(--asteria-panel-background,#111c27);min-height:80px}
+  .combat-sidebar{position:fixed;inset:0 auto 0 0;width:min(320px,calc(100vw - 32px));max-height:100dvh;padding:10px;padding-top:max(10px,env(safe-area-inset-top));box-sizing:border-box;z-index:1100;background:var(--asteria-panel-background,#111c27);visibility:hidden;transform:translateX(-100%);opacity:0;animation:none!important;transition:transform 300ms ease,opacity 300ms ease,visibility 0s linear 300ms}
+  .is-combat-mode .combat-sidebar{transform:translateX(-100%);opacity:0}
+  .is-combat-mode.combat-drawer-open .combat-sidebar{transform:translateX(0);opacity:1;visibility:visible;transition-delay:0s}
+  .combat-drawer-close{display:block;width:100%;min-height:44px;margin-bottom:10px}
+  .combat-drawer-open .combat-drawer-backdrop{display:block;position:fixed;inset:0;z-index:1090;border:0;border-radius:0;background:#0009}
+  .combat-drawer-open .combat-mobile-tab{visibility:hidden}
+}
+@media(prefers-reduced-motion:reduce){.combat-mode-layout,.combat-sidebar{transition:none;animation:none!important}}

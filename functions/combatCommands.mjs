@@ -83,7 +83,7 @@ export function createCombatCommands(context) {
       const startTurn=()=>{
         const current=currentCombatant(encounter);if(!current)return;
         const previous=state(current.id),turns=(previous.turns||0)+1;
-        setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false});
+        setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false});
         delete privateState.preparations[current.id];
         conditionBoundary(current.id,'start');
         let character=get(current.id);
@@ -192,11 +192,12 @@ export function createCombatCommands(context) {
       if(input.operation==='save'){
         noPending();const requested=input.encounter||{};
         const oldCurrent=currentCombatant(encounter)?.id,oldIds=new Set(encounter.combatants.map(row=>row.id));
-        const nextRows=(requested.combatants||[]).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);return old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};});
+        const nextRows=(requested.combatants||[]).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
         if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
         encounter.combatants=nextRows;
         for(const row of nextRows)if(!oldIds.has(row.id)){
-          const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;
+          if(encounter.status==='active'&&!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}
+          if(row.initiativeSet===undefined&&!row.initiativeRoll)row.initiativeSet=false;
           setState(row.id,{ap:0,bonus:false,turns:0});
         }
         if(encounter.status==='active'){
@@ -205,20 +206,32 @@ export function createCombatCommands(context) {
           encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===oldCurrent);
         }
         encounter.enemies=encounter.combatants.filter(row=>row.kind!=='player').map(copy);
+        if(encounter.status==='ended'&&requested.status==='ready')encounter.status='ready';
         log('GM updated encounter participants.');
       }else if(input.operation==='start'){
         noPending();if(encounter.status==='active'&&encounter.combat?.version===1)throw new Error('The encounter is already active.');
         if(!encounter.combatants.length)throw new Error('Add participants first.');
-        const continuing=encounter.status==='active';
-        encounter.status='active';if(!continuing){encounter.round=1;encounter.turnIndex=0;}encounter.combatId=continuing&&encounter.combatId?encounter.combatId:context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
-        for(const row of encounter.combatants){if(!continuing){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0});}
-        if(!continuing)encounter.combatants.sort(initiativeOrder);startTurn();
+        if(!['ready','ended','active'].includes(encounter.status))throw new Error('Prepare the encounter before starting combat.');
+        encounter.status='active';encounter.round=1;encounter.turnIndex=0;encounter.combatId=context.requestId;encounter.combat.participants={};encounter.combat.firstAid={};encounter.combat.version=1;
+        for(const row of encounter.combatants){if(!row.initiativeSet){const result=initiativeResult(get(row.id),roll(),roll(),{now,encounter});row.initiative=result.total;row.initiativeRoll=result;}setState(row.id,{ap:0,bonus:false,turns:0,turnComplete:false});}
+        encounter.combatants.sort(initiativeOrder);startTurn();
+      }else if(input.operation==='end-turn'){
+        requireActive();controlled();noPending();
+        if(currentCombatant(encounter)?.id!==actorId)throw new Error('Only the current participant can end their turn.');
+        if(state(actorId).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');
+        if(state(actorId).turnComplete)throw new Error('This turn is already complete.');
+        setState(actorId,{turnComplete:true});log(`${entry(actorId).name} ends their turn; unused AP held for reactions. Waiting for the GM to advance.`);
       }else if(input.operation==='next'){
         requireActive();noPending();const current=currentCombatant(encounter);if(state(current.id).pendingDeathSave)throw new Error('Resolve the pending death save before ending this turn.');conditionBoundary(current.id,'end');
         encounter.turnIndex=(encounter.turnIndex+1)%encounter.combatants.length;if(encounter.turnIndex===0)encounter.round++;startTurn();
       }else if(input.operation==='end'||input.operation==='clear'){
-        noPending();for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
-        encounter.status=input.operation==='end'?'ended':'ready';encounter.combat.participants={};if(input.operation==='clear'){encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;}log('Combat ended; remaining resources and conditions retained.');
+        if(input.operation==='end')requireActive();
+        if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
+        privateState.pending=null;privateState.preparations={};
+        for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
+        encounter.status=input.operation==='end'?'ended':'ready';encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
+        for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
+        if(input.operation==='clear'){encounter.combatants=[];encounter.enemies=[];encounter.turnIndex=0;encounter.round=1;}log('Combat ended; remaining resources and conditions retained.');
       }else if(input.operation==='correct'){
         const reason=text(input.reason);if(!reason)throw new Error('A GM correction needs a recorded reason.');
         const id=input.targetId||actorId,character=get(id);
@@ -239,7 +252,7 @@ export function createCombatCommands(context) {
         const option=findOption(actorId,input.optionId),s=state(actorId);
         if(input.operation==='ambush'){
           if(encounter.status==='active'||s.ambushUsed||!input.approval?.feasible||!input.approval?.unnoticed||option.key!=='attack')throw new Error('An opening ambush requires GM approval, an unnoticed attacker and one attack before initiative.');
-        }else if(currentCombatant(encounter)?.id!==actorId)throw new Error('Ordinary actions and preparation are available only on your own turn.');
+        }else if(currentCombatant(encounter)?.id!==actorId||s.turnComplete)throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
         if(combatRestriction(get(actorId),{now,encounter}))throw new Error('This participant cannot act.');
         const p=makePending(actorId,option,input);validateTargets(p);
         if(input.operation==='prepare'){

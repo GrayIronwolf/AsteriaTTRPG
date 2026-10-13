@@ -1,5 +1,4 @@
 import { talentRules } from '../state/talentMechanics.mjs';
-import { CombatPanel, useCombatPanel } from './CombatPanel.jsx';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { ConditionsPanel, EffectsSummary, RestRules } from './CharacterSystemsPanels.jsx';
 import { TalentDetails } from './ClassTalentTree.jsx';
@@ -256,9 +255,8 @@ function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
   </div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, isGM=false, sessionEditable=editable, clock={}, onNavigate }) {
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
   const {message,busy,run}=useAsyncAction();
-  const combat=useCombatPanel(campaignId,character,clock.encounter,editable);
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
@@ -266,7 +264,6 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const visible = key => !preferences.hiddenPanels.includes(key);
   const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
   return <>
-    <CombatPanel combat={combat}/>
     <div className="react-player-overview-grid">
       {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
       {visible('talents')||combat.selector==='talent' ? <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
