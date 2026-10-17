@@ -4,7 +4,6 @@
   const hiddenUtilitySelector = '.test-logins,.offline-logins';
   let setViewHomeWrapped = false;
   let homeRouting = false;
-  let mobileNavReturnFocus = null;
   let settingsReturnFocus = null;
 
   function byId(id){ return document.getElementById(id); }
@@ -24,63 +23,6 @@
     return Boolean(session.uid || session.email || ['account', 'player', 'gm'].includes(session.role));
   }
 
-  function mobileNavigationIsAvailable(){
-    return window.matchMedia?.('(max-width: 900px)').matches;
-  }
-
-  function setMobileNavigation(open, restoreFocus = true){
-    const toggle = byId('mobileNavToggle');
-    const navigation = byId('globalNavigation');
-    if(!toggle || !navigation) return;
-    const shouldOpen = Boolean(open && mobileNavigationIsAvailable());
-    if(shouldOpen) mobileNavReturnFocus = document.activeElement;
-    document.body.classList.toggle('mobile-nav-open', shouldOpen);
-    toggle.setAttribute('aria-expanded', String(shouldOpen));
-    toggle.setAttribute('aria-label', shouldOpen ? 'Close main navigation' : 'Open main navigation');
-    navigation.setAttribute('aria-hidden', String(mobileNavigationIsAvailable() && !shouldOpen));
-    navigation.inert = mobileNavigationIsAvailable() && !shouldOpen;
-    if(shouldOpen){
-      requestAnimationFrame(() => navigation.querySelector('button, a, [tabindex]:not([tabindex="-1"])')?.focus());
-    } else if(restoreFocus && mobileNavReturnFocus){
-      mobileNavReturnFocus.focus?.();
-      mobileNavReturnFocus = null;
-    }
-  }
-
-  function bindMobileNavigation(){
-    const toggle = byId('mobileNavToggle');
-    const navigation = byId('globalNavigation');
-    const shade = byId('mobileNavShade');
-    if(!toggle || !navigation || toggle.dataset.shellBound) return;
-    toggle.dataset.shellBound = '1';
-    setMobileNavigation(false, false);
-    toggle.addEventListener('click', event => {
-      event.preventDefault();
-      setMobileNavigation(toggle.getAttribute('aria-expanded') !== 'true');
-    });
-    shade?.addEventListener('click', () => setMobileNavigation(false));
-    navigation.addEventListener('click', event => {
-      if(mobileNavigationIsAvailable() && event.target.closest('button, a, [role="button"]')) setMobileNavigation(false, false);
-    }, true);
-    document.addEventListener('keydown', event => {
-      if(!document.body.classList.contains('mobile-nav-open')) return;
-      if(event.key === 'Escape'){
-        event.preventDefault();
-        setMobileNavigation(false);
-        return;
-      }
-      if(event.key !== 'Tab') return;
-      const controls = qsa('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])', navigation)
-        .filter(control => control.offsetParent !== null);
-      if(!controls.length) return event.preventDefault();
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
-      else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
-    });
-    window.matchMedia?.('(max-width: 900px)').addEventListener?.('change', () => setMobileNavigation(false, false));
-  }
-
   function settingsFocusableControls(panel){
     return qsa('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', panel)
       .filter(control => control.offsetParent !== null);
@@ -95,7 +37,7 @@
     panel.setAttribute('aria-hidden', String(!open));
     panel.inert = !open;
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close settings' : 'Open settings');
+    toggle.setAttribute('aria-label', open ? 'Close menu and appearance' : 'Open menu and appearance');
     shade?.setAttribute('aria-hidden', String(!open));
     if(open){
       if(!settingsReturnFocus) settingsReturnFocus = toggle;
@@ -395,7 +337,6 @@
   function bindStaticControls(){
     qsa(hiddenUtilitySelector).forEach(el => el.remove());
     wrapSetViewHomeRoute();
-    bindMobileNavigation();
     bindSettingsAccessibility();
     bindStaticDialogAccessibility();
 

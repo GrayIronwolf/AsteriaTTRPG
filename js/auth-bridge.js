@@ -12,13 +12,13 @@
     const create = document.getElementById('createAccountTop');
     if(!login) return;
     if(isLoggedIn()){
-      login.textContent = 'Log Out';
+      login.textContent = 'Logout';
       login.onclick = event => {
         event?.preventDefault?.();
         window.logout?.();
       };
       if(create){
-        create.textContent = 'Log Out';
+        create.textContent = 'Logout';
         create.onclick = event => {
           event?.preventDefault?.();
           window.logout?.();

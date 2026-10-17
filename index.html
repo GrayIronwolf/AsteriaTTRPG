@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Asteria TTRPG</title>
+  <link rel="preload" as="image" href="assets/header/asteria-header-desktop.webp" media="(min-width: 1201px)">
+  <link rel="preload" as="image" href="assets/header/asteria-header-compact.webp" media="(max-width: 1200px)">
   <link rel="stylesheet" href="css/asteria-design-tokens.css?v=design-system-v1" />
   <link rel="stylesheet" href="css/styles.css?v=20260730-live-delivery-4" />
 <link rel="stylesheet" href="css/clean-compendium.css">
@@ -13,53 +15,35 @@
 <link rel="stylesheet" href="css/asteria-item-ecosystem.css">
 <link rel="stylesheet" href="react-dist/asteria-react.css?v=react-m1">
 <link rel="stylesheet" href="css/asteria-modern-ui.css?v=modern-ui-v2">
+<link rel="stylesheet" href="css/asteria-navigation.css?v=top-navigation-v1">
 <script src="js/asteria-home-guard.js"></script>
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
-  <header class="topbar core-v2-topbar">
-    <div class="brand">
-      <img class="brand-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo">
-    </div>
-    <nav class="top-workspace-menu auth-only locked" aria-label="Account workspace">
-      <button id="characterForgeTop" class="primary small top-menu-btn" type="button" onclick="window.AsteriaGameplay?.openCharacterForgeHub?.()">Character Forge</button>
-      <button id="campaignsTop" class="primary small top-menu-btn" type="button" onclick="window.AsteriaWorkspace?.openCampaignHub?.()">Campaign Forge</button>
+  <header class="topbar core-v2-topbar asteria-header">
+    <nav id="globalNavigation" class="asteria-main-navigation" aria-label="Main navigation">
+      <button id="sidebarHomeButton" class="crystal-button" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
+      <div class="compendium-split">
+        <a id="compendiumIndexButton" class="crystal-button" href="#/compendium">Asteria Compendium</a>
+        <button id="compendiumQuickToggle" class="crystal-button crystal-arrow" type="button" aria-label="Open Compendium quick navigation" aria-expanded="false" aria-controls="compendiumQuickMenu">▾</button>
+        <div id="compendiumQuickMenu" class="compendium-quick-menu" hidden aria-label="Compendium quick navigation"></div>
+      </div>
+      <button id="characterForgeTop" class="crystal-button" type="button">Character Forge</button>
+      <button id="campaignsTop" class="crystal-button" type="button">Campaign Forge</button>
     </nav>
     <div class="top-actions">
-      <button id="mobileNavToggle" class="hamburger global-nav-toggle" type="button" aria-label="Open main navigation" aria-controls="globalNavigation" aria-expanded="false"><span></span><span></span><span></span></button>
-      <button id="loginToggle" class="primary small" type="button" onclick="setView('loginPage')">Login</button>
-      <button id="settingsToggle" class="hamburger" type="button" title="Settings" aria-label="Open settings" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div id="accountControls" class="asteria-account-controls">
+        <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
+        <button id="accountSettingsTop" class="crystal-button" type="button" data-workspace-action="settings">Account Settings</button>
+      </div>
+      <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Menu and appearance" aria-label="Open menu and appearance" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </header>
 
-  <aside id="globalNavigation" class="sidebar public-sidebar" aria-label="Main navigation">
-    <div class="side-section portal-buttons">
-      <button id="sidebarHomeButton" class="side-main" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
-      <div class="side-logo-block"><span>Asteria Compendiums</span></div>
-      <button class="side-main" data-view="workspace" data-workspace-section="Asteria Handbook">Asteria Handbook</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="World, Realms & Planes">World, Realms &amp; Planes</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Races">Races</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Classes">Classes</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Skills">Skills</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Items">Items</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Creatures">Creatures</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Magic">Magic</button>
-      <button class="side-main" data-view="workspace" data-workspace-section="Theology">Theology</button>
-    </div>
-    <div class="side-section app-buttons">
-      <button class="side-main auth-only locked" data-view="workspace" data-workspace-mode="dashboard">Dashboard</button>
-      <button class="side-main auth-only locked" data-workspace-action="settings">Settings</button>
-    </div>
-    <div class="side-section mobile-shell-actions" aria-label="Account workspace">
-      <button class="side-main auth-only locked" type="button" onclick="window.AsteriaGameplay?.openCharacterForgeHub?.()">Character Forge</button>
-      <button class="side-main auth-only locked" type="button" onclick="window.AsteriaWorkspace?.openCampaignHub?.()">Campaign Forge</button>
-      <button class="side-main" type="button" onclick="document.getElementById('settingsToggle')?.click()">Settings</button>
-    </div>
-  </aside>
-  <div id="mobileNavShade" class="mobile-nav-shade" aria-hidden="true"></div>
-
   <aside id="settingsPanel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
-    <div class="settings-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" type="button" aria-label="Close settings">×</button></div>
+    <div class="settings-head"><h2 id="settingsTitle">Menu &amp; appearance</h2><button id="settingsClose" type="button" aria-label="Close settings">×</button></div>
+    <div id="mobileNavigationSlot"></div>
+    <div id="mobileAccountSlot"></div>
     <section id="asteriaThemeSettings" class="theme-settings-section">
       <h3>UI Theme</h3>
       <p>Choose a class theme or create your own accent colour.</p>
@@ -343,9 +327,10 @@
 <script src="js/asteria-inventory-workflows.js?v=react-m1"></script>
 <script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-item-ecosystem.js"></script>
-<script src="js/asteria-core-shell.js?v=ui-foundations-20261017"></script>
+<script src="js/asteria-core-shell.js?v=top-navigation-v1"></script>
 <script src="js/asteria-ui-theme-system.js"></script>
-<script src="js/border-glow.js"></script>
+<script src="js/asteria-navigation.js?v=top-navigation-v1"></script>
+<script src="js/border-glow.js?v=top-navigation-v1"></script>
 <script type="module" src="src/dev-entry.js?v=milestone-1-dashboards"></script>
 <div id="asteriaLiveRegion" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
