@@ -6,18 +6,25 @@
   --asteria-banner-height:clamp(132px,9.375vw,240px);
   --core-header-height:calc(var(--asteria-banner-height) + 216px);
   --asteria-header-art:url("../assets/header/asteria-header-v2.webp");
+  --button-metal-dark:#090a0c;
+  --button-metal-mid:#4b4d50;
+  --button-metal-light:#c9cbce;
 }
 
 /* The existing top-nav ID keeps these shared rules above legacy menu skins. */
 body :is(.asteria-menu-button,#globalNavigation > .crystal-button) {
   --menu-tip:20px;
+  --button-bezel:6px;
+  --button-crystal-color:var(--asteria-menu-button,var(--asteria-accent,#808080));
+  --button-crystal-highlight:color-mix(in srgb,var(--button-crystal-color) 22%,white);
+  --button-crystal-glow:color-mix(in srgb,var(--button-crystal-color) calc(var(--asteria-glow-intensity,.36) * 70%),transparent);
   position:relative!important;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   min-height:var(--asteria-menu-height)!important;height:auto;min-width:0;
   padding:11px 28px!important;border:0!important;border-radius:0!important;
-  background:transparent!important;color:#e5edf2!important;box-shadow:none!important;
+  background:transparent!important;color:var(--asteria-text,#e5edf2)!important;box-shadow:none!important;
   font:600 .9rem/1.25 var(--asteria-font-body)!important;text-align:center;text-decoration:none;
   white-space:normal;overflow:visible!important;overflow-wrap:anywhere;cursor:pointer;
-  filter:drop-shadow(0 3px 2px #0009);
+  filter:drop-shadow(0 5px 1px #000c) drop-shadow(0 7px 5px #0008);
   transition:transform 160ms ease,filter 160ms ease;
 }
 body .asteria-menu-button::before,body .asteria-menu-button::after {
@@ -28,28 +35,41 @@ body .asteria-menu-button::before,body .asteria-menu-button::after {
 }
 body .asteria-menu-button::before {
   inset:0!important;z-index:-2!important;
-  background:linear-gradient(155deg,#d1dbe1 0%,#7d8990 7%,#3e4a53 13%,#1c252c 42%,#a8b5bf 49%,#53616c 54%,#28323b 64%,#11191f 91%,#85949f 100%)!important;
-  box-shadow:inset 0 1px #e3eff7,inset 0 -3px #080d11!important;
+  /* Fixed achromatic forged metal: no accent or crystal variables in this layer. */
+  background:linear-gradient(112deg,#ffffff70 0%,#ffffff0a 8%,transparent 12% 88%,#0009 96%),repeating-linear-gradient(173deg,#ffffff0a 0 1px,transparent 1px 5px),linear-gradient(180deg,#eeeeef 0%,var(--button-metal-light) 3%,#77797d 9%,var(--button-metal-mid) 20%,#202124 44%,var(--button-metal-dark) 57%,#292a2d 78%,#9a9b9e 94%,#1a1b1e 100%)!important;
+  box-shadow:inset 0 2px #f5f5f5,inset 0 -4px #030304,inset 2px 0 #c1c1c3,inset -2px 0 #101012!important;
 }
 body .asteria-menu-button::after {
-  inset:4px!important;z-index:-1!important;
-  background:linear-gradient(170deg,#d2e9f32b 0%,#8ba9bc14 19%,transparent 42%,#0005 43%,transparent 47%),repeating-linear-gradient(112deg,#b3d1e005 0 1px,transparent 1px 8px),linear-gradient(180deg,#34404a,#1d2831 48%,#0e161d 51%,#202d38)!important;
-  box-shadow:inset 0 1px 1px #d5effb80,inset 0 -2px 2px #02060a!important;
+  inset:var(--button-bezel)!important;z-index:-1!important;
+  clip-path:polygon(0 50%,calc(var(--menu-tip) - var(--button-bezel) * .7) 0,calc(100% - var(--menu-tip) + var(--button-bezel) * .7) 0,100% 50%,calc(100% - var(--menu-tip) + var(--button-bezel) * .7) 100%,calc(var(--menu-tip) - var(--button-bezel) * .7) 100%)!important;
+  background-image:url("../assets/ui/crystal-facets.svg"),radial-gradient(ellipse at 50% 40%,transparent 20%,#0009 100%),linear-gradient(180deg,color-mix(in srgb,var(--button-crystal-color) 62%,#101010),color-mix(in srgb,var(--button-crystal-color) 48%,#050505) 30%,color-mix(in srgb,var(--button-crystal-color) 32%,#030303) 55%,color-mix(in srgb,var(--button-crystal-color) 52%,#080808))!important;
+  background-size:100% 100%!important;background-repeat:no-repeat!important;
+  box-shadow:inset 0 1px 1px var(--button-crystal-highlight),inset 0 -2px var(--button-crystal-color),inset 0 0 5px 3px #000b,inset 0 0 calc(5px + var(--asteria-glow-intensity,.36) * 16px) var(--button-crystal-glow)!important;
+  filter:brightness(1);
 }
 body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover {
-  transform:translateY(-2px);filter:drop-shadow(0 4px 3px #0009) drop-shadow(0 0 5px #a7dcff40);
+  transform:translateY(-2px);filter:drop-shadow(0 6px 1px #000c) drop-shadow(0 9px 6px #0008);
 }
-body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover::after { filter:brightness(1.2); }
-body .asteria-menu-button:is(.active,[aria-selected="true"],[aria-pressed="true"],[aria-current="page"])::after {
-  background:linear-gradient(170deg,#c0e7fc38,transparent 45%),linear-gradient(#334b5c,#172c3a 53%,#243f50)!important;
-  box-shadow:inset 0 1px #e3f5ff,inset 0 -3px #98cfe9!important;
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover::after { filter:brightness(1.22); }
+body .asteria-menu-button:is(.active,[aria-selected="true"],[aria-pressed="true"],[aria-current="page"],[aria-expanded="true"])::after {
+  filter:brightness(1.18);
+  box-shadow:inset 0 2px 1px var(--button-crystal-highlight),inset 0 -3px var(--button-crystal-highlight),inset 0 0 4px 2px #000b,inset 0 0 calc(8px + var(--asteria-glow-intensity,.36) * 20px) var(--button-crystal-glow)!important;
 }
-body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):active { transform:translateY(1px);filter:drop-shadow(0 1px 1px #0009); }
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):active { transform:translateY(2px) scaleY(.97);filter:drop-shadow(0 1px 1px #000b); }
 body .asteria-menu-button:active::after { filter:brightness(.85); }
 body .asteria-menu-button:focus-visible { outline:2px solid #c4eaff!important;outline-offset:3px; }
 body .asteria-menu-button:is(:disabled,[aria-disabled="true"]) { opacity:.5;cursor:not-allowed;transform:none;filter:grayscale(1) drop-shadow(0 1px 1px #0008); }
 body .asteria-menu-button:is(:disabled,[aria-disabled="true"])::after { filter:grayscale(1); }
 body .asteria-menu-button > .edge-light { display:none!important; }
+
+/* Reuse the existing independent colour areas; only the crystal consumes them. */
+body :is(.react-workspace-shell,#player) .asteria-menu-button {
+  --button-crystal-color:var(--asteria-dashboard-tab,var(--asteria-accent,#808080));
+}
+body :is(#globalNavigation,#accountControls) .crystal-button,body .asteria-header #settingsToggle {
+  --button-crystal-color:var(--asteria-top-menu-button,var(--asteria-accent,#808080));
+  --button-bezel:10px;
+}
 
 /* Two times the original 44px height, .78rem text and horizontal padding.
    Artwork occupies its own proportional strip so larger controls cannot cover it. */

@@ -133,6 +133,19 @@
     });
   }
 
+  function applyAccent(accent, persist){
+    const live=current();
+    const previous=appliedSettings?.accent || live.accent;
+    // Follow the global wheel until an area has its own independent colour.
+    // Keep the intentionally separate panel background and custom overrides.
+    live.areas=Object.fromEntries(Object.entries(live.areas).map(([key,value])=>[
+      key,key!=='panelBackground' && value.toLowerCase()===previous.toLowerCase()?accent:value
+    ]));
+    live.theme='custom';
+    live.accent=accent;
+    applyTheme(live,persist);
+  }
+
   function bind(){
     const theme = document.getElementById("asteriaThemeSelect");
     const colour = document.getElementById("asteriaColourWheel");
@@ -160,16 +173,10 @@
     if(colour && !colour.dataset.bound){
       colour.dataset.bound = "1";
       colour.addEventListener("input", () => {
-        const live = current();
-        live.theme = "custom";
-        live.accent = colour.value;
-        applyTheme(live, false);
+        applyAccent(colour.value, false);
       });
       colour.addEventListener("change", () => {
-        const live = current();
-        live.theme = "custom";
-        live.accent = colour.value;
-        applyTheme(live, true);
+        applyAccent(colour.value, true);
       });
     }
     if(text && !text.dataset.bound){
