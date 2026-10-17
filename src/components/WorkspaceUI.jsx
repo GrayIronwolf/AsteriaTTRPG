@@ -2,6 +2,7 @@ import React, { memo, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { liveSyncPresentation } from '../state/liveSyncState.mjs';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
+import { trapDialogTab } from './dialogFocus.mjs';
 
 export function AsteriaAppShell({ eyebrow, title, subtitle, actions, sidebar, children, className = '', showHeader = true }) {
   return <div className={`react-workspace-shell ${sidebar ? 'has-sidebar' : 'no-sidebar'} ${className}`} data-asteria-app-shell="true">
@@ -123,13 +124,7 @@ export function Modal({ title, eyebrow, onClose, children, busy = false, footer 
     dialog?.focus();
     const keydown = event => {
       if(event.key === 'Escape' && !busyRef.current) closeRef.current?.();
-      if(event.key !== 'Tab' || !dialog) return;
-      const controls = [...dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')];
-      if(!controls.length) return event.preventDefault();
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if(event.shiftKey && document.activeElement === first){ event.preventDefault(); last.focus(); }
-      else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+      trapDialogTab(event, dialog, document.activeElement);
     };
     document.addEventListener('keydown', keydown);
     return () => { document.removeEventListener('keydown', keydown); returnFocusRef.current?.focus?.(); };
