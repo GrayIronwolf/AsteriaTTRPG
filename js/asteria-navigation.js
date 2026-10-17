@@ -146,7 +146,7 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu?.hidden){setQuick(false);byId('compendiumQuickToggle')?.focus();}});
     document.addEventListener('focusin',event=>{if(!event.target.closest?.('.compendium-split'))setQuick(false);});
     const desktopNavParent=byId('globalNavigation')?.parentElement,desktopAccountsParent=byId('accountControls')?.parentElement;
-    const media=window.matchMedia('(max-width: 1399px)');
+    const media=window.matchMedia('(max-width: 1249px)');
     const reflow=()=>{
       closePanels();
       const nav=byId('globalNavigation'),accounts=byId('accountControls');

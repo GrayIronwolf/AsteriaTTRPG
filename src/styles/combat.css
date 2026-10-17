@@ -45,7 +45,7 @@
 .combat-selector-open .react-ability-grid,.combat-selector-open .react-dashboard-skill-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 @media(max-width:600px){.combat-header{gap:.4rem}.combat-badge>small{font-size:.54rem;letter-spacing:.04em}.combat-badge strong{font-size:1.35rem}.combat-actions{grid-template-columns:repeat(2,minmax(0,1fr));max-height:320px}.combat-action-tabs button{flex-basis:28%;font-size:.65rem}.combat-source-buttons button{flex-basis:42%}.combat-preview,.combat-gm-review{padding:.7rem}.combat-selector-open{inset:3vh 3vw;max-height:94vh}.combat-source-facts{grid-template-columns:80px 1fr}}
 
-.combat-mode-layout{--combat-sidebar-width:clamp(260px,23vw,310px);display:grid;grid-template-columns:0px minmax(0,1fr);column-gap:0;align-items:start;transition:grid-template-columns 300ms ease,column-gap 300ms ease;min-width:0}
+.combat-mode-layout{--combat-sidebar-width:clamp(390px,34.5vw,465px);display:grid;grid-template-columns:0px minmax(0,1fr);column-gap:0;align-items:start;transition:grid-template-columns 300ms ease,column-gap 300ms ease;min-width:0}
 .combat-mode-layout.is-combat-mode{grid-template-columns:var(--combat-sidebar-width) minmax(0,1fr);column-gap:12px}
 .combat-dashboard-main{grid-column:2;min-width:0;container:combat-dashboard / inline-size}
 .combat-sidebar-slot{grid-column:1;grid-row:1;align-self:stretch;min-width:0;overflow:clip}
@@ -76,7 +76,7 @@
   .combat-mode-layout,.combat-mode-layout.is-combat-mode{grid-template-columns:0px minmax(0,1fr);column-gap:0}
   .combat-sidebar-slot{overflow:visible}
   .combat-mobile-tab{display:block;position:fixed;left:0;top:45%;z-index:1000;writing-mode:vertical-rl;padding:14px 8px;border-radius:0 6px 6px 0;border:1px solid var(--asteria-dashboard-primary,#d0ad68);background:var(--asteria-panel-background,#111c27);min-height:80px}
-  .combat-sidebar{position:fixed;inset:0 auto 0 0;width:min(320px,calc(100vw - 32px));max-height:100dvh;padding:10px;padding-top:max(10px,env(safe-area-inset-top));box-sizing:border-box;z-index:1100;background:var(--asteria-panel-background,#111c27);visibility:hidden;transform:translateX(-100%);opacity:0;animation:none!important;transition:transform 300ms ease,opacity 300ms ease,visibility 0s linear 300ms}
+  .combat-sidebar{position:fixed;inset:0 auto 0 0;width:min(465px,calc(100vw - 24px));max-height:100dvh;padding:10px;padding-top:max(10px,env(safe-area-inset-top));box-sizing:border-box;z-index:1100;background:var(--asteria-panel-background,#111c27);visibility:hidden;transform:translateX(-100%);opacity:0;animation:none!important;transition:transform 300ms ease,opacity 300ms ease,visibility 0s linear 300ms}
   .is-combat-mode .combat-sidebar{transform:translateX(-100%);opacity:0}
   .is-combat-mode.combat-drawer-open .combat-sidebar{transform:translateX(0);opacity:1;visibility:visible;transition-delay:0s}
   .combat-drawer-close{display:block;width:100%;min-height:44px;margin-bottom:10px}
@@ -84,3 +84,27 @@
   .combat-drawer-open .combat-mobile-tab{visibility:hidden}
 }
 @media(prefers-reduced-motion:reduce){.combat-mode-layout,.combat-sidebar{transition:none;animation:none!important}}
+
+/* The resource HUD and dashboard menu precede this two-column region. */
+.combat-dashboard-main>*{min-width:0;max-width:100%;box-sizing:border-box}
+.combat-spend-history{margin:.8rem 0;border-top:1px solid var(--asteria-panel-border,#435c76);padding-top:.7rem}
+.combat-spend-history li{margin:.5rem 0;overflow-wrap:anywhere}
+.combat-spend-history button{margin-left:.5rem;min-height:36px}
+.combat-gm-body{display:grid;grid-template-columns:minmax(390px,465px) minmax(0,1fr);gap:16px;align-items:start}
+.combat-gm-body>*{min-width:0;max-width:100%}
+@media(max-width:1100px){.combat-gm-body{grid-template-columns:minmax(0,1fr)}}
+.combat-gm{container:gm-combat / inline-size}
+.react-gm-main-grid:has(.combat-gm) .react-encounter-panel{grid-column:1 / -1;grid-row:1}
+.react-gm-main-grid:has(.combat-gm) .react-xp-panel{grid-column:auto;grid-row:auto}
+@container gm-combat (max-width:850px){.combat-gm-body{grid-template-columns:minmax(0,1fr)}}
+
+.combat-gm-body .combat-panel{min-width:0;padding:12px;box-sizing:border-box}
+.combat-gm-body .combat-header{grid-template-columns:repeat(2,minmax(0,1fr))}
+.combat-gm-body .combat-action-tabs,.combat-gm-body .combat-source-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.combat-gm-body .combat-action-tabs button:last-child{grid-column:1 / -1}
+.combat-gm-body .react-form-grid{grid-template-columns:minmax(0,1fr)}
+.combat-gm-body :is(input,select,textarea,button){min-width:0;max-width:100%;box-sizing:border-box}
+.combat-gm-body .combat-preview-title{flex-wrap:wrap}
+.combat-gm-body .combat-actions{grid-template-columns:minmax(0,1fr)}
+/* Keep the decorative border sweep inside the combat card on narrow screens. */
+.combat-panel{overflow:clip}
