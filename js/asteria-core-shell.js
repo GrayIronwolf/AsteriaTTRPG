@@ -38,6 +38,7 @@
     toggle.setAttribute('aria-expanded', String(shouldOpen));
     toggle.setAttribute('aria-label', shouldOpen ? 'Close main navigation' : 'Open main navigation');
     navigation.setAttribute('aria-hidden', String(mobileNavigationIsAvailable() && !shouldOpen));
+    navigation.inert = mobileNavigationIsAvailable() && !shouldOpen;
     if(shouldOpen){
       requestAnimationFrame(() => navigation.querySelector('button, a, [tabindex]:not([tabindex="-1"])')?.focus());
     } else if(restoreFocus && mobileNavReturnFocus){
@@ -92,6 +93,7 @@
     if(!panel || !toggle) return;
     const open = panel.classList.contains('open');
     panel.setAttribute('aria-hidden', String(!open));
+    panel.inert = !open;
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Close settings' : 'Open settings');
     shade?.setAttribute('aria-hidden', String(!open));
