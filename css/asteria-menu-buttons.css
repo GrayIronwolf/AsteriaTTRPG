@@ -151,3 +151,7 @@ body .react-tabs .asteria-menu-button { flex-shrink:0; }
   body .asteria-menu-button { --button-travel:0px!important; }
   body .asteria-menu-button,body .asteria-menu-button::before,body .asteria-menu-button::after { transition:none!important;transform:none!important; }
 }
+/* Dashboard tab rows scroll as one full-width menu; labels never break mid-word. */
+body :is(.react-gm-dashboard,.react-character-dashboard) .react-tabs .asteria-menu-button {
+  flex:0 0 auto!important;min-width:max-content!important;white-space:nowrap!important;
+}
