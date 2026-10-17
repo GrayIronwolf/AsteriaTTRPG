@@ -6,7 +6,7 @@ import TestRenderer, { act } from 'react-test-renderer';
 import { createServer } from 'vite';
 import '../js/character-access.js';
 
-let server, CharacterDashboard, OwnedCharacterDashboard, DashboardErrorBoundary, CombatDashboardLayout;
+let server, CharacterDashboard, OwnedCharacterDashboard, DashboardErrorBoundary, CombatDashboardLayout, CombatActionButton;
 const campaign = {id:'c', ownerUid:'gm', name:'Campaign', playerCharacterLinks:{b:'player'}};
 const character = {id:'b',ownerUid:'player',sharedCampaignId:'c',name:'Player B',hp:[8,10],sp:[8,10],mp:[8,10],inventory:[],storages:[]};
 before(async()=>{
@@ -23,7 +23,7 @@ before(async()=>{
   }]});
   ({CharacterDashboard,OwnedCharacterDashboard} = await server.ssrLoadModule('/src/dashboards/CharacterDashboard.jsx'));
   ({DashboardErrorBoundary} = await server.ssrLoadModule('/src/app/AsteriaReactRoot.jsx'));
-  ({CombatDashboardLayout} = await server.ssrLoadModule('/src/dashboards/CombatPanel.jsx'));
+  ({CombatDashboardLayout,CombatActionButton} = await server.ssrLoadModule('/src/dashboards/CombatPanel.jsx'));
 });
 after(async()=>{await server?.close();delete globalThis.window;});
 const render = ()=>renderToStaticMarkup(React.createElement(CharacterDashboard,{campaignId:'c',characterId:'b'}));
@@ -72,7 +72,8 @@ test('combat sidebar is absent in setup and for nonparticipants, restores on ref
     window.__ownershipTestLive.encounter.status='active';
     const active=render();assert.match(active,/<aside[^>]+aria-label="Combat controls"/);assert.match(active,/is-combat-mode/);assert.match(active,/END TURN/);
     assert.equal((active.match(/aria-label="HP change amount"/g)||[]).length,1);assert.doesNotMatch(active,/class="combat-resources"/);
-    assert.ok(active.indexOf('combat-dashboard-main')<active.indexOf('react-campaign-resource-hud'));
+    assert.ok(active.indexOf('Character Dashboard menu')<active.indexOf('combat-mode-layout'));
+    assert.ok(active.indexOf('combat-mode-layout')<active.indexOf('combat-dashboard-main'));
     assert.ok(active.indexOf('react-campaign-resource-hud')<active.indexOf('Character Dashboard menu'));
     assert.ok(active.indexOf('Character Dashboard menu')<active.indexOf('react-player-overview-grid'));
     window.__ownershipTestLive.encounter.combatants=[{id:'other',characterId:'other'}];assert.doesNotMatch(render(),/<aside/);
@@ -122,4 +123,23 @@ test('a rejected dashboard import shows recovery controls and does not block ano
     act(()=>renderer?.unmount());
     delete window.location;
   }
+});
+
+
+test('action card double-click spends once without opening preview; keyboard opens explicit spend controls',async()=>{
+  const previous={setTimeout:window.setTimeout,clearTimeout:window.clearTimeout};
+  const timers=new Map();let next=0,selected=0,spent=0;
+  window.setTimeout=fn=>{timers.set(++next,fn);return next;};window.clearTimeout=id=>timers.delete(id);
+  const option={id:'basic:walk',key:'walk',kind:'basic',name:'Walk',ap:1,costs:{}};
+  const combat={actorId:'player-b',character,encounter:{status:'active',turnIndex:0,combatants:[{id:'player-b'}],combat:{participants:{'player-b':{ap:3,bonus:true}}}},editable:true,busy:false,select(){selected++;},spend(){spent++;}};
+  let renderer;
+  try{
+    act(()=>{renderer=TestRenderer.create(React.createElement(CombatActionButton,{combat,option},'Walk'));});
+    const button=renderer.root.findByType('button');
+    act(()=>button.props.onClick({detail:1}));assert.equal(selected,0);assert.equal(spent,0);
+    act(()=>button.props.onClick({detail:2}));act(()=>button.props.onDoubleClick());
+    assert.equal(spent,1);assert.equal(selected,0);assert.equal(timers.size,0);
+    act(()=>button.props.onClick({detail:0}));assert.equal(selected,1);assert.equal(spent,1);
+    act(()=>button.props.onClick({detail:1}));for(const fn of timers.values())act(()=>fn());assert.equal(selected,2);assert.equal(spent,1);
+  }finally{act(()=>renderer?.unmount());Object.assign(window,previous);}
 });

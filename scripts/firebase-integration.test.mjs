@@ -524,3 +524,21 @@ test('published information is readable while drafts and publication controls st
   await assertSucceeds(updateDoc(ref,{information:{}}));
   assert.deepEqual((await getDoc(doc(user('alice'),'campaigns/c/systems/party-workspace'))).data().information,{});
 });
+
+test('direct player AP spend is transactional, deduplicated, ownership checked and live to the GM',async()=>{
+  const command=async(uid,actorId,operation,extra={},requestId=crypto.randomUUID())=>{
+    const encounter=(await db.doc('campaigns/c/systems/encounter').get()).data()||{};
+    return action(uid,'combatCommand',['c',actorId,{operation,revision:encounter.combat?.revision||0,...extra}],requestId);
+  };
+  await command('gm','encounter','save',{encounter:{combatants:[{id:'player-a',characterId:'a',initiative:20,initiativeSet:true},{id:'player-b',characterId:'b',initiative:10,initiativeSet:true}]}});
+  assert.equal((await command('gm','encounter','start')).ok,true);
+  assert.equal((await command('bob','player-a','spend-ap',{ap:1})).ok,false);
+  const encounter=(await db.doc('campaigns/c/systems/encounter').get()).data();
+  const args=['c','player-a',{operation:'spend-ap',optionId:'basic:dash',revision:encounter.combat.revision}];
+  const results=await Promise.all([action('alice','combatCommand',args,'ap-once'),action('alice','combatCommand',args,'ap-once')]);
+  for(const result of results)assert.equal(result.ok,true,result.error);
+  const publicEncounter=(await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/encounter')))).data();
+  assert.equal(publicEncounter.combat.participants['player-a'].ap,1);assert.equal(publicEncounter.combat.participants['player-a'].apSpends.length,1);assert.equal(publicEncounter.combat.pending,null);
+  assert.equal((await command('alice','player-a','spend-ap',{ap:2})).ok,false);
+  assert.equal((await command('alice','player-a','end-turn')).ok,true);
+});

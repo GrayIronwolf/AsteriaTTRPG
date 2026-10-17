@@ -128,7 +128,7 @@ export function combatOptions(character,catalog=[]) {
   }
   return result;
 }
-export function optionProblem(option,character,encounter,actorId,{reaction=false}={}) {
+export function optionProblem(option,character,encounter,actorId,{reaction=false,prepaid=null}={}) {
   if(option.blocked)return option.blocked;
   const restriction=combatRestriction(character,{encounter});if(restriction)return restriction;
   if(encounter?.status!=='active')return 'Combat is not active.';
@@ -141,8 +141,8 @@ export function optionProblem(option,character,encounter,actorId,{reaction=false
   if(option.key==='drag'&&!state.grappleTarget)return 'No established hold.';
   if(option.key==='jump'&&!state.movement)return 'Pay for movement first.';
   if(option.key==='attack'&&!wieldedItems(character).length)return 'No intact wielded weapon.';
-  if(option.ap>state.ap)return 'Not enough held AP.';
-  if(option.bonus&&!state.bonus)return 'Bonus action already used.';
+  if(option.ap>state.ap+(prepaid?.ap||0))return 'Not enough held AP.';
+  if(option.bonus&&!state.bonus&&!prepaid?.bonus)return 'Bonus action already used.';
   if(state.pendingDeathSave)return 'Resolve the turn-start death save.';
   try{applyResourceChanges(character,{costs:option.costs});}catch(error){return error.message;}
   return '';

@@ -11,7 +11,7 @@ import { effectTimeMs } from '../src/state/effectsEngine.mjs';
 import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs';
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
-import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
+import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const text=(value,max=1000)=>String(value||'').trim().slice(0,max);
@@ -20,7 +20,7 @@ const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
 const management=new Set(['save','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
-const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
+const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
 // mutations and request receipts. NPC adjudication stays in the existing GM workspace.
@@ -83,8 +83,9 @@ export function createCombatCommands(context) {
       const startTurn=()=>{
         const current=currentCombatant(encounter);if(!current)return;
         const previous=state(current.id),turns=(previous.turns||0)+1;
-        setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false});
+        setState(current.id,{ap:3,bonus:true,turns,prepared:null,disengaged:false,movement:null,turnStartedAt:now,pendingDeathSave:false,turnComplete:false,apSpends:[]});
         delete privateState.preparations[current.id];
+        if(privateState.apSpends)delete privateState.apSpends[current.id];
         conditionBoundary(current.id,'start');
         let character=get(current.id);
         if(previous.grappleTarget){try{character=applyResourceChanges(character,{costs:{sp:5}});log(`${current.name} maintains the grapple: 5 SP.`);}catch{setState(previous.grappleTarget,{grappledBy:null});setState(current.id,{grappleTarget:null});log(`${current.name}'s grapple ends: maintenance unpaid.`);}}
@@ -101,8 +102,8 @@ export function createCombatCommands(context) {
         if(option.blocked&&!approval.sourceReason)throw new Error(option.blocked);
         const ap=approval.apOverride===undefined?option.ap:bounded(approval.apOverride,0,3);
         if(approval.apOverride!==undefined&&!approval.sourceReason)throw new Error('An explicit AP override needs its source and reason.');
-        if(!Number.isInteger(ap)||(!p.ambush&&s.ap<ap))throw new Error('Not enough AP.');
-        if(option.bonus&&!s.bonus)throw new Error('The shared bonus action has already been used.');
+        if(!Number.isInteger(ap)||(!p.ambush&&s.ap+(p.prepaidAP?.ap||0)<ap))throw new Error('Not enough AP.');
+        if(option.bonus&&!s.bonus&&!p.prepaidAP?.bonus)throw new Error('The shared bonus action has already been used.');
         validateTargets(p);
         if(option.key==='shove'&&!['push','prone'].includes(p.choice))throw new Error('Choose push or prone before rolling.');
         if(['grapple','shove','disarm','drag'].includes(option.key)){
@@ -180,7 +181,7 @@ export function createCombatCommands(context) {
         if(consumptions.length){character.inventory=copy(rows(character.inventory));for(const c of consumptions){const item=character.inventory.find(row=>row.id===c.itemId),quantity=bounded(c.quantity,1,100000);if(!Number.isInteger(quantity)||!item||Number(item.qty??1)<quantity)throw new Error('A required component, scroll or ammunition is missing.');item.qty=Number(item.qty??1)-quantity;}character.inventory=character.inventory.filter(row=>row.qty!==0);}
         if(option.kind==='item'&&option.item.charges!==undefined){const item=character.inventory.find(row=>row.id===option.itemId);if(!item||Number(item.charges)<1)throw new Error('No charges remaining.');item.charges--;}
         if(option.kind==='item'){const effect=option.item.effect||option.item.effects||{};p.deferred={restore:effect.resource?{[effect.resource]:Number(effect.amount)}:parseResourceCosts(effect)};}
-        if(!p.ambush)setState(p.actorId,{ap:s.ap-ap,bonus:option.bonus?false:s.bonus,prepared:p.prepared?null:s.prepared});
+        if(!p.ambush)setState(p.actorId,{ap:Math.min(3,s.ap-ap+(p.prepaidAP?.ap||0)),bonus:option.bonus?false:s.bonus,prepared:p.prepared?null:s.prepared});
         if(option.key==='first-aid')encounter.combat.firstAid={...encounter.combat.firstAid,[`${p.actorId}:${p.targetIds[0]}`]:encounter.round};
         put(p.actorId,character);
         p.status=['attack','spell','scroll'].includes(option.key||option.kind)||approval.voluntaryLeavesReach?'reactions':'awaiting-roll';p.window=[];p.windowIndex=0;
@@ -227,7 +228,7 @@ export function createCombatCommands(context) {
       }else if(input.operation==='end'||input.operation==='clear'){
         if(input.operation==='end')requireActive();
         if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
-        privateState.pending=null;privateState.preparations={};
+        privateState.pending=null;privateState.preparations={};privateState.apSpends={};
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
         encounter.status=input.operation==='end'?'ended':'ready';encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
@@ -247,6 +248,26 @@ export function createCombatCommands(context) {
         put(id,character);log(`GM updated ${entry(id).name}'s conditions.`);
       }else if(input.operation==='death-save'){
         requireActive();controlled();if(currentCombatant(encounter)?.id!==actorId||!state(actorId).pendingDeathSave)throw new Error('No death save is due for this participant.');const die=roll();put(actorId,deathSave(get(actorId),die));setState(actorId,{pendingDeathSave:false});log(`${entry(actorId).name} death save: ${die}.`);
+      }else if(input.operation==='spend-ap'){
+        requireActive();controlled();noPending();
+        const s=state(actorId),character=get(actorId);
+        if(currentCombatant(encounter)?.id!==actorId||s.turnComplete)throw new Error('Spend AP only on your own turn before it is completed.');
+        const restriction=combatRestriction(character,{now,encounter});
+        if(restriction||s.pendingDeathSave)throw new Error(restriction||'Resolve the turn-start death save first.');
+        const option=input.optionId?findOption(actorId,input.optionId):null;
+        let ap,bonus;
+        if(option){const problem=optionProblem(option,character,encounter,actorId);if(problem)throw new Error(problem);ap=option.ap;bonus=Boolean(option.bonus);}
+        else{ap=bounded(input.ap,0,3);bonus=ap===0;}
+        if(!Number.isInteger(ap)||ap<0||ap>3)throw new Error('Choose a whole AP cost from 0 to 3.');
+        if(s.ap<ap)throw new Error('Not enough AP.');
+        if(bonus&&!s.bonus)throw new Error('The shared bonus action has already been used.');
+        if((s.apSpends||[]).length>=24)throw new Error('This turn already has the maximum number of recorded actions.');
+        const name=option?.name||(bonus?'Bonus action':`${ap} AP action`);
+        const spend={id:context.requestId,optionId:option?.id||'',name:entry(actorId).kind==='player'?name:'Creature action',ap,bonus,turn:s.turns,linked:false};
+        const spends=[...(s.apSpends||[]),spend];
+        if(entry(actorId).kind!=='player')privateState.apSpends={...privateState.apSpends,[actorId]:[...(privateState.apSpends?.[actorId]||[]),spend]};
+        setState(actorId,{ap:s.ap-ap,bonus:bonus?false:s.bonus,apSpends:spends.map(row=>entry(actorId).kind==='player'?row:{...row,optionId:''})});
+        log(`${entry(actorId).name} spends ${ap} AP${bonus?' · bonus used':''}: ${spend.name}.`);
       }else if(input.operation==='declare'||input.operation==='prepare'||input.operation==='ambush'){
         if(input.operation!=='ambush')requireActive();controlled();noPending();
         const option=findOption(actorId,input.optionId),s=state(actorId);
@@ -255,6 +276,15 @@ export function createCombatCommands(context) {
         }else if(currentCombatant(encounter)?.id!==actorId||s.turnComplete)throw new Error('Ordinary actions and preparation are available only on your own turn before it is completed.');
         if(combatRestriction(get(actorId),{now,encounter}))throw new Error('This participant cannot act.');
         const p=makePending(actorId,option,input);validateTargets(p);
+        if(input.spendId){
+          if(input.operation!=='declare')throw new Error('An AP receipt can only be linked to its ordinary action.');
+          const receipts=entry(actorId).kind==='player'?s.apSpends:privateState.apSpends?.[actorId];
+          const spend=(receipts||[]).find(row=>row.id===input.spendId&&row.turn===s.turns&&row.optionId===option.id&&!row.linked);
+          if(!spend)throw new Error('Choose an unused AP receipt for this action and turn.');
+          p.prepaidAP={id:spend.id,ap:spend.ap,bonus:spend.bonus};
+          if(privateState.apSpends?.[actorId])privateState.apSpends[actorId]=privateState.apSpends[actorId].map(row=>row.id===spend.id?{...row,linked:true}:row);
+          setState(actorId,{apSpends:s.apSpends.map(row=>row.id===spend.id?{...row,linked:true}:row)});
+        }
         if(input.operation==='prepare'){
           if(s.prepared)throw new Error('One prepared action may be declared per turn.');
           if(s.ap<option.ap||option.bonus&&!s.bonus)throw new Error('Retain enough AP and bonus use to execute this action.');
@@ -274,7 +304,7 @@ export function createCombatCommands(context) {
       }else if(input.operation==='reject'||input.operation==='cancel'){
         const p=privateState.pending;if(!p||p.status!=='awaiting-approval')throw new Error('A begun action cannot be freely cancelled or refunded.');
         if(!gm){controlled();if(p.actorId!==actorId)throw new Error('This is another participant’s declaration.');}
-        privateState.pending=null;log('Unbegun declaration cancelled; no costs spent.');
+        privateState.pending=null;log(p.prepaidAP?'Action resolution cancelled; the player’s recorded AP spend is retained.':'Unbegun declaration cancelled; no costs spent.');
       }else if(input.operation==='trigger-prepared'){
         if(!gm)throw new Error('The GM confirms observable prepared triggers.');requireActive();noPending();
         const p=privateState.preparations[actorId];if(!p||state(actorId).turns>=p.expiresOnTurn)throw new Error('No unexpired prepared action.');

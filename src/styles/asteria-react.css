@@ -1739,15 +1739,15 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 .react-character-dashboard .react-workspace-main > .react-session-gate span { font-size: .62rem; }
 
-.react-character-dashboard .combat-dashboard-main > .react-tabs {
+.react-character-dashboard .react-workspace-main > .react-tabs {
   display: flex;
   min-height: 43px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
 }
-.react-character-dashboard .combat-dashboard-main > .react-tabs::-webkit-scrollbar { display: none; }
-.react-character-dashboard .combat-dashboard-main > .react-tabs button {
+.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar { display: none; }
+.react-character-dashboard .react-workspace-main > .react-tabs button {
   flex: 1 0 auto;
   min-width: 82px;
   min-height: 42px;
@@ -1755,8 +1755,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   white-space: nowrap;
   transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
-.react-character-dashboard .combat-dashboard-main > .react-tabs button .asteria-icon { width: 16px; height: 16px; }
-.react-character-dashboard .combat-dashboard-main > .react-tabs button.active { color: var(--asteria-text-primary); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 15%, rgba(0, 0, 0, .7)); }
+.react-character-dashboard .react-workspace-main > .react-tabs button .asteria-icon { width: 16px; height: 16px; }
+.react-character-dashboard .react-workspace-main > .react-tabs button.active { color: var(--asteria-text-primary); background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 15%, rgba(0, 0, 0, .7)); }
 
 .react-player-overview-grid {
   display: grid;

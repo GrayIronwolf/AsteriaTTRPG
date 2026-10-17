@@ -2,9 +2,9 @@
    action buttons keep their current dimensions and semantics. */
 :root {
   --asteria-menu-height:48px;
-  --asteria-top-menu-height:88px;
-  --asteria-banner-height:clamp(132px,9.375vw,240px);
-  --core-header-height:calc(var(--asteria-banner-height) + 216px);
+  --asteria-top-menu-height:53px;
+  --asteria-banner-height:clamp(140px,9.375vw,240px);
+  --core-header-height:var(--asteria-banner-height);
   --asteria-header-art:url("../assets/header/asteria-header-v2.webp");
   --button-metal-dark:#090a0c;
   --button-metal-mid:#4b4d50;
@@ -90,33 +90,33 @@ body :is(.react-workspace-shell,#player) .asteria-menu-button {
 }
 body :is(#globalNavigation,#accountControls) .crystal-button,body .asteria-header #settingsToggle {
   --button-crystal-color:var(--asteria-top-menu-button,var(--asteria-accent,#808080));
-  --button-bezel:10px;
+  --button-bezel:6px;
 }
 
-/* Two times the original 44px height, .78rem text and horizontal padding.
-   Artwork occupies its own proportional strip so larger controls cannot cover it. */
+/* Compact controls are approximately 3/5 of the previous 88px design.
+   The single desktop row sits over the lower edge of the approved artwork. */
 body .topbar.asteria-header {
-  display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-content:end!important;
-  gap:16px!important;padding:var(--asteria-banner-height) 24px 16px!important;
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-content:end!important;
+  gap:10px!important;padding:0 16px 6px!important;
   height:var(--core-header-height)!important;min-height:var(--core-header-height)!important;
-  background-image:linear-gradient(180deg,#02070c05,#02070c22),var(--asteria-header-art),linear-gradient(#09111b,#080f17)!important;
-  background-size:100% var(--asteria-banner-height),100% auto,cover!important;
+  background-image:linear-gradient(180deg,#02070c00 35%,#02070c44 65%,#02070cbb),var(--asteria-header-art),linear-gradient(#09111b,#080f17)!important;
+  background-size:cover,100% auto,cover!important;
   background-repeat:no-repeat!important;background-position:center top!important;
 }
-body .asteria-main-navigation { justify-content:center;gap:12px;flex-wrap:nowrap; }
-body .asteria-header .top-actions { margin:0!important;height:auto!important;justify-content:center!important;gap:16px!important; }
-body .asteria-account-controls { gap:12px; }
+body .asteria-main-navigation { justify-content:flex-start;gap:7px;flex-wrap:nowrap; }
+body .asteria-header .top-actions { margin:0!important;height:auto!important;justify-content:flex-end!important;gap:10px!important; }
+body .asteria-account-controls { gap:7px; }
 body :is(#globalNavigation,#accountControls) .crystal-button,
 body .asteria-header #settingsToggle,
 body #accountControls #loginToggle {
-  --menu-tip:32px;
+  --menu-tip:19px;
   min-height:var(--asteria-top-menu-height)!important;height:var(--asteria-top-menu-height)!important;
-  --button-padding:16px;
-  padding-inline:36px!important;font-size:1.56rem!important;line-height:1.1!important;white-space:nowrap;
+  --button-padding:10px;
+  padding-inline:22px!important;font-size:.94rem!important;line-height:1.1!important;white-space:nowrap;
 }
-body #globalNavigation .crystal-arrow { width:74px!important;min-width:74px!important;padding-inline:16px!important; }
-body .asteria-header #settingsToggle { width:88px!important;min-width:88px!important;padding-inline:16px!important;gap:9px!important; }
-body .asteria-header #settingsToggle span { width:36px!important;height:3px!important; }
+body #globalNavigation .crystal-arrow { width:45px!important;min-width:45px!important;padding-inline:10px!important; }
+body .asteria-header #settingsToggle { width:53px!important;min-width:53px!important;padding-inline:10px!important;gap:5px!important; }
+body .asteria-header #settingsToggle span { width:22px!important;height:2px!important; }
 body #accountControls #loginToggle { order:0!important; }
 body .compendium-split { gap:2px; }
 body .compendium-quick-menu { width:380px;padding:12px; }
@@ -126,14 +126,9 @@ body :is(.react-tabs,.workspace-tabs,.phase3-tabs,.phase4-tabs,.ecosystem-tabs,.
 body .react-tabs { padding:8px!important; }
 body .react-tabs .asteria-menu-button { flex-shrink:0; }
 
-@media (min-width:2200px) {
-  :root { --core-header-height:calc(var(--asteria-banner-height) + 112px); }
-  body .topbar.asteria-header { grid-template-columns:minmax(0,1fr) auto!important; }
-  body .asteria-main-navigation { justify-content:flex-start; }
-}
-@media (max-width:1399px) {
-  :root { --asteria-banner-height:clamp(96px,9.375vw,132px);--core-header-height:calc(var(--asteria-banner-height) + 112px); }
-  body .topbar.asteria-header { padding:var(--asteria-banner-height) 16px 12px!important; }
+@media (max-width:1249px) {
+  :root { --asteria-banner-height:clamp(96px,9.375vw,132px);--core-header-height:var(--asteria-banner-height); }
+  body .topbar.asteria-header { grid-template-columns:minmax(0,1fr)!important;padding:0 16px 6px!important; }
   body .asteria-header .top-actions { justify-content:flex-end!important; }
   #mobileNavigationSlot,#mobileAccountSlot { display:block; }
   #globalNavigation { display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-bottom:18px; }
@@ -155,4 +150,8 @@ body .react-tabs .asteria-menu-button { flex-shrink:0; }
 @media (prefers-reduced-motion:reduce) {
   body .asteria-menu-button { --button-travel:0px!important; }
   body .asteria-menu-button,body .asteria-menu-button::before,body .asteria-menu-button::after { transition:none!important;transform:none!important; }
+}
+/* Dashboard tab rows scroll as one full-width menu; labels never break mid-word. */
+body :is(.react-gm-dashboard,.react-character-dashboard) .react-tabs .asteria-menu-button {
+  flex:0 0 auto!important;min-width:max-content!important;white-space:nowrap!important;
 }
