@@ -146,15 +146,26 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu?.hidden){setQuick(false);byId('compendiumQuickToggle')?.focus();}});
     document.addEventListener('focusin',event=>{if(!event.target.closest?.('.compendium-split'))setQuick(false);});
     const desktopNavParent=byId('globalNavigation')?.parentElement,desktopAccountsParent=byId('accountControls')?.parentElement;
-    const media=window.matchMedia('(max-width: 1249px)');
+    const media=window.matchMedia('(max-width: 1679px)');
+    const alignHeader=()=>{
+      if(media.matches)return;
+      const nav=byId('globalNavigation'),trigger=byId('compendiumQuickToggle');
+      if(!nav||!trigger)return;
+      const row=nav.getBoundingClientRect(),marker=trigger.getBoundingClientRect();
+      nav.style.setProperty('--compendium-trigger-offset',`${marker.left+marker.width/2-row.left}px`);
+    };
     const reflow=()=>{
       closePanels();
       const nav=byId('globalNavigation'),accounts=byId('accountControls');
       if(media.matches){byId('mobileNavigationSlot')?.appendChild(nav);byId('mobileAccountSlot')?.appendChild(accounts);}
       else{desktopNavParent?.insertBefore(nav,desktopAccountsParent);desktopAccountsParent?.insertBefore(accounts,byId('settingsToggle'));}
       byId('settingsToggle')?.setAttribute('aria-label',media.matches?'Open main menu':'Open menu and appearance');
+      alignHeader();
     };
     media.addEventListener('change',reflow);reflow();
+    window.addEventListener('resize',alignHeader);
+    if(window.ResizeObserver&&byId('globalNavigation'))new window.ResizeObserver(alignHeader).observe(byId('globalNavigation'));
+    document.fonts?.ready.then(alignHeader);
     window.addEventListener('hashchange',()=>{readRoute();closePanels();});
     window.addEventListener('popstate',readRoute);
     window.addEventListener('asteria:custom-items-updated',()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();});
