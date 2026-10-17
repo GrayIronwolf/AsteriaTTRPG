@@ -147,3 +147,64 @@ test('End Combat closes a begun casting reaction window and preparations, stops 
   const privateCombat=h.store.get('campaigns/c/systems/gmWorkspace').combatState;assert.equal(privateCombat.pending,null);assert.deepEqual(privateCombat.preparations,{});
   assert.match((await h.command('gm','encounter','end')).error,/not active/);assert.match((await h.command('alice','player-a','declare',{optionId:spell.id})).error,/not active/);
 });
+
+test('players spend AP directly without a GM pending action; receipts prevent duplicate charges',async()=>{
+  const h=database();await h.setup();const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  const revision=h.encounter().combat.revision,requestId='direct-ap-once';
+  const args={optionId:'basic:dash',revision,ap:0,approval:{apOverride:0}};
+  const first=await h.command(uid,actor.id,'spend-ap',args,requestId),retry=await h.command(uid,actor.id,'spend-ap',args,requestId);
+  assert.equal(first.ok,true,first.error);assert.deepEqual(first,retry);
+  const state=h.encounter().combat.participants[actor.id];assert.equal(state.ap,1);assert.equal(state.apSpends.length,1);assert.equal(h.encounter().combat.pending,null);
+  assert.match((await h.command(uid,actor.id,'spend-ap',{optionId:'basic:dash'})).error,/AP/);assert.equal(state.ap,1);
+  assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:1})).ok,true);assert.equal(h.encounter().combat.participants[actor.id].ap,0);
+  assert.equal((await h.command(uid,actor.id,'end-turn')).ok,true);
+});
+test('direct AP spending enforces ownership, turn, whole costs, shared bonus and active session',async()=>{
+  const h=database();await h.setup();const actor=currentCombatant(h.encounter()),waiting=h.encounter().combatants.find(row=>row.id!==actor.id),uid=actor.characterId==='a'?'alice':'bob',other=uid==='alice'?'bob':'alice';
+  assert.match((await h.command(other,actor.id,'spend-ap',{ap:1})).error,/control/);
+  assert.match((await h.command(other,waiting.id,'spend-ap',{ap:1})).error,/own turn/);
+  for(const ap of [-1,.5,4])assert.equal((await h.command(uid,actor.id,'spend-ap',{ap})).ok,false);
+  assert.equal((await h.command(uid,actor.id,'spend-ap',{ap:0})).ok,true);assert.equal(h.encounter().combat.participants[actor.id].bonus,false);
+  assert.match((await h.command(uid,actor.id,'spend-ap',{optionId:'basic:command'})).error,/bonus/i);
+  await h.command(uid,actor.id,'end-turn');assert.match((await h.command(uid,actor.id,'spend-ap',{ap:1})).error,/completed/);
+  h.store.get('campaigns/c/liveSession/current').status='paused';assert.match((await h.command(uid,actor.id,'spend-ap',{ap:1})).error,/live session/);
+});
+test('AP-paid actions can use GM resolution without charging AP twice or reusing receipts',async()=>{
+  const h=database();await h.setup();const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  await h.command(uid,actor.id,'spend-ap',{optionId:'basic:dash'});
+  const spend=h.encounter().combat.participants[actor.id].apSpends[0];assert.equal(spend.ap,2);
+  assert.equal((await h.command(uid,actor.id,'declare',{optionId:'basic:dash',spendId:spend.id})).ok,true);
+  assert.equal((await h.command('gm',actor.id,'approve',{approval:{checkType:'none',feasible:true}})).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,1);
+  await h.command('gm',actor.id,'resolve',{reason:'Movement completed',success:true});
+  assert.match((await h.command(uid,actor.id,'declare',{optionId:'basic:dash',spendId:spend.id})).error,/unused AP receipt/);
+  await h.command('gm','encounter','next');await h.command('gm','encounter','next');assert.deepEqual(h.encounter().combat.participants[actor.id].apSpends,[]);
+  assert.match((await h.command(uid,actor.id,'declare',{optionId:'basic:dash',spendId:spend.id})).error,/unused AP receipt/);
+});
+test('direct spell AP spending does not bypass MP checks or consume resources before resolution',async()=>{
+  const h=database();h.store.set('campaigns/c/characters/a',sheet('a','alice',{spells:[{name:'Heal — Weak',rank:'Weak'}]}));await h.setup();if(currentCombatant(h.encounter()).id!=='player-a')await h.command('gm','encounter','next');
+  const option=combatOptions(h.character('a'),compendium.entries).find(row=>row.kind==='spell');
+  assert.equal((await h.command('alice','player-a','spend-ap',{optionId:option.id})).ok,true);assert.equal(h.character('a').mp[0],100);assert.equal(h.encounter().combat.participants['player-a'].ap,2);
+  const spend=h.encounter().combat.participants['player-a'].apSpends[0];
+  await h.command('alice','player-a','declare',{optionId:option.id,spendId:spend.id,targetIds:['player-a']});
+  assert.equal((await h.command('gm','player-a','approve',{approval:{checkType:'none',castingMethod:'mancer',rankEligible:true,feasible:true}})).ok,true);
+  assert.equal(h.character('a').mp[0],55);assert.equal(h.encounter().combat.participants['player-a'].ap,2);
+});
+test('cancelling optional resolution keeps the direct AP spend and rejects forged receipts',async()=>{
+  const h=database();await h.setup();const actor=currentCombatant(h.encounter()),uid=actor.characterId==='a'?'alice':'bob';
+  assert.match((await h.command(uid,actor.id,'declare',{optionId:'basic:dash',spendId:'forged'})).error,/receipt/);
+  await h.command(uid,actor.id,'spend-ap',{optionId:'basic:dash'});const spend=h.encounter().combat.participants[actor.id].apSpends[0];
+  await h.command(uid,actor.id,'declare',{optionId:'basic:dash',spendId:spend.id});assert.equal((await h.command(uid,actor.id,'cancel')).ok,true);
+  assert.equal(h.encounter().combat.participants[actor.id].ap,1);assert.equal(h.encounter().combat.pending,null);
+});
+
+test('creature AP receipts keep source identities in the private GM workspace',async()=>{
+  const h=database();
+  await h.command('gm','encounter','save',{encounter:{combatants:[{id:'creature',kind:'enemy',name:'Enemy',hp:[40,40],sp:[100,100],mp:[100,100],initiative:40,initiativeSet:true},{id:'player-a',characterId:'a',initiative:10,initiativeSet:true}]}});
+  await h.command('gm','encounter','start');assert.equal(currentCombatant(h.encounter()).id,'creature');
+  assert.equal((await h.command('gm','creature','spend-ap',{optionId:'basic:dash'})).ok,true);
+  const publicReceipt=h.encounter().combat.participants.creature.apSpends[0];assert.equal(publicReceipt.name,'Creature action');assert.equal(publicReceipt.optionId,'');
+  const privateReceipt=h.store.get('campaigns/c/systems/gmWorkspace').combatState.apSpends.creature[0];assert.equal(privateReceipt.optionId,'basic:dash');
+  assert.equal((await h.command('gm','creature','declare',{optionId:'basic:dash',spendId:privateReceipt.id})).ok,true);
+  assert.equal((await h.command('gm','creature','approve',{approval:{checkType:'none',feasible:true}})).ok,true);assert.equal(h.encounter().combat.participants.creature.ap,1);
+});
