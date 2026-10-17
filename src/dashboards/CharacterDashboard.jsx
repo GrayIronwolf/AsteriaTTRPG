@@ -187,9 +187,9 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   >
     {gmReturn ? <button type="button" className="react-gm-return" onClick={() => returnToGM(gmReturn)}>← Back to GM Dashboard</button> : null}
     {campaignId?<SessionGate session={live.session} />:<div className="react-unassigned-dashboard" role="status"><b>Unassigned character</b><p>You can inspect this character now. Link a campaign and join an active session to use gameplay actions.</p><div className="react-action-row"><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaWorkspace?.openDashboard?.('campaigns'))}>Link a campaign</button><button onClick={()=>openLegacyView('workspace',()=>window.AsteriaGameplay?.openCharacterForgeHub?.())}>Back to Character Forge</button></div></div>}
-    <DashboardNavigation tabs={tabs} active={tab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
+    <DashboardNavigation tabs={tabs} active={tab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     {tab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={navigate} /><ActivityLog character={character} /></> : null}
     {tab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {tab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
