@@ -21,7 +21,7 @@
     "test:nac": "node --test scripts/racial-natural-ac.test.mjs",
     "test:talents": "node --test scripts/class-talents.test.mjs scripts/talent-graph.test.mjs",
     "test:deployment": "node --test scripts/firestore-index-deploy.test.mjs",
-    "lint": "eslint src functions js/firebase-auth.js js/asteria-navigation.js",
+    "lint": "eslint src functions js/firebase-auth.js js/asteria-navigation.js js/asteria-menu-buttons.js",
     "test:core": "node --test scripts/core-systems.test.mjs",
     "content:build": "node scripts/generate-compendium.js",
     "content:check": "node scripts/generate-compendium.js --check && node scripts/validate-compendium.js",
