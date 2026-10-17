@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" preserveAspectRatio="none">
+  <!-- Neutral optical planes only. The live theme supplies the crystal colour. -->
+  <defs>
+    <linearGradient id="crown" x2="0" y2="1">
+      <stop stop-color="#fff" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".03"/>
+    </linearGradient>
+    <linearGradient id="reflection" x2="1" y2="1">
+      <stop stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".52" stop-color="#fff" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".02"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 80 50 0H750L800 80 741 28H59Z" fill="url(#crown)"/>
+  <path d="M0 80 59 28 150 66 113 126 50 160Z" fill="#fff" opacity=".2"/>
+  <path d="m59 28 91 38 147-38 168 31 125-31H741L750 0H50Z" fill="#fff" opacity=".12"/>
+  <path d="m150 66 147-38 168 31-167 29Z" fill="url(#reflection)"/>
+  <path d="m590 28 151 0 59 52-50 80-38-46Z" fill="#000" opacity=".4"/>
+  <path d="m465 59 125-31 122 86-171-20Z" fill="#fff" opacity=".08"/>
+  <path d="m113 126 185-38 243 6 171 20 38 46H50Z" fill="#000" opacity=".25"/>
+  <path d="m113 126 185-38 121 47 122-41 171 20-74 25H165Z" fill="#fff" opacity=".11"/>
+  <path d="M50 160h700l-38-46-74 25H165l-52-13Z" fill="#fff" opacity=".22"/>
+  <path d="m59 28 91 38 147-38 168 31 125-31 122 86-74 25H165l-52-13 37-60M298 88l121 47 122-41" fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="1"/>
+  <path d="M70 15h648" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
+</svg>
