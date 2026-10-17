@@ -512,7 +512,7 @@ test('51. The redesigned player dashboard responds by reflowing panels and scrol
   assert.match(styles, /react-ability-grid/);
   assert.match(styles, /@container \(max-width: 900px\)/);
   assert.match(styles, /@container \(max-width: 620px\)/);
-  assert.match(styles, /react-character-dashboard \.react-workspace-main > \.react-tabs[\s\S]*overflow-x: auto/);
+  assert.match(styles, /react-character-dashboard \.combat-dashboard-main > \.react-tabs[\s\S]*overflow-x: auto/);
 });
 
 test('52. Production chunks share one React entry URL', () => {
