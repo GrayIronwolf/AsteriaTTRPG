@@ -251,6 +251,7 @@
 
   function apply(el, options = {}){
     if(!el || el.dataset.borderGlowBound === 'true') return el;
+    if(el.matches?.('.react-tabs[aria-label="Character Dashboard menu"],.react-tabs[aria-label="GM Dashboard menu"]'))return el;
     // Crystal navigation owns its bevel layers; retain BorderGlow on gameplay UI.
     if(el.classList?.contains('crystal-button') || el.classList?.contains('asteria-menu-button')) return el;
     if(el.matches?.('input,select,textarea,option,img,svg,canvas,.edge-light,.bar,.meter,.mini-meter,.hp,.sp,.mp,.xp,.hp-bar,.sp-bar,.mp-bar,.xp-bar,[data-resource]')) return el;
