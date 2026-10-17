@@ -28,6 +28,23 @@
   }
   function boot(){
     enhance(document);
+    // Native clicks/navigation stay untouched. Enter and Space get the same
+    // held-down face as touch/mouse :active, including cancellation on blur.
+    let pressed=null;
+    function release(){
+      pressed?.removeAttribute('data-menu-pressed');pressed=null;
+    }
+    document.addEventListener('keydown',event=>{
+      if(event.key!=='Enter' && event.key!==' ')return;
+      const button=event.target.closest?.('.asteria-menu-button');
+      if(!button || button.disabled || button.getAttribute('aria-disabled')==='true')return;
+      release();pressed=button;pressed.setAttribute('data-menu-pressed','');
+    });
+    document.addEventListener('keyup',event=>{if(event.key==='Enter' || event.key===' ')release();});
+    document.addEventListener('focusout',release);
+    document.addEventListener('pointercancel',release);
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)release();});
+    window.addEventListener('blur',release);
     // Legacy viewers and React tabs render after startup. React can also replace
     // className when selection changes; reapply only this presentation class.
     new MutationObserver(records=>{
