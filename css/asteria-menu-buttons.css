@@ -11,36 +11,48 @@
   --button-metal-light:#c9cbce;
 }
 
+/* Keep the movement token below interaction-state specificity. */
+body .asteria-menu-button { --button-travel:0px; }
+
 /* The existing top-nav ID keeps these shared rules above legacy menu skins. */
 body :is(.asteria-menu-button,#globalNavigation > .crystal-button) {
   --menu-tip:20px;
   --button-bezel:6px;
+  --button-depth:7px;
+  --button-padding:11px;
   --button-crystal-color:var(--asteria-menu-button,var(--asteria-accent,#808080));
   --button-crystal-highlight:color-mix(in srgb,var(--button-crystal-color) 22%,white);
   --button-crystal-glow:color-mix(in srgb,var(--button-crystal-color) calc(var(--asteria-glow-intensity,.36) * 70%),transparent);
   position:relative!important;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   min-height:var(--asteria-menu-height)!important;height:auto;min-width:0;
-  padding:11px 28px!important;border:0!important;border-radius:0!important;
+  box-sizing:border-box;
+  padding:calc(var(--button-padding) - var(--button-depth) / 2 + var(--button-travel)) 28px calc(var(--button-padding) + var(--button-depth) / 2 - var(--button-travel))!important;
+  border:0 solid transparent!important;border-radius:0!important;
+  /* Stationary lower body. Nine-slice SVG keeps pointed ends the same width
+     on short icon controls and long labels; it never tints with the crystal. */
+  border-image:url("../assets/ui/steel-sidewall.svg") 0 20 fill / 0 var(--menu-tip) / 0 stretch!important;
   background:transparent!important;color:var(--asteria-text,#e5edf2)!important;box-shadow:none!important;
   font:600 .9rem/1.25 var(--asteria-font-body)!important;text-align:center;text-decoration:none;
   white-space:normal;overflow:visible!important;overflow-wrap:anywhere;cursor:pointer;
   filter:drop-shadow(0 5px 1px #000c) drop-shadow(0 7px 5px #0008);
-  transition:transform 160ms ease,filter 160ms ease;
+  transition:padding 280ms cubic-bezier(.2,1.45,.45,1),filter 180ms ease;
+  transform:none!important;
 }
 body .asteria-menu-button::before,body .asteria-menu-button::after {
   content:""!important;position:absolute;pointer-events:none;opacity:1!important;mask:none!important;
   border:0!important;border-radius:0!important;mix-blend-mode:normal!important;
   clip-path:polygon(0 50%,var(--menu-tip) 0,calc(100% - var(--menu-tip)) 0,100% 50%,calc(100% - var(--menu-tip)) 100%,var(--menu-tip) 100%);
-  transition:filter 160ms ease,background 160ms ease;transform:none!important;
+  transition:transform 280ms cubic-bezier(.2,1.45,.45,1),filter 180ms ease,box-shadow 180ms ease;
+  transform:translateY(var(--button-travel))!important;
 }
 body .asteria-menu-button::before {
-  inset:0!important;z-index:-2!important;
+  inset:0 0 var(--button-depth)!important;z-index:-2!important;
   /* Fixed achromatic forged metal: no accent or crystal variables in this layer. */
   background:linear-gradient(112deg,#ffffff70 0%,#ffffff0a 8%,transparent 12% 88%,#0009 96%),repeating-linear-gradient(173deg,#ffffff0a 0 1px,transparent 1px 5px),linear-gradient(180deg,#eeeeef 0%,var(--button-metal-light) 3%,#77797d 9%,var(--button-metal-mid) 20%,#202124 44%,var(--button-metal-dark) 57%,#292a2d 78%,#9a9b9e 94%,#1a1b1e 100%)!important;
   box-shadow:inset 0 2px #f5f5f5,inset 0 -4px #030304,inset 2px 0 #c1c1c3,inset -2px 0 #101012!important;
 }
 body .asteria-menu-button::after {
-  inset:var(--button-bezel)!important;z-index:-1!important;
+  inset:var(--button-bezel) var(--button-bezel) calc(var(--button-bezel) + var(--button-depth))!important;z-index:-1!important;
   clip-path:polygon(0 50%,calc(var(--menu-tip) - var(--button-bezel) * .7) 0,calc(100% - var(--menu-tip) + var(--button-bezel) * .7) 0,100% 50%,calc(100% - var(--menu-tip) + var(--button-bezel) * .7) 100%,calc(var(--menu-tip) - var(--button-bezel) * .7) 100%)!important;
   background-image:url("../assets/ui/crystal-facets.svg"),radial-gradient(ellipse at 50% 40%,transparent 20%,#0009 100%),linear-gradient(180deg,color-mix(in srgb,var(--button-crystal-color) 62%,#101010),color-mix(in srgb,var(--button-crystal-color) 48%,#050505) 30%,color-mix(in srgb,var(--button-crystal-color) 32%,#030303) 55%,color-mix(in srgb,var(--button-crystal-color) 52%,#080808))!important;
   background-size:100% 100%!important;background-repeat:no-repeat!important;
@@ -48,17 +60,27 @@ body .asteria-menu-button::after {
   filter:brightness(1);
 }
 body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover {
-  transform:translateY(-2px);filter:drop-shadow(0 6px 1px #000c) drop-shadow(0 9px 6px #0008);
+  --button-travel:-2px;filter:drop-shadow(0 5px 1px #000c) drop-shadow(0 8px 6px #0008);
 }
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover::before { filter:brightness(1.12); }
 body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover::after { filter:brightness(1.22); }
 body .asteria-menu-button:is(.active,[aria-selected="true"],[aria-pressed="true"],[aria-current="page"],[aria-expanded="true"])::after {
   filter:brightness(1.18);
   box-shadow:inset 0 2px 1px var(--button-crystal-highlight),inset 0 -3px var(--button-crystal-highlight),inset 0 0 4px 2px #000b,inset 0 0 calc(8px + var(--asteria-glow-intensity,.36) * 20px) var(--button-crystal-glow)!important;
 }
-body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):active { transform:translateY(2px) scaleY(.97);filter:drop-shadow(0 1px 1px #000b); }
-body .asteria-menu-button:active::after { filter:brightness(.85); }
+/* Only the top face and its label travel. The lower sidewall stays anchored. */
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):is(:active,[data-menu-pressed]) {
+  --button-travel:4px;filter:drop-shadow(0 1px 1px #000b);transition-duration:70ms!important;
+}
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):is(:active,[data-menu-pressed])::before {
+  transition-duration:70ms!important;filter:brightness(.94);
+  box-shadow:inset 0 1px #c8c9cc,inset 0 -2px #030304,inset 2px 0 #999b9e,inset -2px 0 #101012!important;
+}
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):is(:active,[data-menu-pressed])::after {
+  transition-duration:70ms!important;filter:brightness(1.35);
+}
 body .asteria-menu-button:focus-visible { outline:2px solid #c4eaff!important;outline-offset:3px; }
-body .asteria-menu-button:is(:disabled,[aria-disabled="true"]) { opacity:.5;cursor:not-allowed;transform:none;filter:grayscale(1) drop-shadow(0 1px 1px #0008); }
+body .asteria-menu-button:is(:disabled,[aria-disabled="true"]) { --button-travel:0px;opacity:.5;cursor:not-allowed;filter:grayscale(1) drop-shadow(0 1px 1px #0008); }
 body .asteria-menu-button:is(:disabled,[aria-disabled="true"])::after { filter:grayscale(1); }
 body .asteria-menu-button > .edge-light { display:none!important; }
 
@@ -89,15 +111,16 @@ body .asteria-header #settingsToggle,
 body #accountControls #loginToggle {
   --menu-tip:32px;
   min-height:var(--asteria-top-menu-height)!important;height:var(--asteria-top-menu-height)!important;
-  padding:16px 36px!important;font-size:1.56rem!important;line-height:1.1!important;white-space:nowrap;
+  --button-padding:16px;
+  padding-inline:36px!important;font-size:1.56rem!important;line-height:1.1!important;white-space:nowrap;
 }
-body #globalNavigation .crystal-arrow { width:74px!important;min-width:74px!important;padding:16px!important; }
-body .asteria-header #settingsToggle { width:88px!important;min-width:88px!important;padding:16px!important;gap:9px!important; }
+body #globalNavigation .crystal-arrow { width:74px!important;min-width:74px!important;padding-inline:16px!important; }
+body .asteria-header #settingsToggle { width:88px!important;min-width:88px!important;padding-inline:16px!important;gap:9px!important; }
 body .asteria-header #settingsToggle span { width:36px!important;height:3px!important; }
 body #accountControls #loginToggle { order:0!important; }
 body .compendium-split { gap:2px; }
 body .compendium-quick-menu { width:380px;padding:12px; }
-body .compendium-quick-menu .asteria-menu-button { display:flex;min-height:48px!important;padding:12px 24px!important;margin-block:5px;font-size:.88rem!important; }
+body .compendium-quick-menu .asteria-menu-button { display:flex;min-height:48px!important;padding-inline:24px!important;margin-block:5px;font-size:.88rem!important; }
 body .compendium-quick-menu .asteria-menu-button span { font-size:1rem; }
 body :is(.react-tabs,.workspace-tabs,.phase3-tabs,.phase4-tabs,.ecosystem-tabs,.codex-detail-tabs,.react-filter-tabs,.combat-action-tabs) { gap:8px; }
 body .react-tabs { padding:8px!important; }
@@ -130,5 +153,6 @@ body .react-tabs .asteria-menu-button { flex-shrink:0; }
   .library-groups,.library-results { grid-template-columns:minmax(0,1fr); }
 }
 @media (prefers-reduced-motion:reduce) {
+  body .asteria-menu-button { --button-travel:0px!important; }
   body .asteria-menu-button,body .asteria-menu-button::before,body .asteria-menu-button::after { transition:none!important;transform:none!important; }
 }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" preserveAspectRatio="none">
+  <!-- Fixed neutral steel body. CSS nine-slices the 20-unit shoulders. -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#55575a"/>
+      <stop offset=".5" stop-color="#151619"/>
+      <stop offset=".78" stop-color="#34363a"/>
+      <stop offset=".87" stop-color="#777a7e"/>
+      <stop offset=".90" stop-color="#27282c"/>
+      <stop offset=".98" stop-color="#090a0c"/>
+      <stop offset="1" stop-color="#53565b"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 50 20 0H180L200 50 180 100H20Z" fill="url(#steel)"/>
+  <path d="m1 51 19 47h160l19-47M22 94h156" fill="none" stroke="#bdc0c5" stroke-opacity=".25"/>
+</svg>
