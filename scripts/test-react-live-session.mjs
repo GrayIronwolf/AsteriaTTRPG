@@ -339,15 +339,15 @@ test('34. Campaign, character progression, resources, characteristics, and curre
   assert.doesNotMatch(dashboard, /Coin Pouch/);
 });
 
-test('35. The modern shell exposes an accessible responsive navigation drawer', () => {
+test('35. The modern shell shares responsive top navigation with the existing utility drawer', () => {
   const html = read('index.html');
-  const shell = read('js/asteria-core-shell.js');
-  const styles = read('css/asteria-modern-ui.css');
-  ['mobileNavToggle','globalNavigation','mobileNavShade'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
-  assert.match(shell, /setMobileNavigation/);
-  assert.match(shell, /mobile-nav-open/);
-  assert.match(styles, /@media \(max-width: 900px\)/);
-  assert.match(styles, /body\.mobile-nav-open \.public-sidebar/);
+  const navigation = read('js/asteria-navigation.js');
+  const styles = read('css/asteria-navigation.css');
+  ['settingsToggle','globalNavigation','mobileNavigationSlot','mobileAccountSlot','accountSettingsTop'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
+  assert.doesNotMatch(html, /class="sidebar public-sidebar"/);
+  assert.match(navigation, /media.addEventListener\('change',reflow\)/);
+  assert.match(styles, /@media \(max-width:1200px\)/);
+  assert.match(styles, /left:0!important/);
 });
 
 test('36. Shared tabs and modals expose keyboard and focus behavior', () => {

@@ -251,6 +251,8 @@
 
   function apply(el, options = {}){
     if(!el || el.dataset.borderGlowBound === 'true') return el;
+    // Crystal navigation owns its bevel layers; retain BorderGlow on gameplay UI.
+    if(el.classList?.contains('crystal-button')) return el;
     if(el.matches?.('input,select,textarea,option,img,svg,canvas,.edge-light,.bar,.meter,.mini-meter,.hp,.sp,.mp,.xp,.hp-bar,.sp-bar,.mp-bar,.xp-bar,[data-resource]')) return el;
     const cls = typeof el.className === 'string' ? el.className : '';
     if(/\b(?:codex-card-grid|card-grid|grid|list|row|head|content|image|art|icon|name|subtitle|ranks|resource-stack|stat-row|meter|bar|actions)\b/.test(cls)) return el;

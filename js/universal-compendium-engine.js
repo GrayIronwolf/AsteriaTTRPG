@@ -441,6 +441,7 @@
     if(!tabs.includes('Related')) tabs.push('Related');
     return `
       <article class="codex-detail-page universal-detail-page">
+        <a class="compendium-library-return" href="#/compendium">← Asteria Compendium</a>
         <button type="button" id="universalBackToCards" class="clean-back codex-return">Back to cards</button>
         <header class="codex-detail-head">
           <div class="codex-detail-art">${entry.imagePath ? `<img src="${escapeHtml(entry.imagePath)}" alt="${escapeHtml(entry.title)}" decoding="async">` : `<span>${escapeHtml(initials(entry.title))}</span>`}</div>
@@ -510,6 +511,7 @@
     activePath = selectedEntry.categoryPath.slice();
     drillPath = selectedEntry.categoryPath.slice(0, -1);
     activeTab = (selectedEntry.tabs || tabTemplates[activeDomain] || tabTemplates.handbook)[0];
+    window.dispatchEvent?.(new CustomEvent('asteria:compendium-viewed', {detail:{id:target.id}}));
     writeRoute(true);
     render();
     window.scrollTo?.({ top:0, left:0, behavior:'auto' });
@@ -542,6 +544,7 @@
   function readRoute(){
     const hash = (window.location.hash || '').replace(/^#/,'');
     const [pathname,query=''] = hash.split('?');
+    if(/^\/?compendium\/?$/.test(pathname)) return window.AsteriaLibrary?.readRoute?.() || false;
     const segments = pathname.replace(/^\//,'').split('/');
     const legacyCollection = ['flora','minerals','materials'].includes(segments[0]);
     const matches = window.AsteriaContent.resolveAll(pathname);

@@ -19,7 +19,7 @@
   const authWorkspaceModes = [
     { id:'dashboard', label:'Dashboard', title:'User Workspace Dashboard', intro:'Your account workspace for campaigns, characters, notifications, and active party tools.' },
     { id:'campaigns', label:'Campaign Forge', title:'Campaign Forge', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
-    { id:'settings', label:'Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' }
+    { id:'settings', label:'Account Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' }
   ];
   const authWorkspaceTabs = {
     dashboard: ['Overview','Campaigns','Characters','Activity'],

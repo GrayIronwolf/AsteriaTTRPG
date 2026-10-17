@@ -32,28 +32,20 @@ test('empty dialog keeps Tab inside and unrelated keys are untouched', () => {
   const arrow=key(false,'ArrowDown');trapDialogTab(arrow,dialog,dialog);assert.equal(arrow.prevented,false);
 });
 function shell() {
-  const nodes=Object.fromEntries(['mobileNavToggle','globalNavigation','settingsPanel','settingsToggle','shade'].map(id=>[id,{
+  const nodes=Object.fromEntries(['settingsPanel','settingsToggle','shade'].map(id=>[id,{
     attributes:{},inert:false,open:false,
     classList:{contains:()=>false},
     setAttribute(name,value){this.attributes[name]=value;},
     querySelector(){return null;}
   }]));
-  let mobile=true;
   const trigger=control();
   const document={readyState:'loading',addEventListener(){},getElementById:id=>nodes[id],activeElement:trigger,body:{classList:{toggle(){}}}};
-  const context={document,window:{matchMedia:()=>({matches:mobile})},requestAnimationFrame:fn=>fn()};
+  const context={document,window:{},requestAnimationFrame:fn=>fn()};
   vm.createContext(context);
-  const source=fs.readFileSync('js/asteria-core-shell.js','utf8').replace(/\}\)\(\);\s*$/, 'window.testShell={setMobileNavigation,syncSettingsAccessibility};})();');
+  const source=fs.readFileSync('js/asteria-core-shell.js','utf8').replace(/\}\)\(\);\s*$/, 'window.testShell={syncSettingsAccessibility};})();');
   vm.runInContext(source,context);
-  return {nodes,trigger,api:context.window.testShell,setMobile:value=>{mobile=value;}};
+  return {nodes,trigger,api:context.window.testShell};
 }
-test('closed mobile navigation is inert, opening restores access, and desktop remains accessible', () => {
-  const {nodes,trigger,api,setMobile}=shell();
-  api.setMobileNavigation(false);assert.equal(nodes.globalNavigation.inert,true);assert.equal(nodes.globalNavigation.attributes['aria-hidden'],'true');
-  api.setMobileNavigation(true);assert.equal(nodes.globalNavigation.inert,false);assert.equal(nodes.mobileNavToggle.attributes['aria-expanded'],'true');
-  api.setMobileNavigation(false);assert.equal(trigger.focused,1);
-  setMobile(false);api.setMobileNavigation(false);assert.equal(nodes.globalNavigation.inert,false);assert.equal(nodes.globalNavigation.attributes['aria-hidden'],'false');
-});
 test('settings keyboard access follows its actual open state', () => {
   const {nodes,api}=shell();let open=false;
   nodes.settingsPanel.classList.contains=()=>open;
