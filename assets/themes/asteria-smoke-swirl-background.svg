@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440" role="img" aria-label="Dark blue and steel-grey atmospheric smoke and swirling mist">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#030811"/>
+      <stop offset="0.35" stop-color="#0b1c30"/>
+      <stop offset="0.7" stop-color="#07121f"/>
+      <stop offset="1" stop-color="#02050c"/>
+    </linearGradient>
+    <radialGradient id="blueHaze"><stop stop-color="#366588" stop-opacity=".75"/><stop offset=".36" stop-color="#1e3b57" stop-opacity=".36"/><stop offset="1" stop-color="#08121e" stop-opacity="0"/></radialGradient>
+    <radialGradient id="steelHaze"><stop stop-color="#b5cee3" stop-opacity=".29"/><stop offset=".3" stop-color="#527692" stop-opacity=".2"/><stop offset="1" stop-color="#091928" stop-opacity="0"/></radialGradient>
+    <radialGradient id="deepShadow"><stop stop-color="#00030a" stop-opacity="0"/><stop offset=".62" stop-color="#02060c" stop-opacity=".16"/><stop offset="1" stop-color="#000207" stop-opacity=".7"/></radialGradient>
+    <linearGradient id="smokeFlow" x1="0" y1=".3" x2="1" y2=".7">
+      <stop offset="0" stop-color="#b8d5ed" stop-opacity="0"/>
+      <stop offset=".18" stop-color="#7198b6" stop-opacity=".6"/>
+      <stop offset=".43" stop-color="#376387" stop-opacity=".29"/>
+      <stop offset=".67" stop-color="#a3c8e5" stop-opacity=".58"/>
+      <stop offset="1" stop-color="#44698d" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="edgeFlow" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#84b5d9" stop-opacity="0"/>
+      <stop offset=".2" stop-color="#d4e2ee" stop-opacity=".24"/>
+      <stop offset=".5" stop-color="#5e85a1" stop-opacity=".4"/>
+      <stop offset=".8" stop-color="#7ba4c1" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#8bb5d6" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur90" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="65"/></filter>
+    <filter id="blur28" x="-30%" y="-70%" width="160%" height="240%"><feGaussianBlur stdDeviation="28"/></filter>
+    <filter id="blur8" x="-30%" y="-70%" width="160%" height="240%"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+  <rect width="2560" height="1440" fill="url(#night)"/>
+  <ellipse cx="250" cy="340" rx="1080" ry="640" fill="url(#blueHaze)"/>
+  <ellipse cx="2090" cy="480" rx="980" ry="900" fill="url(#steelHaze)"/>
+  <ellipse cx="1130" cy="980" rx="1300" ry="600" fill="url(#blueHaze)" opacity=".72"/>
+  <ellipse cx="1790" cy="1340" rx="1030" ry="620" fill="url(#steelHaze)" opacity=".68"/>
+  <g fill="none" stroke="url(#smokeFlow)" stroke-linecap="round" filter="url(#blur90)">
+    <path d="M -250 920 C 140 380 470 1240 920 690 S 1510 390 1820 650 S 2310 800 2830 250" stroke-width="330" opacity=".41"/>
+    <path d="M -210 170 C 200 610 520 80 860 350 S 1550 1140 2070 700 S 2410 300 2790 620" stroke-width="270" opacity=".46"/>
+    <path d="M -130 1510 C 360 970 650 1330 1130 1020 S 1910 580 2680 1260" stroke-width="395" opacity=".39"/>
+    <path d="M 690 -170 C 800 280 1180 510 1470 110 S 2250 -40 2690 240" stroke-width="290" opacity=".3"/>
+  </g>
+  <g fill="none" stroke="url(#smokeFlow)" stroke-linecap="round" filter="url(#blur28)">
+    <path d="M -110 1050 C 210 850 220 470 560 620 S 710 1110 1130 710 S 1720 470 1970 690 S 2300 580 2630 400" stroke-width="140" opacity=".56"/>
+    <path d="M -100 360 C 230 500 450 120 770 260 S 1110 740 1420 560 S 1700 240 2130 340 S 2480 660 2700 430" stroke-width="122" opacity=".53"/>
+    <path d="M -150 1260 C 170 1150 510 1450 830 1140 S 1230 880 1550 1010 S 2240 1010 2660 1280" stroke-width="160" opacity=".49"/>
+    <path d="M 1630 -30 C 1540 210 1970 210 2150 40 S 2520 330 2650 710" stroke-width="100" opacity=".48"/>
+  </g>
+  <g fill="none" stroke="url(#edgeFlow)" stroke-linecap="round" filter="url(#blur8)">
+    <path d="M -70 615 C 160 390 470 770 680 600 S 700 220 1070 390 S 1320 870 1640 630 S 1980 300 2200 550 S 2370 760 2650 560" stroke-width="38" opacity=".68"/>
+    <path d="M -150 790 C 250 555 350 990 670 815 S 970 390 1250 570 S 1630 1040 1990 650 S 2310 690 2600 900" stroke-width="32" opacity=".6"/>
+    <path d="M -90 270 C 230 570 340 120 740 180 S 1100 530 1440 320 S 2010 30 2470 355" stroke-width="28" opacity=".61"/>
+    <path d="M -160 1170 C 90 1270 200 990 450 1070 S 740 1460 1040 1250 S 1350 850 1610 1000 S 2210 1020 2710 1210" stroke-width="47" opacity=".55"/>
+    <path d="M 2480 -60 C 2070 90 2010 500 2240 610 S 2570 320 2680 680" stroke-width="34" opacity=".59"/>
+    <path d="M 2600 250 C 2340 150 2220 340 2320 470 C 2480 630 2100 780 2070 530 C 2030 270 1820 400 1930 530" stroke-width="24" opacity=".45"/>
+  </g>
+  <g fill="none" stroke="#b4cde3" stroke-linecap="round" opacity=".14">
+    <path d="M -100 720 C 240 495 410 870 710 695 S 1010 375 1240 520" stroke-width="4"/>
+    <path d="M 1030 1280 C 1280 1000 1530 1080 1780 820 S 2160 430 2440 660" stroke-width="3"/>
+    <path d="M 180 170 C 520 370 580 10 870 240 S 1160 490 1410 340" stroke-width="3"/>
+    <path d="M 2420 30 C 2100 100 2040 310 2290 490 C 2460 600 2320 770 2070 715" stroke-width="3"/>
+  </g>
+  <rect width="2560" height="1440" fill="url(#deepShadow)"/>
+</svg>
