@@ -106,9 +106,17 @@
     if(open&&focus)menu.querySelector('a')?.focus();
   }
   function syncNavigation(){
-    const compendium=/^#\/?compendium(?:[/?]|$)|^#\/?(?:flora|minerals|materials)(?:[/?]|$)/.test(window.location.hash);
-    byId('compendiumIndexButton')?.setAttribute('aria-current',compendium?'page':'false');
-    const home=byId('sidebarHomeButton');if(home)home.setAttribute('aria-current',compendium?'false':home.classList.contains('active')?'page':'false');
+    const visible=id=>Boolean(byId(id)?.getClientRects?.().length);
+    const workspace=visible('asteria-workspace-shell');
+    const mode=byId('auth-workspace-mode-filter')?.value;
+    const states={
+      sidebarHomeButton:visible('home') || workspace&&mode==='dashboard',
+      compendiumIndexButton:visible('compendiumLibrary') || visible('universal-compendium-shell'),
+      characterForgeTop:visible('phase3GameplayShell') && byId('phase3GameplayShell')?.classList.contains('phase3-forge-shell'),
+      campaignsTop:workspace&&mode==='campaigns',
+      accountSettingsTop:workspace&&mode==='settings'
+    };
+    Object.entries(states).forEach(([id,current])=>{const button=byId(id);if(button){button.setAttribute('aria-current',current?'page':'false');button.classList.toggle('active',Boolean(current));}});
   }
   function bind(){
     const menu=byId('compendiumQuickMenu');
@@ -152,6 +160,9 @@
     window.addEventListener('asteria:custom-items-updated',()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();});
     // Logout/account changes must not leave another account's saved-page list visible.
     new MutationObserver(()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();syncNavigation();}).observe(document.body,{attributes:true,attributeFilter:['data-role']});
+    // Home and legacy workspaces can change views without changing the hash.
+    const main=byId('mainContent');
+    if(main)new MutationObserver(records=>{if(records.some(record=>record.type==='childList'||record.target.classList?.contains('view')))syncNavigation();}).observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
     window.AsteriaViewHooks?.afterView?.('top-navigation-state',null,syncNavigation,{defer:false});
     readRoute();
   }

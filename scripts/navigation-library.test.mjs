@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
 import canonical from '../data/compendium.js';
-function runtime(rows=canonical.entries){
+function runtime(rows=canonical.entries,nodes={}){
   const history=[];const views=[];
   const context={URLSearchParams,localStorage:{getItem:()=>null,setItem(){}},window:{
     addEventListener(){},AsteriaUniversalCompendium:{visibleEntries:()=>rows},location:{hash:'#/compendium'},history:{state:null,pushState(_state,_title,url){history.push(url);context.window.location.hash=url;},replaceState(_state,_title,url){history.push(url);context.window.location.hash=url;}},setView:id=>views.push(id)
-  },document:{readyState:'loading',addEventListener(){},getElementById:()=>null,querySelectorAll:()=>[],body:{classList:{remove(){}}}}};
-  vm.createContext(context);vm.runInContext(fs.readFileSync('js/asteria-navigation.js','utf8'),context);
-  return {api:context.window.AsteriaLibrary,window:context.window,history,views};
+  },document:{readyState:'loading',addEventListener(){},getElementById:id=>nodes[id]||null,querySelectorAll:()=>[],body:{classList:{remove(){}}}}};
+  const source=fs.readFileSync('js/asteria-navigation.js','utf8').replace(/\}\)\(\);\s*$/, 'window.testNavigation={syncNavigation};})();');
+  vm.createContext(context);vm.runInContext(source,context);
+  return {api:context.window.AsteriaLibrary,window:context.window,history,views,syncNavigation:context.window.testNavigation.syncNavigation};
 }
 test('six navigation groups retain every 00–25 category plus the Handbook without changing definitions',()=>{
   const {api}=runtime();assert.equal(api.groups.length,6);
@@ -53,4 +54,21 @@ test('the library uses the authoritative visibility filter rather than exposing 
   assert.match(source,/visibleEntries\?\./);assert.doesNotMatch(source,/ASTERIA_UNIVERSAL_COMPENDIUM_INDEX/);
   const html=fs.readFileSync('index.html','utf8');assert.doesNotMatch(html,/class="sidebar public-sidebar"/);
   for(const id of ['characterForgeTop','campaignsTop','accountSettingsTop','settingsToggle','loginToggle'])assert.equal((html.match(new RegExp(`id="${id}"`,'g'))||[]).length,1);
+});
+test('selected navigation follows the visible workspace even when a legacy hash remains',()=>{
+  const shown=new Set(['compendiumLibrary']);
+  const ids=['sidebarHomeButton','compendiumIndexButton','characterForgeTop','campaignsTop','accountSettingsTop'];
+  const nodes=Object.fromEntries(ids.map(id=>[id,{attributes:{},setAttribute(name,value){this.attributes[name]=value;},classList:{toggle(){}}}]));
+  for(const id of ['home','compendiumLibrary','universal-compendium-shell','asteria-workspace-shell','phase3GameplayShell'])nodes[id]={getClientRects:()=>shown.has(id)?[{}]:[],classList:{contains:()=>true}};
+  nodes['auth-workspace-mode-filter']={value:'settings'};
+  const {syncNavigation,window}=runtime([],nodes);
+  window.location.hash='#/compendium';syncNavigation();
+  assert.equal(nodes.compendiumIndexButton.attributes['aria-current'],'page');
+  shown.clear();shown.add('home');syncNavigation();
+  assert.equal(nodes.sidebarHomeButton.attributes['aria-current'],'page');
+  assert.equal(nodes.compendiumIndexButton.attributes['aria-current'],'false');
+  shown.clear();shown.add('asteria-workspace-shell');syncNavigation();
+  assert.equal(nodes.accountSettingsTop.attributes['aria-current'],'page');
+  assert.equal(nodes.sidebarHomeButton.attributes['aria-current'],'false');
+  assert.equal(nodes.compendiumIndexButton.attributes['aria-current'],'false');
 });

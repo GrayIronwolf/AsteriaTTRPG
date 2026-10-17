@@ -53,7 +53,7 @@ The separate HTML logo is removed; the supplied artwork itself is unchanged.
   1920 and 2560px; no horizontal overflow or duplicate navigation controls.
 - Browser interactions: split disclosure keyboard/Escape, category navigation,
   global search, favourites, recent pages, detail bookmarks, back/forward, Home
-  and mobile menu navigation.
+  mobile menu navigation and selected states after Home/workspace changes.
 - Local authenticated fixture: Account Settings, campaign gallery, Character
   Forge, new-character flow, dashboard resource/menu order, library and Logout.
   The existing fixture lacks `refreshCharacterSystems`; the browser harness
