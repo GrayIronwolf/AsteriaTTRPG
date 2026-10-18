@@ -7,11 +7,15 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
 (async()=>{
  const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{}),args:['--no-sandbox']});
  const errors=[];
- async function page(options={}){
+ async function page({restoredSession=false,...options}={}){
   const p=await browser.newPage({viewport:{width:1440,height:1000},...options});
   p.setDefaultTimeout(20000);
   p.on('pageerror',e=>errors.push(e.message));
   await p.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+  if(restoredSession) await p.route('**/js/auth-bridge.js*',async route=>{
+   const response=await route.fetch();
+   await route.fulfill({response,body:await response.text()+"\nwindow.AsteriaAuthBridge.setSession({uid:'player-demo',username:'Player',characters:[]},{uid:'player-demo',email:'player@example.com'});"});
+  });
   return p;
  }
  const guest=await page();const requested=[];guest.on('request',r=>requested.push(r.url()));
@@ -37,6 +41,57 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  console.log('PASS: Home/Handbook avoid dashboard runtime; dynamic Home, workspace controls and card decoration remain functional.');
  await guest.close();
 
+ const restored=await page({restoredSession:true});
+ await restored.goto(base,{waitUntil:'networkidle'});
+ assert.equal(await restored.evaluate(()=>window.AsteriaAuthBridge.getSession().uid),'player-demo');
+ await restored.locator('#home.show').waitFor();
+ await restored.reload({waitUntil:'networkidle'});
+ await restored.locator('#home.show').waitFor();
+ await restored.evaluate(()=>window.AsteriaWorkspace.openDashboard('characters'));
+ await restored.locator('#workspace.show .character-forge-hub').waitFor();
+ await restored.evaluate(()=>window.AsteriaAuthBridge.setSession({username:'Updated'},{uid:'player-demo'}));
+ await restored.locator('#workspace.show .character-forge-hub').waitFor();
+ await restored.locator('#sidebarHomeButton').evaluate(el=>el.click());
+ await restored.locator('#home.show').waitFor();
+ assert.equal(await restored.evaluate(()=>window.location.hash),'');
+ // The core shell also supports Home if the early guard is unavailable.
+ await restored.evaluate(()=>{window.AsteriaWorkspace.openDashboard('characters');window.asteriaHardHome=null;window.goHome();});
+ await restored.locator('#home.show').waitFor();
+ console.log('PASS: restored login and reload stay on Home; profile sync preserves Forge; both Home routes return to Home.');
+ await restored.close();
+
+ for(const [hash,selector] of [['#/compendium','#compendiumLibrary.show'],['#/join/123456789012','#workspaceJoinCampaignCode']]){
+  const saved=await page({restoredSession:true});
+  await saved.goto(base+hash,{waitUntil:'networkidle'});
+  await saved.locator(selector).waitFor();
+  await saved.evaluate(()=>window.AsteriaAuthBridge.setSession({username:'Updated'},{uid:'player-demo'}));
+  await saved.locator(selector).waitFor();
+  assert.equal(await saved.evaluate(()=>window.location.hash),hash);
+  if(hash.includes('/join/'))assert.equal(await saved.locator(selector).inputValue(),'123456789012');
+  await saved.close();
+ }
+ console.log('PASS: restored login preserves Compendium bookmarks and campaign invitation codes.');
+
+ const mobile=await page();
+ await mobile.goto(base,{waitUntil:'networkidle'});
+ for(const width of [320,360,390,430,768,900,1024,1440,1920]){
+  await mobile.setViewportSize({width,height:900});
+  const layout=await mobile.evaluate(()=>{
+   const hero=document.querySelector('#home .public-hero');
+   const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height};};
+   return {overflow:document.documentElement.scrollWidth>innerWidth,text:rect(hero.querySelector('div')),buttons:[...document.querySelectorAll('#home button')].filter(el=>el.getClientRects().length).map(rect),label:rect(document.querySelector('#home .map-placeholder span'))};
+  });
+  assert.equal(layout.overflow,false,`Home overflow at ${width}px`);
+  assert.ok(layout.text.width>=230,`Home text too narrow at ${width}px`);
+  for(const button of layout.buttons){
+   assert.ok(button.left>=0&&button.right<=width,`Home button outside ${width}px`);
+   if(width<=900)assert.ok(button.height>=44,`Home tap target too short at ${width}px`);
+  }
+  assert.ok(layout.label.right<=width,`Map title outside ${width}px`);
+ }
+ console.log('PASS: readable Home, contained map title and comfortable phone controls across 320–1920px.');
+ await mobile.close();
+
  const p=await page();const chunks=[];p.on('request',r=>{if(r.url().includes('mountDashboard'))chunks.push(r.url());});
  await p.goto(base+'?reactFixture=1',{waitUntil:'networkidle'});
  await p.waitForFunction(()=>window.AsteriaReactMigration?.available&&window.AsteriaFirebase?.getUser()?.uid==='player-demo');
@@ -55,9 +110,13 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  console.log('PASS: first dashboard load, character/inventory/GM navigation, one runtime load, mobile sizing.');
  await p.close();
 
- const direct=await page();
+ const direct=await page({restoredSession:true});
  await direct.goto(base+'?reactFixture=1#/react/owned-character/kael',{waitUntil:'networkidle'});
  await direct.locator('.react-character-dashboard').waitFor();
+ const characterRoute=await direct.evaluate(()=>window.location.hash);
+ await direct.evaluate(()=>window.AsteriaAuthBridge.setSession({username:'Updated'},{uid:'player-demo'}));
+ await direct.locator('.react-character-dashboard').waitFor();
+ assert.equal(await direct.evaluate(()=>window.location.hash),characterRoute);
  console.log('PASS: direct owned-character bookmark.');await direct.close();
 
  const slow=await page();let release;

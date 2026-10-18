@@ -1316,10 +1316,6 @@
     });
     bindPublicButtons();
     openRouteFromLocation();
-    if (window.__asteriaOpenDashboardOnReady || (accountSignedIn() && byId('home')?.classList.contains('show'))) {
-      window.__asteriaOpenDashboardOnReady = false;
-      openDashboard('dashboard');
-    }
     window.addEventListener('hashchange', openRouteFromLocation);
     const observer = new MutationObserver(records => {
       const roots = new Set(records.flatMap(record => Array.from(record.addedNodes)).filter(node => node.nodeType === 1 && node.isConnected));

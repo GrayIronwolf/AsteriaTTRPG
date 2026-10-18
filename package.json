@@ -31,7 +31,7 @@
     "test:compendium": "node --test scripts/compendium.test.mjs",
     "test:startup:browser": "node scripts/test-startup-browser.cjs",
     "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs scripts/loading-speed.test.mjs",
-    "test:navigation": "node --test scripts/navigation-library.test.mjs",
+    "test:navigation": "node --test scripts/navigation-library.test.mjs scripts/home-startup.test.mjs",
     "audit:production": "npm audit --omit=dev --audit-level=moderate"
   },
   "dependencies": {

@@ -7,18 +7,6 @@
   function qsa(selector, root=document){ return Array.from(root.querySelectorAll(selector)); }
   function byId(id){ return document.getElementById(id); }
 
-  function isLoggedIn(){
-    const bridgeSession = window.AsteriaAuthBridge?.getSession?.() || {};
-    const legacySession = window.session || {};
-    const session = Object.assign({}, legacySession, bridgeSession);
-    return Boolean(
-      window.AsteriaAuthBridge?.isLoggedIn?.() ||
-      session.uid ||
-      session.email ||
-      ['account', 'player', 'gm'].includes(session.role)
-    );
-  }
-
   function isHomeControl(element){
     if(!element) return false;
     const text = String(element.textContent || '').trim().toLowerCase();
@@ -72,13 +60,6 @@
     try {
       clearRouteHash();
       clearShellsAndHiddenState();
-      if(isLoggedIn() && typeof window.AsteriaWorkspace?.openDashboard === 'function'){
-        const opened = window.AsteriaWorkspace.openDashboard('dashboard');
-        if(opened !== false){
-          window.scrollTo?.({ top:0, left:0, behavior:'auto' });
-          return false;
-        }
-      }
       showPublicHome();
       window.scrollTo?.({ top:0, left:0, behavior:'auto' });
       return false;

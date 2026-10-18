@@ -165,13 +165,6 @@
       clearRouteState();
       byId('settingsPanel')?.classList.remove('open');
       byId('shade')?.classList.remove('open');
-      if(isAccountSignedIn() && window.AsteriaWorkspace?.openDashboard){
-        const opened = window.AsteriaWorkspace.openDashboard('dashboard');
-        if(opened !== false){
-          window.scrollTo?.({ top:0, left:0, behavior:'auto' });
-          return true;
-        }
-      }
       showPublicHome();
       window.scrollTo?.({ top:0, left:0, behavior:'auto' });
       restoreMainViews();

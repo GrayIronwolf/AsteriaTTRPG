@@ -515,7 +515,11 @@ function openAccountHome(profile, user){
   if(!window.AsteriaAuthBridge){ throw new Error('Asteria account bridge is not loaded. Refresh the page and try again.'); }
   window.AsteriaAuthBridge.setSession(profile, user);
   $('loginPanel')?.classList.remove('open');
-  window.AsteriaWorkspace?.openDashboard?.('dashboard');
+  // Preserve bookmarks and campaign invitations; an ordinary login opens Home.
+  if(!window.location.hash.replace(/^#\/?$/, '')){
+    if(window.asteriaHardHome) window.asteriaHardHome();
+    else window.setView?.('home');
+  }
 }
 
 function authPanelHtml(){
@@ -584,7 +588,7 @@ window.firebaseCreateAccountPage = async function(){
     currentProfile = Object.assign({}, profile, { createdAt: Date.now() });
     saveLocalProfile(cred.user.uid, currentProfile);
     await loadCharacters(cred.user);
-    showCreateHint('Account created. Opening your workspace dashboard.', 'success');
+    showCreateHint('Account created.', 'success');
     notice('Account created.');
     openAccountHome(currentProfile, cred.user);
     window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: cred.user.uid, source:'login' }}));
@@ -624,7 +628,7 @@ window.firebaseLogin = async function(input = {}){
       role:'account',
       characters:[]
     }, getLocalProfile(cred.user.uid) || {});
-    showAuthHint('Logged in. Opening your workspace dashboard.', 'success');
+    showAuthHint('Logged in.', 'success');
     notice('Logged in.');
     openAccountHome(currentProfile, cred.user);
     ensureProfile(cred.user, { username:resolved.username, role:'account' })
@@ -632,9 +636,6 @@ window.firebaseLogin = async function(input = {}){
         currentProfile = profile;
         window.AsteriaAuthBridge?.setSession?.(currentProfile, cred.user);
         return loadCharacters(cred.user);
-      })
-      .then(() => {
-        window.AsteriaWorkspace?.openDashboard?.('dashboard');
       })
       .catch(err => console.warn('Post-login profile sync skipped.', err));
   }catch(err){
