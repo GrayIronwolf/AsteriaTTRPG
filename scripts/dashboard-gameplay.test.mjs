@@ -46,6 +46,8 @@ test('custom encounter instances omit empty pools and retain configured XP and r
   const next=setEncounterResource(creature,'sp',20,80);assert.deepEqual(next.sp,[20,80]);
   assert.deepEqual(preserveEncounterResources([{...creature,sp:[80,80]}],[next])[0].sp,[20,80]);
   assert.throws(()=>customEncounterCreature({name:'No HP',hp:0,xpReward:0},'a'));
+  const npc=customEncounterCreature({type:'NPC',name:'Caravan guard',hp:90,sp:75,mp:30,xpReward:1200,ac:14,initiative:8},'npc');
+  assert.equal(npc.type,'Custom NPC');assert.equal(npc.kind,'enemy');assert.deepEqual(npc.mp,[30,30]);assert.equal(npc.ac,14);
   const extra={...creature,resources:{focus:[4,8]},resourceDefinitions:{focus:{name:'Focus'}}};
   assert.ok(encounterResourceKeys(extra).includes('focus'));assert.deepEqual(setEncounterResource(extra,'focus',2,8).resources.focus,[2,8]);
 });

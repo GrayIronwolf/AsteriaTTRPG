@@ -542,3 +542,27 @@ test('direct player AP spend is transactional, deduplicated, ownership checked a
   assert.equal((await command('alice','player-a','spend-ap',{ap:2})).ok,false);
   assert.equal((await command('alice','player-a','end-turn')).ok,true);
 });
+
+test('GM encounter recovery persists custom creatures after a character is unlinked without changing either sheet',async()=>{
+  const command=async(uid,operation,extra={})=>{
+    const encounter=(await db.doc('campaigns/c/systems/encounter').get()).data()||{};
+    return action(uid,'combatCommand',['c','encounter',{operation,revision:encounter.combat?.revision||0,...extra}]);
+  };
+  const players=[{id:'player-a',characterId:'a'},{id:'player-b',characterId:'b'}];
+  assert.equal((await command('gm','save',{encounter:{combatants:players}})).ok,true);
+  await db.doc('campaigns/c').update({'playerCharacterLinks.b':FieldValue.delete(),'characters.b':FieldValue.delete(),'players.bob.characterIds':[]});
+  const beforeShared=(await db.doc('campaigns/c/characters/b').get()).data(),beforePrivate=(await db.doc('users/bob/characters/b').get()).data();
+  await db.doc('campaigns/c/systems/encounter').update({'combat.participants.player-b':{ap:2,turns:1}});
+  await db.doc('campaigns/c/systems/gmWorkspace').update({combatState:{preparations:{'player-b':{secret:'gone'}},apSpends:{'player-b':[{ap:1}]}}});
+  const creature={id:'bandit',name:'Bob',kind:'enemy',type:'Custom NPC',hp:[90,90],sp:[75,75],mp:[30,30],xpReward:1200,ac:14,initiative:8,initiativeSet:true};
+  assert.equal((await command('alice','save',{encounter:{combatants:[...players,creature]}})).ok,false);
+  const result=await command('gm','save',{encounter:{combatants:[...players,creature]}});assert.equal(result.ok,true,result.error);
+  const saved=(await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/encounter')))).data();
+  assert.deepEqual(saved.combatants.map(row=>row.id),['player-a','bandit']);assert.deepEqual(saved.enemies[0].hp,[90,90]);assert.equal(saved.enemies[0].xpReward,1200);
+  assert.equal(saved.combat.participants['player-b'],undefined);
+  const workspace=(await db.doc('campaigns/c/systems/gmWorkspace').get()).data();
+  assert.equal(workspace.privateNotes,'GM only');assert.equal(workspace.combatState.preparations['player-b'],undefined);assert.equal(workspace.combatState.apSpends['player-b'],undefined);
+  assert.deepEqual((await db.doc('campaigns/c/characters/b').get()).data(),beforeShared);assert.deepEqual((await db.doc('users/bob/characters/b').get()).data(),beforePrivate);
+  assert.equal((await command('gm','save',{encounter:{combatants:[...saved.combatants,{id:'forged',characterId:'foreign'}]}})).ok,false);
+  assert.equal((await command('gm','start')).ok,true);
+});

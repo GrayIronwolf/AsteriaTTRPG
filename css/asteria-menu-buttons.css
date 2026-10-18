@@ -3,7 +3,7 @@
 :root {
   --asteria-menu-height:48px;
   --asteria-top-menu-height:53px;
-  --asteria-banner-height:clamp(140px,17.708333vw,454px);
+  --asteria-banner-height:clamp(84px,10.625vw,272.4px);
   --core-header-height:var(--asteria-banner-height);
   --asteria-header-art:url("../assets/header/asteria-energy-header.webp");
   --button-metal-dark:#090a0c;
@@ -104,7 +104,7 @@ body .topbar.asteria-header {
   height:var(--core-header-height)!important;min-height:var(--core-header-height)!important;
   background-image:linear-gradient(90deg,#02070c00 25%,#02070c30 48%,#02070c30),var(--asteria-header-art),linear-gradient(#09111b,#080f17)!important;
   background-size:cover,100% auto,cover!important;
-  background-repeat:no-repeat!important;background-position:left center!important;
+  background-repeat:no-repeat!important;background-position:left 52%!important;
 }
 body .asteria-main-navigation { justify-content:flex-start;gap:7px;flex-wrap:nowrap; }
 /* Measure the existing split control after fonts load; no duplicate navigation. */
@@ -133,7 +133,7 @@ body .react-tabs { padding:8px!important; }
 body .react-tabs .asteria-menu-button { flex-shrink:0; }
 
 @media (max-width:1679px) {
-  :root { --asteria-banner-height:clamp(96px,17.708333vw,300px);--core-header-height:var(--asteria-banner-height); }
+  :root { --asteria-banner-height:clamp(57.6px,10.625vw,180px);--core-header-height:var(--asteria-banner-height); }
   body .topbar.asteria-header { grid-template-columns:minmax(0,1fr)!important;padding:0 16px 6px!important; }
   body .asteria-header .top-actions { justify-content:flex-end!important; }
   body .topbar.asteria-header { background-size:cover,auto calc(var(--asteria-banner-height) * 516 / 272),cover!important; }

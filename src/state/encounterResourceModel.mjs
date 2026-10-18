@@ -95,7 +95,7 @@ export function adjustEncounterResource(record = {}, key, delta) {
 export function customEncounterCreature(input={},id) {
   const name=String(input.name || '').trim().slice(0,120);
   if(!name)throw new Error('Enter a creature name.');
-  const next={id,name,kind:'enemy',type:'Custom Creature',custom:true,defeated:false};
+  const next={id,name,kind:'enemy',type:input.type==='NPC'?'Custom NPC':'Custom Creature',custom:true,defeated:false};
   for(const key of ['hp','sp','mp','xpReward','ac','initiative']) {
     if(input[key]==='' || input[key]===undefined) {if(['hp','xpReward'].includes(key))throw new Error('HP and XP reward are required.');continue;}
     const value=Number(input[key]);
