@@ -37,7 +37,7 @@ jsFiles.forEach(file => {
 });
 
 [
-  'data/compendium.js',
+  'data/compendium-index.js',
   'js/compendium-registry.js',
   'js/asteria-home-guard.js',
   'js/asteria-state.js',
@@ -221,7 +221,7 @@ const raceContentDirs = fs.readdirSync(raceContentRoot, { withFileTypes:true }).
 const cavernRaceFile = fs.readFileSync(path.join(raceContentRoot, 'cavern-sprite/index.md'), 'utf8');
 const raceManifestEntries = content.entries('race');
 const raceManifest = {source:'content/races',entryCount:raceManifestEntries.length};
-check('Canonical data and registry load before the shared viewer', jsFiles.indexOf('data/compendium.js') < jsFiles.indexOf('js/compendium-registry.js') && jsFiles.indexOf('js/compendium-registry.js') < jsFiles.indexOf('js/universal-compendium-engine.js'));
+check('Canonical data and registry load before the shared viewer', jsFiles.indexOf('data/compendium-index.js') < jsFiles.indexOf('js/compendium-registry.js') && jsFiles.indexOf('js/compendium-registry.js') < jsFiles.indexOf('js/universal-compendium-engine.js'));
 check('Race content folder is flat and generated', fs.existsSync(path.join(root, 'scripts/generate-race-content.js')) && raceContentDirs.length === 201 && raceContentDirs.every(entry => fs.existsSync(path.join(raceContentRoot, entry.name, 'index.md'))));
 check('Race manifest is generated from content/races', raceManifest.source === 'content/races' && raceManifest.entryCount === 201 && raceManifestEntries.length === 201 && raceManifestEntries.every(entry => String(entry.sourcePath || '').startsWith('content/races/')));
 check('Removed race entries are not active', !fs.existsSync(path.join(raceContentRoot, 'undien/index.md')) && !fs.existsSync(path.join(raceContentRoot, 'deepborn-undien/index.md')) && !raceManifestEntries.some(entry => ['Undien','Deepborn Undien'].includes(entry.name)));
@@ -450,13 +450,13 @@ jsFiles.forEach(file => {
 const scriptOrder = jsFiles.join(' > ');
 check(
   'Script order keeps manifest before app',
-  jsFiles.indexOf('data/compendium.js') >= 0 &&
-    jsFiles.indexOf('js/app.js') > jsFiles.indexOf('data/compendium.js'),
+  jsFiles.indexOf('data/compendium-index.js') >= 0 &&
+    jsFiles.indexOf('js/app.js') > jsFiles.indexOf('data/compendium-index.js'),
   scriptOrder
 );
 check(
   'Script order keeps generated content index before unified compendium',
-  jsFiles.indexOf('js/compendium-registry.js') > jsFiles.indexOf('data/compendium.js') &&
+  jsFiles.indexOf('js/compendium-registry.js') > jsFiles.indexOf('data/compendium-index.js') &&
     jsFiles.indexOf('js/clean-compendium.js') > jsFiles.indexOf('js/compendium-registry.js'),
   scriptOrder
 );
@@ -467,8 +467,8 @@ check(
 );
 check(
   'Script order keeps state between manifest and app',
-  jsFiles.indexOf('data/compendium.js') >= 0 &&
-    jsFiles.indexOf('js/asteria-state.js') > jsFiles.indexOf('data/compendium.js') &&
+  jsFiles.indexOf('data/compendium-index.js') >= 0 &&
+    jsFiles.indexOf('js/asteria-state.js') > jsFiles.indexOf('data/compendium-index.js') &&
     jsFiles.indexOf('js/app.js') > jsFiles.indexOf('js/asteria-state.js'),
   scriptOrder
 );

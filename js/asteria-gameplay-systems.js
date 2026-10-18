@@ -1077,6 +1077,10 @@
     if(!activeTab || !system.tabs.includes(activeTab)) activeTab = system.tabs[0];
     if(activeSystem === 'characterCreator' && forgeMode !== 'hub') draft().activeTab = activeTab;
     const root = shell();
+    const forgeDomains={Race:[],Class:['talent'],Patron:['religion'],Appearance:[],Origin:['origin'],Characteristics:[],Magic:['spell'],Skills:['skill'],'Affinity Rolls':['spell','skill'],Equipment:['item'],Review:['talent','religion','origin','spell','skill','item']};
+    const systemDomains={characterSheet:['race','class','talent','skill','spell','item'],appearanceBuilder:['race'],talentTree:['class','talent'],encounterBuilder:['creature'],lootGenerator:['item'],craftingSystem:['item','profession'],professionSystem:['profession','item']};
+    const dependencies=activeSystem==='characterCreator' ? (forgeMode==='hub'?[]:['race','class',...(forgeDomains[activeTab] || [])]) : (systemDomains[activeSystem] || []);
+    if(window.AsteriaContent?.readyForView && !window.AsteriaContent.readyForView(root,dependencies,render))return;
     if(activeSystem === 'characterCreator'){
       const d = draft();
       const visibleTabs = forgeTabsForDraft(d);
@@ -2749,6 +2753,14 @@
   }
 
   async function saveCharacterFromDraft(){
+    try {
+      const required=['race','class','talent','religion','origin','spell','skill','item'];
+      if(window.AsteriaContent?.domainsReady?.(required)===false) await window.AsteriaContent.ensureDomains(required);
+    } catch(error) {
+      window.toast?.('Character rules could not load. Check the connection and retry Save.');
+      console.warn('Character save deferred until rules are available.',error);
+      return false;
+    }
     const d = draft();
     if(!d.raceSlug){
       activeTab = 'Race';

@@ -14,7 +14,7 @@ async function loadEntry() {
   }
   // Keep the entry URL identical to the URLs imported by Rollup chunks. A query
   // suffix here would cause the browser to evaluate a second React runtime.
-  return import('../react-dist/asteria-react.js');
+  return import('../react-dist/asteria-react-content-v1.js');
 }
 
 loadEntry().then(() => {

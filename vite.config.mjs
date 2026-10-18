@@ -18,7 +18,7 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(process.cwd(), 'src/main.jsx'),
       output: {
-        entryFileNames: 'asteria-react.js',
+        entryFileNames: 'asteria-react-content-v1.js',
         chunkFileNames: 'asteria-react-[name]-[hash].js',
         assetFileNames: asset => asset.name?.endsWith('.css') ? 'asteria-react.css' : 'assets/[name]-[hash][extname]'
       }

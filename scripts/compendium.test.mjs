@@ -161,6 +161,6 @@ test('Handbook partition combines into the same deterministic registry without d
   addHandbook(actual);
   assert.equal(actual.entries.length,891);
   const html=read('index.html');
-  assert.ok(html.indexOf('data/compendium.js')<html.indexOf('data/compendium-handbook.js'));
-  assert.ok(html.indexOf('data/compendium-handbook.js')<html.indexOf('js/compendium-registry.js'));
+  assert.ok(html.indexOf('data/compendium-index.js')<html.indexOf('js/compendium-registry.js'));
+  assert.doesNotMatch(html, /src="data\/compendium(?:-handbook)?\.js/);
 });

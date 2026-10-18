@@ -158,6 +158,7 @@ function generate({ check = false } = {}) {
       if (!fs.existsSync(file) || fs.readFileSync(file,'utf8') !== content) throw new Error('Compendium is stale. Run npm run content:build.');
     } else fs.writeFileSync(file,content);
   }
+  require('./lib/compendium-delivery.cjs').writeDelivery({root,payload:hydrate(payload),hydrate,headingName},{check});
   console.log(`${check ? 'Verified' : 'Generated'} ${entries.length} canonical entries.`);
   return hydrate(payload);
 }
