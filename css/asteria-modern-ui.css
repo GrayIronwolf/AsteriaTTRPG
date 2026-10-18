@@ -752,6 +752,54 @@ textarea:disabled,
   max-width: var(--asteria-content-reading);
 }
 
+/* Home keeps its reading width and comfortable controls on phones. */
+@media (max-width: 900px) {
+  #home .public-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  #home .public-hero .hero-logo {
+    width: min(180px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+    justify-self: center;
+  }
+
+  #home .public-hero > div { min-width: 0; }
+
+  #home .hero-actions > button,
+  #home .world-map-preview .section-head button {
+    min-height: 44px;
+    white-space: normal;
+  }
+
+  #home .world-map-preview .section-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  #home .map-placeholder {
+    align-content: center;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  #home .map-placeholder span {
+    font-size: clamp(24px, 5vw, 42px);
+    letter-spacing: 2px;
+  }
+
+  #home .map-placeholder small { margin-top: 0; }
+}
+
+@media (max-width: 480px) {
+  #home .hero-actions { flex-direction: column; }
+  #home .hero-actions > button,
+  #home .world-map-preview .section-head button { width: 100%; }
+}
+
 .markdown-body,
 .race-markdown-body,
 .clean-note-body {

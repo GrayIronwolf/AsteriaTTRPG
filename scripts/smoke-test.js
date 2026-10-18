@@ -367,7 +367,7 @@ check('Material and economy panels no longer fall back into player overview', ap
 check('Fake visible login controls removed', !firebaseAuthJs.includes('Offline test logins') && !firebaseAuthJs.includes("quickLogin('") && !html.includes('test-logins'));
 check('Single account-style test login exists', html.includes('asteriaTestLogin()') && firebaseAuthJs.includes('testLoginBtn') && authBridgeJs.includes('window.asteriaTestLogin') && authBridgeJs.includes('asteria-test-account'));
 check('Core shell login routes to Firebase only', !coreShellJs.includes('function localLogin') && coreShellJs.includes('firebaseLoginFromPage'));
-check('Auth bridge opens workspace dashboard', authBridgeJs.includes('openDashboard') && authBridgeJs.includes('Campaign permissions are assigned per campaign'));
+check('Auth bridge restores account identity without a dashboard redirect', !authBridgeJs.includes('openDashboard') && authBridgeJs.includes('Campaign permissions are assigned per campaign'));
 check('Workspace exposes auth dashboard APIs', cleanCompendiumJs.includes('openDashboard') && cleanCompendiumJs.includes('createWorkspaceCampaign') && cleanCompendiumJs.includes('createWorkspaceCharacter'));
 check('Workspace campaign creation stores GM permissions', cleanCompendiumJs.includes('gmId:uid') && cleanCompendiumJs.includes("roles:{ [uid]:'gm' }") && cleanCompendiumJs.includes('gmUids:[uid]') && cleanCompendiumJs.includes('inviteLink'));
 check('Workspace campaign structure supports future systems', ['players:{', 'characters:{}', 'chat:{ messages:[] }', 'guildBank:{', 'settings:{'].every(token => cleanCompendiumJs.includes(token)));

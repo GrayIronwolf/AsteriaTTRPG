@@ -176,8 +176,7 @@
         if(access) access.textContent = `Signed in as ${firebaseUser?.email || displayName}. Campaign permissions are assigned per campaign.`;
         updateRoleLocks?.();
         updateTopButtons();
-        if(window.AsteriaWorkspace?.openDashboard) window.AsteriaWorkspace.openDashboard('dashboard');
-        else window.__asteriaOpenDashboardOnReady = true;
+        // Auth restoration and profile refreshes update identity without changing the current route.
       });
     },
     importCharacters(accountKey, list){
