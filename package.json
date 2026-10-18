@@ -29,7 +29,8 @@
     "test:combat": "node --test scripts/combat-panel.test.mjs",
     "test:dashboard": "node --test scripts/dashboard-gameplay.test.mjs",
     "test:compendium": "node --test scripts/compendium.test.mjs",
-    "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs",
+    "test:startup:browser": "node scripts/test-startup-browser.cjs",
+    "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs scripts/loading-speed.test.mjs",
     "test:navigation": "node --test scripts/navigation-library.test.mjs",
     "audit:production": "npm audit --omit=dev --audit-level=moderate"
   },

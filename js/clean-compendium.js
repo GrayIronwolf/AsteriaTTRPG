@@ -1176,8 +1176,10 @@
     return false;
   }
 
-  function bindPublicButtons() {
-    qsa('button,a').forEach(element => {
+  function bindPublicButtons(root = document) {
+    const controls = root.matches?.('button,a') ? [root] : [];
+    if(root === document || root.firstElementChild) controls.push(...qsa('button,a',root));
+    controls.forEach(element => {
       if (element.dataset.cleanCompendiumBound) return;
 
       const workspaceMode = element.dataset.workspaceMode;
@@ -1319,7 +1321,13 @@
       openDashboard('dashboard');
     }
     window.addEventListener('hashchange', openRouteFromLocation);
-    const observer = new MutationObserver(bindPublicButtons);
+    const observer = new MutationObserver(records => {
+      const roots = new Set(records.flatMap(record => Array.from(record.addedNodes)).filter(node => node.nodeType === 1 && node.isConnected));
+      roots.forEach(node => {
+        for(let parent = node.parentElement; parent; parent = parent.parentElement) if(roots.has(parent)) return;
+        bindPublicButtons(node);
+      });
+    });
     observer.observe(document.body, { childList:true, subtree:true });
   }
 

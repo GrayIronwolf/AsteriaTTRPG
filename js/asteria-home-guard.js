@@ -113,8 +113,8 @@
 
   function boot(){
     bindKnownHomeControls();
-    const observer = new MutationObserver(bindKnownHomeControls);
-    observer.observe(document.body, { childList:true, subtree:true });
+    // Capture delegation above also handles Home controls inserted later.
+    // Re-scanning every button after every DOM update is unnecessary.
   }
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();

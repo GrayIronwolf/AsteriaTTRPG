@@ -249,17 +249,21 @@
     });
   }
 
-  function apply(el, options = {}){
-    if(!el || el.dataset.borderGlowBound === 'true') return el;
-    if(el.matches?.('.react-tabs[aria-label="Character Dashboard menu"],.react-tabs[aria-label="GM Dashboard menu"]'))return el;
-    // Crystal navigation owns its bevel layers; retain BorderGlow on gameplay UI.
-    if(el.classList?.contains('crystal-button') || el.classList?.contains('asteria-menu-button')) return el;
-    if(el.matches?.('input,select,textarea,option,img,svg,canvas,.edge-light,.bar,.meter,.mini-meter,.hp,.sp,.mp,.xp,.hp-bar,.sp-bar,.mp-bar,.xp-bar,[data-resource]')) return el;
+  function eligible(el){
+    if(!el || el.dataset?.borderGlowBound === 'true') return false;
+    if(el.matches?.('.react-tabs[aria-label="Character Dashboard menu"],.react-tabs[aria-label="GM Dashboard menu"]'))return false;
+    if(el.classList?.contains('crystal-button') || el.classList?.contains('asteria-menu-button')) return false;
+    if(el.matches?.('input,select,textarea,option,img,svg,canvas,.edge-light,.bar,.meter,.mini-meter,.hp,.sp,.mp,.xp,.hp-bar,.sp-bar,.mp-bar,.xp-bar,[data-resource]')) return false;
     const cls = typeof el.className === 'string' ? el.className : '';
-    if(/\b(?:codex-card-grid|card-grid|grid|list|row|head|content|image|art|icon|name|subtitle|ranks|resource-stack|stat-row|meter|bar|actions)\b/.test(cls)) return el;
+    return !/\b(?:codex-card-grid|card-grid|grid|list|row|head|content|image|art|icon|name|subtitle|ranks|resource-stack|stat-row|meter|bar|actions)\b/.test(cls);
+  }
+
+  function apply(el, options = {}, measuredPosition){
+    if(!eligible(el)) return el;
+    const cls = typeof el.className === 'string' ? el.className : '';
     const isCompactControl = el.tagName === 'BUTTON' && !/(^|\s)[\w-]*-card(\s|$)/.test(cls);
     const opts = datasetOptions(el, { ...DEFAULTS, ...options });
-    const currentPosition = getComputedStyle(el).position;
+    const currentPosition = measuredPosition ?? getComputedStyle(el).position;
     ensureEdgeLight(el);
     el.classList.add('border-glow-card');
     if(isCompactControl) el.classList.add('border-glow-control');
@@ -291,18 +295,39 @@
     return el;
   }
 
+  function applyRoots(roots, options = {}){
+    const candidates = new Set();
+    for(const root of roots){
+      if(root.matches?.(AUTO_SELECTOR) && eligible(root)) candidates.add(root);
+      if(root === document || root.firstElementChild) for(const el of root.querySelectorAll?.(AUTO_SELECTOR) || []) if(eligible(el)) candidates.add(el);
+    }
+    // Read positions before adding decoration/styles so one card cannot force
+    // a fresh layout for every following card.
+    const measured = Array.from(candidates, el => [el,getComputedStyle(el).position]);
+    measured.forEach(([el,position]) => apply(el, options, position));
+  }
+
   function applyAll(root = document, options = {}){
-    Array.from(root.querySelectorAll?.(AUTO_SELECTOR) || []).forEach(el => apply(el, options));
+    applyRoots([root], options);
   }
 
   function startObserver(){
+    const pending = new Set();
+    let frame = null;
     const observer = new MutationObserver(records => {
-      records.forEach(record => {
-        record.addedNodes.forEach(node => {
-          if(node.nodeType !== 1) return;
-          if(node.matches?.(AUTO_SELECTOR)) apply(node);
-          applyAll(node);
+      for(const record of records) for(const node of record.addedNodes){
+        if(node.nodeType === 1 && !node.classList.contains('edge-light')) pending.add(node);
+      }
+      if(!pending.size || frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        const roots = Array.from(pending).filter(node => {
+          if(!node.isConnected) return false;
+          for(let parent = node.parentElement; parent; parent = parent.parentElement) if(pending.has(parent)) return false;
+          return true;
         });
+        pending.clear();
+        applyRoots(roots);
       });
     });
     observer.observe(document.body, { childList:true, subtree:true });

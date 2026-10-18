@@ -89,7 +89,7 @@ check('No duplicate IDs', duplicateIds.length === 0, duplicateIds.map(([id, coun
 });
 
 check('React migration entry is loaded', jsFiles.includes('src/dev-entry.js'));
-check('React production CSS is loaded', cssFiles.includes('react-dist/asteria-react.css'));
+check('React dashboard CSS loads with its runtime', !cssFiles.includes('react-dist/asteria-react.css') && fs.readFileSync(path.join(root,'src/app/mountDashboard.jsx'),'utf8').includes("import '../styles/asteria-react.css'"));
 check('Modern responsive UI CSS is loaded', cssFiles.includes('css/asteria-modern-ui.css'));
 check('Canonical design token CSS is loaded first', cssFiles.includes('css/asteria-design-tokens.css') && cssFiles.indexOf('css/asteria-design-tokens.css') < cssFiles.indexOf('css/styles.css') && cssFiles.indexOf('css/asteria-design-tokens.css') < cssFiles.indexOf('css/asteria-modern-ui.css'));
 check('React production bundle exists', fs.existsSync(path.join(root, 'react-dist/asteria-react.js')));
