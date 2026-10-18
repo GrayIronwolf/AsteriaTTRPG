@@ -1,29 +1,20 @@
-/* Asteria — two-layer smoke + theme-colour magic.
-   Neutral static smoke is independent of the energy overlay.
-   Theme accent, visibility and glow controls remain authoritative. */
+/* The supplied 9933 artwork stays neutral. Its luminance-derived alpha mask
+   lights the same swirls without introducing a second drawing of the smoke.
+   Both layers use the same fixed viewport, crop and source dimensions. */
 :root {
-  --asteria-smoke-art: url("../assets/themes/asteria-smoke-neutral-background.svg");
-  --asteria-energy-mask: url("../assets/themes/asteria-energy-swirl-mask.svg");
+  --asteria-smoke-art: url("../assets/themes/asteria-smoke-9933.webp");
+  --asteria-energy-mask: url("../assets/themes/asteria-smoke-9933-light-mask.webp");
+  --asteria-smoke-position: center center;
+  --asteria-energy-strength: calc(var(--asteria-background-visibility, .44) *
+    (.75 + var(--asteria-glow-intensity, .36) * .75));
 }
 
-html { background-color: #030509 !important; }
-
+html { background-color: #030303 !important; }
 body {
-  background-color: #05070c !important;
-  background-image:
-    linear-gradient(180deg,
-      rgba(2, 4, 8, var(--asteria-bg-top-veil, .28)),
-      rgba(2, 4, 8, var(--asteria-bg-bottom-veil, .53))),
-    var(--asteria-smoke-art),
-    linear-gradient(145deg, #10151c, #080d14 52%, #020409) !important;
-  background-position: center top, center center, center center !important;
-  background-size: cover, cover, cover !important;
-  background-repeat: no-repeat, no-repeat, no-repeat !important;
-  background-attachment: fixed, fixed, fixed !important;
+  background: #030303 !important;
+  /* Keep decorative negative layers above the body background and behind UI. */
+  isolation: isolate;
 }
-
-/* Two independent colour layers: soft base illumination and travelling shimmer.
-   Only the extracted swirl paths are coloured; grey/black smoke never changes. */
 body::before,
 body::after {
   content: "" !important;
@@ -31,76 +22,78 @@ body::after {
   position: fixed !important;
   inset: 0 !important;
   pointer-events: none !important;
-  -webkit-mask-image: var(--asteria-energy-mask) !important;
-  mask-image: var(--asteria-energy-mask) !important;
-  -webkit-mask-size: cover !important;
-  mask-size: cover !important;
-  -webkit-mask-position: center center !important;
-  mask-position: center center !important;
-  -webkit-mask-repeat: no-repeat !important;
-  mask-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: var(--asteria-smoke-position);
+  background-repeat: no-repeat !important;
 }
+/* Static greyscale artwork: never filtered, blended or tinted by theme colour. */
 body::before {
   z-index: -2 !important;
-  background: var(--asteria-accent, #1f7dff) !important;
-  opacity: calc(.16 + var(--asteria-background-visibility, .44) * .55);
-  filter: drop-shadow(0 0 calc(5px + 10px * var(--asteria-glow-intensity, .36))
-    rgba(var(--asteria-accent-rgb, 31,125,255), .46)) !important;
-  animation: asteria-energy-pulse 7s ease-in-out infinite;
+  background-image:
+    linear-gradient(180deg,
+      rgba(0, 0, 0, var(--asteria-bg-top-veil, .28)),
+      rgba(0, 0, 0, var(--asteria-bg-bottom-veil, .53))),
+    var(--asteria-smoke-art) !important;
+  background-color: #030303 !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  animation: none !important;
+  transition: none !important;
 }
+/* A single transparent coloured light layer, clipped to the photographed swirls.
+   Only the shimmer moves; the smoke and mask never translate or scale. */
 body::after {
   z-index: -1 !important;
-  background-image: linear-gradient(100deg,
-    transparent 20%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .02) 36%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .9) 47%,
-    rgba(248, 252, 255, .75) 50%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .9) 53%,
-    transparent 67%) !important;
-  background-color: transparent !important;
-  background-size: 250% 100%;
+  -webkit-mask: var(--asteria-energy-mask) var(--asteria-smoke-position) / cover no-repeat !important;
+  mask: var(--asteria-energy-mask) var(--asteria-smoke-position) / cover no-repeat !important;
+  background-color: rgba(var(--asteria-accent-rgb, 31,125,255), .48) !important;
+  background-image: linear-gradient(105deg,
+    transparent 25%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .12) 38%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .85) 48%,
+    color-mix(in srgb, var(--asteria-accent, #1f7dff) 65%, white) 50%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .85) 52%,
+    transparent 65%) !important;
+  background-size: 300% 100% !important;
   background-position: 100% center;
-  background-repeat: no-repeat;
-  opacity: calc(.26 + var(--asteria-background-visibility, .44) * .42);
-  filter: drop-shadow(0 0 7px
+  opacity: var(--asteria-energy-strength);
+  filter: drop-shadow(0 0 calc(8px * var(--asteria-glow-intensity, .36))
     rgba(var(--asteria-accent-rgb, 31,125,255), .5)) !important;
-  animation: asteria-energy-wave 17s linear infinite;
+  animation: asteria-energy-pulse 7s ease-in-out infinite,
+    asteria-energy-wave 18s linear infinite;
+  transition: opacity .25s ease;
 }
-
 @keyframes asteria-energy-pulse {
-  0%, 100% {
-    opacity: calc(.16 + var(--asteria-background-visibility, .44) * .43);
-  }
-  50% {
-    opacity: calc(.37 + var(--asteria-background-visibility, .44) * .55);
-  }
+  0%, 100% { opacity: calc(var(--asteria-energy-strength) * .62); }
+  50% { opacity: var(--asteria-energy-strength); }
 }
 @keyframes asteria-energy-wave {
-  0%, 12% { background-position: 100% center; }
-  86%, 100% { background-position: 0% center; }
+  0% { background-position: 100% center; }
+  100% { background-position: 0% center; }
 }
-
-/* Keep static colour visible when animations are switched off. */
-body[data-asteria-energy-motion="off"]::before,
-body[data-asteria-energy-motion="wave"]::before {
-  animation: none !important;
-  opacity: calc(.25 + var(--asteria-background-visibility, .44) * .52);
+body[data-asteria-energy-motion="wave"]::after {
+  animation: asteria-energy-wave 18s linear infinite;
 }
-body[data-asteria-energy-motion="off"]::after,
 body[data-asteria-energy-motion="pulse"]::after {
-  display: none !important;
+  background-image: none !important;
+  animation: asteria-energy-pulse 7s ease-in-out infinite;
 }
-
+body[data-asteria-energy-motion="off"]::after {
+  background-image: none !important;
+  animation: none !important;
+}
 @media (max-width: 900px) {
-  body {
-    background-size: cover, cover, cover !important;
-    background-position: center top, 52% center, center center !important;
-    background-attachment: scroll, scroll, scroll !important;
+  :root {
+    --asteria-smoke-art: url("../assets/themes/asteria-smoke-9933-mobile.webp");
+    --asteria-energy-mask: url("../assets/themes/asteria-smoke-9933-light-mask-mobile.webp");
   }
-  body::after { animation-duration: 22s; }
 }
-/* Accessibility: never force movement on reduced-motion users. */
 @media (prefers-reduced-motion: reduce) {
-  body::before { animation: none !important; }
-  body::after { display: none !important; animation: none !important; }
+  body::after {
+    animation: none !important;
+    transition: none !important;
+    background-image: none !important;
+  }
 }

@@ -67,17 +67,7 @@ body::before {
   transition:color .28s ease, opacity .28s ease, filter .28s ease, background-color .28s ease;
 }
 
-body::after {
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at 18% 10%, rgba(var(--asteria-accent-rgb),.10), transparent 25%),
-    radial-gradient(circle at 80% 75%, rgba(var(--asteria-accent-rgb),.07), transparent 28%),
-    linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.38));
-}
+/* Smoke lighting is defined in asteria-smoke-background.css. */
 
 button,.toplink,.side-main,.clean-nav button.cat,.clean-card,.card,.panel,.settings-panel,.asteria-workspace-shell,.clean-compendium-shell,.clean-display,.clean-nav {
   transition:border-color .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease;
@@ -253,15 +243,7 @@ body::before {
    so the bottom of the page does not look empty.
 */
 @media (max-width: 900px) and (min-height: 760px) {
-  body::after {
-    background:
-      linear-gradient(180deg,
-        rgba(0,0,0,.06) 0%,
-        rgba(0,0,0,.18) 32%,
-        rgba(0,0,0,.48) 72%,
-        rgba(0,0,0,.66) 100%),
-      radial-gradient(circle at 50% 18%, rgba(var(--asteria-accent-rgb), .10), transparent 34%) !important;
-  }
+  /* Smoke lighting is defined in asteria-smoke-background.css. */
 }
 
 /* Wide screens can keep the original full cinematic fill. */
@@ -311,13 +293,7 @@ body::before {
     drop-shadow(0 0 1px rgba(255,255,255,.22));
 }
 
-body::after {
-  background:
-    linear-gradient(90deg, rgba(0,0,0,.46), transparent 18%, transparent 82%, rgba(0,0,0,.48)),
-    linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.24) 58%, rgba(0,0,0,.48)),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
-    repeating-linear-gradient(90deg, rgba(var(--asteria-accent-rgb),.026) 0 1px, transparent 1px 92px) !important;
-}
+/* Smoke lighting is defined in asteria-smoke-background.css. */
 
 .topbar.core-v2-topbar,
 .topbar {

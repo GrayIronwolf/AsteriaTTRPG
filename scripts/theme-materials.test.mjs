@@ -6,7 +6,7 @@ import vm from 'node:vm';
 function themeRuntime(settings={}) {
   const variables=new Map(),storage=new Map();
   const areas=['panelBorder','panelBackground','menuButton','topMenuButton','dashboardPrimary','dashboardTab','divider'];
-  const ids=['asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaPanelOpacitySlider',...areas.map(key=>`asteriaArea-${key}`)];
+  const ids=['asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaPanelOpacitySlider','asteriaMotionSelect',...areas.map(key=>`asteriaArea-${key}`)];
   const nodes=Object.fromEntries(ids.map(id=>[id,{value:'',dataset:{},listeners:{},addEventListener(type,handler){this.listeners[type]=handler;}}]));
   const context={document:{readyState:'loading',addEventListener(){},getElementById:id=>nodes[id],documentElement:{style:{setProperty:(key,value)=>variables.set(key,value)}},body:{dataset:{},removeAttribute(){}}},window:{dispatchEvent(){}},localStorage:{setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},CustomEvent:class{}};
   vm.createContext(context);vm.runInContext(fs.readFileSync('js/asteria-ui-theme-system.js','utf8'),context);
@@ -46,4 +46,33 @@ test('class presets still reset their linked areas and glow control reaches zero
   assert.equal(api.getSettings().areas.dashboardTab,'#b51f2e');
   nodes.asteriaGlowSlider.value='0';nodes.asteriaGlowSlider.listeners.input();
   assert.equal(variables.get('--asteria-glow-intensity'),'0');
+});
+
+test('background modes use the existing control and persist with custom lighting',()=>{
+  const {api,nodes,variables,storage}=themeRuntime({accent:'#da42b8'});
+  for(const mode of ['both','pulse','wave','off']) {
+    nodes.asteriaMotionSelect.value=mode;
+    nodes.asteriaMotionSelect.listeners.change();
+    assert.equal(api.getSettings().motion,mode);
+    assert.equal(JSON.parse(storage.get('asteria-ui-theme-v1')).motion,mode);
+    assert.equal(variables.get('--asteria-accent'),'#da42b8');
+  }
+  nodes.asteriaOverlaySlider.value='0';nodes.asteriaOverlaySlider.listeners.input();
+  assert.equal(variables.get('--asteria-background-visibility'),'0');
+  nodes.asteriaOverlaySlider.listeners.change();
+  const saved=JSON.parse(storage.get('asteria-ui-theme-v1'));
+  const restored=themeRuntime(saved);
+  assert.equal(restored.api.getSettings().accent,'#da42b8');
+  assert.equal(restored.api.getSettings().overlay,0);
+  assert.equal(restored.api.getSettings().motion,'off');
+  nodes.asteriaThemeSelect.value='cleric';nodes.asteriaThemeSelect.listeners.change();
+  assert.equal(api.getSettings().motion,'off','class selection preserves the motion preference');
+});
+
+test('invalid saved motion falls back without changing independent character UI colours',()=>{
+  const {api,nodes}=themeRuntime({motion:'invalid',areas:{dashboardTab:'#abcdef'}});
+  assert.equal(api.getSettings().motion,'both');
+  assert.equal(nodes.asteriaMotionSelect.value,'both');
+  nodes.asteriaMotionSelect.value='wave';nodes.asteriaMotionSelect.listeners.change();
+  assert.equal(api.getSettings().areas.dashboardTab,'#abcdef');
 });
