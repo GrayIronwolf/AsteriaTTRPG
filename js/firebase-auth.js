@@ -193,7 +193,7 @@ async function loadSharedCampaignDetails(id, accountCampaign={}, knownShared=nul
   try{
     const characterSnap = await getDocs(collection(db, 'campaigns', id, 'characters'));
     characterSnap.forEach(characterDoc=>{
-      sharedCharacters[characterDoc.id] = Object.assign({ id:characterDoc.id }, characterDoc.data());
+      sharedCharacters[characterDoc.id] = Object.assign({}, characterDoc.data(), { id:characterDoc.id });
     });
   }catch(error){
     reportSyncError('campaign-characters-read', error, { campaignId:id });
@@ -1942,7 +1942,7 @@ const firebasePublicApi = {
       snapshot=>{
         const characters={};
         snapshot.forEach(characterDoc=>{
-          const next=Object.assign({id:characterDoc.id},characterDoc.data());
+          const next=Object.assign({},characterDoc.data(),{id:characterDoc.id});
           characters[characterDoc.id]=JSON.stringify(previous[characterDoc.id])===JSON.stringify(next)?previous[characterDoc.id]:next;
         });
         previous=characters;

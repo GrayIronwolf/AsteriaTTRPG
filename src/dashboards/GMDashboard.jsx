@@ -17,6 +17,7 @@ import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { encounterResourcePair, encounterSourceResources, encounterResourceKeys, encounterXP, customEncounterCreature } from '../state/encounterResourceModel.mjs';
 import { GMCombatPanel } from './CombatPanel.jsx';
 import { useAsyncAction } from '../components/useAsyncAction.js';
+import { encounterPlayerRoster } from '../state/campaignCharacterRecords.mjs';
 import { migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../state/gmWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
@@ -159,9 +160,10 @@ function CampaignEncounter({ campaignId, campaign, campaignNPCs, characters, enc
   const active=state.status==='active'&&state.combat?.version===1;
   const setup=state.status==='ready'||state.status==='active'&&!active;
   const save = next => run(()=>firebaseService.saveEncounter(campaignId,next),'Encounter synchronized.');
-  const ensurePlayers = combatants => {
-    const existing = new Set(combatants.filter(entry => entry.kind === 'player').map(entry => entry.characterId));
-    return [...combatants, ...Object.values(characters).filter(character => !existing.has(character.id)&&window.AsteriaCharacterAccess.isLinked(campaign,character)).map(character => ({ id:`player-${character.id}`, characterId:character.id, name:character.name || 'Character', kind:'player',  defeated:false }))];
+  const playerRoster=encounterPlayerRoster(campaignId,campaign,characters,state.combatants,window.AsteriaCharacterAccess);
+  const addLinkedPlayers = async () => {
+    const result=await save({...state,combatants:playerRoster.combatants});
+    if(result?.ok)setMessage(`${result.message||'Encounter synchronized.'} ${playerRoster.added.length} linked player(s) added.${playerRoster.skipped.length?` Not added: ${playerRoster.skipped.map(row=>row.name).join(', ')}. See link details below.`:''}`);
   };
   const command=(operation,extra={})=>run(()=>firebaseService.combatCommand(campaignId,'encounter',{operation,revision:Number(state.combat?.revision||0),...extra}),'Combat synchronized.');
   const start=()=>command('start');
@@ -177,9 +179,10 @@ function CampaignEncounter({ campaignId, campaign, campaignNPCs, characters, enc
   const removeCombatant = id => save({ ...state, combatants:(state.combatants || []).filter(entry => entry.id !== id), enemies:(state.enemies || []).filter(entry => entry.id !== id), turnIndex:0 });
   const nextTurn = () => command('next');
   return <Panel title="Campaign Encounters" eyebrow="Initiative & Encounter Tracker" className="react-encounter-panel" action={<StatusPill tone={active ? 'success' : ''}>{active?'COMBAT ACTIVE':state.status==='ended'?'ENDED':'SETUP'}</StatusPill>}>
-    <div className="react-encounter-toolbar"><button disabled={busy} onClick={()=>save({...state,combatants:ensurePlayers(state.combatants||[])})}>Add linked players</button>{state.status==='ended'?<button disabled={busy} onClick={()=>save({...state,status:'ready'})}>Set Up Combat</button>:<button className="primary" disabled={busy||!setup||!state.combatants.length} onClick={start}>{active?'COMBAT ACTIVE':'START COMBAT'}</button>}<button disabled={busy||!active} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy||!active} onClick={end}>END COMBAT</button><button disabled={busy||active} onClick={()=>command('clear')}>Clear Setup</button></div>
+    <div className="react-encounter-toolbar"><button disabled={busy} onClick={addLinkedPlayers}>Add linked players</button>{state.status==='ended'?<button disabled={busy} onClick={()=>save({...state,status:'ready'})}>Set Up Combat</button>:<button className="primary" disabled={busy||!setup||!state.combatants.length} onClick={start}>{active?'COMBAT ACTIVE':'START COMBAT'}</button>}<button disabled={busy||!active} onClick={nextTurn}>Next Turn</button><button className="danger" disabled={busy||!active} onClick={end}>END COMBAT</button><button disabled={busy||active} onClick={()=>command('clear')}>Clear Setup</button></div>
     {setup?<p className="react-help">Add participants and enter initiative, or leave it to roll when combat starts.</p>:null}
-    <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{Object.keys(characters).length} players</StatusPill><span>{message}</span></div>
+    <div className="react-encounter-summary"><StatusPill>Round {Number(state.round || 1)}</StatusPill><StatusPill>{(state.enemies || []).length} enemies</StatusPill><StatusPill>{state.combatants.filter(row=>row.characterId).length} players in encounter</StatusPill><StatusPill>{playerRoster.linkedCount} linked players</StatusPill><span role="status">{message}</span></div>
+    {playerRoster.skipped.length?<div className="react-help" role="status"><b>Character links need attention</b><ul>{playerRoster.skipped.map(row=><li key={row.id}><b>{row.name}:</b> {row.reason}</li>)}</ul><p>The character owner can reconnect their saved character from Character Forge. Existing character sheets and ownership are preserved.</p></div>:null}
     <GMCombatPanel campaignId={campaignId} encounter={state} characters={characters} combatState={combatState}/>
     <div className="react-encounter-builder">
       <section><h3>Add Creature or NPC</h3><div className="react-form-grid"><label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search creature compendium and NPCs..." /></label><label>Number<ManualNumberInput min="1" max="20" value={quantity} onChange={event => setQuantity(event.target.value)} /></label></div>{search ? <div className="react-search-results encounter">{results.map(entry => <button key={entry.id} disabled={busy} onClick={() => addEnemy(entry)}><b>{entry.name}</b><small>{entry.type} | {entry.threatTier}</small></button>)}{!results.length ? <EmptyState title="No matches" /> : null}</div> : null}</section>

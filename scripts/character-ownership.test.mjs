@@ -5,12 +5,48 @@ import vm from 'node:vm';
 import '../js/character-access.js';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { openGMCharacter, gmReturnContext, returnToGM, restoredGMView } from '../src/app/gmCharacterNavigation.mjs';
+import { campaignCharacterRecords, encounterPlayerRoster } from '../src/state/campaignCharacterRecords.mjs';
 
 const access = globalThis.AsteriaCharacterAccess;
 const campaign = { id:'c', ownerUid:'gm', playerCharacterLinks:{ b:'player' }, characters:{ b:{ ownerUid:'player' } } };
 const a = { id:'a', ownerUid:'gm' };
 const b = { id:'b', ownerUid:'player', sourceCharacterId:'b', sharedCampaignId:'c' };
 const c = { id:'c', ownerUid:'outsider' };
+
+test('campaign document IDs override stale sheet IDs when adding Mako alongside existing players',()=>{
+  const campaign={id:'campaign',playerCharacterLinks:{fletcher:'alice',mako:'bob',voxer:'carol',tharmack:'dan'}};
+  const characters={fletcher:{id:'fletcher',name:'Fletcher',ownerUid:'alice'},mako:{id:'old-forge-id',sourceCharacterId:'private-mako',name:'Mako',ownerUid:'bob',sharedCampaignId:'campaign',hp:[27,200],sp:[190,190],mp:[34,200]},voxer:{id:'voxer',name:'Voxer',ownerUid:'carol'},tharmack:{id:'tharmack',name:'Tharmack',ownerUid:'dan'}};
+  const before=structuredClone(characters),existing=[{id:'player-fletcher',characterId:'fletcher',kind:'player',initiative:12},{id:'bandit',kind:'enemy',hp:[10,40]}];
+  assert.equal(access.isLinked(campaign,characters.mako),false);
+  const roster=encounterPlayerRoster('campaign',campaign,characters,existing,access);
+  assert.equal(roster.linkedCount,4);assert.equal(roster.skipped.length,0);assert.equal(roster.added.length,3);
+  assert.ok(roster.combatants.some(row=>row.characterId==='mako'&&row.name==='Mako'));
+  assert.deepEqual(roster.combatants[0],existing[0]);assert.deepEqual(roster.combatants[1],existing[1]);
+  assert.equal(encounterPlayerRoster('campaign',campaign,characters,roster.combatants,access).added.length,0);
+  const normalized=campaignCharacterRecords(characters);assert.equal(normalized.mako.id,'mako');assert.equal(normalized.mako.sourceCharacterId,'private-mako');assert.deepEqual(normalized.mako.hp,[27,200]);
+  assert.deepEqual(characters,before);
+});
+
+test('unverified roster entries are named with a reason and never silently counted or adopted',()=>{
+  const campaign={id:'c',playerCharacterLinks:{wrong:'someone-else',other:'bob'}};
+  const records={missing:{name:'Missing owner'},wrong:{ownerUid:'bob',name:'Wrong owner'},other:{ownerUid:'bob',sharedCampaignId:'different',name:'Wrong campaign'},unlinked:{ownerUid:'bob',name:'Unlinked'}};
+  const roster=encounterPlayerRoster('c',campaign,records,[],access);
+  assert.equal(roster.added.length,0);assert.equal(roster.linkedCount,0);assert.equal(roster.skipped.length,4);
+  for(const entry of roster.skipped)assert.ok(entry.reason);
+  assert.match(roster.skipped.find(row=>row.id==='missing').reason,/owner/);
+  assert.match(roster.skipped.find(row=>row.id==='wrong').reason,/do not match/);
+  assert.match(roster.skipped.find(row=>row.id==='other').reason,/another campaign/);
+  assert.match(roster.skipped.find(row=>row.id==='unlinked').reason,/no saved ownership link/);
+});
+
+test('the real campaign listener keeps the Firestore key when legacy data has a different ID',()=>{
+  const source=fs.readFileSync('js/firebase-auth.js','utf8'),start=source.indexOf('  subscribeCampaignCharacters: function('),end=source.indexOf('\n  },',start)+4;
+  const data={id:'private-mako',sourceCharacterId:'private-mako',name:'Mako',ownerUid:'bob'};
+  let callback;
+  const api=vm.runInNewContext(`({${source.slice(start,end)}})`,{db:{},currentUser:{uid:'gm'},collection:()=>({}),onSnapshot:(_ref,_options,next)=>{callback=next;return()=>{};},reportSyncError:()=>{}});
+  let output;api.subscribeCampaignCharacters('c',value=>{output=value;});callback({forEach:fn=>fn({id:'campaign-mako',data:()=>data}),metadata:{fromCache:false}});
+  assert.equal(output['campaign-mako'].id,'campaign-mako');assert.equal(output['campaign-mako'].sourceCharacterId,'private-mako');assert.equal(data.id,'private-mako');
+});
 
 test('A/B/D/E: ownership ignores campaign roles, selected character, and legacy aliases', () => {
   const characters = { a, b:{ ...b, accountId:'gm', uid:'gm', ownerAccount:'gm' }, c, legacy:{ uid:'gm' } };

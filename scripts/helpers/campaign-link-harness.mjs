@@ -24,3 +24,10 @@ export function browserOwnedSubscription(db,uid) {
   const dependencies={...firestore,db,currentUser:{uid},validateOwnedRecord};
   return Function(...Object.keys(dependencies),`return ({${source.slice(start,end)}}).subscribeOwnedCharacter;`)(...Object.values(dependencies));
 }
+
+export function browserCampaignSubscription(db,uid) {
+  const source=fs.readFileSync('js/firebase-auth.js','utf8');
+  const start=source.indexOf('  subscribeCampaignCharacters: function('),end=source.indexOf('\n  },',start)+4;
+  const dependencies={...firestore,db,currentUser:{uid},reportSyncError:(_scope,error)=>{throw error;}};
+  return Function(...Object.keys(dependencies),`return ({${source.slice(start,end)}}).subscribeCampaignCharacters;`)(...Object.values(dependencies));
+}
