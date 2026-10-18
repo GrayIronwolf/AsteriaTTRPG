@@ -50,7 +50,7 @@
     "globals": "^16.5.0",
     "js-yaml": "3.15.2",
     "react-test-renderer": "^18.3.1",
-    "vite": "5.4.14"
+    "vite": "8.3.4"
   },
   "main": "functions/index.mjs",
   "engines": {
