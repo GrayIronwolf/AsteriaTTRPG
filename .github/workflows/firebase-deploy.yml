@@ -1,6 +1,10 @@
 name: Deploy Firebase backend (manual)
 on:
   workflow_dispatch:
+  # Temporary entry for the approved security/link-recovery release only.
+  push:
+    branches: [main]
+    paths: [.github/workflows/firebase-deploy.yml]
 permissions:
   contents: read
 concurrency:
@@ -8,7 +12,10 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && github.event.before == 'dce5bc5907bb2b1565d9b4979c370149ab842d24'))
     environment: firebase-production
     runs-on: ubuntu-latest
     timeout-minutes: 30
