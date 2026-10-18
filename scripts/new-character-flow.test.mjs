@@ -91,3 +91,24 @@ test('owned dashboard routes need no campaign and preserve normal campaign URLs'
   assert.throws(()=>buildReactRoute({type:'character',characterId:'ty'}),/campaign ID/);
   assert.throws(()=>buildReactRoute({type:'owned-character'}),/character ID/);
 });
+
+function repairUI(operation) {
+  const button={disabled:false},status={textContent:''},sheet={hp:[27,200],ownerUid:'alice'};
+  const nodes={workspaceRepairCharacterBtn:button,workspaceRepairStatus:status,workspaceRepairCharacter:{value:'mako'}};
+  let refreshes=0;
+  const window={chars:{mako:sheet},AsteriaFirebase:{isReady:()=>true,repairCampaignCharacterLink:operation},AsteriaDataSync:{refreshCampaigns:async()=>refreshes++}};
+  const repair=workspaceMethod('repairCharacterCampaignLink',{window,byId:id=>nodes[id]});
+  return {button,status,sheet,repair,refreshes:()=>refreshes};
+}
+test('owner link repair UI waits for server verification and leaves saved sheets intact',async()=>{
+  let finish;
+  const h=repairUI(()=>new Promise(resolve=>{finish=resolve}));const before=JSON.stringify(h.sheet);
+  const pending=h.repair('campaign');assert.equal(h.button.disabled,true);assert.equal(h.refreshes(),0);
+  finish({ok:true});await pending;assert.equal(h.button.disabled,false);assert.equal(h.refreshes(),1);
+  assert.match(h.status.textContent,/Link repaired/);assert.equal(JSON.stringify(h.sheet),before);
+});
+test('owner link repair UI shows rejection and permits retry without local ownership changes',async()=>{
+  const h=repairUI(async()=>({ok:false,error:'Only the existing character owner can repair this link.'}));
+  await h.repair('campaign');assert.equal(h.refreshes(),0);assert.equal(h.button.disabled,false);
+  assert.match(h.status.textContent,/existing character owner/);assert.equal(h.sheet.ownerUid,'alice');
+});

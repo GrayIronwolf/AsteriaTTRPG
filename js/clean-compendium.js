@@ -441,7 +441,7 @@
     const list = sortCards(filterCards(accountCampaigns(), campaign => [campaign.name, campaignRole(campaign), campaign.description].join(' ')), campaign => campaign.name || campaign.id, campaignRole);
     list.forEach(campaign => {
       ensureCampaignInviteFields(campaign);
-      grid.appendChild(galleryCard({
+      const card=galleryCard({
         tag:campaignRole(campaign),
         title:campaign.name || 'Untitled Campaign',
         subtitle:`${arrayValue(campaign.party).length} linked character${arrayValue(campaign.party).length === 1 ? '' : 's'}`,
@@ -449,7 +449,12 @@
         image:campaign.image || campaign.art || campaign.banner || '',
         initial:'C',
         action:() => openCampaignGMDashboard(campaign)
-      }));
+      });
+      const manage=document.createElement('button');manage.type='button';manage.textContent='Manage character links';
+      manage.addEventListener('click',event=>{event.stopPropagation();renderCampaignDetail(campaign);});
+      manage.addEventListener('dblclick',event=>event.stopPropagation());
+      manage.addEventListener('keydown',event=>event.stopPropagation());
+      card.appendChild(manage);grid.appendChild(card);
     });
     grid.appendChild(galleryCard({
       tag:'New Campaign',
@@ -582,6 +587,7 @@
     ensureCampaignInviteFields(campaign);
     const role = campaignRole(campaign);
     const invites = arrayValue(campaign.invites);
+    const repairIds=[...new Set([...arrayValue(campaign.party),...Object.keys(campaign.characters || {})])];
     grid.innerHTML = `
       <article class="clean-page workspace-viewer" data-viewer="universal-workspace-viewer">
         <button class="clean-back clean-return" type="button" id="workspace-campaign-return">Back to campaigns</button>
@@ -607,15 +613,23 @@
         ` : ''}
         <section class="workspace-link-panel">
           <h3>Link Existing Character</h3>
-          <p class="muted">Players can link a character they own to this campaign. A full approval flow can be added later.</p>
+          <p class="muted">Players can link a saved character they own to this campaign.</p>
           <label>Character<select id="workspaceLinkCharacter">${characters.map(character => `<option value="${escapeHtml(character.id)}" ${character.id === (window.session?.character || window.selected) ? 'selected' : ''}>${escapeHtml(character.name || character.id)}</option>`).join('')}</select></label>
           <button class="primary" type="button" id="workspaceLinkCharacterBtn" ${characters.length ? '' : 'disabled'}>Link Character</button>
+        </section>
+        <section class="workspace-link-panel">
+          <h3>Repair Existing Character Link</h3>
+          <p>The character owner can repair conflicting campaign links. Both existing character sheets must verify the same owner and campaign. HP, XP, inventory and ownership stay unchanged.</p>
+          <label>Campaign character<select id="workspaceRepairCharacter">${repairIds.map(id=>`<option value="${escapeHtml(id)}">${escapeHtml(campaign.characters?.[id]?.name || id)}</option>`).join('')}</select></label>
+          <button type="button" id="workspaceRepairCharacterBtn" ${repairIds.length ? '' : 'disabled'}>Verify Ownership &amp; Repair Link</button>
+          <p id="workspaceRepairStatus" role="status" aria-live="polite"></p>
         </section>
       </article>
     `;
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
+    byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
   }
 
   function renderCharacterDetail(character) {
@@ -635,6 +649,9 @@
       </article>
     `;
     byId('workspace-character-return').onclick = () => openDashboard('characters');
+    const controls=document.createElement('div');
+    const repair=document.createElement('button');repair.type='button';repair.textContent='Manage / repair campaign links';
+    repair.addEventListener('click',()=>openDashboard('campaigns'));controls.appendChild(repair);grid.querySelector('article')?.appendChild(controls);
   }
 
   function campaignByCode(codeValue) {
@@ -966,6 +983,25 @@
     window.toast?.(`Character created: ${name}`);
     openDashboard('characters');
     renderCharacterDetail(Object.assign({ id }, window.chars[id]));
+  }
+
+  async function repairCharacterCampaignLink(campaignId) {
+    const button=byId('workspaceRepairCharacterBtn'),status=byId('workspaceRepairStatus');
+    const id=byId('workspaceRepairCharacter')?.value;
+    if(!id || !button || button.disabled)return;
+    button.disabled=true;
+    try {
+      const api=window.AsteriaFirebase;
+      if(!api?.isReady?.() || !api.repairCampaignCharacterLink)throw new Error('Sign in and wait for Firebase before repairing a link.');
+      if(status)status.textContent='Verifying the existing owner and saved character…';
+      const result=await api.repairCampaignCharacterLink(campaignId,id);
+      if(!result?.ok)throw new Error(result?.error || 'The link could not be repaired.');
+      await window.AsteriaDataSync?.refreshCampaigns?.('character-link-repaired');
+      const target=byId('workspaceRepairStatus') || status;
+      if(target)target.textContent='Link repaired. Return to the GM encounter and choose Add linked players.';
+    } catch(error) {
+      if(status)status.textContent=error.message || 'The link could not be repaired.';
+    } finally { button.disabled=false; }
   }
 
   async function linkCharacterToCampaign(campaignIdValue, characterIdValue = '', options = {}) {

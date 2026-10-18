@@ -1,4 +1,5 @@
 import { isCampaignGM as gm, isCampaignMember as member, isLinkedCharacter, GM_CHARACTER_ACTIONS, GM_ONLY_ACTIONS } from './characterPermissions.mjs';
+import { repairCharacterLink } from './characterLinkRecovery.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createCommands } from './commands.mjs';
@@ -31,6 +32,7 @@ export function validateRequest(data) {
 export async function executeAction(db,uid,data,serverTimestamp) {
   if(!uid) throw new Error('Sign in to use this action.');
   validateRequest(data);
+  if(data.action==='repairCampaignCharacterLink') return repairCharacterLink(db,uid,data,serverTimestamp);
   const {action,requestId}=data;
   const args=data.args.map(value=>value===null?undefined:value);
   const campaignId=args[0];

@@ -584,3 +584,40 @@ test('Mako with a legacy embedded ID is added using its real campaign document I
   const shared=(await db.doc('campaigns/c/characters/b').get()).data();assert.equal(shared.id,'legacy-private-id');assert.equal(shared.ownerUid,'bob');assert.deepEqual(shared.hp,[27,200]);assert.deepEqual(shared.sp,[190,190]);assert.deepEqual(shared.mp,[34,200]);
   assert.equal((await db.doc('users/bob/characters/b').get()).data().ownerUid,'bob');
 });
+
+test('owner repairs conflicting campaign indexes without modifying either character sheet',async()=>{
+  const sharedBefore=(await db.doc('campaigns/c/characters/a').get()).data();
+  const privateBefore=(await db.doc('users/alice/characters/a').get()).data();
+  await db.doc('campaigns/c').update({'playerCharacterLinks.a':'bob','characters.a.ownerUid':'bob','players.alice.characterIds':[],'players.bob.characterIds':['a','b']});
+  assert.equal(globalThis.AsteriaCharacterAccess.isLinked({id:'c',...(await db.doc('campaigns/c').get()).data()},sharedBefore),false);
+  const args=['c','a'];
+  const results=await Promise.all([action('alice','repairCampaignCharacterLink',args,'repair-once'),action('alice','repairCampaignCharacterLink',args,'repair-once')]);
+  assert.ok(results.every(result=>result.ok));
+  const after=(await db.doc('campaigns/c').get()).data();
+  assert.equal(after.playerCharacterLinks.a,'alice');assert.equal(after.characters.a.ownerUid,'alice');
+  assert.deepEqual(after.players.alice.characterIds,['a']);assert.deepEqual(after.players.bob.characterIds,['b']);
+  assert.deepEqual(after.roles,campaign.roles);assert.deepEqual(after.playerUids,campaign.playerUids);
+  assert.equal(globalThis.AsteriaCharacterAccess.isLinked({id:'c',...after},sharedBefore),true);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),sharedBefore);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data(),privateBefore);
+});
+
+test('link repair rejects other players, GMs, outsiders and forged source ownership',async()=>{
+  await db.doc('campaigns/c').update({'playerCharacterLinks.a':'bob'});
+  for(const uid of ['bob','gm','eve'])await assert.rejects(action(uid,'repairCampaignCharacterLink',['c','a']));
+  await db.doc('users/alice/characters/a').delete();
+  await assert.rejects(action('alice','repairCampaignCharacterLink',['c','a']),/saved character/);
+  await db.doc('users/alice/characters/a').set({...sheet('a','alice'),ownerUid:'bob'});
+  await assert.rejects(action('alice','repairCampaignCharacterLink',['c','a']),/saved character/);
+  assert.equal((await db.doc('campaigns/c').get()).data().playerCharacterLinks.a,'bob');
+});
+
+test('link repair requires an existing campaign backlink and uses the canonical source ID',async()=>{
+  await db.doc('campaigns/c/characters/a').update({sourceCharacterId:'private-a'});
+  await db.doc('users/alice/characters/private-a').set({...sheet('a','alice'),id:'private-a',sourceCharacterId:'private-a',sharedCampaignId:'other',linkedCampaignIds:[]});
+  await assert.rejects(action('alice','repairCampaignCharacterLink',['c','a']),/confirm this campaign/);
+  await db.doc('users/alice/characters/private-a').update({linkedCampaignIds:['other','c']});
+  assert.equal((await action('alice','repairCampaignCharacterLink',['c','a'])).sourceCharacterId,'private-a');
+  await db.doc('campaigns/c/characters/a').update({sharedCampaignId:'other'});
+  await assert.rejects(action('alice','repairCampaignCharacterLink',['c','a']),/another campaign/);
+});

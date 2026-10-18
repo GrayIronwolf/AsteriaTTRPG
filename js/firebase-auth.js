@@ -1342,6 +1342,7 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  repairCampaignCharacterLink: (...args) => callTrustedAction('repairCampaignCharacterLink', args),
   combatCommand: (...args) => callTrustedAction('combatCommand', args),
   saveCampaignEncounter: async function(campaignId, encounter={}){
     return callTrustedAction('combatCommand',[campaignId,'encounter',{operation:'save',encounter,revision:Number(encounter.combat?.revision||0)}]);
