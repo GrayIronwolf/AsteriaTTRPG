@@ -24,6 +24,47 @@ function database(){
   const setup=async()=>{assert.equal((await command('gm','encounter','save',{encounter:{combatants:[{id:'player-a',characterId:'a'},{id:'player-b',characterId:'b'}]}})).ok,true);assert.equal((await command('gm','encounter','start')).ok,true);};
   return {db,store,command,encounter,setup,character:id=>store.get(`campaigns/c/characters/${id}`)};
 }
+test('GM can add bandits and NPCs despite a deleted or unlinked old character; sheets are not adopted or changed',async()=>{
+  for(const failure of ['deleted','unlinked','wrong-campaign']){
+    const h=database();
+    await h.command('gm','encounter','save',{encounter:{combatants:[{id:'player-a',characterId:'a'},{id:'player-b',characterId:'b'}]}});
+    if(failure==='deleted')h.store.delete('campaigns/c/characters/b');
+    if(failure==='unlinked')h.store.get('campaigns/c').playerCharacterLinks.b='someone-else';
+    if(failure==='wrong-campaign')h.character('b').sharedCampaignId='another-campaign';
+    const privateBefore=structuredClone(h.store.get('users/bob/characters/b'));
+    const rows=[...h.encounter().combatants,{id:'bandit',name:'Bandit',hp:[90,90],sp:[75,75],mp:[30,30],xpReward:1200,ac:14},{id:'npc',name:'Caravan guard',type:'Custom NPC',hp:[50,50],xpReward:0}];
+    const result=await h.command('gm','encounter','save',{encounter:{combatants:rows}});
+    assert.equal(result.ok,true,result.error);assert.match(result.message,/unlinked/);
+    assert.deepEqual(h.encounter().combatants.map(row=>row.id),['player-a','bandit','npc']);
+    assert.deepEqual(h.encounter().enemies[0].hp,[90,90]);assert.equal(h.encounter().enemies[0].ac,14);assert.equal(h.encounter().enemies[1].type,'Custom NPC');
+    assert.deepEqual(h.store.get('users/bob/characters/b'),privateBefore);
+    assert.equal(h.store.get('campaigns/c/systems/gmWorkspace').privateNotes,'Never share this');
+    assert.equal((await h.command('gm','encounter','start')).ok,true);
+  }
+});
+test('GM removal and clear recover a stale roster; new invalid links and player roster writes are still denied',async()=>{
+  const h=database();await h.command('gm','encounter','save',{encounter:{combatants:[{id:'player-a',characterId:'a'}]}});
+  h.store.delete('campaigns/c/characters/a');
+  assert.equal((await h.command('alice','encounter','save',{encounter:{combatants:[]}})).ok,false);
+  const invalid=await h.command('gm','encounter','save',{encounter:{combatants:[{id:'intruder',characterId:'outsider'}]}});assert.equal(invalid.ok,false);
+  assert.equal((await h.command('gm','encounter','save',{encounter:{combatants:[]}})).ok,true);
+  h.encounter().combatants=[{id:'old',characterId:'a'}];
+  assert.equal((await h.command('gm','encounter','clear')).ok,true);assert.deepEqual(h.encounter().combatants,[]);
+});
+test('repairing a disconnected current participant starts its successor once and removes old private combat state',async()=>{
+  const h=database();await h.command('gm','encounter','save',{encounter:{combatants:[{id:'player-a',characterId:'a',initiative:20,initiativeSet:true},{id:'player-b',characterId:'b',initiative:10,initiativeSet:true}]}});
+  await h.command('gm','encounter','start');h.store.delete('campaigns/c/characters/a');
+  assert.equal((await h.command('bob','player-b','spend-ap',{ap:1})).ok,false);
+  const result=await h.command('gm','encounter','save',{encounter:{combatants:h.encounter().combatants}});assert.equal(result.ok,true,result.error);
+  assert.equal(currentCombatant(h.encounter()).id,'player-b');assert.equal(h.encounter().combat.participants['player-b'].ap,3);assert.equal(h.encounter().combat.participants['player-b'].turns,1);
+  assert.equal(h.encounter().combat.participants['player-a'],undefined);
+  assert.equal((await h.command('gm','encounter','save',{encounter:{combatants:h.encounter().combatants}})).ok,true);assert.equal(h.encounter().combat.participants['player-b'].turns,1);
+});
+test('GM can end combat with a disconnected player without modifying the disconnected character',async()=>{
+  const h=database();await h.setup();h.store.get('campaigns/c').playerCharacterLinks.a='not-alice';const before=structuredClone(h.character('a'));
+  assert.equal((await h.command('gm','encounter','end')).ok,true);assert.equal(h.encounter().status,'ended');
+  assert.deepEqual(h.character('a'),before);assert.ok(!h.encounter().combatants.some(row=>row.characterId==='a'));
+});
 test('characteristic tiers, spell AP and explicit canonical owned costs',()=>{
   assert.deepEqual([1,19,20,39,40,59,60,79,80,100,120].map(tierBonus),[0,0,1,1,2,2,3,3,4,4,4]);
   assert.deepEqual(['Weak','Minor','Greater','Strengthened','Enhanced','Superior','Grand','World'].map(spellAP),[1,1,1,1,2,2,3,3]);

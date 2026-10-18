@@ -40,13 +40,20 @@ export function createCombatCommands(context) {
       const privateState=copy(gmSnap.data()?.combatState||{pending:null});
       privateState.preparations=privateState.preparations||{};
       const incoming=input.operation==='save'?input.encounter?.combatants||[]:[];
-      const entries=[...encounter.combatants,...incoming];
+      // A GM save must be able to remove a broken old link. Loading the union of
+      // both rosters made even removal/clear impossible after a character left.
+      const entries=input.operation==='save'?[...incoming,...(encounter.status==='active'&&currentCombatant(encounter)?[currentCombatant(encounter)]:[])]:encounter.combatants;
+      const recoverRoster=gm&&['save','end','clear'].includes(input.operation);
+      const unavailable=new Set();
       const characterIds=[...new Set(entries.map(row=>row.characterId).filter(Boolean))];
       if(characterIds.length>60||entries.length>160)throw new Error('This encounter has too many participants.');
       const documents=new Map(),characters=new Map();
       for(const id of characterIds){
         const ref=doc(db,'campaigns',campaignId,'characters',id),snapshot=await tx.get(ref);
-        if(!snapshot.exists()||!isLinkedCharacter(campaign,id,snapshot.data(),campaignId))throw new Error('An encounter character is no longer linked to this campaign.');
+        if(!snapshot.exists()||!isLinkedCharacter(campaign,id,snapshot.data(),campaignId)){
+          if(recoverRoster&&encounter.combatants.some(row=>row.characterId===id)){unavailable.add(id);continue;}
+          throw new Error('An encounter character is no longer linked to this campaign.');
+        }
         const original=snapshot.data(),privateRef=doc(db,'users',original.ownerUid,'characters',original.sourceCharacterId||id),privateSnap=await tx.get(privateRef);
         if(privateSnap.exists()&&privateSnap.data().ownerUid!==original.ownerUid)throw new Error('Character ownership does not match.');
         documents.set(id,{ref,original,privateRef,privateExists:privateSnap.exists()});
@@ -192,8 +199,8 @@ export function createCombatCommands(context) {
 
       if(input.operation==='save'){
         noPending();const requested=input.encounter||{};
-        const oldCurrent=currentCombatant(encounter)?.id,oldIds=new Set(encounter.combatants.map(row=>row.id));
-        const nextRows=(requested.combatants||[]).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
+        const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
+        const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
         if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
         encounter.combatants=nextRows;
         for(const row of nextRows)if(!oldIds.has(row.id)){
@@ -203,9 +210,17 @@ export function createCombatCommands(context) {
         }
         if(encounter.status==='active'){
           encounter.combatants.sort(initiativeOrder);
-          if(!nextRows.some(row=>row.id===oldCurrent))throw new Error('Advance the current turn before removing its participant.');
-          encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===oldCurrent);
+          if(!nextRows.some(row=>row.id===oldCurrent?.id)){
+            if(!unavailable.has(oldCurrent?.characterId))throw new Error('Advance the current turn before removing its participant.');
+            if(!nextRows.length)throw new Error('End combat before removing its last participant.');
+            const previousIndex=previousRows.findIndex(row=>row.id===oldCurrent.id);
+            const successor=[...previousRows.slice(previousIndex+1),...previousRows.slice(0,previousIndex)].find(row=>nextRows.some(next=>next.id===row.id))||nextRows[0];
+            if(previousRows.findIndex(row=>row.id===successor.id)<=previousIndex)encounter.round++;
+            encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===successor.id);startTurn();
+          }else encounter.turnIndex=encounter.combatants.findIndex(row=>row.id===oldCurrent.id);
         }
+        const retained=new Set(nextRows.map(row=>row.id));
+        for(const map of [encounter.combat.participants,privateState.preparations,privateState.apSpends||{}])for(const id of Object.keys(map))if(!retained.has(id))delete map[id];
         encounter.enemies=encounter.combatants.filter(row=>row.kind!=='player').map(copy);
         if(encounter.status==='ended'&&requested.status==='ready')encounter.status='ready';
         log('GM updated encounter participants.');
@@ -229,6 +244,8 @@ export function createCombatCommands(context) {
         if(input.operation==='end')requireActive();
         if(privateState.pending)log(`GM closes the pending ${privateState.pending.status} action at combat end; committed costs remain spent.`);
         privateState.pending=null;privateState.preparations={};privateState.apSpends={};
+        encounter.combatants=encounter.combatants.filter(row=>!unavailable.has(row.characterId));
+        encounter.enemies=encounter.combatants.filter(row=>!row.characterId).map(copy);
         for(const row of encounter.combatants){const character=get(row.id);character.conditions=rows(character.conditions).map(condition=>condition.encounterId||condition.throughOwnTurn!==undefined?{...condition,encounterId:'',untilRound:0,pendingGMExpiry:true}:condition);put(row.id,character);}
         encounter.status=input.operation==='end'?'ended':'ready';encounter.turnIndex=null;encounter.combat.participants={};encounter.combat.firstAid={};
         for(const key of ['turnTimer','timer'])if(encounter[key])encounter[key]={...encounter[key],enabled:false,endsAt:null};
@@ -435,9 +452,11 @@ export function createCombatCommands(context) {
         if(refs.original.downed&&next.downed===undefined)patch.downed=null;
         if(Object.keys(patch).length){patch.coreRevision=Number(refs.original.coreRevision||0)+1;patch.updatedAt=serverTimestamp();tx.update(refs.ref,patch);if(refs.privateExists)tx.update(refs.privateRef,patch);}
       }
-      tx.set(encounterRef,{...encounter,updatedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
-      tx.set(gmRef,{combatState:privateState},{merge:true});
-      return {ok:true,revision:encounter.combat.revision};
+      // Replace the transaction snapshot so removed participant map keys really
+      // disappear; recursive merge would resurrect their old combat state.
+      tx.set(encounterRef,{...encounter,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+      if(gmSnap.exists())tx.update(gmRef,{combatState:privateState});else tx.set(gmRef,{combatState:privateState});
+      return {ok:true,revision:encounter.combat.revision,...(unavailable.size?{message:`Encounter synchronized. Removed ${unavailable.size} unlinked character(s) from this encounter.`}:{})};
     });}catch(error){return {ok:false,error:error.message||String(error)};}
   }};
 }
