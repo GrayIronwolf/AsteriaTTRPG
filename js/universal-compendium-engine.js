@@ -205,7 +205,7 @@
       if(filters.section && entry.workspaceSection !== filters.section && entry.section !== filters.section) return false;
       if(filters.category && !entry.categoryPath.map(lower).includes(lower(filters.category))) return false;
       if(filters.route && entry.route !== filters.route) return false;
-      if(q && !entry.searchTerms.includes(q)) return false;
+      if(q && !(window.AsteriaContent.matches ? window.AsteriaContent.matches(entry,q) : entry.searchTerms.includes(q))) return false;
       return Object.entries(filters.metadata || {}).every(([key, value]) => !value || lower(entry.filters?.[key] ?? entry.metadata?.[key]) === lower(value));
     });
   }
@@ -480,6 +480,7 @@
     const focusId = focused?.id;
     const selection = typeof focused?.selectionStart === 'number' ? [focused.selectionStart,focused.selectionEnd] : null;
     const root = shell();
+    if(window.AsteriaContent.readyForView && !window.AsteriaContent.readyForView(root,selectedEntry || [],render))return;
     root.innerHTML = layout();
     bind();
     const next = focusId ? byId(focusId) : null;
@@ -506,7 +507,7 @@
   }
 
   function openEntry(entry){
-    const target = typeof entry === 'string' ? getBySlug(entry) : entry;
+    const target = typeof entry === 'string' ? getBySlug(entry) : getBySlug(entry?.id) || entry;
     if(!target || (target.gmOnly && !isGMMode())) return false;
     selectedEntry = target;
     routeChoices = null;

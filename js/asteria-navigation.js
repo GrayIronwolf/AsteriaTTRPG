@@ -39,7 +39,7 @@
     const category=classify(entry);
     if(categoryId && category!==categoryId)return false;
     if(groupId && CATEGORIES.find(c=>c.id===category)?.group!==groupId)return false;
-    return !query || `${entry.searchTerms||entry.title||''} ${entry.metadata?.['Asteria ID Index Code']||''}`.toLowerCase().includes(query.toLowerCase().trim());
+    return !query || (window.AsteriaContent?.matches ? window.AsteriaContent.matches(entry,query) : `${entry.searchTerms||entry.title||''} ${entry.metadata?.['Asteria ID Index Code']||''}`.toLowerCase().includes(query.toLowerCase().trim()));
   });}
   function href(group='',category='',q=''){
     const params=new URLSearchParams();if(group)params.set('group',group);if(category)params.set('category',category);if(q)params.set('q',q);

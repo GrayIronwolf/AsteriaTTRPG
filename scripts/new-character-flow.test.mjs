@@ -83,6 +83,24 @@ test('Forge retains the draft and ID when saving fails, without claiming a succe
   assert.equal(await h.save(),false);assert.deepEqual(Object.keys(h.window.chars),[id]);
 });
 
+test('Forge loads required rules before constructing or saving a character',async()=>{
+  let release,saves=0;
+  const h=forgeRuntime(async()=>{saves++;return true;});
+  h.window.AsteriaContent={...h.window.AsteriaContent,domainsReady:()=>false,ensureDomains:()=>new Promise(resolve=>{release=resolve;})};
+  const pending=h.save();
+  assert.deepEqual(Object.keys(h.window.chars),[]);assert.equal(saves,0);
+  release();await pending;assert.equal(saves,1);
+});
+
+test('a failed rule download cannot create an incomplete character snapshot',async()=>{
+  let saves=0;
+  const h=forgeRuntime(async()=>{saves++;return true;});
+  h.window.AsteriaContent={...h.window.AsteriaContent,domainsReady:()=>false,ensureDomains:async()=>{throw new Error('Network unavailable');}};
+  assert.equal(await h.save(),false);
+  assert.deepEqual(Object.keys(h.window.chars),[]);assert.equal(saves,0);
+  assert.match(h.messages.at(-1),/rules could not load/);
+});
+
 test('owned dashboard routes need no campaign and preserve normal campaign URLs',()=>{
   const owned={type:'owned-character',campaignId:'',characterId:'Ty / Test'};
   assert.deepEqual(parseReactRoute(buildReactRoute(owned)),owned);

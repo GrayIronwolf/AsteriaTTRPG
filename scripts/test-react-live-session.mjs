@@ -517,7 +517,7 @@ test('51. The redesigned player dashboard responds by reflowing panels and scrol
 
 test('52. Production chunks share one React entry URL', () => {
   const entry = read('src/dev-entry.js');
-  assert.match(entry, /import\('\.\.\/react-dist\/asteria-react\.js'\)/);
+  assert.match(entry, /import\('\.\.\/react-dist\/asteria-react-content-v1\.js'\)/);
   assert.doesNotMatch(entry, /asteria-react\.js\?/);
 });
 

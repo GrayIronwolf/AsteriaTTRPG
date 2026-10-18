@@ -9,7 +9,10 @@ function ensureDashboard(){
   if(!host) return Promise.resolve();
   if(dashboardLoad) return dashboardLoad;
   host.innerHTML = '<div class="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>';
-  dashboardLoad = import('./app/mountDashboard.jsx').then(module => module.mountDashboard(host)).catch(error => {
+  dashboardLoad = Promise.all([
+    import('./app/mountDashboard.jsx'),
+    window.AsteriaContent?.ensureDomains?.(['race','class','talent','skill','spell','item','creature'])
+  ]).then(([module]) => module.mountDashboard(host)).catch(error => {
     dashboardLoad = null;
     if(parseReactRoute(window.location.hash)) {
       host.innerHTML = '<div class="react-route-state" role="alert"><p>The dashboard could not load. Reload the page to try again.</p><button type="button">Reload dashboard</button></div>';
@@ -44,7 +47,8 @@ function openRoute(route) {
 }
 
 function restoreLegacy(view, callback) {
-  openLegacyView(view, callback);
+  return Promise.resolve(window.AsteriaContent?.ensureDomains?.(['race','class','talent','skill','spell','item','creature']))
+    .then(() => openLegacyView(view, callback));
 }
 
 function linkedCharacterRoute(characterId = '') {
