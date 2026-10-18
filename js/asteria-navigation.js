@@ -173,7 +173,8 @@
     new MutationObserver(()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();syncNavigation();}).observe(document.body,{attributes:true,attributeFilter:['data-role']});
     // Home and legacy workspaces can change views without changing the hash.
     const main=byId('mainContent');
-    if(main)new MutationObserver(records=>{if(records.some(record=>record.type==='childList'||record.target.classList?.contains('view')))syncNavigation();}).observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+    const viewSelector='.view,#asteria-workspace-shell,#universal-compendium-shell,#phase3GameplayShell';
+    if(main)new MutationObserver(records=>{if(records.some(record=>record.target.matches?.(viewSelector)||(record.type==='childList'&&[...record.addedNodes,...record.removedNodes].some(node=>node.matches?.(viewSelector)))))syncNavigation();}).observe(main,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
     window.AsteriaViewHooks?.afterView?.('top-navigation-state',null,syncNavigation,{defer:false});
     readRoute();
   }

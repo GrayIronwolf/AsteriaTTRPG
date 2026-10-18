@@ -82,6 +82,7 @@ export function installDevFixtures() {
     }
   };
   const ownedCharacters = clone(characters);
+  const ownedListeners = new Map();
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
@@ -164,12 +165,21 @@ export function installDevFixtures() {
 
   const fixtureApi = {
     isReady: () => true,
+    // The fixture already publishes clock/system snapshots through its subscriptions.
+    refreshCharacterSystems: async () => ({ok:true}),
     getUser: () => ({ uid: 'player-demo', email: 'preview@asteria.local' }),
     getProfile: () => ({ uid: 'player-demo', displayName: 'Preview Player' }),
     saveOwnedCharacterSnapshot: async (characterId,character) => {
       if(!characterId || !character) return false;
       ownedCharacters[characterId] = { ...(ownedCharacters[characterId] || {}), ...clone(character), id:characterId };
+      for(const callback of ownedListeners.get(characterId) || []) callback(clone(ownedCharacters[characterId]));
       return true;
+    },
+    subscribeOwnedCharacter: (characterId,callback) => {
+      const callbacks=ownedListeners.get(characterId) || new Set();
+      ownedListeners.set(characterId,callbacks);callbacks.add(callback);
+      queueMicrotask(()=>{if(callbacks.has(callback))callback(ownedCharacters[characterId]?.ownerUid==='player-demo'?clone(ownedCharacters[characterId]):null);});
+      return ()=>callbacks.delete(callback);
     },
     loadCharacters: async () => clone(characters),
     loadCampaigns: async () => [clone(campaign)],
