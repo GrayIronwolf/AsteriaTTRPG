@@ -101,3 +101,9 @@ Authoring instructions and the schema example are in `content/README.md`.
 
 These checks use local code and emulated services; they do not assert that a
 production deployment has occurred.
+
+## Handbook restoration
+
+The later security/reliability update imports five player-facing rule pages from the existing Dropbox Handbook, bringing the current registry to 891 definitions. Setup documents remain outside the rules catalog. See `handbook-import.json` for provenance.
+
+The generator emits a base and a small Handbook partition (`data/compendium-handbook.js`). Both derive only from canonical `content/` pages and assemble into the same registry before any consumer loads; there is no separate Handbook database. Build/check validates both artifacts.

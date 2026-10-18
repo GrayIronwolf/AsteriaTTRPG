@@ -64,7 +64,7 @@ npm test
 npm run build
 ```
 
-Commit the source, `data/compendium.js`, and the rebuilt `react-dist` together.
+Commit the source, the generated `data/compendium*.js` files, and the rebuilt `react-dist` together.
 The generated file is the one browser/backend registry and is never edited by
 hand. CI rejects a stale registry, invalid canonical path, duplicate identity,
 missing declared artwork, invalid price, or an unindexed content page.
