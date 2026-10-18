@@ -30,11 +30,12 @@
     "test:dashboard": "node --test scripts/dashboard-gameplay.test.mjs",
     "test:compendium": "node --test scripts/compendium.test.mjs",
     "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs",
-    "test:navigation": "node --test scripts/navigation-library.test.mjs"
+    "test:navigation": "node --test scripts/navigation-library.test.mjs",
+    "audit:production": "npm audit --omit=dev --audit-level=moderate"
   },
   "dependencies": {
-    "firebase-admin": "^13.4.0",
-    "firebase-functions": "^6.4.0",
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
