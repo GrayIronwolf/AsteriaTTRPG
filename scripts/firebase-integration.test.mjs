@@ -8,7 +8,9 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
-import {browserCampaignLink,browserOwnedSubscription} from './helpers/campaign-link-harness.mjs';
+import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
+import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
+import '../js/character-access.js';
 const projectId='demo-asteria';
 let env,adminApp,db;
 const campaign={ownerUid:'gm',gmUids:['gm'],playerUids:['alice','bob'],roles:{gm:'gm',alice:'player',bob:'player'},players:{alice:{uid:'alice',role:'player',characterIds:['a']},bob:{uid:'bob',role:'player',characterIds:['b']}},party:['a','b'],characters:{a:{ownerUid:'alice'},b:{ownerUid:'bob'}},playerCharacterLinks:{a:'alice',b:'bob'},ucn:'123456789012'};
@@ -565,4 +567,20 @@ test('GM encounter recovery persists custom creatures after a character is unlin
   assert.deepEqual((await db.doc('campaigns/c/characters/b').get()).data(),beforeShared);assert.deepEqual((await db.doc('users/bob/characters/b').get()).data(),beforePrivate);
   assert.equal((await command('gm','save',{encounter:{combatants:[...saved.combatants,{id:'forged',characterId:'foreign'}]}})).ok,false);
   assert.equal((await command('gm','start')).ok,true);
+});
+
+test('Mako with a legacy embedded ID is added using its real campaign document ID without changing ownership',async()=>{
+  await db.doc('campaigns/c/characters/b').update({id:'legacy-private-id',sourceCharacterId:'b',name:'Mako',hp:[27,200],sp:[190,190],mp:[34,200]});
+  const records=await new Promise(resolve=>{
+    let stop=()=>{};
+    stop=browserCampaignSubscription(user('gm'),'gm')('c',value=>{if(value.b?.name==='Mako'){stop();resolve(value);}});
+  });
+  assert.equal(records.b.id,'b');assert.equal(records.b.sourceCharacterId,'b');
+  const roster=encounterPlayerRoster('c',{...campaign,id:'c'},records,[{id:'player-a',characterId:'a',kind:'player',initiative:17,initiativeSet:true}],globalThis.AsteriaCharacterAccess);
+  assert.equal(roster.added.length,1);assert.equal(roster.added[0].name,'Mako');assert.equal(roster.added[0].characterId,'b');
+  const result=await action('gm','combatCommand',['c','encounter',{operation:'save',revision:0,encounter:{combatants:roster.combatants}}]);assert.equal(result.ok,true,result.error);
+  const saved=(await db.doc('campaigns/c/systems/encounter').get()).data();assert.equal(saved.combatants.filter(row=>row.characterId==='b').length,1);assert.equal(saved.combatants.find(row=>row.characterId==='b').name,'Mako');
+  assert.equal(encounterPlayerRoster('c',{...campaign,id:'c'},records,saved.combatants,globalThis.AsteriaCharacterAccess).added.length,0);
+  const shared=(await db.doc('campaigns/c/characters/b').get()).data();assert.equal(shared.id,'legacy-private-id');assert.equal(shared.ownerUid,'bob');assert.deepEqual(shared.hp,[27,200]);assert.deepEqual(shared.sp,[190,190]);assert.deepEqual(shared.mp,[34,200]);
+  assert.equal((await db.doc('users/bob/characters/b').get()).data().ownerUid,'bob');
 });

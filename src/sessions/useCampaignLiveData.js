@@ -4,6 +4,7 @@ import { mergeEvents } from '../state/liveEventReducer.mjs';
 import { effectiveSession } from '../state/liveWorkspaceModel.mjs';
 import { publishCustomItems } from '../app/legacyBridge.js';
 import { LIVE_SYNC_STATES } from '../types/asteriaContracts.mjs';
+import { campaignCharacterRecords } from '../state/campaignCharacterRecords.mjs';
 
 export function useCampaignLiveData(campaignId, { mode = 'character', characterId = '' } = {}) {
   const [authUid, setAuthUid] = useState(() => firebaseService.currentUser()?.uid || '');
@@ -110,7 +111,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
         setCampaign(value);
         if(!value) syncError({detail:{message:'This campaign is unavailable or has been removed.'}});
       })));
-      unsubscribers.push(firebaseService.subscribeCharacters(campaignId, accept('characters', value=>setCharacters(value||{}))));
+      unsubscribers.push(firebaseService.subscribeCharacters(campaignId, accept('characters', value=>setCharacters(campaignCharacterRecords(value||{})))));
       unsubscribers.push(firebaseService.subscribeSession(campaignId, accept('session', value=>setSession(effectiveSession(value||{status:'idle',id:''})))));
       unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, accept('partyWorkspace',value=>setPartyWorkspace(value||{sharedNotes:'',questLog:[]}))));
       unsubscribers.push(firebaseService.subscribePartyChat(campaignId, accept('partyChat',value=>setPartyChat(value||[]))));
