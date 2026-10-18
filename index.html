@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="react-dist/asteria-react.css?v=react-m1">
 <link rel="stylesheet" href="css/asteria-modern-ui.css?v=modern-ui-v2">
 <link rel="stylesheet" href="css/asteria-navigation.css?v=top-navigation-v1">
-<link rel="stylesheet" href="css/asteria-smoke-background.css?v=smoke-v1">
+<link rel="stylesheet" href="css/asteria-smoke-background.css?v=motion-v2">
 <link rel="stylesheet" href="css/asteria-menu-buttons.css?v=encounter-header-v7">
 <script src="js/asteria-home-guard.js"></script>
 </head>
@@ -79,6 +79,14 @@
       </label>
       <label>Background Visibility
         <input id="asteriaOverlaySlider" type="range" min="0" max="100" value="44">
+      </label>
+      <label>Background Energy Motion
+        <select id="asteriaMotionSelect" aria-label="Background energy animation">
+          <option value="both">Pulse + Wave</option>
+          <option value="pulse">Pulse only</option>
+          <option value="wave">Wave only</option>
+          <option value="off">Still (no animation)</option>
+        </select>
       </label>
       <label>Panel Opacity
         <input id="asteriaPanelOpacitySlider" type="range" min="62" max="92" value="78">
@@ -330,7 +338,7 @@
 <script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-item-ecosystem.js"></script>
 <script src="js/asteria-core-shell.js?v=top-navigation-v1"></script>
-<script src="js/asteria-ui-theme-system.js?v=faceted-crystal-v3"></script>
+<script src="js/asteria-ui-theme-system.js?v=motion-v2"></script>
 <script src="js/asteria-navigation.js?v=polished-gem-v6"></script>
 <script src="js/asteria-menu-buttons.js?v=compact-combat-v5"></script>
 <script src="js/border-glow.js?v=polished-gem-v6"></script>

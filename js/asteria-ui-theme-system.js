@@ -43,6 +43,7 @@
     const glow = document.getElementById("asteriaGlowSlider");
     const overlay = document.getElementById("asteriaOverlaySlider");
     const panel = document.getElementById("asteriaPanelOpacitySlider");
+    const motion = document.getElementById("asteriaMotionSelect");
 
     Object.keys(AREA_LABELS).forEach(key=>{const input=document.getElementById(`asteriaArea-${key}`);if(input)input.value=settings.areas[key];});
     if(theme) theme.value = settings.theme || "spellblade";
@@ -51,6 +52,7 @@
     if(glow) glow.value = Math.round((settings.glow ?? .36) * 100);
     if(overlay) overlay.value = Math.round((settings.overlay ?? .44) * 100);
     if(panel) panel.value = Math.round((settings.panel ?? .78) * 100);
+    if(motion) motion.value = settings.motion || "both";
   }
 
   function normalise(settings = {}){
@@ -63,7 +65,8 @@
       text:settings.text || preset.text || DEFAULT_TEXT,
       glow:clamp(typeof settings.glow === "number" ? settings.glow : preset.glow),
       overlay:clamp(typeof settings.overlay === "number" ? settings.overlay : preset.overlay),
-      panel:clamp(typeof settings.panel === "number" ? settings.panel : preset.panel, .62, .92)
+      panel:clamp(typeof settings.panel === "number" ? settings.panel : preset.panel, .62, .92),
+      motion:["both", "pulse", "wave", "off"].includes(settings.motion) ? settings.motion : "both"
     };
   }
 
@@ -112,6 +115,7 @@
     setVar('--asteria-divider',rgba(next.areas.divider,.46));
     window.dispatchEvent(new CustomEvent('asteria:theme-change',{detail:next}));
     document.body.dataset.asteriaTheme = next.theme;
+    document.body.dataset.asteriaEnergyMotion = next.motion;
     document.body.removeAttribute("data-theme");
     document.body.removeAttribute("data-accent");
     sync(next);
@@ -129,7 +133,8 @@
       text:document.getElementById("asteriaTextColourWheel")?.value || preset.text || DEFAULT_TEXT,
       glow:Number(document.getElementById("asteriaGlowSlider")?.value ?? Math.round(preset.glow * 100)) / 100,
       overlay:Number(document.getElementById("asteriaOverlaySlider")?.value ?? Math.round(preset.overlay * 100)) / 100,
-      panel:Number(document.getElementById("asteriaPanelOpacitySlider")?.value ?? Math.round((preset.panel || .78) * 100)) / 100
+      panel:Number(document.getElementById("asteriaPanelOpacitySlider")?.value ?? Math.round((preset.panel || .78) * 100)) / 100,
+      motion:document.getElementById("asteriaMotionSelect")?.value || appliedSettings?.motion || "both"
     });
   }
 
@@ -153,6 +158,7 @@
     const glow = document.getElementById("asteriaGlowSlider");
     const overlay = document.getElementById("asteriaOverlaySlider");
     const panel = document.getElementById("asteriaPanelOpacitySlider");
+    const motion = document.getElementById("asteriaMotionSelect");
     const save = document.getElementById("asteriaThemeSave");
     const reset = document.getElementById("asteriaThemeReset");
 
@@ -167,7 +173,7 @@
       theme.addEventListener("change", () => {
         const preset = themes[theme.value] || themes.spellblade;
         const live = current();
-        applyTheme({theme:theme.value,accent:preset.accent,text:live.text,glow:preset.glow,overlay:preset.overlay,panel:live.panel}, true);
+        applyTheme({theme:theme.value,accent:preset.accent,text:live.text,glow:preset.glow,overlay:preset.overlay,panel:live.panel,motion:live.motion}, true);
       });
     }
     if(colour && !colour.dataset.bound){
@@ -218,6 +224,10 @@
         applyTheme(live, false);
       });
       panel.addEventListener("change", () => applyTheme(current(), true));
+    }
+    if(motion && !motion.dataset.bound){
+      motion.dataset.bound = "1";
+      motion.addEventListener("change", () => applyTheme(current(), true));
     }
     if(save && !save.dataset.bound){
       save.dataset.bound = "1";

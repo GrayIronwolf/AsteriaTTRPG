@@ -1,42 +1,94 @@
-/* Asteria TTRPG — site background matching the smoke-and-swirl header.
-   Visual-only: keeps all navigation, account/character data, and theme controls. */
+/* Asteria — two-layer smoke + theme-colour magic.
+   Neutral static smoke is independent of the energy overlay.
+   Theme accent, visibility and glow controls remain authoritative. */
 :root {
-  --asteria-smoke-art: url("../assets/themes/asteria-smoke-swirl-background.svg");
+  --asteria-smoke-art: url("../assets/themes/asteria-smoke-neutral-background.svg");
+  --asteria-energy-mask: url("../assets/themes/asteria-energy-swirl-mask.svg");
 }
 
-html {
-  background-color: #02050b !important;
-}
+html { background-color: #030509 !important; }
 
 body {
-  background-color: #030711 !important;
+  background-color: #05070c !important;
   background-image:
-    linear-gradient(
-      180deg,
-      rgba(2, 6, 12, var(--asteria-bg-top-veil, .28)),
-      rgba(1, 4, 9, var(--asteria-bg-bottom-veil, .53))
-    ),
+    linear-gradient(180deg,
+      rgba(2, 4, 8, var(--asteria-bg-top-veil, .28)),
+      rgba(2, 4, 8, var(--asteria-bg-bottom-veil, .53))),
     var(--asteria-smoke-art),
-    linear-gradient(145deg, #081a2a 0%, #06111f 47%, #02050b 100%) !important;
+    linear-gradient(145deg, #10151c, #080d14 52%, #020409) !important;
   background-position: center top, center center, center center !important;
   background-size: cover, cover, cover !important;
   background-repeat: no-repeat, no-repeat, no-repeat !important;
   background-attachment: fixed, fixed, fixed !important;
 }
 
-/* Remove the former page-wide spell-circle and D20 geometry. */
+/* Two independent colour layers: soft base illumination and travelling shimmer.
+   Only the extracted swirl paths are coloured; grey/black smoke never changes. */
+body::before,
+body::after {
+  content: "" !important;
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  -webkit-mask-image: var(--asteria-energy-mask) !important;
+  mask-image: var(--asteria-energy-mask) !important;
+  -webkit-mask-size: cover !important;
+  mask-size: cover !important;
+  -webkit-mask-position: center center !important;
+  mask-position: center center !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+}
 body::before {
-  content: none !important;
-  display: none !important;
+  z-index: -2 !important;
+  background: var(--asteria-accent, #1f7dff) !important;
+  opacity: calc(.16 + var(--asteria-background-visibility, .44) * .55);
+  filter: drop-shadow(0 0 calc(5px + 10px * var(--asteria-glow-intensity, .36))
+    rgba(var(--asteria-accent-rgb, 31,125,255), .46)) !important;
+  animation: asteria-energy-pulse 7s ease-in-out infinite;
+}
+body::after {
+  z-index: -1 !important;
+  background-image: linear-gradient(100deg,
+    transparent 20%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .02) 36%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .9) 47%,
+    rgba(248, 252, 255, .75) 50%,
+    rgba(var(--asteria-accent-rgb, 31,125,255), .9) 53%,
+    transparent 67%) !important;
+  background-color: transparent !important;
+  background-size: 250% 100%;
+  background-position: 100% center;
+  background-repeat: no-repeat;
+  opacity: calc(.26 + var(--asteria-background-visibility, .44) * .42);
+  filter: drop-shadow(0 0 7px
+    rgba(var(--asteria-accent-rgb, 31,125,255), .5)) !important;
+  animation: asteria-energy-wave 17s linear infinite;
 }
 
-/* Atmospheric shading, with no grid pattern behind character/compendium panels. */
-body::after {
-  background:
-    radial-gradient(ellipse at 12% 22%, rgba(78, 126, 163, .1), transparent 38%),
-    radial-gradient(ellipse at 85% 62%, rgba(91, 123, 155, .09), transparent 38%),
-    linear-gradient(90deg, rgba(1, 4, 10, .28), transparent 25%, transparent 78%, rgba(1, 4, 10, .33)) !important;
-  opacity: calc(.48 + var(--asteria-background-visibility, .44) * .5) !important;
+@keyframes asteria-energy-pulse {
+  0%, 100% {
+    opacity: calc(.16 + var(--asteria-background-visibility, .44) * .43);
+  }
+  50% {
+    opacity: calc(.37 + var(--asteria-background-visibility, .44) * .55);
+  }
+}
+@keyframes asteria-energy-wave {
+  0%, 12% { background-position: 100% center; }
+  86%, 100% { background-position: 0% center; }
+}
+
+/* Keep static colour visible when animations are switched off. */
+body[data-asteria-energy-motion="off"]::before,
+body[data-asteria-energy-motion="wave"]::before {
+  animation: none !important;
+  opacity: calc(.25 + var(--asteria-background-visibility, .44) * .52);
+}
+body[data-asteria-energy-motion="off"]::after,
+body[data-asteria-energy-motion="pulse"]::after {
+  display: none !important;
 }
 
 @media (max-width: 900px) {
@@ -45,4 +97,10 @@ body::after {
     background-position: center top, 52% center, center center !important;
     background-attachment: scroll, scroll, scroll !important;
   }
+  body::after { animation-duration: 22s; }
+}
+/* Accessibility: never force movement on reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none !important; }
+  body::after { display: none !important; animation: none !important; }
 }
