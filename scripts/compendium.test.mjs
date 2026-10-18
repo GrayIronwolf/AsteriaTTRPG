@@ -4,13 +4,14 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import canonical from '../data/compendium.js';
+import addHandbook from '../data/compendium-handbook.js';
 import {stackableStorageItem} from '../src/state/liveWorkspaceModel.mjs';
 const require=createRequire(import.meta.url);
 const {generate}=require('./generate-compendium.js');
 const {validate}=require('./validate-compendium.js');
 const read=file=>fs.readFileSync(file,'utf8');
 function runtime(){
-  const context={window:{ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:structuredClone(canonical)},document:{readyState:'loading',addEventListener(){},getElementById(){return null;},querySelectorAll(){return [];},body:{dataset:{}}},URL,URLSearchParams,setTimeout,clearTimeout};
+  const context={window:{ASTERIA_UNIVERSAL_COMPENDIUM_INDEX:addHandbook(structuredClone(canonical))},document:{readyState:'loading',addEventListener(){},getElementById(){return null;},querySelectorAll(){return [];},body:{dataset:{}}},URL,URLSearchParams,setTimeout,clearTimeout};
   vm.createContext(context);
   vm.runInContext(read('js/compendium-registry.js'),context);
   const source=read('js/universal-compendium-engine.js').replace(/\}\)\(\);\s*$/,"window.viewerTest={allEntries,search,filters,tree,detail,properties,naturalACLabel,getBySlug,getByRoute,markdownToHtml,tab:(entry,name)=>{activeTab=name;return tabContent(entry);}};})();");
@@ -22,7 +23,7 @@ function runtime(){
 test('one deterministic registry covers every canonical source with unique IDs and valid assets',()=>{
   const result=validate(generate({check:true}));
   assert.deepEqual(result.errors,[]);
-  assert.equal(result.entries,886);
+  assert.equal(result.entries,891);
   const html=read('index.html');
   for(const retired of ['js/wiki-index.js','js/content-manifest.js','js/race-compendium.js','js/codex-compendium.js','data/compendium-index-clean.json','js/compendium-snapshot-v1.1.js']){
     assert.equal(fs.existsSync(retired),false,retired);assert.equal(html.includes(retired),false,retired);
@@ -130,4 +131,36 @@ test('shared content safely renders links and unavailable artwork without duplic
   assert.match(html,/Artwork unavailable/);
   assert.equal(html.includes('<img'),false);
   assert.equal(html.includes('href="javascript:'),false);
+});
+
+
+test('Handbook contains imported playable rules with source provenance and stable routes',()=>{
+  const {AsteriaContent:content,viewerTest:viewer}=runtime();
+  const rules=content.entries('handbook');assert.equal(rules.length,5);
+  for(const rule of rules){
+    assert.equal(rule.metadata.sourceProvider,'Dropbox');
+    assert.match(rule.metadata.sourceFileId,/^id:/);
+    assert.ok(rule.body.length>500);assert.equal(content.resolve(rule.route)?.id,rule.id);
+  }
+  const cool=rules.find(rule=>rule.slug==='rule-of-cool');
+  assert.match(viewer.detail(cool),/Rule of Cool/);
+  assert.match(cool.body,/GM-approved/);
+  assert.match(viewer.tab(cool,'Rules'),/GM-approved/);
+  assert.doesNotMatch(viewer.tab({...cool,sections:{...cool.sections,'GM Notes':'Private draft'}},'Rules'),/Private draft/);
+  assert.ok(viewer.search('Rule of Cool',{domain:'handbook'}).length);
+  assert.ok(!rules.some(rule=>/setup|phase-3|universal-compendium-engine/.test(rule.slug)));
+});
+
+
+test('Handbook partition combines into the same deterministic registry without duplicate definitions',()=>{
+  const expected=generate({check:true});
+  const actual=addHandbook(structuredClone(canonical));
+  assert.deepEqual(actual.entries.map(entry=>entry.id),expected.entries.map(entry=>entry.id));
+  assert.equal(actual.contentHash,expected.contentHash);
+  assert.deepEqual(actual.aliases,expected.aliases);
+  addHandbook(actual);
+  assert.equal(actual.entries.length,891);
+  const html=read('index.html');
+  assert.ok(html.indexOf('data/compendium.js')<html.indexOf('data/compendium-handbook.js'));
+  assert.ok(html.indexOf('data/compendium-handbook.js')<html.indexOf('js/compendium-registry.js'));
 });

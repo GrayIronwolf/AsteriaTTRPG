@@ -404,6 +404,10 @@
   }
 
   function tabContent(entry){
+    if(entry.domain==='handbook' && activeTab==='Rules') {
+      const content=Object.entries(entry.sections || {}).filter(([heading])=>heading!=='GM Notes').map(([heading,body])=>heading==='Overview'?body:`## ${heading}\n\n${body}`).join('\n\n');
+      return `<section class="codex-info-panel markdown-body"><h3>Rules</h3>${markdownToHtml(content,entry)}</section>`;
+    }
     if(activeTab === 'GM Notes' && !isGMMode()) return '<section class="codex-gm-notes locked"><h3>GM Notes</h3><p>Hidden from player view.</p></section>';
     if(activeTab === 'Gallery') return `<section class="codex-gallery-panel"><h3>Gallery</h3><div class="compendium-gallery">${Object.entries(entry.images || {}).filter(([key,src],index,images) => images.findIndex(([,value]) => value===src)===index).map(([label,src]) => `<figure><img src="${escapeHtml(src)}" alt="${escapeHtml(entry.title+' — '+label)}" loading="lazy" decoding="async"><figcaption>${escapeHtml(titleCase(label))}</figcaption></figure>`).join('') || '<p>No artwork recorded.</p>'}</div>${markdownToHtml(entry.sections.Gallery,entry)}</section>`;
     if(activeTab === 'Related') return `<section class="codex-info-panel"><h3>Related Content</h3>${related(entry).map(item => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>`).join('') || '<p>Information coming soon.</p>'}</section>`;
@@ -437,8 +441,8 @@
   }
 
   function detail(entry){
-    const tabs = [...new Set([...(entry.tabs || tabTemplates[entry.domain] || tabTemplates.handbook),...Object.keys(entry.sections || {})])].filter(tab => tab !== 'GM Notes' || isGMMode());
-    if(!tabs.includes('Related')) tabs.push('Related');
+    const tabs = entry.domain==='handbook' ? ['Rules',...(related(entry).length?['Related']:[]),...(isGMMode()&&entry.sections?.['GM Notes']?['GM Notes']:[])] : [...new Set([...(entry.tabs || tabTemplates[entry.domain] || tabTemplates.handbook),...Object.keys(entry.sections || {})])].filter(tab => tab !== 'GM Notes' || isGMMode());
+    if(entry.domain!=='handbook' && !tabs.includes('Related')) tabs.push('Related');
     return `
       <article class="codex-detail-page universal-detail-page">
         <a class="compendium-library-return" href="#/compendium">← Asteria Compendium</a>
