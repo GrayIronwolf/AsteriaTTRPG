@@ -15,7 +15,9 @@ Status: in progress (started 2026-11-05). This is a working plan, not a claim of
 - [x] Recover GM roster selection when the selected character disappears.
 - [x] Add targeted state regression tests to the dashboard test command.
 - [ ] Audit Player Dashboard overview, character, talents, skills, spells, inventory, quests, journal, party, gallery and settings.
+- [x] Keep the selected dashboard tab visible when horizontally scrolling between sections.
 - [ ] Audit GM main, PC inventory, news, quests, notes, economy, crafting, tools, gameplay and world panels.
+- [x] Replace GM roster double-click-only access with separate keyboard and touch-accessible Select and Open Character controls.
 - [ ] Verify modal focus, empty/loading/error states, horizontal overflow, scroll restoration and form save feedback.
 - [ ] Validate 320px, 390px, tablet and desktop layouts with screenshots and browser tests.
 
@@ -52,3 +54,6 @@ Status: in progress (started 2026-11-05). This is a working plan, not a claim of
 
 ## Release strategy
 Use focused, independently reviewable pull requests. Do not automatically merge or deploy the whole overhaul just because a navigation patch passes. The first PR is #44, which introduces dashboard navigation state recovery. All later checkbox completions require actual implementation and verification.
+
+## Release note — PR #45
+The follow-up patch includes source-level UI changes. The existing CI verifies that committed `react-dist` bundles match the source. Regenerating and committing those bundles is required before this patch can be merged with all checks passing; source-level changes alone are not an acceptable release. Full responsive browser visual QA and live deployment remain outstanding.
