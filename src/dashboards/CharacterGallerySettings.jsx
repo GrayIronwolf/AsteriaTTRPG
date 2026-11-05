@@ -1,13 +1,10 @@
 import { ThemeControls } from '../components/ThemeControls.jsx';
+import { DashboardLayoutEditor } from '../components/DashboardCustomisation.jsx';
 import React, { useMemo, useState } from 'react';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { DEFAULT_DASHBOARD_PANELS, OPTIONAL_INFORMATION_FIELDS, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
-
-const PANEL_LABELS = {
-  weapons:'Equipment, Weapons & Quick Items',
-  talents:'Class Talents', spells:'Active Spells', skills:'Skills', conditions:'Conditions'
-};
+import { OPTIONAL_INFORMATION_FIELDS, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
+import { visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 
 const INFORMATION_LABELS = {
   portrait:'Character portrait', title:'Displayed player title', party:'Adventure Party membership',
@@ -108,23 +105,15 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   const saved=useMemo(()=>normalizeDashboardPreferences(character),[character]);
   const [preferences,setPreferences]=useState(saved);
   const action=useSaveAction();
-  const [draggedPanel,setDraggedPanel]=useState('');
   React.useEffect(()=>setPreferences(saved),[saved]);
   const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
-  const move=(index,direction)=>setPreferences(current=>{const rows=[...current.panelOrder];const target=index+direction;if(target<0||target>=rows.length)return current;[rows[index],rows[target]]=[rows[target],rows[index]];return {...current,panelOrder:rows};});
-  const toggle=key=>setPreferences(current=>({...current,hiddenPanels:current.hiddenPanels.includes(key)?current.hiddenPanels.filter(value=>value!==key):[...current.hiddenPanels,key]}));
+  const updateLayout=update=>setPreferences(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
   const toggleInformation=key=>setPreferences(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
-  const dropPanel=target=>setPreferences(current=>{
-    if(!draggedPanel||draggedPanel===target)return current;
-    const rows=current.panelOrder.filter(key=>key!==draggedPanel);
-    const targetIndex=rows.indexOf(target);
-    rows.splice(targetIndex,0,draggedPanel);
-    return {...current,panelOrder:rows};
-  });
+  const save=()=>action.run(()=>firebaseService.updateDashboardPreferences(campaignId,character.id,preferences),'Dashboard settings saved.');
   return <div className="react-settings-workspace"><ThemeControls/>
-    <Panel title="Dashboard Layout" action={<StatusPill>{DEFAULT_DASHBOARD_PANELS.length-preferences.hiddenPanels.length} visible</StatusPill>}>
-      <p className="react-help">Choose which dashboard panels are visible and arrange their display order.</p>
-      <div className="react-panel-order-list">{preferences.panelOrder.map((key,index)=><article key={key} draggable={editable} className={draggedPanel===key?'dragging':''} onDragStart={()=>setDraggedPanel(key)} onDragEnd={()=>setDraggedPanel('')} onDragOver={event=>editable&&event.preventDefault()} onDrop={()=>dropPanel(key)}><label><input type="checkbox" disabled={!editable} checked={!preferences.hiddenPanels.includes(key)} onChange={()=>toggle(key)}/><b>{PANEL_LABELS[key]}</b></label><div><button title="Move up" disabled={!editable||index===0} onClick={()=>move(index,-1)}>Up</button><button title="Move down" disabled={!editable||index===preferences.panelOrder.length-1} onClick={()=>move(index,1)}>Down</button></div></article>)}</div>
+    <Panel title="Dashboard Customisation" action={<StatusPill>{visibleDashboardPanels(preferences.dashboardLayout,'player').length} panels</StatusPill>}>
+      <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} disabled={!editable}/>
+      <p className="react-help">These settings affect only this character. The original dashboard layout is restored by selecting Default. You can also edit panels directly from the main Dashboard tab.</p>
     </Panel>
     <Panel title="Sidebar Identity">
       <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>setPreferences(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>
@@ -132,9 +121,9 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
       {!titles.length?<p className="react-help">Titles granted by the GM will appear here.</p>:null}
     </Panel>
     <Panel title="Player Information Bar">
-      <p className="react-help">Character name, level, experience, core resources, campaign name, and navigation always remain visible.</p>
+      <p className="react-help">Character name, level, experience, core resources, campaign name, and navigation always remain visible. These controls change optional details, never the resource or level widgets.</p>
       <div className="react-information-field-list">{OPTIONAL_INFORMATION_FIELDS.map(key=><label className="react-check-row" key={key}><input type="checkbox" disabled={!editable} checked={!preferences.hiddenInformationFields.includes(key)} onChange={()=>toggleInformation(key)}/>{INFORMATION_LABELS[key]}</label>)}</div>
     </Panel>
-    <div className="react-settings-save"><button className="primary" disabled={!editable||action.busy} onClick={()=>action.run(()=>firebaseService.updateDashboardPreferences(campaignId,character.id,preferences),'Dashboard settings saved.')}>Save Dashboard Settings</button><span>{action.message}</span></div>
+    <div className="react-settings-save"><button className="primary" disabled={!editable||action.busy} onClick={save}>Save Dashboard Settings</button><span role="status">{action.message}</span></div>
   </div>;
 }
