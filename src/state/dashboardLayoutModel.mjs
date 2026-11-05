@@ -1,3 +1,12 @@
+import {
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
+  dashboardGridRule, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
+  normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount
+} from './dashboardGridModel.mjs';
+export {
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
+  dashboardGridRule, defaultGridDimensions, clampGridDimensions, gridRowCount
+};
 /**
  * Canonical, presentation-only dashboard layout configuration.
  * IDs refer to existing components or safe shortcuts; never arbitrary React code.
@@ -50,7 +59,7 @@ export const DASHBOARD_PANEL_REGISTRY = {
 export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
 export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
-export const DASHBOARD_LAYOUT_VERSION = 3;
+export const DASHBOARD_LAYOUT_VERSION = 4;
 export const DASHBOARD_LAYOUT_PRESETS = {
   player:{
     default:[],
@@ -84,6 +93,8 @@ export function defaultDashboardLayout(role='player') {
     order:panels.map(p=>p.id),
     hidden:panels.filter(p=>p.optional).map(p=>p.id),
     sizes:Object.fromEntries(panels.map(p=>[p.id,p.size])),
+    placements:normalizeGridPlacements(role,panels.map(p=>p.id),panels.filter(p=>p.optional).map(p=>p.id)),
+    lockedPositions:[],
     backgroundStyle:'obsidian',
     panelBackgrounds:{}
   };
@@ -112,13 +123,20 @@ export function normalizeDashboardLayout(value,role='player') {
   const panelBackgrounds={};
   for(const id of ids)if(DASHBOARD_BACKGROUND_STYLES.includes(rawBackgrounds[id]))panelBackgrounds[id]=rawBackgrounds[id];
   const backgroundStyle=DASHBOARD_BACKGROUND_STYLES.includes(value.backgroundStyle)?value.backgroundStyle:'obsidian';
+  const order=[...ordered,...ids.filter(id=>!ordered.includes(id))];
+  const hiddenIds=ids.filter(id=>hidden.has(id));
+  const legacySizes=Number(value.version||0)<DASHBOARD_LAYOUT_VERSION&&custom?rawSizes:{};
+  const placements=normalizeGridPlacements(scope,order,hiddenIds,value.placements||value.positions,legacySizes);
+  const lockedPositions=safeArray(value.lockedPositions).filter(id=>known.has(id));
   return {
     version:DASHBOARD_LAYOUT_VERSION,
     mode:value.mode==='custom'?'custom':'default',
     preset:typeof value.preset==='string'&&(value.preset==='custom'||validPreset(scope,value.preset))?value.preset:'default',
-    order:[...ordered,...ids.filter(id=>!ordered.includes(id))],
-    hidden:ids.filter(id=>hidden.has(id)),
+    order,
+    hidden:hiddenIds,
     sizes,
+    placements,
+    lockedPositions,
     backgroundStyle,
     panelBackgrounds
   };
@@ -163,16 +181,19 @@ export function applyDashboardPreset(layout,role='player',preset='default'){
   const previous=normalizeDashboardLayout(layout,scope);
   const requested=DASHBOARD_LAYOUT_PRESETS[scope][preset];
   const selected=new Set(requested);
+  const order=[...requested,...defaults.order.filter(id=>!selected.has(id))];
+  const hidden=defaults.order.filter(id=>!selected.has(id));
   return {...previous,version:DASHBOARD_LAYOUT_VERSION,mode:'custom',preset,
-    order:[...requested,...defaults.order.filter(id=>!selected.has(id))],
-    hidden:defaults.order.filter(id=>!selected.has(id))};
+    order,hidden,
+    placements:packGridPlacements(scope,order,hidden,previous.placements,previous.lockedPositions)};
 }
 export function moveDashboardPanel(layout,role='player',id,target){
   const previous=normalizeDashboardLayout(layout,role);
   if(id===target || !previous.order.includes(id) || !previous.order.includes(target))return previous;
   const order=previous.order.filter(x=>x!==id);
   order.splice(order.indexOf(target),0,id);
-  return {...previous,mode:'custom',preset:'custom',order};
+  return {...previous,mode:'custom',preset:'custom',order,
+    placements:packGridPlacements(role,order,previous.hidden,previous.placements,previous.lockedPositions)};
 }
 export function nudgeDashboardPanel(layout,role='player',id,direction){
   const previous=normalizeDashboardLayout(layout,role);
@@ -182,22 +203,77 @@ export function nudgeDashboardPanel(layout,role='player',id,direction){
   const order=[...previous.order];
   const from=order.indexOf(id),to=order.indexOf(target);
   [order[from],order[to]]=[order[to],order[from]];
-  return {...previous,mode:'custom',preset:'custom',order};
+  return {...previous,mode:'custom',preset:'custom',order,
+    placements:packGridPlacements(role,order,previous.hidden,previous.placements,previous.lockedPositions)};
 }
 export function toggleDashboardPanel(layout,role='player',id,enabled){
   const previous=normalizeDashboardLayout(layout,role);
   if(!previous.order.includes(id))return previous;
   const hidden=new Set(previous.hidden);
   if(enabled)hidden.delete(id);else hidden.add(id);
-  return {...previous,mode:'custom',preset:'custom',hidden:[...hidden]};
+  return {...previous,mode:'custom',preset:'custom',hidden:[...hidden],
+    placements:normalizeGridPlacements(role,previous.order,[...hidden],previous.placements)};
 }
+/** Legacy preset-size entrypoint retained for saved dashboards and older callers. */
 export function resizeDashboardPanel(layout,role='player',id,size){
   const previous=normalizeDashboardLayout(layout,role);
   if(!previous.order.includes(id)||!Object.hasOwn(DASHBOARD_SIZE_COLUMNS,size))return previous;
-  return {...previous,mode:'custom',preset:'custom',sizes:{...previous.sizes,[id]:size}};
+  const dim=legacyGridDimensions(role,id,size);
+  if(!dim)return previous;
+  const current=previous.placements[id]||{x:0,y:0,...defaultGridDimensions(role,id)};
+  const next=resizeDashboardGridPanel(previous,role,id,dim.w,dim.h);
+  return {...next,sizes:{...next.sizes,[id]:size}};
 }
 export function dashboardSizeForColumns(columns){
   if(columns>=10)return '9x3';
   if(columns>=6)return '6x3';
   return '3x3';
+}
+export function dashboardGridPlacement(layout,role,id){
+  return normalizeDashboardLayout(layout,role).placements[id]||null;
+}
+/** Move one panel to its requested square when there is no collision. */
+export function moveDashboardGridPanel(layout,role,id,x,y){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(previous.hidden.includes(id)||previous.lockedPositions.includes(id))return previous;
+  const current=previous.placements[id];
+  if(!current)return previous;
+  const nx=Number(x),ny=Number(y);
+  if(!Number.isInteger(nx)||!Number.isInteger(ny)||nx<0||ny<0||
+    nx+current.w>DASHBOARD_GRID_COLUMNS||ny+current.h>600)return previous;
+  const candidate={...current,x:nx,y:ny};
+  if(!gridPositionIsFree(candidate,visiblePlacements(previous),id))return previous;
+  return {...previous,mode:'custom',preset:'custom',
+    placements:{...previous.placements,[id]:candidate}};
+}
+function visiblePlacements(layout){
+  const result={};
+  for(const id of layout.order)if(!layout.hidden.includes(id)&&layout.placements[id])
+    result[id]=layout.placements[id];
+  return result;
+}
+/** Resize width and height independently, enforcing role-specific panel size rules. */
+export function resizeDashboardGridPanel(layout,role,id,width,height){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(previous.hidden.includes(id)||previous.lockedPositions.includes(id))return previous;
+  const current=previous.placements[id];
+  const dimensions=clampGridDimensions(role,id,width,height);
+  if(!current||!dimensions)return previous;
+  const candidate={...current,...dimensions,
+    x:Math.min(current.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
+  if(candidate.y+candidate.h>600||!gridPositionIsFree(candidate,visiblePlacements(previous),id))return previous;
+  return {...previous,mode:'custom',preset:'custom',
+    placements:{...previous.placements,[id]:candidate}};
+}
+export function lockDashboardGridPanel(layout,role,id,lock=true){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(!previous.order.includes(id))return previous;
+  const locked=new Set(previous.lockedPositions);
+  if(lock)locked.add(id);else locked.delete(id);
+  return {...previous,mode:'custom',preset:'custom',lockedPositions:[...locked]};
+}
+export function autoArrangeDashboardLayout(layout,role='player'){
+  const previous=normalizeDashboardLayout(layout,role);
+  return {...previous,mode:'custom',preset:'custom',
+    placements:packGridPlacements(role,previous.order,previous.hidden,previous.placements,previous.lockedPositions)};
 }
