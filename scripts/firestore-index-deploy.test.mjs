@@ -37,7 +37,8 @@ function deployment(existing) {
       throw new Error(`Unexpected network operation: ${String(operation)}`);
     },
   });
-  api.listIndexes = async () => FirestoreApi.processIndexes(existing);
+  // Firebase CLI 15 returns raw server index definitions; deploy performs matching itself.
+  api.listIndexes = async () => existing;
   api.listFieldOverrides = async () => [];
   api.getDatabase = async () => ({ databaseEdition: 'STANDARD' });
   api.createIndex = async (_project, spec) => {
