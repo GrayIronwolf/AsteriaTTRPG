@@ -2565,7 +2565,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
    This only affects the customisable grid. Resource banner and GM sidebar stay fixed. */
 .react-dashboard-custom-grid {
   grid-template-columns:repeat(12,minmax(0,1fr));
-  grid-auto-flow:row dense;
+  grid-auto-flow:row;
   align-items:stretch;
 }
 .react-dashboard-custom-cell {
