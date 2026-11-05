@@ -2,11 +2,22 @@
    a separately selected backdrop, existing HTML data and existing header.
    Do not replace supplied images with generated CSS ornaments. */
 .react-dashboard-custom-grid {container-type:inline-size; grid-auto-flow:row; align-items:start;}
-.react-dashboard-custom-cell {min-width:0; aspect-ratio:1 / 1;}
+.react-dashboard-custom-cell {
+  min-width:0;
+  aspect-ratio:1 / 1;
+  --asteria-panel-backdrop:url("../assets/ui/dashboard/panel-backdrop-obsidian.webp");
+  --asteria-frame-padding:8%;
+  --asteria-surface-inset:4% 3.5%;
+  --asteria-surface-cut-x:7%;
+  --asteria-surface-cut-y:7%;
+}
 .react-dashboard-custom-cell[data-panel-size="6x3"] {aspect-ratio:2 / 1;}
 .react-dashboard-custom-cell[data-panel-size="9x3"] {aspect-ratio:3 / 1;}
 .react-dashboard-custom-cell[data-panel-size="3x6"] {aspect-ratio:1 / 2;}
-.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic {
+/* Match the theme's scope so its !important border/background cannot survive
+   around the artwork. This image is the panel's only physical perimeter. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic {
   position:relative!important;
   isolation:isolate;
   height:100%;
@@ -16,26 +27,41 @@
   border-radius:0!important;
   box-shadow:none!important;
   backdrop-filter:none!important;
-  background-color:#080d13!important;
-  background-image:url("../assets/ui/dashboard/panel-backdrop-obsidian.webp")!important;
-  background-size:cover!important;
-  background-position:center center!important;
-  background-repeat:no-repeat!important;
-  padding:clamp(15px,2.6cqw,28px);
+  background:transparent!important;
+  padding:var(--asteria-frame-padding)!important;
   overflow:visible;
 }
-.react-dashboard-custom-cell[data-panel-background="slate"] > .asteria-react-panel.asteria-royal-relic {
-  background-image:url("../assets/ui/dashboard/panel-backdrop-slate.webp")!important;
+.react-dashboard-custom-cell[data-panel-background="slate"] {
+  --asteria-panel-backdrop:url("../assets/ui/dashboard/panel-backdrop-slate.webp");
 }
-.react-dashboard-custom-cell[data-panel-background="arcane"] > .asteria-react-panel.asteria-royal-relic {
-  background-image:url("../assets/ui/dashboard/panel-backdrop-arcane.webp")!important;
+.react-dashboard-custom-cell[data-panel-background="arcane"] {
+  --asteria-panel-backdrop:url("../assets/ui/dashboard/panel-backdrop-arcane.webp");
 }
 /* Separate picture frame, attached to each panel and moving with it. */
 .react-dashboard-custom-cell[data-panel-size="3x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x3.webp"); }
 .react-dashboard-custom-cell[data-panel-size="6x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-6x3.webp"); }
 .react-dashboard-custom-cell[data-panel-size="3x6"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x6.webp"); }
 .react-dashboard-custom-cell[data-panel-size="9x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-9x3.webp"); }
-.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::before {
+.react-dashboard-custom-cell[data-panel-size="3x6"] {
+  --asteria-frame-padding:10%;
+  --asteria-surface-inset:2.8% 4.7%;
+  --asteria-surface-cut-x:10%;
+  --asteria-surface-cut-y:5%;
+}
+.react-dashboard-custom-cell[data-panel-size="6x3"] {
+  --asteria-frame-padding:7.5% 6%;
+  --asteria-surface-inset:10% 3%;
+  --asteria-surface-cut-x:4%;
+  --asteria-surface-cut-y:10%;
+}
+.react-dashboard-custom-cell[data-panel-size="9x3"] {
+  --asteria-frame-padding:5.5% 5%;
+  --asteria-surface-inset:10% 2.4%;
+  --asteria-surface-cut-x:3%;
+  --asteria-surface-cut-y:13%;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::before {
   content:"";
   position:absolute!important;
   inset:0!important;
@@ -47,16 +73,40 @@
   box-shadow:none!important;
   opacity:1!important;
 }
-.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::after {
-  content:none!important;
+/* Texture ends underneath the steel. Transparent outer margins and cut corners
+   stay transparent instead of revealing a second rectangular panel behind it. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::after {
+  content:""!important;
+  position:absolute!important;
+  inset:var(--asteria-surface-inset)!important;
+  z-index:-1!important;
+  pointer-events:none!important;
+  background:#080d13 var(--asteria-panel-backdrop) center / cover no-repeat!important;
+  clip-path:polygon(
+    var(--asteria-surface-cut-x) 0,
+    calc(100% - var(--asteria-surface-cut-x)) 0,
+    100% var(--asteria-surface-cut-y),
+    100% calc(100% - var(--asteria-surface-cut-y)),
+    calc(100% - var(--asteria-surface-cut-x)) 100%,
+    var(--asteria-surface-cut-x) 100%,
+    0 calc(100% - var(--asteria-surface-cut-y)),
+    0 var(--asteria-surface-cut-y)
+  );
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  opacity:1!important;
 }
-.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic:hover {
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic:hover {
   transform:none!important;
   box-shadow:none!important;
   border-color:transparent!important;
 }
 /* Labels, controls, input fields and panel data remain real HTML, not baked into images. */
-.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic > .react-panel-header {
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic > .react-panel-header {
   z-index:2;
   background-image:none!important;
   background-color:rgba(2,8,15,.75)!important;
