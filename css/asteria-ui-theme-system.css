@@ -558,11 +558,14 @@ body textarea {
   --asteria-top-menu-button:var(--asteria-accent);
   --asteria-dashboard-tab:var(--asteria-accent);
 }
-body :is(.panel,.card,.settings-panel,.clean-display,.clean-nav,.asteria-react-panel,.react-player-topbar,.react-tree-talent,.react-party-card) {
+/* Royal Relic panels opt out of the generic flat-theme reset.
+   The reset previously used !important on ALL .asteria-react-panel backgrounds
+   and borders, hiding the steel/obsidian finish despite successful deployments. */
+body :is(.panel,.card,.settings-panel,.clean-display,.clean-nav,.asteria-react-panel:not(.asteria-royal-relic),.react-player-topbar,.react-tree-talent,.react-party-card) {
   border-color:var(--asteria-panel-border)!important;
   background:var(--asteria-panel-background)!important;
 }
-body :is(.panel,.card,.asteria-react-panel,.react-tree-talent,.react-party-card):hover { border-color:var(--asteria-panel-border)!important; }
+body :is(.panel,.card,.asteria-react-panel:not(.asteria-royal-relic),.react-tree-talent,.react-party-card):hover { border-color:var(--asteria-panel-border)!important; }
 body .topbar :is(button,.toplink,.account-top-btn),body .toplink {
   border-color:var(--asteria-top-menu-button)!important;
   background:color-mix(in srgb,var(--asteria-top-menu-button) 25%,#061011)!important;
@@ -592,3 +595,49 @@ body :is(hr,.react-panel-header,.react-tree-tier) { border-color:var(--asteria-d
 .asteria-independent-colours,.react-theme-colours { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px; }
 .react-theme-colours label { display:grid;gap:8px; }
 .react-theme-colours input[type=color] { min-height:44px;width:100%; }
+
+/* Legacy dashboard fallback: render a restrained physical material frame even
+   if the lazy React dashboard has not mounted yet (common on older mobile views).
+   Do not change sizing, position, ordering, or the fixed resource/navigation bars. */
+body #player .card,
+body #gm .card,
+body #gmPlayer .card {
+  position: relative;
+  border: 1px solid #8998a4 !important;
+  border-radius: 4px;
+  background:
+    linear-gradient(155deg,rgba(34,45,51,.22),rgba(0,0,0,.13) 42%,rgba(0,0,0,.16)),
+    url("../assets/ui/royal-relic-obsidian.svg") center / 440px 440px repeat,
+    #080d11 !important;
+  box-shadow: 0 2px 7px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(230,234,232,.42),
+    inset 1px 0 0 rgba(164,180,191,.25),
+    inset 0 -2px 0 rgba(0,0,0,.6),
+    0 0 0 1px #151c21;
+}
+body #player .card:hover,
+body #gm .card:hover,
+body #gmPlayer .card:hover { border-color: #afbec7 !important; }
+body :is(#player,#gm,#gmPlayer) .card::before {
+  content:"";
+  position:absolute;
+  inset:2px;
+  border:1px solid rgba(172,190,198,.23);
+  pointer-events:none;
+  border-radius:2px;
+  background:
+    url("../assets/ui/royal-relic-brushed-steel.svg") top left / 100% 2px no-repeat;
+}
+body :is(#player,#gm,#gmPlayer) .card::after {
+  content:"";
+  position:absolute;
+  inset:3px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 7px 7px, #d8ebf3 0 1px, var(--asteria-accent,#447ea8) 1.5px 3px, #454e53 3.5px 4.5px, transparent 5px),
+    radial-gradient(circle at calc(100% - 7px) 7px, #d8ebf3 0 1px, var(--asteria-accent,#447ea8) 1.5px 3px, #454e53 3.5px 4.5px, transparent 5px);
+}
+/* Avoid interfering with legacy content overlays, which may use their own
+   ::before/::after for tooltips, loading states, or other interactions. */
+body :is(#player,#gm,#gmPlayer) .card:has(> .edge-light)::before,
+body :is(#player,#gm,#gmPlayer) .card:has(> .edge-light)::after { content: none; }
