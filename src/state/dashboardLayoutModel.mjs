@@ -5,49 +5,52 @@
  */
 export const DASHBOARD_PANEL_REGISTRY = {
   player: [
-    {id:'armour',label:'Equipment & Armour',category:'Character',size:'wide'},
+    {id:'armour',label:'Equipment & Armour',category:'Character',size:'long'},
     {id:'weapons',label:'Equipped Weapons',category:'Equipment',size:'standard'},
-    {id:'quick',label:'Quick Items',category:'Equipment',size:'compact'},
+    {id:'quick',label:'Quick Items',category:'Equipment',size:'standard'},
     {id:'talents',label:'Class Talents',category:'Abilities',size:'standard'},
     {id:'spells',label:'Active Spells',category:'Abilities',size:'standard'},
     {id:'skills',label:'Skills',category:'Character',size:'standard'},
-    {id:'conditions',label:'Conditions',category:'Combat',size:'compact'},
+    {id:'conditions',label:'Conditions',category:'Combat',size:'standard'},
     {id:'effects',label:'Active Effects',category:'Combat',size:'standard'},
-    {id:'specialDamage',label:'Special Damage',category:'Combat',size:'compact'},
-    {id:'rest',label:'Rest & Recovery',category:'Character',size:'compact'},
-    {id:'currency',label:'Currency',category:'Equipment',size:'compact'},
+    {id:'specialDamage',label:'Special Damage',category:'Combat',size:'standard'},
+    {id:'rest',label:'Rest & Recovery',category:'Character',size:'standard'},
+    {id:'currency',label:'Currency',category:'Equipment',size:'standard'},
     {id:'quests',label:'Current Quests',category:'Adventures',size:'standard'},
     {id:'journal',label:'Recent Journal',category:'Adventures',size:'standard'},
     {id:'party',label:'Party',category:'Social',size:'standard'},
-    {id:'shortcutInventory',label:'Inventory Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutQuest',label:'Quest Log Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutCharacter',label:'Character Sheet Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutSpells',label:'Spellbook Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutGallery',label:'Gallery Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutSettings',label:'Dashboard Settings Shortcut',category:'Shortcuts',size:'compact',optional:true}
+    {id:'shortcutInventory',label:'Inventory Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutQuest',label:'Quest Log Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutCharacter',label:'Character Sheet Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutSpells',label:'Spellbook Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutGallery',label:'Gallery Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutSettings',label:'Dashboard Settings Shortcut',category:'Shortcuts',size:'standard',optional:true}
   ],
   gm: [
     {id:'restRequests',label:'Rest Requests',category:'Session',size:'standard'},
-    {id:'encounter',label:'Campaign Encounter',category:'Combat',size:'wide'},
+    {id:'encounter',label:'Campaign Encounter',category:'Combat',size:'long'},
     {id:'xp',label:'XP Distribution',category:'Rewards',size:'standard'},
     {id:'specialDamage',label:'Special Damage',category:'Combat',size:'standard'},
     {id:'loot',label:'Loot Rewards',category:'Rewards',size:'standard',optional:true},
     {id:'magicRewards',label:'Magic Element Rewards',category:'Rewards',size:'standard',optional:true},
-    {id:'acInspector',label:'Armour Class Inspector',category:'Characters',size:'wide',optional:true},
-    {id:'playerManagement',label:'Player Titles & Storage',category:'Characters',size:'wide',optional:true},
+    {id:'acInspector',label:'Armour Class Inspector',category:'Characters',size:'long',optional:true},
+    {id:'playerManagement',label:'Player Titles & Storage',category:'Characters',size:'long',optional:true},
     {id:'partySummary',label:'Party Summary',category:'Characters',size:'standard',optional:true},
-    {id:'shortcutInventory',label:'PC Inventory Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutQuests',label:'Quests Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutNotes',label:'GM Notes Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutEconomy',label:'Economy Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutCrafting',label:'Crafting Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutTools',label:'GM Tools Shortcut',category:'Shortcuts',size:'compact',optional:true},
-    {id:'shortcutWorld',label:'World Systems Shortcut',category:'Shortcuts',size:'compact',optional:true}
+    {id:'shortcutInventory',label:'PC Inventory Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutQuests',label:'Quests Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutNotes',label:'GM Notes Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutEconomy',label:'Economy Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutCrafting',label:'Crafting Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutTools',label:'GM Tools Shortcut',category:'Shortcuts',size:'standard',optional:true},
+    {id:'shortcutWorld',label:'World Systems Shortcut',category:'Shortcuts',size:'standard',optional:true}
   ]
 };
 
-export const DASHBOARD_SIZE_COLUMNS = Object.freeze({compact:3,standard:6,wide:9,full:12});
-export const DASHBOARD_LAYOUT_VERSION = 1;
+// The twelve-column dashboard renders three standard-width tracks.
+ // Standard: 1/3 (4 columns); Long: 2/3 (8); Full: 3/3 (12).
+ // Panels remain content-height driven; no clipping or height distortion.
+export const DASHBOARD_SIZE_COLUMNS = Object.freeze({standard:4,long:8,full:12});
+export const DASHBOARD_LAYOUT_VERSION = 2;
 export const DASHBOARD_LAYOUT_PRESETS = {
   player:{
     default:[],
@@ -95,7 +98,14 @@ export function normalizeDashboardLayout(value,role='player') {
   for(const item of registry(scope))if(item.optional&&!ordered.includes(item.id))hidden.add(item.id);
   const sizes={};
   const rawSizes=value.sizes&&typeof value.sizes==='object'&&!Array.isArray(value.sizes)?value.sizes:{};
-  for(const item of registry(scope)) sizes[item.id]=Object.hasOwn(DASHBOARD_SIZE_COLUMNS,rawSizes[item.id])?rawSizes[item.id]:item.size;
+  // Preserve previously saved layout widths when upgrading the original
+  // Compact / Standard / Wide / Full presets to the three-width grid.
+  const normaliseSize=size=> {
+    if(size==='compact')return 'standard';
+    if(size==='wide')return 'long';
+    return Object.hasOwn(DASHBOARD_SIZE_COLUMNS,size)?size:null;
+  };
+  for(const item of registry(scope))sizes[item.id]=normaliseSize(rawSizes[item.id])||item.size;
   return {
     version:DASHBOARD_LAYOUT_VERSION,
     mode:value.mode==='custom'?'custom':'default',
@@ -161,8 +171,7 @@ export function resizeDashboardPanel(layout,role='player',id,size){
   return {...previous,mode:'custom',preset:'custom',sizes:{...previous.sizes,[id]:size}};
 }
 export function dashboardSizeForColumns(columns){
-  if(columns>=11)return 'full';
-  if(columns>=8)return 'wide';
-  if(columns>=5)return 'standard';
-  return 'compact';
+  if(columns>=10)return 'full';
+  if(columns>=6)return 'long';
+  return 'standard';
 }
