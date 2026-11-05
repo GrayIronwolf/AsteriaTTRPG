@@ -188,45 +188,101 @@ body .asteria-menu-button:not(:disabled):hover::after {
   filter:brightness(1.2);
 }
 
-/* 4. Other dashboard action controls inherit the metal-and-crystal material,
-   without changing their sizes, click targets or controls' functionality. */
+/* 4. General controls have restrained metal edges. Full-size action buttons
+   use the SAME pointed silhouette as top navigation, not a flat rectangle.
+   Do not transform item slots, portrait controls, drag/resize handles or HUD steppers. */
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) button:not(.asteria-menu-button):not(.react-gallery-media-button):not(.react-icon-button) {
   border-color:color-mix(in srgb,#9caab2 72%,#c0a063 28%);
   box-shadow:inset 0 1px 0 rgba(232,240,244,.2),inset 0 -2px 2px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.4);
 }
-body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
-  :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action) {
+/* Primary navigation/action buttons, including modal actions portal-mounted in
+   document.body, share one painted surface. Their native button remains intact. */
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button) {
   --royal-action-hue:var(--asteria-dashboard-tab,var(--asteria-accent,#187bac));
-  border:1px solid #9eabb4 !important;
-  border-radius:2px !important;
-  background-image:
-    linear-gradient(180deg,rgba(240,249,250,.28),transparent 24%,transparent 75%,rgba(2,8,14,.58)),
-    radial-gradient(ellipse at 50% 96%,color-mix(in srgb,var(--royal-action-hue) 64%,#a6deeb),transparent 75%),
-    linear-gradient(90deg,
-      color-mix(in srgb,var(--royal-action-hue) 52%,#050d17),
-      color-mix(in srgb,var(--royal-action-hue) 66%,#0b1d2e) 23%,
-      color-mix(in srgb,var(--royal-action-hue) 38%,#030a12) 50%,
-      color-mix(in srgb,var(--royal-action-hue) 66%,#0b1d2e) 77%,
-      color-mix(in srgb,var(--royal-action-hue) 52%,#050d17)) !important;
+  --royal-action-tip:clamp(8px,1.1em,14px);
+  position:relative !important;
+  isolation:isolate;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
   color:#edf4f5 !important;
-  text-shadow:0 1px 2px #000;
-  box-shadow:
-    inset 0 1px rgba(235,244,246,.56),inset 0 -2px rgba(1,6,12,.85),
-    0 1px 0 #b39054,0 3px 6px rgba(0,0,0,.53) !important;
-  filter:none;
+  text-shadow:0 1px 2px #000,0 0 3px rgba(224,240,247,.18);
+  box-shadow:none !important;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));
+  transition:filter 140ms ease;
 }
-body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
-  :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action):not(:disabled):hover {
-  filter:brightness(1.12);
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button)::before,
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button)::after {
+  content:"";
+  display:block;
+  pointer-events:none;
+  position:absolute;
+  clip-path:polygon(0 50%,var(--royal-action-tip) 0,calc(100% - var(--royal-action-tip)) 0,100% 50%,calc(100% - var(--royal-action-tip)) 100%,var(--royal-action-tip) 100%);
 }
-body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
-  :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action):not(:disabled):active {
-  box-shadow:inset 0 2px 5px #000,inset 0 0 7px color-mix(in srgb,var(--royal-action-hue) 45%,transparent) !important;
-  filter:brightness(1.18);
+/* Forged steel shoulder, micro-bevelled silver outer lip and two fine gold rails. */
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button)::before {
+  z-index:-2;
+  inset:0;
+  background:
+    linear-gradient(90deg,transparent 3%,#b98e50 16%,#d6b879 50%,#b98e50 84%,transparent 97%) top 2px / 100% 1px no-repeat,
+    linear-gradient(90deg,transparent 3%,#a27b3d 16%,#d6b879 50%,#a27b3d 84%,transparent 97%) bottom 2px / 100% 1px no-repeat,
+    linear-gradient(180deg,#e2e8ea 0%,#788894 6%,#2c353e 20%,#101a22 62%,#4c5c66 90%,#b7c1c6 100%);
+  box-shadow:inset 0 1px 0 #fff4;
 }
-/* Keep destructive commands recognisably red, not gem-blue. */
-body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
-  button.danger {
+/* Separately coloured crystal: changing the theme never recolours the steel. */
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button)::after {
+  z-index:-1;
+  inset:3px 4px;
+  background:
+    radial-gradient(ellipse 60% 27% at 50% 0%,rgba(238,252,255,.35),transparent 80%),
+    url("../assets/ui/crystal-facets.svg") center / 100% 100% no-repeat,
+    linear-gradient(180deg,#020b18b0,transparent 23% 70%,#000713b0),
+    radial-gradient(ellipse 95% 130% at 51% 54%,
+      color-mix(in srgb,var(--royal-action-hue) 72%,#80b4d0),
+      color-mix(in srgb,var(--royal-action-hue) 53%,#071625) 64%,
+      color-mix(in srgb,var(--royal-action-hue) 22%,#02070c));
+  background-size:100% 100%;
+  box-shadow:inset 0 1px 1px #def4ff99,inset 0 -2px 4px #000b;
+  transition:filter 150ms ease,transform 90ms ease;
+}
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button):not(:disabled):hover::after {
+  filter:brightness(1.17);
+}
+body :is(
+  #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    :is(button.primary,button.asteria-button,.react-action-row > button,.react-modal-actions > button,.react-quick-actions > button,.react-empty-action,.react-dashboard-reset-action),
+  .react-modal :is(button.primary,button.asteria-button)
+):not(.asteria-menu-button):not(:disabled):active::after {
+  transform:translateY(2px);
+  filter:brightness(1.24);
+}
+/* Destructive action faces remain recognisably red. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) button.danger,
+body .react-modal button.danger {
   --royal-action-hue:var(--asteria-danger,#a83b4f);
 }
 
