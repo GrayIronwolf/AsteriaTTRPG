@@ -27,7 +27,7 @@ jobs:
         run: npm ci
       - name: Apply non-breaking production dependency fixes
         run: |
-          npm audit fix --omit=dev --no-fund
+          npm audit fix --no-fund
           npm ci
           npm run audit:production
       - name: Test content, lint, gameplay, Firebase and build
