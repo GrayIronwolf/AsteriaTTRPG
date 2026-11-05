@@ -57,3 +57,6 @@ Use focused, independently reviewable pull requests. Do not automatically merge 
 
 ## Release note — PR #45
 The follow-up patch includes source-level UI changes. The existing CI verifies that committed `react-dist` bundles match the source. Regenerating and committing those bundles is required before this patch can be merged with all checks passing; source-level changes alone are not an acceptable release. Full responsive browser visual QA and live deployment remain outstanding.
+
+## Security and Firebase compatibility repair — PR #46
+On 5 November 2026, the isolated repair workflow passed content validation (891 canonical entries), lint, the full npm test suite, Firebase emulator tests, production build, and the unmodified production dependency security audit. The CLI was pinned to Firebase Tools 15.35.0 and the index-deployment fixture was updated to match its API normalization; compatible transitive overrides and lockfile security fixes were applied. The updated production React bundle and generated Compendium files were committed from the verified build. The temporary repair workflow was subsequently removed from the branch. Regular PR checks and production deployment must still be confirmed before marking the overhaul release complete.

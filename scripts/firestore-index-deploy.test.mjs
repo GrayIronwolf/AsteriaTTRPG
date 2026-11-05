@@ -20,10 +20,12 @@ function serverIndex(spec, id) {
     density: 'SPARSE_ALL',
     multikey: false,
     state: 'READY',
-    fields: [...structuredClone(spec.fields), {
-      fieldPath: '__name__',
-      order: spec.fields.at(-1).order,
-    }],
+    fields: spec.fields.at(-1)?.fieldPath === '__name__'
+      ? structuredClone(spec.fields)
+      : [...structuredClone(spec.fields), {
+          fieldPath: '__name__',
+          order: spec.fields.at(-1).order,
+        }],
   };
 }
 
@@ -37,7 +39,8 @@ function deployment(existing) {
       throw new Error(`Unexpected network operation: ${String(operation)}`);
     },
   });
-  api.listIndexes = async () => FirestoreApi.processIndexes(existing);
+  // Firebase CLI 15 returns raw server index definitions; deploy performs matching itself.
+  api.listIndexes = async () => existing;
   api.listFieldOverrides = async () => [];
   api.getDatabase = async () => ({ databaseEdition: 'STANDARD' });
   api.createIndex = async (_project, spec) => {
@@ -65,7 +68,7 @@ test('deployment creates only a missing event index and skips it on the next run
   const deploy = deployment([serverIndex(indexes[0], 'existing')]);
   await deploy.run();
   await deploy.run();
-  assert.deepEqual(deploy.created, [indexes[1]]);
+  assert.deepEqual(deploy.created, [{ ...indexes[1], fields: [...indexes[1].fields, { fieldPath: '__name__', order: indexes[1].fields.at(-1).order }] }]);
   assert.deepEqual(deploy.removed, []);
 });
 
@@ -74,6 +77,6 @@ test('default normalization still detects a different indexed field order', asyn
   existing[0].fields[0].order = 'DESCENDING';
   const deploy = deployment(existing);
   await deploy.run();
-  assert.deepEqual(deploy.created, [indexes[0]]);
+  assert.deepEqual(deploy.created, [{ ...indexes[0], fields: [...indexes[0].fields, { fieldPath: '__name__', order: indexes[0].fields.at(-1).order }] }]);
   assert.deepEqual(deploy.removed, []);
 });
