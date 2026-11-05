@@ -1,8 +1,7 @@
 import React, {useRef, useState} from 'react';
-import {Panel} from './WorkspaceUI.jsx';
 import {
   DASHBOARD_PANEL_REGISTRY, DASHBOARD_LAYOUT_PRESETS, DASHBOARD_SIZE_COLUMNS, DASHBOARD_SIZE_ROWS, DASHBOARD_BACKGROUND_STYLES,
-  applyDashboardPreset, dashboardSizeForColumns, defaultDashboardLayout,
+  applyDashboardPreset, dashboardSizeForColumns,
   moveDashboardPanel, normalizeDashboardLayout, nudgeDashboardPanel,
   resizeDashboardPanel, toggleDashboardPanel, visibleDashboardPanels, setDashboardBackground, dashboardBackgroundForPanel
 } from '../state/dashboardLayoutModel.mjs';
