@@ -71,8 +71,7 @@ function LoadoutSlot({ label, item, icon = 'equipment', shortcut = '', onOpen, o
     <button
       className={`react-loadout-slot ${item ? 'is-filled' : 'is-empty'} ${rarity ? `rarity-${rarityClass(item)}` : ''}`}
       disabled={disabled}
-      onClick={!onUse ? onOpen : undefined}
-      onDoubleClick={onUse ? activate : onOpen}
+      onClick={activate}
       type="button"
       aria-label={tooltip}
     >
@@ -146,9 +145,21 @@ function WeaponsPanel({ character, onNavigate, style }) {
 
 function QuickItemsPanel({ campaignId, character, editable, busy, onNavigate, run, style }) {
   const quickSlots = values(character.quickSlots).slice(0, 4).map(record);
+  const [pendingItem, setPendingItem] = useState(null);
+  const itemStillEquipped = Boolean(pendingItem?.id && quickSlots.some(slot => slot.id === pendingItem.id));
   const useItem = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type:'use', itemId:item.id, expectedCoreRevision:Number(character.coreRevision || 0) }));
-  return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style}>
-    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={!editable || busy} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? useItem : undefined} />)}</div>
+  const confirmUse = async () => {
+    if(!editable || busy || !itemStillEquipped) return;
+    const result = await useItem(pendingItem);
+    if(result?.ok) setPendingItem(null);
+  };
+  return <DashboardPanel icon="quick" title="Quick Items" variant="equipment" className="react-overview-quick" style={style} action={<button type="button" onClick={() => onNavigate('inventory')}>Open Inventory</button>}>
+    <div className="react-quick-slot-grid">{[0, 1, 2, 3].map(index => <LoadoutSlot key={index} label={`Quick ${index + 1}`} shortcut={String(index + 1)} item={quickSlots[index]} icon="quick" disabled={busy} onOpen={() => onNavigate('inventory')} onUse={quickSlots[index]?.id ? item => setPendingItem(item) : undefined} />)}</div>
+    {pendingItem ? <Modal title={`Use ${itemName(pendingItem)}?`} eyebrow="Quick Item" busy={busy} onClose={() => setPendingItem(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingItem(null)}>Cancel</button><button type="button" className="primary" disabled={busy || !editable || !itemStillEquipped} onClick={confirmUse}>Use Item</button></>}>
+      <p>Review your selection before using this item. It may be consumed or change your character's resources.</p>
+      {!editable ? <p role="status">Start an editable campaign session to use this item. You can still open Inventory to inspect it.</p> : null}
+      {!itemStillEquipped ? <p role="alert">This item is no longer in a quick slot. Close this panel and select an available item.</p> : null}
+    </Modal> : null}
   </DashboardPanel>;
 }
 
@@ -163,7 +174,7 @@ function AbilityCard({ ability, type, disabled = false, onActivate }) {
   const cost = rules ? (rules.choices.length?'Choose resource option':costText(rules.costs)) : costText(entry.costs || entry.cost);
   const activate = () => { if(!disabled) onActivate?.(entry); };
   return <Tooltip label={`${title}${meta ? ` - ${meta}` : ''}${cost ? ` - ${cost}` : ''}`}>
-    <button className={`react-ability-card ${type} ${disabled ? 'is-disabled' : ''}`} disabled={disabled} onClick={type==='talent'?activate:undefined} onDoubleClick={type==='talent'?undefined:activate} onKeyDown={event => { if(event.key === 'Enter' && type!=='talent'){ event.preventDefault(); activate(); } }} type="button">
+    <button className={`react-ability-card ${type} ${disabled ? 'is-disabled' : ''}`} disabled={disabled} onClick={activate} aria-label={type === 'spell' ? `Review spell ${title}` : `View talent ${title}`} type="button">
       <span className="react-ability-art">{image ? <img src={image} alt="" loading="lazy" decoding="async" /> : <AsteriaIcon name={type === 'talent' ? 'talents' : 'spells'} size={25} />}</span>
       <b>{title}</b>
       {meta ? <small>{meta}</small> : null}
@@ -184,12 +195,23 @@ function TalentSummary({ talents, onNavigate, style, campaignId, character, edit
 function SpellSummary({ campaignId, character, spells, editable, busy, onNavigate, run, style, combat }) {
   const elements = useMemo(() => [...new Set(spells.map(spell => record(spell).element || record(spell).magicType).filter(Boolean))], [spells]);
   const [filter, setFilter] = useState('All');
+  const [pendingSpell, setPendingSpell] = useState(null);
   const visible = filter === 'All' ? spells : spells.filter(spell => (record(spell).element || record(spell).magicType) === filter);
   const cast = spell => combat?.active?combat.select(combat.options.find(row=>row.kind==='spell'&&row.name===spell.name)):run(() => firebaseService.castSpell(campaignId, character.id, {...spell,expectedCoreRevision:Number(character.coreRevision || 0)}, parseResourceCost(spell.costs || spell.cost)));
+  const confirmCast = async () => {
+    if(!pendingSpell || !editable || busy || combat?.active) return;
+    const result = await cast(pendingSpell);
+    if(result?.ok) setPendingSpell(null);
+  };
   return <DashboardPanel icon="spells" title="Active Spells" action={<button type="button" onClick={() => onNavigate('spells')}>Open Spell Menu</button>} className={`react-overview-spells ${combat?.selector==='spell'?'combat-selector-open':''}`} style={style}>
     {combat?.selector==='spell'?<SelectorHeading combat={combat}/>:null}
     {elements.length ? <div className="react-ability-filters" aria-label="Spell element filters">{['All', ...elements].map(element => <button className={filter === element ? 'active' : ''} aria-pressed={filter === element} key={element} onClick={() => setFilter(element)} type="button">{element}</button>)}</div> : null}
-    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={cast} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
+    {combat?.active?<div className="react-ability-grid">{combat.options.filter(row=>row.kind==='spell'&&(filter==='All'||row.element===filter)).map(option=><CombatActionButton className="combat-selection-card" key={option.id} combat={combat} option={option} disabled={!editable||busy}><b>{option.name}</b><small>{option.rank} · {option.ap} AP · {costText(option.costs)}</small></CombatActionButton>)}</div>:visible.length ? <div className="react-ability-grid">{visible.slice(0, 8).map((spell, index) => <AbilityCard key={spell.id || spell.name || index} ability={spell} type="spell" disabled={!editable || busy} onActivate={spell => setPendingSpell(spell)} />)}</div> : <DashboardEmpty title="No Active Spells" description="Known spells will appear here after they are added to this character." actionLabel="Open Spell Menu" onAction={() => onNavigate('spells')} />}
+    {pendingSpell && !combat?.active ? <Modal title={`Cast ${pendingSpell.name || pendingSpell.title || 'spell'}?`} eyebrow="Spell Confirmation" busy={busy} onClose={() => setPendingSpell(null)} footer={<><button type="button" disabled={busy} onClick={() => setPendingSpell(null)}>Cancel</button><button type="button" className="primary" disabled={!editable || busy} onClick={confirmCast}>Cast Spell</button></>}>
+      <p>Confirm this spell before spending its resources.</p>
+      <p><strong>Cost:</strong> {costText(pendingSpell.costs || pendingSpell.cost) || 'Refer to spell rules'}</p>
+      {!editable ? <p role="status">Spell casting is unavailable until your campaign session permits edits.</p> : null}
+    </Modal> : null}
   </DashboardPanel>;
 }
 

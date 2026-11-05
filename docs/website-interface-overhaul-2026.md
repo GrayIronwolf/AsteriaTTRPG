@@ -19,6 +19,8 @@ Status: in progress (started 2026-11-05). This is a working plan, not a claim of
 - [ ] Audit GM main, PC inventory, news, quests, notes, economy, crafting, tools, gameplay and world panels.
 - [x] Replace GM roster double-click-only access with separate keyboard and touch-accessible Select and Open Character controls.
 - [ ] Verify modal focus, empty/loading/error states, horizontal overflow, scroll restoration and form save feedback.
+- [x] Replace Player overview double-click-only quick-item/spell gestures with accessible confirmation controls and keep Inventory navigation available.
+- [x] Clear GM title edit drafts on character changes; restore busy state and show errors after thrown GM save failures.
 - [ ] Validate 320px, 390px, tablet and desktop layouts with screenshots and browser tests.
 
 ### 2. Shared navigation and Compendium
@@ -60,3 +62,6 @@ The follow-up patch includes source-level UI changes. The existing CI verifies t
 
 ## Security and Firebase compatibility repair — PR #46
 On 5 November 2026, the isolated repair workflow passed content validation (891 canonical entries), lint, the full npm test suite, Firebase emulator tests, production build, and the unmodified production dependency security audit. The CLI was pinned to Firebase Tools 15.35.0 and the index-deployment fixture was updated to match its API normalization; compatible transitive overrides and lockfile security fixes were applied. The updated production React bundle and generated Compendium files were committed from the verified build. The temporary repair workflow was subsequently removed from the branch. Regular PR checks and production deployment must still be confirmed before marking the overhaul release complete.
+
+## Panel reliability patch — PR #47
+First audit pass focused on touch/keyboard access to Player Quick Items and Active Spells, confirmation before resource-consuming actions, and GM title/Armour Class save recovery. These changes require automated UI regression tests, committed source-matching React bundles, and Firebase/emulator and production security verification. A comprehensive panel-by-panel responsive visual audit remains open.
