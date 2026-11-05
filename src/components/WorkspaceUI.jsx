@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { liveSyncPresentation } from '../state/liveSyncState.mjs';
 import { AsteriaIcon } from './AsteriaIcons.jsx';
 import { trapDialogTab } from './dialogFocus.mjs';
+import { tabVisibilityDelta } from '../state/dashboardNavigation.mjs';
 
 export function AsteriaAppShell({ eyebrow, title, subtitle, actions, sidebar, children, className = '', showHeader = true }) {
   return <div className={`react-workspace-shell ${sidebar ? 'has-sidebar' : 'no-sidebar'} ${className}`} data-asteria-app-shell="true">
@@ -52,14 +53,28 @@ export function NavigationItem({ tab, active, index, onChange, onKeyDown }) {
 }
 
 export function Tabs({ tabs, active, onChange, ariaLabel = 'Workspace sections' }) {
+  const navigationRef = useRef(null);
+  useEffect(() => {
+    const navigation = navigationRef.current;
+    const selected = Array.from(navigation?.querySelectorAll('[role="tab"]') || []).find(tab => tab.getAttribute('aria-selected') === 'true');
+    if(!navigation || !selected || navigation.scrollWidth <= navigation.clientWidth) return;
+    const viewport = navigation.getBoundingClientRect();
+    const item = selected.getBoundingClientRect();
+    const delta = tabVisibilityDelta({
+      viewportStart: viewport.left, viewportEnd: viewport.right,
+      itemStart: item.left, itemEnd: item.right
+    });
+    if(delta) navigation.scrollLeft += delta;
+  }, [active, tabs]);
   const move = (event, index) => {
     if(!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    if(!tabs.length) return;
     event.preventDefault();
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
     onChange(tabs[next].id);
     event.currentTarget.parentElement?.querySelectorAll('[role="tab"]')?.[next]?.focus();
   };
-  return <nav className="react-tabs asteria-react-panel" aria-label={ariaLabel} aria-orientation="horizontal" role="tablist">
+  return <nav ref={navigationRef} className="react-tabs asteria-react-panel" aria-label={ariaLabel} aria-orientation="horizontal" role="tablist">
     {tabs.map((tab, index) => <NavigationItem key={tab.id} tab={tab} index={index} active={active === tab.id} onChange={onChange} onKeyDown={move} />)}
   </nav>;
 }
