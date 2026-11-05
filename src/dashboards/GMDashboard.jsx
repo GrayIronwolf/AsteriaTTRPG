@@ -398,15 +398,16 @@ function PlayerManagementTools({ campaignId, characters }) {
   const [manageCharacterId,setManageCharacterId]=useState('');const [titleEdits,setTitleEdits]=useState({});
   useEffect(()=>setSelected(current=>current.filter(id=>characters[id])),[characters]);
   useEffect(()=>{if(!manageCharacterId||!characters[manageCharacterId])setManageCharacterId(Object.keys(characters)[0]||'');},[characters,manageCharacterId]);
-  const run=async(operation,success)=>{setBusy(true);const result=await operation();setMessage(result?.ok?success:result?.error||'The GM change could not be saved.');setBusy(false);return result;};
+  useEffect(()=>setTitleEdits({}),[manageCharacterId]);
+  const run=async(operation,success)=>{setBusy(true);setMessage('Saving...');try{const result=await operation();setMessage(result?.ok?success:result?.error||'The GM change could not be saved.');return result;}catch(error){const detail=error?.message||String(error);setMessage(detail);return {ok:false,error:detail};}finally{setBusy(false);}};
   const managed=characters[manageCharacterId];
   const managedTitles=(Array.isArray(managed?.titles)?managed.titles:[]).map((value,index)=>typeof value==='string'?{id:`title-${index}`,text:value}:value);
   return <Panel title="Player Titles & Storage" eyebrow="GM Character Tools">
     <div className="react-recipient-actions"><button onClick={()=>setSelected(Object.keys(characters))}>Select All</button><button onClick={()=>setSelected([])}>Clear</button><span>{selected.length} selected</span></div>
     <div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={selected.includes(character.id)} onChange={event=>setSelected(ids=>event.target.checked?[...new Set([...ids,character.id])]:ids.filter(id=>id!==character.id))}/>{character.name}</label>)}</div>
     <div className="react-gm-grant-grid"><section><h3>Grant Player Title</h3><label>Title<input value={title} onChange={event=>setTitle(event.target.value)} placeholder="e.g. Hero of Elarion"/></label><button className="primary" disabled={busy||!selected.length||!title.trim()} onClick={async()=>{const result=await run(()=>firebaseService.grantTitle(campaignId,selected,title),'Title granted to selected characters.');if(result?.ok)setTitle('');}}>Grant Title</button></section><section><h3>Grant Storage Slots</h3><label>Additional Slots<ManualNumberInput min="1" max="10" value={slots} onChange={event=>setSlots(event.target.value)}/></label><button className="primary" disabled={busy||!selected.length} onClick={()=>{if(!isManualNumber(slots,{min:1,max:10}))return setMessage('Enter a whole slot amount from 1 to 10.');return run(()=>firebaseService.grantStorageSlots(campaignId,selected,manualNumber(slots)),'Storage slots granted.');}}>Grant Slots</button></section></div>
-    <section className="react-title-manager"><h3>Manage Existing Titles</h3><label>Character<select value={manageCharacterId} onChange={event=>setManageCharacterId(event.target.value)}>{Object.values(characters).map(character=><option key={character.id} value={character.id}>{character.name}</option>)}</select></label><div>{managedTitles.map(record=><article key={record.id}><input aria-label={`Edit ${record.text}`} value={titleEdits[record.id]??record.text} onChange={event=>setTitleEdits(current=>({...current,[record.id]:event.target.value}))}/><button disabled={busy} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{text:titleEdits[record.id]??record.text}),'Player title updated.')}>Save</button><button className="danger" disabled={busy} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{revoke:true}),'Player title revoked.')}>Revoke</button></article>)}{!managedTitles.length?<p className="react-help">This character has no granted titles.</p>:null}</div></section>
-    <p>{message}</p>
+    <section className="react-title-manager"><h3>Manage Existing Titles</h3><label>Character<select value={manageCharacterId} onChange={event=>setManageCharacterId(event.target.value)}>{Object.values(characters).map(character=><option key={character.id} value={character.id}>{character.name}</option>)}</select></label><div>{managedTitles.map(record=><article key={record.id}><input aria-label={`Edit ${record.text}`} value={titleEdits[record.id]??record.text} onChange={event=>setTitleEdits(current=>({...current,[record.id]:event.target.value}))}/><button disabled={busy||!(titleEdits[record.id]??record.text).trim()} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{text:titleEdits[record.id]??record.text}),'Player title updated.')}>Save</button><button className="danger" disabled={busy} onClick={()=>run(()=>firebaseService.manageTitle(campaignId,manageCharacterId,record.id,{revoke:true}),'Player title revoked.')}>Revoke</button></article>)}{!managedTitles.length?<p className="react-help">This character has no granted titles.</p>:null}</div></section>
+    <p className="react-action-message" role="status">{message}</p>
   </Panel>;
 }
 
@@ -427,9 +428,14 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
       modifier={...modifier,value:manualNumber(modifier.value),durationMinutes:manualNumber(modifier.durationMinutes)};
     }
     setBusy(true);setMessage('Saving AC modifier...');
-    const result=await firebaseService.setACModifier(campaignId,character.id,modifier);
-    setMessage(result?.ok?'Armour Class modifier synchronized.':result?.error||'AC modifier could not be saved.');
-    setBusy(false);
+    try {
+      const result=await firebaseService.setACModifier(campaignId,character.id,modifier);
+      setMessage(result?.ok?'Armour Class modifier synchronized.':result?.error||'AC modifier could not be saved.');
+    } catch(error) {
+      setMessage(error?.message||'AC modifier could not be saved.');
+    } finally {
+      setBusy(false);
+    }
   };
   return <Panel title="Armour Class Inspector" eyebrow="GM Character Tool" className="react-gm-ac-panel" action={character?<StatusPill tone="info">Final AC {armour.finalAC}</StatusPill>:null}>
     <label>Character<select value={character?.id||''} onChange={event=>setSelectedId(event.target.value)}>{Object.values(characters).map(entry=><option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
