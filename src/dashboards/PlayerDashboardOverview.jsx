@@ -330,6 +330,7 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   </>;
   return <>
     <DashboardLayoutWorkspace key={character.id} role="player" layout={preferences.dashboardLayout} canEdit={canEditLayout}
+      forcedPanels={combat?.active ? (combat.selector==='talent'?['talents']:combat.selector==='spell'?['spells']:['skill','technique'].includes(combat.selector)?['skills']:[]) : []}
       title="Player Dashboard" onSave={layout=>firebaseService.updateDashboardPreferences(campaignId,character.id,{dashboardLayout:layout})}
       renderPanel={renderPanel} defaultContent={defaultContent}/>
     <p className="react-action-message" role="status">{message}</p>
