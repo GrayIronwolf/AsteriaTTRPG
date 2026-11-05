@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveDashboardTab, resolveRosterSelection } from '../src/state/dashboardNavigation.mjs';
+import { resolveDashboardTab, resolveRosterSelection, tabVisibilityDelta } from '../src/state/dashboardNavigation.mjs';
 
 test('retains the active Player tab while it is available', () => {
   const tabs = [{ id: 'dashboard' }, { id: 'skills' }, { id: 'party' }];
@@ -28,4 +28,14 @@ test('recovers GM selection when the selected character is removed', () => {
   assert.equal(resolveRosterSelection(roster, ''), 'a');
   assert.equal(resolveRosterSelection({ a: null, c: { id: 'c' } }, 'a'), 'c');
   assert.equal(resolveRosterSelection({}, 'missing'), '');
+});
+
+test('active tab scrolls horizontally only when outside the visible strip', () => {
+  const viewport = { viewportStart: 100, viewportEnd: 400 };
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: 160, itemEnd: 260}), 0);
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: 70, itemEnd: 210}), -30);
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: 360, itemEnd: 445}), 45);
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: 420, itemEnd: 500}), 100);
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: 200, itemEnd: 300, viewportEnd: 100}), 0);
+  assert.equal(tabVisibilityDelta({...viewport, itemStart: NaN, itemEnd: 300}), 0);
 });
