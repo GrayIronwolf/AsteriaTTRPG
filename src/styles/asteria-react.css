@@ -2447,3 +2447,118 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media (prefers-reduced-motion:reduce) {
   .react-dashboard-custom-cell, .react-dashboard-custom-cell * { scroll-behavior:auto!important; transition:none!important; }
 }
+
+
+/* Royal Relic v2 — tactile, readable materials for EVERY shared Player and GM panel.
+   Only surface painting changes; content geometry, grid positions and navigation do not. */
+.react-character-dashboard .asteria-react-panel.asteria-royal-relic,
+.react-gm-dashboard .asteria-react-panel.asteria-royal-relic {
+  --relic-silver: #b3bfc6;
+  --relic-shadow: #171d21;
+  --relic-crystal: var(--asteria-accent, #568daf);
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  border: 1px solid #88949e;
+  border-radius: 4px;
+  background-color: #090e12;
+  background-image:
+    linear-gradient(160deg, rgba(163,176,185,.11) 0%, rgba(8,13,16,.04) 26%, rgba(0,0,0,.16) 55%, rgba(17,22,27,.10) 100%),
+    url("../assets/ui/royal-relic-obsidian.svg");
+  background-position: center, center;
+  background-size: cover, 512px 512px;
+  background-repeat: no-repeat, repeat;
+  box-shadow:
+    0 0 0 1px #14191e,
+    0 3px 9px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(237,239,238,.53),
+    inset 1px 0 0 rgba(199,208,213,.22),
+    inset -1px 0 0 rgba(16,23,26,.82),
+    inset 0 -2px 0 rgba(0,0,0,.67),
+    inset 0 0 17px rgba(0,0,0,.25);
+  backdrop-filter: blur(2px);
+  color: var(--asteria-text, #e7dfd0);
+}
+
+/* Metallic perimeter bevel: less than 4px visual weight, no changed padding. */
+.react-character-dashboard .asteria-react-panel.asteria-royal-relic::before,
+.react-gm-dashboard .asteria-react-panel.asteria-royal-relic::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border: 1px solid rgba(199,209,211,.23);
+  border-radius: 2px;
+  pointer-events: none;
+  background:
+    url("../assets/ui/royal-relic-brushed-steel.svg") top / 100% 2px no-repeat,
+    linear-gradient(180deg,rgba(209,219,223,.45),transparent 75%) left / 1px 100% no-repeat,
+    linear-gradient(180deg,rgba(209,219,223,.22),transparent 65%) right / 1px 100% no-repeat;
+  box-shadow: inset 0 2px 1px rgba(0,0,0,.47);
+}
+
+/* Small gemstone settings instead of large, distracting corner ornaments.
+   Blue is just the fallback: each user's existing theme controls the hue. */
+.react-character-dashboard .asteria-react-panel.asteria-royal-relic::after,
+.react-gm-dashboard .asteria-react-panel.asteria-royal-relic::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: 0;
+  border: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 7px 7px, #e1e9ed 0 1px, var(--relic-crystal) 1.3px 2.6px, #3c484f 2.8px 4px, transparent 4.5px),
+    radial-gradient(circle at calc(100% - 7px) 7px, #e1e9ed 0 1px, var(--relic-crystal) 1.3px 2.6px, #3c484f 2.8px 4px, transparent 4.5px),
+    linear-gradient(90deg,transparent,rgba(221,226,227,.13) 12%,rgba(221,226,227,.13) 88%,transparent) top 2px left 0 / 100% 1px no-repeat;
+  opacity: .83;
+  box-shadow: none;
+}
+
+/* Keep headings compact. Visible steel grain appears in their subtle backing. */
+.react-character-dashboard .asteria-royal-relic > .react-panel-header,
+.react-gm-dashboard .asteria-royal-relic > .react-panel-header {
+  position: relative;
+  z-index: 1;
+  background-image:
+    linear-gradient(90deg, rgba(83,95,102,.32), rgba(18,26,30,.13) 72%, transparent),
+    url("../assets/ui/royal-relic-brushed-steel.svg");
+  background-size: auto, 256px 64px;
+  background-blend-mode: normal, soft-light;
+  border-bottom: 1px solid rgba(162,174,179,.46);
+  box-shadow: 0 1px 0 rgba(0,0,0,.68), 0 2px 3px rgba(0,0,0,.15);
+  padding-inline: 6px;
+  /* Existing header height and spacing remain unchanged. */
+}
+.react-character-dashboard .asteria-royal-relic > .react-panel-header h2,
+.react-gm-dashboard .asteria-royal-relic > .react-panel-header h2 {
+  color: var(--asteria-text, #efe5d4);
+  text-shadow: 0 1px 1px rgba(0,0,0,.82);
+}
+.react-character-dashboard .asteria-royal-relic > .react-panel-header .asteria-icon,
+.react-gm-dashboard .asteria-royal-relic > .react-panel-header .asteria-icon {
+  color: color-mix(in srgb,var(--relic-crystal) 65%,#d4e0e4);
+  filter: drop-shadow(0 1px 1px #000);
+}
+.react-character-dashboard .asteria-royal-relic:hover,
+.react-gm-dashboard .asteria-royal-relic:hover {
+  border-color: #b0bcc4;
+  box-shadow:
+    0 0 0 1px #151d22, 0 3px 10px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(241,243,240,.58),
+    inset 1px 0 0 rgba(199,208,213,.22),
+    inset 0 -2px 0 rgba(0,0,0,.67),
+    0 0 7px color-mix(in srgb,var(--relic-crystal) 12%,transparent);
+}
+
+/* Prevent decoration from covering readable text, controls, or active widgets. */
+.react-character-dashboard .asteria-royal-relic > :not(.react-panel-header),
+.react-gm-dashboard .asteria-royal-relic > :not(.react-panel-header) {
+  position: relative;
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-character-dashboard .asteria-royal-relic,
+  .react-gm-dashboard .asteria-royal-relic { transition: none; }
+}
