@@ -86,31 +86,37 @@ function PanelFrame({item,layout,editing,role,onChange,children}) {
   </div>;
 }
 
-export function DashboardLayoutWorkspace({role='player',layout:incoming,onSave,renderPanel,defaultContent,canEdit=true,title='Dashboard Panels'}) {
+export function DashboardLayoutWorkspace({role='player',layout:incoming,onSave,renderPanel,defaultContent,canEdit=true,title='Dashboard Panels',forcedPanels=[]}) {
   const incomingLayout=normalizeDashboardLayout(incoming,role);
   const [draft,setDraft]=useState(incomingLayout);
+  const [lastSaved,setLastSaved]=useState(null);
   const [editing,setEditing]=useState(false);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
 
   const [libraryOpen,setLibraryOpen]=useState(false);
   const signature=JSON.stringify(incomingLayout);
-  useEffect(()=>{if(!editing)setDraft(incomingLayout);},[signature,editing]);
-  const current=editing?draft:incomingLayout;
-  const changed=JSON.stringify(draft)!==signature;
+  useEffect(()=>{if(lastSaved&&JSON.stringify(lastSaved)===signature)setLastSaved(null);},[signature,lastSaved]);
+  const persisted=lastSaved||incomingLayout;
+  const persistedSignature=JSON.stringify(persisted);
+  useEffect(()=>{if(!editing)setDraft(persisted);},[persistedSignature,editing]);
+  const current=editing?draft:persisted;
+  const changed=JSON.stringify(draft)!==persistedSignature;
   const save=async()=>{
     if(!canEdit||busy)return;
     setBusy(true);setMessage('Saving dashboard layout...');
     try{
       const result=await onSave(draft);
       if(result?.ok===false)throw new Error(result.error||'Dashboard layout could not be saved.');
+      setLastSaved(draft);
       setMessage('Dashboard layout saved.');
       setEditing(false);setLibraryOpen(false);
     }catch(error){setMessage(error?.message||'Dashboard layout could not be saved.');}
     finally{setBusy(false);}
   };
-  const cancel=()=>{setDraft(incomingLayout);setEditing(false);setLibraryOpen(false);setMessage('Unsaved changes discarded.');};
-  const ids=visibleDashboardPanels(current,role);
+  const cancel=()=>{setDraft(persisted);setEditing(false);setLibraryOpen(false);setMessage('Unsaved changes discarded.');};
+  const allowed=new Set(DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'].map(item=>item.id));
+  const ids=[...new Set([...visibleDashboardPanels(current,role),...forcedPanels.filter(id=>allowed.has(id))])];
   const items=DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
   const custom=current.mode==='custom'||editing;
   return <section className="react-dashboard-layout-workspace" aria-label={title}>
@@ -118,7 +124,7 @@ export function DashboardLayoutWorkspace({role='player',layout:incoming,onSave,r
       <div><b>{title}</b><small>{custom?'Custom layout':'Original dashboard layout'} · {ids.length} panels</small></div>
       <div>
         {editing?<><button type="button" disabled={busy} onClick={cancel}>Cancel</button><button type="button" disabled={busy} onClick={()=>setLibraryOpen(value=>!value)}>{libraryOpen?'Close Panel Library':'Add / Remove Panels'}</button><button className="primary" type="button" disabled={busy||!changed} onClick={save}>{busy?'Saving...':'Save Layout'}</button></>:
-          <button type="button" disabled={!canEdit} onClick={()=>{setDraft(incomingLayout);setMessage('');setEditing(true);setLibraryOpen(true);}}>Edit Layout</button>}
+          <button type="button" disabled={!canEdit} onClick={()=>{setDraft(persisted);setMessage('');setEditing(true);setLibraryOpen(true);}}>Edit Layout</button>}
       </div>
     </div>
     {editing&&libraryOpen?<Panel title="Dashboard Panel Library"><DashboardLayoutEditor role={role} layout={draft} onChange={setDraft} disabled={busy}/><div className="react-dashboard-reset-action"><button type="button" disabled={busy} onClick={()=>setDraft(defaultDashboardLayout(role))}>Restore Original Layout</button></div></Panel>:null}
