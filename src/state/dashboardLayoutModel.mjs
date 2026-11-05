@@ -189,7 +189,7 @@ export function applyDashboardPreset(layout,role='player',preset='default'){
 }
 export function moveDashboardPanel(layout,role='player',id,target){
   const previous=normalizeDashboardLayout(layout,role);
-  if(id===target || !previous.order.includes(id) || !previous.order.includes(target))return previous;
+  if(id===target || !previous.order.includes(id) || !previous.order.includes(target))return layout && typeof layout==='object'?layout:previous;
   const order=previous.order.filter(x=>x!==id);
   order.splice(order.indexOf(target),0,id);
   return {...previous,mode:'custom',preset:'custom',order,
@@ -220,8 +220,12 @@ export function resizeDashboardPanel(layout,role='player',id,size){
   if(!previous.order.includes(id)||!Object.hasOwn(DASHBOARD_SIZE_COLUMNS,size))return previous;
   const dim=legacyGridDimensions(role,id,size);
   if(!dim)return previous;
-  const next=resizeDashboardGridPanel(previous,role,id,dim.w,dim.h);
-  return {...next,sizes:{...next.sizes,[id]:size}};
+  const proposed={...previous.placements,
+    [id]:{x:0,y:0,w:dim.w,h:dim.h}};
+  const order=[id,...previous.order.filter(name=>name!==id)];
+  const placements=packGridPlacements(role,order,previous.hidden,proposed,previous.lockedPositions);
+  return {...previous,mode:'custom',preset:'custom',
+    placements,sizes:{...previous.sizes,[id]:size}};
 }
 export function dashboardSizeForColumns(columns){
   if(columns>=10)return '9x3';
