@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" preserveAspectRatio="none">
+  <!-- Steel is fixed; only the CSS crystal face receives the selected theme colour.
+       The endcaps mirror each other and carry no top/bottom ornaments. -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#e5ebed"/><stop offset=".045" stop-color="#8998a3"/>
+      <stop offset=".13" stop-color="#34414a"/><stop offset=".43" stop-color="#121a20"/>
+      <stop offset=".69" stop-color="#172129"/><stop offset=".83" stop-color="#65727b"/>
+      <stop offset=".92" stop-color="#131a20"/><stop offset=".985" stop-color="#9ba8b1"/>
+      <stop offset="1" stop-color="#252c33"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffdf9a"/><stop offset=".5" stop-color="#8b6329"/><stop offset="1" stop-color="#d4af66"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 50 20 0H180L200 50 180 100H20Z" fill="url(#steel)"/>
+  <path d="M1 50 21 2H179L199 50 179 98H21Z" fill="none" stroke="#d0d9df" stroke-width="1.2" stroke-opacity=".85"/>
+  <path d="M5 50 23 7H177L195 50 177 93H23Z" fill="none" stroke="#050a0e" stroke-width="2" stroke-opacity=".86"/>
+  <path d="M23 8H177M23 92H177" stroke="url(#gold)" stroke-width="1.5" stroke-opacity=".87"/>
+  <path d="M2 50 16 39 28 50 16 61Z M198 50 184 39 172 50 184 61Z" fill="url(#gold)" stroke="#201915" stroke-width="1.2"/>
+  <path d="M7 50 16 44 24 50 16 56Z M193 50 184 44 176 50 184 56Z" fill="#e8bd65" opacity=".73"/>
+  <path d="M20 1 1 50 20 99 M180 1 199 50 180 99" fill="none" stroke="#090e13" stroke-width="2" opacity=".8"/>
+</svg>
