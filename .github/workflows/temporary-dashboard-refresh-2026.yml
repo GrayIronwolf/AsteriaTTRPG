@@ -23,8 +23,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install exact dependencies
-        run: npm ci
+      - name: Resolve pinned dependency upgrades on repair branch
+        run: npm install --no-fund
       - name: Apply non-breaking production dependency fixes
         run: |
           npm audit fix --no-fund
