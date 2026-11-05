@@ -88,7 +88,7 @@ export function DashboardLayoutWorkspace({role='player',layout:incoming,onSave,r
   const [editing,setEditing]=useState(false);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
-  const [dragged,setDragged]=useState('');
+
   const [libraryOpen,setLibraryOpen]=useState(false);
   const signature=JSON.stringify(incomingLayout);
   useEffect(()=>{if(!editing)setDraft(incomingLayout);},[signature,editing]);
