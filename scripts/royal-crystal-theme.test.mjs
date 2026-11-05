@@ -49,7 +49,7 @@ test('Crystals recolour using existing independent theme controls; metal never u
   assert.match(endcaps,/<linearGradient id="steel"/);
   assert.match(endcaps,/<linearGradient id="gold"/);
   assert.doesNotMatch(endcaps,/--asteria-|--button-crystal-color/,'fixed-colour metal endcaps');
-  assert.doesNotMatch(endcaps,/star|ornament/i,'no top/bottom stars or ornaments');
+  assert.doesNotMatch(endcaps,/<(?:circle|polygon)\b/i,'no extra decorative circles or star polygons');
 });
 
 test('Existing menu pressing and dashboard editing remain JavaScript-owned',()=>{
