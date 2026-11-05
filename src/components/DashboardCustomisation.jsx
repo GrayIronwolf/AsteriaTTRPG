@@ -63,9 +63,13 @@ function PanelFrame({item,layout,editing,role,onChange,children}) {
     const size=dashboardSizeForColumns(Math.round(drag.columns+(event.clientX-drag.startX)/cellWidth));
     onChange(current=>resizeDashboardPanel(current,role,item.id,size));
   };
-  return <div ref={gridRef} className="react-dashboard-custom-cell" data-panel-id={item.id} style={{'--panel-columns':DASHBOARD_SIZE_COLUMNS[layout.sizes[item.id]]||6}}>
+  return <div ref={gridRef} className="react-dashboard-custom-cell" data-panel-id={item.id}
+    style={{'--panel-columns':DASHBOARD_SIZE_COLUMNS[layout.sizes[item.id]]||6}}
+    onDragOver={event=>{if(editing)event.preventDefault();}}
+    onDrop={event=>{if(!editing)return;event.preventDefault();const draggedId=event.dataTransfer.getData('text/plain');onChange(current=>moveDashboardPanel(current,role,draggedId,item.id));}}>
     {editing?<div className="react-dashboard-inline-tools" aria-label={`${item.label} layout controls`}>
-      <b>{item.label}</b>
+      <span draggable="true" className="react-dashboard-inline-grip" title="Drag to move panel" aria-label={`Drag ${item.label} to reorder`}
+        onDragStart={event=>{event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',item.id);}}>⋮⋮ <b>{item.label}</b></span>
       <span className="react-dashboard-inline-actions">
         <button type="button" disabled={index===0} onClick={()=>onChange(current=>nudgeDashboardPanel(current,role,item.id,-1))} aria-label={`Move ${item.label} up`}>↑</button>
         <button type="button" disabled={index===visible.length-1} onClick={()=>onChange(current=>nudgeDashboardPanel(current,role,item.id,1))} aria-label={`Move ${item.label} down`}>↓</button>
