@@ -2552,12 +2552,8 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
     0 0 7px color-mix(in srgb,var(--relic-crystal) 12%,transparent);
 }
 
-/* Prevent decoration from covering readable text, controls, or active widgets. */
-.react-character-dashboard .asteria-royal-relic > :not(.react-panel-header),
-.react-gm-dashboard .asteria-royal-relic > :not(.react-panel-header) {
-  position: relative;
-  z-index: 1;
-}
+/* Material corner glints have pointer-events:none, and no content elements
+   are repositioned. Existing absolute/fixed widget positioning is preserved. */
 @media (prefers-reduced-motion: reduce) {
   .react-character-dashboard .asteria-royal-relic,
   .react-gm-dashboard .asteria-royal-relic { transition: none; }
