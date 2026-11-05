@@ -1,0 +1,79 @@
+/* Asteria dashboard panel composition: immutable frame PNG/WebP overlays,
+   a separately selected backdrop, existing HTML data and existing header.
+   Do not replace supplied images with generated CSS ornaments. */
+.react-dashboard-custom-grid {container-type:inline-size; grid-auto-flow:row; align-items:start;}
+.react-dashboard-custom-cell {min-width:0; aspect-ratio:1 / 1;}
+.react-dashboard-custom-cell[data-panel-size="6x3"] {aspect-ratio:2 / 1;}
+.react-dashboard-custom-cell[data-panel-size="9x3"] {aspect-ratio:3 / 1;}
+.react-dashboard-custom-cell[data-panel-size="3x6"] {aspect-ratio:1 / 2;}
+.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic {
+  position:relative!important;
+  isolation:isolate;
+  height:100%;
+  min-height:0;
+  box-sizing:border-box;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  background-color:#080d13!important;
+  background-image:url("../assets/ui/dashboard/panel-backdrop-obsidian.webp")!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  padding:clamp(15px,2.6cqw,28px);
+  overflow:visible;
+}
+.react-dashboard-custom-cell[data-panel-background="slate"] > .asteria-react-panel.asteria-royal-relic {
+  background-image:url("../assets/ui/dashboard/panel-backdrop-slate.webp")!important;
+}
+.react-dashboard-custom-cell[data-panel-background="arcane"] > .asteria-react-panel.asteria-royal-relic {
+  background-image:url("../assets/ui/dashboard/panel-backdrop-arcane.webp")!important;
+}
+/* Separate picture frame, attached to each panel and moving with it. */
+.react-dashboard-custom-cell[data-panel-size="3x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x3.webp"); }
+.react-dashboard-custom-cell[data-panel-size="6x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-6x3.webp"); }
+.react-dashboard-custom-cell[data-panel-size="3x6"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x6.webp"); }
+.react-dashboard-custom-cell[data-panel-size="9x3"] > .asteria-react-panel.asteria-royal-relic { --asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-9x3.webp"); }
+.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::before {
+  content:"";
+  position:absolute!important;
+  inset:0!important;
+  z-index:4!important;
+  pointer-events:none!important;
+  background:var(--asteria-panel-frame) center center / 100% 100% no-repeat!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  opacity:1!important;
+}
+.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::after {
+  content:none!important;
+}
+.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic:hover {
+  transform:none!important;
+  box-shadow:none!important;
+  border-color:transparent!important;
+}
+/* Labels, controls, input fields and panel data remain real HTML, not baked into images. */
+.react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic > .react-panel-header {
+  z-index:2;
+  background-image:none!important;
+  background-color:rgba(2,8,15,.75)!important;
+  border-bottom:1px solid rgba(210,175,99,.26)!important;
+  box-shadow:none!important;
+}
+.react-dashboard-background-selector {
+  margin:10px 0 16px;
+  padding:12px;
+  border:1px solid rgba(187,164,107,.4);
+  min-width:0;
+}
+.react-dashboard-background-selector label {display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.react-dashboard-background-selector select {max-width:100%;min-height:42px;}
+.react-dashboard-panel-library-actions select {max-width:220px;}
+@container (max-width:620px) {
+  /* The portrait/mobile viewport uses one track; don't clip long inventories. */
+  .react-dashboard-custom-cell {grid-column:1/-1; aspect-ratio:auto; min-height:300px;}
+  .react-dashboard-custom-cell[data-panel-size="3x6"] {min-height:550px;}
+}
