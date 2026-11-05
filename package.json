@@ -56,5 +56,13 @@
   "main": "functions/index.mjs",
   "engines": {
     "node": "22"
+  },
+  "overrides": {
+    "glob": "^14.0.2",
+    "minimatch": "^11.0.1",
+    "rimraf": "^6.1.4",
+    "gaxios": "^7.1.4",
+    "google-gax": "^5.0.9",
+    "gcp-metadata": "^8.1.5"
   }
 }
