@@ -3,6 +3,7 @@ import { PCInventory } from './PCInventory.jsx';
 import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './CharacterSystemsPanels.jsx';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
+import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
@@ -453,7 +454,10 @@ export function GMDashboard({ campaignId }) {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
   const migrationStarted = useRef(false);
-  useEffect(() => { if(!selectedId && Object.keys(live.characters)[0]) setSelectedId(Object.keys(live.characters)[0]); }, [live.characters, selectedId]);
+  useEffect(() => {
+    const validSelection = resolveRosterSelection(live.characters, selectedId);
+    if(validSelection !== selectedId) setSelectedId(validSelection);
+  }, [live.characters, selectedId]);
   useEffect(() => {
     if(migrationStarted.current || !live.gmWorkspaceLoaded || live.gmWorkspace || !live.campaign) return;
     migrationStarted.current=true;
