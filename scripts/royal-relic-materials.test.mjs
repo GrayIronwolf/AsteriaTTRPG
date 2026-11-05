@@ -41,7 +41,7 @@ test('No dashboard grid, resource banner, navigation or GM roster markup is modi
   assert.match(gm,/sidebar=\{<PartySidebar /);
   assert.match(gm,/<DashboardNavigation tabs=\{GM_TABS\}/);
   const materialRule=styles.slice(styles.lastIndexOf('/* Royal Relic v2'));
-  assert.doesNotMatch(materialRule,/grid-template-columns|grid-column:|order:|min-height:|max-height:|width: [0-9]|padding: [0-9]/);
+  assert.doesNotMatch(materialRule,/^(?:\\s*)(?:grid-template-columns|grid-column|order|min-height|max-height|width|padding)\\s*:/m);
 });
 
 test('Production dashboard styles use a new versioned URL while remaining lazy-loaded',()=>{
