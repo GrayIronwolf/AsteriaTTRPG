@@ -1,4 +1,5 @@
 import { baseCharacteristicValue } from './effectsEngine.mjs';
+import { layoutFromPlayerPreferences } from './dashboardLayoutModel.mjs';
 import { parseResourceCosts } from './resourceEngine.mjs';
 import { normalizeMarketPricing } from '../systems/items/marketPricing.mjs';
 
@@ -160,6 +161,7 @@ export function normalizeDashboardPreferences(character = {}) {
     .filter(key => DEFAULT_DASHBOARD_PANELS.includes(key));
   return {
     panelOrder,
+    dashboardLayout:layoutFromPlayerPreferences(source),
     hiddenPanels:Array.isArray(source.hiddenPanels) ? source.hiddenPanels.filter(key => DEFAULT_DASHBOARD_PANELS.includes(key)) : [],
     hiddenInformationFields:Array.isArray(source.hiddenInformationFields)
       ? source.hiddenInformationFields.filter(key => OPTIONAL_INFORMATION_FIELDS.includes(key))

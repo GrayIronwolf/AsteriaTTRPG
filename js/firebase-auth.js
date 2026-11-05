@@ -1080,21 +1080,48 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
-  updateCharacterDashboardPreferences: async function(campaignId,characterId,preferences={}){
-    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
-    const refs=liveCharacterRefs(campaignId,characterId);
-    try{
-      await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        const snapshot=await transaction.get(refs.campaign);
-        if(!snapshot.exists()) throw new Error('Character not found.');
-        const character=Object.assign({id:characterId},snapshot.data());
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        character.dashboardPreferences=normalizeDashboardPreferences({dashboardPreferences:Object.assign({},character.dashboardPreferences||{},structuredCloneSafe(preferences))});
-        writeLiveCharacter(transaction,refs,character);
-      });
+  subscribeUserDashboardLayout: function(campaignId,role,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const allowed=role==='gm'?'gm':'player';
+    return onSnapshot(doc(db,'users',currentUser.uid,'dashboardLayouts',allowed+'-'+campaignId),
+      snapshot=>onChange(snapshot.exists()?snapshot.data().layout||null:null),
+      error=>reportSyncError('dashboard-layout-listener',error,{campaignId,role:allowed}));
+  },
+  saveUserDashboardLayout: async function(campaignId,role,layout){
+    if(!db||!currentUser||!campaignId||!['player','gm'].includes(role))return {ok:false,error:'Sign in to save a dashboard layout.'};
+    try {
+      if(role==='gm'){
+        const snapshot=await getDoc(doc(db,'campaigns',campaignId));
+        if(!snapshot.exists()||!currentUserIsCampaignGM(snapshot.data()))return {ok:false,error:'Only campaign GMs can customise the GM dashboard.'};
+      }
+      const {normalizeDashboardLayout}=await import('../src/state/dashboardLayoutModel.mjs');
+      await setDoc(doc(db,'users',currentUser.uid,'dashboardLayouts',role+'-'+campaignId),
+        {layout:normalizeDashboardLayout(layout,role),updatedAt:serverTimestamp()},{merge:true});
       return {ok:true};
-    }catch(error){return {ok:false,error:error.message||String(error)};}
+    } catch(error) {return {ok:false,error:error?.message||String(error)};}
+  },
+  updateCharacterDashboardPreferences: async function(campaignId,characterId,preferences={}){
+    if(!db||!currentUser||!characterId)return {ok:false,error:'Sign in to update dashboard settings.'};
+    try{
+      if(!campaignId){
+        const privateRef=doc(db,'users',currentUser.uid,'characters',characterId);
+        const snap=await getDoc(privateRef);
+        if(!snap.exists()||snap.data().ownerUid!==currentUser.uid)throw new Error('Only the character owner can update this layout.');
+        const patch=normalizeDashboardPreferences({dashboardPreferences:{...(snap.data().dashboardPreferences||{}),...structuredCloneSafe(preferences)}});
+        await setDoc(privateRef,{dashboardPreferences:patch,updatedAt:serverTimestamp()},{merge:true});
+      } else {
+        const refs=liveCharacterRefs(campaignId,characterId);
+        await runTransaction(db,async transaction=>{
+          const snapshot=await transaction.get(refs.campaign);
+          if(!snapshot.exists())throw new Error('Character not found.');
+          const character={id:characterId,...snapshot.data()};
+          await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+          character.dashboardPreferences=normalizeDashboardPreferences({dashboardPreferences:{...(character.dashboardPreferences||{}),...structuredCloneSafe(preferences)}});
+          writeLiveCharacter(transaction,refs,character);
+        });
+      }
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||String(error)};}
   },
   createPartyOrganization: (...args) => callTrustedAction('createPartyOrganization', args),
   uploadCharacterGalleryImage: async function(campaignId,characterId,file){

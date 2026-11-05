@@ -4,6 +4,7 @@ import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './Charac
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
+import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
@@ -460,6 +461,18 @@ export function GMDashboard({ campaignId }) {
   const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
+  const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
+  const [dashboardLayoutError,setDashboardLayoutError] = useState('');
+  const accountUid=firebaseService.currentUser()?.uid || '';
+  useEffect(()=>{
+    if(!campaignId||!accountUid)return;
+    setSavedDashboardLayout(null);
+    return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
+      setSavedDashboardLayout(layout);
+      setDashboardLayoutError('');
+    });
+  },[campaignId,accountUid]);
+
   useEffect(() => { if(!live.loading && restored.scrollY) window.scrollTo(0, restored.scrollY); }, [live.loading]);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -484,6 +497,35 @@ export function GMDashboard({ campaignId }) {
   },[campaignId,live.campaign,live.gmWorkspace,live.gmWorkspaceLoaded,live.itemEcosystem,live.partyWorkspace]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
+  const saveDashboardLayout=async layout=>{
+    const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
+    if(result?.ok)setSavedDashboardLayout(layout);
+    else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
+    return result;
+  };
+  const gmPanel=id=>{
+    const shortcut=(title,tab)=> <Panel title={title}><p className="react-help">Open the full {title} workspace.</p><button type="button" onClick={()=>setTab(tab)}>Open {title}</button></Panel>;
+    switch(id){
+      case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>;
+      case 'encounter':return <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>;
+      case 'xp':return <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>;
+      case 'specialDamage':return <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>;
+      case 'loot':return <LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/>;
+      case 'magicRewards':return <MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events}/>;
+      case 'acInspector':return <ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/>;
+      case 'playerManagement':return <PlayerManagementTools campaignId={campaignId} characters={live.characters}/>;
+      case 'partySummary':return <Panel title="Party Summary"><p className="react-help">{Object.keys(live.characters||{}).length} characters linked to this campaign.</p><div className="react-party-summary-list">{Object.values(live.characters||{}).map(character=><button key={character.id} onClick={()=>setSelectedId(character.id)}>{character.name||'Unnamed Character'} · Level {Number(character.level||0)}</button>)}</div><button type="button" onClick={()=>setTab('tools')}>Open GM Character Tools</button></Panel>;
+      case 'shortcutInventory':return shortcut('PC Inventory','inventory');
+      case 'shortcutQuests':return shortcut('Quests','quests');
+      case 'shortcutNotes':return shortcut('GM Notes','notes');
+      case 'shortcutEconomy':return shortcut('Economy','economy');
+      case 'shortcutCrafting':return shortcut('Crafting','crafting');
+      case 'shortcutTools':return shortcut('GM Tools','tools');
+      case 'shortcutWorld':return shortcut('World Systems','world');
+      default:return null;
+    }
+  };
+
   const run = async operation => { setBusy(true); setActionError(''); try { const result=await operation(); if(result?.ok===false) setActionError(result.error || 'The change could not be saved.'); } catch(error) { setActionError(error.message || String(error)); } finally { setBusy(false); } };
   if(live.loading) return <div className="react-route-state">Connecting GM Dashboard...</div>;
   if(!window.AsteriaCharacterAccess.isGM(live.campaign, firebaseService.currentUser()?.uid)) return <div className="react-route-state" role="alert">You do not have GM access to this campaign.</div>;
@@ -496,11 +538,16 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
-    {tab === 'main' ? <div className="react-gm-main-grid">
-      <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/><CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState} />
-      <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events} />
-      <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter} />
-    </div> : null}
+    {tab === 'main' ? <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
+      layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
+      defaultContent={<div className="react-gm-main-grid">
+        <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>
+        <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>
+        <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>
+        <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
+      </div>}
+    /> : null}
+    {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
     {tab === 'inventory' ? <PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/>}/> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}

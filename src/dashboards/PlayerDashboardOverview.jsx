@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
+import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
@@ -267,18 +268,20 @@ function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }
   </DashboardPanel>;
 }
 
-function SummaryPanels({ character, characters, partyWorkspace, onNavigate }) {
+function SummaryPanels({ character, characters, partyWorkspace, onNavigate, only = '' }) {
   const currentQuests = selectQuests(character, partyWorkspace).filter(quest => ['Active','Awaiting Review','On Hold'].includes(quest.status || 'Active')).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked))).slice(0, 3);
   const journals = values(character.journal).slice().sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)).slice(0, 3);
   const party = Object.values(characters || {}).filter(member => member.id !== character.id).slice(0, 4);
-  return <div className="react-dashboard-summary-grid">
-    <DashboardPanel icon="quest" title="Current Quests" compact action={<button type="button" onClick={() => onNavigate('quest')}>Open Quest Log</button>}><div className="react-summary-list">{currentQuests.map(quest => <button key={quest.id} onClick={() => onNavigate('quest')}><b>{quest.name}</b><span>{quest.description || 'No quest summary recorded.'}</span></button>)}{!currentQuests.length ? <DashboardEmpty title="No Active Quests" description="Tracked campaign quests will appear here." /> : null}</div></DashboardPanel>
-    <DashboardPanel icon="journal" title="Recent Journal" compact action={<button type="button" onClick={() => onNavigate('journal')}>Open Journal</button>}><div className="react-summary-list">{journals.map((entry, index) => <button key={entry.id || index} onClick={() => onNavigate('journal')}><b>{entry.title || 'Journal Entry'}</b><span>{entry.body || entry.text || ''}</span></button>)}{!journals.length ? <DashboardEmpty title="No Journal Entries" description="Session notes and discoveries will appear here." /> : null}</div></DashboardPanel>
-    <DashboardPanel icon="party" title="Party" compact action={<button type="button" onClick={() => onNavigate('party')}>Open Party</button>}><div className="react-dashboard-party-summary">{party.map(member => <button key={member.id} onClick={() => onNavigate('party')}><span>{member.image || member.portrait ? <img src={member.image || member.portrait} alt="" loading="lazy" decoding="async" /> : String(member.name || '?').charAt(0)}</span><b>{member.name}</b><small>{member.klass || member.class || 'Adventurer'} | Level {Number(member.level || 0)}</small></button>)}{!party.length ? <DashboardEmpty title="No Linked Party Members" description="Campaign party members will appear after they link a character." /> : null}</div></DashboardPanel>
-  </div>;
+  const panels = {
+    quests:<DashboardPanel icon="quest" title="Current Quests" compact action={<button type="button" onClick={() => onNavigate('quest')}>Open Quest Log</button>}><div className="react-summary-list">{currentQuests.map(quest => <button key={quest.id} onClick={() => onNavigate('quest')}><b>{quest.name}</b><span>{quest.description || 'No quest summary recorded.'}</span></button>)}{!currentQuests.length ? <DashboardEmpty title="No Active Quests" description="Tracked campaign quests will appear here." /> : null}</div></DashboardPanel>,
+    journal:<DashboardPanel icon="journal" title="Recent Journal" compact action={<button type="button" onClick={() => onNavigate('journal')}>Open Journal</button>}><div className="react-summary-list">{journals.map((entry, index) => <button key={entry.id || index} onClick={() => onNavigate('journal')}><b>{entry.title || 'Journal Entry'}</b><span>{entry.body || entry.text || ''}</span></button>)}{!journals.length ? <DashboardEmpty title="No Journal Entries" description="Session notes and discoveries will appear here." /> : null}</div></DashboardPanel>,
+    party:<DashboardPanel icon="party" title="Party" compact action={<button type="button" onClick={() => onNavigate('party')}>Open Party</button>}><div className="react-dashboard-party-summary">{party.map(member => <button key={member.id} onClick={() => onNavigate('party')}><span>{member.image || member.portrait ? <img src={member.image || member.portrait} alt="" loading="lazy" decoding="async" /> : String(member.name || '?').charAt(0)}</span><b>{member.name}</b><small>{member.klass || member.class || 'Adventurer'} | Level {Number(member.level || 0)}</small></button>)}{!party.length ? <DashboardEmpty title="No Linked Party Members" description="Campaign party members will appear after they link a character." /> : null}</div></DashboardPanel>
+  };
+  if(only)return panels[only]||null;
+  return <div className="react-dashboard-summary-grid">{panels.quests}{panels.journal}{panels.party}</div>;
 }
 
-export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
+export function PlayerDashboardOverview({ campaignId, campaign, character, characters, partyWorkspace, editable, canEditLayout=editable, isGM=false, sessionEditable=editable, clock={}, onNavigate, combat }) {
   const {message,busy,run}=useAsyncAction();
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
@@ -286,7 +289,32 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const preferences = normalizeDashboardPreferences(character);
   const visible = key => !preferences.hiddenPanels.includes(key);
   const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
-  return <>
+  const summary = id => <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} only={id}/>;
+  const shortcut = (title,description,tab) => <DashboardPanel icon="quick" title={title} compact><p className="react-help">{description}</p><button type="button" onClick={()=>onNavigate(tab)}>Open {title}</button></DashboardPanel>;
+  const renderPanel=id=>{
+    switch(id) {
+      case 'armour':return <ArmourPanel character={character} onNavigate={onNavigate}/>;
+      case 'weapons':return <WeaponsPanel character={character} onNavigate={onNavigate}/>;
+      case 'quick':return <QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'talents':return <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate}/>;
+      case 'spells':return <SpellSummary combat={combat} campaignId={campaignId} character={character} spells={spells} editable={editable} busy={busy} onNavigate={onNavigate} run={run}/>;
+      case 'skills':return <SkillsSummary combat={combat} skills={skills} onNavigate={onNavigate}/>;
+      case 'conditions':return <ConditionsPanel campaignId={campaignId} character={character} isGM={isGM} editable={isGM?sessionEditable:editable} clock={clock}/>;
+      case 'effects':return <EffectsSummary character={character} clock={clock}/>;
+      case 'specialDamage':return <SpecialDamagePanel character={character}/>;
+      case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run}/>;
+      case 'currency':return <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency,amount)=>run(()=>firebaseService.updateCurrency(campaignId,character.id,currency,amount,{source:'Character Dashboard Currency'}))} className="react-overview-currency"/>;
+      case 'quests':case 'journal':case 'party':return summary(id);
+      case 'shortcutInventory':return shortcut('Inventory','View equipment, storage and consumables.','inventory');
+      case 'shortcutQuest':return shortcut('Quest Log','Review active missions and objectives.','quest');
+      case 'shortcutCharacter':return shortcut('Character Sheet','Review your character details and progression.','character');
+      case 'shortcutSpells':return shortcut('Spellbook','Open known spells and casting details.','spells');
+      case 'shortcutGallery':return shortcut('Gallery','Browse your character artwork.','gallery');
+      case 'shortcutSettings':return shortcut('Dashboard Settings','Open full dashboard customisation settings.','settings');
+      default:return null;
+    }
+  };
+  const defaultContent=<>
     <div className="react-player-overview-grid">
       {visible('weapons') ? <><ArmourPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') }} /><WeaponsPanel character={character} onNavigate={onNavigate} style={{ order:order('weapons') + 1 }} /><QuickItemsPanel campaignId={campaignId} character={character} editable={editable} busy={busy} onNavigate={onNavigate} run={run} style={{ order:order('weapons') + 2 }} /></> : null}
       {visible('talents')||combat.selector==='talent' ? <TalentSummary combat={combat} talents={talents} campaignId={campaignId} character={character} editable={editable} onNavigate={onNavigate} style={{ order:order('talents') }} /> : null}
@@ -299,6 +327,12 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       {!preferences.hiddenInformationFields.includes('currency') ? <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency, amount) => run(() => firebaseService.updateCurrency(campaignId, character.id, currency, amount, { source:'Character Dashboard Currency' }))} className="react-overview-currency" style={{ order:order('conditions') + 3 }} /> : null}
     </div>
     <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} />
+  </>;
+  return <>
+    <DashboardLayoutWorkspace key={character.id} role="player" layout={preferences.dashboardLayout} canEdit={canEditLayout}
+      forcedPanels={combat?.active ? (combat.selector==='talent'?['talents']:combat.selector==='spell'?['spells']:['skill','technique'].includes(combat.selector)?['skills']:[]) : []}
+      title="Player Dashboard" onSave={layout=>firebaseService.updateDashboardPreferences(campaignId,character.id,{dashboardLayout:layout})}
+      renderPanel={renderPanel} defaultContent={defaultContent}/>
     <p className="react-action-message" role="status">{message}</p>
   </>;
 }

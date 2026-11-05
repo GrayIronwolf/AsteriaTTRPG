@@ -2358,3 +2358,92 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Royal Relic: deliberately thin, tactile frames. Information remains dominant. */
+.react-character-dashboard .react-dashboard-panel,
+.react-gm-dashboard .react-gm-main-grid > .asteria-react-panel,
+.react-gm-dashboard .react-dashboard-custom-cell > .asteria-react-panel {
+  position: relative;
+  border: 1px solid #6d7479;
+  border-radius: 5px;
+  background-image:
+    linear-gradient(145deg, rgba(169,179,183,.055), rgba(9,13,16,.05) 38%, rgba(0,0,0,.15) 75%),
+    repeating-linear-gradient(120deg, transparent 0, transparent 13px, rgba(215,222,222,.012) 14px, transparent 15px),
+    linear-gradient(165deg, rgba(23,25,29,.96), rgba(4,8,11,.96) 70%, rgba(20,24,27,.96));
+  box-shadow: 0 2px 8px rgba(0,0,0,.36),
+    inset 0 1px 0 rgba(225,231,233,.22),
+    inset 1px 0 0 rgba(162,174,183,.11),
+    inset 0 -2px 3px rgba(0,0,0,.58),
+    0 0 0 1px rgba(25,28,31,.9);
+}
+.react-character-dashboard .react-dashboard-panel::after,
+.react-gm-dashboard .react-gm-main-grid > .asteria-react-panel::after,
+.react-gm-dashboard .react-dashboard-custom-cell > .asteria-react-panel::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  border: 1px solid rgba(119,129,136,.18);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(195,207,208,.05);
+}
+.react-character-dashboard .react-panel-header,
+.react-gm-dashboard .react-panel-header {
+  border-bottom-color: color-mix(in srgb, var(--asteria-accent,#477fa8) 24%, #62676a);
+}
+
+/* Dashboard edit mode only. No changes to the default panel dimensions or order. */
+.react-dashboard-layout-workspace { min-width:0; display:grid; gap:10px; }
+.react-dashboard-layout-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+.react-dashboard-layout-toolbar > div:first-child { display:grid; gap:1px; }
+.react-dashboard-layout-toolbar b { font-size:.8rem; }
+.react-dashboard-layout-toolbar small { font-size:.66rem; color:var(--asteria-text-secondary); }
+.react-dashboard-layout-toolbar > div:last-child { display:flex; flex-wrap:wrap; gap:6px; }
+.react-dashboard-layout-toolbar button { min-height:38px; padding:7px 12px; }
+.react-dashboard-layout-presets,
+.react-dashboard-layout-filter { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.react-dashboard-layout-presets button[aria-pressed="true"],
+.react-dashboard-layout-filter button[aria-pressed="true"] { border-color:var(--asteria-accent,#6495c4); background:color-mix(in srgb,var(--asteria-accent,#6495c4) 17%,#121820); }
+.react-dashboard-panel-library { display:grid; gap:7px; }
+.react-dashboard-panel-library article { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid rgba(155,170,183,.22); background:rgba(5,9,13,.62); border-radius:4px; }
+.react-dashboard-panel-library article.dragging { opacity:.5; }
+.react-dashboard-panel-library-name { display:flex; align-items:center; gap:9px; min-width:125px; flex:1; }
+.react-dashboard-panel-library-name > div { display:grid; gap:2px; }
+.react-dashboard-panel-library-name b { font-size:.77rem; }
+.react-dashboard-panel-library-name small { font-size:.64rem; color:var(--asteria-text-secondary); }
+.react-dashboard-drag-grip { cursor:grab; font-size:1.2rem; color:var(--asteria-text-secondary); }
+.react-dashboard-panel-library-actions { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.react-dashboard-panel-library-actions button { min-width:38px; min-height:40px; }
+.react-dashboard-panel-library-actions label { display:flex; align-items:center; gap:6px; font-size:.7rem; }
+.react-dashboard-panel-library-actions select { min-height:40px; max-width:140px; }
+.react-dashboard-reset-action { margin-top:10px; }
+.react-dashboard-custom-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:10px; align-items:stretch; min-width:0; }
+.react-dashboard-custom-cell { min-width:0; display:flex; flex-direction:column; grid-column:span var(--panel-columns,6); gap:5px; }
+.react-dashboard-custom-cell > .asteria-react-panel { flex:1; min-width:0; }
+.react-dashboard-custom-cell .react-gm-ac-panel { grid-column:auto; }
+.react-dashboard-custom-cell .react-core-effects { grid-column:auto; }
+.react-dashboard-inline-tools, .react-dashboard-inline-resize { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px; padding:4px 7px; border:1px solid rgba(120,145,163,.28); background:rgba(7,11,15,.84); border-radius:4px; }
+.react-dashboard-inline-tools b { font-size:.7rem; }
+.react-dashboard-inline-actions { display:flex; gap:3px; }
+.react-dashboard-inline-actions button { min-width:32px; min-height:34px; }
+.react-dashboard-inline-resize label { display:flex; align-items:center; gap:5px; font-size:.69rem; }
+.react-dashboard-inline-resize select { min-height:35px; }
+.react-dashboard-resize-handle { touch-action:none; cursor:ew-resize; min-width:37px; min-height:37px; }
+.react-dashboard-no-panels { grid-column:1/-1; padding:18px; border:1px dashed rgba(153,163,173,.4); }
+.react-party-summary-list { display:grid; gap:5px; }
+.react-party-summary-list button { min-height:40px; text-align:left; padding:7px; }
+@container (max-width:900px) {
+  .react-dashboard-custom-cell { grid-column:span max(6,var(--panel-columns,6)); }
+}
+@container (max-width:620px) {
+  .react-dashboard-custom-cell { grid-column:1/-1; }
+  .react-dashboard-panel-library article { align-items:stretch; }
+  .react-dashboard-panel-library-actions { width:100%; }
+  .react-dashboard-panel-library-actions label { flex:1; justify-content:flex-end; }
+  .react-dashboard-layout-toolbar > div:last-child { width:100%; }
+  .react-dashboard-layout-toolbar > div:last-child button { flex:1; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .react-dashboard-custom-cell, .react-dashboard-custom-cell * { scroll-behavior:auto!important; transition:none!important; }
+}
