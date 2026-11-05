@@ -20,10 +20,12 @@ function serverIndex(spec, id) {
     density: 'SPARSE_ALL',
     multikey: false,
     state: 'READY',
-    fields: [...structuredClone(spec.fields), {
-      fieldPath: '__name__',
-      order: spec.fields.at(-1).order,
-    }],
+    fields: spec.fields.at(-1)?.fieldPath === '__name__'
+      ? structuredClone(spec.fields)
+      : [...structuredClone(spec.fields), {
+          fieldPath: '__name__',
+          order: spec.fields.at(-1).order,
+        }],
   };
 }
 
