@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DASHBOARD_PANEL_REGISTRY, DASHBOARD_SIZE_COLUMNS, DASHBOARD_LAYOUT_PRESETS,
-  applyDashboardPreset, dashboardPanelIds, dashboardSizeForColumns, defaultDashboardLayout,
+  DASHBOARD_PANEL_REGISTRY, DASHBOARD_SIZE_COLUMNS, DASHBOARD_SIZE_ROWS, DASHBOARD_LAYOUT_PRESETS,
+  applyDashboardPreset, dashboardPanelIds, dashboardSizeForColumns, defaultDashboardLayout, dashboardBackgroundForPanel, setDashboardBackground,
   layoutFromPlayerPreferences, moveDashboardPanel, normalizeDashboardLayout,
   nudgeDashboardPanel, resizeDashboardPanel, toggleDashboardPanel, visibleDashboardPanels
 } from '../src/state/dashboardLayoutModel.mjs';
@@ -61,15 +61,15 @@ test('Drag reorder and accessible nudge operate only on allowlisted IDs',()=>{
 });
 
 test('Size presets snap to allowed columns and reject arbitrary dimensions',()=>{
-  const layout=resizeDashboardPanel(null,'gm','encounter','full');
-  assert.equal(layout.sizes.encounter,'full');
+  const layout=resizeDashboardPanel(null,'gm','encounter','9x3');
+  assert.equal(layout.sizes.encounter,'9x3');
   assert.equal(DASHBOARD_SIZE_COLUMNS[layout.sizes.encounter],12);
-  assert.equal(resizeDashboardPanel(layout,'gm','encounter','999px').sizes.encounter,'full');
-  assert.equal(dashboardSizeForColumns(3),'standard');
-  assert.equal(dashboardSizeForColumns(4),'standard');
-  assert.equal(dashboardSizeForColumns(6),'long');
-  assert.equal(dashboardSizeForColumns(9),'long');
-  assert.equal(dashboardSizeForColumns(12),'full');
+  assert.equal(resizeDashboardPanel(layout,'gm','encounter','999px').sizes.encounter,'9x3');
+  assert.equal(dashboardSizeForColumns(3),'3x3');
+  assert.equal(dashboardSizeForColumns(4),'3x3');
+  assert.equal(dashboardSizeForColumns(6),'6x3');
+  assert.equal(dashboardSizeForColumns(9),'6x3');
+  assert.equal(dashboardSizeForColumns(12),'9x3');
 });
 
 test('Invalid or old saved layout records cannot inject unauthorized panels or layout values',()=>{
@@ -82,26 +82,27 @@ test('Invalid or old saved layout records cannot inject unauthorized panels or l
   assert.equal(layout.order.includes('resources'),false);
   assert.equal(layout.order.includes('__proto__'),false);
   assert.equal(layout.order.filter(id=>id==='encounter').length,1);
-  assert.equal(layout.sizes.encounter,'long');
-  assert.equal(layout.sizes.partySummary,'long');
+  assert.equal(layout.sizes.encounter,'3x3');
+  assert.equal(layout.sizes.partySummary,'6x3');
   assert.equal(layout.hidden.includes('partySummary'),true);
   assert.equal(normalizeDashboardLayout(null,'gm').mode,'default');
   assert.equal(DASHBOARD_PANEL_REGISTRY.gm.every(item=>typeof item.id==='string'),true);
 });
 
 test('Already saved Player layout wins over legacy display flags',()=>{
-  const saved=layoutFromPlayerPreferences({dashboardLayout:resizeDashboardPanel(null,'player','armour','full'),hiddenPanels:['weapons']});
-  assert.equal(saved.sizes.armour,'full');
+  const saved=layoutFromPlayerPreferences({dashboardLayout:resizeDashboardPanel(null,'player','armour','9x3'),hiddenPanels:['weapons']});
+  assert.equal(saved.sizes.armour,'9x3');
   assert.equal(saved.hidden.includes('armour'),false);
 });
 
 
 test('Three-column dashboard maps standard, long and full widths without changing existing panels',()=>{
-  assert.deepEqual(DASHBOARD_SIZE_COLUMNS,{standard:4,long:8,full:12});
-  assert.equal(defaultDashboardLayout('player').sizes.armour,'long');
-  assert.equal(defaultDashboardLayout('player').sizes.weapons,'standard');
-  assert.equal(defaultDashboardLayout('gm').sizes.encounter,'long');
-  for(const size of ['standard','long','full']) {
+  assert.deepEqual(DASHBOARD_SIZE_COLUMNS,{'3x3':4,'6x3':8,'3x6':4,'9x3':12});
+  assert.deepEqual(DASHBOARD_SIZE_ROWS,{'3x3':1,'6x3':1,'3x6':2,'9x3':1});
+  assert.equal(defaultDashboardLayout('player').sizes.armour,'3x3');
+  assert.equal(defaultDashboardLayout('player').sizes.weapons,'3x3');
+  assert.equal(defaultDashboardLayout('gm').sizes.encounter,'3x3');
+  for(const size of ['3x3','6x3','3x6','9x3']) {
     const saved=resizeDashboardPanel(null,'player','weapons',size);
     assert.equal(saved.sizes.weapons,size);
   }
@@ -109,7 +110,32 @@ test('Three-column dashboard maps standard, long and full widths without changin
 
 test('Migrates older Compact / Wide saved panel sizes into standard / long',()=>{
   const old=normalizeDashboardLayout({sizes:{quick:'compact',armour:'wide',weapons:'standard'},mode:'custom'},'player');
-  assert.equal(old.sizes.quick,'standard');
-  assert.equal(old.sizes.armour,'long');
-  assert.equal(old.sizes.weapons,'standard');
+  assert.equal(old.sizes.quick,'3x3');
+  assert.equal(old.sizes.armour,'6x3');
+  assert.equal(old.sizes.weapons,'3x3');
+});
+
+test('Panel backgrounds default to obsidian, allow entire dashboard and single-panel overrides',()=>{
+  let layout=defaultDashboardLayout('player');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','armour'),'obsidian');
+  layout=setDashboardBackground(layout,'player','slate');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','armour'),'slate');
+  layout=setDashboardBackground(layout,'player','arcane','armour');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','armour'),'arcane');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','weapons'),'slate');
+  layout=setDashboardBackground(layout,'player','obsidian','armour');
+  layout=setDashboardBackground(layout,'player','default','armour');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','armour'),'slate');
+  layout=setDashboardBackground(layout,'player','obsidian');
+  assert.equal(dashboardBackgroundForPanel(layout,'player','armour'),'obsidian');
+  assert.deepEqual(layout.panelBackgrounds,{});
+  assert.equal(Object.hasOwn(layout.panelBackgrounds,'resources'),false);
+});
+test('Existing default-mode layouts move to all 3x3 while custom widths migrate faithfully',()=>{
+  const oldDefault=normalizeDashboardLayout({mode:'default',sizes:{armour:'long',weapons:'wide'}},'player');
+  assert.equal(oldDefault.sizes.armour,'3x3');
+  const custom=normalizeDashboardLayout({mode:'custom',sizes:{armour:'long',weapons:'wide',quick:'compact'}},'player');
+  assert.equal(custom.sizes.armour,'6x3');
+  assert.equal(custom.sizes.weapons,'6x3');
+  assert.equal(custom.sizes.quick,'3x3');
 });

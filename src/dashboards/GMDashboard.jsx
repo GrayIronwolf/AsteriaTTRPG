@@ -4,7 +4,8 @@ import { ConditionsPanel, RestRequestsPanel, ResourceRulesPanel } from './Charac
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
-import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
@@ -27,6 +28,7 @@ import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, Gameplay
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
+  { id: 'settings', label: 'Dashboard Settings', icon: 'settings' },
   { id: 'inventory', label: 'PC Inventory', icon: 'inventory' },
   { id:'information', label:'News & Events', icon:'journal' },
   { id: 'quests', label: 'Quests', icon: '\u2691' },
@@ -462,6 +464,9 @@ export function GMDashboard({ campaignId }) {
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
+  const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
+  const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
+  const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
   const [dashboardLayoutError,setDashboardLayoutError] = useState('');
   const accountUid=firebaseService.currentUser()?.uid || '';
   useEffect(()=>{
@@ -469,6 +474,7 @@ export function GMDashboard({ campaignId }) {
     setSavedDashboardLayout(null);
     return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
       setSavedDashboardLayout(layout);
+      setDashboardSettingsDraft(normalizeDashboardLayout(layout,'gm'));
       setDashboardLayoutError('');
     });
   },[campaignId,accountUid]);
@@ -502,6 +508,17 @@ export function GMDashboard({ campaignId }) {
     if(result?.ok)setSavedDashboardLayout(layout);
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
+  };
+  const saveDashboardSettings=async()=>{
+    if(savingDashboardSettings)return;
+    setSavingDashboardSettings(true);
+    setDashboardSettingsMessage('Saving panel settings...');
+    try{
+      const result=await saveDashboardLayout(dashboardSettingsDraft);
+      setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':'Dashboard panel settings saved.');
+    }catch(error){
+      setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
+    }finally{setSavingDashboardSettings(false);}
   };
   const gmPanel=id=>{
     const shortcut=(title,tab)=> <Panel title={title}><p className="react-help">Open the full {title} workspace.</p><button type="button" onClick={()=>setTab(tab)}>Open {title}</button></Panel>;
@@ -547,6 +564,17 @@ export function GMDashboard({ campaignId }) {
         <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
       </div>}
     /> : null}
+    {tab === 'settings' ? <div className="react-settings-workspace">
+      <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
+        <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
+        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={setDashboardSettingsDraft} disabled={!accountUid||savingDashboardSettings}/>
+        <div className="react-settings-save">
+          <button type="button" disabled={!accountUid||savingDashboardSettings} onClick={()=>setDashboardSettingsDraft(defaultDashboardLayout('gm'))}>Restore Default Layout</button>
+          <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>
+        </div>
+        <p role="status">{dashboardSettingsMessage}</p>
+      </Panel>
+    </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
     {tab === 'inventory' ? <PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/>}/> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
