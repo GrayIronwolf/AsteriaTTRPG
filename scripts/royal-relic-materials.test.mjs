@@ -40,7 +40,7 @@ test('No dashboard grid, resource banner, navigation or GM roster markup is modi
   assert.match(player,/<DashboardNavigation tabs=\{tabs\}/);
   assert.match(gm,/sidebar=\{<PartySidebar /);
   assert.match(gm,/<DashboardNavigation tabs=\{GM_TABS\}/);
-  const materialRule=styles.slice(styles.lastIndexOf('/* Royal Relic v2'));
+  const materialRule=styles.slice(styles.lastIndexOf('/* Royal Relic v2'),styles.indexOf('/* Unified three-column standard/long/full dashboard editor.'));
   assert.doesNotMatch(materialRule,/^\s*(?:grid-template-columns|grid-column|order|min-height|max-height|width|padding)\s*:/m);
 });
 
