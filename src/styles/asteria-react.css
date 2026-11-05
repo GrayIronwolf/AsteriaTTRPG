@@ -2435,7 +2435,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-party-summary-list button { min-height:40px; text-align:left; padding:7px; }
 @container (max-width:900px) {
   /* Two columns on medium displays: standard occupies half; long/full span both. */
-  .react-dashboard-custom-cell { grid-column:span max(6,var(--panel-columns,4)); }
+  .react-dashboard-custom-cell { grid-column:span var(--panel-tablet-columns,6); }
 }
 @container (max-width:620px) {
   .react-dashboard-custom-cell { grid-column:1/-1; }
@@ -2573,7 +2573,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   min-width:0;
 }
 @container (max-width:900px) {
-  .react-dashboard-custom-cell { grid-column:span max(6,var(--panel-columns,4)); }
+  .react-dashboard-custom-cell { grid-column:span var(--panel-tablet-columns,6); }
 }
 @container (max-width:620px) {
   .react-dashboard-custom-cell { grid-column:1/-1; }
