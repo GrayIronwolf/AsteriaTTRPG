@@ -2307,3 +2307,54 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 .react-unassigned-dashboard { padding:16px;border:1px solid var(--asteria-panel-border);border-radius:var(--asteria-radius);background:var(--asteria-panel-background); }
 .react-unassigned-dashboard p { margin:8px 0; }
+
+
+/* Shared dashboard menu and roster interaction refinements. */
+.react-character-dashboard .react-workspace-main > .react-tabs,
+.react-gm-dashboard .react-workspace-main > .react-tabs {
+  scroll-padding-inline: 12px;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.react-character-dashboard .react-workspace-main > .react-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: var(--asteria-border-active) transparent;
+}
+.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar {
+  display: block;
+  height: 5px;
+}
+.react-character-dashboard .react-workspace-main > .react-tabs::-webkit-scrollbar-thumb {
+  background: var(--asteria-border-active);
+}
+.react-gm-dashboard .react-party-card {
+  cursor: default;
+}
+.react-gm-dashboard .react-party-card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+.react-gm-dashboard .react-party-card-actions button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--asteria-border-subtle);
+  border-radius: var(--asteria-radius-sm, 3px);
+  background: var(--asteria-button-active-bg, rgba(31,125,255,.18));
+  color: var(--asteria-text);
+}
+.react-gm-dashboard .react-party-card-actions button[aria-pressed="true"] {
+  border-color: var(--asteria-border-active);
+}
+@media (max-width: 560px) {
+  .react-character-dashboard .react-workspace-main > .react-tabs button,
+  .react-gm-dashboard .react-workspace-main > .react-tabs button {
+    min-height: 48px;
+  }
+  .react-gm-dashboard .react-party-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
