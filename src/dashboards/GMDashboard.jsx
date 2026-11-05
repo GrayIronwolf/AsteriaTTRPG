@@ -47,11 +47,15 @@ function CharacterRosterCard({ character, selected, presence, onSelect, onOpen }
   const armour = useArmourClass(character);
   const soulDamage = soulDamageValue(character);
   const online = Object.values(presence || {}).some(record => record.characterId === character.id && record.state === 'online');
-  return <button className={`react-party-card ${selected ? 'active' : ''}`} type="button" onClick={onSelect} onDoubleClick={onOpen}>
+  return <article className={`react-party-card ${selected ? 'active' : ''}`}>
     <div className="react-party-name"><div><b>{character.name || 'Unnamed Character'}</b><small>{character.klass || character.class || 'Class'} | Level {Number(character.level || 0)}</small></div><StatusPill tone="info">AC {armour.finalAC}</StatusPill><span className={online ? 'presence online' : 'presence'} title={online ? 'Online' : 'Offline'} /></div>
     {resourceDefinitions(character).map(row=>{const [value,maximum]=resourcePair(storedResource(character,row.id));return <ResourceBar key={row.id} compact label={row.name} kind={row.id} value={value} maximum={maximum} reserved={row.id==='hp'?soulDamage:0}/>;})}
     <ResourceBar compact label="XP" kind="xp" value={xp.xp} maximum={xp.xpMax} />
-  </button>;
+    <div className="react-party-card-actions">
+      <button type="button" aria-pressed={selected} onClick={onSelect}>{selected ? 'Selected' : 'Select'}</button>
+      <button type="button" onClick={onOpen} aria-label={`Open ${character.name || 'character'} dashboard`}>Open Character</button>
+    </div>
+  </article>;
 }
 
 function PartySidebar({ campaign, characters, selectedId, setSelectedId, presence, onOpen }) {
@@ -67,9 +71,9 @@ function PartySidebar({ campaign, characters, selectedId, setSelectedId, presenc
         onSelect={() => setSelectedId(character.id)}
         onOpen={() => onOpen(character)}
       />)}
-      {!partyIds.length ? <EmptyState title="No linked characters">Characters appear here as soon as they join this campaign.</EmptyState> : null}
+      {!partyIds.some(id => Boolean(characters[id])) ? <EmptyState title="No linked characters">Characters appear here as soon as they join this campaign.</EmptyState> : null}
     </div>
-    <p className="react-help">Double-click a character to open the live Character Dashboard.</p>
+    <p className="react-help">Select a character to manage them, or open their Character Dashboard.</p>
   </Panel>;
 }
 
