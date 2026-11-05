@@ -25,6 +25,8 @@ jobs:
           java-version: '21'
       - name: Resolve pinned dependency upgrades on repair branch
         run: npm install --no-fund
+      - name: Apply compatible production security fixes
+        run: npm audit fix --omit=dev --no-fund
       - name: Verify reproducible installation
         run: npm ci
       - name: Test content, lint, gameplay, Firebase and build
