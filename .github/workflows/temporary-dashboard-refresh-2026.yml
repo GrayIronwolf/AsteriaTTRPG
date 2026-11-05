@@ -25,11 +25,8 @@ jobs:
           java-version: '21'
       - name: Resolve pinned dependency upgrades on repair branch
         run: npm install --no-fund
-      - name: Apply non-breaking production dependency fixes
-        run: |
-          npm audit fix --no-fund
-          npm ci
-          npm run audit:production
+      - name: Verify reproducible installation
+        run: npm ci
       - name: Test content, lint, gameplay, Firebase and build
         run: |
           npm run content:check
@@ -40,6 +37,8 @@ jobs:
           npm run test:firebase
           npm run build
           git diff --check
+      - name: Enforce production dependency security gate
+        run: npm run audit:production
       - name: Commit reproducible lockfile and generated site assets to this branch
         shell: bash
         run: |
