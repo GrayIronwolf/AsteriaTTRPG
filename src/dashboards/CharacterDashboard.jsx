@@ -192,7 +192,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     <DashboardInformationRow campaign={live.campaign || {}} session={live.session} character={character} partyWorkspace={live.partyWorkspace} editable={editable} onResourceChange={updateResource} online={live.online} connectionState={live.connectionState} error={live.error || coreSyncError} loading={live.loading} />
     <DashboardNavigation tabs={tabs} active={activeTab} onChange={navigate} ariaLabel="Character Dashboard menu" />
     <CombatDashboardLayout combat={combat}>
-    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} onNavigate={navigate} /><ActivityLog character={character} /></> : null}
+    {activeTab === 'dashboard' ? <><PlayerDashboardOverview combat={combat} isGM={window.AsteriaCharacterAccess.isGM(live.campaign,uid)} sessionEditable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} campaign={live.campaign || {}} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} editable={editable} canEditLayout={isOwner} onNavigate={navigate} /><ActivityLog character={character} /></> : null}
     {activeTab === 'character' ? <CharacterTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
@@ -202,7 +202,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : isOwner && questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : isOwner && xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
