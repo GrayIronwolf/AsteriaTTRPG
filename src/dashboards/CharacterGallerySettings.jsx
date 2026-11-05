@@ -113,7 +113,7 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   return <div className="react-settings-workspace"><ThemeControls/>
     <Panel title="Dashboard Customisation" action={<StatusPill>{visibleDashboardPanels(preferences.dashboardLayout,'player').length} panels</StatusPill>}>
       <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} disabled={!editable}/>
-      <p className="react-help">These settings affect only this character. The original dashboard layout is restored by selecting Default. You can also edit panels directly from the main Dashboard tab.</p>
+      <p className="react-help">These settings affect only this character. Open the Visual Grid Editor to move, resize and lock panels. Select Apply Layout, then Save Dashboard Settings. Reset Layout restores the recommended defaults.</p>
     </Panel>
     <Panel title="Sidebar Identity">
       <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>setPreferences(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>
