@@ -7,7 +7,7 @@ import {
   resizeDashboardPanel, toggleDashboardPanel, visibleDashboardPanels
 } from '../state/dashboardLayoutModel.mjs';
 
-const SIZE_LABELS = {compact:'Compact',standard:'Standard',wide:'Wide',full:'Full Width'};
+const SIZE_LABELS = {standard:'Standard (1/3)',long:'Long (2/3)',full:'Full Width (3/3)'};
 const PRESET_LABELS = {default:'Default',combat:'Combat',exploration:'Exploration',roleplaying:'Roleplaying',encounter:'Encounter'};
 const PRESET_NAMES = Object.keys(PRESET_LABELS);
 
@@ -64,7 +64,7 @@ function PanelFrame({item,layout,editing,role,onChange,children}) {
     onChange(current=>resizeDashboardPanel(current,role,item.id,size));
   };
   return <div ref={gridRef} className="react-dashboard-custom-cell" data-panel-id={item.id}
-    style={{'--panel-columns':DASHBOARD_SIZE_COLUMNS[layout.sizes[item.id]]||6}}
+    style={{'--panel-columns':DASHBOARD_SIZE_COLUMNS[layout.sizes[item.id]]||4,'--panel-tablet-columns':layout.sizes[item.id]==='standard'?6:12}}
     onDragOver={event=>{if(editing)event.preventDefault();}}
     onDrop={event=>{if(!editing)return;event.preventDefault();const draggedId=event.dataTransfer.getData('text/plain');onChange(current=>moveDashboardPanel(current,role,draggedId,item.id));}}>
     {editing?<div className="react-dashboard-inline-tools" aria-label={`${item.label} layout controls`}>

@@ -65,9 +65,10 @@ test('Size presets snap to allowed columns and reject arbitrary dimensions',()=>
   assert.equal(layout.sizes.encounter,'full');
   assert.equal(DASHBOARD_SIZE_COLUMNS[layout.sizes.encounter],12);
   assert.equal(resizeDashboardPanel(layout,'gm','encounter','999px').sizes.encounter,'full');
-  assert.equal(dashboardSizeForColumns(3),'compact');
-  assert.equal(dashboardSizeForColumns(6),'standard');
-  assert.equal(dashboardSizeForColumns(9),'wide');
+  assert.equal(dashboardSizeForColumns(3),'standard');
+  assert.equal(dashboardSizeForColumns(4),'standard');
+  assert.equal(dashboardSizeForColumns(6),'long');
+  assert.equal(dashboardSizeForColumns(9),'long');
   assert.equal(dashboardSizeForColumns(12),'full');
 });
 
@@ -81,8 +82,8 @@ test('Invalid or old saved layout records cannot inject unauthorized panels or l
   assert.equal(layout.order.includes('resources'),false);
   assert.equal(layout.order.includes('__proto__'),false);
   assert.equal(layout.order.filter(id=>id==='encounter').length,1);
-  assert.equal(layout.sizes.encounter,'wide');
-  assert.equal(layout.sizes.partySummary,'wide');
+  assert.equal(layout.sizes.encounter,'long');
+  assert.equal(layout.sizes.partySummary,'long');
   assert.equal(layout.hidden.includes('partySummary'),true);
   assert.equal(normalizeDashboardLayout(null,'gm').mode,'default');
   assert.equal(DASHBOARD_PANEL_REGISTRY.gm.every(item=>typeof item.id==='string'),true);
@@ -92,4 +93,23 @@ test('Already saved Player layout wins over legacy display flags',()=>{
   const saved=layoutFromPlayerPreferences({dashboardLayout:resizeDashboardPanel(null,'player','armour','full'),hiddenPanels:['weapons']});
   assert.equal(saved.sizes.armour,'full');
   assert.equal(saved.hidden.includes('armour'),false);
+});
+
+
+test('Three-column dashboard maps standard, long and full widths without changing existing panels',()=>{
+  assert.deepEqual(DASHBOARD_SIZE_COLUMNS,{standard:4,long:8,full:12});
+  assert.equal(defaultDashboardLayout('player').sizes.armour,'long');
+  assert.equal(defaultDashboardLayout('player').sizes.weapons,'standard');
+  assert.equal(defaultDashboardLayout('gm').sizes.encounter,'long');
+  for(const size of ['standard','long','full']) {
+    const saved=resizeDashboardPanel(null,'player','weapons',size);
+    assert.equal(saved.sizes.weapons,size);
+  }
+});
+
+test('Migrates older Compact / Wide saved panel sizes into standard / long',()=>{
+  const old=normalizeDashboardLayout({sizes:{quick:'compact',armour:'wide',weapons:'standard'},mode:'custom'},'player');
+  assert.equal(old.sizes.quick,'standard');
+  assert.equal(old.sizes.armour,'long');
+  assert.equal(old.sizes.weapons,'standard');
 });
