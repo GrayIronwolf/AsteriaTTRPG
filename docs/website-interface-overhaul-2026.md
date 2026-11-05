@@ -15,6 +15,10 @@ Status: in progress (started 2026-11-05). This is a working plan, not a claim of
 - [x] Recover GM roster selection when the selected character disappears.
 - [x] Add targeted state regression tests to the dashboard test command.
 - [ ] Audit Player Dashboard overview, character, talents, skills, spells, inventory, quests, journal, party, gallery and settings.
+- [x] Build versioned Player and GM panel library, responsive snap-grid ordering, drag-to-resize, presets and accessible controls.
+- [x] Preserve fixed Player resources and GM sidebar; keep existing dashboard arrangement as the default.
+- [x] Save Player preferences per character and GM customisations per account/campaign outside active gameplay sessions.
+- [ ] Finish visual browser verification on mobile/tablet/desktop and confirm design balance with actual content.
 - [x] Keep the selected dashboard tab visible when horizontally scrolling between sections.
 - [ ] Audit GM main, PC inventory, news, quests, notes, economy, crafting, tools, gameplay and world panels.
 - [x] Replace GM roster double-click-only access with separate keyboard and touch-accessible Select and Open Character controls.
@@ -65,3 +69,6 @@ On 5 November 2026, the isolated repair workflow passed content validation (891 
 
 ## Panel reliability patch — PR #47
 First audit pass focused on touch/keyboard access to Player Quick Items and Active Spells, confirmation before resource-consuming actions, and GM title/Armour Class save recovery. These changes require automated UI regression tests, committed source-matching React bundles, and Firebase/emulator and production security verification. A comprehensive panel-by-panel responsive visual audit remains open.
+
+## Dashboard customisation feature branch — 5 November 2026
+The implementation introduces an opt-in layout manager on the Player Dashboard and GM Main Dashboard. Available panels can be added and removed without deleting data; the existing core panels stay connected to the same handlers. Combat, Exploration, Roleplaying and role-appropriate Encounter preset selections are available, together with a full-width, wide, standard and compact snap grid. Accessible keyboard-friendly Move Up / Move Down and size selectors accompany drag/drop and pointer resizing. Player configuration uses the existing character dashboard preferences; GM configuration is written to private per-user, per-campaign Firestore documents. The top Player information/resource bar and GM roster sidebar do not enter the movable registry. The visual styling applies a thin Royal Relic steel/obsidian finish without moving the default panel layout. Source changes require comprehensive CI and generated bundle consistency before release.
