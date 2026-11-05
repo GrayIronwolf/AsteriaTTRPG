@@ -21,7 +21,7 @@ loadEntry().then(() => {
   // A returning browser may still hold the previous eager entry in its cache.
   // Its matching stable chunks remain available; supply its former stylesheet.
   if(window.AsteriaReactMigration?.dashboardRuntime === 'on-demand') return;
-  const href = new URL('../react-dist/asteria-react.css', import.meta.url).href;
+  const href = new URL('../react-dist/asteria-react-royal-relic-v2.css', import.meta.url).href;
   if(Array.from(document.querySelectorAll('link[rel="stylesheet"]')).some(link => link.href === href)) return;
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
