@@ -30,7 +30,7 @@ export function PanelHeader({ title, eyebrow, action, icon }) {
 }
 
 export function Panel({ title, eyebrow, action, icon, children, className = '', style }) {
-  return <section className={`asteria-react-panel ${className}`} style={style}>
+  return <section className={`asteria-react-panel asteria-royal-relic ${className}`.trim()} data-panel-material="royal-relic" style={style}>
     <PanelHeader title={title} eyebrow={eyebrow} action={action} icon={icon} />
     {children}
   </section>;
