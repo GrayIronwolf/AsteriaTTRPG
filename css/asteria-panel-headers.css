@@ -1,0 +1,123 @@
+/* Approved panel title artwork: original transparent PNGs, separate live text.
+   The visible artwork is centred at y=356 of its original 724px canvas. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic {
+  --asteria-header-rail-y:0%;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic {
+  --asteria-header-rail-y:4%;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell[data-panel-size="3x6"] > .asteria-react-panel.asteria-royal-relic {--asteria-header-rail-y:2.8%;}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell:is([data-panel-size="6x3"],[data-panel-size="9x3"]) > .asteria-react-panel.asteria-royal-relic {--asteria-header-rail-y:10%;}
+
+/* A static header leaves its label anchored to the panel itself. Actions stay
+   in normal flow at the right, clear of the title and its decorative artwork. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header,
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic > .react-panel-header {
+  position:static!important;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  min-height:0;
+  gap:8px;
+  margin:0 0 12px;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group {
+  position:absolute;
+  isolation:isolate;
+  container-type:inline-size;
+  top:var(--asteria-header-rail-y);
+  right:52%;
+  left:auto;
+  width:min(47.5%,280px);
+  height:auto;
+  aspect-ratio:3 / 1;
+  min-height:0;
+  max-width:none;
+  box-sizing:border-box;
+  display:block;
+  margin:0;
+  padding:0;
+  z-index:6;
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:translateY(-49.17%)!important;
+  transition:none!important;
+  animation:none!important;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group::before,
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border:0;
+  border-radius:0;
+  box-shadow:none!important;
+  filter:none;
+  opacity:1;
+  transform:none!important;
+  transition:none!important;
+  animation:none!important;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group::before {
+  z-index:-1;
+  background:url("../assets/ui/dashboard/10004.png") center / 100% 100% no-repeat;
+  clip-path:polygon(10% 49.17%,16% 28%,84% 28%,90% 49.17%,84% 71%,16% 71%);
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group::after {
+  z-index:0;
+  background:url("../assets/ui/dashboard/10006.png") center / 100% 100% no-repeat;
+  clip-path:none;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group > div {
+  position:absolute;
+  inset:28% 16% 29%;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-width:0;
+  text-align:center;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group h2 {
+  width:100%;
+  margin:0;
+  padding:0;
+  font-size:clamp(9px,6cqw,14px);
+  line-height:1.08;
+  font-weight:700;
+  letter-spacing:0;
+  overflow-wrap:anywhere;
+  text-align:center;
+  color:#edf3f5!important;
+  text-shadow:0 1px 2px #000;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group .react-eyebrow {
+  margin:0!important;
+  font-size:clamp(7px,4cqw,10px);
+  line-height:1.05;
+}
+/* The supplied gold end ornaments replace the old decorative title icon. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group > .asteria-icon {display:none;}

@@ -17,3 +17,14 @@ The supplied frames have truly transparent centres. They are intended to overlay
 **No placeholder artwork is allowed:** the exact approved reference assets must be used. Check appearance against original desktop and Android screenshots. Do not merge with any file missing, or if the frame is blurry or stretched.
 
 Mouse-following BorderGlow files have been removed; other button presses and static effects remain.
+
+## Approved panel headers
+
+- `10004.png` is the original transparent blue centre fill.
+- `10006.png` is the original transparent steel-and-gold header frame.
+
+Both PNG files are preserved byte for byte. `css/asteria-panel-headers.css` layers
+the fill inside the metal artwork and keeps the title as live, centred HTML text.
+The visible header centre straddles the top panel rail; its right tip ends just
+left of the panel midpoint. Header artwork is decorative and non-interactive;
+existing header actions remain separate controls.
