@@ -26,7 +26,7 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  await guest.locator('#compendiumLibrary').getByText('Artificer Discipline',{exact:true}).waitFor();
  assert.equal(requested.some(url=>url.includes('/compendium-parts/')),false);
  await guest.evaluate(()=>window.asteriaHardHome());
- assert.equal(requested.some(url=>url.includes('asteria-react-mountDashboard')||url.includes('react-dist/asteria-react.css')),false);
+ assert.equal(requested.some(url=>url.includes('asteria-react-mountDashboard')||/react-dist\/asteria-react(?:-royal-relic-v2)?\.css/.test(url)),false);
  await guest.getByRole('button',{name:'Open Handbook',exact:true}).click();
  await guest.getByText('Rule of Cool',{exact:true}).dblclick();
  await guest.waitForFunction(()=>document.getElementById('workspace')?.textContent.includes('GM-approved'));
@@ -45,7 +45,7 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  assert.equal(await guest.locator('#dynamic-card').evaluate(el=>getComputedStyle(el).getPropertyValue('--border-glow-position').trim()),'absolute');
  await guest.locator('#dynamic-handbook').evaluate(el=>el.click());
  await guest.getByText('Rule of Cool',{exact:true}).waitFor();
- assert.equal(requested.some(url=>url.includes('asteria-react-mountDashboard')||url.includes('react-dist/asteria-react.css')),false);
+ assert.equal(requested.some(url=>url.includes('asteria-react-mountDashboard')||/react-dist\/asteria-react(?:-royal-relic-v2)?\.css/.test(url)),false);
  console.log('PASS: Home/Handbook avoid dashboard runtime; dynamic Home, workspace controls and card decoration remain functional.');
  await guest.close();
 
