@@ -7,7 +7,7 @@ import {
   resizeDashboardPanel, toggleDashboardPanel, visibleDashboardPanels
 } from '../state/dashboardLayoutModel.mjs';
 
-const SIZE_LABELS = {compact:'Compact',standard:'Standard',wide:'Wide',full:'Full Width'};
+const SIZE_LABELS = {standard:'Standard (1/3)',long:'Long (2/3)',full:'Full Width (3/3)'};
 const PRESET_LABELS = {default:'Default',combat:'Combat',exploration:'Exploration',roleplaying:'Roleplaying',encounter:'Encounter'};
 const PRESET_NAMES = Object.keys(PRESET_LABELS);
 
