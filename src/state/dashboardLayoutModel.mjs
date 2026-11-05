@@ -143,7 +143,10 @@ export function nudgeDashboardPanel(layout,role='player',id,direction){
   const visible=visibleDashboardPanels(previous,role);
   const index=visible.indexOf(id),target=visible[index+direction];
   if(index<0||!target)return previous;
-  return moveDashboardPanel(previous,role,id,target);
+  const order=[...previous.order];
+  const from=order.indexOf(id),to=order.indexOf(target);
+  [order[from],order[to]]=[order[to],order[from]];
+  return {...previous,mode:'custom',preset:'custom',order};
 }
 export function toggleDashboardPanel(layout,role='player',id,enabled){
   const previous=normalizeDashboardLayout(layout,role);
