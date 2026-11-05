@@ -220,7 +220,6 @@ export function resizeDashboardPanel(layout,role='player',id,size){
   if(!previous.order.includes(id)||!Object.hasOwn(DASHBOARD_SIZE_COLUMNS,size))return previous;
   const dim=legacyGridDimensions(role,id,size);
   if(!dim)return previous;
-  const current=previous.placements[id]||{x:0,y:0,...defaultGridDimensions(role,id)};
   const next=resizeDashboardGridPanel(previous,role,id,dim.w,dim.h);
   return {...next,sizes:{...next.sizes,[id]:size}};
 }
