@@ -61,7 +61,6 @@
     "glob": "^14.0.2",
     "minimatch": "^11.0.1",
     "rimraf": "^6.1.4",
-    "gaxios": "^7.1.4",
-    "gcp-metadata": "^8.1.5"
+    "gaxios": "^7.1.4"
   }
 }
