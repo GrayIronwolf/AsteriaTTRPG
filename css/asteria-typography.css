@@ -1,0 +1,102 @@
+/* Phase 4: accessible typography, leaving approved image layers and panel sizes intact. */
+:root { --asteria-typography-scale: 1; }
+body {
+  font-family: var(--asteria-font-body) !important;
+  font-size: calc(16px * var(--asteria-typography-scale));
+}
+button, input, select, textarea, [role="button"],
+.asteria-library, .clean-compendium-shell, .clean-page,
+.react-workspace-shell, .react-dashboard-panel {
+  font-family: var(--asteria-font-body) !important;
+}
+main h1, main h2, .asteria-library h3,
+#settingsPanel .theme-settings-section h3 {
+  font-family: var(--asteria-font-display) !important;
+}
+/* Fixed-space gameplay panel labels remain readable even with decorative scripts. */
+main .react-dashboard-custom-cell h1,
+main .react-dashboard-custom-cell h2,
+main .react-dashboard-custom-cell h3 {
+  font-family: var(--asteria-font-body) !important;
+}
+.asteria-typography-controls {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  min-width: 0;
+  color: var(--asteria-text);
+}
+.asteria-typography-help {
+  margin: 0;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+.asteria-typography-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 14px;
+}
+.asteria-typography-fields label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  font: 600 .9rem/1.4 ui-sans-serif, system-ui, sans-serif !important;
+}
+.asteria-typography-fields select,
+.asteria-typography-fields input[type="range"] {
+  width: 100%;
+  max-width: 100%;
+}
+.asteria-typography-fields select {
+  min-height: 44px;
+  padding: 8px 10px;
+  background: #08131d;
+  color: #f5e8ce;
+  border: 1px solid var(--asteria-border);
+  border-radius: 6px;
+  font: 400 .92rem/1.4 ui-sans-serif, system-ui, sans-serif !important;
+}
+.asteria-typography-fields output {
+  margin-left: 8px;
+  color: var(--asteria-gold);
+  font-variant-numeric: tabular-nums;
+}
+.asteria-typography-preview {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--asteria-border);
+  border-radius: 8px;
+  background: rgba(3, 12, 18, .77);
+  overflow-wrap: anywhere;
+}
+.asteria-typography-preview h3 {
+  font-family: var(--asteria-font-display) !important;
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 400;
+  line-height: 1.35;
+  margin: 0 0 12px;
+}
+.asteria-typography-preview p {
+  font-family: var(--asteria-font-body) !important;
+  font-size: calc(1rem * var(--asteria-typography-scale));
+  line-height: 1.65;
+  margin: 0;
+}
+.asteria-typography-reset {
+  justify-self: start;
+  min-height: 44px;
+}
+#asteriaTypographyMenu {
+  border: 1px solid rgba(188, 138, 57, .32);
+  border-radius: 14px;
+  padding: 14px;
+}
+#asteriaTypographyMenu > h3 { margin: 0; }
+.workspace-gallery-open {
+  min-height: 44px;
+  margin-top: 12px;
+}
+@media (max-width: 620px) {
+  .asteria-typography-fields { grid-template-columns: minmax(0, 1fr); }
+  .asteria-typography-preview { padding: 12px; }
+}
