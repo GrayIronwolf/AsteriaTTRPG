@@ -57,22 +57,22 @@ test('Auth login, same-role identity changes and logout refresh Compendium and t
   assert.match(nav,/window\.addEventListener\('storage'/);
 });
 
-test('Dashboard modal traps Tab, releases canceled pointers, and protects locked keyboard moves',()=>{
-  const code=read('src/components/DashboardCustomisation.jsx');
-  assert.match(code,/onPointerCancel=\{cancel\}\s+onLostPointerCapture=\{cancel\}/);
-  assert.match(code,/const cancel=e=>\{/);
-  assert.match(code,/grid\.current\?\.releasePointerCapture\?\.\(e\.pointerId\)/);
-  assert.match(code,/if\(disabled\|\|lock\)return;/);
-  assert.match(code,/aria-label=\{'Resize '\+item\.label\} disabled=\{disabled\}/);
-  assert.match(code,/onKeyDown=\{e=>\{[\s\S]{0,220}size\(id,pos\.w/);
-  assert.match(code,/if\(e\.key!=='Tab'\)return/);
-  assert.match(code,/dialogRef\.current\?\.contains\(document\.activeElement\)/);
-  assert.match(code,/e\.stopPropagation\(\);first\.focus\(\)/);
-  assert.match(code,/if\(e\.key==='Escape'\)\{e\.preventDefault\(\)/);
-  assert.match(code,/Apply Layout to Settings/);
-  assert.match(code,/Save Dashboard Settings/);
+test('Existing dashboard grid drag, resize, lock and save behavior stays protected',()=>{
+  const editor=read('src/components/DashboardCustomisation.jsx');
+  assert.match(editor,/onPointerMove=\{drag\}\s+onPointerUp=\{end\}/);
+  assert.match(editor,/onPointerCancel=/);
+  assert.match(editor,/if\(disabled\|\|e\.button!==0\|\|layout\.lockedPositions\.includes\(id\)\)return/);
+  assert.match(editor,/onKeyDown=\{e=>\{/);
+  assert.match(editor,/e\.altKey/);
+  assert.match(editor,/const next=propose\(g,e\)/);
+  assert.match(editor,/onChange\(draft\);setOpen\(false\)/);
+  assert.match(editor,/Apply Layout to Settings/);
+  assert.match(editor,/Save Dashboard Settings/);
+  // Editor enhancements that alter JSX require a matching committed production
+  // bundle; this release does not pretend an unbuilt source change is live.
+  const html=read('index.html');
+  assert.match(html,/src\/dev-entry\.js/);
 });
-
 test('Menu labels respect the 1679px navigation breakpoint while the active dialog is open',()=>{
   const shell=read('js/asteria-core-shell.js');
   assert.match(shell,/window\.matchMedia\?\.\('\(max-width: 1679px\)'\)/);
