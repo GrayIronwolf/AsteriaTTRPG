@@ -47,7 +47,15 @@ require('./local-static-server.js');
  await page.reload({waitUntil:'networkidle'});
  await page.waitForFunction(()=>window.AsteriaReactMigration?.available&&window.AsteriaFirebase?.getUser()?.uid==='player-demo');
  await page.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
- await page.locator('.react-gm-dashboard').waitFor();
+ await page.waitForTimeout(2500);
+ const gmDiagnostic=await page.evaluate(()=>({
+   hash:location.hash, content:document.querySelector('#asteriaReactRoot')?.innerText?.slice(0,1000)||'',
+   dashboardShown:document.querySelector('#reactDashboard')?.classList.contains('show'),
+   user:window.AsteriaFirebase?.getUser?.()?.uid,
+   campaignCount:window.campaigns?.length
+ }));
+ console.log('GM fixture diagnostic',JSON.stringify(gmDiagnostic),JSON.stringify(errors));
+ await page.locator('.react-gm-dashboard').waitFor({timeout:6500});
  await page.getByRole('tab',{name:'World Systems',exact:true}).first().click();
  await check('gm');
  await page.getByRole('tab',{name:'Dashboard Settings',exact:true}).first().click();
