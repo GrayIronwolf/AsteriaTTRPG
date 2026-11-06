@@ -173,6 +173,7 @@
         document.body.dataset.role = 'account';
         // Explicitly refresh account-scoped typography even when the role is unchanged.
         window.AsteriaTypography?.refreshAccount?.();
+        window.AsteriaLibrary?.refreshAccount?.();
         selected = session.character || selected;
         const access = document.getElementById('accessSummary');
         if(access) access.textContent = `Signed in as ${firebaseUser?.email || displayName}. Campaign permissions are assigned per campaign.`;
@@ -205,6 +206,7 @@
         session={role:'guest',character:null,account:null,uid:null,email:null};
         document.body.dataset.role='guest';
         window.AsteriaTypography?.refreshAccount?.();
+        window.AsteriaLibrary?.refreshAccount?.();
         updateRoleLocks();
         updateTopButtons();
         setView('home');

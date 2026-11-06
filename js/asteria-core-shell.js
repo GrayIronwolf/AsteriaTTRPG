@@ -37,7 +37,11 @@
     panel.setAttribute('aria-hidden', String(!open));
     panel.inert = !open;
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close menu and appearance' : 'Open menu and appearance');
+    // Keep the toggle name consistent with the responsive navigation mode.
+    const compact=window.matchMedia?.('(max-width: 1679px)')?.matches;
+    toggle.setAttribute('aria-label', open
+      ? (compact?'Close main menu':'Close menu and appearance')
+      : (compact?'Open main menu':'Open menu and appearance'));
     shade?.setAttribute('aria-hidden', String(!open));
     if(open){
       if(!settingsReturnFocus) settingsReturnFocus = toggle;
