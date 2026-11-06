@@ -22,7 +22,17 @@
   const escape = value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   let query='', groupId='', categoryId='', savedOnly=false, sortMode='relevance', limit=48, reading=false;
   let searchFrame=0;
-  const storageKey = kind=>`asteria.library.${kind}.${window.AsteriaFirebase?.getUser?.()?.uid || window.session?.uid || 'guest'}`;
+  function libraryAccountKey(){
+    // The signed-in session is authoritative. Firebase may briefly retain
+    // the previous user while a logout transition is still being processed.
+    try{
+      const session=window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+      if(session.role==='guest'&&!session.uid&&!session.account)return 'guest';
+      return String(session.uid || session.account || window.session?.uid ||
+        window.AsteriaFirebase?.getUser?.()?.uid || 'guest');
+    }catch{return 'guest';}
+  }
+  const storageKey = kind=>`asteria.library.${kind}.${libraryAccountKey()}`;
   function readSaved(kind){try{const value=JSON.parse(localStorage.getItem(storageKey(kind))||'[]');return Array.isArray(value)?value.filter(id=>typeof id==='string').slice(0,100):[];}catch{return [];}}
   function save(kind,ids){try{localStorage.setItem(storageKey(kind),JSON.stringify(ids.slice(0,100)));}catch{/* Reading remains available when browser storage is disabled. */}}
   function classify(entry){
@@ -211,6 +221,11 @@
     else if(focusId==='libraryLoadMore'){byId(focusId)?.focus({preventScroll:true});}
     else if(['libraryGroupFilter','libraryCategoryFilter','librarySort','librarySavedOnly'].includes(focusId)){byId(focusId)?.focus?.({preventScroll:true});}
   }
+  function refreshAccount(){
+    // Explicitly invoked by authentication even when account->account keeps
+    // the same data-role attribute and MutationObserver cannot detect it.
+    if(byId('compendiumLibrary')?.classList.contains('show'))render();
+  }
   function setQuick(open,focus=false){
     const toggle=byId('compendiumQuickToggle'),menu=byId('compendiumQuickMenu');if(!toggle||!menu)return;
     menu.hidden=!open;toggle.setAttribute('aria-expanded',String(open));
@@ -280,6 +295,11 @@
     window.addEventListener('hashchange',()=>{readRoute();closePanels();});
     window.addEventListener('popstate',readRoute);
     window.addEventListener('asteria:custom-items-updated',()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();});
+    // Favourites/recent items changed in another tab are reflected immediately.
+    window.addEventListener('storage',event=>{
+      if((event.key===null || event.key===storageKey('favourites') || event.key===storageKey('recent')) &&
+        byId('compendiumLibrary')?.classList.contains('show'))render();
+    });
     // Logout/account changes must not leave another account's saved-page list visible.
     new MutationObserver(()=>{if(byId('compendiumLibrary')?.classList.contains('show'))render();syncNavigation();}).observe(document.body,{attributes:true,attributeFilter:['data-role']});
     // Home and legacy workspaces can change views without changing the hash.
@@ -290,7 +310,7 @@
     readRoute();
   }
   window.addEventListener('asteria:compendium-viewed',event=>{const id=event.detail?.id;if(id&&entries().some(e=>e.id===id))save('recent',[id,...readSaved('recent').filter(x=>x!==id)]);});
-  window.AsteriaLibrary=Object.freeze({groups:GROUPS,categories:CATEGORIES,classify,entries,filtered,open:show,readRoute,matchesSearch});
+  window.AsteriaLibrary=Object.freeze({groups:GROUPS,categories:CATEGORIES,classify,entries,filtered,open:show,readRoute,matchesSearch,refreshAccount});
   function boot(){
     if(!byId('compendiumLibrary')){const view=document.createElement('section');view.id='compendiumLibrary';view.className='view';view.setAttribute('aria-label','Asteria Compendium library');byId('mainContent')?.appendChild(view);}
     bind();
