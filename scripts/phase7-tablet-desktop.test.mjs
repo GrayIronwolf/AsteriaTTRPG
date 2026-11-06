@@ -48,6 +48,13 @@ test('Tablet panel reflow keeps DOM order, desktop saved placements and fixed re
  assert.match(player,/DashboardLayoutWorkspace/);
  assert.match(gm,/DashboardLayoutWorkspace/);
 });
+test('GM local browser fixture supports account-scoped layout save/subscribe calls',()=>{
+ const fixture=read('src/devFixtures.js');
+ assert.match(fixture,/subscribeUserDashboardLayout: \(campaignId,role,callback\) => \{/);
+ assert.match(fixture,/saveUserDashboardLayout: async \(campaignId,role,layout\) => \{/);
+ assert.match(fixture,/dashboardLayouts\.set\(key,clone\(layout\)\)/);
+ assert.match(fixture,/return \(\)=>callbacks\.delete\(callback\)/);
+});
 test('Approved frames and gameplay still use existing assets and definitions',()=>{
  const html=read('index.html');
  for(const asset of ['asteria-panel-headers.css','asteria-dashboard-panel-images.css','asteria-smoke-background.css','asteria-button-images.css'])
