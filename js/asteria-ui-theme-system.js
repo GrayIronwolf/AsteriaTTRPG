@@ -2,6 +2,24 @@
   const STORAGE_KEY = "asteria-ui-theme-v1";
   const AREA_LABELS={panelBorder:'Panel box outline',panelBackground:'Panel background',menuButton:'Compendium menu buttons',topMenuButton:'Top menu buttons',dashboardPrimary:'Dashboard primary colour',dashboardTab:'Dashboard menu tabs',divider:'Divider / line colour'};
   let appliedSettings=null;
+  let activeAccount='';
+  function themeAccountId(){
+    try{
+      const session=window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+      if(session.role==='guest'&&!session.uid&&!session.account)return 'guest';
+      const id=session.uid || session.account || window.session?.uid || window.AsteriaFirebase?.getUser?.()?.uid;
+      return id?String(id).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,128):'guest';
+    }catch{return 'guest';}
+  }
+  function storageKey(){
+    return activeAccount && activeAccount!=='guest'?'asteria.ui.theme.v2.'+activeAccount:STORAGE_KEY;
+  }
+  function loadSaved(){
+    try{return JSON.parse(localStorage.getItem(storageKey())||'null');}catch{return null;}
+  }
+  function storeLocal(value){
+    try{localStorage.setItem(storageKey(),JSON.stringify(value));}catch{/* local storage can be disabled */}
+  }
   const validColour=value=>/^#[0-9a-f]{6}$/i.test(value || '');
   const DEFAULT_TEXT = "#f7ead1";
   const themes = {
@@ -119,7 +137,13 @@
     document.body.removeAttribute("data-theme");
     document.body.removeAttribute("data-accent");
     sync(next);
-    if(persist) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    if(persist) {
+      storeLocal(next);
+      // Only deliberate user saves request cross-device upload; cloud hydration
+      // uses applyCloud and never triggers another write.
+      if(typeof window.dispatchEvent==='function'&&typeof CustomEvent==='function')
+        window.dispatchEvent(new CustomEvent('asteria:appearance-local-change',{detail:{section:'theme',value:next}}));
+    }
   }
 
   function current(){
@@ -239,7 +263,7 @@
     if(reset && !reset.dataset.bound){
       reset.dataset.bound = "1";
       reset.addEventListener("click", () => {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(storageKey());
         localStorage.removeItem("asteria-theme");
         localStorage.removeItem("asteria-accent");
         applyTheme({theme:"spellblade", ...themes.spellblade}, true);
@@ -248,13 +272,25 @@
     }
   }
 
+  function refreshAccount(){
+    const id=themeAccountId();
+    if(id===activeAccount)return;
+    activeAccount=id;
+    applyTheme(loadSaved() || {theme:"spellblade", ...themes.spellblade},false);
+  }
+  function applyCloud(settings){
+    applyTheme(settings,false);
+    storeLocal(appliedSettings);
+  }
   function boot(){
-    localStorage.removeItem("asteria-theme");
-    localStorage.removeItem("asteria-accent");
-    let saved = null;
-    try{ saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); }catch(e){}
-    applyTheme(saved || {theme:"spellblade", ...themes.spellblade}, false);
+    try{localStorage.removeItem("asteria-theme");localStorage.removeItem("asteria-accent");}catch{/* private browsing */}
+    activeAccount=themeAccountId();
+    applyTheme(loadSaved() || {theme:"spellblade", ...themes.spellblade},false);
     bind();
+    window.addEventListener?.('storage',event=>{
+      if(event.key===storageKey() || event.key===null)
+        applyTheme(loadSaved() || {theme:"spellblade", ...themes.spellblade},false);
+    });
   }
 
   window.AsteriaThemeSystem = {
@@ -263,8 +299,11 @@
     getSettings:()=>normalise(appliedSettings || {}),
     applyTheme,
     refreshControls:bind,
+    refreshAccount,
+    applyCloud,
+    scopedStorageKey:storageKey,
     reset(){
-      localStorage.removeItem(STORAGE_KEY);
+      try{localStorage.removeItem(storageKey());}catch{/* blocked */}
       applyTheme({theme:"spellblade", ...themes.spellblade}, true);
     }
   };
