@@ -31,7 +31,13 @@
   };
   function userId(){
     let account=null;
-    try{account=window.AsteriaFirebase?.getUser?.()?.uid || window.AsteriaAuthBridge?.getSession?.()?.uid || window.session?.uid || window.session?.account;}catch{/* use local guest key */}
+    try{
+      const session=window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+      // During sign-out Firebase can still briefly report the old user.
+      // Never attribute that user's font choices to the public guest view.
+      if(session.role==='guest' && !session.uid && !session.account)return 'guest';
+      account=session.uid || session.account || window.session?.uid || window.AsteriaFirebase?.getUser?.()?.uid;
+    }catch{/* use local guest key */}
     return String(account || 'guest').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,128);
   }
   function key(){return 'asteria.typography.v1.'+userId();}
@@ -48,14 +54,27 @@
     try{return normalize(JSON.parse(window.localStorage?.getItem(key())||'null'));}
     catch{return {...DEFAULTS};}
   }
+  function fontNotice(message){
+    document.querySelectorAll?.('[data-asteria-font-status]')?.forEach(node=>{node.textContent=message;});
+  }
   function loadFont(id){
     const font=byId(id);
     if(!font||loadedFonts.has(id))return;
+    // Normal pages load only their two selected families; the optional gallery
+    // loads further families when its samples enter the viewport.
     loadedFonts.add(id);
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(font.family).replace(/%20/g,'+')+'&display=swap';
+    const family=encodeURIComponent(font.family).replace(/%20/g,'+');
+    const weights=font.type==='both'?':wght@400;700':'';
+    link.href='https://fonts.googleapis.com/css2?family='+family+weights+'&display=swap';
     link.dataset.asteriaTypographyFont=id;
+    link.onerror=()=>{
+      loadedFonts.delete(id);
+      link.remove?.();
+      fontNotice(font.name+' could not load. A readable fallback font is being used; try again when online.');
+    };
+    link.onload=()=>{fontNotice('');};
     document.head?.appendChild(link);
   }
   function syncControls(){
@@ -68,6 +87,10 @@
       if(reading)reading.value=current.reading;
       if(size)size.value=String(current.size);
       if(amount)amount.textContent=current.size+'%';
+      host.querySelectorAll?.('[data-use-heading]')?.forEach(button=>
+        button.setAttribute('aria-pressed',String(button.dataset.useHeading===current.heading)));
+      host.querySelectorAll?.('[data-use-reading]')?.forEach(button=>
+        button.setAttribute('aria-pressed',String(button.dataset.useReading===current.reading)));
     });
   }
   function apply(value,persist){
@@ -76,6 +99,9 @@
     style.setProperty('--asteria-font-display',familyOf(current.heading));
     style.setProperty('--asteria-font-body',familyOf(current.reading));
     style.setProperty('--asteria-typography-scale',String(current.size/100));
+    // The root percentage scales all rem-based labels as well as body copy.
+    // Percentages retain the user's browser base font size and zoom settings.
+    style.setProperty('--asteria-root-font-size',current.size+'%');
     document.documentElement.dataset.asteriaHeadingFont=current.heading;
     loadFont(current.heading);
     loadFont(current.reading);
@@ -101,6 +127,78 @@
     select.addEventListener('change',()=>apply({...current,[kind]:select.value},true));
     label.appendChild(select);
     return label;
+  }
+  function sampleCard(font){
+    const card=document.createElement('div');
+    card.className='asteria-typography-sample';
+    card.dataset.fontSample=font.id;
+    const title=document.createElement('strong');
+    title.className='asteria-typography-sample-name';
+    title.textContent=font.name;
+    card.appendChild(title);
+    const line=document.createElement('p');
+    line.className='asteria-typography-sample-line';
+    line.textContent='Asteria — The Shattered Realms';
+    line.style?.setProperty?.('font-family',familyOf(font.id));
+    card.appendChild(line);
+    const actions=document.createElement('div');
+    actions.className='asteria-typography-sample-actions';
+    const heading=document.createElement('button');
+    heading.type='button';
+    heading.textContent='Use for headings';
+    heading.dataset.useHeading=font.id;
+    heading.setAttribute('aria-label','Use '+font.name+' for headings');
+    heading.addEventListener('click',()=>apply({...current,heading:font.id},true));
+    actions.appendChild(heading);
+    if(READABLE.includes(font.id)){
+      const reading=document.createElement('button');
+      reading.type='button';
+      reading.textContent='Use for reading';
+      reading.dataset.useReading=font.id;
+      reading.setAttribute('aria-label','Use '+font.name+' for reading text');
+      reading.addEventListener('click',()=>apply({...current,reading:font.id},true));
+      actions.appendChild(reading);
+    }else{
+      const note=document.createElement('small');
+      note.textContent='Decorative headings only';
+      actions.appendChild(note);
+    }
+    card.appendChild(actions);
+    return card;
+  }
+  function fontGallery(host){
+    const details=document.createElement('details');
+    details.className='asteria-typography-gallery';
+    const summary=document.createElement('summary');
+    summary.textContent='Browse all 15 font previews';
+    details.appendChild(summary);
+    const hint=document.createElement('p');
+    hint.textContent='Tap a sample to use its font. Samples download only as you browse; decorative scripts are excluded from reading text.';
+    details.appendChild(hint);
+    const list=document.createElement('div');
+    list.className='asteria-typography-samples';
+    FONTS.forEach(font=>list.appendChild(sampleCard(font)));
+    details.appendChild(list);
+    let observer=null;
+    details.addEventListener('toggle',()=>{
+      observer?.disconnect();
+      observer=null;
+      if(!details.open)return;
+      if(typeof window.IntersectionObserver!=='function'){
+        FONTS.forEach(font=>loadFont(font.id));
+        return;
+      }
+      observer=new window.IntersectionObserver(entries=>{
+        for(const entry of entries)if(entry.isIntersecting){
+          loadFont(entry.target.dataset.fontSample);
+          observer?.unobserve(entry.target);
+        }
+      },{rootMargin:'240px 0px'});
+      list.querySelectorAll('[data-font-sample]').forEach(card=>{
+        if(!loadedFonts.has(card.dataset.fontSample))observer.observe(card);
+      });
+    });
+    host.appendChild(details);
   }
   function mount(host){
     if(!host)return;
@@ -144,6 +242,13 @@
     body.textContent='Beneath the silver moon, a new adventure begins. Read rules and character details comfortably.';
     preview.append(title,body);
     host.appendChild(preview);
+    const fontStatus=document.createElement('p');
+    fontStatus.className='asteria-typography-font-status';
+    fontStatus.dataset.asteriaFontStatus='true';
+    fontStatus.setAttribute('role','status');
+    fontStatus.setAttribute('aria-live','polite');
+    host.appendChild(fontStatus);
+    fontGallery(host);
     const reset=document.createElement('button');
     reset.type='button';
     reset.className='outline asteria-typography-reset';
