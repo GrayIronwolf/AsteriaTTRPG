@@ -26,7 +26,7 @@ function listFiles(root){
       if(row.isSymbolicLink())fail('symbolic links are not permitted: '+path.relative(root,file));
       if(row.isDirectory())walk(file);
       else if(row.isFile()){
-        if(row.name==='README.md')continue;
+        if(row.name==='README.md'||(dir===root&&row.name==='manifest.json'))continue;
         const rel=path.relative(root,file).split(path.sep).join('/');
         if(!/^[a-z]+\/[a-z0-9]+(?:-[a-z0-9]+)*\/index\.md$/.test(rel))
           fail('unexpected file outside a domain/slug/index.md export: '+rel);
@@ -53,7 +53,7 @@ function strings(value,file,key,max=50){
     fail(file+' has invalid '+key);
   return value;
 }
-function approvedRecord(source,entry){
+function approvedRecord(entry){
   const {rel,file}=entry;
   const match=rel.match(/^([a-z]+)\/([a-z0-9]+(?:-[a-z0-9]+)*)\/index\.md$/);
   const [folder,slug]=match.slice(1);
@@ -83,9 +83,10 @@ function approvedRecord(source,entry){
   return {rel,folder,slug,domain,id,markdown,sha256};
 }
 function syncApprovedContent({source,out,dryRun=false}){
+  if(!source||!out)fail('explicit source and output paths are required');
   const src=path.resolve(source),dest=path.resolve(out);
-  if(src===dest||dest.startsWith(src+path.sep))fail('output must be outside the private source directory');
-  const records=listFiles(src).map(row=>approvedRecord(src,row));
+  if(src===dest||dest.startsWith(src+path.sep)||src.startsWith(dest+path.sep))fail('source and output must be separate directories');
+  const records=listFiles(src).map(approvedRecord);
   const ids=new Set(),paths=new Set();
   for(const record of records){
     if(ids.has(record.id))fail('duplicate public Asteria ID: '+record.id);
