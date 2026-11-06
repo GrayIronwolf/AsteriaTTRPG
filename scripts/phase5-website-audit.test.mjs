@@ -29,7 +29,7 @@ test('Laptop and tablet navigation use the same breakpoint as the JavaScript ref
 test('Navigation moves the same real controls into and out of the menu without duplicating them',()=>{
   const nodes={},events={};
   function node(id){
-    const el={id,attributes:{},parentElement:null,hidden:true,innerHTML:'',
+    const el={id,attributes:{},parentElement:null,hidden:true,innerHTML:'',style:{setProperty(){}},
       classList:{toggle(){},contains(){return false;}},
       setAttribute(k,v){this.attributes[k]=v;},
       addEventListener(k,fn){this.listeners=this.listeners||{};this.listeners[k]=fn;},
