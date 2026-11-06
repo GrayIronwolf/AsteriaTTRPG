@@ -83,6 +83,15 @@ export function installDevFixtures() {
   };
   const ownedCharacters = clone(characters);
   const ownedListeners = new Map();
+  // The browser fixture mirrors owner-scoped GM layout subscriptions without
+  // connecting to Firebase. Real account persistence remains on the service.
+  const dashboardLayouts=new Map();
+  const dashboardLayoutListeners=new Map();
+  const dashboardLayoutKey=(campaignId,role)=>String(campaignId)+':'+String(role);
+  const notifyDashboardLayout=key=>{
+    const value=dashboardLayouts.get(key)||null;
+    for(const callback of dashboardLayoutListeners.get(key)||[])callback(value?clone(value):null);
+  };
   let session = { id: 'session-001', status: 'active', number: 7, startedAt: Date.now(), expiresAt:Date.now()+SESSION_LIMIT_MS, maxDurationHours:10 };
   let events = [];
   let encounter = { status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] };
@@ -195,6 +204,20 @@ export function installDevFixtures() {
       return { ok: true };
     },
     saveState: async () => ({ ok: true }),
+    subscribeUserDashboardLayout: (campaignId,role,callback) => {
+      const key=dashboardLayoutKey(campaignId,role);
+      if(!dashboardLayoutListeners.has(key))dashboardLayoutListeners.set(key,new Set());
+      const callbacks=dashboardLayoutListeners.get(key);
+      callbacks.add(callback);
+      queueMicrotask(()=>{if(callbacks.has(callback))notifyDashboardLayout(key);});
+      return ()=>callbacks.delete(callback);
+    },
+    saveUserDashboardLayout: async (campaignId,role,layout) => {
+      const key=dashboardLayoutKey(campaignId,role);
+      dashboardLayouts.set(key,clone(layout));
+      notifyDashboardLayout(key);
+      return {ok:true};
+    },
     subscribeCampaign: (_campaignId, callback) => subscribe('campaign', callback),
     subscribeCampaignCharacters: (_campaignId, callback) => subscribe('characters', callback),
     subscribeLiveSession: (_campaignId, callback) => subscribe('session', callback),
