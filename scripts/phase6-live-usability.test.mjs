@@ -65,8 +65,8 @@ test('Existing dashboard grid drag, resize, lock and save behavior stays protect
   assert.match(editor,/onKeyDown=\{e=>\{/);
   assert.match(editor,/e\.altKey/);
   assert.match(editor,/const next=propose\(g,e\)/);
-  assert.match(editor,/onChange\(draft\);setOpen\(false\)/);
-  assert.match(editor,/Apply Layout to Settings/);
+  assert.match(editor,/onApply\(combined\)/);
+  assert.match(editor,/Apply Changes/);
   assert.match(editor,/Save Dashboard Settings/);
   // Editor enhancements that alter JSX require a matching committed production
   // bundle; this release does not pretend an unbuilt source change is live.
