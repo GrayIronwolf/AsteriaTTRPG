@@ -141,7 +141,7 @@ test('Phase 5 Compendium shows accessible responsive filters, permanent IDs and 
   assert.match(css,/\.library-filter-bar/);
   assert.match(css,/@media\(max-width:600px\)/);
   const html=fs.readFileSync('index.html','utf8');
-  assert.match(html,/js\/asteria-navigation\.js\?v=phase5-update3-20261106/);
+  assert.match(html,/js\/asteria-navigation\.js\?v=phase5-update4-20261106/);
   assert.match(html,/css\/asteria-navigation\.css\?v=phase5-update3-20261106/);
   assert.ok(api.groups.length===6);
 });
