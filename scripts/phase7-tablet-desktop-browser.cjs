@@ -68,11 +68,14 @@ require('./local-static-server.js');
    parent:el.parentElement?.tagName,
    viewportWidth:el.getBoundingClientRect().width,
    viewportHeight:el.getBoundingClientRect().height,
-   layer:getComputedStyle(el).position
+   layer:getComputedStyle(el).position,
+   clientWidth:document.documentElement.clientWidth,
+   innerWidth:innerWidth
  }));
  assert.equal(portal.parent,'BODY','Grid editor must be portalled outside settings stacking context');
  assert.equal(portal.layer,'fixed');
- assert.ok(portal.viewportWidth>=1900);
+ console.log('Editor portal dimensions',JSON.stringify(portal));
+ assert.ok(portal.viewportWidth>=portal.innerWidth-24,'Portal does not span viewport');
  await editor.getByRole('button',{name:'Cancel layout changes'}).click();
  assert.equal(await editor.count(),0);
  console.log('PASS visual editor portal above desktop/tablet settings');
