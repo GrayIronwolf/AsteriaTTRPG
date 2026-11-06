@@ -1,4 +1,5 @@
 import React,{useState,useRef} from 'react';
+import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
 import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
  dashboardGridRule,gridRowCount,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
@@ -172,7 +173,7 @@ export function DashboardLayoutWorkspace({role='player',layout:raw,renderPanel,t
      data-panel-size={p.w+'x'+p.h} data-frame-family={frame}
      data-panel-background={dashboardBackgroundForPanel(layout,role,id)}
      style={{'--panel-col':p.x+1,'--panel-row':p.y+1,'--panel-w':p.w,'--panel-h':p.h}}>
-     {renderPanel(id)}
+     <DashboardPanelFrameContext.Provider value={true}>{renderPanel(id)}</DashboardPanelFrameContext.Provider>
     </div>;
    })}
   </div>
