@@ -48,10 +48,11 @@ test('Player preferences and GM talent catalogues ignore clock-only updates',()=
 });
 
 test('live clock pauses on hidden tabs and catches up immediately on visibility restore',()=>{
- assert.match(live,/const tick=\(\)=>\{if\(!document\.hidden\)setClock\(Date\.now\(\)\);\}/);
- assert.match(live,/const resume=\(\)=>\{if\(!document\.hidden\)setClock\(Date\.now\(\)\);\}/);
- assert.match(live,/document\.addEventListener\('visibilitychange',resume\)/);
- assert.match(live,/document\.removeEventListener\('visibilitychange',resume\)/);
+ assert.match(live,/const visibilityDocument=typeof document==='undefined'\?null:document/);
+ assert.match(live,/const tick=\(\)=>\{if\(!visibilityDocument\?\.hidden\)setClock\(Date\.now\(\)\);\}/);
+ assert.match(live,/const resume=\(\)=>\{if\(!visibilityDocument\?\.hidden\)setClock\(Date\.now\(\)\);\}/);
+ assert.match(live,/visibilityDocument\?\.addEventListener\('visibilitychange',resume\)/);
+ assert.match(live,/visibilityDocument\?\.removeEventListener\('visibilitychange',resume\)/);
  assert.match(live,/window\.clearInterval\(timer\)/);
  assert.match(live,/effectiveSession\(session,clock\)/);
  assert.match(live,/const liveSession=useMemo/);
