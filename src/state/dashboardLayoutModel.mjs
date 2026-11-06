@@ -322,14 +322,14 @@ export function dashboardLayoutForViewport(source,role='player',viewport='deskto
   const root=normalizeDashboardLayout(source,role);
   const key=DASHBOARD_VIEWPORTS.includes(viewport)?viewport:'desktop';
   if(root.viewportLayouts?.[key])return normalizeDashboardLayout(root.viewportLayouts[key],role);
-  const {viewportLayouts:ignored,...fallback}=root;
+  const fallback={...root};delete fallback.viewportLayouts;
   return fallback;
 }
 export function setDashboardViewportLayout(source,role='player',viewport='desktop',next){
   const root=normalizeDashboardLayout(source,role);
   const key=DASHBOARD_VIEWPORTS.includes(viewport)?viewport:'desktop';
   const updated=normalizeDashboardLayout(next,role);
-  const {viewportLayouts:ignored,...single}=updated;
+  const single={...updated};delete single.viewportLayouts;
   const views={...(root.viewportLayouts||{}),[key]:single};
   return key==='desktop'?{...root,...single,viewportLayouts:views}:{...root,viewportLayouts:views};
 }
