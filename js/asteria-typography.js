@@ -109,6 +109,8 @@
     if(persist){
       try{window.localStorage?.setItem(key(),JSON.stringify(current));}
       catch{/* Typography stays usable when local storage is blocked. */}
+      if(typeof window.dispatchEvent==='function'&&typeof CustomEvent==='function')
+        window.dispatchEvent(new CustomEvent('asteria:appearance-local-change',{detail:{section:'typography',value:{...current}}}));
     }
     return {...current};
   }
@@ -281,7 +283,12 @@
     get:()=>({...current}),
     apply,
     mount,
-    refreshAccount
+    refreshAccount,
+    applyCloud(value){
+      apply(value,false);
+      try{window.localStorage?.setItem(key(),JSON.stringify(current));}catch{/* local fallback */}
+    },
+    scopedStorageKey:key
   });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
 })();
