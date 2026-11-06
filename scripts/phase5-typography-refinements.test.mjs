@@ -136,6 +136,6 @@ test('Auth changes immediately refresh user-specific font settings',()=>{
   const code=read('js/auth-bridge.js');
   const login=code.slice(code.indexOf("setSession(profile, firebaseUser)"),code.indexOf('importCharacters(accountKey'));
   const logout=code.slice(code.indexOf('logoutLocal(){'),code.indexOf('\n  };',code.indexOf('logoutLocal(){')));
-  assert.match(login,/document\.body\.dataset\.role = 'account';\s*\/\/[^\n]*\n\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
-  assert.match(logout,/document\.body\.dataset\.role='guest';\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
+  assert.match(login,/document\.body\.dataset\.role = 'account';\s*\/\/[^\n]*\n\s*window\.AsteriaThemeSystem\?\.refreshAccount\?\.\(\);\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
+  assert.match(logout,/document\.body\.dataset\.role='guest';\s*window\.AsteriaThemeSystem\?\.refreshAccount\?\.\(\);\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
 });
