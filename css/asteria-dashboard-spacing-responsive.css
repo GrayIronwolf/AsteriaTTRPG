@@ -1,0 +1,133 @@
+/* Dashboard Update 3 — spacing and responsive placement.
+   Keep the desktop 12-column saved grid and its pixel geometry untouched.
+   These changes only affect in-panel density and the <=900px reflow.
+   The approved metallic frames, header PNGs and textures are unchanged. */
+
+/* Make the live content use available space without artificially inflating
+   empty states. The Update 1 scroll pane still protects long inventories. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  > .asteria-react-panel.asteria-royal-relic > .react-panel-scroll-region {
+  align-content:start;
+  scroll-padding-block:8px;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  .react-panel-scroll-region :is(.react-dashboard-empty,.react-quiet-state) {
+  min-height:clamp(82px,14cqi,124px);
+  padding:8px 10px;
+  gap:5px;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  .react-panel-scroll-region :is(
+    .react-weapon-slot-grid,.react-quick-slot-grid,.react-ability-grid,
+    .react-dashboard-skill-grid,.react-rest-actions,.react-form-grid,
+    .react-encounter-builder,.react-magic-grid,.react-gm-grant-grid) {
+  gap:clamp(5px,0.85cqi,9px);
+}
+/* Blank shortcuts do not need the minimum height of a full interactive form.
+   Long labels and actions still wrap instead of overflowing. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id^="shortcut"]
+  .react-panel-scroll-region {
+  overflow-wrap:anywhere;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  .react-panel-scroll-region :is(.react-action-row,.react-encounter-toolbar,.react-recipient-actions) {
+  gap:6px;
+  flex-wrap:wrap;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  .react-panel-scroll-region :is(button,input,select,textarea) {
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+/* On tablets, use two equal columns for genuinely compact panels and
+   shortcuts. Complex editors and large panels span both columns to avoid
+   cutting off forms or putting combat controls into unusable narrow areas.
+   No dense auto-placement: the visible DOM and keyboard order stay aligned. */
+@container (min-width:621px) and (max-width:900px) {
+  .react-dashboard-custom-grid.react-dashboard-freeform-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:auto!important;
+    grid-auto-flow:row!important;
+    gap:10px 9px!important;
+    align-items:stretch;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell {
+    grid-column:1 / -1!important;
+    grid-row:auto!important;
+    height:auto!important;
+    min-height:185px!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell:is(
+    [data-panel-id="conditions"],[data-panel-id="effects"],
+    [data-panel-id="currency"],[data-panel-id="partySummary"],
+    [data-panel-id^="shortcut"]) {
+    grid-column:span 1!important;
+    min-height:146px!important;
+  }
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    > .asteria-react-panel.asteria-royal-relic {
+    height:auto!important;
+    min-height:100%!important;
+    padding:clamp(13px,2cqw,19px)!important;
+  }
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    > .asteria-react-panel.asteria-royal-relic > .react-panel-scroll-region {
+    flex:1 1 auto;
+    max-height:min(65vh,650px);
+    overflow-y:auto;
+  }
+}
+
+/* Phones: one full-width, content-driven column. Do not retain the old
+   minimum 180–300px for a near-empty panel or the old 550px tall frame.
+   Expanding content and artwork both participate in the cell's intrinsic
+   height; Update 1's header remains outside the scrollport. */
+@container (max-width:620px) {
+  .react-dashboard-custom-grid.react-dashboard-freeform-grid {
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-auto-rows:auto!important;
+    grid-auto-flow:row!important;
+    gap:10px!important;
+    align-items:start;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell,
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-size="3x6"] {
+    grid-column:1 / -1!important;
+    grid-row:auto!important;
+    height:auto!important;
+    min-height:126px!important;
+    aspect-ratio:auto!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id^="shortcut"] {
+    min-height:112px!important;
+  }
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    > .asteria-react-panel.asteria-royal-relic {
+    height:auto!important;
+    min-height:126px!important;
+    padding:clamp(11px,3cqw,17px)!important;
+  }
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    > .asteria-react-panel.asteria-royal-relic > .react-panel-scroll-region {
+    flex:1 1 auto;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+    .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-panel-scroll-region .react-dashboard-empty {
+    min-height:78px!important;
+    padding:7px!important;
+  }
+}
