@@ -32,6 +32,10 @@ test('only top-level dashboard panels have content scroller; header stays separa
   assert.match(workspace,/inDashboardGrid[\s\S]*<DashboardPanelFrameContext\.Provider value=\{false\}>/);
   assert.match(workspace,/<div className="react-panel-scroll-region">\{children\}<\/div>/);
   assert.match(editor,/<DashboardPanelFrameContext\.Provider value=\{true\}>\{renderPanel\(id\)\}<\/DashboardPanelFrameContext\.Provider>/);
+  // Preserve native controls and unwrapped nested panel contents outside the grid scope.
+  assert.match(workspace,/<DashboardPanelFrameContext.Provider value=\{false\}>/);
+  assert.match(workspace,/\s: children}/);
+  assert.doesNotMatch(editor,/onClick=\{\(\)=>renderPanel/);
   assert.match(css,/>.react-panel-scroll-region\{[\s\S]*?overflow-y:auto;/);
   assert.match(css,/>.react-panel-header\{[\s\S]*?overflow:visible!important;/);
   assert.match(css,/@container \(max-width:620px\)\{[\s\S]*?>.react-panel-scroll-region\{[\s\S]*?overflow:visible;/);
