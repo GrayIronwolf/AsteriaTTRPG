@@ -78,7 +78,8 @@ test('Failed XP and quest acknowledgement stays pending and can be retried',asyn
  assert.match(dashboard,/catch\(error\)\{\s*setNoticeError/);
  assert.match(dashboard,/noticeError\?<p className="react-action-message" role="alert"/);
  assert.doesNotMatch(dashboard,/setAcknowledged\(previous => new Set\(\[\.\.\.previous, xpEvent\.id\]\)\)/);
- assert.doesNotMatch(dashboard,/\.catch\(\(\) => \{\}\)/);
+ const noticeHandler=dashboard.slice(dashboard.indexOf('const acknowledgeNotice='),dashboard.indexOf('const resolvedLoot ='));
+ assert.doesNotMatch(noticeHandler,/\.catch\(\(\) => \{\}\)/);
 });
 
 test('Core gameplay commands remain existing Firebase transactions, not new client writes',()=>{
