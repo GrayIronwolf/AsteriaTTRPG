@@ -107,7 +107,7 @@ function GridEditor({role,layout,onChange,disabled}){
     <button type="button" disabled={disabled} onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,activeSelected,!locked))}>
       {locked?'Unlock Position':'Lock Position'}</button>
     <button type="button" disabled={disabled} onClick={()=>onChange(old=>toggleDashboardPanel(old,role,activeSelected,false))}>Remove Panel</button>
-    <BackgroundSelector id={selected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>
+    <BackgroundSelector id={activeSelected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>
    </React.Fragment>:<p>Select a panel.</p>}
   </aside>
  </div>;
