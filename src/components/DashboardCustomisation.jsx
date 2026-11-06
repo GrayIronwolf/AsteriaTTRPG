@@ -1,7 +1,7 @@
 import React,{useState,useRef} from 'react';
 import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
 import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
- dashboardGridRule,gridRowCount,normalizeDashboardLayout,defaultDashboardLayout,
+ dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
  resizeDashboardGridPanel,lockDashboardGridPanel,autoArrangeDashboardLayout,
  setDashboardBackground,dashboardBackgroundForPanel} from '../state/dashboardLayoutModel.mjs';
@@ -19,42 +19,50 @@ function GridEditor({role,layout,onChange,disabled}){
  const ids=visibleDashboardPanels(layout,role);
  const [selected,setSelected]=useState(ids[0]||''),[preview,setPreview]=useState(null);
  const grid=useRef(null),gesture=useRef(null);
- const p=preview?.id===selected?preview.rect:layout.placements[selected];
- const rule=dashboardGridRule(role,selected),locked=layout.lockedPositions.includes(selected);
+ // A removed panel cannot remain selected or editable in the side panel.
+ const activeSelected=ids.includes(selected)?selected:(ids[0]||'');
+ const p=preview?.id===activeSelected?preview.rect:layout.placements[activeSelected];
+ const rule=dashboardGridRule(role,activeSelected),locked=layout.lockedPositions.includes(activeSelected);
  const move=(id,x,y)=>onChange(old=>moveDashboardGridPanel(old,role,id,x,y));
  const size=(id,w,h)=>onChange(old=>resizeDashboardGridPanel(old,role,id,w,h));
+ const propose=(g,e)=>dashboardPointerProposal(role,g.id,g.rect,g.kind,
+  (e.clientX-g.x)/g.step,(e.clientY-g.y)/g.step);
  const begin=(e,id,kind)=>{
   if(disabled||e.button!==0||layout.lockedPositions.includes(id))return;
   const rect=layout.placements[id],host=grid.current;if(!rect||!host)return;
-  const step=host.getBoundingClientRect().width/12;
+  const {width}=host.getBoundingClientRect();
+  // The editor's 12 columns are separated by gaps; include each gap in
+  // the drag step so finger movement accurately tracks grid squares.
+  const gap=parseFloat(window.getComputedStyle(host).columnGap)||0;
+  const step=(width+gap)/12;
   if(!step)return;
   gesture.current={id,kind,pointer:e.pointerId,x:e.clientX,y:e.clientY,rect,step};
   setSelected(id);e.stopPropagation();e.preventDefault();host.setPointerCapture?.(e.pointerId);
  };
  const drag=e=>{
   const g=gesture.current;if(!g||g.pointer!==e.pointerId)return;
-  const dx=Math.round((e.clientX-g.x)/g.step),dy=Math.round((e.clientY-g.y)/g.step);
-  const r=dashboardGridRule(role,g.id);
-  const next=g.kind==='resize'?{...g.rect,w:Math.min(r.maxW,Math.max(r.portrait?3:r.minW,g.rect.w+dx)),
-   h:Math.min(r.maxH,Math.max(r.minH,g.rect.h+dy))}:
-   {...g.rect,x:Math.max(0,Math.min(12-g.rect.w,g.rect.x+dx)),y:Math.max(0,Math.min(600-g.rect.h,g.rect.y+dy))};
-  setPreview({id:g.id,rect:next});
+  const next=propose(g,e);
+  if(next)setPreview({id:g.id,rect:next});
  };
  const end=e=>{
   const g=gesture.current;if(!g||g.pointer!==e.pointerId)return;
   gesture.current=null;
-  const next=preview?.id===g.id?preview.rect:g.rect;
-  if(g.kind==='resize')size(g.id,next.w,next.h);else move(g.id,next.x,next.y);
+  const next=propose(g,e);
+  // A tap or an unchanged gesture must not flip the layout to custom.
+  if(next && (g.kind==='resize'?(next.w!==g.rect.w||next.h!==g.rect.h):
+   (next.x!==g.rect.x||next.y!==g.rect.y))){
+   if(g.kind==='resize')size(g.id,next.w,next.h);else move(g.id,next.x,next.y);
+  }
   setPreview(null);
   try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* already released */}
  };
  const number=(field,value)=>{
   if(!p||value===''||!Number.isInteger(Number(value)))return;
   const n=Number(value);
-  if(field==='w')size(selected,n,p.h);
-  if(field==='h')size(selected,p.w,n);
-  if(field==='x')move(selected,n-1,p.y);
-  if(field==='y')move(selected,p.x,n-1);
+  if(field==='w')size(activeSelected,n,p.h);
+  if(field==='h')size(activeSelected,p.w,n);
+  if(field==='x')move(activeSelected,n-1,p.y);
+  if(field==='y')move(activeSelected,p.x,n-1);
  };
  return <div className="react-grid-editor-content">
   <div className="react-grid-editor-scroller">
@@ -66,9 +74,9 @@ function GridEditor({role,layout,onChange,disabled}){
       const item=registry(role).find(x=>x.id===id);
       if(!pos||!item)return null;
       const fixed=dashboardGridRule(role,id).fixed,lock=layout.lockedPositions.includes(id);
-      return <div key={id} className={'react-grid-editor-tile'+(selected===id?' selected':'')}
+      return <div key={id} className={'react-grid-editor-tile'+(activeSelected===id?' selected':'')}
        style={{gridColumn:(pos.x+1)+' / span '+pos.w,gridRow:(pos.y+1)+' / span '+pos.h}}>
-       <button type="button" aria-pressed={selected===id} className="react-grid-editor-tile-main"
+       <button type="button" aria-pressed={activeSelected===id} className="react-grid-editor-tile-main"
         onPointerDown={e=>begin(e,id,'move')} onClick={()=>setSelected(id)}
         onKeyDown={e=>{
          if(!e.altKey||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
@@ -87,7 +95,7 @@ function GridEditor({role,layout,onChange,disabled}){
   <aside className="react-grid-editor-properties">
    <h3>Selected panel</h3>
    {p&&rule?<React.Fragment>
-    <b>{registry(role).find(x=>x.id===selected)?.label}</b>
+    <b>{registry(role).find(x=>x.id===activeSelected)?.label}</b>
     {['w','h','x','y'].map(key=><label key={key}>{({w:'Width',h:'Height',x:'Column',y:'Row'})[key]}
       <input type="number" aria-label={'Panel '+({w:'width',h:'height',x:'column',y:'row'})[key]}
        value={key==='x'||key==='y'?p[key]+1:p[key]} min={key==='w'?(rule.portrait?3:rule.minW):key==='h'?rule.minH:1}
@@ -96,10 +104,10 @@ function GridEditor({role,layout,onChange,disabled}){
        onChange={e=>number(key,e.target.value)}/></label>)}
     <small>Minimum {rule.minW}×{rule.minH}; maximum {rule.maxW}×{rule.maxH}.
      {rule.portrait?' Optional 3×6 portrait mode.':''}</small>
-    <button type="button" disabled={disabled} onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,selected,!locked))}>
+    <button type="button" disabled={disabled} onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,activeSelected,!locked))}>
       {locked?'Unlock Position':'Lock Position'}</button>
-    <button type="button" disabled={disabled} onClick={()=>onChange(old=>toggleDashboardPanel(old,role,selected,false))}>Remove Panel</button>
-    <BackgroundSelector id={selected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>
+    <button type="button" disabled={disabled} onClick={()=>onChange(old=>toggleDashboardPanel(old,role,activeSelected,false))}>Remove Panel</button>
+    <BackgroundSelector id={activeSelected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>
    </React.Fragment>:<p>Select a panel.</p>}
   </aside>
  </div>;
@@ -107,6 +115,16 @@ function GridEditor({role,layout,onChange,disabled}){
 export function DashboardLayoutEditor({role,layout:source,onChange,disabled=false}){
  const layout=normalizeDashboardLayout(source,role);
  const [open,setOpen]=useState(false),[draft,setDraft]=useState(null),[filter,setFilter]=useState('all');
+ const openButtonRef=useRef(null),dialogRef=useRef(null),wasOpenRef=useRef(false);
+ React.useEffect(()=>{
+  if(open){
+   wasOpenRef.current=true;
+   dialogRef.current?.querySelector('button')?.focus();
+  }else if(wasOpenRef.current){
+   openButtonRef.current?.focus();
+   wasOpenRef.current=false;
+  }
+ },[open]);
  const visible=new Set(visibleDashboardPanels(layout,role));
  const update=change=>setDraft(old=>typeof change==='function'?change(old):change);
  return <div className="react-dashboard-layout-editor">
@@ -117,7 +135,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
     onClick={()=>onChange(old=>applyDashboardPreset(old,role,preset))}>{preset}</button>)}
   </div>
   <div className="react-dashboard-layout-toolbar">
-   <button type="button" className="primary" disabled={disabled} onClick={()=>{setDraft(layout);setOpen(true);}}>Open Visual Grid Editor</button>
+   <button type="button" className="primary" ref={openButtonRef} disabled={disabled} onClick={()=>{setDraft(layout);setOpen(true);}}>Open Visual Grid Editor</button>
    <button type="button" disabled={disabled} onClick={()=>onChange(old=>autoArrangeDashboardLayout(old,role))}>Auto Arrange</button>
    <button type="button" disabled={disabled} onClick={()=>onChange(defaultDashboardLayout(role))}>Reset Layout</button>
   </div>
@@ -144,8 +162,9 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
     </article>;
    })}
   </div>
-  {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor">
-   <div className="react-grid-editor-dialog">
+  {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
+   onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+   <div className="react-grid-editor-dialog" ref={dialogRef}>
     <header className="react-grid-editor-header"><div><h2>Dashboard Layout Editor</h2>
      <small>12 columns · 30 starting rows · flexible sizes</small></div>
      <button type="button" aria-label="Cancel layout changes" onClick={()=>setOpen(false)}>×</button></header>

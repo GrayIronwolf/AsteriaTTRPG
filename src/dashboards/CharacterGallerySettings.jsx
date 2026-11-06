@@ -102,7 +102,12 @@ export function GalleryTab({ campaignId, character, editable }) {
 }
 
 export function DashboardSettingsTab({ campaignId, character, editable }) {
-  const saved=useMemo(()=>normalizeDashboardPreferences(character),[character]);
+  // Live HP/MP/combat updates replace the character snapshot frequently.
+  // Only an actual settings change should resynchronise this editing draft.
+  const savedPreferencesKey=JSON.stringify(character.dashboardPreferences||{});
+  const saved=useMemo(()=>normalizeDashboardPreferences({
+    dashboardPreferences:JSON.parse(savedPreferencesKey)
+  }),[savedPreferencesKey]);
   const [preferences,setPreferences]=useState(saved);
   const action=useSaveAction();
   React.useEffect(()=>setPreferences(saved),[saved]);

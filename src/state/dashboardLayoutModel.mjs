@@ -1,11 +1,11 @@
 import {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
-  dashboardGridRule, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
+  dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount
 } from './dashboardGridModel.mjs';
 export {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
-  dashboardGridRule, defaultGridDimensions, clampGridDimensions, gridRowCount
+  dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, gridRowCount
 };
 /**
  * Canonical, presentation-only dashboard layout configuration.
@@ -209,6 +209,7 @@ export function nudgeDashboardPanel(layout,role='player',id,direction){
 export function toggleDashboardPanel(layout,role='player',id,enabled){
   const previous=normalizeDashboardLayout(layout,role);
   if(!previous.order.includes(id))return previous;
+  if(previous.hidden.includes(id)===!enabled)return previous;
   const hidden=new Set(previous.hidden);
   if(enabled)hidden.delete(id);else hidden.add(id);
   return {...previous,mode:'custom',preset:'custom',hidden:[...hidden],
@@ -245,6 +246,7 @@ export function moveDashboardGridPanel(layout,role,id,x,y){
   if(!Number.isInteger(nx)||!Number.isInteger(ny)||nx<0||ny<0||
     nx+current.w>DASHBOARD_GRID_COLUMNS||ny+current.h>600)return previous;
   const candidate={...current,x:nx,y:ny};
+  if(candidate.x===current.x&&candidate.y===current.y)return previous;
   if(!gridPositionIsFree(candidate,visiblePlacements(previous),id))return previous;
   return {...previous,mode:'custom',preset:'custom',
     placements:{...previous.placements,[id]:candidate}};
@@ -264,6 +266,7 @@ export function resizeDashboardGridPanel(layout,role,id,width,height){
   if(!current||!dimensions)return previous;
   const candidate={...current,...dimensions,
     x:Math.min(current.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
+  if(candidate.x===current.x&&candidate.w===current.w&&candidate.h===current.h)return previous;
   if(candidate.y+candidate.h>600||!gridPositionIsFree(candidate,visiblePlacements(previous),id))return previous;
   return {...previous,mode:'custom',preset:'custom',
     placements:{...previous.placements,[id]:candidate}};
@@ -271,6 +274,7 @@ export function resizeDashboardGridPanel(layout,role,id,width,height){
 export function lockDashboardGridPanel(layout,role,id,lock=true){
   const previous=normalizeDashboardLayout(layout,role);
   if(!previous.order.includes(id))return previous;
+  if(previous.lockedPositions.includes(id)===Boolean(lock))return previous;
   const locked=new Set(previous.lockedPositions);
   if(lock)locked.add(id);else locked.delete(id);
   return {...previous,mode:'custom',preset:'custom',lockedPositions:[...locked]};

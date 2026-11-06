@@ -30,7 +30,7 @@
     "test:dashboard": "node --test scripts/dashboard-gameplay.test.mjs scripts/dashboard-navigation.test.mjs scripts/dashboard-layout.test.mjs scripts/dashboard-grid.test.mjs",
     "test:compendium": "node --test scripts/compendium.test.mjs scripts/compendium-loading.test.mjs",
     "test:startup:browser": "node scripts/test-startup-browser.cjs",
-    "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs scripts/button-size-families.test.mjs scripts/button-slice.test.mjs scripts/loading-speed.test.mjs scripts/dashboard-panel-interactions.test.mjs scripts/dashboard-frame-stacking.test.mjs scripts/dashboard-responsive-content.test.mjs scripts/dashboard-spacing-responsive.test.mjs scripts/royal-relic-materials.test.mjs scripts/royal-crystal-theme.test.mjs",
+    "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs scripts/button-size-families.test.mjs scripts/button-slice.test.mjs scripts/loading-speed.test.mjs scripts/dashboard-panel-interactions.test.mjs scripts/dashboard-frame-stacking.test.mjs scripts/dashboard-responsive-content.test.mjs scripts/dashboard-spacing-responsive.test.mjs scripts/dashboard-editor-usability.test.mjs scripts/royal-relic-materials.test.mjs scripts/royal-crystal-theme.test.mjs",
     "test:navigation": "node --test scripts/navigation-library.test.mjs scripts/home-startup.test.mjs",
     "audit:production": "npm audit --omit=dev --audit-level=moderate"
   },
