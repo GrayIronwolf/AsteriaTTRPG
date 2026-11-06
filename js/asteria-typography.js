@@ -175,4 +175,4 @@
     refreshAccount
   });
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
-})();\n
+})();
