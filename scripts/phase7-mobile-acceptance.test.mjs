@@ -61,7 +61,7 @@ test('GM unsaved layout draft survives background subscriptions and resets on ac
  assert.match(gm,/dashboardDraftDirty\.current=false;[\s\S]*?setDashboardSettingsDraft\(defaultDashboardLayout\('gm'\)\)/);
  assert.match(gm,/if\(!dashboardDraftDirty\.current\)\s*setDashboardSettingsDraft\(normalizeDashboardLayout\(layout,'gm'\)\)/);
  assert.match(gm,/dashboardDraftDirty\.current=true;\s*setDashboardSettingsDraft\(change\)/);
- assert.match(gm,/if\(result\?\.ok\)dashboardDraftDirty\.current=false/);
+ assert.match(gm,/if\(result\?\.ok&&dashboardDraftRevision\.current===saveRevision\)dashboardDraftDirty\.current=false/);
  assert.match(gm,/onChange=\{updateDashboardSettingsDraft\}/);
  const player=read('src/dashboards/CharacterGallerySettings.jsx');
  assert.match(player,/const savedPreferencesKey=JSON\.stringify\(character\.dashboardPreferences\|\|\{\}\)/);
