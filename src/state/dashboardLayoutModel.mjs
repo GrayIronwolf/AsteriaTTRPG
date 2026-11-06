@@ -364,7 +364,7 @@ export function placeDashboardGridPanel(layout,role,id,x,y){
   const prioritized=[id,...previous.order.filter(name=>name!==id)];
   const placements=packGridPlacements(role,prioritized,previous.hidden,
     {...previous.placements,[id]:candidate},previous.lockedPositions);
-  return {...previous,mode:'custom',preset:'custom',placements};
+  return {...previous,mode:'custom',preset:'custom',order:prioritized,placements};
 }
 /** Select an explicit size without drag handles; resolve unlocked collisions. */
 export function fitDashboardGridPanel(layout,role,id,width,height){
@@ -379,5 +379,5 @@ export function fitDashboardGridPanel(layout,role,id,width,height){
   const prioritized=[id,...previous.order.filter(name=>name!==id)];
   const placements=packGridPlacements(role,prioritized,previous.hidden,
     {...previous.placements,[id]:candidate},previous.lockedPositions);
-  return {...previous,mode:'custom',preset:'custom',placements};
+  return {...previous,mode:'custom',preset:'custom',order:prioritized,placements};
 }
