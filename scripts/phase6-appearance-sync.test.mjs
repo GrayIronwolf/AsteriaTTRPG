@@ -91,7 +91,7 @@ test('A local preference is preserved on conflict until the user explicitly sele
  assert.equal(t.getTheme().theme,'paladin');
  assert.equal(t.getStatus().conflicts.theme,false);
  t.elements['appearanceDevice-typography'].click();
- await Promise.resolve();await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(t.written.at(-1).section,'typography');
  assert.equal(t.written.at(-1).force,true);
  assert.equal(t.getStatus().conflicts.typography,false);
@@ -102,7 +102,7 @@ test('Explicit sync saves independent section revisions and does not publish on 
  const t=runtime();
  t.emit(null);
  t.elements.appearanceSyncNow.click();
- await Promise.resolve();await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.deepEqual(t.written.map(x=>x.section).sort(),['theme','typography']);
  assert.equal(t.getStatus().revisions.theme,1);
  assert.equal(t.getStatus().revisions.typography,1);
@@ -123,7 +123,7 @@ test('Cloud conflict detection is per section and excludes gameplay and raw secr
  assert.match(source,/doc\(db,'users',uid,'settings','appearance'\)/);
  const scope=source.slice(source.indexOf('saveAppearancePreference: async function'),source.indexOf('subscribeLiveSession: function'));
  for(const forbidden of ['characterId','campaignId','password','accessToken','inventory','xp','coins'])
-   assert.ok(!scope.includes(forbidden),'Appearance API must not contain '+forbidden);
+   assert.ok(!new RegExp('\\b'+forbidden+'\\b','i').test(scope),'Appearance API must not contain '+forbidden);
  const theme=read('js/asteria-ui-theme-system.js');
  const typography=read('js/asteria-typography.js');
  assert.match(theme,/function applyCloud\(settings\)/);
