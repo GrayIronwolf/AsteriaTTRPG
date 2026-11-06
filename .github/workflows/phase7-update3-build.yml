@@ -1,0 +1,37 @@
+name: Phase 7 Update 3 build and verification
+on:
+  push:
+    branches: [fix/phase7-update3-grid-save-safeguards-20261106]
+permissions:
+  contents: write
+jobs:
+  verify-and-bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm run audit:production
+      - run: npm run content:check
+      - run: npm run lint
+      - run: npm test
+      - run: node scripts/test-xp-realtime-sync.js
+      - run: npm run test:firebase
+      - run: npm run build
+      - name: Commit source-matching production React assets
+        run: |
+          git add react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Build Phase 7 Update 3 production React assets'
+            git push
+          fi
