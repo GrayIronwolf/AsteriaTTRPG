@@ -16,7 +16,7 @@ test('Laptop and tablet navigation use the same breakpoint as the JavaScript ref
   assert.match(laptop[1],/#globalNavigation\s*\{\s*display:flex;flex-direction:column/);
   assert.match(laptop[1],/#accountControls\s*\{\s*display:flex;flex-direction:column/);
   assert.match(css,/@media \(max-width:1200px\)[\s\S]*?#mobileNavigationSlot,#mobileAccountSlot\s*\{\s*display:block/);
-  assert.match(html,/css\/asteria-navigation\.css\?v=phase5-update1-20261106/);
+  assert.match(html,/css\/asteria-navigation\.css\?v=phase5-update3-20261106/);
   assert.match(html,/id="mobileNavigationSlot"/);
   assert.match(html,/id="mobileAccountSlot"/);
   for(const width of [320,390,768,1024,1200,1201,1366,1440,1679,1680,1920]){
