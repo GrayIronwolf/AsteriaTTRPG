@@ -6,6 +6,16 @@
   const slug = value => String(value || '').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   const byId = new Map(data.entries.map(entry => [entry.id,entry]));
   const staticEntries = data.entries;
+  // Build class-to-talent relationships once instead of searching the full
+  // registry for every class during initial page load (O(N + T), not O(N*C)).
+  // Preserve source order and independent array values for existing consumers.
+  const talentsByClass = new Map();
+  for(const entry of staticEntries){
+    if(entry.domain !== 'talent') continue;
+    const key = slug(entry.metadata.className || entry.metadata.classname);
+    if(!talentsByClass.has(key))talentsByClass.set(key, []);
+    talentsByClass.get(key).push(entry);
+  }
   const customCache = new WeakMap();
   const emptyCustom = [];
   if(data.lazy) for(const entry of staticEntries) for(const alias of [entry.id,entry.sourcePath,entry.route,...entry.aliases]) {
@@ -23,7 +33,7 @@
       entry.availability = entry.playable === false ? 'non-playable' : 'playable';
     }
     if (entry.domain === 'class') {
-      entry.talents = staticEntries.filter(talent => talent.domain === 'talent' && slug(talent.metadata.className || talent.metadata.classname) === entry.slug);
+      entry.talents = (talentsByClass.get(entry.slug) || []).slice();
       entry.overview = entry.sections.Overview || '';
       entry.lore = entry.sections.Lore || '';
     }
