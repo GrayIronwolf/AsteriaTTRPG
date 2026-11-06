@@ -741,6 +741,57 @@ const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
   getProfile:()=>currentProfile,
+  subscribeAppearancePreferences: function(onChange){
+    if(!db || !currentUser || typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(doc(db,'users',uid,'settings','appearance'),
+      snapshot=>{
+        if(currentUser?.uid!==uid)return;
+        onChange(snapshot.exists()?snapshot.data():null);
+      },
+      error=>reportSyncError('appearance-listener',error));
+  },
+  saveAppearancePreference: async function(section,value,expectedRevision,overwrite=false){
+    if(!db||!currentUser)return {ok:false,error:'Sign in before syncing appearance.'};
+    if(!['theme','typography'].includes(section))return {ok:false,error:'Unknown appearance section.'};
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)return {ok:false,error:'Load cloud settings before saving.'};
+    const uid=currentUser.uid;
+    // Theme/typography contain cosmetic primitives only; never accept
+    // character sheets, credentials, campaign state, or arbitrary fields.
+    let clean;
+    if(section==='typography'){
+      clean={heading:String(value?.heading||'').slice(0,60),reading:String(value?.reading||'').slice(0,60),
+        size:Math.max(90,Math.min(115,Number(value?.size)||100))};
+    }else{
+      const validColour=x=>/^#[0-9a-f]{6}$/i.test(String(x||''));
+      const areaNames=['panelBorder','panelBackground','menuButton','topMenuButton','dashboardPrimary','dashboardTab','divider'];
+      const areas=Object.fromEntries(areaNames.map(key=>[key,validColour(value?.areas?.[key])?value.areas[key]:'#1f7dff']));
+      const number=(n,otherwise)=>Number.isFinite(Number(n))?Math.max(0,Math.min(1,Number(n))):otherwise;
+      clean={theme:String(value?.theme||'spellblade').slice(0,40),accent:validColour(value?.accent)?value.accent:'#1f7dff',
+        text:validColour(value?.text)?value.text:'#f7ead1',areas,
+        glow:number(value?.glow,.36),overlay:number(value?.overlay,.44),
+        panel:Math.max(.62,Math.min(.92,number(value?.panel,.78))),
+        motion:['both','pulse','wave','off'].includes(value?.motion)?value.motion:'both'};
+    }
+    try{
+      const reference=doc(db,'users',uid,'settings','appearance');
+      const result=await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(reference);
+        const data=snapshot.exists()?snapshot.data():{};
+        const previous=data?.[section]||{};
+        const revision=Number(previous.revision||0);
+        if(!overwrite && revision!==expectedRevision)return {ok:false,conflict:true,revision,value:previous.value||null};
+        const next=revision+1;
+        transaction.set(reference,{[section]:{value:clean,revision:next,updatedAt:serverTimestamp()}},{merge:true});
+        return {ok:true,revision:next};
+      });
+      if(currentUser?.uid!==uid)return {ok:false,error:'Account changed during save.'};
+      return result;
+    }catch(error){
+      reportSyncError('appearance-save',error);
+      return {ok:false,error:error?.message||String(error)};
+    }
+  },
   subscribeLiveSession: function(campaignId, onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(
