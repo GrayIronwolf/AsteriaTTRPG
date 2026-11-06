@@ -1,0 +1,34 @@
+# Temporary build refresh for dashboard Update 1. Branch-scoped and removed
+# before merge. Generated React entry/chunks are checked into this repo.
+name: Refresh dashboard bundle for PR 58
+on:
+  push:
+    branches:
+      - fix/dashboard-frame-header-stacking-20261106
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    if: github.ref == 'refs/heads/fix/dashboard-frame-header-stacking-20261106'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Regenerate checked-in React bundle
+        run: npm run build
+      - name: Commit generated bundle only to the temporary feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh committed React bundle for dashboard header fix"
+            git push origin HEAD:fix/dashboard-frame-header-stacking-20261106
+          fi
