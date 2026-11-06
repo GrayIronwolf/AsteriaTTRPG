@@ -46,6 +46,6 @@ test('layout geometry and panel sizing remain managed by existing grid code',()=
   assert.match(grid,/DASHBOARD_GRID_COLUMNS = 12/);
   assert.match(editor,/data-panel-size=\{p\.w\+'x'\+p\.h\}/);
   assert.match(editor,/data-frame-family=\{frame\}/);
-  assert.match(editor,/dashboardBackgroundForPanel\(layout,role,id\)/);
+  assert.match(editor,/data-panel-background=\{layout\.panelBackgrounds\[id\]\|\|layout\.backgroundStyle\}/);
   assert.doesNotMatch(css,/pointer-events:none[^;]*;[^}]*\.react-panel-scroll-region/);
 });
