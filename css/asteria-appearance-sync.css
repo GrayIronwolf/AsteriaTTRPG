@@ -1,0 +1,37 @@
+/* Account appearance sync: scoped to the existing Settings drawer only. */
+#asteriaAppearanceSync {
+  display:grid;
+  gap:12px;
+  min-width:0;
+  border:1px solid var(--asteria-border-subtle);
+  border-radius:9px;
+  padding:14px;
+}
+#asteriaAppearanceSync h3,
+#asteriaAppearanceSync p {margin:0;line-height:1.5;}
+#asteriaAppearanceSync #appearanceSyncControls {display:grid;gap:12px;min-width:0;}
+#asteriaAppearanceSync #appearanceSyncControls[hidden],
+#asteriaAppearanceSync #appearanceConflictControls[hidden],
+#asteriaAppearanceSync [id^="appearanceConflict-"][hidden] {display:none!important;}
+#appearanceSyncStatus {color:var(--asteria-text-secondary);overflow-wrap:anywhere;}
+#appearanceConflictControls {display:grid;gap:10px;min-width:0;}
+#asteriaAppearanceSync [id^="appearanceConflict-"] {
+  border:1px solid var(--asteria-border);
+  border-radius:8px;
+  padding:12px;
+  min-width:0;
+}
+#asteriaAppearanceSync button {
+  min-height:44px;
+  margin:6px 6px 0 0;
+  white-space:normal;
+}
+#asteriaAppearanceSync button:focus-visible {
+  outline:2px solid var(--asteria-border-active);
+  outline-offset:3px;
+}
+@media (max-width:600px){
+  #asteriaAppearanceSync{padding:10px;}
+  #asteriaAppearanceSync [id^="appearanceConflict-"]{padding:10px;}
+  #asteriaAppearanceSync button{width:100%;margin-inline:0;}
+}

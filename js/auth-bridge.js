@@ -172,6 +172,7 @@
         };
         document.body.dataset.role = 'account';
         // Explicitly refresh account-scoped typography even when the role is unchanged.
+        window.AsteriaThemeSystem?.refreshAccount?.();
         window.AsteriaTypography?.refreshAccount?.();
         window.AsteriaLibrary?.refreshAccount?.();
         selected = session.character || selected;
@@ -205,6 +206,7 @@
       safe(()=>{
         session={role:'guest',character:null,account:null,uid:null,email:null};
         document.body.dataset.role='guest';
+        window.AsteriaThemeSystem?.refreshAccount?.();
         window.AsteriaTypography?.refreshAccount?.();
         window.AsteriaLibrary?.refreshAccount?.();
         updateRoleLocks();

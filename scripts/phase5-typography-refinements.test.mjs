@@ -125,7 +125,7 @@ test('Font stylesheet failures retain readable CSS fallbacks and do not mutate d
   assert.match(css,/\.asteria-typography-gallery/);
   const html=read('index.html');
   assert.match(html,/css\/asteria-typography\.css\?v=phase5-update2-20261106/);
-  assert.match(html,/js\/asteria-typography\.js\?v=phase5-update2-20261106/);
+  assert.match(html,/js\/asteria-typography\.js\?v=phase6-update2-20261106/);
   for(const a of ['asteria-button-images.css','asteria-panel-headers.css','asteria-dashboard-panel-images.css','asteria-smoke-background.css'])
     assert.ok(html.includes(a),a);
   const source=read('js/asteria-typography.js');
@@ -136,6 +136,6 @@ test('Auth changes immediately refresh user-specific font settings',()=>{
   const code=read('js/auth-bridge.js');
   const login=code.slice(code.indexOf("setSession(profile, firebaseUser)"),code.indexOf('importCharacters(accountKey'));
   const logout=code.slice(code.indexOf('logoutLocal(){'),code.indexOf('\n  };',code.indexOf('logoutLocal(){')));
-  assert.match(login,/document\.body\.dataset\.role = 'account';\s*\/\/[^\n]*\n\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
-  assert.match(logout,/document\.body\.dataset\.role='guest';\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
+  assert.match(login,/document\.body\.dataset\.role = 'account';\s*\/\/[^\n]*\n\s*window\.AsteriaThemeSystem\?\.refreshAccount\?\.\(\);\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
+  assert.match(logout,/document\.body\.dataset\.role='guest';\s*window\.AsteriaThemeSystem\?\.refreshAccount\?\.\(\);\s*window\.AsteriaTypography\?\.refreshAccount\?\.\(\)/);
 });

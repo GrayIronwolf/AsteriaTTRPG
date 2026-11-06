@@ -621,3 +621,23 @@ test('link repair requires an existing campaign backlink and uses the canonical 
   await db.doc('campaigns/c/characters/a').update({sharedCampaignId:'other'});
   await assert.rejects(action('alice','repairCampaignCharacterLink',['c','a']),/another campaign/);
 });
+
+
+test('appearance preferences are private per Firebase user and cannot be read or changed by another account',async()=>{
+  const a=doc(user('alice'),'users/alice/settings/appearance');
+  const other=doc(user('bob'),'users/alice/settings/appearance');
+  const anonymous=doc(env.unauthenticatedContext().firestore(),'users/alice/settings/appearance');
+  const theme={value:{theme:'ranger',accent:'#2f9b55'},revision:1,updatedAt:Timestamp.now()};
+  await assertSucceeds(setDoc(a,{theme}));
+  const saved=await assertSucceeds(getDoc(a));
+  assert.equal(saved.data().theme.revision,1);
+  await assertFails(getDoc(other));
+  await assertFails(setDoc(other,{theme:{value:{theme:'rogue'},revision:2}}));
+  await assertFails(getDoc(anonymous));
+  await assertFails(setDoc(anonymous,{theme}));
+  // Per-section merge leaves the other cosmetic preference untouched.
+  await assertSucceeds(setDoc(a,{typography:{value:{heading:'cinzel',reading:'inter',size:105},revision:1}}, {merge:true}));
+  const both=(await assertSucceeds(getDoc(a))).data();
+  assert.equal(both.theme.value.theme,'ranger');
+  assert.equal(both.typography.value.reading,'inter');
+});
