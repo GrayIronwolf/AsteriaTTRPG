@@ -6,7 +6,7 @@ import {dashboardKeyboardProposal} from '../state/dashboardGridModel.mjs';
 import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
- resizeDashboardGridPanel,lockDashboardGridPanel,autoArrangeDashboardLayout,
+ resizeDashboardGridPanel,dashboardGridCandidateIsFree,lockDashboardGridPanel,autoArrangeDashboardLayout,
  setDashboardBackground} from '../state/dashboardLayoutModel.mjs';
 const labels={obsidian:'Obsidian Stone',slate:'Stone Slate',arcane:'Arcane Mist'};
 const registry=role=>DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
@@ -21,6 +21,7 @@ function BackgroundSelector({id,role,layout,onChange,disabled}){
 function GridEditor({role,layout,onChange,disabled}){
  const ids=visibleDashboardPanels(layout,role);
  const [selected,setSelected]=useState(ids[0]||''),[preview,setPreview]=useState(null);
+ const [moveFeedback,setMoveFeedback]=useState('');
  const grid=useRef(null),gesture=useRef(null);
  // A removed panel cannot remain selected or editable in the side panel.
  const activeSelected=ids.includes(selected)?selected:(ids[0]||'');
@@ -40,12 +41,16 @@ function GridEditor({role,layout,onChange,disabled}){
   const step=(width+gap)/12;
   if(!step)return;
   gesture.current={id,kind,pointer:e.pointerId,x:e.clientX,y:e.clientY,rect,step};
-  setSelected(id);e.stopPropagation();e.preventDefault();host.setPointerCapture?.(e.pointerId);
+  setMoveFeedback('');setSelected(id);e.stopPropagation();e.preventDefault();host.setPointerCapture?.(e.pointerId);
  };
  const drag=e=>{
   const g=gesture.current;if(!g||g.pointer!==e.pointerId)return;
   const next=propose(g,e);
-  if(next)setPreview({id:g.id,rect:next});
+  if(next){
+   const valid=dashboardGridCandidateIsFree(layout,role,g.id,next);
+   setPreview(valid?{id:g.id,rect:next}:null);
+   setMoveFeedback(valid?'':'That position is blocked or outside the available grid.');
+  }
  };
  const end=e=>{
   const g=gesture.current;if(!g||g.pointer!==e.pointerId)return;
@@ -54,7 +59,10 @@ function GridEditor({role,layout,onChange,disabled}){
   // A tap or an unchanged gesture must not flip the layout to custom.
   if(next && (g.kind==='resize'?(next.w!==g.rect.w||next.h!==g.rect.h):
    (next.x!==g.rect.x||next.y!==g.rect.y))){
-   if(g.kind==='resize')size(g.id,next.w,next.h);else move(g.id,next.x,next.y);
+   if(dashboardGridCandidateIsFree(layout,role,g.id,next)){
+    if(g.kind==='resize')size(g.id,next.w,next.h);else move(g.id,next.x,next.y);
+    setMoveFeedback('');
+   }else setMoveFeedback('That position is blocked or outside the available grid.');
   }
   setPreview(null);
   try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* already released */}
@@ -70,16 +78,25 @@ function GridEditor({role,layout,onChange,disabled}){
   if(disabled||layout.lockedPositions.includes(id))return;
   const next=dashboardKeyboardProposal(role,id,rect,kind,key);
   if(!next)return;
+  if(!dashboardGridCandidateIsFree(layout,role,id,next)){
+   setMoveFeedback('That position is blocked or outside the available grid.');return;
+  }
+  setMoveFeedback('');
   if(kind==='resize')size(id,next.w,next.h);
   else move(id,next.x,next.y);
  };
  const number=(field,value)=>{
   if(!p||value===''||!Number.isInteger(Number(value)))return;
   const n=Number(value);
-  if(field==='w')size(activeSelected,n,p.h);
-  if(field==='h')size(activeSelected,p.w,n);
-  if(field==='x')move(activeSelected,n-1,p.y);
-  if(field==='y')move(activeSelected,p.x,n-1);
+  const proposed=field==='w'||field==='h'
+   ?dashboardPointerProposal(role,activeSelected,p,'resize',field==='w'?n-p.w:0,field==='h'?n-p.h:0)
+   :{...p,x:field==='x'?n-1:p.x,y:field==='y'?n-1:p.y};
+  if(!dashboardGridCandidateIsFree(layout,role,activeSelected,proposed)){
+   setMoveFeedback('That position is blocked or outside the available grid.');return;
+  }
+  setMoveFeedback('');
+  if(field==='w'||field==='h')size(activeSelected,proposed.w,proposed.h);
+  else move(activeSelected,proposed.x,proposed.y);
  };
  return <div className="react-grid-editor-content">
   <div className="react-grid-editor-scroller">
@@ -114,6 +131,7 @@ function GridEditor({role,layout,onChange,disabled}){
    </div>
   </div>
   <aside className="react-grid-editor-properties">
+    <p role="status" aria-live="polite" className="react-grid-editor-feedback">{moveFeedback}</p>
    <h3>Selected panel</h3>
    {p&&rule?<React.Fragment>
     <b>{registry(role).find(x=>x.id===activeSelected)?.label}</b>
