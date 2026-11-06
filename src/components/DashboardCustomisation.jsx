@@ -151,6 +151,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,onApply,disab
  const [open,setOpen]=useState(false),[draft,setDraft]=useState(null),[filter,setFilter]=useState('all');
  const [viewport,setViewport]=useState('desktop'),[resetConfirm,setResetConfirm]=useState(false);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[dismissConfirm,setDismissConfirm]=useState(false);
+ const [libraryOpen,setLibraryOpen]=useState(true);
  const dirty=draft!==null&&JSON.stringify(draft)!==JSON.stringify(dashboardLayoutForViewport(layout,role,viewport));
  const close=()=>{if(dirty){setDismissConfirm(true);return;}setOpen(false);};
  const apply=async()=>{
@@ -207,8 +208,10 @@ export function DashboardLayoutEditor({role,layout:source,onChange,onApply,disab
     <p className="react-help">Drag a panel by its handle; neighbours reflow when released. Use Alt + arrow keys for keyboard movement. Choose a size within each panel.</p>
     <div className="react-grid-editor-content">
      <GridEditor role={role} layout={draft} onChange={update} disabled={disabled||busy}/>
-     <aside className="react-grid-editor-library">
-      <h3>Panel library</h3>
+     <aside className={'react-grid-editor-library'+(libraryOpen?'':' collapsed')}>
+      <button type="button" className="react-grid-editor-library-toggle" aria-expanded={libraryOpen}
+        onClick={()=>setLibraryOpen(open=>!open)}>Panel library {libraryOpen?'−':'+'}</button>
+      <div className="react-grid-editor-library-body">
       <div className="react-dashboard-layout-filter">
        {['all','active','available'].map(value=><button type="button" key={value} aria-pressed={filter===value}
         onClick={()=>setFilter(value)}>{value==='all'?'All':value==='active'?'Added':'Available'}</button>)}
@@ -230,6 +233,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,onApply,disab
        <button type="button" disabled={busy||disabled} onClick={()=>update(old=>autoArrangeDashboardLayout(old,role))}>Auto Arrange</button>
       </div>
       <BackgroundSelector role={role} layout={draft} onChange={update} disabled={disabled||busy}/>
+      </div>
      </aside>
     </div>
     <footer className="react-grid-editor-footer">
