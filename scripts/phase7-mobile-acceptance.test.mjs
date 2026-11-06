@@ -51,8 +51,8 @@ test('Visual editor handles pointer cancel/lost capture, locks and keyboard resi
  assert.match(editor,/keyboard\(id,pos,'resize',e\.key\)/);
  assert.match(editor,/trapDialogTab\(e,dialogRef\.current,document\.activeElement\)/);
  assert.match(editor,/e\.stopPropagation\(\)/);
- assert.match(editor,/Apply Layout to Settings/);
- assert.match(editor,/Save Dashboard Settings/);
+ assert.match(editor,/Apply Changes/);
+ assert.match(editor,/onApply\(combined\)/);
 });
 
 test('GM unsaved layout draft survives background subscriptions and resets on account changes',()=>{
