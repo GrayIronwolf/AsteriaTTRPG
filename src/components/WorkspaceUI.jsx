@@ -66,15 +66,34 @@ export function Tabs({ tabs, active, onChange, ariaLabel = 'Workspace sections' 
   const navigationRef = useRef(null);
   useEffect(() => {
     const navigation = navigationRef.current;
-    const selected = Array.from(navigation?.querySelectorAll('[role="tab"]') || []).find(tab => tab.getAttribute('aria-selected') === 'true');
-    if(!navigation || !selected || navigation.scrollWidth <= navigation.clientWidth) return;
-    const viewport = navigation.getBoundingClientRect();
-    const item = selected.getBoundingClientRect();
-    const delta = tabVisibilityDelta({
-      viewportStart: viewport.left, viewportEnd: viewport.right,
-      itemStart: item.left, itemEnd: item.right
-    });
-    if(delta) navigation.scrollLeft += delta;
+    if(!navigation) return;
+    let frame = 0;
+    const revealSelected = () => {
+      const selected = navigation.querySelector('[role="tab"][aria-selected="true"]');
+      if(!selected || navigation.scrollWidth <= navigation.clientWidth) return;
+      const viewport = navigation.getBoundingClientRect();
+      const item = selected.getBoundingClientRect();
+      const delta = tabVisibilityDelta({
+        viewportStart: viewport.left, viewportEnd: viewport.right,
+        itemStart: item.left, itemEnd: item.right
+      });
+      if(delta) navigation.scrollLeft += delta;
+    };
+    // The tab strip can narrow when a desktop window becomes a tablet or a
+    // GM sidebar changes width, even though the active tab stays the same.
+    const scheduleReveal = () => {
+      if(frame) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => { frame = 0; revealSelected(); });
+    };
+    revealSelected();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(scheduleReveal) : null;
+    observer?.observe(navigation);
+    window.addEventListener('resize', scheduleReveal);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', scheduleReveal);
+      if(frame) window.cancelAnimationFrame(frame);
+    };
   }, [active, tabs]);
   const move = (event, index) => {
     if(!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
