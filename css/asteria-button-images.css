@@ -85,3 +85,60 @@ body .asteria-menu-button:is(:disabled,[aria-disabled="true"]) {--asteria-crysta
     transition:none!important;
   }
 }
+
+
+/* Phase 4 — image fidelity: three-slice the APPROVED source images.
+   Do not resize, replace or recolour the silver/gold artwork. CSS border-image
+   stretches only the unornamented central strip; pointed ends retain fixed
+   pixel widths. The icon family is an intentionally square image and is
+   never three-sliced. The live HTML label remains independent. */
+body .asteria-menu-button {
+  --asteria-button-source-cap:13%;
+  --asteria-button-render-cap:28px;
+}
+body .asteria-menu-button[data-asteria-button-size="small"] {
+  --asteria-button-source-cap:14%;
+  --asteria-button-render-cap:24px;
+}
+body .asteria-menu-button[data-asteria-button-size="standard"] {
+  --asteria-button-source-cap:13%;
+  --asteria-button-render-cap:28px;
+}
+body .asteria-menu-button[data-asteria-button-size="long"] {
+  --asteria-button-source-cap:12%;
+  --asteria-button-render-cap:42px;
+}
+body .asteria-menu-button[data-asteria-button-size="icon"] {
+  --asteria-button-source-cap:0%;
+  --asteria-button-render-cap:0px;
+}
+
+/* Preserve the pointed steel ends and thin top/bottom bevel at any width.
+   The full transparent frame is kept in ::before and the crystal in ::after.
+   border-image works with a zero-width transparent border in Chromium.
+   The 'fill' keyword draws the image's centre strip between the endcaps. */
+body :is(.asteria-menu-button,#globalNavigation > .crystal-button):not([data-asteria-button-size="icon"])::before {
+  background:none!important;
+  border:0 solid transparent!important;
+  border-image-source:var(--asteria-approved-frame)!important;
+  border-image-slice:0 var(--asteria-button-source-cap) 0 var(--asteria-button-source-cap) fill!important;
+  border-image-width:0 var(--asteria-button-render-cap) 0 var(--asteria-button-render-cap)!important;
+  border-image-outset:0!important;
+  border-image-repeat:stretch!important;
+}
+
+/* Preserve the crystal's pointed alpha mask too. Chromium and Safari
+   support -webkit-mask-box-image three-slice masks. Browsers without it retain
+   the Phase 3 transparent alpha-mask fallback and existing colour blending.
+   The colour/lighting only affects ::after, NEVER the steel frame. */
+@supports (-webkit-mask-box-image-slice: 0 12% 0 12% fill) {
+  body :is(.asteria-menu-button,#globalNavigation > .crystal-button):not([data-asteria-button-size="icon"])::after {
+    -webkit-mask-image:none!important;
+    mask-image:none!important;
+    -webkit-mask-box-image-source:var(--asteria-approved-crystal)!important;
+    -webkit-mask-box-image-slice:0 var(--asteria-button-source-cap) 0 var(--asteria-button-source-cap) fill!important;
+    -webkit-mask-box-image-width:0 var(--asteria-button-render-cap) 0 var(--asteria-button-render-cap)!important;
+    -webkit-mask-box-image-outset:0!important;
+    -webkit-mask-box-image-repeat:stretch!important;
+  }
+}
