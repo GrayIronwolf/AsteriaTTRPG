@@ -73,6 +73,25 @@ export function legacyGridDimensions(role,id,value){
   const pair=Object.hasOwn(map,value)?map[value]:null;
   return pair?clampGridDimensions(role,id,pair[0],pair[1]):defaultGridDimensions(role,id);
 }
+/** Resolve pointer movement from the *release* event, not a possibly stale
+ * React preview. Shared by touch, mouse and trackpad gestures in the editor.
+ * This is a proposal only: the layout reducer still rejects collisions/locks. */
+export function dashboardPointerProposal(role,id,rect,kind,deltaX=0,deltaY=0){
+  const current=validGridPlacement(role,id,rect);
+  const rule=dashboardGridRule(role,id);
+  if(!current||!rule||!['move','resize'].includes(kind))return null;
+  const dx=Number.isFinite(Number(deltaX))?Math.round(Number(deltaX)):0;
+  const dy=Number.isFinite(Number(deltaY))?Math.round(Number(deltaY)):0;
+  if(kind==='move')return {
+    ...current,
+    x:clamp(current.x+dx,0,DASHBOARD_GRID_COLUMNS-current.w),
+    y:clamp(current.y+dy,0,DASHBOARD_GRID_MAX_ROWS-current.h)
+  };
+  if(rule.fixed)return current;
+  const dimensions=clampGridDimensions(role,id,current.w+dx,current.h+dy);
+  return {...current,...dimensions,x:Math.min(current.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
+}
+
 export function gridRectanglesOverlap(a,b){
   return a.x<b.x+b.w && b.x<a.x+a.w && a.y<b.y+b.h && b.y<a.y+a.h;
 }
