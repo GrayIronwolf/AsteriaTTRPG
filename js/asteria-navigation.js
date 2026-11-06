@@ -21,6 +21,7 @@
   const byId = id=>document.getElementById(id);
   const escape = value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   let query='', groupId='', categoryId='', savedOnly=false, sortMode='relevance', limit=48, reading=false;
+  let searchFrame=0;
   const storageKey = kind=>`asteria.library.${kind}.${window.AsteriaFirebase?.getUser?.()?.uid || window.session?.uid || 'guest'}`;
   function readSaved(kind){try{const value=JSON.parse(localStorage.getItem(storageKey(kind))||'[]');return Array.isArray(value)?value.filter(id=>typeof id==='string').slice(0,100):[];}catch{return [];}}
   function save(kind,ids){try{localStorage.setItem(storageKey(kind),JSON.stringify(ids.slice(0,100)));}catch{/* Reading remains available when browser storage is disabled. */}}
@@ -98,6 +99,8 @@
     syncNavigation();
   }
   function show({group='',category='',search='',saved=false,sort='relevance',push=true}={}){
+    if(searchFrame && window.cancelAnimationFrame)window.cancelAnimationFrame(searchFrame);
+    searchFrame=0;
     groupId=GROUPS.some(g=>g.id===group)?group:'';
     categoryId=CATEGORIES.some(c=>c.id===category)?category:'';
     if(categoryId)groupId=CATEGORIES.find(c=>c.id===categoryId).group;
@@ -174,7 +177,17 @@
       ${!showResults&&recent.length?`<section class="library-collection"><h2>Recently viewed</h2><div class="library-results">${cards(recent)}</div></section>`:''}
       ${showResults?`<section class="library-collection"><h2>${category?escape(category.title):group?escape(group.title):'Search results'}</h2><p id="libraryResultCount" role="status" aria-live="polite">${rows.length} matching ${rows.length===1?'entry':'entries'} · Showing ${Math.min(limit,rows.length)}${savedOnly?' · Favourites only':''}</p><div class="library-results">${cards(rows.slice(0,limit))}</div>${!rows.length?'<p class="library-empty">No published entries match the selected filters. Clear filters or try another search.</p>':''}${rows.length>limit?'<button class="crystal-button" id="libraryLoadMore" type="button">Show more entries</button>':''}</section>`:''}
     </div>`;
-    byId('librarySearch')?.addEventListener('input',event=>{query=event.target.value;limit=48;render();route(false);});
+    byId('librarySearch')?.addEventListener('input',event=>{
+      query=event.target.value;
+      limit=48;
+      // Coalesce keystrokes within one paint frame. Rebuilding the entire
+      // library and normalising all search results on every input event is costly.
+      if(searchFrame && window.cancelAnimationFrame)window.cancelAnimationFrame(searchFrame);
+      if(window.requestAnimationFrame)searchFrame=window.requestAnimationFrame(()=>{
+        searchFrame=0;render();route(false);
+      });
+      else {searchFrame=0;render();route(false);}
+    });
     byId('libraryGroupFilter')?.addEventListener('change',event=>{
       groupId=GROUPS.some(g=>g.id===event.target.value)?event.target.value:'';
       if(categoryId&&CATEGORIES.find(c=>c.id===categoryId)?.group!==groupId)categoryId='';
