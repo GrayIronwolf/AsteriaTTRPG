@@ -1,0 +1,157 @@
+/* ASTERIA BUTTON FAMILIES — Phase 2 (2026-11-06)
+   Only dimensions and their responsive placement. Phase 3 will supply separate
+   approved steel-frame and colourable crystal assets. Do not bake labels into
+   images or interfere with native button presses and navigation.
+
+   Design masters (CSS px): small 160×40, standard 220×48,
+   long 360×53, icon 53×53.
+   Top navigation and dashboard tabs scale their *width* down when required to
+   prevent header collisions; heights retain their family dimensions. */
+:root {
+  --asteria-button-small-width:160px;
+  --asteria-button-small-height:40px;
+  --asteria-button-standard-width:220px;
+  --asteria-button-standard-height:48px;
+  --asteria-button-long-width:360px;
+  --asteria-button-long-height:53px;
+  --asteria-button-icon-width:53px;
+  --asteria-button-icon-height:53px;
+}
+
+/* Width/height metadata is also the contract for the upcoming separate
+   frame and crystal image layers; graphics do not define button hit targets. */
+body .asteria-menu-button[data-asteria-button-size="small"] {
+  --asteria-button-design-width:var(--asteria-button-small-width);
+  --asteria-button-design-height:var(--asteria-button-small-height);
+  --asteria-button-side-width:16px;
+  --button-padding:6px;--button-depth:5px;--button-bezel:4px;--menu-tip:16px;
+  --asteria-button-inline-padding:16px;
+  --asteria-button-text-size:.84rem;
+}
+body .asteria-menu-button[data-asteria-button-size="standard"] {
+  --asteria-button-design-width:var(--asteria-button-standard-width);
+  --asteria-button-design-height:var(--asteria-button-standard-height);
+  --asteria-button-side-width:19px;
+  --button-padding:8px;--button-depth:6px;--button-bezel:5px;--menu-tip:19px;
+  --asteria-button-inline-padding:18px;
+  --asteria-button-text-size:.9rem;
+}
+body .asteria-menu-button[data-asteria-button-size="long"] {
+  --asteria-button-design-width:var(--asteria-button-long-width);
+  --asteria-button-design-height:var(--asteria-button-long-height);
+  --asteria-button-side-width:20px;
+  --button-padding:9px;--button-depth:7px;--button-bezel:6px;--menu-tip:20px;
+  --asteria-button-inline-padding:20px;
+  --asteria-button-text-size:.94rem;
+}
+body .asteria-menu-button[data-asteria-button-size="icon"] {
+  --asteria-button-design-width:var(--asteria-button-icon-width);
+  --asteria-button-design-height:var(--asteria-button-icon-height);
+  --asteria-button-side-width:15px;
+  --button-padding:6px;--button-depth:6px;--button-bezel:5px;--menu-tip:15px;
+  --asteria-button-inline-padding:7px;
+  --asteria-button-text-size:1rem;
+}
+body .asteria-menu-button[data-asteria-button-size] {
+  box-sizing:border-box!important;
+  block-size:var(--asteria-button-design-height)!important;
+  min-block-size:var(--asteria-button-design-height)!important;
+  font-size:var(--asteria-button-text-size)!important;
+  padding-inline:var(--asteria-button-inline-padding)!important;
+  /* Keep the existing steel sidewall, crystal hue and press travel intact. */
+}
+
+/* Explicit top-nav selectors outrank legacy ID-based 53px height rules. */
+body #globalNavigation .crystal-button[data-asteria-button-size],
+body #accountControls .crystal-button[data-asteria-button-size],
+body #accountControls #loginToggle[data-asteria-button-size],
+body .asteria-header #settingsToggle[data-asteria-button-size] {
+  block-size:var(--asteria-button-design-height)!important;
+  height:var(--asteria-button-design-height)!important;
+  min-block-size:var(--asteria-button-design-height)!important;
+  min-height:var(--asteria-button-design-height)!important;
+  padding-inline:var(--asteria-button-inline-padding)!important;
+  font-size:var(--asteria-button-text-size)!important;
+  box-sizing:border-box!important;
+}
+body .asteria-header #globalNavigation .crystal-button[data-asteria-button-size],
+body .asteria-header #accountControls .crystal-button[data-asteria-button-size],
+body .asteria-header #settingsToggle[data-asteria-button-size] {
+  inline-size:var(--asteria-button-design-width)!important;
+  width:var(--asteria-button-design-width)!important;
+  max-inline-size:100%;
+  flex:0 0 auto;
+}
+body #globalNavigation #compendiumQuickToggle[data-asteria-button-size="icon"],
+body .asteria-header #settingsToggle[data-asteria-button-size="icon"] {
+  inline-size:53px!important;width:53px!important;
+  min-inline-size:53px!important;min-width:53px!important;
+  padding-inline:7px!important;
+}
+/* Long text cannot force overlap with account buttons or the logo on
+   smaller wide-screen displays. Preserved maximum is the approved 360px. */
+@media (min-width:1680px) {
+  body .asteria-header #globalNavigation .crystal-button[data-asteria-button-size="long"] {
+    inline-size:clamp(195px,11vw,360px)!important;
+    width:clamp(195px,11vw,360px)!important;
+  }
+  body .asteria-header #globalNavigation #sidebarHomeButton[data-asteria-button-size="small"] {
+    inline-size:clamp(106px,8vw,160px)!important;
+    width:clamp(106px,8vw,160px)!important;
+  }
+  body .asteria-header #accountControls .crystal-button[data-asteria-button-size="small"] {
+    inline-size:clamp(106px,8vw,160px)!important;
+    width:clamp(106px,8vw,160px)!important;
+  }
+  body .asteria-header #accountControls .crystal-button[data-asteria-button-size="standard"] {
+    inline-size:clamp(170px,10vw,220px)!important;
+    width:clamp(170px,10vw,220px)!important;
+  }
+}
+
+/* Inside the slide-out navigation, every label has the full available width.
+   The Compendium arrow remains an independent 53px control. */
+@media (max-width:1679px) {
+  body #settingsPanel #globalNavigation > .crystal-button[data-asteria-button-size],
+  body #settingsPanel #accountControls .crystal-button[data-asteria-button-size] {
+    inline-size:100%!important;width:100%!important;max-inline-size:100%!important;
+  }
+  body #settingsPanel #globalNavigation .compendium-split > a[data-asteria-button-size="long"] {
+    inline-size:auto!important;width:auto!important;flex:1 1 0!important;
+    min-inline-size:0!important;max-inline-size:none!important;
+  }
+  body #settingsPanel #compendiumQuickToggle[data-asteria-button-size="icon"] {
+    inline-size:53px!important;width:53px!important;flex:0 0 53px!important;
+  }
+}
+/* Tab row remains horizontally scrollable; standard is the design family,
+   but long labels may grow to their intrinsic text width. */
+body :is(.react-character-dashboard,.react-gm-dashboard) .react-workspace-main > .react-tabs .asteria-menu-button[data-asteria-button-size="standard"] {
+  block-size:48px!important;height:48px!important;min-height:48px!important;
+  inline-size:auto!important;width:auto!important;
+  min-inline-size:clamp(160px,10vw,220px)!important;
+  padding-inline:16px!important;white-space:nowrap!important;flex:0 0 auto!important;
+}
+/* Compendium quick navigation is a vertical list, not four 160px columns. */
+body .compendium-quick-menu .asteria-menu-button[data-asteria-button-size="small"] {
+  min-block-size:40px!important;min-height:40px!important;
+  block-size:auto!important;height:auto!important;
+  inline-size:100%!important;width:100%!important;
+  padding-block:6px!important;white-space:normal!important;
+}
+/* Landing actions use the long artwork family, but may wrap on narrow screens. */
+body .hero-actions .asteria-menu-button[data-asteria-button-size="long"] {
+  inline-size:min(360px,100%)!important;
+  width:min(360px,100%)!important;
+  max-inline-size:100%!important;
+}
+/* Never force the tiny HP/MP/resource steppers, dice controls, inventory
+   reorder handles or gameplay inputs into a large navigation image family. */
+@media (max-width:600px) {
+  body .asteria-menu-button[data-asteria-button-size="standard"] {
+    --asteria-button-inline-padding:14px;
+  }
+  body .asteria-menu-button[data-asteria-button-size="long"] {
+    --asteria-button-inline-padding:16px;
+  }
+}
