@@ -4,7 +4,7 @@ import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_S
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
  resizeDashboardGridPanel,lockDashboardGridPanel,autoArrangeDashboardLayout,
- setDashboardBackground,dashboardBackgroundForPanel} from '../state/dashboardLayoutModel.mjs';
+ setDashboardBackground} from '../state/dashboardLayoutModel.mjs';
 const labels={obsidian:'Obsidian Stone',slate:'Stone Slate',arcane:'Arcane Mist'};
 const registry=role=>DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
 function BackgroundSelector({id,role,layout,onChange,disabled}){
