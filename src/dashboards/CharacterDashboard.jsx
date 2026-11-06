@@ -9,6 +9,7 @@ import { AsteriaAppShell, DashboardNavigation, Modal, StatusPill } from '../comp
 import { DashboardInformationRow } from '../components/DashboardInformation.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { pendingLootEvent, pendingMagicRewardEvent, questNoticeEvent, xpNoticeEvent } from '../state/liveEventReducer.mjs';
+import { acknowledgeGameplayNotice } from '../state/gameplayIntegrationView.mjs';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { questRewardSummary } from '../state/questRewardModel.mjs';
 import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
@@ -130,6 +131,8 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const [acknowledged, setAcknowledged] = useState(() => new Set());
   const processedLoot = useRef(new Set());
   const processedMagic = useRef(new Set());
+  const pendingNoticeAcknowledgements=useRef(new Set());
+  const [noticeError,setNoticeError]=useState('');
   const rawCharacter = live.character;
   const catalog = useMemo(()=>rawCharacter?talentCatalog(rawCharacter):[],[rawCharacter]);
   const character = useMemo(()=>rawCharacter?reconcileCharacterSystems(rawCharacter,catalog,{grantIncrease:true,encounter:live.encounter,now:live.clock}):null,[rawCharacter,catalog,live.encounter,live.clock]);
@@ -142,6 +145,8 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     setAcknowledged(new Set());
     processedLoot.current.clear();
     processedMagic.current.clear();
+    pendingNoticeAcknowledgements.current.clear();
+    setNoticeError('');
   },[campaignId,characterId]);
   useEffect(()=>{
     const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party'].includes(event.detail?.tab)))setTab(event.detail.tab);};
@@ -161,17 +166,23 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   const questEvent = questNoticeEvent(live.events.filter(event => !event.targetCharacterId || event.targetCharacterId === characterId), acknowledged);
   const lootEvent = pendingLootEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedLoot.current.has(event.id)));
   const magicEvent = pendingMagicRewardEvent(live.events.filter(event => (!event.targetCharacterId || event.targetCharacterId === characterId) && !processedMagic.current.has(event.id)));
-  const closeXP = async () => {
-    if(!xpEvent) return;
-    setAcknowledged(previous => new Set([...previous, xpEvent.id]));
-    await firebaseService.acknowledgeEvent(campaignId, xpEvent.id, { status: 'acknowledged' }).catch(() => {});
+  const acknowledgeNotice=async (event,openQuest=false)=>{
+    if(!event || pendingNoticeAcknowledgements.current.has(event.id))return;
+    pendingNoticeAcknowledgements.current.add(event.id);
+    setNoticeError('');
+    try{
+      await acknowledgeGameplayNotice(event,id=>
+        firebaseService.acknowledgeEvent(campaignId,id,{status:'acknowledged'}));
+      setAcknowledged(previous=>new Set([...previous,event.id]));
+      if(openQuest)setTab('quest');
+    }catch(error){
+      setNoticeError(error?.message||'Could not acknowledge this notification. Retry to continue.');
+    }finally{
+      pendingNoticeAcknowledgements.current.delete(event.id);
+    }
   };
-  const closeQuest = async openQuest => {
-    if(!questEvent) return;
-    setAcknowledged(previous => new Set([...previous, questEvent.id]));
-    if(openQuest) setTab('quest');
-    await firebaseService.acknowledgeEvent(campaignId, questEvent.id, { status:'acknowledged' }).catch(() => {});
-  };
+  const closeXP=()=>acknowledgeNotice(xpEvent);
+  const closeQuest=openQuest=>acknowledgeNotice(questEvent,openQuest);
   const resolvedLoot = () => { if(lootEvent) processedLoot.current.add(lootEvent.id); };
   const resolvedMagic = () => { if(magicEvent) processedMagic.current.add(magicEvent.id); };
   if(live.error && !character) return <div className="react-route-state" role="alert">{live.error}</div>;
@@ -205,6 +216,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
+    {noticeError?<p className="react-action-message" role="alert">{noticeError}</p>:null}
     {editable && lootEvent ? <LootModal campaignId={campaignId} character={character} event={lootEvent} editable={editable} onResolved={resolvedLoot} /> : editable && magicEvent ? <MagicRewardModal campaignId={campaignId} character={character} event={magicEvent} onResolved={resolvedMagic} /> : isOwner && questEvent ? <QuestAssignmentModal event={questEvent} onClose={()=>closeQuest(false)} onOpen={()=>closeQuest(true)} /> : isOwner && xpEvent ? <XPModal event={xpEvent} onClose={closeXP} /> : null}
   </AsteriaAppShell>;
 }

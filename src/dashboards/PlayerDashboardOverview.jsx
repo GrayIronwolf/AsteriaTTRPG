@@ -16,6 +16,7 @@ import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveW
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { knownSpells, quests as selectQuests, unlockedClassTalents } from './characterWorkspaceData.js';
+import { openDashboardQuests } from '../state/gameplayIntegrationView.mjs';
 
 function values(value) {
   return Array.isArray(value) ? value : [];
@@ -270,7 +271,7 @@ function RestRecoveryPanel({ campaignId, character, editable, busy, run, style }
 }
 
 function SummaryPanels({ character, characters, partyWorkspace, onNavigate, only = '' }) {
-  const currentQuests = selectQuests(character, partyWorkspace).filter(quest => ['Active','Awaiting Review','On Hold'].includes(quest.status || 'Active')).sort((a,b)=>Number(Boolean(b.tracked))-Number(Boolean(a.tracked))).slice(0, 3);
+  const currentQuests = openDashboardQuests(selectQuests(character, partyWorkspace)).slice(0,3);
   const journals = values(character.journal).slice().sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)).slice(0, 3);
   const party = Object.values(characters || {}).filter(member => member.id !== character.id).slice(0, 4);
   const panels = {

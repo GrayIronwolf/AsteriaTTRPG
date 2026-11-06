@@ -1,30 +1,18 @@
 import React from 'react';
 import { DashboardPanel } from '../components/WorkspaceUI.jsx';
 import { resourcePair } from '../state/specialDamageModel.mjs';
+import { inventoryItems, quests as playerQuestRows } from './characterWorkspaceData.js';
+import { openDashboardQuests, encounterRosterCount } from '../state/gameplayIntegrationView.mjs';
 
 // These are read-only views of existing Firebase-backed records. They never
 // create parallel quest, inventory, resource or encounter state.
 const arr=value=>Array.isArray(value)?value:[];
 const name=value=>String(value?.name||value?.title||value?.text||'Unnamed').slice(0,100);
 const number=value=>Number.isFinite(Number(value))?Number(value):0;
-const activeQuest=quest=>!['completed','failed','abandoned','archived','declined'].includes(
-  String(quest?.status||'active').toLowerCase());
 const itemQuantity=item=>Math.max(0,number(item?.qty??item?.quantity??1));
-const itemRows=character=>{
-  const inventory=arr(character?.inventory);
-  const storages=arr(character?.storages);
-  return inventory.length?inventory:storages.flatMap(store=>arr(store?.items));
-};
-const questRows=(character,workspace)=> {
-  const rows=[...arr(workspace?.questLog),...arr(character?.quests||character?.questLog)];
-  const found=new Map();
-  rows.forEach((row,index)=>{
-    if(!row||typeof row!=='object')return;
-    const id=String(row.id||row.slug||row.name||row.title||index);
-    if(!found.has(id))found.set(id,row);
-  });
-  return [...found.values()].filter(activeQuest);
-};
+// Use the same canonical inventory/quest selectors as the full Player workspaces.
+const itemRows=character=>inventoryItems(character);
+const questRows=(character,workspace)=>openDashboardQuests(playerQuestRows(character,workspace));
 const stat=(label,value)=><div className="react-focus-stat" key={label}><span>{label}</span><strong>{value}</strong></div>;
 const OpenButton=({tab,onNavigate,children})=><button type="button" onClick={()=>onNavigate(tab)}>{children}</button>;
 function FocusPanel({title,eyebrow,children,tab,onNavigate,button}){
@@ -57,8 +45,8 @@ export function PlayerExplorationOverview({campaign={},partyWorkspace={},charact
 export function PlayerQuestTracker({character={},partyWorkspace={},onNavigate}){
   const quests=questRows(character,partyWorkspace);
   return <FocusPanel title="Quest Tracker" eyebrow="Player Focus" tab="quest" button="Quest Log" onNavigate={onNavigate}>
-    <div className="react-focus-stats">{stat('Active quests',quests.length)}</div>
-    <PreviewList rows={quests} empty="No active quests are assigned." render={row=><><b>{name(row)}</b><span>{String(row.status||'Active')}</span></>}/>
+    <div className="react-focus-stats">{stat('Open quests',quests.length)}</div>
+    <PreviewList rows={quests} empty="No open personal or shared quests." render={row=><><b>{name(row)}</b><span>{String(row.status||'Active')}{row.tracked?' · Tracked':''}</span></>}/>
   </FocusPanel>;
 }
 export function PlayerInventoryOverview({character={},onNavigate}){
@@ -70,7 +58,7 @@ export function PlayerInventoryOverview({character={},onNavigate}){
 }
 export function GMCombatOverview({encounter={},session={},characters={},onNavigate}){
   const combat=encounter?.combat||encounter||{};
-  const combatants=arr(combat.combatants).length||arr(combat.enemies).length;
+  const combatants=encounterRosterCount(encounter);
   const running=combat.status==='active'||combat.active===true;
   return <FocusPanel title="Combat Overview" eyebrow="GM Focus" tab="main" button="Encounter Board" onNavigate={onNavigate}>
     <div className="react-focus-stats">{stat('Encounter',running?'Active':String(combat.status||'Idle'))}{stat('Combatants',combatants)}{stat('Party',Object.keys(characters||{}).length)}{stat('Session',String(session.status||'Idle'))}</div>
@@ -86,9 +74,9 @@ export function GMExplorationOverview({workspace={},campaign={},onNavigate}){
   </FocusPanel>;
 }
 export function GMQuestTracker({workspace={},onNavigate}){
-  const quests=arr(workspace.quests),active=quests.filter(activeQuest);
+  const quests=arr(workspace.quests),active=openDashboardQuests(quests);
   return <FocusPanel title="Quest Tracker" eyebrow="GM Focus" tab="quests" button="Manage Quests" onNavigate={onNavigate}>
-    <div className="react-focus-stats">{stat('Active quests',active.length)}{stat('Total quests',quests.length)}</div>
+    <div className="react-focus-stats">{stat('Open quests',active.length)}{stat('Total quests',quests.length)}</div>
     <PreviewList rows={active} empty="No active quests recorded." render={row=><><b>{name(row)}</b><span>{String(row.status||'Active')}</span></>}/>
   </FocusPanel>;
 }
