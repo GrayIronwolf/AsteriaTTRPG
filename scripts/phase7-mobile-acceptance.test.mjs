@@ -48,7 +48,7 @@ test('Visual editor handles pointer cancel/lost capture, locks and keyboard resi
  assert.match(editor,/releasePointerCapture\?\.\(e\.pointerId\)/);
  assert.match(editor,/if\(disabled\|\|layout\.lockedPositions\.includes\(id\)\)return/);
  assert.match(editor,/dashboardKeyboardProposal\(role,id,rect,kind,key\)/);
- assert.match(editor,/keyboard\(id,pos,'resize',e\.key\)/);
+ assert.match(editor,/dashboardPanelSizeChoices\(role,id\)/);
  assert.match(editor,/trapDialogTab\(e,dialogRef\.current,document\.activeElement\)/);
  assert.match(editor,/e\.stopPropagation\(\)/);
  assert.match(editor,/Apply Changes/);
