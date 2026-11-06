@@ -27,13 +27,16 @@ export class DashboardErrorBoundary extends React.Component {
 }
 
 function AsteriaRouteOutlet() {
-  const { route } = useAsteriaApp();
+  const { route, account } = useAsteriaApp();
   useEffect(() => {
     if(route) activateReactDashboard();
   }, [route]);
 
   if(!route) return null;
-  return <DashboardErrorBoundary key={`${route.type}/${route.campaignId}/${route.characterId || ''}`}><Suspense fallback={<div className="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>}>
+  // Changing Firebase accounts must discard the previous user's mounted
+  // dashboard, subscriptions, modal drafts and pending navigation state.
+  const accountScope=account?.user?.uid||'signed-out';
+  return <DashboardErrorBoundary key={`${accountScope}/${route.type}/${route.campaignId}/${route.characterId || ''}`}><Suspense fallback={<div className="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>}>
     {route.type === 'gm'
       ? <GMDashboard key={route.campaignId} campaignId={route.campaignId} />
       : route.type === 'owned-character' ? <OwnedCharacterDashboard key={route.characterId} characterId={route.characterId} />
