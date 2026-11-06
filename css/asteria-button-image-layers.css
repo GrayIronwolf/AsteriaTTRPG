@@ -79,6 +79,10 @@ body #globalNavigation > .crystal-button[data-asteria-button-size]::after {
   background-repeat:no-repeat!important;
   background-size:100% 100%!important;
   background-position:center center!important;
+  mask-image:var(--asteria-button-crystal-art)!important;
+  mask-size:100% 100%!important;
+  mask-position:center center!important;
+  mask-repeat:no-repeat!important;
   border:0!important;
   box-shadow:none!important;
   opacity:1!important;
