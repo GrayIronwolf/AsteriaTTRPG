@@ -473,9 +473,13 @@ export function GMDashboard({ campaignId }) {
   const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
   const [dashboardLayoutError,setDashboardLayoutError] = useState('');
   const dashboardDraftDirty=useRef(false);
+  const dashboardDraftRevision=useRef(0);
+  const dashboardSaveScope=useRef('');
   const accountUid=firebaseService.currentUser()?.uid || '';
   useEffect(()=>{
     dashboardDraftDirty.current=false;
+    dashboardDraftRevision.current++;
+    dashboardSaveScope.current=campaignId+':'+accountUid;
     setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
     if(!campaignId||!accountUid)return;
@@ -515,24 +519,27 @@ export function GMDashboard({ campaignId }) {
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const saveDashboardLayout=async layout=>{
     const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
-    if(result?.ok)setSavedDashboardLayout(layout);
+    if(result?.ok&&dashboardSaveScope.current===campaignId+':'+accountUid)setSavedDashboardLayout(layout);
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
   };
   const updateDashboardSettingsDraft=change=>{
     dashboardDraftDirty.current=true;
+    dashboardDraftRevision.current++;
     setDashboardSettingsDraft(change);
   };
   const saveDashboardSettings=async()=>{
     if(savingDashboardSettings)return;
+    const saveScope=campaignId+':'+accountUid,saveRevision=dashboardDraftRevision.current;
     setSavingDashboardSettings(true);
     setDashboardSettingsMessage('Saving panel settings...');
     try{
       const result=await saveDashboardLayout(dashboardSettingsDraft);
-      if(result?.ok)dashboardDraftDirty.current=false;
-      setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':'Dashboard panel settings saved.');
+      if(dashboardSaveScope.current!==saveScope)return;
+      if(result?.ok&&dashboardDraftRevision.current===saveRevision)dashboardDraftDirty.current=false;
+      setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':dashboardDraftDirty.current?'Earlier settings saved; newer changes still need saving.':'Dashboard panel settings saved.');
     }catch(error){
-      setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
+      if(dashboardSaveScope.current===saveScope)setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
     }finally{setSavingDashboardSettings(false);}
   };
   const gmPanel=id=>{

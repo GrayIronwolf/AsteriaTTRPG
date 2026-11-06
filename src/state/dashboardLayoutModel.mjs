@@ -1,7 +1,7 @@
 import {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
-  normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount
+  normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
 } from './dashboardGridModel.mjs';
 export {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
@@ -264,6 +264,15 @@ function visiblePlacements(layout){
   for(const id of layout.order)if(!layout.hidden.includes(id)&&layout.placements[id])
     result[id]=layout.placements[id];
   return result;
+}
+/** Test a proposed editor position against the exact saved-layout rules.
+ * Pointer previews and keyboard feedback must not imply that blocked moves
+ * or resizes will be saved. Hidden and locked panels cannot be edited. */
+export function dashboardGridCandidateIsFree(layout,role,id,candidate){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(previous.hidden.includes(id)||previous.lockedPositions.includes(id)||!previous.order.includes(id))return false;
+  if(!previous.placements[id]||!validGridPlacement(role,id,candidate))return false;
+  return gridPositionIsFree(candidate,visiblePlacements(previous),id);
 }
 /** Resize width and height independently, enforcing role-specific panel size rules. */
 export function resizeDashboardGridPanel(layout,role,id,width,height){
