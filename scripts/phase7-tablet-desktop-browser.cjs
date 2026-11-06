@@ -12,6 +12,8 @@ require('./local-static-server.js');
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
+ page.on('console',message=>{if(['warning','error'].includes(message.type()))console.log('BROWSER CONSOLE',message.type(),message.text().slice(0,1200));});
+ page.on('requestfailed',request=>console.log('BROWSER REQUEST FAILED',request.url(),request.failure()?.errorText));
  await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
  const base='http://127.0.0.1:8123/?reactFixture=1';
  await page.goto(base,{waitUntil:'networkidle'});
