@@ -148,3 +148,8 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
  .react-grid-editor-size-options button{min-height:27px}
 }
 @media(prefers-reduced-motion:reduce){.react-grid-editor-tile,.react-grid-editor-tile.dragging{transition:none!important;animation:none!important}}
+
+.react-grid-editor-lock{position:absolute;z-index:4;top:2px;right:2px;min-height:28px;padding:1px 5px;font-size:.66rem;background:#13283a;color:#e4ddc9;border:1px solid #68859a}
+.react-grid-editor-lock[aria-pressed="true"]{color:#ffe1a5;border-color:#d6af68}
+.react-grid-editor-lock:focus-visible,.react-grid-editor-size-options button:focus-visible,.react-grid-editor-library-item:focus-visible{outline:3px solid #c7e9ff!important;outline-offset:2px}
+.react-grid-editor-tile-main{padding-top:25px!important}
