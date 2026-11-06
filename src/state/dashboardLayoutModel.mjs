@@ -349,6 +349,35 @@ export function dashboardPanelSizeChoices(role,id){
   return proposed.map(option=>({...option,...clampGridDimensions(role,id,option.w,option.h)}))
     .filter(option=>{const key=option.w+'x'+option.h;if(seen.has(key))return false;seen.add(key);return true;});
 }
+function reflowDashboardPlacements(previous,role,id,candidate){
+  const ids=previous.order.filter(name=>!previous.hidden.includes(name));
+  const occupied={};
+  const reserve=(name,pos)=>{occupied[name]=pos;};
+  for(const name of previous.lockedPositions){
+    if(name===id||!ids.includes(name))continue;
+    const saved=previous.placements[name];
+    if(saved)reserve(name,saved);
+  }
+  if(!gridPositionIsFree(candidate,occupied,id))return null;
+  reserve(id,candidate);
+  const result={...previous.placements,[id]:candidate};
+  for(const name of ids){
+    if(occupied[name])continue;
+    const saved=previous.placements[name];
+    if(saved&&gridPositionIsFree(saved,occupied,name)){
+      result[name]=saved;reserve(name,saved);continue;
+    }
+    if(!saved)continue;
+    let found=null;
+    for(let y=0;y<=600-saved.h&&!found;y++)
+      for(let x=0;x<=DASHBOARD_GRID_COLUMNS-saved.w;x++){
+        const option={x,y,w:saved.w,h:saved.h};
+        if(gridPositionIsFree(option,occupied,name)){found=option;break;}
+      }
+    if(found){result[name]=found;reserve(name,found);}
+  }
+  return result;
+}
 /** Other unlocked panels move out of the way; locked panels never move. */
 export function placeDashboardGridPanel(layout,role,id,x,y){
   const previous=normalizeDashboardLayout(layout,role);
@@ -362,8 +391,8 @@ export function placeDashboardGridPanel(layout,role,id,x,y){
     .filter(name=>previous.placements[name]).map(name=>[name,previous.placements[name]]));
   if(!gridPositionIsFree(candidate,locked,id))return previous;
   const prioritized=[id,...previous.order.filter(name=>name!==id)];
-  const placements=packGridPlacements(role,prioritized,previous.hidden,
-    {...previous.placements,[id]:candidate},previous.lockedPositions);
+  const placements=reflowDashboardPlacements(previous,role,id,candidate);
+  if(!placements)return previous;
   return {...previous,mode:'custom',preset:'custom',order:prioritized,placements};
 }
 /** Select an explicit size without drag handles; resolve unlocked collisions. */
@@ -377,7 +406,7 @@ export function fitDashboardGridPanel(layout,role,id,width,height){
   if(old.w===dimensions.w&&old.h===dimensions.h)return previous;
   const candidate={...old,...dimensions,x:Math.min(old.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
   const prioritized=[id,...previous.order.filter(name=>name!==id)];
-  const placements=packGridPlacements(role,prioritized,previous.hidden,
-    {...previous.placements,[id]:candidate},previous.lockedPositions);
+  const placements=reflowDashboardPlacements(previous,role,id,candidate);
+  if(!placements)return previous;
   return {...previous,mode:'custom',preset:'custom',order:prioritized,placements};
 }
