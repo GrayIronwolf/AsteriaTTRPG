@@ -14,7 +14,7 @@ test('Active Player/GM tab is rechecked when tablet/desktop layout width changes
  assert.match(ui,/observer\?\.disconnect\(\)/);
  assert.match(ui,/window\.cancelAnimationFrame\(frame\)/);
  assert.match(ui,/navigation\.querySelector\('\[role="tab"\]\[aria-selected="true"\]'\)/);
- assert.match(ui,/scrollLeft \+= delta/);
+ assert.match(ui,/navigation\.scrollTo\(\{left,behavior:'instant'\}\)/);
  assert.equal(tabVisibilityDelta({viewportStart:0,viewportEnd:500,itemStart:475,itemEnd:605}),105);
  assert.equal(tabVisibilityDelta({viewportStart:0,viewportEnd:900,itemStart:475,itemEnd:605}),0);
 });
