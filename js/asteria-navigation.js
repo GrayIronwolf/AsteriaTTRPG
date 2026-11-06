@@ -116,7 +116,22 @@
   }
   function cards(rows){
     const saved=new Set(readSaved('favourites'));
-    return rows.map(entry=>`<article class="library-entry"><a href="#${escape(entry.route)}" data-library-entry="${escape(entry.id)}"><span class="library-entry-kind">${escape(CATEGORIES.find(c=>c.id===classify(entry))?.title||entry.domain)}</span><h3>${escape(entry.title)}</h3><p>${escape(String(entry.summary||'').slice(0,160))}</p>${entry.metadata?.['Asteria ID Index Code']?`<small>${escape(entry.metadata['Asteria ID Index Code'])}</small>`:''}</a><button type="button" class="library-favourite" data-library-favourite="${escape(entry.id)}" aria-label="${saved.has(entry.id)?'Remove':'Add'} ${escape(entry.title)} ${saved.has(entry.id)?'from':'to'} favourites" aria-pressed="${saved.has(entry.id)}">${saved.has(entry.id)?'★':'☆'}</button></article>`).join('');
+    return rows.map(entry=>{
+      const category=CATEGORIES.find(c=>c.id===classify(entry));
+      const code=definitionCode(entry);
+      const path=Array.isArray(entry.categoryPath)?entry.categoryPath.filter(Boolean).slice(0,3):[];
+      const summary=String(entry.summary||entry.description||'').trim().slice(0,170);
+      return '<article class="library-entry"><a href="#'+escape(entry.route)+'" data-library-entry="'+escape(entry.id)+'">'+
+        '<span class="library-entry-kind">'+escape(category?.title||entry.domain)+'</span>'+
+        '<h3>'+escape(entry.title)+'</h3>'+
+        (summary?'<p>'+escape(summary)+'</p>':'<p class="library-entry-no-summary">Open to view this definition.</p>')+
+        (path.length?'<span class="library-entry-path">'+escape(path.join(' / '))+'</span>':'')+
+        (code?'<span class="library-entry-code" title="Permanent Asteria ID Index Code">'+escape(code)+'</span>':'')+
+        '<span class="library-entry-open">View definition</span></a>'+
+        '<button type="button" class="library-favourite" data-library-favourite="'+escape(entry.id)+'" aria-label="'+
+        (saved.has(entry.id)?'Remove':'Add')+' '+escape(entry.title)+' '+(saved.has(entry.id)?'from':'to')+
+        ' favourites" aria-pressed="'+saved.has(entry.id)+'">'+(saved.has(entry.id)?'★':'☆')+'</button></article>';
+    }).join('');
   }
   function render(){
     const view=byId('compendiumLibrary');if(!view)return;
