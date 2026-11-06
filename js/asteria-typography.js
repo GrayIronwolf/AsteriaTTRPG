@@ -108,9 +108,9 @@
     host.dataset.asteriaTypographyHost='true';
     host.classList.add('asteria-typography-controls');
     // Keep a visible heading after replacing the placeholder settings contents.
-    const title=document.createElement('h3');
-    title.textContent='Typography';
-    host.appendChild(title);
+    const sectionHeading=document.createElement('h3');
+    sectionHeading.textContent='Typography';
+    host.appendChild(sectionHeading);
     const intro=document.createElement('p');
     intro.className='asteria-typography-help';
     intro.textContent='Choose a decorative heading font and a readable text font. Fonts save automatically on this device for the signed-in account.';
