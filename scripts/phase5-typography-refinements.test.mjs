@@ -27,6 +27,7 @@ function runtime(){
   const host=el('section');
   const document={
     readyState:'loading',addEventListener(name,fn){listeners[name]=fn;},createElement:el,
+    getElementById(id){return id==='asteriaTypographyMenu'?host:null;},
     querySelectorAll(selector){return selector==='[data-asteria-typography-host]'?[host]:selector==='[data-asteria-font-status]'?all(host).filter(x=>x.dataset.asteriaFontStatus):[];},
     head:{appendChild(link){links.push(link);}},body:{dataset:{role:'account'}},
     documentElement:{dataset:{},style:{setProperty:(key,val)=>css.set(key,val)}}
