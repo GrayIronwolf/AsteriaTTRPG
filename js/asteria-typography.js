@@ -31,7 +31,13 @@
   };
   function userId(){
     let account=null;
-    try{account=window.AsteriaAuthBridge?.getSession?.()?.uid || window.session?.uid || window.AsteriaFirebase?.getUser?.()?.uid || window.session?.account;}catch{/* use local guest key */}
+    try{
+      const session=window.AsteriaAuthBridge?.getSession?.() || window.session || {};
+      // During sign-out Firebase can still briefly report the old user.
+      // Never attribute that user's font choices to the public guest view.
+      if(session.role==='guest' && !session.uid && !session.account)return 'guest';
+      account=session.uid || session.account || window.session?.uid || window.AsteriaFirebase?.getUser?.()?.uid;
+    }catch{/* use local guest key */}
     return String(account || 'guest').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,128);
   }
   function key(){return 'asteria.typography.v1.'+userId();}
