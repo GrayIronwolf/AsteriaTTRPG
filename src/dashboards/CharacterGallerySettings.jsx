@@ -1,6 +1,6 @@
 import { ThemeControls } from '../components/ThemeControls.jsx';
 import { DashboardLayoutEditor } from '../components/DashboardCustomisation.jsx';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { OPTIONAL_INFORMATION_FIELDS, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
@@ -110,25 +110,39 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   }),[savedPreferencesKey]);
   const [preferences,setPreferences]=useState(saved);
   const action=useSaveAction();
-  React.useEffect(()=>setPreferences(saved),[saved]);
+  const dirty=useRef(false),revision=useRef(0);
+  const scope=campaignId+':'+character.id;
+  const scopeRef=useRef(scope);
+  // A new character must never inherit another character's unsaved settings.
+  if(scopeRef.current!==scope){
+    scopeRef.current=scope;dirty.current=false;revision.current++;
+  }
+  React.useEffect(()=>{
+    if(!dirty.current)setPreferences(saved);
+  },[saved,scope]);
   const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
-  const updateLayout=update=>setPreferences(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
-  const toggleInformation=key=>setPreferences(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
-  const save=()=>action.run(()=>firebaseService.updateDashboardPreferences(campaignId,character.id,preferences),'Dashboard settings saved.');
+  const edit=change=>{dirty.current=true;revision.current++;setPreferences(change);};
+  const updateLayout=update=>edit(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
+  const toggleInformation=key=>edit(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
+  const save=async()=>{
+    const savedScope=scope,savedRevision=revision.current;
+    const result=await action.run(()=>firebaseService.updateDashboardPreferences(campaignId,character.id,preferences),'Dashboard settings saved.');
+    if(result?.ok&&scopeRef.current===savedScope&&revision.current===savedRevision)dirty.current=false;
+  };
   return <div className="react-settings-workspace"><ThemeControls/>
     <Panel title="Dashboard Customisation" action={<StatusPill>{visibleDashboardPanels(preferences.dashboardLayout,'player').length} panels</StatusPill>}>
       <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} disabled={!editable}/>
       <p className="react-help">These settings affect only this character. Open the Visual Grid Editor to move, resize and lock panels. Select Apply Layout, then Save Dashboard Settings. Reset Layout restores the recommended defaults.</p>
     </Panel>
     <Panel title="Sidebar Identity">
-      <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>setPreferences(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>
-      <label className="react-check-row"><input type="checkbox" disabled={!editable} checked={preferences.showPartyMembership} onChange={event=>setPreferences(current=>({...current,showPartyMembership:event.target.checked}))}/>Show Adventure Party membership</label>
+      <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>edit(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>
+      <label className="react-check-row"><input type="checkbox" disabled={!editable} checked={preferences.showPartyMembership} onChange={event=>edit(current=>({...current,showPartyMembership:event.target.checked}))}/>Show Adventure Party membership</label>
       {!titles.length?<p className="react-help">Titles granted by the GM will appear here.</p>:null}
     </Panel>
     <Panel title="Player Information Bar">
       <p className="react-help">Character name, level, experience, core resources, campaign name, and navigation always remain visible. These controls change optional details, never the resource or level widgets.</p>
       <div className="react-information-field-list">{OPTIONAL_INFORMATION_FIELDS.map(key=><label className="react-check-row" key={key}><input type="checkbox" disabled={!editable} checked={!preferences.hiddenInformationFields.includes(key)} onChange={()=>toggleInformation(key)}/>{INFORMATION_LABELS[key]}</label>)}</div>
     </Panel>
-    <div className="react-settings-save"><button className="primary" disabled={!editable||action.busy} onClick={save}>Save Dashboard Settings</button><span role="status">{action.message}</span></div>
+    <div className="react-settings-save"><button type="button" disabled={!editable||action.busy||!dirty.current} onClick={()=>{dirty.current=false;revision.current++;setPreferences(saved);}}>Discard Unsaved Changes</button><button className="primary" disabled={!editable||action.busy} onClick={save}>Save Dashboard Settings</button><span role="status">{action.message}</span></div>
   </div>;
 }
