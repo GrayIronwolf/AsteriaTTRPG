@@ -136,6 +136,15 @@ export function normalizeDashboardLayout(value,role='player') {
   const legacySizes=Number(value.version||0)<DASHBOARD_LAYOUT_VERSION&&custom?rawSizes:{};
   const placements=normalizeGridPlacements(scope,order,hiddenIds,value.placements||value.positions,legacySizes);
   const lockedPositions=safeArray(value.lockedPositions).filter(id=>known.has(id));
+  // A single saved record contains three independent viewport layouts. Older
+  // layouts remain valid and act as the fallback until a viewport is edited.
+  const viewportLayouts={};
+  const rawViews=value.viewportLayouts&&typeof value.viewportLayouts==='object'&&!Array.isArray(value.viewportLayouts)?value.viewportLayouts:{};
+  for(const viewport of ['desktop','tablet','mobile']){
+    const candidate=rawViews[viewport];
+    if(candidate&&typeof candidate==='object'&&!Array.isArray(candidate))
+      viewportLayouts[viewport]=normalizeDashboardLayout({...candidate,viewportLayouts:null},scope);
+  }
   return {
     version:DASHBOARD_LAYOUT_VERSION,
     mode:value.mode==='custom'?'custom':'default',
@@ -146,7 +155,8 @@ export function normalizeDashboardLayout(value,role='player') {
     placements,
     lockedPositions,
     backgroundStyle,
-    panelBackgrounds
+    panelBackgrounds,
+    ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{})
   };
 }
 /** Backgrounds belong to this user/character dashboard; panel override wins. */
@@ -300,4 +310,74 @@ export function autoArrangeDashboardLayout(layout,role='player'){
   const previous=normalizeDashboardLayout(layout,role);
   return {...previous,mode:'custom',preset:'custom',
     placements:packGridPlacements(role,previous.order,previous.hidden,previous.placements,previous.lockedPositions)};
+}
+
+/** Browser width selects an independently saved layout; no user-agent sniffing. */
+export const DASHBOARD_VIEWPORTS=Object.freeze(['desktop','tablet','mobile']);
+export function dashboardViewportFromWidth(width){
+  const pixels=Number(width);
+  return !Number.isFinite(pixels)||pixels>900?'desktop':pixels>620?'tablet':'mobile';
+}
+export function dashboardLayoutForViewport(source,role='player',viewport='desktop'){
+  const root=normalizeDashboardLayout(source,role);
+  const key=DASHBOARD_VIEWPORTS.includes(viewport)?viewport:'desktop';
+  if(root.viewportLayouts?.[key])return normalizeDashboardLayout(root.viewportLayouts[key],role);
+  const {viewportLayouts:ignored,...fallback}=root;
+  return fallback;
+}
+export function setDashboardViewportLayout(source,role='player',viewport='desktop',next){
+  const root=normalizeDashboardLayout(source,role);
+  const key=DASHBOARD_VIEWPORTS.includes(viewport)?viewport:'desktop';
+  const updated=normalizeDashboardLayout(next,role);
+  const {viewportLayouts:ignored,...single}=updated;
+  const views={...(root.viewportLayouts||{}),[key]:single};
+  return key==='desktop'?{...root,...single,viewportLayouts:views}:{...root,viewportLayouts:views};
+}
+/** Displayable size choices are derived from actual per-panel grid constraints. */
+export function dashboardPanelSizeChoices(role,id){
+  const rule=dashboardGridRule(role,id);
+  if(!rule)return [];
+  if(rule.fixed)return [{label:'Fixed',w:rule.defaultW,h:rule.defaultH}];
+  const proposed=[
+    {label:'Small',w:rule.minW,h:rule.minH},
+    {label:'Medium',w:rule.defaultW,h:rule.defaultH},
+    {label:'Large',w:Math.min(rule.maxW,rule.defaultW+2),h:Math.min(rule.maxH,rule.defaultH+2)},
+    {label:'Wide',w:rule.maxW,h:rule.defaultH},
+    ...(rule.portrait?[{label:'Portrait',w:rule.portrait.w,h:rule.portrait.minH}]:[])
+  ];
+  const seen=new Set();
+  return proposed.map(option=>({...option,...clampGridDimensions(role,id,option.w,option.h)}))
+    .filter(option=>{const key=option.w+'x'+option.h;if(seen.has(key))return false;seen.add(key);return true;});
+}
+/** Other unlocked panels move out of the way; locked panels never move. */
+export function placeDashboardGridPanel(layout,role,id,x,y){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(previous.hidden.includes(id)||previous.lockedPositions.includes(id))return previous;
+  const old=previous.placements[id],rule=dashboardGridRule(role,id);
+  if(!old||!rule)return previous;
+  const candidate={...old,x:Number(x),y:Number(y)};
+  if(!validGridPlacement(role,id,candidate))return previous;
+  if(old.x===candidate.x&&old.y===candidate.y)return previous;
+  const locked=Object.fromEntries(previous.lockedPositions.filter(name=>name!==id&&!previous.hidden.includes(name))
+    .filter(name=>previous.placements[name]).map(name=>[name,previous.placements[name]]));
+  if(!gridPositionIsFree(candidate,locked,id))return previous;
+  const prioritized=[id,...previous.order.filter(name=>name!==id)];
+  const placements=packGridPlacements(role,prioritized,previous.hidden,
+    {...previous.placements,[id]:candidate},previous.lockedPositions);
+  return {...previous,mode:'custom',preset:'custom',placements};
+}
+/** Select an explicit size without drag handles; resolve unlocked collisions. */
+export function fitDashboardGridPanel(layout,role,id,width,height){
+  const previous=normalizeDashboardLayout(layout,role);
+  if(previous.hidden.includes(id)||previous.lockedPositions.includes(id))return previous;
+  const old=previous.placements[id],rule=dashboardGridRule(role,id);
+  if(!old||!rule||rule.fixed)return previous;
+  const dimensions=clampGridDimensions(role,id,width,height);
+  if(!dimensions)return previous;
+  if(old.w===dimensions.w&&old.h===dimensions.h)return previous;
+  const candidate={...old,...dimensions,x:Math.min(old.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
+  const prioritized=[id,...previous.order.filter(name=>name!==id)];
+  const placements=packGridPlacements(role,prioritized,previous.hidden,
+    {...previous.placements,[id]:candidate},previous.lockedPositions);
+  return {...previous,mode:'custom',preset:'custom',placements};
 }
