@@ -141,13 +141,16 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     // The clock drives duration labels and expiring effects. Avoid recomputing
     // all dashboard character panels every second while the tab is hidden;
     // refresh immediately on return so expirations still use the real time.
-    const tick=()=>{if(!document.hidden)setClock(Date.now());};
-    const resume=()=>{if(!document.hidden)setClock(Date.now());};
+    // Test renderers and server-side tools have no document. Keep the clock
+    // active there without adding browser listeners, and always clean it up.
+    const visibilityDocument=typeof document==='undefined'?null:document;
+    const tick=()=>{if(!visibilityDocument?.hidden)setClock(Date.now());};
+    const resume=()=>{if(!visibilityDocument?.hidden)setClock(Date.now());};
     const timer=window.setInterval(tick,1000);
-    document.addEventListener('visibilitychange',resume);
+    visibilityDocument?.addEventListener('visibilitychange',resume);
     return ()=>{
       window.clearInterval(timer);
-      document.removeEventListener('visibilitychange',resume);
+      visibilityDocument?.removeEventListener('visibilitychange',resume);
     };
   },[]);
 
