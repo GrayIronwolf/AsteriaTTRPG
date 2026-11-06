@@ -20,7 +20,7 @@
   const keywords = {core:/core standards/,conditions:/conditions|status effects/,resources:/resources|materials|flora|minerals|plants|herbs|ores|ingots/,enchantments:/enchantments?/,runestones:/runestones?/,schematics:/schematics?/,recipes:/recipes?/,blueprints:/blueprints?/,patterns:/patterns?/,formulas:/formulas?/,designs:/designs|jewellery design/,structures:/structures|buildings/,npcs:/^npcs?$|non.player characters/,languages:/languages?/,quests:/quests?|adventures?/,gm:/game master|gm resources/};
   const byId = id=>document.getElementById(id);
   const escape = value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  let query='', groupId='', categoryId='', limit=48, reading=false;
+  let query='', groupId='', categoryId='', savedOnly=false, sortMode='relevance', limit=48, reading=false;
   const storageKey = kind=>`asteria.library.${kind}.${window.AsteriaFirebase?.getUser?.()?.uid || window.session?.uid || 'guest'}`;
   function readSaved(kind){try{const value=JSON.parse(localStorage.getItem(storageKey(kind))||'[]');return Array.isArray(value)?value.filter(id=>typeof id==='string').slice(0,100):[];}catch{return [];}}
   function save(kind,ids){try{localStorage.setItem(storageKey(kind),JSON.stringify(ids.slice(0,100)));}catch{/* Reading remains available when browser storage is disabled. */}}
@@ -35,27 +35,73 @@
     return match?.[0] || domainCategory[entry.domain] || 'handbook';
   }
   function entries(){return window.AsteriaUniversalCompendium?.visibleEntries?.(true) || [];}
-  function filtered(){return entries().filter(entry=>{
-    const category=classify(entry);
-    if(categoryId && category!==categoryId)return false;
-    if(groupId && CATEGORIES.find(c=>c.id===category)?.group!==groupId)return false;
-    return !query || (window.AsteriaContent?.matches ? window.AsteriaContent.matches(entry,query) : `${entry.searchTerms||entry.title||''} ${entry.metadata?.['Asteria ID Index Code']||''}`.toLowerCase().includes(query.toLowerCase().trim()));
-  });}
-  function href(group='',category='',q=''){
-    const params=new URLSearchParams();if(group)params.set('group',group);if(category)params.set('category',category);if(q)params.set('q',q);
+  const allowedSorts = ['relevance','name','category'];
+  const normal = value => String(value ?? '').trim().toLocaleLowerCase();
+  const titleSort = (a,b) => String(a.title||'').localeCompare(String(b.title||''),undefined,{sensitivity:'base'});
+  const definitionCode = entry => String(entry.metadata?.['Asteria ID Index Code'] || '');
+  function matchesSearch(entry,search){
+    const q=normal(search);
+    if(!q)return true;
+    const code=normal(definitionCode(entry));
+    // Whole permanent IDs have one unambiguous result; partial IDs also
+    // support browsing a system/category prefix without changing ID identity.
+    if(/^\d{2}-\d{2}-\d{3}-\d{3}$/.test(q))return code===q;
+    if(/^\d{2}(?:-\d{1,3}){1,3}-?$/.test(q) && code.startsWith(q))return true;
+    if(window.AsteriaContent?.matches?.(entry,q))return true;
+    const haystack=[
+      entry.title,entry.summary,entry.description,entry.searchTerms,definitionCode(entry),
+      ...(Array.isArray(entry.aliases)?entry.aliases:[]),
+      ...(Array.isArray(entry.tags)?entry.tags:[]),
+      ...(Array.isArray(entry.categoryPath)?entry.categoryPath:[])
+    ].filter(Boolean).join(' ').toLocaleLowerCase();
+    return q.split(/\s+/).every(word=>haystack.includes(word));
+  }
+  function resultPriority(entry){
+    if(!normal(query))return 5;
+    const q=normal(query),title=normal(entry.title),code=normal(definitionCode(entry));
+    if(code===q)return 0;
+    if(title===q)return 1;
+    if(title.startsWith(q))return 2;
+    if(title.includes(q))return 3;
+    if((entry.aliases||[]).some(alias=>normal(alias).includes(q)))return 4;
+    return 5;
+  }
+  function filtered(){
+    const favouriteIds=savedOnly?new Set(readSaved('favourites')):null;
+    const rows=entries().filter(entry=>{
+      const category=classify(entry);
+      if(categoryId && category!==categoryId)return false;
+      if(groupId && CATEGORIES.find(c=>c.id===category)?.group!==groupId)return false;
+      if(favouriteIds && !favouriteIds.has(entry.id))return false;
+      return matchesSearch(entry,query);
+    });
+    if(sortMode==='name')return rows.sort(titleSort);
+    if(sortMode==='category')return rows.sort((a,b)=>
+      String(CATEGORIES.find(c=>c.id===classify(a))?.title||'').localeCompare(
+        String(CATEGORIES.find(c=>c.id===classify(b))?.title||'')) || titleSort(a,b));
+    if(normal(query))return rows.sort((a,b)=>resultPriority(a)-resultPriority(b)||titleSort(a,b));
+    return rows;
+  }
+  function href(group='',category='',q='',saved=false,sort='relevance'){
+    const params=new URLSearchParams();
+    if(group)params.set('group',group);
+    if(category)params.set('category',category);
+    if(q)params.set('q',q);
+    if(saved)params.set('saved','1');
+    if(allowedSorts.includes(sort)&&sort!=='relevance')params.set('sort',sort);
     return '#/compendium'+(params.size?'?'+params:'');
   }
   function closePanels(){setQuick(false);window.closeSettings?.();}
   function route(push=true){
-    const url=href(groupId,categoryId,query);
+    const url=href(groupId,categoryId,query,savedOnly,sortMode);
     if(!reading && window.location.hash!==url)window.history[push?'pushState':'replaceState'](window.history.state,'',url);
     syncNavigation();
   }
-  function show({group='',category='',search='',push=true}={}){
+  function show({group='',category='',search='',saved=false,sort='relevance',push=true}={}){
     groupId=GROUPS.some(g=>g.id===group)?group:'';
     categoryId=CATEGORIES.some(c=>c.id===category)?category:'';
     if(categoryId)groupId=CATEGORIES.find(c=>c.id===categoryId).group;
-    query=search;limit=48;closePanels();
+    query=String(search||'');savedOnly=saved===true||saved==='1';sortMode=allowedSorts.includes(sort)?sort:'relevance';limit=48;closePanels();
     window.setView?.('compendiumLibrary');
     document.querySelectorAll('.view').forEach(view=>view.classList.toggle('show',view.id==='compendiumLibrary'));
     document.body.classList.remove('workspace-active','compendium-active');
@@ -65,7 +111,7 @@
     const [path,params='']=window.location.hash.replace(/^#/,'').split('?');
     if(!/^\/?compendium\/?$/.test(path)){syncNavigation();return false;}
     const p=new URLSearchParams(params);reading=true;
-    try{return show({group:p.get('group')||'',category:p.get('category')||'',search:p.get('q')||'',push:false});}
+    try{return show({group:p.get('group')||'',category:p.get('category')||'',search:p.get('q')||'',saved:p.get('saved')==='1',sort:p.get('sort')||'relevance',push:false});}
     finally{reading=false;}
   }
   function cards(rows){
