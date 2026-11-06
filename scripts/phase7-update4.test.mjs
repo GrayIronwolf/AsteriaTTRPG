@@ -49,7 +49,7 @@ test('Player and GM saves do not mutate a replacement account or campaign',()=>{
  const player=read('src/dashboards/CharacterGallerySettings.jsx');
  assert.match(player,/firebaseService\.currentUser\(\)\?\.uid\|\|'signed-out'/);
  assert.match(player,/scopeRef\.current===savedScope&&revision\.current===savedRevision/);
- assert.match(player,/if\(!dirty\.current\)setPreferences\(saved\)/);
+ assert.match(player,/if\(scopeRef\.current===scope&&!dirty\.current\)setPreferences\(saved\)/);
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/if\(dashboardSaveScope\.current!==subscriptionScope\)return/);
  assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return result/);
