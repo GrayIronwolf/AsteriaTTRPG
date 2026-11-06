@@ -140,26 +140,63 @@
     const rows=filtered(),all=entries(),group=GROUPS.find(g=>g.id===groupId),category=CATEGORIES.find(c=>c.id===categoryId);
     const recent=readSaved('recent').map(id=>all.find(e=>e.id===id)).filter(Boolean).slice(0,6);
     const favourites=readSaved('favourites').map(id=>all.find(e=>e.id===id)).filter(Boolean);
+    const showResults=Boolean(query||groupId||categoryId||savedOnly||sortMode!=='relevance');
+    const byCategory=new Map(),byGroup=new Map();
+    for(const entry of all){
+      const cat=classify(entry),parent=CATEGORIES.find(c=>c.id===cat)?.group;
+      byCategory.set(cat,(byCategory.get(cat)||0)+1);
+      if(parent)byGroup.set(parent,(byGroup.get(parent)||0)+1);
+    }
+    const categoryOptions=CATEGORIES.filter(c=>!groupId||c.group===groupId);
+    const filterBar='<section class="library-filter-bar" role="group" aria-label="Compendium filters">'+
+      '<label for="libraryGroupFilter">Section<select id="libraryGroupFilter"><option value="">All sections</option>'+
+      GROUPS.map(g=>'<option value="'+escape(g.id)+'" '+(g.id===groupId?'selected':'')+'>'+escape(g.title)+' ('+(byGroup.get(g.id)||0)+')</option>').join('')+
+      '</select></label><label for="libraryCategoryFilter">Category<select id="libraryCategoryFilter"><option value="">All categories</option>'+
+      categoryOptions.map(c=>'<option value="'+escape(c.id)+'" '+(c.id===categoryId?'selected':'')+'>'+escape(c.title)+' ('+(byCategory.get(c.id)||0)+')</option>').join('')+
+      '</select></label><label for="librarySort">Sort<select id="librarySort">'+
+      allowedSorts.map(value=>'<option value="'+value+'" '+(value===sortMode?'selected':'')+'>'+({relevance:'Relevance',name:'Name A–Z',category:'Category'})[value]+'</option>').join('')+
+      '</select></label><label class="library-saved-filter" for="librarySavedOnly"><input id="librarySavedOnly" type="checkbox" '+(savedOnly?'checked':'')+'><span>Favourites only</span></label>'+
+      (showResults?'<a class="library-clear-filters" href="'+href()+'">Clear filters</a>':'')+'</section>';
     view.innerHTML=`<div class="asteria-library">
       <header class="library-hero"><p class="eyebrow">The Asteria Library</p><h1>Asteria Compendium</h1><p>Explore the rules, characters and worlds of Asteria.</p></header>
       <nav class="library-breadcrumbs" aria-label="Compendium breadcrumbs"><a href="${href()}">Asteria Compendium</a>${group?`<span aria-hidden="true">/</span><a href="${href(groupId)}">${escape(group.title)}</a>`:''}${category?`<span aria-hidden="true">/</span><span aria-current="page">${escape(category.title)}</span>`:''}</nav>
-      <label class="library-search" for="librarySearch"><span>${category?`Search ${escape(category.title)}`:group?`Search ${escape(group.title)}`:'Search the entire Compendium'}</span><input id="librarySearch" type="search" value="${escape(query)}" placeholder="Find a rule, race, spell, item or definition ID…" autocomplete="off"></label>
-      ${!query&&!categoryId?`<div class="library-groups">${GROUPS.filter(g=>!groupId||g.id===groupId).map(g=>{
+      <label class="library-search" for="librarySearch"><span>${category?`Search ${escape(category.title)}`:group?`Search ${escape(group.title)}`:'Search the entire Compendium'}</span><input id="librarySearch" type="search" value="${escape(query)}" placeholder="Find a rule, race, spell, item or definition ID…" autocomplete="off" aria-describedby="librarySearchHelp"></label>
+      <p class="library-search-help" id="librarySearchHelp">Search by name, alias, keyword or permanent Asteria ID. A prefix such as 07-05 also works.</p>
+      ${filterBar}
+      ${!query&&!categoryId&&!savedOnly?`<div class="library-groups">${GROUPS.filter(g=>!groupId||g.id===groupId).map(g=>{
         const count=all.filter(e=>CATEGORIES.find(c=>c.id===classify(e))?.group===g.id).length;
         return `<section class="library-group"><div class="library-group-heading"><span aria-hidden="true">${g.symbol}</span><div><h2>${escape(g.title)}</h2><p>${escape(g.description)}</p></div></div><small>${count} published entries</small><details ${groupId?'open':''}><summary>Browse categories</summary><ul>${g.categories.map(([code,id,title])=>{
           const count=all.filter(e=>classify(e)===id).length;
           return `<li>${count?`<a href="${href(g.id,id)}"><span>${escape(title)}</span><small>${count}</small></a>`:`<span class="library-unavailable"><span>${escape(title)}</span><small>No published entries</small></span>`}</li>`;
         }).join('')}</ul></details></section>`;
       }).join('')}</div>`:''}
-      ${!query&&!groupId&&favourites.length?`<section class="library-collection"><h2>Favourites</h2><div class="library-results">${cards(favourites)}</div></section>`:''}
-      ${!query&&!groupId&&recent.length?`<section class="library-collection"><h2>Recently viewed</h2><div class="library-results">${cards(recent)}</div></section>`:''}
-      ${query||groupId?`<section class="library-collection"><h2>${category?escape(category.title):group?escape(group.title):'Search results'}</h2><p id="libraryResultCount" role="status" aria-live="polite">${rows.length} matching entries</p><div class="library-results">${cards(rows.slice(0,limit))}</div>${!rows.length?'<p class="library-empty">No published entries match this search. Try another word or return to the library.</p>':''}${rows.length>limit?'<button class="crystal-button" id="libraryLoadMore" type="button">Show more entries</button>':''}</section>`:''}
+      ${!showResults&&favourites.length?`<section class="library-collection"><h2>Favourites</h2><div class="library-results">${cards(favourites)}</div></section>`:''}
+      ${!showResults&&recent.length?`<section class="library-collection"><h2>Recently viewed</h2><div class="library-results">${cards(recent)}</div></section>`:''}
+      ${showResults?`<section class="library-collection"><h2>${category?escape(category.title):group?escape(group.title):'Search results'}</h2><p id="libraryResultCount" role="status" aria-live="polite">${rows.length} matching ${rows.length===1?'entry':'entries'} · Showing ${Math.min(limit,rows.length)}${savedOnly?' · Favourites only':''}</p><div class="library-results">${cards(rows.slice(0,limit))}</div>${!rows.length?'<p class="library-empty">No published entries match the selected filters. Clear filters or try another search.</p>':''}${rows.length>limit?'<button class="crystal-button" id="libraryLoadMore" type="button">Show more entries</button>':''}</section>`:''}
     </div>`;
     byId('librarySearch')?.addEventListener('input',event=>{query=event.target.value;limit=48;render();route(false);});
+    byId('libraryGroupFilter')?.addEventListener('change',event=>{
+      groupId=GROUPS.some(g=>g.id===event.target.value)?event.target.value:'';
+      if(categoryId&&CATEGORIES.find(c=>c.id===categoryId)?.group!==groupId)categoryId='';
+      limit=48;render();route(false);
+    });
+    byId('libraryCategoryFilter')?.addEventListener('change',event=>{
+      categoryId=CATEGORIES.some(c=>c.id===event.target.value)?event.target.value:'';
+      if(categoryId)groupId=CATEGORIES.find(c=>c.id===categoryId).group;
+      limit=48;render();route(false);
+    });
+    byId('librarySort')?.addEventListener('change',event=>{
+      sortMode=allowedSorts.includes(event.target.value)?event.target.value:'relevance';
+      limit=48;render();route(false);
+    });
+    byId('librarySavedOnly')?.addEventListener('change',event=>{
+      savedOnly=Boolean(event.target.checked);limit=48;render();route(false);
+    });
     byId('libraryLoadMore')?.addEventListener('click',()=>{limit+=48;render();});
     if(focusId==='librarySearch'){const input=byId(focusId);input?.focus({preventScroll:true});if(typeof selection==='number')input?.setSelectionRange?.(selection,selection);}
     else if(favouriteId){[...view.querySelectorAll('[data-library-favourite]')].find(button=>button.dataset.libraryFavourite===favouriteId)?.focus({preventScroll:true});}
     else if(focusId==='libraryLoadMore'){byId(focusId)?.focus({preventScroll:true});}
+    else if(['libraryGroupFilter','libraryCategoryFilter','librarySort','librarySavedOnly'].includes(focusId)){byId(focusId)?.focus?.({preventScroll:true});}
   }
   function setQuick(open,focus=false){
     const toggle=byId('compendiumQuickToggle'),menu=byId('compendiumQuickMenu');if(!toggle||!menu)return;
@@ -197,7 +234,7 @@
       const link=event.target.closest?.('a[href^="#/compendium"]');
       if(link&&/^#\/compendium(?:\?|$)/.test(link.getAttribute('href'))){
         event.preventDefault();event.stopImmediatePropagation();const params=new URLSearchParams(link.getAttribute('href').split('?')[1]||'');
-        show({group:params.get('group')||'',category:params.get('category')||'',search:params.get('q')||''});return;
+        show({group:params.get('group')||'',category:params.get('category')||'',search:params.get('q')||'',saved:params.get('saved')==='1',sort:params.get('sort')||'relevance'});return;
       }
       const favourite=event.target.closest?.('[data-library-favourite]');
       if(favourite){const id=favourite.dataset.libraryFavourite,ids=readSaved('favourites');if(entries().some(e=>e.id===id)){save('favourites',ids.includes(id)?ids.filter(x=>x!==id):[id,...ids]);render();}return;}
@@ -240,7 +277,7 @@
     readRoute();
   }
   window.addEventListener('asteria:compendium-viewed',event=>{const id=event.detail?.id;if(id&&entries().some(e=>e.id===id))save('recent',[id,...readSaved('recent').filter(x=>x!==id)]);});
-  window.AsteriaLibrary=Object.freeze({groups:GROUPS,categories:CATEGORIES,classify,entries,filtered,open:show,readRoute});
+  window.AsteriaLibrary=Object.freeze({groups:GROUPS,categories:CATEGORIES,classify,entries,filtered,open:show,readRoute,matchesSearch});
   function boot(){
     if(!byId('compendiumLibrary')){const view=document.createElement('section');view.id='compendiumLibrary';view.className='view';view.setAttribute('aria-label','Asteria Compendium library');byId('mainContent')?.appendChild(view);}
     bind();
