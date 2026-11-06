@@ -14,7 +14,7 @@ const live=read('src/sessions/useCampaignLiveData.js');
 const html=read('index.html');
 
 test('dashboard workspace normalizes a layout once instead of per panel or background',()=>{
- assert.match(workspace,/const layout=React\.useMemo\(\(\)=>normalizeDashboardLayout\(raw,role\),\[raw,role\]\)/);
+ assert.match(workspace,/const layout=React\.useMemo\(\(\)=>dashboardLayoutForViewport\(raw,role,viewport\),\[raw,role,viewport\]\)/);
  assert.match(workspace,/const hidden=new Set\(layout\.hidden\)/);
  assert.match(workspace,/layout\.order\.filter\(id=>!hidden\.has\(id\)\)/);
  assert.match(workspace,/data-panel-background=\{layout\.panelBackgrounds\[id\]\|\|layout\.backgroundStyle\}/);
