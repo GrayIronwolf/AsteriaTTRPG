@@ -3,9 +3,9 @@ import {createPortal} from 'react-dom';
 import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
 import {trapDialogTab} from './dialogFocus.mjs';
 import {dashboardKeyboardProposal} from '../state/dashboardGridModel.mjs';
-import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_BACKGROUND_STYLES,
+import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
- visibleDashboardPanels,toggleDashboardPanel,lockDashboardGridPanel,
+ visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,lockDashboardGridPanel,autoArrangeDashboardLayout,
  dashboardPanelSizeChoices,placeDashboardGridPanel,fitDashboardGridPanel,
  dashboardViewportFromWidth,dashboardLayoutForViewport,setDashboardViewportLayout,
  setDashboardBackground} from '../state/dashboardLayoutModel.mjs';
@@ -131,22 +131,7 @@ function GridEditor({role,layout,onChange,disabled}){
   </div>
   <aside className="react-grid-editor-properties">
     <p role="status" aria-live="polite" className="react-grid-editor-feedback">{moveFeedback}</p>
-   <h3>Selected panel</h3>
-   {p&&rule?<React.Fragment>
-    <b>{registry(role).find(x=>x.id===activeSelected)?.label}</b>
-    {['w','h','x','y'].map(key=><label key={key}>{({w:'Width',h:'Height',x:'Column',y:'Row'})[key]}
-      <input type="number" aria-label={'Panel '+({w:'width',h:'height',x:'column',y:'row'})[key]}
-       value={key==='x'||key==='y'?p[key]+1:p[key]} min={key==='w'?(rule.portrait?3:rule.minW):key==='h'?rule.minH:1}
-       max={key==='w'?rule.maxW:key==='h'?rule.maxH:key==='x'?13-p.w:601-p.h}
-       disabled={disabled||locked||(rule.fixed&&(key==='w'||key==='h'))}
-       onChange={e=>number(key,e.target.value)}/></label>)}
-    <small>Minimum {rule.minW}×{rule.minH}; maximum {rule.maxW}×{rule.maxH}.
-     {rule.portrait?' Optional 3×6 portrait mode.':''}</small>
-    <button type="button" disabled={disabled} onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,activeSelected,!locked))}>
-      {locked?'Unlock Position':'Lock Position'}</button>
-    <button type="button" disabled={disabled} onClick={()=>onChange(old=>toggleDashboardPanel(old,role,activeSelected,false))}>Remove Panel</button>
-    <BackgroundSelector id={activeSelected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>
-   </React.Fragment>:<p>Select a panel.</p>}
+    {p&&rule?<BackgroundSelector id={activeSelected} layout={layout} role={role} onChange={onChange} disabled={disabled}/>:null}
   </aside>
  </div>;
 }
@@ -227,6 +212,13 @@ export function DashboardLayoutEditor({role,layout:source,onChange,onApply,disab
          </button>;
        })}
       </div>
+      <h3>Layout presets</h3>
+      <div className="react-grid-editor-presets">
+       {Object.keys(DASHBOARD_LAYOUT_PRESETS[role]).map(preset=><button key={preset} type="button"
+        disabled={busy||disabled} onClick={()=>update(old=>applyDashboardPreset(old,role,preset))}>{preset}</button>)}
+       <button type="button" disabled={busy||disabled} onClick={()=>update(old=>autoArrangeDashboardLayout(old,role))}>Auto Arrange</button>
+      </div>
+      <BackgroundSelector role={role} layout={draft} onChange={update} disabled={disabled||busy}/>
      </aside>
     </div>
     <footer className="react-grid-editor-footer">
