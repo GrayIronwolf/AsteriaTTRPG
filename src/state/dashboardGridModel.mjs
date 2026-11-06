@@ -96,6 +96,17 @@ export function dashboardPointerProposal(role,id,rect,kind,deltaX=0,deltaY=0){
   return {...current,...dimensions,x:Math.min(current.x,DASHBOARD_GRID_COLUMNS-dimensions.w)};
 }
 
+/** One-square keyboard movement or resize proposal for an editable tile.
+ * The same limits and geometry apply to touch, mouse and keyboard inputs. */
+export function dashboardKeyboardProposal(role,id,rect,kind,key){
+  const deltas={
+    ArrowLeft:[-1,0],ArrowRight:[1,0],
+    ArrowUp:[0,-1],ArrowDown:[0,1]
+  };
+  const delta=deltas[key];
+  return delta?dashboardPointerProposal(role,id,rect,kind,delta[0],delta[1]):null;
+}
+
 export function gridRectanglesOverlap(a,b){
   return a.x<b.x+b.w && b.x<a.x+a.w && a.y<b.y+b.h && b.y<a.y+a.h;
 }
