@@ -19,8 +19,34 @@
     '.compendium-quick-menu a'
   ].join(',');
 
+  // Phase 2: sizing is presentation metadata only. We retain the existing
+  // clickable elements, their labels, event handlers, and interaction states.
+  const BUTTON_FAMILIES=Object.freeze({
+    sidebarHomeButton:'small',
+    compendiumIndexButton:'long',
+    compendiumQuickToggle:'icon',
+    characterForgeTop:'long',
+    campaignsTop:'long',
+    loginToggle:'small',
+    accountSettingsTop:'standard',
+    settingsToggle:'icon'
+  });
+  function buttonSize(element){
+    if(!element)return null;
+    if(Object.prototype.hasOwnProperty.call(BUTTON_FAMILIES,element.id))return BUTTON_FAMILIES[element.id];
+    const within=query=>Boolean(element.closest?.(query));
+    if(within('.react-character-dashboard .react-workspace-main > .react-tabs, .react-gm-dashboard .react-workspace-main > .react-tabs'))return 'standard';
+    if(within('.compendium-quick-menu'))return 'small';
+    if(within('.hero-actions'))return 'long';
+    // Other menus and small gameplay controls keep their established sizes.
+    return null;
+  }
   function mark(element){
-    if(element?.matches?.(selector) && !element.classList.contains('asteria-menu-button'))element.classList.add('asteria-menu-button');
+    if(!element?.matches?.(selector))return;
+    if(!element.classList.contains('asteria-menu-button'))element.classList.add('asteria-menu-button');
+    const family=buttonSize(element);
+    if(family&&element.getAttribute?.('data-asteria-button-size')!==family)
+      element.setAttribute?.('data-asteria-button-size',family);
   }
   function enhance(root){
     mark(root);
@@ -54,6 +80,6 @@
       });
     }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','role']});
   }
-  window.AsteriaMenuButtons=Object.freeze({selector,enhance});
+  window.AsteriaMenuButtons=Object.freeze({selector,enhance,buttonSize,BUTTON_FAMILIES});
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
 })();
