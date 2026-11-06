@@ -1,16 +1,42 @@
 /* Freeform 12-column dashboard; preserve original approved WebP frames using nine slices. */
 .react-dashboard-layout-workspace{container-type:inline-size}
 .react-dashboard-custom-grid.react-dashboard-freeform-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:calc((100cqw - 66px)/12);grid-auto-flow:row;gap:6px;align-items:stretch}
-.react-dashboard-freeform-grid>.react-dashboard-custom-cell{position:relative!important;isolation:isolate;min-width:0!important;min-height:0!important;height:100%;width:100%;overflow:hidden;aspect-ratio:auto!important;grid-column:var(--panel-col)/span var(--panel-w)!important;grid-row:var(--panel-row)/span var(--panel-h)!important;--asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x3.webp")}
+.react-dashboard-freeform-grid>.react-dashboard-custom-cell{position:relative!important;isolation:isolate;min-width:0!important;min-height:0!important;height:100%;width:100%;overflow:visible!important;aspect-ratio:auto!important;grid-column:var(--panel-col)/span var(--panel-w)!important;grid-row:var(--panel-row)/span var(--panel-h)!important;--asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x3.webp")}
 .react-dashboard-freeform-grid>[data-frame-family="wide"]{--asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-6x3.webp")}
 .react-dashboard-freeform-grid>[data-frame-family="ultrawide"]{--asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-9x3.webp")}
 .react-dashboard-freeform-grid>[data-frame-family="tall"]{--asteria-panel-frame:url("../assets/ui/dashboard/panel-frame-3x6.webp")}
-.react-dashboard-freeform-grid>.react-dashboard-custom-cell::before{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;box-sizing:border-box;border:clamp(9px,2cqw,21px) solid transparent;border-image-source:var(--asteria-panel-frame);border-image-slice:12%;border-image-repeat:stretch}
+.react-dashboard-freeform-grid>.react-dashboard-custom-cell::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-sizing:border-box;border:clamp(9px,2cqw,21px) solid transparent;border-image-source:var(--asteria-panel-frame);border-image-slice:12%;border-image-repeat:stretch}
 .react-dashboard-freeform-grid>.react-dashboard-custom-cell::after{content:"";position:absolute;inset:clamp(7px,1.5cqw,14px);z-index:0;pointer-events:none;background:#080d13 var(--asteria-panel-backdrop) center/cover no-repeat;clip-path:polygon(5% 0,95% 0,100% 5%,100% 95%,95% 100%,5% 100%,0 95%,0 5%)}
-body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic{position:relative!important;z-index:1!important;width:100%;height:100%!important;min-height:0!important;border:0!important;border-radius:0!important;padding:clamp(13px,2cqw,25px)!important;box-shadow:none!important;background:transparent!important;overflow:auto!important;scrollbar-width:thin}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic{position:relative!important;z-index:2!important;width:100%;height:100%!important;min-height:0!important;border:0!important;border-radius:0!important;padding:clamp(13px,2cqw,25px)!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;display:flex;flex-direction:column;}
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic::before,body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic::after{content:none!important;display:none!important}
 @container (max-width:900px){.react-dashboard-custom-grid.react-dashboard-freeform-grid{grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:auto;gap:10px}.react-dashboard-freeform-grid>.react-dashboard-custom-cell{grid-column:1/-1!important;grid-row:auto!important;height:auto;min-height:220px!important;aspect-ratio:auto!important}}
 @container (max-width:620px){.react-dashboard-custom-grid.react-dashboard-freeform-grid{grid-template-columns:minmax(0,1fr)}.react-dashboard-freeform-grid>.react-dashboard-custom-cell{grid-column:1/-1!important;grid-row:auto!important;min-height:180px!important;height:auto!important}body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic{min-height:180px!important;height:auto!important;overflow:visible!important}}
+/* Panel Update 1: artwork remains on the outer grid cell, behind the
+   content and the approved PNG header. Only the body's contents scroll:
+   its title plaque is not clipped or moved when long lists are scrolled.
+   Nested panels outside the dashboard grid are unaffected. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic>.react-panel-scroll-region{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic>.react-panel-header{
+  flex:0 0 auto;
+  overflow:visible!important;
+}
+@container (max-width:620px){
+  body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .react-dashboard-freeform-grid>.react-dashboard-custom-cell>.asteria-react-panel.asteria-royal-relic>.react-panel-scroll-region{
+    flex:auto;
+    overflow:visible;
+  }
+}
 .react-grid-editor-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:12px;background:rgba(0,0,0,.85)}
 .react-grid-editor-dialog{width:min(1150px,100%);max-height:92dvh;overflow:auto;background:#0d1722;color:#f0e6d5;border:1px solid #ae9461;padding:14px;border-radius:7px}
 .react-grid-editor-header,.react-grid-editor-footer{display:flex;justify-content:space-between;align-items:center;gap:10px}
