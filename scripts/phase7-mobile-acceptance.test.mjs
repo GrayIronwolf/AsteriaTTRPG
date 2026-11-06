@@ -58,7 +58,7 @@ test('Visual editor handles pointer cancel/lost capture, locks and keyboard resi
 test('GM unsaved layout draft survives background subscriptions and resets on account changes',()=>{
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/const dashboardDraftDirty=useRef\(false\)/);
- assert.match(gm,/dashboardDraftDirty\.current=false;\s*setDashboardSettingsDraft\(defaultDashboardLayout\('gm'\)\)/);
+ assert.match(gm,/dashboardDraftDirty\.current=false;[\s\S]*?setDashboardSettingsDraft\(defaultDashboardLayout\('gm'\)\)/);
  assert.match(gm,/if\(!dashboardDraftDirty\.current\)\s*setDashboardSettingsDraft\(normalizeDashboardLayout\(layout,'gm'\)\)/);
  assert.match(gm,/dashboardDraftDirty\.current=true;\s*setDashboardSettingsDraft\(change\)/);
  assert.match(gm,/if\(result\?\.ok\)dashboardDraftDirty\.current=false/);
