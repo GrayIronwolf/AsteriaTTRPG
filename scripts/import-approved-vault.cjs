@@ -13,9 +13,9 @@ const DOMAINS=Object.freeze({
   origins:'origin',locations:'location',theology:'religion',
   factions:'faction',lore:'lore',handbook:'handbook'
 });
-const ID=/^\\d{2}-\\d{2}-\\d{3}-\\d{3}$/;
+const ID=/^\d{2}-\d{2}-\d{3}-\d{3}$/;
 const MAX_BYTES=180000;
-const unsafe=/(?:^|\\n)\\s*#{1,6}\\s*(?:GM\\s*(?:Notes?|Only|Secrets?)|Secrets?|Private\\s*Notes?|Spoilers?)\\b|\\[\\[|<!--[\\s\\S]*?-->|<\\/?(?:script|iframe|object|embed|form|svg|style)\\b|javascript\\s*:/i;
+const unsafe=/(?:^|\n)\s*#{1,6}\s*(?:GM\s*(?:Notes?|Only|Secrets?)|Secrets?|Private\s*Notes?|Spoilers?)\b|\[\[|<!--[\s\S]*?-->|<\/?(?:script|iframe|object|embed|form|svg|style)\b|javascript\s*:/i;
 function fail(message){throw new Error('Approved vault export: '+message);}
 function listFiles(root){
   if(!fs.existsSync(root))fail('publish/public/ does not exist in the private source repository');
@@ -28,7 +28,7 @@ function listFiles(root){
       else if(row.isFile()){
         if(row.name==='README.md')continue;
         const rel=path.relative(root,file).split(path.sep).join('/');
-        if(!/^[a-z]+\\/[a-z0-9]+(?:-[a-z0-9]+)*\\/index\\.md$/.test(rel))
+        if(!/^[a-z]+\/[a-z0-9]+(?:-[a-z0-9]+)*\/index\.md$/.test(rel))
           fail('unexpected file outside a domain/slug/index.md export: '+rel);
         files.push({file,rel});
       }else fail('unsupported file type: '+file);
@@ -38,7 +38,7 @@ function listFiles(root){
   return files.sort((a,b)=>a.rel.localeCompare(b.rel));
 }
 function readFrontmatter(text,file){
-  const match=text.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n/);
+  const match=text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
   if(!match)fail(file+' must begin with YAML frontmatter');
   let meta;
   try{meta=yaml.safeLoad(match[1]);}catch(error){fail(file+' has invalid YAML: '+error.message);}
@@ -55,7 +55,7 @@ function strings(value,file,key,max=50){
 }
 function approvedRecord(source,entry){
   const {rel,file}=entry;
-  const match=rel.match(/^([a-z]+)\\/([a-z0-9]+(?:-[a-z0-9]+)*)\\/index\\.md$/);
+  const match=rel.match(/^([a-z]+)\/([a-z0-9]+(?:-[a-z0-9]+)*)\/index\.md$/);
   const [folder,slug]=match.slice(1);
   const domain=DOMAINS[folder];
   if(!domain)fail('unknown export category: '+folder);
@@ -78,7 +78,7 @@ function approvedRecord(source,entry){
   // Only allowlisted metadata is exposed; no full private vault frontmatter.
   const clean={title:meta.title.trim(),slug,domain,id,
     'Asteria ID Index Code':id,visibility:'public',categoryPath,tags};
-  const markdown='---\\n'+yaml.safeDump(clean,{noRefs:true,lineWidth:120})+'---\\n\\n'+body+'\\n';
+  const markdown='---\n'+yaml.safeDump(clean,{noRefs:true,lineWidth:120})+'---\n\n'+body+'\n';
   const sha256=crypto.createHash('sha256').update(markdown).digest('hex');
   return {rel,folder,slug,domain,id,markdown,sha256};
 }
@@ -115,7 +115,7 @@ function syncApprovedContent({source,out,dryRun=false}){
       fs.mkdirSync(path.dirname(target),{recursive:true});
       fs.writeFileSync(target,record.markdown);
     }
-    fs.writeFileSync(path.join(dest,'manifest.json'),JSON.stringify(manifest,null,2)+'\\n');
+    fs.writeFileSync(path.join(dest,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
   }
   return {definitions:records.length,manifest};
 }
