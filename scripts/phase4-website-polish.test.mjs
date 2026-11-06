@@ -18,7 +18,7 @@ test('Typography catalogue has 15 unique fonts; only readable fonts may be used 
  assert.match(source,/asteria\.typography\.v1\./);
  assert.match(source,/function mount\(host\)/);
  assert.match(source,/function refreshAccount\(\)/);
- assert.match(source,/https:\/\/fonts\.googleapis\.com\/css2\/family=/);
+ assert.match(source,/https:\/\/fonts\.googleapis\.com\/css2\?family=/);
  assert.match(css,/--asteria-font-display/);
  assert.match(css,/--asteria-font-body/);
  assert.match(css,/--asteria-typography-scale/);
