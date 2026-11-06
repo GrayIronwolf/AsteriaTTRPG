@@ -29,10 +29,20 @@ export function PanelHeader({ title, eyebrow, action, icon }) {
   return <header className="react-panel-header"><div className="react-panel-title-group">{icon ? <AsteriaIcon name={icon} /> : null}<div>{eyebrow ? <p className="react-eyebrow">{eyebrow}</p> : null}{title ? <h2>{title}</h2> : null}</div></div>{action}</header>;
 }
 
+/* Only panels rendered in the editable dashboard grid receive a separate content
+   scroller. Their approved metallic title must remain outside the scrollport.
+   Nested panels and panels elsewhere on the website retain their original DOM. */
+export const DashboardPanelFrameContext = React.createContext(false);
+
 export function Panel({ title, eyebrow, action, icon, children, className = '', style }) {
+  const inDashboardGrid = React.useContext(DashboardPanelFrameContext);
   return <section className={`asteria-react-panel asteria-royal-relic ${className}`.trim()} data-panel-material="royal-relic" style={style}>
     <PanelHeader title={title} eyebrow={eyebrow} action={action} icon={icon} />
-    {children}
+    {inDashboardGrid
+      ? <DashboardPanelFrameContext.Provider value={false}>
+          <div className="react-panel-scroll-region">{children}</div>
+        </DashboardPanelFrameContext.Provider>
+      : children}
   </section>;
 }
 
