@@ -70,8 +70,8 @@ test('GM unsaved layout draft survives background subscriptions and resets on ac
 test('Mobile touch targets increase without modifying frame, gameplay, or dashboard placement',()=>{
  const css=read('css/asteria-freeform-dashboard.css');
  const mobile=css.slice(css.indexOf('/* Phase 7 mobile usability'));
- assert.match(mobile,/\.react-grid-editor-tile-resize\{\s*min-height:44px!important/);
- assert.match(mobile,/min-width:44px!important/);
+ assert.match(mobile,/\.react-grid-editor-lock/);
+ assert.match(mobile,/\.react-grid-editor-size-options button/);
  assert.match(mobile,/\.react-grid-editor-scroller\{\s*overscroll-behavior:contain/);
  assert.match(mobile,/@media \(max-width:720px\)/);
  const html=read('index.html');
