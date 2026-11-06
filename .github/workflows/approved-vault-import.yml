@@ -1,0 +1,76 @@
+name: Import approved Asteria vault content for review
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+permissions:
+  contents: read
+jobs:
+  prepare-review:
+    if: github.repository == 'GrayIronwolf/AsteriaTTRPG'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check bridge credential availability
+        id: credential
+        env:
+          BRIDGE_TOKEN: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+        run: |
+          if [ -n "$BRIDGE_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Bridge is paused: configure ASTERIA_CONTENT_BRIDGE_TOKEN (fine-grained token with website Contents/Pull requests write and private vault Contents read)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.credential.outputs.configured == 'true'
+        with:
+          token: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 1
+      - uses: actions/checkout@v4
+        if: steps.credential.outputs.configured == 'true'
+        with:
+          repository: GrayIronwolf/Asteria-Obsidian-Vault
+          ref: main
+          path: vault-source
+          token: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: steps.credential.outputs.configured == 'true'
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Validate approved public pages and dependencies
+        if: steps.credential.outputs.configured == 'true'
+        run: |
+          npm ci
+          node --test scripts/approved-vault-bridge.test.mjs
+      - name: Validate and stage public-only, review-only export
+        if: steps.credential.outputs.configured == 'true'
+        id: import
+        run: |
+          node scripts/import-approved-vault.cjs --source vault-source/publish/public --out docs/vault-import-preview
+          rm -rf vault-source
+          git add -- docs/vault-import-preview
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No approved public content changes to propose."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open a review pull request, never deploy automatically
+        if: steps.credential.outputs.configured == 'true' && steps.import.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+        run: |
+          set -eu
+          branch="vault-review-$GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "Stage public Asteria vault definitions for manual review"
+          git push --set-upstream origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Review approved Asteria vault export ($GITHUB_RUN_ID)" \
+            --body "Only explicitly approved public Markdown was imported from the private vault. This is a **review-only staging area**, not the live Compendium. Check every exported definition for secrets, permanent IDs, collisions with current website IDs and any sensitive references before merging. A separate reviewed Phase 8 migration must connect these files into the Compendium. This PR must never auto-merge."
