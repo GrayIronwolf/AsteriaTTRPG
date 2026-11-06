@@ -33,7 +33,7 @@ function GridEditor({role,layout,onChange,disabled}){
   const {width}=host.getBoundingClientRect();
   // The editor's 12 columns are separated by gaps; include each gap in
   // the drag step so finger movement accurately tracks grid squares.
-  const gap=parseFloat(getComputedStyle(host).columnGap)||0;
+  const gap=parseFloat(window.getComputedStyle(host).columnGap)||0;
   const step=(width+gap)/12;
   if(!step)return;
   gesture.current={id,kind,pointer:e.pointerId,x:e.clientX,y:e.clientY,rect,step};
