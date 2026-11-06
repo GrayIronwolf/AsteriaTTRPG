@@ -63,7 +63,7 @@
     if(title===q)return 1;
     if(title.startsWith(q))return 2;
     if(title.includes(q))return 3;
-    if((entry.aliases||[]).some(alias=>normal(alias).includes(q)))return 4;
+    if(Array.isArray(entry.aliases)&&entry.aliases.some(alias=>normal(alias).includes(q)))return 4;
     return 5;
   }
   function filtered(){
