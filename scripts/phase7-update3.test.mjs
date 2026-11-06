@@ -57,5 +57,5 @@ test('Player and GM settings preserve unsaved edits until a successful current-s
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/dashboardDraftRevision\.current===saveRevision/);
  assert.match(gm,/dashboardSaveScope\.current!==saveScope/);
- assert.match(gm,/dashboardSaveScope\.current===campaignId\+': '\+accountUid|dashboardSaveScope\.current===campaignId\+':'\+accountUid/);
+ assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return result/);
 });
