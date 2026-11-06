@@ -44,6 +44,8 @@ require('./local-static-server.js');
  // Select a right-hand tab, then narrow the window without changing the tab.
  await page.getByRole('tab',{name:'Inventory',exact:true}).first().click();
  await check('player');
+ await page.reload({waitUntil:'networkidle'});
+ await page.waitForFunction(()=>window.AsteriaReactMigration?.available&&window.AsteriaFirebase?.getUser()?.uid==='player-demo');
  await page.evaluate(()=>window.AsteriaReactMigration.openGM('demo-campaign'));
  await page.locator('.react-gm-dashboard').waitFor();
  await page.getByRole('tab',{name:'World Systems',exact:true}).first().click();
