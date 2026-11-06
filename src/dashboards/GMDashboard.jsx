@@ -537,10 +537,12 @@ export function GMDashboard({ campaignId }) {
   };
   const applyGMLayout=async layout=>{
     if(!accountUid)return {ok:false,error:'Sign in to customise this dashboard.'};
+    const applyScope=campaignId+':'+accountUid;
     setSavingDashboardSettings(true);
     setDashboardSettingsMessage('Saving layout...');
     try{
       const result=await saveDashboardLayout(layout);
+      if(dashboardSaveScope.current!==applyScope)return {ok:false,error:'Account or campaign changed while saving.'};
       if(result?.ok){
         dashboardDraftDirty.current=false;
         setDashboardSettingsDraft(layout);
