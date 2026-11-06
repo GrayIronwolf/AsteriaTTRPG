@@ -4,7 +4,7 @@ import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_S
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
  resizeDashboardGridPanel,lockDashboardGridPanel,autoArrangeDashboardLayout,
- setDashboardBackground,dashboardBackgroundForPanel} from '../state/dashboardLayoutModel.mjs';
+ setDashboardBackground} from '../state/dashboardLayoutModel.mjs';
 const labels={obsidian:'Obsidian Stone',slate:'Stone Slate',arcane:'Arcane Mist'};
 const registry=role=>DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
 function BackgroundSelector({id,role,layout,onChange,disabled}){
@@ -180,8 +180,13 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
  </div>;
 }
 export function DashboardLayoutWorkspace({role='player',layout:raw,renderPanel,title='Dashboard Panels',forcedPanels=[]}){
- const layout=normalizeDashboardLayout(raw,role),items=registry(role),allowed=new Set(items.map(item=>item.id));
- const ids=[...new Set([...visibleDashboardPanels(layout,role),...forcedPanels.filter(id=>allowed.has(id))])];
+ // The live clock refreshes dashboard content every second. Normalize a saved
+ // layout at most once per changed input, not once per panel and once more for
+ // its background during every render.
+ const layout=React.useMemo(()=>normalizeDashboardLayout(raw,role),[raw,role]);
+ const allowed=React.useMemo(()=>new Set(registry(role).map(item=>item.id)),[role]);
+ const hidden=new Set(layout.hidden);
+ const ids=[...new Set([...layout.order.filter(id=>!hidden.has(id)),...forcedPanels.filter(id=>allowed.has(id))])];
  return <section className="react-dashboard-layout-workspace" aria-label={title}>
   <div className="react-dashboard-custom-grid react-dashboard-freeform-grid" aria-label="Dashboard panels"
    style={{'--grid-rows':gridRowCount(layout.placements,ids)}}>
@@ -190,7 +195,7 @@ export function DashboardLayoutWorkspace({role='player',layout:raw,renderPanel,t
     const frame=p.h>p.w*1.4?'tall':p.w>=p.h*2.5?'ultrawide':p.w>=p.h*1.45?'wide':'square';
     return <div key={id} className="react-dashboard-custom-cell" data-panel-id={id}
      data-panel-size={p.w+'x'+p.h} data-frame-family={frame}
-     data-panel-background={dashboardBackgroundForPanel(layout,role,id)}
+     data-panel-background={layout.panelBackgrounds[id]||layout.backgroundStyle}
      style={{'--panel-col':p.x+1,'--panel-row':p.y+1,'--panel-w':p.w,'--panel-h':p.h}}>
      <DashboardPanelFrameContext.Provider value={true}>{renderPanel(id)}</DashboardPanelFrameContext.Provider>
     </div>;

@@ -457,7 +457,10 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
 
 export function GMDashboard({ campaignId }) {
   const rawLive = useCampaignLiveData(campaignId, { mode: 'gm' });
-  const derivedCharacters=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,reconcileCharacterSystems(character,talentCatalog(character),{encounter:rawLive.encounter,now:rawLive.clock})])),[rawLive.characters,rawLive.encounter,rawLive.clock]);
+  // A one-second session clock may expire effects, but does not alter the
+  // learned talent catalogue. Build catalogues only when character data changes.
+  const characterCatalogs=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,talentCatalog(character)])),[rawLive.characters]);
+  const derivedCharacters=useMemo(()=>Object.fromEntries(Object.entries(rawLive.characters).map(([id,character])=>[id,reconcileCharacterSystems(character,characterCatalogs[id],{encounter:rawLive.encounter,now:rawLive.clock})])),[rawLive.characters,characterCatalogs,rawLive.encounter,rawLive.clock]);
   const live={...rawLive,characters:derivedCharacters};
   const coreSyncError=useCharacterSystemsSync(campaignId,rawLive.characters,rawLive.encounter,rawLive.session?.editable);
   const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
