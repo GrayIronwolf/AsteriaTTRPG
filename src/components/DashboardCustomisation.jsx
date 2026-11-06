@@ -56,6 +56,13 @@ function GridEditor({role,layout,onChange,disabled}){
   setPreview(null);
   try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* already released */}
  };
+ const cancel=e=>{
+  const g=gesture.current;
+  if(!g||g.pointer!==e.pointerId)return;
+  gesture.current=null;
+  setPreview(null);
+  try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* already released */}
+ };
  const number=(field,value)=>{
   if(!p||value===''||!Number.isInteger(Number(value)))return;
   const n=Number(value);
@@ -68,7 +75,7 @@ function GridEditor({role,layout,onChange,disabled}){
   <div className="react-grid-editor-scroller">
    <div className="react-grid-editor-canvas" ref={grid}
     style={{'--grid-rows':gridRowCount(layout.placements,ids)}}
-    onPointerMove={drag} onPointerUp={end} onPointerCancel={()=>{gesture.current=null;setPreview(null);}}>
+    onPointerMove={drag} onPointerUp={end} onPointerCancel={cancel} onLostPointerCapture={cancel}>
     {ids.map(id=>{
       const pos=preview?.id===id?preview.rect:layout.placements[id];
       const item=registry(role).find(x=>x.id===id);
@@ -81,13 +88,22 @@ function GridEditor({role,layout,onChange,disabled}){
         onKeyDown={e=>{
          if(!e.altKey||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
          e.preventDefault();
+         if(disabled||lock)return;
          move(id,pos.x+(e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0),
           pos.y+(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0));
         }}>
         <b>{item.label}</b><small>{pos.w}×{pos.h}{lock?' · Locked':''}</small>
        </button>
        {!fixed&&!lock?<button className="react-grid-editor-tile-resize" type="button"
-        aria-label={'Resize '+item.label} onPointerDown={e=>begin(e,id,'resize')}>◢</button>:null}
+        aria-label={'Resize '+item.label} disabled={disabled}
+         onPointerDown={e=>begin(e,id,'resize')}
+         onKeyDown={e=>{
+          if(!e.altKey||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+          e.preventDefault();
+          if(disabled)return;
+          size(id,pos.w+(e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0),
+           pos.h+(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0));
+         }}>◢</button>:null}
       </div>;
     })}
    </div>
@@ -163,7 +179,21 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
    })}
   </div>
   {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
-   onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+   onKeyDown={e=>{
+     if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setOpen(false);return;}
+     if(e.key!=='Tab')return;
+     const controls=Array.from(dialogRef.current?.querySelectorAll(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+     )||[]).filter(node=>node.getClientRects().length);
+     if(!controls.length){e.preventDefault();e.stopPropagation();return;}
+     const first=controls[0],last=controls[controls.length-1];
+     const inside=dialogRef.current?.contains(document.activeElement);
+     if(!inside || (e.shiftKey&&document.activeElement===first)){
+      e.preventDefault();e.stopPropagation();(e.shiftKey?last:first).focus();
+     }else if(!e.shiftKey&&document.activeElement===last){
+      e.preventDefault();e.stopPropagation();first.focus();
+     }else e.stopPropagation();
+    }}>
    <div className="react-grid-editor-dialog" ref={dialogRef}>
     <header className="react-grid-editor-header"><div><h2>Dashboard Layout Editor</h2>
      <small>12 columns · 30 starting rows · flexible sizes</small></div>
