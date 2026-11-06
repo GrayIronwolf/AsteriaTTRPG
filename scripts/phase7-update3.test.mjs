@@ -39,13 +39,13 @@ test('Resizing previews use the same legal bounds and collisions as the reducer'
  assert.equal(dashboardGridCandidateIsFree(enabled,'player','shortcutInventory',{...fixed,w:3}),false);
 });
 
-test('Editor announces rejected pointer, numeric and keyboard placements',()=>{
+test('Editor previews free movement, preserves keyboard placement and accessible status messages',()=>{
  const source=read('src/components/DashboardCustomisation.jsx');
- assert.match(source,/dashboardGridCandidateIsFree\(layout,role,g\.id,next\)/);
- assert.match(source,/dashboardGridCandidateIsFree\(layout,role,id,next\)/);
- assert.match(source,/dashboardGridCandidateIsFree\(layout,role,activeSelected,proposed\)/);
+ assert.match(source,/setPreview\(\{id:g\.id,rect:next\}\)/);
+ assert.match(source,/dashboardKeyboardProposal\(role,id,rect,kind,key\)/);
+ assert.match(source,/placeDashboardGridPanel\(old,role,id,x,y\)/);
  assert.match(source,/aria-live="polite"/);
- assert.match(source,/setPreview\(valid\?\{id:g\.id,rect:next\}:null\)/);
+ assert.match(source,/fitDashboardGridPanel\(old,role,id,w,h\)/);
 });
 
 test('Player and GM settings preserve unsaved edits until a successful current-scope save',()=>{
