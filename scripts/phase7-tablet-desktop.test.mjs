@@ -43,7 +43,7 @@ test('Tablet panel reflow keeps DOM order, desktop saved placements and fixed re
   assert.deepEqual(visibleDashboardPanels(restored,role),visibleDashboardPanels(initial,role));
   assert.deepEqual(restored.placements,initial.placements);
  }
- const player=read('src/dashboards/CharacterDashboard.jsx');
+ const player=read('src/dashboards/PlayerDashboardOverview.jsx');
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(player,/DashboardLayoutWorkspace/);
  assert.match(gm,/DashboardLayoutWorkspace/);
