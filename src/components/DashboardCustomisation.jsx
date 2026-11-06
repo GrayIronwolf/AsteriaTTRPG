@@ -28,7 +28,7 @@ function GridEditor({role,layout,onChange,disabled}){
  // A removed panel cannot remain selected or editable in the side panel.
  const activeSelected=ids.includes(selected)?selected:(ids[0]||'');
  const p=preview?.id===activeSelected?preview.rect:layout.placements[activeSelected];
- const rule=dashboardGridRule(role,activeSelected),locked=layout.lockedPositions.includes(activeSelected);
+ const rule=dashboardGridRule(role,activeSelected);
  const move=(id,x,y)=>onChange(old=>placeDashboardGridPanel(old,role,id,x,y));
  const size=(id,w,h)=>onChange(old=>fitDashboardGridPanel(old,role,id,w,h));
  const propose=(g,e)=>dashboardPointerProposal(role,g.id,g.rect,g.kind,
@@ -82,16 +82,6 @@ function GridEditor({role,layout,onChange,disabled}){
   setMoveFeedback('');
   if(kind==='resize')size(id,next.w,next.h);
   else move(id,next.x,next.y);
- };
- const number=(field,value)=>{
-  if(!p||value===''||!Number.isInteger(Number(value)))return;
-  const n=Number(value);
-  const proposed=field==='w'||field==='h'
-   ?dashboardPointerProposal(role,activeSelected,p,'resize',field==='w'?n-p.w:0,field==='h'?n-p.h:0)
-   :{...p,x:field==='x'?n-1:p.x,y:field==='y'?n-1:p.y};
-  setMoveFeedback('');
-  if(field==='w'||field==='h')size(activeSelected,proposed.w,proposed.h);
-  else move(activeSelected,proposed.x,proposed.y);
  };
  return <div className="react-grid-editor-content">
   <div className="react-grid-editor-scroller">
