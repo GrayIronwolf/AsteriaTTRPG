@@ -122,7 +122,7 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
 /* Dashboard editor: floating tiles, animated layout and integrated library. */
 .react-grid-editor-content:has(>.react-grid-editor-scroller){display:flex;min-width:0}
 .react-grid-editor-content:has(>.react-grid-editor-scroller)>.react-grid-editor-scroller{flex:1;min-width:0}
-.react-grid-editor-content:has(>.react-grid-editor-scroller)>.react-grid-editor-properties{display:none}
+.react-grid-editor-content:has(>.react-grid-editor-scroller)>.react-grid-editor-properties{display:flex;flex:1 1 100%;max-width:100%;padding:6px;gap:6px}
 .react-grid-editor-tile{transition:grid-column .2s ease,grid-row .2s ease,transform .18s ease,box-shadow .18s ease;z-index:1}
 .react-grid-editor-tile.dragging{z-index:30;transition:none;filter:drop-shadow(0 12px 15px rgba(0,0,0,.7))}
 .react-grid-editor-tile.dragging .react-grid-editor-tile-main{cursor:grabbing}
@@ -153,3 +153,9 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
 .react-grid-editor-lock[aria-pressed="true"]{color:#ffe1a5;border-color:#d6af68}
 .react-grid-editor-lock:focus-visible,.react-grid-editor-size-options button:focus-visible,.react-grid-editor-library-item:focus-visible{outline:3px solid #c7e9ff!important;outline-offset:2px}
 .react-grid-editor-tile-main{padding-top:25px!important}
+
+.react-grid-editor-content:has(>.react-grid-editor-scroller){flex-wrap:wrap}
+.react-grid-editor-presets{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 12px}
+.react-grid-editor-presets button{min-height:35px;font-size:.75rem}
+.react-grid-editor-library>label{display:grid;gap:5px;font-size:.75rem}
+.react-grid-editor-library>label select{min-height:42px;max-width:100%}
