@@ -5,6 +5,7 @@ import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js'
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
@@ -535,6 +536,10 @@ export function GMDashboard({ campaignId }) {
       case 'acInspector':return <ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/>;
       case 'playerManagement':return <PlayerManagementTools campaignId={campaignId} characters={live.characters}/>;
       case 'partySummary':return <Panel title="Party Summary"><p className="react-help">{Object.keys(live.characters||{}).length} characters linked to this campaign.</p><div className="react-party-summary-list">{Object.values(live.characters||{}).map(character=><button key={character.id} onClick={()=>setSelectedId(character.id)}>{character.name||'Unnamed Character'} · Level {Number(character.level||0)}</button>)}</div><button type="button" onClick={()=>setTab('tools')}>Open GM Character Tools</button></Panel>;
+      case 'combatOverview':return <GMCombatOverview encounter={live.encounter} session={live.session} characters={live.characters} onNavigate={setTab}/>;
+      case 'explorationOverview':return <GMExplorationOverview workspace={workspace} campaign={live.campaign} onNavigate={setTab}/>;
+      case 'questTracker':return <GMQuestTracker workspace={workspace} onNavigate={setTab}/>;
+      case 'inventoryOverview':return <GMInventoryOverview characters={live.characters} itemEcosystem={live.itemEcosystem} onNavigate={setTab}/>;
       case 'shortcutInventory':return shortcut('PC Inventory','inventory');
       case 'shortcutQuests':return shortcut('Quests','quests');
       case 'shortcutNotes':return shortcut('GM Notes','notes');
