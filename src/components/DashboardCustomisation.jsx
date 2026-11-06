@@ -3,10 +3,9 @@ import {createPortal} from 'react-dom';
 import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
 import {trapDialogTab} from './dialogFocus.mjs';
 import {dashboardKeyboardProposal} from '../state/dashboardGridModel.mjs';
-import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
+import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_BACKGROUND_STYLES,
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
- visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
- resizeDashboardGridPanel,dashboardGridCandidateIsFree,lockDashboardGridPanel,autoArrangeDashboardLayout,
+ visibleDashboardPanels,toggleDashboardPanel,lockDashboardGridPanel,
  dashboardPanelSizeChoices,placeDashboardGridPanel,fitDashboardGridPanel,
  dashboardViewportFromWidth,dashboardLayoutForViewport,setDashboardViewportLayout,
  setDashboardBackground} from '../state/dashboardLayoutModel.mjs';
@@ -181,7 +180,6 @@ export function DashboardLayoutEditor({role,layout:source,onChange,onApply,disab
    wasOpenRef.current=false;
   }
  },[open]);
- const visible=new Set(visibleDashboardPanels(layout,role));
  const update=change=>setDraft(old=>typeof change==='function'?change(old):change);
  return <div className="react-dashboard-layout-editor">
   <p className="react-help">Rearrange, resize, lock or hide panels in one editor. Apply saves the arrangement for the selected screen size.</p>
