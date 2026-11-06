@@ -25,6 +25,27 @@ function GridEditor({role,layout,onChange,disabled}){
  const [moveFeedback,setMoveFeedback]=useState('');
  const [floating,setFloating]=useState(null);
  const grid=useRef(null),gesture=useRef(null);
+ const previousTilePositions=useRef(new Map());
+ const previewLayout=React.useMemo(()=>preview?.id
+   ?placeDashboardGridPanel(layout,role,preview.id,preview.rect.x,preview.rect.y):layout,
+   [layout,role,preview]);
+ React.useLayoutEffect(()=>{
+  const host=grid.current;
+  if(!host)return;
+  const current=new Map();
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  for(const tile of host.querySelectorAll('[data-grid-panel-id]')){
+    const id=tile.getAttribute('data-grid-panel-id'),rect=tile.getBoundingClientRect();
+    current.set(id,{x:rect.x,y:rect.y});
+    const prior=previousTilePositions.current.get(id);
+    if(!prior||id===floating?.id||reduced||typeof tile.animate!=='function')continue;
+    const dx=prior.x-rect.x,dy=prior.y-rect.y;
+    if(Math.abs(dx)>1||Math.abs(dy)>1)
+      tile.animate([{transform:'translate('+dx+'px,'+dy+'px)'},{transform:'translate(0,0)'}],
+        {duration:210,easing:'cubic-bezier(.2,.8,.2,1)'});
+  }
+  previousTilePositions.current=current;
+ },[previewLayout,floating?.id]);
  // A removed panel cannot remain selected or editable in the side panel.
  const activeSelected=ids.includes(selected)?selected:(ids[0]||'');
  const p=preview?.id===activeSelected?preview.rect:layout.placements[activeSelected];
@@ -89,11 +110,11 @@ function GridEditor({role,layout,onChange,disabled}){
     style={{'--grid-rows':gridRowCount(layout.placements,ids)}}
     onPointerMove={drag} onPointerUp={end} onPointerCancel={cancel} onLostPointerCapture={cancel}>
     {ids.map(id=>{
-      const pos=layout.placements[id];
+      const pos=floating?.id===id?layout.placements[id]:previewLayout.placements[id];
       const item=registry(role).find(x=>x.id===id);
       if(!pos||!item)return null;
       const fixed=dashboardGridRule(role,id).fixed,lock=layout.lockedPositions.includes(id);
-      return <div key={id} className={'react-grid-editor-tile'+(activeSelected===id?' selected':'')+(floating?.id===id?' dragging':'')}
+      return <div data-grid-panel-id={id} key={id} className={'react-grid-editor-tile'+(activeSelected===id?' selected':'')+(floating?.id===id?' dragging':'')}
        style={{gridColumn:(pos.x+1)+' / span '+pos.w,gridRow:(pos.y+1)+' / span '+pos.h,
          ...(floating?.id===id?{transform:`translate3d(${floating.dx}px,${floating.dy}px,0) scale(1.02)`}:{})}}>
        <button type="button" aria-pressed={activeSelected===id} className="react-grid-editor-tile-main"
