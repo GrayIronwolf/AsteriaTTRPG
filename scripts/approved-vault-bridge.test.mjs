@@ -14,7 +14,7 @@ const page=(title='Public Primdale',code='07-05-001-001')=>
 function fixture(fn){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'asteria-bridge-'));
  const source=path.join(dir,'vault','publish','public');
- const out=path.join(dir,'website','docs','vault-import-preview');
+ const out=path.join(dir,'website','content-import','approved');
  fs.mkdirSync(source,{recursive:true});
  try{return fn({source,out,write:(rel,contents)=>{const f=path.join(source,rel);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,contents);}});}
  finally{fs.rmSync(dir,{recursive:true,force:true});}
