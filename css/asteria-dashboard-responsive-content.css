@@ -1,0 +1,224 @@
+/* Dashboard Update 2 — adaptive panel bodies and protected approved corners.
+   Scope: Player/GM freeform dashboard ONLY. Keep all four WebP frame assets,
+   header PNGs, backdrops, layout placements and panel interaction logic intact. */
+
+/* Query the panel's *rendered* width, not the viewport, so independently
+   resized 2–12-column panels choose the correct internal content layout.
+   The outer grid remains a 12-column layout and retains saved positions. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell {
+  container-name:asteria-panel;
+  container-type:inline-size;
+  --asteria-frame-border:clamp(9px,2.3cqi,18px);
+}
+
+/* The existing nine-slice frame keeps the ornamental corners unscaled.
+   Only its straight edges stretch as panel widths/heights change. The
+   inset backdrop is still a separate layer below the DOM content. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell::before {
+  border-width:var(--asteria-frame-border)!important;
+  border-image-slice:12%!important;
+  border-image-width:1!important;
+  border-image-repeat:stretch!important;
+  border-image-outset:0!important;
+}
+
+/* Update 1's header stays outside this independently scrolling region.
+   No content is made inert, clipped or truncated to match a tiny panel. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell > .asteria-react-panel
+  > .react-panel-scroll-region {
+  min-width:0;
+  min-height:0;
+  max-width:100%;
+  overflow-wrap:break-word;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell > .asteria-react-panel
+  > .react-panel-scroll-region > * {
+  min-width:0;
+  max-width:100%;
+}
+
+/* As soon as armour no longer has room for three usable slot columns,
+   give the AC core its own full-width row and two equal slot lists.
+   Keep all eight equipment slots and the AC breakdown action live. */
+@container asteria-panel (max-width:520px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-layout {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:auto auto;
+    align-content:start;
+    align-items:start;
+    gap:6px;
+    height:auto!important;
+    min-height:0!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-core {
+    grid-column:1 / -1;
+    grid-row:1;
+    min-height:76px;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-slots {
+    grid-row:2;
+    grid-template-rows:none;
+    grid-auto-rows:minmax(46px,auto);
+    min-width:0;
+    align-content:start;
+  }
+}
+@container asteria-panel (max-width:300px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-layout {
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto auto;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-core {grid-column:1;grid-row:1;}
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-slots:first-child {grid-column:1;grid-row:2;}
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-armour-slots:last-child {grid-column:1;grid-row:3;}
+}
+
+/* Independently sized Weapons and Quick Items panels use two columns when
+   their contents fit and one readable column when they do not. */
+@container asteria-panel (max-width:420px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="weapons"]
+    .react-weapon-slot-grid,
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="quick"]
+    .react-quick-slot-grid {
+    grid-template-columns:minmax(0,1fr)!important;
+    align-content:start;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="quick"]
+    .react-loadout-slot {
+    min-height:60px;
+    grid-template-columns:34px minmax(0,1fr);
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="weapons"]
+    .react-loadout-slot-copy :is(b,em),
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="quick"]
+    .react-loadout-slot-copy :is(b,em),
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-panel-id="armour"]
+    .react-loadout-slot-copy :is(b,em) {
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+  }
+}
+@container asteria-panel (max-width:260px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-weapon-slot-grid,.react-quick-slot-grid,.react-armour-slots)
+    .react-loadout-slot {
+    grid-template-columns:26px minmax(0,1fr);
+    gap:5px;
+    padding:5px;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-weapon-slot-grid,.react-quick-slot-grid,.react-armour-slots)
+    .react-loadout-slot-art {
+    width:26px;
+    height:30px;
+  }
+}
+
+/* Spells, talents and skills currently assume four usable columns.
+   Respond to actual panel width instead, retaining original buttons,
+   filters, card names, accessibility labels and cast confirmation. */
+@container asteria-panel (max-width:650px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-ability-grid,.react-dashboard-skill-grid) {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+@container asteria-panel (max-width:310px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-ability-grid,.react-dashboard-skill-grid) {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
+@container asteria-panel (max-width:420px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-ability-card :is(b,small,em),
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-dashboard-skill-grid :is(b,small) {
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+  }
+}
+
+/* GM forms must collapse at panel-width thresholds, not only when the
+   entire device viewport is narrow. Maintain control sizes and labels. */
+@container asteria-panel (max-width:600px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-form-grid {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr))!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-encounter-builder {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-magic-grid,.react-gm-grant-grid) {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-recipient-grid,.react-search-results) {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr))!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-form-grid,.react-gm-ac-form,.react-encounter-builder,
+        .react-magic-grid,.react-gm-grant-grid,.react-recipient-grid) > * {
+    min-width:0;
+  }
+}
+@container asteria-panel (max-width:410px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    :is(.react-form-grid,.react-gm-ac-form,.react-gm-grant-grid) {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-gm-ac-form label:first-child {
+    grid-column:auto!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-delivery-list > div {
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:5px;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-magic-reward {
+    grid-template-columns:minmax(0,1fr)!important;
+    justify-items:start;
+    gap:8px;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-encounter-resource > div {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-encounter-resource > div > button {
+    grid-column:1 / -1;
+  }
+}
+@container asteria-panel (max-width:280px) {
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+    .react-magic-grid {
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+}
+
+/* Input grids should never grow beyond the scrolling pane or force the
+   surrounding frame to widen. A rare wide table may scroll within its pane. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell
+  :is(input,select,textarea) {
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
