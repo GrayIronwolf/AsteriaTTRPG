@@ -519,7 +519,7 @@ export function GMDashboard({ campaignId }) {
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const saveDashboardLayout=async layout=>{
     const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
-    if(result?.ok)setSavedDashboardLayout(layout);
+    if(result?.ok&&dashboardSaveScope.current===campaignId+':'+accountUid)setSavedDashboardLayout(layout);
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
   };
