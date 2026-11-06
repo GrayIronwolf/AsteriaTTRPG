@@ -125,7 +125,7 @@ test('Font stylesheet failures retain readable CSS fallbacks and do not mutate d
   assert.match(css,/\.asteria-typography-gallery/);
   const html=read('index.html');
   assert.match(html,/css\/asteria-typography\.css\?v=phase5-update2-20261106/);
-  assert.match(html,/js\/asteria-typography\.js\?v=phase5-update2-20261106/);
+  assert.match(html,/js\/asteria-typography\.js\?v=phase6-update2-20261106/);
   for(const a of ['asteria-button-images.css','asteria-panel-headers.css','asteria-dashboard-panel-images.css','asteria-smoke-background.css'])
     assert.ok(html.includes(a),a);
   const source=read('js/asteria-typography.js');
