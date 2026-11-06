@@ -117,7 +117,7 @@ test('Typography settings keep a visible section heading, validate reading fonts
   uid='alpha';typography.refreshAccount();
   assert.equal(typography.get().reading,'inter','Original account preference is preserved');
   const html=read('index.html');
-  assert.match(html,/js\/asteria-typography\.js\?v=phase5-update1-20261106/);
+  assert.match(html,/js\/asteria-typography\.js\?v=phase5-update2-20261106/);
 });
 
 test('Audit retains approved backgrounds, headers, image buttons, compendium and dashboard settings',()=>{
