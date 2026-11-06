@@ -1140,13 +1140,17 @@ const firebasePublicApi = {
   },
   saveUserDashboardLayout: async function(campaignId,role,layout){
     if(!db||!currentUser||!campaignId||!['player','gm'].includes(role))return {ok:false,error:'Sign in to save a dashboard layout.'};
+    // Never resolve a target account from mutable auth state after async work.
+    const ownerUid=currentUser.uid;
     try {
       if(role==='gm'){
         const snapshot=await getDoc(doc(db,'campaigns',campaignId));
+        if(currentUser?.uid!==ownerUid)return {ok:false,error:'Account changed before dashboard settings were saved.'};
         if(!snapshot.exists()||!currentUserIsCampaignGM(snapshot.data()))return {ok:false,error:'Only campaign GMs can customise the GM dashboard.'};
       }
       const {normalizeDashboardLayout}=await import('../src/state/dashboardLayoutModel.mjs');
-      await setDoc(doc(db,'users',currentUser.uid,'dashboardLayouts',role+'-'+campaignId),
+      if(currentUser?.uid!==ownerUid)return {ok:false,error:'Account changed before dashboard settings were saved.'};
+      await setDoc(doc(db,'users',ownerUid,'dashboardLayouts',role+'-'+campaignId),
         {layout:normalizeDashboardLayout(layout,role),updatedAt:serverTimestamp()},{merge:true});
       return {ok:true};
     } catch(error) {return {ok:false,error:error?.message||String(error)};}
