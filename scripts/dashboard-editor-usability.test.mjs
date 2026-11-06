@@ -78,16 +78,16 @@ test('Grid editor uses final pointer event, preserves keyboard and numeric input
   assert.match(editor,/onPointerCancel=/);
   assert.match(editor,/onKeyDown=\{e=>\{/);
   assert.match(editor,/e\.altKey/);
-  assert.match(editor,/type="number"/);
-  assert.match(editor,/Lock Position/);
-  assert.match(editor,/Remove Panel/);
-  assert.match(editor,/Apply Layout to Settings/);
-  assert.match(editor,/Save Dashboard Settings/);
+  assert.match(editor,/dashboardPanelSizeChoices\(role,id\)/);
+  assert.match(editor,/lockDashboardGridPanel\(old,role,id,!lock\)/);
+  assert.match(editor,/react-grid-editor-library-item/);
+  assert.match(editor,/Apply Changes/);
+  assert.match(editor,/onApply\(combined\)/);
 });
 test('Live resource updates cannot overwrite an in-progress Player settings draft',()=>{
   assert.match(playerSettings,/const savedPreferencesKey=JSON\.stringify\(character\.dashboardPreferences\|\|\{\}\)/);
   assert.match(playerSettings,/\[savedPreferencesKey\]/);
   assert.doesNotMatch(playerSettings,/normalizeDashboardPreferences\(character\),\[character\]/);
   assert.match(playerSettings,/updateDashboardPreferences\(campaignId,character\.id,preferences\)/);
-  assert.match(editor,/onClick=\{\(\)=>\{onChange\(draft\);setOpen\(false\);\}\}/);
+  assert.match(editor,/setDashboardViewportLayout\(layout,role,viewport,draft\)/);
 });

@@ -535,6 +535,25 @@ export function GMDashboard({ campaignId }) {
     dashboardDraftRevision.current++;
     setDashboardSettingsDraft(change);
   };
+  const applyGMLayout=async layout=>{
+    if(!accountUid)return {ok:false,error:'Sign in to customise this dashboard.'};
+    const applyScope=campaignId+':'+accountUid;
+    setSavingDashboardSettings(true);
+    setDashboardSettingsMessage('Saving layout...');
+    try{
+      const result=await saveDashboardLayout(layout);
+      if(dashboardSaveScope.current!==applyScope)return {ok:false,error:'Account or campaign changed while saving.'};
+      if(result?.ok){
+        dashboardDraftDirty.current=false;
+        setDashboardSettingsDraft(layout);
+        setDashboardSettingsMessage('Dashboard layout saved.');
+      }else setDashboardSettingsMessage(result?.error||'Could not save dashboard layout.');
+      return result;
+    }catch(error){
+      const failure={ok:false,error:error?.message||'Could not save dashboard layout.'};
+      setDashboardSettingsMessage(failure.error);return failure;
+    }finally{setSavingDashboardSettings(false);}
+  };
   const saveDashboardSettings=async()=>{
     if(savingDashboardSettings)return;
     const saveScope=campaignId+':'+accountUid,saveRevision=dashboardDraftRevision.current;
@@ -600,9 +619,8 @@ export function GMDashboard({ campaignId }) {
     {tab === 'settings' ? <div className="react-settings-workspace">
       <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
         <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
-        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} disabled={!accountUid||savingDashboardSettings}/>
+        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} onApply={applyGMLayout} disabled={!accountUid||savingDashboardSettings}/>
         <div className="react-settings-save">
-          <button type="button" disabled={!accountUid||savingDashboardSettings} onClick={()=>updateDashboardSettingsDraft(defaultDashboardLayout('gm'))}>Restore Default Layout</button>
           <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>
         </div>
         <p role="status">{dashboardSettingsMessage}</p>
