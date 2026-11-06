@@ -366,7 +366,6 @@
   function workspaceCard({ tag, title, subtitle, body, meta, action }) {
     const element = document.createElement('article');
     element.className = 'clean-card workspace-dashboard-card';
-    element.tabIndex = 0;
     element.innerHTML = `
       <span class="clean-tag">${escapeHtml(tag || 'Workspace')}</span>
       <h3>${escapeHtml(title)}</h3>
@@ -374,16 +373,19 @@
       <p>${escapeHtml(body || '')}</p>
       ${meta ? `<div class="clean-meta">${meta}</div>` : ''}
     `;
-    element.onclick = () => {
-      if (create) {
-        action?.();
-        return;
-      }
-      qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
-      element.classList.add('selected');
-    };
-    element.ondblclick = () => action?.();
-    element.onkeydown = event => { if (event.key === 'Enter') action?.(); };
+    // A dedicated control works with touch, keyboard, and screen readers.
+    // The previous click handler referenced an undefined 'create' variable.
+    if (typeof action === 'function') {
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'workspace-gallery-open primary';
+      open.textContent = 'Open ' + String(title || 'workspace');
+      open.addEventListener('click', event => {
+        event.stopPropagation();
+        action();
+      });
+      element.appendChild(open);
+    }
     return element;
   }
 
@@ -406,8 +408,28 @@
       qsa('.clean-card', element.parentElement).forEach(cardElement => cardElement.classList.remove('selected'));
       element.classList.add('selected');
     };
-    element.ondblclick = () => action?.();
-    element.onkeydown = event => { if (event.key === 'Enter') action?.(); };
+    // Gallery cards retain single-tap selection and double-click opening on desktop.
+    // An explicit button makes opening available on mobile and to keyboard users.
+    if (typeof action === 'function') {
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'workspace-gallery-open primary';
+      open.textContent = 'Open ' + String(title || 'entry');
+      open.addEventListener('click', event => {
+        event.stopPropagation();
+        action();
+      });
+      element.querySelector('.workspace-gallery-copy')?.appendChild(open);
+    }
+    element.ondblclick = event => {
+      if (!event.target.closest?.('button,input,select,textarea')) action?.();
+    };
+    element.onkeydown = event => {
+      if (event.target === element && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        action?.();
+      }
+    };
     return element;
   }
 
