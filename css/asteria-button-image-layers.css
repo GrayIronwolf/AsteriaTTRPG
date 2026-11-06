@@ -1,0 +1,106 @@
+/* Asteria Phase 3 — the two user-approved images remain separate optical layers.
+   The eight WebP exports are geometry-adjusted copies of the SAME approved PNGs.
+   All button captions, icons and action handlers remain DOM-owned.
+   IMPORTANT: Merge only when all eight referenced images have been committed. */
+
+body .asteria-menu-button[data-asteria-button-size="small"] {
+  --asteria-button-frame-art:url("../assets/ui/buttons/button-small-frame.webp");
+  --asteria-button-crystal-art:url("../assets/ui/buttons/button-small-crystal.webp");
+  --asteria-frame-cap:30px;
+}
+body .asteria-menu-button[data-asteria-button-size="standard"] {
+  --asteria-button-frame-art:url("../assets/ui/buttons/button-standard-frame.webp");
+  --asteria-button-crystal-art:url("../assets/ui/buttons/button-standard-crystal.webp");
+  --asteria-frame-cap:36px;
+}
+body .asteria-menu-button[data-asteria-button-size="long"] {
+  --asteria-button-frame-art:url("../assets/ui/buttons/button-long-frame.webp");
+  --asteria-button-crystal-art:url("../assets/ui/buttons/button-long-crystal.webp");
+  --asteria-frame-cap:42px;
+}
+body .asteria-menu-button[data-asteria-button-size="icon"] {
+  --asteria-button-frame-art:url("../assets/ui/buttons/button-icon-frame.webp");
+  --asteria-button-crystal-art:url("../assets/ui/buttons/button-icon-crystal.webp");
+  --asteria-frame-cap:20px;
+}
+
+/* The actual button element remains interactive, accessible and keyboard focusable.
+   The approved steel artwork is achromatic and does not consume theme hues. */
+body .asteria-menu-button[data-asteria-button-size],
+body #globalNavigation > .crystal-button[data-asteria-button-size] {
+  position:relative!important;
+  isolation:isolate!important;
+  background:transparent!important;
+  border:0!important;
+  border-image:none!important;
+  border-radius:0!important;
+  text-shadow:0 1px 2px #020710,0 0 5px #010711a8!important;
+  overflow:visible!important;
+}
+/* Layer 1: fixed metallic bezel with pointed silver/gold ends.
+   A three-slice cap/centre/cap keeps the ornate ends intact when a long
+   label is narrower or a mobile navigation button fills its row. */
+body .asteria-menu-button[data-asteria-button-size]::before,
+body #globalNavigation > .crystal-button[data-asteria-button-size]::before {
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  pointer-events:none!important;
+  clip-path:none!important;
+  z-index:-1!important;
+  background-image:var(--asteria-button-frame-art)!important;
+  background-repeat:no-repeat!important;
+  background-position:center center!important;
+  background-size:100% 100%!important;
+  border:0!important;
+  box-shadow:none!important;
+  opacity:1!important;
+  transform:translateY(var(--button-travel,0px))!important;
+  transition:transform 150ms cubic-bezier(.2,1.4,.45,1),filter 180ms ease!important;
+}
+/* Layer 2: full-colour faceted crystal image, aligned behind the steel
+   with the original shared canvas. Theme overlay changes hue while retaining
+   the source photograph's luminosity, facet reflections and shadows. */
+body .asteria-menu-button[data-asteria-button-size]::after,
+body #globalNavigation > .crystal-button[data-asteria-button-size]::after {
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  pointer-events:none!important;
+  clip-path:none!important;
+  z-index:-2!important;
+  background-image:
+    linear-gradient(var(--button-crystal-color,var(--asteria-accent,#1269cd)),
+                    var(--button-crystal-color,var(--asteria-accent,#1269cd))),
+    var(--asteria-button-crystal-art)!important;
+  background-blend-mode:color,normal!important;
+  background-repeat:no-repeat!important;
+  background-size:100% 100%!important;
+  background-position:center center!important;
+  border:0!important;
+  box-shadow:none!important;
+  opacity:1!important;
+  transform:translateY(var(--button-travel,0px))!important;
+  transition:transform 150ms cubic-bezier(.2,1.4,.45,1),filter 180ms ease!important;
+}
+body .asteria-menu-button[data-asteria-button-size]:not(:disabled):not([aria-disabled="true"]):hover::before,
+body #globalNavigation > .crystal-button[data-asteria-button-size]:hover::before {filter:brightness(1.08)!important;}
+body .asteria-menu-button[data-asteria-button-size]:not(:disabled):not([aria-disabled="true"]):hover::after,
+body #globalNavigation > .crystal-button[data-asteria-button-size]:hover::after {filter:brightness(1.18)!important;}
+body .asteria-menu-button[data-asteria-button-size]:not(:disabled):is(:active,[data-menu-pressed])::before,
+body #globalNavigation > .crystal-button[data-asteria-button-size]:is(:active,[data-menu-pressed])::before {
+  filter:brightness(.94)!important;
+  transition-duration:70ms!important;
+}
+body .asteria-menu-button[data-asteria-button-size]:not(:disabled):is(:active,[data-menu-pressed])::after,
+body #globalNavigation > .crystal-button[data-asteria-button-size]:is(:active,[data-menu-pressed])::after {
+  filter:brightness(1.25)!important;
+  transition-duration:70ms!important;
+}
+body .asteria-menu-button[data-asteria-button-size]:disabled::after {filter:grayscale(1)!important;}
+@media (prefers-reduced-motion:reduce) {
+  body .asteria-menu-button[data-asteria-button-size]::before,
+  body .asteria-menu-button[data-asteria-button-size]::after {transform:none!important;transition:none!important;}
+}
