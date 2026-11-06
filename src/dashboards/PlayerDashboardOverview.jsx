@@ -10,6 +10,7 @@ import { DashboardPanel, Modal, ResourceBar, StatusPill, Tooltip } from '../comp
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { CurrencyPanel } from '../components/DashboardInformation.jsx';
 import { DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
+import { PlayerCombatOverview, PlayerExplorationOverview, PlayerQuestTracker, PlayerInventoryOverview } from './DashboardFocusPanels.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { normalizeDashboardPreferences, parseResourceCost } from '../state/liveWorkspaceModel.mjs';
 import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialDamageModel.mjs';
@@ -311,6 +312,10 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
       case 'rest':return <RestRecoveryPanel campaignId={campaignId} character={character} editable={editable} busy={busy} run={run}/>;
       case 'currency':return <CurrencyPanel character={character} campaign={campaign} editable={editable} onCurrencyChange={(currency,amount)=>run(()=>firebaseService.updateCurrency(campaignId,character.id,currency,amount,{source:'Character Dashboard Currency'}))} className="react-overview-currency"/>;
       case 'quests':case 'journal':case 'party':return summary(id);
+      case 'combatOverview':return <PlayerCombatOverview character={character} combat={combat} onNavigate={onNavigate}/>;
+      case 'explorationOverview':return <PlayerExplorationOverview campaign={campaign} partyWorkspace={partyWorkspace} character={character} onNavigate={onNavigate}/>;
+      case 'questTracker':return <PlayerQuestTracker character={character} partyWorkspace={partyWorkspace} onNavigate={onNavigate}/>;
+      case 'inventoryOverview':return <PlayerInventoryOverview character={character} onNavigate={onNavigate}/>;
       case 'shortcutInventory':return shortcut('Inventory','View equipment, storage and consumables.','inventory');
       case 'shortcutQuest':return shortcut('Quest Log','Review active missions and objectives.','quest');
       case 'shortcutCharacter':return shortcut('Character Sheet','Review your character details and progression.','character');
