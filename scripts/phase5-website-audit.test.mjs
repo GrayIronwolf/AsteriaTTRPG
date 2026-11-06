@@ -124,7 +124,7 @@ test('Audit retains approved backgrounds, headers, image buttons, compendium and
   const html=read('index.html'),dash=read('src/components/DashboardCustomisation.jsx');
   for(const asset of ['asteria-smoke-background.css','asteria-button-images.css','asteria-panel-headers.css','asteria-dashboard-panel-images.css','asteria-freeform-dashboard.css'])
     assert.ok(html.includes(asset),asset);
-  for(const marker of ['Apply Layout to Settings','Save Dashboard Settings','Lock Position','Remove Panel','Reset Layout','Auto Arrange'])
+  for(const marker of ['Apply Changes','Customise Dashboard Layout','lockDashboardGridPanel','react-grid-editor-library-item','Reset Layout','Auto Arrange'])
     assert.ok(dash.includes(marker),marker);
   assert.match(dash,/onPointerUp=\{end\}/);
   assert.match(dash,/onPointerCancel=/);
