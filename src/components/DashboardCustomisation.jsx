@@ -115,6 +115,16 @@ function GridEditor({role,layout,onChange,disabled}){
 export function DashboardLayoutEditor({role,layout:source,onChange,disabled=false}){
  const layout=normalizeDashboardLayout(source,role);
  const [open,setOpen]=useState(false),[draft,setDraft]=useState(null),[filter,setFilter]=useState('all');
+ const openButtonRef=useRef(null),dialogRef=useRef(null),wasOpenRef=useRef(false);
+ React.useEffect(()=>{
+  if(open){
+   wasOpenRef.current=true;
+   dialogRef.current?.querySelector('button')?.focus();
+  }else if(wasOpenRef.current){
+   openButtonRef.current?.focus();
+   wasOpenRef.current=false;
+  }
+ },[open]);
  const visible=new Set(visibleDashboardPanels(layout,role));
  const update=change=>setDraft(old=>typeof change==='function'?change(old):change);
  return <div className="react-dashboard-layout-editor">
@@ -125,7 +135,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
     onClick={()=>onChange(old=>applyDashboardPreset(old,role,preset))}>{preset}</button>)}
   </div>
   <div className="react-dashboard-layout-toolbar">
-   <button type="button" className="primary" disabled={disabled} onClick={()=>{setDraft(layout);setOpen(true);}}>Open Visual Grid Editor</button>
+   <button type="button" className="primary" ref={openButtonRef} disabled={disabled} onClick={()=>{setDraft(layout);setOpen(true);}}>Open Visual Grid Editor</button>
    <button type="button" disabled={disabled} onClick={()=>onChange(old=>autoArrangeDashboardLayout(old,role))}>Auto Arrange</button>
    <button type="button" disabled={disabled} onClick={()=>onChange(defaultDashboardLayout(role))}>Reset Layout</button>
   </div>
@@ -152,8 +162,9 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
     </article>;
    })}
   </div>
-  {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor">
-   <div className="react-grid-editor-dialog">
+  {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
+   onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+   <div className="react-grid-editor-dialog" ref={dialogRef}>
     <header className="react-grid-editor-header"><div><h2>Dashboard Layout Editor</h2>
      <small>12 columns · 30 starting rows · flexible sizes</small></div>
      <button type="button" aria-label="Cancel layout changes" onClick={()=>setOpen(false)}>×</button></header>
