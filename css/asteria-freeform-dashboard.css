@@ -109,3 +109,12 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
     flex-wrap:wrap;
   }
 }
+
+/* Phase 7 Update 2: visual grid editor lives in a body portal. Explicit
+   viewport sizing protects tablet/desktop overlays from inherited widths. */
+.react-grid-editor-modal{
+  width:100vw;
+  max-width:100vw;
+  min-height:100dvh;
+  box-sizing:border-box;
+}

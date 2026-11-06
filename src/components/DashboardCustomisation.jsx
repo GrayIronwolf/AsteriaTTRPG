@@ -1,4 +1,5 @@
 import React,{useState,useRef} from 'react';
+import {createPortal} from 'react-dom';
 import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
 import {trapDialogTab} from './dialogFocus.mjs';
 import {dashboardKeyboardProposal} from '../state/dashboardGridModel.mjs';
@@ -182,7 +183,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
     </article>;
    })}
   </div>
-  {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
+  {open?createPortal(<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
    onKeyDown={e=>{
      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setOpen(false);}
      else if(e.key==='Tab'){
@@ -201,7 +202,7 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
      <button type="button" className="primary" disabled={disabled} onClick={()=>{onChange(draft);setOpen(false);}}>Apply Layout to Settings</button>
     </footer>
    </div>
-  </div>:null}
+  </div>,document.body):null}
   <p className="react-help">After applying the grid layout, select Save Dashboard Settings to save it to your account.</p>
  </div>;
 }
