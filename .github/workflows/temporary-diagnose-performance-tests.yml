@@ -1,0 +1,22 @@
+# Temporary diagnostic workflow; remove before merging.
+name: Diagnose performance change test hang
+on:
+  push:
+    branches:
+      - perf/dashboard-render-load-20261106
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Test suite with bounded runtime and subtest log
+        run: |
+          timeout 110s npm test
