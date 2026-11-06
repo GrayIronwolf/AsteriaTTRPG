@@ -29,7 +29,9 @@ export const DASHBOARD_GRID_RULES=Object.freeze({
     journal:rule(2,4,3,5,6,9),
     party:rule(2,3,3,3,6,6),
     shortcutInventory:shortcut,shortcutQuest:shortcut,shortcutCharacter:shortcut,
-    shortcutSpells:shortcut,shortcutGallery:shortcut,shortcutSettings:shortcut
+    shortcutSpells:shortcut,shortcutGallery:shortcut,shortcutSettings:shortcut,
+    combatOverview:rule(3,3,4,4,8,7),explorationOverview:rule(3,3,4,4,8,7),
+    questTracker:rule(3,3,4,4,8,8),inventoryOverview:rule(3,3,4,4,8,7)
   }),
   gm:Object.freeze({
     restRequests:rule(3,3,4,3,8,6),
@@ -43,7 +45,9 @@ export const DASHBOARD_GRID_RULES=Object.freeze({
     partySummary:rule(3,3,3,4,7,7),
     shortcutInventory:shortcut,shortcutQuests:shortcut,shortcutNotes:shortcut,
     shortcutEconomy:shortcut,shortcutCrafting:shortcut,shortcutTools:shortcut,
-    shortcutWorld:shortcut
+    shortcutWorld:shortcut,
+    combatOverview:rule(3,3,4,4,8,7),explorationOverview:rule(3,3,4,4,8,7),
+    questTracker:rule(3,3,4,4,8,8),inventoryOverview:rule(3,3,4,4,8,7)
   })
 });
 const integer=value=>Number.isFinite(Number(value))?Math.round(Number(value)):NaN;

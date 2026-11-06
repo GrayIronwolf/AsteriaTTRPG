@@ -33,7 +33,11 @@ export const DASHBOARD_PANEL_REGISTRY = {
     {id:'shortcutCharacter',label:'Character Sheet Shortcut',category:'Shortcuts',size:'3x3',optional:true},
     {id:'shortcutSpells',label:'Spellbook Shortcut',category:'Shortcuts',size:'3x3',optional:true},
     {id:'shortcutGallery',label:'Gallery Shortcut',category:'Shortcuts',size:'3x3',optional:true},
-    {id:'shortcutSettings',label:'Dashboard Settings Shortcut',category:'Shortcuts',size:'3x3',optional:true}
+    {id:'shortcutSettings',label:'Dashboard Settings Shortcut',category:'Shortcuts',size:'3x3',optional:true},
+    {id:'combatOverview',label:'Combat Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'explorationOverview',label:'Exploration Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'questTracker',label:'Quest Tracker',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true}
   ],
   gm: [
     {id:'restRequests',label:'Rest Requests',category:'Session',size:'3x3'},
@@ -51,7 +55,11 @@ export const DASHBOARD_PANEL_REGISTRY = {
     {id:'shortcutEconomy',label:'Economy Shortcut',category:'Shortcuts',size:'3x3',optional:true},
     {id:'shortcutCrafting',label:'Crafting Shortcut',category:'Shortcuts',size:'3x3',optional:true},
     {id:'shortcutTools',label:'GM Tools Shortcut',category:'Shortcuts',size:'3x3',optional:true},
-    {id:'shortcutWorld',label:'World Systems Shortcut',category:'Shortcuts',size:'3x3',optional:true}
+    {id:'shortcutWorld',label:'World Systems Shortcut',category:'Shortcuts',size:'3x3',optional:true},
+    {id:'combatOverview',label:'Combat Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'explorationOverview',label:'Exploration Overview',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'questTracker',label:'Quest Tracker',category:'Focus Panels',size:'3x3',optional:true},
+    {id:'inventoryOverview',label:'Inventory Overview',category:'Focus Panels',size:'3x3',optional:true}
   ]
 };
 
