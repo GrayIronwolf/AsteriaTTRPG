@@ -33,9 +33,10 @@ test('Resizing previews use the same legal bounds and collisions as the reducer'
  const bigger=dashboardPointerProposal('player','weapons',p,'resize',1,1);
  assert.equal(dashboardGridCandidateIsFree(layout,'player','weapons',bigger),
    JSON.stringify(resizeDashboardGridPanel(layout,'player','weapons',bigger.w,bigger.h).placements.weapons)!==JSON.stringify(p));
- const fixed=layout.placements.shortcutInventory;
- assert.equal(dashboardGridCandidateIsFree(layout,'player','shortcutInventory',fixed),true);
- assert.equal(dashboardGridCandidateIsFree(layout,'player','shortcutInventory',{...fixed,w:3}),false);
+ const enabled=toggleDashboardPanel(layout,'player','shortcutInventory',true);
+ const fixed=enabled.placements.shortcutInventory;
+ assert.equal(dashboardGridCandidateIsFree(enabled,'player','shortcutInventory',fixed),true);
+ assert.equal(dashboardGridCandidateIsFree(enabled,'player','shortcutInventory',{...fixed,w:3}),false);
 });
 
 test('Editor announces rejected pointer, numeric and keyboard placements',()=>{
