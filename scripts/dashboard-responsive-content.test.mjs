@@ -15,6 +15,11 @@ test('Update 2 content CSS follows existing frame rules without changing artwork
   assert.ok(first>=0&&next>first);
   assert.match(css,/container-name:asteria-panel;/);
   assert.match(css,/container-type:inline-size;/);
+  // A named panel container belongs to the scroll region, not the outer grid
+  // cell: otherwise existing generic mobile @container rules misfire on desktop.
+  assert.match(css,/\.react-dashboard-custom-cell > \.asteria-react-panel\s*> \.react-panel-scroll-region \{\s*container-name:asteria-panel;\s*container-type:inline-size;/);
+  assert.doesNotMatch(css,/\.react-dashboard-custom-cell\s*\{\s*container-name:asteria-panel;/);
+  assert.match(css,/--asteria-frame-border:clamp\(9px,2cqi,18px\)/);
   assert.match(css,/border-image-slice:12%!important;/);
   assert.match(css,/border-image-repeat:stretch!important;/);
   assert.match(css,/border-image-width:1!important;/);
