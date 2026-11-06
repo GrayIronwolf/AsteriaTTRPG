@@ -14,18 +14,19 @@ jobs:
       - name: Check bridge credential availability
         id: credential
         env:
-          BRIDGE_TOKEN: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          WEBSITE_TOKEN: ${{ secrets.ASTERIA_WEBSITE_PR_TOKEN }}
+          VAULT_TOKEN: ${{ secrets.ASTERIA_VAULT_READ_TOKEN }}
         run: |
-          if [ -n "$BRIDGE_TOKEN" ]; then
+          if [ -n "$WEBSITE_TOKEN" ] && [ -n "$VAULT_TOKEN" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Bridge is paused: configure ASTERIA_CONTENT_BRIDGE_TOKEN (fine-grained token with website Contents/Pull requests write and private vault Contents read)."
+            echo "Bridge is paused: configure ASTERIA_VAULT_READ_TOKEN (private vault Contents read) and ASTERIA_WEBSITE_PR_TOKEN (website Contents/Pull requests write)."
           fi
       - uses: actions/checkout@v4
         if: steps.credential.outputs.configured == 'true'
         with:
-          token: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          token: ${{ secrets.ASTERIA_WEBSITE_PR_TOKEN }}
           persist-credentials: true
           fetch-depth: 1
       - uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
           repository: GrayIronwolf/Asteria-Obsidian-Vault
           ref: main
           path: vault-source
-          token: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          token: ${{ secrets.ASTERIA_VAULT_READ_TOKEN }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         if: steps.credential.outputs.configured == 'true'
@@ -50,9 +51,9 @@ jobs:
         if: steps.credential.outputs.configured == 'true'
         id: import
         run: |
-          node scripts/import-approved-vault.cjs --source vault-source/publish/public --out docs/vault-import-preview
+          node scripts/import-approved-vault.cjs --source vault-source/publish/public --out content-import/approved
           rm -rf vault-source
-          git add -- docs/vault-import-preview
+          git add -- content-import/approved
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No approved public content changes to propose."
@@ -62,7 +63,7 @@ jobs:
       - name: Open a review pull request, never deploy automatically
         if: steps.credential.outputs.configured == 'true' && steps.import.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.ASTERIA_CONTENT_BRIDGE_TOKEN }}
+          GH_TOKEN: ${{ secrets.ASTERIA_WEBSITE_PR_TOKEN }}
         run: |
           set -eu
           branch="vault-review-$GITHUB_RUN_ID"
