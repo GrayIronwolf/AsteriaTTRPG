@@ -61,7 +61,7 @@ test('Existing dashboard grid drag, resize, lock and save behavior stays protect
   const editor=read('src/components/DashboardCustomisation.jsx');
   assert.match(editor,/onPointerMove=\{drag\}\s+onPointerUp=\{end\}/);
   assert.match(editor,/onPointerCancel=/);
-  assert.match(editor,/if\(disabled\|\|e\.button!==0\|\|layout\.lockedPositions\.includes\(id\)\)return/);
+  assert.match(editor,/if\(disabled\|\|gesture\.current\|\|e\.isPrimary===false\|\|e\.button!==0\|\|layout\.lockedPositions\.includes\(id\)\)return/);
   assert.match(editor,/onKeyDown=\{e=>\{/);
   assert.match(editor,/e\.altKey/);
   assert.match(editor,/const next=propose\(g,e\)/);

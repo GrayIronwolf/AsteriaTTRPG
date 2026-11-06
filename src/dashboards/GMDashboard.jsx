@@ -472,13 +472,19 @@ export function GMDashboard({ campaignId }) {
   const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
   const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
   const [dashboardLayoutError,setDashboardLayoutError] = useState('');
+  const dashboardDraftDirty=useRef(false);
   const accountUid=firebaseService.currentUser()?.uid || '';
   useEffect(()=>{
-    if(!campaignId||!accountUid)return;
+    dashboardDraftDirty.current=false;
+    setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
+    if(!campaignId||!accountUid)return;
     return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
       setSavedDashboardLayout(layout);
-      setDashboardSettingsDraft(normalizeDashboardLayout(layout,'gm'));
+      // Session clocks and background sync can re-emit the same snapshot.
+      // Do not erase unsaved edits while the settings editor is open.
+      if(!dashboardDraftDirty.current)
+        setDashboardSettingsDraft(normalizeDashboardLayout(layout,'gm'));
       setDashboardLayoutError('');
     });
   },[campaignId,accountUid]);
@@ -513,12 +519,17 @@ export function GMDashboard({ campaignId }) {
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
   };
+  const updateDashboardSettingsDraft=change=>{
+    dashboardDraftDirty.current=true;
+    setDashboardSettingsDraft(change);
+  };
   const saveDashboardSettings=async()=>{
     if(savingDashboardSettings)return;
     setSavingDashboardSettings(true);
     setDashboardSettingsMessage('Saving panel settings...');
     try{
       const result=await saveDashboardLayout(dashboardSettingsDraft);
+      if(result?.ok)dashboardDraftDirty.current=false;
       setDashboardSettingsMessage(result?.ok===false?result.error||'Could not save panel settings.':'Dashboard panel settings saved.');
     }catch(error){
       setDashboardSettingsMessage(error?.message||'Could not save panel settings.');
@@ -575,9 +586,9 @@ export function GMDashboard({ campaignId }) {
     {tab === 'settings' ? <div className="react-settings-workspace">
       <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
         <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
-        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={setDashboardSettingsDraft} disabled={!accountUid||savingDashboardSettings}/>
+        <DashboardLayoutEditor role="gm" layout={dashboardSettingsDraft} onChange={updateDashboardSettingsDraft} disabled={!accountUid||savingDashboardSettings}/>
         <div className="react-settings-save">
-          <button type="button" disabled={!accountUid||savingDashboardSettings} onClick={()=>setDashboardSettingsDraft(defaultDashboardLayout('gm'))}>Restore Default Layout</button>
+          <button type="button" disabled={!accountUid||savingDashboardSettings} onClick={()=>updateDashboardSettingsDraft(defaultDashboardLayout('gm'))}>Restore Default Layout</button>
           <button type="button" className="primary" disabled={!accountUid||savingDashboardSettings} onClick={saveDashboardSettings}>{savingDashboardSettings?'Saving...':'Save Dashboard Settings'}</button>
         </div>
         <p role="status">{dashboardSettingsMessage}</p>

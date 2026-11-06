@@ -1,5 +1,7 @@
 import React,{useState,useRef} from 'react';
 import {DashboardPanelFrameContext} from './WorkspaceUI.jsx';
+import {trapDialogTab} from './dialogFocus.mjs';
+import {dashboardKeyboardProposal} from '../state/dashboardGridModel.mjs';
 import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_LAYOUT_PRESETS,DASHBOARD_BACKGROUND_STYLES,
  dashboardGridRule,gridRowCount,dashboardPointerProposal,normalizeDashboardLayout,defaultDashboardLayout,
  visibleDashboardPanels,applyDashboardPreset,toggleDashboardPanel,moveDashboardGridPanel,
@@ -28,7 +30,7 @@ function GridEditor({role,layout,onChange,disabled}){
  const propose=(g,e)=>dashboardPointerProposal(role,g.id,g.rect,g.kind,
   (e.clientX-g.x)/g.step,(e.clientY-g.y)/g.step);
  const begin=(e,id,kind)=>{
-  if(disabled||e.button!==0||layout.lockedPositions.includes(id))return;
+  if(disabled||gesture.current||e.isPrimary===false||e.button!==0||layout.lockedPositions.includes(id))return;
   const rect=layout.placements[id],host=grid.current;if(!rect||!host)return;
   const {width}=host.getBoundingClientRect();
   // The editor's 12 columns are separated by gaps; include each gap in
@@ -56,6 +58,20 @@ function GridEditor({role,layout,onChange,disabled}){
   setPreview(null);
   try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* already released */}
  };
+ const cancel=e=>{
+  const g=gesture.current;
+  if(!g||g.pointer!==e.pointerId)return;
+  gesture.current=null;
+  setPreview(null);
+  try{grid.current?.releasePointerCapture?.(e.pointerId);}catch{/* pointer capture was released */}
+ };
+ const keyboard=(id,rect,kind,key)=>{
+  if(disabled||layout.lockedPositions.includes(id))return;
+  const next=dashboardKeyboardProposal(role,id,rect,kind,key);
+  if(!next)return;
+  if(kind==='resize')size(id,next.w,next.h);
+  else move(id,next.x,next.y);
+ };
  const number=(field,value)=>{
   if(!p||value===''||!Number.isInteger(Number(value)))return;
   const n=Number(value);
@@ -68,7 +84,7 @@ function GridEditor({role,layout,onChange,disabled}){
   <div className="react-grid-editor-scroller">
    <div className="react-grid-editor-canvas" ref={grid}
     style={{'--grid-rows':gridRowCount(layout.placements,ids)}}
-    onPointerMove={drag} onPointerUp={end} onPointerCancel={()=>{gesture.current=null;setPreview(null);}}>
+    onPointerMove={drag} onPointerUp={end} onPointerCancel={cancel} onLostPointerCapture={cancel}>
     {ids.map(id=>{
       const pos=preview?.id===id?preview.rect:layout.placements[id];
       const item=registry(role).find(x=>x.id===id);
@@ -81,13 +97,17 @@ function GridEditor({role,layout,onChange,disabled}){
         onKeyDown={e=>{
          if(!e.altKey||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
          e.preventDefault();
-         move(id,pos.x+(e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0),
-          pos.y+(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0));
+         keyboard(id,pos,'move',e.key);
         }}>
         <b>{item.label}</b><small>{pos.w}×{pos.h}{lock?' · Locked':''}</small>
        </button>
        {!fixed&&!lock?<button className="react-grid-editor-tile-resize" type="button"
-        aria-label={'Resize '+item.label} onPointerDown={e=>begin(e,id,'resize')}>◢</button>:null}
+        aria-label={'Resize '+item.label+' (Alt + arrow keys)'} disabled={disabled}
+        onPointerDown={e=>begin(e,id,'resize')} onKeyDown={e=>{
+         if(!e.altKey||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+         e.preventDefault();
+         keyboard(id,pos,'resize',e.key);
+        }}>◢</button>:null}
       </div>;
     })}
    </div>
@@ -163,12 +183,18 @@ export function DashboardLayoutEditor({role,layout:source,onChange,disabled=fals
    })}
   </div>
   {open?<div className="react-grid-editor-modal" role="dialog" aria-modal="true" aria-label="Dashboard visual grid editor"
-   onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();setOpen(false);}}}>
+   onKeyDown={e=>{
+     if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setOpen(false);}
+     else if(e.key==='Tab'){
+      trapDialogTab(e,dialogRef.current,document.activeElement);
+      e.stopPropagation();
+     }
+    }}>
    <div className="react-grid-editor-dialog" ref={dialogRef}>
     <header className="react-grid-editor-header"><div><h2>Dashboard Layout Editor</h2>
      <small>12 columns · 30 starting rows · flexible sizes</small></div>
      <button type="button" aria-label="Cancel layout changes" onClick={()=>setOpen(false)}>×</button></header>
-    <p className="react-help">Drag a panel or its lower-right resize grip. Use Alt + arrow keys or numeric fields for precise placement. Overlaps are prevented.</p>
+    <p className="react-help">Drag a panel or its lower-right resize grip. With a keyboard, select a panel and press Alt + arrows to move it, or focus the resize grip and press Alt + arrows to resize. Numeric fields also work. Overlaps are prevented.</p>
     <GridEditor role={role} layout={draft} onChange={update} disabled={disabled}/>
     <footer className="react-grid-editor-footer">
      <button type="button" onClick={()=>setOpen(false)}>Cancel</button>

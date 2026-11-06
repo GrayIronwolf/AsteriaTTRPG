@@ -50,3 +50,62 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
 .react-grid-editor-properties{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #465d6e;background:#101e2b}.react-grid-editor-properties label{display:grid;gap:3px;font-size:.78rem}.react-grid-editor-properties input,.react-grid-editor-properties select{width:100%;min-width:0;min-height:35px}.react-grid-editor-properties h3{margin:0}
 .react-dashboard-layout-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 @media (max-width:720px){.react-grid-editor-content{grid-template-columns:1fr}.react-grid-editor-scroller{max-height:43vh}.react-grid-editor-properties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.react-grid-editor-properties h3{grid-column:1/-1}}
+
+/* Phase 7 mobile usability: improve touch access only in the layout editor.
+   Approved panel frames, labels and dashboard geometry are untouched. */
+.react-grid-editor-tile-resize{
+  min-height:44px!important;
+  min-width:44px!important;
+  width:44px!important;
+  right:0;
+  bottom:0;
+  display:grid;
+  place-items:center;
+  font-size:1.15rem;
+}
+.react-grid-editor-tile-main:focus-visible,
+.react-grid-editor-tile-resize:focus-visible,
+.react-grid-editor-dialog button:focus-visible,
+.react-grid-editor-dialog input:focus-visible{
+  outline:3px solid #c7e9ff!important;
+  outline-offset:2px;
+}
+.react-grid-editor-scroller{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.react-grid-editor-dialog{
+  overscroll-behavior:contain;
+}
+.react-grid-editor-properties input,
+.react-grid-editor-properties select,
+.react-grid-editor-properties button,
+.react-grid-editor-footer button,
+.react-grid-editor-header button{
+  min-height:44px;
+}
+@media (max-width:720px){
+  .react-grid-editor-modal{
+    padding:6px;
+    align-items:center;
+  }
+  .react-grid-editor-dialog{
+    max-height:calc(100dvh - 12px);
+    padding:10px;
+    width:100%;
+  }
+  .react-grid-editor-scroller{
+    max-height:min(42dvh,420px);
+    touch-action:pan-x pan-y;
+  }
+  .react-grid-editor-content{
+    gap:10px;
+  }
+  .react-grid-editor-properties{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    min-width:0;
+  }
+  .react-grid-editor-header,.react-grid-editor-footer{
+    flex-wrap:wrap;
+  }
+}
