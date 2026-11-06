@@ -125,6 +125,19 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
   const edit=change=>{dirty.current=true;revision.current++;setPreferences(change);};
   const updateLayout=update=>edit(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
+  const applyLayout=async layout=>{
+    if(!editable)return {ok:false,error:'This dashboard cannot be edited.'};
+    const snapshot={...preferences,dashboardLayout:layout};
+    const currentScope=scope;
+    action.setMessage('Saving dashboard layout...');
+    try{
+      const result=await firebaseService.updateDashboardPreferences(campaignId,character.id,snapshot);
+      if(scopeRef.current!==currentScope)return {ok:false,error:'Account or character changed while saving.'};
+      if(result?.ok){setPreferences(snapshot);dirty.current=false;action.setMessage('Dashboard layout saved.');}
+      else action.setMessage(result?.error||'Dashboard layout could not be saved.');
+      return result;
+    }catch(error){action.setMessage(error.message||String(error));return {ok:false,error:error.message||String(error)};}
+  };
   const toggleInformation=key=>edit(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
   const save=async()=>{
     if(action.busy||!editable)return;
@@ -134,8 +147,8 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   };
   return <div className="react-settings-workspace"><ThemeControls/>
     <Panel title="Dashboard Customisation" action={<StatusPill>{visibleDashboardPanels(preferences.dashboardLayout,'player').length} panels</StatusPill>}>
-      <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} disabled={!editable}/>
-      <p className="react-help">These settings affect only this character. Open the Visual Grid Editor to move, resize and lock panels. Select Apply Layout, then Save Dashboard Settings. Reset Layout restores the recommended defaults.</p>
+      <DashboardLayoutEditor role="player" layout={preferences.dashboardLayout} onChange={updateLayout} onApply={applyLayout} disabled={!editable}/>
+      <p className="react-help">Each character has its own layout. Apply Changes inside the editor saves the selected screen-size arrangement immediately.</p>
     </Panel>
     <Panel title="Sidebar Identity">
       <label>Displayed Title<select disabled={!editable} value={preferences.visibleTitleId} onChange={event=>edit(current=>({...current,visibleTitleId:event.target.value}))}><option value="">No player title</option>{titles.map(title=><option key={title.id} value={title.id}>{title.text}</option>)}</select></label>
