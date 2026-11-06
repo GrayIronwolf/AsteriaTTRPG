@@ -5,7 +5,7 @@
 - **Private content source:** `GrayIronwolf/Asteria-Obsidian-Vault`
 - **Public website:** `GrayIronwolf/AsteriaTTRPG`
 - **Direction:** content repository → staging pull request in website repository (one-way)
-- **Trigger:** manual GitHub Actions `Import Approved Obsidian Content`
+- **Trigger:** manual GitHub Actions `Import approved Asteria vault content for review` plus six-hour scheduled checks after credential setup
 - **Live website:** unchanged; publishing into the running Compendium is deliberately **not** enabled
 
 This prevents a full Obsidian checkout from publishing private campaign material, unpublished lore, or GM-only information. The current website Compendium and its stable identities remain untouched until the separately reviewed Phase 8 ID migration and data mapping are complete.
@@ -19,7 +19,7 @@ The GitHub connector cannot create or inspect Actions secrets. Create **two repo
 
 In GitHub: open `GrayIronwolf/AsteriaTTRPG` → **Settings → Secrets and variables → Actions → New repository secret**. The menu may vary by GitHub account setup. Tokens can be limited to the named repositories and given an expiration. Only the public website repository stores these credentials.
 
-Then open **Actions → Import Approved Obsidian Content → Run workflow**. If no approved pages exist yet, the action validates an empty export and does not create a PR or change the website.
+Then open **Actions → Import approved Asteria vault content for review → Run workflow**. If no approved pages exist yet, the action validates an empty export and does not create a PR or change the website.
 
 ## Approved pages only
 
@@ -59,4 +59,4 @@ Review the resulting website PR carefully. **The staged PR branch is public**, s
 
 The current Compendium has 891 canonical entries and uses stable IDs such as `race:content-races-aarakocra-avian-index`; the permanent Asteria four-part ID convention requires a deliberate, audited mapping. **Do not replace existing IDs automatically.** The bridge is staged but cannot update live Compendium definitions until an ID mapping/approval and migration strategy are implemented and tested.
 
-No continuous or two-way Obsidian/GitHub sync is enabled. No Dropbox changes were made.
+The website periodically checks the *approved export only* after credentials are configured. No continuous or two-way Obsidian vault / Dropbox sync is enabled. No Dropbox changes were made.
