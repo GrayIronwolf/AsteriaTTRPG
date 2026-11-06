@@ -138,8 +138,17 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   }, [campaignId, characterId, mode, online, authUid]);
 
   useEffect(() => {
-    const timer=window.setInterval(()=>setClock(Date.now()),1000);
-    return ()=>window.clearInterval(timer);
+    // The clock drives duration labels and expiring effects. Avoid recomputing
+    // all dashboard character panels every second while the tab is hidden;
+    // refresh immediately on return so expirations still use the real time.
+    const tick=()=>{if(!document.hidden)setClock(Date.now());};
+    const resume=()=>{if(!document.hidden)setClock(Date.now());};
+    const timer=window.setInterval(tick,1000);
+    document.addEventListener('visibilitychange',resume);
+    return ()=>{
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange',resume);
+    };
   },[]);
 
   const liveSession=useMemo(()=>effectiveSession(session,clock),[session,clock]);
