@@ -2,14 +2,19 @@
    Scope: Player/GM freeform dashboard ONLY. Keep all four WebP frame assets,
    header PNGs, backdrops, layout placements and panel interaction logic intact. */
 
-/* Query the panel's *rendered* width, not the viewport, so independently
-   resized 2–12-column panels choose the correct internal content layout.
-   The outer grid remains a 12-column layout and retains saved positions. */
+/* Query the panel's *content* width, not the viewport. Name the
+   existing scroll region (not its outer frame) as the containment root.
+   This avoids activating unrelated mobile-only @container rules on an outer
+   .react-dashboard-custom-cell when a desktop panel is narrow. */
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
   .react-dashboard-freeform-grid > .react-dashboard-custom-cell {
+  --asteria-frame-border:clamp(9px,2cqi,18px);
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell > .asteria-react-panel
+  > .react-panel-scroll-region {
   container-name:asteria-panel;
   container-type:inline-size;
-  --asteria-frame-border:clamp(9px,2.3cqi,18px);
 }
 
 /* The existing nine-slice frame keeps the ornamental corners unscaled.
