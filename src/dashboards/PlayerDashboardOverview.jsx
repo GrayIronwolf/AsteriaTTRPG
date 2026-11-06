@@ -286,7 +286,13 @@ export function PlayerDashboardOverview({ campaignId, campaign, character, chara
   const talents = unlockedClassTalents(character);
   const spells = knownSpells(character);
   const skills = values(character.skills || character.selectedSkills).map(record);
-  const preferences = normalizeDashboardPreferences(character);
+  // Resource/condition clocks can refresh the reconciled character every second.
+  // Layout preferences are independent of that clock: reuse the normalized
+  // panel settings unless their saved Firestore preference data actually changes.
+  const preferences = useMemo(
+    () => normalizeDashboardPreferences({dashboardPreferences:character.dashboardPreferences}),
+    [character.dashboardPreferences]
+  );
   const visible = key => !preferences.hiddenPanels.includes(key);
   const order = key => Math.max(0, preferences.panelOrder.indexOf(key)) * 10;
   const summary = id => <SummaryPanels character={character} characters={characters} partyWorkspace={partyWorkspace} onNavigate={onNavigate} only={id}/>;
