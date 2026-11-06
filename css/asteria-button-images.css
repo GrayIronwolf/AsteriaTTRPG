@@ -1,0 +1,87 @@
+/* Phase 3: approved frame/crystal pairs, preserved at their original resolution.
+   Phase 2 owns hit targets and sizing; the existing elements own all actions. */
+body .asteria-menu-button {
+  --asteria-approved-frame:url("../assets/ui/buttons/button-standard-frame.webp");
+  --asteria-approved-crystal:url("../assets/ui/buttons/button-standard-crystal.webp");
+  --asteria-crystal-brightness:1;
+}
+body .asteria-menu-button[data-asteria-button-size="small"] {
+  --asteria-approved-frame:url("../assets/ui/buttons/button-small-frame.webp");
+  --asteria-approved-crystal:url("../assets/ui/buttons/button-small-crystal.webp");
+}
+body .asteria-menu-button[data-asteria-button-size="long"] {
+  --asteria-approved-frame:url("../assets/ui/buttons/button-long-frame.webp");
+  --asteria-approved-crystal:url("../assets/ui/buttons/button-long-crystal.webp");
+}
+body .asteria-menu-button[data-asteria-button-size="icon"] {
+  --asteria-approved-frame:url("../assets/ui/buttons/button-icon-frame.webp");
+  --asteria-approved-crystal:url("../assets/ui/buttons/button-icon-crystal.webp");
+}
+body :is(.asteria-menu-button,#globalNavigation > .crystal-button) {
+  border-image:none!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+/* Honour Phase 2 metadata over the legacy ID-scoped 48px minimum and 28px
+   side padding, including classified buttons outside the top navigation. */
+body :is(.asteria-menu-button,#globalNavigation > .crystal-button)[data-asteria-button-size] {
+  min-height:var(--asteria-button-design-height)!important;
+  padding-inline:var(--asteria-button-inline-padding)!important;
+  font-size:var(--asteria-button-text-size)!important;
+}
+/* The supplied metal stays stationary and untinted, above the crystal. Remove
+   the old generated bezel, polygon clipping and SVG sidewall from this skin. */
+body :is(.asteria-menu-button,#globalNavigation > .crystal-button)::before {
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:-1!important;
+  pointer-events:none!important;
+  background:var(--asteria-approved-frame) center / 100% 100% no-repeat!important;
+  background-blend-mode:normal!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  clip-path:none!important;
+  mask:none!important;
+  -webkit-mask:none!important;
+  transform:none!important;
+  filter:none!important;
+}
+/* Alpha masking prevents a rectangular tint outside the supplied crystal.
+   Luminosity keeps its authored facets/highlights while the existing independent
+   top-menu, dashboard and compendium colours affect only this inner layer. */
+body :is(.asteria-menu-button,#globalNavigation > .crystal-button)::after {
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:-2!important;
+  pointer-events:none!important;
+  background:var(--button-crystal-color,#1f7dff) var(--asteria-approved-crystal) center / 100% 100% no-repeat!important;
+  background-blend-mode:luminosity!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  clip-path:none!important;
+  -webkit-mask-image:var(--asteria-approved-crystal)!important;
+  mask-image:var(--asteria-approved-crystal)!important;
+  -webkit-mask-size:100% 100%!important;
+  mask-size:100% 100%!important;
+  -webkit-mask-position:center!important;
+  mask-position:center!important;
+  -webkit-mask-repeat:no-repeat!important;
+  mask-repeat:no-repeat!important;
+  transform:translateY(var(--button-travel,0px))!important;
+  filter:brightness(var(--asteria-crystal-brightness)) drop-shadow(0 0 calc(var(--asteria-glow-intensity,.36) * 8px) var(--button-crystal-glow))!important;
+}
+body .asteria-menu-button:is(.active,[aria-selected="true"],[aria-pressed="true"],[aria-current="page"],[aria-expanded="true"]) {--asteria-crystal-brightness:1.15;}
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):hover {--asteria-crystal-brightness:1.2;}
+body .asteria-menu-button:not(:disabled):not([aria-disabled="true"]):is(:active,[data-menu-pressed]) {--asteria-crystal-brightness:1.3;}
+body .asteria-menu-button:is(:disabled,[aria-disabled="true"]) {--asteria-crystal-brightness:1;}
+@media (prefers-reduced-motion:reduce) {
+  body :is(.asteria-menu-button,#globalNavigation > .crystal-button)::before,
+  body :is(.asteria-menu-button,#globalNavigation > .crystal-button)::after {
+    transform:none!important;
+    transition:none!important;
+  }
+}
