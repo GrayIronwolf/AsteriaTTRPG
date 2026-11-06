@@ -482,8 +482,12 @@ export function GMDashboard({ campaignId }) {
     dashboardSaveScope.current=campaignId+':'+accountUid;
     setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
+    setDashboardSettingsMessage('');
+    setDashboardLayoutError('');
     if(!campaignId||!accountUid)return;
+    const subscriptionScope=campaignId+':'+accountUid;
     return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
+      if(dashboardSaveScope.current!==subscriptionScope)return;
       setSavedDashboardLayout(layout);
       // Session clocks and background sync can re-emit the same snapshot.
       // Do not erase unsaved edits while the settings editor is open.
@@ -518,8 +522,11 @@ export function GMDashboard({ campaignId }) {
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const saveDashboardLayout=async layout=>{
+    const saveScope=campaignId+':'+accountUid;
     const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',layout);
-    if(result?.ok&&dashboardSaveScope.current===campaignId+':'+accountUid)setSavedDashboardLayout(layout);
+    // A response for an old account or campaign must never mutate the new view.
+    if(dashboardSaveScope.current!==saveScope)return result;
+    if(result?.ok){setSavedDashboardLayout(layout);setDashboardLayoutError('');}
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
   };

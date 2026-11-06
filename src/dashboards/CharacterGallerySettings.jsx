@@ -111,20 +111,23 @@ export function DashboardSettingsTab({ campaignId, character, editable }) {
   const [preferences,setPreferences]=useState(saved);
   const action=useSaveAction();
   const dirty=useRef(false),revision=useRef(0);
-  const scope=campaignId+':'+character.id;
+  const scope=campaignId+':'+character.id+':'+(firebaseService.currentUser()?.uid||'signed-out');
   const scopeRef=useRef(scope);
   // A new character must never inherit another character's unsaved settings.
   if(scopeRef.current!==scope){
     scopeRef.current=scope;dirty.current=false;revision.current++;
   }
   React.useEffect(()=>{
-    if(!dirty.current)setPreferences(saved);
+    // Account/character changes always replace drafts, even if the previous
+    // character had unsaved edits. Live snapshots cannot overwrite local edits.
+    if(scopeRef.current===scope&&!dirty.current)setPreferences(saved);
   },[saved,scope]);
   const titles=(Array.isArray(character.titles)?character.titles:[]).map((title,index)=>typeof title==='string'?{id:`title-${index}`,text:title}:title);
   const edit=change=>{dirty.current=true;revision.current++;setPreferences(change);};
   const updateLayout=update=>edit(current=>({...current,dashboardLayout:typeof update==='function'?update(current.dashboardLayout):update}));
   const toggleInformation=key=>edit(current=>({...current,hiddenInformationFields:current.hiddenInformationFields.includes(key)?current.hiddenInformationFields.filter(value=>value!==key):[...current.hiddenInformationFields,key]}));
   const save=async()=>{
+    if(action.busy||!editable)return;
     const savedScope=scope,savedRevision=revision.current;
     const result=await action.run(()=>firebaseService.updateDashboardPreferences(campaignId,character.id,preferences),'Dashboard settings saved.');
     if(result?.ok&&scopeRef.current===savedScope&&revision.current===savedRevision)dirty.current=false;

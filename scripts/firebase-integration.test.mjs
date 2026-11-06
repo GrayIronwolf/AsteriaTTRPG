@@ -38,6 +38,21 @@ test('members read characters; outsiders and signed-out visitors cannot',async()
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'campaigns/c')));
   await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
 });
+test('dashboard layouts are private per account, persist across reads, and do not alter gameplay',async()=>{
+ const key='gm-c',alice=doc(user('alice'),'users/alice/dashboardLayouts/'+key);
+ const bob=doc(user('bob'),'users/bob/dashboardLayouts/'+key);
+ const data={layout:{version:4,mode:'custom',order:['encounter','xp'],hidden:[],
+   placements:{encounter:{x:0,y:0,w:6,h:5},xp:{x:6,y:0,w:4,h:4}},lockedPositions:['xp']}};
+ await assertSucceeds(setDoc(alice,data));
+ await assertSucceeds(setDoc(bob,{layout:{version:4,mode:'default'}}));
+ const reopened=await assertSucceeds(getDoc(doc(user('alice'),'users/alice/dashboardLayouts/'+key)));
+ assert.deepEqual(reopened.data().layout,data.layout);
+ await assertFails(getDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+key)));
+ await assertFails(setDoc(doc(user('bob'),'users/alice/dashboardLayouts/'+key),data));
+ assert.equal((await assertSucceeds(getDoc(bob))).data().layout.mode,'default');
+ assert.equal((await db.doc('campaigns/c/characters/a').get()).data().ownerUid,'alice');
+});
+
 test('private GM notes are inaccessible to players',async()=>{
   await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/gmWorkspace')));
   await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));

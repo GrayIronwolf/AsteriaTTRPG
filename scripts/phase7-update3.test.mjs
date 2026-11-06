@@ -50,12 +50,12 @@ test('Editor announces rejected pointer, numeric and keyboard placements',()=>{
 
 test('Player and GM settings preserve unsaved edits until a successful current-scope save',()=>{
  const player=read('src/dashboards/CharacterGallerySettings.jsx');
- assert.match(player,/if\(!dirty\.current\)setPreferences\(saved\)/);
+ assert.match(player,/if\(scopeRef\.current===scope&&!dirty\.current\)setPreferences\(saved\)/);
  assert.match(player,/const edit=change=>\{dirty\.current=true;revision\.current\+\+/);
  assert.match(player,/scopeRef\.current===savedScope&&revision\.current===savedRevision/);
  assert.match(player,/Discard Unsaved Changes/);
  const gm=read('src/dashboards/GMDashboard.jsx');
  assert.match(gm,/dashboardDraftRevision\.current===saveRevision/);
  assert.match(gm,/dashboardSaveScope\.current!==saveScope/);
- assert.match(gm,/dashboardSaveScope\.current===campaignId\+': '\+accountUid|dashboardSaveScope\.current===campaignId\+':'\+accountUid/);
+ assert.match(gm,/if\(dashboardSaveScope\.current!==saveScope\)return result/);
 });
