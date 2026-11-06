@@ -8,6 +8,7 @@
     uid:'',loaded:false,unsubscribe:null,
     cloud:{theme:null,typography:null},revisions:{theme:0,typography:0},
     pending:{theme:false,typography:false},saving:{theme:false,typography:false},
+    timers:{theme:null,typography:null},
     conflicts:{theme:false,typography:false},failed:{theme:false,typography:false}
   };
   const byId=id=>document.getElementById(id);
@@ -77,6 +78,8 @@
     state.unsubscribe?.();state.unsubscribe=null;
     state.uid='';state.loaded=false;
     for(const section of SECTIONS){
+      if(state.timers[section])window.clearTimeout?.(state.timers[section]);
+      state.timers[section]=null;
       state.cloud[section]=null;state.revisions[section]=0;
       state.pending[section]=false;state.conflicts[section]=false;
       state.saving[section]=false;state.failed[section]=false;
@@ -111,7 +114,7 @@
       state.revisions[section]=result.revision;
       state.conflicts[section]=true;
     }else state.failed[section]=true;
-    if(state.pending[section]&&!state.conflicts[section])void saveSection(section);
+    if(state.pending[section]&&!state.conflicts[section]&&!state.timers[section])void saveSection(section);
     display();
   }
   function acceptCloud(section){
@@ -171,12 +174,22 @@
     if(!SECTIONS.includes(section)||!state.uid)return;
     state.pending[section]=true;
     state.failed[section]=false;
-    if(state.loaded)void saveSection(section);
+    if(state.timers[section])window.clearTimeout?.(state.timers[section]);
+    // Colour pickers can emit dozens of input events in one gesture. Send
+    // the final choice rather than a Firestore transaction for each pixel.
+    if(state.loaded&&typeof window.setTimeout==='function')
+      state.timers[section]=window.setTimeout(()=>{
+        state.timers[section]=null;
+        void saveSection(section);
+      },500);
+    else if(state.loaded)void saveSection(section);
     display();
   }
   function syncNow(){
     if(!state.uid||!state.loaded)return;
     for(const section of SECTIONS){
+      if(state.timers[section])window.clearTimeout?.(state.timers[section]);
+      state.timers[section]=null;
       state.failed[section]=false;
       state.pending[section]=true;
       if(!state.conflicts[section])void saveSection(section);
