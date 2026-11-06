@@ -1,11 +1,11 @@
 import {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
-  dashboardGridRule, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
+  dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount
 } from './dashboardGridModel.mjs';
 export {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
-  dashboardGridRule, defaultGridDimensions, clampGridDimensions, gridRowCount
+  dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, gridRowCount
 };
 /**
  * Canonical, presentation-only dashboard layout configuration.
