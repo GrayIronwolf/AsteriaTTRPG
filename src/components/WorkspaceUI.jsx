@@ -77,7 +77,14 @@ export function Tabs({ tabs, active, onChange, ariaLabel = 'Workspace sections' 
         viewportStart: viewport.left, viewportEnd: viewport.right,
         itemStart: item.left, itemEnd: item.right
       });
-      if(delta) navigation.scrollLeft += delta;
+      if(delta){
+        // A smooth global scroll rule can leave the active tab off-screen for
+        // several frames after a desktop/tablet resize. Reposition immediately.
+        const left=navigation.scrollLeft+delta;
+        if(typeof navigation.scrollTo==='function')
+          navigation.scrollTo({left,behavior:'instant'});
+        else navigation.scrollLeft=left;
+      }
     };
     // The tab strip can narrow when a desktop window becomes a tablet or a
     // GM sidebar changes width, even though the active tab stays the same.
