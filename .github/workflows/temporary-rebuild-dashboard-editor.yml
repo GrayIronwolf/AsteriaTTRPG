@@ -1,0 +1,34 @@
+# Temporary branch-only helper. Remove before merging the dashboard interaction fix.
+name: Rebuild dashboard editor bundle
+on:
+  push:
+    branches: [fix/dashboard-editor-interaction-audit-20261106]
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    if: github.ref == 'refs/heads/fix/dashboard-editor-interaction-audit-20261106'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:dashboard
+      - run: npm run test:ui
+      - run: npm run build
+      - name: Commit checked-in React bundle only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh React bundle for dashboard editor interaction improvements"
+            git push origin HEAD:fix/dashboard-editor-interaction-audit-20261106
+          fi
