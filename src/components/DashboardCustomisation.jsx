@@ -256,16 +256,24 @@ export function DashboardLayoutWorkspace({role='player',layout:raw,renderPanel,t
  // The live clock refreshes dashboard content every second. Normalize a saved
  // layout at most once per changed input, not once per panel and once more for
  // its background during every render.
+ const workspaceRef=useRef(null);
  const [viewport,setViewport]=useState(()=>dashboardViewportFromWidth(typeof window==='undefined'?1200:window.innerWidth));
- useEffect(()=>{const update=()=>setViewport(dashboardViewportFromWidth(window.innerWidth));
-  window.addEventListener('resize',update);return ()=>window.removeEventListener('resize',update);},[]);
+ useEffect(()=>{
+  const host=workspaceRef.current;
+  const update=()=>setViewport(dashboardViewportFromWidth(host?.getBoundingClientRect().width||window.innerWidth));
+  update();
+  const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(update):null;
+  if(observer&&host)observer.observe(host);
+  window.addEventListener('resize',update);
+  return ()=>{observer?.disconnect();window.removeEventListener('resize',update);};
+ },[]);
  const layout=React.useMemo(()=>dashboardLayoutForViewport(raw,role,viewport),[raw,role,viewport]);
  const allowed=React.useMemo(()=>new Set(registry(role).map(item=>item.id)),[role]);
  const hidden=new Set(layout.hidden);
  const ids=[...new Set([...layout.order.filter(id=>!hidden.has(id)),...forcedPanels.filter(id=>allowed.has(id))])]
   .sort((a,b)=>viewport==='desktop'?0:(layout.placements[a]?.y??0)-(layout.placements[b]?.y??0)||
     (layout.placements[a]?.x??0)-(layout.placements[b]?.x??0));
- return <section className="react-dashboard-layout-workspace" aria-label={title}>
+ return <section className="react-dashboard-layout-workspace" ref={workspaceRef} aria-label={title}>
   <div className="react-dashboard-custom-grid react-dashboard-freeform-grid" aria-label="Dashboard panels"
    style={{'--grid-rows':gridRowCount(layout.placements,ids)}}>
    {ids.map(id=>{
