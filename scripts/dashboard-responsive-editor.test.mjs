@@ -45,6 +45,16 @@ test('Each Player and GM panel exposes numeric dimensions with three or four cho
  assert.doesNotMatch(editor,/option\.label==='Small'|option\.label==='Large'/);
  assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options\{[^}]*flex-direction:column/);
 });
+test('Editor keeps filled panel tile surfaces while dimension choices remain unboxed text',()=>{
+ const css=read('css/asteria-freeform-dashboard.css');
+ const editor=read('src/components/DashboardCustomisation.jsx');
+ assert.match(css,/\.react-grid-editor-tile\s*\{[^}]*border:1px solid #bda066!important/);
+ assert.match(css,/\.react-grid-editor-tile\s*\{[^}]*background:linear-gradient/);
+ assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options button\s*\{[^}]*background:none!important;[^}]*border:0!important;/);
+ assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options button\[aria-pressed="true"\]\s*\{[^}]*text-decoration:underline/);
+ assert.match(editor,/data-grid-tile-rows=\{pos\.h\}/);
+ assert.match(css,/data-grid-tile-rows="2"/);
+});
 test('Size choices are panel-specific and locked panels do not change',()=>{
  for(const role of ['player','gm']){
   const id=role==='gm'?'encounter':'weapons';
