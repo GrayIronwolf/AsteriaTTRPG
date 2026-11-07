@@ -126,10 +126,10 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
 .react-grid-editor-tile{transition:grid-column .2s ease,grid-row .2s ease,transform .18s ease,box-shadow .18s ease;z-index:1}
 .react-grid-editor-tile.dragging{z-index:30;transition:none;filter:drop-shadow(0 12px 15px rgba(0,0,0,.7))}
 .react-grid-editor-tile.dragging .react-grid-editor-tile-main{cursor:grabbing}
-.react-grid-editor-size-options{position:absolute;z-index:2;left:2px;right:2px;bottom:3px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px}
-.react-grid-editor-size-options button{font-size:clamp(.55rem,.75vw,.7rem);min-height:22px;padding:1px 4px;background:rgba(5,13,24,.88);border:1px solid #718598;color:#e0e8ed}
-.react-grid-editor-size-options button[aria-pressed="true"]{border-color:#d2b579;color:#ffdfa7}
-.react-grid-editor-tile-main{padding-bottom:30px!important}
+.react-grid-editor-size-options{position:absolute;z-index:2;left:3px;bottom:3px;display:flex;flex-direction:column;align-items:stretch;gap:2px;min-width:48px;max-width:calc(100% - 6px)}
+.react-grid-editor-size-options button{font-size:.67rem;line-height:1.2;min-height:24px;padding:2px 5px;background:rgba(5,13,24,.93);border:1px solid #718598;border-radius:3px;color:#e0e8ed;white-space:nowrap}
+.react-grid-editor-size-options button[aria-pressed="true"]{border-color:#d2b579;color:#ffdfa7;background:#283746}
+.react-grid-editor-tile-main{padding-bottom:6px!important;padding-left:55px!important}
 .react-grid-editor-content:has(>.react-grid-editor-scroller){width:100%}
 .react-grid-editor-library{min-width:0;border:1px solid #617687;background:#101f2c;padding:10px;max-height:65vh;overflow:auto}
 .react-grid-editor-library h3{margin:0 0 10px}
