@@ -50,6 +50,7 @@ test('Editor keeps filled panel tile surfaces while dimension choices remain unb
  const editor=read('src/components/DashboardCustomisation.jsx');
  assert.match(css,/\.react-grid-editor-tile\s*\{[^}]*border:1px solid #bda066!important/);
  assert.match(css,/\.react-grid-editor-tile\s*\{[^}]*background:linear-gradient/);
+ assert.match(css,/\.react-grid-editor-tile\s*\{[^}]*overflow:hidden/);
  assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options button\s*\{[^}]*background:none!important;[^}]*border:0!important;/);
  assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options button\[aria-pressed="true"\]\s*\{[^}]*text-decoration:underline/);
  assert.match(editor,/data-grid-tile-rows=\{pos\.h\}/);
