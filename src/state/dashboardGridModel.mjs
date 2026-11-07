@@ -8,6 +8,14 @@
 export const DASHBOARD_GRID_COLUMNS = 12;
 export const DASHBOARD_GRID_START_ROWS = 30;
 export const DASHBOARD_GRID_MAX_ROWS = 600;
+// Explicit numeric sizes used by the in-panel editor; keep freeform geometry
+// and older saved layouts supported independently of these four presets.
+export const DASHBOARD_EDITOR_SIZE_PRESETS = Object.freeze([
+  Object.freeze({label:'3×3',w:3,h:3}),
+  Object.freeze({label:'6×3',w:6,h:3}),
+  Object.freeze({label:'3×6',w:3,h:6}),
+  Object.freeze({label:'3×9',w:3,h:9})
+]);
 
 const rule=(minW,minH,defaultW,defaultH,maxW,maxH,options={})=>
   Object.freeze({minW,minH,defaultW,defaultH,maxW,maxH,...options});
@@ -65,6 +73,10 @@ export function clampGridDimensions(role,id,width,height){
   if(!r)return null;
   if(r.fixed)return {w:r.defaultW,h:r.defaultH};
   const proposedW=integer(width),proposedH=integer(height);
+  // The four editor presets are intentional overrides for panels whose
+  // historical minimums were tuned for freeform dragging instead.
+  if(DASHBOARD_EDITOR_SIZE_PRESETS.some(size=>size.w===proposedW&&size.h===proposedH))
+    return {w:proposedW,h:proposedH};
   const w=Number.isFinite(proposedW)?proposedW:r.defaultW;
   const h=Number.isFinite(proposedH)?proposedH:r.defaultH;
   if(r.portrait&&w===r.portrait.w&&h>=r.portrait.minH)
@@ -73,7 +85,7 @@ export function clampGridDimensions(role,id,width,height){
 }
 export function legacyGridDimensions(role,id,value){
   const map={compact:[3,3],standard:[3,3],wide:[6,3],long:[6,3],tall:[3,6],full:[9,3],
-    '3x3':[3,3],'6x3':[6,3],'3x6':[3,6],'9x3':[9,3]};
+    '3x3':[3,3],'6x3':[6,3],'3x6':[3,6],'3x9':[3,9],'9x3':[9,3]};
   const pair=Object.hasOwn(map,value)?map[value]:null;
   return pair?clampGridDimensions(role,id,pair[0],pair[1]):defaultGridDimensions(role,id);
 }

@@ -1,10 +1,10 @@
 import {
-  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS, DASHBOARD_EDITOR_SIZE_PRESETS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
 } from './dashboardGridModel.mjs';
 export {
-  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS, DASHBOARD_EDITOR_SIZE_PRESETS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, gridRowCount
 };
 /**
@@ -64,8 +64,8 @@ export const DASHBOARD_PANEL_REGISTRY = {
 };
 
 // Twelve-column dashboard: three horizontal units; height is minimum only.
-export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
-export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
+export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'3x9':4,'9x3':12});
+export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'3x9':3,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
 export const DASHBOARD_LAYOUT_VERSION = 4;
 export const DASHBOARD_LAYOUT_PRESETS = {
@@ -338,16 +338,7 @@ export function dashboardPanelSizeChoices(role,id){
   const rule=dashboardGridRule(role,id);
   if(!rule)return [];
   if(rule.fixed)return [{label:'Fixed',w:rule.defaultW,h:rule.defaultH}];
-  const proposed=[
-    {label:'Small',w:rule.minW,h:rule.minH},
-    {label:'Medium',w:rule.defaultW,h:rule.defaultH},
-    {label:'Large',w:Math.min(rule.maxW,rule.defaultW+2),h:Math.min(rule.maxH,rule.defaultH+2)},
-    {label:'Wide',w:rule.maxW,h:rule.defaultH},
-    ...(rule.portrait?[{label:'Portrait',w:rule.portrait.w,h:rule.portrait.minH}]:[])
-  ];
-  const seen=new Set();
-  return proposed.map(option=>({...option,...clampGridDimensions(role,id,option.w,option.h)}))
-    .filter(option=>{const key=option.w+'x'+option.h;if(seen.has(key))return false;seen.add(key);return true;});
+  return [...DASHBOARD_EDITOR_SIZE_PRESETS];
 }
 function reflowDashboardPlacements(previous,role,id,candidate){
   const ids=previous.order.filter(name=>!previous.hidden.includes(name));
