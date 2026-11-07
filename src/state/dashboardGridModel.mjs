@@ -8,18 +8,10 @@
 export const DASHBOARD_GRID_COLUMNS = 12;
 export const DASHBOARD_GRID_START_ROWS = 30;
 export const DASHBOARD_GRID_MAX_ROWS = 600;
-// Explicit numeric sizes used by the in-panel editor; keep freeform geometry
-// and older saved layouts supported independently of these four presets.
-export const DASHBOARD_EDITOR_SIZE_PRESETS = Object.freeze([
-  Object.freeze({label:'3×3',w:3,h:3}),
-  Object.freeze({label:'6×3',w:6,h:3}),
-  Object.freeze({label:'3×6',w:3,h:6}),
-  Object.freeze({label:'3×9',w:3,h:9})
-]);
-
 const rule=(minW,minH,defaultW,defaultH,maxW,maxH,options={})=>
   Object.freeze({minW,minH,defaultW,defaultH,maxW,maxH,...options});
-const shortcut=rule(2,2,2,2,2,2,{fixed:true});
+// Shortcuts can also be resized from their compact 2x2 default in the editor.
+const shortcut=rule(2,2,2,2,4,4);
 export const DASHBOARD_GRID_RULES=Object.freeze({
   player:Object.freeze({
     armour:rule(4,3,4,4,8,7,{portrait:{w:3,minH:6}}),
@@ -73,10 +65,6 @@ export function clampGridDimensions(role,id,width,height){
   if(!r)return null;
   if(r.fixed)return {w:r.defaultW,h:r.defaultH};
   const proposedW=integer(width),proposedH=integer(height);
-  // The four editor presets are intentional overrides for panels whose
-  // historical minimums were tuned for freeform dragging instead.
-  if(DASHBOARD_EDITOR_SIZE_PRESETS.some(size=>size.w===proposedW&&size.h===proposedH))
-    return {w:proposedW,h:proposedH};
   const w=Number.isFinite(proposedW)?proposedW:r.defaultW;
   const h=Number.isFinite(proposedH)?proposedH:r.defaultH;
   if(r.portrait&&w===r.portrait.w&&h>=r.portrait.minH)
