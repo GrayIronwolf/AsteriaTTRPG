@@ -124,7 +124,7 @@ function GridEditor({role,layout,onChange,disabled}){
          e.preventDefault();
          keyboard(id,pos,'move',e.key);
         }}>
-        <b>{item.label}</b><small>{pos.w}×{pos.h}{lock?' · Locked':''}</small>
+        <b>{item.label}</b>
        </button>
        <button type="button" className="react-grid-editor-lock" disabled={disabled}
         aria-label={(lock?'Unlock ':'Lock ')+item.label} aria-pressed={lock}
