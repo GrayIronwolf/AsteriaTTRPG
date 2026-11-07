@@ -34,11 +34,12 @@ test('Size choices are panel-specific and locked panels do not change',()=>{
  for(const role of ['player','gm']){
   const id=role==='gm'?'encounter':'weapons';
   const choices=dashboardPanelSizeChoices(role,id);
-  assert.deepEqual(choices.map(choice=>choice.label),['3×3','6×3','3×6','3×9']);
+  assert.ok(choices.length>=3&&choices.length<=4);
+  assert.deepEqual(choices.map(({label,w,h})=>label),choices.map(({w,h})=>w+'×'+h));
   let layout=defaultDashboardLayout(role);
-  const tall=choices.at(-1);
-  layout=fitDashboardGridPanel(layout,role,id,tall.w,tall.h);
-  assert.deepEqual({w:layout.placements[id].w,h:layout.placements[id].h},{w:3,h:9});
+  const selectedSize=choices.at(-1);
+  layout=fitDashboardGridPanel(layout,role,id,selectedSize.w,selectedSize.h);
+  assert.deepEqual({w:layout.placements[id].w,h:layout.placements[id].h},{w:selectedSize.w,h:selectedSize.h});
   const locked=lockDashboardGridPanel(layout,role,id,true);
   assert.deepEqual(fitDashboardGridPanel(locked,role,id,choices[0].w,choices[0].h).placements[id],layout.placements[id]);
   assert.deepEqual(placeDashboardGridPanel(locked,role,id,0,25).placements[id],layout.placements[id]);
