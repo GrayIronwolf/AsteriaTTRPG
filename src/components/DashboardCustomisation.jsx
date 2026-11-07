@@ -114,7 +114,7 @@ function GridEditor({role,layout,onChange,disabled}){
       const item=registry(role).find(x=>x.id===id);
       if(!pos||!item)return null;
       const fixed=dashboardGridRule(role,id).fixed,lock=layout.lockedPositions.includes(id);
-      return <div data-grid-panel-id={id} key={id} className={'react-grid-editor-tile'+(activeSelected===id?' selected':'')+(floating?.id===id?' dragging':'')}
+      return <div data-grid-panel-id={id} data-grid-tile-rows={pos.h} key={id} className={'react-grid-editor-tile'+(activeSelected===id?' selected':'')+(floating?.id===id?' dragging':'')}
        style={{gridColumn:(pos.x+1)+' / span '+pos.w,gridRow:(pos.y+1)+' / span '+pos.h,
          ...(floating?.id===id?{transform:`translate3d(${floating.dx}px,${floating.dy}px,0) scale(1.02)`}:{})}}>
        <button type="button" aria-pressed={activeSelected===id} className="react-grid-editor-tile-main"

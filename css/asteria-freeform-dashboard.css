@@ -167,38 +167,80 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard) .reac
  .react-grid-editor-library.collapsed .react-grid-editor-library-body{display:none}
 }
 
-/* Clear, top-aligned panel titles and stacked dimension text controls. */
+/* Layout-editor tiles are full visual cards. Only the title is the drag
+   handle: the transparent size controls must never erase the tile surface. */
+.react-grid-editor-tile {
+  box-sizing:border-box;
+  border:1px solid #bda066!important;
+  border-radius:3px;
+  background:linear-gradient(145deg,#1e3649,#0c1822)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.32);
+  overflow:hidden;
+}
+.react-grid-editor-tile.selected {
+  border:2px solid #56aeed!important;
+  box-shadow:0 0 0 1px rgba(86,174,237,.23),0 2px 6px rgba(0,0,0,.38);
+}
+.react-grid-editor-tile.dragging {
+  box-shadow:0 8px 20px rgba(0,0,0,.54);
+}
 .react-grid-editor-tile>.react-grid-editor-tile-main{
-  position:absolute;top:2px;left:3px;right:46px;width:calc(100% - 51px);
-  height:31px;min-height:31px!important;display:flex;justify-content:center;align-items:center;
-  padding:2px 3px!important;text-align:left;background:transparent!important;border:0!important;
-  box-shadow:none!important;border-radius:0;overflow:hidden;cursor:grab;
+  position:absolute;top:2px;left:3px;right:36px;width:calc(100% - 39px);
+  height:30px;min-height:30px!important;
+  display:flex;justify-content:center;align-items:center;
+  padding:2px 3px!important;text-align:center;
+  background:none!important;border:0!important;box-shadow:none!important;
+  border-radius:0;overflow:hidden;cursor:grab;
 }
 .react-grid-editor-tile>.react-grid-editor-tile-main b{
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-  overflow:hidden;font-size:.64rem;line-height:1.18;max-width:100%;
+  overflow:hidden;font-size:.68rem;line-height:1.15;max-width:100%;
 }
 .react-grid-editor-tile.selected>.react-grid-editor-tile-main{
-  border:0!important;text-decoration:underline;text-decoration-color:#56aeed;text-underline-offset:3px;
+  border:0!important;text-decoration:underline;
+  text-decoration-color:#56aeed;text-underline-offset:3px;
 }
 .react-grid-editor-tile>.react-grid-editor-size-options{
-  top:35px;bottom:auto;left:4px;right:4px;min-width:0;max-width:none;
+  position:absolute;z-index:2;
+  top:35px;bottom:auto;left:3px;right:3px;min-width:0;max-width:none;
   display:flex;flex-direction:column;align-items:center;gap:2px;
 }
 .react-grid-editor-tile>.react-grid-editor-size-options button{
-  display:block;width:auto;min-width:45px;min-height:21px!important;line-height:1.2;
-  padding:2px 7px!important;font-size:.72rem;font-weight:600;text-align:center;
-  color:#e6e0d4;background:transparent;border:1px solid transparent;border-radius:3px;
-  box-shadow:none;white-space:nowrap;cursor:pointer;
+  appearance:none;
+  display:block;width:auto;min-width:44px;min-height:21px!important;
+  line-height:1.15!important;padding:2px 7px!important;
+  font-size:.72rem;font-weight:600;text-align:center;
+  color:#e6e0d4!important;
+  background:none!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;text-shadow:none!important;
+  white-space:nowrap;cursor:pointer;
 }
 .react-grid-editor-tile>.react-grid-editor-size-options button:hover:not(:disabled),
 .react-grid-editor-tile>.react-grid-editor-size-options button:focus-visible{
-  background:rgba(115,153,178,.16);border-color:rgba(149,182,202,.55);
+  color:#fff3ce!important;background:none!important;border:0!important;
+  text-decoration:underline;text-underline-offset:2px;
 }
 .react-grid-editor-tile>.react-grid-editor-size-options button[aria-pressed="true"]{
-  background:rgba(208,174,103,.16);border-color:#d2b579;color:#ffdfa7;
+  color:#ffdfa7!important;background:none!important;border:0!important;
+  font-weight:800;text-decoration:underline;
+  text-decoration-color:#d2b579;text-decoration-thickness:2px;
+  text-underline-offset:3px;
 }
 .react-grid-editor-tile>.react-grid-editor-size-options button:disabled{opacity:.55;cursor:default}
+/* At two grid rows tall, four dimensions must remain inside the same tile
+   instead of overlapping the adjacent panel. */
+.react-grid-editor-tile[data-grid-tile-rows="2"]>.react-grid-editor-size-options{
+  top:32px;gap:1px;
+}
+.react-grid-editor-tile[data-grid-tile-rows="2"]>.react-grid-editor-size-options button{
+  min-height:16px!important;font-size:.68rem;line-height:1!important;
+  padding:0 5px!important;
+}
 @media (max-width:720px){
-  .react-grid-editor-tile>.react-grid-editor-size-options button{min-height:21px!important}
+  .react-grid-editor-tile>.react-grid-editor-size-options button{
+    min-height:21px!important;
+  }
+  .react-grid-editor-tile[data-grid-tile-rows="2"]>.react-grid-editor-size-options button{
+    min-height:16px!important;
+  }
 }
