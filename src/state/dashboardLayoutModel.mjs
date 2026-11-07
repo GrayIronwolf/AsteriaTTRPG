@@ -1,10 +1,10 @@
 import {
-  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS, DASHBOARD_EDITOR_SIZE_PRESETS,
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
 } from './dashboardGridModel.mjs';
 export {
-  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS, DASHBOARD_EDITOR_SIZE_PRESETS,
+  DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, gridRowCount
 };
 /**
@@ -64,8 +64,8 @@ export const DASHBOARD_PANEL_REGISTRY = {
 };
 
 // Twelve-column dashboard: three horizontal units; height is minimum only.
-export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'3x9':4,'9x3':12});
-export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'3x9':3,'9x3':1});
+export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x3':12});
+export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
 export const DASHBOARD_LAYOUT_VERSION = 4;
 export const DASHBOARD_LAYOUT_PRESETS = {
@@ -337,8 +337,24 @@ export function setDashboardViewportLayout(source,role='player',viewport='deskto
 export function dashboardPanelSizeChoices(role,id){
   const rule=dashboardGridRule(role,id);
   if(!rule)return [];
-  if(rule.fixed)return [{label:'Fixed',w:rule.defaultW,h:rule.defaultH}];
-  return [...DASHBOARD_EDITOR_SIZE_PRESETS];
+  if(rule.fixed)return [{label:rule.defaultW+'×'+rule.defaultH,w:rule.defaultW,h:rule.defaultH}];
+  // Each panel offers three or four actual sizes derived from its own rules.
+  const raw=[
+    {w:rule.minW,h:rule.minH},
+    {w:rule.defaultW,h:rule.defaultH},
+    {w:Math.min(rule.maxW,Math.max(rule.defaultW+2,rule.minW+1)),h:rule.defaultH},
+    ...(rule.portrait?[{w:rule.portrait.w,h:rule.portrait.minH}]:[]),
+    {w:rule.defaultW,h:Math.min(rule.maxH,Math.max(rule.defaultH+2,rule.minH+1))},
+    {w:rule.maxW,h:rule.maxH}
+  ];
+  const seen=new Set();
+  return raw.filter(option=>{
+    const key=option.w+'x'+option.h;
+    if(seen.has(key))return false;
+    seen.add(key);
+    const sized=clampGridDimensions(role,id,option.w,option.h);
+    return sized?.w===option.w&&sized?.h===option.h;
+  }).slice(0,4).map(option=>({...option,label:option.w+'×'+option.h}));
 }
 function reflowDashboardPlacements(previous,role,id,candidate){
   const ids=previous.order.filter(name=>!previous.hidden.includes(name));
