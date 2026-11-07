@@ -354,7 +354,7 @@ export function dashboardPanelSizeChoices(role,id){
     seen.add(key);
     const sized=clampGridDimensions(role,id,option.w,option.h);
     return sized?.w===option.w&&sized?.h===option.h;
-  }).slice(0,4).map(option=>({...option,label:option.w+'×'+option.h}));
+  }).slice(0,rule.defaultW<=2&&rule.defaultH<=2?3:4).map(option=>({...option,label:option.w+'×'+option.h}));
 }
 function reflowDashboardPlacements(previous,role,id,candidate){
   const ids=previous.order.filter(name=>!previous.hidden.includes(name));
