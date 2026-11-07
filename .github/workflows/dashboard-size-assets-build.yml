@@ -1,0 +1,31 @@
+name: Build dashboard size editor production assets
+on:
+  push:
+    branches: [feature/dashboard-stacked-numeric-sizes-20261107]
+permissions:
+  contents: write
+jobs:
+  bundle:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/dashboard-stacked-numeric-sizes-20261107
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit built assets and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/dashboard-size-assets-build.yml
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts .github/workflows/dashboard-size-assets-build.yml
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Rebuild production assets for numeric dashboard size controls'
+            git push
+          fi
