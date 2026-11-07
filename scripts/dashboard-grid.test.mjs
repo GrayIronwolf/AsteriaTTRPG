@@ -16,7 +16,7 @@ test('Player and GM default panels fit 12-column square grid without overlap',()
 });
 test('Size restrictions and tall armour mode are enforced',()=>{
  assert.deepEqual(clampGridDimensions('player','armour',3,6),{w:3,h:6});
- assert.deepEqual(clampGridDimensions('player','shortcutQuest',9,7),{w:2,h:2});
+ assert.deepEqual(clampGridDimensions('player','shortcutQuest',9,7),{w:4,h:4});
  assert.deepEqual(clampGridDimensions('gm','encounter',2,2),{w:5,h:4});
  assert.equal(dashboardGridRule('gm','resources'),null);
 });

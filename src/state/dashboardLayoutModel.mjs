@@ -337,17 +337,24 @@ export function setDashboardViewportLayout(source,role='player',viewport='deskto
 export function dashboardPanelSizeChoices(role,id){
   const rule=dashboardGridRule(role,id);
   if(!rule)return [];
-  if(rule.fixed)return [{label:'Fixed',w:rule.defaultW,h:rule.defaultH}];
-  const proposed=[
-    {label:'Small',w:rule.minW,h:rule.minH},
-    {label:'Medium',w:rule.defaultW,h:rule.defaultH},
-    {label:'Large',w:Math.min(rule.maxW,rule.defaultW+2),h:Math.min(rule.maxH,rule.defaultH+2)},
-    {label:'Wide',w:rule.maxW,h:rule.defaultH},
-    ...(rule.portrait?[{label:'Portrait',w:rule.portrait.w,h:rule.portrait.minH}]:[])
+  if(rule.fixed)return [{label:rule.defaultW+'×'+rule.defaultH,w:rule.defaultW,h:rule.defaultH}];
+  // Each panel offers three or four actual sizes derived from its own rules.
+  const raw=[
+    {w:rule.minW,h:rule.minH},
+    {w:rule.defaultW,h:rule.defaultH},
+    {w:Math.min(rule.maxW,Math.max(rule.defaultW+2,rule.minW+1)),h:rule.defaultH},
+    ...(rule.portrait?[{w:rule.portrait.w,h:rule.portrait.minH}]:[]),
+    {w:rule.defaultW,h:Math.min(rule.maxH,Math.max(rule.defaultH+2,rule.minH+1))},
+    {w:rule.maxW,h:rule.maxH}
   ];
   const seen=new Set();
-  return proposed.map(option=>({...option,...clampGridDimensions(role,id,option.w,option.h)}))
-    .filter(option=>{const key=option.w+'x'+option.h;if(seen.has(key))return false;seen.add(key);return true;});
+  return raw.filter(option=>{
+    const key=option.w+'x'+option.h;
+    if(seen.has(key))return false;
+    seen.add(key);
+    const sized=clampGridDimensions(role,id,option.w,option.h);
+    return sized?.w===option.w&&sized?.h===option.h;
+  }).slice(0,rule.defaultW<=2&&rule.defaultH<=2?3:4).map(option=>({...option,label:option.w+'×'+option.h}));
 }
 function reflowDashboardPlacements(previous,role,id,candidate){
   const ids=previous.order.filter(name=>!previous.hidden.includes(name));

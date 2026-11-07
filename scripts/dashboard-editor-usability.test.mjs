@@ -36,7 +36,7 @@ test('Touch/mouse move uses pointer release displacement and clamps into twelve 
   assert.equal(dashboardPointerProposal('player','weapons',p,'delete',1,1),null);
 });
 
-test('Resize respects role limits, fixed shortcut tiles, and portrait armour',()=>{
+test('Resize respects role limits, compact shortcut sizes, and portrait armour',()=>{
   const l=defaultDashboardLayout('player'),p=l.placements.weapons;
   const max=dashboardPointerProposal('player','weapons',p,'resize',100,100);
   assert.equal(max.w,dashboardGridRule('player','weapons').maxW);
@@ -48,7 +48,10 @@ test('Resize respects role limits, fixed shortcut tiles, and portrait armour',()
   const portrait=dashboardPointerProposal('player','armour',armour,'resize',-1,2);
   assert.deepEqual({w:portrait.w,h:portrait.h},{w:3,h:6});
   const shortcut=l.placements.shortcutInventory;
-  assert.deepEqual(dashboardPointerProposal('player','shortcutInventory',shortcut,'resize',5,5),shortcut);
+  assert.deepEqual(
+    (({w,h})=>({w,h}))(dashboardPointerProposal('player','shortcutInventory',shortcut,'resize',5,5)),
+    {w:4,h:4}
+  );
 });
 
 test('Dragging cannot override lock, colliding positions, or removed panel visibility',()=>{

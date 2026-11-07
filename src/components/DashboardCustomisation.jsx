@@ -124,14 +124,14 @@ function GridEditor({role,layout,onChange,disabled}){
          e.preventDefault();
          keyboard(id,pos,'move',e.key);
         }}>
-        <b>{item.label}</b><small>{pos.w}×{pos.h}{lock?' · Locked':''}</small>
+        <b>{item.label}</b>
        </button>
        <button type="button" className="react-grid-editor-lock" disabled={disabled}
         aria-label={(lock?'Unlock ':'Lock ')+item.label} aria-pressed={lock}
         onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,id,!lock))}>{lock?'Locked':'Lock'}</button>
        {!fixed?<div className="react-grid-editor-size-options" role="group" aria-label={'Size '+item.label}>
         {dashboardPanelSizeChoices(role,id).map(option=><button key={option.label} type="button"
-          aria-label={item.label+' '+option.label+' '+option.w+' by '+option.h}
+          aria-label={item.label+' '+option.w+' by '+option.h}
           aria-pressed={pos.w===option.w&&pos.h===option.h}
           disabled={disabled||lock}
           onClick={()=>size(id,option.w,option.h)}>{option.label}</button>)}

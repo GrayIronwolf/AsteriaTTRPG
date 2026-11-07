@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gridRectanglesOverlap} from '../src/state/dashboardGridModel.mjs';
 import {
-  defaultDashboardLayout,normalizeDashboardLayout,visibleDashboardPanels,
+  DASHBOARD_PANEL_REGISTRY,defaultDashboardLayout,normalizeDashboardLayout,visibleDashboardPanels,
   dashboardViewportFromWidth,dashboardLayoutForViewport,setDashboardViewportLayout,
   dashboardPanelSizeChoices,placeDashboardGridPanel,fitDashboardGridPanel,
   lockDashboardGridPanel,toggleDashboardPanel
@@ -30,15 +30,31 @@ test('Viewport widths match dashboard container rules',()=>{
  assert.equal(dashboardViewportFromWidth(900),'tablet');
  assert.equal(dashboardViewportFromWidth(901),'desktop');
 });
+test('Each Player and GM panel exposes numeric dimensions with three or four choices',()=>{
+ for(const role of ['player','gm']){
+  for(const panel of DASHBOARD_PANEL_REGISTRY[role]){
+   const options=dashboardPanelSizeChoices(role,panel.id);
+   assert.ok(options.length>=3&&options.length<=4,role+': '+panel.id);
+   assert.equal(new Set(options.map(option=>option.label)).size,options.length);
+   for(const option of options)assert.equal(option.label,option.w+'×'+option.h);
+  }
+ }
+ const editor=read('src/components/DashboardCustomisation.jsx');
+ const css=read('css/asteria-freeform-dashboard.css');
+ assert.match(editor,/<b>\{item\.label\}<\/b>/);
+ assert.doesNotMatch(editor,/option\.label==='Small'|option\.label==='Large'/);
+ assert.match(css,/\.react-grid-editor-tile>\.react-grid-editor-size-options\{[^}]*flex-direction:column/);
+});
 test('Size choices are panel-specific and locked panels do not change',()=>{
  for(const role of ['player','gm']){
   const id=role==='gm'?'encounter':'weapons';
   const choices=dashboardPanelSizeChoices(role,id);
-  assert.ok(choices.length>=3);
+  assert.ok(choices.length>=3&&choices.length<=4);
+  assert.deepEqual(choices.map(({label,w,h})=>label),choices.map(({w,h})=>w+'×'+h));
   let layout=defaultDashboardLayout(role);
-  const large=choices.find(choice=>choice.label==='Large');
-  layout=fitDashboardGridPanel(layout,role,id,large.w,large.h);
-  assert.equal(layout.placements[id].w,large.w);
+  const selectedSize=choices.at(-1);
+  layout=fitDashboardGridPanel(layout,role,id,selectedSize.w,selectedSize.h);
+  assert.deepEqual({w:layout.placements[id].w,h:layout.placements[id].h},{w:selectedSize.w,h:selectedSize.h});
   const locked=lockDashboardGridPanel(layout,role,id,true);
   assert.deepEqual(fitDashboardGridPanel(locked,role,id,choices[0].w,choices[0].h).placements[id],layout.placements[id]);
   assert.deepEqual(placeDashboardGridPanel(locked,role,id,0,25).placements[id],layout.placements[id]);

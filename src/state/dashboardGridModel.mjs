@@ -8,10 +8,10 @@
 export const DASHBOARD_GRID_COLUMNS = 12;
 export const DASHBOARD_GRID_START_ROWS = 30;
 export const DASHBOARD_GRID_MAX_ROWS = 600;
-
 const rule=(minW,minH,defaultW,defaultH,maxW,maxH,options={})=>
   Object.freeze({minW,minH,defaultW,defaultH,maxW,maxH,...options});
-const shortcut=rule(2,2,2,2,2,2,{fixed:true});
+// Shortcuts can also be resized from their compact 2x2 default in the editor.
+const shortcut=rule(2,2,2,2,4,4);
 export const DASHBOARD_GRID_RULES=Object.freeze({
   player:Object.freeze({
     armour:rule(4,3,4,4,8,7,{portrait:{w:3,minH:6}}),
@@ -73,7 +73,7 @@ export function clampGridDimensions(role,id,width,height){
 }
 export function legacyGridDimensions(role,id,value){
   const map={compact:[3,3],standard:[3,3],wide:[6,3],long:[6,3],tall:[3,6],full:[9,3],
-    '3x3':[3,3],'6x3':[6,3],'3x6':[3,6],'9x3':[9,3]};
+    '3x3':[3,3],'6x3':[6,3],'3x6':[3,6],'3x9':[3,9],'9x3':[9,3]};
   const pair=Object.hasOwn(map,value)?map[value]:null;
   return pair?clampGridDimensions(role,id,pair[0],pair[1]):defaultGridDimensions(role,id);
 }
