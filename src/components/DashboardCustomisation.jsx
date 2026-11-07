@@ -131,7 +131,7 @@ function GridEditor({role,layout,onChange,disabled}){
         onClick={()=>onChange(old=>lockDashboardGridPanel(old,role,id,!lock))}>{lock?'Locked':'Lock'}</button>
        {!fixed?<div className="react-grid-editor-size-options" role="group" aria-label={'Size '+item.label}>
         {dashboardPanelSizeChoices(role,id).map(option=><button key={option.label} type="button"
-          aria-label={item.label+' '+option.label+' '+option.w+' by '+option.h}
+          aria-label={item.label+' '+option.w+' by '+option.h}
           aria-pressed={pos.w===option.w&&pos.h===option.h}
           disabled={disabled||lock}
           onClick={()=>size(id,option.w,option.h)}>{option.label}</button>)}
