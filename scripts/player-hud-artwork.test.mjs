@@ -49,8 +49,8 @@ test('Cinematic identity and campaign details sit on images without redundant se
   assert.match(jsx, /<PlayerLevelDisplay character=\{character\}[^>]+cinematic/);
   assert.match(jsx, /<ExperienceBar character=\{character\} cinematic/);
   assert.match(jsx, /<CampaignInformationPanel \{\.\.\.props\} preferences=\{preferences\} embedded cinematic/);
-  assert.match(jsx, /!cinematic \? <div[^>]+Active Character/);
-  assert.match(jsx, /!cinematic \? <div[^>]+Campaign Information/);
+  assert.match(jsx, /!cinematic \? <div[^\n]+<span>Active Character/);
+  assert.match(jsx, /!cinematic \? <div[^\n]+<span>Campaign Information/);
   assert.match(jsx, /String\(value.type \|\| ''\).toLowerCase\(\) === 'guild'/);
   assert.match(css, /asteria-level-shield\.webp/);
   assert.match(css, /\.react-player-campaign-overlay \.react-connection/);
