@@ -83,3 +83,23 @@ export const asteriaCampaignAccessCutover=onCall({region:'us-central1',maxInstan
     throw new HttpsError('failed-precondition',error.message||'Membership access could not be activated.');
   }
 });
+
+// Phase 3.2: per-user pending join requests. Does not approve or link members.
+export const asteriaCampaignJoinRequest=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
+  try {
+    const {campaignJoinRequest}=await import('./campaignJoinRequests.mjs');
+    const data=request.data || {};
+    if(data.action==='submit' && process.env.ASTERIA_JOIN_REQUESTS_ENABLED!=='1'){
+      throw new Error('Join requests are not enabled yet.');
+    }
+    return await campaignJoinRequest(getFirestore(),request.auth.uid,{
+      action:data.action,
+      campaignId:data.campaignId,
+      ucn:data.ucn,
+      characterId:data.characterId
+    });
+  } catch(error){
+    throw new HttpsError('failed-precondition',error.message||'Could not process the join request.');
+  }
+});
