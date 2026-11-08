@@ -42,3 +42,25 @@ export const asteriaCampaignUCN=onCall({region:'us-central1',maxInstances:3,time
     throw new HttpsError('failed-precondition',error.message||'The campaign number could not be checked.');
   }
 });
+
+ 
+// Phase 2.2: prepares member records only. No active access-mode transition.
+// Staging is disabled on the server until explicitly reviewed and enabled.
+export const asteriaMembershipPreparation=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
+  try {
+    const { stageLegacyMemberships }=await import('./campaignMembership.mjs');
+    const data=request.data || {};
+    if(typeof data.campaignId!=='string') throw new Error('Campaign ID is required.');
+    if(data.action==='preview') {
+      return await stageLegacyMemberships(getFirestore(),request.auth.uid,data.campaignId);
+    }
+    if(data.action==='stage') {
+      if(process.env.ASTERIA_MEMBERSHIP_STAGING_ENABLED!=='1') throw new Error('Membership staging is not enabled.');
+      return await stageLegacyMemberships(getFirestore(),request.auth.uid,data.campaignId,{write:true});
+    }
+    throw new Error('Unknown membership preparation action.');
+  }catch(error){
+    throw new HttpsError('failed-precondition',error.message||'Membership records could not be prepared.');
+  }
+});

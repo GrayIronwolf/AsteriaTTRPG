@@ -1,4 +1,5 @@
 import { randomInt, randomUUID } from 'node:crypto';
+import { ownerMembership } from './campaignMembership.mjs';
 
 const UCN_PATTERN = /^\d{12}$/;
 const CAMPAIGN_ID_PATTERN = /^[A-Za-z0-9_-]{1,160}$/;
@@ -37,9 +38,10 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
     const directoryRef = db.doc(`campaignDirectory/${ucn}`);
     const legacyInviteRef = db.doc(`campaignInvites/${ucn}`);
     const creationLimitRef = db.doc(`campaignCreateThrottle/${uid}`);
+    const ownerMemberRef = db.doc(`campaigns/${campaignId}/members/${uid}`);
     const result = await db.runTransaction(async transaction=>{
-      const [campaign, directory, legacyInvite, throttle] = await Promise.all([
-        transaction.get(campaignRef), transaction.get(directoryRef), transaction.get(legacyInviteRef), transaction.get(creationLimitRef)
+      const [campaign, directory, legacyInvite, throttle, ownerMember] = await Promise.all([
+        transaction.get(campaignRef), transaction.get(directoryRef), transaction.get(legacyInviteRef), transaction.get(creationLimitRef), transaction.get(ownerMemberRef)
       ]);
       const rate = throttle.exists ? throttle.data() : {};
       const nowMs = Date.now();
@@ -47,7 +49,7 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
       const withinWindow = nowMs >= windowStart && nowMs - windowStart < CREATE_WINDOW_MS;
       const created = withinWindow ? Number(rate.created || 0) : 0;
       if(created >= MAX_CREATES_PER_WINDOW) throw new Error('Campaign creation limit reached. Please try again later.');
-      if(campaign.exists || directory.exists || legacyInvite.exists) return null;
+      if(campaign.exists || directory.exists || legacyInvite.exists || ownerMember.exists) return null;
       const now = new Date().toISOString();
       transaction.create(campaignRef, {
         id:campaignId, name, ownerUid:uid, gmId:uid,
@@ -55,6 +57,7 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
         players:{[uid]:{uid,role:'gm',status:'active',characterIds:[],joinedAt:now}},
         ucn, createdAt:now
       });
+      transaction.create(ownerMemberRef,ownerMembership(campaignId,uid,new Date(now)));
       transaction.create(directoryRef, {
         ucn,campaignId,ownerUid:uid,status:'active',createdAt:now,updatedAt:now
       });
