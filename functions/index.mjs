@@ -113,6 +113,15 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       await import('./campaignJoinApproval.mjs');
     const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
     const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(data.action==='character-link-list'||data.action==='character-link-review'){
+      if(process.env.ASTERIA_CHARACTER_LINK_APPROVAL_ENABLED!=='1')
+        throw new Error('Campaign character approval is not enabled yet.');
+      const {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink}=
+        await import('./campaignCharacterApproval.mjs');
+      if(data.action==='character-link-list')
+        return await listPendingCampaignCharacterLinks(db,uid,data.campaignId);
+      return await reviewCampaignCharacterLink(db,uid,data);
+    }
     if(data.action==='character-link-request'||data.action==='character-link-status'){
       if(process.env.ASTERIA_CHARACTER_LINK_REQUESTS_ENABLED!=='1')
         throw new Error('Campaign character requests are not enabled yet.');
