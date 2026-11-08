@@ -1914,6 +1914,9 @@ const firebasePublicApi = {
       );
       membershipResults.forEach(result=>{
         if(result.status === 'rejected'){
+          // Legacy array queries may be denied once v2 campaigns use canonical
+          // membership; the verified per-account projection remains available.
+          if(String(result.reason?.code || '').includes('permission-denied')) return;
           reportSyncError('campaign-membership-query', result.reason, { uid });
           throw result.reason;
         }
