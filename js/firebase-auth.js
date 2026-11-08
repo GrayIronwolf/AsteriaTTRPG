@@ -265,7 +265,14 @@ function hydrateSharedCampaignCharacters(campaign, sharedCharacters={}){
   if(!campaign?.id) return;
   window.chars = window.chars || {};
   const summaries = campaign.characters || {};
-  uniqueValues(campaign.party, Object.keys(summaries), Object.keys(sharedCharacters)).forEach(id=>{
+  const activeIds=new Set(uniqueValues(campaign.party,Object.keys(summaries),Object.keys(sharedCharacters)));
+  // Do not rehydrate detached campaign-scoped IDs from stale account caches.
+  Object.keys(window.chars).forEach(id=>{
+    const ch=window.chars[id];
+    if(ch?.sharedCampaignId===campaign.id&&id.startsWith('linkchar-')&&
+      !activeIds.has(id))delete window.chars[id];
+  });
+  activeIds.forEach(id=>{
     const summary = summaries[id] || {};
     const shared = sharedCharacters[id] || {};
     const existing = window.chars[id] || {};
@@ -1977,6 +1984,23 @@ const firebasePublicApi = {
       action:'character-link-request',campaignId,sourceCharacterId,sourceKind
     })).data;
   },
+  listCampaignCharacterLifecycle: async function(campaignId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterLifecycle!==true)
+      throw new Error('Campaign character lifecycle is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-lifecycle-list',campaignId
+    })).data;
+  },
+  changeCampaignCharacterLifecycle: async function(campaignId,{linkId,sourceCharacterId,action,expectedRevision}){
+    if(!functionsClient||!currentUser)throw new Error('Sign in to manage your campaign character.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterLifecycle!==true)
+      throw new Error('Campaign character lifecycle is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-lifecycle-change',campaignId,
+      linkId,sourceCharacterId,action,expectedRevision
+    })).data;
+  },
   listPendingCampaignCharacterLinks: async function(campaignId){
     if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
     if(window.AsteriaFeatureFlags?.campaignCharacterApproval!==true)
@@ -2320,8 +2344,11 @@ const firebasePublicApi = {
       const reference=doc(db,'campaigns',campaignId,'characters',characterId);
       await runTransaction(db,async transaction=>{
         const snapshot=await transaction.get(reference);
-        if(snapshot.exists() && incomingSnapshotIsStale(snapshot.data(),character)) throw new Error('A newer live character update already exists. Refresh before saving progression.');
-        transaction.set(reference,progressionPayload,{merge:true});
+        if(!snapshot.exists()||snapshot.data().status!=='linked')
+          throw new Error('This character is no longer active in the campaign.');
+        if(incomingSnapshotIsStale(snapshot.data(),character))
+          throw new Error('A newer live character update already exists. Refresh before saving progression.');
+        transaction.update(reference,progressionPayload);
       });
       return true;
     }catch(err){
@@ -2367,8 +2394,11 @@ const firebasePublicApi = {
       const reference=doc(db,'campaigns',campaignId,'characters',characterId);
       await runTransaction(db,async transaction=>{
         const current=await transaction.get(reference);
-        if(current.exists() && incomingSnapshotIsStale(current.data(),character)) throw new Error('A newer live character update already exists. Refresh before saving this character.');
-        transaction.set(reference,Object.assign({},snapshot,{updatedAt:serverTimestamp()}),{merge:true});
+        if(!current.exists()||current.data().status!=='linked')
+          throw new Error('This character is no longer active in the campaign.');
+        if(incomingSnapshotIsStale(current.data(),character))
+          throw new Error('A newer live character update already exists. Refresh before saving this character.');
+        transaction.update(reference,Object.assign({},snapshot,{updatedAt:serverTimestamp()}));
       });
       return true;
     }catch(err){
