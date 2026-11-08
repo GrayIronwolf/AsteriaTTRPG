@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { randomInt } from 'node:crypto';
-import { isCampaignGM, isLinkedCharacter } from './characterPermissions.mjs';
+import { isCampaignGM, isLinkedCharacter, readCampaignMember, isCampaignMember } from './characterPermissions.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
 import { buildTalentCatalog } from '../src/state/talentModel.mjs';
 import { useLearnedTalent } from '../src/state/talentMechanics.mjs';
@@ -30,7 +30,12 @@ export function createCombatCommands(context) {
     try{return await runTransaction(db,async tx=>{
       const encounterRef=doc(db,'campaigns',campaignId,'systems','encounter'),gmRef=doc(db,'campaigns',campaignId,'systems','gmWorkspace');
       const [campaignSnap,encounterSnap,sessionSnap,gmSnap]=await Promise.all([tx.get(doc(db,'campaigns',campaignId)),tx.get(encounterRef),tx.get(doc(db,'campaigns',campaignId,'liveSession','current')),tx.get(gmRef)]);
-      const campaign=campaignSnap.data()||{},session=sessionSnap.data()||{},gm=isCampaignGM(campaign,currentUser.uid),now=Date.now();
+      const campaign=campaignSnap.data()||{},session=sessionSnap.data()||{},now=Date.now();
+      const memberRecord=await readCampaignMember({get:async ref=>{
+        const snap=await tx.get(ref);return {exists:snap.exists(),data:()=>snap.data()};
+      }},db,campaignId,campaign,currentUser.uid);
+      if(!isCampaignMember(campaign,currentUser.uid,memberRecord)) throw new Error('Campaign membership is required.');
+      const gm=isCampaignGM(campaign,currentUser.uid,memberRecord);
       if(session.status!=='active'||effectTimeMs(session.expiresAt)<=now)throw new Error('The GM must start the live session first.');
       if(management.has(input.operation)&&!gm)throw new Error('Only the campaign GM can use this combat control.');
       let encounter={status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],...encounterSnap.data()};
