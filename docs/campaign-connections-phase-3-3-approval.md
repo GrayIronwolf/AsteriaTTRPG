@@ -16,10 +16,10 @@
 
 ## UI
 
-- Existing GM Campaign Manager gets a compact Join Requests panel, keeping approved artwork and dashboard structure.
+- Existing Campaign Forge > Manage Campaign GM view gets a compact Join Requests section, keeping the React GM dashboard assets and all approved artwork and layout unchanged.
 - Pending request list includes applicant UID, optional character preference and submission time. Approve/Decline both require an explicit confirmation.
 - Refresh, capacity summary, pending count, approval feedback, and owner-only manual/automatic setting.
-- When the frontend activation switch is disabled, the component does not display and existing dashboard behavior is unchanged.
+- When the frontend activation switch is disabled, the section does not display and existing dashboard behavior is unchanged.
 
 ## Deployment safety
 
