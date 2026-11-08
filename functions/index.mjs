@@ -98,8 +98,36 @@ export const asteriaCampaignJoinRequest=onCall({region:'us-central1',maxInstance
       campaignId:data.campaignId,
       ucn:data.ucn,
       characterId:data.characterId
-    });
+    },{autoApproveEnabled:process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1'});
   } catch(error){
     throw new HttpsError('failed-precondition',error.message||'Could not process the join request.');
+  }
+});
+
+// Phase 3.3: manual GM review, owner-controlled approval mode and status queue.
+// All writes remain explicitly gated pending coordinated backend activation.
+export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:45},async request=>{
+  if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    const {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode}=
+      await import('./campaignJoinApproval.mjs');
+    const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
+    const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(data.action==='list'){
+      return await listPendingCampaignJoinRequests(db,uid,data.campaignId,{autoAvailable});
+    }
+    if(data.action==='review'){
+      if(process.env.ASTERIA_JOIN_REVIEW_ENABLED!=='1')
+        throw new Error('Campaign join approvals are not enabled yet.');
+      return await reviewCampaignJoinRequest(db,uid,data);
+    }
+    if(data.action==='mode'){
+      if(process.env.ASTERIA_JOIN_REVIEW_ENABLED!=='1')
+        throw new Error('Campaign join approvals are not enabled yet.');
+      return await setCampaignJoinApprovalMode(db,uid,data.campaignId,data.mode,{autoAvailable});
+    }
+    throw new Error('Unknown campaign join review action.');
+  }catch(error){
+    throw new HttpsError('failed-precondition',error.message||'Unable to process GM join request review.');
   }
 });
