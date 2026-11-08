@@ -778,6 +778,8 @@ test('v2 permissions deny revoked members despite stale legacy role arrays',asyn
   await assertFails(getDoc(doc(user('bob'),'campaigns/c/systems/itemEcosystem')));
   await assertFails(getDoc(doc(user('bob'),'campaigns/c/liveSession/current')));
   await assertFails(setDoc(doc(user('bob'),'campaigns/c/sessions/s/presence/bob'),{state:'online'}));
+  await db.doc('campaigns/c/partyChat/old').set({ownerUid:'bob',text:'Old message'});
+  await assertFails(deleteDoc(doc(user('bob'),'campaigns/c/partyChat/old')));
   await assertFails(getBytes(ref(env.authenticatedContext('bob').storage(),'campaigns/c/artwork/cover.png')));
   await assertSucceeds(getDoc(doc(user('bob'),'users/bob/characters/b')));
   assert.equal((await db.doc('campaigns/c').get()).data().playerUids.includes('bob'),true);
