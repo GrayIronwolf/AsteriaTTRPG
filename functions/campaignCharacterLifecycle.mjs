@@ -318,7 +318,9 @@ export async function changeCampaignCharacterLifecycle(db,actorUid,
         const links=await tx.get(db.collection(path+'/characterLinks'));
         assertCharacterLinkCapacity(campaign,links.docs||[],link.ownerUid,
           characterCapacityLimits(campaign));
-        const {archivedAt,archivedByUid,archiveReason,unlinkedAt,...original}=archive;
+        const original={...archive};
+        for(const key of ['archivedAt','archivedByUid','archiveReason','unlinkedAt'])
+          delete original[key];
         tx.create(characterRef,{...original,status:'linked',updatedAt:now});
         tx.delete(archiveRef);
         tx.update(privateRef,activePrivateMetadata(sheet,campaignId,
