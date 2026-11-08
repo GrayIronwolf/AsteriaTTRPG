@@ -688,10 +688,12 @@
           </section>
         ` : ''}
         <section class="workspace-link-panel">
-          <h3>Link Existing Character</h3>
-          <p class="muted">Players can link a saved character they own to this campaign.</p>
+          <h3>${campaign.membershipSchemaVersion===2?'Request Character Link':'Link Existing Character'}</h3>
+          <p class="muted">${campaign.membershipSchemaVersion===2?'Choose a saved character you own. A request is sent for GM approval; the character will not enter the party until approved.':'Players can link a saved character they own to this campaign.'}</p>
           <label>Character<select id="workspaceLinkCharacter">${characters.map(character => `<option value="${escapeHtml(character.id)}" ${character.id === (window.session?.character || window.selected) ? 'selected' : ''}>${escapeHtml(character.name || character.id)}</option>`).join('')}</select></label>
-          <button class="primary" type="button" id="workspaceLinkCharacterBtn" ${characters.length ? '' : 'disabled'}>Link Character</button>
+          <button class="primary" type="button" id="workspaceLinkCharacterBtn" ${characters.length && (campaign.membershipSchemaVersion!==2 || (window.AsteriaFeatureFlags?.campaignCharacterLinks===true && campaign.settings?.allowPlayerLinkCharacter!==false)) ? '' : 'disabled'}>${campaign.membershipSchemaVersion===2?'Request Link':'Link Character'}</button>
+          <p id="workspaceCharacterLinkStatus" role="status" aria-live="polite">${campaign.membershipSchemaVersion===2 && window.AsteriaFeatureFlags?.campaignCharacterLinks!==true?'Character link requests are not activated yet.':campaign.membershipSchemaVersion===2 && campaign.settings?.allowPlayerLinkCharacter===false?'The GM has disabled character linking.':''}</p>
+          ${campaign.settings?.allowPlayerCreateCharacter!==false?'<button type="button" id="workspaceForgeCharacterForCampaign">Forge New Character</button>':''}
         </section>
         <section class="workspace-link-panel">
           <h3>Repair Existing Character Link</h3>
@@ -729,6 +731,41 @@
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true) renderCampaignGMActivity(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
+    if(campaign.membershipSchemaVersion===2&&window.AsteriaFeatureFlags?.campaignCharacterLinks===true){
+      const choice=byId('workspaceLinkCharacter');
+      const status=byId('workspaceCharacterLinkStatus');
+      const api=window.AsteriaFirebase;
+      let sequence=0;
+      const refreshStatus=async()=>{
+        const id=choice?.value;
+        const saved=id&&window.chars?.[id];
+        const sourceId=String(saved?.sourceCharacterId||id||'');
+        const request=++sequence;
+        if(!status||!sourceId||!api?.getCampaignCharacterLinkStatus)return;
+        status.textContent='Checking character request status...';
+        try{
+          const result=await api.getCampaignCharacterLinkStatus(campaign.id,sourceId);
+          if(request!==sequence||!status.isConnected)return;
+          status.textContent=result?.status==='pending'?'Pending GM approval.':
+            result?.status==='approved'?'Approved character link.':
+            'No character link request yet.';
+        }catch(error){
+          if(request===sequence&&status.isConnected)
+            status.textContent=error?.message||'Could not check this character request.';
+        }
+      };
+      choice?.addEventListener('change',refreshStatus);
+      if(choice?.value)void refreshStatus();
+    }
+    byId('workspaceForgeCharacterForCampaign')?.addEventListener('click',()=>{
+      if(campaign.membershipSchemaVersion===2 && window.AsteriaFeatureFlags?.campaignCharacterLinks!==true){
+        window.toast?.('Campaign character requests are not activated yet.');return;
+      }
+      setPendingCampaignJoin(campaign);
+      if(window.AsteriaGameplay?.startNewCharacterForge)window.AsteriaGameplay.startNewCharacterForge();
+      else if(window.AsteriaGameplay?.openCharacterCreator)window.AsteriaGameplay.openCharacterCreator();
+      else window.AsteriaGameplay?.openCharacterForge?.();
+    });
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
   }
 
@@ -1058,6 +1095,10 @@
     });
     byId('workspaceJoinForgeCharacterBtn')?.addEventListener('click', event => {
       event.preventDefault();
+      if(campaign.settings?.allowPlayerCreateCharacter===false) {
+        window.toast?.('The GM has disabled new characters for this campaign.');
+        return;
+      }
       setPendingCampaignJoin(campaign);
       if (window.AsteriaGameplay?.startNewCharacterForge) window.AsteriaGameplay.startNewCharacterForge();
       else if (window.AsteriaGameplay?.openCharacterCreator) window.AsteriaGameplay.openCharacterCreator();
@@ -1406,6 +1447,9 @@
       clearPendingCampaignJoin();
       return null;
     }
+    pending.characterId=characterId;
+    if(typeof window!=='undefined')window.AsteriaPendingCampaignJoin=pending;
+    try{localStorage.setItem('asteriaPendingCampaignJoin',JSON.stringify(pending));}catch{}
     const linkedCampaign = await linkCharacterToCampaign(pending.campaignId, characterId, { silent:true, skipRender:true });
     if (linkedCampaign) clearPendingCampaignJoin();
     return linkedCampaign;
@@ -1630,6 +1674,38 @@
     if (window.chars[characterId].ownerUid !== uid) {
       window.toast?.('Only the character owner can link this character.');
       return null;
+    }
+    if(campaign.membershipSchemaVersion===2){
+      const status=byId('workspaceCharacterLinkStatus');
+      const button=byId('workspaceLinkCharacterBtn');
+      if(!api?.isReady?.()||!api.requestCampaignCharacterLink){
+        if(status)status.textContent='Sign in and connect Firebase to request a character link.';
+        return null;
+      }
+      if(window.AsteriaFeatureFlags?.campaignCharacterLinks!==true){
+        if(status)status.textContent='Campaign character requests are not activated yet.';
+        return null;
+      }
+      if(button){button.disabled=true;button.textContent='Requesting…';}
+      try{
+        const pending=readPendingCampaignJoin();
+        const sourceKind=pending?.campaignId===campaign.id&&pending?.characterId===characterId?'forge':'owned';
+        const response=await api.requestCampaignCharacterLink(campaign.id,
+          String(window.chars[characterId].sourceCharacterId||characterId),sourceKind);
+        const outcome=response?.status==='approved'?'already approved':'pending GM approval';
+        const message='Character link '+outcome+'. Your saved character remains unchanged.';
+        if(status)status.textContent=message;
+        if(!options.silent)window.toast?.(message);
+        if(response?.status==='pending'||response?.status==='approved')return campaign;
+        return null;
+      }catch(error){
+        const message=error?.message||'The character link request could not be submitted.';
+        if(status)status.textContent=message;
+        if(!options.silent)window.toast?.(message);
+        return null;
+      }finally{
+        if(button){button.disabled=false;button.textContent='Request Link';}
+      }
     }
     if (api) {
       if (!api.isReady?.() || !api.linkCharacterToCampaign) {
