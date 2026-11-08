@@ -1015,7 +1015,7 @@
     const copy={
       none:'You have not requested access yet. The GM must approve a new request.',
       pending:'Request pending GM approval. You cannot join or link a character yet.',
-      approved:'Request approved. Campaign access will be updated by the GM approval system.',
+      approved:'Your request was approved. Your account now has campaign access. Character linking is a separate step.',
       declined:'Your previous request was declined. Contact the GM if you need assistance.',
       cancelled:'This request is cancelled. Contact the GM to request another invitation.',
       expired:'This request has expired. Contact the GM to submit again.',
