@@ -669,6 +669,15 @@
             <p id="workspaceJoinReviewMessage" role="status" aria-live="polite"></p>
           </section>
         ` : ''}
+        ${role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true ? `
+          <section class="workspace-link-panel workspace-gm-history">
+            <h3>GM Activity History</h3>
+            <p class="muted">Recent member decisions, role changes and delegated permission updates.</p>
+            <button type="button" id="workspaceRefreshMemberActivity">Refresh Activity</button>
+            <div id="workspaceMemberActivity" aria-live="polite"></div>
+            <p id="workspaceMemberActivityStatus" role="status" aria-live="polite"></p>
+          </section>
+        ` : ''}
         ${role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true ? `
           <section class="workspace-link-panel workspace-player-roster">
             <h3>Player Roster</h3>
@@ -718,8 +727,55 @@
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
+    if(role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true) renderCampaignGMActivity(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderCampaignGMActivity(campaign) {
+    const host=byId('workspaceMemberActivity');
+    const status=byId('workspaceMemberActivityStatus');
+    const button=byId('workspaceRefreshMemberActivity');
+    const api=window.AsteriaFirebase;
+    if(!host||!status||!api?.listCampaignMembershipActivity)return;
+    const uid=api.getUser?.()?.uid;
+    let busy=false;
+    const load=async()=>{
+      if(busy)return;
+      busy=true;
+      if(button)button.disabled=true;
+      status.textContent='Loading recent GM activity...';
+      try{
+        const result=await api.listCampaignMembershipActivity(campaign.id);
+        if(!host.isConnected||api.getUser?.()?.uid!==uid)return;
+        host.replaceChildren();
+        const events=Array.isArray(result?.events)?result.events:[];
+        for(const event of events){
+          const entry=document.createElement('div');
+          entry.className='workspace-roster-row';
+          const title=document.createElement('b');
+          title.textContent=String(event.type||'activity')+' · '+String(event.uid||'');
+          const detail=document.createElement('small');
+          detail.textContent=String(event.detail||'');
+          const meta=document.createElement('small');
+          meta.textContent='GM: '+String(event.actorUid||'')+' · '+String(event.at||'Unknown time');
+          entry.append(title,detail,meta);
+          if(event.reason){
+            const reason=document.createElement('small');
+            reason.textContent='Reason: '+String(event.reason);
+            entry.append(reason);
+          }
+          host.append(entry);
+        }
+        if(!events.length){const empty=document.createElement('p');empty.textContent='No recorded GM activity.';host.append(empty);}
+        status.textContent=result?.limited?'Showing the most recent 40 events.':'Activity loaded.';
+      }catch(error){
+        host.replaceChildren();
+        status.textContent=error?.message||'Unable to load GM activity.';
+      }finally{busy=false;if(button)button.disabled=false;}
+    };
+    button?.addEventListener('click',load);
+    await load();
   }
 
   async function renderCampaignGMPlayerRoster(campaign) {
@@ -740,6 +796,29 @@
         if(!content.isConnected || api.getUser?.()?.uid!==uid) return;
         if(!window.AsteriaCampaignRosterView?.present?.(content,data,{
           enableControls:window.AsteriaFeatureFlags?.campaignMemberControls===true,
+          enableRoleControls:window.AsteriaFeatureFlags?.campaignRolePermissions===true,
+          onRoleChange:async item=>{
+            if(busy||api.getUser?.()?.uid!==uid)return;
+            if(!window.confirm('Change '+item.name+' from '+item.role+' to '+item.newRole+'? This changes campaign permissions immediately and will be recorded.'))return;
+            busy=true;
+            status.textContent='Changing member role...';
+            try{
+              await api.changeCampaignMemberRole(campaign.id,item.uid,item.newRole,item.revision,item.role,item.status);
+              status.textContent='Member role updated. Refreshing roster.';
+            }catch(error){status.textContent=error?.message||'Role change failed.';}
+            finally{busy=false;refresh();}
+          },
+          onPermissionChange:async item=>{
+            if(busy||api.getUser?.()?.uid!==uid)return;
+            if(!window.confirm((item.enabled?'Grant ':'Revoke ')+item.capability+' for '+item.name+'? This changes delegated GM permissions immediately.'))return;
+            busy=true;
+            status.textContent='Updating Co-GM permission...';
+            try{
+              await api.setCampaignCoGmPermission(campaign.id,item.uid,item.capability,item.enabled,item.revision,item.role,item.status);
+              status.textContent='Co-GM permission updated. Refreshing roster.';
+            }catch(error){status.textContent=error?.message||'Permission change failed.';}
+            finally{busy=false;refresh();}
+          },
           onAction:async item=>{
             if(busy || api.getUser?.()?.uid!==uid)return;
             const action=item.action;
