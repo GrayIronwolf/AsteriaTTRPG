@@ -744,6 +744,30 @@
   padding: 9px 10px;
 }
 
+.workspace-join-preview {
+  display: grid;
+  gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #19d9ff) 32%, transparent);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(0,0,0,.20);
+}
+.workspace-join-preview[hidden] { display: none; }
+.workspace-join-preview .workspace-join-choice {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+.workspace-join-preview .workspace-join-account {
+  overflow-wrap: anywhere;
+}
+.workspace-join-preview button { justify-self: start; }
+@media (max-width: 520px) {
+  .workspace-join-preview button { width: 100%; }
+}
+
 .workspace-join-result {
   min-height: 22px;
   font-size: .86rem;
