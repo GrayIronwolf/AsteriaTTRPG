@@ -16,7 +16,6 @@ export function CampaignJoinReviewPanel({campaignId}){
     try{
       const result=await firebaseService.listCampaignJoinRequests(campaignId);
       setData(result);
-      setMessage('');
     }catch(error){
       setMessage(error?.message||'Could not load join requests.');
       setData(null);
