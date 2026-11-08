@@ -184,6 +184,15 @@ service cloud.firestore {
       }
     }
 
+    // Phase 6.1 server-only invitation credentials and issuance quotas.
+    // Even campaign members and GMs never read token digests or email targets.
+    match /campaignInvitationTokenIndex/{tokenDigest} {
+      allow read, write: if false;
+    }
+    match /campaignInvitationIssueThrottle/{uid} {
+      allow read, write: if false;
+    }
+
     match /campaignInvites/{ucn} {
       allow get: if signedIn();
       allow list: if false;
@@ -217,6 +226,15 @@ service cloud.firestore {
         allow list: if sharedCampaign(campaignId).get('membershipSchemaVersion', 1) == 2 &&
           isCampaignGM(campaignId);
         allow create, update, delete: if false;
+      }
+
+      // Only authenticated Cloud Functions can issue and validate bearer
+      // invitation records or view recipient restrictions.
+      match /invitations/{inviteId} {
+        allow read, write: if false;
+        match /claims/{memberUid} {
+          allow read, write: if false;
+        }
       }
 
       match /members/{memberUid} {
