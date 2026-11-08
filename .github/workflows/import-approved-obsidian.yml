@@ -44,7 +44,7 @@ jobs:
       - name: Remove private repository files from working directory
         run: rm -rf vault-source
       - name: Propose reviewed staging changes in website PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.ASTERIA_WEBSITE_PR_TOKEN }}
           commit-message: "Stage explicitly approved public Asteria vault definitions"
