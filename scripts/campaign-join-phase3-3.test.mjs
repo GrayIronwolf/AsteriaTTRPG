@@ -146,3 +146,12 @@ test('non-v2 campaigns never accept review actions',async()=>{
   await assert.rejects(listPendingCampaignJoinRequests(db,'gm','c'),/unavailable/);
   await assert.rejects(setCampaignJoinApprovalMode(db,'gm','c','manual'),/unavailable/);
 });
+
+test('request status shows approved outcome after GM activates membership',async()=>{
+  const db=fixture();
+  await request(db);
+  await review(db);
+  const status=await campaignJoinRequest(db,'alice',{action:'status',campaignId:'c',ucn:'000000000789'});
+  assert.equal(status.status,'approved');
+  assert.equal(status.alreadyExists,true);
+});
