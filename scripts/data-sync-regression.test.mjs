@@ -89,6 +89,21 @@ test('cached campaigns and character links do not start streams before access is
   assert.ok(h.window.campaigns.some(c=>c.id==='removed'),'A stale cache must not be destructively deleted');
 });
 
+test('v2 campaigns removed from verified discovery leave no full data in active UI cache',async()=>{
+  const h=harness();
+  h.window.campaigns=[
+    {id:'revoked-v2',ownerUid:'gm',membershipSchemaVersion:2,characters:{private:{xp:1200}}},
+    {id:'offline-v1',ownerUid:'gm',party:[]}
+  ];
+  await h.window.AsteriaDataSync.load();
+  h.remote([{id:'allowed',ownerUid:'gm',roles:{alice:'player'}}]);
+  assert.equal(h.window.campaigns.some(c=>c.id==='revoked-v2'),false);
+  assert.equal(h.window.campaigns.some(c=>c.id==='allowed'),true);
+  assert.equal(h.window.campaigns.some(c=>c.id==='offline-v1'),true);
+  assert.deepEqual(JSON.parse(JSON.stringify(h.window.AsteriaUnavailableCampaigns['revoked-v2'])),
+    {id:'revoked-v2',accessRevoked:true});
+});
+
 function campaignBrowserMethod(name,dependencies,functions=[]) {
   const source=fs.readFileSync('js/firebase-auth.js','utf8');
   const declarations=functions.map(name=>{
