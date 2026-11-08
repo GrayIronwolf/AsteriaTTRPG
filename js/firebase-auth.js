@@ -1083,10 +1083,10 @@ const firebasePublicApi = {
         const snapshot=await transaction.get(campaignRef);
         if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can change campaign artwork.');
         oldPath=String(snapshot.data().imagePath||'');
-        transaction.update(campaignRef,{image:'',imagePath:'',updatedAt:serverTimestamp()});
+        transaction.update(campaignRef,{image:'',imagePath:'',art:'',banner:'',coverImage:'',cover:'',updatedAt:serverTimestamp()});
       });
       const local=(window.campaigns||[]).find(campaign=>campaign.id===campaignId);
-      if(local){local.image='';local.imagePath='';local.art='';local.banner='';}
+      if(local){local.image='';local.imagePath='';local.art='';local.banner='';local.coverImage='';local.cover='';}
       window.dispatchEvent(new CustomEvent('asteria:campaign-artwork-updated',{detail:{campaignId,image:''}}));
       if(oldPath.startsWith(`campaigns/${campaignId}/artwork/`)) {
         deleteObject(storageRef(storage,oldPath)).catch(()=>{});
