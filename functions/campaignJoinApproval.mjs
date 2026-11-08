@@ -28,10 +28,10 @@ function safeReview(row){
     revision:value.revision
   };
 }
-function authorizedReviewer(campaign,uid,membership){
+function authorizedReviewer(campaign,campaignId,uid,membership){
   if(campaign?.ownerUid===uid) return true;
   return membership?.uid===uid &&
-    membership?.campaignId===campaign?.id &&
+    membership?.campaignId===campaignId &&
     membership?.status==='active' && membership?.role==='co-gm' &&
     membership?.capabilityOverrides?.['review-join-requests']===true;
 }
@@ -86,7 +86,7 @@ export async function listPendingCampaignJoinRequests(db,actorUid,campaignId,{au
   validateCampaign(campaign,campaignId);
   const membership=actorUid===campaign.ownerUid ? null :
     (await db.doc('campaigns/'+campaignId+'/members/'+actorUid).get()).data();
-  if(!authorizedReviewer(campaign,actorUid,membership)) throw new Error('Only an authorised GM may review join requests.');
+  if(!authorizedReviewer(campaign,campaignId,actorUid,membership)) throw new Error('Only an authorised GM may review join requests.');
   const [pending,active]=await Promise.all([
     db.collection('campaigns/'+campaignId+'/joinRequests').where('status','==','pending').limit(MAX_REVIEW_ROWS).get(),
     db.collection('campaigns/'+campaignId+'/members').where('status','==','active').get()
@@ -129,7 +129,7 @@ export async function reviewCampaignJoinRequest(db,actorUid,
       tx.get(requestRef),tx.get(memberRef),tx.get(auditRef)
     ]);
     const reviewer=gmSnap?.exists?gmSnap.data():null;
-    if(!authorizedReviewer(campaign,actorUid,reviewer)) throw new Error('Only an authorised GM may review join requests.');
+    if(!authorizedReviewer(campaign,campaignId,actorUid,reviewer)) throw new Error('Only an authorised GM may review join requests.');
     if(requestUid===campaign.ownerUid) throw new Error('The owner cannot request player access.');
     if(!requestSnap.exists) throw new Error('Join request not found.');
     const request=requestSnap.data();
