@@ -12,6 +12,7 @@ import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUC
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
+import {listCampaignPlayerRoster} from '../functions/campaignPlayerRoster.mjs';
 import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
@@ -960,4 +961,31 @@ test('auto approval requires owner opt-in and server enablement',async()=>{
   assert.equal(approved.status,'approved');
   await assertSucceeds(getDoc(doc(user('other'),'campaigns/c')));
   assert.equal((await db.doc('campaigns/c/joinReviewHistory/other').get()).data().mode,'automatic');
+});
+
+test('v2 GM roster lists canonical active, inactive and pending without granting access',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'suspended',revision:2});
+  await db.doc('campaigns/c/joinRequests/eve').set({uid:'eve',campaignId:'c',status:'pending',revision:1,requestedCharacterId:null,requestedAt:new Date()});
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  const roster=await listCampaignPlayerRoster(db,'gm','c');
+  assert.equal(roster.source,'canonical');
+  assert.equal(roster.summary.activePlayers,1);
+  assert.equal(roster.inactive.find(x=>x.uid==='bob').status,'suspended');
+  assert.equal(roster.pending.find(x=>x.uid==='eve').status,'pending');
+  assert.equal(roster.active.find(x=>x.uid==='alice').characters[0].id,'a');
+  await assert.rejects(listCampaignPlayerRoster(db,'bob','c'),/active campaign GM/);
+  await assert.rejects(listCampaignPlayerRoster(db,'eve','c'),/active campaign GM/);
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),before);
+});
+
+test('v1 GM roster preserves legacy access and shows no v2 request data',async()=>{
+  const roster=await listCampaignPlayerRoster(db,'gm','c');
+  assert.equal(roster.source,'legacy');
+  assert.equal(roster.summary.activePlayers,2);
+  assert.equal(roster.pending.length,0);
+  await assert.rejects(listCampaignPlayerRoster(db,'eve','c'),/campaign GM/);
 });
