@@ -113,6 +113,12 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       await import('./campaignJoinApproval.mjs');
     const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
     const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(data.action==='roster'){
+      if(process.env.ASTERIA_PLAYER_ROSTER_ENABLED!=='1')
+        throw new Error('Campaign player roster is not enabled yet.');
+      const {listCampaignPlayerRoster}=await import('./campaignPlayerRoster.mjs');
+      return await listCampaignPlayerRoster(db,uid,data.campaignId);
+    }
     if(data.action==='list'){
       return await listPendingCampaignJoinRequests(db,uid,data.campaignId,{autoAvailable});
     }
