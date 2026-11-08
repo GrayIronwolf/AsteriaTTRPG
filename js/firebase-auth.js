@@ -1966,6 +1966,22 @@ const firebasePublicApi = {
     if(!functionsClient || !currentUser) throw new Error('Sign in to join this campaign.');
     return (await httpsCallable(functionsClient,'asteriaInvite')({code:campaignCode(codeValue),join:true})).data;
   },
+  requestCampaignCharacterLink: async function(campaignId,sourceCharacterId,sourceKind='owned'){
+    if(!functionsClient||!currentUser)throw new Error('Sign in before requesting a character link.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterLinks!==true)
+      throw new Error('Campaign character requests are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-link-request',campaignId,sourceCharacterId,sourceKind
+    })).data;
+  },
+  getCampaignCharacterLinkStatus: async function(campaignId,sourceCharacterId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in before viewing a character link.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterLinks!==true)
+      throw new Error('Campaign character requests are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-link-status',campaignId,sourceCharacterId
+    })).data;
+  },
   linkCharacterToCampaign: async function(campaignId, character){
     if(!db || !currentUser || !campaignId || !character?.id) return null;
     const characterId = String(character.id);
