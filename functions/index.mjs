@@ -58,6 +58,22 @@ export const asteriaSecureInvitation=onCall({
     const data=request.data||{};
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
+    if(data.action==='preview'||data.action==='accept'){
+      if(process.env.ASTERIA_INVITATION_ACCEPTANCE_ENABLED!=='1')
+        throw new Error('Secure invitation acceptance is not enabled yet.');
+      const {previewSecureCampaignInvitation,acceptSecureCampaignInvitation}=
+        await import('./campaignInvitationAcceptance.mjs');
+      const claimant={
+        uid:request.auth.uid,
+        email:request.auth.token?.email||null,
+        emailVerified:request.auth.token?.email_verified===true
+      };
+      const input={campaignId:data.campaignId,inviteId:data.inviteId,token:data.token};
+      const options={signingKey:secureInvitationSigningKey.value()};
+      return data.action==='preview'?
+        await previewSecureCampaignInvitation(getFirestore(),claimant,input,options):
+        await acceptSecureCampaignInvitation(getFirestore(),claimant,input,options);
+    }
     if(data.action==='list'||data.action==='change'){
       if(process.env.ASTERIA_INVITATION_MANAGER_ENABLED!=='1')
         throw new Error('Invitation Manager is not enabled yet.');
