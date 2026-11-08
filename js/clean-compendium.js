@@ -672,7 +672,7 @@
         ${role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true ? `
           <section class="workspace-link-panel workspace-player-roster">
             <h3>Player Roster</h3>
-            <p class="muted">Account membership and verified linked-character summaries. This roster is read-only; member management follows in Phase 4.2.</p>
+            <p class="muted">Account membership and verified linked-character summaries. Controls appear only for server-authorized GM actions.</p>
             <button type="button" id="workspaceRefreshPlayerRoster">Refresh Roster</button>
             <div id="workspacePlayerRosterContent" aria-live="polite"></div>
             <p id="workspacePlayerRosterStatus" role="status" aria-live="polite"></p>
@@ -738,7 +738,48 @@
       try{
         const data=await api.listCampaignPlayerRoster(campaign.id);
         if(!content.isConnected || api.getUser?.()?.uid!==uid) return;
-        if(!window.AsteriaCampaignRosterView?.present?.(content,data))
+        if(!window.AsteriaCampaignRosterView?.present?.(content,data,{
+          enableControls:window.AsteriaFeatureFlags?.campaignMemberControls===true,
+          onAction:async item=>{
+            if(busy || api.getUser?.()?.uid!==uid)return;
+            const action=item.action;
+            const label=action.charAt(0).toUpperCase()+action.slice(1);
+            const question=action==='suspend'
+              ? 'Suspend account access to this campaign? Character sheets and progress will remain saved.'
+              : action==='restore'
+                ? 'Restore campaign access for this account? Existing character records will remain unchanged.'
+                : action==='remove'
+                  ? 'Remove this account from campaign access? All characters and progress will be retained.'
+                  : 'Ban this account from campaign access? An owner must explicitly restore a banned account.';
+            if(!window.confirm(label+' '+item.displayName+'? '+question))return;
+            let reason='';
+            if(action==='remove'||action==='ban'){
+              const typed=window.prompt('Reason for '+label.toLowerCase()+' (4–240 characters, recorded in the GM audit):','');
+              if(typed===null)return;
+              reason=typed.trim();
+              if(reason.length<4 || reason.length>240){
+                status.textContent='A reason of 4–240 characters is required.';
+                return;
+              }
+            }
+            busy=true;
+            if(button)button.disabled=true;
+            content.querySelectorAll('button[data-member-action]').forEach(btn=>btn.disabled=true);
+            status.textContent=label+' in progress...';
+            try{
+              const result=await api.moderateCampaignMember(campaign.id,item.uid,action,item.revision,item.status,reason);
+              if(api.getUser?.()?.uid!==uid)return;
+              status.textContent='Account '+result.status+'. Access permissions were updated on the server. Previously downloaded copies cannot be recalled.';
+              await window.AsteriaDataSync?.refreshCampaigns?.('member-'+action);
+            }catch(error){
+              status.textContent=error?.message||'Member change failed. Refresh roster and retry.';
+            }finally{
+              busy=false;
+              if(button)button.disabled=false;
+              refresh();
+            }
+          }
+        }))
           throw new Error('The roster response was not valid.');
         status.textContent='Roster loaded. Membership status does not indicate who is online.';
       }catch(error){
