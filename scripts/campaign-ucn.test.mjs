@@ -122,7 +122,7 @@ test('forged owner and mismatched UCN do not disclose campaign details',async()=
   });
   assert.equal(await previewCampaignUCN(db,'player',code(6),{now:100000}),null);
   db.records.set('campaignDirectory/'+code(6),{campaignId:'victim',ownerUid:'real-owner',status:'active'});
-  assert.equal(await previewCampaignUCN(db,'player',code(6),{now:100001}),{id:'victim',name:'Private',ucn:code(6)});
+  assert.deepEqual(await previewCampaignUCN(db,'player',code(6),{now:100001}),{id:'victim',name:'Private',ucn:code(6)});
   db.records.set('campaigns/victim',{ownerUid:'real-owner',ucn:code(7),name:'Private'});
   assert.equal(await previewCampaignUCN(db,'player',code(6),{now:100002}),null);
 });
