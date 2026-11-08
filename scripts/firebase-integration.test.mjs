@@ -19,6 +19,7 @@ import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoi
 import {campaignCharacterLink} from '../functions/campaignCharacterLinks.mjs';
 import {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink} from '../functions/campaignCharacterApproval.mjs';
 import {changeCampaignCharacterLifecycle,listCampaignCharacterLifecycle} from '../functions/campaignCharacterLifecycle.mjs';
+import {issueSecureCampaignInvitation,assertSecureInvitationEligible} from '../functions/campaignSecureInvitations.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1281,4 +1282,82 @@ test('Phase 5.3: lifecycle unlink has no browser access shortcut or private shee
   await assert.rejects(changeCampaignCharacterLifecycle(db,'alice',{
     campaignId:'c',sourceCharacterId:'lifecycle',action:'restore',expectedRevision:3
   }),/authorised GM/);
+});
+
+
+test('Phase 6.1: server-issued invitation is private and cannot grant campaign access',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:true}
+  });
+  const signingKey='private-test-key-'.repeat(4);
+  const issued=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'secure-issue-00000001',type:'share-link',
+    roleOffered:'player',expiresInHours:24,maxUses:1
+  },{signingKey,now:new Date('2026-11-09T04:00:00.000Z')});
+  assert.equal(issued.alreadyIssued,false);
+  assert.equal(issued.token.length,43);
+  const path='campaigns/c/invitations/'+issued.inviteId;
+  const privateRecord=(await db.doc(path).get()).data();
+  assert.equal(privateRecord.token,undefined);
+  assert.equal(privateRecord.tokenDigest.length,64);
+  assert.equal((await db.doc('campaigns/c').get()).data().invitations,undefined);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  assert.equal((await db.doc('campaigns/c').get()).data().party.length,2);
+  for(const identity of ['gm','alice','eve']){
+    const client=user(identity);
+    await assertFails(getDoc(doc(client,path)));
+    await assertFails(getDocs(collection(client,'campaigns/c/invitations')));
+    await assertFails(setDoc(doc(client,path),{token:'stolen',status:'active'}));
+    await assertFails(updateDoc(doc(client,path),{usedCount:1}));
+    await assertFails(deleteDoc(doc(client,path)));
+    await assertFails(getDoc(doc(client,'campaignInvitationTokenIndex/'+privateRecord.tokenDigest)));
+    await assertFails(setDoc(doc(client,'campaignInvitationTokenIndex/'+privateRecord.tokenDigest),{
+      campaignId:'c',inviteId:issued.inviteId
+    }));
+    await assertFails(getDoc(doc(client,'campaignInvitationIssueThrottle/gm')));
+  }
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),path)));
+  const check=assertSecureInvitationEligible(privateRecord,{
+    campaignId:'c',inviteId:issued.inviteId,token:issued.token,
+    claimantUid:'eve',now:new Date('2026-11-09T04:05:00.000Z'),signingKey
+  });
+  assert.equal(check.requiresGMApproval,true);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  const replay=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'secure-issue-00000001',type:'share-link',
+    roleOffered:'player',expiresInHours:24,maxUses:1
+  },{signingKey,now:new Date('2026-11-09T04:00:00.000Z')});
+  assert.equal(replay.alreadyIssued,true);
+  assert.equal(replay.token,null);
+});
+
+test('Phase 6.1: only owner of upgraded campaign issues; verified email required',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  const signingKey='private-test-key-'.repeat(4);
+  const request={
+    campaignId:'c',requestId:'secure-issue-00000002',type:'email',
+    recipientEmail:'Player@Example.COM',roleOffered:'player',
+    expiresInHours:1,maxUses:1
+  };
+  await assert.rejects(issueSecureCampaignInvitation(db,'bob',request,{
+    signingKey
+  }),/Only the owner/);
+  const issued=await issueSecureCampaignInvitation(db,'gm',request,{
+    signingKey,now:new Date('2026-11-09T04:00:00.000Z')
+  });
+  const row=(await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data();
+  assert.equal(row.recipientEmailNormalized,'player@example.com');
+  assert.throws(()=>assertSecureInvitationEligible(row,{
+    campaignId:'c',inviteId:issued.inviteId,token:issued.token,
+    claimantUid:'eve',claimantEmail:'player@example.com',
+    emailVerified:false,signingKey,
+    now:new Date('2026-11-09T04:20:00.000Z')
+  }),/unavailable/);
+  assert.throws(()=>assertSecureInvitationEligible(row,{
+    campaignId:'c',inviteId:issued.inviteId,token:issued.token,
+    claimantUid:'eve',claimantEmail:'player@example.com',
+    emailVerified:true,signingKey,
+    now:new Date('2026-11-09T05:00:00.000Z')
+  }),/unavailable/);
 });
