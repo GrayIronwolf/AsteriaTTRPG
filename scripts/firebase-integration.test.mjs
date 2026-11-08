@@ -9,6 +9,7 @@ import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
 import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUCN.mjs';
+import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -134,6 +135,32 @@ test('invitation preview discloses a summary; valid join grants membership',asyn
   await accessInvite(db,'eve','123456789012',true);
   await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c')));
   assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,'player');
+});
+test('server-owned staged membership is separate from legacy access',async()=>{
+  const before=await db.doc('campaigns/c').get();
+  const report=await stageLegacyMemberships(db,'gm','c',{write:true});
+  assert.equal(report.staged,3);
+  assert.equal((await db.doc('campaigns/c/members/gm').get()).data().role,'owner');
+  assert.equal((await db.doc('campaigns/c/members/alice').get()).data().role,'player');
+  assert.equal((await db.doc('campaigns/c/members/bob').get()).data().role,'player');
+  assert.equal((await db.doc('campaigns/c').get()).data().membershipSchemaVersion,undefined);
+  assert.deepEqual((await db.doc('campaigns/c').get()).data(),before.data());
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/members/alice')));
+  await assertFails(getDoc(doc(user('gm'),'campaigns/c/members/alice')));
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/members/alice'),{uid:'alice',role:'owner',status:'active'}));
+  await assertFails(setDoc(doc(user('gm'),'campaigns/c/members/alice'),{uid:'alice',role:'owner',status:'active'}));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/characters/a')));
+  const again=await stageLegacyMemberships(db,'gm','c',{write:true});
+  assert.equal(again.staged,0);
+});
+test('membership staging fails closed for nonowners and banned-user conflicts',async()=>{
+  await assert.rejects(stageLegacyMemberships(db,'alice','c',{write:true}),/Only the campaign owner/);
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'banned',revision:5});
+  const report=await stageLegacyMemberships(db,'gm','c');
+  assert.equal(report.canStage,false);
+  await assert.rejects(stageLegacyMemberships(db,'gm','c',{write:true}),/blocked/);
+  assert.equal((await db.doc('campaigns/c/members/alice').get()).data().status,'banned');
+  assert.equal((await db.doc('campaigns/c/members/gm').get()).exists,false);
 });
 test('server UCN allocation reserves both identities and preserves legacy join',async()=>{
   const code='000000000789';
