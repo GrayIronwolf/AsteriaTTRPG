@@ -34,6 +34,9 @@
   let currentDashboardMode = 'dashboard';
   let campaignLookupState = null;
   let campaignLookupSequence = 0;
+  // Kept only in this tab's volatile memory. Never write bearer tokens to
+  // session, account state, analytics, localStorage or campaign documents.
+  let secureInvitationPending = null;
   let legacyOpenRuleCategory = null;
   let legacyOpenRulePage = null;
 
@@ -492,6 +495,100 @@
     grid.appendChild(renderJoinCampaignCard());
   }
 
+  function renderPendingSecureInvitation(card){
+    const host=card.querySelector('#workspaceSecureInvitationAcceptance');
+    if(!host||!secureInvitationPending)return;
+    const invitation=secureInvitationPending;
+    const api=window.AsteriaFirebase;
+    const ownerUid=api?.getUser?.()?.uid;
+    host.replaceChildren();
+    const section=document.createElement('section');
+    section.className='workspace-link-panel workspace-secure-invite-acceptance';
+    const title=document.createElement('h3');
+    title.textContent='Secure Campaign Invitation';
+    const description=document.createElement('p');
+    description.textContent='Review the invitation before requesting membership. GM approval remains required; an offered Co-GM role is not granted automatically.';
+    const status=document.createElement('p');
+    status.setAttribute('role','status');
+    status.setAttribute('aria-live','polite');
+    const actions=document.createElement('div');
+    actions.className='workspace-join-review-actions';
+    const review=document.createElement('button');
+    review.type='button';
+    review.className='primary';
+    review.textContent='Review Secure Invitation';
+    const discard=document.createElement('button');
+    discard.type='button';
+    discard.textContent='Discard Invitation';
+    actions.append(review,discard);
+    section.append(title,description,actions,status);
+    host.appendChild(section);
+    const valid=()=>host.isConnected&&secureInvitationPending===invitation&&
+      api?.getUser?.()?.uid===ownerUid;
+    const currentAccount=()=>{
+      const active=api?.getUser?.();
+      return active?.uid&&api?.isReady?.()&&
+        window.AsteriaCampaignJoinModel?.joinAccountValid?.(sessionInfo(),active);
+    };
+    discard.addEventListener('click',()=>{
+      if(secureInvitationPending===invitation)secureInvitationPending=null;
+      host.replaceChildren();
+    });
+    review.addEventListener('click',async()=>{
+      if(!valid())return;
+      if(!currentAccount()){
+        status.textContent='Sign in with your Firebase account to review this invitation. Test Login cannot accept.';
+        return;
+      }
+      review.disabled=true;
+      status.textContent='Checking the invitation securely...';
+      try{
+        const info=await api.previewSecureCampaignInvitation(
+          invitation.campaignId,invitation.inviteId,invitation.token);
+        if(!valid())return;
+        status.textContent='Invitation verified. No membership has been granted.';
+        const display=document.createElement('p');
+        display.textContent='Campaign: '+String(info.campaignName||'Campaign')+
+          ' · Offered role: '+String(info.roleOffered||'player')+
+          ' · Expires: '+String(info.expiresAt||'');
+        const accept=document.createElement('button');
+        accept.type='button';
+        accept.className='primary';
+        accept.textContent='Request to Join Campaign';
+        section.insertBefore(display,status);
+        actions.insertBefore(accept,discard);
+        review.remove();
+        accept.addEventListener('click',async()=>{
+          if(!valid()||!currentAccount())return;
+          if(!window.confirm('Submit a request to join this campaign? The GM must approve it before you can access the campaign.'))return;
+          accept.disabled=true;
+          status.textContent='Submitting your secure invitation request...';
+          try{
+            const result=await api.acceptSecureCampaignInvitation(
+              invitation.campaignId,invitation.inviteId,invitation.token);
+            if(!valid())return;
+            status.textContent=result.status==='member'?
+              'You already have campaign access.':
+              result.status==='pending'?
+                'Invitation accepted. Your request is pending GM approval.':
+                'Your existing campaign join request is '+String(result.status)+'.';
+            secureInvitationPending=null;
+            accept.remove();
+            discard.remove();
+          }catch(error){
+            if(valid())status.textContent=error?.message||
+              'Could not submit the invitation. Reopen a valid link or ask the GM.';
+            accept.disabled=false;
+          }
+        });
+      }catch(error){
+        if(valid())status.textContent=error?.message||
+          'This invitation is expired, revoked, exhausted or not intended for this account.';
+        review.disabled=false;
+      }
+    });
+  }
+
   function renderJoinCampaignCard() {
     const previewEnabled = campaignJoinPreviewEnabled();
     const element = document.createElement('article');
@@ -508,6 +605,8 @@
         <div id="workspaceJoinCampaignResult" class="workspace-join-result" aria-live="polite" role="status"></div>
         <div id="workspaceJoinCampaignPreview" class="workspace-join-preview" hidden></div>
         <div id="workspaceJoinCharacterChooser" class="workspace-join-character-chooser"></div>
+        ${window.AsteriaFeatureFlags?.secureInvitationAcceptance===true?
+          '<div id="workspaceSecureInvitationAcceptance"></div>':''}
       </div>
     `;
     element.addEventListener('click', event => {
@@ -530,6 +629,8 @@
       const status = element.querySelector('#workspaceJoinCampaignResult');
       if(status) status.textContent = '';
     });
+    if(window.AsteriaFeatureFlags?.secureInvitationAcceptance===true)
+      renderPendingSecureInvitation(element);
     const pendingInviteCode = takeCampaignInviteCode();
     if (pendingInviteCode) {
       const input = element.querySelector('#workspaceJoinCampaignCode');
@@ -893,15 +994,11 @@
         oneTime.appendChild(warning);
         return;
       }
-      // This Phase 6.2 link is formatted for Phase 6.3's future acceptance
-      // handler. It does not grant access until that phase is activated.
       const base=window.location.href.split('#')[0];
-      const link=base+'#secure-campaign-invite='+
-        encodeURIComponent(campaign.id)+'.'+
-        encodeURIComponent(issued.inviteId)+'.'+
-        encodeURIComponent(issued.token);
+      const link=window.AsteriaSecureInvitationLinks.link(base,
+        campaign.id,issued.inviteId,issued.token);
       const info=document.createElement('p');
-      info.textContent='Copy this invitation link now. It cannot be retrieved later, and accepting invitations is not enabled until Phase 6.3.';
+      info.textContent='Copy this private invitation link now. It cannot be retrieved later. The recipient will need to sign in and request GM approval.';
       const copy=document.createElement('button');
       copy.type='button';
       copy.textContent='Copy One-Time Invitation Link';
@@ -922,7 +1019,27 @@
       forget.addEventListener('click',()=>{
         oneTime.replaceChildren();
       });
-      oneTime.append(info,copy,forget,copyStatus);
+      const qrButton=document.createElement('button');
+      qrButton.type='button';
+      qrButton.textContent='Show Invitation QR Code';
+      const qrHost=document.createElement('div');
+      qrHost.setAttribute('aria-label','QR code representing the private invitation link');
+      qrButton.addEventListener('click',()=>{
+        qrHost.replaceChildren();
+        if(typeof window.QRCode!=='function'){
+          copyStatus.textContent='Local QR generator is unavailable.';
+          return;
+        }
+        try{
+          new window.QRCode(qrHost,{text:link,width:224,height:224,
+            correctLevel:window.QRCode.CorrectLevel.M});
+          copyStatus.textContent='QR generated locally. Anyone with this code can submit a request using the invitation.';
+        }catch{
+          qrHost.replaceChildren();
+          copyStatus.textContent='QR generation failed. Copy the invitation link instead.';
+        }
+      });
+      oneTime.append(info,copy,qrButton,forget,copyStatus,qrHost);
     };
     const load=async()=>{
       if(busy||!current())return;
@@ -2324,6 +2441,26 @@
   }
 
   function openRouteFromLocation() {
+    const raw=window.location.hash||'';
+    if(raw.startsWith('#secure-campaign-invite=')){
+      const parsed=window.AsteriaSecureInvitationLinks?.parse(raw)||null;
+      // Hash fragments contain bearer secrets; clear immediately before any
+      // navigation, user interaction or asynchronous Firebase request.
+      window.history.replaceState(window.history.state,'',
+        window.location.pathname+window.location.search);
+      if(!parsed){
+        window.toast?.('The secure invitation link is malformed.');
+        return true;
+      }
+      if(window.AsteriaFeatureFlags?.secureInvitationAcceptance!==true){
+        window.toast?.('Secure invitation acceptance is not activated yet.');
+        return true;
+      }
+      secureInvitationPending=parsed;
+      if(window.AsteriaFirebase?.isReady?.())openDashboard('campaigns');
+      else window.toast?.('Sign in to review this secure invitation.');
+      return true;
+    }
     if (window.AsteriaUniversalCompendium?.openRoute?.()) return true;
     const route = routeFromLocation();
     if (!route) return false;
@@ -2482,6 +2619,14 @@
     bindPublicButtons();
     openRouteFromLocation();
     window.addEventListener('hashchange', openRouteFromLocation);
+    window.addEventListener('asteria:firebase-ready',()=>{
+      if(secureInvitationPending&&
+        window.AsteriaFeatureFlags?.secureInvitationAcceptance===true)
+        openDashboard('campaigns');
+    });
+    window.addEventListener('asteria:firebase-signed-out',()=>{
+      secureInvitationPending=null;
+    });
     const observer = new MutationObserver(records => {
       const roots = new Set(records.flatMap(record => Array.from(record.addedNodes)).filter(node => node.nodeType === 1 && node.isConnected));
       roots.forEach(node => {
