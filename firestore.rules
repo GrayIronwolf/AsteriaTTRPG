@@ -234,14 +234,19 @@ service cloud.firestore {
       match /characters/{characterId} {
         allow read: if canReadCampaignCharacter(campaignId);
         // Players import a sheet once. Live gameplay mutations use authenticated Functions.
-        allow create: if isCampaignGM(campaignId) || (
+        allow create: if sharedCampaign(campaignId).get('membershipSchemaVersion', 1) == 1 && (
+          isCampaignGM(campaignId) || (
           canWriteCampaignCharacter(campaignId, request.resource.data.ownerUid) &&
           request.resource.data.ownerUid == request.auth.uid &&
           existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId)) &&
           getAfter(/databases/$(database)/documents/users/$(request.auth.uid)/characters/$(request.resource.data.sourceCharacterId)).data.ownerUid == request.auth.uid
-        );
-        allow update: if (isCampaignGM(campaignId) && sameCharacterIdentity()) || safeCharacterEdit(campaignId);
-        allow delete: if isCampaignGM(campaignId);
+        ));
+        // V2 gameplay records are created/archived only by authenticated server
+        // transactions. Browser clients cannot recreate or erase a detached sheet.
+        allow update: if resource.data.get('status','linked') == 'linked' &&
+          request.resource.data.get('status','linked') == 'linked' &&
+          ((isCampaignGM(campaignId) && sameCharacterIdentity()) || safeCharacterEdit(campaignId));
+        allow delete: if sharedCampaign(campaignId).get('membershipSchemaVersion', 1) == 1 && isCampaignGM(campaignId);
       }
 
       match /systems/{systemId} {
