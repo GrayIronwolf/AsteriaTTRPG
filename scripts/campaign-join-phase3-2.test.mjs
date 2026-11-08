@@ -113,3 +113,13 @@ test('existing forged request identities and membership records are refused',asy
   db.store.set('campaigns/c/members/alice',{uid:'bob',campaignId:'c',role:'player',status:'active'});
   await assert.rejects(submit(db),/needs review/);
 });
+
+test('GM-closed join requests reject new submissions without deleting pending requests',async()=>{
+  const db=fixture({ownerUid:'gm',membershipSchemaVersion:2,ucn:code,joinPolicy:{joinRequestsOpen:false}});
+  assert.equal((await status(db)).status,'closed');
+  await assert.rejects(submit(db),/not accepting join requests/);
+  assert.equal(db.store.has('campaigns/c/joinRequests/alice'),false);
+  db.store.set('campaigns/c/joinRequests/alice',{uid:'alice',campaignId:'c',status:'pending',requestedCharacterId:null});
+  assert.equal((await status(db)).status,'pending');
+  assert.equal((await submit(db)).alreadyExists,true);
+});
