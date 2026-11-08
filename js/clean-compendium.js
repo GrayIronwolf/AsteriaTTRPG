@@ -731,6 +731,32 @@
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true) renderCampaignGMActivity(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
+    if(campaign.membershipSchemaVersion===2&&window.AsteriaFeatureFlags?.campaignCharacterLinks===true){
+      const choice=byId('workspaceLinkCharacter');
+      const status=byId('workspaceCharacterLinkStatus');
+      const api=window.AsteriaFirebase;
+      let sequence=0;
+      const refreshStatus=async()=>{
+        const id=choice?.value;
+        const saved=id&&window.chars?.[id];
+        const sourceId=String(saved?.sourceCharacterId||id||'');
+        const request=++sequence;
+        if(!status||!sourceId||!api?.getCampaignCharacterLinkStatus)return;
+        status.textContent='Checking character request status...';
+        try{
+          const result=await api.getCampaignCharacterLinkStatus(campaign.id,sourceId);
+          if(request!==sequence||!status.isConnected)return;
+          status.textContent=result?.status==='pending'?'Pending GM approval.':
+            result?.status==='approved'?'Approved character link.':
+            'No character link request yet.';
+        }catch(error){
+          if(request===sequence&&status.isConnected)
+            status.textContent=error?.message||'Could not check this character request.';
+        }
+      };
+      choice?.addEventListener('change',refreshStatus);
+      if(choice?.value)void refreshStatus();
+    }
     byId('workspaceForgeCharacterForCampaign')?.addEventListener('click',()=>{
       if(campaign.membershipSchemaVersion===2 && window.AsteriaFeatureFlags?.campaignCharacterLinks!==true){
         window.toast?.('Campaign character requests are not activated yet.');return;
