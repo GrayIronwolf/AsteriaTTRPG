@@ -905,3 +905,13 @@ test('staged member requests cannot leak through unapproved browsers or alter le
   await assertFails(getDoc(doc(user('gm'),'campaigns/c/joinRequests/eve')));
   await assertFails(setDoc(doc(user('alice'),'campaigns/c/joinRequests/alice'),{uid:'alice',status:'pending'}));
 });
+
+test('GM closed campaign rejects new join requests while retaining pending records',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:false}});
+  const args={action:'submit',campaignId:'c',ucn:'123456789012'};
+  assert.equal((await campaignJoinRequest(db,'eve',{...args,action:'status'})).status,'closed');
+  await assert.rejects(campaignJoinRequest(db,'eve',args),/not accepting/);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
+  await db.doc('campaigns/c/joinRequests/alice').set({uid:'alice',campaignId:'c',status:'pending'});
+  assert.equal((await campaignJoinRequest(db,'alice',{...args,action:'status'})).status,'pending');
+});
