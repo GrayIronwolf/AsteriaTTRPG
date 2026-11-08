@@ -2953,3 +2953,194 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-player-cinematic-hud .react-level-shield { width:66px; height:90px; padding-top:18px; padding-bottom:12px; }
   .react-player-campaign-caption .react-player-campaign-facts { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+/* Reusable ashen parchment. Keep every label and control as live HTML. */
+.react-player-characteristics { container: characteristic-summary / inline-size; }
+.react-player-characteristic-grid .react-characteristic-paper,
+.react-characteristic-gallery .react-characteristic-paper {
+  --characteristic-ink: #2c241d;
+  --characteristic-muted-ink: #514438;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-shadow: none;
+  color: var(--characteristic-ink);
+  text-shadow: none;
+}
+.react-player-characteristic-grid,
+.react-player-cinematic-hud .react-player-hud-information .react-player-characteristic-grid {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 6px;
+}
+.react-player-characteristic-grid .react-characteristic-paper--summary {
+  grid-template-columns: minmax(0,1fr) auto;
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-items: start;
+  gap: 2px 6px;
+  min-height: 66px;
+  padding: 18px 11% 12px;
+  background-image: url('../assets/ui/characteristics/dashboard-parchment.webp');
+  line-height: 1.1;
+}
+.react-characteristic-paper--summary > span {
+  align-self: end;
+  color: var(--characteristic-ink);
+  font-size: .74rem;
+  font-weight: 900;
+}
+.react-characteristic-paper--summary > strong {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  color: var(--characteristic-ink);
+  font-size: 1.65rem;
+  font-variant-numeric: tabular-nums;
+}
+.react-characteristic-paper--summary > small {
+  grid-column: 1;
+  color: var(--characteristic-muted-ink);
+  font-size: .65rem;
+  white-space: nowrap;
+}
+.react-characteristics-parchment {
+  container: characteristics / inline-size;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.react-characteristics-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 4px 6px;
+}
+.react-characteristics-heading h2 { margin: 0; font-size: 1.2rem; }
+.react-characteristics-heading .react-status-pill { padding: 0; border: 0; font-weight: 800; }
+.react-characteristics-parchment > .react-help { margin: 10px 6px 14px !important; }
+.react-characteristics-parchment .react-characteristic-gallery {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+}
+.react-characteristic-gallery .react-characteristic-paper--card {
+  grid-template-rows: auto minmax(54px,1fr) auto auto minmax(44px,auto);
+  align-items: center;
+  gap: 5px;
+  aspect-ratio: 3 / 4;
+  min-height: 282px;
+  padding: 38px 10% 26px;
+  background-image: url('../assets/ui/characteristics/menu-parchment.webp');
+  text-align: center;
+}
+.react-characteristic-paper--card > header {
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.react-characteristic-paper--card h3 {
+  max-width: 100%;
+  color: var(--characteristic-ink);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.react-characteristic-paper--card > header span {
+  color: var(--characteristic-muted-ink);
+  font-size: .7rem;
+  letter-spacing: .1em;
+}
+.react-characteristic-paper--card > strong {
+  color: var(--characteristic-ink);
+  font-size: 2.6rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.react-characteristic-paper--card > small { color: var(--characteristic-muted-ink); }
+.react-characteristic-paper--card .react-characteristic-controls {
+  grid-template-columns: 44px minmax(0,1fr) 44px;
+  gap: 2px;
+  width: 100%;
+}
+.react-characteristic-paper--card .react-characteristic-controls > span {
+  min-width: 0;
+  color: var(--characteristic-muted-ink);
+  font-size: .72rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+/* The site theme sets text colours with !important; parchment needs its own ink. */
+#asteriaReactRoot .react-characteristic-paper :is(h3,strong,span) {
+  color: var(--characteristic-ink) !important;
+}
+#asteriaReactRoot .react-characteristic-paper :is(small,header span,.react-characteristic-controls > span) {
+  color: var(--characteristic-muted-ink) !important;
+}
+/* Override the shared metal-button skin only for these native symbol controls. */
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--characteristic-ink) !important;
+  font-family: var(--asteria-font-body);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: none;
+  filter: none;
+  transition: color 120ms ease, transform 120ms ease;
+}
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper::before,
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper::after { content: none; }
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper:hover:not(:disabled) {
+  color: #75451b !important;
+  transform: scale(1.12);
+}
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper:active:not(:disabled) { transform: scale(.95); }
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper:focus-visible {
+  outline: 2px solid #61431f !important;
+  outline-offset: 0 !important;
+}
+#asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper:disabled {
+  color: #74695c !important;
+  opacity: 1;
+}
+.react-characteristics-parchment .react-characteristics-apply { padding: 0 6px; }
+.react-characteristics-parchment > .react-action-message { padding-inline: 6px; }
+@container characteristic-summary (max-width: 430px) {
+  .react-player-characteristic-grid .react-characteristic-paper--summary {
+    grid-template-columns: minmax(0,1fr);
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    gap: 1px;
+    min-height: 82px;
+    padding: 18px 8% 12px;
+  }
+  .react-characteristic-paper--summary > span { grid-column: 1; grid-row: 1; }
+  .react-characteristic-paper--summary > strong { grid-column: 1; grid-row: 2; font-size: 1.45rem; }
+  .react-characteristic-paper--summary > small { grid-column: 1; grid-row: 3; }
+}
+@container characteristics (max-width: 600px) {
+  .react-characteristics-parchment .react-characteristic-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@container characteristics (max-width: 380px) {
+  .react-characteristics-parchment .react-characteristic-gallery { grid-template-columns: minmax(0,1fr); }
+  .react-characteristic-gallery .react-characteristic-paper--card { width: min(100%,320px); justify-self: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper { transition: none; }
+}
