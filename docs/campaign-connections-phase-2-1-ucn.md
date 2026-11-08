@@ -10,7 +10,7 @@
 3. `asteriaCampaignUCN` authenticated callable: `{action:'create',name}` allocates; `{action:'preview',code}` looks up a UCN. Preview is limited to 12 requests per account per rolling minute, stored under `campaignLookupThrottle/{uid}` (server-only). Responses contain only `{id,name,ucn}`; no roster, email addresses, invite tokens, roles, or protected gameplay data.
 4. The directory is deliberately server-only. An existing UCN lookup uses the legacy `campaignInvites/{ucn}` registry **only if no canonical directory entry exists**; a closed directory cannot be bypassed by an old active invite.
 5. Firestore rules now prevent the existing `ucn` field from being changed by an ordinary owner save or a player. Previously established campaign numbers remain stable.
-6. An opt-in `AsteriaFirebase.createCampaignIdentity(name)` and `previewCampaignByUCN(code)` client API supports the new callable. Campaign Forge uses server allocation only when the build-time `VITE_ASTERIA_SERVER_UCN_ENABLED=1`. **Default is off**, so current creation behavior remains unchanged until backend and rules have been deployed and verified. When enabled, failure aborts creation rather than silently choosing an unreserved code.
+6. An opt-in `AsteriaFirebase.createCampaignIdentity(name)` and `previewCampaignByUCN(code)` client API supports the new callable. Campaign Forge uses server allocation only when the static-site runtime flag `window.AsteriaFeatureFlags.serverCampaignUCN` is set to `true` in `index.html`. **Default is false**, so current creation behavior remains unchanged until backend and rules have been deployed and verified. When enabled, failure aborts creation rather than silently choosing an unreserved code.
 7. Tests cover leading-zero UCNs, reservation collisions against both registries, ownership validation, rates, privacy-preserving responses, legacy UCN compatibility, immutable UCNs and denial of client access to the directory.
 
 ## Deployment order and cautions
@@ -18,7 +18,7 @@
 1. Review and merge this PR only after GitHub CI passes.
 2. Deploy Firebase Functions and Firestore Rules using the existing **manual** reviewed backend workflow on `main`; verify `asteriaCampaignUCN` exists and both create and preview work against the intended Firebase project. This phase does not run production deployment automatically.
 3. Confirm existing campaigns retain their existing UCN and players can still join through the legacy flow.
-4. Enable the new creation path in a reviewed production website build by setting `VITE_ASTERIA_SERVER_UCN_ENABLED=1` **only after** backend verification. Check the switch with authenticated accounts and verify end-to-end persistence and creation/artwork flow before broad rollout.
+4. Enable the new creation path in a reviewed production website build by changing the reviewed `index.html` runtime flag `serverCampaignUCN:false` to `true` **only after** backend verification. Check the switch with authenticated accounts and verify end-to-end persistence and creation/artwork flow before broad rollout.
 5. If the new callable has an outage, disable the frontend flag (not membership security) rather than corrupting or reassigning an allocated UCN. Any already-allocated server campaign is kept for safe resumption; do not delete by default.
 6. Old campaigns without directory entries continue looking up by their original legacy UCN. Do not run a bulk backfill without auditing collisions and ownership and preparing a dry-run report.
 
