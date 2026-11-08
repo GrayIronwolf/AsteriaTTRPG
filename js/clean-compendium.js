@@ -943,7 +943,7 @@
     if(serverIdentityEnabled) {
       try {
         const identity = await window.AsteriaFirebase.createCampaignIdentity(name);
-        if(!identity || !/^\\d{12}$/.test(String(identity.ucn || '')) || !identity.id) {
+        if(!identity || !/^\d{12}$/.test(String(identity.ucn || '')) || !identity.id) {
           throw new Error('Invalid server campaign identity.');
         }
         id = identity.id;
