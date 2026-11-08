@@ -2008,6 +2008,7 @@ const firebasePublicApi = {
       }, error=>{
         if(!active || currentUser?.uid!==uid) return;
         sources.delete(key);emit();
+        if(key==='projections' && String(error?.code || '').includes('permission-denied')) return;
         reportSyncError('campaign-membership-listener', error, { uid, source:key });
       });
     };
