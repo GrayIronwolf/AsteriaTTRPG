@@ -165,7 +165,7 @@ service cloud.firestore {
     match /campaigns/{campaignId} {
       allow read: if isCampaignMember(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || linksOwnedCharacter(campaignId) || (
+      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid && (!resource.data.keys().hasAny(['ucn']) || request.resource.data.ucn == resource.data.ucn)) || linksOwnedCharacter(campaignId) || (
         isCampaignGM(campaignId) &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['image','imagePath','art','banner','coverImage','cover','updatedAt']) &&
