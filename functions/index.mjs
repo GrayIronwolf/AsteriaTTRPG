@@ -113,6 +113,15 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       await import('./campaignJoinApproval.mjs');
     const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
     const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(data.action==='role-change'||data.action==='permission-change'||data.action==='activity'){
+      if(process.env.ASTERIA_ROLE_PERMISSIONS_ENABLED!=='1')
+        throw new Error('Campaign role administration is not enabled yet.');
+      const {changeCampaignMemberRole,setCampaignCoGmPermission,listCampaignMembershipActivity}=
+        await import('./campaignRolePermissions.mjs');
+      if(data.action==='role-change')return await changeCampaignMemberRole(db,uid,data);
+      if(data.action==='permission-change')return await setCampaignCoGmPermission(db,uid,data);
+      return await listCampaignMembershipActivity(db,uid,data.campaignId);
+    }
     if(data.action==='member-control'){
       if(process.env.ASTERIA_MEMBER_CONTROLS_ENABLED!=='1')
         throw new Error('Campaign member controls are not enabled yet.');
