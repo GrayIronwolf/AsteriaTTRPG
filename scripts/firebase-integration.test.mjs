@@ -1399,8 +1399,9 @@ test('Phase 6.2: only owner sees safe metadata, revocation prevents token reuse 
   await assert.rejects(changeSecureCampaignInvitation(db,'gm',{
     campaignId:'c',inviteId:issued.inviteId,action:'expire',expectedRevision:1
   }),/no longer active/);
+  const revokedRecord=(await db.doc(path).get()).data();
   assert.throws(()=>assertSecureInvitationEligible(
-    (await db.doc(path).get()).data(),{
+    revokedRecord,{
       campaignId:'c',inviteId:issued.inviteId,token,
       claimantUid:'eve',claimantEmail:'player@example.com',
       emailVerified:true,now:new Date('2026-11-09T05:00:00.000Z'),signingKey
@@ -1427,6 +1428,6 @@ test('Phase 6.2: expired listing is metadata-only and no source or character cha
   assert.equal(listing.invitations[0].status,'expired');
   assert.equal(listing.invitations[0].roleOffered,'co-gm');
   assert.equal((await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data().status,'active');
-  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().xp,42);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().ownerUid,'alice');
   assert.equal((await db.doc('campaigns/c/members/bob').get()).exists,false);
 });
