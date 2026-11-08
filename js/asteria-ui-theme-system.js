@@ -1,6 +1,7 @@
 (function(){
   const STORAGE_KEY = "asteria-ui-theme-v1";
   const AREA_LABELS={panelBorder:'Panel box outline',panelBackground:'Panel background',menuButton:'Compendium menu buttons',topMenuButton:'Top menu buttons',dashboardPrimary:'Dashboard primary colour',dashboardTab:'Dashboard menu tabs',divider:'Divider / line colour'};
+  const backgrounds={dark:'#000000',light:'#E6E6E6',gray:'#3A3A3A',darkBlue:'#061528',darkGreen:'#072B18'};
   let appliedSettings=null;
   let activeAccount='';
   function themeAccountId(){
@@ -55,6 +56,8 @@
   }
 
   function sync(settings){
+    const background=document.getElementById('asteriaBackgroundSelect');
+    if(background)background.value=settings.background;
     const theme = document.getElementById("asteriaThemeSelect");
     const colour = document.getElementById("asteriaColourWheel");
     const text = document.getElementById("asteriaTextColourWheel");
@@ -78,6 +81,7 @@
     const preset = themes[key] || themes.spellblade;
     return {
       theme:key,
+      background:Object.hasOwn(backgrounds,settings.background)?settings.background:"dark",
       areas:Object.fromEntries(Object.keys(AREA_LABELS).map(area=>[area,validColour(settings.areas?.[area])?settings.areas[area]:area==='panelBackground'?'#040e10':settings.accent || preset.accent])),
       accent:settings.accent || preset.accent,
       text:settings.text || preset.text || DEFAULT_TEXT,
@@ -97,6 +101,7 @@
     const topVeil = clamp(.12 + inverseVisibility * .28, .12, .46);
     const bottomVeil = clamp(.34 + inverseVisibility * .34, .34, .76);
 
+    setVar("--asteria-site-background", backgrounds[next.background]);
     setVar("--asteria-accent", next.accent);
     setVar("--accent", next.accent);
     setVar("--asteria-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
@@ -151,13 +156,14 @@
     const preset = themes[theme] || themes.spellblade;
     return normalise({
       ...appliedSettings,
+      background:document.getElementById("asteriaBackgroundSelect")?.value || appliedSettings?.background || "dark",
       areas:Object.fromEntries(Object.keys(AREA_LABELS).map(key=>[key,document.getElementById(`asteriaArea-${key}`)?.value || appliedSettings?.areas[key]])),
       theme,
-      accent:document.getElementById("asteriaColourWheel")?.value || preset.accent,
-      text:document.getElementById("asteriaTextColourWheel")?.value || preset.text || DEFAULT_TEXT,
-      glow:Number(document.getElementById("asteriaGlowSlider")?.value ?? Math.round(preset.glow * 100)) / 100,
-      overlay:Number(document.getElementById("asteriaOverlaySlider")?.value ?? Math.round(preset.overlay * 100)) / 100,
-      panel:Number(document.getElementById("asteriaPanelOpacitySlider")?.value ?? Math.round((preset.panel || .78) * 100)) / 100,
+      accent:document.getElementById("asteriaColourWheel")?.value || appliedSettings?.accent || preset.accent,
+      text:document.getElementById("asteriaTextColourWheel")?.value || appliedSettings?.text || preset.text || DEFAULT_TEXT,
+      glow:Number(document.getElementById("asteriaGlowSlider")?.value ?? Math.round((appliedSettings?.glow ?? preset.glow) * 100)) / 100,
+      overlay:Number(document.getElementById("asteriaOverlaySlider")?.value ?? Math.round((appliedSettings?.overlay ?? preset.overlay) * 100)) / 100,
+      panel:Number(document.getElementById("asteriaPanelOpacitySlider")?.value ?? Math.round((appliedSettings?.panel ?? preset.panel ?? .78) * 100)) / 100,
       motion:document.getElementById("asteriaMotionSelect")?.value || appliedSettings?.motion || "both"
     });
   }
@@ -176,6 +182,11 @@
   }
 
   function bind(){
+    const background=document.getElementById('asteriaBackgroundSelect');
+    if(background && !background.dataset.bound){
+      background.dataset.bound='1';
+      background.addEventListener('change',()=>applyTheme(current(),true));
+    }
     const theme = document.getElementById("asteriaThemeSelect");
     const colour = document.getElementById("asteriaColourWheel");
     const text = document.getElementById("asteriaTextColourWheel");
@@ -267,7 +278,7 @@
         localStorage.removeItem("asteria-theme");
         localStorage.removeItem("asteria-accent");
         applyTheme({theme:"spellblade", ...themes.spellblade}, true);
-        window.AsteriaAnnounce?.("Theme reset to Spellblade.");
+        window.AsteriaAnnounce?.("Appearance reset. Background set to Dark.");
       });
     }
   }
@@ -295,6 +306,7 @@
 
   window.AsteriaThemeSystem = {
     themes,
+    backgrounds,
     areas:AREA_LABELS,
     getSettings:()=>normalise(appliedSettings || {}),
     applyTheme,

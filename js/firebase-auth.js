@@ -789,7 +789,8 @@ const firebasePublicApi = {
       const areaNames=['panelBorder','panelBackground','menuButton','topMenuButton','dashboardPrimary','dashboardTab','divider'];
       const areas=Object.fromEntries(areaNames.map(key=>[key,validColour(value?.areas?.[key])?value.areas[key]:'#1f7dff']));
       const number=(n,otherwise)=>Number.isFinite(Number(n))?Math.max(0,Math.min(1,Number(n))):otherwise;
-      clean={theme:String(value?.theme||'spellblade').slice(0,40),accent:validColour(value?.accent)?value.accent:'#1f7dff',
+      clean={background:['dark','light','gray','darkBlue','darkGreen'].includes(value?.background)?value.background:'dark',
+        theme:String(value?.theme||'spellblade').slice(0,40),accent:validColour(value?.accent)?value.accent:'#1f7dff',
         text:validColour(value?.text)?value.text:'#f7ead1',areas,
         glow:number(value?.glow,.36),overlay:number(value?.overlay,.44),
         panel:Math.max(.62,Math.min(.92,number(value?.panel,.78))),

@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="css/asteria-item-ecosystem.css">
 <link rel="stylesheet" href="css/asteria-modern-ui.css?v=mobile-home-v1">
 <link rel="stylesheet" href="css/asteria-navigation.css?v=phase5-update3-20261106">
-<link rel="stylesheet" href="css/asteria-smoke-background.css?v=smoke-9933-v1">
+<link rel="stylesheet" href="css/asteria-smoke-background.css?v=solid-palette-20261108">
 <link rel="stylesheet" href="css/asteria-menu-buttons.css?v=encounter-header-v7">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="css/asteria-button-images.css?v=phase3-approved-layers-20261106">
 <link rel="stylesheet" href="css/asteria-typography.css?v=phase5-update2-20261106">
 <link rel="stylesheet" href="css/asteria-appearance-sync.css?v=phase6-update2-20261106">
-<link rel="stylesheet" href="css/asteria-header-wordmark.css?v=wordmark-stars-v2-20261108">
+<link rel="stylesheet" href="css/asteria-header-wordmark.css?v=wordmark-stars-v3-20261108">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
 </head>
 <body data-role="guest">
@@ -80,52 +80,17 @@
     <div id="mobileAccountSlot"></div>
     <section id="asteriaThemeSettings" class="theme-settings-section">
       <h3>UI Theme</h3>
-      <p>Choose a class theme or create your own accent colour.</p>
-      <label>Theme Preset
-        <select id="asteriaThemeSelect">
-          <option value="spellblade">Spellblade</option>
-          <option value="bloodhunter">Bloodhunter</option>
-          <option value="cleric">Cleric</option>
-          <option value="ranger">Ranger</option>
-          <option value="artificer">Artificer</option>
-          <option value="paladin">Paladin</option>
-          <option value="druid">Druid</option>
-          <option value="rogue">Rogue / Shadow</option>
-          <option value="custom">Custom</option>
-        </select>
-      </label>
-      <div class="theme-colour-row">
-        <label>RGB Colour Wheel
-          <input id="asteriaColourWheel" type="color" value="#1f7dff">
-        </label>
-        <div class="theme-preview-orb" id="asteriaThemePreviewOrb"></div>
-      </div>
-      <div class="theme-colour-row">
-        <label>Text Colour
-          <input id="asteriaTextColourWheel" type="color" value="#f7ead1">
-        </label>
-        <div class="theme-preview-orb theme-preview-text" id="asteriaTextPreviewOrb">T</div>
-      </div>
-      <label>Glow Intensity
-        <input id="asteriaGlowSlider" type="range" min="0" max="100" value="36">
-      </label>
-      <label>Background Visibility
-        <input id="asteriaOverlaySlider" type="range" min="0" max="100" value="44">
-      </label>
-      <label>Background Energy Motion
-        <select id="asteriaMotionSelect" aria-label="Background energy animation">
-          <option value="both">Pulse + Wave</option>
-          <option value="pulse">Pulse only</option>
-          <option value="wave">Wave only</option>
-          <option value="off">Still (no animation)</option>
-        </select>
-      </label>
-      <label>Panel Opacity
-        <input id="asteriaPanelOpacitySlider" type="range" min="62" max="92" value="78">
-      </label>
+      <p>Choose your website background and interface colours.</p>
+      <label for="asteriaBackgroundSelect">Website background</label>
+      <select id="asteriaBackgroundSelect" aria-describedby="asteriaBackgroundHelp">
+        <option value="dark">Dark — #000000 (default)</option>
+        <option value="light">Light — #E6E6E6</option>
+        <option value="gray">Gray — #3A3A3A</option>
+        <option value="darkBlue">Dark Blue — #061528</option>
+        <option value="darkGreen">Dark Green — #072B18</option>
+      </select>
+      <p id="asteriaBackgroundHelp">A solid background colour, applied immediately and saved with your appearance settings.</p>
       <div class="asteria-independent-colours">
-        <label>Panel box outline<input type="color" id="asteriaArea-panelBorder" aria-label="Panel box outline"></label>
-        <label>Panel background<input type="color" id="asteriaArea-panelBackground" aria-label="Panel background"></label>
         <label>Compendium menu buttons<input type="color" id="asteriaArea-menuButton" aria-label="Compendium menu buttons"></label>
         <label>Top menu buttons<input type="color" id="asteriaArea-topMenuButton" aria-label="Top menu buttons"></label>
         <label>Dashboard primary colour<input type="color" id="asteriaArea-dashboardPrimary" aria-label="Dashboard primary colour"></label>
@@ -136,7 +101,6 @@
         <button id="asteriaThemeSave" type="button">Save Theme</button>
         <button id="asteriaThemeReset" type="button" class="outline">Reset</button>
       </div>
-      <div class="theme-live-preview"><span>Live Preview</span><button type="button">Button</button><i></i></div>
     </section>
 
     <section id="asteriaTypographyMenu" aria-label="Typography"><h3>Typography</h3></section>
@@ -382,7 +346,7 @@
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=phase6-update2-20261106"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false});</script>
-  <script type="module" src="js/firebase-auth.js?v=campaign-character-lifecycle-phase5-3"></script>
+  <script type="module" src="js/firebase-auth.js?v=solid-palette-20261108"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
@@ -394,7 +358,7 @@
 <script src="js/asteria-world-systems.js"></script>
 <script src="js/asteria-item-ecosystem.js"></script>
 <script src="js/asteria-core-shell.js?v=phase6-update1-20261106"></script>
-<script src="js/asteria-ui-theme-system.js?v=phase6-update2-20261106"></script>
+<script src="js/asteria-ui-theme-system.js?v=solid-palette-20261108"></script>
 <script src="js/asteria-typography.js?v=phase6-update2-20261106"></script>
 <script src="js/asteria-appearance-sync.js?v=phase6-update2-20261106"></script>
 <script src="js/asteria-navigation.js?v=phase6-update1-20261106"></script>

@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-function themeRuntime(settings={}) {
+function themeRuntime(settings={}, simplified=false) {
   const variables=new Map(),storage=new Map();
   const areas=['panelBorder','panelBackground','menuButton','topMenuButton','dashboardPrimary','dashboardTab','divider'];
-  const ids=['asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaPanelOpacitySlider','asteriaMotionSelect',...areas.map(key=>`asteriaArea-${key}`)];
+  const ids=['asteriaBackgroundSelect','asteriaThemeSave','asteriaThemeReset','asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaPanelOpacitySlider','asteriaMotionSelect',...areas.map(key=>`asteriaArea-${key}`)];
   const nodes=Object.fromEntries(ids.map(id=>[id,{value:'',dataset:{},listeners:{},addEventListener(type,handler){this.listeners[type]=handler;}}]));
+  if(simplified)for(const id of ['asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaPanelOpacitySlider','asteriaMotionSelect','asteriaArea-panelBorder','asteriaArea-panelBackground'])delete nodes[id];
   const context={document:{readyState:'loading',addEventListener(){},getElementById:id=>nodes[id],documentElement:{style:{setProperty:(key,value)=>variables.set(key,value)}},body:{dataset:{},removeAttribute(){}}},window:{dispatchEvent(){}},localStorage:{setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},CustomEvent:class{}};
   vm.createContext(context);vm.runInContext(fs.readFileSync('js/asteria-ui-theme-system.js','utf8'),context);
   const api=context.window.AsteriaThemeSystem;
@@ -75,4 +76,52 @@ test('invalid saved motion falls back without changing independent character UI 
   assert.equal(nodes.asteriaMotionSelect.value,'both');
   nodes.asteriaMotionSelect.value='wave';nodes.asteriaMotionSelect.listeners.change();
   assert.equal(api.getSettings().areas.dashboardTab,'#abcdef');
+});
+
+
+test('solid palette applies exact colours, persists selection and restores through cloud hydration',()=>{
+  const palette={dark:'#000000',light:'#E6E6E6',gray:'#3A3A3A',darkBlue:'#061528',darkGreen:'#072B18'};
+  const {api,nodes,variables,storage}=themeRuntime({},true);
+  assert.equal(api.getSettings().background,'dark');
+  assert.equal(variables.get('--asteria-site-background'),'#000000');
+  for(const [key,colour] of Object.entries(palette)){
+    nodes.asteriaBackgroundSelect.value=key;
+    nodes.asteriaBackgroundSelect.listeners.change();
+    assert.equal(variables.get('--asteria-site-background'),colour);
+    const saved=JSON.parse(storage.get('asteria-ui-theme-v1'));
+    assert.equal(saved.background,key);
+    const restored=themeRuntime(saved,true);
+    assert.equal(restored.variables.get('--asteria-site-background'),colour);
+    restored.api.applyCloud({...saved,background:'darkGreen'});
+    assert.equal(restored.nodes.asteriaBackgroundSelect.value,'darkGreen');
+    assert.equal(restored.variables.get('--asteria-site-background'),'#072B18');
+  }
+});
+
+test('simplified controls preserve saved accent, text, panel and independent colours',()=>{
+  const {api,nodes}=themeRuntime({accent:'#654321',text:'#eeeeee',glow:.12,panel:.9,areas:{topMenuButton:'#abcdef',panelBackground:'#101010'}},true);
+  nodes.asteriaBackgroundSelect.value='light';nodes.asteriaBackgroundSelect.listeners.change();
+  nodes['asteriaArea-menuButton'].value='#22aa55';nodes['asteriaArea-menuButton'].listeners.input();
+  nodes.asteriaThemeSave.listeners.click();
+  const saved=api.getSettings();
+  assert.equal(saved.accent,'#654321');assert.equal(saved.text,'#eeeeee');
+  assert.equal(saved.glow,.12);assert.equal(saved.panel,.9);
+  assert.equal(saved.areas.topMenuButton,'#abcdef');assert.equal(saved.areas.panelBackground,'#101010');
+  assert.equal(saved.background,'light');assert.equal(saved.areas.menuButton,'#22aa55');
+  nodes.asteriaThemeReset.listeners.click();assert.equal(api.getSettings().background,'dark');
+});
+
+test('legacy and invalid backgrounds migrate to black; retired controls and smoke layers are absent',()=>{
+  for(const background of [undefined,'smoke','invalid','__proto__']){
+    const {api,variables}=themeRuntime({background},true);
+    assert.equal(api.getSettings().background,'dark');
+    assert.equal(variables.get('--asteria-site-background'),'#000000');
+  }
+  const html=fs.readFileSync('index.html','utf8');
+  const section=html.split('id="asteriaThemeSettings"')[1].split('</section>')[0];
+  for(const id of ['asteriaThemeSelect','asteriaColourWheel','asteriaTextColourWheel','asteriaGlowSlider','asteriaOverlaySlider','asteriaMotionSelect','asteriaPanelOpacitySlider','asteriaArea-panelBorder','asteriaArea-panelBackground'])assert.ok(!section.includes('id="'+id+'"'));
+  assert.equal((section.match(/type="color"/g)||[]).length,5);
+  const css=fs.readFileSync('css/asteria-smoke-background.css','utf8');
+  assert.doesNotMatch(css,/url\(|@keyframes/);
+  assert.match(css,/content:none!important/);
 });
