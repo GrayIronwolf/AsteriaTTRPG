@@ -643,11 +643,11 @@
         <dl class="clean-page-meta">
           <div><dt>Campaign ID</dt><dd>${escapeHtml(campaign.id)}</dd></div>
           <div><dt>UCN</dt><dd>${escapeHtml(campaign.ucn || 'Not generated')}</dd></div>
-          <div><dt>Invite Link</dt><dd>${escapeHtml(inviteLink(campaign))}</dd></div>
+          <div><dt>${campaign.membershipSchemaVersion===2?'Campaign Lookup Link':'Invite Link'}</dt><dd>${escapeHtml(inviteLink(campaign))}</dd></div>
           <div><dt>GM ID</dt><dd>${escapeHtml(campaign.gmId || campaign.ownerUid || 'Not set')}</dd></div>
           <div><dt>Party Characters</dt><dd>${arrayValue(campaign.party).length}</dd></div>
         </dl>
-        ${role === 'GM' ? `
+        ${role === 'GM' && campaign.membershipSchemaVersion!==2 ? `
           <section class="workspace-link-panel campaign-invite-tools">
             <h3>Campaign Invites</h3>
             <p class="muted">Static build note: this creates an email-ready invite record and link. Actual email sending will connect through Firebase later.</p>
@@ -657,6 +657,25 @@
             <div class="workspace-invite-list">
               ${invites.length ? invites.map(invite => `<div><b>${escapeHtml(invite.email || 'Invite')}</b><span>${escapeHtml(invite.status || 'created')}</span><small>${escapeHtml(invite.link || inviteLink(campaign))}</small></div>`).join('') : '<p class="muted">No invite records yet.</p>'}
             </div>
+          </section>
+        ` : ''}
+        ${campaign.membershipSchemaVersion===2 && campaign.ownerUid===window.AsteriaFirebase?.getUser?.()?.uid && window.AsteriaFeatureFlags?.secureInvitationManager===true ? `
+          <section class="workspace-link-panel workspace-secure-invite-manager">
+            <h3>Secure Invitation Manager</h3>
+            <p class="muted">Manage protected campaign invitations. Sharing a token does not add a player; invitation acceptance is not activated until Phase 6.3.</p>
+            <div class="workspace-form-grid">
+              <label>Invitation Type<select id="workspaceSecureInviteType"><option value="share-link">Share link</option><option value="email">Email recipient (not sent automatically)</option></select></label>
+              <label>Offered Role<select id="workspaceSecureInviteRole"><option value="player">Player</option><option value="co-gm">Co-GM (owner approval required)</option></select></label>
+              <label>Expires In<select id="workspaceSecureInviteExpiry"><option value="24">24 hours</option><option value="72">3 days</option><option value="168" selected>7 days</option><option value="336">14 days</option><option value="720">30 days</option></select></label>
+              <label>Maximum Uses<input id="workspaceSecureInviteUses" type="number" min="1" max="25" step="1" value="1"></label>
+              <label>Recipient Email (email invitations only)<input id="workspaceSecureInviteEmail" type="email" autocomplete="off" placeholder="player@example.com"></label>
+            </div>
+            <button class="primary" type="button" id="workspaceSecureInviteIssue">Create Secure Invitation</button>
+            <p id="workspaceSecureInviteCreationStatus" role="status" aria-live="polite"></p>
+            <div id="workspaceSecureInviteOneTime" aria-live="polite"></div>
+            <div class="workspace-join-review-actions"><button type="button" id="workspaceSecureInviteRefresh">Refresh Invitations</button><button type="button" id="workspaceSecureInvitePrevious" disabled>Previous</button><button type="button" id="workspaceSecureInviteNext" disabled>Next</button></div>
+            <div id="workspaceSecureInviteList" class="workspace-invite-list" aria-live="polite"></div>
+            <p id="workspaceSecureInviteListStatus" role="status" aria-live="polite"></p>
           </section>
         ` : ''}
         ${role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true ? `
@@ -749,6 +768,10 @@
     });
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
+    if(campaign.membershipSchemaVersion===2&&
+      campaign.ownerUid===window.AsteriaFirebase?.getUser?.()?.uid&&
+      window.AsteriaFeatureFlags?.secureInvitationManager===true)
+      renderSecureCampaignInvitationManager(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true) renderCampaignGMActivity(campaign);
@@ -823,6 +846,217 @@
       else window.AsteriaGameplay?.openCharacterForge?.();
     });
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderSecureCampaignInvitationManager(campaign){
+    const api=window.AsteriaFirebase;
+    const list=byId('workspaceSecureInviteList');
+    const status=byId('workspaceSecureInviteListStatus');
+    const created=byId('workspaceSecureInviteCreationStatus');
+    const oneTime=byId('workspaceSecureInviteOneTime');
+    const createButton=byId('workspaceSecureInviteIssue');
+    const refresh=byId('workspaceSecureInviteRefresh');
+    const previous=byId('workspaceSecureInvitePrevious');
+    const next=byId('workspaceSecureInviteNext');
+    const type=byId('workspaceSecureInviteType');
+    const email=byId('workspaceSecureInviteEmail');
+    const uses=byId('workspaceSecureInviteUses');
+    if(!api?.issueSecureCampaignInvitation||!api?.listSecureCampaignInvitations||
+      !api?.changeSecureCampaignInvitation||!list||!status)return;
+    const uid=api.getUser?.()?.uid;
+    const current=()=>list.isConnected&&api.getUser?.()?.uid===uid&&
+      window.AsteriaFeatureFlags?.secureInvitationManager===true;
+    const pageHistory=[null];
+    let pageIndex=0,forwardCursor=null,busy=false;
+    const setBusy=value=>{
+      busy=value;
+      for(const control of [createButton,refresh,type,email,uses,
+        byId('workspaceSecureInviteRole'),byId('workspaceSecureInviteExpiry')])
+        if(control)control.disabled=value;
+    };
+    const updateType=()=>{
+      if(!email||!uses||!type)return;
+      email.disabled=type.value!=='email'||busy;
+      if(type.value==='email')uses.value='1';
+      uses.disabled=type.value==='email'||busy;
+    };
+    type?.addEventListener('change',updateType);
+    updateType();
+    const showOneTime=issued=>{
+      oneTime.replaceChildren();
+      const heading=document.createElement('p');
+      heading.textContent='Created: '+issued.inviteId.slice(0,12)+'…';
+      oneTime.appendChild(heading);
+      if(!issued.token){
+        const warning=document.createElement('p');
+        warning.textContent='This invitation already exists. Its secure token cannot be retrieved. Create a new invitation if the token was lost.';
+        oneTime.appendChild(warning);
+        return;
+      }
+      // This Phase 6.2 link is formatted for Phase 6.3's future acceptance
+      // handler. It does not grant access until that phase is activated.
+      const base=window.location.href.split('#')[0];
+      const link=base+'#secure-campaign-invite='+
+        encodeURIComponent(campaign.id)+'.'+
+        encodeURIComponent(issued.inviteId)+'.'+
+        encodeURIComponent(issued.token);
+      const info=document.createElement('p');
+      info.textContent='Copy this invitation link now. It cannot be retrieved later, and accepting invitations is not enabled until Phase 6.3.';
+      const copy=document.createElement('button');
+      copy.type='button';
+      copy.textContent='Copy One-Time Invitation Link';
+      const copyStatus=document.createElement('p');
+      copyStatus.setAttribute('role','status');
+      copy.addEventListener('click',async()=>{
+        try{
+          if(!navigator.clipboard?.writeText)throw Error('Clipboard is not available.');
+          await navigator.clipboard.writeText(link);
+          copyStatus.textContent='Link copied. Treat it as a private credential.';
+        }catch{
+          copyStatus.textContent='Copy failed. Clipboard permission is required.';
+        }
+      });
+      const forget=document.createElement('button');
+      forget.type='button';
+      forget.textContent='Clear One-Time Link';
+      forget.addEventListener('click',()=>{
+        oneTime.replaceChildren();
+      });
+      oneTime.append(info,copy,forget,copyStatus);
+    };
+    const load=async()=>{
+      if(busy||!current())return;
+      setBusy(true);
+      status.textContent='Loading secure invitations...';
+      if(next)next.disabled=true;
+      if(previous)previous.disabled=true;
+      try{
+        const page=await api.listSecureCampaignInvitations(campaign.id,
+          pageHistory[pageIndex]);
+        if(!current())return;
+        forwardCursor=page.nextCursor||null;
+        list.replaceChildren();
+        const items=Array.isArray(page.invitations)?page.invitations:[];
+        if(!items.length){
+          const empty=document.createElement('p');
+          empty.textContent='No secure invitations on this page.';
+          list.appendChild(empty);
+        }
+        for(const invite of items){
+          const row=document.createElement('article');
+          row.className='workspace-join-review-row';
+          const name=document.createElement('strong');
+          name.textContent=String(invite.type||'Invitation')+' · '+
+            String(invite.inviteId||'').slice(0,12);
+          const details=document.createElement('p');
+          details.textContent='Role: '+String(invite.roleOffered||'player')+
+            ' · Status: '+String(invite.status||'unknown')+
+            ' · Uses: '+String(invite.usedCount)+'/'+String(invite.maxUses);
+          const dates=document.createElement('small');
+          dates.textContent='Expires: '+String(invite.expiresAt||'Unknown');
+          row.append(name,details,dates);
+          if(invite.recipientEmail){
+            const recipient=document.createElement('small');
+            recipient.textContent='Recipient: '+invite.recipientEmail;
+            row.appendChild(recipient);
+          }
+          if(invite.status==='active'){
+            const actions=document.createElement('div');
+            actions.className='workspace-join-review-actions';
+            for(const [action,label] of [['revoke','Revoke'],['expire','Expire Now']]){
+              const button=document.createElement('button');
+              button.type='button';
+              button.textContent=label;
+              button.addEventListener('click',async()=>{
+                if(busy||!current())return;
+                if(!window.confirm(action==='revoke'?
+                  'Revoke this invitation immediately? Existing members will not be removed.':
+                  'Expire this invitation now? This cannot be undone.'))return;
+                setBusy(true);
+                status.textContent='Updating invitation...';
+                try{
+                  await api.changeSecureCampaignInvitation(campaign.id,
+                    invite.inviteId,action,invite.revision);
+                  if(current())status.textContent='Invitation '+(action==='revoke'?'revoked.':'expired.');
+                }catch(error){
+                  if(current())status.textContent=error?.message||'Could not update invitation.';
+                }finally{
+                  setBusy(false);
+                  if(current())void load();
+                }
+              });
+              actions.appendChild(button);
+            }
+            row.appendChild(actions);
+          }
+          list.appendChild(row);
+        }
+        status.textContent=items.length+' invitation(s) displayed. Tokens cannot be retrieved or resent.';
+      }catch(error){
+        if(current()){
+          list.replaceChildren();
+          status.textContent=error?.message||'Could not load secure invitations.';
+        }
+      }finally{
+        setBusy(false);
+        updateType();
+        if(current()){
+          if(previous)previous.disabled=pageIndex===0;
+          if(next)next.disabled=!forwardCursor;
+        }
+      }
+    };
+    refresh?.addEventListener('click',load);
+    previous?.addEventListener('click',()=>{
+      if(busy||pageIndex===0)return;
+      pageIndex--;void load();
+    });
+    next?.addEventListener('click',()=>{
+      if(busy||!forwardCursor)return;
+      pageIndex++;
+      pageHistory[pageIndex]=forwardCursor;
+      pageHistory.length=pageIndex+1;
+      void load();
+    });
+    createButton?.addEventListener('click',async()=>{
+      if(busy||!current())return;
+      const inviteType=type?.value;
+      const emailValue=String(email?.value||'').trim();
+      const maximum=inviteType==='email'?1:Number(uses?.value);
+      const expiry=Number(byId('workspaceSecureInviteExpiry')?.value);
+      if(!['share-link','email'].includes(inviteType)||!Number.isSafeInteger(maximum)||
+        maximum<1||maximum>25||!Number.isSafeInteger(expiry)||
+        (inviteType==='email'&&!emailValue)){
+        created.textContent='Enter valid invitation settings and an email recipient when required.';
+        return;
+      }
+      if(!window.crypto?.randomUUID){
+        created.textContent='Secure request IDs require a supported HTTPS browser.';
+        return;
+      }
+      setBusy(true);
+      oneTime.replaceChildren();
+      created.textContent='Creating secure invitation...';
+      try{
+        const result=await api.issueSecureCampaignInvitation({
+          campaignId:campaign.id,requestId:window.crypto.randomUUID(),
+          type:inviteType,
+          roleOffered:byId('workspaceSecureInviteRole')?.value||'player',
+          recipientEmail:inviteType==='email'?emailValue:null,
+          expiresInHours:expiry,maxUses:maximum
+        });
+        if(!current())return;
+        showOneTime(result);
+        created.textContent='Secure invitation created. No email has been sent.';
+        pageIndex=0;pageHistory.length=1;forwardCursor=null;
+      }catch(error){
+        if(current())created.textContent=error?.message||'Unable to issue invitation.';
+      }finally{
+        setBusy(false);updateType();
+        if(current())void load();
+      }
+    });
+    await load();
   }
 
   async function renderCampaignGMCharacterLifecycle(campaign){

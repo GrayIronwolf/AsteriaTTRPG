@@ -55,10 +55,25 @@ export const asteriaSecureInvitation=onCall({
 },async request=>{
   if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
   try{
-    if(process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
+    const data=request.data||{};
+    if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
-    if(request.data?.action!=='issue')
-      throw new Error('Secure invitation management is not available in Phase 6.1.');
+    if(data.action==='list'||data.action==='change'){
+      if(process.env.ASTERIA_INVITATION_MANAGER_ENABLED!=='1')
+        throw new Error('Invitation Manager is not enabled yet.');
+      const {listSecureCampaignInvitations,changeSecureCampaignInvitation}=
+        await import('./campaignInvitationManager.mjs');
+      if(data.action==='list')
+        return await listSecureCampaignInvitations(getFirestore(),request.auth.uid,{
+          campaignId:data.campaignId,cursor:data.cursor??null
+        });
+      return await changeSecureCampaignInvitation(getFirestore(),request.auth.uid,{
+        campaignId:data.campaignId,inviteId:data.inviteId,
+        action:data.managementAction,expectedRevision:data.expectedRevision
+      });
+    }
+    if(data.action!=='issue')
+      throw new Error('Unknown secure invitation action.');
     const {issueSecureCampaignInvitation}=await import('./campaignSecureInvitations.mjs');
     const {campaignId,requestId,type,roleOffered,recipientEmail,
       recipientUid,expiresInHours,maxUses,requiresGMApproval}=request.data||{};

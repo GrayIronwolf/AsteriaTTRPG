@@ -2002,6 +2002,33 @@ const firebasePublicApi = {
       linkId,sourceCharacterId,lifecycleAction:action,expectedRevision
     })).data;
   },
+  issueSecureCampaignInvitation: async function(request){
+    if(!functionsClient||!currentUser)
+      throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.secureInvitationManager!==true)
+      throw new Error('Secure Invitation Manager is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'issue',...request,requiresGMApproval:true
+    })).data;
+  },
+  listSecureCampaignInvitations: async function(campaignId,cursor=null){
+    if(!functionsClient||!currentUser)
+      throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.secureInvitationManager!==true)
+      throw new Error('Secure Invitation Manager is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'list',campaignId,cursor
+    })).data;
+  },
+  changeSecureCampaignInvitation: async function(campaignId,inviteId,managementAction,expectedRevision){
+    if(!functionsClient||!currentUser)
+      throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.secureInvitationManager!==true)
+      throw new Error('Secure Invitation Manager is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'change',campaignId,inviteId,managementAction,expectedRevision
+    })).data;
+  },
   listPendingCampaignCharacterLinks: async function(campaignId){
     if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
     if(window.AsteriaFeatureFlags?.campaignCharacterApproval!==true)
