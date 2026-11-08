@@ -1901,6 +1901,26 @@ const firebasePublicApi = {
       action:'submit',campaignId,ucn:campaignCode(codeValue),characterId:characterId || null
     })).data;
   },
+  listCampaignJoinRequests: async function(campaignId){
+    if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'list',campaignId
+    })).data;
+  },
+  reviewCampaignJoinRequest: async function(campaignId,requestUid,decision,expectedRevision){
+    if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignJoinReview!==true) throw new Error('GM review is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'review',campaignId,requestUid,decision,expectedRevision
+    })).data;
+  },
+  setCampaignJoinApprovalMode: async function(campaignId,mode){
+    if(!functionsClient || !currentUser) throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.campaignJoinReview!==true) throw new Error('GM review is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'mode',campaignId,mode
+    })).data;
+  },
   joinCampaignByUCN: async function(codeValue){
     if(!functionsClient || !currentUser) throw new Error('Sign in to join this campaign.');
     return (await httpsCallable(functionsClient,'asteriaInvite')({code:campaignCode(codeValue),join:true})).data;
