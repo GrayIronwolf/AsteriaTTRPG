@@ -10,6 +10,7 @@ import {executeAction} from '../functions/handler.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
 import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUCN.mjs';
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
+import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -763,4 +764,82 @@ test('legacy campaign invite behavior remains unchanged while v2 is dormant',asy
   await accessInvite(db,'eve','123456789012',true);
   assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,'player');
   await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c')));
+});
+
+test('v2 permissions deny revoked members despite stale legacy role arrays',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'suspended',revision:1});
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c')));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c')));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/characters/a')));
+  await assertFails(getDoc(doc(user('bob'),'campaigns/c')));
+  await assertFails(getDoc(doc(user('bob'),'campaigns/c/characters/b')));
+  await assertFails(getDoc(doc(user('bob'),'campaigns/c/systems/itemEcosystem')));
+  await assertFails(getDoc(doc(user('bob'),'campaigns/c/liveSession/current')));
+  await assertFails(setDoc(doc(user('bob'),'campaigns/c/sessions/s/presence/bob'),{state:'online'}));
+  await assertFails(getBytes(ref(env.authenticatedContext('bob').storage(),'campaigns/c/artwork/cover.png')));
+  await assertSucceeds(getDoc(doc(user('bob'),'users/bob/characters/b')));
+  assert.equal((await db.doc('campaigns/c').get()).data().playerUids.includes('bob'),true);
+  assert.equal((await action('bob','updateCampaignCharacterResource',['c','b','hp',-1])).ok,false);
+  await assert.rejects(accessInvite(db,'eve','123456789012',true),/join request/);
+});
+
+test('v2 Co-GM access requires an active canonical role; legacy gmUids cannot restore access',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,
+    gmUids:['gm','co'],
+    roles:{gm:'gm',co:'gm',alice:'player',bob:'player'}
+  });
+  await db.doc('campaigns/c/members/co').set({uid:'co',campaignId:'c',role:'co-gm',status:'active',revision:1});
+  await assertSucceeds(getDoc(doc(user('co'),'campaigns/c/systems/gmWorkspace')));
+  await db.doc('campaigns/c/members/co').update({status:'banned',revision:2});
+  await assertFails(getDoc(doc(user('co'),'campaigns/c/systems/gmWorkspace')));
+  await assertFails(getDoc(doc(user('co'),'campaigns/c')));
+  await assertFails(updateDoc(doc(user('co'),'campaigns/c'),{image:'https://example.org/co.webp',imagePath:'campaigns/c/artwork/co.webp'}));
+});
+
+test('v2 member role, status and schema version cannot be forged by browser writes',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/members/alice'),{role:'co-gm'}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/members/alice'),{status:'banned'}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c'),{membershipSchemaVersion:1}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c'),{'roles.alice':'gm'}));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{membershipSchemaVersion:1}));
+  await assertSucceeds(updateDoc(doc(user('gm'),'campaigns/c'),{name:'Still editable'}));
+});
+
+test('v1-to-v2 migration preview and cutover preserve character records and old campaign identity',async()=>{
+  const oldCampaign=(await db.doc('campaigns/c').get()).data();
+  const oldCharacter=(await db.doc('campaigns/c/characters/a').get()).data();
+  const prepare=await stageLegacyMemberships(db,'gm','c',{write:true});
+  assert.equal(prepare.staged,3);
+  const preview=await prepareCampaignCutover(db,'gm','c');
+  assert.equal(preview.ready,true);
+  await assert.rejects(prepareCampaignCutover(db,'alice','c',{activate:true}),/owner/);
+  const result=await prepareCampaignCutover(db,'gm','c',{activate:true});
+  assert.equal(result.activated,true);
+  assert.equal((await db.doc('campaigns/c').get()).data().membershipSchemaVersion,2);
+  const projection=(await db.doc('campaignMemberProjections/alice/campaigns/c').get()).data();
+  assert.equal(projection.status,'active');
+  await assertSucceeds(getDoc(doc(user('alice'),'campaignMemberProjections/alice/campaigns/c')));
+  await assertFails(getDoc(doc(user('bob'),'campaignMemberProjections/alice/campaigns/c')));
+  await assertFails(updateDoc(doc(user('alice'),'campaignMemberProjections/alice/campaigns/c'),{role:'owner'}));
+  assert.equal((await db.doc('campaigns/c').get()).data().ucn,oldCampaign.ucn);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),oldCharacter);
+});
+
+test('cutover refuses missing, mismatched, or extra canonical membership records',async()=>{
+  await stageLegacyMemberships(db,'gm','c',{write:true});
+  await db.doc('campaigns/c/members/alice').update({status:'banned',revision:3});
+  const preview=await prepareCampaignCutover(db,'gm','c');
+  assert.equal(preview.ready,false);
+  await assert.rejects(prepareCampaignCutover(db,'gm','c',{activate:true}),/unresolved conflicts/);
+  assert.equal((await db.doc('campaigns/c').get()).data().membershipSchemaVersion,undefined);
+  await db.doc('campaigns/c/members/alice').update({status:'active'});
+  await db.doc('campaigns/c/members/eve').set({uid:'eve',campaignId:'c',status:'active',role:'player',revision:1});
+  const extra=await prepareCampaignCutover(db,'gm','c');
+  assert.equal(extra.ready,false);
+  assert.ok(extra.issues.some(row=>row.code==='unmatched-staged-member'));
 });
