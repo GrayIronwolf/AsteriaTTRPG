@@ -63,6 +63,12 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
         !JOIN_REQUEST_STATUSES.includes(request.status)) throw new Error('Existing join request needs review.');
       return ownRequestSummary(campaignId,request,true);
     }
+    // Explicit GM closure prevents new requests but does not erase existing
+    // pending/history records. Approval settings never grant access here.
+    if(campaign.joinPolicy?.joinRequestsOpen===false) {
+      if(action==='submit') throw new Error('This campaign is not accepting join requests.');
+      return {campaignId,status:'closed',requestedCharacterId:null,alreadyExists:false};
+    }
     if(action==='status') return {campaignId,status:'none',requestedCharacterId:null,alreadyExists:false};
 
     let charSnap=null,throttleSnap=null;
