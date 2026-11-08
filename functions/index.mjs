@@ -113,6 +113,15 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       await import('./campaignJoinApproval.mjs');
     const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
     const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(['character-lifecycle-list','character-lifecycle-change'].includes(data.action)){
+      if(process.env.ASTERIA_CHARACTER_LIFECYCLE_ENABLED!=='1')
+        throw new Error('Character lifecycle management is not enabled yet.');
+      const {listCampaignCharacterLifecycle,changeCampaignCharacterLifecycle}=
+        await import('./campaignCharacterLifecycle.mjs');
+      if(data.action==='character-lifecycle-list')
+        return await listCampaignCharacterLifecycle(db,uid,data.campaignId);
+      return await changeCampaignCharacterLifecycle(db,uid,data);
+    }
     if(data.action==='character-link-list'||data.action==='character-link-review'){
       if(process.env.ASTERIA_CHARACTER_LINK_APPROVAL_ENABLED!=='1')
         throw new Error('Campaign character approval is not enabled yet.');
