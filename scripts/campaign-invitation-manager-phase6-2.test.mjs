@@ -106,8 +106,8 @@ test('owner-only manager denies members and outsiders, including legacy-role GMs
 
 test('revocation immediately invalidates a previously copied token, without removing players',async()=>{
   const db=fixture(),issued=await issue(db),snapshot=clone(db.store.get('campaigns/c'));
-  const doc=db.store.get('campaigns/c/invitations/'+issued.inviteId);
-  const check=()=>assertSecureInvitationEligible(doc,{
+  const check=()=>assertSecureInvitationEligible(
+    db.store.get('campaigns/c/invitations/'+issued.inviteId),{
     campaignId:'c',inviteId:issued.inviteId,token:issued.token,
     claimantUid:'alice',now:new Date(t0.getTime()+5000),signingKey
   });
