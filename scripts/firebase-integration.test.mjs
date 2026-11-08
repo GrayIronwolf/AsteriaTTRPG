@@ -12,6 +12,7 @@ import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUC
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
+import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -914,4 +915,49 @@ test('GM closed campaign rejects new join requests while retaining pending recor
   assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
   await db.doc('campaigns/c/joinRequests/alice').set({uid:'alice',campaignId:'c',status:'pending'});
   assert.equal((await campaignJoinRequest(db,'alice',{...args,action:'status'})).status,'pending');
+});
+
+test('GM approval grants active v2 membership while protecting character data and capacity',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,playerLimit:1});
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  await campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  await assert.rejects(listPendingCampaignJoinRequests(db,'bob','c'),/authorised GM/);
+  const queue=await listPendingCampaignJoinRequests(db,'gm','c');
+  assert.equal(queue.requests.length,1);
+  assert.equal(queue.requests[0].uid,'eve');
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
+  const approved=await reviewCampaignJoinRequest(db,'gm',{campaignId:'c',requestUid:'eve',decision:'approve',expectedRevision:1});
+  assert.equal(approved.status,'approved');
+  await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c')));
+  await assertSucceeds(getDoc(doc(user('eve'),'campaignMemberProjections/eve/campaigns/c')));
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).data().status,'approved');
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),before);
+  assert.equal((await reviewCampaignJoinRequest(db,'gm',{campaignId:'c',requestUid:'eve',decision:'approve',expectedRevision:1})).alreadyReviewed,true);
+});
+
+test('GM decline and full campaign capacity never grant membership',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,playerLimit:1});
+  await campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  const rejected=await reviewCampaignJoinRequest(db,'gm',{campaignId:'c',requestUid:'eve',decision:'decline',expectedRevision:1});
+  assert.equal(rejected.status,'declined');
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  await campaignJoinRequest(db,'other',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active'});
+  await assert.rejects(reviewCampaignJoinRequest(db,'gm',{campaignId:'c',requestUid:'other',decision:'approve',expectedRevision:1}),/capacity/);
+  assert.equal((await db.doc('campaigns/c/joinRequests/other').get()).data().status,'pending');
+  assert.equal((await db.doc('campaigns/c/members/other').get()).exists,false);
+});
+
+test('auto approval requires owner opt-in and server enablement',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,playerLimit:2});
+  await assert.rejects(setCampaignJoinApprovalMode(db,'alice','c','manual'),/owner/);
+  await assert.rejects(setCampaignJoinApprovalMode(db,'gm','c','automatic'),/not enabled/);
+  await setCampaignJoinApprovalMode(db,'gm','c','automatic',{autoAvailable:true});
+  const pending=await campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  assert.equal(pending.status,'pending');
+  const approved=await campaignJoinRequest(db,'other',{action:'submit',campaignId:'c',ucn:'123456789012'}, {autoApproveEnabled:true});
+  assert.equal(approved.status,'approved');
+  await assertSucceeds(getDoc(doc(user('other'),'campaigns/c')));
+  assert.equal((await db.doc('campaigns/c/joinReviewHistory/other').get()).data().mode,'automatic');
 });

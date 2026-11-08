@@ -659,6 +659,16 @@
             </div>
           </section>
         ` : ''}
+        ${role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true ? `
+          <section class="workspace-link-panel workspace-join-review">
+            <h3>Join Requests</h3>
+            <p class="muted">Approve or decline a pending account request. Any selected character is a preference, not an automatic link.</p>
+            <div id="workspaceJoinReviewSummary" aria-live="polite">Checking pending requests...</div>
+            <div class="workspace-join-review-actions"><button type="button" id="workspaceRefreshJoinReviews">Refresh Requests</button></div>
+            <div id="workspaceJoinReviewList" class="workspace-invite-list"></div>
+            <p id="workspaceJoinReviewMessage" role="status" aria-live="polite"></p>
+          </section>
+        ` : ''}
         <section class="workspace-link-panel">
           <h3>Link Existing Character</h3>
           <p class="muted">Players can link a saved character they own to this campaign.</p>
@@ -697,8 +707,87 @@
     });
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
+    if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderCampaignGMJoinApprovals(campaign) {
+    const host=byId('workspaceJoinReviewList');
+    const summary=byId('workspaceJoinReviewSummary');
+    const message=byId('workspaceJoinReviewMessage');
+    const refresh=byId('workspaceRefreshJoinReviews');
+    const api=window.AsteriaFirebase;
+    if(!host || !summary || !api?.listCampaignJoinRequests) return;
+    const accountUid=api.getUser?.()?.uid;
+    let busy=false;
+    const report=text=>{if(message)message.textContent=text;};
+    const load=async()=>{
+      if(busy)return;
+      busy=true;
+      if(refresh)refresh.disabled=true;
+      if(summary)summary.textContent='Loading join requests...';
+      try{
+        const result=await api.listCampaignJoinRequests(campaign.id);
+        if(!host.isConnected || accountUid!==api.getUser?.()?.uid) return;
+        const requests=Array.isArray(result?.requests)?result.requests:[];
+        const cap=Number(result?.capacity||0),count=Number(result?.activePlayers||0);
+        summary.textContent=`${requests.length} pending requests · ${count} of ${cap} player slots filled · ${result.approvalMode==='automatic'?'Automatic approval':'GM approval'}`;
+        const manualSelect=result.canSetMode ? `<label>Join Request Approval
+          <select id="workspaceJoinApprovalMode">
+            <option value="manual" ${result.approvalMode!=='automatic'?'selected':''}>GM approval (default)</option>
+            ${result.autoAvailable || result.approvalMode==='automatic' ? `<option value="automatic" ${result.approvalMode==='automatic'?'selected':''} ${!result.autoAvailable?'disabled':''}>Automatic approval when capacity allows</option>` : ''}
+          </select>
+        </label>` : '';
+        host.innerHTML=manualSelect + (requests.length?requests.map(row=>`
+          <div class="workspace-join-review-row">
+            <b>Account ${escapeHtml(row.uid)}</b>
+            <small>Character preference: ${escapeHtml(row.requestedCharacterId||'None selected')}</small>
+            <small>Requested: ${escapeHtml(row.requestedAt||'Not recorded')}</small>
+            <div class="workspace-join-review-actions">
+              <button class="primary" type="button" data-review="approve" data-uid="${escapeHtml(row.uid)}" data-revision="${Number(row.revision)||0}" ${count>=cap?'disabled':''}>Approve</button>
+              <button type="button" data-review="decline" data-uid="${escapeHtml(row.uid)}" data-revision="${Number(row.revision)||0}">Decline</button>
+            </div>
+          </div>
+        `).join(''):'<p class="muted">No pending join requests.</p>');
+        if(result.truncated) host.insertAdjacentHTML('beforeend','<p class="muted">More requests may be pending. Refresh after reviewing these requests.</p>');
+        const mode=byId('workspaceJoinApprovalMode');
+        mode?.addEventListener('change',async()=>{
+          const next=mode.value;
+          if(next==='automatic' && !window.confirm('Allow automatic approval of future join requests while slots remain available?')){
+            mode.value='manual';return;
+          }
+          mode.disabled=true;
+          try{
+            await api.setCampaignJoinApprovalMode(campaign.id,next);
+            report('Approval preference saved.');
+          }catch(error){report(error?.message||'Could not change approval settings.');}
+          finally{mode.disabled=false;await load();}
+        });
+        host.querySelectorAll('button[data-review]').forEach(button=>button.addEventListener('click',async()=>{
+          const decision=button.dataset.review;
+          const id=button.dataset.uid;
+          const revision=Number(button.dataset.revision);
+          if(!['approve','decline'].includes(decision)||!Number.isSafeInteger(revision))return;
+          if(!window.confirm(`${decision==='approve'?'Approve':'Decline'} this request? This action is recorded.`))return;
+          host.querySelectorAll('button').forEach(btn=>btn.disabled=true);
+          try{
+            const response=await api.reviewCampaignJoinRequest(campaign.id,id,decision,revision);
+            report(response.status==='approved'?'Account approved and given campaign access.':'Request declined without granting access.');
+          }catch(error){report(error?.message||'Request review failed. Refresh and retry.');}
+          await load();
+        }));
+      }catch(error){
+        if(summary) summary.textContent='Unable to verify GM request access.';
+        host.replaceChildren();
+        report(error?.message||'Unable to retrieve join requests.');
+      }finally{
+        busy=false;
+        if(refresh)refresh.disabled=false;
+      }
+    };
+    refresh?.addEventListener('click',load);
+    await load();
   }
 
   function renderCharacterDetail(character) {
@@ -1015,7 +1104,7 @@
     const copy={
       none:'You have not requested access yet. The GM must approve a new request.',
       pending:'Request pending GM approval. You cannot join or link a character yet.',
-      approved:'Request approved. Campaign access will be updated by the GM approval system.',
+      approved:'Your request was approved. Your account now has campaign access. Character linking is a separate step.',
       declined:'Your previous request was declined. Contact the GM if you need assistance.',
       cancelled:'This request is cancelled. Contact the GM to request another invitation.',
       expired:'This request has expired. Contact the GM to submit again.',

@@ -1,5 +1,6 @@
 import {validUCN} from './campaignUCN.mjs';
 import {JOIN_REQUEST_STATUSES, MEMBER_STATUSES} from './campaignMembership.mjs';
+import {preparePlayerApproval} from './campaignJoinApproval.mjs';
 
 // A UCN locates a campaign. It is NOT a secret invitation or membership grant.
 // Server-controlled request documents are deterministic per account and campaign.
@@ -53,7 +54,16 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
       if(member.uid!==uid || member.campaignId!==campaignId ||
         !MEMBER_STATUSES.includes(member.status) ||
         !['player','co-gm','owner'].includes(member.role)) throw new Error('Campaign membership needs review.');
-      if(member.status==='active') return {campaignId,status:'member',requestedCharacterId:null,alreadyExists:true};
+      if(member.status==='active') {
+        // The player status view should show the final GM decision, not
+        // disguise an approved request as a pre-existing membership.
+        if(action==='status' && requestSnap.exists){
+          const previous=requestSnap.data();
+          if(previous.uid===uid && previous.campaignId===campaignId && previous.status==='approved')
+            return ownRequestSummary(campaignId,previous,true);
+        }
+        return {campaignId,status:'member',requestedCharacterId:null,alreadyExists:true};
+      }
       // No request may reinstate a banned, removed or suspended member.
       return {campaignId,status:'blocked',requestedCharacterId:null,alreadyExists:true};
     }
@@ -84,14 +94,24 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
     const created=insideWindow ? Number(previous.created || 0) : 0;
     if(created>=MAX_NEW_REQUESTS_PER_DAY) throw new Error('Daily join request limit reached. Please try again later.');
 
+    let automatic=null;
+    if(campaign.joinPolicy?.autoApprove===true && options.autoApproveEnabled===true){
+      automatic=await preparePlayerApproval(tx,db,campaignId,uid,campaign,now,campaign.ownerUid);
+      if(!automatic.available) throw new Error('Campaign player capacity has been reached.');
+    }
     const record={
-      uid,campaignId,status:'pending',
+      uid,campaignId,status:automatic?'approved':'pending',
       requestedCharacterId:charRef ? characterId : null,
       requestedAt:now,updatedAt:now,
       source:'ucn',revision:1,
-      reviewedByUid:null,reviewedAt:null
+      reviewedByUid:automatic?campaign.ownerUid:null,reviewedAt:automatic?now:null
     };
+    if(automatic) automatic.apply();
     tx.create(requestRef,record);
+    if(automatic) tx.create(db.doc('campaigns/'+campaignId+'/joinReviewHistory/'+uid),{
+      campaignId,uid,decision:'approve',status:'approved',actorUid:campaign.ownerUid,
+      mode:'automatic',requestedCharacterId:record.requestedCharacterId,at:now
+    });
     tx.set(throttleRef,{
       windowStartedAtMs:insideWindow?windowStart:nowMs,
       created:created+1,updatedAtMs:nowMs
