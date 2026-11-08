@@ -1448,7 +1448,7 @@
       return null;
     }
     pending.characterId=characterId;
-    window.AsteriaPendingCampaignJoin=pending;
+    if(typeof window!=='undefined')window.AsteriaPendingCampaignJoin=pending;
     try{localStorage.setItem('asteriaPendingCampaignJoin',JSON.stringify(pending));}catch{}
     const linkedCampaign = await linkCharacterToCampaign(pending.campaignId, characterId, { silent:true, skipRender:true });
     if (linkedCampaign) clearPendingCampaignJoin();
