@@ -138,7 +138,7 @@ test('discovery publishes only verified campaign records and retains authorized 
   assert.deepEqual(emissions.at(-1).map(c=>c.id),['current']);
   const count=emissions.length;unsubscribe();
   watchers.get('player-query').success(collectionSnapshot([{id:'late'}]));
-  assert.equal(emissions.length,count);assert.equal(stopped,6);
+  assert.equal(emissions.length,count);assert.equal(stopped,7); // plus the authenticated canonical projection listener
 });
 
 test('background discovery errors do not break an open dashboard; its actual stream errors still surface',async()=>{
