@@ -274,7 +274,7 @@ check('Old dark/light controls removed', !html.includes('Dark Mode') && !html.in
 check('Old dark/light CSS modes removed', !stylesCss.includes('body[data-theme'));
 check('Old fixed accent controls removed', !html.includes("setAccent('blue')") && !html.includes('class="colour-grid"'));
 check('Old fixed accent system removed', !appJs.includes('function setAccent') && !stylesCss.includes('body[data-accent') && !stylesCss.includes('.colour-grid'));
-check('Theme controls include required sliders', html.includes('asteriaThemeSelect') && html.includes('asteriaColourWheel') && html.includes('asteriaGlowSlider') && html.includes('asteriaOverlaySlider') && html.includes('asteriaPanelOpacitySlider'));
+check('Appearance settings include solid backgrounds and five independent colour controls', html.includes('asteriaBackgroundSelect') && ['menuButton','topMenuButton','dashboardPrimary','dashboardTab','divider'].every(key => html.includes('asteriaArea-'+key)) && !html.includes('id="asteriaThemeSelect"'));
 check('Home reset clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('showPublicHome'));
 check('Navigation shell uses solid blue-gray panels', stylesCss.includes('--asteria-shell:#17242d') && stylesCss.includes('background:var(--asteria-shell)!important') && stylesCss.includes('overflow:hidden!important'));
 check('Settings drawer opens below the top panel', stylesCss.includes('top:var(--core-header-height)!important') && appJs.includes('function toggleSettings()') && appJs.includes("$('shade').onclick=closeSettings"));

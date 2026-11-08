@@ -1,99 +1,17 @@
-/* The supplied 9933 artwork stays neutral. Its luminance-derived alpha mask
-   lights the same swirls without introducing a second drawing of the smoke.
-   Both layers use the same fixed viewport, crop and source dimensions. */
-:root {
-  --asteria-smoke-art: url("../assets/themes/asteria-smoke-9933.webp");
-  --asteria-energy-mask: url("../assets/themes/asteria-smoke-9933-light-mask.webp");
-  --asteria-smoke-position: center center;
-  --asteria-energy-strength: calc(var(--asteria-background-visibility, .44) *
-    (.75 + var(--asteria-glow-intensity, .36) * .75));
+/* Solid website backgrounds replace the retired smoke and energy layers.
+   Keep this stylesheet URL stable for existing shell integrations. */
+:root { --asteria-site-background:#000000; }
+html, body {
+  background:var(--asteria-site-background,#000000)!important;
 }
-
-html { background-color: #030303 !important; }
-body {
-  background: #030303 !important;
-  /* Keep decorative negative layers above the body background and behind UI. */
-  isolation: isolate;
+body { isolation:isolate; }
+body::before, body::after {
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  mask:none!important;
+  -webkit-mask:none!important;
+  animation:none!important;
 }
-body::before,
-body::after {
-  content: "" !important;
-  display: block !important;
-  position: fixed !important;
-  inset: 0 !important;
-  pointer-events: none !important;
-  background-size: cover !important;
-  background-position: var(--asteria-smoke-position);
-  background-repeat: no-repeat !important;
-}
-/* Static greyscale artwork: never filtered, blended or tinted by theme colour. */
-body::before {
-  z-index: -2 !important;
-  background-image:
-    linear-gradient(180deg,
-      rgba(0, 0, 0, var(--asteria-bg-top-veil, .28)),
-      rgba(0, 0, 0, var(--asteria-bg-bottom-veil, .53))),
-    var(--asteria-smoke-art) !important;
-  background-color: #030303 !important;
-  -webkit-mask: none !important;
-  mask: none !important;
-  opacity: 1 !important;
-  filter: none !important;
-  animation: none !important;
-  transition: none !important;
-}
-/* A single transparent coloured light layer, clipped to the photographed swirls.
-   Only the shimmer moves; the smoke and mask never translate or scale. */
-body::after {
-  z-index: -1 !important;
-  -webkit-mask: var(--asteria-energy-mask) var(--asteria-smoke-position) / cover no-repeat !important;
-  mask: var(--asteria-energy-mask) var(--asteria-smoke-position) / cover no-repeat !important;
-  background-color: rgba(var(--asteria-accent-rgb, 31,125,255), .48) !important;
-  background-image: linear-gradient(105deg,
-    transparent 25%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .12) 38%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .85) 48%,
-    color-mix(in srgb, var(--asteria-accent, #1f7dff) 65%, white) 50%,
-    rgba(var(--asteria-accent-rgb, 31,125,255), .85) 52%,
-    transparent 65%) !important;
-  background-size: 300% 100% !important;
-  background-position: 100% center;
-  opacity: var(--asteria-energy-strength);
-  filter: drop-shadow(0 0 calc(8px * var(--asteria-glow-intensity, .36))
-    rgba(var(--asteria-accent-rgb, 31,125,255), .5)) !important;
-  animation: asteria-energy-pulse 7s ease-in-out infinite,
-    asteria-energy-wave 18s linear infinite;
-  transition: opacity .25s ease;
-}
-@keyframes asteria-energy-pulse {
-  0%, 100% { opacity: calc(var(--asteria-energy-strength) * .62); }
-  50% { opacity: var(--asteria-energy-strength); }
-}
-@keyframes asteria-energy-wave {
-  0% { background-position: 100% center; }
-  100% { background-position: 0% center; }
-}
-body[data-asteria-energy-motion="wave"]::after {
-  animation: asteria-energy-wave 18s linear infinite;
-}
-body[data-asteria-energy-motion="pulse"]::after {
-  background-image: none !important;
-  animation: asteria-energy-pulse 7s ease-in-out infinite;
-}
-body[data-asteria-energy-motion="off"]::after {
-  background-image: none !important;
-  animation: none !important;
-}
-@media (max-width: 900px) {
-  :root {
-    --asteria-smoke-art: url("../assets/themes/asteria-smoke-9933-mobile.webp");
-    --asteria-energy-mask: url("../assets/themes/asteria-smoke-9933-light-mask-mobile.webp");
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    animation: none !important;
-    transition: none !important;
-    background-image: none !important;
-  }
-}
+#asteriaBackgroundSelect { width:100%;min-height:44px; }
+#asteriaBackgroundHelp { font-size:.82rem;line-height:1.5; }
