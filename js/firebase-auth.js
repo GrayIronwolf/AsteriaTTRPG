@@ -1862,11 +1862,11 @@ const firebasePublicApi = {
   serverCampaignUCNEnabled: function(){
     // Do not switch production creation before the separately deployed backend
     // callable and Firebase rules have been verified.
-    return firebaseEnv.VITE_ASTERIA_SERVER_UCN_ENABLED === '1';
+    return window.AsteriaFeatureFlags?.serverCampaignUCN === true;
   },
   createCampaignIdentity: async function(name){
     if(!functionsClient || !currentUser) throw new Error('Sign in before creating a campaign.');
-    if(firebaseEnv.VITE_ASTERIA_SERVER_UCN_ENABLED !== '1') throw new Error('Server campaign identity allocation is not enabled.');
+    if(window.AsteriaFeatureFlags?.serverCampaignUCN !== true) throw new Error('Server campaign identity allocation is not enabled.');
     return (await httpsCallable(functionsClient,'asteriaCampaignUCN')({action:'create',name})).data;
   },
   previewCampaignByUCN: async function(codeValue){
