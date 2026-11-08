@@ -178,7 +178,7 @@ export function CharacteristicSummary({ character = {} }) {
         const score = effectiveCharacteristicValue(character, stat.key);
         const tier = characteristicTier(score);
         const modifier = Number(tier.modifier || 0);
-        return <article key={stat.key} title={`${stat.label}: ${score}, ${tier.label}${modifier ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`}>
+        return <article key={stat.key} className="react-characteristic-paper react-characteristic-paper--summary" data-characteristic={stat.key} title={`${stat.label}: ${score}, ${tier.label}${modifier ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`}>
           <span>{stat.short}</span>
           <strong>{score}</strong>
           <small>{modifier ? `${modifier > 0 ? '+' : ''}${modifier}` : tier.label}</small>

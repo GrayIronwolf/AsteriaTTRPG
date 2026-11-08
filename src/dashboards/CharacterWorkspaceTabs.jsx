@@ -57,7 +57,8 @@ function CharacteristicsPanel({ campaignId, character, editable }) {
     const result=await action.run(()=>firebaseService.spendCPBatch(campaignId,character.id,draft),`Applied ${staged} Characteristic Point${staged===1?'':'s'}.`);
     if(result?.ok) setDraft({});
   };
-  return <Panel title="Characteristics" action={<StatusPill>{available} CP available</StatusPill>} className="react-characteristics-panel">
+  return <section className="react-characteristics-panel react-characteristics-parchment" aria-label="Characteristics">
+    <header className="react-characteristics-heading"><h2>Characteristics</h2><StatusPill>{available} CP available</StatusPill></header>
     <p className="react-help">Stage available Characteristic Points with the controls below. Constitution, Endurance, and Wisdom each add 10 maximum HP, SP, or MP per applied point.</p>
     <div className="react-characteristic-gallery">{CHARACTERISTICS.map(stat=>{
       const base=characteristicValue(character,stat.key);
@@ -65,21 +66,21 @@ function CharacteristicsPanel({ campaignId, character, editable }) {
       const value=base+pending;
       const tier=characteristicTier(value);
       const cap=characteristicCap(character,stat.key);
-      return <article key={stat.key}>
+      return <article key={stat.key} className="react-characteristic-paper react-characteristic-paper--card" data-characteristic={stat.key}>
         <header><h3>{stat.label}</h3><span>{stat.short}</span></header>
         <strong>{value}</strong>
         <small>{tier.label}</small>
         <small>Tier Cap {cap}</small>
         <div className="react-characteristic-controls">
-          <button aria-label={`Remove staged point from ${stat.label}`} disabled={!editable||action.busy||pending<1} onClick={()=>change(stat.key,-1)} type="button">-</button>
+          <button className="react-characteristic-stepper" aria-label={`Remove staged point from ${stat.label}`} disabled={!editable||action.busy||pending<1} onClick={()=>change(stat.key,-1)} type="button">−</button>
           <span>{pending?`+${pending} staged`:'No change'}</span>
-          <button aria-label={`Add point to ${stat.label}`} disabled={!editable||action.busy||available<1||value>=cap} onClick={()=>change(stat.key,1)} type="button">+</button>
+          <button className="react-characteristic-stepper" aria-label={`Add point to ${stat.label}`} disabled={!editable||action.busy||available<1||value>=cap} onClick={()=>change(stat.key,1)} type="button">+</button>
         </div>
       </article>;
     })}</div>
     <div className="react-characteristics-apply"><span>{staged} CP staged</span><button className="primary" disabled={!editable||action.busy||staged<1} onClick={apply} type="button">Apply Characteristic Points</button></div>
     <p className="react-action-message" role="status">{action.message}</p>
-  </Panel>;
+  </section>;
 }
 
 function detailLabel(value) {
