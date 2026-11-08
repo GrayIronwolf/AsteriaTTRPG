@@ -27,10 +27,10 @@ test('Player HUD uses full-height unframed art on both sides without losing exis
   assert.match(jsx, /react-player-hud-campaign-art/);
   assert.match(jsx, /campaign\.image, campaign\.art, campaign\.banner/);
   assert.match(jsx, /showPortrait=\{false\}/);
-  assert.match(jsx, /<ExperienceBar character=\{character\}/);
+  assert.match(jsx, /<ExperienceBar character=\{character\} cinematic/);
   assert.match(jsx, /<ResourceBarGroup character=\{character\}/);
   assert.match(jsx, /<CharacteristicSummary character=\{character\}/);
-  assert.match(jsx, /<CampaignInformationPanel \{\.\.\.props\}/);
+  assert.match(jsx, /<CampaignInformationPanel \{\.\.\.props\} preferences=\{preferences\} embedded cinematic/);
   assert.match(jsx, /onResourceChange=\{props\.onResourceChange\}/);
   assert.match(css, /\.react-player-topbar\.react-player-cinematic-hud/);
   assert.match(css, /object-fit: cover/);
@@ -39,4 +39,22 @@ test('Player HUD uses full-height unframed art on both sides without losing exis
   assert.match(css, /@container \(max-width: 900px\)/);
   assert.match(css, /@container \(max-width: 620px\)/);
   assert.doesNotMatch(read('src/dashboards/GMDashboard.jsx'), /react-player-cinematic-hud/);
+});
+
+test('Cinematic identity and campaign details sit on images without redundant section headers', () => {
+  const jsx = read('src/components/DashboardInformation.jsx');
+  const css = read('src/styles/asteria-react.css');
+  assert.match(jsx, /react-player-portrait-caption/);
+  assert.match(jsx, /react-player-campaign-caption/);
+  assert.match(jsx, /<PlayerLevelDisplay character=\{character\}[^>]+cinematic/);
+  assert.match(jsx, /<ExperienceBar character=\{character\} cinematic/);
+  assert.match(jsx, /<CampaignInformationPanel \{\.\.\.props\} preferences=\{preferences\} embedded cinematic/);
+  assert.match(jsx, /!cinematic \? <div[^\n]+<span>Active Character/);
+  assert.match(jsx, /!cinematic \? <div[^\n]+<span>Campaign Information/);
+  assert.match(jsx, /String\(value.type \|\| ''\).toLowerCase\(\) === 'guild'/);
+  assert.match(css, /asteria-level-shield\.webp/);
+  assert.match(css, /\.react-player-campaign-overlay \.react-connection/);
+  assert.match(css, /background: transparent !important/);
+  assert.match(css, /@container \(max-width: 620px\)/);
+  assert.match(css, /@container \(max-width: 420px\)/);
 });
