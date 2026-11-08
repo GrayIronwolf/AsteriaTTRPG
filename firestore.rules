@@ -119,7 +119,7 @@ service cloud.firestore {
     function linksOwnedCharacter(campaignId) {
       let characterId = request.resource.data.lastLinkedCharacterId;
       let linked = getAfter(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(characterId)).data;
-      return isCampaignMember(resource.data, campaignId) &&
+      return resource.data.get('membershipSchemaVersion', 1) == 1 && isCampaignMember(resource.data, campaignId) &&
         linked.ownerUid == request.auth.uid &&
         resource.data.get('playerCharacterLinks', {}).get(characterId, request.auth.uid) == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
