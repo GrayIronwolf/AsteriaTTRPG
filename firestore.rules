@@ -290,7 +290,7 @@ service cloud.firestore {
           request.resource.data.text.size() <= 2000;
         allow update: if false;
         allow delete: if isCampaignGM(campaignId) ||
-          (signedIn() && resource.data.ownerUid == request.auth.uid);
+          (canUseCampaignSystems(campaignId) && resource.data.ownerUid == request.auth.uid);
       }
     }
 
