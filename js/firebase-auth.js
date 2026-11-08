@@ -1908,6 +1908,15 @@ const firebasePublicApi = {
       action:'roster',campaignId
     })).data;
   },
+  moderateCampaignMember: async function(campaignId,memberUid,action,expectedRevision,expectedStatus,reason){
+    if(!functionsClient || !currentUser)throw new Error('Sign in as an authorised GM.');
+    if(window.AsteriaFeatureFlags?.campaignMemberControls!==true)
+      throw new Error('Member controls are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'member-control',campaignId,memberUid,memberAction:action,
+      expectedRevision,expectedStatus,reason
+    })).data;
+  },
   listCampaignJoinRequests: async function(campaignId){
     if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
     return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
