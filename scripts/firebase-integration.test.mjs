@@ -1230,7 +1230,7 @@ test('Phase 5.3: archive and restore preserve owned gameplay and forbid browser 
     await assertFails(getDoc(doc(client,'campaigns/c/archivedCharacters/'+id)));
     await assertFails(setDoc(doc(client,path),{id,ownerUid:'alice',sourceCharacterId:'lifecycle'}));
   }
-  await assertFails(setDoc(doc(user('gm'),'campaigns/c/characters/forged',{
+  await assertFails(setDoc(doc(user('gm'),'campaigns/c/characters/forged'),{
     id:'forged',ownerUid:'gm',sourceCharacterId:'forged'
   }));
   await assertFails(deleteDoc(doc(user('gm'),'campaigns/c/characters/a')));
