@@ -697,12 +697,24 @@
             <p id="workspaceCharacterApprovalStatus" role="status" aria-live="polite"></p>
           </section>
         ` : ''}
+        ${role === 'GM' && campaign.membershipSchemaVersion===2 &&
+          window.AsteriaFeatureFlags?.campaignCharacterLifecycle===true ? `
+          <section class="workspace-link-panel workspace-character-lifecycle">
+            <h3>Manage Campaign Characters</h3>
+            <p class="muted">Deactivation archives the current gameplay sheet and removes it from active encounters and party lists. Restore returns it without losing progress. Unlink preserves the archived character and original Forge sheet.</p>
+            <button type="button" id="workspaceRefreshCharacterLifecycle">Refresh Character Links</button>
+            <div id="workspaceCharacterLifecycleList" aria-live="polite"></div>
+            <p id="workspaceCharacterLifecycleStatus" role="status" aria-live="polite"></p>
+          </section>
+        ` : ''}
         <section class="workspace-link-panel">
           <h3>${campaign.membershipSchemaVersion===2?'Request Character Link':'Link Existing Character'}</h3>
           <p class="muted">${campaign.membershipSchemaVersion===2?'Choose a saved character you own. A request is sent for GM approval; the character will not enter the party until approved.':'Players can link a saved character they own to this campaign.'}</p>
           <label>Character<select id="workspaceLinkCharacter">${characters.map(character => `<option value="${escapeHtml(character.id)}" ${character.id === (window.session?.character || window.selected) ? 'selected' : ''}>${escapeHtml(character.name || character.id)}</option>`).join('')}</select></label>
           <button class="primary" type="button" id="workspaceLinkCharacterBtn" ${characters.length && (campaign.membershipSchemaVersion!==2 || (window.AsteriaFeatureFlags?.campaignCharacterLinks===true && campaign.settings?.allowPlayerLinkCharacter!==false)) ? '' : 'disabled'}>${campaign.membershipSchemaVersion===2?'Request Link':'Link Character'}</button>
           <p id="workspaceCharacterLinkStatus" role="status" aria-live="polite">${campaign.membershipSchemaVersion===2 && window.AsteriaFeatureFlags?.campaignCharacterLinks!==true?'Character link requests are not activated yet.':campaign.membershipSchemaVersion===2 && campaign.settings?.allowPlayerLinkCharacter===false?'The GM has disabled character linking.':''}</p>
+          ${campaign.membershipSchemaVersion===2&&window.AsteriaFeatureFlags?.campaignCharacterLifecycle===true?
+            '<button type="button" id="workspaceUnlinkOwnCharacter">Unlink My Character</button>':''}
           ${campaign.settings?.allowPlayerCreateCharacter!==false?'<button type="button" id="workspaceForgeCharacterForCampaign">Forge New Character</button>':''}
         </section>
         <section class="workspace-link-panel">
@@ -744,6 +756,37 @@
       window.AsteriaFeatureFlags?.campaignCharacterApproval===true)
       renderCampaignGMCharacterApprovals(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
+    if(role==='GM'&&campaign.membershipSchemaVersion===2&&
+      window.AsteriaFeatureFlags?.campaignCharacterLifecycle===true)
+      renderCampaignGMCharacterLifecycle(campaign);
+    byId('workspaceUnlinkOwnCharacter')?.addEventListener('click',async()=>{
+      const api=window.AsteriaFirebase,choice=byId('workspaceLinkCharacter');
+      const status=byId('workspaceCharacterLinkStatus');
+      const saved=window.chars?.[choice?.value];
+      if(!api?.changeCampaignCharacterLifecycle||!api?.getCampaignCharacterLinkStatus||!saved)return;
+      const sourceCharacterId=String(saved.sourceCharacterId||saved.id||'');
+      const request=await api.getCampaignCharacterLinkStatus(campaign.id,sourceCharacterId)
+        .catch(error=>({error:error?.message||'Could not check character status.'}));
+      if(request.error){if(status)status.textContent=request.error;return;}
+      const action=request.status==='pending'?'cancel':'unlink';
+      if(!['pending','approved','inactive'].includes(request.status)){
+        if(status)status.textContent='No active character link to withdraw.';
+        return;
+      }
+      if(!window.confirm(action==='cancel'?'Withdraw this pending character request?':
+        'Unlink this character from the campaign? Your original Forge sheet and archived gameplay will be preserved.'))return;
+      const button=byId('workspaceUnlinkOwnCharacter');
+      if(button)button.disabled=true;
+      try{
+        const result=await api.changeCampaignCharacterLifecycle(campaign.id,{
+          sourceCharacterId,action,expectedRevision:request.revision
+        });
+        if(status)status.textContent=result.status==='declined'?
+          'Pending request withdrawn.':'Character unlinked. Original sheet and gameplay archive retained.';
+        if(action==='unlink')await window.AsteriaDataSync?.refreshCampaigns?.('character-unlinked');
+      }catch(error){if(status)status.textContent=error?.message||'Could not unlink character.';}
+      finally{if(button)button.disabled=false;}
+    });
     if(campaign.membershipSchemaVersion===2&&window.AsteriaFeatureFlags?.campaignCharacterLinks===true){
       const choice=byId('workspaceLinkCharacter');
       const status=byId('workspaceCharacterLinkStatus');
@@ -780,6 +823,96 @@
       else window.AsteriaGameplay?.openCharacterForge?.();
     });
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderCampaignGMCharacterLifecycle(campaign){
+    const host=byId('workspaceCharacterLifecycleList');
+    const status=byId('workspaceCharacterLifecycleStatus');
+    const refresh=byId('workspaceRefreshCharacterLifecycle');
+    const api=window.AsteriaFirebase;
+    if(!host||!status||!api?.listCampaignCharacterLifecycle||
+      !api?.changeCampaignCharacterLifecycle)return;
+    const uid=api.getUser?.()?.uid;
+    let busy=false;
+    const load=async()=>{
+      if(busy)return;
+      busy=true;
+      if(refresh)refresh.disabled=true;
+      status.textContent='Loading character lifecycle records...';
+      try{
+        const result=await api.listCampaignCharacterLifecycle(campaign.id);
+        if(!host.isConnected||api.getUser?.()?.uid!==uid)return;
+        host.replaceChildren();
+        const links=Array.isArray(result?.links)?result.links:[];
+        if(!links.length){
+          const empty=document.createElement('p');
+          empty.className='muted';
+          empty.textContent='No approved or deactivated characters to manage.';
+          host.appendChild(empty);
+        }
+        for(const link of links){
+          const row=document.createElement('article');
+          row.className='workspace-roster-row';
+          const name=document.createElement('b');
+          name.textContent='Character: '+String(link.sourceCharacterId||'');
+          const owner=document.createElement('small');
+          owner.textContent='Owner: '+String(link.ownerUid||'');
+          const state=document.createElement('small');
+          state.textContent='Status: '+String(link.status||'');
+          row.append(name,owner,state);
+          const actions=document.createElement('div');
+          actions.className='workspace-roster-controls';
+          const choices=link.status==='approved'?
+            [['deactivate','Deactivate'],['unlink','Unlink']]:
+            [['restore','Restore'],['unlink','Unlink']];
+          for(const [action,label] of choices){
+            const button=document.createElement('button');
+            button.type='button';
+            button.textContent=label;
+            button.addEventListener('click',async()=>{
+              if(busy||api.getUser?.()?.uid!==uid)return;
+              const question=action==='deactivate'?
+                'Deactivate this character? The live sheet will be archived and active gameplay stopped.':
+                action==='restore'?
+                  'Restore this character and its archived gameplay to the active campaign?':
+                  'Unlink this character? The Forge sheet and gameplay archive will be retained.';
+              if(!window.confirm(question))return;
+              busy=true;
+              if(refresh)refresh.disabled=true;
+              host.querySelectorAll('button').forEach(b=>{b.disabled=true;});
+              status.textContent='Updating character lifecycle...';
+              let message='';
+              try{
+                const outcome=await api.changeCampaignCharacterLifecycle(campaign.id,{
+                  linkId:link.linkId,action,expectedRevision:link.revision
+                });
+                if(api.getUser?.()?.uid!==uid)return;
+                message='Character '+outcome.status+'. Original Forge data preserved.';
+                await window.AsteriaDataSync?.refreshCampaigns?.('character-'+action);
+              }catch(error){message=error?.message||'Could not change character state.';}
+              finally{
+                busy=false;
+                if(status.isConnected)status.textContent=message;
+                if(host.isConnected&&api.getUser?.()?.uid===uid)void load();
+              }
+            });
+            actions.appendChild(button);
+          }
+          row.appendChild(actions);
+          host.appendChild(row);
+        }
+        status.textContent=links.length+' character lifecycle record(s) loaded.';
+      }catch(error){
+        if(host.isConnected)host.replaceChildren();
+        if(status.isConnected)status.textContent=error?.message||
+          'Could not load character lifecycle records.';
+      }finally{
+        busy=false;
+        if(refresh)refresh.disabled=false;
+      }
+    };
+    refresh?.addEventListener('click',load);
+    await load();
   }
 
   async function renderCampaignGMCharacterApprovals(campaign){
