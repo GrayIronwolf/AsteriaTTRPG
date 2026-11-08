@@ -12,6 +12,7 @@ import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUC
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
+import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -904,4 +905,45 @@ test('staged member requests cannot leak through unapproved browsers or alter le
   await assertFails(getDoc(doc(user('eve'),'campaigns/c/joinRequests/eve')));
   await assertFails(getDoc(doc(user('gm'),'campaigns/c/joinRequests/eve')));
   await assertFails(setDoc(doc(user('alice'),'campaigns/c/joinRequests/alice'),{uid:'alice',status:'pending'}));
+});
+
+test('join requests create pending server records without granting campaign access',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  const args={action:'submit',campaignId:'c',ucn:'123456789012',characterId:'a'};
+  const result=await campaignJoinRequest(db,'alice',args);
+  assert.equal(result.status,'pending');
+  assert.equal(result.requestedCharacterId,'a');
+  assert.equal(result.alreadyExists,false);
+  const saved=(await db.doc('campaigns/c/joinRequests/alice').get()).data();
+  assert.equal(saved.uid,'alice');
+  assert.equal(saved.status,'pending');
+  assert.equal((await db.doc('campaigns/c/members/alice').get()).exists,false);
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/joinRequests/alice')));
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/joinRequests/alice'),{status:'approved'}));
+  await assertFails(setDoc(doc(user('gm'),'campaigns/c/joinRequests/alice'),{status:'approved'}));
+  const second=await campaignJoinRequest(db,'alice',args);
+  assert.equal(second.status,'pending');
+  assert.equal(second.alreadyExists,true);
+  assert.equal((await db.doc('campaignJoinRequestThrottle/alice').get()).data().created,1);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().xp,0);
+});
+
+test('join requests deny foreign characters, banned accounts, and legacy campaigns',async()=>{
+  await assert.rejects(campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'}),/unavailable/);
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  await assert.rejects(campaignJoinRequest(db,'bob',{action:'submit',campaignId:'c',ucn:'123456789012',characterId:'a'}),/not owned/);
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'banned'});
+  const blocked=await campaignJoinRequest(db,'bob',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  assert.equal(blocked.status,'blocked');
+  assert.equal((await db.doc('campaigns/c/joinRequests/bob').get()).exists,false);
+});
+
+test('closed v2 campaigns cannot accept new join requests',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:false}});
+  const args={action:'submit',campaignId:'c',ucn:'123456789012'};
+  const info=await campaignJoinRequest(db,'eve',{...args,action:'status'});
+  assert.equal(info.status,'closed');
+  await assert.rejects(campaignJoinRequest(db,'eve',args),/not accepting/);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
 });
