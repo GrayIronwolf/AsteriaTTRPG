@@ -166,7 +166,7 @@ export async function reviewCampaignCharacterLink(db,actorUid,
     const revision=link.revision+1;
     if(!goodRevision(revision))throw Error('Character link revision overflow.');
     const status=decision==='approve'?'approved':'declined';
-    const audit={
+    const auditEvent={
       eventId:receiptId,campaignId,actorUid,subjectUid:link.ownerUid,
       category:'character-link',action:status,decision,createdAt:now,
       metadata:{sourceCharacterId:link.sourceCharacterId,campaignCharacterId:link.campaignCharacterId}
@@ -209,7 +209,7 @@ export async function reviewCampaignCharacterLink(db,actorUid,
     tx.update(linkRef,{status,revision,reviewedByUid:actorUid,
       reviewedAt:now,approvedByUid:decision==='approve'?actorUid:null,
       approvedAt:decision==='approve'?now:null,updatedAt:now});
-    tx.create(auditRef,audit);
+    tx.create(auditRef,auditEvent);
     return {campaignId,linkId,status,alreadyReviewed:false,
       campaignCharacterId:link.campaignCharacterId};
   });
