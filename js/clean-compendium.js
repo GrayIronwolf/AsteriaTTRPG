@@ -996,21 +996,22 @@
     try{saved=Boolean(await saveCampaign?.(id,campaign));}
     catch(error){console.warn('Campaign save failed before artwork upload',error);}
     if(!saved){
-      window.toast?.('Campaign created locally, but cloud saving failed. Retry after reconnecting.');
-      if(forgeButton)forgeButton.disabled=false;
+      window.toast?.('Campaign saved locally, but the cloud save failed. Open Campaign Forge to retry after reconnecting.');
+      openDashboard('campaigns');
       return;
     }
+    let imageWarning='';
     if(imageFile){
       const status=byId('workspaceCampaignArtworkStatus');
       if(status)status.textContent='Uploading campaign artwork...';
       try{
         const result=await window.AsteriaFirebase?.uploadCampaignArtwork?.(id,imageFile);
         if(result?.ok){campaign.image=result.image;campaign.imagePath=result.path;}
-        else window.toast?.(result?.error||'Campaign created, but artwork upload failed. Add it in the GM Campaign Manager.');
-      }catch(error){window.toast?.('Campaign created, but artwork upload failed. Add it in the GM Campaign Manager.');}
+        else imageWarning=result?.error||'Artwork upload failed. Add it in the GM Campaign Manager.';
+      }catch(error){imageWarning=error?.message||'Artwork upload failed. Add it in the GM Campaign Manager.';}
     }
-    window.toast?.(`Campaign created: ${name}`);
     openDashboard('campaigns');
+    window.toast?.(imageWarning ? `Campaign created, but ${imageWarning}` : `Campaign created: ${name}`);
   }
 
   function createWorkspaceCharacter() {
