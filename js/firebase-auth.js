@@ -1998,7 +1998,7 @@ const firebasePublicApi = {
       throw new Error('Campaign character lifecycle is not activated.');
     return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
       action:'character-lifecycle-change',campaignId,
-      linkId,sourceCharacterId,action,expectedRevision
+      linkId,sourceCharacterId,lifecycleAction:action,expectedRevision
     })).data;
   },
   listPendingCampaignCharacterLinks: async function(campaignId){
