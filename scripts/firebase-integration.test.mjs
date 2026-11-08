@@ -675,3 +675,41 @@ test('appearance preferences are private per Firebase user and cannot be read or
   assert.equal(both.theme.value.theme,'ranger');
   assert.equal(both.typography.value.reading,'inter');
 });
+
+ 
+// Phase 1.3: the proposed v2 collections must remain locked down until their
+// dedicated Firestore rules and server-only operations are implemented.
+test('future campaign connection collections are denied to browser clients by default',async()=>{
+  const alice=user('alice'),gm=user('gm'),eve=user('eve');
+  const paths=[
+    'campaignDirectory/123456789012',
+    'campaigns/c/members/alice',
+    'campaigns/c/joinRequests/alice',
+    'campaigns/c/invitations/invite1',
+    'campaigns/c/characterLinks/link1',
+    'campaigns/c/auditEvents/audit1'
+  ];
+  for(const path of paths) {
+    await db.doc(path).set({campaignId:'c',uid:'alice',status:'active',recipientEmailNormalized:'private@example.test'});
+    for(const client of [alice,gm,eve]){
+      await assertFails(getDoc(doc(client,path)));
+      await assertFails(setDoc(doc(client,path),{status:'active'}));
+    }
+  }
+});
+
+test('legacy owner can still write private account projections; v2 must restrict these',async()=>{
+  const path='users/alice/campaignRefs/c';
+  await assertSucceeds(setDoc(doc(user('alice'),path),{role:'owner',status:'active'}));
+  await assertFails(getDoc(doc(user('bob'),path)));
+  // This permissive v1 owner-write rule is a known migration requirement, not v2 authorization.
+});
+
+test('legacy campaign invite behavior remains unchanged while v2 is dormant',async()=>{
+  const first=await accessInvite(db,'eve','123456789012',false);
+  assert.deepEqual(Object.keys(first).sort(),['id','name','ucn']);
+  assert.equal((await db.doc('campaigns/c').get()).data().membershipSchemaVersion,undefined);
+  await accessInvite(db,'eve','123456789012',true);
+  assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,'player');
+  await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c')));
+});
