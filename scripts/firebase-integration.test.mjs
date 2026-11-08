@@ -20,6 +20,7 @@ import {campaignCharacterLink} from '../functions/campaignCharacterLinks.mjs';
 import {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink} from '../functions/campaignCharacterApproval.mjs';
 import {changeCampaignCharacterLifecycle,listCampaignCharacterLifecycle} from '../functions/campaignCharacterLifecycle.mjs';
 import {issueSecureCampaignInvitation,assertSecureInvitationEligible} from '../functions/campaignSecureInvitations.mjs';
+import {listSecureCampaignInvitations,changeSecureCampaignInvitation} from '../functions/campaignInvitationManager.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1360,4 +1361,72 @@ test('Phase 6.1: only owner of upgraded campaign issues; verified email required
     emailVerified:true,signingKey,
     now:new Date('2026-11-09T05:00:00.000Z')
   }),/unavailable/);
+});
+
+
+test('Phase 6.2: only owner sees safe metadata, revocation prevents token reuse without joining',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,
+    joinPolicy:{joinRequestsOpen:true}});
+  const signingKey='firebase-test-key-'.repeat(3);
+  const issued=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'phase-6-2-invite-00000001',
+    type:'email',recipientEmail:' Player@example.COM ',
+    roleOffered:'player',expiresInHours:48,maxUses:1
+  },{signingKey,now:new Date('2026-11-09T04:00:00.000Z')});
+  const token=issued.token;
+  const path='campaigns/c/invitations/'+issued.inviteId;
+  const before=(await db.doc('campaigns/c').get()).data();
+  const list=await listSecureCampaignInvitations(db,'gm',{campaignId:'c'},
+    {now:new Date('2026-11-09T05:00:00.000Z')});
+  assert.equal(list.invitations.length,1);
+  assert.equal(list.invitations[0].recipientEmail,'player@example.com');
+  assert.equal(list.invitations[0].revision,1);
+  assert.equal(list.nextCursor,null);
+  assert.equal(JSON.stringify(list).includes(token),false);
+  assert.equal(JSON.stringify(list).includes(
+    (await db.doc(path).get()).data().tokenDigest),false);
+  await assert.rejects(listSecureCampaignInvitations(db,'alice',{campaignId:'c'}),/Only the owner/);
+  await assert.rejects(listSecureCampaignInvitations(db,'bob',{campaignId:'c'}),/Only the owner/);
+  await assert.rejects(changeSecureCampaignInvitation(db,'alice',{
+    campaignId:'c',inviteId:issued.inviteId,action:'revoke',expectedRevision:1
+  }),/Only the owner/);
+  const revoked=await changeSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',inviteId:issued.inviteId,action:'revoke',expectedRevision:1
+  },{now:new Date('2026-11-09T05:00:00.000Z')});
+  assert.equal(revoked.status,'revoked');
+  assert.equal(revoked.revision,2);
+  assert.equal((await db.doc('campaigns/c/auditEvents/invite-management-'+issued.inviteId+'-r1').get()).data().action,'revoke');
+  await assert.rejects(changeSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',inviteId:issued.inviteId,action:'expire',expectedRevision:1
+  }),/no longer active/);
+  assert.throws(()=>assertSecureInvitationEligible(
+    (await db.doc(path).get()).data(),{
+      campaignId:'c',inviteId:issued.inviteId,token,
+      claimantUid:'eve',claimantEmail:'player@example.com',
+      emailVerified:true,now:new Date('2026-11-09T05:00:00.000Z'),signingKey
+    }),/unavailable/);
+  const after=(await db.doc('campaigns/c').get()).data();
+  assert.deepEqual(after,before);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  for(const uid of ['gm','alice','eve']){
+    await assertFails(getDoc(doc(user(uid),path)));
+    await assertFails(getDocs(collection(user(uid),'campaigns/c/invitations')));
+    await assertFails(updateDoc(doc(user(uid),path),{status:'active'}));
+  }
+});
+
+test('Phase 6.2: expired listing is metadata-only and no source or character changes',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  const issued=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'phase-6-2-invite-00000002',
+    type:'share-link',roleOffered:'co-gm',expiresInHours:1,maxUses:1
+  },{signingKey:'firebase-test-key-'.repeat(3),
+    now:new Date('2026-11-09T04:00:00.000Z')});
+  const listing=await listSecureCampaignInvitations(db,'gm',{campaignId:'c'},
+    {now:new Date('2026-11-09T06:00:00.000Z')});
+  assert.equal(listing.invitations[0].status,'expired');
+  assert.equal(listing.invitations[0].roleOffered,'co-gm');
+  assert.equal((await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data().status,'active');
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().xp,42);
+  assert.equal((await db.doc('campaigns/c/members/bob').get()).exists,false);
 });
