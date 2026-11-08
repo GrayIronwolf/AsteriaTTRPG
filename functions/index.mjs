@@ -113,6 +113,16 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       await import('./campaignJoinApproval.mjs');
     const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
     const autoAvailable=process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1';
+    if(data.action==='character-link-request'||data.action==='character-link-status'){
+      if(process.env.ASTERIA_CHARACTER_LINK_REQUESTS_ENABLED!=='1')
+        throw new Error('Campaign character requests are not enabled yet.');
+      const {campaignCharacterLink}=await import('./campaignCharacterLinks.mjs');
+      return await campaignCharacterLink(db,uid,{
+        action:data.action==='character-link-request'?'request':'status',
+        campaignId:data.campaignId,sourceCharacterId:data.sourceCharacterId,
+        sourceKind:data.sourceKind||'owned'
+      });
+    }
     if(data.action==='role-change'||data.action==='permission-change'||data.action==='activity'){
       if(process.env.ASTERIA_ROLE_PERMISSIONS_ENABLED!=='1')
         throw new Error('Campaign role administration is not enabled yet.');
