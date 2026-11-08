@@ -77,7 +77,8 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
   .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group::before {
   z-index:-1;
-  background:url("../assets/ui/dashboard/10004.png") center / 100% 100% no-repeat;
+  background:var(--asteria-dashboard-tab,var(--asteria-accent,#1f7dff)) url("../assets/ui/dashboard/10004.png") center / 100% 100% no-repeat;
+  background-blend-mode:luminosity;
   clip-path:polygon(10% 49.17%,16% 28%,84% 28%,90% 49.17%,84% 71%,16% 71%);
 }
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
@@ -121,3 +122,27 @@ body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
 /* The supplied gold end ornaments replace the old decorative title icon. */
 body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
   .asteria-react-panel.asteria-royal-relic > .react-panel-header > .react-panel-title-group > .asteria-icon {display:none;}
+
+/* Freeform frames use a 12% source slice scaled to --asteria-frame-border.
+   Anchor the plaque to that painted rail, never to the content-driven height.
+   Source rail centres: square 4%, wide/ultrawide 10%, tall 2.8%. */
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell {
+  --asteria-header-rail-ratio:.333333;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell:is([data-frame-family="wide"],[data-frame-family="ultrawide"]) {
+  --asteria-header-rail-ratio:.833333;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell[data-frame-family="tall"] {
+  --asteria-header-rail-ratio:.233333;
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic {
+  --asteria-header-rail-y:calc(var(--asteria-frame-border,18px) * var(--asteria-header-rail-ratio));
+}
+body #asteriaReactRoot :is(.react-character-dashboard,.react-gm-dashboard)
+  .react-dashboard-freeform-grid > .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic > .react-panel-header {
+  min-height:12px;
+}
