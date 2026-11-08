@@ -81,13 +81,20 @@ export async function moderateCampaignMember(db,actorUid,
 
     const desired=nextStatus(action,expectedStatus);
     if(!desired)throw new Error('This member status cannot be changed using that action.');
-    const permitted=allowedMemberControls(campaign,actorUid,actorMember,target);
-    if(!permitted.includes(action))throw new Error('Only an authorised GM may perform this member action.');
+    const owner=campaign.ownerUid===actorUid;
+    const moderator=owner||(actorMember?.uid===actorUid&&
+      actorMember?.campaignId===campaignId&&actorMember?.role==='co-gm'&&
+      actorMember?.status==='active'&&actorMember?.capabilityOverrides?.['moderate-members']===true&&
+      target.role==='player'&&action!=='ban'&&
+      !(action==='restore'&&expectedStatus==='banned'));
+    if(!moderator)throw new Error('Only an authorised GM may perform this member action.');
     if(target.revision===expectedRevision+1&&target.status===desired&&
        target.lastStatusAction===action&&target.lastStatusChangedByUid===actorUid)
       return {campaignId,uid:memberUid,status:target.status,revision:target.revision,alreadyApplied:true};
     if(target.revision!==expectedRevision||target.status!==expectedStatus)
       throw new Error('Member status changed. Refresh the roster before continuing.');
+    const permitted=allowedMemberControls(campaign,actorUid,actorMember,target);
+    if(!permitted.includes(action))throw new Error('Only an authorised GM may perform this member action.');
 
     if(action==='restore'&&target.role==='player'){
       const count=await countActivePlayers(tx,db,campaignId);
