@@ -8,7 +8,7 @@ export const MEMBER_ROLES=Object.freeze(['owner','co-gm','player']);
 export const MEMBER_STATUSES=Object.freeze(['active','suspended','removed','banned']);
 export const JOIN_REQUEST_STATUSES=Object.freeze(['pending','approved','declined','cancelled','expired']);
 
-const VALID_ID=/^[A-Za-z0-9_-]{1,128}$/;
+const VALID_ID=/^[A-Za-z0-9_-]{1,160}$/;
 const MAX_STAGED_MEMBERS=100;
 const DENIED_STATUSES=new Set(['suspended','removed','banned']);
 
