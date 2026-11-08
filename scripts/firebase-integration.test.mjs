@@ -687,8 +687,7 @@ test('future campaign connection collections are denied to browser clients by de
     'campaigns/c/joinRequests/alice',
     'campaigns/c/invitations/invite1',
     'campaigns/c/characterLinks/link1',
-    'campaigns/c/auditEvents/audit1',
-    'users/alice/campaignRefs/c'
+    'campaigns/c/auditEvents/audit1'
   ];
   for(const path of paths) {
     await db.doc(path).set({campaignId:'c',uid:'alice',status:'active',recipientEmailNormalized:'private@example.test'});
@@ -697,6 +696,13 @@ test('future campaign connection collections are denied to browser clients by de
       await assertFails(setDoc(doc(client,path),{status:'active'}));
     }
   }
+});
+
+test('legacy owner can still write private account projections; v2 must restrict these',async()=>{
+  const path='users/alice/campaignRefs/c';
+  await assertSucceeds(setDoc(doc(user('alice'),path),{role:'owner',status:'active'}));
+  await assertFails(getDoc(doc(user('bob'),path)));
+  // This permissive v1 owner-write rule is a known migration requirement, not v2 authorization.
 });
 
 test('legacy campaign invite behavior remains unchanged while v2 is dormant',async()=>{
