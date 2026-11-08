@@ -18,6 +18,7 @@ import {changeCampaignMemberRole,setCampaignCoGmPermission,listCampaignMembershi
 import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
 import {campaignCharacterLink} from '../functions/campaignCharacterLinks.mjs';
 import {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink} from '../functions/campaignCharacterApproval.mjs';
+import {changeCampaignCharacterLifecycle,listCampaignCharacterLifecycle} from '../functions/campaignCharacterLifecycle.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1188,4 +1189,96 @@ test('Phase 5.2: decline is reversible through fresh player request, not a stale
   }),/changed/);
   const next=(await listPendingCampaignCharacterLinks(db,'gm','c')).requests[0];
   assert.equal(next.revision,3);
+});
+
+test('Phase 5.3: archive and restore preserve owned gameplay and forbid browser recreation',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,
+    capacity:{maxActiveCharacters:5,maxCharactersPerPlayer:2}});
+  await db.doc('campaigns/c/members/alice').set({
+    uid:'alice',campaignId:'c',role:'player',status:'active',revision:1
+  });
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({
+    campaignId:'c',role:'player',status:'active'
+  });
+  await db.doc('users/alice/characters/lifecycle').set({
+    id:'lifecycle',sourceCharacterId:'lifecycle',ownerUid:'alice',
+    name:'Archived Forge',level:6,xp:440,coins:{copper:40},
+    inventory:[{name:'Shield'}],privateNotes:'secret'
+  });
+  await campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'lifecycle'
+  });
+  const row=(await listPendingCampaignCharacterLinks(db,'gm','c')).requests[0];
+  const approval=await reviewCampaignCharacterLink(db,'gm',{
+    campaignId:'c',linkId:row.linkId,decision:'approve',expectedRevision:row.revision
+  });
+  const id=approval.campaignCharacterId,path='campaigns/c/characters/'+id;
+  await db.doc(path).update({xp:880,coins:{copper:90}});
+  const live=(await db.doc(path).get()).data();
+  const lifecycle=await changeCampaignCharacterLifecycle(db,'gm',{
+    campaignId:'c',linkId:row.linkId,action:'deactivate',expectedRevision:2
+  });
+  assert.equal(lifecycle.status,'inactive');
+  assert.equal((await db.doc(path).get()).exists,false);
+  assert.equal((await db.doc('campaigns/c/archivedCharacters/'+id).get()).data().xp,880);
+  const source=(await db.doc('users/alice/characters/lifecycle').get()).data();
+  assert.equal(source.xp,880);
+  assert.equal(source.privateNotes,'secret');
+  assert.deepEqual(source.campaignCharacterIds,{});
+  assert.equal((await db.doc('campaigns/c').get()).data().playerCharacterLinks[id],undefined);
+  for(const client of [user('alice'),user('gm'),user('eve')]){
+    await assertFails(getDoc(doc(client,'campaigns/c/archivedCharacters/'+id)));
+    await assertFails(setDoc(doc(client,path),{id,ownerUid:'alice',sourceCharacterId:'lifecycle'}));
+  }
+  await assertFails(setDoc(doc(user('gm'),'campaigns/c/characters/forged',{
+    id:'forged',ownerUid:'gm',sourceCharacterId:'forged'
+  }));
+  await assertFails(deleteDoc(doc(user('gm'),'campaigns/c/characters/a')));
+  const listed=await listCampaignCharacterLifecycle(db,'gm','c');
+  assert.equal(listed.links.find(link=>link.linkId===row.linkId).status,'inactive');
+  assert.equal(JSON.stringify(listed).includes('secret'),false);
+  const restored=await changeCampaignCharacterLifecycle(db,'gm',{
+    campaignId:'c',linkId:row.linkId,action:'restore',expectedRevision:3
+  });
+  assert.equal(restored.status,'approved');
+  assert.equal((await db.doc(path).get()).data().xp,880);
+  assert.equal((await db.doc('campaigns/c/archivedCharacters/'+id).get()).exists,false);
+  assert.equal((await db.doc('campaigns/c').get()).data().playerCharacterLinks[id],'alice');
+});
+
+test('Phase 5.3: lifecycle unlink has no browser access shortcut or private sheet deletion',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,
+    capacity:{maxActiveCharacters:5,maxCharactersPerPlayer:2}});
+  await db.doc('campaigns/c/members/alice').set({
+    uid:'alice',campaignId:'c',role:'player',status:'active',revision:1
+  });
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({
+    campaignId:'c',role:'player',status:'active'
+  });
+  await db.doc('users/alice/characters/lifecycle').set({
+    id:'lifecycle',ownerUid:'alice',name:'Forge',xp:900,inventory:[{name:'Ring'}]
+  });
+  await campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'lifecycle'
+  });
+  const row=(await listPendingCampaignCharacterLinks(db,'gm','c')).requests[0];
+  await reviewCampaignCharacterLink(db,'gm',{
+    campaignId:'c',linkId:row.linkId,decision:'approve',expectedRevision:1
+  });
+  const removed=await changeCampaignCharacterLifecycle(db,'alice',{
+    campaignId:'c',sourceCharacterId:'lifecycle',action:'unlink',expectedRevision:2
+  });
+  assert.equal(removed.status,'unlinked');
+  const original=(await db.doc('users/alice/characters/lifecycle').get()).data();
+  assert.equal(original.ownerUid,'alice');
+  assert.equal(original.xp,900);
+  assert.equal(original.sharedCampaignId,'');
+  assert.equal((await db.doc('campaigns/c/archivedCharacters/'+row.campaignCharacterId).get()).data().status,'unlinked');
+  assert.equal((await db.doc('campaigns/c/characters/'+row.campaignCharacterId).get()).exists,false);
+  await assert.rejects(campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'lifecycle'
+  }),/inactive/);
+  await assert.rejects(changeCampaignCharacterLifecycle(db,'alice',{
+    campaignId:'c',sourceCharacterId:'lifecycle',action:'restore',expectedRevision:3
+  }),/authorised GM/);
 });
