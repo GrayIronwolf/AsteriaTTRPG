@@ -5,7 +5,7 @@
   --asteria-top-menu-height:53px;
   --asteria-banner-height:clamp(84px,10.625vw,272.4px);
   --core-header-height:var(--asteria-banner-height);
-  --asteria-header-art:url("../assets/header/asteria-energy-header.webp");
+  --asteria-header-art:none;
   --button-metal-dark:#090a0c;
   --button-metal-mid:#4b4d50;
   --button-metal-light:#c9cbce;

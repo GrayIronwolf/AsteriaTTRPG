@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Asteria TTRPG</title>
-  <link rel="preload" as="image" href="assets/header/asteria-energy-header.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="assets/header/asteria-wordmark.png" fetchpriority="high">
   <link rel="stylesheet" href="css/asteria-design-tokens.css?v=design-system-v1" />
   <link rel="stylesheet" href="css/styles.css?v=20260730-live-delivery-4" />
 <link rel="stylesheet" href="css/clean-compendium.css">
@@ -26,11 +26,35 @@
 <link rel="stylesheet" href="css/asteria-button-images.css?v=phase3-approved-layers-20261106">
 <link rel="stylesheet" href="css/asteria-typography.css?v=phase5-update2-20261106">
 <link rel="stylesheet" href="css/asteria-appearance-sync.css?v=phase6-update2-20261106">
+<link rel="stylesheet" href="css/asteria-header-wordmark.css?v=wordmark-stars-v2-20261108">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
   <header class="topbar core-v2-topbar asteria-header">
+    <a class="asteria-header-brand" href="#home" aria-label="Asteria TTRPG home" onclick="return window.asteriaHardHome(event)">
+      <svg class="asteria-header-wordmark" viewBox="0 0 2048 682" role="img" aria-labelledby="headerLogoTitle" xmlns="http://www.w3.org/2000/svg">
+        <title id="headerLogoTitle">Asteria TTRPG</title>
+        <defs>
+          <filter id="headerStarColour" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
+            <feColorMatrix type="saturate" values="0" result="silver"/>
+            <feFlood class="asteria-logo-star-colour" result="theme"/>
+            <feBlend in="theme" in2="silver" mode="color"/>
+            <feComposite in2="SourceGraphic" operator="in"/>
+          </filter>
+          <clipPath id="headerStarWindows">
+            <path d="M356 286 Q374 344 443 365 Q374 384 356 450 Q337 385 266 365 Q337 345 356 286Z"/>
+            <path d="M1721 286 Q1740 345 1804 365 Q1740 385 1721 447 Q1702 385 1640 365 Q1702 345 1721 286Z"/>
+            <path d="M709 496 Q718 516 747 527 Q718 536 709 557 Q699 536 671 527 Q699 518 709 496Z"/>
+            <path d="M1346 497 Q1356 518 1385 527 Q1356 537 1346 558 Q1336 537 1308 527 Q1336 518 1346 497Z"/>
+          </clipPath>
+        </defs>
+        <image href="assets/header/asteria-wordmark.png" width="2048" height="682"/>
+        <g clip-path="url(#headerStarWindows)" aria-hidden="true">
+          <image href="assets/header/asteria-wordmark.png" width="2048" height="682" filter="url(#headerStarColour)"/>
+        </g>
+      </svg>
+    </a>
     <nav id="globalNavigation" class="asteria-main-navigation" aria-label="Main navigation">
       <button id="sidebarHomeButton" class="crystal-button" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
       <div class="compendium-split">
