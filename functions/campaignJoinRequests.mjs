@@ -1,5 +1,6 @@
 import {validUCN} from './campaignUCN.mjs';
 import {JOIN_REQUEST_STATUSES, MEMBER_STATUSES} from './campaignMembership.mjs';
+import {preparePlayerApproval} from './campaignJoinApproval.mjs';
 
 // A UCN locates a campaign. It is NOT a secret invitation or membership grant.
 // Server-controlled request documents are deterministic per account and campaign.
@@ -84,14 +85,24 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
     const created=insideWindow ? Number(previous.created || 0) : 0;
     if(created>=MAX_NEW_REQUESTS_PER_DAY) throw new Error('Daily join request limit reached. Please try again later.');
 
+    let automatic=null;
+    if(campaign.joinPolicy?.autoApprove===true && options.autoApproveEnabled===true){
+      automatic=await preparePlayerApproval(tx,db,campaignId,uid,campaign,now,campaign.ownerUid);
+      if(!automatic.available) throw new Error('Campaign player capacity has been reached.');
+    }
     const record={
-      uid,campaignId,status:'pending',
+      uid,campaignId,status:automatic?'approved':'pending',
       requestedCharacterId:charRef ? characterId : null,
       requestedAt:now,updatedAt:now,
       source:'ucn',revision:1,
-      reviewedByUid:null,reviewedAt:null
+      reviewedByUid:automatic?campaign.ownerUid:null,reviewedAt:automatic?now:null
     };
+    if(automatic) automatic.apply();
     tx.create(requestRef,record);
+    if(automatic) tx.create(db.doc('campaigns/'+campaignId+'/joinReviewHistory/'+uid),{
+      campaignId,uid,decision:'approve',status:'approved',actorUid:campaign.ownerUid,
+      mode:'automatic',requestedCharacterId:record.requestedCharacterId,at:now
+    });
     tx.set(throttleRef,{
       windowStartedAtMs:insideWindow?windowStart:nowMs,
       created:created+1,updatedAtMs:nowMs
