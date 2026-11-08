@@ -39,6 +39,10 @@ function summarizeMember(campaign,row){
     displayName:safeName(player.displayName)||safeName(player.name)||'',
     joinedAt:dateText(row.joinedAt||player.joinedAt),
     revision:Number.isSafeInteger(row.revision)?row.revision:null,
+    capabilities:row.role==='co-gm'&&row.status==='active'?{
+      'review-join-requests':row.capabilityOverrides?.['review-join-requests']===true,
+      'moderate-members':row.capabilityOverrides?.['moderate-members']===true
+    }:null,
     characters:linkedCharacterSummaries(campaign,row.uid)
   };
 }
@@ -94,11 +98,12 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
         throw new Error('Campaign owner membership requires review.');
       const entry=summarizeMember(campaign,row);
       entry.controls=allowedMemberControls(campaign,actorUid,actorMember,row);
+      entry.roleEditable=actorUid===campaign.ownerUid && row.uid!==campaign.ownerUid && row.status==='active' && ['player','co-gm'].includes(row.role);
       members.push(entry);
     }
     // The owner is always authoritative even if canonical staging is incomplete.
     if(!members.some(row=>row.uid===campaign.ownerUid))
-      members.push({...summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}),controls:[]});
+      members.push({...summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}),controls:[],roleEditable:false});
     pending=requests.docs.map(row=>safePending(row,campaignId)).filter(Boolean)
       .filter(row=>!members.some(member=>member.uid===row.uid));
   }else if(version===undefined||version===null||version===1){
@@ -108,7 +113,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
     if(!isGM)throw new Error('Only a campaign GM may view the roster.');
     const plan=legacyMembershipPlan(campaign,campaignId);
     if(plan.issues.length)throw new Error('Legacy campaign roster has unresolved membership conflicts.');
-    members=plan.rows.map(row=>({...summarizeMember(campaign,row),controls:[]}));
+    members=plan.rows.map(row=>({...summarizeMember(campaign,row),controls:[],roleEditable:false}));
     // The legacy system has no canonical pending queue.
   }else throw new Error('Unsupported campaign membership version.');
 
