@@ -94,7 +94,7 @@ test('UCN preview returns only id, name and ucn, never GM private data',async()=
   });
   db.records.set('campaigns/c',{ownerUid:'gm',ucn:code(2),name:'Citadel',invites:[{email:'private@example.test'}],players:{gm:{email:'private@example.test'}}});
   const summary=await previewCampaignUCN(db,'player',code(2),{now:100000});
-  assert.deepEqual(summary,{id:'c',name:'Citadel',ucn:code(2)});
+  assert.deepEqual(summary,{id:'c',name:'Citadel',ucn:code(2),joinMode:'legacy'});
   assert.equal(JSON.stringify(summary).includes('private@example.test'),false);
 });
 
@@ -103,7 +103,7 @@ test('legacy campaign UCN lookup remains possible until the membership migration
     ['campaignInvites/'+code(4)]:{campaignId:'old',ownerUid:'owner',status:'active'},
     'campaigns/old':{ownerUid:'owner',name:'Legacy',ucn:code(4)}
   });
-  assert.deepEqual(await previewCampaignUCN(db,'player',code(4),{now:100000}),{id:'old',name:'Legacy',ucn:code(4)});
+  assert.deepEqual(await previewCampaignUCN(db,'player',code(4),{now:100000}),{id:'old',name:'Legacy',ucn:code(4),joinMode:'legacy'});
 });
 
 test('closed directory entries must not silently use active legacy invitations',async()=>{
@@ -122,7 +122,7 @@ test('forged owner and mismatched UCN do not disclose campaign details',async()=
   });
   assert.equal(await previewCampaignUCN(db,'player',code(6),{now:100000}),null);
   db.records.set('campaignDirectory/'+code(6),{campaignId:'victim',ownerUid:'real-owner',status:'active'});
-  assert.deepEqual(await previewCampaignUCN(db,'player',code(6),{now:100001}),{id:'victim',name:'Private',ucn:code(6)});
+  assert.deepEqual(await previewCampaignUCN(db,'player',code(6),{now:100001}),{id:'victim',name:'Private',ucn:code(6),joinMode:'legacy'});
   db.records.set('campaigns/victim',{ownerUid:'real-owner',ucn:code(7),name:'Private'});
   assert.equal(await previewCampaignUCN(db,'player',code(6),{now:100002}),null);
 });
@@ -138,4 +138,29 @@ test('unauthenticated lookups and invalid codes are denied',async()=>{
   const db=memoryFirestore();
   await assert.rejects(previewCampaignUCN(db,'',code(5)),/Sign in/);
   await assert.rejects(previewCampaignUCN(db,'reader','bad'),/valid 12-digit/);
+});
+
+test('preview clearly distinguishes v2 join requests without exposing membership fields',async()=>{
+  const db=memoryFirestore({
+    ['campaignDirectory/'+code(8)]:{campaignId:'c8',ownerUid:'gm',status:'active'},
+    ['campaignInvites/'+code(8)]:{campaignId:'c8',ownerUid:'gm',status:'active'},
+    'campaigns/c8':{
+      ownerUid:'gm',name:'Approval Required',ucn:code(8),membershipSchemaVersion:2,
+      playerUids:['alice'],players:{alice:{email:'secret@example.test'}},
+      inviteToken:'private'
+    }
+  });
+  const preview=await previewCampaignUCN(db,'other',code(8),{now:100000});
+  assert.deepEqual(preview,{id:'c8',name:'Approval Required',ucn:code(8),joinMode:'request'});
+  assert.equal(JSON.stringify(preview).includes('secret@example.test'),false);
+  assert.equal(JSON.stringify(preview).includes('private'),false);
+});
+
+test('unknown membership schemas never appear as immediately joinable',async()=>{
+  const db=memoryFirestore({
+    ['campaignInvites/'+code(9)]:{campaignId:'c9',ownerUid:'gm',status:'active'},
+    'campaigns/c9':{ownerUid:'gm',ucn:code(9),name:'Unknown',membershipSchemaVersion:5}
+  });
+  const result=await previewCampaignUCN(db,'reader',code(9),{now:100000});
+  assert.equal(result.joinMode,'unavailable');
 });
