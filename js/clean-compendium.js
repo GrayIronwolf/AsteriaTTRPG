@@ -669,6 +669,15 @@
             <p id="workspaceJoinReviewMessage" role="status" aria-live="polite"></p>
           </section>
         ` : ''}
+        ${role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true ? `
+          <section class="workspace-link-panel workspace-player-roster">
+            <h3>Player Roster</h3>
+            <p class="muted">Account membership and verified linked-character summaries. This roster is read-only; member management follows in Phase 4.2.</p>
+            <button type="button" id="workspaceRefreshPlayerRoster">Refresh Roster</button>
+            <div id="workspacePlayerRosterContent" aria-live="polite"></div>
+            <p id="workspacePlayerRosterStatus" role="status" aria-live="polite"></p>
+          </section>
+        ` : ''}
         <section class="workspace-link-panel">
           <h3>Link Existing Character</h3>
           <p class="muted">Players can link a saved character they own to this campaign.</p>
@@ -708,8 +717,42 @@
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
+    if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderCampaignGMPlayerRoster(campaign) {
+    const content=byId('workspacePlayerRosterContent');
+    const status=byId('workspacePlayerRosterStatus');
+    const button=byId('workspaceRefreshPlayerRoster');
+    const api=window.AsteriaFirebase;
+    if(!content || !status || !api?.listCampaignPlayerRoster) return;
+    const uid=api.getUser?.()?.uid;
+    let busy=false;
+    const refresh=async()=>{
+      if(busy) return;
+      busy=true;
+      if(button)button.disabled=true;
+      status.textContent='Loading verified roster...';
+      try{
+        const data=await api.listCampaignPlayerRoster(campaign.id);
+        if(!content.isConnected || api.getUser?.()?.uid!==uid) return;
+        if(!window.AsteriaCampaignRosterView?.present?.(content,data))
+          throw new Error('The roster response was not valid.');
+        status.textContent='Roster loaded. Membership status does not indicate who is online.';
+      }catch(error){
+        if(content.isConnected){
+          content.replaceChildren();
+          status.textContent=error?.message||'Could not load campaign roster.';
+        }
+      }finally{
+        busy=false;
+        if(button)button.disabled=false;
+      }
+    };
+    button?.addEventListener('click',refresh);
+    await refresh();
   }
 
   async function renderCampaignGMJoinApprovals(campaign) {
