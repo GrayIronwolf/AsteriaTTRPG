@@ -78,7 +78,7 @@ service cloud.firestore {
     }
 
     function canUseCampaignSystems(campaignId) {
-      return isCampaignMember(sharedCampaign(campaignId));
+      return isCampaignMember(sharedCampaign(campaignId), campaignId);
     }
 
     function activeSession(campaignId) {
@@ -195,7 +195,7 @@ service cloud.firestore {
     match /campaigns/{campaignId} {
       allow read: if isCampaignMember(resource.data, campaignId);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid && request.resource.data.get('membershipSchemaVersion', 1) == 1;
-      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.get('membershipSchemaVersion', 1) == resource.data.get('membershipSchemaVersion', 1) && (resource.data.get('membershipSchemaVersion', 1) != 2 || request.resource.data.diff(resource.data).affectedKeys().hasNone(['ownerUid','gmUids','playerUids','roles','players','membershipSchemaVersion','membershipRevision','joinPolicy','capacity','invites','inviteCode','uniqueCampaignCode'])) && (!resource.data.keys().hasAny(['ucn']) || request.resource.data.ucn == resource.data.ucn)) || linksOwnedCharacter(campaignId) || (
+      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.get('membershipSchemaVersion', 1) == resource.data.get('membershipSchemaVersion', 1) && (resource.data.get('membershipSchemaVersion', 1) != 2 || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['ownerUid','gmUids','playerUids','roles','players','membershipSchemaVersion','membershipRevision','joinPolicy','capacity','invites','inviteCode','uniqueCampaignCode'])) && (!resource.data.keys().hasAny(['ucn']) || request.resource.data.ucn == resource.data.ucn)) || linksOwnedCharacter(campaignId) || (
         isCampaignGM(campaignId) &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['image','imagePath','art','banner','coverImage','cover','updatedAt']) &&
