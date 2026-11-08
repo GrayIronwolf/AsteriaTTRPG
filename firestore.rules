@@ -156,18 +156,6 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if ownsUserData(uid);
 
-      match /members/{memberUid} {
-        // Server-managed role/status, readable only by campaign owner, 
-        // the member themselves, or active v2 co-GM.
-        allow get: if signedIn() && (
-          request.auth.uid == memberUid ||
-          isCampaignOwner(sharedCampaign(campaignId)) ||
-          isCampaignGM(campaignId)
-        );
-        allow list: if isCampaignGM(campaignId);
-        allow write: if false;
-      }
-
       match /characters/{characterId} {
         allow read: if ownsUserData(uid);
         allow create: if ownsUserData(uid) && request.resource.data.ownerUid == uid &&
@@ -219,6 +207,18 @@ service cloud.firestore {
         (request.resource.data.get('imagePath','') == '' || request.resource.data.get('imagePath','').matches('campaigns/' + campaignId + '/artwork/.*'))
       );
       allow delete: if isCampaignOwner(resource.data);
+
+      match /members/{memberUid} {
+        // Server-managed role/status, readable only by campaign owner, 
+        // the member themselves, or active v2 co-GM.
+        allow get: if signedIn() && (
+          request.auth.uid == memberUid ||
+          isCampaignOwner(sharedCampaign(campaignId)) ||
+          isCampaignGM(campaignId)
+        );
+        allow list: if isCampaignGM(campaignId);
+        allow write: if false;
+      }
 
       match /characters/{characterId} {
         allow read: if canReadCampaignCharacter(campaignId);
