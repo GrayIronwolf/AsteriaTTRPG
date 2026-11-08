@@ -175,7 +175,7 @@ test('server UCN allocation reserves both identities and preserves legacy join',
   await assertFails(getDoc(doc(user('alice'),'campaigns/camp-server-allocated')));
   await assertFails(getDoc(doc(user('alice'),'campaignDirectory/'+code)));
   await assertFails(setDoc(doc(user('alice'),'campaignDirectory/000000001234'),{campaignId:'fake'}));
-  assert.deepEqual(await previewCampaignUCN(db,'alice',code),identity);
+  assert.deepEqual(await previewCampaignUCN(db,'alice',code),{...identity,joinMode:'legacy'});
   const joined=await accessInvite(db,'alice',code,true);
   assert.equal(joined.roles.alice,'player');
   await assertSucceeds(getDoc(doc(user('alice'),'campaigns/camp-server-allocated')));
