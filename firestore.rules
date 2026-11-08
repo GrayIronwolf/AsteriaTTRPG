@@ -216,7 +216,7 @@ service cloud.firestore {
           isCampaignOwner(sharedCampaign(campaignId)) ||
           isCampaignGM(campaignId)
         );
-        allow list: if isCampaignGM(campaignId);
+        allow list: if sharedCampaign(campaignId).get('membershipSchemaVersion', 1) == 2 && isCampaignGM(campaignId);
         allow write: if false;
       }
 
