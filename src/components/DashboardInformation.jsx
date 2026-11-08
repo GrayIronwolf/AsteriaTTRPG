@@ -9,6 +9,7 @@ import { CurrencyDisplay, DashboardPanel, LiveSyncStatus, LoadingSkeleton, Panel
 import { AsteriaIcon } from './AsteriaIcons.jsx';
 import { CHARACTERISTICS, characteristicTier, normalizeDashboardPreferences } from '../state/liveWorkspaceModel.mjs';
 import { soulDamageValue } from '../state/specialDamageModel.mjs';
+import { hudImageSource, hudImagePosition } from '../state/playerHudMedia.mjs';
 import { ASTERIA_CURRENCIES, currencyDefinitionFor } from '../systems/currency/currencyConfig.mjs';
 
 function firstValue(...values) {
@@ -117,7 +118,7 @@ function ResourceControl({ label, resource, value, editable, onResourceChange, r
   </div>;
 }
 
-export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, preferences = normalizeDashboardPreferences(character) }) {
+export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, preferences = normalizeDashboardPreferences(character), showPortrait = true }) {
   const portrait = character.image || character.portrait || character.characterImage || character.appearance?.image || character.appearance?.portrait;
   const title = selectedTitle(character, preferences);
   const membership = (partyWorkspace.organizations || []).find(value =>
@@ -126,7 +127,7 @@ export function PlayerLevelDisplay({ character = {}, partyWorkspace = {}, prefer
   return <section className="react-player-topbar-section react-player-identity-level" aria-label="Active character">
     <div className="react-player-section-label react-player-topbar-heading"><AsteriaIcon name="character" /><span>Active Character</span></div>
     <div className="react-player-identity-content">
-      {!preferences.hiddenInformationFields.includes('portrait') ? <div className="react-player-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}</div> : null}
+      {showPortrait && !preferences.hiddenInformationFields.includes('portrait') ? <div className="react-player-portrait">{portrait ? <img src={portrait} alt={`${character.name || 'Character'} portrait`} /> : <span>{String(character.name || 'A').charAt(0)}</span>}</div> : null}
       <div className="react-player-identity-copy">
         <strong>{character.name || 'Unnamed Character'}</strong>
         <span>{characterClass(character)}</span>
@@ -233,13 +234,26 @@ export function CurrencyPanel({ character = {}, campaign = {}, loading = false, 
 }
 
 export function DashboardInformationRow(props) {
-  const preferences = normalizeDashboardPreferences(props.character);
-  return <section className="asteria-react-panel react-campaign-resource-hud react-player-topbar" aria-label="Character progression, resources, characteristics, and campaign status">
-    <PlayerLevelDisplay character={props.character} partyWorkspace={props.partyWorkspace} preferences={preferences} />
-    <ExperienceBar character={props.character} />
-    <ResourceBarGroup character={props.character} editable={props.editable} onResourceChange={props.onResourceChange} />
-    <CharacteristicSummary character={props.character} />
-    <CampaignInformationPanel {...props} preferences={preferences} embedded />
+  const character = props.character || {};
+  const campaign = props.campaign || {};
+  const preferences = normalizeDashboardPreferences(character);
+  const portrait = hudImageSource(character.image, character.portrait, character.characterImage, character.appearance?.image, character.appearance?.portrait);
+  const campaignArtwork = hudImageSource(campaign.image, campaign.art, campaign.banner, campaign.coverImage, campaign.cover, campaign.appearance?.image);
+  const portraitVisible = !preferences.hiddenInformationFields.includes('portrait');
+  return <section className="asteria-react-panel react-campaign-resource-hud react-player-topbar react-player-cinematic-hud" aria-label="Character progression, resources, characteristics, and campaign status">
+    {portraitVisible ? <div className="react-player-hud-art react-player-hud-portrait" aria-label={portrait ? `${character.name || 'Character'} portrait` : 'Character portrait not selected'}>
+      {portrait ? <img src={portrait} alt="" loading="eager" decoding="async" style={{objectPosition:hudImagePosition(character.portraitPosition || character.imagePosition || character.appearance?.portraitPosition, 'center top')}} /> : <span className="react-player-hud-art-fallback" aria-hidden="true">{String(character.name || 'A').charAt(0)}</span>}
+    </div> : null}
+    <div className="react-player-hud-information">
+      <PlayerLevelDisplay character={character} partyWorkspace={props.partyWorkspace} preferences={preferences} showPortrait={false} />
+      <ExperienceBar character={character} />
+      <ResourceBarGroup character={character} editable={props.editable} onResourceChange={props.onResourceChange} />
+      <CharacteristicSummary character={character} />
+      <CampaignInformationPanel {...props} preferences={preferences} embedded />
+    </div>
+    <div className="react-player-hud-art react-player-hud-campaign-art" aria-label={campaignArtwork ? `${campaign.name || 'Campaign'} artwork` : 'Campaign artwork not selected'}>
+      {campaignArtwork ? <img src={campaignArtwork} alt="" loading="lazy" decoding="async" style={{objectPosition:hudImagePosition(campaign.imagePosition || campaign.bannerPosition || campaign.coverPosition, 'center')}} /> : <span className="react-player-hud-art-fallback" aria-hidden="true"><AsteriaIcon name="campaign" /></span>}
+    </div>
   </section>;
 }
 

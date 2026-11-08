@@ -2578,3 +2578,131 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @container (max-width:620px) {
   .react-dashboard-custom-cell { grid-column:1/-1; }
 }
+
+
+/* Player HUD: unframed edge-to-edge artwork, live middle section, unchanged GM panels. */
+.react-player-topbar.react-player-cinematic-hud {
+  display: grid;
+  grid-template-columns: minmax(145px, 22fr) minmax(0, 56fr) minmax(145px, 22fr);
+  min-height: 260px;
+  overflow: hidden;
+  align-items: stretch;
+  isolation: isolate;
+}
+.react-player-cinematic-hud > .react-player-hud-art {
+  position: relative;
+  min-width: 0;
+  min-height: 260px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--asteria-accent, #1f7dff) 12%, #07131a);
+}
+.react-player-hud-art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+}
+.react-player-hud-art-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 4rem var(--asteria-font-display, Georgia, serif);
+  color: color-mix(in srgb, var(--asteria-accent, #1f7dff) 40%, #dbe9f1);
+}
+.react-player-hud-art-fallback .asteria-icon { width: 64px; height: 64px; opacity: .6; }
+.react-player-hud-portrait::after,
+.react-player-hud-campaign-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.react-player-hud-portrait::after {
+  background: linear-gradient(90deg, transparent 55%, var(--asteria-bg-primary, #020b11) 100%);
+}
+.react-player-hud-campaign-art::after {
+  background: linear-gradient(270deg, transparent 55%, var(--asteria-bg-primary, #020b11) 100%);
+}
+.react-player-cinematic-hud > .react-player-hud-information {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-content: center;
+  gap: 8px 12px;
+  padding: 14px 8px;
+  background: color-mix(in srgb, var(--asteria-bg-primary, #020b11) 93%, transparent);
+}
+.react-player-hud-information > .react-player-topbar-section {
+  min-width: 0;
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 2px 6px;
+  border: 0 !important;
+  grid-column: auto;
+}
+.react-player-hud-information > .react-player-identity-level { grid-column: span 5; }
+.react-player-hud-information > .react-player-xp { grid-column: span 7; }
+.react-player-hud-information > .react-player-resources { grid-column: span 7; }
+.react-player-hud-information > .react-player-characteristics { grid-column: span 5; }
+.react-player-hud-information > .react-player-campaign { grid-column: 1 / -1; }
+.react-player-hud-information .react-player-identity-content { display: block; }
+.react-player-hud-information .react-player-identity-copy { gap: 4px; }
+.react-player-hud-information .react-player-identity-copy strong { white-space: normal; overflow-wrap: anywhere; font-size: clamp(1.03rem, 1.5vw, 1.4rem); }
+.react-player-hud-information .react-player-topbar-heading { margin-bottom: 2px; }
+.react-player-hud-information .react-player-resource-controls { grid-template-columns: minmax(0,1fr) 28px 28px; }
+.react-player-hud-information .react-player-resource-row { min-width: 0; }
+.react-player-hud-information .react-player-campaign-title strong { white-space: normal; }
+.react-player-hud-information .react-player-campaign-facts { grid-template-columns: repeat(4, minmax(0,1fr)); }
+
+@container (max-width: 1100px) {
+  .react-player-topbar.react-player-cinematic-hud {
+    grid-template-columns: minmax(115px, 20fr) minmax(0, 60fr) minmax(115px, 20fr);
+  }
+  .react-player-hud-information > .react-player-resources { grid-column: 1 / -1; }
+  .react-player-hud-information > .react-player-characteristics { grid-column: 1 / -1; }
+  .react-player-hud-information .react-player-characteristic-grid { grid-template-columns: repeat(9, minmax(0,1fr)); }
+}
+@container (max-width: 900px) {
+  .react-player-topbar.react-player-cinematic-hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+  }
+  .react-player-cinematic-hud > .react-player-hud-art {
+    min-height: 170px;
+    height: 170px;
+    grid-row: 1;
+  }
+  .react-player-hud-portrait { grid-column: 1; }
+  .react-player-hud-campaign-art { grid-column: 2; }
+  .react-player-hud-portrait::after { background: linear-gradient(0deg, var(--asteria-bg-primary, #020b11), transparent 65%); }
+  .react-player-hud-campaign-art::after { background: linear-gradient(0deg, var(--asteria-bg-primary, #020b11), transparent 65%); }
+  .react-player-cinematic-hud > .react-player-hud-information {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    padding: 12px;
+  }
+  .react-player-hud-information > .react-player-resources { grid-column: span 7; }
+  .react-player-hud-information > .react-player-characteristics { grid-column: span 5; }
+  .react-player-hud-information .react-player-characteristic-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .react-player-hud-information > .react-player-topbar-section { border: 0 !important; }
+}
+@container (max-width: 620px) {
+  .react-player-cinematic-hud > .react-player-hud-art { min-height: 130px; height: 130px; }
+  .react-player-hud-information > .react-player-identity-level,
+  .react-player-hud-information > .react-player-xp,
+  .react-player-hud-information > .react-player-resources,
+  .react-player-hud-information > .react-player-characteristics,
+  .react-player-hud-information > .react-player-campaign { grid-column: 1 / -1; }
+  .react-player-hud-information .react-player-characteristic-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .react-player-hud-information .react-player-campaign-facts { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@container (max-width: 420px) {
+  .react-player-cinematic-hud > .react-player-hud-art { min-height: 108px; height: 108px; }
+}
