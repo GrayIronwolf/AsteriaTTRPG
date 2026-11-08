@@ -14,6 +14,7 @@ import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
 import {listCampaignPlayerRoster} from '../functions/campaignPlayerRoster.mjs';
 import {moderateCampaignMember} from '../functions/campaignMemberControls.mjs';
+import {changeCampaignMemberRole,setCampaignCoGmPermission,listCampaignMembershipActivity} from '../functions/campaignRolePermissions.mjs';
 import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
@@ -1044,4 +1045,66 @@ test('moderation protects owner, stale roles and capacity, and cannot be forged 
   await assert.rejects(moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'bob',action:'restore',expectedRevision:1,expectedStatus:'suspended'}),/capacity/);
   await assertFails(updateDoc(doc(user('gm'),'campaigns/c/members/bob'),{status:'active'}));
   await assertFails(updateDoc(doc(user('bob'),'campaignMemberProjections/bob/campaigns/c'),{status:'active'}));
+});
+
+test('owner promotes and demotes Co-GM with immediate Firestore role and projection changes',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,membershipRevision:1,playerLimit:3});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({campaignId:'c',role:'player',status:'active'});
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
+  const promoted=await changeCampaignMemberRole(db,'gm',{
+    campaignId:'c',memberUid:'alice',newRole:'co-gm',expectedRole:'player',expectedRevision:1,expectedStatus:'active'
+  });
+  assert.equal(promoted.role,'co-gm');
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
+  assert.equal((await db.doc('campaignMemberProjections/alice/campaigns/c').get()).data().role,'co-gm');
+  await assert.rejects(changeCampaignMemberRole(db,'bob',{
+    campaignId:'c',memberUid:'alice',newRole:'player',expectedRole:'co-gm',expectedRevision:2,expectedStatus:'active'
+  }),/campaign owner/);
+  const demoted=await changeCampaignMemberRole(db,'gm',{
+    campaignId:'c',memberUid:'alice',newRole:'player',expectedRole:'co-gm',expectedRevision:2,expectedStatus:'active'
+  });
+  assert.equal(demoted.role,'player');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/gmWorkspace')));
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),before);
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/members/alice'),{role:'co-gm'}));
+  await assertFails(updateDoc(doc(user('alice'),'campaignMemberProjections/alice/campaigns/c'),{role:'co-gm'}));
+});
+
+test('delegated Co-GM capabilities remain owner-only and changes appear in activity history',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,membershipRevision:1});
+  await db.doc('campaigns/c/members/bob').set({
+    uid:'bob',campaignId:'c',role:'co-gm',status:'active',revision:1,capabilityOverrides:{}
+  });
+  await db.doc('campaignMemberProjections/bob/campaigns/c').set({campaignId:'c',role:'co-gm',status:'active'});
+  await assert.rejects(setCampaignCoGmPermission(db,'alice',{
+    campaignId:'c',memberUid:'bob',capability:'review-join-requests',
+    enabled:true,expectedRevision:1,expectedRole:'co-gm',expectedStatus:'active'
+  }),/campaign owner/);
+  const enabled=await setCampaignCoGmPermission(db,'gm',{
+    campaignId:'c',memberUid:'bob',capability:'review-join-requests',
+    enabled:true,expectedRevision:1,expectedRole:'co-gm',expectedStatus:'active'
+  });
+  assert.equal(enabled.enabled,true);
+  assert.equal((await db.doc('campaigns/c/members/bob').get()).data().capabilityOverrides['review-join-requests'],true);
+  await assert.rejects(setCampaignCoGmPermission(db,'gm',{
+    campaignId:'c',memberUid:'bob',capability:'moderate-members',
+    enabled:true,expectedRevision:1,expectedRole:'co-gm',expectedStatus:'active'
+  }),/Refresh/);
+  const history=await listCampaignMembershipActivity(db,'bob','c');
+  assert.equal(history.events.some(e=>e.type==='permission'&&e.uid==='bob'),true);
+  await assert.rejects(listCampaignMembershipActivity(db,'alice','c'),/active campaign GM/);
+});
+
+test('demoting Co-GM fails when campaign Player capacity has been reached',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,playerLimit:1});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'co-gm',status:'active',revision:1});
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({campaignId:'c',role:'co-gm',status:'active'});
+  await assert.rejects(changeCampaignMemberRole(db,'gm',{
+    campaignId:'c',memberUid:'alice',newRole:'player',
+    expectedRole:'co-gm',expectedRevision:1,expectedStatus:'active'
+  }),/capacity/);
+  assert.equal((await db.doc('campaigns/c/members/alice').get()).data().role,'co-gm');
 });

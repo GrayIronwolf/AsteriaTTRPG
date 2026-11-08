@@ -1908,6 +1908,31 @@ const firebasePublicApi = {
       action:'roster',campaignId
     })).data;
   },
+  changeCampaignMemberRole: async function(campaignId,memberUid,newRole,expectedRevision,expectedRole,expectedStatus){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as campaign owner.');
+    if(window.AsteriaFeatureFlags?.campaignRolePermissions!==true)
+      throw new Error('Role management is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'role-change',campaignId,memberUid,newRole,expectedRevision,expectedRole,expectedStatus
+    })).data;
+  },
+  setCampaignCoGmPermission: async function(campaignId,memberUid,capability,enabled,expectedRevision,expectedRole,expectedStatus){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as campaign owner.');
+    if(window.AsteriaFeatureFlags?.campaignRolePermissions!==true)
+      throw new Error('Role management is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'permission-change',campaignId,memberUid,capability,enabled,
+      expectedRevision,expectedRole,expectedStatus
+    })).data;
+  },
+  listCampaignMembershipActivity: async function(campaignId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a GM.');
+    if(window.AsteriaFeatureFlags?.campaignRolePermissions!==true)
+      throw new Error('Activity history is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'activity',campaignId
+    })).data;
+  },
   moderateCampaignMember: async function(campaignId,memberUid,action,expectedRevision,expectedStatus,reason){
     if(!functionsClient || !currentUser)throw new Error('Sign in as an authorised GM.');
     if(window.AsteriaFeatureFlags?.campaignMemberControls!==true)

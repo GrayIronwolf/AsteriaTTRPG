@@ -58,6 +58,36 @@
           }
           article.appendChild(controls);
         }
+        if(section.key!=='pending'&&payload.source==='canonical'&&
+          handlers.enableRoleControls===true&&typeof handlers.onRoleChange==='function'&&
+          item.roleEditable===true&&Number.isSafeInteger(item.revision)&&item.revision>0){
+          const roleBox=node('div',null,'workspace-roster-controls');
+          const roleButton=node('button',item.role==='co-gm'?'Make Player':'Make Co-GM');
+          roleButton.type='button';
+          roleButton.addEventListener('click',()=>handlers.onRoleChange({
+            uid:item.uid,name:item.displayName||item.uid,
+            newRole:item.role==='co-gm'?'player':'co-gm',
+            revision:item.revision,role:item.role,status:item.status
+          }));
+          roleBox.appendChild(roleButton);
+          if(item.role==='co-gm'&&typeof handlers.onPermissionChange==='function'){
+            for(const [capability,label] of [
+              ['review-join-requests','Review join requests'],
+              ['moderate-members','Moderate players']
+            ]){
+              const current=item.capabilities?.[capability]===true;
+              const button=node('button',(current?'Disable ':'Enable ')+label);
+              button.type='button';
+              button.addEventListener('click',()=>handlers.onPermissionChange({
+                uid:item.uid,name:item.displayName||item.uid,
+                capability,enabled:!current,revision:item.revision,
+                role:item.role,status:item.status
+              }));
+              roleBox.appendChild(button);
+            }
+          }
+          article.appendChild(roleBox);
+        }
         wrapper.appendChild(article);
       }
       host.appendChild(wrapper);
