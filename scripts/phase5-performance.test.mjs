@@ -5,14 +5,14 @@ import vm from 'node:vm';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const exists=path=>statSync(new URL('../'+path,import.meta.url)).size;
 
-test('Initial header preload targets the approved active banner rather than an unused older image',()=>{
+test('Initial header preload targets the separate wordmark without loading the retired banner',()=>{
   const html=read('index.html'),css=read('css/asteria-menu-buttons.css');
   const preloads=[...html.matchAll(/<link[^>]*rel="preload"[^>]*as="image"[^>]*>/g)].map(x=>x[0]);
   assert.equal(preloads.length,1);
-  assert.match(preloads[0],/href="assets\/header\/asteria-energy-header\.webp"/);
+  assert.match(preloads[0],/href="assets\/header\/asteria-wordmark\.png"/);
   assert.match(preloads[0],/fetchpriority="high"/);
-  assert.match(css,/--asteria-header-art:url\("\.\.\/assets\/header\/asteria-energy-header\.webp"\)/);
-  assert.ok(exists('assets/header/asteria-energy-header.webp')>0);
+  assert.match(css,/--asteria-header-art:none/);
+  assert.ok(exists('assets/header/asteria-wordmark.png')>0);
   assert.doesNotMatch(preloads[0],/asteria-header-v2/);
 });
 

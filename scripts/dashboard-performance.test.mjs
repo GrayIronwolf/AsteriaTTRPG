@@ -59,7 +59,7 @@ test('live clock pauses on hidden tabs and catches up immediately on visibility 
 });
 
 test('header image is loaded once at high priority without reducing original quality',()=>{
- const matches=html.match(/<link rel="preload" as="image" href="assets\/header\/asteria-energy-header\.webp"[^>]*>/g)||[];
+ const matches=html.match(/<link rel="preload" as="image" href="assets\/header\/asteria-wordmark\.png"[^>]*>/g)||[];
  assert.equal(matches.length,1);
  assert.match(matches[0],/fetchpriority="high"/);
  assert.match(html,/<img class="hero-logo" src="asteria-logo-transparent\.png"[^>]*decoding="async"/);

@@ -1,5 +1,5 @@
 /* Site chrome only. Gameplay and character-dashboard controls retain their themes. */
-:root { --core-sidebar-width:0px; --core-header-height:clamp(150px,12.5vw,320px); --asteria-header-art:url("../assets/header/asteria-header-desktop.webp"); }
+:root { --core-sidebar-width:0px; --core-header-height:clamp(150px,12.5vw,320px); --asteria-header-art:none; }
 body { min-width:0!important; }
 body .main, body main.main, body.workspace-active .main { left:0!important; width:100%!important; margin-left:0!important; padding:20px!important; top:var(--core-header-height)!important; }
 body .topbar.asteria-header {
@@ -108,7 +108,7 @@ body .crystal-arrow { width:37px;min-width:37px;padding:9px 10px!important;font-
   #settingsPanel { width:360px!important; }
 }
 @media (max-width:1200px) {
-  :root { --core-header-height:110px;--core-sidebar-width:0px;--asteria-header-art:url("../assets/header/asteria-header-compact.webp"); }
+  :root { --core-header-height:110px;--core-sidebar-width:0px;--asteria-header-art:none; }
   body .topbar.asteria-header { gap:12px;padding:6px 16px!important;background-position:right center!important; }
   #mobileNavigationSlot,#mobileAccountSlot { display:block; }
   #globalNavigation { display:flex;flex-direction:column;align-items:stretch;gap:9px;margin-bottom:18px; }

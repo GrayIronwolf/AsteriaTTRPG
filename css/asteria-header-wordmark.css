@@ -1,0 +1,34 @@
+/* Header artwork and logo are independent of the navigation controls. */
+body .topbar.asteria-header {
+  display:flex!important;
+  padding:8px clamp(12px,1.6vw,32px)!important;
+  gap:clamp(12px,1.4vw,28px)!important;
+  background:#192838!important;
+}
+body .topbar.asteria-header::before,
+body .topbar.asteria-header::after { content:none!important; }
+.asteria-header-brand {
+  display:block;
+  flex:0 0 clamp(280px,19vw,440px);
+  width:clamp(280px,19vw,440px);
+  min-width:0;
+  line-height:0;
+}
+.asteria-header-wordmark { display:block;width:100%;height:auto;overflow:visible; }
+.asteria-logo-star-colour { flood-color:var(--asteria-accent,#1f7dff); }
+.asteria-header-brand:focus-visible { outline:2px solid var(--asteria-accent,#1f7dff);outline-offset:4px; }
+body .asteria-header #globalNavigation {
+  position:static;left:auto;top:auto;width:auto;transform:none;
+  flex:1;justify-content:center;
+}
+body .asteria-header .top-actions {
+  position:static;right:auto;top:auto;transform:none;
+  margin-left:auto!important;flex-shrink:0;
+}
+@media (max-width:1679px) {
+  :root { --asteria-banner-height:clamp(84px,12.5vw,180px); }
+  .asteria-header-brand {
+    flex-basis:auto;
+    width:min(480px,calc(100vw - 105px),calc((var(--core-header-height) - 16px) * 3));
+  }
+}
