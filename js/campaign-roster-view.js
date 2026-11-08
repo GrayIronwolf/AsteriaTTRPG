@@ -12,7 +12,7 @@
     if(value!==undefined && value!==null)el.textContent=String(value);
     return el;
   }
-  function present(host,payload){
+  function present(host,payload,handlers={}){
     if(!host || !payload || !Array.isArray(payload.active) ||
       !Array.isArray(payload.inactive)||!Array.isArray(payload.pending))return false;
     host.replaceChildren();
@@ -38,6 +38,25 @@
           if(item.joinedAt)article.appendChild(node('small','Joined: '+item.joinedAt));
           const characters=Array.isArray(item.characters)?item.characters:[];
           article.appendChild(node('small',characters.length?'Linked characters ('+characters.length+'): '+characters.map(c=>c.name+(Number.isInteger(c.level)?' · Level '+c.level:'')).join(', '):'No verified linked characters'));
+        }
+        const actions=Array.isArray(item.controls)?item.controls:[];
+        if(section.key!=='pending' && payload.source==='canonical' &&
+          handlers.enableControls===true && typeof handlers.onAction==='function' &&
+          Number.isSafeInteger(item.revision) && item.revision>0 && actions.length){
+          const controls=node('div',null,'workspace-roster-controls');
+          for(const action of actions){
+            if(!['suspend','restore','remove','ban'].includes(action))continue;
+            const button=node('button',action.charAt(0).toUpperCase()+action.slice(1));
+            button.type='button';
+            button.dataset.memberAction=action;
+            button.dataset.memberUid=item.uid;
+            button.addEventListener('click',()=>handlers.onAction({
+              action,uid:item.uid,displayName:item.displayName||item.uid,
+              revision:item.revision,status:item.status,role:item.role
+            }));
+            controls.appendChild(button);
+          }
+          article.appendChild(controls);
         }
         wrapper.appendChild(article);
       }
