@@ -90,7 +90,7 @@ test('legacy campaigns, mismatched code and unknown schema cannot create request
 });
 test('malformed input or missing authentication fails closed',async()=>{
   const db=fixture();
-  for(const uid of ['',undefined,'invalid/uid'])await assert.rejects(submit(db,uid),/Sign in/);
+  for(const uid of ['',undefined,'invalid/uid'])await assert.rejects(campaignJoinRequest(db,uid,{action:'submit',campaignId:'c',ucn:code}),/Sign in/);
   await assert.rejects(campaignJoinRequest(db,'alice',{action:'submit',campaignId:'../x',ucn:code}),/Verify/);
   await assert.rejects(submit(db,'alice','../hero'),/valid owned character/);
   assert.equal(db.store.size,1);
