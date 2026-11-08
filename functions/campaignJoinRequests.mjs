@@ -54,7 +54,16 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
       if(member.uid!==uid || member.campaignId!==campaignId ||
         !MEMBER_STATUSES.includes(member.status) ||
         !['player','co-gm','owner'].includes(member.role)) throw new Error('Campaign membership needs review.');
-      if(member.status==='active') return {campaignId,status:'member',requestedCharacterId:null,alreadyExists:true};
+      if(member.status==='active') {
+        // The player status view should show the final GM decision, not
+        // disguise an approved request as a pre-existing membership.
+        if(action==='status' && requestSnap.exists){
+          const previous=requestSnap.data();
+          if(previous.uid===uid && previous.campaignId===campaignId && previous.status==='approved')
+            return ownRequestSummary(campaignId,previous,true);
+        }
+        return {campaignId,status:'member',requestedCharacterId:null,alreadyExists:true};
+      }
       // No request may reinstate a banned, removed or suspended member.
       return {campaignId,status:'blocked',requestedCharacterId:null,alreadyExists:true};
     }
