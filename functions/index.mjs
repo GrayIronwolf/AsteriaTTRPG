@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
@@ -44,6 +45,33 @@ export const asteriaCampaignUCN=onCall({region:'us-central1',maxInstances:3,time
 });
 
  
+// Phase 6.1: server-only issuance. No redemption, membership changes or
+// invitation management. The HMAC secret is provided by Firebase Secret Manager
+// and is never sent to the browser or stored in an invitation document.
+const secureInvitationSigningKey=defineSecret('ASTERIA_SECURE_INVITE_SIGNING_KEY');
+export const asteriaSecureInvitation=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30,
+  secrets:[secureInvitationSigningKey]
+},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    if(process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
+      throw new Error('Secure invitation issuance is not enabled yet.');
+    if(request.data?.action!=='issue')
+      throw new Error('Secure invitation management is not available in Phase 6.1.');
+    const {issueSecureCampaignInvitation}=await import('./campaignSecureInvitations.mjs');
+    const {campaignId,requestId,type,roleOffered,recipientEmail,
+      recipientUid,expiresInHours,maxUses,requiresGMApproval}=request.data||{};
+    return await issueSecureCampaignInvitation(getFirestore(),request.auth.uid,{
+      campaignId,requestId,type,roleOffered,recipientEmail,recipientUid,
+      expiresInHours,maxUses,requiresGMApproval
+    },{signingKey:secureInvitationSigningKey.value()});
+  }catch(error){
+    throw new HttpsError('failed-precondition',
+      error.message||'The invitation could not be issued.');
+  }
+});
+
 // Phase 2.2: prepares member records only. No active access-mode transition.
 // Staging is disabled on the server until explicitly reviewed and enabled.
 export const asteriaMembershipPreparation=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
