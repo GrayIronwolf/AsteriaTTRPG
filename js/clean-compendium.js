@@ -936,7 +936,7 @@
       campaignLookupState={preview:candidate,uid:activeUser.uid};
       renderCampaignJoinPreview(candidate,activeUser);
       joinResult('Campaign found. Review the details and your account below.', 'ok');
-      if(candidate.joinMode==='request' && typeof firebase.joinRequestStatus==='function') {
+      if(candidate.joinMode==='request' && window.AsteriaFeatureFlags?.campaignJoinRequests===true && typeof firebase.joinRequestStatus==='function') {
         try {
           const status=await firebase.joinRequestStatus(candidate.id,candidate.ucn);
           if(requestId===campaignLookupSequence && firebase.getUser?.()?.uid===activeUser.uid){
@@ -1019,6 +1019,7 @@
       declined:'Your previous request was declined. Contact the GM if you need assistance.',
       cancelled:'This request is cancelled. Contact the GM to request another invitation.',
       expired:'This request has expired. Contact the GM to submit again.',
+      closed:'This campaign is not accepting new join requests.',
       member:'This account is already a campaign member.',
       blocked:'This account cannot submit a new request. Contact the GM.'
     };
@@ -1026,6 +1027,7 @@
     const eligible=value==='none' && window.AsteriaFeatureFlags?.campaignJoinRequests===true;
     if(submit) { submit.disabled=!eligible; submit.hidden=!eligible; }
     if(choice) choice.disabled=!eligible;
+    if(value==='unknown' && !eligible && line) line.textContent='Join requests are not activated on this website yet.';
     if(value==='none' && !eligible && line) line.textContent=
       'Join requests are not activated on this website yet. No account connection has been changed.';
   }
