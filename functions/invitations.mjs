@@ -11,6 +11,9 @@ export async function accessInvite(db, uid, code, join=false) {
     if(!snapshot.exists) return null;
     const campaign=snapshot.data();
     if(campaign.ownerUid!==invite.data().ownerUid || campaign.ucn!==code) return null;
+    // V2 UCN lookup is not a bearer invitation. Join requests are Phase 3.
+    if(campaign.membershipSchemaVersion===2 && join) throw new Error('This campaign requires a join request.');
+    if(campaign.membershipSchemaVersion!==undefined && campaign.membershipSchemaVersion!==null && campaign.membershipSchemaVersion!==1 && campaign.membershipSchemaVersion!==2) return null;
     if(!join) return {id,name:campaign.name||'Campaign',ucn:code};
     const isGM=campaign.ownerUid===uid || (campaign.gmUids||[]).includes(uid) || campaign.roles?.[uid]==='gm';
     const previous=campaign.players?.[uid]||{};
