@@ -117,7 +117,7 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
       if(process.env.ASTERIA_MEMBER_CONTROLS_ENABLED!=='1')
         throw new Error('Campaign member controls are not enabled yet.');
       const {moderateCampaignMember}=await import('./campaignMemberControls.mjs');
-      return await moderateCampaignMember(db,uid,data);
+      return await moderateCampaignMember(db,uid,{...data,action:data.memberAction});
     }
     if(data.action==='roster'){
       if(process.env.ASTERIA_PLAYER_ROSTER_ENABLED!=='1')
