@@ -58,7 +58,7 @@ test('workspace requires explicit preview then confirmation and does not join wh
   assert.match(confirmation,/canJoinPreview/);
   assert.match(confirmation,/firebase\.joinCampaignByUCN\(state\.preview\.ucn\)/);
   assert.match(source,/renderCampaignJoinPreview\(candidate,activeUser\)/);
-  assert.match(source,/request submission is being added in Phase 3\.2/);
+  assert.match(source,/Request submission is being added in Phase 3\.2/);
 });
 test('HTML loads the join model before clean compendium and preserves existing image/theme assets',()=>{
   const html=fs.readFileSync('index.html','utf8');
