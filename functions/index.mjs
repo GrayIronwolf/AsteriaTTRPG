@@ -120,7 +120,7 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
         await import('./campaignCharacterLifecycle.mjs');
       if(data.action==='character-lifecycle-list')
         return await listCampaignCharacterLifecycle(db,uid,data.campaignId);
-      return await changeCampaignCharacterLifecycle(db,uid,data);
+      return await changeCampaignCharacterLifecycle(db,uid,{...data,action:data.lifecycleAction});
     }
     if(data.action==='character-link-list'||data.action==='character-link-review'){
       if(process.env.ASTERIA_CHARACTER_LINK_APPROVAL_ENABLED!=='1')
