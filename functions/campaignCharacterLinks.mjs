@@ -59,9 +59,15 @@ function countReservations(campaign,links,uid,limits){
   if(links.length>100)throw new Error('Campaign character links need reconciliation.');
   const inParty=Array.isArray(campaign.party)?campaign.party:[];
   if(inParty.some(id=>!validId(id)))throw new Error('Campaign party records need reconciliation.');
-  const all=new Set(inParty);
+  // Legacy roster/gameplay indexes can contain established campaign characters
+  // not currently in the party. Treat them as occupied capacity, never overwrite.
+  const summaries=record(campaign.characters)?campaign.characters:{};
+  const oldLinks=record(campaign.playerCharacterLinks)?campaign.playerCharacterLinks:{};
+  const all=new Set([...inParty,...Object.keys(summaries),...Object.keys(oldLinks)]);
   const mine=new Set(Array.isArray(campaign.players?.[uid]?.characterIds)?
     campaign.players[uid].characterIds:[]);
+  for(const [id,owner] of Object.entries(oldLinks))if(owner===uid)mine.add(id);
+  for(const [id,summary] of Object.entries(summaries))if(summary?.ownerUid===uid)mine.add(id);
   let pendingTotal=0,pendingMine=0;
   for(const row of links){
     const link=row.data();
