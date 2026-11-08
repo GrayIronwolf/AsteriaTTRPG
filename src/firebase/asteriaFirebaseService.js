@@ -27,6 +27,9 @@ function requireMethod(name) {
 export const firebaseService = {
   currentUser: () => api()?.getUser?.() || null,
   currentProfile: () => api()?.getProfile?.() || null,
+  listCampaignJoinRequests: campaignId => requireMethod('listCampaignJoinRequests')(campaignId),
+  reviewCampaignJoinRequest: (campaignId,uid,decision,revision) => requireMethod('reviewCampaignJoinRequest')(campaignId,uid,decision,revision),
+  setCampaignJoinApprovalMode: (campaignId,mode) => requireMethod('setCampaignJoinApprovalMode')(campaignId,mode),
   mirrorOwnedCharacter: (characterId, character) => requireMethod('saveOwnedCharacterSnapshot')(characterId, character),
   loadCampaigns: () => requireMethod('loadCampaigns')(),
   subscribeOwnedCharacter: (...args) => requireMethod('subscribeOwnedCharacter')(...args),
