@@ -16,6 +16,8 @@ import {listCampaignPlayerRoster} from '../functions/campaignPlayerRoster.mjs';
 import {moderateCampaignMember} from '../functions/campaignMemberControls.mjs';
 import {changeCampaignMemberRole,setCampaignCoGmPermission,listCampaignMembershipActivity} from '../functions/campaignRolePermissions.mjs';
 import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
+import {campaignCharacterLink} from '../functions/campaignCharacterLinks.mjs';
+import {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink} from '../functions/campaignCharacterApproval.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1107,4 +1109,83 @@ test('demoting Co-GM fails when campaign Player capacity has been reached',async
     expectedRole:'co-gm',expectedRevision:1,expectedStatus:'active'
   }),/capacity/);
   assert.equal((await db.doc('campaigns/c/members/alice').get()).data().role,'co-gm');
+});
+
+test('Phase 5.2: canonical GM review imports a verified sheet without client link writes or private leaks',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,
+    capacity:{maxActiveCharacters:5,maxCharactersPerPlayer:2}});
+  await db.doc('campaigns/c/members/alice').set({
+    uid:'alice',campaignId:'c',role:'player',status:'active',revision:1
+  });
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({
+    campaignId:'c',role:'player',status:'active'
+  });
+  await db.doc('users/alice/characters/forge').set({
+    id:'forge',sourceCharacterId:'forge',ownerUid:'alice',
+    name:'Private Forge',xp:450,inventory:[{name:'Wand'}],
+    secretNotes:'must remain private'
+  });
+  const queued=await campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'forge'
+  });
+  assert.equal(queued.status,'pending');
+  const result=await listPendingCampaignCharacterLinks(db,'gm','c');
+  assert.equal(result.requests.length,1);
+  assert.equal(JSON.stringify(result).includes('secretNotes'),false);
+  const link=result.requests[0];
+  const path='campaigns/c/characterLinks/'+link.linkId;
+  await assertFails(getDoc(doc(user('alice'),path)));
+  await assertFails(getDoc(doc(user('gm'),path)));
+  await assertFails(setDoc(doc(user('alice'),path),{status:'approved'}));
+  await assertFails(updateDoc(doc(user('gm'),path),{status:'approved'}));
+  await assert.rejects(reviewCampaignCharacterLink(db,'bob',{
+    campaignId:'c',linkId:link.linkId,decision:'approve',expectedRevision:link.revision
+  }),/authorised GM/);
+  const approved=await reviewCampaignCharacterLink(db,'gm',{
+    campaignId:'c',linkId:link.linkId,decision:'approve',expectedRevision:link.revision
+  });
+  assert.equal(approved.status,'approved');
+  assert.equal(approved.campaignCharacterId,queued.campaignCharacterId);
+  const shared=(await db.doc('campaigns/c/characters/'+approved.campaignCharacterId).get()).data();
+  assert.equal(shared.ownerUid,'alice');
+  assert.equal(shared.sourceCharacterId,'forge');
+  assert.equal(shared.xp,450);
+  assert.deepEqual(shared.inventory,[{name:'Wand'}]);
+  assert.equal(shared.secretNotes,undefined);
+  assert.equal((await db.doc('users/alice/characters/forge').get()).data().secretNotes,'must remain private');
+  assert.equal((await db.doc('users/alice/characters/forge').get()).data().campaignCharacterIds.c,
+    approved.campaignCharacterId);
+  await assertSucceeds(getDoc(doc(user('alice'),
+    'campaigns/c/characters/'+approved.campaignCharacterId)));
+  assert.equal((await db.doc('campaigns/c').get()).data().playerCharacterLinks[approved.campaignCharacterId],'alice');
+  assert.equal((await listPendingCampaignCharacterLinks(db,'gm','c')).requests.length,0);
+});
+
+test('Phase 5.2: decline is reversible through fresh player request, not a stale GM replay',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,
+    capacity:{maxActiveCharacters:5,maxCharactersPerPlayer:2}});
+  await db.doc('campaigns/c/members/alice').set({
+    uid:'alice',campaignId:'c',role:'player',status:'active',revision:1
+  });
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({
+    campaignId:'c',role:'player',status:'active'
+  });
+  await db.doc('users/alice/characters/forge').set({id:'forge',ownerUid:'alice',xp:99});
+  await campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'forge'
+  });
+  const old=(await listPendingCampaignCharacterLinks(db,'gm','c')).requests[0];
+  await reviewCampaignCharacterLink(db,'gm',{
+    campaignId:'c',linkId:old.linkId,decision:'decline',expectedRevision:old.revision
+  });
+  assert.equal((await db.doc('campaigns/c/characters/'+old.campaignCharacterId).get()).exists,false);
+  assert.equal((await db.doc('users/alice/characters/forge').get()).data().xp,99);
+  await campaignCharacterLink(db,'alice',{
+    action:'request',campaignId:'c',sourceCharacterId:'forge'
+  });
+  await assert.rejects(reviewCampaignCharacterLink(db,'gm',{
+    campaignId:'c',linkId:old.linkId,decision:'approve',expectedRevision:old.revision
+  }),/changed/);
+  const next=(await listPendingCampaignCharacterLinks(db,'gm','c')).requests[0];
+  assert.equal(next.revision,3);
 });
