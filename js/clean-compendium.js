@@ -643,7 +643,7 @@
         <dl class="clean-page-meta">
           <div><dt>Campaign ID</dt><dd>${escapeHtml(campaign.id)}</dd></div>
           <div><dt>UCN</dt><dd>${escapeHtml(campaign.ucn || 'Not generated')}</dd></div>
-          <div><dt>Invite Link</dt><dd>${escapeHtml(inviteLink(campaign))}</dd></div>
+          <div><dt>${campaign.membershipSchemaVersion===2?'Campaign Lookup Link':'Invite Link'}</dt><dd>${escapeHtml(inviteLink(campaign))}</dd></div>
           <div><dt>GM ID</dt><dd>${escapeHtml(campaign.gmId || campaign.ownerUid || 'Not set')}</dd></div>
           <div><dt>Party Characters</dt><dd>${arrayValue(campaign.party).length}</dd></div>
         </dl>
