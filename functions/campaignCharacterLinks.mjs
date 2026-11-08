@@ -5,6 +5,7 @@ import {createHash,randomUUID} from 'node:crypto';
 // changes an owned sheet, or places a character in the active party.
 const ID=/^[A-Za-z0-9_-]{1,160}$/;
 const ACTIVE_LINK_STATUSES=new Set(['pending','approved']);
+const LINK_STATUSES=new Set(['pending','approved','declined','inactive','unlinked']);
 const validId=value=>typeof value==='string'&&ID.test(value);
 const record=value=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
 
@@ -14,7 +15,7 @@ function limit(value,fallback,label){
     throw new Error('Campaign '+label+' needs owner review.');
   return value;
 }
-function capacity(campaign){
+export function characterCapacityLimits(campaign){
   const partySize=limit(campaign.partySize??campaign.settings?.partySize,4,'party size');
   return {
     overall:limit(campaign.capacity?.maxActiveCharacters,partySize,'character capacity'),
@@ -23,7 +24,8 @@ function capacity(campaign){
 }
 function existingStatus(campaignId,link,alreadyExists=true){
   return {campaignId,sourceCharacterId:link.sourceCharacterId,
-    status:link.status,campaignCharacterId:link.campaignCharacterId||null,alreadyExists};
+    status:link.status,campaignCharacterId:link.campaignCharacterId||null,
+    revision:Number.isSafeInteger(link.revision)?link.revision:1,alreadyExists};
 }
 function ensureActiveMember(campaign,member,projection,uid,campaignId){
   const role=uid===campaign.ownerUid?'owner':member?.role;
@@ -35,13 +37,13 @@ function ensureActiveMember(campaign,member,projection,uid,campaignId){
     projection.status!=='active'||projection.role!==role)
     throw new Error('Campaign membership needs reconciliation before linking a character.');
 }
-function ensureOwnedSheet(sheet,uid,sourceCharacterId){
+export function ensureOwnedCampaignSheet(sheet,uid,sourceCharacterId){
   if(!record(sheet)||sheet.ownerUid!==uid||
     (sheet.id!==undefined&&sheet.id!==sourceCharacterId)||
     (sheet.sourceCharacterId!==undefined&&sheet.sourceCharacterId!==sourceCharacterId))
     throw new Error('The selected saved character is not owned by this account.');
 }
-function legacyLinkExists(campaign,sheet,uid,sourceCharacterId,campaignId){
+export function legacyCharacterLinkExists(campaign,sheet,uid,sourceCharacterId,campaignId){
   const links=record(campaign.playerCharacterLinks)?campaign.playerCharacterLinks:{};
   const summaries=record(campaign.characters)?campaign.characters:{};
   const player=record(campaign.players?.[uid])?campaign.players[uid]:{};
@@ -55,7 +57,7 @@ function legacyLinkExists(campaign,sheet,uid,sourceCharacterId,campaignId){
   return Array.isArray(player.characterIds)&&player.characterIds.some(id=>
     id===sourceCharacterId||summaries[id]?.sourceCharacterId===sourceCharacterId);
 }
-function countReservations(campaign,links,uid,limits){
+export function assertCharacterLinkCapacity(campaign,links,uid,limits,{approving=false}={}){
   if(links.length>100)throw new Error('Campaign character links need reconciliation.');
   const inParty=Array.isArray(campaign.party)?campaign.party:[];
   if(inParty.some(id=>!validId(id)))throw new Error('Campaign party records need reconciliation.');
@@ -72,7 +74,7 @@ function countReservations(campaign,links,uid,limits){
   for(const row of links){
     const link=row.data();
     if(!record(link)||link.linkId!==row.id||!validId(link.ownerUid)||
-      !validId(link.sourceCharacterId)||!['pending','approved','inactive','unlinked'].includes(link.status))
+      !validId(link.sourceCharacterId)||!LINK_STATUSES.has(link.status))
       throw new Error('Campaign character links need reconciliation.');
     if(!ACTIVE_LINK_STATUSES.has(link.status))continue;
     if(link.status==='pending'){
@@ -84,9 +86,9 @@ function countReservations(campaign,links,uid,limits){
       if(link.ownerUid===uid)mine.add(link.campaignCharacterId);
     }
   }
-  if(all.size+pendingTotal>=limits.overall)
+  if(all.size+pendingTotal>limits.overall||(!approving&&all.size+pendingTotal===limits.overall))
     throw new Error('The campaign character capacity has been reached.');
-  if(mine.size+pendingMine>=limits.perOwner)
+  if(mine.size+pendingMine>limits.perOwner||(!approving&&mine.size+pendingMine===limits.perOwner))
     throw new Error('This account has reached the campaign character limit.');
 }
 
@@ -126,7 +128,7 @@ export async function campaignCharacterLink(db,uid,
       projectionSnap.exists?projectionSnap.data():null,uid,campaignId);
     if(!sheetSnap.exists)throw new Error('Save this character in Character Forge before requesting a link.');
     const sheet=sheetSnap.data();
-    ensureOwnedSheet(sheet,uid,sourceCharacterId);
+    ensureOwnedCampaignSheet(sheet,uid,sourceCharacterId);
     const link=linkSnap.exists?linkSnap.data():null;
     const key=keySnap.exists?keySnap.data():null;
     if(Boolean(link)!==Boolean(key))
@@ -136,28 +138,47 @@ export async function campaignCharacterLink(db,uid,
         link.campaignId!==campaignId||link.ownerUid!==uid||
         link.sourceCharacterId!==sourceCharacterId||
         key.linkId!==digest||key.campaignId!==campaignId||
-        key.ownerUid!==uid||key.sourceCharacterId!==sourceCharacterId)
+        key.ownerUid!==uid||key.sourceCharacterId!==sourceCharacterId||
+        key.campaignCharacterId!==link.campaignCharacterId||
+        !LINK_STATUSES.has(link.status))
         throw new Error('The character link reservation does not match its owner.');
-      if(!ACTIVE_LINK_STATUSES.has(link.status))
+      if(action==='status'||ACTIVE_LINK_STATUSES.has(link.status))
+        return existingStatus(campaignId,link);
+      if(link.status!=='declined')
         throw new Error('This character link is inactive. Ask the GM to review it.');
-      return existingStatus(campaignId,link);
     }
     if(action==='status')return {campaignId,sourceCharacterId,status:'none',
-      campaignCharacterId:null,alreadyExists:false};
+      campaignCharacterId:null,revision:null,alreadyExists:false};
     if(campaign.settings?.allowPlayerLinkCharacter===false)
       throw new Error('The GM has disabled character linking for this campaign.');
-    if(sourceKind==='forge'&&campaign.settings?.allowPlayerCreateCharacter===false)
+    const effectiveSourceKind=link?.sourceKind==='forge'?'forge':sourceKind;
+    if(effectiveSourceKind==='forge'&&campaign.settings?.allowPlayerCreateCharacter===false)
       throw new Error('The GM has disabled new characters for this campaign.');
-    if(legacyLinkExists(campaign,sheet,uid,sourceCharacterId,campaignId))
+    if(legacyCharacterLinkExists(campaign,sheet,uid,sourceCharacterId,campaignId))
       throw new Error('This character already has a legacy campaign link. Ask the GM to reconcile it rather than duplicate the character.');
-    const limits=capacity(campaign);
+    const limits=characterCapacityLimits(campaign);
     const links=await tx.get(db.collection(path+'/characterLinks'));
-    countReservations(campaign,links.docs||[],uid,limits);
+    assertCharacterLinkCapacity(campaign,links.docs||[],uid,limits);
+    if(link){
+      const revision=Number.isSafeInteger(link.revision)&&link.revision>=1?link.revision+1:3;
+      if(revision>Number.MAX_SAFE_INTEGER)throw new Error('Link revision overflow.');
+      tx.update(linkRef,{
+        status:'pending',revision,sourceKind:effectiveSourceKind,requestedAt:now,
+        updatedAt:now,approvedByUid:null,approvedAt:null,reviewedByUid:null,reviewedAt:null
+      });
+      const auditId='character-link-'+digest+'-r'+revision;
+      tx.create(db.doc(path+'/auditEvents/'+auditId),{
+        eventId:auditId,campaignId,actorUid:uid,subjectUid:uid,
+        category:'character-link',action:'requested-again',createdAt:now,
+        metadata:{sourceCharacterId}
+      });
+      return existingStatus(campaignId,{...link,status:'pending',revision},false);
+    }
 
     const campaignCharacterId='linkchar-'+randomUUID().replace(/-/g,'');
     const requested={
       linkId:digest,campaignId,ownerUid:uid,sourceCharacterId,campaignCharacterId,
-      status:'pending',requestedAt:now,approvedByUid:null,approvedAt:null,
+      status:'pending',revision:1,requestedAt:now,approvedByUid:null,approvedAt:null,
       updatedAt:now,role:'player-character',sourceKind
     };
     tx.create(linkRef,requested);
