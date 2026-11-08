@@ -121,7 +121,7 @@
       campaign?.membershipSchemaVersion===2 && !availableIds.has(String(campaign.id)));
     if(unavailable.length) {
       window.AsteriaUnavailableCampaigns=Object.assign({},window.AsteriaUnavailableCampaigns||{},
-        Object.fromEntries(unavailable.map(campaign=>[campaign.id,campaign])));
+        Object.fromEntries(unavailable.map(campaign=>[campaign.id,{id:campaign.id,accessRevoked:true}])));
     }
     const merged = new Map((window.campaigns || []).filter(campaign=>
       campaign?.id && (campaign.membershipSchemaVersion!==2 || availableIds.has(String(campaign.id))))
