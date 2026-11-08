@@ -5,6 +5,8 @@ const CAMPAIGN_ID_PATTERN = /^[A-Za-z0-9_-]{1,160}$/;
 const MAX_ALLOCATION_ATTEMPTS = 12;
 const MAX_LOOKUPS_PER_WINDOW = 12;
 const LOOKUP_WINDOW_MS = 60_000;
+const MAX_CREATES_PER_WINDOW = 10;
+const CREATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function campaignSummary(campaignId, campaign, ucn) {
   return { id: campaignId, name: String(campaign.name || 'Campaign').slice(0, 120), ucn };
@@ -34,10 +36,17 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
     const campaignRef = db.doc(`campaigns/${campaignId}`);
     const directoryRef = db.doc(`campaignDirectory/${ucn}`);
     const legacyInviteRef = db.doc(`campaignInvites/${ucn}`);
+    const creationLimitRef = db.doc(`campaignCreateThrottle/${uid}`);
     const result = await db.runTransaction(async transaction=>{
-      const [campaign, directory, legacyInvite] = await Promise.all([
-        transaction.get(campaignRef), transaction.get(directoryRef), transaction.get(legacyInviteRef)
+      const [campaign, directory, legacyInvite, throttle] = await Promise.all([
+        transaction.get(campaignRef), transaction.get(directoryRef), transaction.get(legacyInviteRef), transaction.get(creationLimitRef)
       ]);
+      const rate = throttle.exists ? throttle.data() : {};
+      const nowMs = Date.now();
+      const windowStart = typeof rate.windowStartedAtMs === 'number' ? rate.windowStartedAtMs : 0;
+      const withinWindow = nowMs >= windowStart && nowMs - windowStart < CREATE_WINDOW_MS;
+      const created = withinWindow ? Number(rate.created || 0) : 0;
+      if(created >= MAX_CREATES_PER_WINDOW) throw new Error('Campaign creation limit reached. Please try again later.');
       if(campaign.exists || directory.exists || legacyInvite.exists) return null;
       const now = new Date().toISOString();
       transaction.create(campaignRef, {
@@ -51,6 +60,9 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
       });
       transaction.create(legacyInviteRef, {
         ucn,campaignId,campaignName:name,ownerUid:uid,status:'active',createdAt:now,updatedAt:now
+      });
+      transaction.set(creationLimitRef,{
+        windowStartedAtMs:withinWindow?windowStart:nowMs,created:created+1,updatedAtMs:nowMs
       });
       return { id:campaignId, ucn, name };
     });
