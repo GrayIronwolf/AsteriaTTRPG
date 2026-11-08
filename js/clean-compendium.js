@@ -936,6 +936,21 @@
       campaignLookupState={preview:candidate,uid:activeUser.uid};
       renderCampaignJoinPreview(candidate,activeUser);
       joinResult('Campaign found. Review the details and your account below.', 'ok');
+      if(candidate.joinMode==='request' && typeof firebase.joinRequestStatus==='function') {
+        try {
+          const status=await firebase.joinRequestStatus(candidate.id,candidate.ucn);
+          if(requestId===campaignLookupSequence && firebase.getUser?.()?.uid===activeUser.uid){
+            campaignLookupState.requestStatus=status;
+            renderCampaignJoinRequestStatus(status);
+          }
+        }catch(error){
+          if(requestId===campaignLookupSequence){
+            joinResult('Campaign found, but request status could not be verified. Search again before submitting.', 'warn');
+            const submit=byId('workspaceSubmitJoinRequest');
+            if(submit) submit.disabled=true;
+          }
+        }
+      }
       return candidate;
     }catch(error){
       console.warn('Campaign preview failed.',error);
@@ -966,14 +981,94 @@
       <p class="muted">${legacy
         ? 'This campaign uses the existing invitation system. Confirming connects your account immediately. GM approval for new join requests will be introduced in Phase 3.2–3.3.'
         : request
-          ? 'This campaign requires a GM-approved join request. Request submission is being added in Phase 3.2. Looking up a UCN does not grant access.'
+          ? 'Submit a join request for GM approval. You may select an owned character as a preference; no character will be linked until approval.'
           : 'This campaign is not accepting connections through the current joining system.'}</p>
       ${legacy ? '<button class="primary" type="button" id="workspaceConfirmCampaignJoin">Confirm &amp; Join Campaign</button>' : ''}
+      ${request ? `<section class="workspace-join-request" aria-label="Campaign join request">
+        <p id="workspaceJoinRequestStatus" aria-live="polite">Checking request status...</p>
+        <label class="workspace-join-code-label">Character preference (optional)
+          <select id="workspaceJoinRequestCharacter" disabled>
+            <option value="">No character selected</option>
+            ${ownedCharacters().map(character=>`<option value="${escapeHtml(character.id)}">${escapeHtml(character.name || character.id)}</option>`).join('')}
+          </select>
+        </label>
+        <button class="primary" type="button" id="workspaceSubmitJoinRequest" disabled>Request to Join</button>
+      </section>` : ''}
     `;
+    byId('workspaceSubmitJoinRequest')?.addEventListener('click',async event=>{
+      event.preventDefault();event.stopPropagation();
+      await submitCampaignJoinRequest();
+    });
     byId('workspaceConfirmCampaignJoin')?.addEventListener('click',async event=>{
       event.preventDefault();event.stopPropagation();
       await confirmCampaignJoin();
     });
+  }
+
+  function renderCampaignJoinRequestStatus(status){
+    const state=campaignLookupState;
+    if(state?.preview?.joinMode!=='request') return;
+    const line=byId('workspaceJoinRequestStatus');
+    const submit=byId('workspaceSubmitJoinRequest');
+    const choice=byId('workspaceJoinRequestCharacter');
+    const value=status?.status || 'unknown';
+    const copy={
+      none:'You have not requested access yet. The GM must approve a new request.',
+      pending:'Request pending GM approval. You cannot join or link a character yet.',
+      approved:'Request approved. Campaign access will be updated by the GM approval system.',
+      declined:'Your previous request was declined. Contact the GM if you need assistance.',
+      cancelled:'This request is cancelled. Contact the GM to request another invitation.',
+      expired:'This request has expired. Contact the GM to submit again.',
+      member:'This account is already a campaign member.',
+      blocked:'This account cannot submit a new request. Contact the GM.'
+    };
+    if(line) line.textContent=copy[value] || 'Request status could not be verified.';
+    const eligible=value==='none' && window.AsteriaFeatureFlags?.campaignJoinRequests===true;
+    if(submit) { submit.disabled=!eligible; submit.hidden=!eligible; }
+    if(choice) choice.disabled=!eligible;
+    if(value==='none' && !eligible && line) line.textContent=
+      'Join requests are not activated on this website yet. No account connection has been changed.';
+  }
+
+  async function submitCampaignJoinRequest(){
+    const state=campaignLookupState;
+    const firebase=window.AsteriaFirebase;
+    const activeUser=firebase?.getUser?.();
+    const model=window.AsteriaCampaignJoinModel;
+    if(!state || state.preview?.joinMode!=='request' ||
+       state.uid!==activeUser?.uid ||
+       !model?.joinAccountValid?.(sessionInfo(),activeUser) ||
+       model.normalizeUCN(byId('workspaceJoinCampaignCode')?.value || '')!==state.preview.ucn ||
+       state.requestStatus?.status!=='none' ||
+       window.AsteriaFeatureFlags?.campaignJoinRequests!==true){
+      clearCampaignJoinPreview();
+      joinResult('Account or campaign verification changed. Search again before requesting access.', 'warn');
+      return null;
+    }
+    const requestId=campaignLookupSequence;
+    const button=byId('workspaceSubmitJoinRequest');
+    if(button) button.disabled=true;
+    joinResult('Submitting join request...', 'info');
+    try{
+      const selected=byId('workspaceJoinRequestCharacter')?.value || null;
+      const result=await firebase.submitCampaignJoinRequest(state.preview.id,state.preview.ucn,selected);
+      if(requestId!==campaignLookupSequence || firebase.getUser?.()?.uid!==state.uid) return null;
+      if(!result || result.campaignId!==state.preview.id || typeof result.status!=='string'){
+        throw new Error('Unexpected join request response.');
+      }
+      state.requestStatus=result;
+      renderCampaignJoinRequestStatus(result);
+      joinResult(result.status==='pending' ? 'Request pending GM approval. You will not gain access until approved.' :
+        'Your campaign request status has been updated.', 'ok');
+      return result;
+    }catch(error){
+      console.warn('Campaign join request failed.',error);
+      if(requestId===campaignLookupSequence){
+        joinResult('Request could not be confirmed. Search again to check its status before retrying.', 'warn');
+        clearCampaignJoinPreview();
+      }
+      return null;
+    }
   }
 
   async function confirmCampaignJoin() {

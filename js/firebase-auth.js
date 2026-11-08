@@ -1888,6 +1888,19 @@ const firebasePublicApi = {
     if(!functionsClient || !currentUser) throw new Error('Sign in to view this invitation.');
     return (await httpsCallable(functionsClient,'asteriaInvite')({code:campaignCode(codeValue),join:false})).data;
   },
+  joinRequestStatus: async function(campaignId,codeValue){
+    if(!functionsClient || !currentUser) throw new Error('Sign in to review the request.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinRequest')({
+      action:'status',campaignId,ucn:campaignCode(codeValue)
+    })).data;
+  },
+  submitCampaignJoinRequest: async function(campaignId,codeValue,characterId=null){
+    if(!functionsClient || !currentUser) throw new Error('Sign in to request campaign access.');
+    if(window.AsteriaFeatureFlags?.campaignJoinRequests!==true) throw new Error('Join requests are not enabled.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinRequest')({
+      action:'submit',campaignId,ucn:campaignCode(codeValue),characterId:characterId || null
+    })).data;
+  },
   joinCampaignByUCN: async function(codeValue){
     if(!functionsClient || !currentUser) throw new Error('Sign in to join this campaign.');
     return (await httpsCallable(functionsClient,'asteriaInvite')({code:campaignCode(codeValue),join:true})).data;
