@@ -32,6 +32,8 @@
 
   let activeWorkspaceTab = '';
   let currentDashboardMode = 'dashboard';
+  let campaignLookupState = null;
+  let campaignLookupSequence = 0;
   let legacyOpenRuleCategory = null;
   let legacyOpenRulePage = null;
 
@@ -498,10 +500,12 @@
       <div class="workspace-gallery-copy">
         <span class="clean-tag">Join Campaign</span>
         <h3>Join Campaign</h3>
-        <p>Enter the 12 digit UCN from your GM invite, then link an existing character or forge a new one.</p>
-        <label class="workspace-join-code-label">Unique Campaign Number<input id="workspaceJoinCampaignCode" inputmode="numeric" maxlength="14" placeholder="000000000000"></label>
-        <button class="primary" type="button" id="workspaceJoinCampaignBtn">Join Campaign</button>
-        <div id="workspaceJoinCampaignResult" class="workspace-join-result" aria-live="polite"></div>
+        <p>Find your GM's campaign using its 12-digit Unique Campaign Number. Review the campaign before connecting your account.</p>
+        <label class="workspace-join-code-label">Unique Campaign Number<input id="workspaceJoinCampaignCode" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="000000000000" aria-describedby="workspaceJoinCodeHelp"></label>
+        <p class="muted" id="workspaceJoinCodeHelp">Enter all 12 digits. Spaces or hyphens are optional.</p>
+        <button class="primary" type="button" id="workspaceJoinCampaignBtn">Find Campaign</button>
+        <div id="workspaceJoinCampaignResult" class="workspace-join-result" aria-live="polite" role="status"></div>
+        <div id="workspaceJoinCampaignPreview" class="workspace-join-preview" hidden></div>
         <div id="workspaceJoinCharacterChooser" class="workspace-join-character-chooser"></div>
       </div>
     `;
@@ -511,14 +515,24 @@
     element.querySelector('#workspaceJoinCampaignBtn')?.addEventListener('click', async event => {
       event.preventDefault();
       event.stopPropagation();
-      await joinCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
+      await lookupCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
+    });
+    element.querySelector('#workspaceJoinCampaignCode')?.addEventListener('input', () => {
+      campaignLookupSequence += 1;
+      campaignLookupState = null;
+      const preview = element.querySelector('#workspaceJoinCampaignPreview');
+      if(preview) { preview.replaceChildren(); preview.hidden = true; }
+      const chooser = element.querySelector('#workspaceJoinCharacterChooser');
+      if(chooser) chooser.replaceChildren();
+      const status = element.querySelector('#workspaceJoinCampaignResult');
+      if(status) status.textContent = '';
     });
     const pendingInviteCode = takeCampaignInviteCode();
     if (pendingInviteCode) {
       const input = element.querySelector('#workspaceJoinCampaignCode');
       if (input) input.value = pendingInviteCode;
       const result = element.querySelector('#workspaceJoinCampaignResult');
-      if (result) result.innerHTML = '<span class="ok">Invite loaded. Click Join Campaign to accept it.</span>';
+      if (result) result.textContent = 'Campaign number loaded. Select Find Campaign to verify it before joining.';
     }
     return element;
   }
@@ -796,59 +810,153 @@
     });
   }
 
-  async function joinCampaignByUCN(codeValue) {
+  function clearCampaignJoinPreview() {
+    campaignLookupSequence += 1;
+    campaignLookupState = null;
+    const preview = byId('workspaceJoinCampaignPreview');
+    if(preview) { preview.hidden = true; preview.replaceChildren(); }
+    const chooser = byId('workspaceJoinCharacterChooser');
+    if(chooser) chooser.replaceChildren();
+  }
+
+  async function lookupCampaignByUCN(codeValue) {
     if (!requireAccountWorkspace()) return null;
-    const code = campaignCode(codeValue);
-    if (code.length !== 12) {
-      joinResult('Enter the 12 digit Unique Campaign Number from your GM.', 'warn');
+    clearCampaignJoinPreview();
+    const model = window.AsteriaCampaignJoinModel;
+    const code = model?.normalizeUCN?.(codeValue) || '';
+    if (!code) {
+      joinResult('Enter a valid 12-digit Unique Campaign Number.', 'warn');
       return null;
     }
-    const joinButton = byId('workspaceJoinCampaignBtn');
-    let campaign = campaignByCode(code);
-    let joinedInCloud = false;
-    const firebaseReady = Boolean(window.AsteriaFirebase?.isReady?.());
-    if (firebaseReady && (!campaign || campaignRole(campaign) !== 'GM')) {
-      if (joinButton) joinButton.disabled = true;
-      joinResult('Finding campaign...', 'info');
+    const firebase = window.AsteriaFirebase;
+    const activeUser = firebase?.getUser?.();
+    const account = sessionInfo();
+    if (!firebase?.isReady?.() || !model?.joinAccountValid?.(account,activeUser)) {
+      joinResult('Sign in with your Firebase account to verify the campaign. Test Login cannot join another account\'s campaign.', 'warn');
+      return null;
+    }
+    if (typeof firebase.previewCampaignByUCN !== 'function') {
+      joinResult('Campaign lookup is currently unavailable. Try again after the connection is restored.', 'warn');
+      return null;
+    }
+    const requestId=campaignLookupSequence;
+    const joinButton=byId('workspaceJoinCampaignBtn');
+    if(joinButton) joinButton.disabled=true;
+    joinResult('Checking campaign number...', 'info');
+    try {
+      let response;
       try {
-        const sharedCampaign = await window.AsteriaFirebase.joinCampaignByUCN(code);
-        if (sharedCampaign) {
-          campaign = storeAccountCampaign(sharedCampaign);
-          joinedInCloud = true;
-        }
-      } catch (error) {
-        console.warn('UCN campaign join failed.', error);
-        const permissionProblem = error?.code === 'permission-denied' || /permission/i.test(String(error?.message || ''));
-        joinResult(permissionProblem
-          ? 'Firebase blocked this join. Publish the included Firestore rules, then try again.'
-          : 'The campaign service could not complete the join. Please try again.', 'warn');
-        return null;
-      } finally {
-        if (joinButton) joinButton.disabled = false;
+        response=await firebase.previewCampaignByUCN(code);
+      }catch(error){
+        // Older backend deployments may support the original preview callable.
+        // Never bypass security/rate-limit errors or treat an unlabelled
+        // response as proof that an unknown campaign allows instant joining.
+        if(!/not-found|unimplemented/i.test(String(error?.code || '')) ||
+          typeof firebase.findCampaignByUCN !== 'function') throw error;
+        response=await firebase.findCampaignByUCN(code);
       }
+      if(requestId !== campaignLookupSequence ||
+        firebase?.getUser?.()?.uid !== activeUser.uid) return null;
+      const locallyVerified = (window.campaigns || []).find(campaign=>
+        campaign?.id===response?.id && campaign?.ucn===code);
+      if(response && !response.joinMode && locallyVerified &&
+        [undefined,null,1].includes(locallyVerified.membershipSchemaVersion)){
+        response={...response,joinMode:'legacy-compatibility'};
+      }
+      const candidate=model.verifiedPreview(response,code);
+      if(!candidate){
+        joinResult(response ? 'The campaign could not be verified for joining. Please try again later.' : 'No campaign was found for that UCN.', 'warn');
+        return null;
+      }
+      campaignLookupState={preview:candidate,uid:activeUser.uid};
+      renderCampaignJoinPreview(candidate,activeUser);
+      joinResult('Campaign found. Review the details and your account below.', 'ok');
+      return candidate;
+    }catch(error){
+      console.warn('Campaign preview failed.',error);
+      if(requestId !== campaignLookupSequence) return null;
+      const throttled=/too many|resource-exhausted/i.test(String(error?.message || '')+' '+String(error?.code || ''));
+      joinResult(throttled ? 'Too many campaign lookups. Please try again shortly.' :
+        'Campaign lookup is unavailable. No account connection was changed.', 'warn');
+      return null;
+    }finally{
+      if(joinButton) joinButton.disabled=false;
     }
-    if (!campaign) {
-      joinResult(firebaseReady
-        ? 'No campaign was found for that UCN.'
-        : 'Cross-account UCN joining requires a real Firebase login. Test Login only sees campaigns in this browser.', 'warn');
+  }
+
+  function renderCampaignJoinPreview(preview,activeUser) {
+    const host=byId('workspaceJoinCampaignPreview');
+    if(!host) return;
+    const account=sessionInfo();
+    const label=account.email || account.user || activeUser.email || activeUser.uid;
+    const legacy=preview.joinMode==='legacy' || preview.joinMode==='legacy-compatibility';
+    const request=preview.joinMode==='request';
+    host.hidden=false;
+    host.innerHTML=`
+      <div class="workspace-join-choice">
+        <div><b>${escapeHtml(preview.name)}</b><small>UCN ${escapeHtml(preview.ucn)}</small></div>
+        <span class="clean-tag">${legacy?'Legacy invitation':request?'GM approval required':'Unavailable'}</span>
+      </div>
+      <p class="workspace-join-account"><b>Verified account:</b> ${escapeHtml(label)}</p>
+      <p class="muted">${legacy
+        ? 'This campaign uses the existing invitation system. Confirming connects your account immediately. GM approval for new join requests will be introduced in Phase 3.2–3.3.'
+        : request
+          ? 'This campaign requires a GM-approved join request. Request submission is being added in Phase 3.2. Looking up a UCN does not grant access.'
+          : 'This campaign is not accepting connections through the current joining system.'}</p>
+      ${legacy ? '<button class="primary" type="button" id="workspaceConfirmCampaignJoin">Confirm &amp; Join Campaign</button>' : ''}
+    `;
+    byId('workspaceConfirmCampaignJoin')?.addEventListener('click',async event=>{
+      event.preventDefault();event.stopPropagation();
+      await confirmCampaignJoin();
+    });
+  }
+
+  async function confirmCampaignJoin() {
+    const state=campaignLookupState;
+    const model=window.AsteriaCampaignJoinModel;
+    const firebase=window.AsteriaFirebase;
+    const account=sessionInfo(),activeUser=firebase?.getUser?.();
+    const code=byId('workspaceJoinCampaignCode')?.value || '';
+    if(!state || state.uid!==activeUser?.uid ||
+      !model?.canJoinPreview?.(state.preview,account,activeUser,code)){
+      clearCampaignJoinPreview();
+      joinResult('Campaign or account verification changed. Search again before joining.', 'warn');
       return null;
     }
-    ensureCampaignInviteFields(campaign);
-    const player = addCampaignPlayer(campaign);
-    const email = sessionInfo().email || '';
-    campaign.invites = arrayValue(campaign.invites).map(invite => {
-      if (invite.code === campaign.ucn && (!invite.email || !email || lower(invite.email) === lower(email))) {
-        return Object.assign({}, invite, { status:'accepted', acceptedBy:accountKey(), acceptedAt:new Date().toISOString() });
+    const button=byId('workspaceConfirmCampaignJoin');
+    if(button) button.disabled=true;
+    joinResult('Connecting your account to this legacy campaign...', 'info');
+    try {
+      const sharedCampaign=await firebase.joinCampaignByUCN(state.preview.ucn);
+      if(!sharedCampaign || sharedCampaign.id!==state.preview.id ||
+        sharedCampaign.ucn!==state.preview.ucn){
+        throw new Error('Campaign identity changed while joining.');
       }
-      return invite;
-    });
-    campaign.activity = arrayValue(campaign.activity);
-    if (!joinedInCloud) campaign.activity.push(`${sessionInfo().user || sessionInfo().email || 'Player'} joined with UCN.`);
-    persistWorkspaceChange('campaign-ucn-joined');
-    if (!joinedInCloud) window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
-    joinResult(`Joined ${campaign.name || 'campaign'}. Choose a character to link.`, 'ok');
-    renderJoinCharacterChooser(campaign);
-    return player;
+      if(firebase.getUser?.()?.uid!==state.uid || !model.joinAccountValid(sessionInfo(),firebase.getUser?.())){
+        clearCampaignJoinPreview();
+        joinResult('Account changed. Refresh the campaign list before continuing.', 'warn');
+        return null;
+      }
+      const campaign=storeAccountCampaign(sharedCampaign);
+      const player=addCampaignPlayer(campaign);
+      persistWorkspaceChange('campaign-ucn-joined');
+      joinResult(`Joined ${campaign.name || 'campaign'}. Choose a character to link.`, 'ok');
+      renderJoinCharacterChooser(campaign);
+      return player;
+    }catch(error){
+      console.warn('UCN campaign join failed.',error);
+      joinResult(/join request/i.test(String(error?.message || ''))
+        ? 'This campaign requires GM approval. Join requests will be available in the next update.'
+        : 'The campaign service could not complete the connection. No local membership was added.', 'warn');
+      return null;
+    }finally {
+      if(button) button.disabled=false;
+    }
+  }
+
+  // Existing API name now performs read-only discovery, never an implicit join.
+  async function joinCampaignByUCN(codeValue) {
+    return lookupCampaignByUCN(codeValue);
   }
 
   function setPendingCampaignJoin(campaign) {
@@ -1389,6 +1497,8 @@
       createCharacter: createWorkspaceCharacter,
       createCampaignInvite,
       joinCampaignByUCN,
+      lookupCampaignByUCN,
+      confirmCampaignJoin,
       linkCharacterToCampaign,
       consumePendingCampaignJoin,
       setPendingCampaignJoin,
