@@ -36,8 +36,8 @@ function fixture(campaign={ownerUid:'gm',name:'Asteria',membershipSchemaVersion:
     }
   };
   db.doc=(path)=>({path,get:async()=>read({path})});
-  db.collection=(path)=>({...collection(path),get:async()=>{
-    return read({path});
+  db.collection=(path)=>({...collection(path),get:async function(){
+    return read(this);
   }});
   return db;
 }
