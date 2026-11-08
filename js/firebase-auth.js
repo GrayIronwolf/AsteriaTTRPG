@@ -418,6 +418,9 @@ async function syncCharacterToCampaigns(characterId, character){
   if(!campaignIds.length) return;
   const snapshotBase = Object.assign({}, character, { id:characterId, linkedCampaignIds:campaignIds });
   for(const campaignId of campaignIds){
+    // V2 characters are imported by an authenticated GM transaction. Legacy
+    // client link upserts must never rewrite their reserved campaign IDs.
+    if(character.campaignCharacterIds?.[campaignId])continue;
     try{
       await upsertSharedCampaignCharacter(campaignId, characterId, snapshotBase);
     }catch(err){ reportSyncError('character-link-write',err,{campaignId,characterId}); throw err; }
@@ -1974,6 +1977,22 @@ const firebasePublicApi = {
       action:'character-link-request',campaignId,sourceCharacterId,sourceKind
     })).data;
   },
+  listPendingCampaignCharacterLinks: async function(campaignId){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterApproval!==true)
+      throw new Error('Character link approval is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-link-list',campaignId
+    })).data;
+  },
+  reviewCampaignCharacterLink: async function(campaignId,linkId,decision,expectedRevision){
+    if(!functionsClient||!currentUser)throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignCharacterApproval!==true)
+      throw new Error('Character link approval is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'character-link-review',campaignId,linkId,decision,expectedRevision
+    })).data;
+  },
   getCampaignCharacterLinkStatus: async function(campaignId,sourceCharacterId){
     if(!functionsClient||!currentUser)throw new Error('Sign in before viewing a character link.');
     if(window.AsteriaFeatureFlags?.campaignCharacterLinks!==true)
@@ -2248,7 +2267,7 @@ const firebasePublicApi = {
     try{
       const uid = currentUser.uid, campaignId = character.sharedCampaignId || character.campaignId;
       if(!campaignId) return true;
-      const sharedId = character.id || characterId;
+      const sharedId = character.campaignCharacterIds?.[campaignId] || character.id || characterId;
       await runTransaction(db, async transaction => {
         const privateRef = doc(db, 'users', uid, 'characters', characterId);
         const [privateSnapshot, sharedSnapshot] = await Promise.all([

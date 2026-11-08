@@ -687,6 +687,16 @@
             <p id="workspacePlayerRosterStatus" role="status" aria-live="polite"></p>
           </section>
         ` : ''}
+        ${role === 'GM' && campaign.membershipSchemaVersion===2 &&
+          window.AsteriaFeatureFlags?.campaignCharacterApproval===true ? `
+          <section class="workspace-link-panel workspace-character-approval">
+            <h3>Character Link Requests</h3>
+            <p class="muted">Review saved characters requested by active campaign members. Approval adds a verified character to the party. Declining leaves the saved character unchanged.</p>
+            <button type="button" id="workspaceRefreshCharacterLinks">Refresh Requests</button>
+            <div id="workspaceCharacterApprovalList" aria-live="polite"></div>
+            <p id="workspaceCharacterApprovalStatus" role="status" aria-live="polite"></p>
+          </section>
+        ` : ''}
         <section class="workspace-link-panel">
           <h3>${campaign.membershipSchemaVersion===2?'Request Character Link':'Link Existing Character'}</h3>
           <p class="muted">${campaign.membershipSchemaVersion===2?'Choose a saved character you own. A request is sent for GM approval; the character will not enter the party until approved.':'Players can link a saved character they own to this campaign.'}</p>
@@ -730,6 +740,9 @@
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignPlayerRoster===true) renderCampaignGMPlayerRoster(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignRolePermissions===true) renderCampaignGMActivity(campaign);
+    if(role === 'GM' && campaign.membershipSchemaVersion===2 &&
+      window.AsteriaFeatureFlags?.campaignCharacterApproval===true)
+      renderCampaignGMCharacterApprovals(campaign);
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
     if(campaign.membershipSchemaVersion===2&&window.AsteriaFeatureFlags?.campaignCharacterLinks===true){
       const choice=byId('workspaceLinkCharacter');
@@ -767,6 +780,96 @@
       else window.AsteriaGameplay?.openCharacterForge?.();
     });
     byId('workspaceRepairCharacterBtn')?.addEventListener('click', () => repairCharacterCampaignLink(campaign.id));
+  }
+
+  async function renderCampaignGMCharacterApprovals(campaign){
+    const host=byId('workspaceCharacterApprovalList');
+    const status=byId('workspaceCharacterApprovalStatus');
+    const refresh=byId('workspaceRefreshCharacterLinks');
+    const api=window.AsteriaFirebase;
+    if(!host||!status||!api?.listPendingCampaignCharacterLinks||
+      !api?.reviewCampaignCharacterLink)return;
+    const uid=api.getUser?.()?.uid;
+    let busy=false;
+    const load=async()=>{
+      if(busy)return;
+      busy=true;
+      if(refresh)refresh.disabled=true;
+      status.textContent='Loading character link requests...';
+      try{
+        const result=await api.listPendingCampaignCharacterLinks(campaign.id);
+        if(!host.isConnected||api.getUser?.()?.uid!==uid)return;
+        host.replaceChildren();
+        const requests=Array.isArray(result?.requests)?result.requests:[];
+        if(!requests.length){
+          const empty=document.createElement('p');
+          empty.className='muted';
+          empty.textContent='No character links awaiting approval.';
+          host.appendChild(empty);
+        }
+        for(const item of requests){
+          const row=document.createElement('div');
+          row.className='workspace-join-review-row';
+          const heading=document.createElement('b');
+          heading.textContent='Account '+String(item.ownerUid||'');
+          const detail=document.createElement('small');
+          detail.textContent='Saved character: '+String(item.sourceCharacterId||'');
+          const when=document.createElement('small');
+          when.textContent='Requested: '+String(item.requestedAt||'Unknown time');
+          row.append(heading,detail,when);
+          const actions=document.createElement('div');
+          actions.className='workspace-join-review-actions';
+          for(const decision of ['approve','decline']){
+            const button=document.createElement('button');
+            button.type='button';
+            button.textContent=decision==='approve'?'Approve Character':'Decline Request';
+            if(decision==='approve')button.className='primary';
+            button.addEventListener('click',async()=>{
+              if(busy||api.getUser?.()?.uid!==uid)return;
+              if(!window.confirm((decision==='approve'?'Approve':'Decline')+
+                ' the character link for '+String(item.ownerUid||'')+
+                '? This decision will be recorded.'))return;
+              busy=true;
+              if(refresh)refresh.disabled=true;
+              host.querySelectorAll('button').forEach(b=>{b.disabled=true;});
+              status.textContent='Reviewing character link...';
+              let message='';
+              try{
+                const outcome=await api.reviewCampaignCharacterLink(campaign.id,
+                  item.linkId,decision,item.revision);
+                if(api.getUser?.()?.uid!==uid)return;
+                message=outcome.status==='approved'?
+                  'Character approved and linked to the campaign.':
+                  'Character link declined. The original Forge character was preserved.';
+                if(outcome.status==='approved')
+                  await window.AsteriaDataSync?.refreshCampaigns?.('character-link-approved');
+              }catch(error){
+                message=error?.message||'Could not review character link. Refresh and retry.';
+              }finally{
+                busy=false;
+                if(status.isConnected)status.textContent=message;
+                if(host.isConnected&&api.getUser?.()?.uid===uid)void load();
+              }
+            });
+            actions.appendChild(button);
+          }
+          row.appendChild(actions);
+          host.appendChild(row);
+        }
+        status.textContent=result?.truncated?
+          'Showing the first 100 requests. Review these and refresh for more.':
+          requests.length+' character link request(s) pending.';
+      }catch(error){
+        if(host.isConnected)host.replaceChildren();
+        if(status.isConnected)
+          status.textContent=error?.message||'Could not retrieve character link requests.';
+      }finally{
+        busy=false;
+        if(refresh)refresh.disabled=false;
+      }
+    };
+    refresh?.addEventListener('click',load);
+    await load();
   }
 
   async function renderCampaignGMActivity(campaign) {
