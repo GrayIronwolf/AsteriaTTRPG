@@ -20,6 +20,7 @@
     "test:campaign-access": "node --test scripts/campaign-access-phase2-3.test.mjs",
     "test:campaign-join": "node --test scripts/campaign-join-phase3-1.test.mjs",
     "test:campaign-join-requests": "node --test scripts/campaign-join-phase3-2.test.mjs",
+    "test:campaign-join-requests": "node --test scripts/campaign-join-phase3-2.test.mjs",
     "test:firebase": "firebase emulators:exec --project demo-asteria --only firestore,auth,storage \"node --test scripts/firebase-integration.test.mjs\"",
     "emulators": "firebase emulators:start --project demo-asteria",
     "test:inputs": "node --test scripts/manual-number-inputs.test.mjs",
