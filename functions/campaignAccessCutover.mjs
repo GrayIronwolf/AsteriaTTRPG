@@ -39,9 +39,12 @@ export async function prepareCampaignCutover(db,actorUid,campaignId,{activate=fa
       if(member.status==='active') activeMembers.push(row);
     }
     if(!plan.rows.some(row=>row.uid===actorUid&&row.role==='owner'&&row.status==='active')) issues.push({code:'missing-owner'});
-    // Prevent user-by-user staging from silently missing old membership rows.
-    const memberDirectory=await tx.get(db.doc('campaigns/'+campaignId+'/membershipReadiness/validation'));
-    if(memberDirectory.exists) issues.push({code:'unexpected-readiness-sentinel'});
+    // Reject unlisted active/stale member docs before switching the rules.
+    const currentMembers=await tx.get(db.collection('campaigns/'+campaignId+'/members'));
+    const expected=new Set(plan.rows.map(row=>row.uid));
+    for(const row of currentMembers.docs || []) {
+      if(!expected.has(row.id)) issues.push({code:'unmatched-staged-member',uid:row.id});
+    }
     const result={campaignId,ready:issues.length===0,issues,activeMembers:activeMembers.length,totalMembers:plan.rows.length,legacyVersion:campaign.membershipSchemaVersion??1};
     if(!activate) return result;
     if(issues.length) throw new Error('Campaign membership migration has unresolved conflicts.');
