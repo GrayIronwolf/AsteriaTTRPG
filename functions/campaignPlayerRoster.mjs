@@ -1,4 +1,5 @@
 import {legacyMembershipPlan, MEMBER_ROLES, MEMBER_STATUSES} from './campaignMembership.mjs';
+import {allowedMemberControls} from './campaignMemberControls.mjs';
 
 const ID=/^[A-Za-z0-9_-]{1,160}$/;
 const MAX_ROSTER=100;
@@ -37,6 +38,7 @@ function summarizeMember(campaign,row){
     status:row.status,
     displayName:safeName(player.displayName)||safeName(player.name)||'',
     joinedAt:dateText(row.joinedAt||player.joinedAt),
+    revision:Number.isSafeInteger(row.revision)?row.revision:null,
     characters:linkedCharacterSummaries(campaign,row.uid)
   };
 }
@@ -68,10 +70,12 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
     throw new Error('Campaign membership requires review.');
   const version=campaign.membershipSchemaVersion;
   let members=[],pending=[],truncated=false;
+  let actorMember=null;
   if(version===2){
     if(actorUid!==campaign.ownerUid){
       const memberSnap=await db.doc('campaigns/'+campaignId+'/members/'+actorUid).get();
       const gm=memberSnap.exists?memberSnap.data():null;
+      actorMember=gm;
       if(!gm || gm.uid!==actorUid || gm.campaignId!==campaignId ||
         gm.role!=='co-gm' || gm.status!=='active')throw new Error('Only an active campaign GM may view the roster.');
     }
@@ -88,11 +92,13 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
         !safeRole(row.role)||!safeStatus(row.status))throw new Error('Campaign membership records require review.');
       if(row.role==='owner' && (doc.id!==campaign.ownerUid||row.status!=='active'))
         throw new Error('Campaign owner membership requires review.');
-      members.push(summarizeMember(campaign,row));
+      const entry=summarizeMember(campaign,row);
+      entry.controls=allowedMemberControls(campaign,actorUid,actorMember,row);
+      members.push(entry);
     }
     // The owner is always authoritative even if canonical staging is incomplete.
     if(!members.some(row=>row.uid===campaign.ownerUid))
-      members.push(summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}));
+      members.push({...summarizeMember(campaign,{uid:campaign.ownerUid,role:'owner',status:'active'}),controls:[]});
     pending=requests.docs.map(row=>safePending(row,campaignId)).filter(Boolean)
       .filter(row=>!members.some(member=>member.uid===row.uid));
   }else if(version===undefined||version===null||version===1){
@@ -102,7 +108,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
     if(!isGM)throw new Error('Only a campaign GM may view the roster.');
     const plan=legacyMembershipPlan(campaign,campaignId);
     if(plan.issues.length)throw new Error('Legacy campaign roster has unresolved membership conflicts.');
-    members=plan.rows.map(row=>summarizeMember(campaign,row));
+    members=plan.rows.map(row=>({...summarizeMember(campaign,row),controls:[]}));
     // The legacy system has no canonical pending queue.
   }else throw new Error('Unsupported campaign membership version.');
 
