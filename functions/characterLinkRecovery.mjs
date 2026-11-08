@@ -1,4 +1,4 @@
-import { isCampaignMember } from './characterPermissions.mjs';
+import { isCampaignMember, readCampaignMember } from './characterPermissions.mjs';
 
 // Repair stale campaign indexes only. Neither character ownership nor a saved
 // sheet is created, transferred or overwritten by this operation.
@@ -9,10 +9,11 @@ export async function repairCharacterLink(db, uid, data, serverTimestamp) {
   const characterRef = db.doc(`campaigns/${campaignId}/characters/${characterId}`);
   const receiptRef = db.doc(`campaigns/${campaignId}/actionReceipts/${uid}_${data.requestId}`);
   return db.runTransaction(async transaction => {
-    const [campaignSnapshot, characterSnapshot, receipt] = await Promise.all([
-      transaction.get(campaignRef), transaction.get(characterRef), transaction.get(receiptRef)
-    ]);
-    if (!campaignSnapshot.exists || !isCampaignMember(campaignSnapshot.data(), uid)) throw new Error('Campaign membership is required.');
+    const campaignSnapshot = await transaction.get(campaignRef);
+    if (!campaignSnapshot.exists) throw new Error('Campaign membership is required.');
+    const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
+    if (!isCampaignMember(campaignSnapshot.data(), uid, memberRecord)) throw new Error('Campaign membership is required.');
+    const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
     if (!characterSnapshot.exists) throw new Error('The campaign character no longer exists. No sheet was recreated.');
     const campaign = campaignSnapshot.data(), character = characterSnapshot.data();
     if (character.ownerUid !== uid) throw new Error('Only the existing character owner can repair this link.');

@@ -1,10 +1,14 @@
-import {isCampaignGM} from './characterPermissions.mjs';
+import {isCampaignGM,isCampaignMember,readCampaignMember} from './characterPermissions.mjs';
 export function createInformationCommands({db,currentUser,requestId,doc,runTransaction,serverTimestamp}) {
   return {
     sendCharacterNotification:async(campaignId,characterId,input={})=>{
       try {await runTransaction(db,async tx=>{
         const [campaign,target]=await Promise.all([tx.get(doc(db,'campaigns',campaignId)),tx.get(doc(db,'campaigns',campaignId,'characters',characterId))]);
-        if(!campaign.exists() || !isCampaignGM(campaign.data(),currentUser.uid))throw new Error('Only the campaign GM can send this notification.');
+        if(!campaign.exists())throw new Error('Campaign not found.');
+        const membership=await readCampaignMember({get:async ref=>{
+          const row=await tx.get(ref);return {exists:row.exists(),data:()=>row.data()};
+        }},db,campaignId,campaign.data(),currentUser.uid);
+        if(!isCampaignGM(campaign.data(),currentUser.uid,membership))throw new Error('Only the campaign GM can send this notification.');
         if(!target.exists())throw new Error('Character not found.');
         const title=String(input.title || '').trim().slice(0,160),message=String(input.message || '').trim().slice(0,4000);
         if(!title || !message)throw new Error('Enter a title and message.');
@@ -14,6 +18,12 @@ export function createInformationCommands({db,currentUser,requestId,doc,runTrans
     },
     markNotificationRead:async(campaignId,characterId,source,id,read=true)=>{
       try {await runTransaction(db,async tx=>{
+        const campaignSnap=await tx.get(doc(db,'campaigns',campaignId));
+        if(!campaignSnap.exists())throw new Error('Campaign not found.');
+        const membership=await readCampaignMember({get:async ref=>{
+          const row=await tx.get(ref);return {exists:row.exists(),data:()=>row.data()};
+        }},db,campaignId,campaignSnap.data(),currentUser.uid);
+        if(!isCampaignMember(campaignSnap.data(),currentUser.uid,membership))throw new Error('Campaign membership is required.');
         const ref=doc(db,'campaigns',campaignId,'characters',characterId),snapshot=await tx.get(ref);
         if(!snapshot.exists() || snapshot.data().ownerUid!==currentUser.uid)throw new Error('Only the character owner can change read state.');
         const character=snapshot.data();

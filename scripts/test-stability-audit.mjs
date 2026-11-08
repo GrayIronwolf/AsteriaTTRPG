@@ -221,9 +221,11 @@ test('28. The owning dashboard mirrors canonical cross-account updates to the so
 
 test('29. Firebase security roles agree with runtime GM and member authorization',()=>{
   const rules=read('firestore.rules');
-  assert.match(rules,/data\.roles\[request\.auth\.uid\] == 'gm'/);
-  assert.match(rules,/data\.roles\[request\.auth\.uid\] == 'player'/);
-  assert.match(rules,/campaign\.roles\[request\.auth\.uid\] == 'gm'/);
+  assert.ok(rules.includes("data.get('membershipSchemaVersion', 1) == 2"));
+  assert.ok(rules.includes("activeV2Member(campaignId, request.auth.uid)"));
+  assert.ok(rules.includes("activeV2GM(campaignId, request.auth.uid)"));
+  assert.ok(rules.includes("data.get('roles', {}).get(request.auth.uid, '') in ['gm','player']"));
+  assert.ok(rules.includes("campaign.get('roles', {}).get(request.auth.uid, '') == 'gm'"));
 });
 
 test('30. Production code contains no database wipe or destructive reset path',()=>{

@@ -64,3 +64,22 @@ export const asteriaMembershipPreparation=onCall({region:'us-central1',maxInstan
     throw new HttpsError('failed-precondition',error.message||'Membership records could not be prepared.');
   }
 });
+
+ 
+// Phase 2.3: per-campaign access cutover. Safe preview by owner, and disabled
+// activation unless backend operator explicitly enables migration.
+export const asteriaCampaignAccessCutover=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:60},async request=>{
+  if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
+  try {
+    const {prepareCampaignCutover}=await import('./campaignAccessCutover.mjs');
+    const {campaignId,action}=request.data || {};
+    if(action==='preview') return await prepareCampaignCutover(getFirestore(),request.auth.uid,campaignId);
+    if(action==='activate') {
+      if(process.env.ASTERIA_MEMBERSHIP_CUTOVER_ENABLED!=='1') throw new Error('Membership activation is not enabled.');
+      return await prepareCampaignCutover(getFirestore(),request.auth.uid,campaignId,{activate:true});
+    }
+    throw new Error('Unknown campaign cutover action.');
+  }catch(error){
+    throw new HttpsError('failed-precondition',error.message||'Membership access could not be activated.');
+  }
+});

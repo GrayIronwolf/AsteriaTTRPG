@@ -1,4 +1,4 @@
-import { isCampaignGM as gm, isCampaignMember as member, isLinkedCharacter, GM_CHARACTER_ACTIONS, GM_ONLY_ACTIONS } from './characterPermissions.mjs';
+import { isCampaignGM as gm, isCampaignMember as member, isLinkedCharacter, readCampaignMember, GM_CHARACTER_ACTIONS, GM_ONLY_ACTIONS } from './characterPermissions.mjs';
 import { repairCharacterLink } from './characterLinkRecovery.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -45,15 +45,18 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const campaignRef=db.doc(`campaigns/${campaignId}`);
     const characterRef=db.doc(`campaigns/${campaignId}/characters/${args[1]}`);
     const receiptRef=db.doc(`campaigns/${campaignId}/actionReceipts/${uid}_${requestId}`);
-    const [campaignSnapshot,characterSnapshot,receipt]=await Promise.all([transaction.get(campaignRef),transaction.get(characterRef),transaction.get(receiptRef)]);
-    if(!campaignSnapshot.exists || !member(campaignSnapshot.data(),uid)) throw new Error('Campaign membership is required.');
+    const campaignSnapshot=await transaction.get(campaignRef);
+    if(!campaignSnapshot.exists) throw new Error('Campaign membership is required.');
+    const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
+    if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
+    const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
     const combatAction=action==='combatCommand';
     if(!combatAction&&!characterSnapshot.exists) throw new Error('Character not found.');
     const campaign=campaignSnapshot.data();
     const character=characterSnapshot.data()||{};
     // Character ownership comes from Firestore, never a caller-supplied private copy.
     const linked=isLinkedCharacter(campaign,args[1],character,campaignId);
-    const gmAccess=GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid) && linked;
+    const gmAccess=GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid,memberRecord) && linked;
     if(GM_ONLY_ACTIONS.has(action) && !gmAccess) throw new Error('Only the GM of this linked character can make this change.');
     if(!combatAction&&character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
     if(receipt.exists){
@@ -69,7 +72,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     for(const detail of args.slice(2)) if(detail && typeof detail==='object' && detail.expectedCoreRevision!==undefined) {
       if(!Number.isSafeInteger(detail.expectedCoreRevision) || detail.expectedCoreRevision!==Number(character.coreRevision || 0)) throw new Error('The character changed. Wait for live sync before trying again.');
     }
-    if(action==='updateCharacterInventory' && args[2]?.type==='add-item' && !gm(campaign,uid)) throw new Error('Ask the GM to grant new items.');
+    if(action==='updateCharacterInventory' && args[2]?.type==='add-item' && !gm(campaign,uid,memberRecord)) throw new Error('Ask the GM to grant new items.');
     if(action==='updateCampaignCharacterCurrency' && (!Number.isSafeInteger(args[3]) || Math.abs(args[3])>1e9)) throw new Error('Choose a whole currency amount within range.');
     if(action==='updateCampaignCharacterResource' && (!Number.isFinite(args[3]) || Math.abs(args[3])>1e9)) throw new Error('Invalid resource amount.');
     for(const detail of args.slice(2)) if(detail && typeof detail==='object') for(const key of ['quantity','exchangeQuantity','priceCopper','rows','cols','soulRecovery']) {

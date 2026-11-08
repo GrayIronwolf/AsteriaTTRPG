@@ -1,21 +1,43 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function v2Member(campaignId,uid) {
+      let member = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/members/$(uid)).data;
+      return member.get('uid', '') == uid &&
+        member.get('campaignId', '') == campaignId &&
+        member.get('status', '') == 'active' &&
+        member.get('role', '') in ['co-gm','player'];
+    }
+    function v2GM(campaignId,uid) {
+      let member = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/members/$(uid)).data;
+      return member.get('uid', '') == uid &&
+        member.get('campaignId', '') == campaignId &&
+        member.get('status', '') == 'active' &&
+        member.get('role', '') == 'co-gm';
+    }
     function campaignMember(campaignId) {
       let campaign = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)).data;
       return request.auth != null && (
-        campaign.ownerUid == request.auth.uid ||
-        request.auth.uid in campaign.get('gmUids', []) ||
-        request.auth.uid in campaign.get('playerUids', []) ||
-        campaign.get('roles', {}).get(request.auth.uid, '') in ['gm','player']
+        campaign.get('membershipSchemaVersion',1) == 2
+          ? (campaign.ownerUid == request.auth.uid || v2Member(campaignId,request.auth.uid))
+          : (campaign.get('membershipSchemaVersion',1) == 1 && (
+            campaign.ownerUid == request.auth.uid ||
+            request.auth.uid in campaign.get('gmUids', []) ||
+            request.auth.uid in campaign.get('playerUids', []) ||
+            campaign.get('roles', {}).get(request.auth.uid, '') in ['gm','player']
+          ))
       );
     }
     function campaignGM(campaignId) {
       let campaign = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)).data;
       return request.auth != null && (
-        campaign.ownerUid == request.auth.uid ||
-        request.auth.uid in campaign.get('gmUids', []) ||
-        campaign.get('roles', {}).get(request.auth.uid, '') == 'gm'
+        campaign.get('membershipSchemaVersion',1) == 2
+          ? (campaign.ownerUid == request.auth.uid || v2GM(campaignId,request.auth.uid))
+          : (campaign.get('membershipSchemaVersion',1) == 1 && (
+            campaign.ownerUid == request.auth.uid ||
+            request.auth.uid in campaign.get('gmUids', []) ||
+            campaign.get('roles', {}).get(request.auth.uid, '') == 'gm'
+          ))
       );
     }
     match /campaigns/{campaignId}/artwork/{fileName} {

@@ -1,4 +1,5 @@
 import { createInformationCommands } from './informationCommands.mjs';
+import { isCampaignGM, readCampaignMember } from './characterPermissions.mjs';
 import { createCombatCommands } from './combatCommands.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
@@ -35,8 +36,10 @@ async function requireCampaignGM(transaction,campaignId){
   if(!snapshot.exists()) throw new Error('Campaign not found.');
   const campaign=snapshot.data();
   const uid=currentUser?.uid || '';
-  const allowed=campaign.ownerUid===uid || campaign.roles?.[uid]==='gm' || (campaign.gmUids||[]).includes(uid);
-  if(!allowed) throw new Error('Only a GM for this campaign can make this change.');
+  const membership=await readCampaignMember({get:async ref=>{
+    const row=await transaction.get(ref);return {exists:row.exists(),data:()=>row.data()};
+  }},db,campaignId,campaign,uid);
+  if(!isCampaignGM(campaign,uid,membership)) throw new Error('Only a GM for this campaign can make this change.');
   return campaign;
 }
 function liveCharacterRefs(campaignId,characterId){

@@ -341,6 +341,17 @@ async function upsertSharedCampaignCharacter(campaignId, characterId, character)
     if(!campaignSnap.exists()) return null;
     const campaign = Object.assign({}, campaignSnap.data(), { id:campaignId });
     const roles = Object.assign({}, campaign.roles || {});
+    if(campaign.membershipSchemaVersion === 2) {
+      const membership = await transaction.get(doc(db,'campaigns',campaignId,'members',uid));
+      const m = membership.exists() ? membership.data() : null;
+      if(campaign.ownerUid !== uid && !(m?.uid === uid && m?.campaignId === campaignId && m?.status === 'active' && ['player','co-gm'].includes(m.role))) {
+        throw new Error('campaign-membership-required');
+      }
+      // Full v2 character-link approval and capacity checks arrive in Phase 5.
+      // Block legacy roster writes rather than re-create access through old maps.
+      throw new Error('Character linking for upgraded campaigns requires GM approval.');
+    }
+    if(campaign.membershipSchemaVersion !== undefined && campaign.membershipSchemaVersion !== null && campaign.membershipSchemaVersion !== 1) throw new Error('campaign-membership-required');
     const isMember = campaign.ownerUid === uid || roles[uid] === 'gm' || roles[uid] === 'player' || (campaign.playerUids || []).includes(uid) || (campaign.gmUids || []).includes(uid);
     if(!isMember) throw new Error('campaign-membership-required');
 
@@ -1903,6 +1914,9 @@ const firebasePublicApi = {
       );
       membershipResults.forEach(result=>{
         if(result.status === 'rejected'){
+          // Legacy array queries may be denied once v2 campaigns use canonical
+          // membership; the verified per-account projection remains available.
+          if(String(result.reason?.code || '').includes('permission-denied')) return;
           reportSyncError('campaign-membership-query', result.reason, { uid });
           throw result.reason;
         }
@@ -1910,7 +1924,15 @@ const firebasePublicApi = {
           sharedCampaigns.set(item.id, Object.assign({}, item.data(), { id:item.id }));
         });
       });
+      let verifiedProjections=[];
+      try {
+        const projections=await getDocs(collection(db,'campaignMemberProjections',uid,'campaigns'));
+        verifiedProjections=projections.docs.filter(row=>row.data()?.status==='active').map(row=>row.id);
+      } catch(error) {
+        if(!String(error?.code || '').includes('permission-denied')) reportSyncError('campaign-projections',error,{uid});
+      }
       const campaignIds = new Set([
+        ...verifiedProjections,
         ...accountCampaigns.keys(),
         ...sharedCampaigns.keys(),
         ...linkedCampaignIdsFromOwnedCharacters(uid)
@@ -1951,7 +1973,12 @@ const firebasePublicApi = {
       )));
     };
     const watchLinkedCampaigns=()=>{
-      const candidates=new Set([...(sources.get('account') || new Map()).keys(),...linkedCampaignIdsFromOwnedCharacters(uid)]);
+      const projections=sources.get('projections') || new Map();
+      const candidates=new Set([
+        ...[...projections].filter(([,item])=>item.status==='active').map(([id])=>id),
+        ...(sources.get('account') || new Map()).keys(),
+        ...linkedCampaignIdsFromOwnedCharacters(uid)
+      ]);
       linkSubscriptions.forEach((unsubscribe,id)=>{
         if(candidates.has(id)) return;
         unsubscribe();linkSubscriptions.delete(id);linked.delete(id);
@@ -1979,16 +2006,18 @@ const firebasePublicApi = {
           records.set(item.id, Object.assign({}, item.data(), { id:item.id }));
         });
         sources.set(key, records);
-        if(key==='account') watchLinkedCampaigns();
+        if(key==='account' || key==='projections') watchLinkedCampaigns();
         emit();
       }, error=>{
         if(!active || currentUser?.uid!==uid) return;
         sources.delete(key);emit();
+        if(key==='projections' && String(error?.code || '').includes('permission-denied')) return;
         reportSyncError('campaign-membership-listener', error, { uid, source:key });
       });
     };
     const unsubscribers = [
       watch('account', collection(db, 'users', uid, 'campaigns')),
+      watch('projections', collection(db,'campaignMemberProjections',uid,'campaigns')),
       ...campaignMembershipQueries(uid).map((campaignQuery,index)=>watch(['owner','gm','player'][index], campaignQuery))
     ];
     watchLinkedCampaigns();
