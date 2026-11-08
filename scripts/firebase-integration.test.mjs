@@ -13,6 +13,7 @@ import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
 import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
 import {listCampaignPlayerRoster} from '../functions/campaignPlayerRoster.mjs';
+import {moderateCampaignMember} from '../functions/campaignMemberControls.mjs';
 import {listPendingCampaignJoinRequests,reviewCampaignJoinRequest,setCampaignJoinApprovalMode} from '../functions/campaignJoinApproval.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
@@ -988,4 +989,59 @@ test('v1 GM roster preserves legacy access and shows no v2 request data',async()
   assert.equal(roster.summary.activePlayers,2);
   assert.equal(roster.pending.length,0);
   await assert.rejects(listCampaignPlayerRoster(db,'eve','c'),/campaign GM/);
+});
+
+test('v2 GM suspend revokes Firestore access, actions and account projection while retaining owned sheets',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,membershipRevision:1});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({campaignId:'c',role:'player',status:'active'});
+  const sheetBefore=(await db.doc('users/alice/characters/a').get()).data();
+  const campaignSheetBefore=(await db.doc('campaigns/c/characters/a').get()).data();
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c')));
+  const response=await moderateCampaignMember(db,'gm',{
+    campaignId:'c',memberUid:'alice',action:'suspend',expectedRevision:1,expectedStatus:'active'
+  });
+  assert.equal(response.status,'suspended');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/characters/a')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/liveSession/current')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/itemEcosystem')));
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/sessions/s/presence/alice'),{state:'online'}));
+  assert.equal((await action('alice','updateCampaignCharacterResource',['c','a','hp',-1])).ok,false);
+  assert.equal((await db.doc('campaignMemberProjections/alice/campaigns/c').get()).data().status,'suspended');
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data(),sheetBefore);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),campaignSheetBefore);
+  await assertSucceeds(getDoc(doc(user('alice'),'users/alice/characters/a')));
+  assert.equal((await moderateCampaignMember(db,'gm',{
+    campaignId:'c',memberUid:'alice',action:'suspend',expectedRevision:1,expectedStatus:'active'
+  })).alreadyApplied,true);
+});
+
+test('v2 GM remove and ban do not delete character data and owner can restore',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,membershipRevision:1});
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaignMemberProjections/bob/campaigns/c').set({campaignId:'c',role:'player',status:'active'});
+  const before=(await db.doc('users/bob/characters/b').get()).data();
+  await moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'bob',action:'remove',expectedRevision:1,expectedStatus:'active',reason:'Left the campaign'});
+  await assertFails(getDoc(doc(user('bob'),'campaigns/c')));
+  await moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'bob',action:'ban',expectedRevision:2,expectedStatus:'removed',reason:'Severe rule breach'});
+  assert.equal((await db.doc('campaigns/c/members/bob').get()).data().status,'banned');
+  assert.equal((await db.doc('campaigns/c/memberModerationEvents/bob-3').get()).data().action,'ban');
+  await moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'bob',action:'restore',expectedRevision:3,expectedStatus:'banned'});
+  assert.equal((await db.doc('campaigns/c/members/bob').get()).data().status,'active');
+  await assertSucceeds(getDoc(doc(user('bob'),'campaigns/c')));
+  assert.deepEqual((await db.doc('users/bob/characters/b').get()).data(),before);
+});
+
+test('moderation protects owner, stale roles and capacity, and cannot be forged through client writes',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2,playerLimit:1});
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active',revision:1});
+  await db.doc('campaigns/c/members/bob').set({uid:'bob',campaignId:'c',role:'player',status:'suspended',revision:1});
+  await db.doc('campaignMemberProjections/alice/campaigns/c').set({campaignId:'c',role:'player',status:'active'});
+  await db.doc('campaignMemberProjections/bob/campaigns/c').set({campaignId:'c',role:'player',status:'suspended'});
+  await assert.rejects(moderateCampaignMember(db,'bob',{campaignId:'c',memberUid:'alice',action:'suspend',expectedRevision:1,expectedStatus:'active'}),/authorised GM/);
+  await assert.rejects(moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'gm',action:'suspend',expectedRevision:1,expectedStatus:'active'}),/protected/);
+  await assert.rejects(moderateCampaignMember(db,'gm',{campaignId:'c',memberUid:'bob',action:'restore',expectedRevision:1,expectedStatus:'suspended'}),/capacity/);
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/members/bob'),{status:'active'}));
+  await assertFails(updateDoc(doc(user('bob'),'campaignMemberProjections/bob/campaigns/c'),{status:'active'}));
 });
