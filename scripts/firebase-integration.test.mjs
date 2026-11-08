@@ -11,6 +11,7 @@ import {accessInvite} from '../functions/invitations.mjs';
 import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUCN.mjs';
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
 import {prepareCampaignCutover} from '../functions/campaignAccessCutover.mjs';
+import {campaignJoinRequest} from '../functions/campaignJoinRequests.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -736,7 +737,6 @@ test('future campaign connection collections are denied to browser clients by de
   const paths=[
     'campaignDirectory/123456789012',
     'campaigns/c/members/alice',
-    'campaigns/c/joinRequests/alice',
     'campaigns/c/invitations/invite1',
     'campaigns/c/characterLinks/link1',
     'campaigns/c/auditEvents/audit1'
@@ -844,4 +844,64 @@ test('cutover refuses missing, mismatched, or extra canonical membership records
   const extra=await prepareCampaignCutover(db,'gm','c');
   assert.equal(extra.ready,false);
   assert.ok(extra.issues.some(row=>row.code==='unmatched-staged-member'));
+});
+
+test('v2 applicant can create one pending request without receiving any campaign access',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  const preview=await campaignJoinRequest(db,'eve',{action:'status',campaignId:'c',ucn:'123456789012'});
+  assert.equal(preview.status,'none');
+  const request=await campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  assert.equal(request.status,'pending');
+  assert.equal(request.alreadyExists,false);
+  const repeated=await campaignJoinRequest(db,'eve',{action:'submit',campaignId:'c',ucn:'123456789012'});
+  assert.equal(repeated.alreadyExists,true);
+  assert.equal((await db.collection('campaigns/c/joinRequests').get()).size,1);
+  assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,undefined);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c/characters/a')));
+  await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c/joinRequests/eve')));
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/joinRequests/eve')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/joinRequests/eve')));
+  await assertFails(setDoc(doc(user('eve'),'campaigns/c/joinRequests/eve'),{status:'approved'}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/joinRequests/eve'),{status:'approved'}));
+  await assertFails(getDocs(collection(user('eve'),'campaigns/c/joinRequests')));
+});
+
+test('v2 request character preferences require real account ownership and never link sheets',async()=>{
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  await assert.rejects(campaignJoinRequest(db,'eve',{
+    action:'submit',campaignId:'c',ucn:'123456789012',characterId:'a'
+  }),/not owned/);
+  await db.doc('users/eve/characters/z').set({id:'z',ownerUid:'eve',xp:3000,inventory:[{id:'spellbook'}]});
+  const saved=await campaignJoinRequest(db,'eve',{
+    action:'submit',campaignId:'c',ucn:'123456789012',characterId:'z'
+  });
+  assert.equal(saved.requestedCharacterId,'z');
+  assert.equal((await db.doc('users/eve/characters/z').get()).data().xp,3000);
+  assert.equal((await db.doc('campaigns/c/characters/z').get()).exists,false);
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c')));
+});
+
+test('legacy, owner, current member and banned applicants never get new requests',async()=>{
+  await assert.rejects(campaignJoinRequest(db,'eve',{
+    action:'submit',campaignId:'c',ucn:'123456789012'
+  }),/unavailable/);
+  await db.doc('campaigns/c').update({membershipSchemaVersion:2});
+  assert.equal((await campaignJoinRequest(db,'gm',{action:'submit',campaignId:'c',ucn:'123456789012'})).status,'member');
+  await db.doc('campaigns/c/members/alice').set({uid:'alice',campaignId:'c',role:'player',status:'active'});
+  assert.equal((await campaignJoinRequest(db,'alice',{action:'submit',campaignId:'c',ucn:'123456789012'})).status,'member');
+  await db.doc('campaigns/c/members/alice').update({status:'banned'});
+  assert.equal((await campaignJoinRequest(db,'alice',{action:'submit',campaignId:'c',ucn:'123456789012'})).status,'blocked');
+  assert.equal((await db.collection('campaigns/c/joinRequests').get()).size,0);
+});
+
+test('staged member requests cannot leak through unapproved browsers or alter legacy campaign rules',async()=>{
+  await db.doc('campaigns/c/joinRequests/eve').set({
+    uid:'eve',campaignId:'c',status:'pending',requestedAt:new Date(),requestedCharacterId:null
+  });
+  // No v1 clients can read unactivated join requests.
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c/joinRequests/eve')));
+  await assertFails(getDoc(doc(user('gm'),'campaigns/c/joinRequests/eve')));
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/joinRequests/alice'),{uid:'alice',status:'pending'}));
 });
