@@ -566,6 +566,9 @@
           <label>Campaign Name<input id="workspaceCampaignName" placeholder="Campaign name"></label>
           <label>Party Size<input id="workspaceCampaignPartySize" type="number" min="1" max="12" value=""></label>
           <label>Description<textarea id="workspaceCampaignDescription" placeholder="Short campaign premise"></textarea></label>
+          <label>Campaign Image (optional)<input type="file" id="workspaceCampaignArtwork" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+          <p class="muted">PNG, JPG, WEBP or GIF, up to 8 MB. This image will appear in Campaign Forge and on the Player Dashboard.</p>
+          <p id="workspaceCampaignArtworkStatus" role="status" aria-live="polite"></p>
         </div>
         <button class="primary" id="workspaceCreateCampaignBtn" type="button">Forge Campaign</button>
       </article>
@@ -614,6 +617,12 @@
       <article class="clean-page workspace-viewer" data-viewer="universal-workspace-viewer">
         <button class="clean-back clean-return" type="button" id="workspace-campaign-return">Back to campaigns</button>
         <header class="clean-page-head"><span class="clean-tag">${escapeHtml(role)}</span><div><p class="eyebrow">Campaign Forge</p><h2>${escapeHtml(campaign.name || 'Untitled Campaign')}</h2><p>${escapeHtml(campaign.description || 'Campaign workspace.')}</p></div></header>
+        <section class="workspace-link-panel workspace-campaign-artwork-editor">
+          <h3>Campaign Image</h3>
+          <div class="workspace-campaign-artwork-preview" id="workspaceCampaignArtworkPreview">${campaign.image ? `<img src="${escapeHtml(campaign.image)}" alt="Campaign artwork" loading="lazy">` : `<p class="muted">No campaign artwork uploaded.</p>`}</div>
+          ${role === 'GM' ? `<label>Upload or Replace Image<input id="workspaceCampaignDetailImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><button id="workspaceRemoveCampaignImage" type="button" ${campaign.image ? '' : 'disabled'}>Remove Campaign Image</button><p class="muted">PNG, JPG, WEBP or GIF, up to 8 MB.</p>` : ''}
+          <p id="workspaceCampaignDetailImageStatus" role="status" aria-live="polite"></p>
+        </section>
         <dl class="clean-page-meta">
           <div><dt>Campaign ID</dt><dd>${escapeHtml(campaign.id)}</dd></div>
           <div><dt>UCN</dt><dd>${escapeHtml(campaign.ucn || 'Not generated')}</dd></div>
@@ -648,6 +657,27 @@
         </section>
       </article>
     `;
+    byId('workspaceCampaignDetailImage')?.addEventListener('change',async event=>{
+      const file=event.target.files?.[0];event.target.value='';if(!file)return;
+      const input=byId('workspaceCampaignDetailImage'),status=byId('workspaceCampaignDetailImageStatus');
+      if(input)input.disabled=true;if(status)status.textContent='Uploading campaign artwork...';
+      try {
+        const result=await window.AsteriaFirebase?.uploadCampaignArtwork?.(campaign.id,file);
+        if(result?.ok){campaign.image=result.image;campaign.imagePath=result.path;persistWorkspaceChange('campaign-artwork-updated');renderCampaignDetail(campaign);}
+        else if(status)status.textContent=result?.error||'Campaign artwork upload failed.';
+      }catch(error){if(status)status.textContent=error?.message||'Campaign artwork upload failed.';}
+      finally{if(input)input.disabled=false;}
+    });
+    byId('workspaceRemoveCampaignImage')?.addEventListener('click',async()=>{
+      const button=byId('workspaceRemoveCampaignImage'),status=byId('workspaceCampaignDetailImageStatus');
+      if(button)button.disabled=true;if(status)status.textContent='Removing artwork...';
+      try{
+        const result=await window.AsteriaFirebase?.removeCampaignArtwork?.(campaign.id);
+        if(result?.ok){campaign.image='';campaign.imagePath='';campaign.art='';campaign.banner='';persistWorkspaceChange('campaign-artwork-removed');renderCampaignDetail(campaign);}
+        else if(status)status.textContent=result?.error||'Could not remove campaign artwork.';
+      }catch(error){if(status)status.textContent=error?.message||'Could not remove campaign artwork.';}
+      finally{if(button)button.disabled=false;}
+    });
     byId('workspace-campaign-return').onclick = () => openDashboard('campaigns');
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     byId('workspaceLinkCharacterBtn')?.addEventListener('click', () => linkCharacterToCampaign(campaign.id));
@@ -895,10 +925,16 @@
     window.AsteriaDataSync?.scheduleSave?.(reason);
   }
 
-  function createWorkspaceCampaign() {
+  async function createWorkspaceCampaign() {
     if (!requireAccountWorkspace()) return;
     const name = String(byId('workspaceCampaignName')?.value || '').trim() || 'New Campaign';
     const description = String(byId('workspaceCampaignDescription')?.value || '').trim();
+    const imageFile=byId('workspaceCampaignArtwork')?.files?.[0];
+    if(imageFile && (!['image/png','image/jpeg','image/webp','image/gif'].includes(imageFile.type) || !imageFile.size || imageFile.size>8*1024*1024)) {
+      const status=byId('workspaceCampaignArtworkStatus');if(status)status.textContent='Choose a PNG, JPG, WEBP or GIF image up to 8 MB.';
+      return;
+    }
+    const forgeButton=byId('workspaceCreateCampaignBtn');if(forgeButton)forgeButton.disabled=true;
     const partySize = Math.max(1, Math.min(12, Number(byId('workspaceCampaignPartySize')?.value || 4)));
     const uid = accountKey();
     const id = randomToken('camp-');
@@ -954,9 +990,28 @@
     window.campaigns.push(campaign);
     window.activeCampaign = window.campaigns.length - 1;
     persistWorkspaceChange('workspace-campaign-created');
-    window.AsteriaFirebase?.saveCampaign?.(id, campaign);
-    window.toast?.(`Campaign created: ${name}`);
+    // Save the campaign first: Storage access requires its verified GM membership.
+    const saveCampaign=window.AsteriaFirebase?.saveCampaign;
+    let saved=false;
+    try{saved=Boolean(await saveCampaign?.(id,campaign));}
+    catch(error){console.warn('Campaign save failed before artwork upload',error);}
+    if(!saved){
+      window.toast?.('Campaign saved locally, but the cloud save failed. Open Campaign Forge to retry after reconnecting.');
+      openDashboard('campaigns');
+      return;
+    }
+    let imageWarning='';
+    if(imageFile){
+      const status=byId('workspaceCampaignArtworkStatus');
+      if(status)status.textContent='Uploading campaign artwork...';
+      try{
+        const result=await window.AsteriaFirebase?.uploadCampaignArtwork?.(id,imageFile);
+        if(result?.ok){campaign.image=result.image;campaign.imagePath=result.path;}
+        else imageWarning=result?.error||'Artwork upload failed. Add it in the GM Campaign Manager.';
+      }catch(error){imageWarning=error?.message||'Artwork upload failed. Add it in the GM Campaign Manager.';}
+    }
     openDashboard('campaigns');
+    window.toast?.(imageWarning ? `Campaign created, but ${imageWarning}` : `Campaign created: ${name}`);
   }
 
   function createWorkspaceCharacter() {

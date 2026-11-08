@@ -10,6 +10,22 @@ service firebase.storage {
         campaign.get('roles', {}).get(request.auth.uid, '') in ['gm','player']
       );
     }
+    function campaignGM(campaignId) {
+      let campaign = firestore.get(/databases/(default)/documents/campaigns/$(campaignId)).data;
+      return request.auth != null && (
+        campaign.ownerUid == request.auth.uid ||
+        request.auth.uid in campaign.get('gmUids', []) ||
+        campaign.get('roles', {}).get(request.auth.uid, '') == 'gm'
+      );
+    }
+    match /campaigns/{campaignId}/artwork/{fileName} {
+      allow read: if campaignMember(campaignId);
+      allow create: if campaignGM(campaignId) &&
+        request.resource.size > 0 &&
+        request.resource.size <= 8 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
+      allow delete: if campaignGM(campaignId);
+    }
     match /users/{uid}/characters/{characterId}/gallery/{fileName} {
       allow read: if request.auth != null && (request.auth.uid == uid ||
         ('campaignId' in resource.metadata && campaignMember(resource.metadata.campaignId)));

@@ -165,7 +165,17 @@ service cloud.firestore {
     match /campaigns/{campaignId} {
       allow read: if isCampaignMember(resource.data);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || linksOwnedCharacter(campaignId);
+      allow update: if (isCampaignOwner(resource.data) && request.resource.data.ownerUid == resource.data.ownerUid) || linksOwnedCharacter(campaignId) || (
+        isCampaignGM(campaignId) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['image','imagePath','art','banner','coverImage','cover','updatedAt']) &&
+        request.resource.data.get('image','') is string &&
+        request.resource.data.get('imagePath','') is string &&
+        request.resource.data.get('image','').size() <= 2048 &&
+        request.resource.data.get('imagePath','').size() <= 500 &&
+        (request.resource.data.get('image','') == '' || request.resource.data.get('image','').matches('https://.*')) &&
+        (request.resource.data.get('imagePath','') == '' || request.resource.data.get('imagePath','').matches('campaigns/' + campaignId + '/artwork/.*'))
+      );
       allow delete: if isCampaignOwner(resource.data);
 
       match /characters/{characterId} {

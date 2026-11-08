@@ -1,4 +1,5 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
+import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
@@ -1032,6 +1033,66 @@ const firebasePublicApi = {
       });
       return {ok:true,assigned:ids.length};
     }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  uploadCampaignArtwork: async function(campaignId,file) {
+    if(!db || !storage || !currentUser || !campaignId) return {ok:false,error:'Sign in to upload campaign artwork.'};
+    const error=campaignArtworkFileError(file);
+    if(error) return {ok:false,error};
+    const campaignRef=doc(db,'campaigns',campaignId);
+    try {
+      const snapshot=await getDoc(campaignRef);
+      if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) return {ok:false,error:'Only a campaign GM can change campaign artwork.'};
+    }catch(error) {
+      return {ok:false,error:error?.message||String(error)};
+    }
+    const extension=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif'})[String(file.type).toLowerCase()];
+    const path=`campaigns/${campaignId}/artwork/${Date.now()}-${Math.random().toString(36).slice(2,10)}.${extension}`;
+    const reference=storageRef(storage,path);
+    let uploaded=false;
+    try {
+      await uploadBytes(reference,file,{contentType:file.type});
+      uploaded=true;
+      const image=await getDownloadURL(reference);
+      if(!/^https:\/\//i.test(String(image||''))) throw new Error('Firebase returned an invalid campaign image URL.');
+      let previousPath='';
+      await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(campaignRef);
+        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can change campaign artwork.');
+        previousPath=String(snapshot.data().imagePath||'');
+        transaction.update(campaignRef,{image,imagePath:path,updatedAt:serverTimestamp()});
+      });
+      const local=(window.campaigns||[]).find(campaign=>campaign.id===campaignId);
+      if(local){local.image=image;local.imagePath=path;}
+      window.dispatchEvent(new CustomEvent('asteria:campaign-artwork-updated',{detail:{campaignId,image}}));
+      if(previousPath.startsWith(`campaigns/${campaignId}/artwork/`) && previousPath!==path) {
+        deleteObject(storageRef(storage,previousPath)).catch(()=>{});
+      }
+      return {ok:true,image,path};
+    }catch(error) {
+      if(uploaded) deleteObject(reference).catch(()=>{});
+      reportSyncError('campaign-artwork-upload',error,{campaignId});
+      return {ok:false,error:galleryUploadError(error).replace('character owner','campaign GM')};
+    }
+  },
+  removeCampaignArtwork: async function(campaignId) {
+    if(!db || !currentUser || !campaignId) return {ok:false,error:'Sign in to update campaign artwork.'};
+    try {
+      const campaignRef=doc(db,'campaigns',campaignId);
+      let oldPath='';
+      await runTransaction(db,async transaction=>{
+        const snapshot=await transaction.get(campaignRef);
+        if(!snapshot.exists() || !currentUserIsCampaignGM(snapshot.data())) throw new Error('Only a campaign GM can change campaign artwork.');
+        oldPath=String(snapshot.data().imagePath||'');
+        transaction.update(campaignRef,{image:'',imagePath:'',art:'',banner:'',coverImage:'',cover:'',updatedAt:serverTimestamp()});
+      });
+      const local=(window.campaigns||[]).find(campaign=>campaign.id===campaignId);
+      if(local){local.image='';local.imagePath='';local.art='';local.banner='';local.coverImage='';local.cover='';}
+      window.dispatchEvent(new CustomEvent('asteria:campaign-artwork-updated',{detail:{campaignId,image:''}}));
+      if(oldPath.startsWith(`campaigns/${campaignId}/artwork/`)) {
+        deleteObject(storageRef(storage,oldPath)).catch(()=>{});
+      }
+      return {ok:true,image:''};
+    }catch(error){return {ok:false,error:error?.message||String(error)};}
   },
   updateCampaignDetails: async function(campaignId,patch={}){
     if(!db || !currentUser || !campaignId) return {ok:false};

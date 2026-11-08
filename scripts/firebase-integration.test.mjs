@@ -161,6 +161,25 @@ test('gallery reads require ownership or campaign membership; uploads enforce MI
   await assertFails(uploadBytes(ref(owner,'users/alice/characters/a/gallery/file.html'),new Uint8Array([1]),{contentType:'text/html'}));
   await deleteObject(ref(owner,path));
 });
+test('campaign artwork permissions allow GM upload and member read only',async()=>{
+  const path='campaigns/c/artwork/cover.png';
+  const gm=env.authenticatedContext('gm').storage();
+  await assertSucceeds(uploadBytes(ref(gm,path),new Uint8Array([137,80,78,71]),{contentType:'image/png'}));
+  await assertSucceeds(getBytes(ref(env.authenticatedContext('alice').storage(),path)));
+  await assertFails(getBytes(ref(env.authenticatedContext('eve').storage(),path)));
+  await assertFails(uploadBytes(ref(env.authenticatedContext('alice').storage(),'campaigns/c/artwork/player.png'),new Uint8Array([1]),{contentType:'image/png'}));
+  await assertFails(uploadBytes(ref(gm,'campaigns/c/artwork/unsafe.svg'),new Uint8Array([1]),{contentType:'image/svg+xml'}));
+  await assertSucceeds(deleteObject(ref(gm,path)));
+});
+test('GM campaign artwork updates cannot alter gameplay or owner fields',async()=>{
+  const gm=user('gm');
+  const image='https://example.org/campaign.webp';
+  await assertSucceeds(updateDoc(doc(gm,'campaigns/c'),{image,imagePath:'campaigns/c/artwork/cover.webp'}));
+  const newImage='https://example.org/other.webp';
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{image:newImage,imagePath:'campaigns/c/artwork/player.webp'}));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{ownerUid:'alice'}));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{party:['hijacked']}));
+});
 test('owner can link a new private character atomically; cannot delete and reimport live state',async()=>{
   const own=user('alice');await setDoc(doc(own,'users/alice/characters/new'),sheet('new','alice'));
   const batch=writeBatch(own);batch.set(doc(own,'campaigns/c/characters/new'),sheet('new','alice'));
