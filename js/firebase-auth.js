@@ -1901,6 +1901,13 @@ const firebasePublicApi = {
       action:'submit',campaignId,ucn:campaignCode(codeValue),characterId:characterId || null
     })).data;
   },
+  listCampaignPlayerRoster: async function(campaignId){
+    if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
+    if(window.AsteriaFeatureFlags?.campaignPlayerRoster!==true) throw new Error('Campaign roster is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({
+      action:'roster',campaignId
+    })).data;
+  },
   listCampaignJoinRequests: async function(campaignId){
     if(!functionsClient || !currentUser) throw new Error('Sign in as a campaign GM.');
     return (await httpsCallable(functionsClient,'asteriaCampaignJoinReview')({

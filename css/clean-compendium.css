@@ -827,6 +827,42 @@
   color: #dff5ff;
 }
 
+.workspace-player-roster #workspacePlayerRosterContent {
+  display: grid;
+  gap: 12px;
+}
+.workspace-roster-group {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+.workspace-roster-group h4 {
+  margin: 4px 0;
+}
+.workspace-roster-row {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 8px;
+  background: rgba(255,255,255,.035);
+  overflow-wrap: anywhere;
+}
+.workspace-roster-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 7px;
+}
+.workspace-roster-row small {
+  color: rgba(255,239,211,.76);
+}
+@media(max-width:520px) {
+  .workspace-player-roster #workspaceRefreshPlayerRoster { width: 100%; }
+}
+
 .workspace-invite-list {
   display: grid;
   gap: 8px;
