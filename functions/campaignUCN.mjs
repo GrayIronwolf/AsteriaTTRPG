@@ -10,7 +10,12 @@ const MAX_CREATES_PER_WINDOW = 10;
 const CREATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function campaignSummary(campaignId, campaign, ucn) {
-  return { id: campaignId, name: String(campaign.name || 'Campaign').slice(0, 120), ucn };
+  // The preview is public to authenticated accounts, not a campaign-data read.
+  // V2 accounts can submit join requests only after Phase 3.2.
+  const version=campaign.membershipSchemaVersion;
+  const joinMode=version===2?'request':
+    (version===undefined || version===null || version===1)?'legacy':'unavailable';
+  return { id: campaignId, name: String(campaign.name || 'Campaign').slice(0, 120), ucn, joinMode };
 }
 function validCampaignId(id) { return typeof id === 'string' && CAMPAIGN_ID_PATTERN.test(id); }
 export function validUCN(code) { return typeof code === 'string' && UCN_PATTERN.test(code); }
