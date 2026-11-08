@@ -937,8 +937,25 @@
     const forgeButton=byId('workspaceCreateCampaignBtn');if(forgeButton)forgeButton.disabled=true;
     const partySize = Math.max(1, Math.min(12, Number(byId('workspaceCampaignPartySize')?.value || 4)));
     const uid = accountKey();
-    const id = randomToken('camp-');
-    const inviteCode = uniqueCampaignCode();
+    let id = randomToken('camp-');
+    let inviteCode = uniqueCampaignCode();
+    const serverIdentityEnabled = window.AsteriaFirebase?.serverCampaignUCNEnabled?.() === true;
+    if(serverIdentityEnabled) {
+      try {
+        const identity = await window.AsteriaFirebase.createCampaignIdentity(name);
+        if(!identity || !/^\d{12}$/.test(String(identity.ucn || '')) || !identity.id) {
+          throw new Error('Invalid server campaign identity.');
+        }
+        id = identity.id;
+        inviteCode = identity.ucn;
+      } catch(error) {
+        console.warn('Campaign identity could not be reserved.',error);
+        const status = byId('workspaceCampaignArtworkStatus');
+        if(status) status.textContent = 'Campaign number could not be reserved. No campaign was created. Check the connection and retry.';
+        if(forgeButton) forgeButton.disabled = false;
+        return;
+      }
+    }
     const campaign = {
       id,
       name,

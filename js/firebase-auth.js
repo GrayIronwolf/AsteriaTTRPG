@@ -1859,6 +1859,20 @@ const firebasePublicApi = {
       return true;
     }catch(err){ console.warn('Could not save campaign to Firestore.', err); return false; }
   },
+  serverCampaignUCNEnabled: function(){
+    // Do not switch production creation before the separately deployed backend
+    // callable and Firebase rules have been verified.
+    return window.AsteriaFeatureFlags?.serverCampaignUCN === true;
+  },
+  createCampaignIdentity: async function(name){
+    if(!functionsClient || !currentUser) throw new Error('Sign in before creating a campaign.');
+    if(window.AsteriaFeatureFlags?.serverCampaignUCN !== true) throw new Error('Server campaign identity allocation is not enabled.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignUCN')({action:'create',name})).data;
+  },
+  previewCampaignByUCN: async function(codeValue){
+    if(!functionsClient || !currentUser) throw new Error('Sign in to look up a campaign.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignUCN')({action:'preview',code:campaignCode(codeValue)})).data;
+  },
   findCampaignByUCN: async function(codeValue){
     if(!functionsClient || !currentUser) throw new Error('Sign in to view this invitation.');
     return (await httpsCallable(functionsClient,'asteriaInvite')({code:campaignCode(codeValue),join:false})).data;

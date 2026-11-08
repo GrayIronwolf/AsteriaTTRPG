@@ -18,8 +18,27 @@ export const asteriaInvite=onCall({region:'us-central1',maxInstances:3,timeoutSe
   if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
   try {
     const { accessInvite }=await import('./invitations.mjs');
-    return await accessInvite(getFirestore(),request.auth.uid,request.data?.code,request.data?.join===true);
+    if(request.data?.join!==true) {
+      const { previewCampaignUCN }=await import('./campaignUCN.mjs');
+      return await previewCampaignUCN(getFirestore(),request.auth.uid,request.data?.code);
+    }
+    return await accessInvite(getFirestore(),request.auth.uid,request.data?.code,true);
   } catch(error) {
     throw new HttpsError('failed-precondition',error.message||'The invitation could not be checked.');
+  }
+});
+
+ 
+// Permanent UCN identity allocation and limited lookup (independent of invite redemption).
+export const asteriaCampaignUCN=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
+  try {
+    const { createCampaignIdentity, previewCampaignUCN }=await import('./campaignUCN.mjs');
+    const data=request.data || {};
+    if(data.action==='create') return await createCampaignIdentity(getFirestore(),request.auth.uid,data.name);
+    if(data.action==='preview') return await previewCampaignUCN(getFirestore(),request.auth.uid,data.code);
+    throw new Error('Unknown campaign identity action.');
+  } catch(error) {
+    throw new HttpsError('failed-precondition',error.message||'The campaign number could not be checked.');
   }
 });

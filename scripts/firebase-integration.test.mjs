@@ -8,6 +8,7 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
+import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUCN.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -133,6 +134,29 @@ test('invitation preview discloses a summary; valid join grants membership',asyn
   await accessInvite(db,'eve','123456789012',true);
   await assertSucceeds(getDoc(doc(user('eve'),'campaigns/c')));
   assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,'player');
+});
+test('server UCN allocation reserves both identities and preserves legacy join',async()=>{
+  const code='000000000789';
+  const identity=await createCampaignIdentity(db,'gm','Test Citadel',{
+    nextCode:()=>code,nextId:()=> 'camp-server-allocated'
+  });
+  assert.deepEqual(identity,{id:'camp-server-allocated',name:'Test Citadel',ucn:code});
+  assert.equal((await db.doc('campaignDirectory/'+code).get()).data().campaignId,identity.id);
+  assert.equal((await db.doc('campaignInvites/'+code).get()).data().ownerUid,'gm');
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/camp-server-allocated')));
+  await assertFails(getDoc(doc(user('alice'),'campaigns/camp-server-allocated')));
+  await assertFails(getDoc(doc(user('alice'),'campaignDirectory/'+code)));
+  await assertFails(setDoc(doc(user('alice'),'campaignDirectory/000000001234'),{campaignId:'fake'}));
+  assert.deepEqual(await previewCampaignUCN(db,'alice',code),identity);
+  const joined=await accessInvite(db,'alice',code,true);
+  assert.equal(joined.roles.alice,'player');
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/camp-server-allocated')));
+});
+test('campaign UCN cannot be modified by owner or players after allocation',async()=>{
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c'),{ucn:'000000000000'}));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c'),{ucn:'000000000001'}));
+  await assertSucceeds(updateDoc(doc(user('gm'),'campaigns/c'),{name:'Safe rename'}));
+  assert.equal((await db.doc('campaigns/c').get()).data().ucn,'123456789012');
 });
 test('forged invites cannot grant campaign membership',async()=>{
   await db.doc('campaignInvites/999999999999').set({campaignId:'c',ownerUid:'eve',status:'active'});
