@@ -493,6 +493,7 @@
   }
 
   function renderJoinCampaignCard() {
+    const previewEnabled = campaignJoinPreviewEnabled();
     const element = document.createElement('article');
     element.className = 'clean-card workspace-dashboard-card workspace-gallery-card workspace-campaign-join-card';
     element.innerHTML = `
@@ -500,10 +501,10 @@
       <div class="workspace-gallery-copy">
         <span class="clean-tag">Join Campaign</span>
         <h3>Join Campaign</h3>
-        <p>Find your GM's campaign using its 12-digit Unique Campaign Number. Review the campaign before connecting your account.</p>
+        <p>${previewEnabled ? 'Find your GM\'s campaign using its 12-digit Unique Campaign Number. Review the campaign before connecting your account.' : 'Enter the 12 digit UCN from your GM invite, then link an existing character or forge a new one.'}</p>
         <label class="workspace-join-code-label">Unique Campaign Number<input id="workspaceJoinCampaignCode" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="000000000000" aria-describedby="workspaceJoinCodeHelp"></label>
         <p class="muted" id="workspaceJoinCodeHelp">Enter all 12 digits. Spaces or hyphens are optional.</p>
-        <button class="primary" type="button" id="workspaceJoinCampaignBtn">Find Campaign</button>
+        <button class="primary" type="button" id="workspaceJoinCampaignBtn">${previewEnabled ? 'Find Campaign' : 'Join Campaign'}</button>
         <div id="workspaceJoinCampaignResult" class="workspace-join-result" aria-live="polite" role="status"></div>
         <div id="workspaceJoinCampaignPreview" class="workspace-join-preview" hidden></div>
         <div id="workspaceJoinCharacterChooser" class="workspace-join-character-chooser"></div>
@@ -515,7 +516,9 @@
     element.querySelector('#workspaceJoinCampaignBtn')?.addEventListener('click', async event => {
       event.preventDefault();
       event.stopPropagation();
-      await lookupCampaignByUCN(element.querySelector('#workspaceJoinCampaignCode')?.value || '');
+      await (previewEnabled ? lookupCampaignByUCN : joinLegacyCampaignByUCN)(
+        element.querySelector('#workspaceJoinCampaignCode')?.value || ''
+      );
     });
     element.querySelector('#workspaceJoinCampaignCode')?.addEventListener('input', () => {
       campaignLookupSequence += 1;
@@ -532,7 +535,7 @@
       const input = element.querySelector('#workspaceJoinCampaignCode');
       if (input) input.value = pendingInviteCode;
       const result = element.querySelector('#workspaceJoinCampaignResult');
-      if (result) result.textContent = 'Campaign number loaded. Select Find Campaign to verify it before joining.';
+      if (result) result.textContent = previewEnabled ? 'Campaign number loaded. Select Find Campaign to verify it before joining.' : 'Invite loaded. Select Join Campaign to connect.';
     }
     return element;
   }
@@ -810,6 +813,68 @@
     });
   }
 
+  function campaignJoinPreviewEnabled() {
+    // The website and Firebase Cloud Functions deploy separately. Leave the
+    // legacy join path intact until the new backend response is verified.
+    return window.AsteriaFeatureFlags?.campaignJoinPreview === true;
+  }
+
+  async function joinLegacyCampaignByUCN(codeValue) {
+    if (!requireAccountWorkspace()) return null;
+    const code = campaignCode(codeValue);
+    if (code.length !== 12) {
+      joinResult('Enter the 12 digit Unique Campaign Number from your GM.', 'warn');
+      return null;
+    }
+    const joinButton = byId('workspaceJoinCampaignBtn');
+    let campaign = campaignByCode(code);
+    let joinedInCloud = false;
+    const firebaseReady = Boolean(window.AsteriaFirebase?.isReady?.());
+    if (firebaseReady && (!campaign || campaignRole(campaign) !== 'GM')) {
+      if (joinButton) joinButton.disabled = true;
+      joinResult('Finding campaign...', 'info');
+      try {
+        const sharedCampaign = await window.AsteriaFirebase.joinCampaignByUCN(code);
+        if (sharedCampaign) {
+          campaign = storeAccountCampaign(sharedCampaign);
+          joinedInCloud = true;
+        }
+      } catch (error) {
+        console.warn('UCN campaign join failed.', error);
+        const permissionProblem = error?.code === 'permission-denied' || /permission/i.test(String(error?.message || ''));
+        joinResult(permissionProblem
+          ? 'Firebase blocked this join. Publish the included Firestore rules, then try again.'
+          : 'The campaign service could not complete the join. Please try again.', 'warn');
+        return null;
+      } finally {
+        if (joinButton) joinButton.disabled = false;
+      }
+    }
+    if (!campaign) {
+      joinResult(firebaseReady
+        ? 'No campaign was found for that UCN.'
+        : 'Cross-account UCN joining requires a real Firebase login. Test Login only sees campaigns in this browser.', 'warn');
+      return null;
+    }
+    ensureCampaignInviteFields(campaign);
+    const player = addCampaignPlayer(campaign);
+    const email = sessionInfo().email || '';
+    campaign.invites = arrayValue(campaign.invites).map(invite => {
+      if (invite.code === campaign.ucn && (!invite.email || !email || lower(invite.email) === lower(email))) {
+        return Object.assign({}, invite, { status:'accepted', acceptedBy:accountKey(), acceptedAt:new Date().toISOString() });
+      }
+      return invite;
+    });
+    campaign.activity = arrayValue(campaign.activity);
+    if (!joinedInCloud) campaign.activity.push(`${sessionInfo().user || sessionInfo().email || 'Player'} joined with UCN.`);
+    persistWorkspaceChange('campaign-ucn-joined');
+    if (!joinedInCloud) window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
+    joinResult(`Joined ${campaign.name || 'campaign'}. Choose a character to link.`, 'ok');
+    renderJoinCharacterChooser(campaign);
+    return player;
+  }
+
+
   function clearCampaignJoinPreview() {
     campaignLookupSequence += 1;
     campaignLookupState = null;
@@ -956,7 +1021,9 @@
 
   // Existing API name now performs read-only discovery, never an implicit join.
   async function joinCampaignByUCN(codeValue) {
-    return lookupCampaignByUCN(codeValue);
+    return campaignJoinPreviewEnabled()
+      ? lookupCampaignByUCN(codeValue)
+      : joinLegacyCampaignByUCN(codeValue);
   }
 
   function setPendingCampaignJoin(campaign) {
