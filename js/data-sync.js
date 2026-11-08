@@ -114,7 +114,18 @@
   function mergeCloudCampaigns(campaigns){
     if(!Array.isArray(campaigns)) return;
     const activeId = window.campaigns?.[window.activeCampaign ?? 0]?.id || null;
-    const merged = new Map((window.campaigns || []).filter(Boolean).map(campaign=>[campaign.id, campaign]));
+    const availableIds=new Set(campaigns.filter(campaign=>campaign?.id).map(campaign=>String(campaign.id)));
+    // Keep older v1 offline records until their cloud state is resolved, but
+    // never show a cached v2 campaign after authenticated discovery omits it.
+    const unavailable=(window.campaigns || []).filter(campaign=>
+      campaign?.membershipSchemaVersion===2 && !availableIds.has(String(campaign.id)));
+    if(unavailable.length) {
+      window.AsteriaUnavailableCampaigns=Object.assign({},window.AsteriaUnavailableCampaigns||{},
+        Object.fromEntries(unavailable.map(campaign=>[campaign.id,campaign])));
+    }
+    const merged = new Map((window.campaigns || []).filter(campaign=>
+      campaign?.id && (campaign.membershipSchemaVersion!==2 || availableIds.has(String(campaign.id))))
+      .map(campaign=>[campaign.id,campaign]));
     campaigns.forEach(campaign=>{
       if(!campaign?.id) return;
       merged.set(campaign.id, Object.assign({}, merged.get(campaign.id) || {}, campaign));
