@@ -107,7 +107,7 @@ export async function listCampaignPlayerRoster(db,actorUid,campaignId){
   }else throw new Error('Unsupported campaign membership version.');
 
   const roleSort={owner:0,'co-gm':1,player:2};
-  members.sort((a,b)=>(roleSort[a.role]-roleSort[b.role]) || a.displayName.localeCompare(b.displayName) || a.uid.localeCompare(b.uid));
+  members.sort((a,b)=>(roleSort[a.role]-roleSort[b.role]) || (a.displayName||a.uid).localeCompare(b.displayName||b.uid) || a.uid.localeCompare(b.uid));
   pending.sort((a,b)=>(a.requestedAt||'').localeCompare(b.requestedAt||'')||a.uid.localeCompare(b.uid));
   const active=members.filter(row=>row.status==='active');
   const inactive=members.filter(row=>row.status!=='active');
