@@ -18,7 +18,11 @@ export const asteriaInvite=onCall({region:'us-central1',maxInstances:3,timeoutSe
   if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
   try {
     const { accessInvite }=await import('./invitations.mjs');
-    return await accessInvite(getFirestore(),request.auth.uid,request.data?.code,request.data?.join===true);
+    if(request.data?.join!==true) {
+      const { previewCampaignUCN }=await import('./campaignUCN.mjs');
+      return await previewCampaignUCN(getFirestore(),request.auth.uid,request.data?.code);
+    }
+    return await accessInvite(getFirestore(),request.auth.uid,request.data?.code,true);
   } catch(error) {
     throw new HttpsError('failed-precondition',error.message||'The invitation could not be checked.');
   }
