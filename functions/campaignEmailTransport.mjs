@@ -20,7 +20,10 @@ function safeLabel(value,name){
   if(typeof value!=='string'||!value.trim()||value.length>LABEL_LIMIT)
     throw Error('Invalid '+name+'.');
   const clean=value.trim();
-  if(/[\x00-\x1f\x7f]/.test(clean))throw Error('Invalid '+name+'.');
+  if([...clean].some(character=>{
+    const code=character.charCodeAt(0);
+    return code<32||code===127;
+  }))throw Error('Invalid '+name+'.');
   return clean;
 }
 function validateInvitationUrl(link,inviteId,campaignId){
