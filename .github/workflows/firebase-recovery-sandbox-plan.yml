@@ -1,0 +1,19 @@
+name: Firebase recovery sandbox preparation (offline)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify_sandbox_plan:
+    name: Verify non-deployable sandbox plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check sandbox planning safeguards (local files only)
+        run: node --test scripts/firebase-recovery-sandbox-plan.test.mjs
+      - name: Print safe planning result (no cloud operations)
+        run: node scripts/firebase-recovery-sandbox-plan.mjs --check

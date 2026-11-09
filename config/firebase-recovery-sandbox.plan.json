@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "purpose": "asteria-firebase-recovery-step-3-1",
+  "status": "unprovisioned",
+  "executionMode": "offline-plan-only",
+  "productionProjectId": "asteria-ttrpg",
+  "localEmulatorProjectId": "demo-asteria",
+  "sandboxProjectId": null,
+  "sandboxLocation": null,
+  "dataPolicy": "synthetic-only",
+  "firestore": {
+    "rulesTemplate": "config/firebase-recovery-sandbox/firestore.deny.rules",
+    "databaseProvisioned": false,
+    "backupImported": false
+  },
+  "storage": {
+    "rulesTemplate": "config/firebase-recovery-sandbox/storage.deny.rules",
+    "bucketProvisioned": false,
+    "artworkCopied": false
+  },
+  "authentication": {
+    "providerConfigured": false,
+    "realUserAccountsAllowed": false,
+    "outboundEmailEnabled": false
+  },
+  "integrations": {
+    "cloudFunctionsDeployed": false,
+    "publicHostingEnabled": false,
+    "emailProviderEnabled": false,
+    "webhooksEnabled": false,
+    "productionFirebaseConfigReuse": false
+  },
+  "security": {
+    "productionServiceAccountReuse": false,
+    "productionWorkloadIdentityReuse": false,
+    "productionOAuthClientReuse": false,
+    "productionBucketReuse": false,
+    "credentialsProvisioned": false,
+    "productionWritesAllowed": false,
+    "realBackupExportAllowed": false,
+    "restorationAllowed": false
+  },
+  "approvals": {
+    "projectCreationApproved": false,
+    "billingBudgetApproved": false,
+    "budgetAlertsConfigured": false,
+    "leastPrivilegeIAMReviewed": false,
+    "sandboxIsolationVerified": false,
+    "cleanupPlanApproved": false,
+    "realDataRestoreApproved": false
+  }
+}
