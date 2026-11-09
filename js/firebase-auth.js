@@ -80,7 +80,6 @@ function callTrustedAction(action,args) {
 function $(id){ return document.getElementById(id); }
 function notice(msg){ if(window.toast) window.toast(msg); else alert(msg); }
 function usernameKey(value){ return String(value||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,''); }
-function validUsername(value){ return /^[a-z0-9._-]{3,24}$/i.test(String(value||'').trim()); }
 function localUsernameMap(){ try{return JSON.parse(localStorage.getItem('asteriaFirebaseUsernameMap')||'{}')}catch(e){return {}} }
 function saveLocalUsername(username, data){ try{ const map=localUsernameMap(); map[usernameKey(username)] = data; localStorage.setItem('asteriaFirebaseUsernameMap', JSON.stringify(map)); }catch(e){} }
 function localProfileStore(){ try{return JSON.parse(localStorage.getItem('asteriaFirebaseProfiles')||'{}')}catch(e){return {}} }
