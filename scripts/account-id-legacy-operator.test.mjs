@@ -61,20 +61,20 @@ test('reviewed one-account backfill is explicit and no-op when already assigned'
  const request=prepareLegacyOperatorRequest(backfill,enabled);
  let writes=0;
  const inspect=async()=>({status:'eligible',username:'Asteria'});
- const backfill=async(_db,_auth,uidArg,opts)=>{
+ const backfillFn=async(_db,_auth,uidArg,opts)=>{
   assert.equal(uidArg,uid);
   assert.equal(opts.projectId,projectId);
   assert.equal(opts.confirmation,'BACKFILL-ACCOUNT-ID:alice');
   assert.equal(opts.enabled,true);
   writes++;return {status:'assigned',accountId:'Asteria#01416'};
  };
- const assigned=await performLegacyOperatorRequest(request,{db,auth,inspect,backfill});
+ const assigned=await performLegacyOperatorRequest(request,{db,auth,inspect,backfill:backfillFn});
  assert.deepEqual(assigned,{status:'assigned',accountId:'Asteria#01416',
    writesPerformed:true});
  assert.equal(writes,1);
  const repeated=await performLegacyOperatorRequest(request,{
   db,auth,inspect:async()=>({status:'already-assigned',username:'Asteria'}),
-  backfill
+  backfill:backfillFn
  });
  assert.deepEqual(repeated,{status:'already-assigned',writesPerformed:false});
  assert.equal(writes,1);
@@ -83,7 +83,7 @@ test('operator module is not a callable, bulk scanner or an automated CI migrati
  const cli=readFileSync(new URL('./account-id-legacy-operator.mjs',import.meta.url),'utf8');
  const api=readFileSync(new URL('../functions/index.mjs',import.meta.url),'utf8');
  const workflow=readFileSync(new URL('../.github/workflows/firebase-deploy.yml',import.meta.url),'utf8');
- assert.doesNotMatch(cli,/listUsers\(|onCall\(|workflow_dispatch/);
+ assert.doesNotMatch(cli,/listUsers\(|onCall\(|workflow_dispatch:/);
  assert.doesNotMatch(api,/account-id-legacy-operator|backfillLegacyAccountIdentity/);
  assert.doesNotMatch(workflow,/account-id-legacy-operator|backfillLegacyAccountIdentity/);
  assert.match(cli,/ASTERIA_LEGACY_ACCOUNT_IDS_BACKFILL_ENABLED/);

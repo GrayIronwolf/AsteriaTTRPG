@@ -52,7 +52,7 @@ export function inspectAccountIdProductionFinalization(reader=read){
     check('full-tests-connected',
       tests.scripts?.['test:account-id']?.includes('account-id-legacy-operator.test.mjs')&&
       tests.scripts?.['test:account-id']?.includes('account-id-production-finalization.test.mjs')&&
-      tests.scripts?.['test:firebase']),
+      Boolean(tests.scripts?.['test:firebase'])),
   ];
   const safe=checks.every(row=>row.pass);
   return {sourceChecksPassed:safe,decision:safe?'SOURCE-READY / PRODUCTION-NOT-ACTIVATED':'NO-GO',
