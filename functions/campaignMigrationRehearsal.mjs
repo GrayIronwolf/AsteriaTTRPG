@@ -273,7 +273,7 @@ export async function rehearseLegacyCampaignMigration(db,actorUid,campaignId,{
       staged:{members:0,links:0,reservations:0,directory:0}
     };
     if(!stage)return report;
-    if(problems.length)throw Error('Migration rehearsal blocked; resolve audit issues first.');
+    if(problems.length||warnings.length)throw Error('Migration rehearsal blocked; resolve audit issues and privacy/mapping warnings first.');
     // All reads above precede all writes; never update or overwrite anything.
     for(const row of plannedMembers){
       tx.create(db.doc(prefix+'/members/'+row.uid),memberDocument({
