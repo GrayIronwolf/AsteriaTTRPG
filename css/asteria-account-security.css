@@ -1,0 +1,47 @@
+/* Phase 3.3: Account Security uses the established blue-grey profile treatment. */
+.asteria-security-overlay[hidden] {display:none!important;}
+.asteria-security-overlay {
+  position:fixed;inset:0;z-index:3510;display:grid;place-items:center;
+  padding:16px;background:rgba(2,7,13,.82);overflow-y:auto;
+}
+.asteria-security-dialog {
+  box-sizing:border-box;width:min(100%,500px);max-height:calc(100dvh - 32px);
+  overflow:auto;padding:clamp(18px,3vw,28px);
+  border:1px solid #7893a4;border-radius:5px;
+  color:var(--asteria-text,#e6eef5);
+  background:linear-gradient(145deg,#1a3042,#0a1724 66%,#07101a);
+  box-shadow:0 25px 80px #000c,inset 0 1px #d6ecfb24;
+  font-family:var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-security-heading {
+  display:flex;gap:14px;align-items:flex-start;justify-content:space-between;
+  padding-bottom:14px;border-bottom:1px solid #71889b55;
+}
+.asteria-security-heading .eyebrow {margin:0;color:#b5ccd9;}
+.asteria-security-heading h2 {
+  margin:4px 0 0;color:#e6d3b5;
+  font:400 clamp(1.4rem,4vw,1.85rem)/1.2 var(--asteria-font-display,Georgia,serif);
+}
+.asteria-security-heading button {
+  min-width:44px;min-height:44px;font-size:1.45rem;color:#e3eaf2;
+  background:#0b1a27;border:1px solid #71899b;cursor:pointer;
+}
+.asteria-security-body {margin:18px 0;}
+.asteria-security-body strong {color:#e6d3b5;}
+.asteria-security-email {overflow-wrap:anywhere;color:#e8f1f7;font-weight:600;}
+.asteria-security-body p {line-height:1.55;}
+.asteria-security-actions {display:flex;gap:12px;flex-wrap:wrap;}
+.asteria-security-actions button {
+  min-height:44px;flex:1;min-width:190px;
+  border:1px solid #7a95a5;border-radius:2px;padding:10px 14px;
+  background:#19374d;color:#f3f7fb;
+  font:600 .88rem/1.2 var(--asteria-font-body,Arial,sans-serif);cursor:pointer;
+}
+.asteria-security-actions button:disabled {opacity:.52;cursor:not-allowed;}
+.asteria-security-dialog button:focus-visible {outline:2px solid #c6edff;outline-offset:3px;}
+.asteria-security-status {min-height:1.25em;margin:16px 0 0;line-height:1.5;color:#c0d7e5;}
+@media (max-width:600px){
+  .asteria-security-overlay {align-items:start;padding:12px;}
+  .asteria-security-dialog {max-height:calc(100dvh - 24px);}
+  .asteria-security-actions {flex-direction:column;}
+}

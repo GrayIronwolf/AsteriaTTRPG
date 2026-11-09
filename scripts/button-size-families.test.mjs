@@ -16,7 +16,7 @@ test('Phase 2 loads the four approved button families after previous website sty
   assert.match(css,new RegExp('--asteria-button-'+family+'-height:'+h+'px;'));
   assert.match(css,new RegExp('data-asteria-button-size="'+family+'"'));
  }
- assert.match(index,/asteria-menu-buttons\.js\?v=phase2-size-families-20261106/);
+ assert.match(index,/asteria-menu-buttons\.js\?v=account-menu-phase3-3/);
 });
 test('Classification preserves navigation controls and avoids tiny gameplay controls',()=>{
  const elements=[];
@@ -43,7 +43,7 @@ test('Classification preserves navigation controls and avoids tiny gameplay cont
  const expected={
   sidebarHomeButton:'small',compendiumIndexButton:'long',compendiumQuickToggle:'icon',
   characterForgeTop:'long',campaignsTop:'long',loginToggle:'small',
-  accountSettingsTop:'standard',settingsToggle:'icon'
+  settingsToggle:'icon'
  };
  for(const [id,family] of Object.entries(expected)){
   const {element,attributes}=mock(id);

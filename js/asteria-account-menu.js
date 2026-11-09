@@ -1,6 +1,5 @@
-/* Asteria Account Navigation — Phase 3.1.
- * Only replaces the signed-in header action and exposes existing account
- * settings/logout. Profile, notifications and security follow in later phases.
+/* Asteria Account Navigation — Phase 3.3.
+ * Profile, updates and security actions grouped in the existing responsive menu.
  */
 (function(){
   const byId=id=>document.getElementById(id);
@@ -31,6 +30,9 @@
   }
   function toggle(){
     const next=!opened&&isSignedIn();
+    const state=byId('accountMenuNotificationsState');
+    if(state)state.textContent=window.AsteriaFeatureFlags?.campaignNotifications===true?
+      'Available':'Not active';
     const mobileSlot=byId('mobileAccountSlot'),wrapper=byId('accountMenuWrap');
     // Desktop Account replaces an open appearance drawer; mobile keeps that
     // drawer open because the Account control is physically inside it.
@@ -44,13 +46,20 @@
     const target=event.target;
     const profile=target.closest?.('#accountMenuProfile');
     const settings=target.closest?.('#accountMenuSettings');
+    const notifications=target.closest?.('#accountMenuNotifications');
+    const security=target.closest?.('#accountMenuSecurity');
     const logout=target.closest?.('#accountMenuLogout');
-    if(!profile&&!settings&&!logout)return;
+    if(!profile&&!settings&&!notifications&&!security&&!logout)return;
     event.preventDefault();
     close();
     window.closeSettings?.();
     if(profile)window.AsteriaAccountProfile?.open?.();
     else if(settings)window.AsteriaWorkspace?.openDashboard?.('settings');
+    else if(notifications){
+      if(!window.AsteriaWorkspace?.openNotifications?.())
+        window.toast?.('Notifications are not ready. Try again shortly.');
+    }
+    else if(security)window.AsteriaAccountSecurity?.open?.();
     else window.logout?.();
   }
   function bind(){
