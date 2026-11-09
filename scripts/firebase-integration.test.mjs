@@ -23,6 +23,7 @@ import {issueSecureCampaignInvitation,assertSecureInvitationEligible} from '../f
 import {listSecureCampaignInvitations,changeSecureCampaignInvitation} from '../functions/campaignInvitationManager.mjs';
 import {previewSecureCampaignInvitation,acceptSecureCampaignInvitation} from '../functions/campaignInvitationAcceptance.mjs';
 import {sendCampaignEmailInvitations,resendCampaignEmailInvitation} from '../functions/campaignEmailInvitations.mjs';
+import {listCampaignNotifications,markCampaignNotificationRead,notifyVerifiedEmailRecipient} from '../functions/campaignNotifications.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1570,4 +1571,79 @@ test('Phase 7.2: GM-only bulk sending stores provider status privately and rotat
   assert.equal((await db.doc('campaigns/c/invitations/'+rotated.result.inviteId).get()).data().resendOfInviteId,inviteId);
   assert.equal(sends,3);
   assert.deepEqual((await db.doc('campaigns/c').get()).data(),before);
+});
+
+
+test('Phase 7.3: GM join alerts and player decisions remain recipient-private and gameplay-safe',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:true},partySize:8
+  });
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  const submitted=await campaignJoinRequest(db,'eve',{
+    action:'submit',campaignId:'c',ucn:'123456789012'
+  },{notificationsEnabled:true});
+  assert.equal(submitted.status,'pending');
+  const gm=await listCampaignNotifications(db,'gm');
+  assert.equal(gm.notifications.length,1);
+  assert.equal(gm.notifications[0].kind,'join-request');
+  assert.equal(gm.unreadShown,1);
+  assert.equal((await listCampaignNotifications(db,'eve')).notifications.length,0);
+  const gmDoc='campaignNotificationInbox/gm/items/'+gm.notifications[0].notificationId;
+  for(const uid of ['gm','alice','eve']){
+    const client=user(uid);
+    await assertFails(getDoc(doc(client,gmDoc)));
+    await assertFails(getDocs(collection(client,'campaignNotificationInbox/gm/items')));
+    await assertFails(setDoc(doc(client,gmDoc),{title:'Forged notice'}));
+    await assertFails(updateDoc(doc(client,gmDoc),{readAt:new Date()}));
+    await assertFails(deleteDoc(doc(client,gmDoc)));
+  }
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),gmDoc)));
+  const review=await reviewCampaignJoinRequest(db,'gm',{
+    campaignId:'c',requestUid:'eve',decision:'approve',expectedRevision:1
+  },{notificationsEnabled:true});
+  assert.equal(review.status,'approved');
+  const player=await listCampaignNotifications(db,'eve');
+  assert.equal(player.notifications.length,1);
+  assert.equal(player.notifications[0].kind,'join-approved');
+  assert.equal(player.unreadShown,1);
+  await assertFails(getDoc(doc(user('eve'),'campaignNotificationInbox/eve/items/'+
+    player.notifications[0].notificationId)));
+  const read=await markCampaignNotificationRead(db,'eve',
+    player.notifications[0].notificationId);
+  assert.equal(read.alreadyRead,false);
+  assert.equal((await listCampaignNotifications(db,'eve')).unreadShown,0);
+  assert.equal((await markCampaignNotificationRead(db,'eve',
+    player.notifications[0].notificationId)).alreadyRead,true);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data(),before);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).data().role,'player');
+  const replay=await reviewCampaignJoinRequest(db,'gm',{
+    campaignId:'c',requestUid:'eve',decision:'approve',expectedRevision:1
+  },{notificationsEnabled:true});
+  assert.equal(replay.alreadyReviewed,true);
+  assert.equal((await listCampaignNotifications(db,'eve')).notifications.length,1);
+});
+
+test('Phase 7.3: verified-account invitation notice is opaque and cannot grant access',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:true}
+  });
+  const id='a'.repeat(64);
+  const once=await notifyVerifiedEmailRecipient(db,'eve',{
+    campaignId:'c',campaignName:'The Frost Throne',inviteId:id
+  });
+  assert.equal(once.alreadyExists,false);
+  const again=await notifyVerifiedEmailRecipient(db,'eve',{
+    campaignId:'c',campaignName:'The Frost Throne',inviteId:id
+  });
+  assert.equal(again.alreadyExists,true);
+  const list=await listCampaignNotifications(db,'eve');
+  assert.equal(list.notifications.length,1);
+  assert.equal(list.notifications[0].kind,'email-invitation');
+  assert.equal(JSON.stringify(list).includes(id),false);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
+  const privatePath='campaignNotificationInbox/eve/items/'+once.notificationId;
+  await assertFails(getDoc(doc(user('gm'),privatePath)));
+  await assertFails(getDoc(doc(user('eve'),privatePath)));
+  await assertFails(setDoc(doc(user('eve'),privatePath),{readAt:new Date()}));
 });
