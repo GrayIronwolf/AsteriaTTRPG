@@ -772,6 +772,15 @@
               <label>Recipient Email (email invitations only)<input id="workspaceSecureInviteEmail" type="email" autocomplete="off" placeholder="player@example.com"></label>
             </div>
             <button class="primary" type="button" id="workspaceSecureInviteIssue">Create Secure Invitation</button>
+            ${window.AsteriaFeatureFlags?.emailInvitationControls===true ? `
+              <section class="workspace-email-invitations">
+                <h4>Email Invitations</h4>
+                <p class="muted">Send to up to five player email addresses, one address per line. Each invitation is private, single-use and requires GM approval. Sending status does not confirm inbox delivery.</p>
+                <label>Recipients (up to 5)<textarea id="workspaceEmailInviteRecipients" rows="4" placeholder="player1@example.com&#10;player2@example.com"></textarea></label>
+                <button type="button" class="primary" id="workspaceEmailInviteSend">Send Email Invitations</button>
+                <p id="workspaceEmailInviteStatus" role="status" aria-live="polite"></p>
+              </section>
+            ` : ''}
             <p id="workspaceSecureInviteCreationStatus" role="status" aria-live="polite"></p>
             <div id="workspaceSecureInviteOneTime" aria-live="polite"></div>
             <div class="workspace-join-review-actions"><button type="button" id="workspaceSecureInviteRefresh">Refresh Invitations</button><button type="button" id="workspaceSecureInvitePrevious" disabled>Previous</button><button type="button" id="workspaceSecureInviteNext" disabled>Next</button></div>
@@ -962,6 +971,10 @@
     const type=byId('workspaceSecureInviteType');
     const email=byId('workspaceSecureInviteEmail');
     const uses=byId('workspaceSecureInviteUses');
+    const emailSend=byId('workspaceEmailInviteSend');
+    const emailRecipients=byId('workspaceEmailInviteRecipients');
+    const emailStatus=byId('workspaceEmailInviteStatus');
+    let emailPendingRequest=null,emailPendingSignature=null;
     if(!api?.issueSecureCampaignInvitation||!api?.listSecureCampaignInvitations||
       !api?.changeSecureCampaignInvitation||!list||!status)return;
     const uid=api.getUser?.()?.uid;
@@ -971,7 +984,7 @@
     let pageIndex=0,forwardCursor=null,busy=false;
     const setBusy=value=>{
       busy=value;
-      for(const control of [createButton,refresh,type,email,uses,
+      for(const control of [createButton,refresh,type,email,uses,emailSend,emailRecipients,
         byId('workspaceSecureInviteRole'),byId('workspaceSecureInviteExpiry')])
         if(control)control.disabled=value;
     };
@@ -983,6 +996,53 @@
     };
     type?.addEventListener('change',updateType);
     updateType();
+    emailSend?.addEventListener('click',async()=>{
+      if(busy||!current()||!emailStatus||!api.sendCampaignEmailInvitations)return;
+      const recipients=String(emailRecipients?.value||'')
+        .split(/[\n,;]+/).map(value=>value.trim()).filter(Boolean);
+      const roleOffered=byId('workspaceSecureInviteRole')?.value||'player';
+      const expiresInHours=Number(byId('workspaceSecureInviteExpiry')?.value);
+      if(!recipients.length||recipients.length>5||
+        !recipients.every(value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))||
+        new Set(recipients.map(value=>value.toLowerCase())).size!==recipients.length){
+        emailStatus.textContent='Enter 1–5 unique, valid email addresses.';
+        return;
+      }
+      if(!window.crypto?.randomUUID){
+        emailStatus.textContent='This browser cannot create secure request IDs.';
+        return;
+      }
+      const signature=JSON.stringify({recipients,roleOffered,expiresInHours});
+      if(emailPendingSignature!==signature){
+        emailPendingRequest=window.crypto.randomUUID();
+        emailPendingSignature=signature;
+      }
+      if(!window.confirm('Send private, single-use invitations to '+recipients.length+
+        ' recipient(s)? Existing access will not change until a GM approves a request.'))return;
+      setBusy(true);
+      emailStatus.textContent='Submitting '+recipients.length+' email invitation(s)...';
+      try{
+        const result=await api.sendCampaignEmailInvitations({
+          campaignId:campaign.id,requestId:emailPendingRequest,
+          recipients,roleOffered,expiresInHours
+        });
+        if(!current())return;
+        const rows=Array.isArray(result?.results)?result.results:[];
+        const accepted=rows.filter(row=>row.status==='accepted').length;
+        const uncertain=rows.filter(row=>row.status==='unknown').length;
+        const failed=rows.filter(row=>row.status==='failed').length;
+        emailStatus.textContent='Provider accepted: '+accepted+
+          ' · Unconfirmed: '+uncertain+' · Failed: '+failed+
+          '. Check the invitation list. Accepted does not guarantee delivery.';
+        emailPendingRequest=null;emailPendingSignature=null;
+        void load();
+      }catch(error){
+        if(current())emailStatus.textContent=(error?.message||'Could not confirm email submission.')+
+          ' Retrying unchanged recipients will use the same request ID to avoid duplicate sends.';
+      }finally{
+        setBusy(false);updateType();
+      }
+    });
     const showOneTime=issued=>{
       oneTime.replaceChildren();
       const heading=document.createElement('p');
@@ -1072,6 +1132,45 @@
           const dates=document.createElement('small');
           dates.textContent='Expires: '+String(invite.expiresAt||'Unknown');
           row.append(name,details,dates);
+          if(invite.type==='email'&&window.AsteriaFeatureFlags?.emailInvitationControls===true){
+            const delivery=document.createElement('small');
+            delivery.textContent='Email status: '+String(invite.deliveryStatus||'not-sent')+
+              ' (provider acceptance is not inbox delivery)';
+            row.appendChild(delivery);
+            if(invite.usedCount===0&&['active','expired'].includes(invite.status)&&
+              api.resendCampaignEmailInvitation){
+              const resend=document.createElement('button');
+              resend.type='button';
+              resend.textContent='Replace and Resend';
+              resend.addEventListener('click',async()=>{
+                if(busy||!current())return;
+                if(!window.crypto?.randomUUID){
+                  status.textContent='This browser cannot create secure request IDs.';
+                  return;
+                }
+                if(!window.confirm('Replace this invitation with a new private token and send it to '+
+                  String(invite.recipientEmail||'the original recipient')+
+                  '? The previous invitation will be revoked.'))return;
+                setBusy(true);
+                status.textContent='Replacing invitation and submitting email...';
+                try{
+                  const result=await api.resendCampaignEmailInvitation({
+                    campaignId:campaign.id,requestId:window.crypto.randomUUID(),
+                    sourceInviteId:invite.inviteId,expectedRevision:invite.revision
+                  });
+                  if(current())status.textContent='Replacement status: '+
+                    String(result?.result?.status||'unknown')+
+                    '. Provider acceptance does not confirm inbox delivery.';
+                }catch(error){
+                  if(current())status.textContent=error?.message||
+                    'Unable to replace invitation. Refresh before retrying.';
+                }finally{
+                  setBusy(false);if(current())void load();
+                }
+              });
+              row.appendChild(resend);
+            }
+          }
           if(invite.recipientEmail){
             const recipient=document.createElement('small');
             recipient.textContent='Recipient: '+invite.recipientEmail;

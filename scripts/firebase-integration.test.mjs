@@ -22,6 +22,7 @@ import {changeCampaignCharacterLifecycle,listCampaignCharacterLifecycle} from '.
 import {issueSecureCampaignInvitation,assertSecureInvitationEligible} from '../functions/campaignSecureInvitations.mjs';
 import {listSecureCampaignInvitations,changeSecureCampaignInvitation} from '../functions/campaignInvitationManager.mjs';
 import {previewSecureCampaignInvitation,acceptSecureCampaignInvitation} from '../functions/campaignInvitationAcceptance.mjs';
+import {sendCampaignEmailInvitations,resendCampaignEmailInvitation} from '../functions/campaignEmailInvitations.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1506,4 +1507,67 @@ test('Phase 6.3: revocation and exhausted sharing block new claims and preserve 
   assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
   assert.deepEqual((await db.doc('campaigns/c').get()).data(),before);
   assert.equal((await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data().usedCount,0);
+});
+
+
+test('Phase 7.2: GM-only bulk sending stores provider status privately and rotates tokens on resend',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:true}
+  });
+  const opts={
+    now:new Date('2026-11-09T09:00:00.000Z'),
+    signingKey:'phase72-secure-signing-key-'.repeat(2),
+    apiKey:'re_'+'x'.repeat(40),
+    env:{
+      ASTERIA_EMAIL_DELIVERY_ENABLED:'1',
+      ASTERIA_EMAIL_SENDING_DOMAIN:'mail.asteriattrpg.com',
+      ASTERIA_EMAIL_FROM:'invites@mail.asteriattrpg.com',
+      ASTERIA_EMAIL_DOMAIN_VERIFIED:'1'
+    }
+  };
+  let sends=0,lastLink=null;
+  const mock=async data=>{
+    sends++;lastLink=data.invitationUrl;
+    return {status:'accepted',providerMessageId:'test_'+sends};
+  };
+  const input={
+    campaignId:'c',requestId:'phase72-bulk-0000001',
+    recipients:['eve@example.com','mallory@example.com'],
+    roleOffered:'player',expiresInHours:24
+  };
+  await assert.rejects(sendCampaignEmailInvitations(db,'alice',input,{
+    ...opts,deliver:mock
+  }),/Only the owner/);
+  const first=await sendCampaignEmailInvitations(db,'gm',input,{...opts,deliver:mock});
+  assert.equal(first.results.length,2);
+  assert.equal(first.results.every(row=>row.status==='accepted'),true);
+  assert.equal(sends,2);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
+  const before=(await db.doc('campaigns/c').get()).data();
+  const inviteId=first.results[0].inviteId;
+  const path='campaigns/c/invitations/'+inviteId;
+  const privateInvite=(await db.doc(path).get()).data();
+  assert.equal(privateInvite.deliveryStatus,'accepted');
+  assert.equal(privateInvite.deliveryAttemptCount,1);
+  assert.equal(privateInvite.token,undefined);
+  assert.equal(JSON.stringify(privateInvite).includes(lastLink),false);
+  for(const uid of ['gm','alice','eve']){
+    await assertFails(getDoc(doc(user(uid),path)));
+    await assertFails(updateDoc(doc(user(uid),path),{deliveryStatus:'delivered'}));
+  }
+  const replay=await sendCampaignEmailInvitations(db,'gm',input,{...opts,deliver:mock});
+  assert.equal(replay.results.every(row=>row.alreadyExists),true);
+  assert.equal(sends,2);
+  const source=first.results[0];
+  const rotated=await resendCampaignEmailInvitation(db,'gm',{
+    campaignId:'c',requestId:'phase72-replace-00001',
+    sourceInviteId:source.inviteId,expectedRevision:1
+  },{...opts,deliver:mock});
+  assert.equal(rotated.result.status,'accepted');
+  assert.notEqual(rotated.result.inviteId,source.inviteId);
+  assert.equal((await db.doc(path).get()).data().status,'revoked');
+  assert.equal((await db.doc('campaigns/c/invitations/'+rotated.result.inviteId).get()).data().resendOfInviteId,inviteId);
+  assert.equal(sends,3);
+  assert.deepEqual((await db.doc('campaigns/c').get()).data(),before);
 });

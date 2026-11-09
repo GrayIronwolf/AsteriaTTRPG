@@ -2,6 +2,7 @@ import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
+import { asteriaResendApiKeySecret } from './campaignEmailSecrets.mjs';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
@@ -100,6 +101,46 @@ export const asteriaSecureInvitation=onCall({
   }catch(error){
     throw new HttpsError('failed-precondition',
       error.message||'The invitation could not be issued.');
+  }
+});
+
+// Phase 7.2: GM email sends and token-rotating replacements.
+// Both provider and invitation signing secrets are bound only to this callable.
+// No service can send without a separate server enablement flag.
+export const asteriaCampaignEmailInvitations=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:55,
+  secrets:[secureInvitationSigningKey,asteriaResendApiKeySecret]
+},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED!=='1'||
+     process.env.ASTERIA_EMAIL_DELIVERY_ENABLED!=='1'||
+     process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Email invitations are not enabled.');
+  try{
+    const {sendCampaignEmailInvitations,resendCampaignEmailInvitation}=
+      await import('./campaignEmailInvitations.mjs');
+    const db=getFirestore(),uid=request.auth.uid,data=request.data||{};
+    const options={
+      signingKey:secureInvitationSigningKey.value(),
+      apiKey:asteriaResendApiKeySecret.value()
+    };
+    if(data.action==='send')
+      return await sendCampaignEmailInvitations(db,uid,{
+        campaignId:data.campaignId,requestId:data.requestId,
+        recipients:data.recipients,roleOffered:data.roleOffered,
+        expiresInHours:data.expiresInHours
+      },options);
+    if(data.action==='resend')
+      return await resendCampaignEmailInvitation(db,uid,{
+        campaignId:data.campaignId,requestId:data.requestId,
+        sourceInviteId:data.sourceInviteId,
+        expectedRevision:data.expectedRevision
+      },options);
+    throw new Error('Unknown email invitation operation.');
+  }catch(error){
+    // Never send back provider response bodies or bearer tokens.
+    throw new HttpsError('failed-precondition',
+      error.message||'Email invitation operation failed.');
   }
 });
 
