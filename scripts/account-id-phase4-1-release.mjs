@@ -37,8 +37,8 @@ function strictFlagOff(source,name){
 }
 /**
  * The server callable currently checks active Auth state and the flag, but
- * does not use the per-account legacy eligibility review. We flag that as a
- * documented production-release blocker, NOT a test failure for CI.
+ * must reject legacy accounts using server-maintained account creation
+ * metadata, independently of editable client profile fields.
  */
 export function inspectAccountIdReleaseSource(read=readRepoFile){
   const html=read('index.html');
@@ -51,6 +51,16 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
   const profile=read('js/asteria-account-profile.js');
   const menu=read('js/asteria-account-menu.js');
   const tests=read('package.json');
+  const issuance=read('functions/accountIdentityIssuance.mjs');
+  const safeRegistrationBoundary=
+    api.includes('issueNewRegistrationAccountId(getFirestore(),firebaseUser,request.auth.uid,') &&
+    api.includes('process.env.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE') &&
+    !api.includes('ensureAccountIdentityProfile(getFirestore(),request.auth.uid)') &&
+    issuance.includes('authUser.metadata?.creationTime') &&
+    issuance.includes('created<cutoff.getTime()') &&
+    issuance.includes('now.getTime()-created>NEW_REGISTRATION_WINDOW_MS') &&
+    issuance.includes('expectedUsername:username') &&
+    issuance.includes('expectedEmail:email');
   const checks=[
     check('account-id-browser-rollout-disabled',strictFlagOff(html,'accountIds')),
     check('notifications-browser-rollout-disabled',strictFlagOff(html,'campaignNotifications')),
@@ -74,6 +84,8 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
       !api.includes('accountIdentityLegacy')),
     check('new-registration-opt-in-only',
       registration.includes('accountIdRegistrationEnabled(window.AsteriaFeatureFlags)')),
+    check('legacy-self-allocation-rejected',
+      safeRegistrationBoundary),
     check('account-id-profile-fresh-read-only',
       registration.includes("getDocFromServer(doc(db,'users',uid))")&&
       profile.includes('readAccountProfileForDisplay')&&
@@ -92,13 +104,12 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
       tests.includes('test:account-profile')&&
       tests.includes('test:firebase'))
   ];
-  // Separate release gate deliberately fails while the callable can allocate
-  // an ID to any authenticated legacy account after server flag activation.
-  const unsafeLegacyCallableBoundary=
-    api.includes("ensureAccountIdentityProfile(getFirestore(),request.auth.uid)") &&
-    !api.includes('inspectLegacyAccountIdentity(');
+  // New registrations are admitted only using server-maintained Firebase
+  // Auth creationTime and an explicit rollout cutoff. The operator-only
+  // reviewed backfill remains separate and unavailable to browser callers.
+
   const blockers=[];
-  if(unsafeLegacyCallableBoundary)
+  if(!safeRegistrationBoundary)
     blockers.push('legacy-accounts-can-invoke-assignment-if-server-flag-enabled');
   if(!checks.every(x=>x.pass))
     blockers.push('source-safety-check-failed');
