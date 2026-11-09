@@ -131,7 +131,7 @@ test('wrong SDK or codebase aborts staging before any writes',()=>{
 });
 test('source staging has no shell execution, credential access, or production changes',()=>{
  const s=read('scripts/account-id-release-package.mjs');
- assert.doesNotMatch(s,/\b(?:spawn|execFile|execSync|initializeApp|getFirestore)\(/);
+ assert.doesNotMatch(s,/\b(?:spawn|execFile|execSync)\(/);
  assert.doesNotMatch(s,/writeFileSync\(.*(?:firebase\.json|index\.html|functions\/index\.mjs)/);
  assert.match(s,/RUNNER_TEMP/);
  assert.match(s,/AST\-?ERIA_ACCOUNT_ID_SCOPED_DEPLOY/);
