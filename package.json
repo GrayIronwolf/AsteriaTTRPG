@@ -33,7 +33,7 @@
     "test:email-infrastructure": "node --test scripts/campaign-email-infrastructure-phase7-1.test.mjs",
     "test:email-invitations": "node --test scripts/campaign-email-invitations-phase7-2.test.mjs && node --check js/clean-compendium.js && node --check js/firebase-auth.js",
     "test:notifications": "node --test scripts/campaign-notifications-phase7-3.test.mjs && node --check js/campaign-notifications-ui.js",
-    "test:firebase": "firebase emulators:exec --project demo-asteria --only firestore,auth,storage \"node --test scripts/firebase-integration.test.mjs && node --test scripts/campaign-migration-phase8-2-emulator.test.mjs && node --test scripts/campaign-phase8-3-emulator.test.mjs && node --test scripts/account-id-phase1-3-emulator.test.mjs\"",
+    "test:firebase": "firebase emulators:exec --project demo-asteria --only firestore,auth,storage \"node --test scripts/firebase-integration.test.mjs && node --test scripts/campaign-migration-phase8-2-emulator.test.mjs && node --test scripts/campaign-phase8-3-emulator.test.mjs && node --test scripts/account-id-phase1-3-emulator.test.mjs && node --test scripts/account-id-phase2-2-emulator.test.mjs\"",
     "emulators": "firebase emulators:start --project demo-asteria",
     "test:inputs": "node --test scripts/manual-number-inputs.test.mjs",
     "test:quests": "node --test scripts/quest-workflow.test.mjs",
@@ -57,7 +57,7 @@
     "test:rollout": "node --test scripts/campaign-phase8-3-release.test.mjs && node scripts/campaign-phase8-3-release.mjs --audit",
     "test:firebase-auth-check": "node --test scripts/firebase-deployment-auth-check.test.mjs scripts/firebase-campaign-deploy-scope.test.mjs",
     "test:firebase-backup-audit": "node --test scripts/firebase-production-backup-audit.test.mjs",
-    "test:account-id": "node --test scripts/account-id-phase1-2.test.mjs scripts/account-id-phase1-3.test.mjs scripts/account-id-phase2-1.test.mjs"
+    "test:account-id": "node --test scripts/account-id-phase1-2.test.mjs scripts/account-id-phase1-3.test.mjs scripts/account-id-phase2-1.test.mjs scripts/account-id-phase2-2.test.mjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

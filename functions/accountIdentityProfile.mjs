@@ -58,6 +58,12 @@ export async function ensureAccountIdentityProfile(db,uid,options={}) {
       if(has(profile,'uid') && profile.uid!==uid)
         throw new Error('Account profile ownership requires administrator reconciliation.');
       const {username,usernameLower}=normaliseAccountUsername(profile.username);
+      // Legacy backfill pins the reviewed username inside the reservation
+      // transaction, preventing a profile edit between review and allocation.
+      if(options.expectedUsername!==undefined &&
+         (typeof options.expectedUsername!=='string' ||
+          username!==options.expectedUsername))
+        throw new Error('Account username changed after legacy review.');
       if(profile.username!==username)
         throw new Error('Account profile username must be normalized before assigning an ID.');
       const assignedSnap=await tx.get(assignmentRef);
