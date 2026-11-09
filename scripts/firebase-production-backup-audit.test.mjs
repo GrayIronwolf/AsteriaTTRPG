@@ -38,7 +38,7 @@ test('all gcloud operations have allowlisted read-only list verbs, never write o
   for(const [key,args] of Object.entries(LIST_COMMANDS)){
     assert.ok(['databases','schedules','backups','operations','buckets','indexes'].includes(key));
     assert.ok(Array.isArray(args));
-    assert.equal(args.at(-1)?.startsWith('--'),true);
+    assert.equal(args[0]==='firestore'||args[0]==='storage',true);
     assert.equal(args.includes('list'),true);
     assert.equal(args.some(x=>/^(create|delete|export|import|restore|deploy|update|copy|cp|cat|objects|describe|read|download)$/.test(x)),false);
   }
