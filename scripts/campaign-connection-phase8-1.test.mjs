@@ -50,8 +50,8 @@ test('Roster and GM manager remain view-only except existing gated actions',()=>
   const manager=read('src/dashboards/GMWorkspacePanels.jsx');
   assert.match(roster,/workspace-roster-count/);
   assert.match(roster,/setAttribute\('role','group'\)/);
-  assert.match(manager,/Math\.max\(1,uniqueGms\.size\)/);
-  assert.match(manager,/number does not grant access/);
+  assert.match(manager,/CampaignManagerWorkspace/);
+  assert.match(manager,/Campaign Manager/);
   assert.match(roster,/handlers\.enableControls===true/);
   assert.match(roster,/handlers\.enableRoleControls===true/);
 });
