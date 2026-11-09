@@ -1,0 +1,33 @@
+name: Campaign Connection Phase 8.3 readiness (read-only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Inspect default-off website/backend rollout gates
+        run: npm run test:rollout
+      - name: Verify authenticated campaign canary against Firebase emulators
+        run: npm run test:firebase
+      - name: Record release preflight result (does not activate production)
+        run: node scripts/campaign-phase8-3-release.mjs --audit
+
+# This workflow intentionally has no production environment, deployments,
+# secrets, Firebase credentials, email sender, feature activation, or writes.
+# A successful read-only preflight is NOT a production rollout approval.
