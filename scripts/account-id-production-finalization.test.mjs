@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import yaml from 'js-yaml';
 import {inspectAccountIdProductionFinalization} from './account-id-production-finalization.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -56,4 +57,33 @@ test('client registration uses authenticated server reads when confirming perman
  assert.match(auth,/getDocFromServer\(doc\(db,'users',cred\.user\.uid\)\)/);
  assert.match(auth,/getDocFromServer\(doc\(db,'users',user\.uid\)\)/);
  assert.match(auth,/Older registrations may need account review/);
+});
+
+test('production release workflow has parseable YAML and fails closed on missing callable prechecks',()=>{
+ const source=read('.github/workflows/firebase-deploy.yml');
+ const parsed=yaml.safeLoad(source);
+ const steps=parsed.jobs.account_id_deploy.steps;
+ const pre=steps.find(step=>step.name===
+   'Verify existing campaign callables before scoped deployment (read-only)');
+ const deploy=steps.find(step=>step.name===
+   'Deploy Account ID callable from clean release directory only');
+ const post=steps.find(step=>step.name===
+   'Verify Account ID and both existing callables (read-only)');
+ assert.ok(pre&&deploy&&post);
+ assert.ok(steps.indexOf(pre)<steps.indexOf(deploy));
+ assert.ok(steps.indexOf(deploy)<steps.indexOf(post));
+ assert.match(pre.run,/set -euo pipefail/);
+ assert.match(pre.run,/grep -Eq '\\(\\^\\|\\/\\)asteriaAction\\\$'/);
+ assert.match(pre.run,/grep -Eq '\\(\\^\\|\\/\\)asteriaInvite\\\$'/);
+ assert.match(pre.run,/asteria-functions-before\\.txt/);
+ assert.match(post.run,/set -euo pipefail/);
+ assert.match(post.run,/asteriaAccountIdentity asteriaAction asteriaInvite/);
+ assert.match(post.run,/,ACTIVE\\\$/);
+ assert.equal(steps.filter(step=>step.name==='Release boundaries').length,1);
+ assert.equal(deploy['working-directory'],
+   '${{ runner.temp }}/asteria-account-id-release');
+ assert.match(deploy.run,/--only functions:asteria:asteriaAccountIdentity/);
+ assert.throws(()=>yaml.safeLoad(source.replace(
+   "grep -Eq '(^|/)asteriaAction$' \"$RUNNER_TEMP/asteria-functions-before.txt\"",
+   "grep -Eq '(^|/)asteriaAction\n      - name: Release boundaries")));
 });
