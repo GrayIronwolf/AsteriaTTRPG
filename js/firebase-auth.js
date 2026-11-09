@@ -129,7 +129,7 @@ async function retryPendingAccountSetup(){
         });
       }),
       readCanonical:async()=>{
-        const snap=await getDoc(doc(db,'users',user.uid));
+        const snap=await getDocFromServer(doc(db,'users',user.uid));
         return snap.exists()?snap.data():null;
       }
     });
@@ -140,7 +140,7 @@ async function retryPendingAccountSetup(){
         enabled:true,uid:user.uid,username:profile.username,
         requestAssignment:input=>httpsCallable(functionsClient,'asteriaAccountIdentity')(input),
         readProfile:async()=>{
-          const snap=await getDoc(doc(db,'users',user.uid));
+          const snap=await getDocFromServer(doc(db,'users',user.uid));
           return snap.exists()?snap.data():null;
         }
       })||{};
@@ -688,7 +688,7 @@ window.firebaseCreateAccountPage = async function(){
     let accountIdWarning = '';
     if(accountIdRegistrationEnabled(window.AsteriaFeatureFlags)){
       if(!profileStored || !functionsClient){
-        accountIdWarning = 'Account created, but your Account ID is pending. Sign in later to complete account setup.';
+        accountIdWarning = 'Account created. Your Account ID is pending; retry setup promptly. Older registrations may need account review.';
       }else{
         try{
           accountIdentity = await finalizeRegisteredAccountId({
@@ -697,7 +697,7 @@ window.firebaseCreateAccountPage = async function(){
             username,
             requestAssignment: request => httpsCallable(functionsClient,'asteriaAccountIdentity')(request),
             readProfile: async()=>{
-              const stored = await getDoc(doc(db,'users',cred.user.uid));
+              const stored = await getDocFromServer(doc(db,'users',cred.user.uid));
               return stored.exists() ? stored.data() : null;
             }
           });
@@ -705,7 +705,7 @@ window.firebaseCreateAccountPage = async function(){
           // The Firebase Auth account exists already: never claim it was rolled back
           // or silently report a complete Account ID registration.
           console.warn('Account ID finalization pending.',err?.code || 'unknown');
-          accountIdWarning = 'Account created, but your Account ID could not be confirmed. Sign in later to complete account setup.';
+          accountIdWarning = 'Account created, but your Account ID could not be confirmed. Retry promptly; older registrations may need account review.';
         }
       }
     }

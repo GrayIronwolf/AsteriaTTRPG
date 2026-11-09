@@ -1,0 +1,80 @@
+/** Read-only release preparation: never enables flags or accesses account data. */
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+
+const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
+const read=path=>readFileSync(resolve(root,path),'utf8');
+const check=(name,ok)=>({name,pass:ok===true});
+
+export function inspectAccountIdProductionFinalization(reader=read){
+  const html=reader('index.html');
+  const auth=reader('js/firebase-auth.js');
+  const api=reader('functions/index.mjs');
+  const issue=reader('functions/accountIdentityIssuance.mjs');
+  const rules=reader('firestore.rules');
+  const legacy=reader('functions/accountIdentityLegacy.mjs');
+  const cli=reader('scripts/account-id-legacy-operator.mjs');
+  const workflow=reader('.github/workflows/account-id-release.yml');
+  const firebase=JSON.parse(reader('.firebaserc'));
+  const tests=JSON.parse(reader('package.json'));
+  const checks=[
+    check('production-target-unchanged',firebase.projects?.production==='asteria-ttrpg'&&
+      firebase.projects?.default==='demo-asteria'),
+    check('browser-account-ids-disabled',html.includes('accountIds:false')),
+    check('notifications-still-disabled',html.includes('campaignNotifications:false')),
+    check('server-identity-gate-required',api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")&&
+      api.includes('ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE')),
+    check('authenticated-creation-cutoff-required',
+      issue.includes('authUser.metadata?.creationTime')&&
+      issue.includes('created<cutoff.getTime()')&&
+      issue.includes('now.getTime()-created>NEW_REGISTRATION_WINDOW_MS')&&
+      issue.includes('expectedEmail:email')),
+    check('fresh-canonical-registration-read',
+      auth.includes("getDocFromServer(doc(db,'users',cred.user.uid))")&&
+      auth.includes("getDocFromServer(doc(db,'users',user.uid))")),
+    check('private-account-id-registry',
+      rules.includes('match /accountIdRegistry/{accountIdKey} {\n      allow read, write: if false;')&&
+      rules.includes('match /accountIdAssignments/{uid} {\n      allow read, write: if false;')),
+    check('operator-migration-requires-uid-confirmation',
+      cli.includes('BACKFILL-ACCOUNT-ID:')&&
+      cli.includes('ASTERIA_LEGACY_ACCOUNT_IDS_BACKFILL_ENABLED')&&
+      legacy.includes('inspectLegacyAccountIdentity')&&
+      !api.includes('backfillLegacyAccountIdentity')),
+    check('manual-release-workflow-only',
+      workflow.startsWith('name: Asteria Account ID release (manual, gated)\non:\n  workflow_dispatch:')&&
+      workflow.includes("inputs.production_confirmation == 'DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE'")&&
+      !/^\s{2}(push|pull_request|schedule|workflow_run):/m.test(workflow)),
+    check('account-id-callable-only-deploy',
+      workflow.includes('--only functions:asteria:asteriaAccountIdentity')&&
+      !workflow.includes('--only functions,firestore,storage')&&
+      !workflow.includes('backfillLegacyAccountIdentity(')),
+    check('full-tests-connected',
+      tests.scripts?.['test:account-id']?.includes('account-id-legacy-operator.test.mjs')&&
+      tests.scripts?.['test:account-id']?.includes('account-id-production-finalization.test.mjs')&&
+      Boolean(tests.scripts?.['test:firebase'])),
+  ];
+  const safe=checks.every(row=>row.pass);
+  return {sourceChecksPassed:safe,decision:safe?'SOURCE-READY / PRODUCTION-NOT-ACTIVATED':'NO-GO',
+    checks,productionDeploymentPerformed:false,
+    accountIdsActivated:false,legacyAccountsMigrated:false,liveUserDataRead:false,
+    operationalGatesPending:[
+      'Review currently deployed Firebase Functions and Rules in a read-only inventory',
+      'Review existing user Auth and Firestore records privately and reconcile mismatch cases',
+      'Obtain explicit scoped approval for callable-only deploy',
+      'Configure immutable server rollout cutoff and enable server flag only after approved canary',
+      'Activate website accountIds flag only after server gate and canary verification',
+      'Reconcile and approve each existing-account assignment independently',
+      'Complete manual device testing, monitoring and abort checklist'
+    ]};
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  if(process.argv.length!==3||process.argv[2]!=='--check'){
+    process.stderr.write('Only read-only --check mode is supported.\n');
+    process.exitCode=1;
+  }else{
+    const result=inspectAccountIdProductionFinalization();
+    process.stdout.write(JSON.stringify(result,null,2)+'\n');
+    if(!result.sourceChecksPassed)process.exitCode=1;
+  }
+}
