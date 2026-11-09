@@ -14,7 +14,7 @@
 3. Correct old rollout language in the legacy email-ready invitation record and secure invitation manager; email-ready records are **not** sent emails, secure links do **not** independently grant membership.
 4. Improve private notification inbox presentation: readable page/unread summary, clear unread/read state, semantic list items, localized timestamps, and busy-state indication. Retain authenticated server-only callable, account switch checks, pagination, safe `textContent` rendering and idempotent mark-read.
 5. Improve GM roster sections with explicit item counts and descriptive keyboard-accessible member action groups. The server remains the sole authority for GM permissions.
-6. Improve React GM Campaign Manager wording for canonical UCN lookup versus legacy joining, and display unique GM accounts without double-counting the owner.
+6. Improve the existing React GM Campaign Manager presentation through scoped CSS only. The compiled React bundle and GM membership display logic remain unchanged; accounting fixes require a separately rebuilt artifact and regression review.
 
 ## Security and release boundaries
 - Preserve `window.AsteriaFeatureFlags` **false** values in `index.html`, including `campaignNotifications`, `secureInvitationManager`, `emailInvitationControls` and join request/review flags.
