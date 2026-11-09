@@ -312,18 +312,12 @@ jobs:
           node scripts/account-id-release-cli-verify.mjs --check
       - uses: google-github-actions/setup-gcloud@v3
       - name: Verify existing campaign callables before scoped deployment (read-only)
+        shell: bash
         run: |
+          set -euo pipefail
           gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-functions-before.txt"
-          grep -Eq '(^|/)asteriaAction
-      - name: Release boundaries
-        run: |
-          echo 'Only the Account ID callable was deployed. This job does not enable backend Account ID issuance, website registration, legacy backfill, notifications, or emails.' >> "$GITHUB_STEP_SUMMARY"
- "$RUNNER_TEMP/asteria-functions-before.txt"
-          grep -Eq '(^|/)asteriaInvite
-      - name: Release boundaries
-        run: |
-          echo 'Only the Account ID callable was deployed. This job does not enable backend Account ID issuance, website registration, legacy backfill, notifications, or emails.' >> "$GITHUB_STEP_SUMMARY"
- "$RUNNER_TEMP/asteria-functions-before.txt"
+          grep -Eq '(^|/)asteriaAction$' "$RUNNER_TEMP/asteria-functions-before.txt"
+          grep -Eq '(^|/)asteriaInvite$' "$RUNNER_TEMP/asteria-functions-before.txt"
       - name: Deploy Account ID callable from clean release directory only
         working-directory: ${{ runner.temp }}/asteria-account-id-release
         run: >-
@@ -332,10 +326,12 @@ jobs:
           --only functions:asteria:asteriaAccountIdentity
           --non-interactive
       - name: Verify Account ID and both existing callables (read-only)
+        shell: bash
         run: |
-          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name,state)' > "$RUNNER_TEMP/asteria-functions-after.txt"
+          set -euo pipefail
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='csv[no-heading](name,state)' > "$RUNNER_TEMP/asteria-functions-after.csv"
           for fn in asteriaAccountIdentity asteriaAction asteriaInvite; do
-            grep -E "^([^[:space:]]*/)?${fn}[[:space:]]+ACTIVE$" "$RUNNER_TEMP/asteria-functions-after.txt"
+            grep -Eq "(^|/)${fn},ACTIVE$" "$RUNNER_TEMP/asteria-functions-after.csv"
           done
       - name: Release boundaries
         run: |
