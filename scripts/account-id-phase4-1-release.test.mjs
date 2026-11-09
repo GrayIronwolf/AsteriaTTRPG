@@ -33,7 +33,7 @@ test('the current source is default-off and the release audit reports NO-GO',()=
   assert.equal(audit.productionFlagsActivated,false);
   assert.equal(audit.productionEvidenceVerified,false);
   assert.equal(audit.productionDataChanged,false);
-  assert.ok(audit.releaseBlockers.includes(
+  assert.ok(!audit.releaseBlockers.includes(
     'legacy-accounts-can-invoke-assignment-if-server-flag-enabled'));
 });
 test('audit detects accidentally enabling browser registration and notifications',()=>{
@@ -54,12 +54,15 @@ test('audit detects missing server gate and exposed identity registry',()=>{
     'match /accountIdRegistry/{accountIdKey} {\n      allow read, write: if true;'));
   assert.equal(registry.staticChecksPassed,false);
 });
-test('a safe callable review must resolve legacy-account bypass before release',()=>{
+test('registration issuance rejects the legacy-account bypass while backfill remains private',()=>{
   const source=inspectAccountIdReleaseSource();
-  assert.ok(source.releaseBlockers.includes('legacy-accounts-can-invoke-assignment-if-server-flag-enabled'));
-  // The existing backfill preflight cannot be substituted for a guarded callable.
+  assert.ok(!source.releaseBlockers.includes('legacy-accounts-can-invoke-assignment-if-server-flag-enabled'));
   const api=readRepoFile('functions/index.mjs');
+  const issuance=readRepoFile('functions/accountIdentityIssuance.mjs');
   const backfill=readRepoFile('functions/accountIdentityLegacy.mjs');
+  assert.match(api,/issueNewRegistrationAccountId\(/);
+  assert.match(api,/ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE/);
+  assert.match(issuance,/metadata\?\.creationTime/);
   assert.match(backfill,/inspectLegacyAccountIdentity/);
   assert.doesNotMatch(api,/inspectLegacyAccountIdentity\(/);
 });

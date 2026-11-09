@@ -346,9 +346,13 @@ export const asteriaAccountIdentity=onCall({
     const firebaseUser=await getAuth().getUser(request.auth.uid);
     if(firebaseUser.disabled)
       throw new Error('This account is not active.');
-    const {ensureAccountIdentityProfile}=
-      await import('./accountIdentityProfile.mjs');
-    return await ensureAccountIdentityProfile(getFirestore(),request.auth.uid);
+    // Legacy Auth accounts must never self-assign. The operator supplies a
+    // trusted Firebase Auth creation cutoff before enabling registrations.
+    const {issueNewRegistrationAccountId}=
+      await import('./accountIdentityIssuance.mjs');
+    return await issueNewRegistrationAccountId(getFirestore(),firebaseUser,request.auth.uid,{
+      notBefore:process.env.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE
+    });
   }catch(error){
     // No Firestore contents, private account fields or auth details exposed.
     throw new HttpsError('failed-precondition',

@@ -127,5 +127,6 @@ test('backend callable requires a feature flag and refuses client-selected UID/u
   assert.match(source,/process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'/);
   assert.match(source,/Object.keys\(data\).length!==1\|\|data.action!=='ensure'/);
   assert.match(source,/getUser\(request.auth.uid\)/);
-  assert.match(source,/ensureAccountIdentityProfile\(getFirestore\(\),request.auth.uid\)/);
+  assert.match(source,/issueNewRegistrationAccountId\(getFirestore\(\),firebaseUser,request.auth.uid/);
+  assert.match(source,/ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE/);
 });

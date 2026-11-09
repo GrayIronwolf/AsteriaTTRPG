@@ -66,6 +66,14 @@ export async function ensureAccountIdentityProfile(db,uid,options={}) {
         throw new Error('Account username changed after legacy review.');
       if(profile.username!==username)
         throw new Error('Account profile username must be normalized before assigning an ID.');
+      // Browser-facing registration is additionally pinned to the Auth email,
+      // independently of editable profile fields. Legacy admin backfill does
+      // not supply expectedEmail and retains its explicit eligibility review.
+      if(options.expectedEmail!==undefined &&
+         (typeof options.expectedEmail!=='string' ||
+          typeof profile.email!=='string' ||
+          profile.email.trim().toLowerCase()!==options.expectedEmail))
+        throw new Error('Account profile email differs from verified Firebase Auth.');
       const assignedSnap=await tx.get(assignmentRef);
       if(assignedSnap.exists) {
         const assigned=assignedSnap.data() || {};
