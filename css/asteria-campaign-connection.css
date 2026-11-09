@@ -1,0 +1,295 @@
+/* Asteria Campaign Connection Upgrade — Phase 8.1, interface-only.
+ * Respects the existing stone/crystal artwork, themes and button image layers.
+ * All selectors are scoped to campaign connection surfaces.
+ */
+.workspace-campaign-join-card .workspace-gallery-copy {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.workspace-campaign-join-card .workspace-gallery-copy > p {
+  margin: 0;
+  max-width: 68ch;
+  line-height: 1.55;
+}
+.workspace-campaign-join-card .workspace-join-code-label {
+  min-width: 0;
+  margin: 0;
+}
+.workspace-campaign-join-card #workspaceJoinCampaignCode {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--asteria-touch-target, 44px);
+  font: 600 1.05rem/1.3 ui-monospace, Consolas, monospace;
+  letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-connection-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.workspace-connection-steps li {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px;
+  border: 1px solid var(--asteria-border-subtle, rgba(100,160,194,.24));
+  border-radius: var(--asteria-radius-lg, 8px);
+  background: color-mix(in srgb, var(--asteria-surface, #0a1822) 75%, transparent);
+  color: var(--asteria-text, #f3ead8);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+.workspace-connection-steps .workspace-step-number {
+  flex: 0 0 26px;
+  display: grid;
+  place-items: center;
+  height: 26px;
+  border: 1px solid color-mix(in srgb, var(--asteria-accent, #249ee8) 45%, transparent);
+  border-radius: 50%;
+  background: var(--asteria-accent-soft, rgba(36,158,232,.2));
+  font: 700 .8rem/1 var(--asteria-font-body, sans-serif);
+  color: var(--asteria-text, #f3ead8);
+}
+.workspace-join-result:not(:empty),
+.workspace-campaign-join-card .workspace-join-preview:not([hidden]) {
+  border-radius: var(--asteria-radius-lg, 8px);
+}
+.workspace-join-result:not(:empty) {
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--asteria-surface, #0a1822) 65%, transparent);
+  border-inline-start: 3px solid var(--asteria-border-active, #249ee8);
+  overflow-wrap: anywhere;
+}
+.workspace-campaign-join-card .workspace-join-preview {
+  min-width: 0;
+}
+.workspace-campaign-join-card .workspace-join-preview .workspace-join-choice b {
+  color: var(--asteria-text, #f3ead8);
+}
+.workspace-campaign-join-card #workspaceJoinCampaignBtn {
+  min-height: var(--asteria-touch-target, 44px);
+  justify-self: start;
+}
+.workspace-campaign-join-card .workspace-join-request {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.workspace-link-panel:is(
+  .workspace-secure-invite-acceptance,
+  .workspace-secure-invite-manager,
+  .workspace-join-review,
+  .workspace-player-roster,
+  .workspace-campaign-notifications,
+  .campaign-invite-tools
+) {
+  min-width: 0;
+  gap: 12px;
+  border-color: var(--asteria-border-subtle, rgba(100,160,194,.24));
+  background: color-mix(in srgb, var(--asteria-surface, #0a1822) 56%, transparent);
+}
+.workspace-link-panel:is(
+  .workspace-secure-invite-acceptance,
+  .workspace-secure-invite-manager,
+  .workspace-join-review,
+  .workspace-player-roster,
+  .workspace-campaign-notifications,
+  .campaign-invite-tools
+) > h3 {
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--asteria-divider, rgba(125,169,195,.2));
+  font-family: var(--asteria-font-display, Georgia, serif);
+}
+.workspace-link-panel:is(
+  .workspace-secure-invite-manager,
+  .workspace-join-review,
+  .workspace-player-roster,
+  .workspace-campaign-notifications
+) .workspace-join-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.workspace-link-panel :is(
+  .workspace-join-review-actions,
+  .workspace-roster-controls
+) button {
+  min-height: var(--asteria-touch-target, 44px);
+}
+.workspace-secure-invite-manager .workspace-form-grid > label,
+.workspace-secure-invite-manager .workspace-email-invitations > label {
+  min-width: 0;
+}
+.workspace-secure-invite-manager :is(input,select,textarea),
+.workspace-email-invitations textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+.workspace-secure-invite-manager .workspace-invite-list,
+.workspace-player-roster .workspace-roster-group,
+.workspace-join-review .workspace-invite-list {
+  min-width: 0;
+}
+.workspace-secure-invite-manager .workspace-join-review-row,
+.workspace-join-review .workspace-join-review-row,
+.workspace-campaign-notifications .workspace-join-review-row {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-roster-group > h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+  font-family: var(--asteria-font-display, Georgia, serif);
+}
+.workspace-roster-count,
+.workspace-notice-state,
+.workspace-notice-page {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border: 1px solid var(--asteria-border-subtle, rgba(100,160,194,.24));
+  border-radius: 999px;
+  color: var(--asteria-text-muted, #9eafbd);
+  background: rgba(0,0,0,.16);
+  font: 600 .75rem/1.4 var(--asteria-font-body, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+.workspace-player-roster .workspace-roster-row {
+  border-color: var(--asteria-border-subtle, rgba(100,160,194,.24));
+  background: rgba(0,0,0,.14);
+}
+.workspace-player-roster .workspace-roster-heading b {
+  color: var(--asteria-text, #f3ead8);
+}
+.workspace-campaign-notifications .workspace-notification-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.workspace-campaign-notifications .workspace-notice-row {
+  display: grid;
+  gap: 8px;
+  border-inline-start: 3px solid var(--asteria-border-subtle, #28506a);
+  padding: 12px;
+}
+.workspace-campaign-notifications .workspace-notice-row.is-unread {
+  border-inline-start-color: var(--asteria-border-active, #249ee8);
+  background: color-mix(in srgb, var(--asteria-accent-soft, rgba(36,158,232,.2)) 25%, transparent);
+}
+.workspace-campaign-notifications .workspace-notice-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: space-between;
+}
+.workspace-campaign-notifications .workspace-notice-heading strong {
+  color: var(--asteria-text, #f3ead8);
+}
+.workspace-campaign-notifications .workspace-notice-heading .workspace-notice-state {
+  color: var(--asteria-text, #f3ead8);
+  border-color: color-mix(in srgb, var(--asteria-accent, #249ee8) 40%, transparent);
+}
+.workspace-campaign-notifications .workspace-notice-row p {
+  margin: 0;
+  line-height: 1.55;
+}
+.workspace-campaign-notifications .workspace-notice-row time {
+  color: var(--asteria-text-muted, #9eafbd);
+  font-size: .8rem;
+}
+.workspace-campaign-notifications .workspace-notice-row > button {
+  justify-self: start;
+  min-height: var(--asteria-touch-target, 44px);
+}
+.workspace-campaign-notifications .workspace-invite-list[aria-busy="true"] {
+  opacity: .76;
+}
+.react-gm-workspace-grid.campaign .react-campaign-code {
+  min-width: 0;
+  padding: 16px;
+  border-radius: var(--asteria-radius-lg, 8px);
+  border: 1px solid var(--asteria-border-subtle, rgba(100,160,194,.24));
+  background: color-mix(in srgb, var(--asteria-surface, #0a1822) 68%, transparent);
+}
+.react-gm-workspace-grid.campaign .react-campaign-code strong {
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .1em;
+}
+.react-gm-workspace-grid.campaign .react-membership-summary {
+  min-width: 0;
+}
+.react-gm-workspace-grid.campaign .react-record-list article {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 680px) {
+  .workspace-link-panel:is(
+    .workspace-secure-invite-acceptance,
+    .workspace-secure-invite-manager,
+    .workspace-join-review,
+    .workspace-player-roster,
+    .workspace-campaign-notifications,
+    .campaign-invite-tools
+  ) {
+    padding: 12px;
+  }
+  .workspace-campaign-notifications .workspace-notice-row > button,
+  .workspace-campaign-join-card #workspaceJoinCampaignBtn {
+    width: 100%;
+    justify-self: stretch;
+  }
+  .workspace-link-panel:is(
+    .workspace-secure-invite-manager,
+    .workspace-join-review,
+    .workspace-player-roster,
+    .workspace-campaign-notifications
+  ) .workspace-join-review-actions > button {
+    flex: 1 1 44%;
+  }
+}
+@media (max-width: 520px) {
+  .workspace-connection-steps {
+    grid-template-columns: 1fr;
+  }
+  .workspace-connection-steps li {
+    padding: 7px 10px;
+  }
+  .workspace-campaign-join-card #workspaceJoinCampaignCode {
+    letter-spacing: .06em;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-campaign-join-card *,
+  .workspace-campaign-notifications * {
+    scroll-behavior: auto;
+    transition-duration: 0s;
+  }
+}
+.workspace-campaign-join-card :focus-visible,
+.workspace-link-panel:is(
+  .workspace-secure-invite-acceptance,
+  .workspace-secure-invite-manager,
+  .workspace-join-review,
+  .workspace-player-roster,
+  .workspace-campaign-notifications,
+  .campaign-invite-tools
+) :focus-visible {
+  outline: 2px solid var(--asteria-border-active, #249ee8);
+  outline-offset: 3px;
+}
