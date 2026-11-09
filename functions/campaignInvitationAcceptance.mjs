@@ -74,16 +74,29 @@ export async function previewSecureCampaignInvitation(db,auth,{
   if(!validId(campaignId)||!HASH.test(inviteId)||!TOKEN.test(token))
     throw unavailable();
   const now=safeNow(options.now);
-  const [root,record]=await Promise.all([
+  const [root,record,claimSnap,requestSnap]=await Promise.all([
     db.doc('campaigns/'+campaignId).get(),
-    db.doc('campaigns/'+campaignId+'/invitations/'+inviteId).get()
+    db.doc('campaigns/'+campaignId+'/invitations/'+inviteId).get(),
+    db.doc('campaigns/'+campaignId+'/invitations/'+inviteId+'/claims/'+identity.uid).get(),
+    db.doc('campaigns/'+campaignId+'/joinRequests/'+identity.uid).get()
   ]);
   if(!root.exists||!record.exists)throw unavailable();
   const campaign=root.data(),invite=record.data();
   assertCampaign(campaign,campaignId);
   if(campaign.joinPolicy?.joinRequestsOpen===false)throw unavailable();
-  const eligible=verify(invite,identity,{campaignId,inviteId,token},{...options,now});
-  return safePreview(campaign,invite,eligible);
+  const existing=claimSnap.exists&&requestSnap.exists&&
+    claimSnap.data()?.uid===identity.uid&&
+    claimSnap.data()?.inviteId===inviteId&&
+    claimSnap.data()?.campaignId===campaignId&&
+    requestSnap.data()?.uid===identity.uid&&
+    requestSnap.data()?.campaignId===campaignId&&
+    requestSnap.data()?.inviteId===inviteId&&
+    JOIN_REQUEST_STATUSES.includes(requestSnap.data()?.status);
+  const eligible=verify(invite,identity,{campaignId,inviteId,token},
+    {...options,now},existing);
+  return {...safePreview(campaign,invite,eligible),
+    status:existing?requestSnap.data().status:'available',
+    alreadyExists:existing};
 }
 
 /**
