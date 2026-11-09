@@ -2471,6 +2471,7 @@
     if (currentDashboardMode === 'dashboard') renderOverviewCards(grid);
     if (currentDashboardMode === 'campaigns') renderCampaignCards(grid);
     if (currentDashboardMode === 'settings') renderSettingsPanel(grid);
+    window.AsteriaCampaignNotificationsUI?.render?.(grid);
     status.textContent = `${authMode().label} / ${activeWorkspaceTab}`;
     count.textContent = currentDashboardMode === 'campaigns'
       ? `${accountCampaigns().length} campaigns`
