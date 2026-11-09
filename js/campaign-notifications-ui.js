@@ -19,8 +19,15 @@
     host.setAttribute('aria-label','Campaign notifications');
     const heading=root.document.createElement('h3');
     heading.textContent='Campaign Notifications';
+    const summary=root.document.createElement('div');
+    summary.className='workspace-notification-summary';
     const count=root.document.createElement('small');
     count.setAttribute('aria-live','polite');
+    const pageLabel=root.document.createElement('span');
+    pageLabel.className='workspace-notice-page';
+    pageLabel.setAttribute('aria-label','Current notification page');
+    pageLabel.textContent='Page 1';
+    summary.append(count,pageLabel);
     const actions=root.document.createElement('div');
     actions.className='workspace-join-review-actions';
     const refresh=root.document.createElement('button');
@@ -32,15 +39,18 @@
     next.type='button';next.textContent='Next';next.disabled=true;
     const list=root.document.createElement('div');
     list.className='workspace-invite-list';
+    list.setAttribute('role','list');
+    list.setAttribute('aria-label','Your private campaign notifications');
     const status=root.document.createElement('p');
     status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     actions.append(refresh,previous,next);
-    host.append(heading,count,actions,list,status);
+    host.append(heading,summary,actions,list,status);
     grid.prepend(host);
     const cursors=[null];
     let page=0,forward=null,busy=false;
     const setBusy=value=>{
       busy=value;
+      list.setAttribute('aria-busy',String(value));
       refresh.disabled=value;
       previous.disabled=value||page===0;
       next.disabled=value||!forward;
@@ -55,6 +65,7 @@
         list.replaceChildren();
         const items=Array.isArray(response.notifications)?response.notifications:[];
         count.textContent=(Number(response.unreadShown)||0)+' unread on this page';
+        pageLabel.textContent='Page '+(page+1)+(forward?' · More available':'');
         if(!items.length){
           const empty=root.document.createElement('p');
           empty.textContent='No campaign notifications on this page.';
@@ -62,15 +73,30 @@
         }
         for(const notice of items){
           const row=root.document.createElement('article');
-          row.className='workspace-join-review-row';
+          row.className='workspace-join-review-row workspace-notice-row'+
+            (notice.readAt?'':' is-unread');
+          row.setAttribute('role','listitem');
+          const noticeHeading=root.document.createElement('div');
+          noticeHeading.className='workspace-notice-heading';
           const name=root.document.createElement('strong');
           name.textContent=String(notice.title||'Campaign update');
+          const state=root.document.createElement('span');
+          state.className='workspace-notice-state';
+          state.textContent=notice.readAt?'Read':'Unread';
+          noticeHeading.append(name,state);
           const body=root.document.createElement('p');
           body.textContent=String(notice.body||'');
-          const meta=root.document.createElement('small');
-          meta.textContent=String(notice.createdAt||'')+
-            (notice.readAt?' · Read':' · Unread');
-          row.append(name,body,meta);
+          const meta=root.document.createElement('time');
+          const created=new Date(notice.createdAt||'');
+          if(Number.isFinite(created.getTime())){
+            meta.dateTime=created.toISOString();
+            meta.textContent=new Intl.DateTimeFormat(undefined,{
+              dateStyle:'medium',timeStyle:'short'
+            }).format(created);
+          }else{
+            meta.textContent='Date unavailable';
+          }
+          row.append(noticeHeading,body,meta);
           if(!notice.readAt){
             const button=root.document.createElement('button');
             button.type='button';
@@ -97,6 +123,8 @@
       }catch(error){
         if(current()){
           list.replaceChildren();
+          count.textContent='Notifications unavailable';
+          forward=null;
           status.textContent=error?.message||'Could not load notifications.';
         }
       }finally{
