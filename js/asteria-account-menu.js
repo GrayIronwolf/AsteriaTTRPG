@@ -42,13 +42,15 @@
   }
   function handleAction(event){
     const target=event.target;
+    const profile=target.closest?.('#accountMenuProfile');
     const settings=target.closest?.('#accountMenuSettings');
     const logout=target.closest?.('#accountMenuLogout');
-    if(!settings&&!logout)return;
+    if(!profile&&!settings&&!logout)return;
     event.preventDefault();
     close();
     window.closeSettings?.();
-    if(settings)window.AsteriaWorkspace?.openDashboard?.('settings');
+    if(profile)window.AsteriaAccountProfile?.open?.();
+    else if(settings)window.AsteriaWorkspace?.openDashboard?.('settings');
     else window.logout?.();
   }
   function bind(){

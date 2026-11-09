@@ -10,7 +10,7 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
    ========================= */
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
 import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
@@ -872,6 +872,16 @@ const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
   getProfile:()=>currentProfile,
+  // The My Profile view may display only a fresh server-read projection.
+  // Never fall back to an offline cache or automatically allocate an ID.
+  readAccountProfileForDisplay: async function(){
+    if(!db||!currentUser?.uid)throw new Error('Sign in before viewing your profile.');
+    const user=currentUser,uid=user.uid;
+    const snapshot=await getDocFromServer(doc(db,'users',uid));
+    if(currentUser?.uid!==uid || auth?.currentUser?.uid!==uid)
+      throw new Error('The authenticated account changed during profile verification.');
+    return {uid,authEmail:user.email||'',profile:snapshot.exists()?snapshot.data():null};
+  },
   subscribeAppearancePreferences: function(onChange){
     if(!db || !currentUser || typeof onChange!=='function')return ()=>{};
     const uid=currentUser.uid;
