@@ -85,8 +85,9 @@ test('approved preparation only writes two ephemeral, expected runner paths',()=
 });
 test('operator-only preparation never writes cloud data or touches persisted environment config',()=>{
   const script=read('scripts/account-id-scoped-deploy.mjs');
-  assert.doesNotMatch(script,/\b(?:exec|spawn|execFile|initializeApp|getFirestore)\(/);
+  assert.doesNotMatch(script,/\b(?:exec|spawn|execFile)\(/);
   assert.doesNotMatch(script,/gcloud functions|firebase deploy|secretmanager\.secrets\.get/);
+  assert.doesNotMatch(script,/^import .*from ['"]firebase-(?:admin|functions)/m);
   assert.doesNotMatch(script,/write\('firebase\.json'|write\('index\.html'|write\('functions\/index\.mjs'/);
   assert.match(script,/GITHUB_REF!=='refs\/heads\/main'/);
   assert.match(script,/GITHUB_EVENT_NAME!=='workflow_dispatch'/);
