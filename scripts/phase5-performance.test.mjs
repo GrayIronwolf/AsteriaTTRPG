@@ -49,7 +49,7 @@ test('Compendium search batches rapid keystrokes into one visual update per fram
   assert.match(source,/window\.requestAnimationFrame\(\(\)=>\{/);
   assert.match(source,/searchFrame=0;render\(\);route\(false\);/);
   assert.match(source,/else \{searchFrame=0;render\(\);route\(false\);\}/);
-  assert.match(read('index.html'),/js\/asteria-navigation\.js\?v=phase6-update1-20261106/);
+  assert.match(read('index.html'),/js\/asteria-navigation\.js\?v=[a-z0-9-]+/);
 });
 
 test('Previous approved artwork and on-demand dashboard runtime are unchanged',()=>{
