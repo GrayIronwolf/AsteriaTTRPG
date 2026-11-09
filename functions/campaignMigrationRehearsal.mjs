@@ -47,7 +47,11 @@ function sourceMatches(sheet,expected){
       sheet.campaignCharacterIds[expected.campaignId]===expected.campaignCharacterId);
 }
 export function assertDemoMigrationTarget(db,host=process.env.FIRESTORE_EMULATOR_HOST){
-  if(db?.app?.options?.projectId!=='demo-asteria'||!HOST.test(host||'')){
+  // Firebase Admin Firestore exposes the configured project through
+  // _settings, whereas the isolated unit fixture has an app.options shape.
+  // Unknown projects fail closed. FIRESTORE_EMULATOR_HOST must be local.
+  const projectId=db?._settings?.projectId??db?.app?.options?.projectId;
+  if(projectId!=='demo-asteria'||!HOST.test(host||'')){
     throw Error('Phase 8.2 writes are restricted to the demo-asteria Firestore emulator.');
   }
 }
