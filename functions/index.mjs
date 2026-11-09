@@ -328,3 +328,30 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
     throw new HttpsError('failed-precondition',error.message||'Unable to process GM join request review.');
   }
 });
+
+// Phase 1.3: authenticated, server-controlled Account ID finalization.
+// Rollout remains disabled unless an explicit backend flag is enabled.
+// No target UID or username is accepted from the browser.
+export const asteriaAccountIdentity=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Asteria Account IDs are not enabled yet.');
+  const data=request.data;
+  if(!data||typeof data!=='object'||Array.isArray(data)||
+     Object.keys(data).length!==1||data.action!=='ensure')
+    throw new HttpsError('invalid-argument','Unknown account identity operation.');
+  try{
+    const firebaseUser=await getAuth().getUser(request.auth.uid);
+    if(firebaseUser.disabled)
+      throw new Error('This account is not active.');
+    const {ensureAccountIdentityProfile}=
+      await import('./accountIdentityProfile.mjs');
+    return await ensureAccountIdentityProfile(getFirestore(),request.auth.uid);
+  }catch(error){
+    // No Firestore contents, private account fields or auth details exposed.
+    throw new HttpsError('failed-precondition',
+      'Account ID could not be assigned. Review your account profile.');
+  }
+});
