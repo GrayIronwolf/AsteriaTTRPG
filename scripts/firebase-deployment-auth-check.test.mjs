@@ -5,7 +5,8 @@ import {readFileSync} from 'node:fs';
 const workflow=readFileSync(
   new URL('../.github/workflows/firebase-deploy.yml',import.meta.url),'utf8'
 );
-const authBlock=workflow.split(/^  auth_check:\s*$/m)[1]?.split(/^  deploy:\s*$/m)[0]||'';
+const authBlock=workflow.split(/^  auth_check:\s*$/m)[1]?.split(/^  backup_audit:\s*$/m)[0]||'';
+const auditBlock=workflow.split(/^  backup_audit:\s*$/m)[1]?.split(/^  deploy:\s*$/m)[0]||'';
 const deployBlock=workflow.split(/^  deploy:\s*$/m)[1]||'';
 
 test('manual only: no push, schedule or pull request deploy trigger',()=>{
@@ -41,4 +42,18 @@ test('identity check cannot modify the configured project or bypass Workload Ide
   assert.match(authBlock,/project_id: asteria-ttrpg/);
   assert.match(authBlock,/gcloud functions list --project=asteria-ttrpg/);
   assert.doesNotMatch(workflow,/credentials_json|serviceAccount.*\.json|firebase login:ci|FIREBASE_TOKEN/);
+});
+
+test('backup-audit is a separate manual metadata-only job with main-branch and environment checks',()=>{
+  assert.match(workflow,/          - backup-audit/);
+  assert.match(auditBlock,/inputs\.operation == 'backup-audit'/);
+  assert.match(auditBlock,/github\.ref == 'refs\/heads\/main'/);
+  assert.match(auditBlock,/environment: firebase-production/);
+  assert.match(auditBlock,/id-token: write/);
+  assert.match(auditBlock,/google-github-actions\/auth@v3/);
+  assert.match(auditBlock,/vars\.FIREBASE_WORKLOAD_IDENTITY_PROVIDER/);
+  assert.match(auditBlock,/ASTERIA_AUDIT_OPERATION: backup-audit/);
+  assert.match(auditBlock,/node scripts\/firebase-production-backup-audit\.mjs --live/);
+  assert.doesNotMatch(auditBlock,/firebase deploy|gcloud .* (deploy|delete|update|create|set-iam-policy)|firestore export|firestore import|storage cp/);
+  assert.match(workflow,/default: auth-check/);
 });

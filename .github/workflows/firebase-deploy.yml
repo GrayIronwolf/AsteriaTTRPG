@@ -9,6 +9,7 @@ on:
         default: auth-check
         options:
           - auth-check
+          - backup-audit
           - deploy
       production_confirmation:
         description: 'For deploy only, type DEPLOY-ASTERIA-PRODUCTION (leave blank for auth-check)'
@@ -66,6 +67,32 @@ jobs:
             echo "Cloud Functions inventory could not be listed; review IAM/read permissions separately." >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "No Firebase deployment, feature flags, email sending or data migration were executed." >> "$GITHUB_STEP_SUMMARY"
+  backup_audit:
+    name: Firebase backup and configuration inventory (metadata only)
+    if: github.ref == 'refs/heads/main' && inputs.operation == 'backup-audit'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticate using the existing restricted GitHub Workload Identity Provider
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect backup metadata (read-only; never exports or restores)
+        env:
+          ASTERIA_AUDIT_OPERATION: backup-audit
+        run: node scripts/firebase-production-backup-audit.mjs --live
   deploy:
     name: Approved Firebase production deployment
     if: >-
