@@ -296,18 +296,47 @@ jobs:
           project_id: asteria-ttrpg
           workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
-      - name: Prepare isolated Account ID callable entry (avoid unrelated email secrets)
+      - name: Stage verified Account ID release package outside website workspace
         env:
           ASTERIA_ACCOUNT_ID_SCOPED_DEPLOY: '1'
           ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
         run: |
-          node scripts/account-id-scoped-deploy.mjs --prepare
-          node --check functions/accountIdentityScopedDeployEntry.mjs
-      - name: Deploy only Account ID callable (no rules or other functions)
+          node scripts/account-id-release-package.mjs --stage-production
+          npm install --prefix "$RUNNER_TEMP/asteria-account-id-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-account-id-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-account-id-release/functions/index.mjs"
+      - name: Install isolated pinned Firebase CLI and verify legacy minimatch API
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-account-id-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-account-id-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+          node scripts/account-id-release-cli-verify.mjs --check
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify existing campaign callables before scoped deployment (read-only)
+        run: |
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-functions-before.txt"
+          grep -Eq '(^|/)asteriaAction
+      - name: Release boundaries
+        run: |
+          echo 'Only the Account ID callable was deployed. This job does not enable backend Account ID issuance, website registration, legacy backfill, notifications, or emails.' >> "$GITHUB_STEP_SUMMARY"
+ "$RUNNER_TEMP/asteria-functions-before.txt"
+          grep -Eq '(^|/)asteriaInvite
+      - name: Release boundaries
+        run: |
+          echo 'Only the Account ID callable was deployed. This job does not enable backend Account ID issuance, website registration, legacy backfill, notifications, or emails.' >> "$GITHUB_STEP_SUMMARY"
+ "$RUNNER_TEMP/asteria-functions-before.txt"
+      - name: Deploy Account ID callable from clean release directory only
+        working-directory: ${{ runner.temp }}/asteria-account-id-release
         run: >-
-          npx firebase deploy --project asteria-ttrpg
+          node "${{ runner.temp }}/asteria-account-id-cli/node_modules/firebase-tools/lib/bin/firebase.js"
+          deploy --project asteria-ttrpg
           --only functions:asteria:asteriaAccountIdentity
           --non-interactive
+      - name: Verify Account ID and both existing callables (read-only)
+        run: |
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name,state)' > "$RUNNER_TEMP/asteria-functions-after.txt"
+          for fn in asteriaAccountIdentity asteriaAction asteriaInvite; do
+            grep -E "^([^[:space:]]*/)?${fn}[[:space:]]+ACTIVE$" "$RUNNER_TEMP/asteria-functions-after.txt"
+          done
       - name: Release boundaries
         run: |
           echo 'Only the Account ID callable was deployed. This job does not enable backend Account ID issuance, website registration, legacy backfill, notifications, or emails.' >> "$GITHUB_STEP_SUMMARY"

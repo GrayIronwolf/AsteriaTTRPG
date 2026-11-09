@@ -52,11 +52,15 @@ export function inspectAccountIdProductionFinalization(reader=read){
       workflow.includes("inputs.production_confirmation == 'DEPLOY-ASTERIA-PRODUCTION'")&&
       !/^\s{2}(push|pull_request|schedule|workflow_run):/m.test(workflow)),
     check('account-id-callable-only-deploy',
-      accountDeployJob.includes('node scripts/account-id-scoped-deploy.mjs --prepare')&&
-      accountDeployJob.includes('node --check functions/accountIdentityScopedDeployEntry.mjs')&&
+      accountDeployJob.includes('node scripts/account-id-release-package.mjs --stage-production')&&
+      accountDeployJob.includes('node scripts/account-id-release-cli-verify.mjs --check')&&
+      accountDeployJob.includes('working-directory: ${{ runner.temp }}/asteria-account-id-release')&&
+      accountDeployJob.includes('npm ci --prefix "$RUNNER_TEMP/asteria-account-id-release/functions"')&&
+      accountDeployJob.includes('firebase-tools@15.35.0')&&
       accountDeployJob.includes("ASTERIA_ACCOUNT_ID_SCOPED_DEPLOY: '1'")&&
       accountDeployJob.includes('ASTERIA_DEPLOY_PROJECT: asteria-ttrpg')&&
       accountDeployJob.includes('--only functions:asteria:asteriaAccountIdentity')&&
+      accountDeployJob.includes('for fn in asteriaAccountIdentity asteriaAction asteriaInvite')&&
       !accountDeployJob.includes('--only functions,firestore,storage')&&
       !accountDeployJob.includes('backfillLegacyAccountIdentity(')),
     check('full-tests-connected',
