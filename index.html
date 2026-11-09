@@ -196,6 +196,7 @@
           <h3>Login Details</h3>
           <label>Username<input id="createUsername" placeholder="Username" autocomplete="username"></label>
           <label>Password<input id="createPassword" type="password" placeholder="Password" autocomplete="new-password"></label>
+          <label>Confirm Password<input id="createConfirmPassword" type="password" placeholder="Confirm password" autocomplete="new-password"></label>
           <p class="muted smallnote">Username is used to log in. Email is used for account recovery and password reset.</p>
         </section>
       </div>
@@ -203,7 +204,7 @@
     </div></section>
 
 
-    <section id="playerHome" class="view"><div class="player-home-grid"><section class="card player-home-hero"><p class="eyebrow">Player Account</p><h2 id="accountWelcome">Your Characters</h2><p class="muted">Forge characters under your account, then open a character card to enter that character dashboard. The GM chooses which characters are active in a campaign from Campaign Settings.</p><button class="primary" onclick="toggleCharacterCreator()">+ Character Forge</button></section><section id="characterCreator" class="card character-creator"><h3>Character Forge</h3><p class="muted smallnote">Character Forge is the only official character creation workflow. It opens the full guided Forge with compendium races, classes, skills, origins, and items.</p><button class="primary" onclick="toggleCharacterCreator()">Open Character Forge</button></section><section class="card"><div class="section-head"><h3>Character Select</h3><span class="pill">Account Characters</span></div><div id="accountCharacterCards" class="account-character-cards"></div></section></div></section>
+    <section id="playerHome" class="view"><div class="player-home-grid"><div id="pendingAccountSetupBox" class="card" hidden><p>Account profile setup is incomplete. Your existing login remains valid.</p><button id="retryAccountSetupBtn" class="primary" type="button" onclick="asteriaRetryPendingAccountSetup()">Finish Account Setup</button></div><section class="card player-home-hero"><p class="eyebrow">Player Account</p><h2 id="accountWelcome">Your Characters</h2><p class="muted">Forge characters under your account, then open a character card to enter that character dashboard. The GM chooses which characters are active in a campaign from Campaign Settings.</p><button class="primary" onclick="toggleCharacterCreator()">+ Character Forge</button></section><section id="characterCreator" class="card character-creator"><h3>Character Forge</h3><p class="muted smallnote">Character Forge is the only official character creation workflow. It opens the full guided Forge with compendium races, classes, skills, origins, and items.</p><button class="primary" onclick="toggleCharacterCreator()">Open Character Forge</button></section><section class="card"><div class="section-head"><h3>Character Select</h3><span class="pill">Account Characters</span></div><div id="accountCharacterCards" class="account-character-cards"></div></section></div></section>
 
     <section id="campaigns" class="view"><div class="campaign-manager"><section class="card"><div class="section-head"><div><p class="eyebrow">GM System</p><h2>Campaign Manager</h2></div><button class="primary" onclick="createCampaign()">+ Add Campaign</button></div><p class="muted">Choose the active campaign, set party size, create player logins, and manage player access rules.</p><div id="campaignList" class="campaign-list"></div></section><section class="card"><h3>Campaign Settings</h3><label>Campaign Name<input id="campaignNameInput"></label><label>Party Size<input id="partySizeInput" type="number" min="1" max="8"></label><div id="campaignUCNDisplay" class="campaign-ucn-display"></div><h4>Player Login Setup</h4><div id="loginSetup" class="login-setup"></div><h4>Access Rules</h4><div id="campaignAccess" class="checks"></div><button class="primary" onclick="saveCampaignSettings()">Save Campaign Settings</button><button class="danger" onclick="deleteCampaign()">Delete Selected Campaign</button></section></div></section>
 
@@ -347,7 +348,7 @@
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=phase6-update2-20261106"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:false});</script>
-  <script type="module" src="js/firebase-auth.js?v=account-ids-phase2-1"></script>
+  <script type="module" src="js/firebase-auth.js?v=account-ids-phase2-3"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>

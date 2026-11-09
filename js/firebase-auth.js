@@ -13,6 +13,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
+import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
@@ -85,6 +86,82 @@ function saveLocalUsername(username, data){ try{ const map=localUsernameMap(); m
 function localProfileStore(){ try{return JSON.parse(localStorage.getItem('asteriaFirebaseProfiles')||'{}')}catch(e){return {}} }
 function saveLocalProfile(uid, profile){ try{ const map=localProfileStore(); map[uid]=profile; localStorage.setItem('asteriaFirebaseProfiles', JSON.stringify(map)); }catch(e){} }
 function getLocalProfile(uid){ return localProfileStore()[uid] || null; }
+
+// Pending registration records contain only form identity fields, NEVER passwords.
+// Session scope avoids a permanent local account directory or cross-device claims.
+const PENDING_ACCOUNT_KEY='asteriaPendingAccountSetupV1';
+function pendingAccountDraft(){
+  try{return JSON.parse(sessionStorage.getItem(PENDING_ACCOUNT_KEY)||'null');}
+  catch{return null;}
+}
+function setPendingAccountDraft(value){
+  try{
+    if(value)sessionStorage.setItem(PENDING_ACCOUNT_KEY,JSON.stringify(value));
+    else sessionStorage.removeItem(PENDING_ACCOUNT_KEY);
+  }catch(err){console.warn('Account setup session cache unavailable.');}
+}
+function updatePendingAccountSetupNotice(){
+  const row=$('pendingAccountSetupBox');
+  if(!row)return;
+  const draft=pendingAccountDraft();
+  const show=Boolean(currentUser?.uid && draft?.uid===currentUser.uid);
+  row.hidden=!show;
+  row.style.display=show?'':'none';
+}
+async function retryPendingAccountSetup(){
+  const user=currentUser;
+  const draft=pendingAccountDraft();
+  if(!user || !draft || draft.uid!==user.uid){
+    notice('Sign in to the original account to finish its setup.');return;
+  }
+  const button=$('retryAccountSetupBtn');
+  if(button)button.disabled=true;
+  try{
+    if(!db)throw Error('Account profile storage is currently unavailable.');
+    const profile=await recoverPendingRegistrationProfile({
+      uid:user.uid,authEmail:user.email,draft,
+      transaction:callback=>runTransaction(db,async tx=>{
+        const ref=doc(db,'users',user.uid);
+        let snapshot=await tx.get(ref);
+        return callback({
+          read:()=>snapshot.exists()?snapshot.data():null,
+          create: data=>tx.set(ref,{...data,createdAt:serverTimestamp()}),
+          patch: data=>tx.update(ref,data)
+        });
+      }),
+      readCanonical:async()=>{
+        const snap=await getDoc(doc(db,'users',user.uid));
+        return snap.exists()?snap.data():null;
+      }
+    });
+    let identity={};
+    if(accountIdRegistrationEnabled(window.AsteriaFeatureFlags)){
+      if(!functionsClient)throw Error('Account ID service is unavailable.');
+      identity=await finalizeRegisteredAccountId({
+        enabled:true,uid:user.uid,username:profile.username,
+        requestAssignment:input=>httpsCallable(functionsClient,'asteriaAccountIdentity')(input),
+        readProfile:async()=>{
+          const snap=await getDoc(doc(db,'users',user.uid));
+          return snap.exists()?snap.data():null;
+        }
+      })||{};
+    }
+    if(currentUser?.uid!==user.uid)return; // Prevent cross-session completion.
+    currentProfile={...currentProfile,...profile,...identity};
+    saveLocalProfile(user.uid,currentProfile);
+    window.AsteriaAuthBridge?.setSession?.(currentProfile,user);
+    setPendingAccountDraft(null);
+    updatePendingAccountSetupNotice();
+    notice(identity.accountId?`Account setup complete: ${identity.accountId}`:'Account profile setup complete.');
+  }catch(err){
+    console.warn('Account setup retry was not completed.',err?.code || 'unknown');
+    notice('Account setup is still pending. Your existing account was not replaced.');
+  }finally{
+    if(button)button.disabled=false;
+  }
+}
+window.asteriaRetryPendingAccountSetup=retryPendingAccountSetup;
+
 function cleanData(value){ return JSON.parse(JSON.stringify(value)); }
 function campaignCode(value){ return String(value || '').replace(/\D/g, '').slice(0, 12); }
 function campaignOwner(campaign){
@@ -579,22 +656,20 @@ window.firebaseCreateAccountPage = async function(){
   const password = $('createPassword')?.value || '';
   const key = usernameKey(username);
 
-  if(!firstName || !lastName || !email || !username || !password){
-    const msg = 'Please complete First Name, Last Name, Email, Username, and Password.';
-    showCreateHint(msg, 'warn'); return notice(msg);
-  }
-  if(!validUsername(username)){
-    const msg = 'Username must be 3-24 characters and use letters, numbers, dots, underscores, or hyphens only.';
-    showCreateHint(msg, 'warn'); return notice(msg);
-  }
-  if(password.length < 6){
-    const msg = 'Password must be at least 6 characters.';
-    showCreateHint(msg, 'warn'); return notice(msg);
+  const confirmPassword = $('createConfirmPassword')?.value || '';
+  const validation=validateAccountRegistrationFields({
+    firstName,lastName,email,username,password,confirmPassword
+  });
+  if(!validation.ok){
+    showCreateHint(validation.message,'warn');
+    return notice(validation.message);
   }
 
   try{
     showCreateHint('Creating account...', 'info');
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    // If Firestore fails after Auth succeeds, retry on this same UID.
+    setPendingAccountDraft({uid:cred.user.uid,email,username,firstName,lastName});
     const displayName = username;
     try{ await updateProfile(cred.user, { displayName }); }catch(e){ console.warn(e); }
     const profile = { uid:cred.user.uid, email, username, usernameLower:key, firstName, lastName, role:'account', characters:[], createdAt:serverTimestamp() };
@@ -644,7 +719,9 @@ window.firebaseCreateAccountPage = async function(){
       `Account created: ${accountIdentity.accountId}` : 'Account created.');
     showCreateHint(successMessage, accountIdWarning ? 'warn' : 'success');
     notice(successMessage);
+    if(profileStored && !accountIdWarning)setPendingAccountDraft(null);
     openAccountHome(currentProfile, cred.user);
+    updatePendingAccountSetupNotice();
     window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: cred.user.uid, source:'login' }}));
   }catch(err){
     const msg = friendlyFirebaseError(err, 'create');
@@ -685,6 +762,7 @@ window.firebaseLogin = async function(input = {}){
     showAuthHint('Logged in.', 'success');
     notice('Logged in.');
     openAccountHome(currentProfile, cred.user);
+    updatePendingAccountSetupNotice();
     ensureProfile(cred.user, { username:resolved.username, role:'account' })
       .then(profile => {
         currentProfile = profile;
@@ -2540,7 +2618,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const el=$(id);
     if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); id === 'forgotPasswordEmail' ? window.firebaseResetPassword() : window.firebaseLogin(); } });
   });
-  ['createFirstName','createLastName','createEmail','createUsername','createPassword'].forEach(id=>{
+  ['createFirstName','createLastName','createEmail','createUsername','createPassword','createConfirmPassword'].forEach(id=>{
     const el=$(id);
     if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); window.firebaseCreateAccountPage(); } });
   });
@@ -2552,6 +2630,7 @@ if(auth && !reactDevFixture){
       const hadSession = Boolean(currentUser || window.AsteriaAuthBridge?.isLoggedIn?.());
       currentUser = null; ownershipReadyUid = '';
       currentProfile = null;
+      updatePendingAccountSetupNotice();
       window.AsteriaDataSync?.stopWatching?.();
       window.dispatchEvent(new CustomEvent('asteria:firebase-signed-out'));
       if(hadSession) window.AsteriaAuthBridge?.logoutLocal?.();
@@ -2570,6 +2649,7 @@ if(auth && !reactDevFixture){
       window.AsteriaAuthBridge?.setSession(currentProfile, user);
       currentProfile = await ensureProfile(user, {});
       window.AsteriaAuthBridge?.setSession(currentProfile, user);
+      updatePendingAccountSetupNotice();
       await loadCharacters(user);
       window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: user.uid, source:'restore' }}));
     }catch(err){ console.warn('Auth state restore failed.', err); }
