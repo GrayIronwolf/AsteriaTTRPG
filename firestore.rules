@@ -153,8 +153,29 @@ service cloud.firestore {
         request.resource.data.get('id', '') == resource.data.get('id', '');
     }
 
+    // Account identity fields are Admin SDK only. All other private profile
+    // fields remain owner-editable until a permanent account ID is assigned.
+    function safeAccountProfileCreate(uid) {
+      return request.resource.data.get('uid', uid) == uid &&
+        !request.resource.data.keys().hasAny([
+          'accountId', 'accountNumber', 'accountIdKey', 'accountIdAssignedAt'
+        ]);
+    }
+    function safeAccountProfileUpdate(uid) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return request.resource.data.get('uid', uid) == uid &&
+        !changed.hasAny([
+          'accountId', 'accountNumber', 'accountIdKey', 'accountIdAssignedAt'
+        ]) &&
+        (!resource.data.keys().hasAny(['accountId']) ||
+          !changed.hasAny(['username', 'usernameLower', 'uid']));
+    }
+
     match /users/{uid} {
-      allow read, write: if ownsUserData(uid);
+      allow read: if ownsUserData(uid);
+      allow create: if ownsUserData(uid) && safeAccountProfileCreate(uid);
+      allow update: if ownsUserData(uid) && safeAccountProfileUpdate(uid);
+      allow delete: if ownsUserData(uid) && !resource.data.keys().hasAny(['accountId']);
 
       match /characters/{characterId} {
         allow read: if ownsUserData(uid);
@@ -167,6 +188,15 @@ service cloud.firestore {
       match /{collectionId}/{document=**} {
         allow read, write: if collectionId != 'characters' && ownsUserData(uid);
       }
+    }
+
+    // Phase 1.3: permanent Account ID assignments and unique directory are
+    // server-only. Never grant browser reads or writes to either collection.
+    match /accountIdAssignments/{uid} {
+      allow read, write: if false;
+    }
+    match /accountIdRegistry/{accountIdKey} {
+      allow read, write: if false;
     }
 
     match /usernames/{username} {
