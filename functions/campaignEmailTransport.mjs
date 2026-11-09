@@ -19,12 +19,11 @@ const htmlEscape=value=>String(value)
 function safeLabel(value,name){
   if(typeof value!=='string'||!value.trim()||value.length>LABEL_LIMIT)
     throw Error('Invalid '+name+'.');
-  const clean=value.trim();
-  if([...clean].some(character=>{
+  if([...value].some(character=>{
     const code=character.charCodeAt(0);
     return code<32||code===127;
   }))throw Error('Invalid '+name+'.');
-  return clean;
+  return value.trim();
 }
 function validateInvitationUrl(link,inviteId,campaignId){
   if(typeof link!=='string'||link.length>1000)throw Error('Invalid secure invitation URL.');
