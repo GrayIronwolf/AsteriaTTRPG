@@ -296,6 +296,13 @@ jobs:
           project_id: asteria-ttrpg
           workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Prepare isolated Account ID callable entry (avoid unrelated email secrets)
+        env:
+          ASTERIA_ACCOUNT_ID_SCOPED_DEPLOY: '1'
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          node scripts/account-id-scoped-deploy.mjs --prepare
+          node --check functions/accountIdentityScopedDeployEntry.mjs
       - name: Deploy only Account ID callable (no rules or other functions)
         run: >-
           npx firebase deploy --project asteria-ttrpg
