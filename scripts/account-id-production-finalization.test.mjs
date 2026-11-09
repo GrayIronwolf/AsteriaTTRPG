@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import yaml from 'js-yaml';
 import {inspectAccountIdProductionFinalization} from './account-id-production-finalization.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -56,4 +57,30 @@ test('client registration uses authenticated server reads when confirming perman
  assert.match(auth,/getDocFromServer\(doc\(db,'users',cred\.user\.uid\)\)/);
  assert.match(auth,/getDocFromServer\(doc\(db,'users',user\.uid\)\)/);
  assert.match(auth,/Older registrations may need account review/);
+});
+
+test('production release workflow has parseable YAML and complete scoped callable prechecks',()=>{
+ const source=read('.github/workflows/firebase-deploy.yml');
+ const parsed=yaml.safeLoad(source);
+ const steps=parsed.jobs.account_id_deploy.steps;
+ const pre=steps.find(step=>step.name===
+   'Verify existing campaign callables before scoped deployment (read-only)');
+ const deploy=steps.find(step=>step.name===
+   'Deploy Account ID callable from clean release directory only');
+ const post=steps.find(step=>step.name===
+   'Verify Account ID and both existing callables (read-only)');
+ assert.ok(pre&&deploy&&post);
+ assert.ok(steps.indexOf(pre)<steps.indexOf(deploy));
+ assert.ok(steps.indexOf(deploy)<steps.indexOf(post));
+ assert.ok(pre.run.includes('set -euo pipefail'));
+ assert.ok(pre.run.includes("grep -Eq '(^|/)asteriaAction$'"));
+ assert.ok(pre.run.includes("grep -Eq '(^|/)asteriaInvite$'"));
+ assert.ok(pre.run.includes('asteria-functions-before.txt'));
+ assert.ok(post.run.includes('set -euo pipefail'));
+ assert.ok(post.run.includes('asteriaAccountIdentity asteriaAction asteriaInvite'));
+ assert.ok(post.run.includes(',ACTIVE$'));
+ assert.equal(steps.filter(step=>step.name==='Release boundaries').length,1);
+ assert.equal(deploy['working-directory'],
+   '${{ runner.temp }}/asteria-account-id-release');
+ assert.ok(deploy.run.includes('--only functions:asteria:asteriaAccountIdentity'));
 });
