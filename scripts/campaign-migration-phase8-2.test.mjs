@@ -137,7 +137,7 @@ test('emulator rehearsal creates only missing canonical records, directory and l
   const repeat=await run(f,true);
   assert.deepEqual(repeat.staged,{members:0,links:0,reservations:0,directory:0});
   assert.equal(repeat.readyForActivation,true);
-  assert.equal(f.writes,6);
+  assert.equal(f.writes,5);
 });
 test('revoked account stays inactive and member conflicts block all writes',async()=>{
   const f=fixture({campaignChanges:{
