@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { asteriaResendApiKeySecret } from './campaignEmailSecrets.mjs';
@@ -70,7 +71,10 @@ export const asteriaSecureInvitation=onCall({
         emailVerified:request.auth.token?.email_verified===true
       };
       const input={campaignId:data.campaignId,inviteId:data.inviteId,token:data.token};
-      const options={signingKey:secureInvitationSigningKey.value()};
+      const options={
+        signingKey:secureInvitationSigningKey.value(),
+        notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'
+      };
       return data.action==='preview'?
         await previewSecureCampaignInvitation(getFirestore(),claimant,input,options):
         await acceptSecureCampaignInvitation(getFirestore(),claimant,input,options);
@@ -104,6 +108,29 @@ export const asteriaSecureInvitation=onCall({
   }
 });
 
+// Phase 7.3: account-scoped in-app notification inbox. No direct Firestore
+// browser access; notification reads and acknowledgments are callable-only.
+export const asteriaCampaignNotifications=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Campaign notifications are not enabled.');
+  try{
+    const {listCampaignNotifications,markCampaignNotificationRead}=
+      await import('./campaignNotifications.mjs');
+    const data=request.data||{},db=getFirestore(),uid=request.auth.uid;
+    if(data.action==='list')
+      return await listCampaignNotifications(db,uid,{cursor:data.cursor??null});
+    if(data.action==='mark-read')
+      return await markCampaignNotificationRead(db,uid,data.notificationId);
+    throw new Error('Unknown campaign notification action.');
+  }catch(error){
+    throw new HttpsError('failed-precondition',
+      error.message||'Campaign notification operation failed.');
+  }
+});
+
 // Phase 7.2: GM email sends and token-rotating replacements.
 // Both provider and invitation signing secrets are bound only to this callable.
 // No service can send without a separate server enablement flag.
@@ -124,6 +151,22 @@ export const asteriaCampaignEmailInvitations=onCall({
       signingKey:secureInvitationSigningKey.value(),
       apiKey:asteriaResendApiKeySecret.value()
     };
+    if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'){
+      options.notifyAcceptedEmail=async({
+        db:store,campaignId,campaignName,inviteId,recipientEmail,now
+      })=>{
+        let user;
+        try{user=await getAuth().getUserByEmail(recipientEmail);}
+        catch{return;}
+        if(!user?.emailVerified||
+          user.email?.trim().toLowerCase()!==recipientEmail)return;
+        const {notifyVerifiedEmailRecipient}=
+          await import('./campaignNotifications.mjs');
+        await notifyVerifiedEmailRecipient(store,user.uid,{
+          campaignId,campaignName,inviteId
+        },now);
+      };
+    }
     if(data.action==='send')
       return await sendCampaignEmailInvitations(db,uid,{
         campaignId:data.campaignId,requestId:data.requestId,
@@ -198,7 +241,10 @@ export const asteriaCampaignJoinRequest=onCall({region:'us-central1',maxInstance
       campaignId:data.campaignId,
       ucn:data.ucn,
       characterId:data.characterId
-    },{autoApproveEnabled:process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1'});
+    },{
+      autoApproveEnabled:process.env.ASTERIA_AUTO_APPROVE_JOIN_REQUESTS_ENABLED==='1',
+      notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'
+    });
   } catch(error){
     throw new HttpsError('failed-precondition',error.message||'Could not process the join request.');
   }
@@ -268,7 +314,9 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
     if(data.action==='review'){
       if(process.env.ASTERIA_JOIN_REVIEW_ENABLED!=='1')
         throw new Error('Campaign join approvals are not enabled yet.');
-      return await reviewCampaignJoinRequest(db,uid,data);
+      return await reviewCampaignJoinRequest(db,uid,data,{
+        notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'
+      });
     }
     if(data.action==='mode'){
       if(process.env.ASTERIA_JOIN_REVIEW_ENABLED!=='1')

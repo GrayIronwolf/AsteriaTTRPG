@@ -177,6 +177,19 @@ async function sendOne(db,uid,campaign,params,options,recipientEmail,index,sourc
   }
   const status=await finishDelivery(db,params.campaignId,issued.inviteId,
     delivery,options.now);
+  // Only after provider accepted submission. Firebase Admin must verify an
+  // existing account's exact email ownership before creating an inbox alert.
+  // Notification errors cannot cause a second send or expose bearer tokens.
+  if(status==='accepted'&&typeof options.notifyAcceptedEmail==='function'){
+    try{
+      await options.notifyAcceptedEmail({
+        db,campaignId:params.campaignId,campaignName:campaign.name,
+        inviteId:issued.inviteId,recipientEmail,now:options.now
+      });
+    }catch{
+      // The email was already submitted. Never retry delivery for an alert.
+    }
+  }
   return publicResult(row,status,{alreadyExists:false});
 }
 

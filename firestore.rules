@@ -186,6 +186,16 @@ service cloud.firestore {
 
     // Phase 6.1 server-only invitation credentials and issuance quotas.
     // Even campaign members and GMs never read token digests or email targets.
+    // Phase 7.3: notifications are server-written and callable-readable by
+    // their own authenticated recipient only. Browser cannot forge, list,
+    // acknowledge or inspect any other account's inbox through Firestore.
+    match /campaignNotificationInbox/{uid} {
+      allow read, write: if false;
+      match /items/{notificationId} {
+        allow read, write: if false;
+      }
+    }
+
     match /campaignInvitationTokenIndex/{tokenDigest} {
       allow read, write: if false;
     }

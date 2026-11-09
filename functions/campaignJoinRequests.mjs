@@ -1,6 +1,7 @@
 import {validUCN} from './campaignUCN.mjs';
 import {JOIN_REQUEST_STATUSES, MEMBER_STATUSES} from './campaignMembership.mjs';
 import {preparePlayerApproval} from './campaignJoinApproval.mjs';
+import {enqueueCampaignNotification} from './campaignNotifications.mjs';
 
 // A UCN locates a campaign. It is NOT a secret invitation or membership grant.
 // Server-controlled request documents are deterministic per account and campaign.
@@ -108,6 +109,14 @@ export async function campaignJoinRequest(db,uid,{action,campaignId,ucn,characte
     };
     if(automatic) automatic.apply();
     tx.create(requestRef,record);
+    if(options.notificationsEnabled===true){
+      enqueueCampaignNotification(tx,db,
+        automatic?uid:campaign.ownerUid,{
+          campaignId,campaignName:campaign.name,
+          kind:automatic?'join-approved':'join-request',
+          eventKey:(automatic?'join-approved:':'join-request:')+campaignId+':'+uid
+        },now);
+    }
     if(automatic) tx.create(db.doc('campaigns/'+campaignId+'/joinReviewHistory/'+uid),{
       campaignId,uid,decision:'approve',status:'approved',actorUid:campaign.ownerUid,
       mode:'automatic',requestedCharacterId:record.requestedCharacterId,at:now

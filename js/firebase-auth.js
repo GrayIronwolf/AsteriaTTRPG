@@ -2018,6 +2018,24 @@ const firebasePublicApi = {
       action:'accept',campaignId,inviteId,token
     })).data;
   },
+  listCampaignNotifications: async function(cursor=null){
+    if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
+      throw new Error('Sign in to view notifications.');
+    if(window.AsteriaFeatureFlags?.campaignNotifications!==true)
+      throw new Error('Campaign notifications are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignNotifications')({
+      action:'list',cursor
+    })).data;
+  },
+  markCampaignNotificationRead: async function(notificationId){
+    if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
+      throw new Error('Sign in to manage notifications.');
+    if(window.AsteriaFeatureFlags?.campaignNotifications!==true)
+      throw new Error('Campaign notifications are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignNotifications')({
+      action:'mark-read',notificationId
+    })).data;
+  },
   sendCampaignEmailInvitations: async function(request){
     if(!functionsClient||!currentUser)
       throw new Error('Sign in as the campaign owner.');

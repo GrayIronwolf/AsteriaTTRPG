@@ -1,5 +1,6 @@
 import {assertSecureInvitationEligible} from './campaignSecureInvitations.mjs';
 import {MEMBER_STATUSES,JOIN_REQUEST_STATUSES} from './campaignMembership.mjs';
+import {enqueueCampaignNotification} from './campaignNotifications.mjs';
 
 // Phase 6.3: authenticated preview and deterministic claim into the EXISTING
 // canonical join-review queue. Never grants membership or elevated roles.
@@ -186,6 +187,11 @@ export async function acceptSecureCampaignInvitation(db,auth,{
       reviewedAt:null,reviewedByUid:null
     };
     tx.create(requestRef,request);
+    if(options.notificationsEnabled===true)
+      enqueueCampaignNotification(tx,db,campaign.ownerUid,{
+        campaignId,campaignName:campaign.name,kind:'join-request',
+        eventKey:'join-request:'+campaignId+':'+uid
+      },now);
     tx.create(claimRef,{
       uid,campaignId,inviteId,createdAt:now,status:'claimed',
       requestedRole:eligible.roleOffered
