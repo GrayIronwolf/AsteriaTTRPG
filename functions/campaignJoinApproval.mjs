@@ -1,4 +1,5 @@
 import {memberDocument} from './campaignMembership.mjs';
+import {enqueueCampaignNotification} from './campaignNotifications.mjs';
 
 const ID=/^[A-Za-z0-9_-]{1,160}$/;
 const MAX_REVIEW_ROWS=100;
@@ -156,6 +157,13 @@ export async function reviewCampaignJoinRequest(db,actorUid,
       status,reviewedByUid:actorUid,reviewedAt:now,
       updatedAt:now,revision:request.revision+1,reviewMode:'manual'
     });
+    if(options.notificationsEnabled===true){
+      enqueueCampaignNotification(tx,db,requestUid,{
+        campaignId,campaignName:campaign.name,
+        kind:status==='approved'?'join-approved':'join-declined',
+        eventKey:'join-decision:'+campaignId+':'+requestUid
+      },now);
+    }
     tx.create(auditRef,{
       campaignId,uid:requestUid,decision,status,actorUid,mode:'manual',
       requestedCharacterId:request.requestedCharacterId||null,at:now
