@@ -21,8 +21,13 @@
     if(payload.source==='legacy')host.appendChild(node('p','Legacy roster: account membership is shown using existing campaign roles. Canonical membership migration has not been activated.','muted'));
     for(const section of groups){
       const wrapper=node('section',null,'workspace-roster-group');
-      wrapper.appendChild(node('h4',section.title));
+      wrapper.setAttribute('aria-label',section.title);
       const rows=payload[section.key];
+      const sectionHeading=node('h4',section.title);
+      const count=node('span',String(rows.length),'workspace-roster-count');
+      count.setAttribute('aria-label',rows.length+' '+section.title.toLowerCase());
+      sectionHeading.appendChild(count);
+      wrapper.appendChild(sectionHeading);
       if(!rows.length)wrapper.appendChild(node('p',section.empty,'muted'));
       for(const item of rows){
         const article=node('article',null,'workspace-roster-row');
@@ -44,6 +49,8 @@
           handlers.enableControls===true && typeof handlers.onAction==='function' &&
           Number.isSafeInteger(item.revision) && item.revision>0 && actions.length){
           const controls=node('div',null,'workspace-roster-controls');
+          controls.setAttribute('role','group');
+          controls.setAttribute('aria-label','Member actions for '+(item.displayName||item.uid));
           for(const action of actions){
             if(!['suspend','restore','remove','ban'].includes(action))continue;
             const button=node('button',action.charAt(0).toUpperCase()+action.slice(1));
@@ -62,6 +69,8 @@
           handlers.enableRoleControls===true&&typeof handlers.onRoleChange==='function'&&
           item.roleEditable===true&&Number.isSafeInteger(item.revision)&&item.revision>0){
           const roleBox=node('div',null,'workspace-roster-controls');
+          roleBox.setAttribute('role','group');
+          roleBox.setAttribute('aria-label','Role and permissions for '+(item.displayName||item.uid));
           const roleButton=node('button',item.role==='co-gm'?'Make Player':'Make Co-GM');
           roleButton.type='button';
           roleButton.addEventListener('click',()=>handlers.onRoleChange({

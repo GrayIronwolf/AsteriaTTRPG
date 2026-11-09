@@ -598,7 +598,12 @@
       <div class="workspace-gallery-copy">
         <span class="clean-tag">Join Campaign</span>
         <h3>Join Campaign</h3>
-        <p>${previewEnabled ? 'Find your GM\'s campaign using its 12-digit Unique Campaign Number. Review the campaign before connecting your account.' : 'Enter the 12 digit UCN from your GM invite, then link an existing character or forge a new one.'}</p>
+        <p>${previewEnabled ? 'Find your GM\'s campaign using its 12-digit Unique Campaign Number. Review the campaign before submitting a request.' : 'Enter the 12-digit UCN provided by your GM, then link a character after joining.'}</p>
+        <ol class="workspace-connection-steps" aria-label="Campaign connection steps">
+          <li><span class="workspace-step-number" aria-hidden="true">1</span>Enter campaign number</li>
+          <li><span class="workspace-step-number" aria-hidden="true">2</span>${previewEnabled?'Request GM approval':'Join legacy campaign'}</li>
+          <li><span class="workspace-step-number" aria-hidden="true">3</span>Link your character</li>
+        </ol>
         <label class="workspace-join-code-label">Unique Campaign Number<input id="workspaceJoinCampaignCode" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="000000000000" aria-describedby="workspaceJoinCodeHelp"></label>
         <p class="muted" id="workspaceJoinCodeHelp">Enter all 12 digits. Spaces or hyphens are optional.</p>
         <button class="primary" type="button" id="workspaceJoinCampaignBtn">${previewEnabled ? 'Find Campaign' : 'Join Campaign'}</button>
@@ -751,7 +756,7 @@
         ${role === 'GM' && campaign.membershipSchemaVersion!==2 ? `
           <section class="workspace-link-panel campaign-invite-tools">
             <h3>Campaign Invites</h3>
-            <p class="muted">Static build note: this creates an email-ready invite record and link. Actual email sending will connect through Firebase later.</p>
+            <p class="muted">Legacy invitations create a record and link only; this form does not send email. Use the secure invitation manager when enabled for protected invitations.</p>
             <label>Player Email<input id="workspaceInviteEmail" type="email" placeholder="player@example.com"></label>
             <button class="primary" type="button" id="workspaceCreateInviteBtn">Create Invite</button>
             <div class="campaign-code-pill"><b>UCN</b><span>${escapeHtml(campaign.ucn)}</span></div>
@@ -763,7 +768,7 @@
         ${campaign.membershipSchemaVersion===2 && campaign.ownerUid===window.AsteriaFirebase?.getUser?.()?.uid && window.AsteriaFeatureFlags?.secureInvitationManager===true ? `
           <section class="workspace-link-panel workspace-secure-invite-manager">
             <h3>Secure Invitation Manager</h3>
-            <p class="muted">Manage protected campaign invitations. Sharing a token does not add a player; invitation acceptance is not activated until Phase 6.3.</p>
+            <p class="muted">Create and manage protected invitations. A link never grants campaign access by itself; joining requires the recipient to sign in and follow the GM approval process.</p>
             <div class="workspace-form-grid">
               <label>Invitation Type<select id="workspaceSecureInviteType"><option value="share-link">Share link</option><option value="email">Email recipient (not sent automatically)</option></select></label>
               <label>Offered Role<select id="workspaceSecureInviteRole"><option value="player">Player</option><option value="co-gm">Co-GM (owner approval required)</option></select></label>
@@ -1958,7 +1963,7 @@
       </div>
       <p class="workspace-join-account"><b>Verified account:</b> ${escapeHtml(label)}</p>
       <p class="muted">${legacy
-        ? 'This campaign uses the existing invitation system. Confirming connects your account immediately. GM approval for new join requests will be introduced in Phase 3.2–3.3.'
+        ? 'This campaign still uses the legacy invitation system. Confirming joins immediately without the new GM approval workflow.'
         : request
           ? 'Submit a join request for GM approval. You may select an owned character as a preference; no character will be linked until approval.'
           : 'This campaign is not accepting connections through the current joining system.'}</p>
