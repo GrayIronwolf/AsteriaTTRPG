@@ -12,6 +12,7 @@ import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebase
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
+import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
@@ -597,21 +598,52 @@ window.firebaseCreateAccountPage = async function(){
     const displayName = username;
     try{ await updateProfile(cred.user, { displayName }); }catch(e){ console.warn(e); }
     const profile = { uid:cred.user.uid, email, username, usernameLower:key, firstName, lastName, role:'account', characters:[], createdAt:serverTimestamp() };
+    let profileStored = false;
     try{
       if(db){
         await setDoc(doc(db, 'users', cred.user.uid), profile, { merge:true });
+        profileStored = true;
       }
     }catch(err){
       console.warn('Account was created in Firebase Auth, but Firestore profile save failed. Saving local fallback profile.', err);
       showCreateHint('Account created. Firestore profile save failed, so a local profile cache was saved on this device.', 'warn');
     }
+    // Phase 2.1: new registrations only. Website rollout stays OFF by default,
+    // independent of the server-side ASTERIA_ACCOUNT_IDS_ENABLED gate.
+    let accountIdentity = null;
+    let accountIdWarning = '';
+    if(accountIdRegistrationEnabled(window.AsteriaFeatureFlags)){
+      if(!profileStored || !functionsClient){
+        accountIdWarning = 'Account created, but your Account ID is pending. Sign in later to complete account setup.';
+      }else{
+        try{
+          accountIdentity = await finalizeRegisteredAccountId({
+            enabled:true,
+            uid:cred.user.uid,
+            username,
+            requestAssignment: request => httpsCallable(functionsClient,'asteriaAccountIdentity')(request),
+            readProfile: async()=>{
+              const stored = await getDoc(doc(db,'users',cred.user.uid));
+              return stored.exists() ? stored.data() : null;
+            }
+          });
+        }catch(err){
+          // The Firebase Auth account exists already: never claim it was rolled back
+          // or silently report a complete Account ID registration.
+          console.warn('Account ID finalization pending.',err?.code || 'unknown');
+          accountIdWarning = 'Account created, but your Account ID could not be confirmed. Sign in later to complete account setup.';
+        }
+      }
+    }
     saveLocalUsername(username, { uid:cred.user.uid, email, username, usernameLower:key });
     currentUser = cred.user;
-    currentProfile = Object.assign({}, profile, { createdAt: Date.now() });
+    currentProfile = Object.assign({}, profile, accountIdentity || {}, { createdAt: Date.now() });
     saveLocalProfile(cred.user.uid, currentProfile);
     await loadCharacters(cred.user);
-    showCreateHint('Account created.', 'success');
-    notice('Account created.');
+    const successMessage = accountIdWarning || (accountIdentity ?
+      `Account created: ${accountIdentity.accountId}` : 'Account created.');
+    showCreateHint(successMessage, accountIdWarning ? 'warn' : 'success');
+    notice(successMessage);
     openAccountHome(currentProfile, cred.user);
     window.dispatchEvent(new CustomEvent('asteria:firebase-ready', { detail:{ uid: cred.user.uid, source:'login' }}));
   }catch(err){
