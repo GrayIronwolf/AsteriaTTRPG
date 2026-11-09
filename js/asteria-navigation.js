@@ -266,7 +266,10 @@
       }
       const favourite=event.target.closest?.('[data-library-favourite]');
       if(favourite){const id=favourite.dataset.libraryFavourite,ids=readSaved('favourites');if(entries().some(e=>e.id===id)){save('favourites',ids.includes(id)?ids.filter(x=>x!==id):[id,...ids]);render();}return;}
-      if(event.target.closest?.('#globalNavigation a,#globalNavigation button,#accountControls button')&&!event.target.closest?.('#compendiumQuickToggle'))closePanels();
+      // Account menu controls must not close the mobile settings drawer before
+      // their click handler opens the nested menu or activates an item.
+      if(event.target.closest?.('#globalNavigation a,#globalNavigation button,#accountControls button') &&
+         !event.target.closest?.('#compendiumQuickToggle,.asteria-account-menu-wrap'))closePanels();
       if(!event.target.closest?.('.compendium-split'))setQuick(false);
     },true);
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu?.hidden){setQuick(false);byId('compendiumQuickToggle')?.focus();}});

@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="css/asteria-navigation.css?v=phase5-update3-20261106">
 <link rel="stylesheet" href="css/asteria-smoke-background.css?v=solid-palette-20261108">
 <link rel="stylesheet" href="css/asteria-menu-buttons.css?v=encounter-header-v7">
+<link rel="stylesheet" href="css/asteria-account-menu.css?v=phase3-1-20261109">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -68,7 +69,13 @@
     </nav>
     <div class="top-actions">
       <div id="accountControls" class="asteria-account-controls">
-        <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
+        <div class="asteria-account-menu-wrap" id="accountMenuWrap">
+          <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
+          <div id="accountQuickMenu" class="asteria-account-menu" role="menu" aria-label="Account navigation" hidden>
+            <button id="accountMenuSettings" type="button" role="menuitem">Account Settings</button>
+            <button id="accountMenuLogout" type="button" role="menuitem">Log Out</button>
+          </div>
+        </div>
         <button id="accountSettingsTop" class="crystal-button" type="button" data-workspace-action="settings">Account Settings</button>
       </div>
       <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Menu and appearance" aria-label="Open menu and appearance" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -346,7 +353,8 @@
   <script src="js/app.js?v=react-m1"></script>
   <script src="js/asteria-inventory-api.js?v=react-m1"></script>
   <script src="js/character-access.js?v=linked-players-v8"></script>
-  <script src="js/auth-bridge.js?v=phase6-update2-20261106"></script>
+  <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
+<script src="js/asteria-account-menu.js?v=account-menu-phase3-1"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:false});</script>
   <script type="module" src="js/firebase-auth.js?v=account-ids-phase2-3"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
@@ -366,7 +374,7 @@
 <script src="js/asteria-ui-theme-system.js?v=solid-palette-20261108"></script>
 <script src="js/asteria-typography.js?v=phase6-update2-20261106"></script>
 <script src="js/asteria-appearance-sync.js?v=phase6-update2-20261106"></script>
-<script src="js/asteria-navigation.js?v=phase6-update1-20261106"></script>
+<script src="js/asteria-navigation.js?v=account-menu-phase3-1"></script>
 <script src="js/asteria-menu-buttons.js?v=phase2-size-families-20261106"></script>
 
 <script type="module" src="src/dev-entry.js?v=royal-relic-panels-v2"></script>

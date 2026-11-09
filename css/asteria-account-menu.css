@@ -1,0 +1,70 @@
+/* Account navigation Phase 3.1 — aligns with existing forged-metal header.
+ * No changes to approved button art, theme variables or gameplay controls. */
+.asteria-account-menu-wrap {
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+}
+.asteria-account-menu {
+  position:absolute;
+  top:calc(100% + 12px);
+  right:0;
+  width:250px;
+  max-width:calc(100vw - 24px);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  background:linear-gradient(145deg,#142638,#07111d);
+  border:1px solid #648499;
+  border-radius:5px;
+  box-shadow:0 15px 36px #000b;
+  z-index:2100;
+}
+.asteria-account-menu[hidden] { display:none!important; }
+.asteria-account-menu button {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:44px;
+  width:100%;
+  padding:10px 13px;
+  color:#e5eef5;
+  background:transparent;
+  font:600 .88rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+  text-align:left;
+  border:0;
+  border-bottom:1px solid #64849944;
+  border-radius:2px;
+  cursor:pointer;
+}
+.asteria-account-menu button:last-child { border-bottom:0; }
+.asteria-account-menu button:hover,
+.asteria-account-menu button:focus-visible {
+  color:#fff;
+  background:#254158;
+  outline:2px solid #bcefff;
+  outline-offset:-2px;
+}
+/* JS moves the same accountControls element into the settings drawer. */
+@media (max-width:1679px) {
+  #settingsPanel .asteria-account-menu-wrap {
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  #settingsPanel .asteria-account-menu-wrap > #loginToggle { width:100%; }
+  #settingsPanel .asteria-account-menu {
+    position:static;
+    width:100%;
+    max-width:none;
+    box-sizing:border-box;
+    margin-top:7px;
+    box-shadow:none;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .asteria-account-menu button { transition:none; }
+}

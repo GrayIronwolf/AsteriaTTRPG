@@ -12,20 +12,29 @@
     const create = document.getElementById('createAccountTop');
     if(!login) return;
     if(isLoggedIn()){
-      login.textContent = 'Logout';
+      login.textContent = 'Account';
+      login.setAttribute?.('aria-label','Open account menu');
+      login.setAttribute?.('aria-haspopup','menu');
+      login.setAttribute?.('aria-controls','accountQuickMenu');
+      login.setAttribute?.('aria-expanded',String(window.AsteriaAccountMenu?.isOpen?.()===true));
       login.onclick = event => {
         event?.preventDefault?.();
-        window.logout?.();
+        window.AsteriaAccountMenu?.toggle?.();
       };
       if(create){
-        create.textContent = 'Logout';
+        create.textContent = 'Account';
         create.onclick = event => {
           event?.preventDefault?.();
-          window.logout?.();
+          window.AsteriaAccountMenu?.toggle?.();
         };
       }
     } else {
+      window.AsteriaAccountMenu?.close?.();
       login.textContent = 'Login';
+      login.setAttribute?.('aria-label','Log in to Asteria');
+      login.removeAttribute?.('aria-haspopup');
+      login.removeAttribute?.('aria-controls');
+      login.removeAttribute?.('aria-expanded');
       login.onclick = event => {
         event?.preventDefault?.();
         window.setView?.('loginPage');
@@ -38,6 +47,7 @@
         };
       }
     }
+    window.AsteriaAccountMenu?.syncSession?.();
   }
   function ensureAccountCache(accountKey, profile, firebaseUser){
     window.loadAccountState?.();
