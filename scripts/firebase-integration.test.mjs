@@ -21,6 +21,7 @@ import {listPendingCampaignCharacterLinks,reviewCampaignCharacterLink} from '../
 import {changeCampaignCharacterLifecycle,listCampaignCharacterLifecycle} from '../functions/campaignCharacterLifecycle.mjs';
 import {issueSecureCampaignInvitation,assertSecureInvitationEligible} from '../functions/campaignSecureInvitations.mjs';
 import {listSecureCampaignInvitations,changeSecureCampaignInvitation} from '../functions/campaignInvitationManager.mjs';
+import {previewSecureCampaignInvitation,acceptSecureCampaignInvitation} from '../functions/campaignInvitationAcceptance.mjs';
 import {browserCampaignLink,browserOwnedSubscription,browserCampaignSubscription} from './helpers/campaign-link-harness.mjs';
 import {encounterPlayerRoster} from '../src/state/campaignCharacterRecords.mjs';
 import '../js/character-access.js';
@@ -1430,4 +1431,79 @@ test('Phase 6.2: expired listing is metadata-only and no source or character cha
   assert.equal((await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data().status,'active');
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().ownerUid,'alice');
   assert.equal((await db.doc('campaigns/c/members/bob').get()).exists,false);
+});
+
+test('Phase 6.3: verified email invite creates pending request, never grants membership before review',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,partySize:5,
+    joinPolicy:{joinRequestsOpen:true,autoApprove:true}
+  });
+  const signingKey='firebase-acceptance-secret-'.repeat(2);
+  const issued=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'phase-6-3-invite-00000001',
+    type:'email',recipientEmail:'Eve@example.COM',
+    roleOffered:'co-gm',expiresInHours:48,maxUses:1
+  },{signingKey,now:new Date('2026-11-09T04:00:00.000Z')});
+  const source='campaigns/c/invitations/'+issued.inviteId;
+  const data={campaignId:'c',inviteId:issued.inviteId,token:issued.token};
+  const identity={uid:'eve',email:'eve@example.com',emailVerified:true};
+  const preview=await previewSecureCampaignInvitation(db,identity,data,{
+    signingKey,now:new Date('2026-11-09T05:00:00.000Z')
+  });
+  assert.equal(preview.roleOffered,'co-gm');
+  assert.equal(preview.requiresGMApproval,true);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  await assert.rejects(acceptSecureCampaignInvitation(db,{
+    ...identity,emailVerified:false
+  },data,{signingKey,now:new Date('2026-11-09T05:00:00.000Z')}),/unavailable/);
+  const request=await acceptSecureCampaignInvitation(db,identity,data,{
+    signingKey,now:new Date('2026-11-09T05:00:00.000Z')
+  });
+  assert.equal(request.status,'pending');
+  assert.equal(request.offeredRole,'co-gm');
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).data().source,'secure-invite');
+  assert.equal((await db.doc(source).get()).data().status,'exhausted');
+  assert.equal((await db.doc(source).get()).data().usedCount,1);
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).exists,false);
+  assert.equal((await db.doc('campaignMemberProjections/eve/campaigns/c').get()).exists,false);
+  assert.equal((await db.doc('campaigns/c').get()).data().roles.eve,undefined);
+  const replay=await acceptSecureCampaignInvitation(db,identity,data,{
+    signingKey,now:new Date('2026-11-11T05:00:00.000Z')
+  });
+  assert.equal(replay.alreadyExists,true);
+  assert.equal((await db.doc(source).get()).data().usedCount,1);
+  for(const uid of ['gm','alice','eve']){
+    await assertFails(getDoc(doc(user(uid),source+'/claims/eve')));
+    await assertFails(setDoc(doc(user(uid),source+'/claims/eve'),{status:'approved'}));
+    await assertFails(updateDoc(doc(user(uid),'campaigns/c/joinRequests/eve'),{status:'approved'}));
+  }
+  const reviewed=await reviewCampaignJoinRequest(db,'gm',{
+    campaignId:'c',requestUid:'eve',decision:'approve',expectedRevision:1
+  });
+  assert.equal(reviewed.status,'approved');
+  assert.equal((await db.doc('campaigns/c/members/eve').get()).data().role,'player');
+  assert.equal((await db.doc('campaignMemberProjections/eve/campaigns/c').get()).data().role,'player');
+});
+
+test('Phase 6.3: revocation and exhausted sharing block new claims and preserve campaign roster',async()=>{
+  await db.doc('campaigns/c').update({
+    membershipSchemaVersion:2,joinPolicy:{joinRequestsOpen:true}
+  });
+  const signingKey='firebase-acceptance-secret-'.repeat(2);
+  const issued=await issueSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',requestId:'phase-6-3-invite-00000002',
+    type:'share-link',roleOffered:'player',expiresInHours:24,maxUses:1
+  },{signingKey,now:new Date('2026-11-09T04:00:00.000Z')});
+  const data={campaignId:'c',inviteId:issued.inviteId,token:issued.token};
+  const before=(await db.doc('campaigns/c').get()).data();
+  await changeSecureCampaignInvitation(db,'gm',{
+    campaignId:'c',inviteId:issued.inviteId,
+    action:'revoke',expectedRevision:1
+  },{now:new Date('2026-11-09T04:10:00.000Z')});
+  await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'eve'},data,{
+    signingKey,now:new Date('2026-11-09T04:15:00.000Z')
+  }),/unavailable/);
+  assert.equal((await db.doc('campaigns/c/joinRequests/eve').get()).exists,false);
+  assert.deepEqual((await db.doc('campaigns/c').get()).data(),before);
+  assert.equal((await db.doc('campaigns/c/invitations/'+issued.inviteId).get()).data().usedCount,0);
 });
