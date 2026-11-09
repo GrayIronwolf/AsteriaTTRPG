@@ -27,6 +27,19 @@ jobs:
       - run: node scripts/test-xp-realtime-sync.js
       - run: node --test scripts/data-sync-regression.test.mjs
       - run: npm run test:firebase
+      - name: Exercise isolated Account ID release packaging (offline, no cloud)
+        run: |
+          node scripts/account-id-release-package.mjs --stage-ci
+          npm install --prefix "$RUNNER_TEMP/asteria-account-id-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-account-id-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-account-id-release/functions/index.mjs"
+          (cd "$RUNNER_TEMP/asteria-account-id-release/functions" && npm pack --dry-run --json > "$RUNNER_TEMP/asteria-account-id-pack-manifest.json")
+          node scripts/account-id-release-cli-verify.mjs --verify-archive
+      - name: Verify isolated Firebase CLI dependencies (offline)
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-account-id-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-account-id-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+          node scripts/account-id-release-cli-verify.mjs --check
       - run: npm run build
       - name: Verify committed website bundle matches source
         run: git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
