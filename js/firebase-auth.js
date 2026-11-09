@@ -2002,6 +2002,22 @@ const firebasePublicApi = {
       linkId,sourceCharacterId,lifecycleAction:action,expectedRevision
     })).data;
   },
+  previewSecureCampaignInvitation: async function(campaignId,inviteId,token){
+    if(!functionsClient||!currentUser)throw new Error('Sign in to review this invitation.');
+    if(window.AsteriaFeatureFlags?.secureInvitationAcceptance!==true)
+      throw new Error('Secure invitation acceptance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'preview',campaignId,inviteId,token
+    })).data;
+  },
+  acceptSecureCampaignInvitation: async function(campaignId,inviteId,token){
+    if(!functionsClient||!currentUser)throw new Error('Sign in to accept an invitation.');
+    if(window.AsteriaFeatureFlags?.secureInvitationAcceptance!==true)
+      throw new Error('Secure invitation acceptance is not activated.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'accept',campaignId,inviteId,token
+    })).data;
+  },
   issueSecureCampaignInvitation: async function(request){
     if(!functionsClient||!currentUser)
       throw new Error('Sign in as the campaign owner.');
