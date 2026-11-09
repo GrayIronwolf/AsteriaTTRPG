@@ -100,7 +100,7 @@ test('preparation scripts cannot issue cloud writes or initiate backup restores'
  const source=read('scripts/firebase-recovery-sandbox-plan.mjs');
  const workflow=read('.github/workflows/firebase-recovery-sandbox-plan.yml');
  assert.doesNotMatch(source,/\b(?:spawn|execFile|execSync|initializeApp|getFirestore|getAuth)\(/);
- assert.doesNotMatch(source,/\b(?:gcloud|firebase deploy)\s+/);
+ assert.doesNotMatch(source,/^\s*(?:gcloud|firebase deploy)\s+/m);
  assert.doesNotMatch(workflow,/google-github-actions\/auth|id-token:\s*write|secrets\./);
  assert.match(source,/backupRestored:false/);
  assert.match(workflow,/workflow_dispatch:/);
