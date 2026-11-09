@@ -15,7 +15,7 @@ export function inspectAccountIdProductionFinalization(reader=read){
   const rules=reader('firestore.rules');
   const legacy=reader('functions/accountIdentityLegacy.mjs');
   const cli=reader('scripts/account-id-legacy-operator.mjs');
-  const workflow=reader('.github/workflows/account-id-release.yml');
+  const workflow=reader('.github/workflows/firebase-deploy.yml');
   const firebase=JSON.parse(reader('.firebaserc'));
   const tests=JSON.parse(reader('package.json'));
   const checks=[
@@ -42,8 +42,13 @@ export function inspectAccountIdProductionFinalization(reader=read){
       legacy.includes('inspectLegacyAccountIdentity')&&
       !api.includes('backfillLegacyAccountIdentity')),
     check('manual-release-workflow-only',
-      workflow.startsWith('name: Asteria Account ID release (manual, gated)\non:\n  workflow_dispatch:')&&
+      workflow.startsWith('name: Deploy Firebase backend (manual)\non:\n  workflow_dispatch:')&&
+      workflow.includes('          - account-id-inventory')&&
+      workflow.includes('          - account-id-callable-deploy')&&
+      workflow.includes("inputs.operation == 'account-id-inventory'")&&
+      workflow.includes("inputs.operation == 'account-id-callable-deploy'")&&
       workflow.includes("inputs.production_confirmation == 'DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE'")&&
+      workflow.includes("inputs.production_confirmation == 'DEPLOY-ASTERIA-PRODUCTION'")&&
       !/^\s{2}(push|pull_request|schedule|workflow_run):/m.test(workflow)),
     check('account-id-callable-only-deploy',
       workflow.includes('--only functions:asteria:asteriaAccountIdentity')&&
