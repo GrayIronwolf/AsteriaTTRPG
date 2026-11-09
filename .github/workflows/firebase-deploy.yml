@@ -10,9 +10,11 @@ on:
         options:
           - auth-check
           - backup-audit
+          - campaign-backend-inventory
+          - campaign-backend-deploy
           - deploy
       production_confirmation:
-        description: 'For deploy only, type DEPLOY-ASTERIA-PRODUCTION (leave blank for auth-check)'
+        description: 'For deploy type DEPLOY-ASTERIA-PRODUCTION; for campaign-backend-deploy type DEPLOY-ASTERIA-CAMPAIGN-BACKEND. Leave blank for audits.'
         required: false
         type: string
         default: ''
@@ -126,3 +128,100 @@ jobs:
           service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
       - name: Deploy reviewed backend to the explicit production project
         run: npx firebase deploy --project asteria-ttrpg --only functions,firestore,storage --non-interactive
+
+  campaign_backend_inventory:
+    name: Campaign backend callable inventory (read-only)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-backend-inventory'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate using restricted GitHub Workload Identity (read-only)
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Compare callable inventory without reading user data
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-functions.txt"
+          {
+            echo '## Asteria campaign backend inventory (read-only)'
+            echo 'Project: asteria-ttrpg | Region: us-central1'
+            echo 'No deployment, Security Rules change, feature activation or migration occurred.'
+            echo ''
+            echo '| Callable | Cloud Functions inventory |'
+            echo '| --- | --- |'
+            for fn in asteriaAction asteriaInvite asteriaCampaignUCN asteriaMembershipPreparation asteriaCampaignAccessCutover asteriaCampaignJoinRequest asteriaCampaignJoinReview asteriaSecureInvitation asteriaCampaignNotifications asteriaCampaignEmailInvitations; do
+              if grep -Eq "(^|/)${fn}$" "$RUNNER_TEMP/asteria-functions.txt"; then
+                echo "| ${fn} | Listed |"
+              else
+                echo "| ${fn} | Not listed |"
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_backend_deploy:
+    name: Separately approved campaign functions-only release
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-backend-deploy' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-CAMPAIGN-BACKEND'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Check dependencies and production rollout guards
+        run: |
+          npm run audit:production
+          npm run test:rollout
+      - run: npm test
+      - run: npm run test:firebase
+      - name: Authenticate using restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Confirm the existing legacy callables are present (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-functions.txt"
+          grep -Eq '(^|/)asteriaAction$' "$RUNNER_TEMP/asteria-functions.txt"
+          grep -Eq '(^|/)asteriaInvite$' "$RUNNER_TEMP/asteria-functions.txt"
+      - name: Deploy only five staged campaign callables (no existing functions, rules or storage)
+        run: >
+          npx firebase deploy --project asteria-ttrpg
+          --only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview"
+          --non-interactive
+      - name: Record deployment scope
+        run: |
+          echo '## Separately approved, functions-only Asteria campaign release' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Five campaign callables only; no legacy callable, Firestore rules, indexes, Storage rules, website, feature flag, email sender or migration was deployed by this job.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This step does not establish production readiness for public feature activation.' >> "$GITHUB_STEP_SUMMARY"
