@@ -32,7 +32,8 @@ test('missing backend Auth cutoff or public legacy access fails closed',()=>{
 test('release job must require manual approval and scoped callable-only deployment',()=>{
  assert.equal(inspectAccountIdProductionFinalization(modify(
    '.github/workflows/account-id-release.yml',
-   'DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE','NO_APPROVAL')).sourceChecksPassed,false);
+   "inputs.production_confirmation == 'DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE'",
+   "inputs.production_confirmation == 'NO_APPROVAL'")).sourceChecksPassed,false);
  assert.equal(inspectAccountIdProductionFinalization(modify(
    '.github/workflows/account-id-release.yml',
    '--only functions:asteria:asteriaAccountIdentity',
