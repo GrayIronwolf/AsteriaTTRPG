@@ -21,8 +21,9 @@ function fixture(){
         name.startsWith(ref.path+'/')&&!name.slice(ref.path.length+1).includes('/'))
         .map(([name,data])=>({id:name.slice(ref.path.length+1),
           data:()=>clone(data),ref:{path:name}}));
-      rows.sort((a,b)=>new Date(b.data().createdAt)-new Date(a.data().createdAt)||
-        a.id.localeCompare(b.id));
+      if(ref.filter)rows=rows.filter(row=>row.data()[ref.filter[0]]===ref.filter[2]);
+      rows.sort((a,b)=>(new Date(b.data().createdAt).getTime()||0)-
+        (new Date(a.data().createdAt).getTime()||0)||a.id.localeCompare(b.id));
       if(ref.cursor)rows=rows.slice(rows.findIndex(row=>row.id===ref.cursor)+1);
       return {docs:rows.slice(0,ref.limitSize??rows.length)};
     }
@@ -33,6 +34,7 @@ function fixture(){
     collection:path=>({
       path,query:true,
       orderBy(){return this;},
+      where(field,operator,value){return {...this,filter:[field,operator,value]};},
       limit(limitSize){return {...this,limitSize};},
       startAfter(snap){return {...this,cursor:snap.data().notificationId};},
       async get(){return read(this);}
