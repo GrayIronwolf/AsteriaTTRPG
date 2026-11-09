@@ -42,7 +42,8 @@ test('Private notification rendering uses accessible states and safe DOM text',(
   assert.match(source,/api\.getUser\?\.\(\)\?\.uid===uid/);
   assert.match(source,/api\.markCampaignNotificationRead\(notice\.notificationId\)/);
   assert.match(source,/body\.textContent=String\(notice\.body/);
-  assert.doesNotMatch(source,/innerHTML|localStorage|sessionStorage|Notification\(/);
+  const executable=source.split('\n').filter(line=>!line.trim().startsWith('//')).join('\n');
+  assert.doesNotMatch(executable,/innerHTML|localStorage|sessionStorage|Notification\(/);
 });
 
 test('Roster and GM manager remain view-only except existing gated actions',()=>{
