@@ -12,7 +12,7 @@ const user=(uid='alice',created='2026-11-09T11:59:00.000Z')=>({
 function fixture(initial={}){
   const records=new Map(Object.entries(initial));
   let lock=Promise.resolve();
-  const db={records,doc:path=>({path}),runTransaction(callback){
+  const db={records,doc:path=>({path,get:async()=>({exists:records.has(path),data:()=>structuredClone(records.get(path))})}),runTransaction(callback){
     const fn=async()=>{
       const writes=[];
       const tx={
