@@ -278,7 +278,11 @@ check('Appearance settings include solid backgrounds and five independent colour
 check('Home reset clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('showPublicHome'));
 check('Navigation shell uses solid blue-gray panels', stylesCss.includes('--asteria-shell:#17242d') && stylesCss.includes('background:var(--asteria-shell)!important') && stylesCss.includes('overflow:hidden!important'));
 check('Settings drawer opens below the top panel', stylesCss.includes('top:var(--core-header-height)!important') && appJs.includes('function toggleSettings()') && appJs.includes("$('shade').onclick=closeSettings"));
-check('Authenticated top action logs out', authBridgeJs.includes("login.textContent = 'Logout'") && coreShellJs.includes("window.logout?.()"));
+check('Authenticated top action opens Account menu with existing Log Out action',
+  authBridgeJs.includes("login.textContent = 'Account'") &&
+  authBridgeJs.includes("window.AsteriaAccountMenu?.toggle?.()") &&
+  fs.readFileSync(path.join(root,'js/asteria-account-menu.js'),'utf8').includes("window.logout?.()") &&
+  coreShellJs.includes("window.logout?.()"));
 check('Bloodhunter dashboard resource is wired', html.includes('id="pBPResource"') && appJs.includes('function isBloodhunter(c)') && appJs.includes("bp:'pBPAmount'"));
 check('Bloodhunter talent triggers update BP', ['bloodhunterBPGainForTalent','applyBloodhunterTalentBP','talent-bp-trigger'].every(token => appJs.includes(token)) && inventoryWorkflowCss.includes('.talent-bp-trigger'));
 check('Dashboard quick items use four inventory slots', html.includes('id="dashboardQuickItems"') && appJs.includes('function renderDashboardQuickItems()') && appJs.includes('ASTERIA_V133_QUICK_SLOTS.map'));
