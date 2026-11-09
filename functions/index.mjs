@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { asteriaResendApiKeySecret } from './campaignEmailSecrets.mjs';
@@ -150,6 +151,22 @@ export const asteriaCampaignEmailInvitations=onCall({
       signingKey:secureInvitationSigningKey.value(),
       apiKey:asteriaResendApiKeySecret.value()
     };
+    if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'){
+      options.notifyAcceptedEmail=async({
+        db:store,campaignId,campaignName,inviteId,recipientEmail,now
+      })=>{
+        let user;
+        try{user=await getAuth().getUserByEmail(recipientEmail);}
+        catch{return;}
+        if(!user?.emailVerified||
+          user.email?.trim().toLowerCase()!==recipientEmail)return;
+        const {notifyVerifiedEmailRecipient}=
+          await import('./campaignNotifications.mjs');
+        await notifyVerifiedEmailRecipient(store,user.uid,{
+          campaignId,campaignName,inviteId
+        },now);
+      };
+    }
     if(data.action==='send')
       return await sendCampaignEmailInvitations(db,uid,{
         campaignId:data.campaignId,requestId:data.requestId,
