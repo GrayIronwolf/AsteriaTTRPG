@@ -31,7 +31,7 @@
     "test:invitation-manager": "node --test scripts/campaign-invitation-manager-phase6-2.test.mjs",
     "test:invitation-acceptance": "node --test scripts/campaign-invitation-acceptance-phase6-3.test.mjs",
     "test:email-infrastructure": "node --test scripts/campaign-email-infrastructure-phase7-1.test.mjs",
-    "test:email-invitations": "node --test scripts/campaign-email-invitations-phase7-2.test.mjs",
+    "test:email-invitations": "node --test scripts/campaign-email-invitations-phase7-2.test.mjs && node --check js/clean-compendium.js && node --check js/firebase-auth.js",
     "test:firebase": "firebase emulators:exec --project demo-asteria --only firestore,auth,storage \"node --test scripts/firebase-integration.test.mjs\"",
     "emulators": "firebase emulators:start --project demo-asteria",
     "test:inputs": "node --test scripts/manual-number-inputs.test.mjs",
