@@ -70,7 +70,7 @@ function validSource(source,campaignId,actorUid,email){
     source.type!=='email'||source.maxUses!==1||
     source.usedCount!==0||
     source.recipientEmailNormalized!==email||
-    !['active','expired','revoked'].includes(source.status)||
+    source.status!=='active'||
     !Number.isSafeInteger(source.revision)||source.revision<1)
     throw Error('The selected invitation cannot be resent. Create a new invitation.');
 }
