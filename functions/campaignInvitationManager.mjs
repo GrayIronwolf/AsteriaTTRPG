@@ -52,6 +52,11 @@ function safeMetadata(invite,now){
     createdAt:validDate(invite.createdAt).toISOString(),
     expiresAt:validDate(invite.expiresAt).toISOString(),
     maxUses:invite.maxUses,usedCount:invite.usedCount,
+    deliveryStatus:invite.deliveryStatus||'not-sent',
+    deliveryAttemptCount:invite.deliveryAttemptCount||0,
+    deliveryUpdatedAt:invite.deliveryUpdatedAt?
+      validDate(invite.deliveryUpdatedAt)?.toISOString()||null:null,
+    resendOfInviteId:invite.resendOfInviteId||null,
     requiresGMApproval:true
   };
 }
