@@ -91,7 +91,7 @@ export function inspectPhase83Source(read=repoReader){
     result('v2-firestore-active-member-check',rules.includes('activeV2Member')&&
       rules.includes('membershipSchemaVersion')),
     result('v2-storage-membership-check',storage.includes('membershipSchemaVersion')&&
-      (storage.includes('activeV2Member')||storage.includes('activeMember')))
+      storage.includes('v2Member'))
   ];
   return {projectId:PROJECT,checks,staticChecksPassed:checks.every(x=>x.pass),
     productionEvidenceVerified:false,
