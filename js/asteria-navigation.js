@@ -239,8 +239,7 @@
       sidebarHomeButton:visible('home') || workspace&&mode==='dashboard',
       compendiumIndexButton:visible('compendiumLibrary') || visible('universal-compendium-shell'),
       characterForgeTop:visible('phase3GameplayShell') && byId('phase3GameplayShell')?.classList.contains('phase3-forge-shell'),
-      campaignsTop:workspace&&mode==='campaigns',
-      accountSettingsTop:workspace&&mode==='settings'
+      campaignsTop:workspace&&mode==='campaigns'
     };
     Object.entries(states).forEach(([id,current])=>{const button=byId(id);if(button){button.setAttribute('aria-current',current?'page':'false');button.classList.toggle('active',Boolean(current));}});
   }
@@ -257,8 +256,6 @@
       }
     });
     document.addEventListener('click',event=>{
-      const account=event.target.closest?.('#accountSettingsTop');
-      if(account){event.preventDefault();event.stopImmediatePropagation();closePanels();window.AsteriaWorkspace?.openDashboard?.('settings');return;}
       const link=event.target.closest?.('a[href^="#/compendium"]');
       if(link&&/^#\/compendium(?:\?|$)/.test(link.getAttribute('href'))){
         event.preventDefault();event.stopImmediatePropagation();const params=new URLSearchParams(link.getAttribute('href').split('?')[1]||'');

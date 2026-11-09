@@ -343,7 +343,7 @@ test('35. The modern shell shares responsive top navigation with the existing ut
   const html = read('index.html');
   const navigation = read('js/asteria-navigation.js');
   const styles = read('css/asteria-navigation.css');
-  ['settingsToggle','globalNavigation','mobileNavigationSlot','mobileAccountSlot','accountSettingsTop'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
+  ['settingsToggle','globalNavigation','mobileNavigationSlot','mobileAccountSlot','accountMenuSettings'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
   assert.doesNotMatch(html, /class="sidebar public-sidebar"/);
   assert.match(navigation, /media.addEventListener\('change',reflow\)/);
   assert.match(styles, /@media \(max-width:1200px\)/);

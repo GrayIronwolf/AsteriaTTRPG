@@ -28,7 +28,6 @@
     characterForgeTop:'long',
     campaignsTop:'long',
     loginToggle:'small',
-    accountSettingsTop:'standard',
     settingsToggle:'icon'
   });
   function buttonSize(element){

@@ -874,6 +874,17 @@ const firebasePublicApi = {
   getProfile:()=>currentProfile,
   // The My Profile view may display only a fresh server-read projection.
   // Never fall back to an offline cache or automatically allocate an ID.
+  // Authenticated self-service password reset. Never accept an arbitrary
+  // email from the menu or expose a user-selected password to browser code.
+  sendAccountPasswordReset: async function(){
+    const user=currentUser;
+    if(!auth || !user?.uid || auth.currentUser?.uid!==user.uid || !user.email)
+      throw new Error('Sign in to request password recovery.');
+    await sendPasswordResetEmail(auth,user.email);
+    if(currentUser?.uid!==user.uid)
+      throw new Error('Account changed during the reset request.');
+    return {ok:true};
+  },
   readAccountProfileForDisplay: async function(){
     if(!db||!currentUser?.uid)throw new Error('Sign in before viewing your profile.');
     const user=currentUser,uid=user.uid;

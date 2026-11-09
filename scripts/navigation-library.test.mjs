@@ -53,11 +53,11 @@ test('the library uses the authoritative visibility filter rather than exposing 
   const source=fs.readFileSync('js/asteria-navigation.js','utf8');
   assert.match(source,/visibleEntries\?\./);assert.doesNotMatch(source,/ASTERIA_UNIVERSAL_COMPENDIUM_INDEX/);
   const html=fs.readFileSync('index.html','utf8');assert.doesNotMatch(html,/class="sidebar public-sidebar"/);
-  for(const id of ['characterForgeTop','campaignsTop','accountSettingsTop','settingsToggle','loginToggle'])assert.equal((html.match(new RegExp(`id="${id}"`,'g'))||[]).length,1);
+  for(const id of ['characterForgeTop','campaignsTop','settingsToggle','loginToggle','accountMenuSettings'])assert.equal((html.match(new RegExp(`id="${id}"`,'g'))||[]).length,1);
 });
 test('selected navigation follows the visible workspace even when a legacy hash remains',()=>{
   const shown=new Set(['compendiumLibrary']);
-  const ids=['sidebarHomeButton','compendiumIndexButton','characterForgeTop','campaignsTop','accountSettingsTop'];
+  const ids=['sidebarHomeButton','compendiumIndexButton','characterForgeTop','campaignsTop'];
   const nodes=Object.fromEntries(ids.map(id=>[id,{attributes:{},setAttribute(name,value){this.attributes[name]=value;},classList:{toggle(){}}}]));
   for(const id of ['home','compendiumLibrary','universal-compendium-shell','asteria-workspace-shell','phase3GameplayShell'])nodes[id]={getClientRects:()=>shown.has(id)?[{}]:[],classList:{contains:()=>true}};
   nodes['auth-workspace-mode-filter']={value:'settings'};
@@ -68,7 +68,7 @@ test('selected navigation follows the visible workspace even when a legacy hash 
   assert.equal(nodes.sidebarHomeButton.attributes['aria-current'],'page');
   assert.equal(nodes.compendiumIndexButton.attributes['aria-current'],'false');
   shown.clear();shown.add('asteria-workspace-shell');syncNavigation();
-  assert.equal(nodes.accountSettingsTop.attributes['aria-current'],'page');
+  assert.equal(nodes.campaignsTop.attributes['aria-current'],'false');
   assert.equal(nodes.sidebarHomeButton.attributes['aria-current'],'false');
   assert.equal(nodes.compendiumIndexButton.attributes['aria-current'],'false');
 });

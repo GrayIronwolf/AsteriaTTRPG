@@ -10,7 +10,7 @@
   position:absolute;
   top:calc(100% + 12px);
   right:0;
-  width:250px;
+  width:270px;
   max-width:calc(100vw - 24px);
   padding:10px;
   display:flex;
@@ -67,4 +67,22 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .asteria-account-menu button { transition:none; }
+}
+
+/* Phase 3.3 — grouped Account navigation and activity status. */
+.asteria-account-menu {gap:0;padding:8px 10px;}
+.asteria-account-menu-group {padding:6px 0 8px;}
+.asteria-account-menu-group+.asteria-account-menu-group {
+  border-top:1px solid #68879a55;margin-top:2px;padding-top:10px;
+}
+.asteria-account-menu-heading {
+  margin:0 0 4px;padding:0 12px;
+  font-size:.69rem;line-height:1.6;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:#a9c1d2;pointer-events:none;
+}
+.asteria-account-menu-group button {
+  gap:10px;justify-content:space-between;border-bottom:0;
+}
+.asteria-account-menu-meta {
+  font-size:.72rem;font-weight:500;color:#b4c5d1;white-space:nowrap;
 }
