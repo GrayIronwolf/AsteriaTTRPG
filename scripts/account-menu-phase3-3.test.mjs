@@ -98,7 +98,7 @@ test('password reset only targets current authenticated Firebase user',()=>{
   assert.match(firebase,/sendAccountPasswordReset: async function\(\)/);
   assert.match(firebase,/auth\.currentUser\?\.uid!==user\.uid/);
   assert.match(firebase,/sendPasswordResetEmail\(auth,user\.email\)/);
-  assert.match(security,/window\.AsteriaFirebase\.sendAccountPasswordReset\(\)/);
+  assert.match(security,/await api\.sendAccountPasswordReset\(\)/);
   assert.doesNotMatch(security,/password\s*=|localStorage|sessionStorage|sendPasswordResetEmail\(/);
 });
 test('existing account ID display and responsive controls remain unchanged',()=>{
