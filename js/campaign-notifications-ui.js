@@ -1,0 +1,121 @@
+// Phase 7.3 — account-scoped in-app notifications.
+// This isolated, feature-gated view preserves the existing dashboard artwork.
+// All data is served by the authenticated Firebase Callable, never Firestore
+// browser reads, localStorage, account mirrors or browser notifications.
+(function(root){
+  'use strict';
+  function render(grid){
+    if(root.AsteriaFeatureFlags?.campaignNotifications!==true||
+      !grid||!root.document)return;
+    const api=root.AsteriaFirebase;
+    if(!api?.isReady?.()||!api?.getUser?.()?.uid||
+      !api.listCampaignNotifications||!api.markCampaignNotificationRead)return;
+    const uid=api.getUser().uid;
+    const current=()=>host.isConnected&&api.isReady?.()&&
+      api.getUser?.()?.uid===uid&&
+      root.AsteriaFeatureFlags?.campaignNotifications===true;
+    const host=root.document.createElement('section');
+    host.className='workspace-link-panel workspace-campaign-notifications';
+    host.setAttribute('aria-label','Campaign notifications');
+    const heading=root.document.createElement('h3');
+    heading.textContent='Campaign Notifications';
+    const count=root.document.createElement('small');
+    count.setAttribute('aria-live','polite');
+    const actions=root.document.createElement('div');
+    actions.className='workspace-join-review-actions';
+    const refresh=root.document.createElement('button');
+    refresh.type='button';
+    refresh.textContent='Refresh Notifications';
+    const previous=root.document.createElement('button');
+    previous.type='button';previous.textContent='Previous';previous.disabled=true;
+    const next=root.document.createElement('button');
+    next.type='button';next.textContent='Next';next.disabled=true;
+    const list=root.document.createElement('div');
+    list.className='workspace-invite-list';
+    const status=root.document.createElement('p');
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    actions.append(refresh,previous,next);
+    host.append(heading,count,actions,list,status);
+    grid.prepend(host);
+    const cursors=[null];
+    let page=0,forward=null,busy=false;
+    const setBusy=value=>{
+      busy=value;
+      refresh.disabled=value;
+      previous.disabled=value||page===0;
+      next.disabled=value||!forward;
+    };
+    async function load(){
+      if(busy||!current())return;
+      setBusy(true);status.textContent='Loading notifications...';
+      try{
+        const response=await api.listCampaignNotifications(cursors[page]);
+        if(!current())return;
+        forward=response.nextCursor||null;
+        list.replaceChildren();
+        const items=Array.isArray(response.notifications)?response.notifications:[];
+        count.textContent=(Number(response.unreadShown)||0)+' unread on this page';
+        if(!items.length){
+          const empty=root.document.createElement('p');
+          empty.textContent='No campaign notifications on this page.';
+          list.appendChild(empty);
+        }
+        for(const notice of items){
+          const row=root.document.createElement('article');
+          row.className='workspace-join-review-row';
+          const name=root.document.createElement('strong');
+          name.textContent=String(notice.title||'Campaign update');
+          const body=root.document.createElement('p');
+          body.textContent=String(notice.body||'');
+          const meta=root.document.createElement('small');
+          meta.textContent=String(notice.createdAt||'')+
+            (notice.readAt?' · Read':' · Unread');
+          row.append(name,body,meta);
+          if(!notice.readAt){
+            const button=root.document.createElement('button');
+            button.type='button';
+            button.textContent='Mark as Read';
+            button.addEventListener('click',async()=>{
+              if(busy||!current())return;
+              setBusy(true);status.textContent='Marking as read...';
+              try{
+                await api.markCampaignNotificationRead(notice.notificationId);
+                if(current())status.textContent='Notification marked as read.';
+              }catch(error){
+                if(current())status.textContent=error?.message||
+                  'Could not update notification.';
+              }finally{
+                setBusy(false);
+                if(current())void load();
+              }
+            });
+            row.appendChild(button);
+          }
+          list.appendChild(row);
+        }
+        status.textContent=items.length+' notification(s) displayed.';
+      }catch(error){
+        if(current()){
+          list.replaceChildren();
+          status.textContent=error?.message||'Could not load notifications.';
+        }
+      }finally{
+        setBusy(false);
+      }
+    }
+    refresh.addEventListener('click',()=>{void load();});
+    previous.addEventListener('click',()=>{
+      if(busy||page===0)return;
+      page--;void load();
+    });
+    next.addEventListener('click',()=>{
+      if(busy||!forward)return;
+      page++;
+      cursors[page]=forward;
+      cursors.length=page+1;
+      void load();
+    });
+    void load();
+  }
+  root.AsteriaCampaignNotificationsUI=Object.freeze({render});
+})(typeof window!=='undefined'?window:{});
