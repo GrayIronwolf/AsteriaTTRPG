@@ -2018,6 +2018,24 @@ const firebasePublicApi = {
       action:'accept',campaignId,inviteId,token
     })).data;
   },
+  sendCampaignEmailInvitations: async function(request){
+    if(!functionsClient||!currentUser)
+      throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.emailInvitationControls!==true)
+      throw new Error('Email invitations are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignEmailInvitations',{
+      timeout:65000
+    })({action:'send',...request})).data;
+  },
+  resendCampaignEmailInvitation: async function(request){
+    if(!functionsClient||!currentUser)
+      throw new Error('Sign in as the campaign owner.');
+    if(window.AsteriaFeatureFlags?.emailInvitationControls!==true)
+      throw new Error('Email invitations are not activated.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignEmailInvitations',{
+      timeout:65000
+    })({action:'resend',...request})).data;
+  },
   issueSecureCampaignInvitation: async function(request){
     if(!functionsClient||!currentUser)
       throw new Error('Sign in as the campaign owner.');
