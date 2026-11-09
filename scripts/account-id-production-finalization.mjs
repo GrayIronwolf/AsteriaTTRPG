@@ -52,6 +52,10 @@ export function inspectAccountIdProductionFinalization(reader=read){
       workflow.includes("inputs.production_confirmation == 'DEPLOY-ASTERIA-PRODUCTION'")&&
       !/^\s{2}(push|pull_request|schedule|workflow_run):/m.test(workflow)),
     check('account-id-callable-only-deploy',
+      accountDeployJob.includes('node scripts/account-id-scoped-deploy.mjs --prepare')&&
+      accountDeployJob.includes('node --check functions/accountIdentityScopedDeployEntry.mjs')&&
+      accountDeployJob.includes("ASTERIA_ACCOUNT_ID_SCOPED_DEPLOY: '1'")&&
+      accountDeployJob.includes('ASTERIA_DEPLOY_PROJECT: asteria-ttrpg')&&
       accountDeployJob.includes('--only functions:asteria:asteriaAccountIdentity')&&
       !accountDeployJob.includes('--only functions,firestore,storage')&&
       !accountDeployJob.includes('backfillLegacyAccountIdentity(')),
