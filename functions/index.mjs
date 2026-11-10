@@ -356,6 +356,48 @@ export const asteriaAccountUsername=onCall({
   }
 });
 
+// Server-authorized username change: preserves UID/number and reserves old handles.
+// This is independent of first-time Account ID issuance and never reallocates numbers.
+export const asteriaAccountUsername=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to continue.');
+  const data=request.data;
+  if(!data||typeof data!=='object'||Array.isArray(data)||
+     Object.keys(data).sort().join(',')!=='action,expectedAccountId,username'||
+     data.action!=='rename'||typeof data.username!=='string'||
+     typeof data.expectedAccountId!=='string')
+    throw new HttpsError('invalid-argument','Invalid username change request.');
+  try{
+    const user=await getAuth().getUser(request.auth.uid);
+    if(user.disabled)throw new Error('This account is inactive.');
+    const {renameAccountIdentity}=await import('./accountIdentityUsername.mjs');
+    const updated=await renameAccountIdentity(getFirestore(),request.auth.uid,data.username,{
+      expectedAccountId:data.expectedAccountId
+    });
+    // Auth displayName is a cache of the Firestore-backed canonical username.
+    // Best effort: if Auth syncing fails, the verified ID transaction remains
+    // intact and the next profile refresh still shows the correct username.
+    try{
+      if(user.displayName!==updated.username)
+        await getAuth().updateUser(request.auth.uid,{displayName:updated.username});
+    }catch(error){
+      console.error('Account username Auth display cache sync failed.',{uid:request.auth.uid,code:error?.code});
+    }
+    return {ok:true,username:updated.username,accountId:updated.accountId,
+      accountNumber:updated.accountNumber,unchanged:updated.unchanged};
+  }catch(error){
+    // No registry records, UIDs or email addresses in public errors.
+    if(/unavailable/.test(error?.message||''))
+      throw new HttpsError('already-exists','This username and account number combination is unavailable.');
+    if(/3-24/.test(error?.message||''))
+      throw new HttpsError('invalid-argument','Username must be 3–24 letters, numbers, dots, underscores or hyphens.');
+    if(/Refresh your Account Profile|Your Account ID changed/.test(error?.message||''))
+      throw new HttpsError('failed-precondition','Refresh your Account Profile and try again.');
+    throw new HttpsError('failed-precondition','Username change could not be completed. Try refreshing your profile.');
+  }
+});
+
 // Phase 1.3: authenticated, server-controlled Account ID finalization.
 // Rollout remains disabled unless an explicit backend flag is enabled.
 // No target UID or username is accepted from the browser.
