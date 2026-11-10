@@ -329,6 +329,33 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
   }
 });
 
+// Authenticated username edits keep a permanent UID and five-digit number.
+export const asteriaAccountUsername=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to continue.');
+  const input=request.data;
+  if(!input||typeof input!=='object'||Array.isArray(input)||
+     Object.keys(input).sort().join(',')!=='expectedAccountId,username')
+    throw new HttpsError('invalid-argument','Invalid username change request.');
+  try{
+    const authUser=await getAuth().getUser(request.auth.uid);
+    if(authUser.disabled)throw new Error('Account is inactive.');
+    const {renameAccountIdentity}=await import('./accountIdentityUsername.mjs');
+    const result=await renameAccountIdentity(getFirestore(),request.auth.uid,input.username,{
+      expectedAccountId:input.expectedAccountId
+    });
+    // The Auth display name is presentation-only and must match the verified
+    // username recorded in the server transaction. If this external sync fails,
+    // the database remains authoritative and will be retried on next edit.
+    try{await getAuth().updateUser(request.auth.uid,{displayName:result.username});}
+    catch(error){console.warn('Auth display name sync deferred for account:',request.auth.uid);}
+    return result;
+  }catch(error){
+    throw new HttpsError('failed-precondition',error.message||'Username change could not be completed.');
+  }
+});
+
 // Phase 1.3: authenticated, server-controlled Account ID finalization.
 // Rollout remains disabled unless an explicit backend flag is enabled.
 // No target UID or username is accepted from the browser.
