@@ -44,33 +44,31 @@ if ! gcloud auth print-access-token --impersonate-service-account="$sa" >/dev/nu
   exit 1
 fi
 
-echo "Configuring keyless Application Default Credentials for Firebase Admin..."
-if ! gcloud auth application-default login --impersonate-service-account="$sa"; then
-  echo "Service account credential setup failed; no migration or activation started." >&2
+# Cloud Shell sets CLOUDSDK_CONFIG to a per-tab temporary directory. Do not
+# assume ~/.config/gcloud: find the effective gcloud directory instead.
+config_dir="$(gcloud info --format='value(config.paths.global_config_dir)')"
+if [[ ! "$config_dir" = /* || -z "$config_dir" ]]; then
+  echo "Cannot determine Cloud Shell's active gcloud config directory." >&2
   exit 1
 fi
+adc_path="$config_dir/application_default_credentials.json"
 
-# The Admin SDK's Firestore client requires ADC, not an arbitrary token object.
-export ASTERIA_ACCOUNT_ID_EXPECTED_SERVICE_ACCOUNT="$sa"
-if ! env -u GOOGLE_APPLICATION_CREDENTIALS node --input-type=module -e '
-  import {readFileSync} from "node:fs";
-  import {join} from "node:path";
-  const path=join(process.env.HOME||"", ".config/gcloud/application_default_credentials.json");
-  let data;
-  try { data=JSON.parse(readFileSync(path,"utf8")); } catch { process.exit(2); }
-  const account=process.env.ASTERIA_ACCOUNT_ID_EXPECTED_SERVICE_ACCOUNT;
-  const target=data?.service_account_impersonation_url||"";
-  const ok=data?.type==="impersonated_service_account" &&
-    (target.includes(account+":generateAccessToken") ||
-     target.includes(encodeURIComponent(account)+":generateAccessToken"));
-  if(!ok)process.exit(2);
-'; then
-  echo "The Firebase Admin credential did not match the approved service account." >&2
-  echo "No migration or activation started." >&2
-  exit 1
+# Reuse a verified impersonated ADC file to avoid unnecessary OAuth prompts.
+if node scripts/account-id-cloud-shell-credentials.mjs "$adc_path" "$sa" >/dev/null 2>&1; then
+  echo "Reusing existing verified, keyless Firebase Admin credentials."
+else
+  echo "Configuring keyless Application Default Credentials for Firebase Admin..."
+  if ! gcloud auth application-default login --impersonate-service-account="$sa"; then
+    echo "Google credential setup failed; no migration or activation started." >&2
+    exit 1
+  fi
+  if ! node scripts/account-id-cloud-shell-credentials.mjs "$adc_path" "$sa"; then
+    echo "The saved Firebase Admin credentials did not match the approved account." >&2
+    echo "No migration or activation started." >&2
+    exit 1
+  fi
 fi
-unset ASTERIA_ACCOUNT_ID_EXPECTED_SERVICE_ACCOUNT
 
 echo "Credentials verified. Checking production accounts before any writes..."
-env -u GOOGLE_APPLICATION_CREDENTIALS \
+GOOGLE_APPLICATION_CREDENTIALS="$adc_path" \
   node scripts/account-id-coordinated-release.mjs --project "$PROJECT"
