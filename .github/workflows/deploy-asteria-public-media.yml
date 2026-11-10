@@ -63,10 +63,11 @@ jobs:
           npm run build
           git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
           node --test scripts/split-asteria-public-media.test.mjs
-          mkdir -p .asteria-deploy
-          node scripts/build-lean-pages.mjs "$PWD/.asteria-deploy/pages" "$RUNNER_TEMP/lean-report.json"
-          node scripts/split-asteria-public-media.mjs "$PWD/.asteria-deploy/pages" "$PWD/.asteria-deploy/media" "$RUNNER_TEMP/split-report.json"
+          node scripts/build-lean-pages.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/lean-report.json"
+          node scripts/split-asteria-public-media.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/asteria-media" "$RUNNER_TEMP/split-report.json"
           node -e "const r=require(process.argv[1]);if(r.mediaFiles<100||r.mediaBytes<130*1048576)throw Error('Media package incomplete');" "$RUNNER_TEMP/split-report.json"
+          mkdir -p .asteria-deploy
+          cp -R "$RUNNER_TEMP/asteria-media" .asteria-deploy/media
       - name: Deploy only the publicMedia target, not Functions, Firestore, Storage or default Hosting
         if: inputs.operation == 'publish-media'
         run: npx firebase deploy --project asteria-ttrpg --config firebase.public-media.json --only hosting:publicMedia --non-interactive
