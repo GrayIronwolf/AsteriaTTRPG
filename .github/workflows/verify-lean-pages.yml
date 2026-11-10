@@ -1,0 +1,48 @@
+name: Verify lean Pages package (no deployment)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-lean-pages.mjs'
+      - '.github/workflows/verify-lean-pages.yml'
+      - '.github/workflows/deploy-lean-pages.yml'
+      - 'docs/ASTERIA-LEAN-PAGES-RELEASE.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Confirm committed runtime bundles match source
+        run: |
+          npm run build
+          git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+      - name: Stage and audit complete runtime package (does not deploy)
+        run: |
+          node scripts/build-lean-pages.mjs "$RUNNER_TEMP/asteria-lean-pages" "$RUNNER_TEMP/asteria-pages-report.json"
+          test -f "$RUNNER_TEMP/asteria-lean-pages/index.html"
+          test -f "$RUNNER_TEMP/asteria-lean-pages/CNAME"
+          test ! -e "$RUNNER_TEMP/asteria-lean-pages/.github"
+          test ! -e "$RUNNER_TEMP/asteria-lean-pages/functions"
+          test ! -e "$RUNNER_TEMP/asteria-lean-pages/storage.rules"
+          test ! -e "$RUNNER_TEMP/asteria-lean-pages/package.json"
+      - name: Add runtime package audit summary
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/asteria-pages-report.json"; then
+            node -e "const x=require(process.argv[1]);const f=(n)=>(n/1048576).toFixed(1)+' MiB';console.log('Staged '+x.publishedFiles+' files, '+f(x.publishedBytes)+' total; '+x.staticReferenceFailureCount+' broken static references.');" "$RUNNER_TEMP/asteria-pages-report.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Attach package audit metadata (never the deployed website)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-pages-audit
+          path: ${{ runner.temp }}/asteria-pages-report.json
+          if-no-files-found: warn
