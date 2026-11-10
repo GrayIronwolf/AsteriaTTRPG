@@ -52,7 +52,7 @@ test('disable only changes issuance gate and preserves the configured canary',()
 test('failed inventory, wrong name, non-ACTIVE function and malformed mail fail closed',()=>{
   assert.throws(()=>proposedEnvironment(sample({}),'stage',{email:''}),/email required/);
   for(const f of [null,{...sample(),state:'FAILED'},{...sample(),name:'projects/other/locations/us-central1/functions/wrong'},
-    {...sample(),etag:''},{...sample(),serviceConfig:{}}])
+    {...sample(),etag:''},{...sample(),serviceConfig:null}])
     assert.throws(()=>proposedEnvironment(f,'disable'),/inventory incomplete/);
 });
 test('read-only status redacts email and env map; dispatch requires typed confirmation',async()=>{
@@ -82,4 +82,11 @@ test('read-only status redacts email and env map; dispatch requires typed confir
   assert.equal((await run({action:'status',token,api})).issuance,'DISABLED');
   assert.ok(!JSON.stringify(await run({action:'status',token,api})).includes(email));
   assert.ok(!JSON.stringify(await run({action:'status',token,api})).includes(token));
+});
+
+test('canary can stage when an ACTIVE Cloud Function has no environment variable map',()=>{
+  const f={name:NAME,state:'ACTIVE',etag:'opaque-version',serviceConfig:{}};
+  const p=proposedEnvironment(f,'stage',{email});
+  assert.equal(p.serviceConfig.environmentVariables.ASTERIA_ACCOUNT_IDS_ENABLED,'0');
+  assert.equal(p.serviceConfig.environmentVariables.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE,'canary');
 });
