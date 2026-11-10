@@ -21,6 +21,7 @@ test('active callable, disabled issuance and matching published rules are report
   assert.equal(result.functionState,'ACTIVE');
   assert.equal(result.issuance,'DISABLED');
   assert.equal(result.registrationCutoff,'NOT SET');
+  assert.equal(result.verifiedEmailCanary,'NOT SET');
   assert.equal(result.firestoreRules,'EXACT SOURCE MATCH');
   assert.equal(result.decision,'ACTIVATION NOT AUTHORISED');
   assert.equal(result.accountIdWrites,'NONE');
@@ -32,6 +33,7 @@ test('missing function inventory is not assumed safe',()=>{
   assert.equal(result.functionState,'NOT VERIFIED ACTIVE');
   assert.equal(result.issuance,'UNVERIFIED');
   assert.equal(result.registrationCutoff,'UNVERIFIED');
+  assert.equal(result.verifiedEmailCanary,'UNVERIFIED');
   assert.equal(result.firestoreRules,'UNVERIFIED');
 });
 
@@ -86,4 +88,17 @@ test('execution is restricted to manually dispatched production workflow on main
   for(const key of Object.keys(valid)){
     assert.throws(()=>requireAuthorizedContext({...valid,[key]:'unexpected'}));
   }
+});
+
+test('canary configuration is classified without printing email digest',()=>{
+  const digest='a'.repeat(64);
+  const report=audit(f({ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE:'canary',
+    ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256:digest}));
+  assert.equal(report.verifiedEmailCanary,'VERIFIED-EMAIL CANARY CONFIGURED');
+  assert.ok(!JSON.stringify(report).includes(digest));
+  assert.equal(audit(f({ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE:'general',
+    ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256:digest})).verifiedEmailCanary,
+  'INVALID OR INCOMPLETE');
+  assert.equal(audit(f({ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE:'canary'})).verifiedEmailCanary,
+  'INVALID OR INCOMPLETE');
 });

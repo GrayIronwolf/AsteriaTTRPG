@@ -35,6 +35,12 @@ export function inspectActivationState(func,release,ruleset,localRules) {
   const issuance=func===null ? 'UNVERIFIED' :
     flag==='1' ? 'ENABLED - REVIEW REQUIRED' :
     flag===undefined || flag==='' || flag==='0' ? 'DISABLED' : 'UNEXPECTED VALUE';
+  const mode=env?.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE;
+  const digest=env?.ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256;
+  const canary=func===null ? 'UNVERIFIED' :
+    mode===undefined || mode==='' ? 'NOT SET' :
+    mode==='canary' && typeof digest==='string' && /^[0-9a-f]{64}$/.test(digest) ?
+      'VERIFIED-EMAIL CANARY CONFIGURED' : 'INVALID OR INCOMPLETE';
   const cutoff=env?.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE;
   const cutoffState=func===null ? 'UNVERIFIED' :
     cutoff===undefined || cutoff==='' ? 'NOT SET' :
@@ -52,7 +58,7 @@ export function inspectActivationState(func,release,ruleset,localRules) {
       'EXACT SOURCE MATCH' : 'DIFFERENT - REVIEW REQUIRED';
   return Object.freeze({
     project:PROJECT,region:REGION,functionState,
-    issuance,registrationCutoff:cutoffState,firestoreRules:sourceStatus,
+    issuance,registrationCutoff:cutoffState,verifiedEmailCanary:canary,firestoreRules:sourceStatus,
     existingAccountReconciliation:'NOT PERFORMED',
     accountIdWrites:'NONE',
     decision:'ACTIVATION NOT AUTHORISED'
@@ -70,6 +76,7 @@ export function renderSummary(report) {
     '| Account ID callable | '+report.functionState+' |',
     '| Server-side new Account ID issuance | '+report.issuance+' |',
     '| Auth registration creation-time cutoff | '+report.registrationCutoff+' |',
+    '| Server-side verified-email canary | '+report.verifiedEmailCanary+' |',
     '| Published Firestore rules vs reviewed repo source | '+report.firestoreRules+' |',
     '| Existing user Auth/Firestore reconciliation | '+report.existingAccountReconciliation+' |',
     '| User records changed | '+report.accountIdWrites+' |',

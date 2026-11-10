@@ -86,6 +86,12 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
       registration.includes('accountIdRegistrationEnabled(window.AsteriaFeatureFlags)')),
     check('legacy-self-allocation-rejected',
       safeRegistrationBoundary),
+    check('server-side-verified-email-canary-required',
+      api.includes('ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE') &&
+      api.includes('ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256') &&
+      issuance.includes('assertAccountIdCanaryEligible(authUser,email,') &&
+      issuance.includes("rolloutMode!=='canary'") &&
+      issuance.includes('authUser?.emailVerified!==true')),
     check('account-id-profile-fresh-read-only',
       registration.includes("getDocFromServer(doc(db,'users',uid))")&&
       profile.includes('readAccountProfileForDisplay')&&

@@ -32,6 +32,8 @@ export function extractAccountIdCallable(source) {
     !body.endsWith('});')||
     !body.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")||
     !body.includes('ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE')||
+    !body.includes('ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE')||
+    !body.includes('ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256')||
     !body.includes('issueNewRegistrationAccountId(getFirestore(),firebaseUser,request.auth.uid,')||
     /defineSecret\(|ASTERIA_RESEND_API_KEY|asteriaCampaignEmailInvitations|asteriaSecureInvitation|ASTERIA_SECURE_INVITE_SIGNING_KEY/.test(body)||
     /^\s*import\s/m.test(body))

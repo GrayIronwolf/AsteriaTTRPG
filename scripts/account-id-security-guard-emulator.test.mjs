@@ -1,5 +1,6 @@
 import {before,after,beforeEach,test} from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails} from '@firebase/rules-unit-testing';
 import {doc,getDoc} from 'firebase/firestore';
@@ -12,9 +13,11 @@ import {inspectLegacyAccountIdentity,backfillLegacyAccountIdentity}
 const projectId='demo-asteria';
 const cutoff='2026-11-09T11:30:00.000Z';
 const now=new Date('2026-11-09T12:00:00.000Z');
+const canary=(email)=>({rolloutMode:'canary',
+  canaryEmailSha256:createHash('sha256').update(email).digest('hex')});
 let env,app,db;
 const authUser=(uid,createdAt,username='Asteria')=>({
-  uid,disabled:false,email:uid+'@example.test',displayName:username,
+  uid,disabled:false,emailVerified:true,email:uid+'@example.test',displayName:username,
   metadata:{creationTime:createdAt}
 });
 const profile=(uid,name)=>({uid,username:name,usernameLower:name.toLowerCase(),
@@ -31,7 +34,7 @@ test('legacy existing account cannot mint an ID despite a valid editable profile
   await db.doc('users/old').set(profile('old','Asteria'));
   await assert.rejects(issueNewRegistrationAccountId(db,
     authUser('old','2022-01-01T00:00:00.000Z'),'old',{
-      notBefore:cutoff,now,nextNumber:()=> '00001'
+      notBefore:cutoff,now,nextNumber:()=> '00001',...canary('old@example.test')
     }),/new registration/);
   assert.equal((await db.collection('accountIdAssignments').get()).size,0);
   assert.equal((await db.collection('accountIdRegistry').get()).size,0);
@@ -43,11 +46,11 @@ test('post-cutoff registration succeeds while legacy account cannot impersonate 
   await db.doc('users/old').set(profile('old','asteria'));
   await assert.rejects(issueNewRegistrationAccountId(db,
     authUser('old','2020-01-01T00:00:00.000Z','asteria'),'old',{
-      notBefore:cutoff,now,nextNumber:()=> '00001'
+      notBefore:cutoff,now,nextNumber:()=> '00001',...canary('old@example.test')
     }),/new registration/);
   const result=await issueNewRegistrationAccountId(db,
     authUser('new','2026-11-09T11:59:00.000Z'),'new',{
-      notBefore:cutoff,now,nextNumber:()=> '00001'
+      notBefore:cutoff,now,nextNumber:()=> '00001',...canary('new@example.test')
     });
   assert.equal(result.accountId,'Asteria#00001');
   assert.equal((await db.doc('accountIdRegistry/asteria#00001').get()).data().uid,'new');

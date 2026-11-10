@@ -351,7 +351,9 @@ export const asteriaAccountIdentity=onCall({
     const {issueNewRegistrationAccountId}=
       await import('./accountIdentityIssuance.mjs');
     return await issueNewRegistrationAccountId(getFirestore(),firebaseUser,request.auth.uid,{
-      notBefore:process.env.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE
+      notBefore:process.env.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE,
+      rolloutMode:process.env.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE,
+      canaryEmailSha256:process.env.ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256
     });
   }catch(error){
     // No Firestore contents, private account fields or auth details exposed.
