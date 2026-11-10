@@ -12,6 +12,7 @@
  */
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {createInterface} from 'node:readline/promises';
 import {stdin,stdout} from 'node:process';
 
@@ -47,8 +48,13 @@ export function describeCanary(fn) {
 }
 
 export function proposedEnvironment(fn,operation,{email,now=new Date()}={}) {
-  if(fn?.name!==NAME || fn?.state!=='ACTIVE' || !fn?.etag ||
+  // Cloud Functions v2 exposes updateTime, not etag. Require a stable
+  // timestamp and inspect it again immediately before writing.
+  if(fn?.name!==NAME || fn?.state!=='ACTIVE' ||
+     typeof fn?.updateTime!=='string' ||
+     !Number.isFinite(Date.parse(fn.updateTime)) ||
      !fn.serviceConfig || typeof fn.serviceConfig!=='object' ||
+     Array.isArray(fn.serviceConfig) ||
      (fn.serviceConfig.environmentVariables!==undefined &&
        (typeof fn.serviceConfig.environmentVariables!=='object' ||
         fn.serviceConfig.environmentVariables===null ||
@@ -79,7 +85,24 @@ export function proposedEnvironment(fn,operation,{email,now=new Date()}={}) {
   }else if(operation==='disable'){
     vars[KEYS.enabled]='0';
   }else abort('Unsupported operation');
-  return {name:NAME,etag:fn.etag,serviceConfig:{environmentVariables:vars}};
+  return {name:NAME,serviceConfig:{environmentVariables:vars}};
+}
+
+/**
+ * Cloud Functions v2 Function has no etag. Compare the server's updateTime
+ * and current runtime variables again before PATCH; abort if either changes.
+ * This is a best-effort race guard, not an atomic revision precondition.
+ */
+export function assertInventoryUnchanged(before,after) {
+  if(before?.name!==NAME || after?.name!==NAME ||
+     before?.state!=='ACTIVE' || after?.state!=='ACTIVE' ||
+     !before.updateTime || before.updateTime!==after.updateTime ||
+     !before.serviceConfig || !after.serviceConfig ||
+     !isDeepStrictEqual(
+       before.serviceConfig.environmentVariables||{},
+       after.serviceConfig.environmentVariables||{}
+     ))
+    abort('Function changed during confirmation; no changes made. Run status and review.');
 }
 
 function authToken() {
@@ -142,7 +165,9 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
     if(reply!=='DISABLE')abort('No changes made. Explicit approval required.');
   }else abort('Allowed actions: status, stage, enable, disable');
   const proposed=proposedEnvironment(current,action,{email:input});
-  await api.update(current,proposed,token);
+  const fresh=await api.get(token);
+  assertInventoryUnchanged(current,fresh);
+  await api.update(fresh,proposed,token);
   const final=await api.get(token);
   const state=describeCanary(final);
   if(action==='stage' && (state.issuance!=='DISABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='NOT SET'))
