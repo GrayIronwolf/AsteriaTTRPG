@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 import {MEDIA_SITE_ID,MEDIA_ORIGIN,canonicalPublicPath,resolvePublicMedia,rewritePublicMediaText} from './split-asteria-public-media.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
@@ -61,4 +62,20 @@ test('no full-site GitHub Pages or Firebase backend deploy is performed by split
   assert.doesNotMatch(script,/child_process|execSync|spawnSync|httpsCallable|firebase deploy|deploy-pages/);
   const media=JSON.parse(read('firebase.public-media.json'));
   assert.equal(Object.keys(media).join(','),'hosting');
+});
+
+test('runtime resolver preserves saved legacy public images without touching private uploads',()=>{
+  const source=read('js/asteria-public-media-runtime.js');
+  assert.match(read('index.html'),/js\/asteria-public-media-runtime\.js/);
+  const window={};
+  const document={readyState:'loading',addEventListener(){}};
+  vm.runInNewContext(source,{window,document},{timeout:1000});
+  const resolve=window.AsteriaPublicMedia.resolve;
+  assert.equal(resolve('assets/races/cavern-sprite/cavern-sprite-male-adult.png'),
+    MEDIA_ORIGIN+'/assets/races/cavern-sprite/cavern-sprite-male-adult.png');
+  assert.equal(resolve('../content/items/rat-meat/image.png'),
+    MEDIA_ORIGIN+'/content/items/rat-meat/image.png');
+  const privateUrl='https://firebasestorage.googleapis.com/v0/b/x/o/users%2Fu%2Fprofile%2Favatar';
+  assert.equal(resolve(privateUrl),privateUrl);
+  assert.equal(resolve('content/items/rat-meat/index.md'),'content/items/rat-meat/index.md');
 });
