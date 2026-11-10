@@ -48,10 +48,14 @@ export function describeCanary(fn) {
 
 export function proposedEnvironment(fn,operation,{email,now=new Date()}={}) {
   if(fn?.name!==NAME || fn?.state!=='ACTIVE' || !fn?.etag ||
-     typeof fn.serviceConfig?.environmentVariables!=='object' ||
-     Array.isArray(fn.serviceConfig.environmentVariables))
+     !fn.serviceConfig || typeof fn.serviceConfig!=='object' ||
+     (fn.serviceConfig.environmentVariables!==undefined &&
+       (typeof fn.serviceConfig.environmentVariables!=='object' ||
+        fn.serviceConfig.environmentVariables===null ||
+        Array.isArray(fn.serviceConfig.environmentVariables))))
     abort('Function inventory incomplete; no changes made.');
-  const current=fn.serviceConfig.environmentVariables;
+  // Google Cloud may omit an empty environmentVariables map entirely.
+  const current=fn.serviceConfig.environmentVariables||{};
   const vars={...current};
   if(operation==='stage'){
     if(current[KEYS.enabled]==='1')
