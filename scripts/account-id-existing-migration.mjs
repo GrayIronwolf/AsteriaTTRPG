@@ -26,6 +26,13 @@ export async function collectMigrationInventory({auth,db,inspect=inspectLegacyAc
      db?.projectId!==PROJECT)invalid('Unexpected production project or missing trusted services.');
   const records=[];
   const summary={total:0,eligible:0,alreadyAssigned:0,manualReview:0};
+  // Static diagnostics only. Never include UID, username, email or profile data.
+  const knownReasons=new Set([
+    'auth-account-unavailable','profile-missing','profile-uid-mismatch',
+    'invalid-username','username-normalization-mismatch','auth-profile-mismatch',
+    'identity-mapping-inconsistent','untrusted-identity-fields'
+  ]);
+  const reasonCounts=Object.create(null);
   let token;
   const seenTokens=new Set();
   do {
@@ -37,7 +44,11 @@ export async function collectMigrationInventory({auth,db,inspect=inspectLegacyAc
       summary.total++;
       if(result?.status==='eligible') {summary.eligible++;records.push({uid:user.uid,username:result.username});}
       else if(result?.status==='already-assigned')summary.alreadyAssigned++;
-      else summary.manualReview++;
+      else {
+        summary.manualReview++;
+        const reason=knownReasons.has(result?.reason)?result.reason:'unclassified';
+        reasonCounts[reason]=(reasonCounts[reason]||0)+1;
+      }
     }
     token=page.pageToken;
     if(token){
@@ -45,7 +56,7 @@ export async function collectMigrationInventory({auth,db,inspect=inspectLegacyAc
       seenTokens.add(token);
     }
   } while(token);
-  return {summary,records};
+  return {summary,records,reasonCounts:Object.fromEntries(Object.entries(reasonCounts).sort())};
 }
 
 /**
@@ -58,8 +69,10 @@ export async function runMigration({auth,db,mode,inspect,backfill=backfillLegacy
   if(!['preview','apply'].includes(mode))invalid('Unknown migration mode.');
   const inventory=await collectMigrationInventory({auth,db,inspect});
   const summary={...inventory.summary,assigned:0,failed:0};
-  onProgress({phase:'inventory',...summary});
-  if(mode==='preview')return {mode,summary,decision:summary.manualReview===0?'READY':'REVIEW REQUIRED'};
+  const reasonCounts=inventory.reasonCounts;
+  onProgress({phase:'inventory',...summary,reasonCounts});
+  if(mode==='preview')return {mode,summary,reasonCounts,
+    decision:summary.manualReview===0?'READY':'REVIEW REQUIRED'};
   if(summary.manualReview!==0)
     invalid('Existing account identities need reconciliation; no migration writes were made.');
   for(const record of inventory.records) {
