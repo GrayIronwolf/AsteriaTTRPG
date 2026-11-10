@@ -134,6 +134,7 @@ function beginEdit(){
   if(!isOpen()||editingBusy||!lastProfile||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
   get('accountProfileEditFirst').value=String(lastProfile.firstName||'');
   get('accountProfileEditLast').value=String(lastProfile.lastName||'');
+  get('accountProfileEditUsername').value=String(lastProfile.username||'');
   get('accountProfileEditForm').hidden=false;
   get('accountProfileEditStatus').textContent='';
   get('accountProfileEditFirst').focus();
@@ -152,10 +153,20 @@ async function saveEdit(event){
   get('accountProfileSave').disabled=true;
   get('accountProfileEditStatus').textContent='Saving your profile…';
   try{
+    const newUsername=get('accountProfileEditUsername').value.trim();
+    if(!/^[A-Za-z0-9._-]{3,24}$/.test(newUsername))
+      throw new Error('Username must have 3–24 letters, numbers, dots, underscores or hyphens.');
+    if(newUsername!==lastProfile.username){
+      const changed=await window.AsteriaFirebase.renameAccountUsername(newUsername);
+      if(!changed?.ok||!changed.accountId)
+        throw new Error('Username was not verified by the server.');
+      lastProfile={...lastProfile,username:newUsername,accountId:changed.accountId};
+    }
+    if(window.AsteriaFirebase?.getUser?.()?.uid!==uid)
+      throw new Error('The signed-in account changed.');
     const details={
       firstName:get('accountProfileEditFirst').value,
       lastName:get('accountProfileEditLast').value,
-      // Preserve a single canonical display name matching the permanent handle.
       displayName:String(lastProfile.username||'')
     };
     await window.AsteriaFirebase.saveEditableAccountProfile(details);
