@@ -45,3 +45,11 @@
   .asteria-security-dialog {max-height:calc(100dvh - 24px);}
   .asteria-security-actions {flex-direction:column;}
 }
+/* Verification reuses the approved Account Security styling. */
+.asteria-security-verification {
+  padding:12px 0;margin:10px 0 16px;
+  border-top:1px solid #71889b55;border-bottom:1px solid #71889b55;
+}
+.asteria-security-verification p:first-child {margin-top:0;}
+.asteria-security-verification .asteria-security-actions {margin-top:12px;}
+.asteria-security-actions button[hidden] {display:none!important;}

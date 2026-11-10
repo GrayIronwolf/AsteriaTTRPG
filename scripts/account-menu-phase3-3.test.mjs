@@ -8,22 +8,29 @@ const read=file=>fs.readFileSync(file,'utf8');
 function securityHarness(){
   const nodes={};
   const listeners={},windowListeners={},calls=[];
-  let uid='alice',email='alice@example.test',loggedIn=true;
+  let uid='alice',email='alice@example.test',loggedIn=true,emailVerified=false;
+  let shouldFailVerification=false;
   function make(id){
     const handlers={};
     const element={
       id,hidden:true,disabled:false,textContent:'',handlers,isConnected:true,
       focus(){this.focused=true;},
       addEventListener(name,callback){handlers[name]=callback;},
-      getClientRects:()=>[{}],querySelectorAll:()=>[nodes.accountSecurityClose,nodes.accountSecuritySendReset]
+      getClientRects:()=>[{}],querySelectorAll:()=>[nodes.accountSecurityClose,nodes.accountSecuritySendReset,nodes.accountSecuritySendVerification,nodes.accountSecurityCheckVerification,nodes.accountSecurityFinishId]
     };
     return element;
   }
   for(const id of ['accountSecurityOverlay','accountSecurityClose',
-    'accountSecurityEmail','accountSecurityStatus','accountSecuritySendReset'])nodes[id]=make(id);
+    'accountSecurityEmail','accountSecurityStatus','accountSecuritySendReset',
+    'accountSecuritySendVerification','accountSecurityCheckVerification',
+    'accountSecurityFinishId','accountSecurityVerification'])nodes[id]=make(id);
   const window={
-    AsteriaFirebase:{getUser:()=>uid?{uid,email}:null,
-      sendAccountPasswordReset:async()=>{calls.push('send');return {ok:true};}},
+    AsteriaFeatureFlags:{accountIds:false,accountIdCanary:false},
+    AsteriaFirebase:{getUser:()=>uid?{uid,email,emailVerified}:null,
+      sendAccountPasswordReset:async()=>{calls.push('send');return {ok:true};},
+      sendAccountVerificationEmail:async()=>{calls.push('verify-send');if(shouldFailVerification)throw Error('offline');return {sent:true};},
+      refreshAccountEmailVerification:async()=>{calls.push('verify-refresh');return {verified:emailVerified};},
+      completeNewAccountId:async()=>{calls.push('canary-finish');return {accountId:'alice#01416'};}},
     AsteriaAuthBridge:{isLoggedIn:()=>loggedIn},
     addEventListener:(name,cb)=>windowListeners[name]=cb
   };
@@ -33,6 +40,9 @@ function securityHarness(){
   vm.runInNewContext(read('js/asteria-account-security.js'),{window,document});
   return {api:window.AsteriaAccountSecurity,nodes,calls,windowListeners,
     setUser:(nextUid,nextEmail=email)=>{uid=nextUid;email=nextEmail;},
+    setVerified:value=>{emailVerified=value;},
+    setCanary:value=>{window.AsteriaFeatureFlags.accountIdCanary=value;},
+    failVerification:value=>{shouldFailVerification=value;},
     signOut:()=>{loggedIn=false;uid='';windowListeners['asteria:firebase-signed-out']();}};
 }
 test('security modal requires authenticated account and never asks for a password',()=>{
@@ -110,4 +120,44 @@ test('existing account ID display and responsive controls remain unchanged',()=>
   assert.match(html,/accountIds:false/);
   assert.match(css,/@media \(max-width:600px\)/);
   assert.match(read('js/asteria-navigation.js'),/media\.addEventListener\('change',reflow\)/);
+});
+
+test('email verification controls are bound to the current signed-in account',async()=>{
+  const h=securityHarness();
+  h.api.open();
+  assert.equal(h.nodes.accountSecuritySendVerification.disabled,false);
+  assert.equal(h.nodes.accountSecurityFinishId.hidden,true);
+  assert.equal(await h.api.sendVerification(),true);
+  assert.equal(h.calls.filter(x=>x==='verify-send').length,1);
+  assert.equal(await h.api.sendVerification(),false);
+  assert.equal(h.calls.filter(x=>x==='verify-send').length,1);
+  h.setVerified(true);
+  assert.equal(await h.api.checkVerification(),true);
+  assert.equal(h.nodes.accountSecuritySendVerification.disabled,true);
+  assert.equal(h.nodes.accountSecurityVerification.textContent,'Email verified.');
+  h.signOut();
+  assert.equal(h.api.isOpen(),false);
+  assert.equal(h.nodes.accountSecurityVerification.textContent,'');
+});
+
+test('canary completion stays hidden unless explicitly enabled by separate browser flag',async()=>{
+  const h=securityHarness();h.api.open();h.setVerified(true);
+  await h.api.checkVerification();
+  assert.equal(h.nodes.accountSecurityFinishId.hidden,true);
+  assert.equal(await h.api.finishAccountId(),false);
+  h.setCanary(true);h.windowListeners['asteria:auth-changed']();
+  assert.equal(h.nodes.accountSecurityFinishId.hidden,false);
+  assert.equal(h.nodes.accountSecurityFinishId.disabled,false);
+  assert.equal(await h.api.finishAccountId(),true);
+  assert.equal(h.calls.includes('canary-finish'),true);
+  assert.match(h.nodes.accountSecurityVerification.textContent,/assigned/);
+});
+
+test('email verification does not send or finish for a switched account',async()=>{
+  const h=securityHarness();h.api.open();
+  h.setUser('bob','bob@example.test');
+  h.windowListeners['asteria:auth-changed']();
+  assert.equal(h.api.isOpen(),false);
+  assert.equal(await h.api.sendVerification(),false);
+  assert.equal(h.calls.includes('verify-send'),false);
 });

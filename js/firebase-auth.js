@@ -9,10 +9,11 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
    Login uses Username + Password. Account creation captures First Name, Last Name, Email, Username, Password.
    ========================= */
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
+import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnabled} from '../src/state/accountEmailVerification.mjs';
 import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
@@ -682,12 +683,28 @@ window.firebaseCreateAccountPage = async function(){
       console.warn('Account was created in Firebase Auth, but Firestore profile save failed. Saving local fallback profile.', err);
       showCreateHint('Account created. Firestore profile save failed, so a local profile cache was saved on this device.', 'warn');
     }
+    // Send a Firebase Authentication verification email for the new account.
+    // Email send errors do not delete or replace an already-created account.
+    let verificationNotice='';
+    let verificationError=false;
+    if(canSendVerificationEmail(cred.user)){
+      try{
+        await sendEmailVerification(cred.user);
+        verificationNotice=' Check your inbox (including spam) and then use Account > Password & Security to confirm verification.';
+      }catch(error){
+        console.warn('Registration email verification could not be sent.',error?.code||'unavailable');
+        verificationNotice=' The verification email could not be sent. Open Account > Password & Security to resend it.';
+        verificationError=true;
+      }
+    }
     // Phase 2.1: new registrations only. Website rollout stays OFF by default,
     // independent of the server-side ASTERIA_ACCOUNT_IDS_ENABLED gate.
     let accountIdentity = null;
     let accountIdWarning = '';
     if(accountIdRegistrationEnabled(window.AsteriaFeatureFlags)){
-      if(!profileStored || !functionsClient){
+      if(!cred.user.emailVerified){
+        accountIdWarning='Account created. Verify your email, then use Account > Password & Security to finish your Account ID within 15 minutes of registration.';
+      }else if(!profileStored || !functionsClient){
         accountIdWarning = 'Account created. Your Account ID is pending; retry setup promptly. Older registrations may need account review.';
       }else{
         try{
@@ -714,9 +731,9 @@ window.firebaseCreateAccountPage = async function(){
     currentProfile = Object.assign({}, profile, accountIdentity || {}, { createdAt: Date.now() });
     saveLocalProfile(cred.user.uid, currentProfile);
     await loadCharacters(cred.user);
-    const successMessage = accountIdWarning || (accountIdentity ?
-      `Account created: ${accountIdentity.accountId}` : 'Account created.');
-    showCreateHint(successMessage, accountIdWarning ? 'warn' : 'success');
+    const successMessage = (accountIdWarning || (accountIdentity ?
+      `Account created: ${accountIdentity.accountId}` : 'Account created.')) + verificationNotice;
+    showCreateHint(successMessage, accountIdWarning || verificationError ? 'warn' : 'success');
     notice(successMessage);
     if(profileStored && !accountIdWarning)setPendingAccountDraft(null);
     openAccountHome(currentProfile, cred.user);
@@ -876,6 +893,61 @@ const firebasePublicApi = {
   // Never fall back to an offline cache or automatically allocate an ID.
   // Authenticated self-service password reset. Never accept an arbitrary
   // email from the menu or expose a user-selected password to browser code.
+  // Verification is always bound to the *current* Firebase Auth account.
+  // Built-in Firebase email templates provide the action link; no extra
+  // provider, email address input, or client-side verification claim.
+  sendAccountVerificationEmail: async function(){
+    const user=currentUser,uid=user?.uid;
+    if(!auth||!uid||auth.currentUser?.uid!==uid||!canSendVerificationEmail(user))
+      throw new Error('Sign in to an unverified account to request its verification email.');
+    await sendEmailVerification(user);
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid)
+      throw new Error('Account changed during the verification request.');
+    return {sent:true};
+  },
+  refreshAccountEmailVerification: async function(){
+    const user=currentUser,uid=user?.uid;
+    if(!auth||!uid||auth.currentUser?.uid!==uid)
+      throw new Error('Sign in to check email verification.');
+    await reload(user);
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid)
+      throw new Error('Account changed while checking verification.');
+    return {verified:user.emailVerified===true};
+  },
+  // User-initiated Account ID completion only. The client-side flag is not
+  // authorisation: the deployed callable rechecks verified Firebase Auth email,
+  // the private canary digest and immutable creation-time cutoff.
+  completeNewAccountId: async function(){
+    const user=currentUser,uid=user?.uid;
+    if(!auth||!db||!functionsClient||!uid||auth.currentUser?.uid!==uid||
+       !accountIdCompletionEnabled(window.AsteriaFeatureFlags))
+      throw new Error('Account ID completion is not available.');
+    await reload(user);
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid)
+      throw new Error('Account changed during verification.');
+    if(!canCompleteNewAccountId(user,window.AsteriaFeatureFlags))
+      throw new Error('Verify your email promptly after registering. Older accounts require review.');
+    const snapshot=await getDocFromServer(doc(db,'users',uid));
+    const profile=snapshot.exists()?snapshot.data():null;
+    if(!profile||profile.uid!==uid||typeof profile.username!=='string'||
+       profile.email?.trim().toLowerCase()!==user.email?.trim().toLowerCase())
+      throw new Error('Account profile needs review before ID assignment.');
+    const identity=await finalizeRegisteredAccountId({
+      enabled:true,uid,username:profile.username,
+      requestAssignment:input=>httpsCallable(functionsClient,'asteriaAccountIdentity')(input),
+      readProfile:async()=>{
+        const fresh=await getDocFromServer(doc(db,'users',uid));
+        return fresh.exists()?fresh.data():null;
+      }
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid)
+      throw new Error('Account changed before ID confirmation.');
+    currentProfile={...currentProfile,...profile,...identity};
+    saveLocalProfile(uid,currentProfile);
+    window.AsteriaAuthBridge?.setSession?.(currentProfile,user);
+    window.dispatchEvent(new CustomEvent('asteria:account-id-assigned',{detail:{uid}}));
+    return {accountId:identity.accountId,assigned:true};
+  },
   sendAccountPasswordReset: async function(){
     const user=currentUser;
     if(!auth || !user?.uid || auth.currentUser?.uid!==user.uid || !user.email)
