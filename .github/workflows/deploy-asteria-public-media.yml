@@ -1,0 +1,77 @@
+name: Deploy Asteria public media (manual, separate Hosting site)
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Prepare secondary Hosting site or publish media to that site only'
+        required: true
+        type: choice
+        default: inventory
+        options:
+          - inventory
+          - create-site
+          - publish-media
+      confirmation:
+        description: 'Use CREATE-ASTERIA-MEDIA-SITE or PUBLISH-ASTERIA-PUBLIC-MEDIA for write operations'
+        required: false
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: asteria-public-media-hosting
+  cancel-in-progress: false
+jobs:
+  public-media:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (inputs.operation == 'inventory' ||
+      (inputs.operation == 'create-site' && inputs.confirmation == 'CREATE-ASTERIA-MEDIA-SITE') ||
+      (inputs.operation == 'publish-media' && inputs.confirmation == 'PUBLISH-ASTERIA-PUBLIC-MEDIA'))
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - name: Inspect secondary Hosting site without modifying backend
+        if: inputs.operation == 'inventory'
+        run: npx firebase hosting:sites:list --project asteria-ttrpg
+      - name: Create dedicated media Hosting site (one-time; no deployment)
+        if: inputs.operation == 'create-site'
+        run: npx firebase hosting:sites:create asteria-ttrpg-media --project asteria-ttrpg --non-interactive
+      - name: Verify the dedicated Hosting site exists
+        if: inputs.operation == 'publish-media'
+        run: |
+          npx firebase hosting:sites:list --project asteria-ttrpg > "$RUNNER_TEMP/media-sites.txt"
+          grep -F 'asteria-ttrpg-media' "$RUNNER_TEMP/media-sites.txt"
+      - name: Build two independent static artifacts
+        if: inputs.operation == 'publish-media'
+        run: |
+          npm run build
+          git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          node --test scripts/split-asteria-public-media.test.mjs
+          mkdir -p .asteria-deploy
+          node scripts/build-lean-pages.mjs "$PWD/.asteria-deploy/pages" "$RUNNER_TEMP/lean-report.json"
+          node scripts/split-asteria-public-media.mjs "$PWD/.asteria-deploy/pages" "$PWD/.asteria-deploy/media" "$RUNNER_TEMP/split-report.json"
+          node -e "const r=require(process.argv[1]);if(r.mediaFiles<100||r.mediaBytes<130*1048576)throw Error('Media package incomplete');" "$RUNNER_TEMP/split-report.json"
+      - name: Deploy only the publicMedia target, not Functions, Firestore, Storage or default Hosting
+        if: inputs.operation == 'publish-media'
+        run: npx firebase deploy --project asteria-ttrpg --config firebase.public-media.json --only hosting:publicMedia --non-interactive
+      - name: Verify public logo exists on the secondary origin
+        if: inputs.operation == 'publish-media'
+        run: |
+          curl --fail --location --retry 3 --retry-delay 2 --silent --show-error --output /dev/null "https://asteria-ttrpg-media.web.app/assets/header/asteria-wordmark.png"
+          echo 'Public media uploaded and reachable. Existing website, DNS, Firebase Functions, Firestore and Storage are unchanged.' >> "$GITHUB_STEP_SUMMARY"
