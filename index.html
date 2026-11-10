@@ -407,25 +407,33 @@
       </div>
       <dl class="asteria-profile-details">
         <div><dt>Name</dt><dd id="accountProfileName">—</dd></div>
-        <div><dt>Username / display name</dt><dd id="accountProfileUsername">—</dd></div>
+        <div><dt>Username</dt><dd id="accountProfileUsername">—</dd></div>
         <div><dt>Email</dt><dd id="accountProfileEmail">—</dd></div>
         <div class="asteria-profile-id"><dt>Account ID</dt><dd id="accountProfileId">—</dd></div>
       </dl>
       <p id="accountProfileStatus" class="asteria-profile-status" role="status" aria-live="polite">Loading your profile…</p>
       <div class="asteria-profile-actions">
-        <button id="accountProfileEdit" type="button">Edit Profile</button>
+        <button id="accountProfileEdit" type="button">Edit Personal Details</button>
+        <button id="accountProfileChangeUsername" type="button" hidden>Change Username</button>
         <button id="accountProfileCopyId" type="button" disabled>Copy Account ID</button>
         <button id="accountProfileRefresh" type="button">Refresh Profile</button>
       </div>
       <form id="accountProfileEditForm" class="asteria-profile-edit-form" hidden>
-        <p>Change personal details without changing your permanent Account ID. Username changes require a separately verified identity operation.</p>
+        <p>Personal details are private. They do not change your public username or Account ID.</p>
         <label>First name<input id="accountProfileEditFirst" type="text" maxlength="60" autocomplete="given-name"></label>
         <label>Last name<input id="accountProfileEditLast" type="text" maxlength="60" autocomplete="family-name"></label>
-        <label>Username<input id="accountProfileEditUsername" type="text" maxlength="24" minlength="3" pattern="[A-Za-z0-9._-]{3,24}" autocomplete="nickname" required></label>
-        <p class="asteria-profile-username-note">Your public name uses this username and your existing five-digit number. Changing it updates your full Account ID; previous combinations remain reserved to you.</p>
         <div class="asteria-profile-actions">
-          <button id="accountProfileSave" type="submit">Save Profile</button>
+          <button id="accountProfileSave" type="submit">Save Personal Details</button>
           <button id="accountProfileCancel" type="button">Cancel</button>
+        </div>
+      </form>
+      <form id="accountProfileUsernameEditForm" class="asteria-profile-edit-form" hidden>
+        <p>Your username is the public display name. Your five-digit number and account ownership will not change. The old full username and number will remain reserved to you.</p>
+        <label>New username<input id="accountProfileEditUsername" type="text" maxlength="24" minlength="3" pattern="[A-Za-z0-9._-]{3,24}" autocomplete="username" required></label>
+        <p id="accountProfileUsernamePreview" class="asteria-profile-username-note" aria-live="polite"></p>
+        <div class="asteria-profile-actions">
+          <button id="accountProfileUsernameSave" type="submit">Confirm Username Change</button>
+          <button id="accountProfileUsernameCancel" type="button">Cancel</button>
         </div>
       </form>
       <p id="accountProfileEditStatus" class="asteria-profile-copy-status" role="status" aria-live="polite"></p>
