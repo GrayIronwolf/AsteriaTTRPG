@@ -137,3 +137,32 @@ test('navigation and markup preserve existing settings, responsive layout and fe
   assert.match(nav,/\.asteria-account-menu-wrap/);
   assert.doesNotMatch(nav,/createUserWithEmailAndPassword/);
 });
+
+test('core shell cannot intercept the authenticated Account click with a logout capture listener',()=>{
+  const core=fs.readFileSync('js/asteria-core-shell.js','utf8');
+  const bridge=fs.readFileSync('js/auth-bridge.js','utf8');
+  const html=fs.readFileSync('index.html','utf8');
+  const staticControls=core.slice(core.indexOf('function bindStaticControls()'),core.indexOf('function boot()'));
+  assert.doesNotMatch(staticControls,/login\.addEventListener\('click'/);
+  assert.doesNotMatch(staticControls,/create\.addEventListener\('click'/);
+  assert.doesNotMatch(staticControls,/if\(window\.AsteriaAuthBridge\?\.isLoggedIn\?\.\(\)\) window\.logout\?\.\(\)/);
+  assert.match(bridge,/login\.onclick = event => \{/);
+  assert.match(bridge,/window\.AsteriaAccountMenu\?\.toggle\?\.\(\)/);
+  assert.match(bridge,/window\.setView\?\.\('loginPage'\)/);
+  assert.match(html,/asteria-core-shell\.js\?v=account-navigation-logout-fix-20261110/);
+});
+
+test('signed-in Account opens its menu without triggering a logout; only Log Out triggers logout',()=>{
+  const h=menuHarness();
+  h.setSignedIn(true);
+  assert.equal(h.api.toggle(),true);
+  assert.equal(h.menu.hidden,false);
+  assert.equal(h.calls.includes('logout'),false);
+  const closeEvent=eventFor(h.settings,{target:{closest:selector=>selector==='#accountMenuSettings'?h.settings:null}});
+  h.menu.handlers.click(closeEvent);
+  assert.equal(h.calls.includes('logout'),false);
+  assert.equal(h.api.isOpen(),false);
+  h.api.toggle();
+  h.menu.handlers.click(eventFor(h.logout,{target:{closest:selector=>selector==='#accountMenuLogout'?h.logout:null}}));
+  assert.equal(h.calls.filter(x=>x==='logout').length,1);
+});
