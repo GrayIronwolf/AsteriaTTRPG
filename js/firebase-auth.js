@@ -1,6 +1,6 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
-import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs';
+import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
