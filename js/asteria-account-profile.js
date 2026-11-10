@@ -23,7 +23,6 @@ function reset(){
   get('accountProfileId').textContent='—';
   get('accountProfileName').textContent='—';
   get('accountProfileUsername').textContent='—';
-  get('accountProfileDisplayName').textContent='—';
   get('accountProfileEmail').textContent='—';
   get('accountProfileStatus').textContent='Loading your profile…';
   get('accountProfileCopyStatus').textContent='';
@@ -46,8 +45,7 @@ function close({restoreFocus=true}={}){
 }
 function showResult(data){
   get('accountProfileName').textContent=data.name||'Not provided';
-  get('accountProfileDisplayName').textContent=data.displayName||'Not provided';
-  get('accountProfileAvatarFallback').textContent=(data.displayName||data.name||data.username||'A').charAt(0).toUpperCase();
+  get('accountProfileAvatarFallback').textContent=(data.username||'A').charAt(0).toUpperCase();
   get('accountProfileUsername').textContent=data.username||'Not provided';
   get('accountProfileEmail').textContent=data.email||'Not provided';
   verifiedId=data.status==='assigned'?data.accountId:null;
@@ -71,7 +69,7 @@ async function refresh(){
     if(version!==requestVersion||!isOpen()||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
     const profile=inspectAccountProfileDisplay({uid:activeUid,authEmail:read?.authEmail,profile:read?.profile});
     lastProfile=read?.profile||null;
-    showResult({...profile,displayName:typeof lastProfile?.displayName==='string'?lastProfile.displayName.trim():''});
+    showResult(profile);
     const url=await window.AsteriaFirebase?.readOwnAccountAvatar?.();
     if(version===requestVersion&&isOpen()&&window.AsteriaFirebase?.getUser?.()?.uid===activeUid){
       const image=get('accountProfileAvatar');
@@ -136,7 +134,6 @@ function beginEdit(){
   if(!isOpen()||editingBusy||!lastProfile||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
   get('accountProfileEditFirst').value=String(lastProfile.firstName||'');
   get('accountProfileEditLast').value=String(lastProfile.lastName||'');
-  get('accountProfileEditDisplay').value=String(lastProfile.displayName||'');
   get('accountProfileEditForm').hidden=false;
   get('accountProfileEditStatus').textContent='';
   get('accountProfileEditFirst').focus();
@@ -158,7 +155,8 @@ async function saveEdit(event){
     const details={
       firstName:get('accountProfileEditFirst').value,
       lastName:get('accountProfileEditLast').value,
-      displayName:get('accountProfileEditDisplay').value
+      // Preserve a single canonical display name matching the permanent handle.
+      displayName:String(lastProfile.username||'')
     };
     await window.AsteriaFirebase.saveEditableAccountProfile(details);
     if(!isOpen()||uid!==activeUid||window.AsteriaFirebase?.getUser?.()?.uid!==uid)return;

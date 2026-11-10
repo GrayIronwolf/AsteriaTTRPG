@@ -41,9 +41,9 @@ async function refresh(){
       uid,authEmail:response.authEmail,profile:response.profile
     });
     if(verified.status==='unavailable')throw Error('Unverified account profile.');
-    const preferred=typeof response.profile?.displayName==='string'
-      ?response.profile.displayName.trim().slice(0,64):'';
-    const name=preferred||verified.name||verified.username;
+    // One canonical public name: the registered username that owns #00000.
+    // The editable personal name does not replace the verified account handle.
+    const name=verified.username;
     byId('asteriaHeaderName').textContent=name;
     byId('asteriaHeaderAccountId').textContent=
       verified.status==='assigned'?verified.accountId:'Account ID pending';
