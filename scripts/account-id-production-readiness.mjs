@@ -40,7 +40,9 @@ export function inspectActivationState(func,release,ruleset,localRules) {
   const canary=func===null ? 'UNVERIFIED' :
     mode===undefined || mode==='' ? 'NOT SET' :
     mode==='canary' && typeof digest==='string' && /^[0-9a-f]{64}$/.test(digest) ?
-      'VERIFIED-EMAIL CANARY CONFIGURED' : 'INVALID OR INCOMPLETE';
+      'VERIFIED-EMAIL CANARY CONFIGURED' :
+    mode==='auto-canary' && typeof digest==='string' && /^[0-9a-f]{64}$/.test(digest) ?
+      'UNVERIFIED-EMAIL AUTO-CANARY CONFIGURED' : 'INVALID OR INCOMPLETE';
   const cutoff=env?.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE;
   const cutoffState=func===null ? 'UNVERIFIED' :
     cutoff===undefined || cutoff==='' ? 'NOT SET' :
@@ -76,7 +78,7 @@ export function renderSummary(report) {
     '| Account ID callable | '+report.functionState+' |',
     '| Server-side new Account ID issuance | '+report.issuance+' |',
     '| Auth registration creation-time cutoff | '+report.registrationCutoff+' |',
-    '| Server-side verified-email canary | '+report.verifiedEmailCanary+' |',
+    '| Server-side Account ID canary mode | '+report.verifiedEmailCanary+' |',
     '| Published Firestore rules vs reviewed repo source | '+report.firestoreRules+' |',
     '| Existing user Auth/Firestore reconciliation | '+report.existingAccountReconciliation+' |',
     '| User records changed | '+report.accountIdWrites+' |',
