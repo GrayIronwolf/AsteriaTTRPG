@@ -26,6 +26,12 @@ export function inspectAccountIdProductionFinalization(reader=read){
     check('notifications-still-disabled',html.includes('campaignNotifications:false')),
     check('server-identity-gate-required',api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")&&
       api.includes('ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE')),
+    check('production-canary-boundary-required',
+      api.includes('ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE') &&
+      api.includes('ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256') &&
+      issue.includes('assertAccountIdCanaryEligible(authUser,email,') &&
+      issue.includes("rolloutMode!=='canary'") &&
+      issue.includes('authUser?.emailVerified!==true')),
     check('authenticated-creation-cutoff-required',
       issue.includes('authUser.metadata?.creationTime')&&
       issue.includes('created<cutoff.getTime()')&&
