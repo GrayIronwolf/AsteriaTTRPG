@@ -52,7 +52,7 @@ test('disable only changes issuance gate and preserves the configured canary',()
 test('failed inventory, wrong name, non-ACTIVE function and malformed mail fail closed',()=>{
   assert.throws(()=>proposedEnvironment(sample({}),'stage',{email:''}),/email required/);
   for(const f of [null,{...sample(),state:'FAILED'},{...sample(),name:'projects/other/locations/us-central1/functions/wrong'},
-    {...sample(),etag:''},{...sample(),serviceConfig:{}}])
+    {...sample(),etag:''},{...sample(),serviceConfig:null}])
     assert.throws(()=>proposedEnvironment(f,'disable'),/inventory incomplete/);
 });
 test('read-only status redacts email and env map; dispatch requires typed confirmation',async()=>{
