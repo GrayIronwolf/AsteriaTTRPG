@@ -43,6 +43,20 @@
   function syncSession(){
     if(!isSignedIn())close();
   }
+  function openAppearance(){
+    const panel=byId('settingsPanel'),heading=byId('settingsTitle');
+    if(!panel)return false;
+    panel.classList.add('appearance-mode');
+    if(heading)heading.textContent='Appearance';
+    window.openSettings?.();
+    byId('asteriaBackgroundSelect')?.focus?.();
+    return true;
+  }
+  function showNavigation(){
+    byId('settingsPanel')?.classList.remove('appearance-mode');
+    const heading=byId('settingsTitle');
+    if(heading)heading.textContent='Main navigation';
+  }
   function handleAction(event){
     const target=event.target;
     const profile=target.closest?.('#accountMenuProfile');
@@ -57,7 +71,7 @@
     window.closeSettings?.();
     if(profile)window.AsteriaAccountProfile?.open?.();
     else if(settings)window.AsteriaWorkspace?.openDashboard?.('settings');
-    else if(appearance)window.openSettings?.();
+    else if(appearance)openAppearance();
     else if(notifications){
       if(!window.AsteriaWorkspace?.openNotifications?.())
         window.toast?.('Notifications are not ready. Try again shortly.');
@@ -67,6 +81,7 @@
   }
   function bind(){
     const button=byId('loginToggle'),menu=byId('accountQuickMenu'),wrap=byId('accountMenuWrap');
+    byId('settingsToggle')?.addEventListener('click',showNavigation,true);
     if(!button||!menu||!wrap)return;
     button.addEventListener('keydown',event=>{
       if(event.key==='ArrowDown'||event.key==='ArrowUp'){
