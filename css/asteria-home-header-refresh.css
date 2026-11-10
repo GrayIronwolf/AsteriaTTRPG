@@ -176,7 +176,7 @@ body .main:has(> #home.asteria-home-refreshed.show) {
   #home .asteria-home-introduction {margin:-14px auto 0;}
 }
 @media (max-width:380px) {
-  :root {--core-header-height:64px!important;}
+  :root {--core-header-height:54px!important;}
   body .asteria-header .asteria-header-brand {flex-basis:132px!important;width:132px!important;}
   body .asteria-header .asteria-header-identity {padding:16px 1px 2px;}
 }
