@@ -237,6 +237,7 @@
     const mode=byId('auth-workspace-mode-filter')?.value;
     const states={
       sidebarHomeButton:visible('home') || workspace&&mode==='dashboard',
+      asteriaHeaderBrand:visible('home') || workspace&&mode==='dashboard',
       compendiumIndexButton:visible('compendiumLibrary') || visible('universal-compendium-shell'),
       characterForgeTop:visible('phase3GameplayShell') && byId('phase3GameplayShell')?.classList.contains('phase3-forge-shell'),
       campaignsTop:workspace&&mode==='campaigns'
