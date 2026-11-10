@@ -1,6 +1,6 @@
 /* Asteria home & header: preserve existing crystal buttons, colour tokens and gameplay. */
 :root {
-  --core-header-height: clamp(88px, 8.33vw, 212px);
+  --core-header-height: clamp(76px, 6.55vw, 160px);
 }
 body .topbar.asteria-header {
   height:var(--core-header-height)!important;
@@ -10,13 +10,13 @@ body .topbar.asteria-header {
   align-items:center!important;
 }
 body .asteria-header .asteria-header-brand {
-  flex:0 1 clamp(125px,16vw,295px)!important;
-  width:clamp(125px,16vw,295px)!important;
-  max-height:calc(var(--core-header-height) - 12px)!important;
+  flex:0 1 clamp(225px,31vw,510px)!important;
+  width:clamp(225px,31vw,510px)!important;
+  max-height:calc(var(--core-header-height) - 3px)!important;
   overflow:hidden;
 }
 body .asteria-header .asteria-header-wordmark {
-  max-height:calc(var(--core-header-height) - 12px);
+  max-height:calc(var(--core-header-height) - 3px);
   width:100%;height:100%;
 }
 body .asteria-header .top-actions {
@@ -60,6 +60,8 @@ body .asteria-header #asteriaHeaderAvatarButton img {
   width:100%!important;height:100%!important;
   position:absolute;inset:0;
   object-fit:cover!important;
+  -webkit-mask-image:linear-gradient(to right, transparent 0%,rgba(0,0,0,.38) 12%,#000 31%,#000 96%,rgba(0,0,0,.75) 100%);
+  mask-image:linear-gradient(to right, transparent 0%,rgba(0,0,0,.38) 12%,#000 31%,#000 96%,rgba(0,0,0,.75) 100%);
 }
 body .asteria-header #asteriaHeaderAvatarFallback {grid-area:1/1;}
 body .asteria-header .asteria-header-identity {
@@ -116,19 +118,26 @@ body .main:has(> #home.asteria-home-refreshed.show) {
   overflow:hidden;
   isolation:isolate;
   background:transparent;
-  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 39%,rgba(0,0,0,.90) 58%,transparent 100%);
-  mask-image:linear-gradient(to bottom,#000 0%,#000 39%,rgba(0,0,0,.90) 58%,transparent 100%);
+  /* Keep the illustration fully clear across its centre; only the bottom 9% fades. */
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 91%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 91%,transparent 100%);
 }
 #home .asteria-home-cinematic::before {
   content:"";
   position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(to right,var(--asteria-site-background,#000) 0%,transparent 13%,transparent 86%,var(--asteria-site-background,#000) 100%),
-    linear-gradient(to bottom,var(--asteria-site-background,#000) 0%,transparent 13%,transparent 55%,var(--asteria-site-background,#000) 100%);
+  /* Emphasise the left-edge dissolve; do not veil or soften the centre. */
+  background:linear-gradient(to right,var(--asteria-site-background,#000) 0%,transparent 17%,transparent 95%,var(--asteria-site-background,#000) 100%),
+    linear-gradient(to bottom,var(--asteria-site-background,#000) 0%,transparent 3%,transparent 94%,var(--asteria-site-background,#000) 100%);
 }
 #home .asteria-home-cinematic-art {
-  display:block;width:100%;height:100%;
+  display:block;width:100%;max-width:1920px;height:100%;
+  margin-inline:auto;
   object-fit:cover;object-position:center 41%;
-  filter:brightness(.76) contrast(1.08);
+  /* Keep the image crisp on ultrawide screens; dissolve the image's own edges. */
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 13%,#000 96%,transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0%,#000 13%,#000 96%,transparent 100%);
+  filter:none;
+  image-rendering:auto;
 }
 #home .asteria-home-introduction {
   position:relative;
@@ -150,17 +159,17 @@ body .main:has(> #home.asteria-home-refreshed.show) {
   margin-top:16px;
 }
 @media (max-width:1679px) {
-  :root {--core-header-height:clamp(78px,8.33vw,142px)!important;}
+  :root {--core-header-height:clamp(68px,6.55vw,112px)!important;}
   body .asteria-header .asteria-header-brand {
-    flex:0 1 clamp(90px,19vw,230px)!important;
-    width:clamp(90px,19vw,230px)!important;
+    flex:0 1 clamp(172px,28vw,380px)!important;
+    width:clamp(172px,28vw,380px)!important;
   }
 }
 @media (max-width:720px) {
-  :root {--core-header-height:74px!important;}
+  :root {--core-header-height:58px!important;}
   body .topbar.asteria-header {padding:0 0 0 7px!important;gap:4px!important;}
   body .asteria-header .asteria-header-brand {
-    flex:0 1 110px!important;width:110px!important;
+    flex:0 1 166px!important;width:166px!important;
   }
   body .asteria-header #loginToggle {min-width:60px!important;padding:6px 7px!important;}
   body .asteria-header #settingsToggle {min-width:38px!important;width:38px!important;margin-right:0!important;}
@@ -171,8 +180,8 @@ body .main:has(> #home.asteria-home-refreshed.show) {
   #home .asteria-home-introduction {margin:-14px auto 0;}
 }
 @media (max-width:380px) {
-  :root {--core-header-height:64px!important;}
-  body .asteria-header .asteria-header-brand {flex-basis:86px!important;width:86px!important;}
+  :root {--core-header-height:54px!important;}
+  body .asteria-header .asteria-header-brand {flex-basis:132px!important;width:132px!important;}
   body .asteria-header .asteria-header-identity {padding:16px 1px 2px;}
 }
 @media (prefers-reduced-motion:reduce) {

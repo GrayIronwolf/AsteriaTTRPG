@@ -1,7 +1,6 @@
 // Only public profile presentation fields may be edited from a browser.
 // Username, UID and permanent Account ID always remain server-owned.
 const PERSON_NAME=/^[^<>]{0,60}$/;
-const DISPLAY_NAME=/^[^<>]{0,64}$/;
 const containsControl=value=>[...value].some(char=>{
   const code=char.codePointAt(0);
   return code<32||code===127;
@@ -9,20 +8,31 @@ const containsControl=value=>[...value].some(char=>{
 export function validatedEditableProfile(input){
   if(!input||typeof input!=='object'||Array.isArray(input))
     throw new Error('Invalid profile details.');
-  const permitted=['firstName','lastName','displayName'];
+  const permitted=['firstName','lastName'];
   if(Object.keys(input).some(key=>!permitted.includes(key)))
     throw new Error('Account identity and private fields cannot be edited.');
   const clean={};
   for(const key of permitted){
     if(typeof input[key]!=='string')throw new Error('Profile text must be provided.');
     const value=input[key].trim().replace(/\s+/g,' ');
-    if(containsControl(value)||!(key==='displayName'?DISPLAY_NAME:PERSON_NAME).test(value))
+    if(containsControl(value)||!PERSON_NAME.test(value))
       throw new Error('Profile fields contain invalid characters or are too long.');
     clean[key]=value;
   }
-  if(!(clean.firstName||clean.lastName||clean.displayName))
+  if(!(clean.firstName||clean.lastName))
     throw new Error('Provide at least one name to display.');
   return clean;
+}
+// Public handle preview only. Reservation and uniqueness are enforced by the
+// authenticated Cloud Function; no browser code may write the registry.
+export function proposedAccountUsername(raw,number){
+  if(typeof raw!=='string')throw new Error('Enter a username.');
+  const username=raw.trim();
+  if(!/^[A-Za-z0-9._-]{3,24}$/.test(username))
+    throw new Error('Username must contain 3–24 letters, numbers, dots, underscores or hyphens.');
+  if(typeof number!=='string'||!/^[0-9]{5}$/.test(number))
+    throw new Error('Your Account ID must be verified before changing your username.');
+  return {username,accountId:username+'#'+number};
 }
 export function identityFieldsUnchanged(before,after){
   return ['uid','username','usernameLower','accountId','accountNumber','accountIdKey','accountIdAssignedAt']

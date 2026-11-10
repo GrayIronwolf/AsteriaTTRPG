@@ -1,6 +1,6 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
-import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs';
+import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
@@ -1005,6 +1005,50 @@ const firebasePublicApi = {
     window.AsteriaAuthBridge?.setSession?.(currentProfile,user);
     window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
     return {ok:true};
+  },
+  canRenameAccountUsername: async function(){
+    if(!functionsClient||!currentUser?.uid||auth?.currentUser?.uid!==currentUser.uid)
+      return false;
+    const uid=currentUser.uid;
+    try{
+      const result=await httpsCallable(functionsClient,'asteriaAccountUsername')({action:'status'});
+      return currentUser?.uid===uid&&auth?.currentUser?.uid===uid&&result.data?.available===true;
+    }catch{return false;}
+  },
+  renameAccountUsername: async function(rawUsername){
+    if(!db||!functionsClient||!auth||!currentUser?.uid||
+       auth.currentUser?.uid!==currentUser.uid)
+      throw new Error('Sign in before changing your username.');
+    const username=String(rawUsername||'').trim();
+    if(!/^[A-Za-z0-9._-]{3,24}$/.test(username))
+      throw new Error('Username must contain 3–24 letters, numbers, dots, underscores or hyphens.');
+    const uid=currentUser.uid,server=await getDocFromServer(doc(db,'users',uid));
+    if(!server.exists()||server.data().uid!==uid||
+       !server.data().accountId||auth.currentUser?.uid!==uid)
+      throw new Error('Your Account ID needs verification before changing your username.');
+    const previous=server.data(),expectedAccountId=previous.accountId;
+    if(!/^[0-9]{5}$/.test(previous.accountNumber||'')||
+       previous.accountId!==previous.username+'#'+previous.accountNumber||
+       previous.accountIdKey!==previous.username.toLowerCase()+'#'+previous.accountNumber)
+      throw new Error('Account identity needs verification before changing your username.');
+    if(username===previous.username)
+      return {ok:true,unchanged:true,username,accountId:expectedAccountId};
+    const response=await httpsCallable(functionsClient,'asteriaAccountUsername')({
+      username,expectedAccountId
+    });
+    if(auth.currentUser?.uid!==uid||currentUser?.uid!==uid)
+      throw new Error('The signed-in account changed during the username update.');
+    const fresh=await getDocFromServer(doc(db,'users',uid));
+    if(!fresh.exists()||fresh.data().uid!==uid||
+       fresh.data().username!==username||
+       fresh.data().accountNumber!==previous.accountNumber||
+       fresh.data().accountId!==response.data?.accountId)
+      throw new Error('Username updated on server but confirmation failed. Refresh Profile before trying again.');
+    currentProfile={...currentProfile,...fresh.data()};
+    saveLocalProfile(uid,currentProfile);
+    window.AsteriaAuthBridge?.setSession?.(currentProfile,currentUser);
+    window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
+    return response.data;
   },
   readOwnAccountAvatar: async function(){
     const uid=currentUser?.uid;

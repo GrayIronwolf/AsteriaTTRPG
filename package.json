@@ -59,7 +59,7 @@
     "test:firebase-backup-audit": "node --test scripts/firebase-production-backup-audit.test.mjs",
     "test:account-id": "node --test scripts/account-id-phase1-2.test.mjs scripts/account-id-phase1-3.test.mjs scripts/account-id-phase2-1.test.mjs scripts/account-id-phase2-2.test.mjs scripts/account-id-phase2-3.test.mjs scripts/account-id-phase4-1-release.test.mjs scripts/account-id-security-guard.test.mjs scripts/account-id-automatic-registration.test.mjs scripts/account-email-verification.test.mjs scripts/account-id-legacy-operator.test.mjs scripts/account-id-production-finalization.test.mjs scripts/account-id-production-readiness.test.mjs scripts/account-id-canary-operator.test.mjs scripts/account-id-release-package.test.mjs scripts/account-id-release-cli-verify.test.mjs scripts/account-id-complete-release.test.mjs scripts/account-id-coordinated-release.test.mjs",
     "test:account-menu": "node --test scripts/account-menu-phase3-1.test.mjs",
-    "test:account-profile": "node --test scripts/account-profile-phase3-2.test.mjs scripts/header-account-experience.test.mjs",
+    "test:account-profile": "node --test scripts/account-profile-phase3-2.test.mjs scripts/header-account-experience.test.mjs scripts/account-username-rename.test.mjs && node --test scripts/account-username-release-package.test.mjs",
     "test:account-navigation": "node --test scripts/account-menu-phase3-3.test.mjs && node --check js/asteria-account-security.js",
     "audit:account-id": "node scripts/account-id-phase4-1-release.mjs --audit",
     "test:firebase-recovery": "node --test scripts/firebase-recovery-preflight.test.mjs && node scripts/firebase-recovery-preflight.mjs",

@@ -1,0 +1,68 @@
+name: Deploy Asteria username editor backend (manual, scoped)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY-ASTERIA-USERNAME-ONLY to approve the one callable release'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: firebase-production
+  cancel-in-progress: false
+jobs:
+  username-only:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmation == 'DEPLOY-ASTERIA-USERNAME-ONLY'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Validate username change security and current Firebase rules
+        run: |
+          node --test scripts/account-username-rename.test.mjs
+          node scripts/account-username-release-package.mjs --check
+          npm run test:firebase
+      - name: Authenticate via existing production Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Stage clean scoped callable package
+        env:
+          ASTERIA_USERNAME_SCOPED_DEPLOY: '1'
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          node scripts/account-username-release-package.mjs --stage-production
+          npm install --prefix "$RUNNER_TEMP/asteria-username-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-username-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-username-release/functions/index.mjs"
+      - name: Install isolated Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-username-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-username-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only the new username callable
+        working-directory: ${{ runner.temp }}/asteria-username-release
+        run: |
+          "$RUNNER_TEMP/asteria-username-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only functions:asteria:asteriaAccountUsername --non-interactive
+      - name: Confirm deployment scope
+        run: |
+          echo 'One username-rename callable deployed to existing asteria-ttrpg.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No Storage, Firestore Rules, Auth users, existing Account IDs, or GitHub Pages configuration changed.' >> "$GITHUB_STEP_SUMMARY"

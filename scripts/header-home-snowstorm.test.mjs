@@ -24,7 +24,7 @@ test('profile image comes after account button and fills shorter header',()=>{
   const html=read('index.html');
   assert.ok(html.indexOf('id="accountControls"')<html.indexOf('id="asteriaHeaderProfile"'));
   const css=read('css/asteria-home-header-refresh.css');
-  assert.match(css,/--core-header-height: clamp\(88px, 8\.33vw, 212px\)/);
+  assert.match(css,/--core-header-height: clamp\(76px, 6\.55vw, 160px\)/);
   assert.match(css,/border-radius:0!important/);
   assert.match(css,/height:var\(--core-header-height\)!important/);
   assert.match(css,/\.asteria-header-identity/);
@@ -32,12 +32,12 @@ test('profile image comes after account button and fills shorter header',()=>{
 test('display name is only canonical registered username, Account ID stays unchanged',()=>{
   const html=read('index.html');
   assert.doesNotMatch(html,/id="accountProfileEditDisplay"|id="accountProfileDisplayName"/);
-  assert.match(html,/Username \/ display name/);
+  assert.match(html,/Username/);
   const header=read('js/asteria-account-header.js');
   assert.match(header,/const name=verified\.username/);
   assert.match(header,/verified\.status==='assigned'\?verified\.accountId/);
   const profile=read('js/asteria-account-profile.js');
-  assert.match(profile,/displayName:String\(lastProfile\.username\|\|''\)/);
+  assert.match(profile,/get\('accountProfileUsernameEditForm'\)\.hidden=false/);
   assert.doesNotMatch(profile,/get\('accountProfileEditDisplay'\)/);
 });
 test('other site navigation and profile avatar actions remain wired',()=>{

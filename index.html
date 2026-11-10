@@ -33,7 +33,7 @@
 <link rel="stylesheet" href="css/asteria-campaign-connection.css?v=phase8-1-20261109">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
-  <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=header-home-snow-20261110">
+  <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=hero-sharp-20261111">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -165,7 +165,7 @@
   <main id="mainContent" class="main" tabindex="-1">
     <section id="home" class="view show asteria-home-refreshed" aria-label="Welcome to Asteria">
       <div class="asteria-home-cinematic" aria-hidden="true">
-        <img class="asteria-home-cinematic-art" src="assets/home/varkhyn-snowstorm.avif" alt="" decoding="async" fetchpriority="high">
+        <img class="asteria-home-cinematic-art" src="assets/home/varkhyn-snowstorm.avif?v=original-hq-20261111" alt="" decoding="async" fetchpriority="high">
       </div>
       <div class="asteria-home-introduction">
         <p class="eyebrow">Welcome to</p>
@@ -407,24 +407,33 @@
       </div>
       <dl class="asteria-profile-details">
         <div><dt>Name</dt><dd id="accountProfileName">—</dd></div>
-        <div><dt>Username / display name</dt><dd id="accountProfileUsername">—</dd></div>
+        <div><dt>Username</dt><dd id="accountProfileUsername">—</dd></div>
         <div><dt>Email</dt><dd id="accountProfileEmail">—</dd></div>
         <div class="asteria-profile-id"><dt>Account ID</dt><dd id="accountProfileId">—</dd></div>
       </dl>
       <p id="accountProfileStatus" class="asteria-profile-status" role="status" aria-live="polite">Loading your profile…</p>
       <div class="asteria-profile-actions">
-        <button id="accountProfileEdit" type="button">Edit Profile</button>
+        <button id="accountProfileEdit" type="button">Edit Personal Details</button>
+        <button id="accountProfileChangeUsername" type="button" hidden>Change Username</button>
         <button id="accountProfileCopyId" type="button" disabled>Copy Account ID</button>
         <button id="accountProfileRefresh" type="button">Refresh Profile</button>
       </div>
       <form id="accountProfileEditForm" class="asteria-profile-edit-form" hidden>
-        <p>Change personal details without changing your permanent Account ID. Username changes require a separately verified identity operation.</p>
+        <p>Personal details are private. They do not change your public username or Account ID.</p>
         <label>First name<input id="accountProfileEditFirst" type="text" maxlength="60" autocomplete="given-name"></label>
         <label>Last name<input id="accountProfileEditLast" type="text" maxlength="60" autocomplete="family-name"></label>
-        <p class="asteria-profile-username-note">Your display name is your registered username. It remains linked to your permanent Account ID.</p>
         <div class="asteria-profile-actions">
-          <button id="accountProfileSave" type="submit">Save Profile</button>
+          <button id="accountProfileSave" type="submit">Save Personal Details</button>
           <button id="accountProfileCancel" type="button">Cancel</button>
+        </div>
+      </form>
+      <form id="accountProfileUsernameEditForm" class="asteria-profile-edit-form" hidden>
+        <p>Your username is the public display name. Your five-digit number and account ownership will not change. The old full username and number will remain reserved to you.</p>
+        <label>New username<input id="accountProfileEditUsername" type="text" maxlength="24" minlength="3" pattern="[A-Za-z0-9._-]{3,24}" autocomplete="username" required></label>
+        <p id="accountProfileUsernamePreview" class="asteria-profile-username-note" aria-live="polite"></p>
+        <div class="asteria-profile-actions">
+          <button id="accountProfileUsernameSave" type="submit">Confirm Username Change</button>
+          <button id="accountProfileUsernameCancel" type="button">Cancel</button>
         </div>
       </form>
       <p id="accountProfileEditStatus" class="asteria-profile-copy-status" role="status" aria-live="polite"></p>
@@ -451,9 +460,9 @@
 <script src="js/asteria-account-menu.js?v=header-account-20261110"></script>
 <script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
-<script type="module" src="js/asteria-account-profile.js?v=header-account-20261110"></script>
+<script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=header-account-20261110"></script>
+  <script type="module" src="js/firebase-auth.js?v=account-username-20261111"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>

@@ -62,7 +62,7 @@ test('header image is loaded once at high priority without reducing original qua
  const matches=html.match(/<link rel="preload" as="image" href="assets\/header\/asteria-wordmark\.png"[^>]*>/g)||[];
  assert.equal(matches.length,1);
  assert.match(matches[0],/fetchpriority="high"/);
- assert.match(html,/<img class="asteria-home-cinematic-art" src="assets\/home\/varkhyn-snowstorm\.avif"[^>]*decoding="async"/);
+ assert.match(html,/<img class="asteria-home-cinematic-art" src="assets\/home\/varkhyn-snowstorm\.avif\?v=original-hq-20261111"[^>]*decoding="async"/);
  assert.match(html,/asteria-button-images\.css/);
  assert.match(html,/asteria-dashboard-panel-images\.css/);
  assert.match(html,/asteria-panel-headers\.css/);

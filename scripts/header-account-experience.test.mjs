@@ -5,8 +5,8 @@ import {validatedEditableProfile,identityFieldsUnchanged,avatarUploadError,accou
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 test('account editing cannot change the permanent username, UID or Account ID',()=>{
-  const edits=validatedEditableProfile({firstName:' Jaida ',lastName:' Hale ',displayName:' Jade '});
-  assert.deepEqual(edits,{firstName:'Jaida',lastName:'Hale',displayName:'Jade'});
+  const edits=validatedEditableProfile({firstName:' Jaida ',lastName:' Hale '});
+  assert.deepEqual(edits,{firstName:'Jaida',lastName:'Hale'});
   for(const key of ['username','usernameLower','uid','accountId','accountNumber','accountIdKey','email']){
     assert.throws(()=>validatedEditableProfile({...edits,[key]:'changed'}),/identity/);
   }
@@ -15,9 +15,9 @@ test('account editing cannot change the permanent username, UID or Account ID',(
   assert.equal(identityFieldsUnchanged(initial,{...initial,accountNumber:'01449'}),false);
 });
 test('profile input rejects empty or invalid names',()=>{
-  assert.equal(validatedEditableProfile({firstName:'Éowyn',lastName:'',displayName:''}).firstName,'Éowyn');
-  assert.throws(()=>validatedEditableProfile({firstName:'',lastName:'',displayName:''}),/at least one/);
-  assert.throws(()=>validatedEditableProfile({firstName:'<script>',lastName:'',displayName:''}),/invalid/);
+  assert.equal(validatedEditableProfile({firstName:'Éowyn',lastName:''}).firstName,'Éowyn');
+  assert.throws(()=>validatedEditableProfile({firstName:'',lastName:''}),/at least one/);
+  assert.throws(()=>validatedEditableProfile({firstName:'<script>',lastName:''}),/invalid/);
 });
 test('avatar validates size, content and authenticated owner path',()=>{
   assert.equal(accountAvatarPath('alice'),'users/alice/profile/avatar');
