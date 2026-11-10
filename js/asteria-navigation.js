@@ -283,9 +283,13 @@
     const reflow=()=>{
       closePanels();
       const nav=byId('globalNavigation'),accounts=byId('accountControls');
-      if(media.matches){byId('mobileNavigationSlot')?.appendChild(nav);byId('mobileAccountSlot')?.appendChild(accounts);}
-      else{desktopNavParent?.insertBefore(nav,desktopAccountsParent);desktopAccountsParent?.insertBefore(accounts,byId('settingsToggle'));}
-      byId('settingsToggle')?.setAttribute('aria-label',media.matches?'Open main menu':'Open menu and appearance');
+      // Only the main navigation moves into the compact drawer.
+      // The Account control and profile remain accessible in the header.
+      if(media.matches){byId('mobileNavigationSlot')?.appendChild(nav);}
+      else{desktopNavParent?.insertBefore(nav,desktopAccountsParent);}
+      if(accounts&&accounts.parentElement!==desktopAccountsParent)
+        desktopAccountsParent?.insertBefore(accounts,byId('settingsToggle'));
+      byId('settingsToggle')?.setAttribute('aria-label','Open main navigation');
       alignHeader();
     };
     media.addEventListener('change',reflow);reflow();
