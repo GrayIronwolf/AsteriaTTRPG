@@ -77,7 +77,7 @@ async function refresh(){
     // Only show username editing after the dedicated backend callable exists.
     // This avoids publishing a button that would fail before its scoped release.
     const available=profile.status==='assigned'&&
-      await window.AsteriaFirebase?.usernameEditingAvailable?.();
+      await window.AsteriaFirebase?.canRenameAccountUsername?.();
     if(version!==requestVersion||!isOpen()||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
     get('accountProfileChangeUsername').hidden=!available;
     const url=await window.AsteriaFirebase?.readOwnAccountAvatar?.();
