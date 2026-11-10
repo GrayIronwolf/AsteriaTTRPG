@@ -80,3 +80,14 @@ test('Appearance is separate from explicit Logout',()=>{
   assert.match(source,/window\.AsteriaAccountSecurity\?\.open\?\.\(\)/);
   assert.doesNotMatch(read('index.html'),/onclick="logout\(\)"/);
 });
+
+test('avatar release is independently approved and limited to Storage rules',()=>{
+ const yaml=read('.github/workflows/firebase-deploy.yml');
+ const block=yaml.slice(yaml.indexOf('  account_profile_avatar_rules:'));
+ assert.ok(block.length>100,'scoped production job is defined');
+ assert.match(block,/inputs\.operation == 'account-profile-avatar-rules-deploy'/);
+ assert.match(block,/inputs\.production_confirmation == 'DEPLOY-ASTERIA-PROFILE-AVATAR-RULES'/);
+ assert.match(block,/environment: firebase-production/);
+ assert.match(block,/firebase deploy --project asteria-ttrpg --only storage --non-interactive/);
+ assert.doesNotMatch(block,/--only functions|--only firestore|deploy --project asteria-ttrpg --only functions/);
+});
