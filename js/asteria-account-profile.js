@@ -75,8 +75,13 @@ async function refresh(){
     const url=await window.AsteriaFirebase?.readOwnAccountAvatar?.();
     if(version===requestVersion&&isOpen()&&window.AsteriaFirebase?.getUser?.()?.uid===activeUid){
       const image=get('accountProfileAvatar');
-      if(typeof url==='string'&&url.startsWith('https://')){image.src=url;image.hidden=false;}
-      else{image.hidden=true;image.removeAttribute('src');}
+      if(typeof url==='string'&&url.startsWith('https://')){
+        image.src=url;image.hidden=false;
+        get('accountProfileAvatarFallback').hidden=true;
+      } else{
+        image.hidden=true;image.removeAttribute('src');
+        get('accountProfileAvatarFallback').hidden=false;
+      }
     }
   }catch{
     if(version===requestVersion&&isOpen()){
@@ -208,7 +213,7 @@ function bind(){
   overlay.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();close();return;}
     if(event.key!=='Tab')return;
-    const items=[...overlay.querySelectorAll('button:not(:disabled)')].filter(item=>item.getClientRects().length);
+    const items=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')].filter(item=>item.getClientRects().length);
     if(!items.length)return;
     const first=items[0],last=items.at(-1);
     if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
