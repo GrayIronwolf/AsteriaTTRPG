@@ -85,7 +85,16 @@ async function main(){
     if(!existsSync(source))throw Error('Public directory missing: '+category);
     const files=await allFiles(site,category);
     for(const file of files){
-      if(!MEDIA_EXT.test(file))throw Error('Unexpected non-public file in media split: '+file);
+      if(!MEDIA_EXT.test(file)){
+        // Runtime package may contain public artwork-folder documentation.
+        // Exclude it from both deployment packages; never publish metadata
+        // or silently admit arbitrary file extensions to public Hosting.
+        if(/(?:^|\/)README\.md$/i.test(file)){
+          await rm(join(site,file));
+          continue;
+        }
+        throw Error('Unexpected non-public file in media split: '+file);
+      }
       mediaPaths.push(file);mediaBytes+=(await stat(join(site,file))).size;
     }
     await rename(source,join(media,category));
