@@ -421,7 +421,8 @@
         <p>Change personal details without changing your permanent Account ID. Username changes require a separately verified identity operation.</p>
         <label>First name<input id="accountProfileEditFirst" type="text" maxlength="60" autocomplete="given-name"></label>
         <label>Last name<input id="accountProfileEditLast" type="text" maxlength="60" autocomplete="family-name"></label>
-        <p class="asteria-profile-username-note">Your display name is your registered username. It remains linked to your permanent Account ID.</p>
+        <label>Username<input id="accountProfileEditUsername" type="text" maxlength="24" minlength="3" pattern="[A-Za-z0-9._-]{3,24}" autocomplete="nickname" required></label>
+        <p class="asteria-profile-username-note">Your public name uses this username and your existing five-digit number. Changing it updates your full Account ID; previous combinations remain reserved to you.</p>
         <div class="asteria-profile-actions">
           <button id="accountProfileSave" type="submit">Save Profile</button>
           <button id="accountProfileCancel" type="button">Cancel</button>
