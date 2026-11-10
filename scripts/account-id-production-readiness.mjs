@@ -39,7 +39,7 @@ export function inspectActivationState(func,release,ruleset,localRules) {
   const cutoffState=func===null ? 'UNVERIFIED' :
     cutoff===undefined || cutoff==='' ? 'NOT SET' :
     typeof cutoff==='string' && CUTOFF.test(cutoff) &&
-      new Date(cutoff).toISOString()===cutoff ?
+      Number.isFinite(Date.parse(cutoff)) && new Date(cutoff).toISOString()===cutoff ?
       'CANONICAL UTC CONFIGURED' : 'INVALID - REVIEW REQUIRED';
   const remoteFiles=release?.name===RELEASE && RULESET.test(release.rulesetName||'') &&
     ruleset?.name===release.rulesetName && Array.isArray(ruleset?.source?.files) ?
