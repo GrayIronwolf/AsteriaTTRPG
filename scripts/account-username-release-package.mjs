@@ -43,7 +43,7 @@ export function buildUsernameRelease(){
 export function stageUsernameRelease(env=process.env,mode='production'){
   if(!['ci','production'].includes(mode)||env.GITHUB_ACTIONS!=='true'||
      !isAbsolute(env.RUNNER_TEMP||''))
-    throw Error('Staging requires a GitHub Actions temporary directory.');
+    throw Error('Staging requires the approved GitHub Actions temporary directory.');
   if(mode==='production'&&(env.GITHUB_REF!=='refs/heads/main'||
      env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
      env.ASTERIA_USERNAME_SCOPED_DEPLOY!=='1'||
