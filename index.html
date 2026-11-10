@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="css/asteria-campaign-connection.css?v=phase8-1-20261109">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
+  <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=header-home-snow-20261110">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -70,17 +71,6 @@
       <button id="campaignsTop" class="crystal-button" type="button">Campaign Forge</button>
     </nav>
     <div class="top-actions">
-      <div id="asteriaHeaderProfile" class="asteria-header-profile" hidden aria-label="Signed-in account">
-        <button id="asteriaHeaderAvatarButton" type="button" aria-label="Open My Profile">
-          <span id="asteriaHeaderAvatarFallback" aria-hidden="true">A</span>
-          <img id="asteriaHeaderAvatar" alt="" hidden loading="lazy" decoding="async">
-        </button>
-        <div class="asteria-header-identity" aria-live="polite">
-          <span id="asteriaHeaderName"></span>
-          <span id="asteriaHeaderAccountId"></span>
-        </div>
-        <span id="asteriaHeaderMail" class="asteria-header-mail" hidden aria-label="Unread notifications" title="Unread notifications">✉</span>
-      </div>
       <div id="accountControls" class="asteria-account-controls">
         <div class="asteria-account-menu-wrap" id="accountMenuWrap">
           <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
@@ -104,6 +94,17 @@
         </div>
       </div>
       <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Navigation" aria-label="Open main navigation" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
+      <div id="asteriaHeaderProfile" class="asteria-header-profile" hidden aria-label="Signed-in account">
+        <button id="asteriaHeaderAvatarButton" type="button" aria-label="Open My Profile">
+          <span id="asteriaHeaderAvatarFallback" aria-hidden="true">A</span>
+          <img id="asteriaHeaderAvatar" alt="" hidden loading="lazy" decoding="async">
+        </button>
+        <div class="asteria-header-identity" aria-live="polite">
+          <span id="asteriaHeaderName"></span>
+          <span id="asteriaHeaderAccountId"></span>
+        </div>
+        <span id="asteriaHeaderMail" class="asteria-header-mail" hidden aria-label="Unread notifications" title="Unread notifications">✉</span>
+      </div>
     </div>
   </header>
 
@@ -162,22 +163,18 @@
   </aside><div id="shade" class="shade" aria-hidden="true"></div>
 
   <main id="mainContent" class="main" tabindex="-1">
-    <section id="home" class="view show">
-      <div class="public-home-grid">
-        <section class="home-hero card public-hero">
-          <img class="hero-logo" src="asteria-logo-transparent.png" alt="Asteria Tabletop RPG logo" decoding="async">
-          <div>
-            <p class="eyebrow">Welcome to</p>
-            <h2>Asteria</h2>
-            <p>A dark fantasy tabletop RPG world of realms, races, classes, shattered zones, magic systems, items, monsters, and campaign tools.</p>
-            <p class="muted">Explore the public compendium before logging in, or sign in to open the character, campaign, GM, and player systems.</p>
-            <div class="hero-actions"><button class="primary" data-view="workspace" data-workspace-section="World, Realms & Planes">Explore the World</button><button class="outline" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button></div>
-          </div>
-        </section>
-        <section class="card world-map-preview">
-          <div class="section-head"><div><p class="eyebrow">Asteria World</p><h2>World Map</h2></div><button class="outline" data-view="workspace" data-workspace-section="World, Realms & Planes">Open World Workspace</button></div>
-          <div class="map-placeholder"><span>ASTERIA WORLD MAP</span><small>Image / interactive map panel placeholder</small></div>
-        </section>
+    <section id="home" class="view show asteria-home-refreshed" aria-label="Welcome to Asteria">
+      <div class="asteria-home-cinematic" aria-hidden="true">
+        <img class="asteria-home-cinematic-art" src="assets/home/varkhyn-snowstorm.avif" alt="" decoding="async" fetchpriority="high">
+      </div>
+      <div class="asteria-home-introduction">
+        <p class="eyebrow">Welcome to</p>
+        <h2>Asteria</h2>
+        <p>Discover a dark fantasy world of realms, races, classes, magic and adventure.</p>
+        <div class="hero-actions">
+          <button class="primary" data-view="workspace" data-workspace-section="World, Realms &amp; Planes">Explore the World</button>
+          <button class="outline" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button>
+        </div>
       </div>
     </section>
 
@@ -410,8 +407,7 @@
       </div>
       <dl class="asteria-profile-details">
         <div><dt>Name</dt><dd id="accountProfileName">—</dd></div>
-        <div><dt>Display name</dt><dd id="accountProfileDisplayName">—</dd></div>
-        <div><dt>Username</dt><dd id="accountProfileUsername">—</dd></div>
+        <div><dt>Username / display name</dt><dd id="accountProfileUsername">—</dd></div>
         <div><dt>Email</dt><dd id="accountProfileEmail">—</dd></div>
         <div class="asteria-profile-id"><dt>Account ID</dt><dd id="accountProfileId">—</dd></div>
       </dl>
@@ -425,7 +421,7 @@
         <p>Change personal details without changing your permanent Account ID. Username changes require a separately verified identity operation.</p>
         <label>First name<input id="accountProfileEditFirst" type="text" maxlength="60" autocomplete="given-name"></label>
         <label>Last name<input id="accountProfileEditLast" type="text" maxlength="60" autocomplete="family-name"></label>
-        <label>Display name<input id="accountProfileEditDisplay" type="text" maxlength="64" autocomplete="nickname"></label>
+        <p class="asteria-profile-username-note">Your display name is your registered username. It remains linked to your permanent Account ID.</p>
         <div class="asteria-profile-actions">
           <button id="accountProfileSave" type="submit">Save Profile</button>
           <button id="accountProfileCancel" type="button">Cancel</button>
