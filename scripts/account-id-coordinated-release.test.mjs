@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {isApprovedImpersonatedCredential} from './account-id-cloud-shell-credentials.mjs';
 import {completeAccountIdRelease,APPROVAL} from './account-id-coordinated-release.mjs';
 
 const status=async()=>({issuance:'DISABLED',rollout:'UNVERIFIED AUTO-CANARY',cutoff:'NOT SET'});
@@ -76,4 +79,34 @@ test('Cloud Shell launcher uses keyless service-account ADC and no IAM mutations
   assert.doesNotMatch(sh,/gcloud iam service-accounts (?:keys create|add-iam-policy-binding)/);
   assert.doesNotMatch(sh,/gcloud projects add-iam-policy-binding/);
   assert.doesNotMatch(sh,/--key-file|service-account-key\.json/);
+});
+
+test('Cloud Shell reads effective ADC config location rather than assuming home directory',()=>{
+  const sh=readFileSync(new URL('./account-id-cloud-shell-release.sh',import.meta.url),'utf8');
+  assert.match(sh,/gcloud info --format='value\(config\.paths\.global_config_dir\)'/);
+  assert.match(sh,/adc_path="\$config_dir\/application_default_credentials\.json"/);
+  assert.match(sh,/GOOGLE_APPLICATION_CREDENTIALS="\$adc_path"/);
+  assert.doesNotMatch(sh,/env -u GOOGLE_APPLICATION_CREDENTIALS/);
+  assert.doesNotMatch(sh,/HOME.*application_default_credentials/);
+});
+test('saved impersonated credentials must match expected Firebase Admin service account',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'asteria-adc-check-'));
+  try{
+    const account='firebase-adminsdk-test@asteria-ttrpg.iam.gserviceaccount.com';
+    const file=join(dir,'application_default_credentials.json');
+    const good={
+      type:'impersonated_service_account',
+      service_account_impersonation_url:'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+account+':generateAccessToken'
+    };
+    writeFileSync(file,JSON.stringify(good));
+    assert.equal(isApprovedImpersonatedCredential(file,account),true);
+    assert.equal(isApprovedImpersonatedCredential(file,'firebase-adminsdk-other@asteria-ttrpg.iam.gserviceaccount.com'),false);
+    writeFileSync(file,JSON.stringify({...good,type:'authorized_user'}));
+    assert.equal(isApprovedImpersonatedCredential(file,account),false);
+    writeFileSync(file,JSON.stringify({...good,service_account_impersonation_url:'https://wrong.example/v1/projects/-/serviceAccounts/'+account+':generateAccessToken'}));
+    assert.equal(isApprovedImpersonatedCredential(file,account),false);
+    assert.equal(isApprovedImpersonatedCredential(join(dir,'missing'),account),false);
+  } finally{
+    rmSync(dir,{recursive:true,force:true});
+  }
 });
