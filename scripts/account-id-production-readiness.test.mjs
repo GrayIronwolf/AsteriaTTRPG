@@ -102,3 +102,15 @@ test('canary configuration is classified without printing email digest',()=>{
   assert.equal(audit(f({ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE:'canary'})).verifiedEmailCanary,
   'INVALID OR INCOMPLETE');
 });
+
+test('read-only audit distinguishes unverified one-email auto-canary without leaking digest',()=>{
+  const digest='b'.repeat(64);
+  const result=audit(f({ASTERIA_ACCOUNT_IDS_ENABLED:'0',
+    ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE:'auto-canary',
+    ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256:digest}));
+  assert.equal(result.issuance,'DISABLED');
+  assert.equal(result.verifiedEmailCanary,'UNVERIFIED-EMAIL AUTO-CANARY CONFIGURED');
+  assert.equal(result.decision,'ACTIVATION NOT AUTHORISED');
+  assert.ok(!JSON.stringify(result).includes(digest));
+  assert.match(renderSummary(result),/UNVERIFIED-EMAIL AUTO-CANARY CONFIGURED/);
+});

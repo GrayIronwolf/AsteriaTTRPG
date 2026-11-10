@@ -118,3 +118,31 @@ test('a changed runtime inventory blocks any staging writes',async()=>{
     /changed during confirmation/);
   assert.equal(writes,0);
 });
+
+test('unverified automatic canary stages only one email with issuance still disabled',()=>{
+  const value=proposedEnvironment(sample(),'stage-auto',{email});
+  const vars=value.serviceConfig.environmentVariables;
+  assert.equal(vars.ASTERIA_ACCOUNT_IDS_ENABLED,'0');
+  assert.equal(vars.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE,'auto-canary');
+  assert.match(vars.ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256,/^[a-f0-9]{64}$/);
+  assert.equal(vars.ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE,undefined);
+  assert.equal(describeCanary(sample(vars)).singleAccount,'CONFIGURED');
+  assert.equal(describeCanary(sample(vars)).rollout,'UNVERIFIED AUTO-CANARY');
+  const activated=proposedEnvironment(sample(vars),'enable',{now:new Date('2026-11-10T04:03:00.000Z')});
+  assert.equal(activated.serviceConfig.environmentVariables.ASTERIA_ACCOUNT_IDS_ENABLED,'1');
+});
+test('unverified canary staging is refused if an existing issuance gate is on',()=>{
+  assert.throws(()=>proposedEnvironment(sample({ASTERIA_ACCOUNT_IDS_ENABLED:'1'}),'stage-auto',{email}),/enabled/);
+});
+test('auto-canary stages through operator dispatch and requires typed confirmation to enable',async()=>{
+  let writes=0,fn=sample();
+  const api={get:async()=>fn,update:async(_old,body)=>{
+    writes++;
+    fn=sample(body.serviceConfig.environmentVariables);
+  }};
+  await run({action:'stage-auto',token:'hidden',api,ask:async()=>email});
+  assert.equal(writes,1);
+  assert.equal((await run({action:'status',token:'hidden',api})).rollout,'UNVERIFIED AUTO-CANARY');
+  await assert.rejects(run({action:'enable',token:'hidden',api,ask:async()=>'NO'}),/Explicit approval/);
+  assert.equal(writes,1);
+});
