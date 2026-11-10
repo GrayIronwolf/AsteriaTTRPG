@@ -1,5 +1,5 @@
 import { inspectAccountProfileDisplay } from '../src/state/accountProfileDisplay.mjs';
-import {proposedAccountUsername} from '../src/state/accountProfileEdit.mjs';
+import {proposedAccountUsername} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 
 // Authenticated account profile: presentation and server-authorized personal edits.
 const get=id=>document.getElementById(id);
