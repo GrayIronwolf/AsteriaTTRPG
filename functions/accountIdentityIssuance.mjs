@@ -56,25 +56,46 @@ export function assertNewRegistrationEligible(authUser,uid,{
 }
 
 /**
- * Canary-only production gate. An authenticated new registration must have
- * verified ownership of exactly the operator-approved email address.
- * Store only a SHA-256 digest of the lowercased email in the runtime setting.
- * No general rollout mode exists in this version: any other mode fails closed.
- * This check is independent of the website's feature flags and occurs before
- * any Firestore transaction. Never log the digest or full email address.
+ * Rollout policy (server-side only):
+ * - canary: the original one-email, verified-email smoke test.
+ * - auto-canary: a separate one-email smoke test without email verification.
+ * - general: independently approved public rollout, NOT admitted by just
+ *   changing the rollout mode. The separate approval gate must equal '1'.
+ *
+ * All modes still require an authenticated, genuinely new Firebase Auth UID,
+ * a trusted creation-time cutoff, and a canonical matching Firestore profile.
+ * No user-selected target, email, number, timestamp or mode is accepted.
  */
 const EMAIL_DIGEST=/^[0-9a-f]{64}$/;
-export function assertAccountIdCanaryEligible(authUser,email,{
-  rolloutMode,canaryEmailSha256
-}={}) {
-  if(rolloutMode!=='canary' ||
-     typeof canaryEmailSha256!=='string' ||
+function assertApprovedCanaryEmail(email,canaryEmailSha256) {
+  if(typeof canaryEmailSha256!=='string' ||
      !EMAIL_DIGEST.test(canaryEmailSha256) ||
-     authUser?.emailVerified!==true ||
      typeof email!=='string')throw notEligible();
   const expected=Buffer.from(canaryEmailSha256,'hex');
   const actual=createHash('sha256').update(email,'utf8').digest();
   if(!timingSafeEqual(actual,expected))throw notEligible();
+}
+
+/** Preserve the verified-email constraint of the completed first canary. */
+export function assertAccountIdCanaryEligible(authUser,email,{
+  rolloutMode,canaryEmailSha256
+}={}) {
+  if(rolloutMode!=='canary' || authUser?.emailVerified!==true)
+    throw notEligible();
+  assertApprovedCanaryEmail(email,canaryEmailSha256);
+}
+
+/** Verification-free ID creation is isolated to auto-canary or approved general mode. */
+export function assertAccountIdRolloutEligible(authUser,email,{
+  rolloutMode,canaryEmailSha256,generalReleaseApproved
+}={}) {
+  if(rolloutMode==='canary')
+    return assertAccountIdCanaryEligible(authUser,email,{rolloutMode,canaryEmailSha256});
+  if(rolloutMode==='auto-canary')
+    return assertApprovedCanaryEmail(email,canaryEmailSha256);
+  if(rolloutMode==='general' && generalReleaseApproved==='1')
+    return;
+  throw notEligible();
 }
 
 /**
@@ -87,9 +108,10 @@ export async function issueNewRegistrationAccountId(db,authUser,uid,options={}){
   const {username,email}=assertNewRegistrationEligible(authUser,uid,{
     notBefore:options.notBefore,now:options.now||new Date()
   });
-  assertAccountIdCanaryEligible(authUser,email,{
+  assertAccountIdRolloutEligible(authUser,email,{
     rolloutMode:options.rolloutMode,
-    canaryEmailSha256:options.canaryEmailSha256
+    canaryEmailSha256:options.canaryEmailSha256,
+    generalReleaseApproved:options.generalReleaseApproved
   });
   return ensureAccountIdentityProfile(db,uid,{
     expectedUsername:username,
