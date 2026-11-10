@@ -5,6 +5,7 @@
  * Commands:
  *   node scripts/account-id-canary-operator.mjs status
  *   node scripts/account-id-canary-operator.mjs stage
+ *   node scripts/account-id-canary-operator.mjs stage-auto
  *   node scripts/account-id-canary-operator.mjs enable
  *   node scripts/account-id-canary-operator.mjs disable
  *
@@ -63,18 +64,18 @@ export function proposedEnvironment(fn,operation,{email,now=new Date()}={}) {
   // Google Cloud may omit an empty environmentVariables map entirely.
   const current=fn.serviceConfig.environmentVariables||{};
   const vars={...current};
-  if(operation==='stage'){
+  if(operation==='stage'||operation==='stage-auto'){
     if(current[KEYS.enabled]==='1')
       abort('Existing issuance is enabled; stop and review before staging.');
     if(typeof email!=='string'||!MAIL.test(email.trim()))
       abort('Valid tester email required; no changes made.');
     vars[KEYS.enabled]='0';
-    vars[KEYS.mode]='canary';
+    vars[KEYS.mode]=operation==='stage-auto'?'auto-canary':'canary';
     vars[KEYS.digest]=createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
     delete vars[KEYS.cutoff];
   }else if(operation==='enable'){
     if(current[KEYS.enabled]!=='0' ||
-       current[KEYS.mode]!=='canary' ||
+       !['canary','auto-canary'].includes(current[KEYS.mode]) ||
        !MATCH.test(current[KEYS.digest]||'') ||
        current[KEYS.cutoff])
       abort('Canary was not safely staged or is already active. No changes made.');
@@ -155,7 +156,7 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
     return state;
   }
   let input;
-  if(action==='stage'){
+  if(action==='stage'||action==='stage-auto'){
     input=(await ask('Enter the approved test email (not printed): ')).trim();
   }else if(action==='enable'){
     const reply=await ask('Enable Account ID issuance for ONE verified new test registration now? Type ENABLE: ');
@@ -163,14 +164,14 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
   }else if(action==='disable'){
     const reply=await ask('Disable all new Account ID issuance now? Type DISABLE: ');
     if(reply!=='DISABLE')abort('No changes made. Explicit approval required.');
-  }else abort('Allowed actions: status, stage, enable, disable');
+  }else abort('Allowed actions: status, stage, stage-auto, enable, disable');
   const proposed=proposedEnvironment(current,action,{email:input});
   const fresh=await api.get(token);
   assertInventoryUnchanged(current,fresh);
   await api.update(fresh,proposed,token);
   const final=await api.get(token);
   const state=describeCanary(final);
-  if(action==='stage' && (state.issuance!=='DISABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='NOT SET'))
+  if(['stage','stage-auto'].includes(action) && (state.issuance!=='DISABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='NOT SET'))
     abort('Post-update staging verification failed.');
   if(action==='enable' && (state.issuance!=='ENABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='CONFIGURED'))
     abort('Post-update activation verification failed. Run disable if uncertain.');
@@ -182,8 +183,8 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
 const invoked=process.argv[1]?.endsWith('/account-id-canary-operator.mjs');
 if(invoked){
   const action=process.argv[2];
-  if(!['status','stage','enable','disable'].includes(action)||process.argv.length!==3){
-    process.stderr.write('Usage: node account-id-canary-operator.mjs status|stage|enable|disable\n');
+  if(!['status','stage','stage-auto','enable','disable'].includes(action)||process.argv.length!==3){
+    process.stderr.write('Usage: node account-id-canary-operator.mjs status|stage|stage-auto|enable|disable\n');
     process.exitCode=2;
   }else{
     (async()=>{
