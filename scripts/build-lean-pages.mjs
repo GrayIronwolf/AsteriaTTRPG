@@ -35,7 +35,10 @@ function groupOf(p){return p.split('/')[0];}
 function allowed(p){
   if(SOURCE_MAP.test(p))return false;
   if(p.startsWith('content/'))return CONTENT_MEDIA.test(p);
-  // The unbundled browser bridge imports only JS/MJS helpers from src/.\n  // React JSX, source-only stylesheets and duplicate original images are\n  // compiled into react-dist by Vite and are not served directly.\n  if(p.startsWith('src/'))return /\.(?:js|mjs|json)$/i.test(p);
+  // The unbundled browser bridge imports only JS/MJS helpers from src/.
+  // React JSX, source-only stylesheets and duplicate original images are
+  // compiled into react-dist by Vite and are not served directly.
+  if(p.startsWith('src/'))return /\.(?:js|mjs|json)$/i.test(p);
   return true;
 }
 function ensureWithin(candidate,base){
