@@ -47,6 +47,20 @@ Expected safe status: `ACTIVE`, `DISABLED`, `CONFIGURED`, `UNVERIFIED AUTO-CANAR
 
 Do not use `stage-auto` while the production callable still contains the old verified-only implementation; that older callable must fail closed and would not issue the new ID. The general rollout remains disabled without additional approval.
 
+## Separate unverified automatic-ID canary (not public activation)
+After the automatic Account ID callable source is separately deployed and the previous single-account canary has been disabled and audited, an operator may stage a **new** test email using:
+
+```bash
+node /tmp/account-id-canary-operator.mjs stage-auto
+node /tmp/account-id-canary-operator.mjs status
+```
+
+The operator prompts for the approved unregistered address and only modifies `ASTERIA_ACCOUNT_IDS_ENABLED=0`, `ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE=auto-canary`, the private approved email digest, and resets the registration cutoff. No source deployment, public activation or user creation occurs. Status must be **ACTIVE / DISABLED / CONFIGURED / NOT SET**, with rollout **UNVERIFIED AUTO-CANARY**. The separate GitHub read-only audit must show `UNVERIFIED-EMAIL AUTO-CANARY CONFIGURED`, `DISABLED`, `NOT SET`, and `EXACT SOURCE MATCH`.
+
+Only after inspecting that audit and preparing the email inbox and fresh website registration session, run `enable`, type `ENABLE`, then create one new account via `https://asteriattrpg.com/?account-id-auto-canary=1`. Verify that the permanent five-digit ID appears in My Profile **before** email verification. Check persistence, copy, duplicate protection and unchanged character/campaign data. The automatic mode allows at most 24 hours of same-UID registration recovery but the first assignment should occur immediately.
+
+Disable issuance after the test. The pre-existing `Grayson#01448` account must not be deleted or reassigned. The `general` rollout mode and public website flag remain strictly out of scope; require separate abuse-prevention review and approval.
+
 ## Enable — only after staging evidence and tester ready
 Once GitHub read-only audit and website checks pass, with the new inbox open and tester ready to create the account, run:
 
