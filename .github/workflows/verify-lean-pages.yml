@@ -33,6 +33,10 @@ jobs:
           test ! -e "$RUNNER_TEMP/asteria-lean-pages/functions"
           test ! -e "$RUNNER_TEMP/asteria-lean-pages/storage.rules"
           test ! -e "$RUNNER_TEMP/asteria-lean-pages/package.json"
+      - name: Measure compressed runtime snapshot (no publishing)
+        run: |
+          tar -czf "$RUNNER_TEMP/asteria-lean-pages.tar.gz" -C "$RUNNER_TEMP/asteria-lean-pages" .
+          node -e "const fs=require('node:fs');const p=process.argv[1];const n=fs.statSync(p).size;console.log('Compressed Asteria runtime: '+(n/1048576).toFixed(2)+' MiB ('+n+' bytes)');" "$RUNNER_TEMP/asteria-lean-pages.tar.gz"
       - name: Add runtime package audit summary
         if: always()
         run: |
