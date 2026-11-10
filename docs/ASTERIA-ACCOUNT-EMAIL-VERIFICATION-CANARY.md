@@ -10,6 +10,11 @@ Prepare the existing website for Firebase Authentication email verification and 
 - The completion action re-reads Firebase Auth's verified status, checks the immutable creation time is within 15 minutes, reads the canonical Firestore profile, sends only `{action:'ensure'}` to the server, and confirms the server-stored account profile. It never accepts a browser-selected UID, ID, number, email or username as the target of the privileged function.
 - The deployed server will continue to deny issuance until the reviewed verified-email canary version is deployed separately, and its gate and cutoff are explicitly set by the production operator.
 
+## Explicit canary test entrypoint (not activation)
+After this source change is merged and GitHub Pages deploys, the first approved tester can open `https://asteriattrpg.com/?account-id-canary=1` to reveal the test-only **Complete Account ID (Canary)** button under Account > Password & Security. A normal visit without this exact query parameter leaves the button hidden; the test choice does not persist across navigation and does not change `accountIds:false`.
+
+**Important:** The URL is only a user-interface switch, never a credential or authorization. The deployed Cloud Function independently requires the correct approved email digest, verified Auth email, genuine newly-created Auth account within 15 minutes, explicit cutoff, and an enabled canary server gate. With the current disabled backend settings, pressing the canary button cannot issue an ID. No account should be created for the canary until all private server settings are explicitly approved and verified. Do not send the private test email, UID, or any digest in GitHub issues or logs.
+
 ## Operator checklist — no changes until canary approval
 1. **Firebase Console > Authentication > Sign-in method:** confirm **Email/Password** is enabled. This is already required by the existing account creation flow, so do not enable another provider.
 2. **Firebase Console > Authentication > Templates > Email address verification:** inspect the sender, subject and verification link domain. The Firebase built-in template is sufficient; no Resend API key or new email provider is needed. Verify mail is delivered to an inbox you control and check spam. Do not expose a private test email in GitHub.
