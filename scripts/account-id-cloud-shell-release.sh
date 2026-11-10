@@ -69,6 +69,15 @@ else
   fi
 fi
 
-echo "Credentials verified. Checking production accounts before any writes..."
-GOOGLE_APPLICATION_CREDENTIALS="$adc_path" \
-  node scripts/account-id-coordinated-release.mjs --project "$PROJECT"
+if [[ "${1:-}" == "--preview" && "$#" -eq 1 ]]; then
+  echo "Read-only legacy account reconciliation audit. No data or settings will be modified."
+  GOOGLE_APPLICATION_CREDENTIALS="$adc_path" \
+    node scripts/account-id-existing-migration.mjs --project "$PROJECT" --mode preview
+elif [[ "$#" -eq 0 ]]; then
+  echo "Credentials verified. Checking production accounts before any writes..."
+  GOOGLE_APPLICATION_CREDENTIALS="$adc_path" \
+    node scripts/account-id-coordinated-release.mjs --project "$PROJECT"
+else
+  echo "Usage: bash scripts/account-id-cloud-shell-release.sh [--preview]" >&2
+  exit 1
+fi
