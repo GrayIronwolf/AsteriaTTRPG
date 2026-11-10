@@ -96,7 +96,7 @@ test('the Account menu opens My Profile while settings and logout remain intact'
   assert.match(menu,/window\.logout\?\.\(\)/);
   assert.match(markup,/role="dialog" aria-modal="true"/);
   assert.match(markup,/accountIds:true/);
-  assert.match(markup,/js\/asteria-account-profile\.js\?v=header-account-20261110/);
+  assert.match(markup,/js\/asteria-account-profile\.js\?v=account-username-20261111/);
   assert.match(css,/@media \(max-width:600px\)/);
 });
 test('profile is read-only, includes no identity allocation or account mutation',()=>{
