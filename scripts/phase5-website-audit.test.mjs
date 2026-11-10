@@ -60,15 +60,15 @@ test('Navigation moves the same real controls into and out of the menu without d
   vm.runInContext(read('js/asteria-navigation.js'),context);
   events['document:DOMContentLoaded']();
   assert.equal(nav.parentElement,mobileNav,'Laptop navigation moved into visible menu slot');
-  assert.equal(account.parentElement,mobileAccount,'Laptop account buttons moved into visible menu slot');
-  assert.equal(toggle.attributes['aria-label'],'Open main menu');
+  assert.equal(account.parentElement,actions,'Account controls remain available in laptop header');
+  assert.equal(toggle.attributes['aria-label'],'Open main navigation');
   media.matches=false;mediaHandler();
   assert.equal(nav.parentElement,header,'Desktop navigation returned to header');
   assert.equal(account.parentElement,actions,'Desktop account buttons returned to header');
-  assert.equal(toggle.attributes['aria-label'],'Open menu and appearance');
+  assert.equal(toggle.attributes['aria-label'],'Open main navigation');
   media.matches=true;mediaHandler();
   assert.equal(nav.parentElement,mobileNav,'Navigation returns to menu on resize');
-  assert.equal(account.parentElement,mobileAccount,'Account actions return to menu on resize');
+  assert.equal(account.parentElement,actions,'Account actions remain in header on resize');
 });
 
 test('Typography settings keep a visible section heading, validate reading fonts and isolate stored users',()=>{

@@ -190,6 +190,8 @@
         if(access) access.textContent = `Signed in as ${firebaseUser?.email || displayName}. Campaign permissions are assigned per campaign.`;
         updateRoleLocks?.();
         updateTopButtons();
+        // Revalidate the account header from the server, never from session cache.
+        void window.AsteriaAccountHeader?.refresh?.();
         // Auth restoration and profile refreshes update identity without changing the current route.
       });
     },
@@ -221,6 +223,7 @@
         window.AsteriaLibrary?.refreshAccount?.();
         updateRoleLocks();
         updateTopButtons();
+        window.AsteriaAccountHeader?.reset?.();
         setView('home');
       });
     }

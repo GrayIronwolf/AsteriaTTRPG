@@ -32,11 +32,12 @@
 <link rel="stylesheet" href="css/asteria-header-wordmark.css?v=wordmark-stars-v3-20261108">
 <link rel="stylesheet" href="css/asteria-campaign-connection.css?v=phase8-1-20261109">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
+  <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
   <header class="topbar core-v2-topbar asteria-header">
-    <a class="asteria-header-brand" href="#home" aria-label="Asteria TTRPG home" onclick="return window.asteriaHardHome(event)">
+    <a class="asteria-header-brand" href="#home" id="asteriaHeaderBrand" data-home-action="true" aria-label="Asteria TTRPG home" onclick="return window.asteriaHardHome(event)">
       <svg class="asteria-header-wordmark" viewBox="0 0 2048 682" role="img" aria-labelledby="headerLogoTitle" xmlns="http://www.w3.org/2000/svg">
         <title id="headerLogoTitle">Asteria TTRPG</title>
         <defs>
@@ -60,7 +61,6 @@
       </svg>
     </a>
     <nav id="globalNavigation" class="asteria-main-navigation" aria-label="Main navigation">
-      <button id="sidebarHomeButton" class="crystal-button" type="button" data-view="home" data-home-action="true" onclick="return window.asteriaHardHome(event)">Home</button>
       <div class="compendium-split">
         <a id="compendiumIndexButton" class="crystal-button" href="#/compendium">Asteria Compendium</a>
         <button id="compendiumQuickToggle" class="crystal-button crystal-arrow" type="button" aria-label="Open Compendium quick navigation" aria-expanded="false" aria-controls="compendiumQuickMenu">▾</button>
@@ -70,6 +70,17 @@
       <button id="campaignsTop" class="crystal-button" type="button">Campaign Forge</button>
     </nav>
     <div class="top-actions">
+      <div id="asteriaHeaderProfile" class="asteria-header-profile" hidden aria-label="Signed-in account">
+        <button id="asteriaHeaderAvatarButton" type="button" aria-label="Open My Profile">
+          <span id="asteriaHeaderAvatarFallback" aria-hidden="true">A</span>
+          <img id="asteriaHeaderAvatar" alt="" hidden loading="lazy" decoding="async">
+        </button>
+        <div class="asteria-header-identity" aria-live="polite">
+          <span id="asteriaHeaderName"></span>
+          <span id="asteriaHeaderAccountId"></span>
+        </div>
+        <span id="asteriaHeaderMail" class="asteria-header-mail" hidden aria-label="Unread notifications" title="Unread notifications">✉</span>
+      </div>
       <div id="accountControls" class="asteria-account-controls">
         <div class="asteria-account-menu-wrap" id="accountMenuWrap">
           <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
@@ -78,6 +89,7 @@
               <p class="asteria-account-menu-heading" aria-hidden="true">Account</p>
               <button id="accountMenuProfile" type="button" role="menuitem">My Profile</button>
               <button id="accountMenuSettings" type="button" role="menuitem">Account Settings</button>
+              <button id="accountMenuAppearance" type="button" role="menuitem">Appearance</button>
             </div>
             <div class="asteria-account-menu-group" role="group" aria-label="Updates">
               <p class="asteria-account-menu-heading" aria-hidden="true">Updates</p>
@@ -91,12 +103,12 @@
           </div>
         </div>
       </div>
-      <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Menu and appearance" aria-label="Open menu and appearance" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
+      <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Navigation" aria-label="Open main navigation" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </header>
 
   <aside id="settingsPanel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
-    <div class="settings-head"><h2 id="settingsTitle">Menu &amp; appearance</h2><button id="settingsClose" type="button" aria-label="Close settings">×</button></div>
+    <div class="settings-head"><h2 id="settingsTitle">Navigation &amp; Appearance</h2><button id="settingsClose" type="button" aria-label="Close settings">×</button></div>
     <div id="mobileNavigationSlot"></div>
     <div id="mobileAccountSlot"></div>
     <section id="asteriaThemeSettings" class="theme-settings-section">
@@ -146,7 +158,7 @@
       </div>
     </section>
     <section><h3>System</h3><p><b>Current Version:</b> Asteria UI Modernisation Steps 7-12</p><p class="muted smallnote">Version logs and patch notes live here so the home screen stays clean.</p><button class="outline" onclick="setView('devLog');closeSettings()">Open Version Log</button></section>
-    <section><h3>Access</h3><p id="accessSummary">Guest access. Log in to unlock your workspace dashboard.</p><button onclick="logout()" class="outline">Log Out</button></section>
+    <section><h3>Access</h3><p id="accessSummary">Guest access. Log in to unlock your workspace dashboard.</p></section>
   </aside><div id="shade" class="shade" aria-hidden="true"></div>
 
   <main id="mainContent" class="main" tabindex="-1">
@@ -384,17 +396,42 @@
         <div><p class="eyebrow">Asteria Account</p><h2 id="accountProfileTitle">My Profile</h2></div>
         <button type="button" id="accountProfileClose" aria-label="Close My Profile">×</button>
       </div>
+      <div class="asteria-profile-avatar-controls">
+        <span class="asteria-profile-avatar-shell">
+          <img id="accountProfileAvatar" alt="Current profile picture" hidden>
+          <span id="accountProfileAvatarFallback" aria-hidden="true">A</span>
+        </span>
+        <div>
+          <label for="accountProfileAvatarFile">Profile picture (PNG, JPG or WEBP, up to 4 MB)</label>
+          <input id="accountProfileAvatarFile" type="file" accept="image/png,image/jpeg,image/webp">
+          <button id="accountProfileAvatarUpload" type="button">Update picture</button>
+          <button id="accountProfileAvatarRemove" type="button">Remove picture</button>
+        </div>
+      </div>
       <dl class="asteria-profile-details">
         <div><dt>Name</dt><dd id="accountProfileName">—</dd></div>
+        <div><dt>Display name</dt><dd id="accountProfileDisplayName">—</dd></div>
         <div><dt>Username</dt><dd id="accountProfileUsername">—</dd></div>
         <div><dt>Email</dt><dd id="accountProfileEmail">—</dd></div>
         <div class="asteria-profile-id"><dt>Account ID</dt><dd id="accountProfileId">—</dd></div>
       </dl>
       <p id="accountProfileStatus" class="asteria-profile-status" role="status" aria-live="polite">Loading your profile…</p>
       <div class="asteria-profile-actions">
+        <button id="accountProfileEdit" type="button">Edit Profile</button>
         <button id="accountProfileCopyId" type="button" disabled>Copy Account ID</button>
         <button id="accountProfileRefresh" type="button">Refresh Profile</button>
       </div>
+      <form id="accountProfileEditForm" class="asteria-profile-edit-form" hidden>
+        <p>Change personal details without changing your permanent Account ID. Username changes require a separately verified identity operation.</p>
+        <label>First name<input id="accountProfileEditFirst" type="text" maxlength="60" autocomplete="given-name"></label>
+        <label>Last name<input id="accountProfileEditLast" type="text" maxlength="60" autocomplete="family-name"></label>
+        <label>Display name<input id="accountProfileEditDisplay" type="text" maxlength="64" autocomplete="nickname"></label>
+        <div class="asteria-profile-actions">
+          <button id="accountProfileSave" type="submit">Save Profile</button>
+          <button id="accountProfileCancel" type="button">Cancel</button>
+        </div>
+      </form>
+      <p id="accountProfileEditStatus" class="asteria-profile-copy-status" role="status" aria-live="polite"></p>
       <p id="accountProfileCopyStatus" class="asteria-profile-copy-status" role="status" aria-live="polite"></p>
     </section>
   </div>
@@ -415,11 +452,12 @@
   <script src="js/asteria-inventory-api.js?v=react-m1"></script>
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
-<script src="js/asteria-account-menu.js?v=account-menu-phase3-3"></script>
+<script src="js/asteria-account-menu.js?v=header-account-20261110"></script>
+<script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
-<script type="module" src="js/asteria-account-profile.js?v=account-profile-phase3-2"></script>
+<script type="module" src="js/asteria-account-profile.js?v=header-account-20261110"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=account-id-automatic-signup-20261110"></script>
+  <script type="module" src="js/firebase-auth.js?v=header-account-20261110"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>

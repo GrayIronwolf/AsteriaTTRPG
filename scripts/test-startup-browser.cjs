@@ -59,7 +59,7 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  await restored.locator('#workspace.show .character-forge-hub').waitFor();
  await restored.evaluate(()=>window.AsteriaAuthBridge.setSession({username:'Updated'},{uid:'player-demo'}));
  await restored.locator('#workspace.show .character-forge-hub').waitFor();
- await restored.locator('#sidebarHomeButton').evaluate(el=>el.click());
+ await restored.locator('.asteria-header-brand').evaluate(el=>el.click());
  await restored.locator('#home.show').waitFor();
  assert.equal(await restored.evaluate(()=>window.location.hash),'');
  // The core shell also supports Home if the early guard is unavailable.

@@ -264,12 +264,12 @@ check('World systems do not inject extra sidebar shortcuts', !worldJs.includes('
 check('Home view has no account option panel', !/Account Options|test-logins|offline-logins/i.test(homeHtml));
 check('Top-right login remains and create account moved to login page', html.includes('id="loginToggle"') && !html.includes('id="createAccountTop"') && html.includes('id="accountCreate"'));
 check('Home guard loads before app scripts', jsFiles.includes('js/asteria-home-guard.js') && jsFiles.indexOf('js/asteria-home-guard.js') < jsFiles.indexOf('js/app.js'));
-check('Home button uses early hard-home action', html.includes('id="sidebarHomeButton"') && html.includes('onclick="return window.asteriaHardHome(event)"') && homeGuardJs.includes("document.addEventListener('click', handleHomeEvent, true)"));
-check('Home button uses shell home action', html.includes('data-home-action="true"') && coreShellJs.includes('window.goHome') && coreShellJs.includes('clearRouteState'));
+check('Asteria logo uses early hard-home action', html.includes('id="asteriaHeaderBrand"') && html.includes('onclick="return window.asteriaHardHome(event)"') && homeGuardJs.includes("document.addEventListener('click', handleHomeEvent, true)"));
+check('Asteria logo uses shell home action', html.includes('data-home-action="true"') && coreShellJs.includes('window.goHome') && coreShellJs.includes('clearRouteState'));
 check('Home action clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('stopImmediatePropagation') && coreShellJs.includes('shellHomeCaptureBound'));
 check('Legacy setView home route is wrapped', coreShellJs.includes('wrapSetViewHomeRoute') && coreShellJs.includes('__asteriaHomeWrapped') && coreShellJs.includes("if(id === 'home') return goHome()") && appJs.includes("if(id === 'home' && window.AsteriaRouter?.home"));
 check('Duplicate home fallback is removed', !jsFiles.includes('js/asteria-home-fix.js') && !fs.existsSync(path.join(root, 'js/asteria-home-fix.js')));
-check('Canonical home guard and shell own the visible Home action', homeGuardJs.includes('window.asteriaHardHome') && html.includes('id="sidebarHomeButton"') && coreShellJs.includes('wrapSetViewHomeRoute'));
+check('Canonical home guard and shell own the logo Home action', homeGuardJs.includes('window.asteriaHardHome') && html.includes('id="asteriaHeaderBrand"') && coreShellJs.includes('wrapSetViewHomeRoute'));
 check('Old dark/light controls removed', !html.includes('Dark Mode') && !html.includes('Light Mode') && !appJs.includes('setThemeMode'));
 check('Old dark/light CSS modes removed', !stylesCss.includes('body[data-theme'));
 check('Old fixed accent controls removed', !html.includes("setAccent('blue')") && !html.includes('class="colour-grid"'));

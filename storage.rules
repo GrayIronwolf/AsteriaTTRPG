@@ -48,6 +48,14 @@ service firebase.storage {
         request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
       allow delete: if campaignGM(campaignId);
     }
+    // Private account profile photo; only the authenticated owner can read,
+    // create, replace or remove this fixed-path 512px cropped WEBP.
+    match /users/{uid}/profile/avatar {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid &&
+        request.resource.size > 0 && request.resource.size <= 2 * 1024 * 1024 &&
+        request.resource.contentType == 'image/webp';
+    }
     match /users/{uid}/characters/{characterId}/gallery/{fileName} {
       allow read: if request.auth != null && (request.auth.uid == uid ||
         ('campaignId' in resource.metadata && campaignMember(resource.metadata.campaignId)));

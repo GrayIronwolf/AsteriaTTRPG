@@ -1,0 +1,135 @@
+/* Asteria Header & Account Experience: preserve approved wordmark and crystal buttons. */
+body .topbar.asteria-header {
+  gap:clamp(8px,1vw,16px)!important;
+  padding:8px clamp(10px,1.5vw,26px)!important;
+  background:#192838!important;
+}
+body .asteria-header .asteria-header-brand {
+  flex:0 1 clamp(160px,18vw,340px)!important;
+  width:clamp(160px,18vw,340px)!important;
+  min-width:0!important;
+}
+body .asteria-header #globalNavigation {
+  position:static!important;left:auto!important;top:auto!important;
+  transform:none!important;width:auto!important;
+  justify-content:center!important;flex:1 1 auto!important;
+}
+body .asteria-header .top-actions {
+  display:flex!important;align-items:center!important;
+  gap:clamp(6px,.8vw,12px)!important;margin-left:auto!important;
+  min-width:0!important;
+}
+body .asteria-header #settingsToggle {display:none!important;}
+.asteria-header-profile {
+  display:flex;align-items:center;justify-content:flex-end;gap:9px;
+  min-width:0;max-width:230px;flex:0 1 auto;overflow:hidden;
+  border-radius:18px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,black 8%,black 100%);
+  mask-image:linear-gradient(90deg,transparent,black 8%,black 100%);
+}
+.asteria-header-profile[hidden],#asteriaHeaderAvatar[hidden],.asteria-header-mail[hidden] {display:none!important;}
+.asteria-header-profile.asteria-header-arriving {
+  animation:asteria-profile-arrival 550ms cubic-bezier(.18,.75,.24,1) both;
+}
+@keyframes asteria-profile-arrival {
+  0% {opacity:0;transform:translateX(24px);}
+  42% {opacity:.7;transform:translateX(12px);}
+  75% {opacity:1;transform:translateX(3px);}
+  100% {opacity:1;transform:translateX(0);}
+}
+#asteriaHeaderAvatarButton {
+  flex:0 0 42px;width:42px;height:42px;border:1px solid #819daa;
+  border-radius:50%;padding:0;background:#0c1c2a;color:#e6d3b5;
+  overflow:hidden;display:grid;place-items:center;cursor:pointer;
+  font:600 1.2rem/1 var(--asteria-font-display,Georgia,serif);
+}
+#asteriaHeaderAvatarButton img {width:100%;height:100%;object-fit:cover;grid-area:1/1;}
+#asteriaHeaderAvatarFallback {grid-area:1/1;}
+#asteriaHeaderAvatarButton:focus-visible {outline:2px solid #bcefff;outline-offset:3px;}
+.asteria-header-identity {
+  display:flex;flex-direction:column;gap:1px;min-width:0;
+  font-family:var(--asteria-font-body,Arial,sans-serif);
+}
+#asteriaHeaderName {
+  font-size:clamp(.69rem,.8vw,.83rem);font-weight:700;
+  color:#e7dbc5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#asteriaHeaderAccountId {
+  font-size:clamp(.62rem,.75vw,.75rem);color:#c6dbe8;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.asteria-header-mail {color:#e2bd76;font-size:1.15rem;line-height:1;}
+.asteria-header #loginToggle {min-width:102px!important;}
+.asteria-account-menu {max-height:min(75dvh,600px);overflow:auto;}
+.asteria-profile-avatar-controls {
+  display:flex;align-items:center;gap:16px;margin-top:18px;flex-wrap:wrap;
+}
+.asteria-profile-avatar-shell {
+  display:grid;place-items:center;flex:0 0 90px;width:90px;height:90px;
+  border:1px solid #7a95a5;border-radius:50%;background:#132e40;
+  color:#e1ceab;font:600 2rem Georgia,serif;overflow:hidden;
+}
+.asteria-profile-avatar-shell img {grid-area:1/1;width:100%;height:100%;object-fit:cover;}
+.asteria-profile-avatar-shell img[hidden] {display:none!important;}
+#accountProfileAvatarFallback {grid-area:1/1;}
+.asteria-profile-avatar-controls>div {flex:1 1 220px;display:grid;gap:7px;}
+.asteria-profile-avatar-controls label {font-size:.77rem;color:#b5ccd9;}
+.asteria-profile-avatar-controls input {color:#e7eef6;max-width:100%;}
+.asteria-profile-avatar-controls button {
+  background:#19374d;border:1px solid #6b899a;border-radius:2px;color:#f1f5fa;
+  min-height:40px;padding:8px 12px;cursor:pointer;font:600 .8rem var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-profile-edit-form {padding:16px 0;margin-top:12px;border-top:1px solid #71889b55;display:grid;gap:12px;}
+.asteria-profile-edit-form[hidden] {display:none!important;}
+.asteria-profile-edit-form p {font-size:.83rem;color:#bdcfda;margin:0;}
+.asteria-profile-edit-form label {display:grid;gap:6px;font-size:.8rem;color:#dbe8ee;}
+.asteria-profile-edit-form input {
+  min-height:44px;width:100%;box-sizing:border-box;
+  background:#071522;border:1px solid #6d8798;border-radius:2px;color:#f5f7fa;
+  padding:10px 12px;font:inherit;
+}
+@media (max-width:1679px) {
+  body .asteria-header #globalNavigation {
+    position:static!important;flex-direction:column;align-items:stretch;
+    justify-content:flex-start!important;
+  }
+  body .asteria-header #settingsToggle {display:flex!important;}
+  body .asteria-header .asteria-header-brand {
+    flex:0 1 clamp(140px,25vw,260px)!important;width:clamp(140px,25vw,260px)!important;
+  }
+  #accountControls {display:flex!important;flex-direction:row!important;align-items:center!important;
+    border:0!important;padding:0!important;}
+}
+@media (max-width:720px) {
+  body .topbar.asteria-header {gap:6px!important;padding:5px 9px!important;}
+  body .asteria-header .asteria-header-brand {flex:0 1 124px!important;width:124px!important;}
+  .asteria-header-profile {gap:4px;max-width:110px;}
+  #asteriaHeaderAvatarButton {width:32px;height:32px;flex-basis:32px;font-size:.9rem;}
+  .asteria-header-identity {max-width:70px;}
+  #asteriaHeaderName {font-size:.64rem;}
+  #asteriaHeaderAccountId {font-size:.58rem;}
+  body .asteria-header #loginToggle {min-width:64px!important;padding:7px 9px!important;font-size:.66rem!important;}
+  body .asteria-header #settingsToggle {width:42px!important;min-width:42px!important;padding:7px!important;}
+  .asteria-header-mail {font-size:.85rem;}
+  .asteria-profile-avatar-controls {align-items:flex-start;}
+}
+@media (max-width:380px) {
+  body .asteria-header .asteria-header-brand {flex:0 1 88px!important;width:88px!important;}
+  .asteria-header-identity {max-width:50px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .asteria-header-profile.asteria-header-arriving {animation:none!important;}
+}
+
+/* The navigation drawer and Appearance screen share one existing shell,
+   but are entered through separate buttons. No duplicate settings controls. */
+#settingsPanel:not(.appearance-mode) > section {display:none!important;}
+#settingsPanel.appearance-mode #mobileNavigationSlot,
+#settingsPanel.appearance-mode #mobileAccountSlot {display:none!important;}
+#settingsPanel.appearance-mode > section {display:block;}
+#settingsPanel:not(.appearance-mode) #mobileAccountSlot {display:none!important;}
+@media (min-width:1680px) {
+  #settingsPanel:not(.appearance-mode) #mobileNavigationSlot {display:none!important;}
+}
+
+.asteria-profile-avatar-shell #accountProfileAvatarFallback[hidden] {display:none!important;}
