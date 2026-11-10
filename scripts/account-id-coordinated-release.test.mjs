@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {completeAccountIdRelease,APPROVAL} from './account-id-coordinated-release.mjs';
 
 const status=async()=>({issuance:'DISABLED',rollout:'UNVERIFIED AUTO-CANARY',cutoff:'NOT SET'});
@@ -65,4 +66,14 @@ test('incomplete server activation is never reported as completed',async()=>{
   const {input}=supplied({activate:async()=>({issuance:'DISABLED',rollout:'GENERAL PUBLIC RELEASE',
     generalRelease:'APPROVED',cutoff:'CONFIGURED'})});
   await assert.rejects(completeAccountIdRelease(input),/activation was not confirmed/);
+});
+
+test('Cloud Shell launcher uses keyless service-account ADC and no IAM mutations',()=>{
+  const sh=readFileSync(new URL('./account-id-cloud-shell-release.sh',import.meta.url),'utf8');
+  assert.match(sh,/gcloud auth print-access-token --impersonate-service-account/);
+  assert.match(sh,/gcloud auth application-default login --impersonate-service-account/);
+  assert.match(sh,/node scripts\/account-id-coordinated-release\.mjs --project/);
+  assert.doesNotMatch(sh,/gcloud iam service-accounts (?:keys create|add-iam-policy-binding)/);
+  assert.doesNotMatch(sh,/gcloud projects add-iam-policy-binding/);
+  assert.doesNotMatch(sh,/--key-file|service-account-key\.json/);
 });
