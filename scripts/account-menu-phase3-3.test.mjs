@@ -100,7 +100,7 @@ test('notifications menu leads to account-scoped existing service, not placehold
   assert.match(workspace,/Campaign notifications are not active yet/);
   assert.match(workspace,/action:\(\) => openDashboard\('notifications'\)/);
   assert.match(ui,/root\.AsteriaFeatureFlags\?\.campaignNotifications!==true/);
-  assert.match(html,/campaignNotifications:false,accountIds:false/);
+  assert.match(html,/campaignNotifications:false,accountIds:true/);
 });
 test('password reset only targets current authenticated Firebase user',()=>{
   const firebase=read('js/firebase-auth.js');
@@ -117,7 +117,7 @@ test('existing account ID display and responsive controls remain unchanged',()=>
   const css=read('css/asteria-account-security.css');
   assert.match(profile,/get\('accountProfileCopyId'\)\.disabled=!verifiedId/);
   assert.match(html,/id="accountProfileOverlay"/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(css,/@media \(max-width:600px\)/);
   assert.match(read('js/asteria-navigation.js'),/media\.addEventListener\('change',reflow\)/);
 });
