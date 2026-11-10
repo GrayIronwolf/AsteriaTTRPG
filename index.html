@@ -360,6 +360,16 @@
         <p><strong>Password reset</strong></p>
         <p>We can send a password reset link to the email on your signed-in account.</p>
         <p class="asteria-security-email" id="accountSecurityEmail">—</p>
+        <div class="asteria-security-verification">
+          <p><strong>Email verification</strong></p>
+          <p class="muted">Verify your account email before completing a newly registered Account ID. Verification links are sent through Firebase Authentication.</p>
+          <div class="asteria-security-actions">
+            <button id="accountSecuritySendVerification" type="button" disabled>Send Verification Email</button>
+            <button id="accountSecurityCheckVerification" type="button" disabled>Check Verification</button>
+            <button id="accountSecurityFinishId" type="button" hidden disabled>Complete Account ID (Canary)</button>
+          </div>
+          <p id="accountSecurityVerification" class="asteria-security-status" role="status" aria-live="polite"></p>
+        </div>
         <p class="muted">For your security, password changes are completed through the Firebase password reset email. Your current password is never displayed here.</p>
       </div>
       <div class="asteria-security-actions">
@@ -406,10 +416,10 @@
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
 <script src="js/asteria-account-menu.js?v=account-menu-phase3-3"></script>
-<script src="js/asteria-account-security.js?v=account-menu-phase3-3"></script>
+<script src="js/asteria-account-security.js?v=account-verification-phase1"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-profile-phase3-2"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:false});</script>
-  <script type="module" src="js/firebase-auth.js?v=account-menu-phase3-3"></script>
+  <script type="module" src="js/firebase-auth.js?v=account-verification-phase1"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
