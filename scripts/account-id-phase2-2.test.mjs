@@ -85,3 +85,34 @@ test('no automatic callable or bulk migration is exposed',async()=>{
   assert.doesNotMatch(code,/listUsers\(|onCall\(/);
   assert.doesNotMatch(index,/backfillLegacyAccountIdentity|accountIdentityLegacy/);
 });
+
+test('legacy profile with no uid gets a permanent ID only after Auth checks',async()=>{
+  const f=fixture();
+  delete f.records.get('users/alice').uid;
+  const before=clone(f.records.get('users/alice'));
+  assert.deepEqual(await inspectLegacyAccountIdentity(f.db,f.auth,'alice'),
+    {uid:'alice',status:'eligible',username:'Asteria'});
+  assert.deepEqual(f.records.get('users/alice'),before);
+  const result=await backfillLegacyAccountIdentity(f.db,f.auth,'alice',approval());
+  assert.equal(result.accountId,'Asteria#01416');
+  assert.equal(f.records.get('users/alice').uid,'alice');
+  assert.equal(f.records.get('users/alice').firstName,'Keep');
+  assert.equal(f.records.get('accountIdRegistry/asteria#01416').uid,'alice');
+});
+test('legacy missing uid is not repaired when Auth profile fails validation',async()=>{
+  const f=fixture({}, {email:'wrong@example.test'});
+  delete f.records.get('users/alice').uid;
+  assert.equal((await inspectLegacyAccountIdentity(f.db,f.auth,'alice')).status,'manual-review');
+  await assert.rejects(backfillLegacyAccountIdentity(f.db,f.auth,'alice',approval()),
+    /manual reconciliation/);
+  assert.equal(f.records.get('users/alice').uid,undefined);
+  assert.equal(f.records.has('accountIdAssignments/alice'),false);
+});
+test('conflicting explicit uid is never overwritten during a migration',async()=>{
+  const f=fixture({uid:'other'});
+  assert.equal((await inspectLegacyAccountIdentity(f.db,f.auth,'alice')).reason,'profile-uid-conflict');
+  await assert.rejects(backfillLegacyAccountIdentity(f.db,f.auth,'alice',approval()),
+    /manual reconciliation/);
+  assert.equal(f.records.get('users/alice').uid,'other');
+  assert.equal(f.records.has('accountIdAssignments/alice'),false);
+});

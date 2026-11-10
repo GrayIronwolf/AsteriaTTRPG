@@ -15,9 +15,9 @@ test('Account ID finalization remains source-ready but operationally disabled',(
  assert.equal(r.legacyAccountsMigrated,false);
  assert.equal(r.liveUserDataRead,false);
 });
-test('turning on browser flag or relaxing registry rules fails closed',()=>{
+test('turning off browser flag or relaxing registry rules fails closed',()=>{
  assert.equal(inspectAccountIdProductionFinalization(modify('index.html',
-   'accountIds:false','accountIds:true')).sourceChecksPassed,false);
+   'accountIds:true','accountIds:false')).sourceChecksPassed,false);
  assert.equal(inspectAccountIdProductionFinalization(modify('firestore.rules',
    'match /accountIdRegistry/{accountIdKey} {\n      allow read, write: if false;',
    'match /accountIdRegistry/{accountIdKey} {\n      allow read, write: if true;')).sourceChecksPassed,false);

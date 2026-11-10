@@ -131,7 +131,7 @@ test('navigation and markup preserve existing settings, responsive layout and fe
   for(const id of ['accountMenuWrap','accountQuickMenu','accountMenuSettings','accountMenuLogout','accountMenuProfile','loginToggle'])
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1);
   assert.match(html,/role="menu" aria-label="Account navigation" hidden/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(css,/@media \(max-width:1679px\)/);
   assert.match(css,/\.asteria-account-menu\[hidden\]/);
   assert.match(nav,/\.asteria-account-menu-wrap/);

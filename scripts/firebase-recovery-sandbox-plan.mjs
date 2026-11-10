@@ -140,7 +140,7 @@ export function inspectSandboxPreparation({
       productionWorkflow.includes('firebase deploy --project asteria-ttrpg')&&
       !productionWorkflow.includes('asteria-recovery-')),
     check('web-feature-flags-still-disabled',
-      index.includes('accountIds:false')&&
+      index.includes('accountIds:true')&&
       index.includes('campaignNotifications:false'))
   ];
   const safe=checks.every(entry=>entry.pass);

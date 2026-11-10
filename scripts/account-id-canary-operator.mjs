@@ -8,6 +8,7 @@
  *   node scripts/account-id-canary-operator.mjs stage-auto
  *   node scripts/account-id-canary-operator.mjs enable
  *   node scripts/account-id-canary-operator.mjs disable
+ *   node scripts/account-id-canary-operator.mjs release-general
  *
  * No email, digest, access token, environment map or UID is printed.
  */
@@ -25,7 +26,8 @@ const KEYS=Object.freeze({
   enabled:'ASTERIA_ACCOUNT_IDS_ENABLED',
   mode:'ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE',
   digest:'ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256',
-  cutoff:'ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE'
+  cutoff:'ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE',
+  general:'ASTERIA_ACCOUNT_IDS_GENERAL_RELEASE_APPROVED'
 });
 const abort=message=>{throw new Error(message)};
 
@@ -44,7 +46,8 @@ export function describeCanary(fn) {
     ready:true,
     issuance:flag==='1'?'ENABLED':flag===undefined||flag==='0'?'DISABLED':'UNEXPECTED VALUE',
     singleAccount:['canary','auto-canary'].includes(mode)&&MATCH.test(digest||'')?'CONFIGURED':'NOT CONFIGURED',
-    rollout:mode==='canary'?'VERIFIED-EMAIL CANARY':mode==='auto-canary'?'UNVERIFIED AUTO-CANARY':'NOT CONFIGURED',
+    rollout:mode==='canary'?'VERIFIED-EMAIL CANARY':mode==='auto-canary'?'UNVERIFIED AUTO-CANARY':mode==='general'?'GENERAL PUBLIC RELEASE':'NOT CONFIGURED',
+    generalRelease:mode==='general' && vars[KEYS.general]==='1'?'APPROVED':'NOT APPROVED',
     cutoff:safeCutoff?'CONFIGURED':!cutoff?'NOT SET':'INVALID'
   };
 }
@@ -73,7 +76,20 @@ export function proposedEnvironment(fn,operation,{email,now=new Date()}={}) {
     vars[KEYS.enabled]='0';
     vars[KEYS.mode]=operation==='stage-auto'?'auto-canary':'canary';
     vars[KEYS.digest]=createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+    delete vars[KEYS.general];
     delete vars[KEYS.cutoff];
+  }else if(operation==='release-general'){
+    // One production configuration update after code, CI and migration review.
+    // Existing Auth accounts remain excluded by the fresh server-side cutoff.
+    if(current[KEYS.enabled]==='1')
+      abort('Issuance is already enabled; review status instead of re-releasing.');
+    if(!(now instanceof Date)||!Number.isFinite(now.valueOf()))
+      abort('Invalid UTC clock.');
+    vars[KEYS.enabled]='1';
+    vars[KEYS.mode]='general';
+    vars[KEYS.general]='1';
+    vars[KEYS.cutoff]=now.toISOString();
+    delete vars[KEYS.digest];
   }else if(operation==='enable'){
     if(current[KEYS.enabled]!=='0' ||
        !['canary','auto-canary'].includes(current[KEYS.mode]) ||
@@ -159,6 +175,9 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
   let input;
   if(action==='stage'||action==='stage-auto'){
     input=(await ask('Enter the approved test email (not printed): ')).trim();
+  }else if(action==='release-general'){
+    const reply=await ask('Release automatic Account IDs to ALL new registrations? Type RELEASE-GENERAL: ');
+    if(reply!=='RELEASE-GENERAL')abort('No changes made. Explicit approval required.');
   }else if(action==='enable'){
     const reply=await ask('Enable Account ID issuance for ONE approved new test registration now? Type ENABLE: ');
     if(reply!=='ENABLE')abort('No changes made. Explicit approval required.');
@@ -174,6 +193,9 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
   const state=describeCanary(final);
   if(['stage','stage-auto'].includes(action) && (state.issuance!=='DISABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='NOT SET'))
     abort('Post-update staging verification failed.');
+  if(action==='release-general' && (state.issuance!=='ENABLED'||state.rollout!=='GENERAL PUBLIC RELEASE'||
+      state.generalRelease!=='APPROVED'||state.cutoff!=='CONFIGURED'||state.singleAccount!=='NOT CONFIGURED'))
+    abort('General release verification failed. Disable issuance and review.');
   if(action==='enable' && (state.issuance!=='ENABLED'||state.singleAccount!=='CONFIGURED'||state.cutoff!=='CONFIGURED'))
     abort('Post-update activation verification failed. Run disable if uncertain.');
   if(action==='disable' && state.issuance!=='DISABLED')
@@ -184,8 +206,8 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
 const invoked=process.argv[1]?.endsWith('/account-id-canary-operator.mjs');
 if(invoked){
   const action=process.argv[2];
-  if(!['status','stage','stage-auto','enable','disable'].includes(action)||process.argv.length!==3){
-    process.stderr.write('Usage: node account-id-canary-operator.mjs status|stage|stage-auto|enable|disable\n');
+  if(!['status','stage','stage-auto','enable','disable','release-general'].includes(action)||process.argv.length!==3){
+    process.stderr.write('Usage: node account-id-canary-operator.mjs status|stage|stage-auto|enable|disable|release-general\n');
     process.exitCode=2;
   }else{
     (async()=>{
@@ -199,7 +221,8 @@ if(invoked){
           'New issuance: '+state.issuance+'\n'+
           'Single-email canary: '+state.singleAccount+'\n'+
           'Rollout: '+state.rollout+'\n'+
-          'Registration cutoff: '+state.cutoff+'\n'
+          'Registration cutoff: '+state.cutoff+'\n'+
+          'General release approval: '+state.generalRelease+'\n'
         );
       }finally{rl.close();}
     })().catch(error=>{

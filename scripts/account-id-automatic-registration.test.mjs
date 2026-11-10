@@ -103,7 +103,7 @@ test('signup assigns ID before optional verification email and public flag stays
   assert.ok(signup.indexOf('accountIdentity = await finalizeRegisteredAccountId(') <
     signup.indexOf('await sendEmailVerification(cred.user)'));
   assert.doesNotMatch(signup,/if\(!cred\.user\.emailVerified\)/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(src,/setPendingAccountDraft\(\{uid:cred\.user\.uid/);
   assert.match(src,/getDocFromServer\(doc\(db,'users',cred\.user\.uid\)\)/);
 });

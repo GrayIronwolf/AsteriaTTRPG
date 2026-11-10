@@ -94,7 +94,7 @@ test('unexpected production Firebase target or enabled account flag fails',()=>{
  assert.equal(inspectSandboxPreparation({read:altered('.firebaserc',
    s=>s.replace('demo-asteria','asteria-ttrpg'))}).safe,false);
  assert.equal(inspectSandboxPreparation({read:altered('index.html',
-   s=>s.replace('accountIds:false','accountIds:true'))}).safe,false);
+   s=>s.replace('accountIds:true','accountIds:false'))}).safe,false);
 });
 test('preparation scripts cannot issue cloud writes or initiate backup restores',()=>{
  const source=read('scripts/firebase-recovery-sandbox-plan.mjs');

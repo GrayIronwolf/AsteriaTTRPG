@@ -95,7 +95,7 @@ test('the Account menu opens My Profile while settings and logout remain intact'
   assert.match(menu,/window\.AsteriaWorkspace\?\.openDashboard\?\.\('settings'\)/);
   assert.match(menu,/window\.logout\?\.\(\)/);
   assert.match(markup,/role="dialog" aria-modal="true"/);
-  assert.match(markup,/accountIds:false/);
+  assert.match(markup,/accountIds:true/);
   assert.match(markup,/js\/asteria-account-profile\.js\?v=account-profile-phase3-2/);
   assert.match(css,/@media \(max-width:600px\)/);
 });
