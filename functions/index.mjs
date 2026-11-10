@@ -335,6 +335,15 @@ export const asteriaAccountUsername=onCall({
 },async request=>{
   if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to continue.');
   const input=request.data;
+  if(input&&typeof input==='object'&&!Array.isArray(input)&&
+     Object.keys(input).length===1&&input.action==='status'){
+    try{
+      const account=await getAuth().getUser(request.auth.uid);
+      return {available:account.disabled!==true};
+    }catch{
+      return {available:false};
+    }
+  }
   if(!input||typeof input!=='object'||Array.isArray(input)||
      Object.keys(input).sort().join(',')!=='expectedAccountId,username')
     throw new HttpsError('invalid-argument','Invalid username change request.');
