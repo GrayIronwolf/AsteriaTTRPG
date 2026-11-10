@@ -13,6 +13,7 @@ on:
           - campaign-backend-inventory
           - campaign-backend-deploy
           - account-id-inventory
+          - account-id-activation-audit
           - account-id-callable-deploy
           - deploy
       production_confirmation:
@@ -263,6 +264,32 @@ jobs:
             fi
             echo 'No Account ID issued, deployed or migrated; production flags unchanged.'
           } >> "$GITHUB_STEP_SUMMARY"
+  account_id_activation_audit:
+    name: Read-only Account ID production activation inventory
+    if: github.ref == 'refs/heads/main' && inputs.operation == 'account-id-activation-audit'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticate using the existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Summarise callable flags and published rules without exposing values
+        env:
+          ASTERIA_AUDIT_OPERATION: account-id-activation-audit
+        run: node scripts/account-id-production-readiness.mjs --live
+
   account_id_deploy:
     name: Separately approved Account ID callable-only deployment
     if: >-
