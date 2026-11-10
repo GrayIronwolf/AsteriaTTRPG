@@ -2,7 +2,8 @@ import test from 'node:test';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {assertNewRegistrationEligible,assertAccountIdCanaryEligible,
-  issueNewRegistrationAccountId,NEW_REGISTRATION_WINDOW_MS} from '../functions/accountIdentityIssuance.mjs';
+  issueNewRegistrationAccountId,NEW_REGISTRATION_WINDOW_MS,
+  AUTO_REGISTRATION_RECOVERY_WINDOW_MS,assertAccountIdRolloutEligible} from '../functions/accountIdentityIssuance.mjs';
 import {inspectLegacyAccountIdentity} from '../functions/accountIdentityLegacy.mjs';
 const now=new Date('2026-11-09T12:00:00.000Z');
 const cutoff='2026-11-09T11:30:00.000Z';
@@ -167,4 +168,66 @@ test('canary verified email is canonical and case-normalized',async()=>{
   uid.email='ALICE@EXAMPLE.TEST';
   const result=await run(db,uid);
   assert.equal(result.accountId,'Asteria#01416');
+});
+
+test('automatic new registration assigns ID immediately without verified email',async()=>{
+  const db=fixture({'users/alice':profile()});
+  const fresh={...user(),emailVerified:false};
+  const result=await run(db,fresh,{rolloutMode:'auto-canary'});
+  assert.equal(result.accountId,'Asteria#01416');
+  assert.equal(db.records.get('accountIdRegistry/asteria#01416').uid,'alice');
+  assert.deepEqual(db.records.get('users/alice').characters,[{id:'hero',xp:100}]);
+});
+
+test('auto-canary never opens to a different email or a missing digest',async()=>{
+  for(const patch of [
+    {rolloutMode:'auto-canary',canaryEmailSha256:undefined},
+    {rolloutMode:'auto-canary',canaryEmailSha256:'a'.repeat(64)},
+    {rolloutMode:'general',generalReleaseApproved:undefined},
+    {rolloutMode:'general',generalReleaseApproved:'true'}
+  ]){
+    const db=fixture({'users/alice':profile()});
+    await assert.rejects(run(db,{...user(),emailVerified:false},patch),/new registration/);
+    assert.equal(db.records.size,1);
+  }
+  assert.throws(()=>assertAccountIdRolloutEligible(user(),'alice@example.test',{
+    rolloutMode:'unapproved'
+  }),/new registration/);
+});
+
+test('general rollout must have separate server-side approval; verified email not required',async()=>{
+  const db=fixture({'users/alice':profile()});
+  const result=await run(db,{...user(),emailVerified:false},{
+    rolloutMode:'general',generalReleaseApproved:'1'
+  });
+  assert.equal(result.accountId,'Asteria#01416');
+  assert.equal(db.records.get('accountIdAssignments/alice').uid,'alice');
+});
+
+test('automatic modes allow only bounded same-account recovery and remain idempotent',async()=>{
+  assert.equal(AUTO_REGISTRATION_RECOVERY_WINDOW_MS,24*60*60*1000);
+  const recentPast='2026-11-08T12:01:00.000Z';
+  const expired='2026-11-08T11:59:59.000Z';
+  // All these users are after their operator-defined creation cutoff.
+  const oldCutoff='2026-11-08T10:00:00.000Z';
+  const db=fixture({'users/alice':profile()});
+  const first=await run(db,{...user('alice',recentPast),emailVerified:false},{
+    notBefore:oldCutoff,rolloutMode:'auto-canary'
+  });
+  assert.equal(first.accountId,'Asteria#01416');
+  const second=await run(db,{...user('alice',recentPast),emailVerified:false},{
+    notBefore:oldCutoff,rolloutMode:'auto-canary',nextNumber:()=> '99999'
+  });
+  assert.equal(second.alreadyAssigned,true);
+  assert.equal(second.accountId,first.accountId);
+  await assert.rejects(run(db,{...user('alice',expired),emailVerified:false},{
+    notBefore:oldCutoff,rolloutMode:'auto-canary'
+  }),/new registration/);
+});
+
+test('automatic general rollout still rejects legacy accounts before cutoff',async()=>{
+  const db=fixture({'users/alice':profile()});
+  await assert.rejects(run(db,{...user('alice','2023-01-01T00:00:00.000Z'),
+    emailVerified:false},{rolloutMode:'general',generalReleaseApproved:'1'}),/new registration/);
+  assert.equal(db.records.size,1);
 });
