@@ -48,7 +48,6 @@ export async function renameAccountIdentity(db,uid,newUsername,{expectedAccountI
      !(now instanceof Date)||!Number.isFinite(now.getTime()))
     throw new Error('Refresh your Account Profile before changing your username.');
   const {username,usernameLower}=normaliseAccountUsername(newUsername);
-  const updatedAt=now.toISOString();
   return db.runTransaction(async tx=>{
     const profileRef=db.doc('users/'+uid),assignmentRef=db.doc('accountIdAssignments/'+uid);
     const [profileSnap,assignmentSnap]=await Promise.all([tx.get(profileRef),tx.get(assignmentRef)]);
