@@ -131,3 +131,5 @@ body .asteria-header #settingsToggle {display:none!important;}
 @media (min-width:1680px) {
   #settingsPanel:not(.appearance-mode) #mobileNavigationSlot {display:none!important;}
 }
+
+.asteria-profile-avatar-shell #accountProfileAvatarFallback[hidden] {display:none!important;}
