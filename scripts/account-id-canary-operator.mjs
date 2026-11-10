@@ -160,7 +160,7 @@ export async function run({action,token,ask=async()=>'',api={get:getFunction,
   if(action==='stage'||action==='stage-auto'){
     input=(await ask('Enter the approved test email (not printed): ')).trim();
   }else if(action==='enable'){
-    const reply=await ask('Enable Account ID issuance for ONE verified new test registration now? Type ENABLE: ');
+    const reply=await ask('Enable Account ID issuance for ONE approved new test registration now? Type ENABLE: ');
     if(reply!=='ENABLE')abort('No changes made. Explicit approval required.');
   }else if(action==='disable'){
     const reply=await ask('Disable all new Account ID issuance now? Type DISABLE: ');
