@@ -342,28 +342,12 @@
       settings.innerHTML = '<span></span><span></span><span></span>';
     }
 
-    const login = byId('loginToggle');
-    if(login && !login.dataset.shellBound){
-      login.dataset.shellBound = '1';
-      login.textContent = 'Login';
-      login.addEventListener('click', ev => {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        if(window.AsteriaAuthBridge?.isLoggedIn?.()) window.logout?.();
-        else window.setView?.('loginPage');
-      }, true);
-    }
-
-    const create = byId('createAccountTop');
-    if(create && !create.dataset.shellBound){
-      create.dataset.shellBound = '1';
-      create.addEventListener('click', ev => {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        if(window.AsteriaAuthBridge?.isLoggedIn?.()) window.logout?.();
-        else window.setView?.('accountCreate');
-      }, true);
-    }
+    // AuthBridge alone owns Login/Account button navigation. The previous
+    // capture-phase listeners called logout() for every signed-in click and
+    // stopped propagation before the Account menu could open (including on
+    // mobile, where the same button moves into the settings drawer).
+    // No click or textContent binding belongs here: auth-bridge.js sets
+    // these based on the current authenticated session.
 
     const forge = byId('characterForgeTop');
     if(forge && !forge.dataset.shellBound){
