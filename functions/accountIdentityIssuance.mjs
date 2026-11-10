@@ -1,3 +1,4 @@
+import {createHash,timingSafeEqual} from 'node:crypto';
 import {normaliseAccountUsername} from './accountIdentity.mjs';
 import {ensureAccountIdentityProfile} from './accountIdentityProfile.mjs';
 
@@ -55,6 +56,28 @@ export function assertNewRegistrationEligible(authUser,uid,{
 }
 
 /**
+ * Canary-only production gate. An authenticated new registration must have
+ * verified ownership of exactly the operator-approved email address.
+ * Store only a SHA-256 digest of the lowercased email in the runtime setting.
+ * No general rollout mode exists in this version: any other mode fails closed.
+ * This check is independent of the website's feature flags and occurs before
+ * any Firestore transaction. Never log the digest or full email address.
+ */
+const EMAIL_DIGEST=/^[0-9a-f]{64}$/;
+export function assertAccountIdCanaryEligible(authUser,email,{
+  rolloutMode,canaryEmailSha256
+}={}) {
+  if(rolloutMode!=='canary' ||
+     typeof canaryEmailSha256!=='string' ||
+     !EMAIL_DIGEST.test(canaryEmailSha256) ||
+     authUser?.emailVerified!==true ||
+     typeof email!=='string')throw notEligible();
+  const expected=Buffer.from(canaryEmailSha256,'hex');
+  const actual=createHash('sha256').update(email,'utf8').digest();
+  if(!timingSafeEqual(actual,expected))throw notEligible();
+}
+
+/**
  * The *only* Account ID writer reachable from the public callable.
  * An existing UID cannot gain a new number by signing in, supplying client
  * metadata, or changing the editable Firestore profile after registration.
@@ -63,6 +86,10 @@ export function assertNewRegistrationEligible(authUser,uid,{
 export async function issueNewRegistrationAccountId(db,authUser,uid,options={}){
   const {username,email}=assertNewRegistrationEligible(authUser,uid,{
     notBefore:options.notBefore,now:options.now||new Date()
+  });
+  assertAccountIdCanaryEligible(authUser,email,{
+    rolloutMode:options.rolloutMode,
+    canaryEmailSha256:options.canaryEmailSha256
   });
   return ensureAccountIdentityProfile(db,uid,{
     expectedUsername:username,
