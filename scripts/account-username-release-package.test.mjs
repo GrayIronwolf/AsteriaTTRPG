@@ -41,7 +41,7 @@ test('backend production staging fails closed without exact operator-approved wo
     {RUNNER_TEMP:'relative'},
     {ASTERIA_USERNAME_SCOPED_DEPLOY:'0'},
     {ASTERIA_DEPLOY_PROJECT:'demo-asteria'}]){
-    assert.throws(()=>stageUsernameRelease({...env,...patch}),/requires the approved/);
+    assert.throws(()=>stageUsernameRelease({...env,...patch}),/requires (?:a GitHub Actions temporary directory|the approved)/);
   }
 });
 test('production deploy workflow changes only one callable, not all Firebase services',()=>{
