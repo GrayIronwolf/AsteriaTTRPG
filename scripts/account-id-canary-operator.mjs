@@ -43,7 +43,8 @@ export function describeCanary(fn) {
   return {
     ready:true,
     issuance:flag==='1'?'ENABLED':flag===undefined||flag==='0'?'DISABLED':'UNEXPECTED VALUE',
-    singleAccount:mode==='canary'&&MATCH.test(digest||'')?'CONFIGURED':'NOT CONFIGURED',
+    singleAccount:['canary','auto-canary'].includes(mode)&&MATCH.test(digest||'')?'CONFIGURED':'NOT CONFIGURED',
+    rollout:mode==='canary'?'VERIFIED-EMAIL CANARY':mode==='auto-canary'?'UNVERIFIED AUTO-CANARY':'NOT CONFIGURED',
     cutoff:safeCutoff?'CONFIGURED':!cutoff?'NOT SET':'INVALID'
   };
 }
@@ -196,7 +197,8 @@ if(invoked){
         stdout.write(
           'Account ID callable: ACTIVE\n'+
           'New issuance: '+state.issuance+'\n'+
-          'One verified-email canary: '+state.singleAccount+'\n'+
+          'Single-email canary: '+state.singleAccount+'\n'+
+          'Rollout: '+state.rollout+'\n'+
           'Registration cutoff: '+state.cutoff+'\n'
         );
       }finally{rl.close();}
