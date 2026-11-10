@@ -108,7 +108,7 @@
         const send=get('accountSecuritySendVerification');
         const check=get('accountSecurityCheckVerification');
         const finish=get('accountSecurityFinishId');
-        if(send)send.disabled=Boolean(verifySentAt)||currentUser()?.emailVerified===true;
+        if(send)send.disabled=currentUser()?.emailVerified===true;
         if(check)check.disabled=false;
         if(finish)finish.disabled=currentUser()?.emailVerified!==true;
       }
@@ -139,20 +139,24 @@
     const uid=activeUid,api=window.AsteriaFirebase;
     if(typeof api?.completeNewAccountId!=='function')return false;
     verifyBusy=true;updateVerification(currentUser());
+    let feedback='';
     try{
       const result=await api.completeNewAccountId();
       if(!visible()||!matchingUser()||activeUid!==uid)return false;
-      get('accountSecurityVerification').textContent=result?.accountId?
+      feedback=result?.accountId?
         'Your Account ID has been verified and assigned. Open My Profile to view it.':
         'Account ID could not be confirmed.';
       return Boolean(result?.accountId);
     }catch{
       if(visible()&&matchingUser()&&activeUid===uid)
-        get('accountSecurityVerification').textContent='Account ID could not be assigned. Verify your email promptly after registration; older accounts require review.';
+        feedback='Account ID could not be assigned. Verify your email promptly after registration; older accounts require review.';
       return false;
     }finally{
       verifyBusy=false;
-      if(visible()&&matchingUser()&&activeUid===uid)updateVerification(currentUser());
+      if(visible()&&matchingUser()&&activeUid===uid){
+        updateVerification(currentUser());
+        if(feedback)get('accountSecurityVerification').textContent=feedback;
+      }
     }
   }
   function bind(){
@@ -160,9 +164,9 @@
     if(!overlay)return;
     get('accountSecurityClose')?.addEventListener('click',()=>close());
     get('accountSecuritySendReset')?.addEventListener('click',()=>{void sendReset();});
-  get('accountSecuritySendVerification')?.addEventListener('click',()=>{void sendVerification();});
-  get('accountSecurityCheckVerification')?.addEventListener('click',()=>{void checkVerification();});
-  get('accountSecurityFinishId')?.addEventListener('click',()=>{void finishAccountId();});
+    get('accountSecuritySendVerification')?.addEventListener('click',()=>{void sendVerification();});
+    get('accountSecurityCheckVerification')?.addEventListener('click',()=>{void checkVerification();});
+    get('accountSecurityFinishId')?.addEventListener('click',()=>{void finishAccountId();});
     overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
     overlay.addEventListener('keydown',event=>{
       if(event.key==='Escape'){event.preventDefault();close();return;}
