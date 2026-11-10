@@ -683,28 +683,12 @@ window.firebaseCreateAccountPage = async function(){
       console.warn('Account was created in Firebase Auth, but Firestore profile save failed. Saving local fallback profile.', err);
       showCreateHint('Account created. Firestore profile save failed, so a local profile cache was saved on this device.', 'warn');
     }
-    // Send a Firebase Authentication verification email for the new account.
-    // Email send errors do not delete or replace an already-created account.
-    let verificationNotice='';
-    let verificationError=false;
-    if(canSendVerificationEmail(cred.user)){
-      try{
-        await sendEmailVerification(cred.user);
-        verificationNotice=' Check your inbox (including spam) and then use Account > Password & Security to confirm verification.';
-      }catch(error){
-        console.warn('Registration email verification could not be sent.',error?.code||'unavailable');
-        verificationNotice=' The verification email could not be sent. Open Account > Password & Security to resend it.';
-        verificationError=true;
-      }
-    }
     // Phase 2.1: new registrations only. Website rollout stays OFF by default,
     // independent of the server-side ASTERIA_ACCOUNT_IDS_ENABLED gate.
     let accountIdentity = null;
     let accountIdWarning = '';
     if(accountIdRegistrationEnabled(window.AsteriaFeatureFlags)){
-      if(!cred.user.emailVerified){
-        accountIdWarning='Account created. Verify your email, then use Account > Password & Security to finish your Account ID within 15 minutes of registration.';
-      }else if(!profileStored || !functionsClient){
+      if(!profileStored || !functionsClient){
         accountIdWarning = 'Account created. Your Account ID is pending; retry setup promptly. Older registrations may need account review.';
       }else{
         try{
@@ -724,6 +708,23 @@ window.firebaseCreateAccountPage = async function(){
           console.warn('Account ID finalization pending.',err?.code || 'unknown');
           accountIdWarning = 'Account created, but your Account ID could not be confirmed. Retry promptly; older registrations may need account review.';
         }
+      }
+    }
+    // Email verification is independent from permanent Account ID creation.
+    // Request the verification email after the first ID attempt so delivery
+    // failures cannot delay, prevent or replace an account's number.
+    // Send a Firebase Authentication verification email for the new account.
+    // Email send errors do not delete or replace an already-created account.
+    let verificationNotice='';
+    let verificationError=false;
+    if(canSendVerificationEmail(cred.user)){
+      try{
+        await sendEmailVerification(cred.user);
+        verificationNotice=' Check your inbox (including spam) and then use Account > Password & Security to confirm verification.';
+      }catch(error){
+        console.warn('Registration email verification could not be sent.',error?.code||'unavailable');
+        verificationNotice=' The verification email could not be sent. Open Account > Password & Security to resend it.';
+        verificationError=true;
       }
     }
     saveLocalUsername(username, { uid:cred.user.uid, email, username, usernameLower:key });

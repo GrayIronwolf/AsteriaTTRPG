@@ -70,3 +70,24 @@ test('legacy backfill still requires explicit operator confirmation',async()=>{
   });
   assert.equal(approved.accountId,'Asteria#00002');
 });
+
+test('new unverified registration receives ID only within one-email auto-canary gate',async()=>{
+  const newUser=authUser('new','2026-11-09T11:59:00.000Z');
+  newUser.emailVerified=false;
+  await db.doc('users/new').set(profile('new','Asteria'));
+  const approved=canary('new@example.test');
+  const assigned=await issueNewRegistrationAccountId(db,newUser,'new',{
+    notBefore:cutoff,now,nextNumber:()=> '01448',
+    rolloutMode:'auto-canary',canaryEmailSha256:approved.canaryEmailSha256
+  });
+  assert.equal(assigned.accountId,'Asteria#01448');
+  assert.equal((await db.doc('accountIdRegistry/asteria#01448').get()).data().uid,'new');
+  const other=authUser('other','2026-11-09T11:59:00.000Z');
+  other.emailVerified=false;
+  await db.doc('users/other').set(profile('other','Asteria'));
+  await assert.rejects(issueNewRegistrationAccountId(db,other,'other',{
+    notBefore:cutoff,now,nextNumber:()=> '00009',
+    rolloutMode:'auto-canary',canaryEmailSha256:approved.canaryEmailSha256
+  }),/new registration/);
+  assert.equal((await db.doc('accountIdAssignments/other').get()).exists,false);
+});

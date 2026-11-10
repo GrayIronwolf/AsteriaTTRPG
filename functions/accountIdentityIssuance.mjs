@@ -6,6 +6,8 @@ import {ensureAccountIdentityProfile} from './accountIdentityProfile.mjs';
 // operator-reviewed legacy backfill. Firebase Auth creationTime is maintained
 // by Firebase Auth and cannot be backdated by a browser profile update.
 export const NEW_REGISTRATION_WINDOW_MS=15*60*1000;
+// Allow bounded same-UID recovery when a new registration has transient failures.
+export const AUTO_REGISTRATION_RECOVERY_WINDOW_MS=24*60*60*1000;
 const FUTURE_CLOCK_SKEW_MS=5*1000;
 const UID=/^[A-Za-z0-9_-]{1,128}$/;
 const CANONICAL_UTC=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -20,11 +22,13 @@ const notEligible=()=>new Error('Account ID issuance requires a new registration
  * No client-supplied date, profile timestamp or username can grant access.
  */
 export function assertNewRegistrationEligible(authUser,uid,{
-  notBefore,now=new Date()
+  notBefore,now=new Date(),maxAgeMs=NEW_REGISTRATION_WINDOW_MS
 }={}){
   if(typeof uid!=='string'||!UID.test(uid)||
      !authUser||authUser.uid!==uid||authUser.disabled===true)throw notEligible();
-  if(!(now instanceof Date)||!Number.isFinite(now.getTime()))throw notEligible();
+  if(!(now instanceof Date)||!Number.isFinite(now.getTime()) ||
+     ![NEW_REGISTRATION_WINDOW_MS,AUTO_REGISTRATION_RECOVERY_WINDOW_MS].includes(maxAgeMs))
+    throw notEligible();
 
   // The cutoff MUST be manually supplied when production issuance is enabled.
   // Missing, ambiguous or incorrectly formatted values fail closed.
@@ -41,7 +45,7 @@ export function assertNewRegistrationEligible(authUser,uid,{
   const created=Date.parse(createdText);
   if(!Number.isFinite(created)||created<cutoff.getTime()||
      created>now.getTime()+FUTURE_CLOCK_SKEW_MS||
-     now.getTime()-created>NEW_REGISTRATION_WINDOW_MS)
+     now.getTime()-created>maxAgeMs)
     throw notEligible();
 
   if(typeof authUser.displayName!=='string')throw notEligible();
@@ -56,25 +60,46 @@ export function assertNewRegistrationEligible(authUser,uid,{
 }
 
 /**
- * Canary-only production gate. An authenticated new registration must have
- * verified ownership of exactly the operator-approved email address.
- * Store only a SHA-256 digest of the lowercased email in the runtime setting.
- * No general rollout mode exists in this version: any other mode fails closed.
- * This check is independent of the website's feature flags and occurs before
- * any Firestore transaction. Never log the digest or full email address.
+ * Rollout policy (server-side only):
+ * - canary: the original one-email, verified-email smoke test.
+ * - auto-canary: a separate one-email smoke test without email verification.
+ * - general: independently approved public rollout, NOT admitted by just
+ *   changing the rollout mode. The separate approval gate must equal '1'.
+ *
+ * All modes still require an authenticated, genuinely new Firebase Auth UID,
+ * a trusted creation-time cutoff, and a canonical matching Firestore profile.
+ * No user-selected target, email, number, timestamp or mode is accepted.
  */
 const EMAIL_DIGEST=/^[0-9a-f]{64}$/;
-export function assertAccountIdCanaryEligible(authUser,email,{
-  rolloutMode,canaryEmailSha256
-}={}) {
-  if(rolloutMode!=='canary' ||
-     typeof canaryEmailSha256!=='string' ||
+function assertApprovedCanaryEmail(email,canaryEmailSha256) {
+  if(typeof canaryEmailSha256!=='string' ||
      !EMAIL_DIGEST.test(canaryEmailSha256) ||
-     authUser?.emailVerified!==true ||
      typeof email!=='string')throw notEligible();
   const expected=Buffer.from(canaryEmailSha256,'hex');
   const actual=createHash('sha256').update(email,'utf8').digest();
   if(!timingSafeEqual(actual,expected))throw notEligible();
+}
+
+/** Preserve the verified-email constraint of the completed first canary. */
+export function assertAccountIdCanaryEligible(authUser,email,{
+  rolloutMode,canaryEmailSha256
+}={}) {
+  if(rolloutMode!=='canary' || authUser?.emailVerified!==true)
+    throw notEligible();
+  assertApprovedCanaryEmail(email,canaryEmailSha256);
+}
+
+/** Verification-free ID creation is isolated to auto-canary or approved general mode. */
+export function assertAccountIdRolloutEligible(authUser,email,{
+  rolloutMode,canaryEmailSha256,generalReleaseApproved
+}={}) {
+  if(rolloutMode==='canary')
+    return assertAccountIdCanaryEligible(authUser,email,{rolloutMode,canaryEmailSha256});
+  if(rolloutMode==='auto-canary')
+    return assertApprovedCanaryEmail(email,canaryEmailSha256);
+  if(rolloutMode==='general' && generalReleaseApproved==='1')
+    return;
+  throw notEligible();
 }
 
 /**
@@ -85,11 +110,14 @@ export function assertAccountIdCanaryEligible(authUser,email,{
  */
 export async function issueNewRegistrationAccountId(db,authUser,uid,options={}){
   const {username,email}=assertNewRegistrationEligible(authUser,uid,{
-    notBefore:options.notBefore,now:options.now||new Date()
+    notBefore:options.notBefore,now:options.now||new Date(),
+    maxAgeMs:['auto-canary','general'].includes(options.rolloutMode) ?
+      AUTO_REGISTRATION_RECOVERY_WINDOW_MS : NEW_REGISTRATION_WINDOW_MS
   });
-  assertAccountIdCanaryEligible(authUser,email,{
+  assertAccountIdRolloutEligible(authUser,email,{
     rolloutMode:options.rolloutMode,
-    canaryEmailSha256:options.canaryEmailSha256
+    canaryEmailSha256:options.canaryEmailSha256,
+    generalReleaseApproved:options.generalReleaseApproved
   });
   return ensureAccountIdentityProfile(db,uid,{
     expectedUsername:username,

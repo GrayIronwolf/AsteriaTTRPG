@@ -58,7 +58,9 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
     !api.includes('ensureAccountIdentityProfile(getFirestore(),request.auth.uid)') &&
     issuance.includes('authUser.metadata?.creationTime') &&
     issuance.includes('created<cutoff.getTime()') &&
-    issuance.includes('now.getTime()-created>NEW_REGISTRATION_WINDOW_MS') &&
+    issuance.includes('now.getTime()-created>maxAgeMs') &&
+     issuance.includes('AUTO_REGISTRATION_RECOVERY_WINDOW_MS') &&
+     issuance.includes("['auto-canary','general'].includes(options.rolloutMode)") &&
     issuance.includes('expectedUsername:username') &&
     issuance.includes('expectedEmail:email');
   const checks=[

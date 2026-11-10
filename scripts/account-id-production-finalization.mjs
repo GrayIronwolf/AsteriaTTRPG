@@ -35,7 +35,9 @@ export function inspectAccountIdProductionFinalization(reader=read){
     check('authenticated-creation-cutoff-required',
       issue.includes('authUser.metadata?.creationTime')&&
       issue.includes('created<cutoff.getTime()')&&
-      issue.includes('now.getTime()-created>NEW_REGISTRATION_WINDOW_MS')&&
+      issue.includes('now.getTime()-created>maxAgeMs')&&
+      issue.includes('AUTO_REGISTRATION_RECOVERY_WINDOW_MS')&&
+      issue.includes("['auto-canary','general'].includes(options.rolloutMode)")&&
       issue.includes('expectedEmail:email')),
     check('fresh-canonical-registration-read',
       auth.includes("getDocFromServer(doc(db,'users',cred.user.uid))")&&

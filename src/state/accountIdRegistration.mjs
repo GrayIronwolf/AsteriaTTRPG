@@ -5,7 +5,7 @@ const UID=/^[A-Za-z0-9_-]{1,128}$/;
 
 export function accountIdRegistrationEnabled(flags) {
   // Never infer rollout from server availability or authentication alone.
-  return flags?.accountIds === true;
+  return flags?.accountIds === true || flags?.accountIdAutoCanary === true;
 }
 
 export async function finalizeRegisteredAccountId({

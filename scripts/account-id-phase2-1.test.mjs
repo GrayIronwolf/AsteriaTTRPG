@@ -17,6 +17,9 @@ test('account ID rollout stays off until explicitly set true',()=>{
   for(const flags of [null,{}, {accountIds:false},{accountIds:'true'},{campaignNotifications:true}])
     assert.equal(accountIdRegistrationEnabled(flags),false);
   assert.equal(accountIdRegistrationEnabled({accountIds:true}),true);
+  assert.equal(accountIdRegistrationEnabled({accountIdAutoCanary:true}),true);
+  assert.equal(accountIdRegistrationEnabled({accountIdAutoCanary:'true'}),false);
+  assert.equal(accountIdRegistrationEnabled({accountIdCanary:true}),false);
 });
 test('disabled registration makes no external calls',async()=>{
   let called=false;
@@ -83,4 +86,18 @@ test('registration source gates rollout, confirms Firestore storage and handles 
   assert.match(auth,/Account ID could not be confirmed/);
   assert.match(auth,/saveLocalProfile\(cred\.user\.uid, currentProfile\)/);
   assert.doesNotMatch(auth,/requestAssignment:[^\n]+username/);
+});
+
+test('signup requests ID before optional email verification, without verified-email precondition',()=>{
+  const auth=readFileSync(new URL('../js/firebase-auth.js',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+  const createStart=auth.indexOf('window.firebaseCreateAccountPage = async function()');
+  const createEnd=auth.indexOf('function loginCredentials(',createStart);
+  const signup=auth.slice(createStart,createEnd);
+  const id=signup.indexOf('accountIdentity = await finalizeRegisteredAccountId(');
+  const verification=signup.indexOf('await sendEmailVerification(cred.user)');
+  assert.ok(id>0 && verification>id,'assignment precedes optional email send');
+  assert.doesNotMatch(signup,/if\(!cred\.user\.emailVerified\)/);
+  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIdAutoCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-auto-canary'\)==='1'/);
 });
