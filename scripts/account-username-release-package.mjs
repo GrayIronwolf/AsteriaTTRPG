@@ -40,13 +40,17 @@ export function buildUsernameRelease(){
     'functions/accountIdentityUsername.mjs':readFileSync(join(root,'functions/accountIdentityUsername.mjs'),'utf8')
   };
 }
-export function stageUsernameRelease(env=process.env){
-  if(env.GITHUB_ACTIONS!=='true'||env.GITHUB_REF!=='refs/heads/main'||
+export function stageUsernameRelease(env=process.env,mode='production'){
+  if(!['ci','production'].includes(mode)||env.GITHUB_ACTIONS!=='true'||
+     !isAbsolute(env.RUNNER_TEMP||''))
+    throw Error('Staging requires a GitHub Actions temporary directory.');
+  if(mode==='production'&&(env.GITHUB_REF!=='refs/heads/main'||
      env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
      env.ASTERIA_USERNAME_SCOPED_DEPLOY!=='1'||
-     env.ASTERIA_DEPLOY_PROJECT!=='asteria-ttrpg'||
-     !isAbsolute(env.RUNNER_TEMP||''))
+     env.ASTERIA_DEPLOY_PROJECT!=='asteria-ttrpg'))
     throw Error('Production staging requires the approved GitHub Actions context.');
+  if(mode==='ci'&&!['pull_request','push'].includes(env.GITHUB_EVENT_NAME))
+    throw Error('CI staging must be a repository check event.');
   const dir=join(env.RUNNER_TEMP,'asteria-username-release');
   if(existsSync(dir))throw Error('Release directory already exists.');
   for(const [file,content] of Object.entries(buildUsernameRelease())){
@@ -61,8 +65,9 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     if(process.argv[2]==='--check') {
       const files=buildUsernameRelease();
       console.log(JSON.stringify({ready:true,files:Object.keys(files),cloudWrites:false}));
-    }else if(process.argv[2]==='--stage-production')
-      console.log(JSON.stringify({staged:stageUsernameRelease(),scope:'functions:asteria:asteriaAccountUsername'}));
-    else throw Error('Unknown release operation.');
+    }else if(process.argv[2]==='--stage-production'||process.argv[2]==='--stage-ci'){
+      const mode=process.argv[2]==='--stage-ci'?'ci':'production';
+      console.log(JSON.stringify({staged:stageUsernameRelease(process.env,mode),scope:'functions:asteria:asteriaAccountUsername',mode}));
+    }else throw Error('Unknown release operation.');
   }catch(error){console.error(error.message);process.exitCode=1;}
 }
