@@ -76,7 +76,7 @@ test('server errors propagate to registration handler for pending-state messagin
 test('registration source gates rollout, confirms Firestore storage and handles pending state',()=>{
   const auth=readFileSync(new URL('../js/firebase-auth.js',import.meta.url),'utf8');
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(auth,/accountIdRegistrationEnabled\(window\.AsteriaFeatureFlags\)/);
   assert.match(auth,/if\(!profileStored \|\| !functionsClient\)/);
   assert.match(auth,/finalizeRegisteredAccountId\(/);
@@ -98,6 +98,6 @@ test('signup requests ID before optional email verification, without verified-em
   const verification=signup.indexOf('await sendEmailVerification(cred.user)');
   assert.ok(id>0 && verification>id,'assignment precedes optional email send');
   assert.doesNotMatch(signup,/if\(!cred\.user\.emailVerified\)/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(html,/accountIdAutoCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-auto-canary'\)==='1'/);
 });

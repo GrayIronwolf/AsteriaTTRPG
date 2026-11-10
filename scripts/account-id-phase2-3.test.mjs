@@ -101,7 +101,7 @@ test('website form and retry UI preserve rollout off and do not create another A
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
   assert.match(html,/id="createConfirmPassword"/);
   assert.match(html,/id="pendingAccountSetupBox"/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(js,/validateAccountRegistrationFields\(/);
   assert.match(js,/recoverPendingRegistrationProfile\(/);
   assert.match(js,/window\.asteriaRetryPendingAccountSetup=retryPendingAccountSetup/);
