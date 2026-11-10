@@ -1,5 +1,6 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
+import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js';
@@ -886,6 +887,21 @@ function appendActivity(character,entry){
   character.actionLog=[Object.assign({id:`action-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString()},entry),...rows].slice(0,100);
 }
 
+async function cropProfileAvatar(file){
+  const image=await createImageBitmap(file);
+  try{
+    const canvas=document.createElement('canvas');
+    canvas.width=512;canvas.height=512;
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw new Error('Image editing is not available on this browser.');
+    const size=Math.min(image.width,image.height);
+    if(size<1)throw new Error('Invalid image dimensions.');
+    ctx.drawImage(image,(image.width-size)/2,(image.height-size)/2,size,size,0,0,512,512);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.85));
+    if(!blob||blob.size>2*1024*1024)throw new Error('Profile image could not be prepared.');
+    return blob;
+  } finally{image.close?.();}
+}
 const firebasePublicApi = {
   isReady:()=>Boolean(db && currentUser && ownershipReadyUid === currentUser.uid),
   getUser:()=>currentUser,
@@ -965,6 +981,82 @@ const firebasePublicApi = {
     if(currentUser?.uid!==uid || auth?.currentUser?.uid!==uid)
       throw new Error('The authenticated account changed during profile verification.');
     return {uid,authEmail:user.email||'',profile:snapshot.exists()?snapshot.data():null};
+  },
+  saveEditableAccountProfile: async function(input){
+    if(!db||!auth||!currentUser?.uid||currentUser.uid!==auth.currentUser?.uid)
+      throw new Error('Sign in before editing your profile.');
+    const clean=validatedEditableProfile(input);
+    const uid=currentUser.uid,user=currentUser,reference=doc(db,'users',uid);
+    await runTransaction(db,async tx=>{
+      const snap=await tx.get(reference);
+      if(!snap.exists()||snap.data().uid!==uid)
+        throw new Error('Your account profile needs verification.');
+      if(auth.currentUser?.uid!==uid||currentUser?.uid!==uid)
+        throw new Error('The signed-in account changed.');
+      tx.update(reference,{...clean,updatedAt:serverTimestamp()});
+    });
+    if(auth.currentUser?.uid!==uid||currentUser?.uid!==uid)
+      throw new Error('The account changed after saving.');
+    const verified=await getDocFromServer(reference);
+    if(!verified.exists()||verified.data().uid!==uid)
+      throw new Error('Saved profile could not be verified.');
+    currentProfile={...currentProfile,...verified.data()};
+    saveLocalProfile(uid,currentProfile);
+    window.AsteriaAuthBridge?.setSession?.(currentProfile,user);
+    window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
+    return {ok:true};
+  },
+  readOwnAccountAvatar: async function(){
+    const uid=currentUser?.uid;
+    if(!storage||!db||!uid||auth?.currentUser?.uid!==uid)return null;
+    const snap=await getDocFromServer(doc(db,'users',uid));
+    if(currentUser?.uid!==uid||auth?.currentUser?.uid!==uid||
+       !snap.exists()||snap.data().uid!==uid||!snap.data().avatarUpdatedAt)return null;
+    try {
+      const url=await getDownloadURL(storageRef(storage,accountAvatarPath(uid)));
+      return currentUser?.uid===uid&&auth?.currentUser?.uid===uid?url:null;
+    } catch{return null;}
+  },
+  saveOwnAccountAvatar: async function(file){
+    if(!storage||!db||!currentUser?.uid||auth?.currentUser?.uid!==currentUser.uid)
+      throw new Error('Sign in before changing your profile image.');
+    const issue=avatarUploadError(file);
+    if(issue)throw new Error(issue);
+    const uid=currentUser.uid;
+    const path=accountAvatarPath(uid);
+    const blob=await cropProfileAvatar(file);
+    if(currentUser?.uid!==uid||auth?.currentUser?.uid!==uid)
+      throw new Error('The account changed during image preparation.');
+    await uploadBytes(storageRef(storage,path),blob,{contentType:'image/webp',cacheControl:'private,max-age=300'});
+    if(currentUser?.uid!==uid||auth?.currentUser?.uid!==uid)
+      throw new Error('The account changed during the upload.');
+    await runTransaction(db,async tx=>{
+      const reference=doc(db,'users',uid),snap=await tx.get(reference);
+      if(!snap.exists()||snap.data().uid!==uid)
+        throw new Error('Account profile not verified.');
+      tx.update(reference,{avatarUpdatedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    });
+    if(currentUser?.uid!==uid||auth?.currentUser?.uid!==uid)
+      throw new Error('The account changed after the upload.');
+    window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
+    return {ok:true};
+  },
+  removeOwnAccountAvatar: async function(){
+    if(!storage||!db||!currentUser?.uid||auth?.currentUser?.uid!==currentUser.uid)
+      throw new Error('Sign in before removing your profile image.');
+    const uid=currentUser.uid,reference=doc(db,'users',uid);
+    await runTransaction(db,async tx=>{
+      const snap=await tx.get(reference);
+      if(!snap.exists()||snap.data().uid!==uid)
+        throw new Error('Account profile not verified.');
+      tx.update(reference,{avatarUpdatedAt:null,updatedAt:serverTimestamp()});
+    });
+    try{await deleteObject(storageRef(storage,accountAvatarPath(uid)));}catch(e){
+      if(e?.code!=='storage/object-not-found')throw e;
+    }
+    if(currentUser?.uid===uid&&auth?.currentUser?.uid===uid)
+      window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
+    return {ok:true};
   },
   subscribeAppearancePreferences: function(onChange){
     if(!db || !currentUser || typeof onChange!=='function')return ()=>{};
