@@ -120,3 +120,14 @@ body .asteria-header #settingsToggle {display:none!important;}
 @media (prefers-reduced-motion:reduce){
   .asteria-header-profile.asteria-header-arriving {animation:none!important;}
 }
+
+/* The navigation drawer and Appearance screen share one existing shell,
+   but are entered through separate buttons. No duplicate settings controls. */
+#settingsPanel:not(.appearance-mode) > section {display:none!important;}
+#settingsPanel.appearance-mode #mobileNavigationSlot,
+#settingsPanel.appearance-mode #mobileAccountSlot {display:none!important;}
+#settingsPanel.appearance-mode > section {display:block;}
+#settingsPanel:not(.appearance-mode) #mobileAccountSlot {display:none!important;}
+@media (min-width:1680px) {
+  #settingsPanel:not(.appearance-mode) #mobileNavigationSlot {display:none!important;}
+}
