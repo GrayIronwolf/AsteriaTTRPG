@@ -1027,6 +1027,10 @@ const firebasePublicApi = {
        !server.data().accountId||auth.currentUser?.uid!==uid)
       throw new Error('Your Account ID needs verification before changing your username.');
     const previous=server.data(),expectedAccountId=previous.accountId;
+    if(!/^[0-9]{5}$/.test(previous.accountNumber||'')||
+       previous.accountId!==previous.username+'#'+previous.accountNumber||
+       previous.accountIdKey!==previous.username.toLowerCase()+'#'+previous.accountNumber)
+      throw new Error('Account identity needs verification before changing your username.');
     if(username===previous.username)
       return {ok:true,unchanged:true,username,accountId:expectedAccountId};
     const response=await httpsCallable(functionsClient,'asteriaAccountUsername')({
