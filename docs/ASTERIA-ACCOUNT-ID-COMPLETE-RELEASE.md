@@ -18,10 +18,10 @@ One coordinated release for permanent `Username#00000` identities for **all exis
    git clone --depth 1 --branch feat/account-id-complete-general-release https://github.com/GrayIronwolf/AsteriaTTRPG.git /tmp/asteria-id-release
    cd /tmp/asteria-id-release
    npm ci --omit=dev --no-audit --no-fund
-   node scripts/account-id-coordinated-release.mjs --project asteria-ttrpg
+   bash scripts/account-id-cloud-shell-release.sh
    ```
 
-4. If the preview is clean and the administrator accepts the production operation, enter `COMPLETE-ASTERIA-ACCOUNT-IDS` once. The script repeats the account scan, assigns all eligible existing IDs transactionally, preserves previous permanent IDs and switches the existing Cloud Function to general registration only after migration reports success. A failure blocks the activation; partial migration can be reviewed and resumed without regenerating IDs. Use a current full backup and verified account-recovery plan before running.
+4. The launcher uses the existing Firebase Admin service account through short-lived impersonation, not unsupported Cloud Shell end-user ADC. If impersonation is refused, stop and grant the current operator **Service Account Token Creator on that one service account** through a separately reviewed permission change. No private keys are downloaded. If the preview is clean and the administrator accepts the production operation, enter `COMPLETE-ASTERIA-ACCOUNT-IDS` once. The script repeats the account scan, assigns all eligible existing IDs transactionally, preserves previous permanent IDs and switches the existing Cloud Function to general registration only after migration reports success. A failure blocks the activation; partial migration can be reviewed and resumed without regenerating IDs. Use a current full backup and verified account-recovery plan before running.
 5. The script confirms `BACKEND ACTIVATED; PUBLISH WEBSITE` only when the backend's general flag, independent approval flag and fresh registration cutoff are verified. This does **not** imply that the website has been published yet.
 6. Merge and publish this PR only after backend activation and successful migration, so the public UI is not enabled before the backend.
 7. Perform one live end-to-end test using a previously created account **without** modifying its assigned ID; create another fresh unverified account and verify immediate ID issuance. Test persistence, account switching, concurrent signup, logout/login, profile copy, mobile and unaffected campaign/character state.
