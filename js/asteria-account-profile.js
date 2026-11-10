@@ -1,6 +1,7 @@
 import { inspectAccountProfileDisplay } from '../src/state/accountProfileDisplay.mjs';
+import {proposedAccountUsername} from '../src/state/accountProfileEdit.mjs';
 
-// Read-only, authenticated account profile. Never writes to Firestore.
+// Authenticated account profile: presentation and server-authorized personal edits.
 const get=id=>document.getElementById(id);
 let requestVersion=0;
 let activeUid='';
@@ -14,6 +15,8 @@ function reset(){
   verifiedId=null;
   lastProfile=null;
   get('accountProfileEditForm').hidden=true;
+  get('accountProfileUsernameEditForm').hidden=true;
+  get('accountProfileChangeUsername').hidden=true;
   get('accountProfileEditStatus').textContent='';
   get('accountProfileAvatarFile').value='';
   const picture=get('accountProfileAvatar');
@@ -35,6 +38,7 @@ function close({restoreFocus=true}={}){
   const picture=get('accountProfileAvatar');
   if(picture){picture.hidden=true;picture.removeAttribute('src');}
   get('accountProfileEditForm').hidden=true;
+  get('accountProfileUsernameEditForm').hidden=true;
   get('accountProfileEditStatus').textContent='';
   const overlay=get('accountProfileOverlay');
   if(overlay)overlay.hidden=true;
@@ -70,6 +74,12 @@ async function refresh(){
     const profile=inspectAccountProfileDisplay({uid:activeUid,authEmail:read?.authEmail,profile:read?.profile});
     lastProfile=read?.profile||null;
     showResult(profile);
+    // Only show username editing after the dedicated backend callable exists.
+    // This avoids publishing a button that would fail before its scoped release.
+    const available=profile.status==='assigned'&&
+      await window.AsteriaFirebase?.usernameEditingAvailable?.();
+    if(version!==requestVersion||!isOpen()||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
+    get('accountProfileChangeUsername').hidden=!available;
     const url=await window.AsteriaFirebase?.readOwnAccountAvatar?.();
     if(version===requestVersion&&isOpen()&&window.AsteriaFirebase?.getUser?.()?.uid===activeUid){
       const image=get('accountProfileAvatar');
@@ -132,9 +142,9 @@ async function copyId(){
 }
 function beginEdit(){
   if(!isOpen()||editingBusy||!lastProfile||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
+  get('accountProfileUsernameEditForm').hidden=true;
   get('accountProfileEditFirst').value=String(lastProfile.firstName||'');
   get('accountProfileEditLast').value=String(lastProfile.lastName||'');
-  get('accountProfileEditUsername').value=String(lastProfile.username||'');
   get('accountProfileEditForm').hidden=false;
   get('accountProfileEditStatus').textContent='';
   get('accountProfileEditFirst').focus();
@@ -145,41 +155,92 @@ function cancelEdit(){
   get('accountProfileEditStatus').textContent='';
   get('accountProfileEdit').focus();
 }
+function updateUsernamePreview(){
+  const preview=get('accountProfileUsernamePreview');
+  if(!preview)return;
+  try{
+    const candidate=proposedAccountUsername(get('accountProfileEditUsername').value,lastProfile?.accountNumber);
+    preview.textContent='New public Account ID: '+candidate.accountId+'. Uniqueness is checked by the server when you confirm.';
+  }catch(error){
+    preview.textContent=error?.message||'Enter a valid username.';
+  }
+}
+function beginUsernameEdit(){
+  if(!isOpen()||editingBusy||get('accountProfileChangeUsername')?.hidden||
+     !verifiedId||!lastProfile||window.AsteriaFirebase?.getUser?.()?.uid!==activeUid)return;
+  get('accountProfileEditForm').hidden=true;
+  get('accountProfileEditStatus').textContent='';
+  get('accountProfileEditUsername').value=String(lastProfile.username||'');
+  get('accountProfileUsernameEditForm').hidden=false;
+  updateUsernamePreview();
+  get('accountProfileEditUsername').focus();
+}
+function cancelUsernameEdit(){
+  if(editingBusy)return;
+  get('accountProfileUsernameEditForm').hidden=true;
+  get('accountProfileEditStatus').textContent='';
+  get('accountProfileChangeUsername').focus();
+}
 async function saveEdit(event){
   event?.preventDefault?.();
   const uid=activeUid,version=requestVersion;
   if(!isOpen()||editingBusy||window.AsteriaFirebase?.getUser?.()?.uid!==uid)return;
   editingBusy=true;
   get('accountProfileSave').disabled=true;
-  get('accountProfileEditStatus').textContent='Saving your profile…';
+  get('accountProfileEditStatus').textContent='Saving your personal details…';
   try{
-    const newUsername=get('accountProfileEditUsername').value.trim();
-    if(!/^[A-Za-z0-9._-]{3,24}$/.test(newUsername))
-      throw new Error('Username must have 3–24 letters, numbers, dots, underscores or hyphens.');
-    if(newUsername!==lastProfile.username){
-      const changed=await window.AsteriaFirebase.renameAccountUsername(newUsername);
-      if(!changed?.ok||!changed.accountId)
-        throw new Error('Username was not verified by the server.');
-      lastProfile={...lastProfile,username:newUsername,accountId:changed.accountId};
-    }
-    if(window.AsteriaFirebase?.getUser?.()?.uid!==uid)
-      throw new Error('The signed-in account changed.');
     const details={
       firstName:get('accountProfileEditFirst').value,
-      lastName:get('accountProfileEditLast').value,
-      displayName:String(lastProfile.username||'')
+      lastName:get('accountProfileEditLast').value
     };
     await window.AsteriaFirebase.saveEditableAccountProfile(details);
     if(!isOpen()||uid!==activeUid||window.AsteriaFirebase?.getUser?.()?.uid!==uid)return;
     get('accountProfileEditForm').hidden=true;
-    get('accountProfileEditStatus').textContent='Profile updated.';
     await refresh();
+    if(isOpen()&&activeUid===uid)get('accountProfileEditStatus').textContent='Personal details saved.';
   }catch(error){
     if(isOpen()&&uid===activeUid&&version===requestVersion)
-      get('accountProfileEditStatus').textContent=error?.message||'Could not save your profile.';
+      get('accountProfileEditStatus').textContent=error?.message||'Could not save personal details.';
   }finally{
     editingBusy=false;
-    if(get('accountProfileSave'))get('accountProfileSave').disabled=false;
+    get('accountProfileSave').disabled=false;
+  }
+}
+async function saveUsername(event){
+  event?.preventDefault?.();
+  const uid=activeUid,version=requestVersion;
+  if(!isOpen()||editingBusy||!verifiedId||!lastProfile||
+     get('accountProfileUsernameEditForm').hidden||
+     window.AsteriaFirebase?.getUser?.()?.uid!==uid)return;
+  let candidate;
+  try{
+    candidate=proposedAccountUsername(get('accountProfileEditUsername').value,lastProfile.accountNumber);
+  }catch(error){
+    get('accountProfileEditStatus').textContent=error.message;
+    return;
+  }
+  if(candidate.username===lastProfile.username){
+    get('accountProfileEditStatus').textContent='Your username is already '+candidate.username+'.';
+    return;
+  }
+  editingBusy=true;
+  get('accountProfileUsernameSave').disabled=true;
+  get('accountProfileEditStatus').textContent='Checking and reserving your new username…';
+  try{
+    const changed=await window.AsteriaFirebase.renameAccountUsername(candidate.username);
+    if(!changed?.ok||changed.accountId!==candidate.accountId)
+      throw new Error('Your new Account ID could not be verified. Refresh My Profile.');
+    if(!isOpen()||uid!==activeUid||window.AsteriaFirebase?.getUser?.()?.uid!==uid)return;
+    get('accountProfileUsernameEditForm').hidden=true;
+    await refresh();
+    if(isOpen()&&activeUid===uid)
+      get('accountProfileEditStatus').textContent='Username updated. Your Account ID is now '+changed.accountId+'.';
+  }catch(error){
+    if(isOpen()&&uid===activeUid&&version===requestVersion)
+      get('accountProfileEditStatus').textContent=error?.message||'Could not change your username.';
+  }finally{
+    editingBusy=false;
+    get('accountProfileUsernameSave').disabled=false;
   }
 }
 async function changeAvatar(remove=false){
@@ -213,6 +274,10 @@ function bind(){
   get('accountProfileRefresh')?.addEventListener('click',refresh);
   get('accountProfileCopyId')?.addEventListener('click',copyId);
   get('accountProfileEdit')?.addEventListener('click',beginEdit);
+  get('accountProfileChangeUsername')?.addEventListener('click',beginUsernameEdit);
+  get('accountProfileEditUsername')?.addEventListener('input',updateUsernamePreview);
+  get('accountProfileUsernameCancel')?.addEventListener('click',cancelUsernameEdit);
+  get('accountProfileUsernameEditForm')?.addEventListener('submit',saveUsername);
   get('accountProfileCancel')?.addEventListener('click',cancelEdit);
   get('accountProfileEditForm')?.addEventListener('submit',saveEdit);
   get('accountProfileAvatarUpload')?.addEventListener('click',()=>{void changeAvatar(false);});
