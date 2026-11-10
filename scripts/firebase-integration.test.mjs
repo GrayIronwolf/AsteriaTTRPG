@@ -216,6 +216,20 @@ test('two clients receive an update and unsubscribed clients stop receiving',asy
   await new Promise(resolve=>setTimeout(resolve,100));assert.equal(values.length,count);
 });
 
+test('private Account avatars are owner-only, size and MIME restricted',async()=>{
+  const path='users/alice/profile/avatar';
+  const alice=env.authenticatedContext('alice').storage();
+  const bob=env.authenticatedContext('bob').storage();
+  await assertFails(getBytes(ref(bob,path)));
+  await assertFails(uploadBytes(ref(bob,path),new Uint8Array([1,2,3]),{contentType:'image/webp'}));
+  await assertFails(uploadBytes(ref(alice,path),new Uint8Array([1]),{contentType:'image/svg+xml'}));
+  await assertFails(uploadBytes(ref(alice,path),new Uint8Array(2*1024*1024+1),{contentType:'image/webp'}));
+  await assertSucceeds(uploadBytes(ref(alice,path),new Uint8Array([1,2,3]),{contentType:'image/webp'}));
+  await assertSucceeds(getBytes(ref(alice,path)));
+  await assertFails(getBytes(ref(bob,path)));
+  await assertFails(deleteObject(ref(bob,path)));
+  await assertSucceeds(deleteObject(ref(alice,path)));
+});
 test('gallery reads require ownership or campaign membership; uploads enforce MIME',async()=>{
   const path='users/alice/characters/a/gallery/photo.png';
   const owner=env.authenticatedContext('alice').storage();
