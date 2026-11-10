@@ -50,15 +50,15 @@ test('website source sends native Firebase email, refreshes Auth and never activ
   assert.match(js,/canCompleteNewAccountId\(user,window\.AsteriaFeatureFlags\)/);
   assert.match(js,/httpsCallable\(functionsClient,'asteriaAccountIdentity'\)/);
   assert.match(js,/getDocFromServer\(doc\(db,'users',uid\)\)/);
-  assert.match(html,/accountIds:false/);
+  assert.match(html,/accountIds:true/);
   assert.match(ui,/accountIdCanary!==true/);
   assert.doesNotMatch(ui,/localStorage|sessionStorage|accountIdCanary\s*=\s*true/);
 });
 
 test('canary test-only entrypoint is explicit and does not enable general account ID registration',()=>{
   const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-  assert.match(html,/accountIds:false,accountIdAutoCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-auto-canary'\)==='1',accountIdCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-canary'\)==='1'/);
-  assert.doesNotMatch(html,/accountIds:true/);
+  assert.match(html,/accountIds:true,accountIdAutoCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-auto-canary'\)==='1',accountIdCanary:new URLSearchParams\(window\.location\.search\)\.get\('account-id-canary'\)==='1'/);
+  assert.doesNotMatch(html,/accountIds:false/);
   assert.doesNotMatch(html,/localStorage\.setItem\([^\n]*accountIdCanary/);
   assert.doesNotMatch(html,/sessionStorage\.setItem\([^\n]*accountIdCanary/);
 });

@@ -101,7 +101,7 @@ export function inspectRecoveryPreflight(plan,fixture){
      !fire.includes('"auth"')||!rules.includes('accountIdRegistry')||
      !storage.includes('campaigns/{campaignId}/artwork')||
      !deployed.includes('production_confirmation')||
-     !html.includes('accountIds:false'))
+     !html.includes('accountIds:true'))
     return deny('Repository release and security source checks are incomplete.');
   return {
     ready:true,decision:'PLAN-READY / RESTORE-NOT-VERIFIED',
