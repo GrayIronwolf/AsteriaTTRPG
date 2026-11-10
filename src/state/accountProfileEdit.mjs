@@ -1,7 +1,11 @@
 // Only public profile presentation fields may be edited from a browser.
 // Username, UID and permanent Account ID always remain server-owned.
-const PERSON_NAME=/^[^\u0000-\u001f\u007f<>]{0,60}$/;
-const DISPLAY_NAME=/^[^\u0000-\u001f\u007f<>]{0,64}$/;
+const PERSON_NAME=/^[^<>]{0,60}$/;
+const DISPLAY_NAME=/^[^<>]{0,64}$/;
+const containsControl=value=>[...value].some(char=>{
+  const code=char.codePointAt(0);
+  return code<32||code===127;
+});
 export function validatedEditableProfile(input){
   if(!input||typeof input!=='object'||Array.isArray(input))
     throw new Error('Invalid profile details.');
@@ -12,7 +16,7 @@ export function validatedEditableProfile(input){
   for(const key of permitted){
     if(typeof input[key]!=='string')throw new Error('Profile text must be provided.');
     const value=input[key].trim().replace(/\s+/g,' ');
-    if(!(key==='displayName'?DISPLAY_NAME:PERSON_NAME).test(value))
+    if(containsControl(value)||!(key==='displayName'?DISPLAY_NAME:PERSON_NAME).test(value))
       throw new Error('Profile fields contain invalid characters or are too long.');
     clean[key]=value;
   }
