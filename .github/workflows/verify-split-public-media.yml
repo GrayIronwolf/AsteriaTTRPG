@@ -1,0 +1,56 @@
+name: Verify two-part Asteria deployment (no publishing)
+on:
+  pull_request:
+    paths:
+      - 'scripts/split-asteria-public-media.mjs'
+      - 'scripts/split-asteria-public-media.test.mjs'
+      - 'scripts/build-lean-pages.mjs'
+      - 'firebase.public-media.json'
+      - '.firebaserc'
+      - '.github/workflows/verify-split-public-media.yml'
+      - '.github/workflows/deploy-asteria-public-media.yml'
+      - '.github/workflows/deploy-asteria-website.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/split-asteria-public-media.test.mjs
+      - name: Verify committed browser bundles
+        run: |
+          npm run build
+          git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+      - name: Build independent website and public-media artifacts
+        run: |
+          node scripts/build-lean-pages.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/lean-report.json"
+          node scripts/split-asteria-public-media.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/asteria-media" "$RUNNER_TEMP/split-report.json"
+      - name: Verify release boundaries and URLs
+        run: |
+          test -f "$RUNNER_TEMP/asteria-site/index.html"
+          test -f "$RUNNER_TEMP/asteria-site/react-dist/asteria-react-content-v2.js"
+          test -f "$RUNNER_TEMP/asteria-site/data/compendium-index.js"
+          test ! -e "$RUNNER_TEMP/asteria-site/assets"
+          test ! -e "$RUNNER_TEMP/asteria-site/content"
+          test -f "$RUNNER_TEMP/asteria-media/assets/header/asteria-wordmark.png"
+          test ! -e "$RUNNER_TEMP/asteria-media/users"
+          test ! -e "$RUNNER_TEMP/asteria-media/storage.rules"
+          node -e "const r=require(process.argv[1]);if(r.pagesBytes>45*1048576)throw Error('Pages package is unexpectedly large');if(r.mediaBytes<130*1048576)throw Error('Media package is unexpectedly small');if(r.pagesFiles<100)throw Error('Pages package is unexpectedly incomplete');console.log(r);" "$RUNNER_TEMP/split-report.json"
+          git diff --exit-code
+      - name: Save split size and routing metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-two-part-audit
+          path: |
+            ${{ runner.temp }}/lean-report.json
+            ${{ runner.temp }}/split-report.json
+          if-no-files-found: warn
