@@ -25,7 +25,7 @@ After reviewing this code and confirming the real test email, run:
 node /tmp/account-id-canary-operator.mjs stage
 ```
 
-At the prompt, type the **approved new test email address**. Input is visible in the operator's own terminal but is **not sent to GitHub**, logged by the script or printed in the resulting summary. The script normalises it to lowercase, computes its SHA-256 digest in memory, and patches the **existing function's runtime environment variables only**. It preserves unrelated variables; validates the function name, state, region, etag, and project; requires issuance not already enabled; sets `ASTERIA_ACCOUNT_IDS_ENABLED=0`, `ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE=canary` and `ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256`; and clears any cutoff. It waits for the Cloud Functions update to finish.
+At the prompt, type the **approved new test email address**. Input is visible in the operator's own terminal but is **not sent to GitHub**, logged by the script or printed in the resulting summary. The script normalises it to lowercase, computes its SHA-256 digest in memory, and patches the **existing function's runtime environment variables only**. It preserves unrelated variables; validates the function name, state, region, update timestamp, and project; requires issuance not already enabled; sets `ASTERIA_ACCOUNT_IDS_ENABLED=0`, `ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE=canary` and `ASTERIA_ACCOUNT_IDS_CANARY_EMAIL_SHA256`; and clears any cutoff. It waits for the Cloud Functions update to finish.
 
 Run:
 
@@ -62,6 +62,7 @@ Type `DISABLE` if prompted. Expect **DISABLED**. This leaves any legitimately as
 - The URL can reveal a button but **cannot bypass** the server's verified-email, registration timestamp, canary digest and issuance gates.
 - Do **not** paste actual verification links, passwords, token output, raw Cloud Function settings or email hashes into GitHub issues or this chat.
 - The operator script does **not** display raw environment variables or access tokens. Its Google Cloud API requests require the current Cloud Shell credentials; no GitHub Actions secrets are involved.
-- This is a Cloud Functions v2 **configuration-only REST PATCH** using the documented `serviceConfig.environmentVariables` field mask and the resource etag; it does not run Firebase CLI source deployment or deploy any unrelated functions.
+- This is a Cloud Functions v2 **configuration-only REST PATCH** using the documented `serviceConfig.environmentVariables` field mask after re-reading the function's update timestamp and environment variables; it does not run Firebase CLI source deployment or deploy any unrelated functions.
+- Cloud Functions v2 does not expose an `etag` on its Function resource. The operator rechecks `updateTime` and existing runtime settings immediately before patching. This is a best-effort concurrency check, **not** an atomic lock; do not run other configuration changes at the same time.
 - Cloud Functions configuration changes can create a new underlying Cloud Run revision. The stage and enable operations are real production changes and must be separately approved by the operator.
 - If any operation reports an error, run read-only `status` and do not retry blindly. Check the Cloud Functions console operations for the existing function. Do not edit IAM without a specific denied permission.
