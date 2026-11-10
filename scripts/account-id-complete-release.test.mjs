@@ -100,3 +100,25 @@ test('failed migration stops without retrying or changing established IDs',async
     }}),/stopped on an account error/);
   assert.deepEqual(writes,['a','b']);
 });
+
+test('read-only inventory explains legacy blocks using category counts, never account details',async()=>{
+  const inspect=async(_db,_auth,uid)=>({
+    status:'manual-review',
+    reason:uid==='a'?'auth-profile-mismatch':'profile-missing',
+    email:'private@example.test'
+  });
+  const inventory=await collectMigrationInventory({db,auth:baseAuth(),inspect});
+  assert.deepEqual(inventory.summary,{total:2,eligible:0,alreadyAssigned:0,manualReview:2});
+  assert.deepEqual(inventory.reasonCounts,{'auth-profile-mismatch':1,'profile-missing':1});
+  const displayed=JSON.stringify(inventory.reasonCounts);
+  assert.doesNotMatch(displayed,/private@example.test|\"uid\"|\"email\"/);
+  const preview=await runMigration({db,auth:baseAuth(),mode:'preview',inspect});
+  assert.equal(preview.decision,'REVIEW REQUIRED');
+  assert.deepEqual(preview.reasonCounts,inventory.reasonCounts);
+});
+test('untrusted reasons are never included verbatim in migration diagnostics',async()=>{
+  const inspect=async()=>({status:'manual-review',reason:'uid=secret-account;email=secret@example.test'});
+  const inventory=await collectMigrationInventory({db,auth:baseAuth(),inspect});
+  assert.deepEqual(inventory.reasonCounts,{unclassified:2});
+  assert.doesNotMatch(JSON.stringify(inventory.reasonCounts),/secret|email/);
+});
