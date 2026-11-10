@@ -25,7 +25,7 @@ export function canonicalPublicPath(value){
   if(/^(?:https?:|\/\/|data:|blob:|gs:|firebase:|javascript:)/i.test(value))return null;
   const pathname=value.replace(/^(?:(?:\.\.\/)+|\.\/|\/)+/,'').split(/[?#]/,1)[0];
   if(!pathname.startsWith('assets/')&&!pathname.startsWith('content/'))return null;
-  if(pathname.includes('..')||pathname.includes('\')||!MEDIA_EXT.test(pathname))return null;
+  if(pathname.includes('..')||pathname.includes(String.fromCharCode(92))||!MEDIA_EXT.test(pathname))return null;
   return pathname;
 }
 export function resolvePublicMedia(value){
