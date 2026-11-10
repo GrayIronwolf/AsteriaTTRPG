@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/build-lean-pages.mjs OUTPUT_DIRECTORY [REPORT_JSON]
  */
-import {readdir,lstat,copyFile,mkdir,readFile,rm,writeFile,stat} from 'node:fs/promises';
+import {readdir,lstat,copyFile,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -21,7 +21,7 @@ if(out===root||!relative.startsWith('..')||out===path.dirname(root))
   throw Error('The output must be outside the source repository.');
 if(reportPath===out||reportPath.startsWith(out+path.sep))
   throw Error('Report must be outside the public site directory.');
-const PUBLIC_ROOT_FILES=['index.html','CNAME','404.html','favicon.ico','robots.txt','sitemap.xml'];
+const PUBLIC_ROOT_FILES=['index.html','CNAME','404.html','favicon.ico','robots.txt','sitemap.xml','asteria-logo-transparent.png','asteria-logo.jpg'];
 // Every runtime bundle, source module, image and generated compendium resource
 // retains its original relative URL. The raw Markdown authoring vault,
  // build tools, functions, test fixtures and private configuration do not ship.
@@ -35,7 +35,7 @@ function groupOf(p){return p.split('/')[0];}
 function allowed(p){
   if(SOURCE_MAP.test(p))return false;
   if(p.startsWith('content/'))return CONTENT_MEDIA.test(p);
-  if(p.startsWith('src/'))return !/\/\.(?:DS_Store|gitkeep)$/.test(p);
+  // The unbundled browser bridge imports only JS/MJS helpers from src/.\n  // React JSX, source-only stylesheets and duplicate original images are\n  // compiled into react-dist by Vite and are not served directly.\n  if(p.startsWith('src/'))return /\.(?:js|mjs|json)$/i.test(p);
   return true;
 }
 function ensureWithin(candidate,base){
