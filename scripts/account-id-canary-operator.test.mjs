@@ -1,16 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {proposedEnvironment,describeCanary,run,NAME} from './account-id-canary-operator.mjs';
+import {proposedEnvironment,describeCanary,assertInventoryUnchanged,run,NAME} from './account-id-canary-operator.mjs';
 
 const sample=(env={})=>({
-  name:NAME,state:'ACTIVE',etag:'opaque-version',
+  name:NAME,state:'ACTIVE',updateTime:'2026-11-10T03:00:00Z',
   serviceConfig:{environmentVariables:{KEEP_CAMPAIGN_SETTING:'unchanged',...env}}
 });
 const email='asteria-example+test@gmail.com';
 test('stage never enables issuance; preserves unrelated environment values',()=>{
   const patch=proposedEnvironment(sample(),'stage',{email:' Asteria-Example+Test@Gmail.com '});
   const vars=patch.serviceConfig.environmentVariables;
-  assert.equal(patch.etag,'opaque-version');
+  assert.equal(patch.name,NAME);
+  assert.equal(Object.hasOwn(patch,'etag'),false);
   assert.equal(vars.KEEP_CAMPAIGN_SETTING,'unchanged');
   assert.equal(vars.ASTERIA_ACCOUNT_IDS_ENABLED,'0');
   assert.equal(vars.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE,'canary');
@@ -52,7 +53,7 @@ test('disable only changes issuance gate and preserves the configured canary',()
 test('failed inventory, wrong name, non-ACTIVE function and malformed mail fail closed',()=>{
   assert.throws(()=>proposedEnvironment(sample({}),'stage',{email:''}),/email required/);
   for(const f of [null,{...sample(),state:'FAILED'},{...sample(),name:'projects/other/locations/us-central1/functions/wrong'},
-    {...sample(),etag:''},{...sample(),serviceConfig:null}])
+    {...sample(),updateTime:''},{...sample(),serviceConfig:null}])
     assert.throws(()=>proposedEnvironment(f,'disable'),/inventory incomplete/);
 });
 test('read-only status redacts email and env map; dispatch requires typed confirmation',async()=>{
@@ -85,8 +86,35 @@ test('read-only status redacts email and env map; dispatch requires typed confir
 });
 
 test('canary can stage when an ACTIVE Cloud Function has no environment variable map',()=>{
-  const f={name:NAME,state:'ACTIVE',etag:'opaque-version',serviceConfig:{}};
+  const f={name:NAME,state:'ACTIVE',updateTime:'2026-11-10T03:00:00Z',serviceConfig:{}};
   const p=proposedEnvironment(f,'stage',{email});
   assert.equal(p.serviceConfig.environmentVariables.ASTERIA_ACCOUNT_IDS_ENABLED,'0');
   assert.equal(p.serviceConfig.environmentVariables.ASTERIA_ACCOUNT_IDS_ROLLOUT_MODE,'canary');
+});
+
+test('Cloud Functions v2 response without etag is valid with a timestamp',()=>{
+  const value=sample();
+  assert.equal(Object.hasOwn(value,'etag'),false);
+  assert.doesNotThrow(()=>proposedEnvironment(value,'stage',{email}));
+});
+
+test('pre-update recheck stops changed timestamps and runtime variables',()=>{
+  const before=sample();
+  assert.doesNotThrow(()=>assertInventoryUnchanged(before,structuredClone(before)));
+  for(const changed of [
+    {...sample(),updateTime:'2026-11-10T03:01:00Z'},
+    sample({ASTERIA_ACCOUNT_IDS_ENABLED:'1'}),
+    {...sample(),state:'FAILED'}
+  ])assert.throws(()=>assertInventoryUnchanged(before,changed),/changed during confirmation/);
+});
+
+test('a changed runtime inventory blocks any staging writes',async()=>{
+  let reads=0,writes=0;
+  const api={
+    get:async()=>++reads===1?sample():sample({ANOTHER_KEY:'changed'}),
+    update:async()=>{writes++;}
+  };
+  await assert.rejects(run({action:'stage',token:'hidden',api,ask:async()=>email}),
+    /changed during confirmation/);
+  assert.equal(writes,0);
 });
