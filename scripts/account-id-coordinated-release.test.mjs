@@ -110,3 +110,11 @@ test('saved impersonated credentials must match expected Firebase Admin service 
     rmSync(dir,{recursive:true,force:true});
   }
 });
+
+test('Cloud Shell preview runs reconciliation without migration or activation',()=>{
+  const sh=readFileSync(new URL('./account-id-cloud-shell-release.sh',import.meta.url),'utf8');
+  assert.match(sh,/\$\{1:-\}.*--preview/);
+  assert.match(sh,/node scripts\/account-id-existing-migration\.mjs --project "\$PROJECT" --mode preview/);
+  assert.match(sh,/node scripts\/account-id-coordinated-release\.mjs --project "\$PROJECT"/);
+  assert.match(sh,/No data or settings will be modified/);
+});
