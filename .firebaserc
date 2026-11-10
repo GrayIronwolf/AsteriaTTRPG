@@ -2,5 +2,14 @@
   "projects": {
     "default": "demo-asteria",
     "production": "asteria-ttrpg"
+  },
+  "targets": {
+    "asteria-ttrpg": {
+      "hosting": {
+        "publicMedia": [
+          "asteria-ttrpg-media"
+        ]
+      }
+    }
   }
 }
