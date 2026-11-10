@@ -6,6 +6,8 @@ import {ensureAccountIdentityProfile} from './accountIdentityProfile.mjs';
 // operator-reviewed legacy backfill. Firebase Auth creationTime is maintained
 // by Firebase Auth and cannot be backdated by a browser profile update.
 export const NEW_REGISTRATION_WINDOW_MS=15*60*1000;
+// Allow bounded same-UID recovery when a new registration has transient failures.
+export const AUTO_REGISTRATION_RECOVERY_WINDOW_MS=24*60*60*1000;
 const FUTURE_CLOCK_SKEW_MS=5*1000;
 const UID=/^[A-Za-z0-9_-]{1,128}$/;
 const CANONICAL_UTC=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -20,11 +22,13 @@ const notEligible=()=>new Error('Account ID issuance requires a new registration
  * No client-supplied date, profile timestamp or username can grant access.
  */
 export function assertNewRegistrationEligible(authUser,uid,{
-  notBefore,now=new Date()
+  notBefore,now=new Date(),maxAgeMs=NEW_REGISTRATION_WINDOW_MS
 }={}){
   if(typeof uid!=='string'||!UID.test(uid)||
      !authUser||authUser.uid!==uid||authUser.disabled===true)throw notEligible();
-  if(!(now instanceof Date)||!Number.isFinite(now.getTime()))throw notEligible();
+  if(!(now instanceof Date)||!Number.isFinite(now.getTime()) ||
+     ![NEW_REGISTRATION_WINDOW_MS,AUTO_REGISTRATION_RECOVERY_WINDOW_MS].includes(maxAgeMs))
+    throw notEligible();
 
   // The cutoff MUST be manually supplied when production issuance is enabled.
   // Missing, ambiguous or incorrectly formatted values fail closed.
@@ -41,7 +45,7 @@ export function assertNewRegistrationEligible(authUser,uid,{
   const created=Date.parse(createdText);
   if(!Number.isFinite(created)||created<cutoff.getTime()||
      created>now.getTime()+FUTURE_CLOCK_SKEW_MS||
-     now.getTime()-created>NEW_REGISTRATION_WINDOW_MS)
+     now.getTime()-created>maxAgeMs)
     throw notEligible();
 
   if(typeof authUser.displayName!=='string')throw notEligible();
@@ -106,7 +110,9 @@ export function assertAccountIdRolloutEligible(authUser,email,{
  */
 export async function issueNewRegistrationAccountId(db,authUser,uid,options={}){
   const {username,email}=assertNewRegistrationEligible(authUser,uid,{
-    notBefore:options.notBefore,now:options.now||new Date()
+    notBefore:options.notBefore,now:options.now||new Date(),
+    maxAgeMs:['auto-canary','general'].includes(options.rolloutMode) ?
+      AUTO_REGISTRATION_RECOVERY_WINDOW_MS : NEW_REGISTRATION_WINDOW_MS
   });
   assertAccountIdRolloutEligible(authUser,email,{
     rolloutMode:options.rolloutMode,
