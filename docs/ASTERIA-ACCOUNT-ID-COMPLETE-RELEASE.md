@@ -12,9 +12,17 @@ One coordinated release for permanent `Username#00000` identities for **all exis
 ## Coordinated production order
 1. Pass the pull request's complete CI, including Firebase emulator authorization, `npm test`, website build and exact bundle comparison. Do not merge failures.
 2. Confirm a currently usable Firestore backup and access to Firebase Auth account recovery. Review owner permissions and verify the expected deployment/function from read-only status. These cannot be inferred from CI.
-3. In the trusted operator's Cloud Shell, check out this reviewed commit and install the repository's pinned dependencies. Run `node scripts/account-id-existing-migration.mjs --project asteria-ttrpg --mode preview`. Review only aggregate totals; if any `manualReview` remains, investigate privately and do not migrate or enable general release.
-4. With a complete clean preview and explicit production approval, run `ASTERIA_ACCOUNT_ID_MIGRATION_APPROVAL=MIGRATE-ASTERIA-EXISTING-ACCOUNTS node scripts/account-id-existing-migration.mjs --project asteria-ttrpg --mode apply`. The scan is repeated before writes. All writes are transactional and idempotent, so a stopped run can be investigated and resumed without regenerating IDs.
-5. Run `node /tmp/account-id-canary-operator.mjs release-general` using the freshly reviewed operator source. Type `RELEASE-GENERAL`. This activates the existing deployed backend for **new** registrations with a fresh creation cutoff. Old Auth accounts cannot invoke the new-registration callable to bypass the migration.
+3. In the trusted operator's Cloud Shell, check out the reviewed pull request branch and install production dependencies. Use the following single, combined release command. The script starts with a read-only check and full existing-account preview. It reports aggregate totals only and **stops before any writes** if even one identity needs manual review.
+
+   ```bash
+   git clone --depth 1 --branch feat/account-id-complete-general-release https://github.com/GrayIronwolf/AsteriaTTRPG.git /tmp/asteria-id-release
+   cd /tmp/asteria-id-release
+   npm ci --omit=dev --no-audit --no-fund
+   node scripts/account-id-coordinated-release.mjs --project asteria-ttrpg
+   ```
+
+4. If the preview is clean and the administrator accepts the production operation, enter `COMPLETE-ASTERIA-ACCOUNT-IDS` once. The script repeats the account scan, assigns all eligible existing IDs transactionally, preserves previous permanent IDs and switches the existing Cloud Function to general registration only after migration reports success. A failure blocks the activation; partial migration can be reviewed and resumed without regenerating IDs. Use a current full backup and verified account-recovery plan before running.
+5. The script confirms `BACKEND ACTIVATED; PUBLISH WEBSITE` only when the backend's general flag, independent approval flag and fresh registration cutoff are verified. This does **not** imply that the website has been published yet.
 6. Merge and publish this PR only after backend activation and successful migration, so the public UI is not enabled before the backend.
 7. Perform one live end-to-end test using a previously created account **without** modifying its assigned ID; create another fresh unverified account and verify immediate ID issuance. Test persistence, account switching, concurrent signup, logout/login, profile copy, mobile and unaffected campaign/character state.
 8. Run the read-only Account ID production audit and check new issuance counts, Function errors and registration errors. Investigate exceptions instead of overwriting IDs.
