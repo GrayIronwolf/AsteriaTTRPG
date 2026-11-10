@@ -1,0 +1,61 @@
+name: Publish Asteria compact website (manual after media release)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type PUBLISH-ASTERIA-COMPACT-WEBSITE after public media is verified'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmation == 'PUBLISH-ASTERIA-COMPACT-WEBSITE'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/configure-pages@v5
+      - run: npm ci
+      - name: Check website and build output
+        run: |
+          npm run build
+          git diff --exit-code -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          node --test scripts/split-asteria-public-media.test.mjs
+      - name: Verify the secondary media is already published
+        run: |
+          curl --fail --location --retry 3 --retry-delay 2 --silent --show-error --output /dev/null "https://asteria-ttrpg-media.web.app/assets/header/asteria-wordmark.png"
+      - name: Prepare small Pages snapshot (does not deploy media)
+        run: |
+          node scripts/build-lean-pages.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/lean-report.json"
+          node scripts/split-asteria-public-media.mjs "$RUNNER_TEMP/asteria-site" "$RUNNER_TEMP/asteria-media" "$RUNNER_TEMP/split-report.json"
+          node -e "const s=require(process.argv[1]);if(s.pagesBytes>45*1048576||s.mediaBytes<130*1048576)throw Error('Unexpected release package sizes');" "$RUNNER_TEMP/split-report.json"
+          test -f "$RUNNER_TEMP/asteria-site/CNAME"
+          test ! -e "$RUNNER_TEMP/asteria-site/assets"
+          test ! -e "$RUNNER_TEMP/asteria-site/content"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/asteria-site
+      - name: Deploy the compact Pages artifact only
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Confirm release scope
+        run: |
+          echo 'Published Asteria compact website after verifying independently hosted public artwork.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Existing custom domain and all Firebase backend data remained unchanged.' >> "$GITHUB_STEP_SUMMARY"
