@@ -1006,6 +1006,37 @@ const firebasePublicApi = {
     window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
     return {ok:true};
   },
+  renameAccountUsername: async function(rawUsername){
+    if(!db||!functionsClient||!auth||!currentUser?.uid||
+       auth.currentUser?.uid!==currentUser.uid)
+      throw new Error('Sign in before changing your username.');
+    const username=String(rawUsername||'').trim();
+    if(!/^[A-Za-z0-9._-]{3,24}$/.test(username))
+      throw new Error('Username must contain 3–24 letters, numbers, dots, underscores or hyphens.');
+    const uid=currentUser.uid,server=await getDocFromServer(doc(db,'users',uid));
+    if(!server.exists()||server.data().uid!==uid||
+       !server.data().accountId||auth.currentUser?.uid!==uid)
+      throw new Error('Your Account ID needs verification before changing your username.');
+    const previous=server.data(),expectedAccountId=previous.accountId;
+    if(username===previous.username)
+      return {ok:true,unchanged:true,username,accountId:expectedAccountId};
+    const response=await httpsCallable(functionsClient,'asteriaAccountUsername')({
+      username,expectedAccountId
+    });
+    if(auth.currentUser?.uid!==uid||currentUser?.uid!==uid)
+      throw new Error('The signed-in account changed during the username update.');
+    const fresh=await getDocFromServer(doc(db,'users',uid));
+    if(!fresh.exists()||fresh.data().uid!==uid||
+       fresh.data().username!==username||
+       fresh.data().accountNumber!==previous.accountNumber||
+       fresh.data().accountId!==response.data?.accountId)
+      throw new Error('Username updated on server but confirmation failed. Refresh Profile before trying again.');
+    currentProfile={...currentProfile,...fresh.data()};
+    saveLocalProfile(uid,currentProfile);
+    window.AsteriaAuthBridge?.setSession?.(currentProfile,currentUser);
+    window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
+    return response.data;
+  },
   readOwnAccountAvatar: async function(){
     const uid=currentUser?.uid;
     if(!storage||!db||!uid||auth?.currentUser?.uid!==uid)return null;
