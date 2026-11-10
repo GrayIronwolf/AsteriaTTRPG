@@ -28,7 +28,7 @@ export async function collectMigrationInventory({auth,db,inspect=inspectLegacyAc
   const summary={total:0,eligible:0,alreadyAssigned:0,manualReview:0};
   // Static diagnostics only. Never include UID, username, email or profile data.
   const knownReasons=new Set([
-    'auth-account-unavailable','profile-missing','profile-uid-mismatch',
+    'auth-account-unavailable','profile-missing','profile-uid-conflict',
     'invalid-username','username-normalization-mismatch','auth-profile-mismatch',
     'identity-mapping-inconsistent','untrusted-identity-fields'
   ]);
