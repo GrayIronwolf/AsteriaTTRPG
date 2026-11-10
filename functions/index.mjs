@@ -358,7 +358,7 @@ export const asteriaAccountUsername=onCall({
     // username recorded in the server transaction. If this external sync fails,
     // the database remains authoritative and will be retried on next edit.
     try{await getAuth().updateUser(request.auth.uid,{displayName:result.username});}
-    catch(error){console.warn('Auth display name sync deferred for account:',request.auth.uid);}
+    catch{console.warn('Auth display name sync deferred for account:',request.auth.uid);}
     return result;
   }catch(error){
     // Do not disclose UIDs, reserved identity records or other private data.
