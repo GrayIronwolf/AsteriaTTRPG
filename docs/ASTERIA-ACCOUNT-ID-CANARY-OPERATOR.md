@@ -35,6 +35,18 @@ node /tmp/account-id-canary-operator.mjs status
 
 Expect **ACTIVE / DISABLED / CONFIGURED / NOT SET**. Then run the separate read-only GitHub workflow operation `account-id-activation-audit`; it must confirm **DISABLED**, **VERIFIED-EMAIL CANARY CONFIGURED**, **NOT SET** and **EXACT SOURCE MATCH**. Do not register the new user yet.
 
+## Stage for automatic verification-free registration (separate approval)
+The original `stage` action stays unchanged and still stages the verified-email canary. After the separately approved deployment of the **new** automatic-ID callable, use `stage-auto` to stage a different, genuinely new Auth email for the verification-free smoke test. The operation leaves issuance **disabled** and clears the previous registration cutoff. Do not use an address already registered as a Firebase Auth user. A Gmail plus address can be used if it is not already registered, but it must be entered exactly in the stage prompt and subsequent Asteria registration.
+
+```bash
+node /tmp/account-id-canary-operator.mjs stage-auto
+node /tmp/account-id-canary-operator.mjs status
+```
+
+Expected safe status: `ACTIVE`, `DISABLED`, `CONFIGURED`, `UNVERIFIED AUTO-CANARY`, `NOT SET`. Run the separate read-only GitHub Account ID audit and confirm it recognises the mode **before** enabling the test. Email verification is still offered, but need not be completed for an Account ID. The server continues to require trusted Auth creation time, a matching canonical Firestore profile and its private one-email digest.
+
+Do not use `stage-auto` while the production callable still contains the old verified-only implementation; that older callable must fail closed and would not issue the new ID. The general rollout remains disabled without additional approval.
+
 ## Enable — only after staging evidence and tester ready
 Once GitHub read-only audit and website checks pass, with the new inbox open and tester ready to create the account, run:
 
