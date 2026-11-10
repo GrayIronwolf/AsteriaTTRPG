@@ -35,6 +35,10 @@ function strictFlagOff(source,name){
   const flags=source.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
   return Boolean(flags&&new RegExp('(?:^|,)\\s*'+name+'\\s*:\\s*false(?:,|$)').test(flags[1]));
 }
+function strictFlagOn(source,name){
+  const flags=source.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
+  return Boolean(flags&&new RegExp('(?:^|,)\\s*'+name+'\\s*:\\s*true(?:,|$)').test(flags[1]));
+}
 /**
  * The server callable currently checks active Auth state and the flag, but
  * must reject legacy accounts using server-maintained account creation
@@ -64,7 +68,7 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
     issuance.includes('expectedUsername:username') &&
     issuance.includes('expectedEmail:email');
   const checks=[
-    check('account-id-browser-rollout-disabled',strictFlagOff(html,'accountIds')),
+    check('account-id-browser-rollout-enabled',strictFlagOn(html,'accountIds')),
     check('notifications-browser-rollout-disabled',strictFlagOff(html,'campaignNotifications')),
     check('account-id-callable-server-gated',
       api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")),

@@ -22,7 +22,7 @@ export function inspectAccountIdProductionFinalization(reader=read){
   const checks=[
     check('production-target-unchanged',firebase.projects?.production==='asteria-ttrpg'&&
       firebase.projects?.default==='demo-asteria'),
-    check('browser-account-ids-disabled',html.includes('accountIds:false')),
+    check('browser-account-ids-enabled',html.includes('accountIds:true')),
     check('notifications-still-disabled',html.includes('campaignNotifications:false')),
     check('server-identity-gate-required',api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")&&
       api.includes('ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE')),
