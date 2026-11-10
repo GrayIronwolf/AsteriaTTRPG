@@ -1006,6 +1006,15 @@ const firebasePublicApi = {
     window.dispatchEvent(new CustomEvent('asteria:account-profile-updated',{detail:{uid}}));
     return {ok:true};
   },
+  canRenameAccountUsername: async function(){
+    if(!functionsClient||!currentUser?.uid||auth?.currentUser?.uid!==currentUser.uid)
+      return false;
+    const uid=currentUser.uid;
+    try{
+      const result=await httpsCallable(functionsClient,'asteriaAccountUsername')({action:'status'});
+      return currentUser?.uid===uid&&auth?.currentUser?.uid===uid&&result.data?.available===true;
+    }catch{return false;}
+  },
   renameAccountUsername: async function(rawUsername){
     if(!db||!functionsClient||!auth||!currentUser?.uid||
        auth.currentUser?.uid!==currentUser.uid)
