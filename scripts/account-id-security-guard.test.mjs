@@ -1,12 +1,13 @@
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
-import {assertNewRegistrationEligible,issueNewRegistrationAccountId,
-  NEW_REGISTRATION_WINDOW_MS} from '../functions/accountIdentityIssuance.mjs';
+import {assertNewRegistrationEligible,assertAccountIdCanaryEligible,
+  issueNewRegistrationAccountId,NEW_REGISTRATION_WINDOW_MS} from '../functions/accountIdentityIssuance.mjs';
 import {inspectLegacyAccountIdentity} from '../functions/accountIdentityLegacy.mjs';
 const now=new Date('2026-11-09T12:00:00.000Z');
 const cutoff='2026-11-09T11:30:00.000Z';
 const user=(uid='alice',created='2026-11-09T11:59:00.000Z')=>({
-  uid,disabled:false,displayName:'Asteria',email:uid+'@example.test',
+  uid,disabled:false,emailVerified:true,displayName:'Asteria',email:uid+'@example.test',
   metadata:{creationTime:created}
 });
 function fixture(initial={}){
@@ -42,7 +43,9 @@ const profile=(uid='alice',name='Asteria')=>({
   email:uid+'@example.test',characters:[{id:'hero',xp:100}]
 });
 const run=(db,u,more={})=>issueNewRegistrationAccountId(db,u,u.uid,{
-  notBefore:cutoff,now,nextNumber:()=> '01416',...more
+  notBefore:cutoff,now,nextNumber:()=> '01416',
+  rolloutMode:'canary',canaryEmailSha256:createHash('sha256').update('alice@example.test').digest('hex'),
+  ...more
 });
 
 test('a new Auth account can receive a permanent number with no client-chosen ID',async()=>{
@@ -136,3 +139,32 @@ test('source callable cannot directly access unrestricted profile allocator',()=
 });
 function requireRead(){return {readFileSync:sourceRead};}
 import {readFileSync as sourceRead} from 'node:fs';
+
+test('canary gate refuses unknown rollout modes and missing digest before writes',async()=>{
+  for(const patch of [
+    {rolloutMode:undefined},{rolloutMode:'general'},
+    {canaryEmailSha256:undefined},{canaryEmailSha256:'wrong'},
+    {canaryEmailSha256:'0'.repeat(64)}
+  ]) {
+    const db=fixture({'users/alice':profile()});
+    await assert.rejects(run(db,user(),patch),/new registration/);
+    assert.equal(db.records.size,1);
+  }
+});
+
+test('canary requires Firebase Auth verified email and never trusts browser input',async()=>{
+  const db=fixture({'users/alice':profile()});
+  await assert.rejects(run(db,{...user(),emailVerified:false}),/new registration/);
+  assert.equal(db.records.size,1);
+  assert.throws(()=>assertAccountIdCanaryEligible(user(),'alice@example.test',{
+    rolloutMode:'general',canaryEmailSha256:createHash('sha256').update('alice@example.test').digest('hex')
+  }),/new registration/);
+});
+
+test('canary verified email is canonical and case-normalized',async()=>{
+  const db=fixture({'users/alice':profile()});
+  const uid=user();
+  uid.email='ALICE@EXAMPLE.TEST';
+  const result=await run(db,uid);
+  assert.equal(result.accountId,'Asteria#01416');
+});
