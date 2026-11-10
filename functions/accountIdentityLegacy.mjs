@@ -50,8 +50,11 @@ export async function inspectLegacyAccountIdentity(db,auth,uid) {
   if(!profileSnap.exists)
     return {uid,status:'manual-review',reason:'profile-missing'};
   const profile=profileSnap.data()||{};
-  if(profile.uid!==uid)
-    return {uid,status:'manual-review',reason:'profile-uid-mismatch'};
+  // Older profiles may predate the uid property. A missing field is safe
+  // to populate only during the existing transaction after Auth identity,
+  // username and email have been checked. Never overwrite an explicit UID.
+  if(owns(profile,'uid') && profile.uid!==uid)
+    return {uid,status:'manual-review',reason:'profile-uid-conflict'};
   let username,usernameLower;
   try{({username,usernameLower}=normaliseAccountUsername(profile.username));}
   catch{return {uid,status:'manual-review',reason:'invalid-username'};}
