@@ -112,8 +112,15 @@ async function auditStaticAssets(){
       /\b(?:import|export)\s+(?:[^;'"]*?\s+from\s*)?["'](\.{1,2}\/[^"']+)["']/g,
       /\bimport\s*\(\s*["'](\.{1,2}\/[^"']+)["']\s*\)/g
     ];
-    for(const regex of imports)
-      for(const match of js.matchAll(regex))checkReference(rel,match[1],'module');
+    for(const regex of imports){
+      for(const match of js.matchAll(regex)){
+        // This JSX entry is exclusively inside the Vite DEV branch.
+        // Production serves the committed react-dist bundle instead.
+        if(rel==='src/dev-entry.js'&&match[1]==='./main.jsx'&&
+          js.includes('if(import.meta.env?.DEV)'))continue;
+        checkReference(rel,match[1],'module');
+      }
+    }
   }
 }
 await rm(out,{recursive:true,force:true});
