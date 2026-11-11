@@ -373,6 +373,31 @@ export const asteriaAccountUsername=onCall({
   }
 });
 
+// Phase 1.2 Friends System: exact, authenticated Account ID discovery only.
+export const asteriaFriendAccountLookup=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)
+    throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_FRIEND_LOOKUP_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Friend account search is not enabled.');
+  const input=request.data;
+  if(!input||typeof input!=='object'||Array.isArray(input)||
+    Object.keys(input).sort().join(',')!=='accountId,action'||
+    input.action!=='find')
+    throw new HttpsError('invalid-argument','Enter an exact Account ID.');
+  try{
+    const {findFriendByAccountId}=await import('./friendAccountLookup.mjs');
+    return await findFriendByAccountId(getFirestore(),getAuth(),request.auth.uid,input.accountId);
+  }catch(error){
+    if(error?.message==='Invalid Account ID.')
+      throw new HttpsError('invalid-argument','Enter a valid Username#00000 Account ID.');
+    if(error?.message==='Account search rate limit reached.')
+      throw new HttpsError('resource-exhausted','Too many searches. Try again later.');
+    throw new HttpsError('failed-precondition','Account search unavailable.');
+  }
+});
+
 // Phase 1.3: authenticated, server-controlled Account ID finalization.
 // Rollout remains disabled unless an explicit backend flag is enabled.
 // No target UID or username is accepted from the browser.
