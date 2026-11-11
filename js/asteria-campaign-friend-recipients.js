@@ -85,7 +85,7 @@
       list.setAttribute('aria-busy',String(value));
     }
     function choose(candidate){
-      if(!valid()||busy||!candidate)return;
+      if(!valid()||!candidate)return;
       // Preview only. There is no token issuance or persisted recipient.
       selected.textContent='Selected: '+candidate.username+
         ' ('+candidate.accountId+'). Invitation issuance is not activated.';
