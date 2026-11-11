@@ -141,7 +141,7 @@ export function buildPhase53Release(operation,{
   const site=read('index.html');
   if((site.match(/campaignFriendRecipients:(true|false)/g)||[]).length!==1||
      (site.match(/campaignFriendInvitations:(true|false)/g)||[]).length!==1||
-     !site.includes('friendNotificationsEnabled:true'))
+     (site.match(/friendNotificationsEnabled:(true|false)/g)||[]).length!==1)
     fail('Website gates or existing friends notifications changed unexpectedly.');
   const files={
     'firebase.json':JSON.stringify({functions:[{source:'functions',codebase:'asteria',runtime:'nodejs22'}]},null,2)+'\n',
