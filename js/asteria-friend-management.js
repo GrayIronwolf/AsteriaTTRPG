@@ -131,7 +131,7 @@
       // Refresh the accepted and blocked views. No automatic campaign changes.
       void window.AsteriaAcceptedFriends?.refresh?.();
       await refresh(false);
-      if(valid(confirm.uid,confirm.sequence))
+      if(state.uid===confirm.uid&&session()&&active())
         status({remove:'Friend removed.',block:'Player blocked.',
           unblock:'Player unblocked.'}[confirm.action]);
       return true;
