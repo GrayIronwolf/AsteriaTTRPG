@@ -343,12 +343,19 @@ export const asteriaFriendRequests=onCall({
     throw new HttpsError('invalid-argument','Enter a valid friend request action.');
   try{
     const {changeFriendRequest}=await import('./friendRequestActions.mjs');
+    if(data.action==='list'){
+      const {listFriendRequests}=await import('./friendRequestInbox.mjs');
+      return await listFriendRequests(getFirestore(),getAuth(),request.auth.uid,data);
+    }
     return await changeFriendRequest(getFirestore(),getAuth(),request.auth.uid,data);
   }catch(error){
+    if(error?.message==='Invalid friend request inbox query.')
+      throw new HttpsError('invalid-argument','Invalid friend request inbox query.');
     if(error?.message==='Invalid friend request action.'||
        error?.message==='Invalid Account ID.')
       throw new HttpsError('invalid-argument','Enter a valid friend request action.');
     if(error?.message==='Account search rate limit reached.'||
+       error?.message==='Friend request inbox rate limit reached.'||
        error?.message==='Daily friend request limit reached.')
       throw new HttpsError('resource-exhausted','Too many friend request actions. Try again later.');
     if(error?.message==='Friendship changed. Refresh and try again.')

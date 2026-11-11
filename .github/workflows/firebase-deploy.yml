@@ -20,9 +20,11 @@ on:
           - friends-lookup-activate
           - friends-lookup-deactivate
           - friends-request-backend-deploy
+          - friends-request-backend-activate
+          - friends-request-backend-deactivate
           - deploy
       production_confirmation:
-        description: 'For deploy type DEPLOY-ASTERIA-PRODUCTION; for campaign-backend-deploy type DEPLOY-ASTERIA-CAMPAIGN-BACKEND. Leave blank for audits. For account-id-callable-deploy type DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE; for account-profile-avatar-rules-deploy type DEPLOY-ASTERIA-PROFILE-AVATAR-RULES. For friends-lookup-deploy type DEPLOY-ASTERIA-FRIENDS-LOOKUP. For friends-lookup-activate type ACTIVATE-ASTERIA-FRIENDS-LOOKUP; for friends-lookup-deactivate type DEACTIVATE-ASTERIA-FRIENDS-LOOKUP; for friends-request-backend-deploy type DEPLOY-ASTERIA-FRIEND-REQUESTS-OFF.'
+        description: 'For deploy type DEPLOY-ASTERIA-PRODUCTION; for campaign-backend-deploy type DEPLOY-ASTERIA-CAMPAIGN-BACKEND. Leave blank for audits. For account-id-callable-deploy type DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE; for account-profile-avatar-rules-deploy type DEPLOY-ASTERIA-PROFILE-AVATAR-RULES. For friends-lookup-deploy type DEPLOY-ASTERIA-FRIENDS-LOOKUP. For friends-lookup-activate type ACTIVATE-ASTERIA-FRIENDS-LOOKUP; for friends-lookup-deactivate type DEACTIVATE-ASTERIA-FRIENDS-LOOKUP; for friends-request-backend-deploy type DEPLOY-ASTERIA-FRIEND-REQUESTS-OFF; for friends-request-backend-activate type ACTIVATE-ASTERIA-FRIEND-REQUESTS; for friends-request-backend-deactivate type DEACTIVATE-ASTERIA-FRIEND-REQUESTS.'
         required: false
         type: string
         default: ''
@@ -625,3 +627,90 @@ jobs:
           echo 'Deployed only asteriaFriendRequests with ASTERIA_FRIEND_REQUESTS_ENABLED=0.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No friendship can be created through this disabled callable.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No Firestore/Storage rules, hosting, account IDs or campaign services were deployed.' >> "$GITHUB_STEP_SUMMARY"
+
+  friend_requests_activation:
+    name: Approved Friend Requests activation or rollback (single callable)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (inputs.operation == 'friends-request-backend-activate' &&
+         inputs.production_confirmation == 'ACTIVATE-ASTERIA-FRIEND-REQUESTS') ||
+        (inputs.operation == 'friends-request-backend-deactivate' &&
+         inputs.production_confirmation == 'DEACTIVATE-ASTERIA-FRIEND-REQUESTS')
+      )
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify request actions, private inbox and Firestore security
+        run: |
+          npm run audit:production
+          npm run test:friends-phase2-1
+          npm run test:friends-phase2-2
+          npm run test:friends-phase2-3
+          npm run test:firebase
+          node scripts/friends-phase2-2-release-package.mjs --check
+      - name: Authenticate using existing trusted GitHub Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Stage one callable with an explicit enabled/disabled flag
+        env:
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_FRIEND_REQUESTS_OPERATION: ${{ inputs.operation }}
+          ASTERIA_FRIEND_REQUESTS_CONFIRMATION: ${{ inputs.production_confirmation }}
+        run: |
+          case "$ASTERIA_FRIEND_REQUESTS_OPERATION" in
+            friends-request-backend-activate)
+              mode=--stage-activation
+              expected=1
+              ;;
+            friends-request-backend-deactivate)
+              mode=--stage-deactivation
+              expected=0
+              ;;
+            *) echo "Unapproved operation" >&2; exit 1 ;;
+          esac
+          node scripts/friends-phase2-2-release-package.mjs "$mode"
+          test "$(cat "$RUNNER_TEMP/asteria-friend-requests-release/functions/.env.asteria-ttrpg")" = "ASTERIA_FRIEND_REQUESTS_ENABLED=$expected"
+          npm install --prefix "$RUNNER_TEMP/asteria-friend-requests-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-friend-requests-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-friend-requests-release/functions/index.mjs"
+      - name: Install isolated pinned Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-friend-requests-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-friend-requests-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only Friends request callable
+        working-directory: ${{ runner.temp }}/asteria-friend-requests-release
+        run: |
+          "$RUNNER_TEMP/asteria-friend-requests-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only functions:asteria:asteriaFriendRequests --non-interactive
+      - name: Verify backend flag after scoped deployment
+        env:
+          ACTION: ${{ inputs.operation }}
+        run: |
+          expected=0
+          if [ "$ACTION" = "friends-request-backend-activate" ]; then expected=1; fi
+          actual="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_REQUESTS_ENABLED)')"
+          if [ "$actual" != "$expected" ]; then
+            echo 'Friend requests activation/rollback could not be verified.' >&2
+            exit 1
+          fi
+          echo "Friend requests backend runtime flag verified as $expected" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Only asteriaFriendRequests was deployed; no Firestore rules, account IDs, campaign functions or Hosting changes.' >> "$GITHUB_STEP_SUMMARY"

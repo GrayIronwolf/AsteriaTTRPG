@@ -201,6 +201,11 @@ service cloud.firestore {
       allow get, list, create, update, delete: if false;
     }
 
+    // Phase 2.3 server-only inbox read quotas. No client access.
+    match /friendRequestInboxThrottle/{uid} {
+      allow get, list, create, update, delete: if false;
+    }
+
     match /friendRequestIssueThrottle/{uid} {
       allow get, list, create, update, delete: if false;
     }
