@@ -2447,6 +2447,39 @@ const firebasePublicApi = {
         expiresAtMs:item.expiresAtMs};
     }),nextCursor:result.nextCursor};
   },
+  // Phase 3.1: recipient-scoped accepted Friends List. No direct registry reads.
+  listAcceptedFriends: async function(cursor=0){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Friends List is not active yet.');
+    if(!Number.isSafeInteger(cursor)||cursor<0||cursor>1000||cursor%20!==0)
+      throw new Error('Invalid Friends List page.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendRequests')({
+      action:'list-friends',cursor
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Account changed during Friends List.');
+    const result=response.data;
+    if(!result||Object.keys(result).sort().join(',')!=='items,nextCursor'||
+       !Array.isArray(result.items)||result.items.length>20||
+       !(result.nextCursor===null||
+         (Number.isSafeInteger(result.nextCursor)&&result.nextCursor>cursor&&
+          result.nextCursor<=1000&&result.nextCursor%20===0)))
+      throw new Error('Invalid Friends List response.');
+    const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
+    return {items:result.items.map(item=>{
+      if(!item||Object.keys(item).sort().join(',')!==
+          'accountId,friendsSinceMs,username'||
+          typeof item.username!=='string'||!HANDLE.test(item.accountId)||
+          item.accountId!==item.username+'#'+item.accountId.slice(-5)||
+          !Number.isSafeInteger(item.friendsSinceMs)||item.friendsSinceMs<0)
+        throw new Error('Invalid Friends List response.');
+      return {username:item.username,accountId:item.accountId,
+        friendsSinceMs:item.friendsSinceMs};
+    }),nextCursor:result.nextCursor};
+  },
   listCampaignNotifications: async function(cursor=null){
     if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
       throw new Error('Sign in to view notifications.');
