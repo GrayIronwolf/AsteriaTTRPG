@@ -2481,6 +2481,58 @@ const firebasePublicApi = {
         friendsSinceMs:item.friendsSinceMs,version:item.version};
     }),nextCursor:result.nextCursor};
   },
+  // Friends Phase 5.1: private, read-only owner campaign recipient selection.
+  // No recipient UID or email is returned, cached, or accepted from browser code.
+  selectCampaignFriendRecipients: async function(campaignId,{action,cursor=0,accountId}={}){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.campaignFriendRecipients!==true)
+      throw new Error('Campaign friend selection is not active.');
+    if(typeof campaignId!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(campaignId)||
+       !['list','resolve'].includes(action))
+      throw new Error('Invalid campaign recipient selection.');
+    const payload=action==='list'?
+      {action,campaignId,cursor}:
+      {action,campaignId,accountId};
+    if(action==='list'&&(!Number.isSafeInteger(cursor)||cursor<0||
+        cursor>1000||cursor%20!==0)||
+       action==='resolve'&&
+        (typeof accountId!=='string'||!/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(accountId)))
+      throw new Error('Invalid campaign recipient selection.');
+    const response=await httpsCallable(functionsClient,'asteriaCampaignFriendRecipients')(payload);
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.campaignFriendRecipients!==true)
+      throw new Error('Account changed during campaign recipient selection.');
+    const result=response.data;
+    const candidate=item=>item&&typeof item==='object'&&!Array.isArray(item)&&
+      Object.keys(item).sort().join(',')==='accountId,username'&&
+      typeof item.username==='string'&&
+      typeof item.accountId==='string'&&
+      /^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(item.accountId)&&
+      item.accountId===item.username+'#'+item.accountId.slice(-5);
+    if(!result||typeof result!=='object'||Array.isArray(result))
+      throw new Error('Invalid campaign recipient selection response.');
+    if(action==='list'){
+      if(Object.keys(result).sort().join(',')!=='items,nextCursor'||
+         !Array.isArray(result.items)||result.items.length>20||
+         !result.items.every(candidate)||
+         !(result.nextCursor===null||
+           Number.isSafeInteger(result.nextCursor)&&result.nextCursor>cursor&&
+           result.nextCursor<=1000&&result.nextCursor%20===0))
+        throw new Error('Invalid campaign recipient selection response.');
+      return {items:result.items.map(item=>({username:item.username,accountId:item.accountId})),
+        nextCursor:result.nextCursor};
+    }
+    if(result.available===false&&Object.keys(result).join(',')==='available')
+      return {available:false};
+    if(result.available!==true||
+       Object.keys(result).sort().join(',')!=='available,recipient'||
+       !candidate(result.recipient))
+      throw new Error('Invalid campaign recipient selection response.');
+    return {available:true,recipient:{username:result.recipient.username,
+      accountId:result.recipient.accountId}};
+  },
   // Phase 3.2: relationship management has independent version checking.
   manageFriendRelationship: async function(action,targetAccountId,expectedVersion){
     const uid=currentUser?.uid;

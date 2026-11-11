@@ -1,0 +1,20 @@
+/* Phase 5.1: bounded, owner-only invitation recipient preview. */
+.workspace-friend-campaign-recipients{display:grid;gap:12px;min-width:0}
+.workspace-campaign-recipient-form{display:flex;flex-wrap:wrap;align-items:end;gap:12px}
+.workspace-campaign-recipient-form label{display:grid;gap:6px;flex:1 1 200px;min-width:0}
+.workspace-campaign-recipient-form input{width:100%;min-height:44px;max-width:100%;box-sizing:border-box}
+.workspace-campaign-recipient-form button,
+.workspace-friend-campaign-recipients button{min-height:44px;max-width:100%}
+.workspace-campaign-recipient-item{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-width:0}
+.workspace-campaign-recipient-item span{overflow-wrap:anywhere}
+.workspace-campaign-recipient-selected{font-weight:600;overflow-wrap:anywhere}
+.workspace-friend-campaign-status{min-height:1.3em}
+@media(max-width:600px){
+  .workspace-campaign-recipient-form{flex-direction:column;align-items:stretch}
+  .workspace-campaign-recipient-form label,.workspace-campaign-recipient-form button{width:100%;flex:auto}
+  .workspace-campaign-recipient-item{align-items:stretch;flex-direction:column}
+  .workspace-campaign-recipient-item button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .workspace-friend-campaign-recipients *{transition:none!important;animation:none!important}
+}

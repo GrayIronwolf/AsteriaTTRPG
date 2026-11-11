@@ -329,6 +329,26 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
   }
 });
 
+// Friends Phase 5.1: read-only campaign recipient selection.
+// Independent owner-scoped gate. No issuance, membership, UID or email response.
+export const asteriaCampaignFriendRecipients=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)
+    throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Campaign friend selection is not activated.');
+  try{
+    const {selectCampaignFriendRecipients}=
+      await import('./campaignFriendRecipients.mjs');
+    return await selectCampaignFriendRecipients(getFirestore(),getAuth(),
+      request.auth.uid,request.data);
+  }catch{
+    throw new HttpsError('failed-precondition',
+      'Campaign recipient selection unavailable.');
+  }
+});
+
 // Phase 4.1 Friends: private social inbox, independently gated from campaigns.
 // No browser Firestore reads, account IDs, pair IDs or counterparty UIDs.
 export const asteriaFriendNotifications=onCall({
