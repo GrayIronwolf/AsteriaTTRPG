@@ -113,3 +113,44 @@ export async function issueAccountBoundFriendInvitation(db,auth,actorUid,input,{
     });
   }catch{throw invalid();}
 }
+
+
+/**
+ * Current-state check during preview AND within the claim transaction.
+ * UID is trusted from Firebase Auth and the existing HMAC-protected invite.
+ * An invite issued before a block or account deactivation cannot be used to
+ * bypass those new restrictions. A later username change does not break the
+ * UID-bound invitation while its canonical identity remains valid.
+ */
+export async function assertCurrentFriendInvitationRecipient(db,auth,invite,
+  ownerUid,claimantUid,tx=null){
+  if(!record(invite)||invite.bindingKind!=='friend-account'||
+     invite.recipientUid!==claimantUid||
+     !UID.test(ownerUid||'')||!UID.test(claimantUid||'')||
+     ownerUid===claimantUid||!db?.doc||!auth?.getUser)
+    throw invalid();
+  const read=ref=>tx?tx.get(ref):ref.get();
+  const [profile,assignment,pairSnap]=await Promise.all([
+    read(db.doc('users/'+claimantUid)),
+    read(db.doc('accountIdAssignments/'+claimantUid)),
+    read(db.doc(friendRelationshipPath(ownerUid,claimantUid)))
+  ]);
+  const profileData=snapData(profile),assignmentData=snapData(assignment);
+  const key=assignmentData?.accountIdKey;
+  if(typeof key!=='string'||!/^[a-z0-9._-]{3,24}#[0-9]{5}$/.test(key))
+    throw invalid();
+  const registry=snapData(await read(db.doc('accountIdRegistry/'+key)));
+  if(!verifiedActiveIdentity(claimantUid,profileData,assignmentData,registry))
+    throw invalid();
+  if(pairSnap.exists){
+    const pair=pairSnap.data();
+    try{
+      assertFriendRelationship(pair);
+      if(pair.pairId!==friendPairId(ownerUid,claimantUid)||
+         pair.status==='blocked')throw invalid();
+    }catch{throw invalid();}
+  }
+  const user=await auth.getUser(claimantUid).catch(()=>null);
+  if(user?.uid!==claimantUid||user.disabled===true)throw invalid();
+  return true;
+}
