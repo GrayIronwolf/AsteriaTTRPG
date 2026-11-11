@@ -204,6 +204,9 @@ service cloud.firestore {
     // Phase 2.3 server-only inbox read quotas. No client access.
     // Phase 4.1: recipient-private friend notification events are Admin-only.
     // Even their owner must use the separately gated authenticated callable.
+    match /friendNotificationAccessThrottle/{uid} {
+      allow get, list, create, update, delete: if false;
+    }
     match /friendNotificationInbox/{uid} {
       allow read, write: if false;
       match /items/{notificationId} {

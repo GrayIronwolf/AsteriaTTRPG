@@ -342,9 +342,12 @@ export const asteriaFriendNotifications=onCall({
     const {validateFriendNotificationAction,listFriendNotifications,
       markFriendNotificationRead}=await import('./friendNotifications.mjs');
     const data=validateFriendNotificationAction(request.data);
+    const db=getFirestore();
+    const {chargeFriendNotificationAccess}=await import('./friendNotificationThrottle.mjs');
+    await chargeFriendNotificationAccess(db,request.auth.uid,data.action);
     if(data.action==='list')
-      return await listFriendNotifications(getFirestore(),request.auth.uid,{cursor:data.cursor});
-    return await markFriendNotificationRead(getFirestore(),request.auth.uid,data.notificationId);
+      return await listFriendNotifications(db,request.auth.uid,{cursor:data.cursor});
+    return await markFriendNotificationRead(db,request.auth.uid,data.notificationId);
   }catch{
     // Do not expose notification paths, account identities or recipient details.
     throw new HttpsError('failed-precondition','Friend notification unavailable.');
