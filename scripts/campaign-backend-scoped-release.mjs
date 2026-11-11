@@ -100,7 +100,7 @@ export function buildCampaignCoreRelease(source=read('functions/index.mjs')){
       ignore:['node_modules','.git','.env','.env.*','*.log']
     }]},null,2)+'\n',
     'package.json':JSON.stringify({
-      name:'asteria-campaign-core-scoped-release',private:true,type:'module',
+      name:'asteria-campaign-core-scoped-release',version:'1.0.0',private:true,type:'module',
       main:'functions/index.mjs',engines:{node:'22'},
       dependencies:{'firebase-admin':admin,'firebase-functions':sdk}
     },null,2)+'\n',
