@@ -95,7 +95,7 @@ test('manual staging needs exact trusted production workflow and never stages tw
     assert.deepEqual(result.targets,targets);
     assert.ok(existsSync(join(result.directory,'functions/index.mjs')));
     assert.ok(existsSync(join(result.directory,'src/state/characterIntegrityModel.mjs')));
-    assert.throws(()=>stageCampaignCoreRelease(env),/already exists/);
+    assert.throws(()=>stageCampaignCoreRelease(env),/existing campaign release directory/);
   }finally{
     rmSync(dir,{recursive:true,force:true});
   }
