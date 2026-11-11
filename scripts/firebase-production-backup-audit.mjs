@@ -222,7 +222,7 @@ function requireAuthorizedContext(){
   if(process.env.GITHUB_ACTIONS!=='true'||
      process.env.GITHUB_REPOSITORY!=='GrayIronwolf/AsteriaTTRPG'||
      process.env.GITHUB_REF!=='refs/heads/main'||
-     process.env.ASTERIA_AUDIT_OPERATION!=='backup-audit'){
+     !['backup-audit','campaign-coordinated-readiness-audit'].includes(process.env.ASTERIA_AUDIT_OPERATION)){
     throw Error('Read-only backup inventory must run through the authorised main-branch GitHub operation.');
   }
 }
