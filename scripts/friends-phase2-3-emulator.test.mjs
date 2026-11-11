@@ -5,7 +5,8 @@ import {initializeTestEnvironment,assertFails} from '@firebase/rules-unit-testin
 import {getDoc,doc,getDocs,collection} from 'firebase/firestore';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore} from 'firebase-admin/firestore';
-import {listFriendRequests,validateFriendRequestList} from '../functions/friendRequestInbox.mjs';
+import {listFriendRequests,validateFriendRequestList,
+  nextFriendInboxQuota,FRIEND_INBOX_LIMITS} from '../functions/friendRequestInbox.mjs';
 import {createFriendRequestRecord,transitionFriendRelationship} from '../functions/friendRelationshipModel.mjs';
 
 const projectId='demo-asteria';
@@ -143,4 +144,25 @@ test('bounded scan pagination never returns private pair paths or unbounded arra
  assert.equal(second.nextCursor,null);
  assert.equal(new Set([...first.items,...second.items].map(x=>x.accountId)).size,22);
  assert.equal(JSON.stringify(first).includes('~'),false);
+});
+
+test('inbox reads have per-account quotas and a private Firestore collection',async()=>{
+ assert.equal(FRIEND_INBOX_LIMITS.perWindow,30);
+ assert.equal(FRIEND_INBOX_LIMITS.perDay,120);
+ let quota=null;
+ const base=now.getTime();
+ for(let i=0;i<30;i++)quota=nextFriendInboxQuota(quota,'alice',base+i);
+ assert.equal(quota.windowCount,30);
+ assert.throws(()=>nextFriendInboxQuota(quota,'alice',base+31),/rate limit/);
+ assert.throws(()=>nextFriendInboxQuota({...quota,windowCount:0},'alice',base+31),/unavailable/);
+ assert.throws(()=>nextFriendInboxQuota({...quota,uid:'bob'},'alice',base+31),/unavailable/);
+ const next=nextFriendInboxQuota(quota,'alice',base+15*60*1000);
+ assert.equal(next.windowCount,1);
+ assert.equal(next.dayCount,31);
+ await query('alice','incoming');
+ const persisted=(await db.doc('friendRequestInboxThrottle/alice').get()).data();
+ assert.equal(persisted.windowCount,1);
+ const client=env.authenticatedContext('alice').firestore();
+ await assertFails(getDoc(doc(client,'friendRequestInboxThrottle/alice')));
+ await assertFails(getDocs(collection(client,'friendRequestInboxThrottle')));
 });
