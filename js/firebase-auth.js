@@ -2533,6 +2533,45 @@ const firebasePublicApi = {
     return {available:true,recipient:{username:result.recipient.username,
       accountId:result.recipient.accountId}};
   },
+  // Friends Phase 5.2: owner-only single-use recipient-bound secure invite.
+  // Never accept target UID/email from the UI and never persist bearer token.
+  issueCampaignFriendInvitation: async function(campaignId,accountId,requestId,expiresInHours){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.campaignFriendInvitations!==true||
+       window.AsteriaFeatureFlags?.campaignFriendRecipients!==true||
+       window.AsteriaFeatureFlags?.secureInvitationManager!==true)
+      throw new Error('Campaign friend invitations are not active.');
+    if(typeof campaignId!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(campaignId)||
+       typeof accountId!=='string'||!/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(accountId)||
+       typeof requestId!=='string'||!/^[A-Za-z0-9_-]{12,80}$/.test(requestId)||
+       ![24,72,168,336,720].includes(expiresInHours))
+      throw new Error('Invalid campaign friend invitation.');
+    const response=await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'issue-friend',campaignId,accountId,requestId,expiresInHours
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.campaignFriendInvitations!==true||
+       window.AsteriaFeatureFlags?.campaignFriendRecipients!==true||
+       window.AsteriaFeatureFlags?.secureInvitationManager!==true)
+      throw new Error('Account changed during invitation creation.');
+    const invite=response.data;
+    if(!invite||typeof invite!=='object'||Array.isArray(invite)||
+       invite.campaignId!==campaignId||typeof invite.inviteId!=='string'||
+       !/^[a-f0-9]{64}$/.test(invite.inviteId)||
+       invite.roleOffered!=='player'||invite.type!=='share-link'||
+       invite.requiresGMApproval!==true||invite.maxUses!==1||
+       ![0,1].includes(invite.usedCount)||
+       typeof invite.alreadyIssued!=='boolean'||
+       !(invite.alreadyIssued===true&&invite.token===null||
+         invite.alreadyIssued===false&&typeof invite.token==='string'&&
+         /^[A-Za-z0-9_-]{43}$/.test(invite.token)))
+      throw new Error('Invalid campaign friend invitation response.');
+    return {campaignId,inviteId:invite.inviteId,
+      token:invite.token,alreadyIssued:invite.alreadyIssued,
+      requiresGMApproval:true};
+  },
   // Phase 3.2: relationship management has independent version checking.
   manageFriendRelationship: async function(action,targetAccountId,expectedVersion){
     const uid=currentUser?.uid;

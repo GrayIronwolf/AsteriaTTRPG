@@ -97,6 +97,21 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
     throw Error('Email invitations require a recipient email; share links cannot contain one.');
   if((email||uid)&&maxUses!==1)
     throw Error('Recipient-restricted invitations must allow only one use.');
+  // Phase 5.2: server-only resolver runs INSIDE the same transaction as
+  // private invitation creation. Browser code cannot supply a UID or hook.
+  const resolveBoundRecipient=options.resolveBoundRecipient;
+  const bindingKind=options.bindingKind??null;
+  const accountIdKey=options.recipientAccountIdKey??null;
+  if((bindingKind!==null&&bindingKind!=='friend-account')||
+     (bindingKind==='friend-account'&&
+       (typeof resolveBoundRecipient!=='function'||
+        typeof accountIdKey!=='string'||
+        !/^[a-z0-9._-]{3,24}#[0-9]{5}$/.test(accountIdKey)))||
+     (bindingKind===null&&accountIdKey!==null)||
+     (resolveBoundRecipient!==undefined&&(
+       typeof resolveBoundRecipient!=='function'||uid!==null||email!==null||
+       type!=='share-link'||roleOffered!=='player'||maxUses!==1)))
+    throw Error('Invalid recipient restriction.');
   const now=options.now instanceof Date&&Number.isFinite(options.now.getTime())?
     options.now:new Date();
   const time=now.getTime();
@@ -126,8 +141,21 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       const previous=existingSnap.data();
       if(!record(previous)||previous.campaignId!==campaignId||
         previous.inviteId!==inviteId||previous.createdByUid!==actorUid||
+        previous.bindingKind!==undefined&&previous.bindingKind!==bindingKind||
+        bindingKind==='friend-account'&&
+          previous.recipientAccountIdKey!==accountIdKey||
         !auditSnap.exists)
         throw Error('Invitation request needs reconciliation.');
+      if(resolveBoundRecipient){
+        // A reused request key must never silently acknowledge a different
+        // recipient; revalidate within this same transaction.
+        const currentUid=await resolveBoundRecipient(tx,{campaignId,actorUid,now});
+        if(previous.recipientUid!==currentUid||previous.maxUses!==1||
+           previous.type!=='share-link'||previous.roleOffered!=='player'||
+           previous.recipientEmailNormalized!==null||
+           previous.requiresGMApproval!==true)
+          throw Error('Invitation recipient unavailable.');
+      }
       // Never regenerate/recover a bearer token after its one-time disclosure.
       return {...safeSummary(previous,true),token:null};
     }
@@ -136,10 +164,17 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
     if(campaign.joinPolicy?.joinRequestsOpen===false)
       throw Error('The campaign is not accepting new invitations.');
     const throttle=dayLimit(throttleSnap.exists?throttleSnap.data():null,time);
+    const boundUid=resolveBoundRecipient?
+      await resolveBoundRecipient(tx,{campaignId,actorUid,now}):uid;
+    if(resolveBoundRecipient&&(!validId(boundUid)||boundUid===actorUid))
+      throw Error('Invitation recipient unavailable.');
     const recordValue={
       inviteId,campaignId,type,roleOffered,status:'active',
       tokenDigest:digest,
-      recipientEmailNormalized:email,recipientUid:uid,
+      recipientEmailNormalized:email,recipientUid:boundUid,
+      ...(resolveBoundRecipient?{friendAccountBound:true}:{}),
+      ...(bindingKind==='friend-account'?
+        {bindingKind,recipientAccountIdKey:accountIdKey}:{}),
       createdByUid:actorUid,createdAt:now,
       expiresAt:new Date(time+expiresInHours*HOUR),
       maxUses,usedCount:0,requiresGMApproval:true,

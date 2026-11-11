@@ -9,6 +9,12 @@ import {selectCampaignFriendRecipients,validateCampaignFriendRecipientRequest}
   from '../functions/campaignFriendRecipients.mjs';
 import {createFriendRequestRecord,transitionFriendRelationship}
   from '../functions/friendRelationshipModel.mjs';
+import {issueAccountBoundFriendInvitation,validateAccountBoundInvitation}
+  from '../functions/campaignFriendInvitations.mjs';
+import {previewSecureCampaignInvitation,acceptSecureCampaignInvitation}
+  from '../functions/campaignInvitationAcceptance.mjs';
+import {changeSecureCampaignInvitation}
+  from '../functions/campaignInvitationManager.mjs';
 
 const projectId='demo-asteria',campaignId='campaign01';
 const now=new Date('2026-11-11T09:30:00.000Z');
@@ -170,4 +176,130 @@ test('closed campaign and disabled actor fail closed; no membership or invitatio
  await assertFails(getDoc(doc(client,'friendRelationships/alice~bob')));
  await assertFails(getDocs(collection(client,'accountIdRegistry')));
  await assertFails(getDocs(collection(client,'campaigns/'+campaignId+'/invitations')));
+});
+
+
+// Phase 5.2: the same existing emulator tests private account-bound issuance,
+// signed redemption and GM-approval-only handoff without touching production.
+const signingKey='S'.repeat(48),secureToken='A'.repeat(43);
+const friendIssue=(actorUid,accountId,requestId='account-invite-req-00001',
+ opts={})=>issueAccountBoundFriendInvitation(db,auth,actorUid,{
+  action:'issue-friend',campaignId,accountId,requestId,expiresInHours:24
+ },{now,signingKey,tokenFactory:()=>secureToken,...opts});
+const inviteArgs=invite=>({
+ campaignId,inviteId:invite.inviteId,token:invite.token
+});
+const inviteOptions=(overrides={})=>({
+ signingKey,now,authAdmin:auth,friendInvitationsEnabled:true,...overrides
+});
+test('Phase 5.2 strict contract rejects client supplied UID, role, email and grants',()=>{
+ const valid={action:'issue-friend',campaignId,accountId:'Poppa_J#52816',
+   requestId:'account-invite-req-00001',expiresInHours:24};
+ assert.equal(validateAccountBoundInvitation(valid).accountIdKey,'poppa_j#52816');
+ for(const input of [
+   {...valid,recipientUid:'bob'},{...valid,type:'email'},
+   {...valid,roleOffered:'co-gm'},{...valid,maxUses:2},
+   {...valid,requiresGMApproval:false},{...valid,recipientEmail:'x@a.test'},
+   {...valid,expiresInHours:1},{...valid,requestId:'short'},
+   {...valid,accountId:'bob@private.test'},{...valid,action:'issue'}
+ ])assert.throws(()=>validateAccountBoundInvitation(input),/unavailable/);
+});
+test('owner issues single-use UID-bound invitation for friend or exact Account ID',async()=>{
+ await friends('alice','bob');
+ const friend=await friendIssue('alice','Poppa_J#52816');
+ assert.equal(friend.alreadyIssued,false);assert.equal(friend.token,secureToken);
+ const stored=(await db.doc('campaigns/'+campaignId+'/invitations/'+friend.inviteId).get()).data();
+ assert.equal(stored.bindingKind,'friend-account');
+ assert.equal(stored.recipientUid,'bob');
+ assert.equal(stored.recipientAccountIdKey,'poppa_j#52816');
+ assert.equal(stored.maxUses,1);assert.equal(stored.roleOffered,'player');
+ assert.equal(stored.requiresGMApproval,true);
+ assert.equal(stored.token,undefined);
+ assert.equal((await db.collection('campaigns/'+campaignId+'/members').get()).size,0);
+ assert.equal((await db.collection('campaigns/'+campaignId+'/joinRequests').get()).size,0);
+ const again=await friendIssue('alice','Poppa_J#52816');
+ assert.equal(again.alreadyIssued,true);assert.equal(again.token,null);
+ await assert.rejects(friendIssue('alice','Traveller#00121'),/unavailable/);
+ const direct=await friendIssue('alice','Traveller#00121',
+   'account-invite-req-00002');
+ const directSnap=(await db.doc('campaigns/'+campaignId+'/invitations/'+direct.inviteId).get()).data();
+ assert.equal(directSnap.recipientUid,'dave');
+ assert.equal(directSnap.maxUses,1);
+ assert.equal(JSON.stringify({friend,direct}).includes('"recipientUid"'),false);
+});
+test('friend-bound invitation claims create pending review only; wrong account denied',async()=>{
+ const issued=await friendIssue('alice','Poppa_J#52816');
+ await assert.rejects(previewSecureCampaignInvitation(db,{
+   uid:'carol',emailVerified:true
+ },inviteArgs(issued),inviteOptions()),/unavailable/);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{
+   uid:'carol',emailVerified:true
+ },inviteArgs(issued),inviteOptions()),/unavailable/);
+ const preview=await previewSecureCampaignInvitation(db,{uid:'bob'},inviteArgs(issued),
+   inviteOptions());
+ assert.equal(preview.requiresGMApproval,true);
+ assert.equal(preview.status,'available');
+ const claim=await acceptSecureCampaignInvitation(db,{uid:'bob'},inviteArgs(issued),
+   inviteOptions());
+ assert.equal(claim.status,'pending');
+ assert.equal(claim.offeredRole,'player');
+ assert.equal((await db.doc('campaigns/'+campaignId+'/joinRequests/bob').get()).data().status,'pending');
+ assert.equal((await db.doc('campaigns/'+campaignId+'/members/bob').get()).exists,false);
+ const repeat=await acceptSecureCampaignInvitation(db,{uid:'bob'},inviteArgs(issued),
+   inviteOptions({now:new Date(now.getTime()+48*3600000)}));
+ assert.equal(repeat.alreadyExists,true);
+ const stored=(await db.doc('campaigns/'+campaignId+'/invitations/'+issued.inviteId).get()).data();
+ assert.equal(stored.usedCount,1);
+});
+test('blocked or disabled recipients cannot receive or redeem new bound invitations',async()=>{
+ const initial=await friendIssue('alice','Poppa_J#52816');
+ const sent=createFriendRequestRecord('alice','bob',{
+   now:new Date(now.getTime()-60000)});
+ const blocked=transitionFriendRelationship(sent,{
+   actorUid:'alice',action:'block',expectedVersion:1,now});
+ await db.doc('friendRelationships/'+blocked.pairId).set(blocked);
+ await assert.rejects(friendIssue('alice','Poppa_J#52816',
+   'account-invite-req-00003'),/unavailable/);
+ await assert.rejects(previewSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(initial),inviteOptions()),/unavailable/);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(initial),inviteOptions()),/unavailable/);
+ disabled.add('dave');
+ await assert.rejects(friendIssue('alice','Traveller#00121',
+   'account-invite-req-00004'),/unavailable/);
+ disabled.add('bob');
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(initial),inviteOptions()),/unavailable/);
+ assert.equal((await db.collection('campaigns/'+campaignId+'/joinRequests').get()).size,0);
+});
+test('revoked, expired, disabled gate, member, pending review and v1 fail closed',async()=>{
+ const issued=await friendIssue('alice','Poppa_J#52816');
+ await assert.rejects(previewSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(issued),inviteOptions({friendInvitationsEnabled:false})),/unavailable/);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(issued),inviteOptions({friendInvitationsEnabled:false})),/unavailable/);
+ await changeSecureCampaignInvitation(db,'alice',{
+   campaignId,inviteId:issued.inviteId,action:'revoke',expectedRevision:1
+ },{now});
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(issued),inviteOptions()),/unavailable/);
+ const expiring=await friendIssue('alice','Poppa_J#52816','account-invite-req-00005');
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},
+   inviteArgs(expiring),inviteOptions({now:new Date(now.getTime()+86400000)})),
+   /unavailable/);
+ await db.doc('campaigns/'+campaignId+'/members/bob').set({
+   uid:'bob',campaignId,role:'player',status:'active'});
+ await assert.rejects(friendIssue('alice','Poppa_J#52816',
+   'account-invite-req-00006'),/unavailable/);
+ await db.doc('campaigns/'+campaignId+'/members/bob').delete();
+ await db.doc('campaigns/'+campaignId+'/joinRequests/bob').set({
+   uid:'bob',campaignId,status:'pending',revision:1});
+ await assert.rejects(friendIssue('alice','Poppa_J#52816',
+   'account-invite-req-00007'),/unavailable/);
+ await db.doc('campaigns/'+campaignId+'/joinRequests/bob').delete();
+ await db.doc('campaigns/'+campaignId).update({membershipSchemaVersion:1});
+ await assert.rejects(friendIssue('alice','Poppa_J#52816',
+   'account-invite-req-00008'),/unavailable/);
+ await assert.rejects(friendIssue('carol','Poppa_J#52816',
+   'account-invite-req-00009'),/unavailable/);
 });

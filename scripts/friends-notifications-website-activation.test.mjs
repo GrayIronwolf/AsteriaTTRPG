@@ -41,13 +41,13 @@ test('website activation references versioned notification client assets exactly
   ];
   for(const asset of assets){
     const version=asset+'?v='+(
-      asset==='js/firebase-auth.js'?'friends-phase5-1':
+      asset==='js/firebase-auth.js'?'friends-phase5-2':
         'friends-notifications-website-20261111');
     assert.equal(source.split(version).length-1,1,asset+' must be cache-busted once');
   }
   assert.match(source,/css\/asteria-friend-notifications\.css/);
   const flag=source.indexOf('window.AsteriaFeatureFlags = Object.freeze(');
-  const firebase=source.indexOf('js/firebase-auth.js?v=friends-phase5-1');
+  const firebase=source.indexOf('js/firebase-auth.js?v=friends-phase5-2');
   const social=source.indexOf('js/asteria-friend-notifications.js?v=friends-notifications-website-20261111');
   const workspace=source.indexOf('js/clean-compendium.js?v=friends-notifications-website-20261111');
   assert.ok(flag>=0&&flag<firebase&&firebase<social&&social<workspace);

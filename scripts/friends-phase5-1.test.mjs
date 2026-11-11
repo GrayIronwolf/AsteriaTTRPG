@@ -103,7 +103,7 @@ test('website does not enable a server rollout or campaign issuance',()=>{
  const server=read('functions/index.mjs');
  const selector=read('functions/campaignFriendRecipients.mjs');
  assert.match(html,/campaignFriendRecipients:false,accountIds:true/);
- assert.match(html,/asteria-campaign-friend-recipients\.js\?v=friends-phase5-1/);
+ assert.match(html,/asteria-campaign-friend-recipients\.js\?v=friends-phase5-2/);
  assert.match(html,/asteria-campaign-friend-recipients\.css\?v=friends-phase5-1/);
  assert.match(read('js/clean-compendium.js'),
    /window\.AsteriaCampaignFriendRecipients\?\.render\?\.\(grid,campaign\)/);
@@ -115,7 +115,7 @@ test('website does not enable a server rollout or campaign issuance',()=>{
  assert.match(selector,/memberSnap\.exists/);
  assert.match(selector,/findFriendByAccountId\(db,auth,actorUid/);
  assert.match(selector,/listAcceptedFriends\(db,auth,actorUid/);
- assert.doesNotMatch(ui,/getDoc\(|getDocs\(|setDoc\(|fetch\(|localStorage|sessionStorage|innerHTML|navigator\.clipboard/);
+ assert.doesNotMatch(ui,/getDoc\(|getDocs\(|setDoc\(|fetch\(|localStorage|sessionStorage|innerHTML/);
  assert.doesNotMatch(selector,/tx\.(create|update|delete)\(|tokenFactory|issueSecureCampaignInvitation/);
  assert.doesNotMatch(server,/ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED==='1'/);
 });
