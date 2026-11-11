@@ -1,0 +1,229 @@
+name: Deploy Friends notification backend (manual, scoped)
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Choose a read-only inventory or separately approved, disabled release'
+        type: choice
+        required: true
+        default: inventory
+        options:
+          - inventory
+          - friend-notifications-rules-deploy
+          - friend-notifications-callable-deploy
+      production_confirmation:
+        description: 'For rules: DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES; for callable: DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF. Empty for inventory.'
+        type: string
+        required: false
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: firebase-production
+  cancel-in-progress: false
+jobs:
+  inventory:
+    name: Inspect production social notifications without writing
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'inventory' &&
+      inputs.production_confirmation == ''
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify committed release boundaries
+        run: |
+          node scripts/friends-notifications-scoped-release.mjs --check
+          node scripts/friends-notifications-scoped-rules.mjs --check
+      - name: Authenticate using existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Read Cloud Functions and Firestore rule inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '## Friends notification production inventory' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Project asteria-ttrpg; no production writes performed.' >> "$GITHUB_STEP_SUMMARY"
+          gcloud functions list --project asteria-ttrpg --regions us-central1 --v2 --format='table(name,state)' | grep -E 'NAME|asteriaFriendNotifications|asteriaFriendRequests' || true
+          token="$(gcloud auth print-access-token)"
+          release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+          ruleset="$(printf '%s' "$release" | jq -r '.rulesetName // empty')"
+          if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then
+            echo 'Could not verify currently published default Firestore ruleset.' >&2
+            exit 1
+          fi
+          curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/$ruleset"             -o "$RUNNER_TEMP/asteria-live-friend-ruleset.json"
+          node scripts/friends-notifications-scoped-rules.mjs --compare-ruleset             "$RUNNER_TEMP/asteria-live-friend-ruleset.json"
+          echo 'Rules version compared to reviewed baseline. No rules were changed.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_rules:
+    name: Deploy only reviewed friend notification Firestore deny rules
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'friend-notifications-rules-deploy' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify Firestore security and release boundaries
+        run: |
+          npm run test:friends-phase4-1
+          npm run test:friends-phase4-3
+          npm run test:firebase
+          node scripts/friends-notifications-scoped-rules.mjs --check
+          node --test scripts/friends-notifications-scoped-deploy.test.mjs
+      - name: Authenticate using existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Fetch and validate exact live ruleset
+        id: validate_rules
+        shell: bash
+        env:
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_NOTIFICATION_OPERATION: ${{ inputs.operation }}
+          ASTERIA_NOTIFICATION_CONFIRMATION: ${{ inputs.production_confirmation }}
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+          ruleset="$(printf '%s' "$release" | jq -r '.rulesetName // empty')"
+          if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then
+            echo 'Default Firestore rules release not found. Deployment refused.' >&2
+            exit 1
+          fi
+          curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/$ruleset"             -o "$RUNNER_TEMP/asteria-live-friend-ruleset.json"
+          result="$(node scripts/friends-notifications-scoped-rules.mjs --stage-production             "$RUNNER_TEMP/asteria-live-friend-ruleset.json")"
+          echo "$result" | jq '{state,baselineSha256,approvedSha256}'
+          state="$(printf '%s' "$result" | jq -r .state)"
+          if [ "$state" = "already-current" ]; then
+            echo "deploy_needed=false" >> "$GITHUB_OUTPUT"
+            echo 'Approved private rules are already deployed; no write needed.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$state" = "ready" ]; then
+            echo "deploy_needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo 'Unexpected rules state; deployment refused.' >&2
+            exit 1
+          fi
+      - name: Install pinned Firebase CLI, isolated from website
+        if: steps.validate_rules.outputs.deploy_needed == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-notifications-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-notifications-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only default Firestore security rules, never indexes or Storage
+        if: steps.validate_rules.outputs.deploy_needed == 'true'
+        working-directory: ${{ runner.temp }}/asteria-friends-notification-rules
+        run: |
+          "$RUNNER_TEMP/asteria-notifications-cli/node_modules/.bin/firebase" deploy             --project asteria-ttrpg --only firestore:rules --non-interactive
+      - name: Confirm live rules match reviewed content after deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+          ruleset="$(printf '%s' "$release" | jq -r '.rulesetName // empty')"
+          if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then
+            echo 'Cannot verify deployed rules release.' >&2
+            exit 1
+          fi
+          curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/$ruleset"             -o "$RUNNER_TEMP/asteria-verified-friend-ruleset.json"
+          node scripts/friends-notifications-scoped-rules.mjs --compare-ruleset             "$RUNNER_TEMP/asteria-verified-friend-ruleset.json" |             jq -e '.state == "already-current"'
+          echo 'Published reviewed rules confirmed. No Firestore documents, indexes, Storage, Functions or Hosting were deployed.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy_callable:
+    name: Deploy only disabled friends notification Cloud Function
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'friend-notifications-callable-deploy' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify social event, auth and emulator security
+        run: |
+          npm run test:friends-phase4-1
+          npm run test:friends-phase4-2
+          npm run test:friends-phase4-3
+          npm run test:firebase
+          node --test scripts/friends-notifications-scoped-deploy.test.mjs
+      - name: Authenticate using existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Stage isolated notification callable with disabled flag
+        env:
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_NOTIFICATION_OPERATION: ${{ inputs.operation }}
+          ASTERIA_NOTIFICATION_CONFIRMATION: ${{ inputs.production_confirmation }}
+        run: |
+          node scripts/friends-notifications-scoped-release.mjs --stage-production
+          test "$(cat "$RUNNER_TEMP/asteria-friends-notifications-release/functions/.env.asteria-ttrpg")" = "ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=0"
+          npm install --prefix "$RUNNER_TEMP/asteria-friends-notifications-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-friends-notifications-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-friends-notifications-release/functions/index.mjs"
+      - name: Install pinned isolated Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-notifications-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-notifications-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only disabled social notifications callable
+        working-directory: ${{ runner.temp }}/asteria-friends-notifications-release
+        run: |
+          "$RUNNER_TEMP/asteria-notifications-cli/node_modules/.bin/firebase" deploy             --project asteria-ttrpg --only functions:asteria:asteriaFriendNotifications --non-interactive
+      - name: Verify correct Cloud Function and disabled runtime flag
+        run: |
+          actual="$(gcloud functions describe asteriaFriendNotifications --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          if [ "$actual" != "0" ]; then
+            echo 'Social notifications must remain disabled after deployment.' >&2
+            exit 1
+          fi
+          echo 'Deployed asteriaFriendNotifications only, with backend flag 0.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No friend-request callable, Firestore rules, Storage, Hosting, account IDs or campaign backend was deployed.' >> "$GITHUB_STEP_SUMMARY"
