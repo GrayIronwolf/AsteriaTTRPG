@@ -100,9 +100,17 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
   // Phase 5.2: server-only resolver runs INSIDE the same transaction as
   // private invitation creation. Browser code cannot supply a UID or hook.
   const resolveBoundRecipient=options.resolveBoundRecipient;
-  if(resolveBoundRecipient!==undefined&&(
-    typeof resolveBoundRecipient!=='function'||uid!==null||email!==null||
-    type!=='share-link'||roleOffered!=='player'||maxUses!==1))
+  const bindingKind=options.bindingKind??null;
+  const accountIdKey=options.recipientAccountIdKey??null;
+  if((bindingKind!==null&&bindingKind!=='friend-account')||
+     (bindingKind==='friend-account'&&
+       (typeof resolveBoundRecipient!=='function'||
+        typeof accountIdKey!=='string'||
+        !/^[a-z0-9._-]{3,24}#[0-9]{5}$/.test(accountIdKey)))||
+     (bindingKind===null&&accountIdKey!==null)||
+     (resolveBoundRecipient!==undefined&&(
+       typeof resolveBoundRecipient!=='function'||uid!==null||email!==null||
+       type!=='share-link'||roleOffered!=='player'||maxUses!==1)))
     throw Error('Invalid recipient restriction.');
   const now=options.now instanceof Date&&Number.isFinite(options.now.getTime())?
     options.now:new Date();
@@ -133,6 +141,9 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       const previous=existingSnap.data();
       if(!record(previous)||previous.campaignId!==campaignId||
         previous.inviteId!==inviteId||previous.createdByUid!==actorUid||
+        previous.bindingKind!==undefined&&previous.bindingKind!==bindingKind||
+        bindingKind==='friend-account'&&
+          previous.recipientAccountIdKey!==accountIdKey||
         !auditSnap.exists)
         throw Error('Invitation request needs reconciliation.');
       if(resolveBoundRecipient){
@@ -161,6 +172,8 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       inviteId,campaignId,type,roleOffered,status:'active',
       tokenDigest:digest,
       recipientEmailNormalized:email,recipientUid:boundUid,
+      ...(bindingKind==='friend-account'?
+        {bindingKind,recipientAccountIdKey:accountIdKey}:{}),
       createdByUid:actorUid,createdAt:now,
       expiresAt:new Date(time+expiresInHours*HOUR),
       maxUses,usedCount:0,requiresGMApproval:true,
