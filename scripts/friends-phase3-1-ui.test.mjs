@@ -59,7 +59,7 @@ test('accepted list is present once, accessible and not enabled globally',()=>{
   'accountFriendsAcceptedRefresh','accountFriendsAcceptedMore'])
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  assert.match(html,/aria-labelledby="accountFriendsAcceptedTitle"/);
- assert.match(html,/asteria-accepted-friends\.js\?v=friends-phase3-1/);
+ assert.match(html,/asteria-accepted-friends\.js\?v=friends-phase3-3/);
  assert.doesNotMatch(html,/friendRequestsEnabled:true/);
  assert.match(read('css/asteria-account-friends.css'),/asteria-accepted-friend-card/);
  assert.match(read('js/asteria-account-friends.js'),/AsteriaAcceptedFriends\?\.onOpen/);
