@@ -48,7 +48,7 @@ const inbox=uid=>'friendNotificationInbox/'+uid+'/items';
 function fail(){throw Error('Friend notification unavailable.');}
 function notificationId(uid,pairId,version,kind){
   return createHash('sha256')
-    .update('asteria-friend-notification-v1\\0'+uid+'\\0'+pairId+'\\0'+version+'\\0'+kind)
+    .update('asteria-friend-notification-v1\0'+uid+'\0'+pairId+'\0'+version+'\0'+kind)
     .digest('hex');
 }
 function assertNotice(row,uid,id){
