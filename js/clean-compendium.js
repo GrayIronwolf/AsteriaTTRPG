@@ -888,6 +888,10 @@
     byId('workspaceCreateInviteBtn')?.addEventListener('click', () => createCampaignInvite(campaign.id));
     if(campaign.membershipSchemaVersion===2&&
       campaign.ownerUid===window.AsteriaFirebase?.getUser?.()?.uid&&
+      window.AsteriaFeatureFlags?.campaignFriendRecipients===true)
+      window.AsteriaCampaignFriendRecipients?.render?.(grid,campaign);
+    if(campaign.membershipSchemaVersion===2&&
+      campaign.ownerUid===window.AsteriaFirebase?.getUser?.()?.uid&&
       window.AsteriaFeatureFlags?.secureInvitationManager===true)
       renderSecureCampaignInvitationManager(campaign);
     if(role === 'GM' && window.AsteriaFeatureFlags?.campaignJoinReview===true) renderCampaignGMJoinApprovals(campaign);
