@@ -67,7 +67,7 @@ test('unreviewed callable changes and unexpected runtime imports fail closed',()
   const source=read('functions/index.mjs');
   for(const altered of [
     source.replace('export const asteriaCampaignUCN=onCall(','export const changedCampaignUCN=onCall('),
-    source.replace("region:'us-central1',maxInstances:3,timeoutSeconds:30","region:'europe-west1',maxInstances:3,timeoutSeconds:30"),
+    source.replace("export const asteriaCampaignUCN=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30","export const asteriaCampaignUCN=onCall({region:'europe-west1',maxInstances:3,timeoutSeconds:30"),
     source.replace("export const asteriaCampaignJoinReview=onCall(","export const asteriaCampaignJoinReview=onCall("+
       "{secrets:[defineSecret('ASTERIA_RESEND_API_KEY')]},")
   ]){
