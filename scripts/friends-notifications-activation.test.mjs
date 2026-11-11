@@ -18,7 +18,7 @@ const base={
   GITHUB_EVENT_NAME:'workflow_dispatch',ASTERIA_DEPLOY_PROJECT:'asteria-ttrpg',
   ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED:'1'
 };
-test('all four packages isolate a single callable and retain website disabled',()=>{
+test('all four packages isolate a single callable while website rollout is separately controlled',()=>{
  for(const [operation,,functionName,on] of operations){
   const pack=buildFriendsNotificationActivationRelease(operation,{requestEnabled:'1'});
   assert.equal(pack.enabled,on);
@@ -42,7 +42,7 @@ test('all four packages isolate a single callable and retain website disabled',(
       'ASTERIA_FRIEND_NOTIFICATIONS_ENABLED='+Number(on)+'\n');
   }
  }
- assert.match(read('index.html'),/friendNotificationsEnabled:false/);
+ assert.match(read('index.html'),/friendNotificationsEnabled:true,serverCampaignUCN:false/);
 });
 test('event rollback preserves a disabled live Friends request handler',()=>{
  const pack=buildFriendsNotificationActivationRelease('friend-notifications-events-deactivate',{
@@ -89,7 +89,7 @@ test('each staging operation requires an exact WIF-trusted manual main-only appr
 });
 test('rollback remains available independent of subsequent browser gate release',()=>{
  const js=read('scripts/friends-notifications-activation-release.mjs');
- assert.match(js,/isOn\(operation\)&&clientFlag\[0\]/);
+ assert.match(js,/clientFlag\.length!==1/);
  assert.match(js,/requestEnabled:env\.ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED/);
  assert.match(js,/requestEnabled===['"]1['"]/);
  assert.match(js,/buildFriendRequestsRelease\(\{enabled:requestEnabled===['"]1['"]\}\)/);
