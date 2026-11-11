@@ -329,6 +329,28 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
   }
 });
 
+// Phase 4.1 Friends: private social inbox, independently gated from campaigns.
+// No browser Firestore reads, account IDs, pair IDs or counterparty UIDs.
+export const asteriaFriendNotifications=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:30
+},async request=>{
+  if(!request.auth?.uid)
+    throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Friend notifications are not enabled.');
+  try{
+    const {validateFriendNotificationAction,listFriendNotifications,
+      markFriendNotificationRead}=await import('./friendNotifications.mjs');
+    const data=validateFriendNotificationAction(request.data);
+    if(data.action==='list')
+      return await listFriendNotifications(getFirestore(),request.auth.uid,{cursor:data.cursor});
+    return await markFriendNotificationRead(getFirestore(),request.auth.uid,data.notificationId);
+  }catch{
+    // Do not expose notification paths, account identities or recipient details.
+    throw new HttpsError('failed-precondition','Friend notification unavailable.');
+  }
+});
+
 // Phase 2.2 Friends: authenticated request mutations, disabled by default.
 // Phase 2.3 introduces the browser request inbox; do not expose private UIDs.
 export const asteriaFriendRequests=onCall({
@@ -376,28 +398,6 @@ export const asteriaFriendRequests=onCall({
       throw new HttpsError('aborted','The request changed. Refresh and try again.');
     // Never reveal which account blocked the request or any UID/pair ID.
     throw new HttpsError('failed-precondition','Friend request unavailable.');
-  }
-});
-
-// Phase 4.1 Friends: private social inbox, independently gated from campaigns.
-// No browser Firestore reads, account IDs, pair IDs or counterparty UIDs.
-export const asteriaFriendNotifications=onCall({
-  region:'us-central1',maxInstances:3,timeoutSeconds:30
-},async request=>{
-  if(!request.auth?.uid)
-    throw new HttpsError('unauthenticated','Sign in to continue.');
-  if(process.env.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED!=='1')
-    throw new HttpsError('failed-precondition','Friend notifications are not enabled.');
-  try{
-    const {validateFriendNotificationAction,listFriendNotifications,
-      markFriendNotificationRead}=await import('./friendNotifications.mjs');
-    const data=validateFriendNotificationAction(request.data);
-    if(data.action==='list')
-      return await listFriendNotifications(getFirestore(),request.auth.uid,{cursor:data.cursor});
-    return await markFriendNotificationRead(getFirestore(),request.auth.uid,data.notificationId);
-  }catch{
-    // Do not expose notification paths, account identities or recipient details.
-    throw new HttpsError('failed-precondition','Friend notification unavailable.');
   }
 });
 
