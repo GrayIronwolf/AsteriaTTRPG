@@ -30,6 +30,13 @@ on:
           - friend-notifications-read-deactivate
           - friend-notifications-events-activate
           - friend-notifications-events-deactivate
+          - campaign-friends-release-audit
+          - campaign-friends-recipients-deploy-off
+          - campaign-friends-recipients-enable
+          - campaign-friends-recipients-disable
+          - campaign-friends-invites-deploy-off
+          - campaign-friends-invites-enable
+          - campaign-friends-invites-disable
           - deploy
       production_confirmation:
         description: 'Production actions require exact per-operation confirmation. Friends notifications rules: DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES; disabled callable: DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF. Leave blank for inventory and audits.'
@@ -1155,3 +1162,227 @@ jobs:
           echo "$NOTIFICATION_RELEASE_TARGET verified notification flag $actual." >> "$GITHUB_STEP_SUMMARY"
           echo 'Exactly one function was deployed. No Firestore rules, Storage, Hosting, email, account ID or campaign changes.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Website Friends notifications remain disabled until separately approved UI activation.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_friends_release_audit:
+    name: Phase 5.3 independent campaign prerequisites audit (no writes)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-friends-release-audit' &&
+      inputs.production_confirmation == ''
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node scripts/friends-phase5-3-scoped-release.mjs --check
+          node --test scripts/friends-phase5-3-release.test.mjs
+      - name: Authenticate with existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Read-only deployed function flags and signing secret readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project asteria-ttrpg --regions us-central1 --v2 --format=json > "$RUNNER_TEMP/campaign-functions.json"
+          for target in asteriaCampaignFriendRecipients asteriaSecureInvitation; do
+            count="$(jq --arg target "$target" '[.[] | select(.name | endswith("/"+$target))] | length' "$RUNNER_TEMP/campaign-functions.json")"
+            case "$count" in
+              0) echo "### $target: not deployed" >> "$GITHUB_STEP_SUMMARY" ;;
+              1)
+                gcloud functions describe "$target" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/$target.json"
+                echo "### $target: deployed" >> "$GITHUB_STEP_SUMMARY"
+                jq -r '.serviceConfig.environmentVariables // {} | to_entries |
+                  map(select(.key|startswith("ASTERIA_"))) | .[] |
+                  "\(.key)=\(if .value=="0" or .value=="1" then .value else "UNREVIEWED" end)"' \
+                  "$RUNNER_TEMP/$target.json" >> "$GITHUB_STEP_SUMMARY" ;;
+              *) echo "Ambiguous deployed function: $target" >&2; exit 1 ;;
+            esac
+          done
+          if gcloud secrets describe ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --format='value(name)' >/dev/null 2>&1 &&
+             gcloud secrets versions list ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --filter='state=ENABLED' --format='value(name)' > "$RUNNER_TEMP/secret-versions.txt" &&
+             [ -s "$RUNNER_TEMP/secret-versions.txt" ]; then
+            echo 'Secure invitation signing secret: an enabled version is visible (no value read).' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Secure invitation signing secret: NOT VERIFIED. Do not activate.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo 'Read-only: no deployment, changes to flags, Storage, rules, email or Hosting.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_friends_release:
+    name: Phase 5.3 confirmed single-function campaign release (manual)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (inputs.operation == 'campaign-friends-recipients-deploy-off' &&
+         inputs.production_confirmation == 'DEPLOY-ASTERIA-CAMPAIGN-FRIEND-RECIPIENTS-OFF') ||
+        (inputs.operation == 'campaign-friends-recipients-enable' &&
+         inputs.production_confirmation == 'ENABLE-ASTERIA-CAMPAIGN-FRIEND-RECIPIENTS') ||
+        (inputs.operation == 'campaign-friends-recipients-disable' &&
+         inputs.production_confirmation == 'DISABLE-ASTERIA-CAMPAIGN-FRIEND-RECIPIENTS') ||
+        (inputs.operation == 'campaign-friends-invites-deploy-off' &&
+         inputs.production_confirmation == 'DEPLOY-ASTERIA-CAMPAIGN-FRIEND-INVITES-OFF') ||
+        (inputs.operation == 'campaign-friends-invites-enable' &&
+         inputs.production_confirmation == 'ENABLE-ASTERIA-CAMPAIGN-FRIEND-INVITES') ||
+        (inputs.operation == 'campaign-friends-invites-disable' &&
+         inputs.production_confirmation == 'DISABLE-ASTERIA-CAMPAIGN-FRIEND-INVITES')
+      )
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Validate independent invitation/security contracts
+        run: |
+          npm run audit:production
+          npm run test:friends-phase5-1
+          npm run test:friends-phase5-2
+          npm run test:friends-phase5-3
+          npm run test:secure-invitations
+          npm run test:invitation-acceptance
+          npm run test:friends-notifications-activation
+          npm run test:firebase
+      - name: Authenticate with existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify live release scope and prerequisites before any write
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          case "$OPERATION" in
+            campaign-friends-recipients-*) target=asteriaCampaignFriendRecipients ;;
+            campaign-friends-invites-*) target=asteriaSecureInvitation ;;
+            *) echo 'Unknown operation.' >&2; exit 1 ;;
+          esac
+          gcloud functions list --project asteria-ttrpg --regions us-central1 --v2 --format=json > "$RUNNER_TEMP/phase53-list.json"
+          count="$(jq --arg target "$target" '[.[] | select(.name | endswith("/"+$target))] | length' "$RUNNER_TEMP/phase53-list.json")"
+          case "$count" in
+            0) printf '{"exists":false,"env":{}}\n' > "$RUNNER_TEMP/phase53-live.json" ;;
+            1)
+              gcloud functions describe "$target" --gen2 --region us-central1 --project asteria-ttrpg --format=json |
+                jq '{exists:true,env:(.serviceConfig.environmentVariables // {})}' > "$RUNNER_TEMP/phase53-live.json" ;;
+            *) echo 'Target function listing is ambiguous.' >&2; exit 1 ;;
+          esac
+          recipient_ready=0; acceptance_ready=0
+          if [[ "$OPERATION" == campaign-friends-recipients-disable ||
+                "$OPERATION" == campaign-friends-recipients-deploy-off ]]; then
+            # Reverse the activation order: do not disable recipient lookup
+            # while independently enabled account-bound issuance depends on it.
+            secure_count="$(jq '[.[] | select(.name | endswith("/asteriaSecureInvitation"))] | length' "$RUNNER_TEMP/phase53-list.json")"
+            if [ "$secure_count" = 1 ]; then
+              gcloud functions describe asteriaSecureInvitation --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/secure-invite-state.json"
+              test "$(jq -r '.serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED // "0"' "$RUNNER_TEMP/secure-invite-state.json")" != 1 || {
+                echo 'Disable account-bound invitation issuance before recipient lookup.' >&2; exit 1;
+              }
+            elif [ "$secure_count" != 0 ]; then
+              echo 'Unable to prove safe recipient rollback order.' >&2; exit 1
+            fi
+          fi
+          if [[ "$OPERATION" == campaign-friends-invites-* ]]; then
+            gcloud secrets describe ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --format='value(name)' >/dev/null
+            gcloud secrets versions list ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --filter='state=ENABLED' --format='value(name)' > "$RUNNER_TEMP/secret-versions.txt"
+            test -s "$RUNNER_TEMP/secret-versions.txt" || { echo 'No enabled signing secret version verified.' >&2; exit 1; }
+          fi
+          if [ "$OPERATION" = campaign-friends-invites-enable ]; then
+            gcloud functions describe asteriaCampaignFriendRecipients --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/recipient.json"
+            test "$(jq -r '.serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED // "0"' "$RUNNER_TEMP/recipient.json")" = 1 || { echo 'Recipient function must already be separately activated.' >&2; exit 1; }
+            recipient_ready=1
+            for key in ASTERIA_SECURE_INVITATIONS_ENABLED ASTERIA_INVITATION_ACCEPTANCE_ENABLED ASTERIA_INVITATION_MANAGER_ENABLED; do
+              test "$(jq -r --arg key "$key" '.env[$key] // "0"' "$RUNNER_TEMP/phase53-live.json")" = 1 || { echo "Existing v2 campaign dependency not active: $key" >&2; exit 1; }
+            done
+            node --input-type=module -e 'import {readFileSync} from "node:fs"; const site=readFileSync("index.html","utf8"); for(const flag of ["secureInvitationManager:true","secureInvitationAcceptance:true","campaignFriendRecipients:true"])if(!site.includes(flag))throw Error("Existing v2 campaign website feature not independently approved: "+flag)'
+            acceptance_ready=1
+          fi
+          echo "ASTERIA_PHASE53_LIVE_FILE=$RUNNER_TEMP/phase53-live.json" >> "$GITHUB_ENV"
+          echo "ASTERIA_PHASE53_RECIPIENT_READY=$recipient_ready" >> "$GITHUB_ENV"
+          echo "ASTERIA_PHASE53_ACCEPTANCE_READY=$acceptance_ready" >> "$GITHUB_ENV"
+      - name: Stage one bounded source package, preserving live environment flags
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+          ASTERIA_PHASE53_OPERATION: ${{ inputs.operation }}
+          ASTERIA_PHASE53_CONFIRMATION: ${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          node scripts/friends-phase5-3-scoped-release.mjs --stage "$OPERATION"
+          case "$OPERATION" in
+            campaign-friends-recipients-*) dir=asteria-phase53-recipients; target=asteriaCampaignFriendRecipients ;;
+            campaign-friends-invites-*) dir=asteria-phase53-invites; target=asteriaSecureInvitation ;;
+            *) exit 1 ;;
+          esac
+          npm install --prefix "$RUNNER_TEMP/$dir/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/$dir/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/$dir/functions/index.mjs"
+          echo "PHASE53_DIR=$dir" >> "$GITHUB_ENV"
+          echo "PHASE53_TARGET=$target" >> "$GITHUB_ENV"
+      - name: Install pinned isolated Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/phase53-cli"
+          npm install --prefix "$RUNNER_TEMP/phase53-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only the single selected function
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$PHASE53_TARGET" in
+            asteriaCampaignFriendRecipients|asteriaSecureInvitation) ;;
+            *) echo 'Unexpected function target.' >&2; exit 1 ;;
+          esac
+          cd "$RUNNER_TEMP/$PHASE53_DIR"
+          "$RUNNER_TEMP/phase53-cli/node_modules/.bin/firebase" deploy \
+            --project asteria-ttrpg --only "functions:asteria:$PHASE53_TARGET" --non-interactive
+      - name: Verify deployed flag values and preserved old campaign settings
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          gcloud functions describe "$PHASE53_TARGET" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/phase53-deployed.json"
+          case "$OPERATION" in
+            *-enable) expected=1 ;;
+            *-disable|*-deploy-off) expected=0 ;;
+            *) exit 1 ;;
+          esac
+          if [ "$PHASE53_TARGET" = asteriaCampaignFriendRecipients ]; then
+            flag=ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED
+          else
+            flag=ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED
+          fi
+          actual="$(jq -r --arg key "$flag" '.serviceConfig.environmentVariables[$key] // "missing"' "$RUNNER_TEMP/phase53-deployed.json")"
+          test "$actual" = "$expected" || { echo 'Feature state not verified.' >&2; exit 1; }
+          jq -r '.serviceConfig.environmentVariables // {} | to_entries |
+            map(select(.key|startswith("ASTERIA_"))) | sort_by(.key) |
+            .[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/phase53-deployed.json" > "$RUNNER_TEMP/deployed-env.txt"
+          grep '^ASTERIA_' "$RUNNER_TEMP/$PHASE53_DIR/functions/.env.asteria-ttrpg" | LC_ALL=C sort > "$RUNNER_TEMP/expected-env.txt"
+          diff -u "$RUNNER_TEMP/expected-env.txt" "$RUNNER_TEMP/deployed-env.txt"
+          echo "Verified $PHASE53_TARGET flag $flag=$actual; exactly one function changed." >> "$GITHUB_STEP_SUMMARY"
+          echo 'No Firestore/Storage rules, Hosting, unrelated Cloud Functions or email system was deployed.' >> "$GITHUB_STEP_SUMMARY"
