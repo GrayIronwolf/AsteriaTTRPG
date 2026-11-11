@@ -113,7 +113,7 @@
       return false;
     }finally{
       busy=false;
-      if(current())updateControls();
+      if(isOpen()&&sameUser())updateControls();
     }
   }
   function handleAuthChange(){
