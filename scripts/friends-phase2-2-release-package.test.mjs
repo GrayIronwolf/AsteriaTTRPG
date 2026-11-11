@@ -12,9 +12,9 @@ test('release contains exactly one disabled request callable with private depend
   const files=buildFriendRequestsRelease();
   assert.deepEqual(Object.keys(files).sort(),[
     'firebase.json','functions/.env.asteria-ttrpg',
-    'functions/friendAccountLookup.mjs','functions/friendRelationshipModel.mjs',
-    'functions/friendRequestActions.mjs','functions/friendRequestInbox.mjs',
-    'functions/friendNotifications.mjs',
+    'functions/friendAccountLookup.mjs','functions/friendNotifications.mjs',
+    'functions/friendRelationshipModel.mjs','functions/friendRequestActions.mjs',
+    'functions/friendRequestInbox.mjs',
     'functions/index.mjs','functions/package.json'
   ]);
   assert.equal(files['functions/index.mjs'],isolatedFriendRequestsSource());
