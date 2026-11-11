@@ -129,3 +129,13 @@ test('no direct Firestore permission or unsafe HTML insertion',()=>{
  assert.match(server,/record\.blockedByUids\.includes\(actorUid\)/);
  assert.match(server,/nextFriendInboxQuota/);
 });
+
+test('mobile friend cards reserve their own row for controls without squeezing Account IDs',()=>{
+ const css=read('css/asteria-account-friends.css');
+ const end=css.slice(css.lastIndexOf('/* Phase 3.2 production fix:'));
+ assert.match(end,/\.asteria-accepted-friend-card\s*\{\s*display:grid;/);
+ assert.match(end,/grid-template-columns:auto minmax\(0,1fr\)/);
+ assert.match(end,/\.asteria-friend-manage-actions\s*\{\s*grid-column:1 \/ -1;/);
+ assert.match(end,/grid-row:2;/);
+ assert.match(end,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+});
