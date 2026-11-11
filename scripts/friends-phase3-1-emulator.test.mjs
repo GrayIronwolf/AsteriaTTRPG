@@ -72,10 +72,10 @@ test('only accepted mutual friends appear, with public handle and friendship dat
  assert.equal(bob.items.length,1);
  assert.deepEqual(alice.items[0],{
    username:'Poppa_J',accountId:'Poppa_J#52816',
-   friendsSinceMs:pair.updatedAtMs});
+   friendsSinceMs:pair.updatedAtMs,version:pair.version});
  assert.deepEqual(bob.items[0],{
    username:'Grayson',accountId:'Grayson#01448',
-   friendsSinceMs:pair.updatedAtMs});
+   friendsSinceMs:pair.updatedAtMs,version:pair.version});
  assert.equal((await listing('carol')).items.length,0);
  assert.equal(alice.nextCursor,null);
  const client=env.authenticatedContext('alice').firestore();
