@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/asteria-account-menu.css?v=account-menu-phase3-3">
 <link rel="stylesheet" href="css/asteria-account-profile.css?v=account-profile-phase3-2">
 <link rel="stylesheet" href="css/asteria-account-security.css?v=account-menu-phase3-3">
-<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase1-3">
+<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase2-3">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -472,7 +472,23 @@
         </div>
         <p>Friend requests will be available in Phase 2. Finding an account does not connect you to a player or campaign.</p>
       </section>
-    </section>
+      <div id="accountFriendsRequests" class="asteria-friend-requests" aria-label="Friend requests">
+        <div class="asteria-friend-requests-head">
+          <h3>Friend Requests</h3>
+          <p id="accountFriendsRequestsStatus" role="status" aria-live="polite">Requests are not active yet.</p>
+        </div>
+        <button id="accountFriendsSend" type="button" hidden disabled>Send Friend Request</button>
+        <div class="asteria-friend-request-tabs" role="tablist" aria-label="Friend request direction">
+          <button id="accountFriendsIncomingTab" type="button" role="tab" aria-selected="true" aria-controls="accountFriendsRequestList" disabled>Incoming</button>
+          <button id="accountFriendsOutgoingTab" type="button" role="tab" aria-selected="false" aria-controls="accountFriendsRequestList" disabled>Outgoing</button>
+        </div>
+        <div class="asteria-friend-request-tools">
+          <button id="accountFriendsRequestsRefresh" type="button" disabled>Refresh</button>
+        </div>
+        <div id="accountFriendsRequestList" class="asteria-friend-request-list" role="tabpanel" aria-labelledby="accountFriendsIncomingTab" aria-live="polite"></div>
+        <button id="accountFriendsRequestsMore" type="button" hidden disabled>Load More</button>
+      </div>
+          </section>
   </div>
   <div id="itemModal" class="item-modal" aria-hidden="true"><div class="item-modal-card" role="dialog" aria-modal="true" aria-labelledby="itemModalName" tabindex="-1"><div class="section-head"><div><p class="eyebrow">Inventory Item</p><h2 id="itemModalName">Item</h2></div><button type="button" onclick="closeItemModal()" aria-label="Close item details">×</button></div><div id="itemModalBody"></div></div></div>
   <div id="feedbackStack" class="feedback-stack"></div>
@@ -493,11 +509,12 @@
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
 <script src="js/asteria-account-menu.js?v=friends-phase1-3"></script>
 <script src="js/asteria-account-friends.js?v=friends-phase1-3"></script>
+<script src="js/asteria-friend-requests.js?v=friends-phase2-3"></script>
 <script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>
-  <script>window.AsteriaFeatureFlags = Object.freeze({friendAccountLookup:new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1',serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=friends-phase1-3"></script>
+  <script>window.AsteriaFeatureFlags = Object.freeze({friendAccountLookup:new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1',friendRequestsEnabled:new URLSearchParams(window.location.search).get('friends-requests-canary')==='1',serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
+  <script type="module" src="js/firebase-auth.js?v=friends-phase2-3"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
