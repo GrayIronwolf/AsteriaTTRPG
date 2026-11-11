@@ -69,9 +69,15 @@ Implement recipient-scoped paginated list and stable UID-backed friendship summa
 Add remove friend, block and unblock with confirmation and server-enforced state transitions. Suppress inappropriate social requests and friend selection across blocks.
 **Exit:** Blocked, removed and concurrent states behave correctly in unit/emulator and signed-in tests.
 
-**3.3 — Friends workspace and limited public profile.**
+**3.3 — Friends workspace, limited public profile, and Phase 3.2 UX follow-up.**
 Build accessible, responsive friend cards/profile preview using current public handle and initials by default; consider explicit opt-in social avatar thumbnail via isolated, reviewed permissions rather than granting access to existing owner-private photos.
-**Exit:** Privacy, mobile, accessibility and visual acceptance passed.
+
+**Carry-forward from Phase 3.2 (approved 11 November 2026):**
+- Update the **Block Player** confirmation to explain explicitly that blocking ends an accepted friendship and any pending request; **Unblock** removes the block but **does not restore the friendship**. When the final block is removed, the existing **seven-day cooldown starts at unblocking**, so a new request cannot be sent immediately. Keep these backend rules unchanged and ensure the mobile confirmation is clear before a destructive action.
+- Keep the **live Remove Friend test pending**, since the two current test accounts are no longer friends after block/unblock. Complete a real two-account removal test when another accepted friendship is available or reconnection becomes eligible after the cooldown; verify removal on both accounts and the reconnection restriction. Do **not** bypass the cooldown or automatically reinstate a friendship just to test removal.
+- Preserve approved Asteria styling and existing secure request/block behaviour; test confirmation wording and cancel/confirm handling on mobile and desktop.
+
+**Exit:** Privacy, mobile, accessibility and visual acceptance passed; block/unblock warning shown and tested; Remove Friend live test completed when an eligible accepted relationship is available, or explicitly recorded as pending rather than misreported as passed.
 
 ### Phase 4 — Social notifications
 
