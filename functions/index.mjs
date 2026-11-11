@@ -87,8 +87,7 @@ export const asteriaSecureInvitation=onCall({
         signingKey:secureInvitationSigningKey.value(),
         authAdmin:getAuth(),
         notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1',
-        friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1',
-        authAdmin:getAuth()
+        friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1'
       };
       return data.action==='preview'?
         await previewSecureCampaignInvitation(getFirestore(),claimant,input,options):
