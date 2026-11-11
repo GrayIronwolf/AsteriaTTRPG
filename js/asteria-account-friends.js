@@ -14,6 +14,7 @@
   function setStatus(message){if(get('accountFriendsStatus'))get('accountFriendsStatus').textContent=message;}
   function clearResult(){
     window.AsteriaFriendRequests?.setCandidate?.(null);
+    window.AsteriaFriendManagement?.setCandidate?.(null);
     if(get('accountFriendsResult'))get('accountFriendsResult').hidden=true;
     for(const id of ['accountFriendsResultInitial','accountFriendsResultName','accountFriendsResultId'])
       if(get(id))get(id).textContent='';
@@ -36,6 +37,7 @@
     clearResult();
     window.AsteriaFriendRequests?.onClose?.();
     window.AsteriaAcceptedFriends?.onClose?.();
+    window.AsteriaFriendManagement?.onClose?.();
     setStatus('');
     activeUid='';busy=false;
     if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
@@ -55,6 +57,7 @@
     overlay.hidden=false;
     window.AsteriaFriendRequests?.onOpen?.();
     window.AsteriaAcceptedFriends?.onOpen?.();
+    window.AsteriaFriendManagement?.onOpen?.();
     const ready=updateControls();
     setStatus(ready?
       'Enter the complete Account ID to find a player.':
@@ -105,6 +108,7 @@
       get('accountFriendsResultInitial').textContent=result.username.charAt(0).toUpperCase();
       get('accountFriendsResult').hidden=false;
       window.AsteriaFriendRequests?.setCandidate?.(result.accountId);
+      window.AsteriaFriendManagement?.setCandidate?.(result.accountId);
       setStatus(window.AsteriaFeatureFlags?.friendRequestsEnabled===true?
         'Player found. You can send a friend request if requests are active.':
         'Player found. Friend requests are not available yet.');
