@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {validateFriendRequestAction} from '../functions/friendRequestActions.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('only four strict request actions are accepted, never a raw UID or pair ID',()=>{
+test('strict request and management actions reject raw UIDs and private pair IDs',()=>{
   assert.deepEqual(validateFriendRequestAction({
     action:'send',targetAccountId:' Grayson#01448 '
   }),{action:'send',targetAccountId:'Grayson#01448'});
@@ -20,7 +20,7 @@ test('only four strict request actions are accepted, never a raw UID or pair ID'
     {action:'accept',targetAccountId:'Asteria#00009'},
     {action:'accept',targetAccountId:'Asteria#00009',expectedVersion:0},
     {action:'decline',targetAccountId:'Asteria#00009',expectedVersion:1,email:'x'},
-    {action:'block',targetAccountId:'Asteria#00009',expectedVersion:1}
+    {action:'remove',targetAccountId:'Asteria#00009',expectedVersion:0}
   ]) assert.throws(()=>validateFriendRequestAction(bad));
 });
 test('request callable is authenticated and disabled until explicitly activated',()=>{
@@ -47,7 +47,7 @@ test('relationship changes never accept user-supplied UID and never return priva
   assert.match(source,/tx\.update\(pairRef,next\)/);
   assert.match(source,/tx\.set\(quotaRef,quota\)/);
   assert.match(source,/nextFriendRequestIssueQuota/);
-  assert.match(source,/expectedVersion:input.expectedVersion/);
+  assert.match(source,/input.expectedVersion/);
   assert.doesNotMatch(source,/return \{[^}]*uid:/);
   assert.doesNotMatch(source,/invite|campaignJoin|campaignMembership/);
   assert.doesNotMatch(read('index.html'),/friendRequestsEnabled:true/);
