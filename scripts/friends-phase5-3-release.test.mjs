@@ -114,7 +114,7 @@ test('unknown function environment rejects arbitrary secrets or dynamic values',
   null,{},[],{exists:true,env:[]},{exists:true,env:{ASTERIA_FRIEND_REQUESTS_ENABLED:'1'}},
   {exists:true,env:{ASTERIA_SECURE_INVITATIONS_ENABLED:'unset'}},
   {exists:false,env:{ASTERIA_SECURE_INVITATIONS_ENABLED:'0'}}
- ])assert.throws(()=>parsePhase53LiveState(data),/reconciliation|Unreviewed/);
+ ])assert.throws(()=>parsePhase53LiveState(data),/reconciliation|Unreviewed|nonempty environment/);
  const saved=parsePhase53LiveState({exists:true,env:{
   FIREBASE_CONFIG:'some runtime project metadata',
   ASTERIA_SECURE_INVITATIONS_ENABLED:'1'
