@@ -193,7 +193,18 @@
     });
     el('accountFriendsManageApprove')?.addEventListener('click',()=>{void approve();});
     el('accountFriendsManageConfirm')?.addEventListener('keydown',event=>{
-      if(event.key==='Escape'){event.preventDefault();hideConfirmation();controls();}
+      if(event.key==='Escape'){
+        event.preventDefault();event.stopPropagation?.();
+        hideConfirmation();controls();return;
+      }
+      if(event.key!=='Tab')return;
+      const cancel=el('accountFriendsManageCancel');
+      const approve=el('accountFriendsManageApprove');
+      if(event.shiftKey&&document.activeElement===cancel){
+        event.preventDefault();approve?.focus();
+      }else if(!event.shiftKey&&document.activeElement===approve){
+        event.preventDefault();cancel?.focus();
+      }
     });
     window.addEventListener('asteria:firebase-signed-out',onClose);
     window.addEventListener('asteria:auth-changed',authChanged);
