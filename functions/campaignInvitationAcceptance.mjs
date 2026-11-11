@@ -38,6 +38,18 @@ function verify(invite,identity,args,options,repeat=false){
     now:options.now,signingKey:options.signingKey
   });
 }
+async function assertBoundFriendEligible(db,options,invite,campaign,uid,tx=null){
+  if(invite.bindingKind===undefined||invite.bindingKind===null)return;
+  if(invite.bindingKind!=='friend-account'||
+     options.friendInvitationsEnabled!==true||!options.authAdmin)
+    throw unavailable();
+  const {assertCurrentFriendInvitationRecipient}=
+    await import('./campaignFriendInvitations.mjs');
+  try{
+    await assertCurrentFriendInvitationRecipient(db,options.authAdmin,
+      invite,campaign.ownerUid,uid,tx);
+  }catch{throw unavailable();}
+}
 function identityFromAuth(auth){
   if(!object(auth)||!validId(auth.uid))throw Error('Sign in with Firebase to use the invitation.');
   return {
@@ -95,6 +107,7 @@ export async function previewSecureCampaignInvitation(db,auth,{
     JOIN_REQUEST_STATUSES.includes(requestSnap.data()?.status);
   const eligible=verify(invite,identity,{campaignId,inviteId,token},
     {...options,now},existing);
+  await assertBoundFriendEligible(db,options,invite,campaign,identity.uid);
   return {...safePreview(campaign,invite,eligible),
     status:existing?requestSnap.data().status:'available',
     alreadyExists:existing};
@@ -151,6 +164,7 @@ export async function acceptSecureCampaignInvitation(db,auth,{
         !JOIN_REQUEST_STATUSES.includes(request.status))
         throw Error('Invitation claim requires reconciliation.');
       verify(invite,identity,{campaignId,inviteId,token},{...options,now},true);
+      await assertBoundFriendEligible(db,options,invite,campaign,uid,tx);
       return requestSummary(campaignId,request,true);
     }
     if(requestSnap.exists){
@@ -163,6 +177,7 @@ export async function acceptSecureCampaignInvitation(db,auth,{
     }
     if(campaign.joinPolicy?.joinRequestsOpen===false)throw unavailable();
     const eligible=verify(invite,identity,{campaignId,inviteId,token},{...options,now});
+    await assertBoundFriendEligible(db,options,invite,campaign,uid,tx);
     if(auditSnap.exists)throw Error('Invitation claim audit requires reconciliation.');
     const previous=throttleSnap.exists?throttleSnap.data():{};
     const start=previous.windowStartedAtMs;
