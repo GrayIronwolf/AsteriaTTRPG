@@ -12,6 +12,7 @@
 - Operation `{action:"list",direction:"incoming"|"outgoing",cursor:0|20|40|…}`, paginated up to 20 records per page, max scan offset 1,000.
 - Returns `{items:[{username,accountId,direction,status,version,requestedAtMs,expiresAtMs}],nextCursor:number|null}`.
 - Reads only pairs containing the authenticated UID. Server-side filters hide all accepted/blocked/expired/nonpending relationships; recipient identity is reverified from the **current** active Account ID registry and Firebase Auth. Old usernames and disabled accounts are not returned.
+- Each account has a **server-enforced inbox read limit** of 30 requests per 15 minutes and 120 per 24 hours. The transactional `friendRequestInboxThrottle/{uid}` record is browser-private and never returned; Firestore rules explicitly deny access.
 - Pagination uses a bounded scan rather than returning pair document IDs or opaque secrets containing raw UIDs. As this is a source-only release, production data and indexes are unchanged; query uses existing single-field `array-contains` index.
 - The listing is advisory, not a permission grant. The existing Phase 2.2 transaction rechecks account ownership, pair state and `expectedVersion` before accepting, declining or cancelling.
 
