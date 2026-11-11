@@ -189,5 +189,5 @@ test('source guards preserve independent social notification feature gates',()=>
  assert.doesNotMatch(block,/ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED/);
  const rules=read('firestore.rules');
  assert.match(rules,/match \/friendNotificationAccessThrottle\/\{uid\}/);
- assert.match(read('index.html'),/friendNotificationsEnabled:false/);
+ assert.match(read('index.html'),/friendNotificationsEnabled:true/);
 });
