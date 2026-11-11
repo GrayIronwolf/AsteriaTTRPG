@@ -114,15 +114,18 @@ export function buildCampaignCoreRelease(source=read('functions/index.mjs')){
     selector:CAMPAIGN_CORE_TARGETS.map(name=>'functions:asteria:'+name).join(',')};
 }
 
-export function stageCampaignCoreRelease(env=process.env){
-  if(env.GITHUB_ACTIONS!=='true'||
-     env.GITHUB_REF!=='refs/heads/main'||
-     env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
-     env.ASTERIA_CAMPAIGN_OPERATION!=='campaign-backend-deploy'||
-     env.ASTERIA_CAMPAIGN_CONFIRMATION!=='DEPLOY-ASTERIA-CAMPAIGN-BACKEND'||
-     env.ASTERIA_DEPLOY_PROJECT!=='asteria-ttrpg'||
-     !isAbsolute(env.RUNNER_TEMP||''))
-    die('Manual main-only production approval required before staging.');
+export function stageCampaignCoreRelease(env=process.env,mode='production'){
+  const validProduction=mode==='production'&&
+    env.GITHUB_REF==='refs/heads/main'&&
+    env.GITHUB_EVENT_NAME==='workflow_dispatch'&&
+    env.ASTERIA_CAMPAIGN_OPERATION==='campaign-backend-deploy'&&
+    env.ASTERIA_CAMPAIGN_CONFIRMATION==='DEPLOY-ASTERIA-CAMPAIGN-BACKEND'&&
+    env.ASTERIA_DEPLOY_PROJECT==='asteria-ttrpg';
+  const validCi=mode==='ci'&&env.CI==='true'&&
+    ['pull_request','push'].includes(env.GITHUB_EVENT_NAME);
+  if(env.GITHUB_ACTIONS!=='true'||!isAbsolute(env.RUNNER_TEMP||'')||
+     !(validProduction||validCi))
+    die('Manual main-only production approval or trusted CI event required before staging.');
   const dir=join(env.RUNNER_TEMP,'asteria-campaign-core-release');
   if(existsSync(dir))die('Refusing to overwrite an existing campaign release directory.');
   const result=buildCampaignCoreRelease();
@@ -140,9 +143,10 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
       const release=buildCampaignCoreRelease();
       console.log(JSON.stringify({ready:true,productionChanged:false,
         targets:release.targets,paths:Object.keys(release.files)}));
-    }else if(process.argv[2]==='--stage'){
-      const stage=stageCampaignCoreRelease();
+    }else if(['--stage','--stage-ci'].includes(process.argv[2])){
+      const stage=stageCampaignCoreRelease(process.env,
+        process.argv[2]==='--stage'?'production':'ci');
       console.log(JSON.stringify(stage));
-    }else die('Choose --check or --stage.');
+    }else die('Choose --check, --stage or --stage-ci.');
   }catch(error){console.error(error.message);process.exitCode=1;}
 }
