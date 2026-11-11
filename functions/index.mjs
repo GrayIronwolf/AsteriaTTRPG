@@ -329,6 +329,35 @@ export const asteriaCampaignJoinReview=onCall({region:'us-central1',maxInstances
   }
 });
 
+// Phase 2.2 Friends: authenticated request mutations, disabled by default.
+// Phase 2.3 introduces the browser request inbox; do not expose private UIDs.
+export const asteriaFriendRequests=onCall({
+  region:'us-central1',maxInstances:3,timeoutSeconds:45
+},async request=>{
+  if(!request.auth?.uid)
+    throw new HttpsError('unauthenticated','Sign in to continue.');
+  if(process.env.ASTERIA_FRIEND_REQUESTS_ENABLED!=='1')
+    throw new HttpsError('failed-precondition','Friend requests are not enabled.');
+  const data=request.data;
+  if(!data||typeof data!=='object'||Array.isArray(data))
+    throw new HttpsError('invalid-argument','Enter a valid friend request action.');
+  try{
+    const {changeFriendRequest}=await import('./friendRequestActions.mjs');
+    return await changeFriendRequest(getFirestore(),getAuth(),request.auth.uid,data);
+  }catch(error){
+    if(error?.message==='Invalid friend request action.'||
+       error?.message==='Invalid Account ID.')
+      throw new HttpsError('invalid-argument','Enter a valid friend request action.');
+    if(error?.message==='Account search rate limit reached.'||
+       error?.message==='Daily friend request limit reached.')
+      throw new HttpsError('resource-exhausted','Too many friend request actions. Try again later.');
+    if(error?.message==='Friendship changed. Refresh and try again.')
+      throw new HttpsError('aborted','The request changed. Refresh and try again.');
+    // Never reveal which account blocked the request or any UID/pair ID.
+    throw new HttpsError('failed-precondition','Friend request unavailable.');
+  }
+});
+
 // Phase 1.2 Friends System: exact, authenticated Account ID discovery only.
 export const asteriaFriendAccountLookup=onCall({
   region:'us-central1',maxInstances:3,timeoutSeconds:30
