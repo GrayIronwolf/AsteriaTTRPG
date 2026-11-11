@@ -166,5 +166,16 @@ test('existing website and friend notification rollbacks are unchanged',()=>{
  const workflow=read('.github/workflows/firebase-deploy.yml');
  assert.match(workflow,/friend-notifications-events-deactivate/);
  assert.match(workflow,/friend-notifications-read-deactivate/);
+ assert.match(workflow,/campaign-friends-release-audit/);
+ for(const name of [
+  'campaign-friends-recipients-deploy-off','campaign-friends-recipients-enable',
+  'campaign-friends-recipients-disable','campaign-friends-invites-deploy-off',
+  'campaign-friends-invites-enable','campaign-friends-invites-disable'
+ ])assert.match(workflow,new RegExp(name));
+ assert.match(workflow,/secure_count/);
+ assert.match(workflow,/Disable account-bound invitation issuance before recipient lookup/);
+ assert.match(workflow,/--only "functions:asteria:\$PHASE53_TARGET"/);
+ assert.match(workflow,/firebase-production/);
+ assert.match(workflow,/github\.ref == 'refs\/heads\/main'/);
  assert.match(read('index.html'),/friendNotificationsEnabled:true/);
 });
