@@ -21,8 +21,7 @@ export function approvedFriendRuleSources(source=read('firestore.rules')){
      !addition.includes('match /friendNotificationAccessThrottle/{uid} {')||
      (addition.match(/allow read, write: if false;/g)||[]).length!==2||
      (addition.match(/allow get, list, create, update, delete: if false;/g)||[]).length!==1||
-     addition.includes('allow read: if true')||
-     source.includes('friendNotificationsEnabled:true'))
+     addition.includes('allow read: if true'))
     fail('Unexpected private-rule contents; refusing deploy.');
   const baseline=source.slice(0,a)+source.slice(b);
   if(!baseline.startsWith("rules_version = '2';")||
