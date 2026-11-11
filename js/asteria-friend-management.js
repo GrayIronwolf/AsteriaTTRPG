@@ -128,8 +128,11 @@
       if(!valid(confirm.uid,confirm.sequence))return false;
       if(!result?.ok)throw new Error('Invalid friendship response.');
       state.busy=false;
-      // Refresh the accepted and blocked views. No automatic campaign changes.
+      if(confirm.action==='block')state.candidate=null;
+      // Keep accepted, blocked, and pending request views in sync.
+      // No changes to campaign memberships or invitations.
       void window.AsteriaAcceptedFriends?.refresh?.();
+      void window.AsteriaFriendRequests?.refresh?.();
       await refresh(false);
       if(state.uid===confirm.uid&&session()&&active())
         status({remove:'Friend removed.',block:'Player blocked.',
