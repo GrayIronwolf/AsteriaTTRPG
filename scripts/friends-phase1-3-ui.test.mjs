@@ -64,7 +64,8 @@ test('Friends Account menu and dialog are present exactly once, accessible and o
     'accountFriendsStatus','accountFriendsResult','accountFriendsResultInitial',
     'accountFriendsResultName','accountFriendsResultId'])
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
-  assert.match(html,/friendAccountLookup:false/);
+  assert.match(html,/friendAccountLookup:new URLSearchParams\(window\.location\.search\)\.get\('friends-lookup-canary'\)==='1'/);
+  assert.doesNotMatch(html,/friendAccountLookup:true/);
   assert.match(html,/aria-modal="true" aria-labelledby="accountFriendsTitle"/);
   assert.match(html,/aria-live="polite"/);
   assert.match(menu,/window\.AsteriaFriends\?\.open\?\.\(\)/);
