@@ -83,7 +83,9 @@ test('Appearance is separate from explicit Logout',()=>{
 
 test('avatar release is independently approved and limited to Storage rules',()=>{
  const yaml=read('.github/workflows/firebase-deploy.yml');
- const block=yaml.slice(yaml.indexOf('  account_profile_avatar_rules:'));
+ const start=yaml.indexOf('  account_profile_avatar_rules:');
+ const next=yaml.indexOf('\n  friends_lookup_deploy:',start);
+ const block=yaml.slice(start,next<0?undefined:next);
  assert.ok(block.length>100,'scoped production job is defined');
  assert.match(block,/inputs\.operation == 'account-profile-avatar-rules-deploy'/);
  assert.match(block,/inputs\.production_confirmation == 'DEPLOY-ASTERIA-PROFILE-AVATAR-RULES'/);
