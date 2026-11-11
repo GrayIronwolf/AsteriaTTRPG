@@ -20,13 +20,13 @@
     { id:'dashboard', label:'Dashboard', title:'User Workspace Dashboard', intro:'Your account workspace for campaigns, characters, notifications, and active party tools.' },
     { id:'campaigns', label:'Campaign Forge', title:'Campaign Forge', intro:'Campaign cards, GM permissions for campaigns you created, invite links, and character linking.' },
     { id:'settings', label:'Account Settings', title:'Account Settings', intro:'Account state, Firebase sync status, and dashboard preferences.' },
-    { id:'notifications', label:'Notifications', title:'Notifications', intro:'Account-scoped campaign invitations, GM messages and activity.' }
+    { id:'notifications', label:'Notifications', title:'Notifications', intro:'Private friend updates and separately gated campaign notifications.' }
   ];
   const authWorkspaceTabs = {
     dashboard: ['Overview','Campaigns','Characters','Activity'],
     campaigns: ['Campaign Gallery','Invite Links','Linked Characters','Activity'],
     settings: ['Account','Sync','Theme','Activity'],
-    notifications: ['Campaign Notifications']
+    notifications: ['Friend Notifications','Campaign Notifications']
   };
 
   let entries = [];
@@ -461,7 +461,7 @@
     const cards = [
       { tag:'Campaigns', title:'Current Campaigns', subtitle:`${campaigns.length} linked`, body:'Campaigns you created or joined with this account.', action:() => openDashboard('campaigns') },
       { tag:'Characters', title:'Available Characters', subtitle:`${characters.length} owned`, body:'Characters attached to this account. Open the Character Forge gallery to manage them.', action:() => window.AsteriaGameplay?.openCharacterForgeHub?.() },
-      { tag:'Notifications', title:'Notifications', subtitle:window.AsteriaFeatureFlags?.campaignNotifications===true?'Account updates':'Not active', body:'Campaign invitations and account updates.', action:() => openDashboard('notifications') },
+      { tag:'Notifications', title:'Notifications', subtitle:(window.AsteriaFeatureFlags?.friendNotificationsEnabled===true||window.AsteriaFeatureFlags?.campaignNotifications===true)?'Account updates':'Not active', body:'Campaign invitations and account updates.', action:() => openDashboard('notifications') },
       { tag:'Party', title:'Active Party', subtitle:`${activePartyCount} linked`, body:'Active party roster, session presence, and party status tools will appear here later.', action:() => renderPlaceholderPage('Active Party', 'Active party tools will connect to campaign sessions later.') }
     ];
     filterCards(cards, card => [card.title, card.subtitle, card.body].join(' ')).forEach(cardData => grid.appendChild(workspaceCard(cardData)));
@@ -2480,6 +2480,19 @@
     if (currentDashboardMode === 'campaigns') renderCampaignCards(grid);
     if (currentDashboardMode === 'settings') renderSettingsPanel(grid);
     if(currentDashboardMode==='notifications'){
+      if(window.AsteriaFeatureFlags?.friendNotificationsEnabled===true &&
+         window.AsteriaFirebase?.isReady?.() &&
+         window.AsteriaFriendNotificationsUI?.render) {
+        window.AsteriaFriendNotificationsUI.render(grid);
+      }else{
+        const friendMessage=document.createElement('p');
+        friendMessage.className='workspace-link-panel workspace-notifications-unavailable';
+        friendMessage.setAttribute('role','status');
+        friendMessage.textContent=window.AsteriaFeatureFlags?.friendNotificationsEnabled===true?
+          'Friend notifications are unavailable. Sign in and retry when the service is ready.':
+          'Friend notifications are not active yet. Your existing Friends workspace is unchanged.';
+        grid.appendChild(friendMessage);
+      }
       if(window.AsteriaFeatureFlags?.campaignNotifications===true &&
          window.AsteriaFirebase?.isReady?.() &&
          window.AsteriaCampaignNotificationsUI?.render) {
