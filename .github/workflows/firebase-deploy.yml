@@ -830,7 +830,7 @@ jobs:
           if [ "$state" = "already-current" ]; then
             echo "deploy_needed=false" >> "$GITHUB_OUTPUT"
             echo 'Approved private rules are already deployed; no write needed.' >> "$GITHUB_STEP_SUMMARY"
-          elif [ "$state" = "ready" ]; then
+          elif [ "$state" = "ready" ] || [ "$state" = "ready-pinned-legacy" ]; then
             echo "deploy_needed=true" >> "$GITHUB_OUTPUT"
           else
             echo 'Unexpected rules state; deployment refused.' >&2

@@ -8,7 +8,7 @@ import {
   stageFriendNotificationsRelease
 } from './friends-notifications-scoped-release.mjs';
 import {
-  approvedFriendRuleSources,evaluateLiveFriendRules,auditLiveFriendRules,
+  approvedFriendRuleSources,evaluateLiveFriendRules,auditLiveFriendRules,onlyAddsReviewedFriendDenials,
   extractLiveRulesFromRuleset,stageFriendRules
 } from './friends-notifications-scoped-rules.mjs';
 
@@ -121,6 +121,38 @@ test('inventory performs diagnostic reporting without changing rules or enabling
   assert.doesNotMatch(rules,/--audit-ruleset/);
   assert.match(read('scripts/friends-notifications-scoped-rules.mjs'),
     /evaluateLiveFriendRules\(live\)/);
+});
+test('reviewed rules are exactly additive private denies over pinned legacy source',()=>{
+  const legacy=read('firestore.rules').replace(
+    /    \/\/ Phase 1\.2: exact friends lookup quotas are Admin-only\.[\s\S]*?(?=    match \/accountIdAssignments\/\{uid\} \{)/,
+    '');
+  const approved=read('firestore.rules');
+  assert.equal(onlyAddsReviewedFriendDenials(legacy,approved),true);
+  const CRLF=legacy.replace(/\n/g,'\r\n');
+  assert.equal(onlyAddsReviewedFriendDenials(CRLF,approved),true);
+  assert.equal(onlyAddsReviewedFriendDenials(legacy,approved.replace(
+    'allow get, list, create, update, delete: if false;',
+    'allow get: if true;')),false);
+  assert.equal(onlyAddsReviewedFriendDenials(legacy,approved.replace(
+    'match /friendRequestIssueThrottle/{uid} {',
+    'match /otherCollection/{uid} {')),false);
+  assert.equal(onlyAddsReviewedFriendDenials(legacy,approved.replace(
+    'allow create: if ownsUserData(uid)',
+    'allow create: if signedIn()')),false);
+  assert.equal(onlyAddsReviewedFriendDenials(legacy+'// change',approved),false);
+});
+test('rules workflow accepts only pinned legacy and exact reviewed baseline',()=>{
+ const source=read('.github/workflows/firebase-deploy.yml');
+ const job=source.split('  friend_notifications_rules:')[1]
+   ?.split('  friend_notifications_callable:')[0]||'';
+ assert.match(job,/ready-pinned-legacy/);
+ assert.match(job,/--stage-production/);
+ assert.match(job,/--only firestore:rules/);
+ assert.doesNotMatch(job,/--only storage|--only firestore:indexes/);
+ const helper=read('scripts/friends-notifications-scoped-rules.mjs');
+ assert.match(helper,/pinnedLiveSourceSha256='c600616db92fde0b0c993f70e96cd83dd39d666d23ade8c7e934db0b14c1b456'/);
+ assert.match(helper,/checksum\(live\)===pinnedLiveSourceSha256/);
+ assert.match(helper,/onlyAddsReviewedFriendDenials\(live,approved\)/);
 });
 test('Firestore staging denies unauthorized runs and never includes indexes or storage',()=>{
   const temp=mkdtempSync(join(tmpdir(),'asteria-friend-rules-stage-'));
