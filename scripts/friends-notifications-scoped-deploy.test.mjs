@@ -110,15 +110,16 @@ test('Firestore staging denies unauthorized runs and never includes indexes or s
   }finally{rmSync(temp,{recursive:true,force:true});}
 });
 test('manual workflow never executes broad deploys or activates social features',()=>{
-  const source=read('.github/workflows/friends-notifications-deploy.yml');
+  const source=read('.github/workflows/firebase-deploy.yml');
   assert.match(source,/^on:\n  workflow_dispatch:/m);
   assert.doesNotMatch(source,/^  (push|schedule|pull_request):/m);
-  assert.match(source,/default: inventory/);
+  assert.match(source,/default: auth-check/);
+  assert.match(source,/friend-notifications-inventory/);
   assert.match(source,/cancel-in-progress: false/);
-  for(const section of ['inventory','deploy_rules','deploy_callable']){
+  for(const section of ['friend_notifications_inventory','friend_notifications_rules','friend_notifications_callable']){
     const start=source.indexOf('  '+section+':');
     assert.ok(start>0,section);
-    const following=source.slice(start+3).match(/\n  (?:inventory|deploy_rules|deploy_callable):/);
+    const following=source.slice(start+3).match(/\n  [a-z_]+:/);
     const next=following?start+3+following.index:-1;
     const body=source.slice(start,next<0?undefined:next);
     assert.match(body,/github.ref == 'refs\/heads\/main'/);
@@ -132,6 +133,7 @@ test('manual workflow never executes broad deploys or activates social features'
   assert.match(source,/DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES/);
   assert.match(source,/DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF/);
   assert.match(source,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=0/);
-  assert.doesNotMatch(source,/--only functions,firestore|--only storage|--only hosting/);
-  assert.doesNotMatch(source,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=1/);
+  const social=source.slice(source.indexOf('  friend_notifications_inventory:'));
+  assert.doesNotMatch(social,/--only functions,firestore|--only storage|--only hosting/);
+  assert.doesNotMatch(social,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=1/);
 });
