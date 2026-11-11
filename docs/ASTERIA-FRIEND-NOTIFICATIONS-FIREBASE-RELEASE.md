@@ -44,3 +44,9 @@ The first inventory run (GitHub Actions #42975159409) failed during the Google W
 
 ## Live drift discovered on November 11, 2026
 The corrected Workload Identity authentication succeeded on inventory run #42977171812. Production exposed the existing `asteriaFriendRequests` Cloud Function. The inventory safely halted on `Live Firestore rules diverge from the reviewed baseline`. The next inventory uses a diagnostic-only mode, reports sanitized metadata/historical revision matches, and does **not** change the strict live-rules check in the separately approved rules-deploy operation. No broad replacement, IAM adjustment or Storage rules change is authorized.
+
+## Reviewed historical production baseline — November 11, 2026
+
+Read-only inventory #42979631194 verified that the default Firestore rules match historical repository commit `e5437f6e6f2764cecb8e23a1b4f59fc66d66f997`, except for line-ending representation. Their live SHA-256 is `c600616db92fde0b0c993f70e96cd83dd39d666d23ade8c7e934db0b14c1b456`. The current repository revision adds only server-deny match blocks for canonical friendships, request issuance and reading quotas, and social notification inbox/quota collections, leaving account, character and campaign rules unchanged. This controlled one-time reconciliation uses an **exact hash** of the live source and a structural deny-only comparison. If live rules have changed in any way since inventory, the proposed deploy aborts before altering production.
+
+The approved operation is still `Deploy Firebase backend (manual)` on `main`, `friend-notifications-rules-deploy`, with the existing typed confirmation. Only do this after PR checks are green, the reconciliation is merged, and a fresh read-only inventory is reviewed. Deployment is limited to `--only firestore:rules`; no Cloud Functions, Storage or Hosting are included. Run the disabled callable operation separately only after verifying the deployed Firestore version.
