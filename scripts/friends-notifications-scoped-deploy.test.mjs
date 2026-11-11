@@ -124,11 +124,11 @@ test('inventory performs diagnostic reporting without changing rules or enabling
 });
 test('reviewed rules are exactly additive private denies over pinned legacy source',()=>{
   const legacy=read('firestore.rules').replace(
-    /    \/\/ Phase 1\.2: exact friends lookup quotas are Admin-only\.[\\s\\S]*?(?=    match \/accountIdAssignments\/\\{uid\\} \\{)/,
+    /    \/\/ Phase 1\.2: exact friends lookup quotas are Admin-only\.[\s\S]*?(?=    match \/accountIdAssignments\/\{uid\} \{)/,
     '');
   const approved=read('firestore.rules');
   assert.equal(onlyAddsReviewedFriendDenials(legacy,approved),true);
-  const CRLF=legacy.replace(/\\n/g,'\\r\\n');
+  const CRLF=legacy.replace(/\n/g,'\r\n');
   assert.equal(onlyAddsReviewedFriendDenials(CRLF,approved),true);
   assert.equal(onlyAddsReviewedFriendDenials(legacy,approved.replace(
     'allow get, list, create, update, delete: if false;',
@@ -151,8 +151,8 @@ test('rules workflow accepts only pinned legacy and exact reviewed baseline',()=
  assert.doesNotMatch(job,/--only storage|--only firestore:indexes/);
  const helper=read('scripts/friends-notifications-scoped-rules.mjs');
  assert.match(helper,/pinnedLiveSourceSha256='c600616db92fde0b0c993f70e96cd83dd39d666d23ade8c7e934db0b14c1b456'/);
- assert.match(helper,/checksum\\(live\\)===pinnedLiveSourceSha256/);
- assert.match(helper,/onlyAddsReviewedFriendDenials\\(live,approved\\)/);
+ assert.match(helper,/checksum\(live\)===pinnedLiveSourceSha256/);
+ assert.match(helper,/onlyAddsReviewedFriendDenials\(live,approved\)/);
 });
 test('Firestore staging denies unauthorized runs and never includes indexes or storage',()=>{
   const temp=mkdtempSync(join(tmpdir(),'asteria-friend-rules-stage-'));
