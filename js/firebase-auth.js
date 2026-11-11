@@ -2357,6 +2357,33 @@ const firebasePublicApi = {
       action:'accept',campaignId,inviteId,token
     })).data;
   },
+  // Phase 1.3 — only the deployed, gated callable can search Account IDs.
+  // Never query the private identity registry directly in the browser.
+  findFriendByAccountId: async function(accountId){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendAccountLookup!==true)
+      throw new Error('Player search is not active yet.');
+    if(typeof accountId!=='string'||!/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(accountId))
+      throw new Error('Enter an exact Username#00000 Account ID.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendAccountLookup')({
+      action:'find',accountId
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.friendAccountLookup!==true)
+      throw new Error('Account changed during search. Try again.');
+    const result=response.data;
+    if(!result||typeof result!=='object'||Array.isArray(result)||
+       (result.found!==true&&result.found!==false))
+      throw new Error('Account search returned an invalid response.');
+    if(result.found!==true)return {found:false};
+    if(Object.keys(result).sort().join(',')!=='accountId,found,username'||
+       typeof result.username!=='string'||typeof result.accountId!=='string'||
+       !/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(result.accountId)||
+       !result.accountId.startsWith(result.username+'#'))
+      throw new Error('Account search returned an invalid response.');
+    return {found:true,username:result.username,accountId:result.accountId};
+  },
   listCampaignNotifications: async function(cursor=null){
     if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
       throw new Error('Sign in to view notifications.');
