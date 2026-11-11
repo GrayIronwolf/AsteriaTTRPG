@@ -100,6 +100,19 @@ test('block remains private to actor, and remove sends neutral notices to both',
  assert.equal((await listFriendNotifications(db,'bob')).notifications[0].kind,'friend-removed');
  await assert.rejects(change('alice','send','Poppa_J#52816',undefined,at(5000)),/unavailable/);
 });
+test('notification read quota documents are inaccessible to browser clients',async()=>{
+ await change('alice','send','Poppa_J#52816');
+ for(const context of [env.authenticatedContext('alice'),
+  env.authenticatedContext('bob'),env.unauthenticatedContext()]){
+  const client=context.firestore();
+  for(const uid of ['alice','bob']){
+   const path='friendNotificationAccessThrottle/'+uid;
+   await assertFails(getDoc(doc(client,path)));
+   await assertFails(setDoc(doc(client,path),{listCount:999}));
+  }
+  await assertFails(getDocs(collection(client,'friendNotificationAccessThrottle')));
+ }
+});
 test('recipient cannot read or acknowledge other recipient notifications',async()=>{
  await change('alice','send','Poppa_J#52816');
  const id=(await listFriendNotifications(db,'bob')).notifications[0].notificationId;
