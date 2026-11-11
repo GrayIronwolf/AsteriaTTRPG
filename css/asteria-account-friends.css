@@ -188,3 +188,44 @@
  .asteria-friend-manage-actions button{flex:1 1 120px}
  .asteria-friends-manage-confirm-actions button{flex:1 1 110px}
 }
+
+
+/* Phase 3.2 production fix: protect full Account IDs on narrow devices.
+ * Place management controls on a separate row, never beside the name. */
+.asteria-accepted-friend-card{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  column-gap:14px;
+  row-gap:10px;
+  align-items:center;
+}
+.asteria-accepted-friend-card > .asteria-friends-initial{
+  grid-column:1;
+  grid-row:1;
+}
+.asteria-accepted-friend-details{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  overflow-wrap:normal;
+}
+.asteria-accepted-friend-details span{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.asteria-friend-manage-actions{
+  grid-column:1 / -1;
+  grid-row:2;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin:2px 0 4px;
+}
+.asteria-friend-manage-actions button{
+  width:100%;
+  min-width:0;
+}
+@media(max-width:480px){
+ .asteria-accepted-friend-card{column-gap:12px}
+ .asteria-friend-manage-actions{grid-template-columns:1fr 1fr}
+ .asteria-friend-manage-actions button{flex:none}
+}
