@@ -740,6 +740,8 @@ jobs:
         run: |
           node scripts/friends-notifications-scoped-release.mjs --check
           node scripts/friends-notifications-scoped-rules.mjs --check
+      - name: Prepare local Firestore rules history for read-only comparison
+        run: git fetch --no-tags --deepen=80 origin main
       - name: Authenticate using existing restricted Workload Identity
         uses: google-github-actions/auth@v3
         with:
@@ -762,8 +764,10 @@ jobs:
             exit 1
           fi
           curl -fsS --retry 2 -H "Authorization: Bearer $token"             "https://firebaserules.googleapis.com/v1/$ruleset"             -o "$RUNNER_TEMP/asteria-live-friend-ruleset.json"
-          node scripts/friends-notifications-scoped-rules.mjs --compare-ruleset             "$RUNNER_TEMP/asteria-live-friend-ruleset.json"
-          echo 'Rules version compared to reviewed baseline. No rules were changed.' >> "$GITHUB_STEP_SUMMARY"
+          node scripts/friends-notifications-scoped-rules.mjs --audit-ruleset             "$RUNNER_TEMP/asteria-live-friend-ruleset.json" | tee "$RUNNER_TEMP/asteria-notification-rule-audit.json"
+          echo '### Read-only Firestore rules comparison' >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"State: \(.state) | Deployment permitted: \(.deploymentPermitted) | Historical match: \(.historicalMatch.commit // "none")"' "$RUNNER_TEMP/asteria-notification-rule-audit.json" >> "$GITHUB_STEP_SUMMARY"
+          echo 'No changes were made to the live Firestore rules. Drift requires a reviewed reconciliation before deployment.' >> "$GITHUB_STEP_SUMMARY"
 
   friend_notifications_rules:
     name: Deploy only reviewed friend notification Firestore deny rules

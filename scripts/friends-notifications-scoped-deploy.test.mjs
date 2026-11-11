@@ -8,7 +8,7 @@ import {
   stageFriendNotificationsRelease
 } from './friends-notifications-scoped-release.mjs';
 import {
-  approvedFriendRuleSources,evaluateLiveFriendRules,
+  approvedFriendRuleSources,evaluateLiveFriendRules,auditLiveFriendRules,
   extractLiveRulesFromRuleset,stageFriendRules
 } from './friends-notifications-scoped-rules.mjs';
 
@@ -87,6 +87,40 @@ test('approved Firestore source contains only private notification denies as del
   assert.throws(()=>extractLiveRulesFromRuleset({source:{files:[]}}),/exactly one/);
   assert.equal(extractLiveRulesFromRuleset({source:{files:[
     {name:'firestore.rules',content:baseline}]}}),baseline);
+});
+test('read-only drift audit reports non-sensitive historical match and blocks deployment',()=>{
+  const {baseline,approved}=approvedFriendRuleSources();
+  const revision='a'.repeat(40);
+  const history=[{sha:revision,content:baseline}];
+  const matching=auditLiveFriendRules(baseline,approved,history);
+  assert.equal(matching.state,'ready');
+  assert.equal(matching.deploymentPermitted,true);
+  assert.deepEqual(matching.historicalMatch,{commit:revision,match:'exact'});
+  const drift=baseline.replace('match /accountIdRegistry/{accountIdKey} {',
+    'match /accountIdRegistry/{accountIdKey} {\n      // changed policy marker');
+  const audit=auditLiveFriendRules(drift,approved,history);
+  assert.equal(audit.deploymentPermitted,false);
+  assert.equal(audit.state,'blocked-drift');
+  assert.equal(audit.knownPaths.accountIdRegistry,true);
+  assert.equal(audit.knownPaths.friendNotificationInbox,false);
+  assert.equal(audit.historicalMatch,null);
+  assert.match(audit.liveSha256,/^[a-f0-9]{64}$/);
+  assert.equal(JSON.stringify(audit).includes('changed policy marker'),false);
+  assert.throws(()=>evaluateLiveFriendRules(drift,approved),/diverge/);
+});
+test('inventory performs diagnostic reporting without changing rules or enabling deploy',()=>{
+  const workflow=read('.github/workflows/firebase-deploy.yml');
+  const inventory=workflow.split('  friend_notifications_inventory:')[1]
+    ?.split('  friend_notifications_rules:')[0]||'';
+  assert.match(inventory,/--audit-ruleset/);
+  assert.match(inventory,/read-only|Read Cloud Functions and Firestore rule inventory/);
+  assert.doesNotMatch(inventory,/firebase" deploy|--only firestore:rules|--only functions:asteria/);
+  const rules=workflow.split('  friend_notifications_rules:')[1]
+    ?.split('  friend_notifications_callable:')[0]||'';
+  assert.match(rules,/--stage-production/);
+  assert.doesNotMatch(rules,/--audit-ruleset/);
+  assert.match(read('scripts/friends-notifications-scoped-rules.mjs'),
+    /evaluateLiveFriendRules\(live\)/);
 });
 test('Firestore staging denies unauthorized runs and never includes indexes or storage',()=>{
   const temp=mkdtempSync(join(tmpdir(),'asteria-friend-rules-stage-'));

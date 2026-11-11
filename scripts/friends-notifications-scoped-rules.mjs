@@ -4,6 +4,7 @@ import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {join,resolve,isAbsolute,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const read=p=>readFileSync(join(root,p),'utf8');
@@ -45,6 +46,95 @@ export function extractLiveRulesFromRuleset(payload){
     fail('Ruleset must contain exactly one readable rules source file.');
   return payload.source.files[0].content;
 }
+
+// Diagnostic only. This produces hashes and rule-path presence flags; it never
+// writes deployed rules, publishes live rule source, or authorizes a deployment.
+const normalizeForDiagnostic=value=>
+  value.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\n*$/,'\n');
+
+const lineDiffCounts=(expected,actual)=>{
+  const left=expected.split('\n'),right=actual.split('\n');
+  let prev=new Uint16Array(right.length+1);
+  for(let i=0;i<left.length;i++){
+    const next=new Uint16Array(right.length+1);
+    for(let j=0;j<right.length;j++)
+      next[j+1]=left[i]===right[j]?prev[j]+1:
+        Math.max(next[j],prev[j+1]);
+    prev=next;
+  }
+  const common=prev[right.length];
+  return {linesOnlyInLive:right.length-common,linesOnlyInReviewed:left.length-common};
+};
+export function auditLiveFriendRules(live,source=read('firestore.rules'),
+  history=[]){
+  if(typeof live!=='string'||live.length<100||live.length>256000)
+    fail('Live Firestore rules are missing or outside safe audit limits.');
+  const {baseline,approved,baselineSha256,approvedSha256}=
+    approvedFriendRuleSources(source);
+  let state='blocked-drift';
+  if(live===baseline)state='ready';
+  else if(live===approved)state='already-current';
+  else if(normalizeForDiagnostic(live)===normalizeForDiagnostic(baseline))
+    state='blocked-format-only-baseline';
+  else if(normalizeForDiagnostic(live)===normalizeForDiagnostic(approved))
+    state='blocked-format-only-current';
+  const match=name=>
+    live.includes('match /'+name+' {');
+  const knownPaths={
+    users:match('users/{uid}'),
+    friendRelationships:match('friendRelationships/{pairId}'),
+    friendRequestInbox:match('friendRequestInbox/{uid}'),
+    friendRequestInboxThrottle:match('friendRequestInboxThrottle/{uid}'),
+    friendNotificationInbox:match('friendNotificationInbox/{uid}'),
+    friendNotificationAccessThrottle:match('friendNotificationAccessThrottle/{uid}'),
+    friendLookupThrottle:match('friendLookupThrottle/{uid}'),
+    accountIdRegistry:match('accountIdRegistry/{accountIdKey}'),
+    campaigns:match('campaigns/{campaignId}'),
+    campaignNotificationInbox:match('campaignNotificationInbox/{uid}')
+  };
+  const candidate=history.find(entry=>entry&&/^[a-f0-9]{40}$/.test(entry.sha)&&
+    typeof entry.content==='string'&&
+    (entry.content===live||
+      normalizeForDiagnostic(entry.content)===normalizeForDiagnostic(live)));
+  const diff=lineDiffCounts(baseline,live);
+  return {
+    state,
+    deploymentPermitted:state==='ready'||state==='already-current',
+    liveSha256:checksum(live),
+    baselineSha256,approvedSha256,
+    liveLineCount:live.split('\n').length,
+    baselineLineCount:baseline.split('\n').length,
+    liveMatchCount:(live.match(/\bmatch\s+\//g)||[]).length,
+    baselineMatchCount:(baseline.match(/\bmatch\s+\//g)||[]).length,
+    ...diff,knownPaths,
+    historicalMatch: candidate?
+      {commit:candidate.sha,match:live===candidate.content?'exact':'line-endings-only'}:null,
+    nextStep:state==='ready'?'Reviewed baseline is live; rules-only release may be requested.':
+      state==='already-current'?'Reviewed rules are already live; no rules deployment needed.':
+      'STOP: source differs from reviewed baseline. Reconcile live rules before deployment.'
+  };
+}
+// Git history is read-only, local to the checked-out public source tree.
+export function readHistoricalRulesForAudit({limit=40}={}){
+  if(!Number.isSafeInteger(limit)||limit<1||limit>80)
+    fail('Invalid rule history audit limit.');
+  let revisions=[];
+  try{
+    revisions=execFileSync('git',['log','--format=%H',
+      '--max-count='+limit,'--','firestore.rules'],
+    {cwd:root,encoding:'utf8',maxBuffer:64000})
+      .trim().split('\n').filter(value=>/^[a-f0-9]{40}$/.test(value));
+  }catch{return [];}
+  const history=[];
+  for(const sha of revisions){
+    try{
+      history.push({sha,content:execFileSync('git',['show',sha+':firestore.rules'],
+        {cwd:root,encoding:'utf8',maxBuffer:256000})});
+    }catch{/* Old entries lacking rules are ignored. */}
+  }
+  return history;
+}
+
 export function stageFriendRules(env=process.env,live){
   if(env.GITHUB_ACTIONS!=='true'||!isAbsolute(env.RUNNER_TEMP||'')||
      env.GITHUB_REF!=='refs/heads/main'||env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
@@ -76,14 +166,20 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
       const {baselineSha256,approvedSha256}=approvedFriendRuleSources();
       console.log(JSON.stringify({baselineSha256,approvedSha256,scope:'firestore:rules',
         deploysIndexes:false,deploysStorage:false}));
-    }else if(arg==='--compare-ruleset'||arg==='--stage-production'){
+    }else if(arg==='--compare-ruleset'||arg==='--stage-production'||
+             arg==='--audit-ruleset'){
       const pathname=process.argv[3];
       if(!pathname||!isAbsolute(pathname))fail('Provide absolute local ruleset snapshot path.');
       const live=extractLiveRulesFromRuleset(JSON.parse(readFileSync(pathname,'utf8')));
-      const result=arg==='--compare-ruleset'?
-        evaluateLiveFriendRules(live):stageFriendRules(process.env,live);
-      console.log(JSON.stringify({state:result.state,directory:result.directory||null,
-        baselineSha256:result.baselineSha256,approvedSha256:result.approvedSha256}));
+      if(arg==='--audit-ruleset'){
+        console.log(JSON.stringify(auditLiveFriendRules(live,read('firestore.rules'),
+          readHistoricalRulesForAudit())));
+      }else{
+        const result=arg==='--compare-ruleset'?
+          evaluateLiveFriendRules(live):stageFriendRules(process.env,live);
+        console.log(JSON.stringify({state:result.state,directory:result.directory||null,
+          baselineSha256:result.baselineSha256,approvedSha256:result.approvedSha256}));
+      }
     }else fail('Unknown Firestore rules release operation.');
   }catch(error){console.error(error.message);process.exitCode=1;}
 }
