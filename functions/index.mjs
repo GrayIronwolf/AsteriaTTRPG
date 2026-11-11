@@ -69,6 +69,18 @@ export const asteriaSecureInvitation=onCall({
           signingKey:secureInvitationSigningKey.value()
         });
     }
+    if(data.action==='issue-friend'){
+      if(process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1'||
+         process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED!=='1'||
+         process.env.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED!=='1')
+        throw new Error('Account-bound campaign invitations are not enabled yet.');
+      const {issueAccountBoundFriendInvitation}=
+        await import('./campaignFriendInvitations.mjs');
+      return await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
+        request.auth.uid,data,{
+          signingKey:secureInvitationSigningKey.value()
+        });
+    }
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
     if(data.action==='preview'||data.action==='accept'){
@@ -84,7 +96,9 @@ export const asteriaSecureInvitation=onCall({
       const input={campaignId:data.campaignId,inviteId:data.inviteId,token:data.token};
       const options={
         signingKey:secureInvitationSigningKey.value(),
-        notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'
+        notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1',
+        friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1',
+        authAdmin:getAuth()
       };
       return data.action==='preview'?
         await previewSecureCampaignInvitation(getFirestore(),claimant,input,options):
@@ -109,6 +123,10 @@ export const asteriaSecureInvitation=onCall({
     const {issueSecureCampaignInvitation}=await import('./campaignSecureInvitations.mjs');
     const {campaignId,requestId,type,roleOffered,recipientEmail,
       recipientUid,expiresInHours,maxUses,requiresGMApproval}=request.data||{};
+    // A browser must never choose a private UID for the legacy issue action.
+    // Phase 5.2 binds public Account IDs only through the new gated action.
+    if(recipientUid!==undefined&&recipientUid!==null)
+      throw new Error('Choose a recipient through the Account ID invitation flow.');
     return await issueSecureCampaignInvitation(getFirestore(),request.auth.uid,{
       campaignId,requestId,type,roleOffered,recipientEmail,recipientUid,
       expiresInHours,maxUses,requiresGMApproval
