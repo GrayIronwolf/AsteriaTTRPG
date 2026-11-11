@@ -17,9 +17,11 @@ on:
           - account-id-callable-deploy
           - account-profile-avatar-rules-deploy
           - friends-lookup-deploy
+          - friends-lookup-activate
+          - friends-lookup-deactivate
           - deploy
       production_confirmation:
-        description: 'For deploy type DEPLOY-ASTERIA-PRODUCTION; for campaign-backend-deploy type DEPLOY-ASTERIA-CAMPAIGN-BACKEND. Leave blank for audits. For account-id-callable-deploy type DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE; for account-profile-avatar-rules-deploy type DEPLOY-ASTERIA-PROFILE-AVATAR-RULES. For friends-lookup-deploy type DEPLOY-ASTERIA-FRIENDS-LOOKUP.'
+        description: 'For deploy type DEPLOY-ASTERIA-PRODUCTION; for campaign-backend-deploy type DEPLOY-ASTERIA-CAMPAIGN-BACKEND. Leave blank for audits. For account-id-callable-deploy type DEPLOY-ASTERIA-ACCOUNT-ID-CALLABLE; for account-profile-avatar-rules-deploy type DEPLOY-ASTERIA-PROFILE-AVATAR-RULES. For friends-lookup-deploy type DEPLOY-ASTERIA-FRIENDS-LOOKUP. For friends-lookup-activate type ACTIVATE-ASTERIA-FRIENDS-LOOKUP; for friends-lookup-deactivate type DEACTIVATE-ASTERIA-FRIENDS-LOOKUP.'
         required: false
         type: string
         default: ''
@@ -448,6 +450,8 @@ jobs:
         env:
           ASTERIA_FRIENDS_SCOPED_DEPLOY: '1'
           ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_FRIENDS_OPERATION: ${{ inputs.operation }}
+          ASTERIA_FRIENDS_CONFIRMATION: ${{ inputs.production_confirmation }}
         run: |
           node scripts/friends-phase1-2-release-package.mjs --stage-production
           npm install --prefix "$RUNNER_TEMP/asteria-friends-lookup-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
@@ -466,3 +470,88 @@ jobs:
           echo 'Deployed only asteriaFriendAccountLookup to existing asteria-ttrpg.' >> "$GITHUB_STEP_SUMMARY"
           echo 'ASTERIA_FRIEND_LOOKUP_ENABLED is not enabled by this workflow.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No other functions, account identities, invitations, rules, Firebase Hosting, or website files changed.' >> "$GITHUB_STEP_SUMMARY"
+
+  friends_lookup_activation:
+    name: Separately approved Friends search activation or rollback
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (inputs.operation == 'friends-lookup-activate' &&
+         inputs.production_confirmation == 'ACTIVATE-ASTERIA-FRIENDS-LOOKUP') ||
+        (inputs.operation == 'friends-lookup-deactivate' &&
+         inputs.production_confirmation == 'DEACTIVATE-ASTERIA-FRIENDS-LOOKUP')
+      )
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify lookup logic, privacy and deployment boundaries
+        run: |
+          npm run audit:production
+          npm run test:friends-phase1-2
+          npm run test:friends-phase1-3
+          npm run test:firebase
+          node scripts/friends-phase1-2-release-package.mjs --check
+      - name: Authenticate via existing production Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Stage one approved Cloud Function and explicit runtime flag
+        env:
+          ASTERIA_FRIENDS_SCOPED_DEPLOY: '1'
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_FRIENDS_OPERATION: ${{ inputs.operation }}
+          ASTERIA_FRIENDS_CONFIRMATION: ${{ inputs.production_confirmation }}
+        run: |
+          case "$ASTERIA_FRIENDS_OPERATION" in
+            friends-lookup-activate)
+              node scripts/friends-phase1-2-release-package.mjs --stage-activation
+              test "$(cat "$RUNNER_TEMP/asteria-friends-lookup-release/functions/.env.asteria-ttrpg")" = "ASTERIA_FRIEND_LOOKUP_ENABLED=1"
+              ;;
+            friends-lookup-deactivate)
+              node scripts/friends-phase1-2-release-package.mjs --stage-deactivation
+              test "$(cat "$RUNNER_TEMP/asteria-friends-lookup-release/functions/.env.asteria-ttrpg")" = "ASTERIA_FRIEND_LOOKUP_ENABLED=0"
+              ;;
+            *) echo "Unapproved operation" >&2; exit 1 ;;
+          esac
+          npm install --prefix "$RUNNER_TEMP/asteria-friends-lookup-release/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-friends-lookup-release/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-friends-lookup-release/functions/index.mjs"
+      - name: Install isolated Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-friends-lookup-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-friends-lookup-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only Friends lookup callable with reviewed flag
+        working-directory: ${{ runner.temp }}/asteria-friends-lookup-release
+        run: |
+          "$RUNNER_TEMP/asteria-friends-lookup-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only functions:asteria:asteriaFriendAccountLookup --non-interactive
+      - name: Confirm deployed environment without exposing other configuration
+        env:
+          EXPECTED_OPERATION: ${{ inputs.operation }}
+        run: |
+          expected="0"
+          if [ "$EXPECTED_OPERATION" = "friends-lookup-activate" ]; then expected="1"; fi
+          actual="$(gcloud functions describe asteriaFriendAccountLookup --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_LOOKUP_ENABLED)')"
+          if [ "$actual" != "$expected" ]; then
+            echo "Backend feature gate could not be verified as $expected." >&2
+            exit 1
+          fi
+          echo 'Backend lookup flag verified; Firestore and website were not changed.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The browser search remains unavailable without the explicit canary URL.' >> "$GITHUB_STEP_SUMMARY"
