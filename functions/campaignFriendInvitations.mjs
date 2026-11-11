@@ -107,6 +107,7 @@ export async function issueAccountBoundFriendInvitation(db,auth,actorUid,input,{
       requiresGMApproval:true
     },{
       signingKey,now,tokenFactory,
+      bindingKind:'friend-account',recipientAccountIdKey:data.accountIdKey,
       resolveBoundRecipient:(tx)=>resolveCampaignRecipientForIssuance(
         tx,db,auth,actorUid,data.campaignId,data.accountIdKey)
     });
