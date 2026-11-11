@@ -32,11 +32,62 @@ export function approvedFriendRuleSources(source=read('firestore.rules')){
   return {baseline,approved:source,baselineSha256:checksum(baseline),
     approvedSha256:checksum(source)};
 }
+
+const pinnedLiveSourceSha256='c600616db92fde0b0c993f70e96cd83dd39d666d23ade8c7e934db0b14c1b456';
+const pinnedLegacyCommit='e5437f6e6f2764cecb8e23a1b4f59fc66d66f997';
+const addedStart='    // Phase 1.2: exact friends lookup quotas are Admin-only.';
+const addedEnd='    match /accountIdAssignments/{uid} {';
+// This list explicitly permits only deny rules, without any new grants or
+// changes to user, character, campaign or account permissions.
+const expectedDenyCode=[
+  'match /friendRelationships/{pairId} {',
+  'allow get, list, create, update, delete: if false;',
+  '}',
+  'match /friendNotificationAccessThrottle/{uid} {',
+  'allow get, list, create, update, delete: if false;',
+  '}',
+  'match /friendNotificationInbox/{uid} {',
+  'allow read, write: if false;',
+  'match /items/{notificationId} {',
+  'allow read, write: if false;',
+  '}',
+  '}',
+  'match /friendRequestInboxThrottle/{uid} {',
+  'allow get, list, create, update, delete: if false;',
+  '}',
+  'match /friendRequestIssueThrottle/{uid} {',
+  'allow get, list, create, update, delete: if false;',
+  '}',
+  'match /friendLookupThrottle/{uid} {',
+  'allow read, write: if false;',
+  '}'
+].join('\n');
+/** Comparison only; never relaxes authorization from a known version. */
+export function onlyAddsReviewedFriendDenials(older,current=read('firestore.rules')){
+  if(typeof older!=='string'||typeof current!=='string')return false;
+  const start=current.indexOf(addedStart),end=current.indexOf(addedEnd);
+  if(start<0||end<=start||
+     current.indexOf(addedStart,start+1)!==-1||
+     current.indexOf(addedEnd,end+1)!==-1)return false;
+  const added=current.slice(start,end);
+  const normalizedAdded=added.split(/\r?\n/)
+    .map(line=>line.replace(/\/\/.*$/,'').trim()).filter(Boolean).join('\n');
+  if(normalizedAdded!==expectedDenyCode)return false;
+  const restored=current.slice(0,start)+current.slice(end);
+  return normalizeForDiagnostic(older)===normalizeForDiagnostic(restored);
+}
+function matchesPinnedLiveRules(live,approved){
+  return checksum(live)===pinnedLiveSourceSha256 &&
+    onlyAddsReviewedFriendDenials(live,approved);
+}
+
 export function evaluateLiveFriendRules(live,source=read('firestore.rules')){
   const files=approvedFriendRuleSources(source);
   if(typeof live!=='string')fail('Live Firestore source is unavailable.');
   if(live===files.approved)return {state:'already-current',...files};
   if(live===files.baseline)return {state:'ready',...files};
+  if(matchesPinnedLiveRules(live,files.approved))
+    return {state:'ready-pinned-legacy',pinnedLegacyCommit,...files};
   fail('Live Firestore rules diverge from the reviewed baseline. Do not deploy.');
 }
 export function extractLiveRulesFromRuleset(payload){
@@ -74,6 +125,8 @@ export function auditLiveFriendRules(live,source=read('firestore.rules'),
   let state='blocked-drift';
   if(live===baseline)state='ready';
   else if(live===approved)state='already-current';
+  else if(matchesPinnedLiveRules(live,approved))
+    state='ready-pinned-legacy';
   else if(normalizeForDiagnostic(live)===normalizeForDiagnostic(baseline))
     state='blocked-format-only-baseline';
   else if(normalizeForDiagnostic(live)===normalizeForDiagnostic(approved))
@@ -99,7 +152,7 @@ export function auditLiveFriendRules(live,source=read('firestore.rules'),
   const diff=lineDiffCounts(baseline,live);
   return {
     state,
-    deploymentPermitted:state==='ready'||state==='already-current',
+    deploymentPermitted:['ready','already-current','ready-pinned-legacy'].includes(state),
     liveSha256:checksum(live),
     baselineSha256,approvedSha256,
     liveLineCount:live.split('\n').length,
@@ -110,6 +163,7 @@ export function auditLiveFriendRules(live,source=read('firestore.rules'),
     historicalMatch: candidate?
       {commit:candidate.sha,match:live===candidate.content?'exact':'line-endings-only'}:null,
     nextStep:state==='ready'?'Reviewed baseline is live; rules-only release may be requested.':
+      state==='ready-pinned-legacy'?'Pinned historical live rules verified; deny-only rules deployment may be requested.':
       state==='already-current'?'Reviewed rules are already live; no rules deployment needed.':
       'STOP: source differs from reviewed baseline. Reconcile live rules before deployment.'
   };
@@ -143,7 +197,8 @@ export function stageFriendRules(env=process.env,live){
      env.ASTERIA_NOTIFICATION_CONFIRMATION!=='DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES')
     fail('Rules deploy staging requires manual approved production workflow.');
   const checked=evaluateLiveFriendRules(live);
-  if(checked.state!=='ready')return {directory:null,...checked};
+  if(!['ready','ready-pinned-legacy'].includes(checked.state))
+    return {directory:null,...checked};
   const directory=join(env.RUNNER_TEMP,'asteria-friends-notification-rules');
   if(existsSync(directory))fail('Rules release directory already exists.');
   const config={
