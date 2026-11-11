@@ -172,12 +172,14 @@
       if(!valid())return false;
       if(!result?.ok)throw new Error('Invalid friend request result.');
       if(action==='send'){state.candidate=null;controls();}
-      status(action==='send'?'Friend request sent.':
+      const confirmation=action==='send'?'Friend request sent.':
         action==='accept'?'Friend request accepted.':
         action==='decline'?'Friend request declined.':
-        'Friend request cancelled.');
+        'Friend request cancelled.';
       state.busy=false;controls();
       await load(false);
+      // Keep the confirmed outcome visible after the inbox refresh.
+      if(state.uid===uid&&session()&&active())status(confirmation);
       return true;
     }catch(error){
       if(valid()){
