@@ -7,6 +7,9 @@ import {assertFriendRelationship,friendPairId} from './friendRelationshipModel.m
 const UID=/^[A-Za-z0-9_-]{1,128}$/;
 const PAGE_SIZE=20;
 const MAX_OFFSET=1000;
+const INBOX_WINDOW_MS=15*60*1000;
+const INBOX_DAY_MS=24*60*60*1000;
+export const FRIEND_INBOX_LIMITS=Object.freeze({perWindow:30,perDay:120});
 const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
 const unavailable=()=>new Error('Friend request inbox unavailable.');
 const dataOf=s=>s?.exists?s.data()||{}:null;
@@ -19,6 +22,40 @@ export function validateFriendRequestList(data){
       data.cursor>MAX_OFFSET||data.cursor%PAGE_SIZE!==0)
     throw new Error('Invalid friend request inbox query.');
   return {direction:data.direction,cursor:data.cursor};
+}
+
+export function nextFriendInboxQuota(previous,actorUid,nowMs){
+  if(typeof actorUid!=='string'||!UID.test(actorUid)||
+     !Number.isSafeInteger(nowMs)||nowMs<0)
+    throw unavailable();
+  if(previous!=null&&(
+     typeof previous!=='object'||Array.isArray(previous)||
+     Object.keys(previous).sort().join(',')!==
+       'dayCount,dayStartMs,lastAttemptAtMs,uid,windowCount,windowStartMs'||
+     previous.uid!==actorUid||
+     !Number.isSafeInteger(previous.dayStartMs)||
+     !Number.isSafeInteger(previous.windowStartMs)||
+     !Number.isSafeInteger(previous.lastAttemptAtMs)||
+     previous.dayStartMs>nowMs||previous.windowStartMs>nowMs||
+     previous.lastAttemptAtMs>nowMs||
+     !Number.isSafeInteger(previous.dayCount)||previous.dayCount<1||
+     previous.dayCount>FRIEND_INBOX_LIMITS.perDay||
+     !Number.isSafeInteger(previous.windowCount)||previous.windowCount<1||
+     previous.windowCount>FRIEND_INBOX_LIMITS.perWindow))
+    throw unavailable();
+  const inWindow=previous&&nowMs-previous.windowStartMs<INBOX_WINDOW_MS;
+  const inDay=previous&&nowMs-previous.dayStartMs<INBOX_DAY_MS;
+  const windowCount=inWindow?previous.windowCount:0;
+  const dayCount=inDay?previous.dayCount:0;
+  if(windowCount>=FRIEND_INBOX_LIMITS.perWindow||
+     dayCount>=FRIEND_INBOX_LIMITS.perDay)
+    throw new Error('Friend request inbox rate limit reached.');
+  return {
+    uid:actorUid,windowStartMs:inWindow?previous.windowStartMs:nowMs,
+    windowCount:windowCount+1,
+    dayStartMs:inDay?previous.dayStartMs:nowMs,
+    dayCount:dayCount+1,lastAttemptAtMs:nowMs
+  };
 }
 
 async function verifiedIdentity(db,uid){
@@ -60,6 +97,14 @@ export async function listFriendRequests(db,authAdmin,actorUid,rawData,{
   catch{throw unavailable();}
   if(actor?.uid!==actorUid||actor.disabled===true||
       !await verifiedIdentity(db,actorUid))throw unavailable();
+  const throttle=db.doc('friendRequestInboxThrottle/'+actorUid);
+  // One transactional quota write per request, even for empty or no-match pages.
+  // Browser clients cannot access the throttle directly. Retries enforce quota.
+  await db.runTransaction(async tx=>{
+    const previous=await tx.get(throttle);
+    const next=nextFriendInboxQuota(dataOf(previous),actorUid,now.getTime());
+    tx.set(throttle,next);
+  });
 
   // A single-field array-contains query avoids a new composite index or any
   // client privilege expansion. The implicit document-ID order is stable
