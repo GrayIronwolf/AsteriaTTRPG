@@ -240,16 +240,61 @@ jobs:
           gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-functions.txt"
           grep -Eq '(^|/)asteriaAction$' "$RUNNER_TEMP/asteria-functions.txt"
           grep -Eq '(^|/)asteriaInvite$' "$RUNNER_TEMP/asteria-functions.txt"
-      - name: Deploy only five staged campaign callables (no existing functions, rules or storage)
-        run: >
-          npx firebase deploy --project asteria-ttrpg
-          --only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview"
-          --non-interactive
-      - name: Record deployment scope
+      - name: Verify reviewed five-function package without cloud writes
         run: |
-          echo '## Separately approved, functions-only Asteria campaign release' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Five campaign callables only; no legacy callable, Firestore rules, indexes, Storage rules, website, feature flag, email sender or migration was deployed by this job.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'This step does not establish production readiness for public feature activation.' >> "$GITHUB_STEP_SUMMARY"
+          node scripts/campaign-backend-scoped-release.mjs --check
+          node --test scripts/campaign-backend-scoped-release.test.mjs
+      - name: Require all five core campaign functions to be absent before initial deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in asteriaCampaignUCN asteriaMembershipPreparation asteriaCampaignAccessCutover asteriaCampaignJoinRequest asteriaCampaignJoinReview; do
+            if grep -Eq "(^|/)${target}$" "$RUNNER_TEMP/asteria-functions.txt"; then
+              echo "Refusing to overwrite existing core campaign function: $target" >&2
+              exit 1
+            fi
+          done
+      - name: Stage isolated, secret-free campaign package in runner temp
+        shell: bash
+        env:
+          ASTERIA_CAMPAIGN_OPERATION: ${{ inputs.operation }}
+          ASTERIA_CAMPAIGN_CONFIRMATION: ${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          node scripts/campaign-backend-scoped-release.mjs --stage
+          npm install --prefix "$RUNNER_TEMP/asteria-campaign-core-release" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-campaign-core-release" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-campaign-core-release/functions/index.mjs"
+      - name: Deploy exactly five isolated core campaign callables (no secrets, rules or email)
+        working-directory: ${{ runner.temp }}/asteria-campaign-core-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GITHUB_WORKSPACE/node_modules/.bin/firebase" deploy --project asteria-ttrpg \
+            --only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview" \
+            --non-interactive
+      - name: Verify only the expected five functions are now listed
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format='value(name)' > "$RUNNER_TEMP/asteria-campaign-post-deploy.txt"
+          for target in asteriaCampaignUCN asteriaMembershipPreparation asteriaCampaignAccessCutover asteriaCampaignJoinRequest asteriaCampaignJoinReview; do
+            grep -Eq "(^|/)${target}$" "$RUNNER_TEMP/asteria-campaign-post-deploy.txt" || {
+              echo "Expected core campaign function missing: $target" >&2
+              exit 1
+            }
+          done
+          for target in asteriaAction asteriaInvite; do
+            grep -Eq "(^|/)${target}$" "$RUNNER_TEMP/asteria-campaign-post-deploy.txt" || {
+              echo "Existing legacy campaign function unexpectedly absent: $target" >&2
+              exit 1
+            }
+          done
+          echo '## Scoped campaign core deployment' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Five previously absent core campaign callables are listed after isolated deployment.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No production feature flags were enabled; no Firestore/Storage rules, Hosting, email delivery or invitation secrets were deployed.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Source-only deployment is not approval for campaign v2 activation.' >> "$GITHUB_STEP_SUMMARY"
 
   account_id_inventory:
     name: Read-only Account ID function inventory
