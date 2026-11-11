@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/asteria-account-menu.css?v=account-menu-phase3-3">
 <link rel="stylesheet" href="css/asteria-account-profile.css?v=account-profile-phase3-2">
 <link rel="stylesheet" href="css/asteria-account-security.css?v=account-menu-phase3-3">
-<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase3-1">
+<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase3-2">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -481,6 +481,23 @@
         <div id="accountFriendsAcceptedList" class="asteria-accepted-friends-list" aria-label="Accepted friends"></div>
         <button id="accountFriendsAcceptedMore" type="button" hidden disabled>Load More Friends</button>
       </section>
+      <section id="accountFriendsBlocked" class="asteria-blocked-friends" aria-labelledby="accountFriendsBlockedTitle">
+        <div class="asteria-blocked-friends-heading">
+          <h3 id="accountFriendsBlockedTitle">Blocked Players</h3>
+          <button id="accountFriendsBlockedRefresh" type="button" disabled>Refresh</button>
+        </div>
+        <p id="accountFriendsBlockedStatus" role="status" aria-live="polite">Blocked accounts are unavailable.</p>
+        <div id="accountFriendsBlockedList" class="asteria-blocked-friends-list" aria-label="Players you have blocked"></div>
+        <button id="accountFriendsBlockedMore" type="button" hidden disabled>Load More</button>
+      </section>
+      <section id="accountFriendsManageConfirm" class="asteria-friends-manage-confirm" role="alertdialog" aria-modal="true" aria-labelledby="accountFriendsManageTitle" aria-describedby="accountFriendsManageMessage" hidden tabindex="-1">
+        <h3 id="accountFriendsManageTitle">Confirm friendship change</h3>
+        <p id="accountFriendsManageMessage"></p>
+        <div class="asteria-friends-manage-confirm-actions">
+          <button id="accountFriendsManageCancel" type="button">Cancel</button>
+          <button id="accountFriendsManageApprove" type="button">Confirm</button>
+        </div>
+      </section>
       <div id="accountFriendsRequests" class="asteria-friend-requests" aria-label="Friend requests">
         <div class="asteria-friend-requests-head">
           <h3>Friend Requests</h3>
@@ -520,11 +537,12 @@
 <script src="js/asteria-account-friends.js?v=friends-phase1-3"></script>
 <script src="js/asteria-friend-requests.js?v=friends-phase2-3"></script>
 <script src="js/asteria-accepted-friends.js?v=friends-phase3-1"></script>
+<script src="js/asteria-friend-management.js?v=friends-phase3-2"></script>
 <script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>
   <script>window.AsteriaFeatureFlags = Object.freeze({friendAccountLookup:new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1',friendRequestsEnabled:new URLSearchParams(window.location.search).get('friends-requests-canary')==='1',serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=friends-phase3-1"></script>
+  <script type="module" src="js/firebase-auth.js?v=friends-phase3-2"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
