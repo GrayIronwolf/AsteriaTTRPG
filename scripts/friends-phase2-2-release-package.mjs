@@ -51,6 +51,7 @@ export function buildFriendRequestsRelease(){
     'functions/.env.asteria-ttrpg':'ASTERIA_FRIEND_REQUESTS_ENABLED=0\n',
     'functions/index.mjs':isolatedFriendRequestsSource(),
     'functions/friendRequestActions.mjs':read('functions/friendRequestActions.mjs'),
+    'functions/friendRequestInbox.mjs':read('functions/friendRequestInbox.mjs'),
     'functions/friendRelationshipModel.mjs':read('functions/friendRelationshipModel.mjs'),
     'functions/friendAccountLookup.mjs':read('functions/friendAccountLookup.mjs')
   };
