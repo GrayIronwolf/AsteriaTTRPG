@@ -1,6 +1,8 @@
 import {assertSecureInvitationEligible} from './campaignSecureInvitations.mjs';
 import {MEMBER_STATUSES,JOIN_REQUEST_STATUSES} from './campaignMembership.mjs';
 import {enqueueCampaignNotification} from './campaignNotifications.mjs';
+import {friendRelationshipPath,friendPairId,assertFriendRelationship}
+  from './friendRelationshipModel.mjs';
 
 // Phase 6.3: authenticated preview and deterministic claim into the EXISTING
 // canonical join-review queue. Never grants membership or elevated roles.
@@ -79,6 +81,26 @@ function requestSummary(campaignId,request,alreadyExists){
   };
 }
 
+async function assertFriendBoundClaim(db,authAdmin,ownerUid,claimantUid,invite,{
+  tx=null
+}={}){
+  if(invite.friendAccountBound!==true)return;
+  const unavailable=()=>new Error('This invitation is unavailable or no longer valid.');
+  if(!authAdmin?.getUser||!validId(ownerUid)||!validId(claimantUid)||
+     invite.recipientUid!==claimantUid)return Promise.reject(unavailable());
+  const account=await authAdmin.getUser(claimantUid).catch(()=>null);
+  if(account?.uid!==claimantUid||account.disabled===true)throw unavailable();
+  const ref=db.doc(friendRelationshipPath(ownerUid,claimantUid));
+  const snap=tx?await tx.get(ref):await ref.get();
+  if(!snap.exists)return;
+  try{
+    const relation=snap.data();
+    assertFriendRelationship(relation);
+    if(relation.pairId!==friendPairId(ownerUid,claimantUid)||
+       relation.status==='blocked')throw unavailable();
+  }catch{throw unavailable();}
+}
+
 /** Read-only secret-authenticated preview; returns no UID, token or join roster. */
 export async function previewSecureCampaignInvitation(db,auth,{
   campaignId,inviteId,token
@@ -107,6 +129,8 @@ export async function previewSecureCampaignInvitation(db,auth,{
     JOIN_REQUEST_STATUSES.includes(requestSnap.data()?.status);
   const eligible=verify(invite,identity,{campaignId,inviteId,token},
     {...options,now},existing);
+  await assertFriendBoundClaim(db,options.authAdmin,campaign.ownerUid,
+    identity.uid,invite);
   await assertBoundFriendEligible(db,options,invite,campaign,identity.uid);
   return {...safePreview(campaign,invite,eligible),
     status:existing?requestSnap.data().status:'available',
@@ -142,6 +166,8 @@ export async function acceptSecureCampaignInvitation(db,auth,{
     if(!root.exists||!inviteSnap.exists)throw unavailable();
     const campaign=root.data(),invite=inviteSnap.data();
     assertCampaign(campaign,campaignId);
+    await assertFriendBoundClaim(db,options.authAdmin,campaign.ownerUid,
+      uid,invite,{tx});
     if(uid===campaign.ownerUid)throw Error('The campaign owner is already a member.');
     if(memberSnap.exists){
       const member=memberSnap.data();
