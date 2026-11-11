@@ -167,5 +167,5 @@ test('independent server gating, existing scoped release, and Firestore deny rul
  assert.match(rules,/match \/items\/\{notificationId\}/);
  const packageSource=read('scripts/friends-phase2-2-release-package.mjs');
  assert.match(packageSource,/functions\/friendNotifications.mjs/);
- assert.doesNotMatch(read('index.html'),/friendNotificationsEnabled:true/);
+ assert.match(read('index.html'),/friendNotificationsEnabled:true,serverCampaignUCN:false/);
 });
