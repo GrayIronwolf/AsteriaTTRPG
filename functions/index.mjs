@@ -355,6 +355,7 @@ export const asteriaFriendRequests=onCall({
        error?.message==='Invalid Account ID.')
       throw new HttpsError('invalid-argument','Enter a valid friend request action.');
     if(error?.message==='Account search rate limit reached.'||
+       error?.message==='Friend request inbox rate limit reached.'||
        error?.message==='Daily friend request limit reached.')
       throw new HttpsError('resource-exhausted','Too many friend request actions. Try again later.');
     if(error?.message==='Friendship changed. Refresh and try again.')
