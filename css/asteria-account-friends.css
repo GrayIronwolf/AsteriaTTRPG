@@ -1,0 +1,77 @@
+/* Asteria Friends: scoped Phase 1.3 Account dialog. No changes to approved art. */
+.asteria-friends-overlay[hidden],.asteria-friends-result[hidden]{display:none!important;}
+.asteria-friends-overlay{
+  position:fixed;inset:0;z-index:3530;display:grid;place-items:center;
+  padding:16px;background:rgba(2,7,13,.82);overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.asteria-friends-dialog{
+  box-sizing:border-box;width:min(100%,560px);max-height:calc(100dvh - 32px);
+  overflow:auto;padding:clamp(18px,3vw,30px);
+  border:1px solid #7893a4;border-radius:5px;
+  color:var(--asteria-text,#e6eef5);
+  background:linear-gradient(145deg,#1a3042,#0a1724 66%,#07101a);
+  box-shadow:0 25px 80px #000c,inset 0 1px #d6ecfb24;
+  font-family:var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-friends-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding-bottom:14px;border-bottom:1px solid #71889b55;
+}
+.asteria-friends-heading .eyebrow{margin:0;color:#b5ccd9;}
+.asteria-friends-heading h2{
+  margin:4px 0 0;color:#e6d3b5;
+  font:400 clamp(1.4rem,4vw,1.85rem)/1.2 var(--asteria-font-display,Georgia,serif);
+}
+.asteria-friends-heading button{
+  min-width:44px;min-height:44px;font-size:1.45rem;color:#e3eaf2;
+  background:#0b1a27;border:1px solid #71899b;cursor:pointer;
+}
+.asteria-friends-intro,.asteria-friends-help,.asteria-friends-status,
+.asteria-friends-result p{line-height:1.55;color:#c0d7e5;}
+.asteria-friends-intro{margin:18px 0;}
+.asteria-friends-search{display:grid;gap:10px;}
+.asteria-friends-search label{font-weight:600;color:#e6d3b5;}
+.asteria-friends-search-row{display:flex;align-items:stretch;gap:10px;}
+.asteria-friends-search-row input{
+  box-sizing:border-box;flex:1;min-width:0;min-height:46px;padding:10px 12px;
+  color:#f5f8fa;background:#081521;border:1px solid #7b95a7;border-radius:3px;
+  font:500 1rem/1.35 var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-friends-search-row input::placeholder{color:#a9bccc;}
+.asteria-friends-search-row button{
+  min-width:138px;min-height:46px;padding:10px 14px;
+  border:1px solid #7a95a5;border-radius:3px;
+  background:#19374d;color:#f3f7fb;
+  font:600 .9rem/1.3 var(--asteria-font-body,Arial,sans-serif);cursor:pointer;
+}
+.asteria-friends-search-row button:disabled,
+.asteria-friends-search-row input:disabled{opacity:.58;cursor:not-allowed;}
+.asteria-friends-help{margin:0;font-size:.84rem;}
+.asteria-friends-status{margin:18px 0;min-height:1.5em;font-size:.9rem;}
+.asteria-friends-result{
+  margin:18px 0 0;padding:18px;border:1px solid #728a9a88;
+  background:rgba(8,23,36,.76);
+}
+.asteria-friends-result h3{margin:0 0 14px;color:#e6d3b5;font-size:1.05rem;}
+.asteria-friends-result-person{display:flex;align-items:center;gap:15px;min-width:0;}
+.asteria-friends-initial{
+  display:grid;place-items:center;flex:none;width:52px;height:52px;
+  border:1px solid #8daabd;border-radius:50%;background:#19374d;
+  font:600 1.5rem var(--asteria-font-display,Georgia,serif);
+}
+.asteria-friends-result-identity{display:grid;gap:5px;min-width:0;overflow-wrap:anywhere;}
+.asteria-friends-result-identity strong{font-size:1.13rem;}
+.asteria-friends-result-identity span{color:#c1d9e7;}
+.asteria-friends-result p{margin-bottom:0;font-size:.85rem;}
+.asteria-friends-dialog button:focus-visible,
+.asteria-friends-dialog input:focus-visible{outline:2px solid #c6edff;outline-offset:3px;}
+@media(max-width:600px){
+  .asteria-friends-overlay{align-items:start;padding:12px;}
+  .asteria-friends-dialog{max-height:calc(100dvh - 24px);}
+  .asteria-friends-search-row{flex-direction:column;}
+  .asteria-friends-search-row button{width:100%;min-width:0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .asteria-friends-dialog *{scroll-behavior:auto;}
+}
