@@ -192,8 +192,9 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     if(process.argv[2]==='--check'){
       const details=Object.keys(operations).map(operation=>{
         const kind=operations[operation][0];
-        const live={exists:!operation.endsWith('-deploy-off'),
-          env:kind==='invites'?{
+        const initiallyAbsent=operation.endsWith('-deploy-off');
+        const live={exists:!initiallyAbsent,
+          env:initiallyAbsent?{}:kind==='invites'?{
             ASTERIA_SECURE_INVITATIONS_ENABLED:'1',
             ASTERIA_INVITATION_ACCEPTANCE_ENABLED:'1',
             ASTERIA_INVITATION_MANAGER_ENABLED:'1'
