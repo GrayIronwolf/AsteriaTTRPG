@@ -80,11 +80,8 @@ test('each staging operation requires an exact WIF-trusted manual main-only appr
    assert.equal(staged.functionName,functionName);
    assert.equal(staged.enabled,on);
    assert.equal(readFileSync(join(staged.directory,'functions/index.mjs'),'utf8'),
-    staged.files['functions/index.mjs']===undefined ?
-      buildFriendsNotificationActivationRelease(operation,{requestEnabled:'1'}).files['functions/index.mjs']:
-      // staged.files is a path allowlist; never use it to construct source.
-      buildFriendsNotificationActivationRelease(operation,{requestEnabled:'1'}).files['functions/index.mjs']
-   );
+      buildFriendsNotificationActivationRelease(operation,{requestEnabled:'1'})
+        .files['functions/index.mjs']);
    assert.throws(()=>stageFriendsNotificationActivation(env,operation),
      /already exists/);
   }finally{rmSync(temp,{recursive:true,force:true});}
