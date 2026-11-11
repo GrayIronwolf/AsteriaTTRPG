@@ -193,6 +193,18 @@ service cloud.firestore {
     // Phase 1.3: permanent Account ID assignments and unique directory are
     // server-only. Never grant browser reads or writes to either collection.
     // Phase 1.2: exact friends lookup quotas are Admin-only. Never list them.
+    // Phase 2.1: canonical social relationships and issuance quotas are Admin-only.
+    // Never let a browser list relationship participants, determine block state,
+    // forge a request, accept on another player's behalf or mint friendship.
+    // Future Phase 2.2 actions must use authenticated Cloud Functions transactions.
+    match /friendRelationships/{pairId} {
+      allow get, list, create, update, delete: if false;
+    }
+
+    match /friendRequestIssueThrottle/{uid} {
+      allow get, list, create, update, delete: if false;
+    }
+
     match /friendLookupThrottle/{uid} {
       allow read, write: if false;
     }
