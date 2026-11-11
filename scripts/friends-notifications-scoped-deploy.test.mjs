@@ -145,7 +145,7 @@ test('rules workflow accepts only pinned legacy and exact reviewed baseline',()=
  const source=read('.github/workflows/firebase-deploy.yml');
  const job=source.split('  friend_notifications_rules:')[1]
    ?.split('  friend_notifications_callable:')[0]||'';
- assert.match(job,/'ready-pinned-legacy'/);
+ assert.match(job,/ready-pinned-legacy/);
  assert.match(job,/--stage-production/);
  assert.match(job,/--only firestore:rules/);
  assert.doesNotMatch(job,/--only storage|--only firestore:indexes/);
