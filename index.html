@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="css/asteria-header-wordmark.css?v=wordmark-stars-v3-20261108">
 <link rel="stylesheet" href="css/asteria-campaign-connection.css?v=phase8-1-20261109">
 <link rel="stylesheet" href="css/asteria-friend-notifications.css?v=friends-phase4-2">
+<link rel="stylesheet" href="css/asteria-campaign-friend-recipients.css?v=friends-phase5-1">
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
   <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=hero-sharp-20261111">
@@ -565,8 +566,8 @@
 <script type="module" src="js/asteria-account-header.js?v=friends-notifications-website-20261111"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>
-  <script>window.AsteriaFeatureFlags = Object.freeze({friendAccountLookup:new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1',friendRequestsEnabled:new URLSearchParams(window.location.search).get('friends-requests-canary')==='1',friendNotificationsEnabled:true,serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=friends-notifications-website-20261111"></script>
+  <script>window.AsteriaFeatureFlags = Object.freeze({friendAccountLookup:new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1',friendRequestsEnabled:new URLSearchParams(window.location.search).get('friends-requests-canary')==='1',friendNotificationsEnabled:true,serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,campaignFriendRecipients:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
+  <script type="module" src="js/firebase-auth.js?v=friends-phase5-1"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
@@ -574,6 +575,7 @@
 <script src="js/secure-campaign-invite.js?v=phase6-3"></script>
 <script src="js/campaign-notifications-ui.js?v=phase7-3"></script>
 <script src="js/asteria-friend-notifications.js?v=friends-notifications-website-20261111"></script>
+<script src="js/asteria-campaign-friend-recipients.js?v=friends-phase5-1"></script>
 <script src="js/clean-compendium.js?v=friends-notifications-website-20261111"></script>
 
 <script src="js/universal-compendium-engine.js?v=compendium-demand-v1"></script>
