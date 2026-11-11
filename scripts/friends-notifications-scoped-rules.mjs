@@ -50,10 +50,10 @@ export function extractLiveRulesFromRuleset(payload){
 // Diagnostic only. This produces hashes and rule-path presence flags; it never
 // writes deployed rules, publishes live rule source, or authorizes a deployment.
 const normalizeForDiagnostic=value=>
-  value.replace(/^\\uFEFF/,'').replace(/\\r\\n/g,'\\n').replace(/\\n*$/,'\\n');
+  value.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\n*$/,'\n');
 
 const lineDiffCounts=(expected,actual)=>{
-  const left=expected.split('\\n'),right=actual.split('\\n');
+  const left=expected.split('\n'),right=actual.split('\n');
   let prev=new Uint16Array(right.length+1);
   for(let i=0;i<left.length;i++){
     const next=new Uint16Array(right.length+1);
@@ -102,10 +102,10 @@ export function auditLiveFriendRules(live,source=read('firestore.rules'),
     deploymentPermitted:state==='ready'||state==='already-current',
     liveSha256:checksum(live),
     baselineSha256,approvedSha256,
-    liveLineCount:live.split('\\n').length,
-    baselineLineCount:baseline.split('\\n').length,
-    liveMatchCount:(live.match(/\\bmatch\\s+\\//g)||[]).length,
-    baselineMatchCount:(baseline.match(/\\bmatch\\s+\\//g)||[]).length,
+    liveLineCount:live.split('\n').length,
+    baselineLineCount:baseline.split('\n').length,
+    liveMatchCount:(live.match(/\bmatch\s+\//g)||[]).length,
+    baselineMatchCount:(baseline.match(/\bmatch\s+\//g)||[]).length,
     ...diff,knownPaths,
     historicalMatch: candidate?
       {commit:candidate.sha,match:live===candidate.content?'exact':'line-endings-only'}:null,
@@ -123,7 +123,7 @@ export function readHistoricalRulesForAudit({limit=40}={}){
     revisions=execFileSync('git',['log','--format=%H',
       '--max-count='+limit,'--','firestore.rules'],
     {cwd:root,encoding:'utf8',maxBuffer:64000})
-      .trim().split('\\n').filter(value=>/^[a-f0-9]{40}$/.test(value));
+      .trim().split('\n').filter(value=>/^[a-f0-9]{40}$/.test(value));
   }catch{return [];}
   const history=[];
   for(const sha of revisions){
