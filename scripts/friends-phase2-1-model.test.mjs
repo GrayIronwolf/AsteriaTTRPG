@@ -54,7 +54,7 @@ test('pending requests expire exactly after 14 days and cannot be accepted or de
  const expired=move(incoming,'alice','expire',14*day);
  assert.equal(expired.status,'expired');
  assert.equal(expired.expiresAtMs,null);
- assert.equal(expired.nextRequestAtMs,14*day+7*day);
+ assert.equal(expired.nextRequestAtMs,start.getTime()+14*day+7*day);
  assert.throws(()=>move(incoming,'alice','expire',14*day-1),/unavailable/);
 });
 test('decline/cancel/remove enforce 7-day retry; re-request may reverse direction only after cooldown',()=>{
