@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/asteria-account-menu.css?v=account-menu-phase3-3">
 <link rel="stylesheet" href="css/asteria-account-profile.css?v=account-profile-phase3-2">
 <link rel="stylesheet" href="css/asteria-account-security.css?v=account-menu-phase3-3">
+<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase1-3">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -80,6 +81,10 @@
               <button id="accountMenuProfile" type="button" role="menuitem">My Profile</button>
               <button id="accountMenuSettings" type="button" role="menuitem">Account Settings</button>
               <button id="accountMenuAppearance" type="button" role="menuitem">Appearance</button>
+            </div>
+            <div class="asteria-account-menu-group" role="group" aria-label="Social">
+              <p class="asteria-account-menu-heading" aria-hidden="true">Social</p>
+              <button id="accountMenuFriends" type="button" role="menuitem">Friends <span id="accountMenuFriendsState" class="asteria-account-menu-meta">Search pending</span></button>
             </div>
             <div class="asteria-account-menu-group" role="group" aria-label="Updates">
               <p class="asteria-account-menu-heading" aria-hidden="true">Updates</p>
@@ -440,6 +445,35 @@
       <p id="accountProfileCopyStatus" class="asteria-profile-copy-status" role="status" aria-live="polite"></p>
     </section>
   </div>
+  <div id="accountFriendsOverlay" class="asteria-friends-overlay" hidden>
+    <section class="asteria-friends-dialog" role="dialog" aria-modal="true" aria-labelledby="accountFriendsTitle" aria-describedby="accountFriendsIntro" tabindex="-1">
+      <div class="asteria-friends-heading">
+        <div><p class="eyebrow">Asteria Social</p><h2 id="accountFriendsTitle">Find Players</h2></div>
+        <button id="accountFriendsClose" type="button" aria-label="Close Friends">×</button>
+      </div>
+      <p id="accountFriendsIntro" class="asteria-friends-intro">Find a player using their exact Asteria Account ID. Names alone are not searchable, and private account information remains hidden.</p>
+      <form id="accountFriendsSearchForm" class="asteria-friends-search" novalidate>
+        <label for="accountFriendsAccountId">Player Account ID</label>
+        <div class="asteria-friends-search-row">
+          <input id="accountFriendsAccountId" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="Username#00000" aria-describedby="accountFriendsFormat" disabled>
+          <button id="accountFriendsFind" type="submit" disabled>Find Player</button>
+        </div>
+        <p id="accountFriendsFormat" class="asteria-friends-help">Enter the complete username and five-digit number, for example Player#01234.</p>
+      </form>
+      <p id="accountFriendsStatus" class="asteria-friends-status" role="status" aria-live="polite">Player search is not active yet.</p>
+      <section id="accountFriendsResult" class="asteria-friends-result" aria-label="Player search result" hidden>
+        <h3>Player found</h3>
+        <div class="asteria-friends-result-person">
+          <span id="accountFriendsResultInitial" class="asteria-friends-initial" aria-hidden="true"></span>
+          <div class="asteria-friends-result-identity">
+            <strong id="accountFriendsResultName"></strong>
+            <span id="accountFriendsResultId"></span>
+          </div>
+        </div>
+        <p>Friend requests will be available in Phase 2. Finding an account does not connect you to a player or campaign.</p>
+      </section>
+    </section>
+  </div>
   <div id="itemModal" class="item-modal" aria-hidden="true"><div class="item-modal-card" role="dialog" aria-modal="true" aria-labelledby="itemModalName" tabindex="-1"><div class="section-head"><div><p class="eyebrow">Inventory Item</p><h2 id="itemModalName">Item</h2></div><button type="button" onclick="closeItemModal()" aria-label="Close item details">×</button></div><div id="itemModalBody"></div></div></div>
   <div id="feedbackStack" class="feedback-stack"></div>
   <div id="levelModal" class="level-modal" aria-hidden="true"><div class="level-card" role="dialog" aria-modal="true" aria-labelledby="levelModalTitle" tabindex="-1"><button type="button" class="level-close" onclick="closeLevelModal()" aria-label="Close level notification">×</button><p class="eyebrow">Asteria Progression</p><h2 id="levelModalTitle">Level Up!</h2><div id="levelModalBody"></div><button class="primary" onclick="setView('player');closeLevelModal()">Open Character</button></div></div>
@@ -457,12 +491,13 @@
   <script src="js/asteria-inventory-api.js?v=react-m1"></script>
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
-<script src="js/asteria-account-menu.js?v=header-account-20261110"></script>
+<script src="js/asteria-account-menu.js?v=friends-phase1-3"></script>
+<script src="js/asteria-account-friends.js?v=friends-phase1-3"></script>
 <script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>
-  <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
-  <script type="module" src="js/firebase-auth.js?v=account-username-20261111"></script>
+  <script>window.AsteriaFeatureFlags = Object.freeze({serverCampaignUCN:false,campaignJoinPreview:false,campaignJoinRequests:false,campaignJoinReview:false,campaignPlayerRoster:false,campaignMemberControls:false,campaignRolePermissions:false,campaignCharacterLinks:false,campaignCharacterApproval:false,campaignCharacterLifecycle:false,secureInvitationManager:false,secureInvitationAcceptance:false,emailInvitationControls:false,campaignNotifications:false,accountIds:true,friendAccountLookup:false,accountIdAutoCanary:new URLSearchParams(window.location.search).get('account-id-auto-canary')==='1',accountIdCanary:new URLSearchParams(window.location.search).get('account-id-canary')==='1'});</script>
+  <script type="module" src="js/firebase-auth.js?v=friends-phase1-3"></script>
 <script src="js/data-sync.js?v=campaign-access-2"></script>
 <script src="js/campaign-join-model.js?v=phase3-1"></script>
 <script src="js/campaign-roster-view.js?v=campaign-phase4-3"></script>
