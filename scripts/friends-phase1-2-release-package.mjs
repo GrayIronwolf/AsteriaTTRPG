@@ -53,20 +53,34 @@ export function buildFriendsRelease(){
 }
 
 export function stageFriendsRelease(env=process.env,mode='ci'){
-  if(!['ci','production'].includes(mode)||env.GITHUB_ACTIONS!=='true'||
+  if(!['ci','production','activate','deactivate'].includes(mode)||env.GITHUB_ACTIONS!=='true'||
       !isAbsolute(env.RUNNER_TEMP||''))
     fail('Staging requires the approved GitHub Actions runner.');
   if(mode==='ci'&&!['pull_request','push'].includes(env.GITHUB_EVENT_NAME))
     fail('CI staging requires a normal code verification event.');
-  if(mode==='production'&&(
-      env.GITHUB_REF!=='refs/heads/main'||
-      env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
-      env.ASTERIA_FRIENDS_SCOPED_DEPLOY!=='1'||
-      env.ASTERIA_DEPLOY_PROJECT!=='asteria-ttrpg'))
-    fail('Production staging requires manual main-only approval.');
+  if(mode!=='ci'){
+    const approval={
+      production:['friends-lookup-deploy','DEPLOY-ASTERIA-FRIENDS-LOOKUP'],
+      activate:['friends-lookup-activate','ACTIVATE-ASTERIA-FRIENDS-LOOKUP'],
+      deactivate:['friends-lookup-deactivate','DEACTIVATE-ASTERIA-FRIENDS-LOOKUP']
+    }[mode];
+    if(!approval||env.GITHUB_REF!=='refs/heads/main'||
+        env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
+        env.ASTERIA_FRIENDS_SCOPED_DEPLOY!=='1'||
+        env.ASTERIA_DEPLOY_PROJECT!=='asteria-ttrpg'||
+        env.ASTERIA_FRIENDS_OPERATION!==approval[0]||
+        env.ASTERIA_FRIENDS_CONFIRMATION!==approval[1])
+      fail('Production staging requires manual main-only approval.');
+  }
   const destination=join(env.RUNNER_TEMP,'asteria-friends-lookup-release');
   if(existsSync(destination))fail('Release staging directory already exists.');
-  for(const [file,content] of Object.entries(buildFriendsRelease())){
+  const files=buildFriendsRelease();
+  // Firebase Functions v2 loads this project-specific dotenv file at runtime.
+  // Explicit off/on values make each targeted deployment deterministic.
+  if(mode!=='ci')
+    files['functions/.env.asteria-ttrpg']=
+      'ASTERIA_FRIEND_LOOKUP_ENABLED='+(mode==='activate'?'1':'0')+'\\n';
+  for(const [file,content] of Object.entries(files)){
     const path=join(destination,file);
     mkdirSync(resolve(path,'..'),{recursive:true});
     writeFileSync(path,content);
@@ -79,9 +93,12 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     if(action==='--check')
       console.log(JSON.stringify({ready:true,scope:'functions:asteria:asteriaFriendAccountLookup',
         files:Object.keys(buildFriendsRelease()),cloudWrites:false}));
-    else if(action==='--stage-ci'||action==='--stage-production')
-      console.log(JSON.stringify({directory:stageFriendsRelease(process.env,
-        action==='--stage-ci'?'ci':'production')}));
+    else if(['--stage-ci','--stage-production','--stage-activation','--stage-deactivation'].includes(action)){
+      const mode={'--stage-ci':'ci','--stage-production':'production',
+        '--stage-activation':'activate','--stage-deactivation':'deactivate'}[action];
+      console.log(JSON.stringify({directory:stageFriendsRelease(process.env,mode),
+        featureGate:mode==='activate'?'enabled':mode==='ci'?'absent':'disabled'}));
+    }
     else fail('Unknown release operation.');
   }catch(error){console.error(error.message);process.exitCode=1;}
 }
