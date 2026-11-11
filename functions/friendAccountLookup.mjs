@@ -22,7 +22,7 @@ export function normaliseFriendAccountId(value) {
   };
 }
 
-function verifiedActiveIdentity(uid, profile, assignment, registry) {
+export function verifiedActiveIdentity(uid, profile, assignment, registry) {
   if (!validUid(uid) || !profile || !assignment || !registry ||
       typeof assignment.username !== 'string' ||
       !/^[A-Za-z0-9._-]{3,24}$/.test(assignment.username) ||
