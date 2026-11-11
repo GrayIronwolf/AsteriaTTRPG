@@ -58,6 +58,17 @@ export const asteriaSecureInvitation=onCall({
   if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
   try{
     const data=request.data||{};
+    if(data.action==='issue-friend'){
+      if(process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED!=='1'||
+         process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
+        throw new Error('Campaign friend invitations are not enabled yet.');
+      const {issueAccountBoundFriendInvitation}=
+        await import('./campaignFriendInvitations.mjs');
+      return await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
+        request.auth.uid,data,{
+          signingKey:secureInvitationSigningKey.value()
+        });
+    }
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
     if(data.action==='preview'||data.action==='accept'){
