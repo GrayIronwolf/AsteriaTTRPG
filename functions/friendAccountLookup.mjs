@@ -94,7 +94,9 @@ export async function findFriendByAccountId(db, authAdmin, actorUid, rawAccountI
   if (!(now instanceof Date) || !Number.isFinite(now.getTime()))
     throw new Error('Account search unavailable.');
   const sought = normaliseFriendAccountId(rawAccountId);
-  const actor = await authAdmin.getUser(actorUid);
+  let actor;
+  try { actor = await authAdmin.getUser(actorUid); }
+  catch { throw new Error('Account search unavailable.'); }
   if (actor?.uid !== actorUid || actor.disabled === true)
     throw new Error('Account search unavailable.');
   const nowMs = now.getTime();
