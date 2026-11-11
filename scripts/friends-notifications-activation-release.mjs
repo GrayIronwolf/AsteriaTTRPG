@@ -33,14 +33,20 @@ function assertSourceAndScope(operation){
      !actions.includes("enqueueFriendNotifications(tx,db,actorUid,input.action,previous,next,{now})"))
     fail('Notification event wiring has changed; release refused.');
 }
-export function buildFriendsNotificationActivationRelease(operation){
+export function buildFriendsNotificationActivationRelease(operation,{requestEnabled}={}){
   if(!Object.hasOwn(approvalByOperation,operation))fail('Unknown notification activation operation.');
   assertSourceAndScope(operation);
   const active=isOn(operation);
   const inbox=isRead(operation);
-  const files=inbox?buildFriendNotificationsRelease():buildFriendRequestsRelease({enabled:true});
+  // Preserve the verified existing Friends request availability on rollback.
+  // Never enable a disabled request handler as a side effect of notifications.
+  if(!inbox&&(!['0','1'].includes(requestEnabled)||
+     (active&&requestEnabled!=='1')))
+    fail('Live Friend Requests flag must be verified before event activation.');
+  const files=inbox?buildFriendNotificationsRelease():
+    buildFriendRequestsRelease({enabled:requestEnabled==='1'});
   const env=inbox?'ASTERIA_FRIEND_NOTIFICATIONS_ENABLED='+Number(active)+'\n':
-    'ASTERIA_FRIEND_REQUESTS_ENABLED=1\n'+
+    'ASTERIA_FRIEND_REQUESTS_ENABLED='+requestEnabled+'\n'+
     'ASTERIA_FRIEND_NOTIFICATIONS_ENABLED='+Number(active)+'\n';
   files['functions/.env.asteria-ttrpg']=env;
   const entry=files['functions/index.mjs'];
@@ -74,7 +80,9 @@ export function stageFriendsNotificationActivation(env=process.env,operation){
     'asteria-friend-notification-reads-activation':
     'asteria-friend-notification-events-activation');
   if(existsSync(directory))fail('Notification activation output already exists.');
-  const release=buildFriendsNotificationActivationRelease(operation);
+  const release=buildFriendsNotificationActivationRelease(operation,{
+    requestEnabled:env.ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED
+  });
   for(const [name,body] of Object.entries(release.files)){
     const filepath=join(directory,name);
     mkdirSync(dirname(filepath),{recursive:true});
@@ -87,7 +95,9 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     const action=process.argv[2];
     if(action==='--check'){
       const details=Object.keys(approvalByOperation).map(operation=>{
-        const {enabled,functionName,files}=buildFriendsNotificationActivationRelease(operation);
+        const {enabled,functionName,files}=buildFriendsNotificationActivationRelease(operation,{
+        requestEnabled:'1'
+      });
         return {operation,enabled,functionName,files:Object.keys(files)};
       });
       console.log(JSON.stringify({ready:true,productionActivated:false,details}));
