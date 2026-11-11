@@ -70,7 +70,10 @@ test('header reads fresh verified identity and disregards switched accounts',()=
   assert.match(src,/requestVersion/);
   assert.match(src,/signedInUid\(\)!==uid/);
   assert.match(src,/asteria:firebase-signed-out/);
-  assert.match(src,/window\.AsteriaFeatureFlags\?\.campaignNotifications!==true/);
+  assert.match(src,/window\.AsteriaFeatureFlags\?\.campaignNotifications===true/);
+  assert.match(src,/window\.AsteriaFeatureFlags\?\.friendNotificationsEnabled===true/);
+  assert.match(src,/Promise\.allSettled\(reads\)/);
+  assert.match(src,/version!==noticeVersion\|\|profileVersion!==requestVersion/);
 });
 test('Appearance is separate from explicit Logout',()=>{
   const source=read('js/asteria-account-menu.js');
