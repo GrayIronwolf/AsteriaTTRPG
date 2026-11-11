@@ -55,7 +55,7 @@
     "test:campaign-interface": "node --test scripts/campaign-connection-phase8-1.test.mjs && node --check js/campaign-notifications-ui.js && node --check js/campaign-roster-view.js && node --check js/clean-compendium.js",
     "test:campaign-migration": "node --test scripts/campaign-migration-phase8-2.test.mjs",
     "test:rollout": "node --test scripts/campaign-phase8-3-release.test.mjs && node scripts/campaign-phase8-3-release.mjs --audit",
-    "test:firebase-auth-check": "node --test scripts/firebase-deployment-auth-check.test.mjs scripts/firebase-campaign-deploy-scope.test.mjs",
+    "test:firebase-auth-check": "node --test scripts/firebase-deployment-auth-check.test.mjs scripts/firebase-campaign-deploy-scope.test.mjs scripts/campaign-backend-scoped-release.test.mjs",
     "test:firebase-backup-audit": "node --test scripts/firebase-production-backup-audit.test.mjs",
     "test:account-id": "node --test scripts/account-id-phase1-2.test.mjs scripts/account-id-phase1-3.test.mjs scripts/account-id-phase2-1.test.mjs scripts/account-id-phase2-2.test.mjs scripts/account-id-phase2-3.test.mjs scripts/account-id-phase4-1-release.test.mjs scripts/account-id-security-guard.test.mjs scripts/account-id-automatic-registration.test.mjs scripts/account-email-verification.test.mjs scripts/account-id-legacy-operator.test.mjs scripts/account-id-production-finalization.test.mjs scripts/account-id-production-readiness.test.mjs scripts/account-id-canary-operator.test.mjs scripts/account-id-release-package.test.mjs scripts/account-id-release-cli-verify.test.mjs scripts/account-id-complete-release.test.mjs scripts/account-id-coordinated-release.test.mjs",
     "test:account-menu": "node --test scripts/account-menu-phase3-1.test.mjs",
