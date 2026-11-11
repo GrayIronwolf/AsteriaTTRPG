@@ -75,3 +75,39 @@
 @media(prefers-reduced-motion:reduce){
   .asteria-friends-dialog *{scroll-behavior:auto;}
 }
+
+/* Phase 2.3 Friends request manager; inherits existing Asteria panel styling. */
+.asteria-friend-requests{margin-top:22px;padding-top:18px;border-top:1px solid #71889b55;}
+.asteria-friend-requests-head h3{margin:0;color:#e6d3b5;font:400 1.28rem/1.3 var(--asteria-font-display,Georgia,serif);}
+.asteria-friend-requests-head p{margin:9px 0 14px;color:#bdd3e2;font-size:.9rem;line-height:1.5;}
+.asteria-friend-request-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;}
+.asteria-friend-request-tabs button,
+.asteria-friend-request-tools button,
+.asteria-friend-request-actions button,
+#accountFriendsSend,#accountFriendsRequestsMore{
+ min-height:44px;padding:9px 12px;border:1px solid #7894a8;border-radius:3px;
+ color:#e7f0f7;background:#132b3e;cursor:pointer;
+ font:600 .9rem/1.35 var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-friend-request-tabs button[aria-selected=true]{color:#f3e0bc;border-color:#d6b98a;background:#24445a;}
+.asteria-friend-request-tabs button:disabled,
+.asteria-friend-request-tools button:disabled,
+.asteria-friend-request-actions button:disabled,
+#accountFriendsSend:disabled,#accountFriendsRequestsMore:disabled{
+ opacity:.55;cursor:not-allowed;
+}
+#accountFriendsSend[hidden],#accountFriendsRequestsMore[hidden]{display:none!important;}
+#accountFriendsSend{width:100%;margin:4px 0 10px;border-color:#b8a078;}
+.asteria-friend-request-tools{display:flex;justify-content:flex-end;margin-bottom:9px;}
+.asteria-friend-request-entry{padding:14px 0;border-bottom:1px solid #728a9a55;}
+.asteria-friend-request-person{display:flex;align-items:center;gap:12px;min-width:0;}
+.asteria-friend-request-person-names{display:grid;gap:3px;min-width:0;overflow-wrap:anywhere;}
+.asteria-friend-request-person-names strong{font-size:1rem;}
+.asteria-friend-request-person-names span{color:#bdd3e2;font-size:.88rem;}
+.asteria-friend-request-date,.asteria-friend-request-empty{color:#b7cbd9;font-size:.87rem;line-height:1.5;}
+.asteria-friend-request-actions{display:flex;flex-wrap:wrap;gap:8px;}
+#accountFriendsRequestsMore{width:100%;margin-top:14px;}
+@media(max-width:600px){
+ .asteria-friend-request-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));}
+ .asteria-friend-request-actions button{width:100%;}
+}
