@@ -156,16 +156,16 @@ test('independent server gating, existing scoped release, and Firestore deny rul
  const block=source.slice(source.indexOf('// Phase 4.1 Friends:'),
   source.indexOf('// Phase 1.2 Friends System:'));
  assert.match(block,/asteriaFriendNotifications=onCall/);
- assert.match(block,/request.auth\\?\\.uid/);
+ assert.match(block,/request.auth\?\.uid/);
  assert.match(block,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED!=='1'/);
  assert.doesNotMatch(block,/ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED/);
  const actions=read('functions/friendRequestActions.mjs');
- assert.match(actions,/if\\(notificationsEnabled\\)/);
+ assert.match(actions,/if\(notificationsEnabled\)/);
  assert.match(source,/notificationsEnabled:process.env.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED==='1'/);
  const rules=read('firestore.rules');
- assert.match(rules,/match \\/friendNotificationInbox\\/\\{uid\\}/);
- assert.match(rules,/match \\/items\\/\\{notificationId\\}/);
+ assert.match(rules,/match \/friendNotificationInbox\/\{uid\}/);
+ assert.match(rules,/match \/items\/\{notificationId\}/);
  const packageSource=read('scripts/friends-phase2-2-release-package.mjs');
- assert.match(packageSource,/functions\\/friendNotifications.mjs/);
+ assert.match(packageSource,/functions\/friendNotifications.mjs/);
  assert.doesNotMatch(read('index.html'),/friendNotificationsEnabled:true/);
 });
