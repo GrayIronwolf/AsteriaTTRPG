@@ -67,7 +67,7 @@ test('CI staging writes only the disabled isolated files',()=>{
 });
 test('manual workflow never deploys other functions, rules, website or enablement',()=>{
   const yaml=read('.github/workflows/firebase-deploy.yml');
-  const job=yaml.split(/^  friend_requests_backend_deploy:\s*$/m)[1]||'';
+  const job=yaml.split(/^  friend_requests_backend_deploy:\s*$/m)[1]?.split(/^  [a-z_]+:\s*$/m)[0]||'';
   assert.match(yaml,/          - friends-request-backend-deploy/);
   assert.match(job,/github\.ref == 'refs\/heads\/main'/);
   assert.match(job,/inputs\.operation == 'friends-request-backend-deploy'/);
@@ -110,7 +110,7 @@ test('activation and rollback package only the same callable with exact opposing
 });
 test('activation workflow restricts main branch, individual confirmations and one callable',()=>{
   const yaml=read('.github/workflows/firebase-deploy.yml');
-  const job=yaml.split(/^  friend_requests_activation:\s*$/m)[1]||'';
+  const job=yaml.split(/^  friend_requests_activation:\s*$/m)[1]?.split(/^  [a-z_]+:\s*$/m)[0]||'';
   assert.match(job,/github\.ref == 'refs\/heads\/main'/);
   assert.match(job,/github\.event_name == 'workflow_dispatch'/);
   assert.match(job,/inputs\.operation == 'friends-request-backend-activate'/);
