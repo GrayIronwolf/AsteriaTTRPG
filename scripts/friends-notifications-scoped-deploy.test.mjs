@@ -118,7 +118,8 @@ test('manual workflow never executes broad deploys or activates social features'
   for(const section of ['inventory','deploy_rules','deploy_callable']){
     const start=source.indexOf('  '+section+':');
     assert.ok(start>0,section);
-    const next=source.indexOf('\n  ',start+3);
+    const following=source.slice(start+3).match(/\n  (?:inventory|deploy_rules|deploy_callable):/);
+    const next=following?start+3+following.index:-1;
     const body=source.slice(start,next<0?undefined:next);
     assert.match(body,/github.ref == 'refs\/heads\/main'/);
     assert.match(body,/environment: firebase-production/);
