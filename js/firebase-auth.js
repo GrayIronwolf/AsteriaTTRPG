@@ -2541,6 +2541,82 @@ const firebasePublicApi = {
         blockedAtMs:item.blockedAtMs,version:item.version};
     }),nextCursor:result.nextCursor};
   },
+  // Phase 4.2: the independent, recipient-private Friends notifications callable.
+  // No Firestore browser reads, caller-provided UID, or account-local cache.
+  listFriendNotifications: async function(cursor=null){
+    const uid=currentUser?.uid;
+    if(!functionsClient||!auth||!uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.friendNotificationsEnabled!==true)
+      throw new Error('Friend notifications are not active.');
+    if(cursor!==null&&(typeof cursor!=='string'||!/^[a-f0-9]{64}$/.test(cursor)))
+      throw new Error('Invalid friend notification page.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendNotifications')({
+      action:'list',cursor
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.friendNotificationsEnabled!==true)
+      throw new Error('Account changed during friend notifications.');
+    const result=response.data;
+    if(!result||typeof result!=='object'||Array.isArray(result)||
+       Object.keys(result).sort().join(',')!=='nextCursor,notifications,unreadShown'||
+       !Array.isArray(result.notifications)||result.notifications.length>25||
+       !Number.isSafeInteger(result.unreadShown)||
+       result.unreadShown<0||result.unreadShown>result.notifications.length||
+       !(result.nextCursor===null||
+         (typeof result.nextCursor==='string'&&/^[a-f0-9]{64}$/.test(result.nextCursor))))
+      throw new Error('Invalid friend notification response.');
+    const allowed=new Set(['incoming-request','request-accepted','request-declined',
+      'request-cancelled','friend-removed','player-blocked','player-unblocked']);
+    const seen=new Set();
+    const notifications=result.notifications.map(item=>{
+      if(!item||typeof item!=='object'||Array.isArray(item)||
+         Object.keys(item).sort().join(',')!==
+           'body,createdAt,kind,notificationId,readAt,title'||
+         typeof item.notificationId!=='string'||
+         !/^[a-f0-9]{64}$/.test(item.notificationId)||
+         seen.has(item.notificationId)||!allowed.has(item.kind)||
+         typeof item.title!=='string'||item.title.length>150||
+         typeof item.body!=='string'||item.body.length>500||
+         typeof item.createdAt!=='string'||
+         !Number.isFinite(Date.parse(item.createdAt))||
+         !(item.readAt===null||
+           (typeof item.readAt==='string'&&Number.isFinite(Date.parse(item.readAt)))))
+        throw new Error('Invalid friend notification response.');
+      seen.add(item.notificationId);
+      return {notificationId:item.notificationId,kind:item.kind,
+        title:item.title,body:item.body,createdAt:item.createdAt,readAt:item.readAt};
+    });
+    if(notifications.filter(item=>item.readAt===null).length!==result.unreadShown)
+      throw new Error('Invalid friend notification response.');
+    return {notifications,unreadShown:result.unreadShown,nextCursor:result.nextCursor};
+  },
+  markFriendNotificationRead: async function(notificationId){
+    const uid=currentUser?.uid;
+    if(!functionsClient||!auth||!uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.friendNotificationsEnabled!==true)
+      throw new Error('Friend notifications are not active.');
+    if(typeof notificationId!=='string'||!/^[a-f0-9]{64}$/.test(notificationId))
+      throw new Error('Invalid friend notification.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendNotifications')({
+      action:'mark-read',notificationId
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||
+       window.AsteriaFeatureFlags?.friendNotificationsEnabled!==true)
+      throw new Error('Account changed during friend notification update.');
+    const item=response.data;
+    if(!item||typeof item!=='object'||Array.isArray(item)||
+       Object.keys(item).sort().join(',')!=='alreadyRead,notificationId,readAt'||
+       item.notificationId!==notificationId||
+       typeof item.alreadyRead!=='boolean'||
+       typeof item.readAt!=='string'||!Number.isFinite(Date.parse(item.readAt)))
+      throw new Error('Invalid friend notification acknowledgement.');
+    return {notificationId:item.notificationId,readAt:item.readAt,
+      alreadyRead:item.alreadyRead};
+  },
   listCampaignNotifications: async function(cursor=null){
     if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
       throw new Error('Sign in to view notifications.');
