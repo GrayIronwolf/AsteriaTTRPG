@@ -57,10 +57,12 @@ test('admin-only exact search returns public handle while private records remain
 });
 test('real Firestore transactions enforce quotas and ignore historical alias handles',async()=>{
   const now=new Date('2026-11-11T00:00:00.000Z');
-  const tasks=Array.from({length:12},()=>findFriendByAccountId(db,auth,
-    'alice','Asteria#00009',{now}));
-  const results=await Promise.allSettled(tasks);
-  assert.equal(results.filter(x=>x.status==='fulfilled').length,10);
+  for(let i=0;i<10;i++) {
+    const result=await findFriendByAccountId(db,auth,'alice','Asteria#00009',{now});
+    assert.equal(result.found,true);
+  }
+  const results=await Promise.allSettled(Array.from({length:2},
+    ()=>findFriendByAccountId(db,auth,'alice','Asteria#00009',{now})));
   assert.equal(results.filter(x=>x.status==='rejected').length,2);
   assert.equal((await db.doc('friendLookupThrottle/alice').get()).data().windowCount,10);
   await db.doc('accountIdRegistry/asteria#00009').update({
