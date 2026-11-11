@@ -7,7 +7,8 @@ import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore} from 'firebase-admin/firestore';
 import {changeFriendRequest,validateFriendRequestAction}
  from '../functions/friendRequestActions.mjs';
-import {listAcceptedFriends,listBlockedFriends,validateBlockedFriendsList}
+import {listAcceptedFriends,listBlockedFriends,listFriendRequests,
+ nextConcurrentInboxQuota,validateBlockedFriendsList}
  from '../functions/friendRequestInbox.mjs';
 import {friendRelationshipPath} from '../functions/friendRelationshipModel.mjs';
 
@@ -145,4 +146,26 @@ test('disabled and renamed accounts respect private block management',async()=>{
   ['Renamed#52816']);
  const response=await action('alice','unblock','Renamed#52816',2,time(1000));
  assert.equal(response.status,'removed');
+});
+
+test('three inbox views share quota safely when request timestamps arrive out of order',async()=>{
+ await action('alice','send','Poppa_J#52816',undefined,time(1000));
+ await action('bob','accept','Grayson#01448',1,time(2000));
+ // Reproduce a later timestamp committing before an earlier-started view.
+ const first=await blocked('alice',time(5100));
+ assert.deepEqual(first.items,[]);
+ const second=await friends('alice',time(5098));
+ assert.deepEqual(second.items.map(x=>x.accountId),['Poppa_J#52816']);
+ const third=await listFriendRequests(db,auth,'alice',{
+   action:'list',direction:'incoming',cursor:0
+ },{now:time(5099)});
+ assert.deepEqual(third.items,[]);
+ const quota=(await db.doc('friendRequestInboxThrottle/alice').get()).data();
+ assert.equal(quota.windowCount,3);
+ assert.equal(quota.lastAttemptAtMs,time(5100).getTime());
+ const next=nextConcurrentInboxQuota(quota,'alice',time(5097).getTime());
+ assert.equal(next.windowCount,4);
+ assert.equal(next.lastAttemptAtMs,quota.lastAttemptAtMs);
+ assert.throws(()=>nextConcurrentInboxQuota(quota,'alice',time(-70_000).getTime()),
+  /unavailable/);
 });
