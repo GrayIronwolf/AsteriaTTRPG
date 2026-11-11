@@ -96,6 +96,7 @@ export const asteriaSecureInvitation=onCall({
       const input={campaignId:data.campaignId,inviteId:data.inviteId,token:data.token};
       const options={
         signingKey:secureInvitationSigningKey.value(),
+        authAdmin:getAuth(),
         notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1',
         friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1',
         authAdmin:getAuth()
