@@ -1,0 +1,107 @@
+name: Asteria coordinated campaign and Friends release audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'config/asteria-release.json'
+      - 'scripts/asteria-release-source.mjs'
+      - 'docs/ASTERIA-CAMPAIGN-FRIENDS-RELEASE-SOURCE-OF-TRUTH.md'
+permissions:
+  contents: read
+concurrency:
+  group: asteria-campaign-release-read-only
+  cancel-in-progress: false
+jobs:
+  readiness:
+    name: One source of truth, production backend and activation blockers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: firebase-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate canonical website release flags and static rollout contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/asteria-release-source.mjs --check
+          node scripts/campaign-phase8-3-release.mjs --audit > "$RUNNER_TEMP/asteria-release-static.json"
+      - name: Authenticate with existing restricted Workload Identity (read-only)
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Collect current function and secret metadata without reading values
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project=asteria-ttrpg --regions=us-central1 --v2 --format=json > "$RUNNER_TEMP/asteria-release-functions.json"
+          if gcloud functions describe asteriaSecureInvitation --gen2 --project=asteria-ttrpg --region=us-central1 --format=json > "$RUNNER_TEMP/asteria-release-secure.json"; then
+            echo 1 > "$RUNNER_TEMP/asteria-secure-describe-ok"
+          else
+            echo 0 > "$RUNNER_TEMP/asteria-secure-describe-ok"
+          fi
+          if gcloud functions describe asteriaCampaignFriendRecipients --gen2 --project=asteria-ttrpg --region=us-central1 --format=json > "$RUNNER_TEMP/asteria-release-recipients.json"; then
+            echo 1 > "$RUNNER_TEMP/asteria-recipients-describe-ok"
+          else
+            echo 0 > "$RUNNER_TEMP/asteria-recipients-describe-ok"
+          fi
+          if gcloud secrets versions list ASTERIA_SECURE_INVITE_SIGNING_KEY --project=asteria-ttrpg --filter='state=ENABLED' --format='value(name)' > "$RUNNER_TEMP/asteria-secret-enabled-versions.txt"; then
+            echo 1 > "$RUNNER_TEMP/asteria-secret-visible"
+          else
+            echo 0 > "$RUNNER_TEMP/asteria-secret-visible"
+          fi
+      - name: Summarize the coordinated production readiness state
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const fs=path=>readFileSync(process.env.RUNNER_TEMP+'/'+path,'utf8');
+          const manifest=JSON.parse(readFileSync('config/asteria-release.json','utf8'));
+          const records=JSON.parse(fs('asteria-release-functions.json'));
+          const active=records.filter(fn=>fn.state==='ACTIVE').map(fn=>fn.name.split('/').pop());
+          const expected=manifest.backend.deployedFunctions;
+          const missing=expected.filter(name=>!active.includes(name));
+          const friend=fs('asteria-recipients-describe-ok').trim()==='1'?
+            JSON.parse(fs('asteria-release-recipients.json')):{};
+          const secure=fs('asteria-secure-describe-ok').trim()==='1'?
+            JSON.parse(fs('asteria-release-secure.json')):{};
+          const recipientFlag=friend.serviceConfig?.environmentVariables?.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED||'0';
+          const secureFlags=secure.serviceConfig?.environmentVariables||{};
+          const needed=['ASTERIA_SECURE_INVITATIONS_ENABLED','ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
+            'ASTERIA_INVITATION_MANAGER_ENABLED','ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'];
+          const disabled=needed.filter(name=>secureFlags[name]!=='1');
+          const signing=fs('asteria-secret-visible').trim()==='1'&&
+            fs('asteria-secret-enabled-versions.txt').trim().length>0;
+          const rows=[
+            '## Asteria coordinated campaign/Friends release — production audit',
+            '',
+            'Production project: \`asteria-ttrpg\`; region: \`us-central1\`.',
+            'Canonical website manifest: \`config/asteria-release.json\`.',
+            '',
+            '| Check | Verified live state |','|---|---|',
+            '| Required active Cloud Functions | '+(missing.length?'Missing: '+missing.join(', '):'7/7 present and ACTIVE')+' |',
+            '| Signing secret metadata | '+(signing?'Enabled version visible; value not read':'Not verifiable')+' |',
+            '| Friend recipient backend gate | '+(recipientFlag==='1'?'Enabled':'Disabled / not verified')+' |',
+            '| Existing v2 invitation and friend issuance gates | '+(disabled.length?'Not all enabled: '+disabled.join(', '):'Reported enabled')+' |',
+            '| Website release mode | '+manifest.status+' |',
+            '| Production rules and backups | Not independently verified by this audit |',
+            '| Migration and real-account/device canary | Not independently verified by this audit |',
+            '',
+            '**Release decision: NO-GO for public activation until the external Phase 8.3 acceptance evidence is verified.**',
+            'This workflow only inspects metadata; it never deploys, migrates, reads secret values, emails users or changes flags.',
+            ''
+          ];
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,rows.join('\n'));
+          console.log('Read-only production inventory recorded; public activation remains gated.');
+          NODE

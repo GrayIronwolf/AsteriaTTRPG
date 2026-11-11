@@ -21,6 +21,8 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci
+      - name: Verify canonical release manifest against website source
+        run: npm run release:check
       - name: Inspect default-off website/backend rollout gates
         run: npm run test:rollout
       - name: Verify authenticated campaign canary against Firebase emulators

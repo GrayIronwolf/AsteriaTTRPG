@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "asteria-campaign-friends-v2",
+  "project": "asteria-ttrpg",
+  "region": "us-central1",
+  "status": "installed-not-activated",
+  "mode": "manual-approval-required",
+  "websiteFlags": {
+    "friendNotificationsEnabled": true,
+    "serverCampaignUCN": false,
+    "campaignJoinPreview": false,
+    "campaignJoinRequests": false,
+    "campaignJoinReview": false,
+    "campaignPlayerRoster": false,
+    "campaignMemberControls": false,
+    "campaignRolePermissions": false,
+    "campaignCharacterLinks": false,
+    "campaignCharacterApproval": false,
+    "campaignCharacterLifecycle": false,
+    "secureInvitationManager": false,
+    "secureInvitationAcceptance": false,
+    "emailInvitationControls": false,
+    "campaignNotifications": false,
+    "campaignFriendRecipients": false,
+    "accountIds": true,
+    "campaignFriendInvitations": false
+  },
+  "canaryFlags": [
+    "friendAccountLookup",
+    "friendRequestsEnabled",
+    "accountIdAutoCanary",
+    "accountIdCanary"
+  ],
+  "backend": {
+    "deployedFunctions": [
+      "asteriaCampaignUCN",
+      "asteriaMembershipPreparation",
+      "asteriaCampaignAccessCutover",
+      "asteriaCampaignJoinRequest",
+      "asteriaCampaignJoinReview",
+      "asteriaCampaignFriendRecipients",
+      "asteriaSecureInvitation"
+    ],
+    "requiresLiveVerification": true,
+    "requiredGates": [
+      "ASTERIA_SECURE_INVITATIONS_ENABLED",
+      "ASTERIA_INVITATION_ACCEPTANCE_ENABLED",
+      "ASTERIA_INVITATION_MANAGER_ENABLED",
+      "ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED",
+      "ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED",
+      "ASTERIA_JOIN_REQUESTS_ENABLED",
+      "ASTERIA_JOIN_REVIEW_ENABLED"
+    ],
+    "blockedAutoActions": [
+      "membership-migration",
+      "schema-cutover",
+      "rules-overwrite",
+      "email-send",
+      "broad-functions-deploy"
+    ]
+  },
+  "approvals": {
+    "humanReviewedProductionEvidence": false,
+    "productionBackupRestoredAndVerified": false,
+    "canonicalMembershipAndRulesVerified": false,
+    "realAccountCanaryVerified": false,
+    "finalProductionAuthorization": false
+  },
+  "existingFriendsNotificationsPreserved": true
+}
