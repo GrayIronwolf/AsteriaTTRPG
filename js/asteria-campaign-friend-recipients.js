@@ -212,7 +212,7 @@
         copy.addEventListener('click',async()=>{
           try{
             if(!root.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable.');
-            await root.navigator.clipboard.writeText(link);
+            await root.navigator?.clipboard?.writeText(link);
             if(valid())status.textContent='Private invitation link copied.';
           }catch{
             if(valid())status.textContent='Copy unavailable. Select and copy the private link manually.';
