@@ -25,6 +25,11 @@ on:
           - friend-notifications-inventory
           - friend-notifications-rules-deploy
           - friend-notifications-callable-deploy
+          - friend-notifications-activation-audit
+          - friend-notifications-read-activate
+          - friend-notifications-read-deactivate
+          - friend-notifications-events-activate
+          - friend-notifications-events-deactivate
           - deploy
       production_confirmation:
         description: 'Production actions require exact per-operation confirmation. Friends notifications rules: DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES; disabled callable: DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF. Leave blank for inventory and audits.'
@@ -927,3 +932,212 @@ jobs:
           fi
           echo 'Deployed asteriaFriendNotifications only, with backend flag 0.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No friend-request callable, Firestore rules, Storage, Hosting, account IDs or campaign backend was deployed.' >> "$GITHUB_STEP_SUMMARY"
+
+  friend_notifications_activation_audit:
+    name: Audit notification activation flags (read-only)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'friend-notifications-activation-audit' &&
+      inputs.production_confirmation == ''
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate prepared isolated activation bundles
+        run: |
+          node scripts/friends-notifications-activation-release.mjs --check
+          node scripts/friends-notifications-scoped-rules.mjs --check
+      - name: Authenticate using existing trusted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect live flags and published Firestore rules (no writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          request_enabled="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_REQUESTS_ENABLED)')"
+          event_enabled="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          read_enabled="$(gcloud functions describe asteriaFriendNotifications --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          test -n "$request_enabled"
+          test -n "$read_enabled"
+          event_enabled="${event_enabled:-0}"
+          for value in "$request_enabled" "$event_enabled" "$read_enabled"; do
+            if [ "$value" != 0 ] && [ "$value" != 1 ]; then echo "Unexpected live feature flag." >&2; exit 1; fi
+          done
+          token="$(gcloud auth print-access-token)"
+          release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token" "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+          ruleset="$(printf '%s' "$release" | jq -r '.rulesetName // empty')"
+          if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then echo 'Unknown Firestore rules release.' >&2; exit 1; fi
+          curl -fsS --retry 2 -H "Authorization: Bearer $token" "https://firebaserules.googleapis.com/v1/$ruleset" -o "$RUNNER_TEMP/asteria-notification-active-rules.json"
+          node scripts/friends-notifications-scoped-rules.mjs --compare-ruleset "$RUNNER_TEMP/asteria-notification-active-rules.json" | jq -e '.state == "already-current"'
+          echo "## Friends notification activation readiness" >> "$GITHUB_STEP_SUMMARY"
+          echo "Project asteria-ttrpg, active reviewed Firestore rules confirmed. No production writes." >> "$GITHUB_STEP_SUMMARY"
+          echo "Friend Requests availability: $request_enabled" >> "$GITHUB_STEP_SUMMARY"
+          echo "Friend notification event emission: $event_enabled" >> "$GITHUB_STEP_SUMMARY"
+          echo "Friend notification read endpoint: $read_enabled" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Website default remains disabled in source. Live account testing and website rollout require separate approval.' >> "$GITHUB_STEP_SUMMARY"
+
+  friend_notifications_activation:
+    name: Explicitly approved Friends notifications activation or rollback (one callable)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (inputs.operation == 'friend-notifications-read-activate' &&
+         inputs.production_confirmation == 'ACTIVATE-ASTERIA-FRIEND-NOTIFICATION-READS') ||
+        (inputs.operation == 'friend-notifications-read-deactivate' &&
+         inputs.production_confirmation == 'DEACTIVATE-ASTERIA-FRIEND-NOTIFICATION-READS') ||
+        (inputs.operation == 'friend-notifications-events-activate' &&
+         inputs.production_confirmation == 'ACTIVATE-ASTERIA-FRIEND-NOTIFICATION-EVENTS') ||
+        (inputs.operation == 'friend-notifications-events-deactivate' &&
+         inputs.production_confirmation == 'DEACTIVATE-ASTERIA-FRIEND-NOTIFICATION-EVENTS')
+      )
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Validate social notification events, access and server-only rules
+        run: |
+          npm run audit:production
+          npm run test:friends-phase2-2
+          npm run test:friends-phase4-1
+          npm run test:friends-phase4-2
+          npm run test:friends-phase4-3
+          npm run test:friends-notifications-activation
+          npm run test:firebase
+      - name: Authenticate using existing trusted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Check live flags, prerequisites and reviewed rules (before any write)
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          case "$OPERATION" in
+            friend-notifications-read-activate|friend-notifications-read-deactivate|friend-notifications-events-activate|friend-notifications-events-deactivate) ;;
+            *) echo 'Unexpected activation operation.' >&2; exit 1 ;;
+          esac
+          request_enabled="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_REQUESTS_ENABLED)')"
+          event_enabled="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          read_enabled="$(gcloud functions describe asteriaFriendNotifications --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          event_enabled="${event_enabled:-0}"
+          test -n "$request_enabled"
+          test -n "$read_enabled"
+          for value in "$request_enabled" "$event_enabled" "$read_enabled"; do
+            if [ "$value" != 0 ] && [ "$value" != 1 ]; then echo 'Unrecognized live backend flag.' >&2; exit 1; fi
+          done
+          if [ "$OPERATION" = friend-notifications-events-activate ] &&
+             { [ "$request_enabled" != 1 ] || [ "$read_enabled" != 1 ]; }; then
+            echo 'Activate inbox reads and verify request availability before recording events.' >&2; exit 1
+          fi
+          if [ "$OPERATION" = friend-notifications-read-deactivate ] &&
+             [ "$event_enabled" != 0 ]; then
+            echo 'Disable event creation before disabling notification reads.' >&2; exit 1
+          fi
+          case "$OPERATION" in
+            *-activate)
+              token="$(gcloud auth print-access-token)"
+              release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token" "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+              ruleset="$(printf '%s' "$release" | jq -r '.rulesetName // empty')"
+              if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then echo 'Cannot verify rules.' >&2; exit 1; fi
+              curl -fsS --retry 2 -H "Authorization: Bearer $token" "https://firebaserules.googleapis.com/v1/$ruleset" -o "$RUNNER_TEMP/asteria-notification-current-rules.json"
+              node scripts/friends-notifications-scoped-rules.mjs --compare-ruleset "$RUNNER_TEMP/asteria-notification-current-rules.json" | jq -e '.state == "already-current"'
+              ;;
+            *-deactivate)
+              echo 'Rollback can proceed without an exact rules match, to fail closed.'
+              ;;
+          esac
+          echo "ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED=$request_enabled" >> "$GITHUB_ENV"
+          echo "Existing request availability=$request_enabled; event emission=$event_enabled; inbox read=$read_enabled" >> "$GITHUB_STEP_SUMMARY"
+      - name: Stage one isolated function with explicit reversible flags
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+          ASTERIA_NOTIFICATION_ACTIVATION_OPERATION: ${{ inputs.operation }}
+          ASTERIA_NOTIFICATION_ACTIVATION_CONFIRMATION: ${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          node scripts/friends-notifications-activation-release.mjs --stage "$OPERATION"
+          case "$OPERATION" in
+            friend-notifications-read-activate)
+              directory=asteria-friend-notification-reads-activation; target=asteriaFriendNotifications; enabled=1 ;;
+            friend-notifications-read-deactivate)
+              directory=asteria-friend-notification-reads-activation; target=asteriaFriendNotifications; enabled=0 ;;
+            friend-notifications-events-activate)
+              directory=asteria-friend-notification-events-activation; target=asteriaFriendRequests; enabled=1 ;;
+            friend-notifications-events-deactivate)
+              directory=asteria-friend-notification-events-activation; target=asteriaFriendRequests; enabled=0 ;;
+            *) exit 1 ;;
+          esac
+          if [ "$target" = asteriaFriendNotifications ]; then
+            test "$(cat "$RUNNER_TEMP/$directory/functions/.env.asteria-ttrpg")" = "ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=$enabled"
+          else
+            printf 'ASTERIA_FRIEND_REQUESTS_ENABLED=%s\nASTERIA_FRIEND_NOTIFICATIONS_ENABLED=%s\n' "$ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED" "$enabled" | cmp - "$RUNNER_TEMP/$directory/functions/.env.asteria-ttrpg"
+          fi
+          npm install --prefix "$RUNNER_TEMP/$directory/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/$directory/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/$directory/functions/index.mjs"
+          echo "NOTIFICATION_RELEASE_DIRECTORY=$directory" >> "$GITHUB_ENV"
+          echo "NOTIFICATION_RELEASE_TARGET=$target" >> "$GITHUB_ENV"
+          echo "NOTIFICATION_RELEASE_ENABLED=$enabled" >> "$GITHUB_ENV"
+      - name: Install pinned isolated Firebase CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/asteria-notifications-activation-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-notifications-activation-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only explicitly approved notification target callable
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$NOTIFICATION_RELEASE_TARGET" in
+            asteriaFriendNotifications|asteriaFriendRequests) ;;
+            *) echo 'Unexpected function target.' >&2; exit 1 ;;
+          esac
+          cd "$RUNNER_TEMP/$NOTIFICATION_RELEASE_DIRECTORY"
+          "$RUNNER_TEMP/asteria-notifications-activation-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only "functions:asteria:$NOTIFICATION_RELEASE_TARGET" --non-interactive
+      - name: Verify deployed flags and preserved Friends request availability
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(gcloud functions describe "$NOTIFICATION_RELEASE_TARGET" --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED)')"
+          if [ "$actual" != "$NOTIFICATION_RELEASE_ENABLED" ]; then
+            echo 'Activation or rollback could not be verified.' >&2; exit 1
+          fi
+          if [ "$NOTIFICATION_RELEASE_TARGET" = asteriaFriendRequests ]; then
+            current="$(gcloud functions describe asteriaFriendRequests --gen2 --region us-central1 --project asteria-ttrpg --format='value(serviceConfig.environmentVariables.ASTERIA_FRIEND_REQUESTS_ENABLED)')"
+            if [ "$current" != "$ASTERIA_CURRENT_FRIEND_REQUESTS_ENABLED" ]; then
+              echo 'Friend request availability was unexpectedly changed.' >&2; exit 1
+            fi
+          fi
+          echo "$NOTIFICATION_RELEASE_TARGET verified notification flag $actual." >> "$GITHUB_STEP_SUMMARY"
+          echo 'Exactly one function was deployed. No Firestore rules, Storage, Hosting, email, account ID or campaign changes.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Website Friends notifications remain disabled until separately approved UI activation.' >> "$GITHUB_STEP_SUMMARY"
