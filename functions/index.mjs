@@ -351,8 +351,14 @@ export const asteriaFriendRequests=onCall({
       const {listAcceptedFriends}=await import('./friendRequestInbox.mjs');
       return await listAcceptedFriends(getFirestore(),getAuth(),request.auth.uid,data);
     }
+    if(data.action==='list-blocked'){
+      const {listBlockedFriends}=await import('./friendRequestInbox.mjs');
+      return await listBlockedFriends(getFirestore(),getAuth(),request.auth.uid,data);
+    }
     return await changeFriendRequest(getFirestore(),getAuth(),request.auth.uid,data);
   }catch(error){
+    if(error?.message==='Invalid blocked accounts query.')
+      throw new HttpsError('invalid-argument','Invalid blocked accounts query.');
     if(error?.message==='Invalid friends list query.')
       throw new HttpsError('invalid-argument','Invalid friends list query.');
     if(error?.message==='Invalid friend request inbox query.')

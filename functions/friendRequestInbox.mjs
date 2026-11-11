@@ -217,7 +217,7 @@ export async function listAcceptedFriends(db,authAdmin,actorUid,rawData,{
       if(other?.uid!==otherUid||other.disabled===true)continue;
       items.push({
         username:identity.username,accountId:identity.accountId,
-        friendsSinceMs:record.updatedAtMs
+        friendsSinceMs:record.updatedAtMs,version:record.version
       });
     }catch{
       // Skip corrupt, removed, blocked or deleted relationships.
@@ -225,6 +225,65 @@ export async function listAcceptedFriends(db,authAdmin,actorUid,rawData,{
     }
   }
   items.sort((a,b)=>b.friendsSinceMs-a.friendsSinceMs||
+    a.accountId.localeCompare(b.accountId));
+  const nextCursor=docs.length>PAGE_SIZE&&cursor+PAGE_SIZE<=MAX_OFFSET?
+    cursor+PAGE_SIZE:null;
+  return {items,nextCursor};
+}
+
+
+/** Phase 3.2: private "Blocked Accounts" list. Only the actor's own blocks
+ * are visible; never disclose whether another participant has blocked them.
+ * This operation shares the existing request/list read quota. */
+export function validateBlockedFriendsList(data){
+  if(!data||typeof data!=='object'||Array.isArray(data)||
+     Object.keys(data).sort().join(',')!=='action,cursor'||
+     data.action!=='list-blocked'||
+     !Number.isSafeInteger(data.cursor)||data.cursor<0||
+     data.cursor>MAX_OFFSET||data.cursor%PAGE_SIZE!==0)
+    throw new Error('Invalid blocked accounts query.');
+  return {cursor:data.cursor};
+}
+export async function listBlockedFriends(db,authAdmin,actorUid,rawData,{now=new Date()}={}){
+  if(typeof actorUid!=='string'||!UID.test(actorUid)||
+     typeof db?.doc!=='function'||typeof db?.collection!=='function'||
+     typeof db?.runTransaction!=='function'||
+     typeof authAdmin?.getUser!=='function'||!(now instanceof Date)||
+     !Number.isSafeInteger(now.getTime())||now.getTime()<0)
+    throw unavailable();
+  const {cursor}=validateBlockedFriendsList(rawData);
+  let actor;
+  try{actor=await authAdmin.getUser(actorUid);}catch{throw unavailable();}
+  if(actor?.uid!==actorUid||actor.disabled===true||
+     !await verifiedIdentity(db,actorUid))throw unavailable();
+  await db.runTransaction(async tx=>{
+    const ref=db.doc('friendRequestInboxThrottle/'+actorUid);
+    tx.set(ref,nextFriendInboxQuota(dataOf(await tx.get(ref)),actorUid,now.getTime()));
+  });
+  const snapshot=await db.collection('friendRelationships')
+    .where('participantUids','array-contains',actorUid)
+    .offset(cursor).limit(PAGE_SIZE+1).get();
+  const docs=snapshot.docs||[],items=[];
+  for(const snap of docs.slice(0,PAGE_SIZE)){
+    try{
+      const record=snap.data();
+      assertFriendRelationship(record);
+      if(record.pairId!==snap.id||record.status!=='blocked'||
+         !record.blockedByUids.includes(actorUid))continue;
+      const otherUid=record.participantUids.find(uid=>uid!==actorUid);
+      if(!otherUid||record.pairId!==friendPairId(actorUid,otherUid))continue;
+      const identity=await verifiedIdentity(db,otherUid);
+      if(!identity||!HANDLE.test(identity.accountId)||
+         identity.accountId!==identity.username+'#'+identity.accountId.slice(-5))
+        continue;
+      let target;
+      try{target=await authAdmin.getUser(otherUid);}catch{continue;}
+      if(target?.uid!==otherUid||target.disabled===true)continue;
+      items.push({username:identity.username,accountId:identity.accountId,
+        blockedAtMs:record.updatedAtMs,version:record.version});
+    }catch{continue;}
+  }
+  items.sort((a,b)=>b.blockedAtMs-a.blockedAtMs||
     a.accountId.localeCompare(b.accountId));
   const nextCursor=docs.length>PAGE_SIZE&&cursor+PAGE_SIZE<=MAX_OFFSET?
     cursor+PAGE_SIZE:null;

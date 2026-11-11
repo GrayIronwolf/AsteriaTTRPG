@@ -58,6 +58,7 @@
       details.append(name,handle,since);
       card.append(initial,details);
       host.appendChild(card);
+      window.AsteriaFriendManagement?.decorateFriendCard?.(card,friend);
     }
   }
   function valid(uid,sequence){

@@ -2471,13 +2471,74 @@ const firebasePublicApi = {
     const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
     return {items:result.items.map(item=>{
       if(!item||Object.keys(item).sort().join(',')!==
-          'accountId,friendsSinceMs,username'||
+          'accountId,friendsSinceMs,username,version'||
           typeof item.username!=='string'||!HANDLE.test(item.accountId)||
           item.accountId!==item.username+'#'+item.accountId.slice(-5)||
-          !Number.isSafeInteger(item.friendsSinceMs)||item.friendsSinceMs<0)
+          !Number.isSafeInteger(item.friendsSinceMs)||item.friendsSinceMs<0||
+          !Number.isSafeInteger(item.version)||item.version<1)
         throw new Error('Invalid Friends List response.');
       return {username:item.username,accountId:item.accountId,
-        friendsSinceMs:item.friendsSinceMs};
+        friendsSinceMs:item.friendsSinceMs,version:item.version};
+    }),nextCursor:result.nextCursor};
+  },
+  // Phase 3.2: relationship management has independent version checking.
+  manageFriendRelationship: async function(action,targetAccountId,expectedVersion){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Friends management unavailable.');
+    if(!['remove','block','unblock'].includes(action)||
+       typeof targetAccountId!=='string'||
+       !/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(targetAccountId)||
+       !(action==='block'&&expectedVersion===undefined)&&
+       (!Number.isSafeInteger(expectedVersion)||expectedVersion<1))
+      throw new Error('Invalid friendship management action.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendRequests')({
+      action,targetAccountId,
+      ...(expectedVersion===undefined?{}:{expectedVersion})
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Account changed during friendship management.');
+    const result=response.data;
+    if(!result||Object.keys(result).sort().join(',')!=='expiresAtMs,ok,status,version'||
+       result.ok!==true||!['removed','blocked'].includes(result.status)||
+       !Number.isSafeInteger(result.version)||result.version<1||
+       result.expiresAtMs!==null)
+      throw new Error('Invalid friendship management response.');
+    return {ok:true,status:result.status,version:result.version};
+  },
+  listBlockedFriends: async function(cursor=0){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Blocked accounts unavailable.');
+    if(!Number.isSafeInteger(cursor)||cursor<0||cursor>1000||cursor%20!==0)
+      throw new Error('Invalid blocked accounts page.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendRequests')({
+      action:'list-blocked',cursor
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Account changed during blocked accounts listing.');
+    const result=response.data;
+    if(!result||Object.keys(result).sort().join(',')!=='items,nextCursor'||
+       !Array.isArray(result.items)||result.items.length>20||
+       !(result.nextCursor===null||
+         (Number.isSafeInteger(result.nextCursor)&&result.nextCursor>cursor&&
+          result.nextCursor<=1000&&result.nextCursor%20===0)))
+      throw new Error('Invalid blocked accounts response.');
+    const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
+    return {items:result.items.map(item=>{
+      if(!item||Object.keys(item).sort().join(',')!==
+          'accountId,blockedAtMs,username,version'||
+          typeof item.username!=='string'||!HANDLE.test(item.accountId)||
+          item.accountId!==item.username+'#'+item.accountId.slice(-5)||
+          !Number.isSafeInteger(item.blockedAtMs)||item.blockedAtMs<0||
+          !Number.isSafeInteger(item.version)||item.version<1)
+        throw new Error('Invalid blocked accounts response.');
+      return {username:item.username,accountId:item.accountId,
+        blockedAtMs:item.blockedAtMs,version:item.version};
     }),nextCursor:result.nextCursor};
   },
   listCampaignNotifications: async function(cursor=null){

@@ -151,3 +151,40 @@
   .asteria-accepted-friends-heading{align-items:flex-start;}
   .asteria-accepted-friends-heading button{min-width:88px;}
 }
+
+/* Phase 3.2 Friendship management: explicit confirmation and private blocks. */
+.asteria-blocked-friends{margin-top:20px;padding-top:16px;border-top:1px solid #71889b55}
+.asteria-blocked-friends-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.asteria-blocked-friends-heading h3{margin:0;color:#e6d3b5;font:400 1.24rem/1.3 var(--asteria-font-display,Georgia,serif)}
+.asteria-blocked-friends-heading button,.asteria-blocked-friend-card button,
+.asteria-friend-manage-actions button,#accountFriendsBlock,
+#accountFriendsBlockedMore,.asteria-friends-manage-confirm-actions button{
+ min-height:44px;padding:9px 12px;border:1px solid #7894a8;border-radius:3px;
+ color:#e7f0f7;background:#132b3e;cursor:pointer;
+ font:600 .88rem/1.35 var(--asteria-font-body,Arial,sans-serif);
+}
+.asteria-blocked-friends-heading button:disabled,.asteria-blocked-friend-card button:disabled,
+.asteria-friend-manage-actions button:disabled,#accountFriendsBlock:disabled,
+#accountFriendsBlockedMore:disabled{opacity:.55;cursor:not-allowed}
+#accountFriendsBlockedMore[hidden],#accountFriendsBlock[hidden],
+#accountFriendsManageConfirm[hidden]{display:none!important}
+#accountFriendsBlock{width:100%;margin-top:12px}
+#accountFriendsBlockedStatus,.asteria-blocked-friends-list p{
+ color:#bdd3e2;font-size:.9rem;line-height:1.5}
+.asteria-blocked-friend-card{display:flex;align-items:center;flex-wrap:wrap;
+ gap:10px;padding:12px 0;border-bottom:1px solid #71889b55}
+.asteria-blocked-friend-card span{color:#bdd3e2;overflow-wrap:anywhere}
+.asteria-blocked-friend-card button{margin-left:auto}
+.asteria-friend-manage-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.asteria-friends-manage-confirm{position:sticky;bottom:8px;z-index:10;
+ padding:20px;margin:16px 0;border:2px solid #bca57e;border-radius:5px;
+ background:#0c1c2b;box-shadow:0 8px 24px #000a;color:#e8d9ba}
+.asteria-friends-manage-confirm h3{margin:0 0 10px;font-size:1.2rem}
+.asteria-friends-manage-confirm p{line-height:1.5}
+.asteria-friends-manage-confirm-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+#accountFriendsManageApprove{border-color:#d5af84}
+@media(max-width:600px){
+ .asteria-blocked-friend-card button{margin-left:0}
+ .asteria-friend-manage-actions button{flex:1 1 120px}
+ .asteria-friends-manage-confirm-actions button{flex:1 1 110px}
+}
