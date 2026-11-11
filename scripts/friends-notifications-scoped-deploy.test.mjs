@@ -199,7 +199,8 @@ test('manual workflow never executes broad deploys or activates social features'
   assert.match(source,/DEPLOY-ASTERIA-FRIEND-NOTIFICATION-RULES/);
   assert.match(source,/DEPLOY-ASTERIA-FRIEND-NOTIFICATIONS-OFF/);
   assert.match(source,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=0/);
-  const social=source.slice(source.indexOf('  friend_notifications_inventory:'));
+  const social=source.slice(source.indexOf('  friend_notifications_inventory:'),
+    source.indexOf('  friend_notifications_activation_audit:'));
   assert.doesNotMatch(social,/--only functions,firestore|--only storage|--only hosting/);
   assert.doesNotMatch(social,/ASTERIA_FRIEND_NOTIFICATIONS_ENABLED=1/);
 });
