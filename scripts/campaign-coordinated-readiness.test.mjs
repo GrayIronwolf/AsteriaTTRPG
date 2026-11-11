@@ -55,7 +55,7 @@ test('a complete synthetic inventory still cannot claim release authorization',(
 test('missing, duplicate, inactive or unverified Cloud Functions are never accepted',()=>{
  const baseline=snapshot();
  for(const mutate of [
-   s=>s.functions.pop(),
+   s=>s.functions.shift(),
    s=>s.functions.push({...s.functions[0]}),
    s=>{s.functions[0].state='FAILED';},
    s=>{delete s.descriptions.asteriaSecureInvitation;}
