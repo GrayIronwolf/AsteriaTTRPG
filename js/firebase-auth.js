@@ -2384,6 +2384,69 @@ const firebasePublicApi = {
       throw new Error('Account search returned an invalid response.');
     return {found:true,username:result.username,accountId:result.accountId};
   },
+  // Friends Phase 2.3: a separate authenticated callable; private pair and
+  // identity documents are never read directly by the browser.
+  manageFriendRequest: async function(action,targetAccountId,expectedVersion){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Friend requests are not active yet.');
+    if(!['send','accept','decline','cancel'].includes(action)||
+       typeof targetAccountId!=='string'||
+       !/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(targetAccountId)||
+       (action!=='send'&&(!Number.isSafeInteger(expectedVersion)||expectedVersion<1)))
+      throw new Error('Invalid friend request action.');
+    const payload={action,targetAccountId,
+      ...(action==='send'?{}:{expectedVersion})};
+    const response=await httpsCallable(functionsClient,'asteriaFriendRequests')(payload);
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Account changed during request.');
+    const result=response.data;
+    if(!result||Object.keys(result).sort().join(',')!=='expiresAtMs,ok,status,version'||
+       result.ok!==true||!['pending','accepted','declined','cancelled'].includes(result.status)||
+       !Number.isSafeInteger(result.version)||result.version<1||
+       !(result.expiresAtMs===null||Number.isSafeInteger(result.expiresAtMs)))
+      throw new Error('Friend request response invalid.');
+    return {ok:true,status:result.status,version:result.version,
+      expiresAtMs:result.expiresAtMs};
+  },
+  listFriendRequests: async function(direction,cursor=0){
+    const uid=currentUser?.uid;
+    if(!uid||!auth||auth.currentUser?.uid!==uid||ownershipReadyUid!==uid||
+       !functionsClient||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Friend requests are not active yet.');
+    if(!['incoming','outgoing'].includes(direction)||
+       !Number.isSafeInteger(cursor)||cursor<0||cursor>1000||cursor%20!==0)
+      throw new Error('Invalid friend request page.');
+    const response=await httpsCallable(functionsClient,'asteriaFriendRequests')({
+      action:'list',direction,cursor
+    });
+    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
+       ownershipReadyUid!==uid||window.AsteriaFeatureFlags?.friendRequestsEnabled!==true)
+      throw new Error('Account changed during request.');
+    const result=response.data;
+    if(!result||!Array.isArray(result.items)||result.items.length>20||
+       !(result.nextCursor===null||
+         (Number.isSafeInteger(result.nextCursor)&&result.nextCursor>cursor&&
+          result.nextCursor<=1000&&result.nextCursor%20===0)))
+      throw new Error('Invalid friend request page.');
+    const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
+    return {items:result.items.map(item=>{
+      if(!item||Object.keys(item).sort().join(',')!==
+          'accountId,direction,expiresAtMs,requestedAtMs,status,username,version'||
+          typeof item.username!=='string'||!HANDLE.test(item.accountId)||
+          item.accountId!==item.username+'#'+item.accountId.slice(-5)||
+          item.direction!==direction||item.status!=='pending'||
+          !Number.isSafeInteger(item.version)||item.version<1||
+          !Number.isSafeInteger(item.requestedAtMs)||
+          !Number.isSafeInteger(item.expiresAtMs))
+        throw new Error('Invalid friend request page.');
+      return {username:item.username,accountId:item.accountId,direction,
+        status:'pending',version:item.version,requestedAtMs:item.requestedAtMs,
+        expiresAtMs:item.expiresAtMs};
+    }),nextCursor:result.nextCursor};
+  },
   listCampaignNotifications: async function(cursor=null){
     if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
       throw new Error('Sign in to view notifications.');
