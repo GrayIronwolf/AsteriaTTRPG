@@ -172,6 +172,7 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       inviteId,campaignId,type,roleOffered,status:'active',
       tokenDigest:digest,
       recipientEmailNormalized:email,recipientUid:boundUid,
+      ...(resolveBoundRecipient?{friendAccountBound:true}:{}),
       ...(bindingKind==='friend-account'?
         {bindingKind,recipientAccountIdKey:accountIdKey}:{}),
       createdByUid:actorUid,createdAt:now,
