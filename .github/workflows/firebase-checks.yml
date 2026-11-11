@@ -22,6 +22,7 @@ jobs:
       - run: npm ci
       - run: npm run audit:production
       - run: npm run release:check
+      - run: npm run audit:campaign-coordinated
       - run: npm run content:check
       - run: npm run lint
       - run: npm test

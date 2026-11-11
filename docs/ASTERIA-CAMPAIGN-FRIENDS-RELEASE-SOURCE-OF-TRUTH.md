@@ -16,6 +16,16 @@ Merging a change to the canonical release configuration triggers `.github/workfl
 
 The existing Google Cloud Workload Identity Provider rejects authentication from newly created workflow files. Live verification belongs exclusively to the already-trusted `.github/workflows/firebase-deploy.yml` manual, scoped, read-only operation. Do not relax WIF conditions or grant wider IAM merely to make an automatic report green.
 
+## Single comprehensive production readiness audit (no writes)
+
+The existing WIF-trusted **Deploy Firebase backend (manual)** workflow on `main` now offers a read-only operation: `campaign-coordinated-readiness-audit`. Leave the production confirmation **blank**.
+
+This single run verifies the seven core Campaign/Friends Cloud Functions, all their relevant boolean server gates, optional notifications/email function availability, signing-secret enabled-version visibility (never secret values), and live Firestore/Storage Rules source parity. It runs the existing backup metadata inventory and records a unified list of release blockers in the job summary. It never deploys, enables, migrates, emails or reads account/character data. If the deployment service account cannot inspect a resource, it reports **NOT VERIFIED** rather than claiming success.
+
+The auto-triggered `asteria-campaign-release-audit.yml` remains offline because new workflows are not allowed Google Cloud Workload Identity credentials. The comprehensive live audit runs **only from the existing trusted workflow** and needs no IAM expansion.
+
+**A successful audit workflow does not mean public activation is authorised.** It never establishes that a backup was restored, that owners reconciled real Campaign v1 memberships, that real accounts tested acceptance, or that an incident-response owner approved general availability. These are intentionally explicit NO-GO blockers until independently verified.
+
 ## Verified historical backend deployment — not an activation attestation
 
 Production project `asteria-ttrpg`, region `us-central1`:

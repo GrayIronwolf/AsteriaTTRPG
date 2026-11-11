@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - name: Verify canonical release manifest against website source
         run: npm run release:check
+      - name: Inspect complete Campaign v2 and Friends source release gates
+        run: npm run audit:campaign-coordinated
       - name: Inspect default-off website/backend rollout gates
         run: npm run test:rollout
       - name: Verify authenticated campaign canary against Firebase emulators
