@@ -78,10 +78,10 @@ async function issue(db,accountId='Poppa_J#52816',requestId='phase-5-2-request-0
 }
 const claim=(db,issued,uid='bob',time=now)=>acceptSecureCampaignInvitation(db,
  {uid}, {campaignId:'campaign01',inviteId:issued.inviteId,token:issued.token},
- {signingKey:key,now:time,authAdmin:auth});
+ {signingKey:key,now:time,authAdmin:auth,friendInvitationsEnabled:true});
 const preview=(db,issued,uid='bob',time=now)=>previewSecureCampaignInvitation(db,
  {uid}, {campaignId:'campaign01',inviteId:issued.inviteId,token:issued.token},
- {signingKey:key,now:time,authAdmin:auth});
+ {signingKey:key,now:time,authAdmin:auth,friendInvitationsEnabled:true});
 
 test('exact Account ID and distinct issue action shape reject forged UIDs and email',()=>{
  assert.deepEqual(validateAccountBoundInvitation(issueInput()).accountIdKey,'poppa_j#52816');
@@ -192,7 +192,7 @@ test('revoked, expired and forged credentials cannot claim; legacy stays unaffec
    /unavailable/);
  await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'carol'},{
    campaignId:'campaign01',inviteId:next.inviteId,token:token()
- },{signingKey:key,now,authAdmin:auth}),/unavailable/);
+ },{signingKey:key,now,authAdmin:auth,friendInvitationsEnabled:true}),/unavailable/);
  const oldRecord={...db.store.get('campaigns/campaign01/invitations/'+next.inviteId)};
  delete oldRecord.friendAccountBound;
  assert.equal(oldRecord.friendAccountBound,undefined);
