@@ -51,7 +51,7 @@ export function validateFriendRequestAction(data) {
  * a version previously issued by a future recipient-scoped inbox.
  */
 export async function changeFriendRequest(db,authAdmin,actorUid,rawData,{
-  now=new Date()
+  now=new Date(),notificationsEnabled=false
 }={}) {
   if(typeof actorUid!=='string'||!UID.test(actorUid)||
      typeof db?.doc!=='function'||typeof db?.runTransaction!=='function'||
@@ -163,6 +163,10 @@ export async function changeFriendRequest(db,authAdmin,actorUid,rawData,{
     if(!previous)tx.create(pairRef,next);
     else tx.update(pairRef,next);
     if(quota)tx.set(quotaRef,quota);
+    if(notificationsEnabled){
+      const {enqueueFriendNotifications}=await import('./friendNotifications.mjs');
+      enqueueFriendNotifications(tx,db,actorUid,input.action,previous,next,{now});
+    }
     return {
       ok:true,status:next.status,version:next.version,
       expiresAtMs:next.status==='pending'?next.expiresAtMs:null
