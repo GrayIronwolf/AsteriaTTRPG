@@ -178,6 +178,7 @@
         'Friend request cancelled.';
       state.busy=false;controls();
       await load(false);
+      if(action==='accept')void window.AsteriaAcceptedFriends?.refresh?.();
       // Keep the confirmed outcome visible after the inbox refresh.
       if(state.uid===uid&&session()&&active())status(confirmation);
       return true;
