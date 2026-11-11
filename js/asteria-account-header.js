@@ -13,6 +13,7 @@ function signedInUid(){
 }
 function reset(){
   requestVersion++;
+  noticeVersion++;
   lastUid='';
   profileImageUrl='';
   const bar=byId('asteriaHeaderProfile');
@@ -68,20 +69,33 @@ async function refresh(){
     }
   }
 }
+let noticeVersion=0;
 async function refreshNotifications(){
   const notice=byId('asteriaHeaderMail'),api=window.AsteriaFirebase;
+  const version=++noticeVersion;
   if(!notice)return;
   notice.hidden=true;
-  if(window.AsteriaFeatureFlags?.campaignNotifications!==true||
-    !api?.listCampaignNotifications||!api.getUser?.()?.uid)return;
-  const uid=api.getUser().uid,version=requestVersion;
-  try{
-    const result=await api.listCampaignNotifications(null);
-    if(version!==requestVersion||signedInUid()!==uid)return;
-    const notices=Array.isArray(result?.notifications)?result.notifications:[];
-    notice.hidden=!notices.some(item=>!item.readAt);
-  }catch{notice.hidden=true;}
+  const friendsEnabled=window.AsteriaFeatureFlags?.friendNotificationsEnabled===true;
+  const campaignsEnabled=window.AsteriaFeatureFlags?.campaignNotifications===true;
+  const uid=signedInUid();
+  if(!uid||(!friendsEnabled&&!campaignsEnabled)||!api?.isReady?.())return;
+  const profileVersion=requestVersion;
+  const reads=[];
+  if(friendsEnabled&&typeof api.listFriendNotifications==='function')
+    reads.push(api.listFriendNotifications(null));
+  if(campaignsEnabled&&typeof api.listCampaignNotifications==='function')
+    reads.push(api.listCampaignNotifications(null));
+  if(!reads.length)return;
+  const results=await Promise.allSettled(reads);
+  if(version!==noticeVersion||profileVersion!==requestVersion||
+     signedInUid()!==uid)return;
+  // Fail closed on uncertain reads: never reveal a previous account's indicator.
+  notice.hidden=!results.some(result=>
+    result.status==='fulfilled'&&
+    Array.isArray(result.value?.notifications)&&
+    result.value.notifications.some(item=>item?.readAt===null));
 }
+
 function bind(){
   byId('asteriaHeaderAvatarButton')?.addEventListener('click',()=>{
     if(signedInUid())window.AsteriaAccountProfile?.open?.();

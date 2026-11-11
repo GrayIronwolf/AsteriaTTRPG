@@ -31,7 +31,8 @@
   function toggle(){
     const next=!opened&&isSignedIn();
     const state=byId('accountMenuNotificationsState');
-    if(state)state.textContent=window.AsteriaFeatureFlags?.campaignNotifications===true?
+    if(state)state.textContent=(window.AsteriaFeatureFlags?.campaignNotifications===true||
+      window.AsteriaFeatureFlags?.friendNotificationsEnabled===true)?
       'Available':'Not active';
     const friendsState=byId('accountMenuFriendsState');
     if(friendsState)friendsState.textContent=window.AsteriaFeatureFlags?.friendAccountLookup===true?
