@@ -81,7 +81,8 @@ test('valid misses and hits consume quota and throttle beyond both window and da
   });
   for(let period=2;period<=4;period++){
     const time=new Date(at.getTime()+period*16*60*1000);
-    for(let j=0;j<10;j++)await find('alice','Asteria#00010',time);
+    const count=period===4?9:10;
+    for(let j=0;j<count;j++)await find('alice','Asteria#00010',time);
   }
   await assert.rejects(find('alice','Asteria#00009',
     new Date(at.getTime()+65*60*1000)),/rate limit/);
