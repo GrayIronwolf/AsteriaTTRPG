@@ -97,6 +97,13 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
     throw Error('Email invitations require a recipient email; share links cannot contain one.');
   if((email||uid)&&maxUses!==1)
     throw Error('Recipient-restricted invitations must allow only one use.');
+  // Phase 5.2: server-only resolver runs INSIDE the same transaction as
+  // private invitation creation. Browser code cannot supply a UID or hook.
+  const resolveBoundRecipient=options.resolveBoundRecipient;
+  if(resolveBoundRecipient!==undefined&&(
+    typeof resolveBoundRecipient!=='function'||uid!==null||email!==null||
+    type!=='share-link'||roleOffered!=='player'||maxUses!==1))
+    throw Error('Invalid recipient restriction.');
   const now=options.now instanceof Date&&Number.isFinite(options.now.getTime())?
     options.now:new Date();
   const time=now.getTime();
@@ -136,10 +143,14 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
     if(campaign.joinPolicy?.joinRequestsOpen===false)
       throw Error('The campaign is not accepting new invitations.');
     const throttle=dayLimit(throttleSnap.exists?throttleSnap.data():null,time);
+    const boundUid=resolveBoundRecipient?
+      await resolveBoundRecipient(tx,{campaignId,actorUid,now}):uid;
+    if(resolveBoundRecipient&&(!validId(boundUid)||boundUid===actorUid))
+      throw Error('Invitation recipient unavailable.');
     const recordValue={
       inviteId,campaignId,type,roleOffered,status:'active',
       tokenDigest:digest,
-      recipientEmailNormalized:email,recipientUid:uid,
+      recipientEmailNormalized:email,recipientUid:boundUid,
       createdByUid:actorUid,createdAt:now,
       expiresAt:new Date(time+expiresInHours*HOUR),
       maxUses,usedCount:0,requiresGMApproval:true,
