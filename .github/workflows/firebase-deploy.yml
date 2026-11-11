@@ -266,12 +266,30 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/asteria-campaign-core-release" --package-lock-only --ignore-scripts --no-audit --no-fund
           npm ci --prefix "$RUNNER_TEMP/asteria-campaign-core-release" --omit=dev --no-audit --no-fund
           node --check "$RUNNER_TEMP/asteria-campaign-core-release/functions/index.mjs"
+      - name: Install isolated pinned Firebase CLI (no repository overrides)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-campaign-core-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-campaign-core-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+          node scripts/account-id-release-cli-verify.mjs --check
+          node - "$RUNNER_TEMP/asteria-campaign-core-cli" <<'NODE'
+          const {createRequire}=require('node:module');
+          const {join}=require('node:path');
+          const cli=createRequire(join(process.argv[2],'node_modules/firebase-tools/package.json'));
+          const mm=cli('minimatch');
+          const info=cli('minimatch/package.json');
+          if(typeof mm!=='function'||!/^3\./.test(info.version)||
+             mm('source.mjs','*.mjs')!==true)
+            throw Error('Isolated campaign Firebase CLI minimatch API mismatch.');
+          console.log('Campaign Firebase CLI minimatch ABI verified: '+info.version);
+          NODE
       - name: Deploy exactly five isolated core campaign callables (no secrets, rules or email)
         working-directory: ${{ runner.temp }}/asteria-campaign-core-release
         shell: bash
         run: |
           set -euo pipefail
-          "$GITHUB_WORKSPACE/node_modules/.bin/firebase" deploy --project asteria-ttrpg \
+          node "$RUNNER_TEMP/asteria-campaign-core-cli/node_modules/firebase-tools/lib/bin/firebase.js" deploy --project asteria-ttrpg \
             --only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview" \
             --non-interactive
       - name: Verify only the expected five functions are now listed
