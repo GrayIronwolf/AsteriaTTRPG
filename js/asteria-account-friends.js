@@ -35,6 +35,7 @@
     if(get('accountFriendsFind'))get('accountFriendsFind').disabled=true;
     clearResult();
     window.AsteriaFriendRequests?.onClose?.();
+    window.AsteriaAcceptedFriends?.onClose?.();
     setStatus('');
     activeUid='';busy=false;
     if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
@@ -53,6 +54,7 @@
     if(input)input.value='';
     overlay.hidden=false;
     window.AsteriaFriendRequests?.onOpen?.();
+    window.AsteriaAcceptedFriends?.onOpen?.();
     const ready=updateControls();
     setStatus(ready?
       'Enter the complete Account ID to find a player.':
