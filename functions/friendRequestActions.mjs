@@ -10,7 +10,7 @@ import {
 } from './friendRelationshipModel.mjs';
 
 const UID=/^[A-Za-z0-9_-]{1,128}$/;
-const ACTIONS=Object.freeze(['send','accept','decline','cancel']);
+const ACTIONS=Object.freeze(['send','accept','decline','cancel','remove','block','unblock']);
 const unavailable=()=>new Error('Friend request unavailable.');
 const dataOf=snapshot=>snapshot?.exists?snapshot.data()||{}:null;
 
@@ -19,17 +19,20 @@ export function validateFriendRequestAction(data) {
      !ACTIONS.includes(data.action))throw new Error('Invalid friend request action.');
   const keys=Object.keys(data).sort().join(',');
   const expected=data.action==='send'?'action,targetAccountId':
-    'action,expectedVersion,targetAccountId';
+    data.action==='block'&&data.expectedVersion===undefined?
+      'action,targetAccountId':'action,expectedVersion,targetAccountId';
   if(keys!==expected)throw new Error('Invalid friend request action.');
   // No raw UID, pair ID, email, bearer token, or arbitrary target path accepted.
   normaliseFriendAccountId(data.targetAccountId);
   if(data.action!=='send'&&
+     !(data.action==='block'&&data.expectedVersion===undefined)&&
      (!Number.isSafeInteger(data.expectedVersion)||data.expectedVersion<1))
     throw new Error('Invalid friend request action.');
   return {
     action:data.action,
     targetAccountId:data.targetAccountId.trim(),
-    ...(data.action==='send'?{}:{expectedVersion:data.expectedVersion})
+    ...(data.action==='send'||data.expectedVersion===undefined?{}:
+      {expectedVersion:data.expectedVersion})
   };
 }
 
@@ -114,7 +117,15 @@ export async function changeFriendRequest(db,authAdmin,actorUid,rawData,{
 
     const previous=dataOf(pairSnap);
     let next;
-    if(input.action==='send'){
+    if(input.action==='block'&&!previous){
+      // Block an account even when no prior friend request exists. The initial
+      // canonical record is never persisted in pending state.
+      if(input.expectedVersion!==undefined)throw unavailable();
+      const initial=createFriendRequestRecord(actorUid,targetUid,{now});
+      next=transitionFriendRelationship(initial,{
+        actorUid,action:'block',expectedVersion:initial.version,now
+      });
+    }else if(input.action==='send'){
       if(!previous){
         next=createFriendRequestRecord(actorUid,targetUid,{now});
       }else{
@@ -137,6 +148,8 @@ export async function changeFriendRequest(db,authAdmin,actorUid,rawData,{
       if(!previous)throw unavailable();
       assertFriendRelationship(previous);
       if(previous.pairId!==pairRef.id)throw unavailable();
+      if(input.action==='block'&&input.expectedVersion===undefined)
+        throw unavailable();
       next=transitionFriendRelationship(previous,{
         actorUid,action:input.action,expectedVersion:input.expectedVersion,now
       });
