@@ -127,7 +127,7 @@ test('approved campaign workflow stages isolated functions and never widens depl
   assert.match(section,/Refusing to overwrite existing core campaign function/);
   assert.match(section,/--only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview"/);
   assert.match(section,/asteria-campaign-core-cli/);
-  assert.match(section,/firebase-tools@15\\.35\\.0/);
+  assert.ok(section.includes('firebase-tools@15.35.0'));
   assert.match(section,/CLI minimatch API mismatch/);
   assert.match(read('.github/workflows/firebase-checks.yml'),/Exercise isolated campaign core packaging and Firebase CLI dependency ABI/);
   assert.doesNotMatch(section,/--only functions,firestore,storage/);
