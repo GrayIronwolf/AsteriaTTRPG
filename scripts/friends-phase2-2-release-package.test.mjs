@@ -13,7 +13,8 @@ test('release contains exactly one disabled request callable with private depend
   assert.deepEqual(Object.keys(files).sort(),[
     'firebase.json','functions/.env.asteria-ttrpg',
     'functions/friendAccountLookup.mjs','functions/friendRelationshipModel.mjs',
-    'functions/friendRequestActions.mjs','functions/index.mjs','functions/package.json'
+    'functions/friendRequestActions.mjs','functions/friendRequestInbox.mjs',
+    'functions/index.mjs','functions/package.json'
   ]);
   assert.equal(files['functions/index.mjs'],isolatedFriendRequestsSource());
   assert.equal((files['functions/index.mjs'].match(/export const /g)||[]).length,1);
