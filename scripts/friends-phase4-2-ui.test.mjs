@@ -153,7 +153,7 @@ test('source keeps separate feature flags, no client Firestore calls and safe pr
   assert.match(auth,/httpsCallable\(functionsClient,'asteriaFriendNotifications'\)/);
   assert.match(auth,/ownershipReadyUid!==uid/);
   assert.match(auth,/Account changed during friend notification/);
-  assert.match(html,/friendNotificationsEnabled:false,serverCampaignUCN:false/);
+  assert.match(html,/friendNotificationsEnabled:true,serverCampaignUCN:false/);
   assert.match(html,/campaignNotifications:false,accountIds:true/);
   assert.match(workspace,/window\.AsteriaFriendNotificationsUI\.render\(grid\)/);
   assert.match(workspace,/window\.AsteriaCampaignNotificationsUI\.render\(grid\)/);
