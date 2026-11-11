@@ -57,6 +57,14 @@
       since.textContent='Friends since '+new Date(friend.friendsSinceMs).toLocaleDateString();
       details.append(name,handle,since);
       card.append(initial,details);
+      const view=document.createElement('button');
+      view.type='button';
+      view.className='asteria-friend-preview-link';
+      view.textContent='View Public Profile';
+      view.addEventListener('click',()=>window.AsteriaFriendsWorkspace?.preview?.(
+        {username:friend.username,accountId:friend.accountId},
+        {context:'Accepted friend.',source:view}));
+      card.appendChild(view);
       host.appendChild(card);
       window.AsteriaFriendManagement?.decorateFriendCard?.(card,friend);
     }

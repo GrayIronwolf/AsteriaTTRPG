@@ -15,6 +15,7 @@
   function clearResult(){
     window.AsteriaFriendRequests?.setCandidate?.(null);
     window.AsteriaFriendManagement?.setCandidate?.(null);
+    window.AsteriaFriendsWorkspace?.closePreview?.();
     if(get('accountFriendsResult'))get('accountFriendsResult').hidden=true;
     for(const id of ['accountFriendsResultInitial','accountFriendsResultName','accountFriendsResultId'])
       if(get(id))get(id).textContent='';
@@ -38,6 +39,7 @@
     window.AsteriaFriendRequests?.onClose?.();
     window.AsteriaAcceptedFriends?.onClose?.();
     window.AsteriaFriendManagement?.onClose?.();
+    window.AsteriaFriendsWorkspace?.onClose?.();
     setStatus('');
     activeUid='';busy=false;
     if(restoreFocus&&returnFocus?.isConnected)returnFocus.focus();
@@ -58,6 +60,7 @@
     window.AsteriaFriendRequests?.onOpen?.();
     window.AsteriaAcceptedFriends?.onOpen?.();
     window.AsteriaFriendManagement?.onOpen?.();
+    window.AsteriaFriendsWorkspace?.onOpen?.();
     const ready=updateControls();
     setStatus(ready?
       'Enter the complete Account ID to find a player.':

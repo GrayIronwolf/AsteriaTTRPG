@@ -64,7 +64,7 @@ test('all management UI controls exist with explicit confirmation and disabled d
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  assert.match(html,/role="alertdialog"/);
  assert.match(html,/aria-modal="true"/);
- assert.match(html,/asteria-friend-management\.js\?v=friends-phase3-2/);
+ assert.match(html,/asteria-friend-management\.js\?v=friends-phase3-3/);
  assert.match(css,/asteria-friend-manage-actions/);
  assert.doesNotMatch(html,/friendRequestsEnabled:true/);
 });

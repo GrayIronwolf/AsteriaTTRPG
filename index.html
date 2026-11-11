@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/asteria-account-menu.css?v=account-menu-phase3-3">
 <link rel="stylesheet" href="css/asteria-account-profile.css?v=account-profile-phase3-2">
 <link rel="stylesheet" href="css/asteria-account-security.css?v=account-menu-phase3-3">
-<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase3-2">
+<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase3-3">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -470,10 +470,31 @@
             <span id="accountFriendsResultId"></span>
           </div>
         </div>
+        <button id="accountFriendsProfileFromSearch" class="asteria-friend-preview-link" type="button">View Public Profile</button>
         <p>Finding a player does not automatically connect you or join their campaign.</p>
         <button id="accountFriendsBlock" type="button" hidden disabled>Block Player</button>
       </section>
-      <section id="accountFriendsAccepted" class="asteria-accepted-friends" aria-labelledby="accountFriendsAcceptedTitle">
+      <section id="accountFriendsPublicPreview" class="asteria-friends-public-preview" aria-labelledby="accountFriendsPublicPreviewTitle" hidden>
+        <div class="asteria-friends-public-preview-heading">
+          <h3 id="accountFriendsPublicPreviewTitle">Public Profile</h3>
+          <button id="accountFriendsPublicPreviewClose" type="button" aria-label="Close public profile">×</button>
+        </div>
+        <div class="asteria-friends-public-preview-identity">
+          <span id="accountFriendsPublicPreviewInitial" class="asteria-friends-initial" aria-hidden="true"></span>
+          <div>
+            <strong id="accountFriendsPublicPreviewName"></strong>
+            <p id="accountFriendsPublicPreviewAccountId"></p>
+          </div>
+        </div>
+        <p id="accountFriendsPublicPreviewContext" class="asteria-friends-public-preview-context"></p>
+        <p class="asteria-friends-public-preview-note">Only the public username and Asteria Account ID are shown. Private profile pictures and account details are not shared.</p>
+      </section>
+      <div id="accountFriendsWorkspaceTabs" class="asteria-friends-workspace-tabs" role="tablist" aria-label="Friends sections">
+        <button id="accountFriendsWorkspaceFriends" type="button" role="tab" tabindex="0" aria-selected="true" aria-controls="accountFriendsAccepted">My Friends</button>
+        <button id="accountFriendsWorkspaceRequests" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="accountFriendsRequests">Requests</button>
+        <button id="accountFriendsWorkspaceBlocked" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="accountFriendsBlocked">Blocked</button>
+      </div>
+      <section id="accountFriendsAccepted" class="asteria-accepted-friends" role="tabpanel" aria-labelledby="accountFriendsWorkspaceFriends">
         <div class="asteria-accepted-friends-heading">
           <h3 id="accountFriendsAcceptedTitle">My Friends</h3>
           <button id="accountFriendsAcceptedRefresh" type="button" disabled>Refresh</button>
@@ -482,7 +503,7 @@
         <div id="accountFriendsAcceptedList" class="asteria-accepted-friends-list" aria-label="Accepted friends"></div>
         <button id="accountFriendsAcceptedMore" type="button" hidden disabled>Load More Friends</button>
       </section>
-      <section id="accountFriendsBlocked" class="asteria-blocked-friends" aria-labelledby="accountFriendsBlockedTitle">
+      <section id="accountFriendsBlocked" class="asteria-blocked-friends" role="tabpanel" aria-labelledby="accountFriendsWorkspaceBlocked" hidden>
         <div class="asteria-blocked-friends-heading">
           <h3 id="accountFriendsBlockedTitle">Blocked Players</h3>
           <button id="accountFriendsBlockedRefresh" type="button" disabled>Refresh</button>
@@ -499,7 +520,7 @@
           <button id="accountFriendsManageApprove" type="button">Confirm</button>
         </div>
       </section>
-      <div id="accountFriendsRequests" class="asteria-friend-requests" aria-label="Friend requests">
+      <div id="accountFriendsRequests" class="asteria-friend-requests" role="tabpanel" aria-labelledby="accountFriendsWorkspaceRequests" hidden>
         <div class="asteria-friend-requests-head">
           <h3>Friend Requests</h3>
           <p id="accountFriendsRequestsStatus" role="status" aria-live="polite">Requests are not active yet.</p>
@@ -535,10 +556,11 @@
   <script src="js/character-access.js?v=linked-players-v8"></script>
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
 <script src="js/asteria-account-menu.js?v=friends-phase1-3"></script>
-<script src="js/asteria-account-friends.js?v=friends-phase1-3"></script>
+<script src="js/asteria-account-friends.js?v=friends-phase3-3"></script>
 <script src="js/asteria-friend-requests.js?v=friends-phase2-3"></script>
-<script src="js/asteria-accepted-friends.js?v=friends-phase3-1"></script>
-<script src="js/asteria-friend-management.js?v=friends-phase3-2"></script>
+<script src="js/asteria-accepted-friends.js?v=friends-phase3-3"></script>
+<script src="js/asteria-friend-management.js?v=friends-phase3-3"></script>
+<script src="js/asteria-friends-workspace.js?v=friends-phase3-3"></script>
 <script type="module" src="js/asteria-account-header.js?v=header-account-20261110"></script>
 <script src="js/asteria-account-security.js?v=account-id-canary-session-20261110"></script>
 <script type="module" src="js/asteria-account-profile.js?v=account-username-20261111"></script>

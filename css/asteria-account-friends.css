@@ -229,3 +229,80 @@
  .asteria-friend-manage-actions{grid-template-columns:1fr 1fr}
  .asteria-friend-manage-actions button{flex:none}
 }
+
+
+/* Phase 3.3: Friends workspace sections and public-only profile preview. */
+#accountFriendsAccepted[hidden],
+#accountFriendsRequests[hidden],
+#accountFriendsBlocked[hidden],
+#accountFriendsPublicPreview[hidden]{display:none!important}
+.asteria-friends-workspace-tabs{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:8px;margin-top:24px;padding-bottom:8px;
+ border-bottom:1px solid #71889b55;
+}
+.asteria-friends-workspace-tabs button{
+ min-width:0;min-height:48px;padding:10px 8px;
+ border:1px solid #7894a8;border-radius:3px;
+ color:#bdd3e2;background:#132b3e;
+ font:600 .91rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+ cursor:pointer;
+}
+.asteria-friends-workspace-tabs button[aria-selected=true]{
+ color:#f3e0bc;border-color:#d6b98a;background:#24445a;
+}
+.asteria-friends-workspace-tabs button:focus-visible,
+.asteria-friend-preview-link:focus-visible,
+#accountFriendsPublicPreviewClose:focus-visible{
+ outline:3px solid #6fb5ff;outline-offset:3px;
+}
+.asteria-accepted-friends,.asteria-blocked-friends,.asteria-friend-requests{
+ margin-top:12px;padding-top:14px;border-top:0;
+}
+.asteria-friends-public-preview{
+ margin:18px 0 8px;padding:17px;border:1px solid #8ca8b7;
+ border-radius:4px;background:#091c2d;color:#eee0c5;
+}
+.asteria-friends-public-preview-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.asteria-friends-public-preview-heading h3{
+ margin:0;font:400 1.2rem/1.35 var(--asteria-font-display,Georgia,serif);
+}
+#accountFriendsPublicPreviewClose{
+ min-width:44px;min-height:44px;border:1px solid #7894a8;
+ border-radius:3px;background:#14293b;color:#eee0c5;
+ font-size:1.25rem;cursor:pointer;
+}
+.asteria-friends-public-preview-identity{
+ display:flex;align-items:center;gap:14px;margin:12px 0;
+ min-width:0;
+}
+.asteria-friends-public-preview-identity>div{min-width:0}
+.asteria-friends-public-preview-identity strong,
+#accountFriendsPublicPreviewAccountId{overflow-wrap:anywhere}
+#accountFriendsPublicPreviewAccountId{margin:4px 0 0;color:#bdd3e2}
+.asteria-friends-public-preview-context,
+.asteria-friends-public-preview-note{
+ margin:10px 0 0;color:#b8cddd;font-size:.88rem;line-height:1.5;
+}
+.asteria-friend-preview-link{
+ min-height:44px;padding:7px 12px;border:1px solid #7894a8;
+ border-radius:3px;background:#10283b;color:#e9d9b5;
+ cursor:pointer;font:600 .86rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+}
+#accountFriendsProfileFromSearch{margin-top:10px;width:100%}
+.asteria-accepted-friend-card>.asteria-friend-preview-link{
+ grid-column:1 / -1;grid-row:2;justify-self:stretch;
+}
+.asteria-accepted-friend-card>.asteria-friend-manage-actions{
+ grid-column:1 / -1;grid-row:3;
+}
+.asteria-friend-request-entry>.asteria-friend-preview-link{
+ width:100%;margin:8px 0;
+}
+@media(max-width:480px){
+ .asteria-friends-workspace-tabs{gap:5px}
+ .asteria-friends-workspace-tabs button{padding:8px 4px;font-size:.83rem}
+ .asteria-friends-public-preview{padding:13px}
+}

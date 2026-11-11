@@ -106,9 +106,9 @@
       remove:'Remove Friend',block:'Block Player',unblock:'Unblock Player'
     }[action];
     if(message)message.textContent={
-      remove:'Remove '+item.accountId+' from your Friends List? You will both lose this friendship and must wait before reconnecting.',
-      block:'Block '+item.accountId+'? Existing friendship or requests will end. This player cannot send you a friend request until your block is removed.',
-      unblock:'Unblock '+item.accountId+'? This will not automatically restore a previous friendship.'
+      remove:'Remove '+item.accountId+' from your Friends List? This ends the friendship for both players. A new friend request is restricted by the seven-day reconnection cooldown.',
+      block:'Block '+item.accountId+'? This immediately ends your friendship and any pending friend requests. Unblocking will NOT restore the friendship. After the final block is removed, a seven-day reconnection cooldown starts before a new friend request can be sent. You must become friends again through a new request.',
+      unblock:'Unblock '+item.accountId+'? Unblocking will NOT restore your previous friendship. If this is the final block, a seven-day reconnection cooldown begins now, after which a new friend request can be sent.'
     }[action];
     if(el('accountFriendsManageConfirm')){
       el('accountFriendsManageConfirm').hidden=false;

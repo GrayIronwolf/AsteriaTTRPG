@@ -116,7 +116,15 @@
         button.addEventListener('click',()=>{void change(action,row);});
         actions.appendChild(button);
       }
-      card.append(identity,meta,actions);
+      const preview=document.createElement('button');
+      preview.type='button';
+      preview.className='asteria-friend-preview-link';
+      preview.textContent='View Public Profile';
+      preview.addEventListener('click',()=>window.AsteriaFriendsWorkspace?.preview?.(
+        {username:row.username,accountId:row.accountId},
+        {context:state.direction==='incoming'?'Incoming friend request.':
+          'Outgoing friend request.',source:preview}));
+      card.append(identity,meta,preview,actions);
       container.appendChild(card);
     }
   }
