@@ -100,6 +100,17 @@ test('manual staging needs exact trusted production workflow and never stages tw
     rmSync(dir,{recursive:true,force:true});
   }
 });
+test('CI staging is non-production and refuses manual production operations',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'asteria-campaign-ci-'));
+  try{
+    const env={GITHUB_ACTIONS:'true',CI:'true',GITHUB_EVENT_NAME:'pull_request',RUNNER_TEMP:dir};
+    assert.throws(()=>stageCampaignCoreRelease({...env,CI:'false'},'ci'),/trusted CI/);
+    assert.throws(()=>stageCampaignCoreRelease({...env,GITHUB_EVENT_NAME:'workflow_dispatch'},'ci'),/trusted CI/);
+    const result=stageCampaignCoreRelease(env,'ci');
+    assert.equal(result.targets.length,5);
+    assert.ok(existsSync(join(result.directory,'functions/index.mjs')));
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
 test('approved campaign workflow stages isolated functions and never widens deployment',()=>{
   const workflow=read('.github/workflows/firebase-deploy.yml');
   const section=workflow.split(/^  campaign_backend_deploy:\s*$/m)[1]
@@ -115,6 +126,10 @@ test('approved campaign workflow stages isolated functions and never widens depl
   assert.match(section,/working-directory: \$\{\{ runner\.temp \}\}\/asteria-campaign-core-release/);
   assert.match(section,/Refusing to overwrite existing core campaign function/);
   assert.match(section,/--only "functions:asteria:asteriaCampaignUCN,functions:asteria:asteriaMembershipPreparation,functions:asteria:asteriaCampaignAccessCutover,functions:asteria:asteriaCampaignJoinRequest,functions:asteria:asteriaCampaignJoinReview"/);
+  assert.match(section,/asteria-campaign-core-cli/);
+  assert.match(section,/firebase-tools@15\\.35\\.0/);
+  assert.match(section,/CLI minimatch API mismatch/);
+  assert.match(read('.github/workflows/firebase-checks.yml'),/Exercise isolated campaign core packaging and Firebase CLI dependency ABI/);
   assert.doesNotMatch(section,/--only functions,firestore,storage/);
   assert.doesNotMatch(section,/gcloud .* (set-iam-policy|add-iam-policy-binding)/);
   assert.match(read('index.html'),/secureInvitationManager:false/);
