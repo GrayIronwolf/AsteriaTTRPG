@@ -347,8 +347,14 @@ export const asteriaFriendRequests=onCall({
       const {listFriendRequests}=await import('./friendRequestInbox.mjs');
       return await listFriendRequests(getFirestore(),getAuth(),request.auth.uid,data);
     }
+    if(data.action==='list-friends'){
+      const {listAcceptedFriends}=await import('./friendRequestInbox.mjs');
+      return await listAcceptedFriends(getFirestore(),getAuth(),request.auth.uid,data);
+    }
     return await changeFriendRequest(getFirestore(),getAuth(),request.auth.uid,data);
   }catch(error){
+    if(error?.message==='Invalid friends list query.')
+      throw new HttpsError('invalid-argument','Invalid friends list query.');
     if(error?.message==='Invalid friend request inbox query.')
       throw new HttpsError('invalid-argument','Invalid friend request inbox query.');
     if(error?.message==='Invalid friend request action.'||
