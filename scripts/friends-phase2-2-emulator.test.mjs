@@ -77,7 +77,7 @@ test('duplicate, reciprocal, stale and forged actions reject without issuing quo
   await assert.rejects(run('alice','send','Poppa_J#52816'),/unavailable/);
   await assert.rejects(run('bob','send','Grayson#01448'),/unavailable/);
   await assert.rejects(run('carol','cancel','Poppa_J#52816',1),/unavailable/);
-  await assert.rejects(run('alice','cancel','Poppa_J#52816',0),/changed/);
+  await assert.rejects(run('alice','cancel','Poppa_J#52816',3),/changed/);
   assert.equal((await db.doc('friendRequestIssueThrottle/alice').get()).data().issued,1);
   assert.equal((await db.doc('friendRequestIssueThrottle/bob').get()).exists,false);
   await run('alice','cancel','Poppa_J#52816',1,at(2000));
