@@ -79,7 +79,7 @@ export function stageFriendsRelease(env=process.env,mode='ci'){
   // Explicit off/on values make each targeted deployment deterministic.
   if(mode!=='ci')
     files['functions/.env.asteria-ttrpg']=
-      'ASTERIA_FRIEND_LOOKUP_ENABLED='+(mode==='activate'?'1':'0')+'\\n';
+      'ASTERIA_FRIEND_LOOKUP_ENABLED='+(mode==='activate'?'1':'0')+'\n';
   for(const [file,content] of Object.entries(files)){
     const path=join(destination,file);
     mkdirSync(resolve(path,'..'),{recursive:true});
