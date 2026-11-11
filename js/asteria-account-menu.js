@@ -33,6 +33,9 @@
     const state=byId('accountMenuNotificationsState');
     if(state)state.textContent=window.AsteriaFeatureFlags?.campaignNotifications===true?
       'Available':'Not active';
+    const friendsState=byId('accountMenuFriendsState');
+    if(friendsState)friendsState.textContent=window.AsteriaFeatureFlags?.friendAccountLookup===true?
+      'Find Players':'Search pending';
     const mobileSlot=byId('mobileAccountSlot'),wrapper=byId('accountMenuWrap');
     // Account stays on the right of the header, including on compact screens.
     // A tap never activates sign-out, and it does not move this control
@@ -63,9 +66,10 @@
     const settings=target.closest?.('#accountMenuSettings');
     const appearance=target.closest?.('#accountMenuAppearance');
     const notifications=target.closest?.('#accountMenuNotifications');
+    const friends=target.closest?.('#accountMenuFriends');
     const security=target.closest?.('#accountMenuSecurity');
     const logout=target.closest?.('#accountMenuLogout');
-    if(!profile&&!settings&&!appearance&&!notifications&&!security&&!logout)return;
+    if(!profile&&!settings&&!appearance&&!friends&&!notifications&&!security&&!logout)return;
     event.preventDefault();
     close();
     window.closeSettings?.();
@@ -76,6 +80,7 @@
       if(!window.AsteriaWorkspace?.openNotifications?.())
         window.toast?.('Notifications are not ready. Try again shortly.');
     }
+    else if(friends)window.AsteriaFriends?.open?.();
     else if(security)window.AsteriaAccountSecurity?.open?.();
     else window.logout?.();
   }
