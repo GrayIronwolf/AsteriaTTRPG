@@ -4,6 +4,15 @@
  */
 (function(root){
   'use strict';
+  const activeViews=new Set();
+  let sessionRevision=0;
+  function clearSessionViews(){
+    sessionRevision++;
+    for(const clear of activeViews)clear();
+    activeViews.clear();
+  }
+  for(const event of ['asteria:auth-changed','asteria:firebase-signed-out'])
+    root.addEventListener?.(event,clearSessionViews);
   const DESTINATIONS=Object.freeze({
     'incoming-request':'requests',
     'request-accepted':'friends',
@@ -23,10 +32,11 @@
        typeof api.listFriendNotifications!=='function'||
        typeof api.markFriendNotificationRead!=='function')return false;
 
+    const revision=sessionRevision;
     const host=root.document.createElement('section');
     host.className='workspace-link-panel workspace-friend-notifications';
     host.setAttribute('aria-label','Friend notifications');
-    const current=()=>host.isConnected&&api.isReady?.()===true&&
+    const current=()=>sessionRevision===revision&&host.isConnected&&api.isReady?.()===true&&
       root.AsteriaAuthBridge?.isLoggedIn?.()===true&&
       api.getUser?.()?.uid===uid&&
       root.AsteriaFeatureFlags?.friendNotificationsEnabled===true;
@@ -69,7 +79,15 @@
     grid.prepend(host);
 
     let page=0,forward=null,busy=false;
+    let requestSerial=0;
     const cursors=[null];
+    activeViews.add(()=>{
+      requestSerial++;
+      page=0;forward=null;busy=false;cursors.length=1;
+      list.replaceChildren();
+      count.textContent='';pageLabel.textContent='';
+      status.textContent='';host.hidden=true;
+    });
     function setBusy(value){
       busy=value;
       list.setAttribute('aria-busy',String(value));
@@ -123,8 +141,10 @@
             if(!current())return;
             succeeded=true;
             status.textContent='Friend notification marked as read.';
-          }catch{
-            if(current())status.textContent='Could not mark this friend notification as read.';
+          }catch(error){
+            if(current())status.textContent=error?.code==='functions/resource-exhausted'?
+              'Too many notification actions. Try again later.':
+              'Could not mark this friend notification as read.';
           }finally{
             if(current()){
               setBusy(false);
@@ -143,10 +163,11 @@
     async function load(){
       if(busy||!current())return;
       setBusy(true);
+      const request=++requestSerial;
       status.textContent='Loading friend notifications...';
       try{
         const response=await api.listFriendNotifications(cursors[page]);
-        if(!current())return;
+        if(!current()||request!==requestSerial)return;
         forward=response.nextCursor;
         const items=response.notifications;
         list.replaceChildren();
@@ -159,15 +180,17 @@
         }
         for(const notice of items)list.append(buildRow(notice));
         status.textContent=items.length+' friend notification(s) displayed.';
-      }catch{
-        if(current()){
+      }catch(error){
+        if(current()&&request===requestSerial){
           list.replaceChildren();
           count.textContent='Friend notifications unavailable';
           forward=null;
-          status.textContent='Could not load friend notifications. Refresh to try again.';
+          status.textContent=error?.code==='functions/resource-exhausted'?
+            'Too many notification refreshes. Try again later.':
+            'Could not load friend notifications. Refresh to try again.';
         }
       }finally{
-        if(current())setBusy(false);
+        if(current()&&request===requestSerial)setBusy(false);
       }
     }
     refresh.addEventListener('click',()=>{
