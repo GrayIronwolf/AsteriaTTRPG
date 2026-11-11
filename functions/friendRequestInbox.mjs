@@ -58,6 +58,29 @@ export function nextFriendInboxQuota(previous,actorUid,nowMs){
   };
 }
 
+/**
+ * Concurrent list views capture their request timestamps before asynchronous
+ * Auth/identity checks. A later-started request can commit its quota first.
+ * Reconcile a small out-of-order server-time interval without relaxing the
+ * 15-minute and 24-hour limits or accepting corrupt/future-dated quota data.
+ */
+export function nextConcurrentInboxQuota(previous,actorUid,requestedAtMs){
+  if(!Number.isSafeInteger(requestedAtMs)||requestedAtMs<0)
+    throw unavailable();
+  const last=previous?.lastAttemptAtMs;
+  if(last!==undefined&&(!Number.isSafeInteger(last)||
+     last-requestedAtMs>60_000))
+    throw unavailable();
+  return nextFriendInboxQuota(previous,actorUid,Math.max(requestedAtMs,last??0));
+}
+async function consumeFriendInboxQuota(db,actorUid,nowMs){
+  const ref=db.doc('friendRequestInboxThrottle/'+actorUid);
+  await db.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    tx.set(ref,nextConcurrentInboxQuota(dataOf(snap),actorUid,nowMs));
+  });
+}
+
 async function verifiedIdentity(db,uid){
   if(!UID.test(uid))return null;
   const [profileSnap,assignmentSnap]=await Promise.all([
@@ -97,14 +120,8 @@ export async function listFriendRequests(db,authAdmin,actorUid,rawData,{
   catch{throw unavailable();}
   if(actor?.uid!==actorUid||actor.disabled===true||
       !await verifiedIdentity(db,actorUid))throw unavailable();
-  const throttle=db.doc('friendRequestInboxThrottle/'+actorUid);
-  // One transactional quota write per request, even for empty or no-match pages.
-  // Browser clients cannot access the throttle directly. Retries enforce quota.
-  await db.runTransaction(async tx=>{
-    const previous=await tx.get(throttle);
-    const next=nextFriendInboxQuota(dataOf(previous),actorUid,now.getTime());
-    tx.set(throttle,next);
-  });
+  // All three Friends views use the same atomic, monotonic quota consumer.
+  await consumeFriendInboxQuota(db,actorUid,now.getTime());
 
   // A single-field array-contains query avoids a new composite index or any
   // client privilege expansion. The implicit document-ID order is stable
@@ -190,11 +207,7 @@ export async function listAcceptedFriends(db,authAdmin,actorUid,rawData,{
      !await verifiedIdentity(db,actorUid))throw unavailable();
   // Same per-user Firestore throttle as the incoming/outgoing requests inbox.
   // Repeated list and refresh calls cannot bypass request-inbox quotas.
-  const throttle=db.doc('friendRequestInboxThrottle/'+actorUid);
-  await db.runTransaction(async tx=>{
-    const previous=await tx.get(throttle);
-    tx.set(throttle,nextFriendInboxQuota(dataOf(previous),actorUid,now.getTime()));
-  });
+  await consumeFriendInboxQuota(db,actorUid,now.getTime());
   const snapshot=await db.collection('friendRelationships')
     .where('participantUids','array-contains',actorUid)
     .offset(cursor).limit(PAGE_SIZE+1).get();
@@ -256,10 +269,7 @@ export async function listBlockedFriends(db,authAdmin,actorUid,rawData,{now=new 
   try{actor=await authAdmin.getUser(actorUid);}catch{throw unavailable();}
   if(actor?.uid!==actorUid||actor.disabled===true||
      !await verifiedIdentity(db,actorUid))throw unavailable();
-  await db.runTransaction(async tx=>{
-    const ref=db.doc('friendRequestInboxThrottle/'+actorUid);
-    tx.set(ref,nextFriendInboxQuota(dataOf(await tx.get(ref)),actorUid,now.getTime()));
-  });
+  await consumeFriendInboxQuota(db,actorUid,now.getTime());
   const snapshot=await db.collection('friendRelationships')
     .where('participantUids','array-contains',actorUid)
     .offset(cursor).limit(PAGE_SIZE+1).get();
