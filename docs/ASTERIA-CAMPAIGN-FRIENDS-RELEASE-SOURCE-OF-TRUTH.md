@@ -10,6 +10,12 @@
 - This initial manifest is deliberately `installed-not-activated`: existing Friends notifications and Account IDs remain on, while all new Campaign v2 and Friends-to-Campaign UI switches remain off.
 - The release generator refuses to render an active state from this unsigned source-only manifest. That requires a separately reviewed evidence-backed activation implementation, and independent backend/Firestore/Storage checks. Do not mark the approval fields true merely to satisfy a test.
 
+## Automatic audit and restricted cloud trust
+
+Merging a change to the canonical release configuration triggers `.github/workflows/asteria-campaign-release-audit.yml` automatically. This is an **offline source audit**: it verifies the manifest against the website and the existing Phase 8.3 release safeguards and publishes a single NO-GO/ready-for-review summary. It does not query live Google Cloud, enable anything or claim that production is ready.
+
+The existing Google Cloud Workload Identity Provider rejects authentication from newly created workflow files. Live verification belongs exclusively to the already-trusted `.github/workflows/firebase-deploy.yml` manual, scoped, read-only operation. Do not relax WIF conditions or grant wider IAM merely to make an automatic report green.
+
 ## Verified historical backend deployment — not an activation attestation
 
 Production project `asteria-ttrpg`, region `us-central1`:
