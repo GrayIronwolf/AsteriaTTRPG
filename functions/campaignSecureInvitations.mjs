@@ -135,6 +135,16 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
         previous.inviteId!==inviteId||previous.createdByUid!==actorUid||
         !auditSnap.exists)
         throw Error('Invitation request needs reconciliation.');
+      if(resolveBoundRecipient){
+        // A reused request key must never silently acknowledge a different
+        // recipient; revalidate within this same transaction.
+        const currentUid=await resolveBoundRecipient(tx,{campaignId,actorUid,now});
+        if(previous.recipientUid!==currentUid||previous.maxUses!==1||
+           previous.type!=='share-link'||previous.roleOffered!=='player'||
+           previous.recipientEmailNormalized!==null||
+           previous.requiresGMApproval!==true)
+          throw Error('Invitation recipient unavailable.');
+      }
       // Never regenerate/recover a bearer token after its one-time disclosure.
       return {...safeSummary(previous,true),token:null};
     }
