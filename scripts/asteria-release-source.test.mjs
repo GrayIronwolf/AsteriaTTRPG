@@ -55,3 +55,12 @@ test('single source of truth is wired into full tests, production build and GitH
  assert.match(release,/npm run release:check/);
  assert.doesNotMatch(release,/firebase deploy|firebase functions:config:set|gcloud functions deploy/);
 });
+
+test('automatic coordinated source audit cannot request untrusted production cloud access',()=>{
+ const offline=readFileSync(new URL('../.github/workflows/asteria-campaign-release-audit.yml',import.meta.url),'utf8');
+ assert.match(offline,/node scripts\/asteria-release-source\.mjs --check/);
+ assert.match(offline,/node scripts\/campaign-phase8-3-release\.mjs --audit/);
+ assert.match(offline,/permissions:\n  contents: read/);
+ assert.doesNotMatch(offline,/google-github-actions\/auth|gcloud\s|id-token:\s*write|firebase deploy/);
+ assert.match(offline,/NO-GO for public activation/);
+});
