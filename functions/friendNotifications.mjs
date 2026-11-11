@@ -86,7 +86,8 @@ export function enqueueFriendNotifications(tx,db,actorUid,action,previous,next,{
   assertFriendRelationship(next);
   if(previous!==null){
     assertFriendRelationship(previous);
-    if(next.pairId!==previous.pairId||next.version<=previous.version)fail();
+    if(next.pairId!==previous.pairId||next.version!==previous.version+1&&
+       !(action==='send'&&next.version===previous.version+2))fail();
   }
   if(!next.participantUids.includes(actorUid))fail();
   const recipient=next.participantUids.find(uid=>uid!==actorUid);
@@ -156,7 +157,7 @@ export async function listFriendNotifications(db,recipientUid,{cursor=null}={}){
      (cursor!==null&&(typeof cursor!=='string'||!NOTICE_ID.test(cursor)))||
      typeof db?.doc!=='function'||typeof db?.collection!=='function')fail();
   let query=db.collection(inbox(recipientUid))
-    .orderBy('createdAt','desc').limit(PAGE_SIZE+1);
+    .orderBy('createdAt','desc').orderBy('__name__','desc').limit(PAGE_SIZE+1);
   if(cursor!==null){
     const snap=await db.doc(inbox(recipientUid)+'/'+cursor).get();
     if(!snap.exists)fail();
