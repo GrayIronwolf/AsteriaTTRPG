@@ -32,7 +32,7 @@ test('request callable is authenticated and disabled until explicitly activated'
   assert.match(block,/export const asteriaFriendRequests=onCall/);
   assert.match(block,/request.auth\?\.uid/);
   assert.match(block,/ASTERIA_FRIEND_REQUESTS_ENABLED!=='1'/);
-  assert.match(block,/changeFriendRequest\(getFirestore\(\),getAuth\(\),request.auth.uid,data\)/);
+  assert.match(block,/changeFriendRequest\(getFirestore\(\),getAuth\(\),request.auth.uid,data,/);
   assert.doesNotMatch(block,/ASTERIA_FRIEND_LOOKUP_ENABLED/);
   assert.doesNotMatch(block,/input\.uid|data\.uid|input\.targetUid|data\.targetUid/);
   assert.match(block,/Friend request unavailable/);
