@@ -99,7 +99,7 @@ test('production deployment, activation and rollback require exact independent a
 });
 test('manual feature enable and emergency rollback use one existing identity-authorized workflow',()=>{
   const workflow=source('.github/workflows/firebase-deploy.yml');
-  const operation=workflow.split(/^  friends_lookup_activation:\s*$/m)[1]||'';
+  const operation=workflow.split(/^  friends_lookup_activation:\s*$/m)[1]?.split(/^  [a-z_]+:\s*$/m)[0]||'';
   assert.match(workflow,/          - friends-lookup-activate/);
   assert.match(workflow,/          - friends-lookup-deactivate/);
   assert.match(operation,/github\.ref == 'refs\/heads\/main'/);
