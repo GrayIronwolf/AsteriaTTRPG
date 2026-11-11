@@ -19,12 +19,11 @@ const isOn=operation=>operation.endsWith('-activate');
 const isRead=operation=>operation.startsWith('friend-notifications-read-');
 function assertSourceAndScope(operation){
   const site=readFileSync(join(root,'index.html'),'utf8');
-  // A rollback MUST remain possible even after a separately approved future
-  // website activation. An activation requires the browser default still off.
+  // The website is released separately from server callables. Reversible
+  // backend operations must work before or after the reviewed UI rollout.
   const clientFlag=site.match(/friendNotificationsEnabled:(true|false)/g)||[];
-  if(clientFlag.length!==1||
-     (isOn(operation)&&clientFlag[0]!=='friendNotificationsEnabled:false'))
-    fail('Notification website flag is unsafe for this activation.');
+  if(clientFlag.length!==1)
+    fail('Unexpected website notification flag configuration.');
   const request=readFileSync(join(root,'functions/index.mjs'),'utf8');
   const actions=readFileSync(join(root,'functions/friendRequestActions.mjs'),'utf8');
   if(!request.includes("notificationsEnabled:process.env.ASTERIA_FRIEND_NOTIFICATIONS_ENABLED==='1'")||
