@@ -1293,6 +1293,20 @@ jobs:
             *) echo 'Target function listing is ambiguous.' >&2; exit 1 ;;
           esac
           recipient_ready=0; acceptance_ready=0
+          if [[ "$OPERATION" == campaign-friends-recipients-disable ||
+                "$OPERATION" == campaign-friends-recipients-deploy-off ]]; then
+            # Reverse the activation order: do not disable recipient lookup
+            # while independently enabled account-bound issuance depends on it.
+            secure_count="$(jq '[.[] | select(.name | endswith("/asteriaSecureInvitation"))] | length' "$RUNNER_TEMP/phase53-list.json")"
+            if [ "$secure_count" = 1 ]; then
+              gcloud functions describe asteriaSecureInvitation --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/secure-invite-state.json"
+              test "$(jq -r '.serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED // "0"' "$RUNNER_TEMP/secure-invite-state.json")" != 1 || {
+                echo 'Disable account-bound invitation issuance before recipient lookup.' >&2; exit 1;
+              }
+            elif [ "$secure_count" != 0 ]; then
+              echo 'Unable to prove safe recipient rollback order.' >&2; exit 1
+            fi
+          fi
           if [[ "$OPERATION" == campaign-friends-invites-* ]]; then
             gcloud secrets describe ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --format='value(name)' >/dev/null
             gcloud secrets versions list ASTERIA_SECURE_INVITE_SIGNING_KEY --project asteria-ttrpg --filter='state=ENABLED' --format='value(name)' > "$RUNNER_TEMP/secret-versions.txt"
