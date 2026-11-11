@@ -30,6 +30,7 @@ on:
           - friend-notifications-read-deactivate
           - friend-notifications-events-activate
           - friend-notifications-events-deactivate
+          - campaign-coordinated-readiness-audit
           - campaign-friends-release-audit
           - campaign-friends-recipients-deploy-off
           - campaign-friends-recipients-enable
@@ -1224,6 +1225,50 @@ jobs:
           echo "$NOTIFICATION_RELEASE_TARGET verified notification flag $actual." >> "$GITHUB_STEP_SUMMARY"
           echo 'Exactly one function was deployed. No Firestore rules, Storage, Hosting, email, account ID or campaign changes.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Website Friends notifications remain disabled until separately approved UI activation.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_coordinated_readiness_audit:
+    name: Full Campaign v2 and Friends release readiness (one read-only report)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-coordinated-readiness-audit' &&
+      inputs.production_confirmation == ''
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify canonical source, website contract and unchanged production security gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/asteria-release-source.mjs --check
+          node scripts/campaign-coordinated-readiness.mjs --check
+          node --test scripts/campaign-coordinated-readiness.test.mjs
+      - name: Authenticate via existing restricted GitHub Workload Identity (read-only)
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Gather and report live release prerequisites without any writes
+        shell: bash
+        env:
+          ASTERIA_AUDIT_OPERATION: campaign-coordinated-readiness-audit
+          ASTERIA_COORDINATED_OPERATION: ${{ inputs.operation }}
+          ASTERIA_COORDINATED_CONFIRMATION: ${{ inputs.production_confirmation }}
+        run: |
+          set -euo pipefail
+          node scripts/campaign-coordinated-live-audit.mjs --live
+          echo 'The audit did not deploy, enable invitations, migrate memberships, send email or change IAM.' >> "$GITHUB_STEP_SUMMARY"
 
   campaign_friends_release_audit:
     name: Phase 5.3 independent campaign prerequisites audit (no writes)
