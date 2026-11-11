@@ -148,10 +148,10 @@ export async function changeFriendRequest(db,authAdmin,actorUid,rawData,{
       if(!previous)throw unavailable();
       assertFriendRelationship(previous);
       if(previous.pairId!==pairRef.id)throw unavailable();
-      if(input.action==='block'&&input.expectedVersion===undefined)
-        throw unavailable();
       next=transitionFriendRelationship(previous,{
-        actorUid,action:input.action,expectedVersion:input.expectedVersion,now
+        actorUid,action:input.action,
+        expectedVersion:input.action==='block'&&input.expectedVersion===undefined?
+          previous.version:input.expectedVersion,now
       });
     }
     let quota=null;
