@@ -71,7 +71,7 @@ test('Friends Account menu and dialog are present exactly once, accessible and o
   assert.match(menu,/window\.AsteriaFriends\?\.open\?\.\(\)/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(css,/prefers-reduced-motion/);
-  assert.match(html,/asteria-account-friends\.js\?v=friends-phase1-3/);
+  assert.match(html,/asteria-account-friends\.js\?v=friends-phase3-3/);
 });
 test('disabled search is inert but Friends workspace can be viewed',()=>{
   const h=harness();
