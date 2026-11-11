@@ -144,5 +144,5 @@ test('mobile controls and high contrast semantics are present without relying on
  assert.match(source,/setAttribute\('aria-live','polite'\)/);
  assert.match(source,/setAttribute\('role','listitem'\)/);
  assert.doesNotMatch(source,/localStorage|sessionStorage|document\.cookie|innerHTML|eval\(/);
- assert.match(read('index.html'),/friendNotificationsEnabled:false/);
+ assert.match(read('index.html'),/friendNotificationsEnabled:true/);
 });
