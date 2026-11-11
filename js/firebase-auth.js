@@ -2572,49 +2572,6 @@ const firebasePublicApi = {
       token:invite.token,alreadyIssued:invite.alreadyIssued,
       requiresGMApproval:true};
   },
-  // Friends Phase 5.2: authenticated, single-use UID-bound secure invitation.
-  // Only an exact public handle is accepted; the recipient UID stays server-only.
-  issueAccountBoundFriendInvitation: async function({
-    campaignId,accountId,requestId,expiresInHours=168
-  }={}){
-    const uid=currentUser?.uid;
-    if(!uid||!auth||auth.currentUser?.uid!==uid||
-       ownershipReadyUid!==uid||!functionsClient||
-       window.AsteriaFeatureFlags?.campaignFriendRecipients!==true||
-       window.AsteriaFeatureFlags?.campaignFriendInvites!==true)
-      throw new Error('Friend campaign invitations are not active.');
-    if(typeof campaignId!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(campaignId)||
-       typeof accountId!=='string'||!/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/.test(accountId)||
-       typeof requestId!=='string'||!/^[A-Za-z0-9_-]{12,80}$/.test(requestId)||
-       ![24,72,168,336,720].includes(expiresInHours))
-      throw new Error('Invalid friend campaign invitation.');
-    const response=await httpsCallable(functionsClient,'asteriaSecureInvitation')({
-      action:'issue-friend',campaignId,accountId,requestId,expiresInHours
-    });
-    if(currentUser?.uid!==uid||auth.currentUser?.uid!==uid||
-       ownershipReadyUid!==uid||
-       window.AsteriaFeatureFlags?.campaignFriendRecipients!==true||
-       window.AsteriaFeatureFlags?.campaignFriendInvites!==true)
-      throw new Error('Account changed during invitation issuance.');
-    const value=response.data;
-    if(!value||typeof value!=='object'||Array.isArray(value)||
-       Object.keys(value).sort().join(',')!==
-         'alreadyIssued,campaignId,expiresAt,inviteId,maxUses,requiresGMApproval,roleOffered,status,token,type,usedCount'||
-       value.campaignId!==campaignId||
-       typeof value.inviteId!=='string'||!/^[a-f0-9]{64}$/.test(value.inviteId)||
-       value.type!=='share-link'||value.roleOffered!=='player'||
-       value.requiresGMApproval!==true||value.maxUses!==1||
-       value.usedCount!==0||value.status!=='active'||
-       typeof value.alreadyIssued!=='boolean'||
-       typeof value.expiresAt!=='string'||!Number.isFinite(Date.parse(value.expiresAt))||
-       !(value.alreadyIssued===true&&value.token===null||
-         value.alreadyIssued===false&&typeof value.token==='string'&&
-           /^[A-Za-z0-9_-]{43}$/.test(value.token)))
-      throw new Error('Invalid friend campaign invitation response.');
-    return {campaignId:value.campaignId,inviteId:value.inviteId,
-      expiresAt:value.expiresAt,alreadyIssued:value.alreadyIssued,
-      token:value.token};
-  },
   // Phase 3.2: relationship management has independent version checking.
   manageFriendRelationship: async function(action,targetAccountId,expectedVersion){
     const uid=currentUser?.uid;
