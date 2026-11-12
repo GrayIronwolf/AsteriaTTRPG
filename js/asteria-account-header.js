@@ -22,7 +22,10 @@ function reset(){
   if(avatar){avatar.hidden=true;avatar.removeAttribute('src');}
   for(const id of ['asteriaHeaderName','asteriaHeaderAccountId'])
     if(byId(id))byId(id).textContent='';
-  if(byId('asteriaHeaderMail'))byId('asteriaHeaderMail').hidden=true;
+  if(byId('asteriaHeaderMail')){
+    byId('asteriaHeaderMail').hidden=true;
+    byId('asteriaHeaderMail').classList.remove('has-unread');
+  }
   if(byId('asteriaHeaderUnreadCount')){
     byId('asteriaHeaderUnreadCount').hidden=true;
     byId('asteriaHeaderUnreadCount').textContent='';
@@ -81,6 +84,7 @@ async function refreshNotifications(){
   const badge=byId('asteriaHeaderUnreadCount');
   if(badge){badge.hidden=true;badge.textContent='';}
   notice.hidden=true;
+  notice.classList.remove('has-unread');
   notice.setAttribute('aria-label','Open Notifications');
   const friendsEnabled=window.AsteriaFeatureFlags?.friendNotificationsEnabled===true;
   const campaignsEnabled=window.AsteriaFeatureFlags?.campaignNotifications===true;
@@ -107,6 +111,7 @@ async function refreshNotifications(){
   if(unread>0&&badge){
     badge.textContent=unread>99?'99+':String(unread);
     badge.hidden=false;
+    notice.classList.add('has-unread');
     notice.setAttribute('aria-label','Open Notifications; '+unread+
       ' unread on the latest page'+(reads.length===1?'':'s'));
   }
