@@ -87,7 +87,7 @@ export async function resolveCampaignRecipientForIssuance(tx,db,auth,
 }
 
 export async function issueAccountBoundFriendInvitation(db,auth,actorUid,input,{
-  now=new Date(),signingKey,tokenFactory
+  now=new Date(),signingKey,tokenFactory,notificationsEnabled=false
 }={}){
   const data=validateAccountBoundInvitation(input);
   if(!UID.test(actorUid||'')||!db?.runTransaction||!db?.doc||
@@ -106,7 +106,7 @@ export async function issueAccountBoundFriendInvitation(db,auth,actorUid,input,{
       expiresInHours:data.expiresInHours,maxUses:1,
       requiresGMApproval:true
     },{
-      signingKey,now,tokenFactory,
+      signingKey,now,tokenFactory,notificationsEnabled,
       bindingKind:'friend-account',recipientAccountIdKey:data.accountIdKey,
       resolveBoundRecipient:(tx)=>resolveCampaignRecipientForIssuance(
         tx,db,auth,actorUid,data.campaignId,data.accountIdKey)
