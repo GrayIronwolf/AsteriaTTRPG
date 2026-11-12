@@ -467,7 +467,7 @@ export function installDevFixtures() {
     },
     respondLiveItemRequest: async (_campaignId,characterId,requestId,accepted,details={})=>{
       try{
-        requireFixtureSession();
+        if(accepted)requireFixtureSession();
         const request=itemRequestById(requestId);
         if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId))throw new Error('This item request is no longer pending for this character.');
         const recipient=characters[characterId];const sender=characters[request.fromCharacterId];
@@ -504,14 +504,28 @@ export function installDevFixtures() {
       }catch(error){return {ok:false,error:error.message||String(error)};}
     },
     cancelLiveItemRequest: async (_campaignId,characterId,requestId)=>{
-      try{requireFixtureSession();const request=itemRequestById(requestId);if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId))throw new Error('This request can no longer be cancelled.');if(request.mode!=='identify')placeFixtureItem(characters[characterId],request.item,request.item.storageId||'');request.status='cancelled';request.recipientNotice='cancelled';request.senderNotice='acknowledged';request.resolvedAt=new Date().toISOString();notify('characters');notify('itemEcosystem');return {ok:true};}catch(error){return {ok:false,error:error.message||String(error)};}
+      try{
+        const request=itemRequestById(requestId);
+        const pending=request?.status==='pending';
+        const awaiting=request?.status==='awaiting-sender'&&request.mode==='trade';
+        const sender=String(request?.fromCharacterId||'')===String(characterId);
+        const recipient=String(request?.toCharacterId||'')===String(characterId);
+        if(!request||(!pending&&!awaiting)||(pending&&!sender)||(!sender&&!recipient))throw new Error('This request cannot be withdrawn.');
+        if(request.mode!=='identify')placeFixtureItem(characters[request.fromCharacterId],request.item,request.item.storageId||'');
+        if(awaiting)placeFixtureItem(characters[request.toCharacterId],request.exchangeItem,request.exchangeItem?.storageId||'');
+        request.status='cancelled';request.recipientNotice=recipient?'acknowledged':'unread';request.senderNotice=sender?'acknowledged':'unread';
+        request.resolvedAt=new Date().toISOString();
+        request.resolution={accepted:false,cancelled:true,escrowReturned:true};
+        notify('characters');notify('itemEcosystem');
+        return {ok:true,cancelled:true,escrowReturned:true};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
     },
     acknowledgeLiveItemRequest: async (_campaignId,characterId,requestId)=>{
       const request=itemRequestById(requestId);if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId))return {ok:false,error:'This result cannot be acknowledged.'};request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();notify('itemEcosystem');return {ok:true};
     },
     finalizeLiveItemTrade: async (_campaignId,characterId,requestId,accepted)=>{
       try{
-        requireFixtureSession();
+        if(accepted)requireFixtureSession();
         const request=itemRequestById(requestId);
         if(!request||request.mode!=='trade'||request.status!=='awaiting-sender'||String(request.fromCharacterId)!==String(characterId))throw new Error('This trade is no longer awaiting final confirmation.');
         const sender=characters[request.fromCharacterId];const recipient=characters[request.toCharacterId];
