@@ -743,6 +743,7 @@ const commands = {
         appendActivity(character,{type:'shop-purchase',message:`Purchased ${qty} x ${item.name} for ${cost} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        savePublicItemEcosystem(transaction,campaignId,ecosystem);
         return {item:received,cost};
       });
       return {ok:true,...result};
@@ -779,6 +780,7 @@ const commands = {
         appendActivity(character,{type:'shop-sale',message:`Sold ${item.name} for ${value} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        savePublicItemEcosystem(transaction,campaignId,ecosystem);
         return {value};
       });
       return {ok:true,...result};
