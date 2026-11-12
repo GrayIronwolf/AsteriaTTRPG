@@ -9,7 +9,7 @@ import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEf
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
 import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
-import { getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 
@@ -107,6 +107,33 @@ async function talentAction(campaignId,characterId,operation){
     return {ok:true,...result};
   }catch(error){return {ok:false,error:error.message||String(error)};}
 }
+function trustedCustomItem(source = {}) {
+  const name=String(source.name || source.title || '').trim().slice(0,160);
+  if(!name) throw new Error('Enter an item name.');
+  const item=createAsteriaItem({
+    name, title:name,
+    type:String(source.type || 'Item').slice(0,80),
+    itemClass:String(source.itemClass || source.rarity || 'Common').slice(0,80),
+    description:String(source.description || '').slice(0,10000),
+    marketValue:source.marketValue ?? 0,
+    marketPrice:source.marketPrice ?? 0,
+    isSpellbook:source.isSpellbook === true,
+    spell:source.isSpellbook === true ? {
+      name:String(source.spell?.name || source.spellName || name).slice(0,160),
+      element:String(source.spell?.element || source.element || '').slice(0,80),
+      rank:String(source.spell?.rank || 'Rank I').slice(0,80)
+    } : null,
+    basicName:String(source.basicName || (source.isSpellbook ? 'Book' : source.type || 'Item')).slice(0,80)
+  });
+  const id=`custom-${liveSlug(name)||'item'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+  return Object.assign({},item,{
+    id, catalogId:id, definitionId:`custom-item:${id}`, slug:id,
+    name, title:name, trueName:name,
+    custom:true, visibility:'public',
+    createdBy:currentUser.uid
+  });
+}
+
 function characterInventory(character){
   return normalizeInventoryItems((Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>
     typeof item === 'string' ? {id:liveSlug(item)||`item-${index}`,name:item,qty:1} : Object.assign({qty:Number(item.qty ?? item.quantity ?? 1)},item)
@@ -449,6 +476,18 @@ const commands = {
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
+        }
+        if(operation.type==='create-custom-item'){
+          if(gmManagement) throw new Error('Create custom inventory items for your own character.');
+          const record=trustedCustomItem(operation.item || {});
+          const added=placeCharacterItem(character,record,{storageId:String(operation.storageId||''),noStack:true});
+          appendActivity(character,{type:'custom-item-added',message:`Created custom item ${added.name} in inventory.`});
+          // Publishing and inventory delivery succeed or fail in the same transaction.
+          transaction.set(doc(db,'customItems',record.id),{
+            ...record,createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+          });
+          writeLiveCharacter(transaction,refs,character);
+          return {itemId:record.id};
         }
         if(operation.type==='add-item'){
           const source=structuredCloneSafe(operation.item||{});
