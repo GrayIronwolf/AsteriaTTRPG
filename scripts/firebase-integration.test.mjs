@@ -331,7 +331,9 @@ test('Phase 1.3: request receipt replay neither re-escrows items nor duplicates 
   assert.deepEqual(again,first);
   assert.equal((await db.collection('campaigns/c/itemRequests').get()).size,1);
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.reduce((n,item)=>n+item.qty,0),1);
-  await assert.rejects(action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:2}],'trade-exactly-once'));
+  const conflict=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:2}],'trade-exactly-once');
+  assert.equal(conflict.ok,false);
+  assert.match(conflict.error||'',/Request ID has already been used/);
 });
 
 test('Phase 1.3: legacy GM migration protects private trades and preserves public shops',async()=>{
