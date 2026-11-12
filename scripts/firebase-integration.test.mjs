@@ -2266,3 +2266,74 @@ test('Phase 3.1: rewards reject invalid quantities, actions and destinations wit
   assert.equal((await action('bob','resolveLootReward',['c','a','gm-bad-31','declined',''])).ok,false);
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.length,1);
 });
+
+test('Phase 3.2: GM grants currency and pending items atomically to live and private character records',async()=>{
+  const bundle={
+    bundleName:'Bandit cache',message:'Recovered from the road',
+    currency:{key:'silver',amount:5},
+    items:[
+      {id:'steel-knife',name:'Steel Knife',qty:2,material:'High Steel',quality:'Exceptional'},
+      {id:'healing-vial',name:'Healing Vial',qty:1}
+    ]
+  };
+  const result=await action('gm','grantGMRewardBundle',['c','a',bundle],'phase32-bundle-once');
+  assert.equal(result.ok,true,result.error);
+  assert.equal(result.itemEvents.length,2);
+  const live=(await db.doc('campaigns/c/characters/a').get()).data();
+  const owner=(await db.doc('users/alice/characters/a').get()).data();
+  assert.equal(live.coins.silver,5);
+  assert.deepEqual(owner.coins,live.coins);
+  assert.equal(live.pendingItemRewards.length,2);
+  assert.deepEqual(owner.pendingItemRewards,live.pendingItemRewards);
+  assert.equal(live.inventory.length,1,'Offered items are not silently inserted');
+  const event=(await db.doc('campaigns/c/events/'+result.itemEvents[0]).get()).data();
+  assert.equal(event.status,'pending');
+  assert.equal(event.payload.item.material,'High Steel');
+  assert.equal(event.payload.item.quality,'Exceptional');
+  assert.equal(event.payload.item.ownerUid,undefined);
+  assert.equal((await db.doc('campaigns/c/events/'+result.currencyEvent).get()).data().payload.amount,5);
+  const repeated=await action('gm','grantGMRewardBundle',['c','a',bundle],'phase32-bundle-once');
+  assert.deepEqual(repeated,result);
+  const after=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(after.pendingItemRewards.length,2);
+  assert.equal(after.coins.silver,5);
+  const claimed=await action('alice','resolveLootReward',['c','a',result.itemEvents[0],'inventory','bag']);
+  assert.equal(claimed.ok,true,claimed.error);
+  assert.equal((await db.doc('campaigns/c/events/'+result.itemEvents[0]).get()).data().status,'accepted');
+});
+
+test('Phase 3.2: award cannot be forged by players or outsiders and does not alter balances',async()=>{
+  const award={currency:{key:'copper',amount:10}};
+  assert.equal((await action('alice','grantGMRewardBundle',['c','a',award])).ok,false);
+  assert.equal((await action('bob','grantGMRewardBundle',['c','a',award])).ok,false);
+  assert.equal((await action('eve','grantGMRewardBundle',['c','a',award])).ok,false);
+  const sheet=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sheet.coins.copper,100);
+  assert.equal((await db.collection('campaigns/c/events').get()).size,0);
+});
+
+test('Phase 3.2: rejected bundle leaves no item offers or currency credit',async()=>{
+  for(const award of [
+    {items:[{name:'Sword',qty:0}]},
+    {currency:{key:'gold',amount:-2}},
+    {currency:{key:'invalid',amount:5}},
+    {items:[{name:'Vial',qty:2.5}]}
+  ])assert.equal((await action('gm','grantGMRewardBundle',['c','a',award])).ok,false);
+  const sheet=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sheet.pendingItemRewards,undefined);
+  assert.deepEqual(sheet.coins,{copper:100});
+  assert.equal((await db.collection('campaigns/c/events').get()).size,0);
+});
+
+test('Phase 3.2: GM reward refuses unlinked character and missing private owner record',async()=>{
+  await db.doc('users/alice/characters/a').delete();
+  const first=await action('gm','grantGMRewardBundle',['c','a',{currency:{key:'copper',amount:1}}]);
+  assert.equal(first.ok,false);
+  await db.doc('users/alice/characters/a').set({
+    id:'a',ownerUid:'alice',name:'a',inventory:[],coins:{copper:100}
+  });
+  await db.doc('campaigns/c').update({'playerCharacterLinks.a':FieldValue.delete(),'characters.a':FieldValue.delete(),'players.alice.characterIds':[]});
+  const second=await action('gm','grantGMRewardBundle',['c','a',{currency:{key:'copper',amount:1}}]);
+  assert.equal(second.ok,false);
+  assert.equal((await db.collection('campaigns/c/events').get()).size,0);
+});
