@@ -1824,6 +1824,7 @@ const firebasePublicApi = {
   respondLiveTrade: async function(campaignId,characterId,requestId,accepted){
     return firebasePublicApi.respondLiveItemRequest(campaignId,characterId,requestId,accepted,{});
   },
+  syncCampaignItemPrivacy: (...args) => callTrustedAction('syncCampaignItemPrivacy', args),
   createLiveItemRequest: (...args) => callTrustedAction('createLiveItemRequest', args),
   createLiveItemOffer: async function(campaignId,characterId,recipientId,itemId,mode='give',details={}){
     return firebasePublicApi.createLiveItemRequest(campaignId,characterId,recipientId,itemId,mode,details);
