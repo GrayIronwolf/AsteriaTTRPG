@@ -1,4 +1,4 @@
-name: Phase 2.3 temporary bundle sync
+name: Phase 2.3 final bundle sync
 on:
   push:
     branches: [feature/inventory-phase-2-3-shop-transactions]
