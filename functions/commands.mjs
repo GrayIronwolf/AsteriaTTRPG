@@ -779,6 +779,8 @@ const commands = {
         const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
         const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
+        const senderRefs={campaign:senderRef};
+        await verifyLiveTradeCounterparty(transaction,campaignId,request.fromCharacterId,sender,senderRefs);
         let revealedItem=null;
         let receivedItem=null;
         let exchangeItem=null;
@@ -822,7 +824,7 @@ const commands = {
         }
         request.status=accepted?'accepted':'declined';request.recipientNotice='acknowledged';request.senderNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
-        transaction.set(senderRef,Object.assign({},structuredCloneSafe(sender),{updatedAt:serverTimestamp()}),{merge:true});
+        writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         return {revealedItem};
@@ -848,6 +850,8 @@ const commands = {
         const sender=Object.assign({id:characterId},senderSnapshot.data());
         const recipient=Object.assign({id:request.toCharacterId},recipientSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,sender,senderRefs);
+        const recipientRefs={campaign:recipientRef};
+        await verifyLiveTradeCounterparty(transaction,campaignId,request.toCharacterId,recipient,recipientRefs);
         let senderReceived=null;let recipientReceived=null;
         if(accepted){
           senderReceived=placeCharacterItem(sender,request.exchangeItem,{});
@@ -863,7 +867,7 @@ const commands = {
         request.status=accepted?'accepted':'declined';request.senderNotice='acknowledged';request.recipientNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:recipientReceived?{name:recipientReceived.name,qty:recipientReceived.qty}:null,exchangeItem:senderReceived?{name:senderReceived.name,qty:senderReceived.qty}:null};
         writeLiveCharacter(transaction,senderRefs,sender);
-        transaction.set(recipientRef,Object.assign({},structuredCloneSafe(recipient),{updatedAt:serverTimestamp()}),{merge:true});
+        writeLiveCharacter(transaction,recipientRefs,recipient);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
       return {ok:true};
