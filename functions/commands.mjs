@@ -890,16 +890,19 @@ const commands = {
   buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1,quote={}){
     const refs=liveCharacterRefs(campaignId,characterId);
     const shopRef=doc(db,'campaigns',campaignId,'shops',String(shopId));
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
     try{
       const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(refs.campaign);
-        const shopSnapshot=await transaction.get(shopRef);
-        if(!characterSnapshot.exists()||!shopSnapshot.exists()) throw new Error('Shop data is not available.');
+        const [shopSnapshot,ecosystemSnapshot]=await Promise.all([transaction.get(shopRef),transaction.get(ecosystemRef)]);
+        if(!characterSnapshot.exists()||(!shopSnapshot.exists()&&!ecosystemSnapshot.exists())) throw new Error('Shop data is not available.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const shop=structuredCloneSafe(shopSnapshot.data());
-        if(shop.deleted)throw new Error('This shop is closed.');
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const legacyIndex=(ecosystem.shops||[]).findIndex(row=>String(row.id)===String(shopId));
+        const shop=structuredCloneSafe(shopSnapshot.exists()?shopSnapshot.data():legacyIndex>=0?ecosystem.shops[legacyIndex]:null);
+        if(!shop||shop.deleted)throw new Error('This shop is closed.');
         const stock=shop?.stock?.[Number(stockIndex)];
         if(!shop||!stock||shop.status!=='open') throw new Error('This shop is not open.');
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
@@ -925,6 +928,11 @@ const commands = {
         appendActivity(character,{type:'shop-purchase',message:`Purchased ${qty} x ${item.name} for ${cost} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(shopRef,{...shop,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+        if(legacyIndex>=0){
+          ecosystem.shops[legacyIndex]=structuredCloneSafe(shop);
+          transaction.set(ecosystemRef,{...ecosystem,updatedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+          savePublicItemEcosystem(transaction,campaignId,ecosystem);
+        }
         return {item:received,cost,quantity:qty,unitPriceCopper:unitCost};
       });
       return {ok:true,...result};
@@ -933,16 +941,19 @@ const commands = {
   sellLiveShopItem: async function(campaignId,characterId,shopId,itemId,quantity=1,quote={}){
     const refs=liveCharacterRefs(campaignId,characterId);
     const shopRef=doc(db,'campaigns',campaignId,'shops',String(shopId));
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
     try{
       const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const characterSnapshot=await transaction.get(refs.campaign);
-        const shopSnapshot=await transaction.get(shopRef);
-        if(!characterSnapshot.exists()||!shopSnapshot.exists()) throw new Error('Shop data is not available.');
+        const [shopSnapshot,ecosystemSnapshot]=await Promise.all([transaction.get(shopRef),transaction.get(ecosystemRef)]);
+        if(!characterSnapshot.exists()||(!shopSnapshot.exists()&&!ecosystemSnapshot.exists())) throw new Error('Shop data is not available.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        const shop=structuredCloneSafe(shopSnapshot.data());
-        if(shop.deleted)throw new Error('This shop is closed.');
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const legacyIndex=(ecosystem.shops||[]).findIndex(row=>String(row.id)===String(shopId));
+        const shop=structuredCloneSafe(shopSnapshot.exists()?shopSnapshot.data():legacyIndex>=0?ecosystem.shops[legacyIndex]:null);
+        if(!shop||shop.deleted)throw new Error('This shop is closed.');
         const inventory=characterInventory(character);
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
         if(!shop||shop.status!=='open'||!item) throw new Error('The shop or item is unavailable.');
@@ -977,6 +988,11 @@ const commands = {
         appendActivity(character,{type:'shop-sale',message:`Sold ${qty} x ${item.name} for ${value} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(shopRef,{...shop,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+        if(legacyIndex>=0){
+          ecosystem.shops[legacyIndex]=structuredCloneSafe(shop);
+          transaction.set(ecosystemRef,{...ecosystem,updatedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+          savePublicItemEcosystem(transaction,campaignId,ecosystem);
+        }
         return {value,quantity:qty,unitPriceCopper:unitValue};
       });
       return {ok:true,...result};
