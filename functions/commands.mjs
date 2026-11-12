@@ -926,7 +926,8 @@ const commands = {
     const recipientRef=doc(db,'campaigns',campaignId,'characters',characterId);
     try{
       const result=await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
+        // Declining and returning escrow is always permitted, even between sessions.
+        if(accepted) await requireLiveSession(transaction,campaignId);
         const request=requirePrivateItemRequest(await transaction.get(requestRef),requestId);
         if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId)) throw new Error('This item request is no longer pending for this character.');
         const senderRef=doc(db,'campaigns',campaignId,'characters',request.fromCharacterId);
@@ -978,9 +979,8 @@ const commands = {
           receivedItem=placeCharacterItem(recipient,request.item,{storageId:details.storageId||''});
           appendActivity(recipient,{type:`item-${request.mode}-accepted`,message:`Accepted ${receivedItem.name} from ${sender.name||'a party member'}.`});
         }else if(request.mode!=='identify'){
-          const storages=normalizeCharacterStorages(sender);
-          if(storages.length) placeCharacterItem(sender,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
-          else sender.inventory=[...characterInventory(sender),Object.assign({},structuredCloneSafe(request.item),{location:'inventory',storageId:'',storageSlot:-1,equipped:false,equippedSlot:''})];
+          const restored=restoreEscrowItem(sender,request.item,request.id);
+          request.returnedToOverflow=restored.overflow;
         }
         request.status=accepted?'accepted':'declined';request.recipientNotice='acknowledged';request.senderNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
@@ -998,7 +998,8 @@ const commands = {
     const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
+        // Rejecting the counteroffer must remain possible after the GM ends a session.
+        if(accepted) await requireLiveSession(transaction,campaignId);
         const [requestSnapshot,senderSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(senderRefs.campaign)]);
         if(!senderSnapshot.exists()) throw new Error('Character not found.');
         const request=requirePrivateItemRequest(requestSnapshot,requestId);
@@ -1021,8 +1022,9 @@ const commands = {
           appendActivity(sender,{type:'item-trade-completed',message:`Completed a trade with ${recipient.name||'a party member'}.`});
           appendActivity(recipient,{type:'item-trade-completed',message:`Completed a trade with ${sender.name||'a party member'}.`});
         }else{
-          placeCharacterItem(sender,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
-          placeCharacterItem(recipient,request.exchangeItem,{storageId:request.exchangeItem?.storageId||'',storageSlot:request.exchangeItem?.storageSlot,preserveId:true});
+          const first=restoreEscrowItem(sender,request.item,request.id+'-sender');
+          const second=restoreEscrowItem(recipient,request.exchangeItem,request.id+'-recipient');
+          request.returnedToOverflow=first.overflow||second.overflow;
           appendActivity(sender,{type:'item-trade-declined',message:`Declined the final trade with ${recipient.name||'a party member'}.`});
           appendActivity(recipient,{type:'item-trade-declined',message:`${sender.name||'The other player'} declined the final trade.`});
         }
