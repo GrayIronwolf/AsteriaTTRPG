@@ -46,6 +46,11 @@
     returnFocus=null;
   }
   function open(){
+    // Existing notification and campaign actions still call AsteriaFriends.open().
+    // Route those calls to the new page rather than opening hidden content.
+    if(window.AsteriaAccountPages?.open &&
+       !get('asteriaFriendsPage')?.classList.contains('show'))
+      return window.AsteriaAccountPages.open('friends');
     const account=user();
     if(!account?.uid||!window.AsteriaAuthBridge?.isLoggedIn?.())return false;
     const overlay=get('accountFriendsOverlay');
