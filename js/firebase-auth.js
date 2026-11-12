@@ -18,7 +18,7 @@ import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnab
 import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { createAsteriaItem, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
