@@ -120,6 +120,17 @@ test('existing trusted production workflow contains both scoped deploys, no emai
   assert.match(section,/inputs\.production_confirmation == 'PREPARE-ASTERIA-INAPP-CAMPAIGN-DISABLED'/);
   assert.match(section,/environment: firebase-production/);
   assert.match(section,/google-github-actions\/auth@v3/);
+  // GitHub Actions evaluates plain [object Object] expressions. A leading literal
+  // backslash survives YAML parsing and corrupts Google's STS audience.
+  const escaped=String.fromCharCode(92,36,123,123);
+  assert.equal(workflow.includes(escaped),false,
+    'A literal backslash before a GitHub Actions expression disables interpolation.');
+  assert.match(section,/workload_identity_provider: \$\{\{ vars\.FIREBASE_WORKLOAD_IDENTITY_PROVIDER \}\}/);
+  assert.match(section,/service_account: \$\{\{ vars\.FIREBASE_DEPLOY_SERVICE_ACCOUNT \}\}/);
+  assert.match(section,/ASTERIA_INAPP_OPERATION: \$\{\{ inputs\.operation \}\}/);
+  assert.match(section,/ASTERIA_INAPP_CONFIRMATION: \$\{\{ inputs\.production_confirmation \}\}/);
+  assert.match(section,/working-directory: \$\{\{ runner\.temp \}\}\/asteria-inapp-coordinated\/notifications/);
+  assert.match(section,/working-directory: \$\{\{ runner\.temp \}\}\/asteria-inapp-coordinated\/secure-invitation/);
   assert.match(section,/node scripts\/campaign-inapp-coordinated-release\.mjs --stage/);
   assert.match(section,/firebase-tools@15\.35\.0/);
   assert.match(section,/--only "functions:asteria:asteriaCampaignNotifications"/);
