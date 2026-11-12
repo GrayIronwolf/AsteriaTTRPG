@@ -121,6 +121,22 @@ test('unknown function environment rejects arbitrary secrets or dynamic values',
  }});
  assert.deepEqual(saved,{exists:true,env:{ASTERIA_SECURE_INVITATIONS_ENABLED:'1'}});
 });
+test('nested Phase 5.3 release rejects unknown config but drops Firebase Gen2 metadata',()=>{
+ const runtime={exists:true,env:{...secure,
+  EVENTARC_CLOUD_EVENT_SOURCE:'//cloudfunctions.googleapis.com/projects/asteria-ttrpg/locations/us-central1/functions/asteriaSecureInvitation',
+  FUNCTION_REGION:'us-central1',FUNCTION_TARGET:'asteriaSecureInvitation',
+  FUNCTION_SIGNATURE_TYPE:'http',K_SERVICE:'asteriasecureinvitation',
+  FIREBASE_CONFIG:'{"projectId":"asteria-ttrpg"}',GOOGLE_CLOUD_PROJECT:'asteria-ttrpg'}};
+ const parsed=parsePhase53LiveState(runtime);
+ assert.deepEqual(parsed.env,secure);
+ const release=buildPhase53Release('campaign-friends-invites-deploy-off',{
+  live:runtime,recipientReady:false,acceptanceReady:false
+ });
+ const env=release.files['functions/.env.asteria-ttrpg'];
+ assert.doesNotMatch(env,/EVENTARC_|FUNCTION_|K_SERVICE|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT/);
+ assert.match(env,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
+ assert.throws(()=>parsePhase53LiveState({exists:true,env:{...secure,MY_API_KEY:'not-reviewed'}}),/Unreviewed/);
+});
 test('runner staging requires a manual trusted main workflow with exact confirmation',()=>{
  const confirmations=new Map([
   ['campaign-friends-recipients-deploy-off','DEPLOY-ASTERIA-CAMPAIGN-FRIEND-RECIPIENTS-OFF'],
