@@ -834,10 +834,10 @@ const commands = {
         const [recipientSnapshot,senderSnapshot]=await Promise.all([transaction.get(recipientRef),transaction.get(senderRef)]);
         if(!recipientSnapshot.exists()||!senderSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         const recipient=Object.assign({id:characterId},recipientSnapshot.data());
+        const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
         if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'') ||
            String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
           throw new Error('One of the trade participants has changed ownership.');
-        const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
         const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
         const senderRefs={campaign:senderRef};
