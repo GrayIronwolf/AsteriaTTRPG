@@ -436,6 +436,46 @@ const commands = {
       return {ok:true,paid:result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  createCustomLootReward: async function(campaignId,characterId,source={},metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const targetRef=doc(db,'campaigns',campaignId,'characters',characterId);
+    const eventId=`loot-${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+    const eventRef=doc(db,'campaigns',campaignId,'events',eventId);
+    try {
+      const result=await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
+        const target=await transaction.get(targetRef);
+        if(!target.exists()) throw new Error('The linked campaign character was not found.');
+        const record=trustedCustomItem(source);
+        const qty=Number(source.qty ?? source.quantity ?? 1);
+        if(!Number.isSafeInteger(qty) || qty<1 || qty>1000000) throw new Error('Choose a valid reward quantity.');
+        const full=Object.assign({},record,{qty});
+        const rewardItem=Object.assign({},full,{
+          trueName:full.name,
+          basicName:String(full.basicName||unidentifiedItemName({...full,identified:false})),
+          identified:false,
+          name:String(full.basicName||unidentifiedItemName({...full,identified:false}))
+        });
+        const message=String(metadata.message||'The GM awarded an unidentified custom item.').slice(0,500);
+        const pending=Array.isArray(target.data().pendingItemRewards)?target.data().pendingItemRewards:[];
+        const reward={id:eventId,campaignId,item:rewardItem,message,status:'pending',createdAt:new Date().toISOString()};
+        const event={
+          id:eventId,campaignId,sessionId:session.id||'',
+          targetCharacterId:characterId,targetOwnerUid:target.data().ownerUid||'',
+          type:'loot-reward',payload:{item:rewardItem,message,campaignName:''},
+          status:'pending',deliveryStatus:'delivered',acknowledged:false,
+          createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:null
+        };
+        // One transaction: no orphan catalog item and no undelivered GM reward.
+        transaction.set(doc(db,'customItems',record.id),{...record,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+        transaction.set(targetRef,{pendingItemRewards:[...pending,reward],updatedAt:serverTimestamp()},{merge:true});
+        transaction.set(eventRef,event);
+        return {itemId:record.id,eventId};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   updateCharacterInventory: async function(campaignId,characterId,operation={}){
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
