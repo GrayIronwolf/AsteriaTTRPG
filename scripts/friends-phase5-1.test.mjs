@@ -102,7 +102,9 @@ test('website does not enable a server rollout or campaign issuance',()=>{
  const ui=read('js/asteria-campaign-friend-recipients.js');
  const server=read('functions/index.mjs');
  const selector=read('functions/campaignFriendRecipients.mjs');
- assert.match(html,/campaignFriendRecipients:false,accountIds:true/);
+ assert.match(html,/campaignFriendRecipients:new URLSearchParams/);
+ assert.match(html,/campaignInAppCanary:new URLSearchParams/);
+ assert.match(html,/accountIds:true/);
  assert.match(html,/asteria-campaign-friend-recipients\.js\?v=friends-phase5-2/);
  assert.match(html,/asteria-campaign-friend-recipients\.css\?v=friends-phase5-1/);
  assert.match(read('js/clean-compendium.js'),
