@@ -202,6 +202,34 @@ export function normalizeCharacterStorages(character = {}) {
     .map((storage,index) => ({ ...storage, order:index }));
 }
 
+// Display-only layout. Existing slot assignments are preserved; malformed,
+// duplicate and out-of-range placements remain visible in the overflow list.
+// No item may disappear just because an old bag has fewer slots than contents.
+export function storageSlotLayout(items = [], storage = {}, sort = 'name') {
+  const capacity=Math.max(1,Number(storage.maxSlots||Number(storage.rows||4)*Number(storage.cols||4)));
+  const slots=Array(capacity).fill(null);
+  const pending=[];
+  const overflow=[];
+  for(const item of Array.isArray(items)?items:[]) {
+    const raw=item?.storageSlot ?? item?.bagSlot;
+    const slot=raw===undefined||raw===null||raw===''?NaN:Number(raw);
+    if(Number.isInteger(slot)&&slot>=0&&slot<capacity&&!slots[slot]) slots[slot]=item;
+    else pending.push(item);
+  }
+  pending.sort((left,right)=>sort==='rarity'
+    ? String(left.rarity||'').localeCompare(String(right.rarity||''))||String(left.name||'').localeCompare(String(right.name||''))
+    : sort==='quantity'
+      ? Number(right.qty||0)-Number(left.qty||0)
+      : String(left.name||'').localeCompare(String(right.name||'')));
+  let cursor=0;
+  for(const item of pending) {
+    while(cursor<capacity&&slots[cursor]) cursor+=1;
+    if(cursor<capacity) slots[cursor]=item;
+    else overflow.push(item);
+  }
+  return {slots,overflow,capacity,used:slots.filter(Boolean).length};
+}
+
 export function firstFreeStorageSlot(items = [], storage = {}, excludeItemId = '') {
   if(!storage?.id) return -1;
   const capacity = Math.max(1, Number(storage.maxSlots || Number(storage.rows || 4) * Number(storage.cols || 4)));
