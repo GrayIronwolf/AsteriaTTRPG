@@ -120,7 +120,7 @@ test('formatting-only changes in production rules are distinguished from permiss
   const result=evaluateProductionSnapshot(data);
   assert.equal(result.rules.storage,'matches-source-ignoring-formatting-and-comments');
   assert.equal(result.rules.firestore,'matches-checked-in-source');
-  assert.equal(result.blockers.some(x=>x.includes('Storage Rules do not have')),false);
+  assert.equal(result.blockers.some(x=>x.includes('storage Rules do not have')),false);
   assert.equal(result.releaseDecision,'NO-GO');
   for(const change of [
     source.replace('request.auth.uid == uid','request.auth.uid != uid'),
@@ -131,7 +131,7 @@ test('formatting-only changes in production rules are distinguished from permiss
     const changed=snapshot();
     changed.rules.storage.source.files[0].content=change;
     assert.equal(evaluateProductionSnapshot(changed).rules.storage,'DIFFERENT FROM SOURCE');
-    assert.ok(evaluateProductionSnapshot(changed).blockers.some(x=>x.includes('Storage Rules do not have')));
+    assert.ok(evaluateProductionSnapshot(changed).blockers.some(x=>x.includes('storage Rules do not have')));
   }
 });
 
