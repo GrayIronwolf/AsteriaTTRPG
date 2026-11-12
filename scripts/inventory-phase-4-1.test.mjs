@@ -23,6 +23,8 @@ test('Phase 4.1: category filtering and inventory searches preserve existing ite
   assert.equal(matchesInventoryFilter(sword,'steel','materials'),false);
   assert.equal(matchesInventoryFilter({...sword,identified:false,name:'Mysterious Blade',trueName:'High Steel Sword'},'steel','all'),false,
     'Unidentified secret names must not become searchable');
+  assert.equal(matchesInventoryFilter({...sword,identified:false,name:'Mysterious Blade'},'weapon','all'),false);
+  assert.equal(inventoryCategory({...sword,identified:false}), 'other');
 });
 test('Phase 4.1: equipment slots bridge legacy labels to trusted backend slot names',()=>{
   assert.deepEqual(availableInventoryEquipmentSlots({...sword,allowedSlots:['Main Weapon','Off-Hand']}),
