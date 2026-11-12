@@ -709,6 +709,110 @@ test('callable transport rejects unauthenticated callers and accepts Firebase Au
   } finally {await deleteClient(app);await new Promise(resolve=>server.close(resolve));}
 });
 
+test('Phase 2.3: shop checkout rejects partial fulfilment and stale quotes without charging the player',async()=>{
+  await db.doc('campaigns/c/systems/itemEcosystem').set({
+    shops:[{id:'merchant',status:'open',buyModifier:1,sellModifier:1,currencyCopper:500,stock:[
+      {qty:2,item:{name:'Health Potion',definitionId:'base:potion',material:'Glass',marketPrice:0.3,marketValue:0.1}}
+    ]}]
+  });
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  const failed=await action('alice','buyLiveShopItem',['c','a','merchant',0,3]);
+  assert.equal(failed.ok,false);assert.match(failed.error,/stock/i);
+  const stale=await action('alice','buyLiveShopItem',['c','a','merchant',0,1,{unitPriceCopper:35}]);
+  assert.equal(stale.ok,false);assert.match(stale.error,/price changed/i);
+  const variant=await action('alice','buyLiveShopItem',['c','a','merchant',0,1,{variantKey:'not-the-item'}]);
+  assert.equal(variant.ok,false);assert.match(variant.error,/item changed/i);
+  const unchanged=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.deepEqual(unchanged.coins,before.coins);
+  assert.deepEqual(unchanged.inventory,before.inventory);
+  assert.equal((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0].stock[0].qty,2);
+  const success=await action('alice','buyLiveShopItem',['c','a','merchant',0,2,{unitPriceCopper:30}]);
+  assert.equal(success.ok,true,success.error);
+  assert.equal(success.quantity,2);assert.equal(success.cost,60);
+  const after=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(after.coins.copper,40);
+  assert.equal((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0].stock[0].qty,0);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,after.inventory);
+  assert.equal((await db.doc('campaigns/c/systems/itemPublic').get()).data().shops[0].stock[0].qty,0);
+  assert.equal((await action('alice','buyLiveShopItem',['c','a','merchant',0,1])).ok,false);
+});
+
+test('Phase 2.3: shop sale never combines the same named item with different quality or material',async()=>{
+  const item={id:'sword',instanceId:'sword',name:'Sword',definitionId:'base:sword',
+    qty:2,material:'Mithril',quality:'Superior',enchantments:[{name:'Winterbite',rank:2}],
+    marketValue:0.1,marketPrice:0.5,storageId:'bag',storageSlot:0};
+  for(const path of ['campaigns/c/characters/a','users/alice/characters/a'])
+    await db.doc(path).update({inventory:[item]});
+  await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[{
+    id:'smith',status:'open',buyModifier:1,sellModifier:1,currencyCopper:200,
+    stock:[{qty:4,item:{name:'Sword',definitionId:'base:sword',material:'Iron',
+      quality:'Common',marketValue:0.1,marketPrice:0.5}}]
+  }]});
+  const sold=await action('alice','sellLiveShopItem',['c','a','smith','sword',2,{unitPriceCopper:10}]);
+  assert.equal(sold.ok,true,sold.error);assert.equal(sold.quantity,2);assert.equal(sold.value,20);
+  const shop=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0];
+  assert.equal(shop.stock.length,2);
+  assert.equal(shop.stock[0].qty,4);
+  assert.equal(shop.stock[1].qty,2);
+  assert.equal(shop.stock[1].item.material,'Mithril');
+  assert.equal(shop.stock[1].item.quality,'Superior');
+  assert.deepEqual(shop.stock[1].item.enchantments,[{name:'Winterbite',rank:2}]);
+  assert.equal(shop.stock[1].item.ownerUid,undefined);
+  assert.equal(shop.stock[1].item.storageId,undefined);
+  const shared=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(shared.inventory.length,0);
+  assert.equal(shared.coins.copper,120);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,shared.inventory);
+  assert.equal((await db.doc('campaigns/c/systems/itemPublic').get()).data().shops[0].stock.length,2);
+  assert.equal((await action('alice','sellLiveShopItem',['c','a','smith','sword',1])).ok,false);
+});
+
+test('Phase 2.3: compatible shop variants stack while differing enchantments remain separate',async()=>{
+  const sharedItem={id:'sword',instanceId:'sword',name:'Sword',definitionId:'base:sword',
+    material:'Iron',quality:'Common',marketValue:0.1,marketPrice:0.5,qty:2,storageId:'bag',storageSlot:0};
+  for(const path of ['campaigns/c/characters/a','users/alice/characters/a'])
+    await db.doc(path).update({inventory:[sharedItem]});
+  const stocked={...sharedItem,qty:1,location:'shop'};
+  for(const key of ['instanceId','storageId','storageSlot'])delete stocked[key];
+  await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[{
+    id:'smith',status:'open',buyModifier:1,sellModifier:1,currencyCopper:100,stock:[{qty:3,item:stocked}]
+  }]});
+  const one=await action('alice','sellLiveShopItem',['c','a','smith','sword',1]);
+  assert.equal(one.ok,true,one.error);
+  const stock=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0].stock;
+  assert.equal(stock.length,1);
+  assert.equal(stock[0].qty,4);
+  const remaining=(await db.doc('campaigns/c/characters/a').get()).data().inventory[0];
+  assert.equal(remaining.qty,1);
+  assert.equal((await db.doc('users/alice/characters/a').get()).data().inventory[0].qty,1);
+});
+
+test('Phase 2.3: insufficient buyer funds, merchant funds and visitor restrictions roll back atomically',async()=>{
+  const item={id:'sword',name:'Sword',definitionId:'base:sword',marketValue:1,marketPrice:2,qty:2,storageId:'bag',storageSlot:0};
+  for(const path of ['campaigns/c/characters/a','users/alice/characters/a'])
+    await db.doc(path).update({inventory:[item]});
+  await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[{
+    id:'shop',status:'open',visitorCharacterIds:['b'],buyModifier:1,sellModifier:1,currencyCopper:10,
+    stock:[{qty:1,item:{name:'Ring',marketValue:1,marketPrice:2}}]
+  }]});
+  const visitor=await action('alice','sellLiveShopItem',['c','a','shop','sword']);
+  assert.equal(visitor.ok,false);assert.match(visitor.error,/visiting/i);
+  await db.doc('campaigns/c/systems/itemEcosystem').update({'shops.0.visitorCharacterIds':[]}).catch(async()=>{
+    const snap=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data();
+    snap.shops[0].visitorCharacterIds=[];
+    await db.doc('campaigns/c/systems/itemEcosystem').set(snap);
+  });
+  const unaffordable=await action('alice','buyLiveShopItem',['c','a','shop',0,1]);
+  assert.equal(unaffordable.ok,false);assert.match(unaffordable.error,/currency/i);
+  const poorMerchant=await action('alice','sellLiveShopItem',['c','a','shop','sword',1]);
+  assert.equal(poorMerchant.ok,false);assert.match(poorMerchant.error,/afford/i);
+  const shop=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0];
+  assert.equal(shop.currencyCopper,10);
+  assert.equal(shop.stock[0].qty,1);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory[0].qty,2);
+  assert.equal((await db.doc('users/alice/characters/a').get()).data().inventory[0].qty,2);
+});
+
 test('shop purchase updates stock and currency and rejects exhausted stock',async()=>{
   await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[{id:'shop',status:'open',buyModifier:1,currencyCopper:1000,stock:[{qty:1,item:{name:'Gem',marketPrice:0.1,marketValue:0.05}}]}]});
   const first=await action('alice','buyLiveShopItem',['c','a','shop',0,1]);assert.equal(first.ok,true,first.error);
