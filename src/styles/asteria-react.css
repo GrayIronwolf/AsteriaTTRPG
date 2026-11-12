@@ -3275,10 +3275,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 
 
 /* Phase 4.1 — selected-item actions; keep existing storage grid and columns. */
-.react-inventory-layout > .react-inventory-quick-actions {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
 .react-inventory-quick-actions {
   display: grid;
   gap: 9px;
@@ -3354,10 +3350,6 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 }
 .react-inventory-toolbar {
   grid-template-columns: minmax(150px,1fr) minmax(130px,.5fr) minmax(130px,.4fr) auto auto;
-}
-@container (max-width: 900px) {
-  .react-inventory-layout > .react-inventory-quick-actions { display: none; grid-column: 1; }
-  .react-inventory-layout.mobile-inventory > .react-inventory-quick-actions { display: grid; }
 }
 @container (max-width: 560px) {
   .react-inventory-toolbar { grid-template-columns: 1fr 1fr; }
