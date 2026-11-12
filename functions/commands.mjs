@@ -118,11 +118,17 @@ function trustedCustomItem(source = {}) {
     marketValue:source.marketValue ?? 0,
     marketPrice:source.marketPrice ?? 0,
     isSpellbook:source.isSpellbook === true,
-    spell:source.isSpellbook === true ? {
-      name:String(source.spell?.name || source.spellName || name).slice(0,160),
-      element:String(source.spell?.element || source.element || '').slice(0,80),
-      rank:String(source.spell?.rank || 'Rank I').slice(0,80)
-    } : null,
+    category:source.isSpellbook === true ? 'Spellbook' : String(source.category || source.type || 'Item').slice(0,80),
+    itemType:source.isSpellbook === true ? 'Spellbook' : String(source.itemType || source.type || 'Item').slice(0,80),
+    image:String(source.image || '').slice(0,1000),
+    compendiumSpellId:source.isSpellbook ? String(source.compendiumSpellId || source.spell?.id || '').slice(0,160) : '',
+    compendiumSpellSlug:source.isSpellbook ? String(source.compendiumSpellSlug || source.spell?.slug || '').slice(0,160) : '',
+    compendiumSpellRoute:source.isSpellbook ? String(source.compendiumSpellRoute || source.spell?.route || '').slice(0,500) : '',
+    sourceSpellPath:source.isSpellbook ? String(source.sourceSpellPath || source.spell?.sourcePath || '').slice(0,500) : '',
+    spell:source.isSpellbook === true ? Object.fromEntries(
+      ['id','slug','name','title','element','magicType','rank','manaCost','cost','image','summary','route','sourcePath']
+        .map(key=>[key,String(source.spell?.[key] ?? (key==='name' ? source.spellName || name : key==='element' ? source.element || '' : key==='rank' ? 'Rank I' : '')).slice(0,key==='summary'?1000:500)])
+    ) : null,
     basicName:String(source.basicName || (source.isSpellbook ? 'Book' : source.type || 'Item')).slice(0,80)
   });
   const id=`custom-${liveSlug(name)||'item'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
