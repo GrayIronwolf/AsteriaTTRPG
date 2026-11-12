@@ -115,7 +115,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribeSession(campaignId, accept('session', value=>setSession(effectiveSession(value||{status:'idle',id:''})))));
       unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, accept('partyWorkspace',value=>setPartyWorkspace(value||{sharedNotes:'',questLog:[]}))));
       unsubscribers.push(firebaseService.subscribePartyChat(campaignId, accept('partyChat',value=>setPartyChat(value||[]))));
-      unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, accept('ecosystem',value=>setItemEcosystem(value||{shops:[],directTrades:[]}))));
+      unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, accept('ecosystem',value=>setItemEcosystem(value||{shops:[],directTrades:[]})),mode));
       unsubscribers.push(firebaseService.subscribeCustomItems(accept('customItems',value=>{setCustomItems(value||[]);publishCustomItems(value||[]);})));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId,accept('events',value=>setEvents(mergeEvents([],value||[]))),{mode,targetOwnerUid:mode==='character'?uid:'',characterId}));
       unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));

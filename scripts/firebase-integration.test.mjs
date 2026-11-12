@@ -267,7 +267,7 @@ test('Phase 1.2: full recipient storage rejects a gift without partial item or c
   assert.equal(response.ok,false);
   for(const [i,id] of ['campaigns/c/characters/a','users/alice/characters/a','campaigns/c/characters/b','users/bob/characters/b'].entries())
     assert.deepEqual((await db.doc(id).get()).data(),before[i],`untouched ${id}`);
-  const request=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0];
+  const request=(await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data();
   assert.equal(request.status,'pending');
 });
 
@@ -277,7 +277,7 @@ test('Phase 1.2: missing or mismatched counterparty owner prevents cross-account
   await db.doc('users/alice/characters/a').delete();
   const result=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
   assert.equal(result.ok,false);
-  assert.equal((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0].status,'pending');
+  assert.equal((await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data().status,'pending');
   assert.equal((await db.doc('campaigns/c/characters/b').get()).data().inventory.reduce((n,i)=>n+i.qty,0),2);
 });
 
@@ -292,6 +292,98 @@ test('Phase 1.2: trade result acknowledgement never overwrites private character
   const owner=(await db.doc('users/alice/characters/a').get()).data();
   assert.equal(owner.name,'Private Forge Name');
   assert.deepEqual(owner.journal,['Owner notes']);
+});
+
+test('Phase 1.3: trades are invisible to other campaign members but available to both players and GM',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1,note:'Private party handoff'}]);
+  assert.equal(created.ok,true,created.error);
+  const requestId=created.request.id;
+  await db.doc('campaigns/c').update({
+    playerUids:['alice','bob','eve'],roles:{gm:'gm',alice:'player',bob:'player',eve:'player'}
+  });
+  const path='campaigns/c/itemRequests/'+requestId;
+  await assertSucceeds(getDoc(doc(user('alice'),path)));
+  await assertSucceeds(getDoc(doc(user('bob'),path)));
+  await assertSucceeds(getDoc(doc(user('gm'),path)));
+  await assertFails(getDoc(doc(user('eve'),path)));
+  const requests=collection(user('alice'),'campaigns/c/itemRequests');
+  const mine=await assertSucceeds(getDocs(query(requests,where('fromOwnerUid','==','alice'))));
+  assert.equal(mine.size,1);
+  const theirs=await assertSucceeds(getDocs(query(collection(user('bob'),'campaigns/c/itemRequests'),where('toOwnerUid','==','bob'))));
+  assert.equal(theirs.size,1);
+  await assertFails(getDocs(collection(user('eve'),'campaigns/c/itemRequests')));
+  await assertFails(getDoc(doc(user('eve'),'campaigns/c/systems/itemEcosystem')));
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/systems/itemEcosystem')));
+  await assertFails(updateDoc(doc(user('alice'),path),{status:'accepted'}));
+  await assertFails(setDoc(doc(user('bob'),'campaigns/c/itemRequests/fake'),{id:'fake'}));
+  const saved=(await db.doc(path).get()).data();
+  assert.equal(saved.status,'pending');
+  assert.equal(saved.note,'Private party handoff');
+});
+
+test('Phase 1.3: request receipt replay neither re-escrows items nor duplicates private trades',async()=>{
+  const args=['c','a','b','sword','give',{quantity:1}];
+  const [first,again]=await Promise.all([
+    action('alice','createLiveItemRequest',args,'trade-exactly-once'),
+    action('alice','createLiveItemRequest',args,'trade-exactly-once')
+  ]);
+  assert.equal(first.ok,true,first.error);
+  assert.deepEqual(again,first);
+  assert.equal((await db.collection('campaigns/c/itemRequests').get()).size,1);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.reduce((n,item)=>n+item.qty,0),1);
+  const conflict=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:2}],'trade-exactly-once');
+  assert.equal(conflict.ok,false);
+  assert.match(conflict.error||'',/Request ID has already been used/);
+});
+
+test('Phase 1.3: legacy GM migration protects private trades and preserves public shops',async()=>{
+  const legacy={
+    id:'item-request-historic',version:2,fromOwnerUid:'alice',toOwnerUid:'bob',
+    fromCharacterId:'a',toCharacterId:'b',mode:'trade',item:{name:'Ancient Ring',qty:1},
+    note:'Secret bargaining',status:'pending',createdAt:new Date().toISOString()
+  };
+  await db.doc('campaigns/c/systems/itemEcosystem').set({
+    shops:[{id:'market',name:'Market',status:'open',stock:[]}],
+    playerItemRequests:[legacy],directTrades:[]
+  });
+  assert.equal((await action('alice','syncCampaignItemPrivacy',['c','a'])).ok,false);
+  const migrated=await action('gm','syncCampaignItemPrivacy',['c','a']);
+  assert.equal(migrated.ok,true,migrated.error);
+  assert.equal(migrated.migrated,1);
+  assert.deepEqual((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests,[]);
+  const row=(await db.doc('campaigns/c/itemRequests/item-request-historic').get()).data();
+  assert.equal(row.note,'Secret bargaining');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/systems/itemEcosystem')));
+  await assertSucceeds(getDoc(doc(user('bob'),'campaigns/c/itemRequests/item-request-historic')));
+  const shop=(await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/systems/itemPublic')))).data().shops[0];
+  assert.equal(shop.name,'Market');
+  const retry=await action('gm','syncCampaignItemPrivacy',['c','a']);
+  assert.equal(retry.ok,true,retry.error);
+  assert.equal(retry.migrated,0);
+  assert.equal((await db.collection('campaigns/c/itemRequests').get()).size,1);
+});
+
+test('Phase 1.3: no browser may inject private details into public shop records',async()=>{
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/systems/itemPublic'),{shops:[],playerItemRequests:[]}));
+  await assertFails(setDoc(doc(user('gm'),'campaigns/c/systems/itemPublic'),{shops:[],playerItemRequests:[]}));
+  await assertSucceeds(setDoc(doc(user('gm'),'campaigns/c/systems/itemPublic'),{
+    version:'asteria-item-public-v1',shops:[],partyLoot:[],sharedStorages:[]
+  }));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/systems/itemPublic'),{directTrades:[{note:'secret'}]}));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/systems/itemPublic')));
+});
+
+test('Phase 1.3: failed trade acknowledgement cannot rewrite a settled request',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  const id=created.request.id;
+  assert.equal((await action('bob','respondLiveItemRequest',['c','b',id,true,{}])).ok,true);
+  const sent=await action('alice','acknowledgeLiveItemRequest',['c','a',id]);
+  assert.equal(sent.ok,true,sent.error);
+  const request=(await db.doc('campaigns/c/itemRequests/'+id).get()).data();
+  assert.equal(request.senderNotice,'acknowledged');
+  assert.equal((await action('bob','respondLiveItemRequest',['c','b',id,true,{}])).ok,false);
+  assert.equal((await db.collection('campaigns/c/itemRequests').get()).size,1);
 });
 
 test('invitation preview discloses a summary; valid join grants membership',async()=>{

@@ -15,7 +15,7 @@ import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, quest
 
 // Canonical player mutations. Executed only by the authenticated callable handler.
 export function createCommands(context) {
-const {db,currentUser,doc,collection,runTransaction,serverTimestamp,window,reportSyncError}=context;
+const {db,currentUser,requestId,doc,collection,runTransaction,serverTimestamp,window,reportSyncError}=context;
 const uniqueValues=(...lists)=>[...new Set(lists.flatMap(value=>Array.isArray(value)?value:[]).filter(Boolean))];
 function liveSessionState(value={}){
   const expiresAt=timestampMs(value.expiresAt);
@@ -192,14 +192,29 @@ function appendActivity(character,entry){
   const rows=Array.isArray(character.actionLog) ? character.actionLog : [];
   character.actionLog=[Object.assign({id:`action-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString()},entry),...rows].slice(0,100);
 }
-function playerItemRequests(ecosystem){
-  ecosystem.playerItemRequests=Array.isArray(ecosystem.playerItemRequests)?ecosystem.playerItemRequests:[];
-  return ecosystem.playerItemRequests;
+// Public marketplace data is intentionally distinct from private trade terms.
+// Never expose player requests or their escrowed items in a campaign-readable doc.
+function publicItemEcosystem(ecosystem={}){
+  return {
+    version:'asteria-item-public-v1',
+    shops:Array.isArray(ecosystem.shops)?ecosystem.shops:[],
+    partyLoot:Array.isArray(ecosystem.partyLoot)?ecosystem.partyLoot:[],
+    sharedStorages:Array.isArray(ecosystem.sharedStorages)?ecosystem.sharedStorages:[]
+  };
 }
-function findPlayerItemRequest(ecosystem,requestId){
-  const primary=playerItemRequests(ecosystem).find(value=>String(value.id)===String(requestId));
-  if(primary) return primary;
-  return (Array.isArray(ecosystem.directTrades)?ecosystem.directTrades:[]).find(value=>String(value.id)===String(requestId)&&String(value.id||'').startsWith('offer-')) || null;
+function itemRequestRef(campaignId,id){
+  return doc(db,'campaigns',campaignId,'itemRequests',String(id));
+}
+function requirePrivateItemRequest(snapshot,requestId){
+  if(!snapshot.exists()) throw new Error('This item request is no longer available.');
+  const request=structuredCloneSafe(snapshot.data());
+  if(String(request.id)!==String(requestId)) throw new Error('This item request does not match.');
+  return request;
+}
+function savePublicItemEcosystem(transaction,campaignId,ecosystem){
+  transaction.set(doc(db,'campaigns',campaignId,'systems','itemPublic'),{
+    ...publicItemEcosystem(ecosystem),updatedAt:serverTimestamp()
+  },{merge:true});
 }
 function placeCharacterItem(character,source,options={}){
   const qty=Math.max(1,Number(source?.qty ?? source?.quantity ?? 1));
@@ -298,6 +313,48 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
 }
 
 const commands = {
+  // Bootstrap the public shop projection and migrate historical requests away
+  // from the broadly readable legacy ecosystem. Safe to call outside a session.
+  syncCampaignItemPrivacy: async function(campaignId,characterId){
+    if(!db||!currentUser||!campaignId||!characterId) return {ok:false};
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const publicRef=doc(db,'campaigns',campaignId,'systems','itemPublic');
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireCampaignGM(transaction,campaignId);
+        const [legacySnapshot,publicSnapshot]=await Promise.all([
+          transaction.get(ecosystemRef),transaction.get(publicRef)
+        ]);
+        const legacy=structuredCloneSafe(legacySnapshot.exists()?legacySnapshot.data():{});
+        const pending=Array.isArray(legacy.playerItemRequests)?legacy.playerItemRequests:[];
+        const previousTrades=Array.isArray(legacy.directTrades)?legacy.directTrades:[];
+        const uniqueRows=[...new Map([...pending,...previousTrades]
+          .filter(row=>row&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,180}$/.test(row.id))
+          .map(row=>[row.id,row])).values()];
+        const ready=uniqueRows.filter(row=>row.fromOwnerUid && row.toOwnerUid &&
+          typeof row.fromCharacterId==='string' && typeof row.toCharacterId==='string').slice(0,60);
+        const references=ready.map(row=>itemRequestRef(campaignId,row.id));
+        const existing=await Promise.all(references.map(ref=>transaction.get(ref)));
+        for(let i=0;i<ready.length;i++) if(!existing[i].exists()){
+          transaction.set(references[i],ready[i]);
+        }
+        const migratedIds=new Set(ready.map(row=>row.id));
+        if(migratedIds.size){
+          transaction.update(ecosystemRef,{
+            playerItemRequests:pending.filter(row=>!migratedIds.has(row.id)),
+            directTrades:previousTrades.filter(row=>!migratedIds.has(row.id)),
+            updatedAt:serverTimestamp()
+          });
+        }
+        const projected=publicItemEcosystem(legacy);
+        if(!publicSnapshot.exists() || Object.keys(projected).some(key=>!isDeepStrictEqual(projected[key],publicSnapshot.data()[key]))){
+          transaction.set(publicRef,{...projected,updatedAt:serverTimestamp()},{merge:true});
+        }
+        return {migrated:migratedIds.size,remaining:uniqueRows.length-migratedIds.size};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   identifyLootReward: async function(campaignId,characterId,eventId){
     if(!db || !currentUser || !campaignId || !characterId || !eventId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
@@ -686,6 +743,7 @@ const commands = {
         appendActivity(character,{type:'shop-purchase',message:`Purchased ${qty} x ${item.name} for ${cost} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        savePublicItemEcosystem(transaction,campaignId,ecosystem);
         return {item:received,cost};
       });
       return {ok:true,...result};
@@ -722,6 +780,7 @@ const commands = {
         appendActivity(character,{type:'shop-sale',message:`Sold ${item.name} for ${value} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        savePublicItemEcosystem(transaction,campaignId,ecosystem);
         return {value};
       });
       return {ok:true,...result};
@@ -730,12 +789,14 @@ const commands = {
   createLiveItemRequest: async function(campaignId,characterId,recipientId,itemId,mode='give',details={}){
     if(!db||!currentUser||!campaignId||!characterId||!recipientId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const id=`item-request-${currentUser.uid}-${requestId}`;
+    const requestRef=itemRequestRef(campaignId,id);
     const recipientRef=doc(db,'campaigns',campaignId,'characters',recipientId);
     try{
       const request=await runTransaction(db,async transaction=>{
         const session=await requireLiveSession(transaction,campaignId);
-        const [characterSnapshot,recipientSnapshot,ecosystemSnapshot]=await Promise.all([transaction.get(refs.campaign),transaction.get(recipientRef),transaction.get(ecosystemRef)]);
+        const [characterSnapshot,recipientSnapshot,requestSnapshot]=await Promise.all([transaction.get(refs.campaign),transaction.get(recipientRef),transaction.get(requestRef)]);
+        if(requestSnapshot.exists()) throw new Error('Item request already exists. Use the original result.');
         if(!characterSnapshot.exists()||!recipientSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         if(String(characterId)===String(recipientId)) throw new Error('Choose another linked character.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
@@ -750,12 +811,11 @@ const commands = {
         const snapshot=Object.assign({},structuredCloneSafe(item),{sourceItemId:liveItemId(item),qty:action==='identify'?1:quantity,equipped:false,equippedSlot:'',location:action==='identify'?'inventory':'player-request-escrow'});
         if(action!=='identify') item.qty=Number(item.qty||1)-quantity;
         character.inventory=inventory.filter(value=>Number(value.qty??1)>0);
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
-        const row={id:`item-request-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,version:2,sessionId:session.id,mode:action,fromCharacterId:characterId,fromCharacterName:character.name||'Party Member',fromOwnerUid:character.ownerUid||currentUser.uid,toCharacterId:recipientId,toCharacterName:recipient.name||'Party Member',toOwnerUid:recipient.ownerUid||'',item:snapshot,quantity:snapshot.qty,note:String(details.note||'').slice(0,1000),priceCopper:Math.max(0,Math.floor(Number(details.priceCopper||0))),requestedItem:String(details.requestedItem||'').slice(0,200),status:'pending',recipientNotice:'unread',senderNotice:'waiting',createdAt:new Date().toISOString(),createdBy:currentUser.uid};
-        playerItemRequests(ecosystem).push(row);
+        if(!recipient.ownerUid) throw new Error('The recipient must have a linked owner.');
+        const row={id,version:2,sessionId:session.id,mode:action,fromCharacterId:characterId,fromCharacterName:character.name||'Party Member',fromOwnerUid:character.ownerUid||currentUser.uid,toCharacterId:recipientId,toCharacterName:recipient.name||'Party Member',toOwnerUid:recipient.ownerUid||'',item:snapshot,quantity:snapshot.qty,note:String(details.note||'').slice(0,1000),priceCopper:Math.max(0,Math.floor(Number(details.priceCopper||0))),requestedItem:String(details.requestedItem||'').slice(0,200),status:'pending',recipientNotice:'unread',senderNotice:'waiting',createdAt:new Date().toISOString(),createdBy:currentUser.uid};
         appendActivity(character,{type:`item-${action}-requested`,message:`Sent ${recipient.name||'a party member'} a ${action} request for ${snapshot.name}.`});
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,row);
         return row;
       });
       return {ok:true,request,offer:request};
@@ -763,21 +823,21 @@ const commands = {
   },
   respondLiveItemRequest: async function(campaignId,characterId,requestId,accepted,details={}){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     const recipientRef=doc(db,'campaigns',campaignId,'characters',characterId);
     try{
       const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const ecosystemSnapshot=await transaction.get(ecosystemRef);
-        if(!ecosystemSnapshot.exists()) throw new Error('Item request data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const request=requirePrivateItemRequest(await transaction.get(requestRef),requestId);
         if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId)) throw new Error('This item request is no longer pending for this character.');
         const senderRef=doc(db,'campaigns',campaignId,'characters',request.fromCharacterId);
         const [recipientSnapshot,senderSnapshot]=await Promise.all([transaction.get(recipientRef),transaction.get(senderRef)]);
         if(!recipientSnapshot.exists()||!senderSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         const recipient=Object.assign({id:characterId},recipientSnapshot.data());
         const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'') ||
+           String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
+          throw new Error('One of the trade participants has changed ownership.');
         const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
         const senderRefs={campaign:senderRef};
@@ -813,7 +873,7 @@ const commands = {
             request.status='awaiting-sender';request.recipientNotice='acknowledged';request.senderNotice='unread';request.recipientReadyAt=new Date().toISOString();request.recipientReadyBy=currentUser.uid;
             appendActivity(recipient,{type:'item-trade-ready',message:`Confirmed an exchange offer for ${request.item?.name||'an item'}.`});
             writeLiveCharacter(transaction,recipientRefs,recipient);
-            transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+            transaction.set(requestRef,request);
             return {awaitingSender:true};
           }
           receivedItem=placeCharacterItem(recipient,request.item,{storageId:details.storageId||''});
@@ -827,7 +887,7 @@ const commands = {
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
         writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
         return {revealedItem};
       });
       return {ok:true,...result};
@@ -836,20 +896,22 @@ const commands = {
   finalizeLiveItemTrade: async function(campaignId,characterId,requestId,accepted){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const senderRefs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const [ecosystemSnapshot,senderSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(senderRefs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!senderSnapshot.exists()) throw new Error('Trade data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,senderSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(senderRefs.campaign)]);
+        if(!senderSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status!=='awaiting-sender'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This trade is no longer awaiting your confirmation.');
         const recipientRef=doc(db,'campaigns',campaignId,'characters',request.toCharacterId);
         const recipientSnapshot=await transaction.get(recipientRef);
         if(!recipientSnapshot.exists()) throw new Error('The other linked character is unavailable.');
         const sender=Object.assign({id:characterId},senderSnapshot.data());
         const recipient=Object.assign({id:request.toCharacterId},recipientSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'') ||
+           String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
+          throw new Error('One of the trade participants has changed ownership.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,sender,senderRefs);
         const recipientRefs={campaign:recipientRef};
         await verifyLiveTradeCounterparty(transaction,campaignId,request.toCharacterId,recipient,recipientRefs);
@@ -869,7 +931,7 @@ const commands = {
         request.resolution={accepted:Boolean(accepted),receivedItem:recipientReceived?{name:recipientReceived.name,qty:recipientReceived.qty}:null,exchangeItem:senderReceived?{name:senderReceived.name,qty:senderReceived.qty}:null};
         writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -877,16 +939,16 @@ const commands = {
   cancelLiveItemRequest: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This request can no longer be cancelled.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         if(request.mode!=='identify'){
           const storages=normalizeCharacterStorages(character);
@@ -896,7 +958,7 @@ const commands = {
         request.status='cancelled';request.recipientNotice='cancelled';request.senderNotice='acknowledged';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         appendActivity(character,{type:'item-request-cancelled',message:`Cancelled the ${request.mode} request for ${request.item?.name||'an item'}.`});
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -904,22 +966,22 @@ const commands = {
   acknowledgeLiveItemRequest: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request result is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This result cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();request.senderAcknowledgedBy=currentUser.uid;
         // New item transactions already mirror both owners immediately.
         // For historic requests, repair only gameplay fields when the owner's
         // stored revision is not newer than the campaign revision.
         repairLegacyTradeMirror(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -927,22 +989,22 @@ const commands = {
   acknowledgeLiveItemRecipientUpdate: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request update is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||!['accepted','declined','cancelled'].includes(request.status)||String(request.toCharacterId)!==String(characterId)) throw new Error('This recipient update cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.toOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.recipientNotice='acknowledged';request.recipientAcknowledgedAt=new Date().toISOString();request.recipientAcknowledgedBy=currentUser.uid;
         // New item transactions already mirror both owners immediately.
         // For historic requests, repair only gameplay fields when the owner's
         // stored revision is not newer than the campaign revision.
         repairLegacyTradeMirror(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
