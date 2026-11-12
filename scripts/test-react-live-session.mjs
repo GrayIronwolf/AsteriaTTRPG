@@ -29,6 +29,7 @@ import {
   talentRankCost
 } from '../src/state/liveWorkspaceModel.mjs';
 import { buildReactRoute, parseReactRoute } from '../src/app/asteriaRoutes.mjs';
+import { shopStockCompatible, shopVariantKey, merchantPriceCopper, characterCurrencyCopper, shopVariantLabel } from '../src/state/shopTransactionModel.mjs';
 import { liveSyncPresentation } from '../src/state/liveSyncState.mjs';
 import { GM_WORKSPACE_VERSION, migrateLegacyGMWorkspace, normalizeGMWorkspace } from '../src/state/gmWorkspaceModel.mjs';
 import { MAGIC_ELEMENT_SYMBOL_SLUGS, magicElementImage } from '../src/data/magicElementSymbols.mjs';
@@ -328,6 +329,40 @@ test('67. Player trade review and escrow recovery remain accessible after sessio
   assert.match(backend,/request\.returnedToOverflow/);
   assert.match(backend,/if\(accepted\) await requireLiveSession/);
   assert.match(backend,/escrowReturned:true/);
+});
+
+test('68. Merchant identity keys keep enchantments, material and quality separate from base IDs', () => {
+  const base={id:'unique-1',definitionId:'07-05-002-001',name:'Dagger',material:'Iron',
+    quality:'Common',marketValue:1,marketPrice:2};
+  const alternate={...base,id:'unique-2'};
+  assert.equal(shopVariantKey(base),shopVariantKey(alternate));
+  assert.equal(shopStockCompatible(base,alternate),true);
+  for(const patch of [{material:'Mithril'},{quality:'Superior'},{enchantments:[{name:'Flame'}]},
+    {condition:'Damaged'},{identified:false}]){
+    assert.notEqual(shopVariantKey(base),shopVariantKey({...alternate,...patch}));
+    assert.equal(shopStockCompatible(base,{...alternate,...patch}),false);
+  }
+  assert.equal(shopStockCompatible(base,{...base,unique:true}),false);
+  assert.match(shopVariantLabel({...base,material:'Mithril',quality:'Superior'}),/Mithril.*Superior/);
+  assert.equal(merchantPriceCopper({buyModifier:1.5},base,'buy'),300);
+  assert.equal(merchantPriceCopper({sellModifier:0.5},base,'sell'),50);
+  assert.equal(characterCurrencyCopper({coins:{gold:1,silver:2,copper:3}}),10203);
+});
+
+test('69. Merchant UI shows upfront quotes, confirmation, inventory and mobile shop tab', () => {
+  const player=read('src/dashboards/ShopWorkspace.jsx');
+  const inventory=read('src/dashboards/InventoryWorkspace.jsx');
+  const dashboard=read('src/dashboards/CharacterDashboard.jsx');
+  const backend=read('functions/commands.mjs');
+  const gm=read('src/dashboards/GMWorkspacePanels.jsx');
+  for(const word of ['Confirm Purchase','Confirm Sale','Your funds','Merchant funds',
+    'canConfirm','unitPriceCopper','variantKey','Available quantity','ShopWorkspace'])
+    assert.match(player+inventory,new RegExp(word));
+  assert.match(inventory, /id:'shops'/);
+  assert.match(dashboard,/ecosystem=\{live.itemEcosystem\}/);
+  assert.match(backend,/shopStockCompatible/);
+  assert.match(backend,/Not enough shop stock for the requested quantity/);
+  assert.match(gm,/shopVariantLabel/);
 });
 
 test('30. Player item requests use participant-restricted Firestore documents', () => {
