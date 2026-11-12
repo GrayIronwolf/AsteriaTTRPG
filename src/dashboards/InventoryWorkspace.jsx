@@ -560,11 +560,19 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const items = inventoryItems(character);
   const selectedItem=items.find(row=>String(row.id)===String(selectedItemId))||null;
   const run = async (operation, success) => {
+    if(busy)return {ok:false,error:'An inventory action is still processing.'};
     setBusy(true);
-    const result = await operation();
-    setMessage(resultText(result, success));
-    setBusy(false);
-    return result;
+    try{
+      const result=await operation();
+      setMessage(resultText(result,success));
+      return result;
+    }catch(error){
+      const result={ok:false,error:error?.message||'The inventory action could not be completed.'};
+      setMessage(result.error);
+      return result;
+    }finally{
+      setBusy(false);
+    }
   };
   return <div className="react-inventory-workspace">
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
@@ -572,8 +580,8 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       <InventorySupportPanel character={character} items={items} storages={storages}/>
       <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={setDetails} />
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} />
-      {selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null}
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
+      {selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null}
       {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
     </div>
     <p className="react-action-message">{message}</p>
