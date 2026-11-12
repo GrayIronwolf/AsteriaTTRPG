@@ -787,12 +787,14 @@ const commands = {
   createLiveItemRequest: async function(campaignId,characterId,recipientId,itemId,mode='give',details={}){
     if(!db||!currentUser||!campaignId||!characterId||!recipientId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const id=`item-request-${currentUser.uid}-${requestId}`;
+    const requestRef=itemRequestRef(campaignId,id);
     const recipientRef=doc(db,'campaigns',campaignId,'characters',recipientId);
     try{
       const request=await runTransaction(db,async transaction=>{
         const session=await requireLiveSession(transaction,campaignId);
-        const [characterSnapshot,recipientSnapshot,ecosystemSnapshot]=await Promise.all([transaction.get(refs.campaign),transaction.get(recipientRef),transaction.get(ecosystemRef)]);
+        const [characterSnapshot,recipientSnapshot,requestSnapshot]=await Promise.all([transaction.get(refs.campaign),transaction.get(recipientRef),transaction.get(requestRef)]);
+        if(requestSnapshot.exists()) throw new Error('Item request already exists. Use the original result.');
         if(!characterSnapshot.exists()||!recipientSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         if(String(characterId)===String(recipientId)) throw new Error('Choose another linked character.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
@@ -807,12 +809,11 @@ const commands = {
         const snapshot=Object.assign({},structuredCloneSafe(item),{sourceItemId:liveItemId(item),qty:action==='identify'?1:quantity,equipped:false,equippedSlot:'',location:action==='identify'?'inventory':'player-request-escrow'});
         if(action!=='identify') item.qty=Number(item.qty||1)-quantity;
         character.inventory=inventory.filter(value=>Number(value.qty??1)>0);
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
-        const row={id:`item-request-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,version:2,sessionId:session.id,mode:action,fromCharacterId:characterId,fromCharacterName:character.name||'Party Member',fromOwnerUid:character.ownerUid||currentUser.uid,toCharacterId:recipientId,toCharacterName:recipient.name||'Party Member',toOwnerUid:recipient.ownerUid||'',item:snapshot,quantity:snapshot.qty,note:String(details.note||'').slice(0,1000),priceCopper:Math.max(0,Math.floor(Number(details.priceCopper||0))),requestedItem:String(details.requestedItem||'').slice(0,200),status:'pending',recipientNotice:'unread',senderNotice:'waiting',createdAt:new Date().toISOString(),createdBy:currentUser.uid};
-        playerItemRequests(ecosystem).push(row);
+        if(!recipient.ownerUid) throw new Error('The recipient must have a linked owner.');
+        const row={id,version:2,sessionId:session.id,mode:action,fromCharacterId:characterId,fromCharacterName:character.name||'Party Member',fromOwnerUid:character.ownerUid||currentUser.uid,toCharacterId:recipientId,toCharacterName:recipient.name||'Party Member',toOwnerUid:recipient.ownerUid||'',item:snapshot,quantity:snapshot.qty,note:String(details.note||'').slice(0,1000),priceCopper:Math.max(0,Math.floor(Number(details.priceCopper||0))),requestedItem:String(details.requestedItem||'').slice(0,200),status:'pending',recipientNotice:'unread',senderNotice:'waiting',createdAt:new Date().toISOString(),createdBy:currentUser.uid};
         appendActivity(character,{type:`item-${action}-requested`,message:`Sent ${recipient.name||'a party member'} a ${action} request for ${snapshot.name}.`});
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,row);
         return row;
       });
       return {ok:true,request,offer:request};
