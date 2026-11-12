@@ -2221,14 +2221,21 @@ const firebasePublicApi = {
     }catch(err){ console.warn('Could not save campaign to Firestore.', err); return false; }
   },
   serverCampaignUCNEnabled: function(){
-    // Do not switch production creation before the separately deployed backend
-    // callable and Firebase rules have been verified.
-    return window.AsteriaFeatureFlags?.serverCampaignUCN === true;
+    // The new-campaign canary is opt-in and leaves legacy creation untouched.
+    return window.AsteriaFeatureFlags?.serverCampaignUCN === true ||
+      (window.AsteriaFeatureFlags?.campaignInAppCanary===true &&
+       new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1');
   },
-  createCampaignIdentity: async function(name){
+  createCampaignIdentity: async function(name,{v2Test=false,partySize=4}={}){
     if(!functionsClient || !currentUser) throw new Error('Sign in before creating a campaign.');
-    if(window.AsteriaFeatureFlags?.serverCampaignUCN !== true) throw new Error('Server campaign identity allocation is not enabled.');
-    return (await httpsCallable(functionsClient,'asteriaCampaignUCN')({action:'create',name})).data;
+    if(!this.serverCampaignUCNEnabled()) throw new Error('Server campaign identity allocation is not enabled.');
+    if(v2Test&&(
+       window.AsteriaFeatureFlags?.campaignInAppCanary!==true ||
+       new URLSearchParams(window.location.search).get('campaign-inapp-canary')!=='1'))
+      throw new Error('New v2 campaign testing is not enabled.');
+    return (await httpsCallable(functionsClient,'asteriaCampaignUCN')({
+      action:'create',name,...(v2Test?{v2Test:true,partySize}:{})
+    })).data;
   },
   previewCampaignByUCN: async function(codeValue){
     if(!functionsClient || !currentUser) throw new Error('Sign in to look up a campaign.');
