@@ -73,10 +73,11 @@ function assertSource(){
     refuse('Canonical source and feature gates must remain disabled.');
   const secure=entry.slice(entry.indexOf('export const asteriaSecureInvitation=onCall('),
     entry.indexOf('// Phase 7.3: account-scoped in-app notification inbox.'));
+  if(!entry.includes("defineSecret('ASTERIA_SECURE_INVITE_SIGNING_KEY')"))
+    refuse('Existing approved signing-secret binding missing from callable source.');
   for(const requirement of [
     'preview-notification','accept-notification',
-    'notificationsEnabled:true','delete safe.token',
-    "defineSecret('ASTERIA_SECURE_INVITE_SIGNING_KEY')"
+    'notificationsEnabled:true','delete safe.token'
   ]){
     if(!secure.includes(requirement))refuse('Required reviewed invitation behavior missing: '+requirement);
   }
