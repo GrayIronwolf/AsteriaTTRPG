@@ -40,7 +40,14 @@ const essential = Object.freeze([
 const optionals = Object.freeze(['asteriaCampaignNotifications','asteriaCampaignEmailInvitations']);
 const local = path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const fail=message=>{throw Error('Coordinated production release audit: '+message);};
-const safe=entry=>entry==='1'?'on':entry==='0'?'off':'unknown';
+// All guarded callables require an explicit '1' to activate a feature.
+// An absent flag on a verified function is disabled by code, not an unknown
+// runtime condition. Unknown/failed function inspection remains 'unknown'.
+export function runtimeFlagState(env,key){
+  if(!env||typeof env!=='object')return 'unknown';
+  if(!Object.hasOwn(env,key))return 'off (default)';
+  return env[key]==='1'?'on':env[key]==='0'?'off':'unknown';
+}
 const leaf=name=>typeof name==='string'?name.split('/').pop():'';
 
 export function inspectCoordinatedSource(){
@@ -89,7 +96,7 @@ export function evaluateProductionSnapshot(snapshot,{manifest=readManifest(),fir
     const env=records[owner]?.state==='ACTIVE'&&
       descriptions[owner]?.serviceConfig?.environmentVariables;
     for(const key of names){
-      const state=safe(env?.[key]);
+      const state=runtimeFlagState(env,key);
       flags[key]=state;
       if(essential.includes(key)&&state!=='on')
         blockers.push('Required invitation/GM backend gate not enabled: '+key);
