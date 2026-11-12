@@ -37,7 +37,13 @@ export const asteriaCampaignUCN=onCall({region:'us-central1',maxInstances:3,time
   try {
     const { createCampaignIdentity, previewCampaignUCN }=await import('./campaignUCN.mjs');
     const data=request.data || {};
-    if(data.action==='create') return await createCampaignIdentity(getFirestore(),request.auth.uid,data.name);
+    if(data.action==='create') {
+      const v2Test=data.v2Test===true;
+      if(v2Test&&process.env.ASTERIA_CAMPAIGN_V2_CANARY_ENABLED!=='1')
+        throw new Error('New campaign invitation testing is not enabled.');
+      return await createCampaignIdentity(getFirestore(),request.auth.uid,data.name,
+        v2Test?{v2Test:true,partySize:data.partySize}:{});
+    }
     if(data.action==='preview') return await previewCampaignUCN(getFirestore(),request.auth.uid,data.code);
     throw new Error('Unknown campaign identity action.');
   } catch(error) {
