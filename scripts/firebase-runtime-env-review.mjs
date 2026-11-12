@@ -32,7 +32,7 @@ export function reviewFunctionEnvironment(raw,approvedFlags){
       if(typeof value!=='string')
         throw Error('Invalid Google-managed runtime metadata: '+key);
     }else{
-      throw Error('Unexpected existing Cloud Function environment key: '+key);
+      throw Error('Unreviewed live application environment variable: '+key);
     }
   }
   return result;
