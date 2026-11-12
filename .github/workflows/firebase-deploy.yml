@@ -1271,8 +1271,8 @@ jobs:
         uses: google-github-actions/auth@v3
         with:
           project_id: asteria-ttrpg
-          workload_identity_provider: \${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: \${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v3
       - name: Inspect deployed callables and existing signed-invitation secret binding (no values)
         shell: bash
@@ -1297,8 +1297,8 @@ jobs:
       - name: Stage two exact callables with all new invitation switches OFF
         shell: bash
         env:
-          ASTERIA_INAPP_OPERATION: \${{ inputs.operation }}
-          ASTERIA_INAPP_CONFIRMATION: \${{ inputs.production_confirmation }}
+          ASTERIA_INAPP_OPERATION: ${{ inputs.operation }}
+          ASTERIA_INAPP_CONFIRMATION: ${{ inputs.production_confirmation }}
           ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
         run: |
           set -euo pipefail
@@ -1321,7 +1321,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/asteria-inapp-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
       - name: Install only private notifications with server gate OFF
         shell: bash
-        working-directory: \${{ runner.temp }}/asteria-inapp-coordinated/notifications
+        working-directory: ${{ runner.temp }}/asteria-inapp-coordinated/notifications
         run: |
           set -euo pipefail
           "$RUNNER_TEMP/asteria-inapp-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only "functions:asteria:asteriaCampaignNotifications" --non-interactive
@@ -1329,7 +1329,7 @@ jobs:
           jq -e '.state == "ACTIVE" and .serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED == "0"' "$RUNNER_TEMP/inapp-notify-verify.json" >/dev/null
       - name: Update only previously installed secure invitations with all friend issuance OFF
         shell: bash
-        working-directory: \${{ runner.temp }}/asteria-inapp-coordinated/secure-invitation
+        working-directory: ${{ runner.temp }}/asteria-inapp-coordinated/secure-invitation
         run: |
           set -euo pipefail
           "$RUNNER_TEMP/asteria-inapp-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only "functions:asteria:asteriaSecureInvitation" --non-interactive
