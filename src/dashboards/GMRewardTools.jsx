@@ -1,19 +1,25 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {ManualNumberInput} from '../components/ManualNumberInput.jsx';
-import {Panel,StatusPill} from '../components/WorkspaceUI.jsx';
+import {Modal,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {
   filterGMRewardEvents,GM_REWARD_CURRENCIES,MAX_GM_REWARD_BUNDLES,
   prepareGMRewardBundle,rewardEventLabel,rewardEventStatus,validateGMRewardPayload
 } from '../state/gmRewardModel.mjs';
+import {deliverGMRewardBatch,linkedGMRewardRecipients,previewGMRewardBatch} from '../state/gmRewardBatchModel.mjs';
 
 const empty=()=>({bundleName:'',currency:{key:'gold',amount:0},items:[],message:''});
 function dateLabel(value){
   const n=typeof value?.toMillis==='function'?value.toMillis():value?.seconds?value.seconds*1000:Date.parse(value||'');
   return Number.isFinite(n)?new Date(n).toLocaleString():'Not recorded';
 }
-export function GMRewardTools({campaignId,characters={},events=[],workspace={},saveSection,customItems=[]}){
-  const [recipient,setRecipient]=useState('');
+export function GMRewardTools({campaignId,characters={},events=[],workspace={},saveSection,customItems=[],editable=false}){
+  const [recipientIds,setRecipientIds]=useState([]);
+  const [recipientSearch,setRecipientSearch]=useState('');
+  const [review,setReview]=useState(null);
+  const [delivery,setDelivery]=useState(null);
+  const [deliveryProgress,setDeliveryProgress]=useState(null);
+  const sendingRef=useRef(false);
   const [draft,setDraft]=useState(empty);
   const [amount,setAmount]=useState('');
   const [quantity,setQuantity]=useState('1');
@@ -36,9 +42,22 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const matchingItems=useMemo(()=>itemQuery?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(itemQuery.toLowerCase())).slice(0,8):[],[catalog,itemQuery]);
   const history=useMemo(()=>filterGMRewardEvents(events,filter,characters),[events,filter,characters]);
+  const roster=useMemo(()=>linkedGMRewardRecipients(characters,recipientSearch),[characters,recipientSearch]);
+  const allRecipients=useMemo(()=>linkedGMRewardRecipients(characters),[characters]);
   useEffect(()=>{
-    if(!characters[recipient])setRecipient(Object.keys(characters)[0]||'');
-  },[characters,recipient]);
+    setRecipientIds(current=>{
+      const valid=current.filter(id=>Boolean(characters[id]));
+      return valid.length===current.length?current:valid;
+    });
+  },[characters]);
+  useEffect(()=>{
+    setRecipientIds([]);setReview(null);setDelivery(null);setDeliveryProgress(null);setRecipientSearch('');
+  },[campaignId]);
+  const toggleRecipient=id=>setRecipientIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id]);
+  const newAward=()=>{
+    setBundleId('');setDraft(empty());setAmount('');setItemQuery('');setSelectedItem(null);
+    setRecipientIds([]);setReview(null);setDelivery(null);setDeliveryProgress(null);setMessage('');
+  };
   const editCurrency=key=>setDraft(old=>({...old,currency:{...old.currency,...key}}));
   const addItem=()=>{
     const qty=Number(quantity);
@@ -50,6 +69,7 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
   };
   const setBundle=draftBundle=>{
     setBundleId(draftBundle.id);
+    setDelivery(null);setReview(null);setDeliveryProgress(null);setMessage('');
     setDraft({bundleName:draftBundle.name||'',currency:draftBundle.currency||{key:'gold',amount:0},
       items:draftBundle.items||[],message:draftBundle.message||''});
     setAmount(String(draftBundle.currency?.amount||''));
@@ -81,15 +101,33 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
       setMessage('Saved bundle removed. Previously awarded items were not affected.');
     }catch(error){setMessage(error?.message||String(error));}finally{setBusy(false);}
   };
-  const send=async()=>{
-    if(!characters[recipient])return setMessage('Choose a linked campaign character.');
-    setBusy(true);
+  const prepareReview=()=>{
+    if(delivery)return setMessage('Choose Prepare Another Award before sending a new reward.');
+    if(!editable)return setMessage('Start a live campaign session before awarding items or currency.');
     try{
-      const payload=validateGMRewardPayload({...draft,currency:{...draft.currency,amount:Number(amount||0)}});
-      const result=await firebaseService.grantGMRewardBundle(campaignId,recipient,payload);
-      if(!result?.ok)throw Error(result?.error||'The award could not be sent.');
-      setMessage('Reward sent. Currency was credited; '+result.itemCount+' item type(s) await player claim.');
-    }catch(error){setMessage(error?.message||String(error));}finally{setBusy(false);}
+      const plan=previewGMRewardBatch({
+        recipientIds,characters,
+        reward:{...draft,currency:{...draft.currency,amount:Number(amount||0)}}
+      });
+      setReview(plan);setMessage('');
+    }catch(error){setMessage(error?.message||String(error));}
+  };
+  const send=async()=>{
+    if(sendingRef.current||!review||!editable)return;
+    sendingRef.current=true;setBusy(true);setMessage('');
+    const plan=review;
+    try{
+      const summary=await deliverGMRewardBatch(plan,
+        (targetId,payload)=>firebaseService.grantGMRewardBundle(campaignId,targetId,payload),
+        setDeliveryProgress);
+      setDelivery(summary);setReview(null);
+      setMessage(summary.ok
+        ?'Award confirmed for all '+summary.completed.length+' linked characters.'
+        :'Delivery stopped after '+summary.completed.length+' confirmed awards. Review the status below before sending another award.');
+    }catch(error){
+      setDelivery({ok:false,completed:[],failed:{characterId:'',error:error?.message||String(error)},remaining:plan.recipientIds,total:plan.recipientIds.length});
+      setReview(null);setMessage('Delivery could not be verified. Check campaign reward history before retrying.');
+    }finally{sendingRef.current=false;setBusy(false);}
   };
   return <Panel title="GM Reward Tools" eyebrow="Quick awards, reusable bundles & reward history" className="react-gm-reward-tools">
     <p className="react-help">Currency is credited immediately. Items are offered to the player to store, equip or decline; the award stays pending until claimed.</p>
