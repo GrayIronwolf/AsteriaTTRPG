@@ -1,6 +1,6 @@
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
+import { createAsteriaItem, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
 import { merchantPriceCopper, shopStockCompatible, shopVariantKey } from './state/shopTransactionModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
