@@ -3,6 +3,7 @@
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {dirname,join,resolve,isAbsolute} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {reviewFunctionEnvironment} from './firebase-runtime-env-review.mjs';
 
 const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const read=p=>readFileSync(join(ROOT,p),'utf8');
@@ -21,7 +22,6 @@ const secureFlags=[
   'ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED',
   'ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'
 ];
-const platformKeys=new Set(['FIREBASE_CONFIG','GCLOUD_PROJECT','GCP_PROJECT']);
 const marker={
   recipients:{
     begin:'// Friends Phase 5.1: read-only campaign recipient selection.',
@@ -89,14 +89,7 @@ export function parsePhase53LiveState(value){
      typeof value.exists!=='boolean'||
      !value.env||typeof value.env!=='object'||Array.isArray(value.env))
     fail('Live Cloud Function metadata requires reconciliation.');
-  const result={exists:value.exists,env:{}};
-  for(const [k,v] of Object.entries(value.env)){
-    if(platformKeys.has(k))continue;
-    if(![...secureFlags,'ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED'].includes(k)||
-       (v!=='0'&&v!=='1'))
-      fail('Unreviewed live application environment variable: '+k);
-    result.env[k]=v;
-  }
+  const result={exists:value.exists,env:reviewFunctionEnvironment(value.env,secureFlags)};
   if(!result.exists&&Object.keys(result.env).length)
     fail('Absent Cloud Function has a nonempty environment.');
   return result;
