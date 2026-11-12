@@ -97,6 +97,52 @@
             meta.textContent='Date unavailable';
           }
           row.append(noticeHeading,body,meta);
+          if(notice.kind==='friend-invitation'&&
+             /^[A-Za-z0-9_-]{1,160}$/.test(notice.campaignId||'')&&
+             /^[a-f0-9]{64}$/.test(notice.inviteId||'')&&
+             root.AsteriaFeatureFlags?.campaignFriendInvitations===true&&
+             root.AsteriaFeatureFlags?.secureInvitationAcceptance===true&&
+             typeof api.previewCampaignNotificationInvitation==='function'&&
+             typeof api.acceptCampaignNotificationInvitation==='function'){
+            const accept=root.document.createElement('button');
+            accept.type='button';
+            accept.textContent='Review Campaign Invitation';
+            accept.addEventListener('click',async()=>{
+              if(busy||!current())return;
+              setBusy(true);status.textContent='Verifying campaign invitation...';
+              try{
+                const preview=await api.previewCampaignNotificationInvitation(
+                  notice.campaignId,notice.inviteId);
+                if(!current())return;
+                if(!preview?.requiresGMApproval||
+                   !['available','pending'].includes(preview.status))
+                  throw Error('This invitation is unavailable.');
+                if(!root.confirm?.('Request to join '+
+                   String(preview.campaignName||'this campaign')+
+                   '? The GM must approve your request before you can join.')){
+                  status.textContent='Invitation remains available in notifications.';
+                  return;
+                }
+                const result=await api.acceptCampaignNotificationInvitation(
+                  notice.campaignId,notice.inviteId);
+                if(current()){
+                  status.textContent=result?.status==='pending'?
+                    'Join request sent. The GM must approve you.':
+                    'Invitation checked: '+String(result?.status||'pending GM review')+'.';
+                  if(typeof root.dispatchEvent==='function'&&
+                     typeof root.CustomEvent==='function')
+                    root.dispatchEvent(new root.CustomEvent('asteria:notifications-updated'));
+                }
+              }catch(error){
+                if(current())status.textContent=error?.message||
+                  'Unable to accept this invitation. Please try again.';
+              }finally{
+                setBusy(false);
+                if(current())void load();
+              }
+            });
+            row.appendChild(accept);
+          }
           if(!notice.readAt){
             const button=root.document.createElement('button');
             button.type='button';
