@@ -136,7 +136,7 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems }) {
   const [search,setSearch]=useState('');const [quantity,setQuantity]=useState('');const [message,setMessage]=useState('');
   useEffect(()=>{if(selectedId&&!shops.some(shop=>shop.id===selectedId))setSelectedId(shops[0]?.id||'');},[shops,selectedId]);
   const selected=shops.find(shop=>shop.id===selectedId)||null;
-  const run=async action=>{const result=await firebaseService.manageShop(campaignId,Object.keys(characters)[0],action);setMessage(result?.ok?'Shop system synchronized.':result?.error||'Shop could not be updated.');return result;};
+  const run=async action=>{const result=await firebaseService.manageShop(campaignId,Object.keys(characters)[0]||'gm-scope',action);setMessage(result?.ok?'Shop system synchronized.':result?.error||'Shop could not be updated.');return result;};
   const create=async()=>{if(!draft.name.trim())return setMessage('Enter a shop name.');if(!isManualNumber(draft.buyModifier,{min:0.1,integer:false})||!isManualNumber(draft.sellModifier,{min:0.1,integer:false}))return setMessage('Enter buy and sell modifiers of at least 0.1.');const result=await run({type:'save',shop:{...draft,buyModifier:manualNumber(draft.buyModifier),sellModifier:manualNumber(draft.sellModifier),id:uid('shop'),status:'closed',visitorCharacterIds:[],stock:[],currencyCopper:100000}});if(result?.ok)setDraft({...draft,name:''});};
   const updateSelected=patch=>selected&&run({type:'save',shop:{id:selected.id,...patch}});
   const matches=search?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(search.toLowerCase())).slice(0,10):[];
