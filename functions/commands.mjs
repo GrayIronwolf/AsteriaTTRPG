@@ -258,6 +258,36 @@ function placeCharacterItem(character,source,options={}){
 }
 
 
+
+// Returning an escrowed item must not depend on having an empty container.
+// Try the original slot (or a compatible stack), then keep the complete item
+// as visible overflow when bags have been filled or removed in the meantime.
+// The action containing this helper commits the return and request status
+// together, so retries cannot return the same escrow more than once.
+function restoreEscrowItem(character,escrow,operationId){
+  if(!escrow||!escrow.name) throw new Error('The escrowed item is unavailable.');
+  const options={storageId:String(escrow.storageId||''),storageSlot:escrow.storageSlot,preserveId:true};
+  try {
+    return {item:placeCharacterItem(character,escrow,options),overflow:false};
+  } catch(error) {
+    if(!/full|needs a storage container/i.test(error.message||'')) throw error;
+  }
+  const inventory=characterInventory(character);
+  const storages=normalizeCharacterStorages(character);
+  const storage=storages.find(row=>String(row.id)===String(escrow.storageId||''))||storages[0];
+  const used=new Set(inventory.map(row=>liveItemId(row)));
+  const desired=String(escrow.instanceId||escrow.id||'');
+  const base=desired&&!used.has(desired)?desired:`escrow-return-${operationId}`;
+  let id=base,index=1;
+  while(used.has(id)) {index+=1;id=`${base}-${index}`;}
+  const item={...structuredCloneSafe(escrow),id,instanceId:id,
+    qty:Math.max(1,Number(escrow.qty||1)),storageId:storage?.id||'',storageSlot:-1,
+    equipped:false,equippedSlot:'',location:'inventory'};
+  character.inventory=[...inventory,item];
+  return {item,overflow:true};
+}
+
+
 function applyQuestRewards(character,quest,questId,characterId) {
   let rewardApplied=false;
   let summary='';
