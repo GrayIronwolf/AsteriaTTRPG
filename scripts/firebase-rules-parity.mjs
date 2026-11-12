@@ -65,8 +65,11 @@ export function firebaseRulesTokens(source){
       out.push(source.slice(start,i));
       continue;
     }
-    // Operators and paths are split into individual significant symbols.
-    // This is conservative: a changed operator or path always changes tokens.
+    // Preserve multi-character operators as indivisible tokens. Without
+    // longest-match handling, 'a!=b' and 'a! =b' would look identical.
+    const op=['===','!==','==','!=','>=','<=','&&','||','=>','++','--','+=','-=']
+      .find(value=>source.startsWith(value,i));
+    if(op){out.push(op);i+=op.length;continue;}
     out.push(c);
     i++;
   }
