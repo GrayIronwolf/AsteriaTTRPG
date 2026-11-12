@@ -834,6 +834,9 @@ const commands = {
         const [recipientSnapshot,senderSnapshot]=await Promise.all([transaction.get(recipientRef),transaction.get(senderRef)]);
         if(!recipientSnapshot.exists()||!senderSnapshot.exists()) throw new Error('One of the linked characters is unavailable.');
         const recipient=Object.assign({id:characterId},recipientSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'') ||
+           String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
+          throw new Error('One of the trade participants has changed ownership.');
         const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
         const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
@@ -906,6 +909,9 @@ const commands = {
         if(!recipientSnapshot.exists()) throw new Error('The other linked character is unavailable.');
         const sender=Object.assign({id:characterId},senderSnapshot.data());
         const recipient=Object.assign({id:request.toCharacterId},recipientSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'') ||
+           String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
+          throw new Error('One of the trade participants has changed ownership.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,sender,senderRefs);
         const recipientRefs={campaign:recipientRef};
         await verifyLiveTradeCounterparty(transaction,campaignId,request.toCharacterId,recipient,recipientRefs);
@@ -942,6 +948,7 @@ const commands = {
         const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This request can no longer be cancelled.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         if(request.mode!=='identify'){
           const storages=normalizeCharacterStorages(character);
@@ -967,6 +974,7 @@ const commands = {
         const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This result cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.fromOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();request.senderAcknowledgedBy=currentUser.uid;
         // New item transactions already mirror both owners immediately.
@@ -989,6 +997,7 @@ const commands = {
         const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||!['accepted','declined','cancelled'].includes(request.status)||String(request.toCharacterId)!==String(characterId)) throw new Error('This recipient update cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
+        if(String(request.toOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.recipientNotice='acknowledged';request.recipientAcknowledgedAt=new Date().toISOString();request.recipientAcknowledgedBy=currentUser.uid;
         // New item transactions already mirror both owners immediately.
