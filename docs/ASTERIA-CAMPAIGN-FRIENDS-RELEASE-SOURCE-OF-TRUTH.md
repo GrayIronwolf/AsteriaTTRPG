@@ -36,6 +36,33 @@ Audit #66 also found Storage Rules source mismatch, a confirmed inactive Friends
 
 This correction does not authorize activation. Production v2 per-campaign migration, backup restore, website approval, real-user acceptance and rollback checks remain mandatory.
 
+## One coordinated Campaign v2 / Friends in-app production preparation
+
+The approved source now contains one complete manual preparation workflow in the **existing WIF-trusted** `.github/workflows/firebase-deploy.yml`.
+
+- **Operation:** `campaign-inapp-prepare-disabled`
+- **Exact confirmation:** `PREPARE-ASTERIA-INAPP-CAMPAIGN-DISABLED`
+- **Repository/branch:** `GrayIronwolf/AsteriaTTRPG`, `main`
+- **Project/region:** `asteria-ttrpg`, `us-central1`
+- **Deployment scope:** precisely `asteriaCampaignNotifications` and the already-deployed `asteriaSecureInvitation`, as two isolated `--only` targets under one reviewed run
+
+One dispatch performs the full relevant security and Firebase emulator suite, reads only Cloud Function names, environment flags and the **existing** signing-secret attachment, builds both packages under the trusted runner's temporary directory, installs the notification callable **with its gate 0**, updates secure invitations to the new notification-aware implementation **while preserving all existing v2 flags and keeping friend issuance 0**, and verifies both callables ACTIVE with the expected flags. It fails closed if notifications are already deployed, if the secure invitation or recipient callable is absent, if the signing-secret attachment is not visible, if unreviewed environment variables exist, or if any selected source packages would reintroduce Resend/email sending.
+
+This preparation step **does not** require `ASTERIA_RESEND_API_KEY`, request access to secret values, modify IAM, migrate campaign memberships, deploy Storage/Firestore rules, or activate browser flags. A successful preparation is **not** approval to activate a v1 campaign.
+
+### Actual production activation — conditions, not unfinished feature implementation
+
+The later *live activation* must meet each requirement below **before** changing any server/UI switches:
+
+1. Live Storage and Firestore Rules are reviewed against source and verified to preserve existing v1 access, v2 active-member permissions and denied/banned states; do not blindly overwrite a drifted ruleset.
+2. A full restorable backup, verified isolated restore and recovery owner are documented for Firestore, Auth, Storage and configuration. Existing READY Firestore backups alone are not sufficient.
+3. An explicitly selected existing campaign has passed owner-approved v2 membership and character reconciliation. The cutover remains per campaign only. Never bulk-migrate every campaign or silently grant previously blocked accounts.
+4. GM, intended recipient and an unrelated authenticated account verify private notification, recipient-only preview, pending GM approval, post-approval roster membership, blocking, expiry, revocation and duplicate claim. At least one mobile test is required.
+5. Review the feature-state diff as **one coordinated release**, including `ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED` on both relevant callables, `ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED`, `ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED`, secure issuance/acceptance/manager, required join request/review gates and the corresponding website flags. The source-of-truth manifest currently keeps every new campaign flag OFF. External email controls remain OFF permanently until a separate future project.
+6. Record a clearly named production owner, evidence references, live monitoring and a stop/rollback procedure before issuing the final GO. Rollback hides browser actions first, then disables friend issuance and notification delivery without reverting membership schema or modifying existing campaign characters.
+
+The auto-triggered source audit and the coordinated preparation are **separate**: CI verifies code on merge, while the production preparation is a single intentionally manual action. Cloud permissions do not allow the GitHub connector to trigger GitHub Actions, and no code can truthfully substitute for authenticated real-account acceptance or a verified backup restore.
+
 ## Invitation delivery: in-app only (Resend postponed)
 
 **Current approved direction:** A GM chooses an accepted Friend or exact Account ID and sends a private invitation through Asteria. The recipient sees it under **Account → Notifications**, can submit a pending join request there, and must be approved by the GM before campaign membership changes.
