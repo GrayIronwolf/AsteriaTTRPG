@@ -22,6 +22,7 @@ on:
           - friends-request-backend-deploy
           - friends-request-backend-activate
           - friends-request-backend-deactivate
+          - friends-complete-activate
           - friend-notifications-inventory
           - friend-notifications-rules-deploy
           - friend-notifications-callable-deploy
@@ -1839,3 +1840,124 @@ jobs:
             echo '### Asteria in-app canary backend disabled' >> "$GITHUB_STEP_SUMMARY"
             echo 'All six new invitation gates set OFF; existing Friends remains unchanged.' >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  friends_complete_live_activation:
+    name: Enable all established Friends functions together (manual)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'friends-complete-activate' &&
+      inputs.production_confirmation == 'ACTIVATE-ASTERIA-COMPLETE-FRIENDS'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Test exact Friends live release packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/friends-live-activation.mjs --check
+          node --test scripts/friends-live-activation.test.mjs
+          npm run test:friends-phase1-2
+          npm run test:friends-phase2-2
+          npm run test:friends-phase4-1
+          npm run test:friends-phase4-2
+          npm run test:friends-phase4-3
+          npm run test:firebase
+      - name: Authenticate via existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect existing Friends callables, no secret data
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n '{}' > "$RUNNER_TEMP/asteria-friends-live.json"
+          for name in asteriaFriendAccountLookup asteriaFriendNotifications asteriaFriendRequests; do
+            gcloud functions describe "$name" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/asteria-friends-current.json"
+            jq -e --arg name "$name" '.state=="ACTIVE" and (.name|endswith("/"+$name)) and
+              ((.serviceConfig.secretEnvironmentVariables//[])|length==0)' "$RUNNER_TEMP/asteria-friends-current.json" >/dev/null
+            jq --arg name "$name" --slurpfile item "$RUNNER_TEMP/asteria-friends-current.json" \
+              '.[$name]={state:$item[0].state,
+                env:($item[0].serviceConfig.environmentVariables//{} |
+                with_entries(select(.key|startswith("ASTERIA_")))),
+                signingSecretAttached:false}' "$RUNNER_TEMP/asteria-friends-live.json" > "$RUNNER_TEMP/asteria-friends-next.json"
+            mv "$RUNNER_TEMP/asteria-friends-next.json" "$RUNNER_TEMP/asteria-friends-live.json"
+          done
+          echo 'Three existing ACTIVE Friends callables confirmed; no secret values copied.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify current published private notification rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-access-token)"
+          release="$(curl -fsS --retry 2 -H "Authorization: Bearer $token" \
+            "https://firebaserules.googleapis.com/v1/projects/asteria-ttrpg/releases/cloud.firestore")"
+          ruleset="$(printf '%s' "$release" | jq -r '.rulesetName//empty')"
+          if [[ ! "$ruleset" =~ ^projects/asteria-ttrpg/rulesets/[A-Za-z0-9_-]+$ ]]; then
+            echo 'Unable to verify notification inbox rules; refusing activation.' >&2; exit 1
+          fi
+          curl -fsS --retry 2 -H "Authorization: Bearer $token" \
+            "https://firebaserules.googleapis.com/v1/$ruleset" -o "$RUNNER_TEMP/asteria-friends-notification-rules.json"
+          node scripts/friends-notifications-scoped-rules.mjs \
+            --compare-ruleset "$RUNNER_TEMP/asteria-friends-notification-rules.json" | jq -e '.state=="already-current"' >/dev/null
+      - name: Stage three exact Friends callables, preserving unrelated gates
+        shell: bash
+        env:
+          ASTERIA_FRIENDS_LIVE_OPERATION: ${{ inputs.operation }}
+          ASTERIA_FRIENDS_LIVE_CONFIRMATION: ${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          export ASTERIA_FRIENDS_LIVE_FILE="$RUNNER_TEMP/asteria-friends-live.json"
+          node scripts/friends-live-activation.mjs --stage
+          for name in asteriaFriendAccountLookup asteriaFriendNotifications asteriaFriendRequests; do
+            package="$RUNNER_TEMP/asteria-friends-live-activation/$name/functions"
+            npm install --prefix "$package" --package-lock-only --ignore-scripts --no-audit --no-fund
+            npm ci --prefix "$package" --omit=dev --no-audit --no-fund
+            node --check "$package/index.mjs"
+          done
+      - name: Install isolated pinned Firebase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-friends-live-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-friends-live-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Enable and verify exact three Friends callables
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in asteriaFriendAccountLookup asteriaFriendNotifications asteriaFriendRequests; do
+            package="$RUNNER_TEMP/asteria-friends-live-activation/$name"
+            (cd "$package" && "$RUNNER_TEMP/asteria-friends-live-cli/node_modules/.bin/firebase" deploy \
+              --project asteria-ttrpg --only "functions:asteria:$name" --non-interactive)
+            gcloud functions describe "$name" --gen2 --region us-central1 --project asteria-ttrpg \
+              --format=json > "$RUNNER_TEMP/asteria-friends-verify.json"
+            jq -e '.state=="ACTIVE"' "$RUNNER_TEMP/asteria-friends-verify.json" >/dev/null
+            jq -r '.serviceConfig.environmentVariables//{}|to_entries|
+              map(select(.key|startswith("ASTERIA_")))|sort_by(.key)|.[]|
+              "\(.key)=\(.value)"' "$RUNNER_TEMP/asteria-friends-verify.json" \
+              > "$RUNNER_TEMP/asteria-friends-actual.txt"
+            LC_ALL=C sort "$package/functions/.env.asteria-ttrpg" \
+              > "$RUNNER_TEMP/asteria-friends-expected.txt"
+            diff -u "$RUNNER_TEMP/asteria-friends-expected.txt" "$RUNNER_TEMP/asteria-friends-actual.txt"
+            echo "Enabled and verified Friends callable: $name" >> "$GITHUB_STEP_SUMMARY"
+          done
+          echo '### Friends backend active (three verified callables)' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No legacy campaigns, identity registry, rules, Storage or Hosting changed.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Existing individual reverse operations remain available for emergency rollback.' >> "$GITHUB_STEP_SUMMARY"
