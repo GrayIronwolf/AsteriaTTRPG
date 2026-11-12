@@ -106,7 +106,8 @@ export function ItemDetailModal({ campaignId, character, item, editable, onClose
         disabled={!editable}
         onClick={() => run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'read-spellbook', itemId: item.id }), `Learned ${item.spell?.name || item.trueName}.`)}
       >Read &amp; Learn</button> : null}
-      {armourPiece.piece ? <button
+      {item.equipped && !item.readOnlyEquipment ? <button type="button" className="primary" disabled={!editable||busy} onClick={()=>run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'unequip',itemId:item.id}),'Unequipped '+item.name+'.')}>Unequip</button> : null}
+      {!item.equipped && armourPiece.piece ? <button
         className="primary"
         disabled={!editable || busy || !armourValidation?.ok}
         title={armourValidation?.ok ? `Equip in ${armourPiece.piece.location}` : armourValidation?.error}
@@ -578,7 +579,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
-      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={setDetails} />
+      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
       {selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null}
