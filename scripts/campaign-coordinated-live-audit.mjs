@@ -49,6 +49,9 @@ function describeFunction(name){
   const allowed=FLAG_OWNERS[name]||[];
   const safeEnv={};
   for(const flag of allowed){
+    // Preserve the distinction between an absent, default-off flag and an
+    // explicitly set but unrecognised value. Never expose raw values.
+    if(!Object.hasOwn(environment,flag))continue;
     const value=environment[flag];
     safeEnv[flag]=value==='0'||value==='1'?value:'UNKNOWN';
   }
@@ -76,9 +79,18 @@ function ruleset(kind){
   if(!Array.isArray(rules?.source?.files))return null;
   return {source:{files:rules.source.files.map(file=>({content:file?.content}))}};
 }
-export function collectProductionSnapshot(){
+// Describe every required function, including asteriaCampaignUCN which has
+// no feature flag of its own. Previously only FLAG_OWNERS was described: this
+// falsely reported the deployed UCN function as NOT VERIFIED ACTIVE.
+export function descriptionTargets(manifest){
+  if(!Array.isArray(manifest?.backend?.deployedFunctions)||
+     manifest.backend.deployedFunctions.length===0)
+    throw Error('Canonical required function inventory is missing.');
+  return [...new Set([...manifest.backend.deployedFunctions,...Object.keys(FLAG_OWNERS)])];
+}
+export function collectProductionSnapshot(manifest){
   const inventory=listFunctions();
-  const wanted=new Set(Object.keys(FLAG_OWNERS));
+  const wanted=new Set(descriptionTargets(manifest));
   const descriptions={};
   for(const item of inventory){
     const name=leaf(item.name);
@@ -100,7 +112,7 @@ function main(){
     throw Error('Use --live only through the existing trusted Firebase workflow.');
   requireTrustedContext();
   const source=inspectCoordinatedSource();
-  const snapshot=collectProductionSnapshot();
+  const snapshot=collectProductionSnapshot(source.manifest);
   const report=evaluateProductionSnapshot(snapshot,{manifest:source.manifest});
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,renderReleaseReport(report)+'\n');
   // Preserve a successful *read-only inspection* even when the release is NO-GO.
