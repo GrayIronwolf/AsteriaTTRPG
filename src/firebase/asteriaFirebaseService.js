@@ -50,6 +50,7 @@ export const firebaseService = {
   acknowledgeEvent: (campaignId, eventId, patch) => requireMethod('acknowledgeCampaignEvent')(campaignId, eventId, patch),
   grantXP: (campaignId, characterId, amount, metadata) => requireMethod('grantCampaignXP')(campaignId, characterId, amount, metadata),
   createLootReward: (campaignId, characterId, item, metadata) => requireMethod('createLootReward')(campaignId, characterId, item, metadata),
+  createCustomLootReward: (campaignId, characterId, item, metadata) => requireMethod('createCustomLootReward')(campaignId, characterId, item, metadata),
   identifyLootReward: (campaignId, characterId, eventId) => requireMethod('identifyLootReward')(campaignId, characterId, eventId),
   createMagicReward: (campaignId, characterId, magicType, metadata) => requireMethod('createMagicElementReward')(campaignId, characterId, magicType, metadata),
   respondMagicReward: (campaignId, characterId, eventId, accepted) => requireMethod('respondMagicElementReward')(campaignId, characterId, eventId, accepted),
