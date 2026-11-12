@@ -36,9 +36,9 @@ test('any production deploy requires two explicit manual inputs, main and enviro
   assert.match(deployBlock,/npm run audit:production/);
   assert.match(deployBlock,/npm test/);
   assert.match(deployBlock,/npm run test:firebase/);
-  assert.match(deployBlock,/npm install --prefix "\\$RUNNER_TEMP\\/asteria-production-cli" --no-save --no-audit --no-fund firebase-tools@15\\.35\\.0/);
+  assert.match(deployBlock,/npm install --prefix "\$RUNNER_TEMP\/asteria-production-cli" --no-save --no-audit --no-fund firebase-tools@15\.35\.0/);
   assert.match(deployBlock,/Isolated Firebase CLI minimatch API mismatch/);
-  assert.match(deployBlock,/node "\\$RUNNER_TEMP\\/asteria-production-cli\\/node_modules\\/firebase-tools\\/lib\\/bin\\/firebase\\.js" deploy/);
+  assert.match(deployBlock,/node "\$RUNNER_TEMP\/asteria-production-cli\/node_modules\/firebase-tools\/lib\/bin\/firebase\.js" deploy/);
   assert.match(deployBlock,/--project asteria-ttrpg --only functions,firestore,storage --non-interactive/);
   assert.doesNotMatch(deployBlock,/npx firebase deploy/);
 });
