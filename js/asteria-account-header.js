@@ -23,6 +23,10 @@ function reset(){
   for(const id of ['asteriaHeaderName','asteriaHeaderAccountId'])
     if(byId(id))byId(id).textContent='';
   if(byId('asteriaHeaderMail'))byId('asteriaHeaderMail').hidden=true;
+  if(byId('asteriaHeaderUnreadCount')){
+    byId('asteriaHeaderUnreadCount').hidden=true;
+    byId('asteriaHeaderUnreadCount').textContent='';
+  }
 }
 async function refresh(){
   const uid=signedInUid(),version=++requestVersion;
@@ -74,11 +78,17 @@ async function refreshNotifications(){
   const notice=byId('asteriaHeaderMail'),api=window.AsteriaFirebase;
   const version=++noticeVersion;
   if(!notice)return;
+  const badge=byId('asteriaHeaderUnreadCount');
+  if(badge){badge.hidden=true;badge.textContent='';}
   notice.hidden=true;
+  notice.setAttribute('aria-label','Open Notifications');
   const friendsEnabled=window.AsteriaFeatureFlags?.friendNotificationsEnabled===true;
   const campaignsEnabled=window.AsteriaFeatureFlags?.campaignNotifications===true;
   const uid=signedInUid();
-  if(!uid||(!friendsEnabled&&!campaignsEnabled)||!api?.isReady?.())return;
+  if(!uid||(!friendsEnabled&&!campaignsEnabled))return;
+  // Inbox navigation stays available even when no messages are unread.
+  notice.hidden=false;
+  if(!api?.isReady?.())return;
   const profileVersion=requestVersion;
   const reads=[];
   if(friendsEnabled&&typeof api.listFriendNotifications==='function')
@@ -89,11 +99,17 @@ async function refreshNotifications(){
   const results=await Promise.allSettled(reads);
   if(version!==noticeVersion||profileVersion!==requestVersion||
      signedInUid()!==uid)return;
-  // Fail closed on uncertain reads: never reveal a previous account's indicator.
-  notice.hidden=!results.some(result=>
-    result.status==='fulfilled'&&
-    Array.isArray(result.value?.notifications)&&
-    result.value.notifications.some(item=>item?.readAt===null));
+  // Only first-page data is available from the private callables. This badge
+  // reports messages on those pages, not a fabricated total across all pages.
+  const unread=results.reduce((total,result)=>
+    total+(result.status==='fulfilled'&&Array.isArray(result.value?.notifications)?
+      result.value.notifications.filter(item=>item&&item.readAt==null).length:0),0);
+  if(unread>0&&badge){
+    badge.textContent=unread>99?'99+':String(unread);
+    badge.hidden=false;
+    notice.setAttribute('aria-label','Open Notifications; '+unread+
+      ' unread on the latest page'+(reads.length===1?'':'s'));
+  }
 }
 
 function bind(){
