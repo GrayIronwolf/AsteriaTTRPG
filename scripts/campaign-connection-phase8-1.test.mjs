@@ -63,7 +63,12 @@ test('Phase 8.1 preserves disabled production connection feature flags',()=>{
     'campaignJoinReview','campaignPlayerRoster','secureInvitationManager',
     'secureInvitationAcceptance','emailInvitationControls',
     'campaignNotifications']){
-    assert.ok(html.includes(flag+':false'),flag+' must stay disabled');
-    assert.ok(!html.includes(flag+':true'),flag+' must not be enabled');
+    const canary=new Set(['campaignJoinPreview','campaignJoinRequests',
+      'campaignJoinReview','secureInvitationManager',
+      'secureInvitationAcceptance','campaignNotifications']);
+    if(canary.has(flag))
+      assert.ok(html.includes(flag+':new URLSearchParams'),flag+' must require the canary URL');
+    else assert.ok(html.includes(flag+':false'),flag+' must stay disabled');
+    assert.ok(!html.includes(flag+':true'),flag+' must not be globally enabled');
   }
 });
