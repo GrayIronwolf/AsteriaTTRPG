@@ -46,7 +46,12 @@ export function itemRecoveryEffect(item={}){
 
 export function availableInventoryEquipmentSlots(item={}){
   const input=item.allowedSlots||item.raw?.allowedSlots||item.raw?.equipmentSlots;
-  const original=(Array.isArray(input)?input:input?[input]:[]).map(value=>String(value||'').trim()).filter(Boolean);
+  const aliases={'main weapon':'Main Hand','main hand':'Main Hand',
+    'secondary weapon':'Ranged Weapon','off-hand':'Off Hand','off weapon':'Off Hand',
+    'quiver':'Ammunition','chest':'Torso','chest armor':'Torso'};
+  const original=(Array.isArray(input)?input:input?[input]:[])
+    .map(value=>String(value||'').trim()).filter(Boolean)
+    .map(value=>aliases[value.toLowerCase()]||value);
   if(original.length)return [...new Set(original)];
   const type=String(item.type||item.raw?.type||'').toLowerCase();
   const name=String(item.name||'').toLowerCase();
