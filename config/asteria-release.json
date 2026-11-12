@@ -23,7 +23,8 @@
     "campaignNotifications": false,
     "campaignFriendRecipients": false,
     "accountIds": true,
-    "campaignFriendInvitations": false
+    "campaignFriendInvitations": false,
+    "campaignInAppCanary": false
   },
   "canaryFlags": [
     "friendAccountLookup",
