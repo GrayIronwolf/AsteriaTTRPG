@@ -78,7 +78,7 @@ test('8. Duplicate legacy inventory IDs are deterministically separated',()=>{
 
 test('9. Trade creation escrows the sender item inside the shared transaction',()=>{
   const source=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
-  assert.match(source,/createLiveItemRequest:[\s\S]*?if\(action!=='identify'\) item\.qty=Number\(item\.qty\|\|1\)-quantity;[\s\S]*?writeLiveCharacter\(transaction,refs,character\);[\s\S]*?transaction\.set\(ecosystemRef/);
+  assert.match(source,/createLiveItemRequest:[\s\S]*?if\(action!=='identify'\) item\.qty=Number\(item\.qty\|\|1\)-quantity;[\s\S]*?writeLiveCharacter\(transaction,refs,character\);[\s\S]*?transaction\.set\(requestRef,row/);
 });
 
 test('10. Trade acceptance and final confirmation are guarded against replay',()=>{
