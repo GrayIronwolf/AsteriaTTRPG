@@ -267,7 +267,7 @@ test('Phase 1.2: full recipient storage rejects a gift without partial item or c
   assert.equal(response.ok,false);
   for(const [i,id] of ['campaigns/c/characters/a','users/alice/characters/a','campaigns/c/characters/b','users/bob/characters/b'].entries())
     assert.deepEqual((await db.doc(id).get()).data(),before[i],`untouched ${id}`);
-  const request=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0];
+  const request=(await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data();
   assert.equal(request.status,'pending');
 });
 
@@ -277,7 +277,7 @@ test('Phase 1.2: missing or mismatched counterparty owner prevents cross-account
   await db.doc('users/alice/characters/a').delete();
   const result=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
   assert.equal(result.ok,false);
-  assert.equal((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0].status,'pending');
+  assert.equal((await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data().status,'pending');
   assert.equal((await db.doc('campaigns/c/characters/b').get()).data().inventory.reduce((n,i)=>n+i.qty,0),2);
 });
 
