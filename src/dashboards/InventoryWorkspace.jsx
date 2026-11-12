@@ -213,10 +213,12 @@ function itemFitsSlot(item, label) {
   return allowed.some(slot => target.includes(String(slot).toLowerCase()) || String(slot).toLowerCase().includes(target));
 }
 
-function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUnequip }) {
+function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUnequip, selectedItem, onEquipSelected }) {
   const [dropState,setDropState]=useState('');
   const inspect=()=>item&&onDetails(item);
   const canDrop=itemFitsSlot(dragged,label);
+  const canTapEquip=editable&&!item&&Boolean(selectedItem?.id)&&!selectedItem?.equipped&&
+    availableInventoryEquipmentSlots(selectedItem).length>0&&itemFitsSlot(selectedItem,label);
   return <div
     className={`react-inventory-slot ${item ? 'filled' : ''} ${dropState}`}
     role="button"
@@ -227,11 +229,13 @@ function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUn
     onDragLeave={()=>setDropState('')}
     onDragOver={event => editable && event.preventDefault()}
     onDrop={event => {setDropState(''); if(editable) onDrop(event, label);}}
+    onClick={inspect}
     onDoubleClick={inspect}
   >
     <ItemImage item={item || { name: label }} className="react-slot-image" />
     <span><small>{label}</small><b>{item?.name || 'Empty'}</b></span>
-    {item && !item.readOnlyEquipment ? <button type="button" title={`Unequip ${item.name}`} aria-label={`Unequip ${item.name}`} disabled={!editable} onClick={event => { event.stopPropagation(); onUnequip(item); }}>X</button> : null}
+    {item && !item.readOnlyEquipment ? <button type="button" title={`Unequip ${item.name}`} aria-label={`Unequip ${item.name}`} disabled={!editable} onClick={event => { event.stopPropagation(); onUnequip(item); }}>×</button> : null}
+    {canTapEquip?<button type="button" className="react-inventory-slot-tap-equip" aria-label={`Equip ${selectedItem.name} in ${label}`} onClick={event=>{event.stopPropagation();onEquipSelected(selectedItem,label);}}>Equip</button>:null}
   </div>;
 }
 
@@ -242,13 +246,19 @@ function quickSlotItem(character, items, index) {
   return items.find(item => String(item.id) === String(id)) || (typeof entry === 'object' ? entry : null);
 }
 
-function InventoryEquipmentPanel({ campaignId, character, items, dragged, editable, run, onDetails }) {
+function InventoryEquipmentPanel({ campaignId, character, items, dragged, editable, run, onDetails, selectedItem }) {
   const drop = (event, slot) => {
     event.preventDefault();
     const itemId = event.dataTransfer.getData('application/x-asteria-item');
     if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'equip', itemId, slot }), `Equipped item in ${slot}.`);
   };
   const unequip = item => run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'unequip', itemId: item.id }), `${item.name} unequipped.`);
+  const equipSelected=(selected,slot)=>run(()=>firebaseService.updateInventory(campaignId,character.id,{
+    type:'equip',itemId:selected.id,slot
+  }),`Equipped ${selected.name} in ${slot}.`);
+  const assignQuick=(selected,index)=>run(()=>firebaseService.updateInventory(campaignId,character.id,{
+    type:'quick',itemId:selected.id,index
+  }),`Assigned ${selected.name} to Quick Slot ${index+1}.`);
   const dropQuick = (event, index) => {
     event.preventDefault();
     const itemId = event.dataTransfer.getData('application/x-asteria-item');
@@ -256,14 +266,16 @@ function InventoryEquipmentPanel({ campaignId, character, items, dragged, editab
   };
   return <Panel title="Equipment Slots" className="react-inventory-equipment">
     <h3>Armour</h3>
-    <div className="react-inventory-slot-list">{ARMOR_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} />)}</div>
+    <div className="react-inventory-slot-list">{ARMOR_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} selectedItem={selectedItem} onEquipSelected={equipSelected} />)}</div>
     <h3>Weapons</h3>
-    <div className="react-inventory-slot-list">{WEAPON_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} />)}</div>
+    <div className="react-inventory-slot-list">{WEAPON_SLOTS.map(([label, aliases]) => <EquipmentSlot key={label} label={label} item={equippedItemForSlot(items, aliases, character.equipment)} dragged={dragged} editable={editable} onDrop={drop} onDetails={onDetails} onUnequip={unequip} selectedItem={selectedItem} onEquipSelected={equipSelected} />)}</div>
     <h3>Quick Items</h3>
     <div className="react-inventory-quick-slots">{[0, 1, 2, 3].map(index => {
       const item = quickSlotItem(character, items, index);
       return <div key={index} className={item ? 'filled' : ''} onDragOver={event => editable && event.preventDefault()} onDrop={event => editable && dropQuick(event, index)} onDoubleClick={() => item && onDetails(item)}>
         <small>Q{index + 1}</small><ItemImage item={item || { name: '?' }} className="react-slot-image" /><b>{item?.name || 'Empty'}</b>
+        {item?<button type="button" onClick={()=>onDetails(item)} aria-label={`Inspect quick item ${item.name}`}>Inspect</button>:null}
+        {editable&&selectedItem?.id?<button type="button" onClick={()=>assignQuick(selectedItem,index)} aria-label={`Assign ${selectedItem.name} to quick slot ${index+1}`}>Assign</button>:null}
       </div>;
     })}</div>
   </Panel>;
@@ -607,7 +619,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
-      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
+      <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} selectedItem={selectedItem} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} quickActions={selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
 
