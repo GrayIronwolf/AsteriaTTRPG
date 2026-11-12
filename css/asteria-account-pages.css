@@ -132,12 +132,16 @@ body .asteria-header button.asteria-header-mail{
   width:auto!important;
   padding:1px 4px!important;
   margin:0!important;
-  border:1px solid #bd7979!important;
-  background:linear-gradient(160deg,#6e1e29,#350e17)!important;
+  border:1px solid #7297a9!important;
+  background:linear-gradient(160deg,#18364b,#091c2a)!important;
   color:#fff!important;
   border-radius:999px;
   cursor:pointer;
   font:700 .78rem/1 var(--asteria-font-body,Arial,sans-serif);
+}
+body .asteria-header button.asteria-header-mail.has-unread{
+  border-color:#c87a85!important;
+  background:linear-gradient(160deg,#7b2230,#380f19)!important;
 }
 body .asteria-header button.asteria-header-mail[hidden]{display:none!important;}
 .asteria-header-mail .asteria-unread-count{
