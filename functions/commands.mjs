@@ -61,11 +61,42 @@ async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,chara
   refs.original=structuredCloneSafe(character);
   const privateSnapshot=await transaction.get(refs.private);
   refs.privateExists=privateSnapshot.exists();
-  if(refs.privateExists && privateSnapshot.data().ownerUid!==character.ownerUid) throw new Error('Character ownership does not match.');
+  refs.privateData=refs.privateExists?privateSnapshot.data():null;
+  if(refs.privateExists && refs.privateData.ownerUid!==character.ownerUid) throw new Error('Character ownership does not match.');
   const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
   refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
   Object.assign(character,reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
   return {privateRef:refs.private,privateSnapshot:null};
+}
+
+// The requester may not own the other side of a trade. Resolve that
+// character's private sheet from the trusted campaign owner, not from the
+// caller's UID, and use the same transaction to update both mirrors.
+async function verifyLiveTradeCounterparty(transaction,campaignId,characterId,character,refs){
+  if(!character.ownerUid) throw new Error('The other character has no verified owner.');
+  refs.campaign=doc(db,'campaigns',campaignId,'characters',characterId);
+  refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
+  refs.original=structuredCloneSafe(character);
+  refs.verifiedOwner=true;
+  const privateSnapshot=await transaction.get(refs.private);
+  refs.privateExists=privateSnapshot.exists();
+  refs.privateData=refs.privateExists?privateSnapshot.data():null;
+  if(!refs.privateExists) throw new Error('The other character owner record is unavailable. No items or currency were moved.');
+  if(refs.privateData.ownerUid!==character.ownerUid) throw new Error('The other character owner record does not match.');
+  const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
+  refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
+  Object.assign(character,reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
+}
+
+// Older, already-resolved item requests might predate atomic owner mirroring.
+// An acknowledgement may repair only gameplay fields; it must never copy
+// unrelated private profile, journal or account metadata over the owner.
+function repairLegacyTradeMirror(transaction,refs,character){
+  if(!refs.privateExists || !refs.privateData) return;
+  const fields=['inventory','equipment','coins','coinPouch','quickSlots','actionLog','coreRevision'];
+  const patch={};
+  for(const key of fields) if(Object.hasOwn(character,key) && !isDeepStrictEqual(refs.privateData[key],character[key])) patch[key]=character[key];
+  if(Object.keys(patch).length) transaction.update(refs.private,{...patch,updatedAt:serverTimestamp()});
 }
 
 function writeLiveCharacter(transaction,refs,character){
