@@ -362,10 +362,10 @@ service cloud.firestore {
         // authenticated GM shop editor, but cannot contain private trade rows.
         allow create: if (systemId == 'itemPublic' && isCampaignGM(campaignId) &&
           request.resource.data.keys().hasOnly(['version','shops','partyLoot','sharedStorages','updatedAt'])) ||
-          (systemId != 'itemPublic' && (isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.keys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid));
+          (systemId != 'itemPublic' && (isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.keys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid)));
         allow update: if (systemId == 'itemPublic' && isCampaignGM(campaignId) &&
           request.resource.data.keys().hasOnly(['version','shops','partyLoot','sharedStorages','updatedAt'])) ||
-          (systemId != 'itemPublic' && (isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid));
+          (systemId != 'itemPublic' && (isCampaignGM(campaignId) || (systemId == 'party-workspace' && canUseCampaignSystems(campaignId) && activeSession(campaignId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedNotes','sessionId','updatedBy','updatedAt']) && request.resource.data.sharedNotes is string && request.resource.data.sharedNotes.size() <= 20000 && request.resource.data.updatedBy == request.auth.uid)));
         allow delete: if systemId != 'itemPublic' && isCampaignOwner(sharedCampaign(campaignId));
       }
 
