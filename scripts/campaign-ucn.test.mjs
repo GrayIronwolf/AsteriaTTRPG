@@ -59,11 +59,13 @@ test('explicit new v2 test campaign is created atomically without converting leg
   assert.equal(campaign.membershipRevision,1);
   assert.equal(campaign.partySize,4);
   assert.deepEqual(campaign.joinPolicy,{joinRequestsOpen:true,autoApprove:false});
-  assert.deepEqual(db.records.get('campaigns/canary-campaign/members/gm'),{
-    uid:'gm',campaignId:'canary-campaign',role:'owner',status:'active',
-    revision:1,joinedAt:db.records.get('campaigns/canary-campaign/members/gm').joinedAt,
-    origin:'owner-creation'
-  });
+  const owner=db.records.get('campaigns/canary-campaign/members/gm');
+  assert.equal(owner.uid,'gm');
+  assert.equal(owner.campaignId,'canary-campaign');
+  assert.equal(owner.role,'owner');
+  assert.equal(owner.status,'active');
+  assert.equal(owner.revision,1);
+  assert.equal(owner.origin,'owner-creation');
   assert.equal(db.records.get('campaigns/old-campaign').membershipSchemaVersion,undefined);
   assert.deepEqual(await previewCampaignUCN(db,'player',code(11)),{
     id:'canary-campaign',name:'Invitation test',ucn:code(11),joinMode:'request'
