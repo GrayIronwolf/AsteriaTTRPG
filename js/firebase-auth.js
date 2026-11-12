@@ -1508,6 +1508,13 @@ const firebasePublicApi = {
           if(index>=0) shops[index]=shop; else shops.push(shop);
         }
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{shops,version:ecosystem.version||'asteria-item-ecosystem-v1',updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        // Shop changes are visible to players without exposing private trades.
+        transaction.set(doc(db,'campaigns',campaignId,'systems','itemPublic'),{
+          version:'asteria-item-public-v1',shops,
+          partyLoot:Array.isArray(ecosystem.partyLoot)?ecosystem.partyLoot:[],
+          sharedStorages:Array.isArray(ecosystem.sharedStorages)?ecosystem.sharedStorages:[],
+          updatedAt:serverTimestamp()
+        },{merge:true});
         return shops;
       });
       return {ok:true,shops:saved};
@@ -2982,15 +2989,43 @@ const firebasePublicApi = {
       return null;
     }
   },
-  subscribeCampaignItemEcosystem: function(campaignId, onChange){
+  subscribeCampaignItemEcosystem: function(campaignId, onChange, mode='character'){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
-    return onSnapshot(
-      doc(db, 'campaigns', campaignId, 'systems', 'itemEcosystem'),
-      snapshot=>{
-        onChange(snapshot.exists() ? snapshot.data() : null);
-      },
-      err=>reportSyncError('item-ecosystem-listener', err, { campaignId })
-    );
+    const uid=currentUser.uid;
+    const gmMode=mode==='gm';
+    const state={public:null,legacy:null,from:[],to:[],all:[]};
+    const notify=()=>{
+      const legacy=gmMode?state.legacy||{}:{};
+      const shared=state.public || (gmMode?legacy:{});
+      const seen=new Map();
+      for(const row of [
+        ...(gmMode?state.all:[...state.from,...state.to]),
+        ...(gmMode?Array.isArray(legacy.playerItemRequests)?legacy.playerItemRequests:[]:[]),
+        ...(gmMode?Array.isArray(legacy.directTrades)?legacy.directTrades:[]:[])
+      ]) if(row?.id&&!seen.has(String(row.id))) seen.set(String(row.id),row);
+      const items=[...seen.values()];
+      onChange({...shared,shops:shared.shops||[],partyLoot:shared.partyLoot||[],
+        sharedStorages:shared.sharedStorages||[],playerItemRequests:items,directTrades:[]});
+    };
+    const watch=(key,source)=>{
+      return onSnapshot(source,snapshot=>{
+        state[key]=key==='public'||key==='legacy'?(snapshot.exists()?snapshot.data():null):
+          snapshot.docs.map(record=>({id:record.id,...record.data()}));
+        notify();
+      },err=>reportSyncError('item-ecosystem-listener',err,{campaignId}));
+    };
+    const requests=collection(db,'campaigns',campaignId,'itemRequests');
+    const subscriptions=[
+      watch('public',doc(db,'campaigns',campaignId,'systems','itemPublic')),
+      ...(gmMode?[
+        watch('legacy',doc(db,'campaigns',campaignId,'systems','itemEcosystem')),
+        watch('all',requests)
+      ]:[
+        watch('from',query(requests,where('fromOwnerUid','==',uid))),
+        watch('to',query(requests,where('toOwnerUid','==',uid)))
+      ])
+    ];
+    return ()=>subscriptions.forEach(unsubscribe=>unsubscribe?.());
   },
   subscribeCustomItems: function(onChange){
     if(!db || !currentUser || typeof onChange!=='function') return ()=>{};
