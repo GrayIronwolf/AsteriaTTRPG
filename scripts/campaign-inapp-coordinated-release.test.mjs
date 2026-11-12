@@ -62,14 +62,24 @@ test('Gen2 Eventarc metadata is never packaged as an Asteria deployment flag',()
   const live=runtime();
   live.env.EVENTARC_CLOUD_EVENT_SOURCE='//cloudfunctions.googleapis.com/projects/asteria-ttrpg/locations/us-central1/functions/asteriaSecureInvitation';
   live.env.EVENTARC_CLOUD_EVENT_TYPE='google.cloud.functions.function.v2.updated';
+  live.env.FUNCTION_REGION='us-central1';
+  live.env.FUNCTION_TARGET='asteriaSecureInvitation';
+  live.env.FUNCTION_SIGNATURE_TYPE='http';
+  live.env.K_SERVICE='asteriasecureinvitation';
+  live.env.K_REVISION='asteriasecureinvitation-00002-abc';
+  live.env.GOOGLE_CLOUD_PROJECT='asteria-ttrpg';
+  live.env.X_GOOGLE_RUNTIME='gen2';
+  live.env.EXT_RUNTIME_METADATA='managed';
   live.env.FIREBASE_CONFIG='{"projectId":"asteria-ttrpg"}';
   live.env.GCLOUD_PROJECT='asteria-ttrpg';
   const reviewed=checkLiveInvitation(live);
   assert.equal(reviewed.env.EVENTARC_CLOUD_EVENT_SOURCE,undefined);
   assert.equal(reviewed.env.FIREBASE_CONFIG,undefined);
+  assert.equal(reviewed.env.FUNCTION_REGION,undefined);
+  assert.equal(reviewed.env.K_SERVICE,undefined);
   const result=buildCoordinatedInAppRelease(live);
   const staged=result.packages[1].files['functions/.env.asteria-ttrpg'];
-  assert.doesNotMatch(staged,/EVENTARC_|FIREBASE_CONFIG|GCLOUD_PROJECT/);
+  assert.doesNotMatch(staged,/EVENTARC_|FIREBASE_CONFIG|GCLOUD_PROJECT|FUNCTION_|K_SERVICE|X_GOOGLE_|EXT_/);
   assert.match(staged,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
   assert.equal(result.productionChanged,false);
 });
@@ -85,6 +95,36 @@ test('unexpected or malformed environment metadata still fails closed',()=>{
     assert.throws(()=>checkLiveInvitation(live));
     assert.throws(()=>buildCoordinatedInAppRelease(live));
   }
+});
+test('coordinated staged packages accept production-shaped Gen2 metadata without copying it',()=>{
+  const dir=mkdtempSync(join(tmpdir(),'asteria-inapp-gen2-'));
+  try{
+    const live=runtime();
+    Object.assign(live.env,{
+      EVENTARC_CLOUD_EVENT_SOURCE:'//cloudfunctions.googleapis.com/projects/asteria-ttrpg/locations/us-central1/functions/asteriaSecureInvitation',
+      FUNCTION_REGION:'us-central1',FUNCTION_TARGET:'asteriaSecureInvitation',
+      FUNCTION_SIGNATURE_TYPE:'http',K_SERVICE:'asteriasecureinvitation',
+      K_REVISION:'asteriasecureinvitation-00002',PORT:'8080',
+      FIREBASE_CONFIG:'{"projectId":"asteria-ttrpg"}',
+      GOOGLE_CLOUD_PROJECT:'asteria-ttrpg'
+    });
+    const liveFile=join(dir,'live.json');
+    writeFileSync(liveFile,JSON.stringify(live));
+    const env={
+      GITHUB_ACTIONS:'true',GITHUB_REPOSITORY:'GrayIronwolf/AsteriaTTRPG',
+      GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',
+      ASTERIA_INAPP_OPERATION:OPERATION,ASTERIA_INAPP_CONFIRMATION:CONFIRMATION,
+      ASTERIA_DEPLOY_PROJECT:'asteria-ttrpg',
+      ASTERIA_INAPP_LIVE_FILE:liveFile,RUNNER_TEMP:dir
+    };
+    const staged=stageCoordinatedInAppRelease(env);
+    assert.deepEqual(staged.targets,TARGETS);
+    for(const pkg of staged.packages){
+      const data=readFileSync(join(staged.directory,pkg.name,'functions/.env.asteria-ttrpg'),'utf8');
+      assert.doesNotMatch(data,/EVENTARC_|FUNCTION_|K_SERVICE|PORT=|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT/);
+      assert.match(data,/ASTERIA_/);
+    }
+  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 test('unknown state, absent existing signing secret or already-live functionality fail without writes',()=>{
   const changes=[
