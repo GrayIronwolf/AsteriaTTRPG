@@ -34,7 +34,7 @@ test('isolated callable is only a disabled recipient-scoped notification inbox',
 test('package rejects removed server feature gates or unexpected callable source',()=>{
  const src=read('functions/index.mjs');
  assert.throws(()=>buildCampaignChannelsRelease(
-   src.replace("process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'","false")
+   src.replace("if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1')","if(false)")
  ),/safeguards changed/);
  assert.throws(()=>buildCampaignChannelsRelease(
    src.replace("await import('./campaignNotifications.mjs')","await import('./other.mjs')")
