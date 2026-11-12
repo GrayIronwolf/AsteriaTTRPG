@@ -26,6 +26,16 @@ The auto-triggered `asteria-campaign-release-audit.yml` remains offline because 
 
 **A successful audit workflow does not mean public activation is authorised.** It never establishes that a backup was restored, that owners reconciled real Campaign v1 memberships, that real accounts tested acceptance, or that an incident-response owner approved general availability. These are intentionally explicit NO-GO blockers until independently verified.
 
+## Audit #66 findings and false-positive correction
+
+The first consolidated production audit (#66) reported six of seven Cloud Functions as verified ACTIVE, even though the seventh, `asteriaCampaignUCN`, was listed by the Cloud Functions API. The audit had only described functions with environment gates and **had not described the non-gated UCN function**. This was a source-audit defect, not proof of a UCN outage. The follow-up correction describes every required function from the canonical manifest.
+
+The live audit must distinguish an absent server gate from an inaccessible function: omitted gate variables on verified callables are **off by default**, since runtime handler code explicitly requires `'1'`; inaccessible or unrecognized values remain **unknown**. No gate may be marked active without a verified explicit `'1'`.
+
+Audit #66 also found Storage Rules source mismatch, a confirmed inactive Friends invitation configuration, four READY Firestore backups, and no independently verified restore. **Do not overwrite production Storage Rules simply to clear a mismatch**. Preserve the current live rules until they have been inspected against the committed rules and the security tests, with special attention to per-campaign membership and avatar/character access. The report's optional campaign notification/email callable warnings do not themselves prove the core Friends invitation path is unusable.
+
+This correction does not authorize activation. Production v2 per-campaign migration, backup restore, website approval, real-user acceptance and rollback checks remain mandatory.
+
 ## Verified historical backend deployment — not an activation attestation
 
 Production project `asteria-ttrpg`, region `us-central1`:
