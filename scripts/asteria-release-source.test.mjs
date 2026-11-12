@@ -14,16 +14,42 @@ test('canonical manifest covers published website flags and preserves older Frie
  assert.equal(response.checked,true);
  assert.equal(response.productionChanged,false);
  assert.match(expectedAssignment(release),/friendNotificationsEnabled:true,serverCampaignUCN:false/);
- assert.match(expectedAssignment(release),/campaignFriendRecipients:false,accountIds:true/);
- assert.match(expectedAssignment(release),/campaignFriendInvitations:false/);
- assert.match(expectedAssignment(release),/secureInvitationManager:false,secureInvitationAcceptance:false/);
+ assert.match(expectedAssignment(release),/campaignFriendRecipients:new URLSearchParams/);
+ assert.match(expectedAssignment(release),/accountIds:true/);
+ assert.match(expectedAssignment(release),/campaignFriendInvitations:new URLSearchParams/);
+ assert.match(expectedAssignment(release),/secureInvitationManager:new URLSearchParams/);
+ assert.match(expectedAssignment(release),/secureInvitationAcceptance:new URLSearchParams/);
+ assert.match(expectedAssignment(release),/emailInvitationControls:false/);
+ assert.match(expectedAssignment(release),/campaignInAppCanary:new URLSearchParams/);
  assert.match(expectedAssignment(release),/accountIdAutoCanary:new URLSearchParams/);
  assert.equal(release.backend.deployedFunctions.length,7);
 });
+test('canary website controls remain URL-limited, while general release and email are OFF',()=>{
+ const release=readManifest();
+ assert.equal(release.status,'installed-not-activated');
+ assert.equal(release.inAppCanary.mode,'test-only');
+ assert.equal(release.inAppCanary.migrationAllowed,false);
+ assert.equal(release.inAppCanary.emailAllowed,false);
+ assert.ok(Object.values(release.websiteFlags).filter(Boolean).length===2);
+ const source=expectedAssignment(release);
+ for(const key of ['campaignJoinPreview','campaignJoinRequests','campaignJoinReview',
+   'secureInvitationManager','secureInvitationAcceptance','campaignNotifications',
+   'campaignFriendRecipients','campaignFriendInvitations','campaignInAppCanary']){
+   assert.match(source,new RegExp(key+':new URLSearchParams'));
+ }
+ for(const key of ['serverCampaignUCN','campaignPlayerRoster','campaignMemberControls',
+   'campaignRolePermissions','campaignCharacterLinks','campaignCharacterApproval',
+   'campaignCharacterLifecycle','emailInvitationControls'])
+   assert.ok(source.includes(key+':false'),key);
+ const invalid=clone(release);
+ invalid.inAppCanary.migrationAllowed=true;
+ assert.throws(()=>validateManifest(invalid),/canary/);
+});
+
 test('website is checked without Firebase access and any drift fails',()=>{
  const source=site();
  assert.equal(renderWebsite(source),source);
- assert.throws(()=>checkWebsite(source.replace('campaignFriendRecipients:false','campaignFriendRecipients:true')),/drifted/);
+ assert.throws(()=>checkWebsite(source.replace('campaignFriendRecipients:new URLSearchParams','campaignFriendRecipients:true && new URLSearchParams')),/drifted/);
  assert.throws(()=>checkWebsite(source.replace('accountIds:true','accountIds:false')),/drifted/);
  assert.throws(()=>checkWebsite(source.replace('window.AsteriaFeatureFlags = Object.freeze','window.OtherFlags = Object.freeze')),/exactly one/);
 });
