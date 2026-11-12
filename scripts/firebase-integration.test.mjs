@@ -48,6 +48,43 @@ beforeEach(async()=>{
   batch.set(db.doc('campaignInvites/123456789012'),{campaignId:'c',ownerUid:'gm',status:'active'});
   await batch.commit();
 });
+test('player custom items are published and delivered together',async()=>{
+  const result=await action('alice','updateCharacterInventory',['c','a',{type:'create-custom-item',storageId:'bag',item:{name:'Copper Lantern',type:'Equipment',marketValue:1,marketPrice:5}}]);
+  assert.equal(result.ok,true,result.error);
+  const catalog=await db.collection('customItems').get();
+  assert.equal(catalog.size,1);
+  const definition=catalog.docs[0].data();
+  const inventory=(await db.doc('campaigns/c/characters/a').get()).data().inventory;
+  const created=inventory.find(item=>item.definitionId===definition.definitionId);
+  assert.ok(created);
+  assert.equal(created.catalogId,definition.id);
+  assert.notEqual(created.instanceId,definition.id);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,inventory);
+});
+
+test('failed custom item storage does not publish an orphan catalog entry',async()=>{
+  await db.doc('campaigns/c/characters/a').update({storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}]});
+  const result=await action('alice','updateCharacterInventory',['c','a',{type:'create-custom-item',storageId:'bag',item:{name:'Blocked Lantern',marketValue:1,marketPrice:5}}]);
+  assert.equal(result.ok,false);
+  assert.equal((await db.collection('customItems').get()).size,0);
+});
+
+test('GM custom reward catalog and recipient reward appear atomically',async()=>{
+  const result=await action('gm','createCustomLootReward',['c','a',{name:'Mystery Vial',type:'Potion',marketValue:1,marketPrice:5,qty:2},{message:'Found in the cellar'}]);
+  assert.equal(result.ok,true,result.error);
+  assert.equal((await db.collection('customItems').get()).size,1);
+  const character=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(character.pendingItemRewards.length,1);
+  assert.equal(character.pendingItemRewards[0].item.qty,2);
+  assert.equal((await db.doc(`campaigns/c/events/${result.eventId}`).get()).data().type,'loot-reward');
+});
+
+test('non GM cannot create a custom reward for another character',async()=>{
+  const result=await action('alice','createCustomLootReward',['c','b',{name:'Unapproved Item',marketValue:1,marketPrice:5}]);
+  assert.equal(result.ok,false);
+  assert.equal((await db.collection('customItems').get()).size,0);
+});
+
 test('members read characters; outsiders and signed-out visitors cannot',async()=>{
   await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/characters/b')));
   await assertFails(getDoc(doc(user('eve'),'campaigns/c/characters/a')));
