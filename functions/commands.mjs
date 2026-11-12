@@ -192,6 +192,19 @@ function appendActivity(character,entry){
   const rows=Array.isArray(character.actionLog) ? character.actionLog : [];
   character.actionLog=[Object.assign({id:`action-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,at:new Date().toISOString()},entry),...rows].slice(0,100);
 }
+// Public marketplace data is intentionally distinct from private trade terms.
+// Never expose player requests or their escrowed items in a campaign-readable doc.
+function publicItemEcosystem(ecosystem={}){
+  return {
+    version:'asteria-item-public-v1',
+    shops:Array.isArray(ecosystem.shops)?ecosystem.shops:[],
+    partyLoot:Array.isArray(ecosystem.partyLoot)?ecosystem.partyLoot:[],
+    sharedStorages:Array.isArray(ecosystem.sharedStorages)?ecosystem.sharedStorages:[]
+  };
+}
+function itemRequestRef(campaignId,id){
+  return doc(db,'campaigns',campaignId,'itemRequests',String(id));
+}
 function playerItemRequests(ecosystem){
   ecosystem.playerItemRequests=Array.isArray(ecosystem.playerItemRequests)?ecosystem.playerItemRequests:[];
   return ecosystem.playerItemRequests;
@@ -298,6 +311,46 @@ async function mutateQuest(campaignId,characterId,questId,operation,{gm=false,no
 }
 
 const commands = {
+  // Bootstrap the public shop projection and migrate historical requests away
+  // from the broadly readable legacy ecosystem. Safe to call outside a session.
+  syncCampaignItemPrivacy: async function(campaignId,characterId){
+    if(!db||!currentUser||!campaignId||!characterId) return {ok:false};
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const publicRef=doc(db,'campaigns',campaignId,'systems','itemPublic');
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        const [legacySnapshot,publicSnapshot]=await Promise.all([
+          transaction.get(ecosystemRef),transaction.get(publicRef)
+        ]);
+        const legacy=structuredCloneSafe(legacySnapshot.exists()?legacySnapshot.data():{});
+        const pending=Array.isArray(legacy.playerItemRequests)?legacy.playerItemRequests:[];
+        const previousTrades=Array.isArray(legacy.directTrades)?legacy.directTrades:[];
+        const uniqueRows=[...new Map([...pending,...previousTrades]
+          .filter(row=>row&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,180}$/.test(row.id))
+          .map(row=>[row.id,row])).values()];
+        const ready=uniqueRows.filter(row=>row.fromOwnerUid && row.toOwnerUid).slice(0,60);
+        const references=ready.map(row=>itemRequestRef(campaignId,row.id));
+        const existing=await Promise.all(references.map(ref=>transaction.get(ref)));
+        for(let i=0;i<ready.length;i++) if(!existing[i].exists()){
+          transaction.set(references[i],ready[i]);
+        }
+        const migratedIds=new Set(ready.map(row=>row.id));
+        if(migratedIds.size){
+          transaction.update(ecosystemRef,{
+            playerItemRequests:pending.filter(row=>!migratedIds.has(row.id)),
+            directTrades:previousTrades.filter(row=>!migratedIds.has(row.id)),
+            updatedAt:serverTimestamp()
+          });
+        }
+        const projected=publicItemEcosystem(legacy);
+        if(!publicSnapshot.exists() || Object.keys(projected).some(key=>!isDeepStrictEqual(projected[key],publicSnapshot.data()[key]))){
+          transaction.set(publicRef,{...projected,updatedAt:serverTimestamp()},{merge:true});
+        }
+        return {migrated:migratedIds.size,remaining:uniqueRows.length-migratedIds.size};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   identifyLootReward: async function(campaignId,characterId,eventId){
     if(!db || !currentUser || !campaignId || !characterId || !eventId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
