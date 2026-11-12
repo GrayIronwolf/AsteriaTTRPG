@@ -792,22 +792,20 @@ test('Phase 2.3: insufficient buyer funds, merchant funds and visitor restrictio
   for(const path of ['campaigns/c/characters/a','users/alice/characters/a'])
     await db.doc(path).update({inventory:[item]});
   await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[{
-    id:'shop',status:'open',visitorCharacterIds:['b'],buyModifier:1,sellModifier:1,currencyCopper:10,
+    id:'shop',status:'open',visitorCharacterIds:['b'],buyModifier:1,sellModifier:1,currencyCopper:5,
     stock:[{qty:1,item:{name:'Ring',marketValue:1,marketPrice:2}}]
   }]});
   const visitor=await action('alice','sellLiveShopItem',['c','a','shop','sword']);
   assert.equal(visitor.ok,false);assert.match(visitor.error,/visiting/i);
-  await db.doc('campaigns/c/systems/itemEcosystem').update({'shops.0.visitorCharacterIds':[]}).catch(async()=>{
-    const snap=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data();
-    snap.shops[0].visitorCharacterIds=[];
-    await db.doc('campaigns/c/systems/itemEcosystem').set(snap);
-  });
+  const shopState=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data();
+  shopState.shops[0].visitorCharacterIds=[];
+  await db.doc('campaigns/c/systems/itemEcosystem').set(shopState);
   const unaffordable=await action('alice','buyLiveShopItem',['c','a','shop',0,1]);
   assert.equal(unaffordable.ok,false);assert.match(unaffordable.error,/currency/i);
   const poorMerchant=await action('alice','sellLiveShopItem',['c','a','shop','sword',1]);
   assert.equal(poorMerchant.ok,false);assert.match(poorMerchant.error,/afford/i);
   const shop=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops[0];
-  assert.equal(shop.currencyCopper,10);
+  assert.equal(shop.currencyCopper,5);
   assert.equal(shop.stock[0].qty,1);
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory[0].qty,2);
   assert.equal((await db.doc('users/alice/characters/a').get()).data().inventory[0].qty,2);
