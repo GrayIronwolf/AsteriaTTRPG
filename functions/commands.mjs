@@ -608,7 +608,7 @@ const commands = {
           const storage=character.storages.find(row=>String(row.id)===String(operation.storageId||''));
           if(!storage) throw new Error('Storage container not found.');
           const name=String(operation.name||'').trim();
-          if(!name||name.length>80||/[\x00-\x1f\x7f]/.test(name)) throw new Error('Enter a storage name of 1 to 80 characters.');
+          if(!name||name.length>80||Array.from(name).some(character=>character.charCodeAt(0)<32||character.charCodeAt(0)===127)) throw new Error('Enter a storage name of 1 to 80 characters.');
           if(character.storages.some(row=>row.id!==storage.id&&String(row.name||'').trim().toLowerCase()===name.toLowerCase()))
             throw new Error('Another container already has that name.');
           if(storage.name===name) return {storageId:storage.id,name};
