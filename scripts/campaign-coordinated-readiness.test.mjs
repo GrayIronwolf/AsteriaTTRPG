@@ -138,3 +138,17 @@ test('trusted live inventory describes every canonical required function includi
  assert.match(collector,/new Set\(descriptionTargets\(manifest\)\)/);
  assert.match(collector,/collectProductionSnapshot\(source\.manifest\)/);
 });
+
+test('missing gates are correctly reported as safely default-disabled, not active or unverified',async()=>{
+ const {runtimeFlagState}=await import('./campaign-coordinated-readiness.mjs');
+ assert.equal(runtimeFlagState({},'ASTERIA_JOIN_REVIEW_ENABLED'),'off (default)');
+ assert.equal(runtimeFlagState({ASTERIA_JOIN_REVIEW_ENABLED:'0'},'ASTERIA_JOIN_REVIEW_ENABLED'),'off');
+ assert.equal(runtimeFlagState({ASTERIA_JOIN_REVIEW_ENABLED:'1'},'ASTERIA_JOIN_REVIEW_ENABLED'),'on');
+ assert.equal(runtimeFlagState({ASTERIA_JOIN_REVIEW_ENABLED:'unexpected'},'ASTERIA_JOIN_REVIEW_ENABLED'),'unknown');
+ assert.equal(runtimeFlagState(null,'ASTERIA_JOIN_REVIEW_ENABLED'),'unknown');
+ const data=snapshot();
+ delete data.descriptions.asteriaCampaignJoinReview.serviceConfig.environmentVariables.ASTERIA_JOIN_REVIEW_ENABLED;
+ const report=evaluateProductionSnapshot(data);
+ assert.equal(report.runtimeFlags.ASTERIA_JOIN_REVIEW_ENABLED,'off (default)');
+ assert.ok(report.blockers.some(s=>s.includes('ASTERIA_JOIN_REVIEW_ENABLED')));
+});
