@@ -15,7 +15,7 @@ import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, quest
 
 // Canonical player mutations. Executed only by the authenticated callable handler.
 export function createCommands(context) {
-const {db,currentUser,doc,collection,runTransaction,serverTimestamp,window,reportSyncError}=context;
+const {db,currentUser,requestId,doc,collection,runTransaction,serverTimestamp,window,reportSyncError}=context;
 const uniqueValues=(...lists)=>[...new Set(lists.flatMap(value=>Array.isArray(value)?value:[]).filter(Boolean))];
 function liveSessionState(value={}){
   const expiresAt=timestampMs(value.expiresAt);
