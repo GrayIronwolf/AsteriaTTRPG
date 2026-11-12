@@ -9,7 +9,7 @@ import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEf
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
 import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
@@ -881,6 +881,14 @@ const commands = {
         if(value===0) throw new Error(`${item.name} has no Market Value and cannot normally be sold.`);
         if(Number(shop.currencyCopper??Infinity)<value) throw new Error('The merchant cannot afford this item.');
         const stockItem=Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'});
+        // Do not expose the seller's private inventory position or ownership
+        // through the campaign-visible merchant stock projection.
+        delete stockItem.ownerUid;
+        delete stockItem.storageId;
+        delete stockItem.storageSlot;
+        delete stockItem.bagId;
+        delete stockItem.bagSlot;
+        delete stockItem.instanceId;
         item.qty=Number(item.qty||1)-qty;
         character.inventory=inventory.filter(record=>Number(record.qty??1)>0);
         setCurrencyTotal(character,currencyTotal(character)+value);
