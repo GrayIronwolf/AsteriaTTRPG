@@ -7,7 +7,7 @@ const workflow=readFileSync(
 );
 const authBlock=workflow.split(/^  auth_check:\s*$/m)[1]?.split(/^  backup_audit:\s*$/m)[0]||'';
 const auditBlock=workflow.split(/^  backup_audit:\s*$/m)[1]?.split(/^  deploy:\s*$/m)[0]||'';
-const deployBlock=workflow.split(/^  deploy:\s*$/m)[1]||'';
+const deployBlock=workflow.split(/^  deploy:\s*$/m)[1]?.split(/^  campaign_backend_inventory:\s*$/m)[0]||'';
 
 test('manual only: no push, schedule or pull request deploy trigger',()=>{
   assert.match(workflow,/^on:\n  workflow_dispatch:/m);
@@ -36,7 +36,11 @@ test('any production deploy requires two explicit manual inputs, main and enviro
   assert.match(deployBlock,/npm run audit:production/);
   assert.match(deployBlock,/npm test/);
   assert.match(deployBlock,/npm run test:firebase/);
-  assert.match(deployBlock,/npx firebase deploy --project asteria-ttrpg --only functions,firestore,storage --non-interactive/);
+  assert.match(deployBlock,/npm install --prefix "\\$RUNNER_TEMP\\/asteria-production-cli" --no-save --no-audit --no-fund firebase-tools@15\\.35\\.0/);
+  assert.match(deployBlock,/Isolated Firebase CLI minimatch API mismatch/);
+  assert.match(deployBlock,/node "\\$RUNNER_TEMP\\/asteria-production-cli\\/node_modules\\/firebase-tools\\/lib\\/bin\\/firebase\\.js" deploy/);
+  assert.match(deployBlock,/--project asteria-ttrpg --only functions,firestore,storage --non-interactive/);
+  assert.doesNotMatch(deployBlock,/npx firebase deploy/);
 });
 test('identity check cannot modify the configured project or bypass Workload Identity',()=>{
   assert.match(authBlock,/project_id: asteria-ttrpg/);
