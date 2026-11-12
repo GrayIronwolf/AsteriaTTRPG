@@ -821,15 +821,12 @@ const commands = {
   },
   respondLiveItemRequest: async function(campaignId,characterId,requestId,accepted,details={}){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     const recipientRef=doc(db,'campaigns',campaignId,'characters',characterId);
     try{
       const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const ecosystemSnapshot=await transaction.get(ecosystemRef);
-        if(!ecosystemSnapshot.exists()) throw new Error('Item request data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const request=requirePrivateItemRequest(await transaction.get(requestRef),requestId);
         if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId)) throw new Error('This item request is no longer pending for this character.');
         const senderRef=doc(db,'campaigns',campaignId,'characters',request.fromCharacterId);
         const [recipientSnapshot,senderSnapshot]=await Promise.all([transaction.get(recipientRef),transaction.get(senderRef)]);
@@ -871,7 +868,7 @@ const commands = {
             request.status='awaiting-sender';request.recipientNotice='acknowledged';request.senderNotice='unread';request.recipientReadyAt=new Date().toISOString();request.recipientReadyBy=currentUser.uid;
             appendActivity(recipient,{type:'item-trade-ready',message:`Confirmed an exchange offer for ${request.item?.name||'an item'}.`});
             writeLiveCharacter(transaction,recipientRefs,recipient);
-            transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+            transaction.set(requestRef,request);
             return {awaitingSender:true};
           }
           receivedItem=placeCharacterItem(recipient,request.item,{storageId:details.storageId||''});
@@ -885,7 +882,7 @@ const commands = {
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
         writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
         return {revealedItem};
       });
       return {ok:true,...result};
@@ -894,14 +891,13 @@ const commands = {
   finalizeLiveItemTrade: async function(campaignId,characterId,requestId,accepted){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const senderRefs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const [ecosystemSnapshot,senderSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(senderRefs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!senderSnapshot.exists()) throw new Error('Trade data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,senderSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(senderRefs.campaign)]);
+        if(!senderSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status!=='awaiting-sender'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This trade is no longer awaiting your confirmation.');
         const recipientRef=doc(db,'campaigns',campaignId,'characters',request.toCharacterId);
         const recipientSnapshot=await transaction.get(recipientRef);
@@ -927,7 +923,7 @@ const commands = {
         request.resolution={accepted:Boolean(accepted),receivedItem:recipientReceived?{name:recipientReceived.name,qty:recipientReceived.qty}:null,exchangeItem:senderReceived?{name:senderReceived.name,qty:senderReceived.qty}:null};
         writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -935,14 +931,13 @@ const commands = {
   cancelLiveItemRequest: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request data is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This request can no longer be cancelled.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
@@ -954,7 +949,7 @@ const commands = {
         request.status='cancelled';request.recipientNotice='cancelled';request.senderNotice='acknowledged';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         appendActivity(character,{type:'item-request-cancelled',message:`Cancelled the ${request.mode} request for ${request.item?.name||'an item'}.`});
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -962,13 +957,12 @@ const commands = {
   acknowledgeLiveItemRequest: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request result is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||request.status==='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This result cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
@@ -977,7 +971,7 @@ const commands = {
         // For historic requests, repair only gameplay fields when the owner's
         // stored revision is not newer than the campaign revision.
         repairLegacyTradeMirror(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
@@ -985,13 +979,12 @@ const commands = {
   acknowledgeLiveItemRecipientUpdate: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
-    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        const [ecosystemSnapshot,characterSnapshot]=await Promise.all([transaction.get(ecosystemRef),transaction.get(refs.campaign)]);
-        if(!ecosystemSnapshot.exists()||!characterSnapshot.exists()) throw new Error('Item request update is unavailable.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.data());
-        const request=findPlayerItemRequest(ecosystem,requestId);
+        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
+        if(!characterSnapshot.exists()) throw new Error('Character not found.');
+        const request=requirePrivateItemRequest(requestSnapshot,requestId);
         if(!request||!['accepted','declined','cancelled'].includes(request.status)||String(request.toCharacterId)!==String(characterId)) throw new Error('This recipient update cannot be acknowledged.');
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
@@ -1000,7 +993,7 @@ const commands = {
         // For historic requests, repair only gameplay fields when the owner's
         // stored revision is not newer than the campaign revision.
         repairLegacyTradeMirror(transaction,refs,character);
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        transaction.set(requestRef,request);
       });
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
