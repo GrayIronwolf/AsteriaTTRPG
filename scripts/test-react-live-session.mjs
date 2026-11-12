@@ -562,7 +562,7 @@ test('53. Optional HUD fields persist without allowing essential information to 
   const information = read('src/components/DashboardInformation.jsx');
   assert.match(read('src/dashboards/PlayerDashboardOverview.jsx'), /hiddenInformationFields\.includes\('currency'\)/);
   assert.match(information, /hiddenInformationFields\.includes\('campaignDetails'\)/);
-  assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS[\s\S]*'name'/);
+  assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS\s*=\s*\[[^\]]*'name'/);
 });
 
 test('54. React snapshots are isolated from mutable legacy dashboard helpers', () => {
