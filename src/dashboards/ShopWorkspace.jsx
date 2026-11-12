@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
@@ -10,7 +10,7 @@ const arr=value=>Array.isArray(value)?value:[];
 const copper=value=>Number(value||0).toLocaleString()+' Copper';
 const tradeable=item=>item&&!item.equipped&&!item.locked&&!item.bound&&!item.questItem&&Number(item.qty||0)>0;
 
-export function ShopWorkspace({campaignId,character,ecosystem={},editable=false}) {
+export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,requestedSale=null}) {
   const shops=arr(ecosystem.shops);
   const [selectedId,setSelectedId]=useState('');
   const [search,setSearch]=useState('');
@@ -18,6 +18,7 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false}
   const [quantity,setQuantity]=useState('');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
+  const handledSaleToken=useRef(null);
   const selected=shops.find(shop=>shop.id===selectedId)||shops[0]||null;
   const visiting=Boolean(selected&&selected.status==='open'&&
     (!arr(selected.visitorCharacterIds).length||selected.visitorCharacterIds.includes(character?.id)));
@@ -27,6 +28,27 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false}
   const searchText=search.trim().toLowerCase();
   const filteredStock=stock.map((row,index)=>({...row,index})).filter(row=>String(row.item?.name||row.item?.title||'').toLowerCase().includes(searchText));
   const filteredInventory=inventory.filter(item=>String(item.name||'').toLowerCase().includes(searchText));
+  useEffect(()=>{
+    if(!requestedSale?.itemId||handledSaleToken.current===requestedSale.token)return;
+    const merchant=shops.find(shop=>shop.status==='open'&&
+      (!arr(shop.visitorCharacterIds).length||shop.visitorCharacterIds.includes(character.id)));
+    const requested=inventory.find(item=>item.id===requestedSale.itemId);
+    if(!merchant||!requested||!tradeable(requested)){
+      handledSaleToken.current=requestedSale.token;
+      setMessage('This item cannot currently be sold to a merchant. Choose an available merchant and item.');
+      return;
+    }
+    if(selected?.id!==merchant.id){setSelectedId(merchant.id);return;}
+    const price=merchantPriceCopper(merchant,requested,'sell');
+    handledSaleToken.current=requestedSale.token;
+    if(!Number.isSafeInteger(price)||price<=0){
+      setMessage('This item has no merchant resale value. Choose a different item.');
+      return;
+    }
+    setQuote({kind:'sell',itemId:requested.id,index:0,variantKey:shopVariantKey(requested),unitPriceCopper:price});
+    setSearch('');setQuantity('1');setMessage('');
+  },[requestedSale,shops,selected?.id,inventory,character.id]);
+
   const source=quote?.kind==='buy'?stock[quote.index]?.item:inventory.find(item=>item.id===quote?.itemId);
   const available=quote?.kind==='buy'?Number(stock[quote.index]?.qty||0):Number(source?.qty||0);
   const unit=source&&selected?merchantPriceCopper(selected,source,quote?.kind==='sell'?'sell':'buy'):null;
