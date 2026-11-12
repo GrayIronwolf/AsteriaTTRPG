@@ -31,6 +31,13 @@ const fns=[
 export function readManifest(){
   return JSON.parse(readFileSync(new URL('../config/asteria-release.json',import.meta.url),'utf8'));
 }
+const INVITATION_CANARY_KEYS=new Set([
+  'campaignJoinPreview','campaignJoinRequests','campaignJoinReview',
+  'secureInvitationManager','secureInvitationAcceptance',
+  'campaignNotifications','campaignFriendRecipients',
+  'campaignFriendInvitations','campaignInAppCanary'
+]);
+const CANARY_QUERY="new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'";
 export function validateManifest(data){
   if(!data||data.schemaVersion!==1||data.releaseId!=='asteria-campaign-friends-v2'||
      data.project!=='asteria-ttrpg'||data.region!=='us-central1'||
@@ -49,6 +56,17 @@ export function validateManifest(data){
      data.invitationDelivery?.resendRequired!==false||
      data.websiteFlags?.emailInvitationControls!==false)
     fail('Current Campaign invitation delivery must be in-app only; external email is deferred');
+  const canary=data.inAppCanary;
+  if(canary!==undefined&&(
+    canary.enabled!==true||canary.mode!=='test-only'||
+    canary.queryParameter!=='campaign-inapp-canary'||
+    canary.migrationAllowed!==false||canary.emailAllowed!==false))
+    fail('Unreviewed in-app website canary configuration.');
+  if(canary?.enabled===true&&(
+    data.websiteFlags?.emailInvitationControls!==false||
+    data.backend?.blockedAutoActions?.includes('membership-migration')!==true||
+    data.backend?.blockedAutoActions?.includes('schema-cutover')!==true))
+    fail('Canary may not modify email or existing campaign memberships.');
   if(data.existingFriendsNotificationsPreserved!==true||
      data.websiteFlags.friendNotificationsEnabled!==true||
      data.websiteFlags.accountIds!==true)
@@ -65,14 +83,16 @@ export function validateManifest(data){
 }
 export function expectedAssignment(data=readManifest()){
   const flags=validateManifest(data).websiteFlags;
+  const websiteValue=key=>data.inAppCanary?.enabled===true&&INVITATION_CANARY_KEYS.has(key)?
+    CANARY_QUERY:flags[key];
   const items=[
     'friendAccountLookup:'+canaries.friendAccountLookup,
     'friendRequestsEnabled:'+canaries.friendRequestsEnabled,
-    ...keys.slice(0,17).map(key=>key+':'+flags[key]),
+    ...keys.slice(0,17).map(key=>key+':'+websiteValue(key)),
     'accountIdAutoCanary:'+canaries.accountIdAutoCanary,
     'accountIdCanary:'+canaries.accountIdCanary,
-    'campaignFriendInvitations:'+flags.campaignFriendInvitations,
-    'campaignInAppCanary:'+flags.campaignInAppCanary
+    'campaignFriendInvitations:'+websiteValue('campaignFriendInvitations'),
+    'campaignInAppCanary:'+websiteValue('campaignInAppCanary')
   ];
   if(items.length!==23)fail('website flag count changed');
   return 'window.AsteriaFeatureFlags = Object.freeze({'+items.join(',')+'});';
