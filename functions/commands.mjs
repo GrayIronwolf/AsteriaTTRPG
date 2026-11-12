@@ -14,6 +14,7 @@ import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src
 import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
+import { validateGMRewardPayload } from '../src/state/gmRewardModel.mjs';
 
 // Canonical player mutations. Executed only by the authenticated callable handler.
 export function createCommands(context) {
@@ -561,6 +562,86 @@ const commands = {
         return paid;
       });
       return {ok:true,paid:result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  grantGMRewardBundle: async function(campaignId,characterId,input={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false,error:'Choose a linked character.'};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try {
+      const reward=validateGMRewardPayload(input);
+      const ids=reward.items.map((_,index)=>`gm-reward-${requestId}-${index}`);
+      const eventRefs=ids.map(id=>doc(db,'campaigns',campaignId,'events',id));
+      const currencyRef=reward.currency.amount
+        ? doc(db,'campaigns',campaignId,'events',`gm-currency-${requestId}`) : null;
+      const result=await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        const campaign=await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists()) throw new Error('The linked campaign character was not found.');
+        const character={...snapshot.data(),id:characterId};
+        if(!character.ownerUid ||
+          !(campaign.playerCharacterLinks?.[characterId]===character.ownerUid ||
+            campaign.characters?.[characterId]?.ownerUid===character.ownerUid ||
+            (campaign.players?.[character.ownerUid]?.characterIds||[]).includes(characterId)))
+          throw new Error('The recipient is not linked to this campaign.');
+        // Reuse the established GM review owner-mirror guard.
+        refs.original=structuredCloneSafe(character);
+        refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
+        const owner=await transaction.get(refs.private);
+        if(!owner.exists()||owner.data().ownerUid!==character.ownerUid)
+          throw new Error('The saved character owner record is unavailable. No rewards were sent.');
+        refs.privateExists=true;
+        const pending=Array.isArray(character.pendingItemRewards)?structuredCloneSafe(character.pendingItemRewards):[];
+        const now=new Date().toISOString();
+        reward.items.forEach((source,index)=>{
+          const item=normalizeMarketPricing(structuredCloneSafe(source),{legacy:true,removeLegacy:true,migratedRecord:true});
+          const trueName=String(item.trueName||item.name||item.title);
+          const unknown=Object.assign({},item,{
+            trueName,basicName:String(item.basicName||unidentifiedItemName({...item,identified:false})),
+            identified:false,
+            name:String(item.basicName||unidentifiedItemName({...item,identified:false})),
+            equipped:false,equippedSlot:'',location:'inventory'
+          });
+          pending.push({
+            id:ids[index],campaignId,item:unknown,
+            message:reward.message||'The GM awarded an item.',status:'pending',
+            bundleName:reward.bundleName,createdAt:now
+          });
+          transaction.set(eventRefs[index],{
+            id:ids[index],campaignId,sessionId:session.id||'',
+            targetCharacterId:characterId,targetOwnerUid:character.ownerUid,
+            type:'loot-reward',
+            payload:{item:unknown,message:reward.message||'The GM awarded an item.',bundleName:reward.bundleName},
+            status:'pending',deliveryStatus:'delivered',acknowledged:false,
+            createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:null
+          });
+        });
+        if(reward.items.length)character.pendingItemRewards=pending;
+        if(reward.currency.amount){
+          character.coins={...(character.coins||character.coinPouch||{})};
+          const key=reward.currency.key;
+          const current=Number(character.coins[key]||0);
+          if(!Number.isSafeInteger(current)||current<0 ||
+            !Number.isSafeInteger(current+reward.currency.amount))
+            throw new Error('The character currency balance is invalid or would overflow.');
+          character.coins[key]=current+reward.currency.amount;
+          appendActivity(character,{
+            type:'gm-currency-reward',message:`GM awarded ${reward.currency.amount} ${key.replaceAll('_',' ')}.`,
+            rewardId:currencyRef.id
+          });
+          transaction.set(currencyRef,{
+            id:currencyRef.id,campaignId,sessionId:session.id||'',
+            targetCharacterId:characterId,targetOwnerUid:character.ownerUid,
+            type:'currency-reward',
+            payload:{key,amount:reward.currency.amount,bundleName:reward.bundleName,message:reward.message},
+            status:'resolved',deliveryStatus:'delivered',acknowledged:false,
+            createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:serverTimestamp()
+          });
+        }
+        writeLiveCharacter(transaction,refs,character);
+        return {itemEvents:ids,currencyEvent:currencyRef?.id||'',itemCount:reward.items.length,currency:reward.currency};
+      });
+      return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   createCustomLootReward: async function(campaignId,characterId,source={},metadata={}){

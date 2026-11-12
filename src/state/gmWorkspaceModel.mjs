@@ -14,7 +14,7 @@ export function defaultGMWorkspace(campaign = {}) {
     },
     crafting: { projects:[], recipes:[], enchantments:[] },
     gameplay: {
-      encounterTemplates:[], lootTables:[], guildContracts:[],
+      encounterTemplates:[], lootTables:[], rewardBundles:[], guildContracts:[],
       sharedNotes:'', professionAssignments:[]
     },
     world: {
@@ -49,7 +49,7 @@ export function normalizeGMWorkspace(value = {}, campaign = {}) {
     notes:{ ...defaults.notes, ...notes, sessionLogs:array(notes.sessionLogs) },
     economy:{ ...defaults.economy, ...economy, routes:array(economy.routes), modifiers:array(economy.modifiers) },
     crafting:{ ...defaults.crafting, ...crafting, projects:array(crafting.projects), recipes:array(crafting.recipes), enchantments:array(crafting.enchantments) },
-    gameplay:{ ...defaults.gameplay, ...gameplay, encounterTemplates:array(gameplay.encounterTemplates), lootTables:array(gameplay.lootTables), guildContracts:array(gameplay.guildContracts), professionAssignments:array(gameplay.professionAssignments) },
+    gameplay:{ ...defaults.gameplay, ...gameplay, encounterTemplates:array(gameplay.encounterTemplates), lootTables:array(gameplay.lootTables), rewardBundles:array(gameplay.rewardBundles), guildContracts:array(gameplay.guildContracts), professionAssignments:array(gameplay.professionAssignments) },
     world:{ ...defaults.world, ...world, regions:array(world.regions), factions:array(world.factions), events:array(world.events), settlements:array(world.settlements), merchants:array(world.merchants), timeline:array(world.timeline), npcs:array(world.npcs), changes:array(world.changes), knowledge:array(world.knowledge), discoveries:array(world.discoveries) },
     campaign:{ ...defaults.campaign, ...campaignDetails }
   };

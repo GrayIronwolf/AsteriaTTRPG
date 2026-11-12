@@ -32,5 +32,5 @@ export function isLinkedCharacter(campaign,characterId,character,campaignId) {
     && (!link || link===owner) && (!summary || summary===owner)
     && (link===owner || summary===owner || (campaign.players?.[owner]?.characterIds || []).includes(characterId));
 }
-export const GM_CHARACTER_ACTIONS=new Set(['sendCharacterNotification','updateCharacterInventory','createCustomLootReward','syncCampaignItemPrivacy','reviewCharacterQuest','manageCharacterCondition','configureCharacterResource','reviewCharacterRest','refreshCharacterSystems']);
-export const GM_ONLY_ACTIONS=new Set(['sendCharacterNotification','reviewCharacterQuest','configureCharacterResource','reviewCharacterRest','syncCampaignItemPrivacy']);
+export const GM_CHARACTER_ACTIONS=new Set(['sendCharacterNotification','updateCharacterInventory','createCustomLootReward','grantGMRewardBundle','syncCampaignItemPrivacy','reviewCharacterQuest','manageCharacterCondition','configureCharacterResource','reviewCharacterRest','refreshCharacterSystems']);
+export const GM_ONLY_ACTIONS=new Set(['sendCharacterNotification','grantGMRewardBundle','reviewCharacterQuest','configureCharacterResource','reviewCharacterRest','syncCampaignItemPrivacy']);
