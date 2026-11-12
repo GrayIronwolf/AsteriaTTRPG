@@ -39,7 +39,10 @@ test('the current source is default-off and the release audit reports NO-GO',()=
 test('audit detects accidentally enabling browser registration and notifications',()=>{
   for(const flag of ['accountIds','campaignNotifications']){
     const audit=inspectAccountIdReleaseSource(
-      readerWith('index.html',flag==='accountIds'?flag+':true':flag+':false',flag==='accountIds'?flag+':false':flag+':true'));
+      readerWith('index.html',
+        flag==='accountIds'?'accountIds:true':
+          "campaignNotifications:new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'",
+        flag==='accountIds'?'accountIds:false':'campaignNotifications:true'));
     assert.equal(audit.staticChecksPassed,false);
     assert.equal(audit.releaseDecision,'NO-GO');
   }
