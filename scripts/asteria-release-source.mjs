@@ -15,7 +15,7 @@ const keys=[
   'campaignMemberControls','campaignRolePermissions','campaignCharacterLinks',
   'campaignCharacterApproval','campaignCharacterLifecycle','secureInvitationManager',
   'secureInvitationAcceptance','emailInvitationControls','campaignNotifications',
-  'campaignFriendRecipients','accountIds','campaignFriendInvitations'
+  'campaignFriendRecipients','accountIds','campaignFriendInvitations','campaignInAppCanary'
 ];
 const canaries={
   friendAccountLookup:"new URLSearchParams(window.location.search).get('friends-lookup-canary')==='1'",
@@ -71,9 +71,10 @@ export function expectedAssignment(data=readManifest()){
     ...keys.slice(0,17).map(key=>key+':'+flags[key]),
     'accountIdAutoCanary:'+canaries.accountIdAutoCanary,
     'accountIdCanary:'+canaries.accountIdCanary,
-    'campaignFriendInvitations:'+flags.campaignFriendInvitations
+    'campaignFriendInvitations:'+flags.campaignFriendInvitations,
+    'campaignInAppCanary:'+flags.campaignInAppCanary
   ];
-  if(items.length!==22)fail('website flag count changed');
+  if(items.length!==23)fail('website flag count changed');
   return 'window.AsteriaFeatureFlags = Object.freeze({'+items.join(',')+'});';
 }
 export function checkWebsite(source,data=readManifest()){
