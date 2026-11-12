@@ -59,6 +59,9 @@ test('explicit new v2 test campaign is created atomically without converting leg
   assert.equal(campaign.membershipRevision,1);
   assert.equal(campaign.partySize,4);
   assert.deepEqual(campaign.joinPolicy,{joinRequestsOpen:true,autoApprove:false});
+  assert.equal(campaign.inviteCode,code(11));
+  assert.equal(campaign.uniqueCampaignCode,code(11));
+  assert.deepEqual(campaign.invites,[]);
   const owner=db.records.get('campaigns/canary-campaign/members/gm');
   assert.equal(owner.uid,'gm');
   assert.equal(owner.campaignId,'canary-campaign');
