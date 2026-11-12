@@ -155,7 +155,7 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
   </Modal>;
 }
 
-function RequestResultModal({ campaignId, character, recipient, request, onDone }) {
+function RequestResultModal({ campaignId, character, recipient, request, editable, onDone }) {
   const action = ACTIONS[request.mode] || ACTIONS.give;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -276,7 +276,7 @@ export function PlayerItemRequestCenter({ campaignId, character, characters, eco
     {active && active.status === 'pending' && String(active.toCharacterId) === String(character.id) ? <IncomingRequestModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} editable={editable} onDismiss={dismiss} /> : null}
     {active && awaitingRecipient.some(request=>request.id===active.id) ? <CounterofferStatusModal campaignId={campaignId} character={character} request={active} onDismiss={dismiss}/> : null}
     {active && recipientUpdates.some(request=>request.id===active.id) ? <RecipientResultModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} onDone={dismiss}/> : null}
-    {active && active.status !== 'pending' && String(active.fromCharacterId) === String(character.id) ? <RequestResultModal campaignId={campaignId} character={character} recipient={characters[active.toCharacterId]} request={active} onDone={dismiss} /> : null}
+    {active && active.status !== 'pending' && String(active.fromCharacterId) === String(character.id) ? <RequestResultModal campaignId={campaignId} character={character} recipient={characters[active.toCharacterId]} request={active} editable={editable} onDone={dismiss} /> : null}
     {historyOpen ? <SentRequestsModal campaignId={campaignId} character={character} characters={characters} requests={sent} editable={editable} onClose={() => setHistoryOpen(false)} onOpen={requestId => { setHistoryOpen(false); setActiveId(requestId); }} /> : null}
   </>;
 }
