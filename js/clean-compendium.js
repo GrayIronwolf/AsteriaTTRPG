@@ -972,7 +972,6 @@
     const previous=byId('workspaceSecureInvitePrevious');
     const next=byId('workspaceSecureInviteNext');
     const type=byId('workspaceSecureInviteType');
-    const email=byId('workspaceSecureInviteEmail');
     const uses=byId('workspaceSecureInviteUses');
     if(!api?.issueSecureCampaignInvitation||!api?.listSecureCampaignInvitations||
        !api?.changeSecureCampaignInvitation||!list||!status)return;
