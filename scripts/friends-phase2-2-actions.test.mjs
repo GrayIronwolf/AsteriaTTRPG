@@ -50,7 +50,7 @@ test('relationship changes never accept user-supplied UID and never return priva
   assert.match(source,/input.expectedVersion/);
   assert.doesNotMatch(source,/return \{[^}]*uid:/);
   assert.doesNotMatch(source,/invite|campaignJoin|campaignMembership/);
-  assert.doesNotMatch(read('index.html'),/friendRequestsEnabled:true/);
+  assert.match(read('index.html'),/friendRequestsEnabled:true/);
 });
 test('existing exact lookup release remains independently scoped',()=>{
   const source=read('scripts/friends-phase1-2-release-package.mjs');
