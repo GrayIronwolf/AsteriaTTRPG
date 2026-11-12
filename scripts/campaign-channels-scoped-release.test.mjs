@@ -94,6 +94,6 @@ test('workflow uses prior absent-target and enabled-version checks, approved dep
  assert.match(job,/node scripts\/campaign-channels-scoped-release\.mjs --stage/);
  assert.match(job,/firebase-tools@15\.35\.0/);
  assert.match(job,/--only "functions:asteria:asteriaCampaignNotifications,functions:asteria:asteriaCampaignEmailInvitations"/);
- assert.match(job,/AST.ERIA_EMAIL_DELIVERY_ENABLED/);
+ assert.match(job,/ASTERIA_EMAIL_DELIVERY_ENABLED/);
  assert.doesNotMatch(job,/firestore:rules|storage:rules|firebase deploy --only hosting|gcloud functions delete|gcloud firestore import/);
 });
