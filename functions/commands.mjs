@@ -575,7 +575,7 @@ const commands = {
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
     try{
-      await runTransaction(db,async transaction=>{
+      const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const snapshot=await transaction.get(refs.campaign);
         if(!snapshot.exists()) throw new Error('Character not found.');
@@ -603,6 +603,20 @@ const commands = {
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
+        }
+        if(operation.type==='rename-storage'){
+          const storage=character.storages.find(row=>String(row.id)===String(operation.storageId||''));
+          if(!storage) throw new Error('Storage container not found.');
+          const name=String(operation.name||'').trim();
+          if(!name||name.length>80||/[\\x00-\\x1f\\x7f]/.test(name)) throw new Error('Enter a storage name of 1 to 80 characters.');
+          if(character.storages.some(row=>row.id!==storage.id&&String(row.name||'').trim().toLowerCase()===name.toLowerCase()))
+            throw new Error('Another container already has that name.');
+          if(storage.name===name) return {storageId:storage.id,name};
+          storage.name=name;
+          appendActivity(character,{type:'storage-renamed',message:`Renamed a storage container to ${name}.`});
+          character.inventory=inventory;
+          writeLiveCharacter(transaction,refs,character);
+          return {storageId:storage.id,name};
         }
         if(operation.type==='reorder-storages'){
           const order=[...new Set((Array.isArray(operation.storageIds)?operation.storageIds:[]).map(String))];
@@ -634,6 +648,38 @@ const commands = {
         }
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(operation.itemId||''));
         if(!item) throw new Error('Inventory item not found.');
+        if(operation.type==='split-stack'){
+          if(item.equipped || item.stackable===false || item.unique===true || item.bound===true ||
+             item.questItem===true || Number(item.maxStack||0)===1)
+            throw new Error('This item cannot be divided into separate stacks.');
+          const available=Number(item.qty);
+          const quantity=Number(operation.quantity);
+          if(!Number.isSafeInteger(available)||available<2||!Number.isSafeInteger(quantity)||quantity<1||quantity>=available)
+            throw new Error('Choose a whole quantity smaller than the existing stack.');
+          if(operation.expectedQuantity!==undefined&&Number(operation.expectedQuantity)!==available)
+            throw new Error('This stack changed. Select it again before splitting.');
+          const storage=character.storages.find(row=>String(row.id)===String(operation.storageId||item.storageId||''));
+          if(!storage) throw new Error('Choose a valid destination container.');
+          const capacity=Number(storage.maxSlots||storage.rows*storage.cols||16);
+          const explicit=operation.storageSlot!==undefined&&operation.storageSlot!==null&&operation.storageSlot!=='';
+          const requested=Number(operation.storageSlot);
+          if(explicit&&(!Number.isInteger(requested)||requested<0||requested>=capacity))
+            throw new Error('Choose a valid destination slot.');
+          const slot=explicit?requested:firstFreeStorageSlot(inventory,storage);
+          if(slot<0) throw new Error(`${storage.name} is full. Choose another container or free a slot.`);
+          if(inventory.some(value=>!value.equipped&&String(value.storageId)===String(storage.id)&&Number(value.storageSlot)===slot))
+            throw new Error('The selected destination slot is already occupied.');
+          const splitId=`split-${requestId}`;
+          if(inventory.some(value=>liveItemId(value)===splitId)) throw new Error('This split has already been applied.');
+          const divided={...structuredCloneSafe(item),id:splitId,instanceId:splitId,qty:quantity,
+            storageId:storage.id,storageSlot:slot,location:'inventory',equipped:false,equippedSlot:''};
+          item.qty=available-quantity;
+          inventory.push(divided);
+          appendActivity(character,{type:'item-stack-split',message:`Split ${quantity} x ${item.name} into ${storage.name}.`});
+          character.inventory=inventory;
+          writeLiveCharacter(transaction,refs,character);
+          return {itemId:splitId,quantity,remaining:item.qty,storageId:storage.id,storageSlot:slot};
+        }
         if(operation.type==='set-quantity'){
           await requireCampaignGM(transaction,campaignId);
           const quantity=Number(operation.quantity);
@@ -676,16 +722,39 @@ const commands = {
           item.qty=Math.max(0,Number(item.qty||1)-1);
           appendActivity(character,{type:'item-used',message:`Used ${item.name}: ${changes.map(([resource,amount])=>`+${amount} ${resource.toUpperCase()}`).join(', ')}.`});
         }else if(operation.type==='move-storage'){
-          const storage=character.storages.find(value=>value.id===String(operation.storageId||''));
-          if(!storage) throw new Error('Storage not found.');
+          if(item.equipped) throw new Error('Unequip this item before moving it between containers.');
+          const storage=character.storages.find(value=>String(value.id)===String(operation.storageId||''));
+          if(!storage) throw new Error('Destination container not found.');
+          if(operation.expectedStorageId!==undefined&&String(operation.expectedStorageId)!==String(item.storageId||''))
+            throw new Error('This item has moved since you selected it. Select it again.');
+          if(operation.expectedStorageSlot!==undefined&&Number(operation.expectedStorageSlot)!==Number(item.storageSlot))
+            throw new Error('The item position has changed. Select it again.');
+          const explicit=operation.storageSlot!==undefined&&operation.storageSlot!==null&&operation.storageSlot!=='';
           const requested=Number(operation.storageSlot);
           const capacity=Number(storage.maxSlots||storage.rows*storage.cols||16);
-          const storageSlot=Number.isInteger(requested)&&requested>=0&&requested<capacity?requested:firstFreeStorageSlot(inventory,storage,item.id);
-          if(storageSlot<0) throw new Error(`${storage.name} is full.`);
-          const occupied=inventory.find(value=>!value.equipped&&String(value.id)!==String(item.id)&&value.storageId===storage.id&&Number(value.storageSlot)===storageSlot);
-          if(occupied) throw new Error(`Slot ${storageSlot+1} is already occupied.`);
-          item.storageId=storage.id;item.storageSlot=storageSlot;item.location='inventory';
-          appendActivity(character,{type:'item-stored',message:`Moved ${item.name} to ${storage.name}.`});
+          if(explicit&&(!Number.isInteger(requested)||requested<0||requested>=capacity))
+            throw new Error('Choose a valid storage grid slot.');
+          const slot=explicit?requested:firstFreeStorageSlot(inventory,storage,item.id);
+          if(slot<0) throw new Error(`${storage.name} is full. Choose another container or swap two occupied slots.`);
+          if(String(item.storageId)===String(storage.id)&&Number(item.storageSlot)===slot) return {unchanged:true};
+          const occupied=inventory.filter(value=>!value.equipped&&liveItemId(value)!==liveItemId(item)&&
+            String(value.storageId)===String(storage.id)&&Number(value.storageSlot)===slot);
+          if(occupied.length>1) throw new Error('The destination contains overlapping items. Resolve the overflow before moving items here.');
+          if(occupied.length){
+            const source=character.storages.find(value=>String(value.id)===String(item.storageId||''));
+            const sourceSlot=item.storageSlot===null||item.storageSlot===undefined?NaN:Number(item.storageSlot);
+            const sourceCapacity=Number(source?.maxSlots||source?.rows*source?.cols||0);
+            if(!source||!Number.isInteger(sourceSlot)||sourceSlot<0||sourceSlot>=sourceCapacity ||
+              inventory.some(value=>!value.equipped&&liveItemId(value)!==liveItemId(item)&&
+                String(value.storageId)===String(source.id)&&Number(value.storageSlot)===sourceSlot))
+              throw new Error('This item has no free, valid source position for a swap. Move it to an empty slot instead.');
+            occupied[0].storageId=source.id;
+            occupied[0].storageSlot=sourceSlot;
+            occupied[0].location='inventory';
+          }
+          item.storageId=storage.id;item.storageSlot=slot;item.location='inventory';
+          appendActivity(character,{type:occupied.length?'item-storage-swapped':'item-stored',
+            message:occupied.length?`Swapped ${item.name} with ${occupied[0].name} between storage slots.`:`Moved ${item.name} to ${storage.name}.`});
         }else if(operation.type==='identify'){
           if(item.identified!==false) throw new Error('This item is already identified.');
           if(!characterKnowsIdentify(character)) throw new Error('This character does not know the Identify spell.');
@@ -706,7 +775,7 @@ const commands = {
         character.inventory=inventory.filter(value=>Number(value.qty??1)>0);
         writeLiveCharacter(transaction,refs,character);
       });
-      return {ok:true};
+      return {ok:true,...(result||{})};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1){
