@@ -3357,3 +3357,104 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-inventory-toolbar > button { grid-column: 1 / -1; }
   .react-inventory-action-buttons > button { flex-basis: calc(50% - 7px); min-height: 44px; }
 }
+
+
+/* Phase 4.2: quick GM awards and multi-character reward distribution. */
+.react-gm-reward-recipient-editor {
+  display:grid;
+  grid-column:1 / -1;
+  gap:10px;
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(104,163,203,.36);
+  background:rgba(5,18,29,.62);
+}
+.react-gm-reward-recipient-editor > b {
+  font-size:.83rem;
+}
+.react-gm-reward-recipient-editor > label {
+  display:grid;
+  gap:5px;
+  min-width:0;
+}
+.react-gm-reward-recipient-editor input[type="search"] {
+  width:100%;
+  min-height:38px;
+}
+.react-gm-reward-recipient-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(175px,1fr));
+  gap:8px;
+  max-height:220px;
+  overflow-y:auto;
+}
+.react-gm-reward-recipient-grid label {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  min-height:46px;
+  padding:8px;
+  border:1px solid rgba(111,158,188,.25);
+  background:rgba(0,0,0,.22);
+  cursor:pointer;
+}
+.react-gm-reward-recipient-grid input[type="checkbox"] {
+  flex:none;
+  width:18px;
+  height:18px;
+}
+.react-gm-reward-recipient-grid label > span {
+  display:grid;
+  gap:3px;
+  overflow-wrap:anywhere;
+  font-size:.78rem;
+}
+.react-gm-reward-recipient-grid label > span small {
+  color:var(--asteria-text-muted,#a0adbb);
+  font-size:.67rem;
+}
+.react-gm-reward-review-list {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(165px,1fr));
+  gap:8px;
+  max-height:180px;
+  overflow-y:auto;
+  margin:10px 0;
+}
+.react-gm-reward-review-list > div {
+  display:grid;
+  gap:3px;
+  padding:8px;
+  border:1px solid rgba(111,158,188,.28);
+  background:rgba(0,0,0,.2);
+  font-size:.8rem;
+}
+.react-gm-reward-review-list small {
+  color:var(--asteria-text-muted,#a0adbb);
+  overflow-wrap:anywhere;
+}
+.react-gm-reward-batch-results {
+  display:grid;
+  gap:7px;
+  padding:12px;
+  margin-top:12px;
+  border:1px solid rgba(111,158,188,.35);
+  background:rgba(0,0,0,.2);
+}
+.react-gm-reward-batch-results h3 {
+  margin:0;
+  font-size:.94rem;
+}
+.react-gm-reward-batch-results p {
+  margin:3px 0;
+  overflow-wrap:anywhere;
+}
+.react-gm-reward-batch-results > button {
+  justify-self:start;
+  min-height:40px;
+}
+@container (max-width:520px) {
+  .react-gm-reward-recipient-grid { grid-template-columns:1fr;max-height:210px; }
+  .react-gm-reward-review-list { grid-template-columns:1fr; }
+}
