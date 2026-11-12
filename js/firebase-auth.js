@@ -18,7 +18,8 @@ import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnab
 import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { createAsteriaItem, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { shopStockCompatible, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
 import { encounterResourcePair, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
@@ -1492,7 +1493,17 @@ const firebasePublicApi = {
           const item=normalizeMarketPricing(structuredCloneSafe(action.item||{}),{legacy:true,removeLegacy:true,migratedRecord:true});
           item.name=item.name||item.title||'Item';
           shops[index].stock=Array.isArray(shops[index].stock)?shops[index].stock:[];
-          shops[index].stock.push({item,qty:Math.max(1,Number(action.quantity||1)),priceCopper:getPlayerPurchasePriceCopper(item,shops[index].buyModifier??1)});
+          const quantity=Number(action.quantity);
+          if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1000000) throw new Error('Choose a stock quantity between 1 and 1,000,000.');
+          const row=shops[index].stock.find(value=>shopStockCompatible(value.item,item));
+          if(row) {
+            if(!Number.isSafeInteger(Number(row.qty)+quantity)||Number(row.qty)+quantity>1000000)
+              throw new Error('This shop stack is too large.');
+            row.qty=Number(row.qty)+quantity;
+            row.priceCopper=merchantPriceCopper(shops[index],row.item,'buy');
+          } else {
+            shops[index].stock.push({item,qty:quantity,priceCopper:merchantPriceCopper(shops[index],item,'buy')});
+          }
         }else if(action.type==='remove-stock'){
           if(index<0) throw new Error('Shop not found.');
           shops[index].stock=(shops[index].stock||[]).filter((_value,stockIndex)=>stockIndex!==Number(action.stockIndex));

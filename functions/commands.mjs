@@ -9,7 +9,8 @@ import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEf
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
 import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
-import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 
@@ -808,7 +809,7 @@ const commands = {
       return {ok:true,...(result||{})};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
-  buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1){
+  buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1,quote={}){
     const refs=liveCharacterRefs(campaignId,characterId);
     const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
     try{
@@ -826,13 +827,17 @@ const commands = {
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
         if(!Number.isSafeInteger(Number(quantity)) || Number(quantity)<1) throw new Error('Choose a whole item quantity.');
         if(Number(stock.qty||0)<1) throw new Error('This item is out of stock.');
-        const qty=Math.min(Number(quantity),Number(stock.qty));
+        if(Number(quantity)>Number(stock.qty)) throw new Error('Not enough shop stock for the requested quantity.');
+        const qty=Number(quantity);
         const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(stock.item||{}),{qty,location:'inventory',equipped:false}),{legacy:true,removeLegacy:true,migratedRecord:true});
         item.name=item.name||item.title||'Shop Item';
-        const unitCost=getPlayerPurchasePriceCopper(item,shop.buyModifier??1);
+        const unitCost=merchantPriceCopper(shop,item,'buy');
+        if(quote.variantKey && quote.variantKey!==shopVariantKey(stock.item)) throw new Error('The selected shop item changed. Review the offer again.');
+        if(quote.unitPriceCopper!==undefined && Number(quote.unitPriceCopper)!==unitCost) throw new Error('The merchant price changed. Review the new price before buying.');
         if(unitCost===null) throw new Error(`${item.name} needs a Market Price before it can be sold.`);
         if(unitCost===0&&marketPricingStatus(item).id==='not-tradeable') throw new Error(`${item.name} is not normally tradeable.`);
         const cost=unitCost*qty;
+        if(!Number.isSafeInteger(cost)||cost<0) throw new Error('Purchase total is outside the supported range.');
         const total=currencyTotal(character);
         if(total<cost) throw new Error('Not enough currency.');
         const received=placeCharacterItem(character,item,{});
@@ -843,12 +848,12 @@ const commands = {
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         savePublicItemEcosystem(transaction,campaignId,ecosystem);
-        return {item:received,cost};
+        return {item:received,cost,quantity:qty,unitPriceCopper:unitCost};
       });
       return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
-  sellLiveShopItem: async function(campaignId,characterId,shopId,itemId){
+  sellLiveShopItem: async function(campaignId,characterId,shopId,itemId,quantity=1,quote={}){
     const refs=liveCharacterRefs(campaignId,characterId);
     const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
     try{
@@ -864,23 +869,39 @@ const commands = {
         const inventory=characterInventory(character);
         const item=inventory.find((value,index)=>liveItemId(value,index)===String(itemId));
         if(!shop||shop.status!=='open'||!item) throw new Error('The shop or item is unavailable.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
+        if(!Number.isSafeInteger(Number(quantity))||Number(quantity)<1||Number(quantity)>Number(item.qty||0)) throw new Error('Choose a quantity available in your inventory.');
+        const qty=Number(quantity);
         if(item.equipped||item.locked||item.bound||item.questItem) throw new Error('This item cannot be sold.');
-        const value=getPlayerSaleValueCopper(item,shop.sellModifier??1);
+        const unitValue=merchantPriceCopper(shop,item,'sell');
+        if(quote.variantKey && quote.variantKey!==shopVariantKey(item)) throw new Error('This inventory item changed. Review the sale again.');
+        if(quote.unitPriceCopper!==undefined && Number(quote.unitPriceCopper)!==unitValue) throw new Error('The merchant offer changed. Review the new price before selling.');
+        const value=unitValue*qty;
+        if(!Number.isSafeInteger(value)||value<0) throw new Error('Sale total is outside the supported range.');
         if(value===0) throw new Error(`${item.name} has no Market Value and cannot normally be sold.`);
         if(Number(shop.currencyCopper??Infinity)<value) throw new Error('The merchant cannot afford this item.');
-        item.qty=Math.max(0,Number(item.qty||1)-1);
+        const stockItem=Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'});
+        // Do not expose the seller's private inventory position or ownership
+        // through the campaign-visible merchant stock projection.
+        delete stockItem.ownerUid;
+        delete stockItem.storageId;
+        delete stockItem.storageSlot;
+        delete stockItem.bagId;
+        delete stockItem.bagSlot;
+        delete stockItem.instanceId;
+        item.qty=Number(item.qty||1)-qty;
         character.inventory=inventory.filter(record=>Number(record.qty??1)>0);
         setCurrencyTotal(character,currencyTotal(character)+value);
         shop.currencyCopper=Number(shop.currencyCopper||0)-value;
         shop.stock=Array.isArray(shop.stock)?shop.stock:[];
-        const existing=shop.stock.find(row=>liveSlug(row.item?.name)===liveSlug(item.name));
-        if(existing) existing.qty=Number(existing.qty||0)+1;
-        else shop.stock.push({item:Object.assign({},structuredCloneSafe(item),{qty:1,equipped:false,equippedSlot:'',location:'shop'}),qty:1,priceCopper:getPlayerPurchasePriceCopper(item,shop.buyModifier??1)});
-        appendActivity(character,{type:'shop-sale',message:`Sold ${item.name} for ${value} copper.`});
+        const existing=shop.stock.find(row=>shopStockCompatible(row.item,stockItem));
+        if(existing) existing.qty=Number(existing.qty||0)+qty;
+        else shop.stock.push({item:stockItem,qty,priceCopper:merchantPriceCopper(shop,stockItem,'buy')});
+        appendActivity(character,{type:'shop-sale',message:`Sold ${qty} x ${item.name} for ${value} copper.`});
         writeLiveCharacter(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         savePublicItemEcosystem(transaction,campaignId,ecosystem);
-        return {value};
+        return {value,quantity:qty,unitPriceCopper:unitValue};
       });
       return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}

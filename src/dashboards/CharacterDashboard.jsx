@@ -208,7 +208,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} editable={editable} /> : null}
+    {activeTab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} /> : null}
     {['information','quest'].includes(activeTab) ? <PlayerInformation key={`${character.id}-${activeTab}`} campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} events={live.events} editable={editable} isOwner={isOwner} initialTab={activeTab==='quest'?'quests':'news'}/> : null}
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}

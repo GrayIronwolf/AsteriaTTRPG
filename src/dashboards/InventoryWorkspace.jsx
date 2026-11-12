@@ -8,6 +8,7 @@ import { characterKnowsIdentify, normalizeCharacterStorages, storageSlotLayout }
 import { calculateArmourPieceAC, previewEquipmentChange, validateEquipmentChange } from '../systems/armour/armourSystem.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
+import { ShopWorkspace } from './ShopWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 
 const ARMOR_SLOTS = [
@@ -499,7 +500,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
   </aside>;
 }
 
-export function InventoryWorkspace({ campaignId, character, characters, editable }) {
+export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable }) {
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
@@ -520,12 +521,13 @@ export function InventoryWorkspace({ campaignId, character, characters, editable
     return result;
   };
   return <div className="react-inventory-workspace">
-    <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
+    <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
       <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={setDetails} />
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
+      {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message">{message}</p>
     {details ? <ItemDetailModal campaignId={campaignId} character={character} item={details} editable={editable} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
