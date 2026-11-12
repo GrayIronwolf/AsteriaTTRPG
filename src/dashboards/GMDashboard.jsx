@@ -550,8 +550,7 @@ export function GMDashboard({ campaignId }) {
   const itemStoresMigrationScope=useRef('');
   useEffect(()=>{
     if(!campaignId||!accountUid||!live.campaign||!live.gmWorkspaceLoaded)return;
-    const scopeId=Object.keys(rawLive.characters||{})[0];
-    if(!scopeId)return;
+    const scopeId=Object.keys(rawLive.characters||{})[0]||'gm-scope';
     const scope=campaignId+':'+accountUid;
     if(itemStoresMigrationScope.current===scope)return;
     itemStoresMigrationScope.current=scope;
