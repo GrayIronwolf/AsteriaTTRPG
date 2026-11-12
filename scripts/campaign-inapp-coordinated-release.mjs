@@ -31,6 +31,12 @@ export const TARGETS=Object.freeze([NOTIFICATION_TARGET,INVITATION_TARGET]);
 export const NOTIFICATION_SELECTOR='functions:asteria:asteriaCampaignNotifications';
 export const INVITATION_SELECTOR='functions:asteria:asteriaSecureInvitation';
 
+const platformMetadataKeys=new Set([
+  'FIREBASE_CONFIG','GCLOUD_PROJECT','GCP_PROJECT',
+  // Google Cloud Functions Gen2 injects Eventarc metadata even for HTTP callables.
+  // These are runtime-owned fields, not Asteria feature flags or deploy inputs.
+  'EVENTARC_CLOUD_EVENT_SOURCE','EVENTARC_CLOUD_EVENT_TYPE'
+]);
 const safeRuntimeFields=Object.freeze([
   'ASTERIA_SECURE_INVITATIONS_ENABLED',
   'ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
@@ -48,18 +54,26 @@ export function checkLiveInvitation(live){
     refuse('Existing secure invitation must be ACTIVE.');
   if(live.signingSecretAttached!==true)
     refuse('Existing secure invitation signing secret binding is not verified.');
-  const allowed=new Set([...safeRuntimeFields,'FIREBASE_CONFIG','GCLOUD_PROJECT','GCP_PROJECT']);
+  // Only explicitly reviewed Asteria gates can be copied into a staged .env.
+  // Google-managed metadata is validated, then intentionally discarded.
+  const reviewedEnv={};
   for(const [key,value] of Object.entries(live.env)){
-    if(!allowed.has(key))
+    if(safeRuntimeFields.includes(key)){
+      if(value!=='0'&&value!=='1')
+        refuse('Unreviewed binary feature gate: '+key);
+      reviewedEnv[key]=value;
+    }else if(platformMetadataKeys.has(key)){
+      if(typeof value!=='string')
+        refuse('Invalid Google-managed runtime metadata: '+key);
+    }else{
       refuse('Unexpected existing secure invitation environment key: '+key);
-    if(key.startsWith('ASTERIA_')&&value!=='0'&&value!=='1')
-      refuse('Unreviewed binary feature gate: '+key);
+    }
   }
-  if(live.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1')
+  if(reviewedEnv.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1')
     refuse('Cannot overwrite an actively enabled invitation function.');
-  if(live.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1')
+  if(reviewedEnv.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1')
     refuse('Cannot reinstall a live notification-dependent invitation function without an approved cutover.');
-  return live;
+  return {...live,env:reviewedEnv};
 }
 function assertSource(){
   const entry=read('functions/index.mjs');
@@ -89,10 +103,10 @@ function assertSource(){
 }
 export function buildCoordinatedInAppRelease(live){
   assertSource();
-  checkLiveInvitation(live);
+  const reviewedLive=checkLiveInvitation(live);
   const notifications=buildCampaignChannelsRelease();
   const secure=buildPhase53Release('campaign-friends-invites-deploy-off',{
-    live:{exists:true,env:live.env},recipientReady:false,acceptanceReady:false
+    live:{exists:true,env:reviewedLive.env},recipientReady:false,acceptanceReady:false
   });
   if(notifications.targets.length!==1||
      notifications.targets[0]!==NOTIFICATION_TARGET||
@@ -114,7 +128,7 @@ export function buildCoordinatedInAppRelease(live){
       refuse('Exactly one isolated Firebase callable is required per package.');
   }
   const expected=Object.fromEntries(safeRuntimeFields.map(key=>[
-    key,live.env[key]??'0'
+    key,reviewedLive.env[key]??'0'
   ]));
   expected.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED='0';
   const env=Object.fromEntries(secure.files['functions/.env.asteria-ttrpg'].trim()

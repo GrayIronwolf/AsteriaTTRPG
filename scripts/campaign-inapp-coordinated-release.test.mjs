@@ -58,6 +58,34 @@ test('all existing approved secure invitation environment flags are preserved, w
   assert.match(env,/ASTERIA_INVITATION_ACCEPTANCE_ENABLED=1/);
   assert.match(env,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
 });
+test('Gen2 Eventarc metadata is never packaged as an Asteria deployment flag',()=>{
+  const live=runtime();
+  live.env.EVENTARC_CLOUD_EVENT_SOURCE='//cloudfunctions.googleapis.com/projects/asteria-ttrpg/locations/us-central1/functions/asteriaSecureInvitation';
+  live.env.EVENTARC_CLOUD_EVENT_TYPE='google.cloud.functions.function.v2.updated';
+  live.env.FIREBASE_CONFIG='{"projectId":"asteria-ttrpg"}';
+  live.env.GCLOUD_PROJECT='asteria-ttrpg';
+  const reviewed=checkLiveInvitation(live);
+  assert.equal(reviewed.env.EVENTARC_CLOUD_EVENT_SOURCE,undefined);
+  assert.equal(reviewed.env.FIREBASE_CONFIG,undefined);
+  const result=buildCoordinatedInAppRelease(live);
+  const staged=result.packages[1].files['functions/.env.asteria-ttrpg'];
+  assert.doesNotMatch(staged,/EVENTARC_|FIREBASE_CONFIG|GCLOUD_PROJECT/);
+  assert.match(staged,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
+  assert.equal(result.productionChanged,false);
+});
+test('unexpected or malformed environment metadata still fails closed',()=>{
+  const bad=[
+    value=>{value.env.UNEXPECTED_RUNTIME_KEY='unsafe';},
+    value=>{value.env.ASTERIA_UNREVIEWED_FEATURE='0';},
+    value=>{value.env.EVENTARC_CLOUD_EVENT_SOURCE=42;},
+    value=>{value.env.ASTERIA_SECURE_INVITATIONS_ENABLED='true';}
+  ];
+  for(const mutate of bad){
+    const live=runtime();mutate(live);
+    assert.throws(()=>checkLiveInvitation(live));
+    assert.throws(()=>buildCoordinatedInAppRelease(live));
+  }
+});
 test('unknown state, absent existing signing secret or already-live functionality fail without writes',()=>{
   const changes=[
     value=>{value.exists=false;},
