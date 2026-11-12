@@ -59,7 +59,7 @@ test('workspace includes exactly three accessible tab panels and a public previe
  assert.match(html,/role="tabpanel" aria-labelledby="accountFriendsWorkspaceRequests" hidden/);
  assert.match(html,/role="tabpanel" aria-labelledby="accountFriendsWorkspaceBlocked" hidden/);
  assert.match(html,/asteria-friends-workspace\.js\?v=friends-phase3-3/);
- assert.doesNotMatch(html,/friendRequestsEnabled:true/);
+ assert.match(html,/friendRequestsEnabled:true/);
  const css=read('css/asteria-account-friends.css');
  assert.match(css,/#accountFriendsPublicPreview\[hidden\]\{display:none!important\}/);
  assert.match(css,/@media\(max-width:480px\)/);
