@@ -219,7 +219,7 @@ function CounterofferStatusModal({ campaignId, character, request, onDismiss }) 
   </Modal>;
 }
 
-function SentRequestsModal({ campaignId, character, characters, requests, editable, onClose, onOpen }) {
+function SentRequestsModal({ campaignId, character, characters, requests, onClose, onOpen }) {
   const [busyId, setBusyId] = useState('');
   const [message, setMessage] = useState('');
   const cancel = async request => {
