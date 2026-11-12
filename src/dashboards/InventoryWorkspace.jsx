@@ -1,6 +1,6 @@
 import { ManualNumberInput } from '../components/ManualNumberInput.jsx';
 import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState, FilterControl, IconButton, Modal, Panel, SearchField, StatusPill, Tabs, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
@@ -11,6 +11,7 @@ import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 import { ShopWorkspace } from './ShopWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
+import {inventoryActivityRecords,inventoryActivityDelta} from '../state/inventoryActivityModel.mjs';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -545,7 +546,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
   </aside>;
 }
 
-export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable }) {
+export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable, events=[] }) {
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
@@ -557,6 +558,19 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const [selectedItemId,setSelectedItemId]=useState('');
   const [pendingUse,setPendingUse]=useState(null);
   const [saleRequest,setSaleRequest]=useState(null);
+  const [activityOpen,setActivityOpen]=useState(false);
+  const [activityNotice,setActivityNotice]=useState('');
+  const seenActivityRef=useRef(null);
+  const activity=useMemo(()=>inventoryActivityRecords(character,events),[character,events]);
+  useEffect(()=>{
+    seenActivityRef.current=null;
+    setActivityNotice('');setActivityOpen(false);
+  },[campaignId,character.id]);
+  useEffect(()=>{
+    const delta=inventoryActivityDelta(seenActivityRef.current,activity);
+    seenActivityRef.current=delta.ids;
+    if(delta.added.length)setActivityNotice(delta.added.length===1?delta.added[0].title:delta.added.length+' new inventory updates');
+  },[activity]);
   const storages = normalizeCharacterStorages(character);
   const activeStorage = storages.some(value => value.id === selectedStorage) ? selectedStorage : storages[0]?.id || '';
   const items = inventoryItems(character);
@@ -577,6 +591,19 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     }
   };
   return <div className="react-inventory-workspace">
+    <div className="react-inventory-mobile-feedback" role="status" aria-live="polite">
+      <div className="react-inventory-mobile-feedback-copy">
+        <strong>{busy?'Processing inventory action':message?'Inventory update':activityNotice?'New activity':'Inventory controls'}</strong>
+        <span>{busy?'Your action is being verified.':message||activityNotice||'Tap an item to select it, then use its action buttons. Drag-and-drop is optional.'}</span>
+      </div>
+      <button type="button" aria-expanded={activityOpen} aria-controls="react-inventory-activity" onClick={()=>{setActivityOpen(v=>!v);setActivityNotice('');}}>{activityOpen?'Hide Activity':'Activity ('+activity.length+')'}</button>
+    </div>
+    {activityOpen?<section id="react-inventory-activity" className="react-inventory-activity" aria-label="Recent inventory activity">
+      <h3>Recent Inventory Activity</h3>
+      {activity.map(row=><p key={row.id}><span>{row.title}</span>{row.at?<time dateTime={new Date(row.at).toISOString()}>{new Date(row.at).toLocaleString()}</time>:null}</p>)}
+      {!activity.length?<p>No recent inventory or currency activity.</p>:null}
+      <small>See News / Events / History for your full notification history.</small>
+    </section>:null}
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
@@ -586,7 +613,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
 
       {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
     </div>
-    <p className="react-action-message">{message}</p>
+    <p className="react-action-message" role="status" aria-live="polite">{message}</p>
     {pendingUse?<Modal title={'Use '+pendingUse.name+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||!items.some(row=>row.id===pendingUse.id&&Number(row.qty)>0)} onClick={async()=>{const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p></Modal>:null}
     {details ? <ItemDetailModal campaignId={campaignId} character={character} item={details} editable={editable} onClose={() => setDetails(null)} onAction={() => setDetails(null)} /> : null}
     {offer ? <SendPlayerItemModal key={`${offer.target.id}-${offer.item.id}-${offer.mode}`} campaignId={campaignId} character={character} target={offer.target} item={offer.item} mode={offer.mode} editable={editable} onClose={() => { setOffer(null); setDragged(null); }} /> : null}
