@@ -205,14 +205,16 @@ function publicItemEcosystem(ecosystem={}){
 function itemRequestRef(campaignId,id){
   return doc(db,'campaigns',campaignId,'itemRequests',String(id));
 }
-function playerItemRequests(ecosystem){
-  ecosystem.playerItemRequests=Array.isArray(ecosystem.playerItemRequests)?ecosystem.playerItemRequests:[];
-  return ecosystem.playerItemRequests;
+function requirePrivateItemRequest(snapshot,requestId){
+  if(!snapshot.exists()) throw new Error('This item request is no longer available.');
+  const request=structuredCloneSafe(snapshot.data());
+  if(String(request.id)!==String(requestId)) throw new Error('This item request does not match.');
+  return request;
 }
-function findPlayerItemRequest(ecosystem,requestId){
-  const primary=playerItemRequests(ecosystem).find(value=>String(value.id)===String(requestId));
-  if(primary) return primary;
-  return (Array.isArray(ecosystem.directTrades)?ecosystem.directTrades:[]).find(value=>String(value.id)===String(requestId)&&String(value.id||'').startsWith('offer-')) || null;
+function savePublicItemEcosystem(transaction,campaignId,ecosystem){
+  transaction.set(doc(db,'campaigns',campaignId,'systems','itemPublic'),{
+    ...publicItemEcosystem(ecosystem),updatedAt:serverTimestamp()
+  },{merge:true});
 }
 function placeCharacterItem(character,source,options={}){
   const qty=Math.max(1,Number(source?.qty ?? source?.quantity ?? 1));
@@ -319,6 +321,7 @@ const commands = {
     const publicRef=doc(db,'campaigns',campaignId,'systems','itemPublic');
     try{
       const result=await runTransaction(db,async transaction=>{
+        await requireCampaignGM(transaction,campaignId);
         const [legacySnapshot,publicSnapshot]=await Promise.all([
           transaction.get(ecosystemRef),transaction.get(publicRef)
         ]);
@@ -328,7 +331,8 @@ const commands = {
         const uniqueRows=[...new Map([...pending,...previousTrades]
           .filter(row=>row&&typeof row.id==='string'&&/^[A-Za-z0-9_-]{1,180}$/.test(row.id))
           .map(row=>[row.id,row])).values()];
-        const ready=uniqueRows.filter(row=>row.fromOwnerUid && row.toOwnerUid).slice(0,60);
+        const ready=uniqueRows.filter(row=>row.fromOwnerUid && row.toOwnerUid &&
+          typeof row.fromCharacterId==='string' && typeof row.toCharacterId==='string').slice(0,60);
         const references=ready.map(row=>itemRequestRef(campaignId,row.id));
         const existing=await Promise.all(references.map(ref=>transaction.get(ref)));
         for(let i=0;i<ready.length;i++) if(!existing[i].exists()){
