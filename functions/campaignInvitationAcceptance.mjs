@@ -1,6 +1,6 @@
-import {assertSecureInvitationEligible} from './campaignSecureInvitations.mjs';
+import {assertSecureInvitationEligible,assertNotifiedFriendInvitationEligible} from './campaignSecureInvitations.mjs';
 import {MEMBER_STATUSES,JOIN_REQUEST_STATUSES} from './campaignMembership.mjs';
-import {enqueueCampaignNotification} from './campaignNotifications.mjs';
+import {enqueueCampaignNotification,assertFriendInvitationNotice} from './campaignNotifications.mjs';
 import {friendRelationshipPath,friendPairId,assertFriendRelationship}
   from './friendRelationshipModel.mjs';
 
@@ -32,6 +32,14 @@ function verify(invite,identity,args,options,repeat=false){
     ...invite,status:'active',usedCount:0,
     expiresAt:new Date(options.now.getTime()+60000)
   }:invite;
+  if(options.notificationOnly===true){
+    if(options.friendInvitationsEnabled!==true||
+       options.notificationsEnabled!==true)throw unavailable();
+    return assertNotifiedFriendInvitationEligible(candidate,{
+      campaignId:args.campaignId,inviteId:args.inviteId,
+      claimantUid:identity.uid,now:options.now
+    });
+  }
   return assertSecureInvitationEligible(candidate,{
     campaignId:args.campaignId,inviteId:args.inviteId,
     token:args.token,claimantUid:identity.uid,
@@ -106,7 +114,12 @@ export async function previewSecureCampaignInvitation(db,auth,{
   campaignId,inviteId,token
 }={},options={}){
   const identity=identityFromAuth(auth);
-  if(!validId(campaignId)||!HASH.test(inviteId)||!TOKEN.test(token))
+  if(!validId(campaignId)||!HASH.test(inviteId)||
+     (options.notificationOnly===true?
+       (token!==undefined&&token!==null)||
+         options.notificationsEnabled!==true||
+         options.friendInvitationsEnabled!==true:
+       !TOKEN.test(token)))
     throw unavailable();
   const now=safeNow(options.now);
   const [root,record,claimSnap,requestSnap]=await Promise.all([
@@ -132,6 +145,8 @@ export async function previewSecureCampaignInvitation(db,auth,{
   await assertFriendBoundClaim(db,options.authAdmin,campaign.ownerUid,
     identity.uid,invite);
   await assertBoundFriendEligible(db,options,invite,campaign,identity.uid);
+  if(options.notificationOnly===true)
+    await assertFriendInvitationNotice(db,identity.uid,{campaignId,inviteId});
   return {...safePreview(campaign,invite,eligible),
     status:existing?requestSnap.data().status:'available',
     alreadyExists:existing};
@@ -146,7 +161,12 @@ export async function acceptSecureCampaignInvitation(db,auth,{
   campaignId,inviteId,token
 }={},options={}){
   const identity=identityFromAuth(auth);
-  if(!validId(campaignId)||!HASH.test(inviteId)||!TOKEN.test(token))
+  if(!validId(campaignId)||!HASH.test(inviteId)||
+     (options.notificationOnly===true?
+       (token!==undefined&&token!==null)||
+         options.notificationsEnabled!==true||
+         options.friendInvitationsEnabled!==true:
+       !TOKEN.test(token)))
     throw unavailable();
   const now=safeNow(options.now),uid=identity.uid;
   const prefix='campaigns/'+campaignId;
@@ -168,6 +188,12 @@ export async function acceptSecureCampaignInvitation(db,auth,{
     assertCampaign(campaign,campaignId);
     await assertFriendBoundClaim(db,options.authAdmin,campaign.ownerUid,
       uid,invite,{tx});
+    if(options.notificationOnly===true){
+      if(options.friendInvitationsEnabled!==true||
+         options.notificationsEnabled!==true)throw unavailable();
+      await assertFriendInvitationNotice(db,uid,{campaignId,inviteId},tx);
+      await assertBoundFriendEligible(db,options,invite,campaign,uid,tx);
+    }
     if(uid===campaign.ownerUid)throw Error('The campaign owner is already a member.');
     if(memberSnap.exists){
       const member=memberSnap.data();

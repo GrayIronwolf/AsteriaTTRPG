@@ -39,7 +39,7 @@
     host.setAttribute('aria-label','Select campaign invitation recipient');
     const heading=el('h3','','Select Invitation Recipient');
     const explanation=el('p','muted',
-      'Choose an accepted friend or enter their complete Account ID. This step only previews eligibility; it does not create or send an invitation, grant campaign access, or disclose email.');
+      'Choose an accepted friend or enter their complete Account ID. The invitation will appear in the recipient’s Asteria notifications. Joining still needs GM approval.');
     const row=el('div','workspace-campaign-recipient-form');
     const label=el('label','','Exact Account ID');
     const input=el('input');
@@ -76,7 +76,7 @@
     }
     const expiryLabel=el('label','','Invitation expires in');
     expiryLabel.appendChild(expiry);
-    const issueButton=el('button','primary','Create Private Invitation');
+    const issueButton=el('button','primary','Send Asteria Invitation');
     issueButton.type='button';issueButton.disabled=true;
     const oneTime=el('div','workspace-friend-invite-one-time');
     oneTime.setAttribute('aria-live','polite');
@@ -111,7 +111,7 @@
       oneTime.replaceChildren();
       selected.textContent='Selected: '+candidate.username+
         ' ('+candidate.accountId+'). '+
-        (canIssue?'Private single-use invitation available.':
+        (canIssue?'In-app invitation available.':
           'Invitation issuance is not activated.');
       if(canIssue)issueButton.disabled=false;
     }
@@ -195,31 +195,15 @@
         const result=await api.issueCampaignFriendInvitation(
           campaignId,chosenId,pendingRequest,hours);
         if(!valid()||call!==serial)return;
-        if(result.alreadyIssued||!result.token){
-          status.textContent='Invitation already created. The original private link cannot be recovered.';
-          chosen=null;return;
+        if(result.alreadyIssued){
+          status.textContent='Invitation already delivered. Check the recipient account’s notifications.';
+          chosen=null;pendingRequest=null;pendingSignature=null;
+          return;
         }
-        const link=root.AsteriaSecureInvitationLinks?.link?.(
-          root.location.href.split('#')[0],campaignId,result.inviteId,result.token);
-        if(typeof link!=='string'||!link.startsWith('https://'))
-          throw Error('Unable to generate secure invite link.');
-        const info=el('p','',
-          'Copy the private one-time invitation link now. It cannot be recovered. '+
-          'Only the selected account can claim it; GM approval remains required.');
-        const field=el('input');field.type='text';field.readOnly=true;field.value=link;
-        field.setAttribute('aria-label','One-time private invitation link');
-        const copy=el('button','','Copy Private Invitation Link');copy.type='button';
-        copy.addEventListener('click',async()=>{
-          try{
-            if(!root.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable.');
-            await root.navigator?.clipboard?.writeText(link);
-            if(valid())status.textContent='Private invitation link copied.';
-          }catch{
-            if(valid())status.textContent='Copy unavailable. Select and copy the private link manually.';
-          }
-        });
-        oneTime.append(info,field,copy);
-        status.textContent='Private invitation created. Share the link with the selected account only.';
+        if(typeof result.inviteId!=='string'||result.token!==undefined)
+          throw Error('Invalid private notification delivery response.');
+        status.textContent='Invitation delivered to the selected account’s Asteria notifications. They can request to join; GM approval is still required.';
+        oneTime.append(el('p','','Invitation sent in Asteria — no email or private link needed.'));
         chosen=null;pendingRequest=null;pendingSignature=null;
       }catch{
         if(valid()&&call===serial)

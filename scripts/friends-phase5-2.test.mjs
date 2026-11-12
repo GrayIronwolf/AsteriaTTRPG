@@ -211,3 +211,63 @@ test('release remains disabled and cannot grant campaign access directly',()=>{
  assert.match(read('functions/campaignInvitationAcceptance.mjs'),/assertFriendBoundClaim/);
  assert.match(read('js/firebase-auth.js'),/issueCampaignFriendInvitation: async function/);
 });
+
+
+test('notification-only friend invitation arrives in exact account inbox and requests GM approval without any token',async()=>{
+ disabled.clear();
+ const db=fixture();accepted(db);
+ const issued=await issueAccountBoundFriendInvitation(db,auth,'alice',issueInput(),{
+   signingKey:key,now,tokenFactory:token,notificationsEnabled:true
+ });
+ const ownerInbox=[...db.store.keys()].filter(p=>
+   p.startsWith('campaignNotificationInbox/alice/items/'));
+ const recipientInbox=[...db.store.keys()].filter(p=>
+   p.startsWith('campaignNotificationInbox/bob/items/'));
+ assert.equal(ownerInbox.length,0);
+ assert.equal(recipientInbox.length,1);
+ const row=db.store.get(recipientInbox[0]);
+ assert.equal(row.kind,'friend-invitation');
+ assert.equal(row.inviteId,issued.inviteId);
+ assert.equal(row.recipientUid,'bob');
+ for(const secret of ['token','tokenDigest','recipientEmail','email'])
+   assert.equal(row[secret],undefined);
+ assert.ok(!JSON.stringify(row).includes(issued.token));
+ const args={campaignId:'campaign01',inviteId:issued.inviteId};
+ const options={now,authAdmin:auth,notificationsEnabled:true,
+   friendInvitationsEnabled:true,notificationOnly:true};
+ const prev=await previewSecureCampaignInvitation(db,{uid:'bob'},args,options);
+ assert.equal(prev.status,'available');
+ await assert.rejects(previewSecureCampaignInvitation(db,{uid:'carol'},args,options),/unavailable/);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'carol'},args,options),/unavailable/);
+ const claim=await acceptSecureCampaignInvitation(db,{uid:'bob'},args,options);
+ assert.equal(claim.status,'pending');
+ assert.equal(db.store.has('campaigns/campaign01/members/bob'),false);
+ assert.equal(db.store.get('campaigns/campaign01/joinRequests/bob').status,'pending');
+ assert.equal(await acceptSecureCampaignInvitation(db,{uid:'bob'},args,options)
+   .then(v=>v.alreadyExists),true);
+});
+test('notice path fails closed without recipient notification, disabled flags, or valid friend relationship',async()=>{
+ disabled.clear();
+ const db=fixture();const pair=accepted(db);
+ const issued=await issue(db);
+ const args={campaignId:'campaign01',inviteId:issued.inviteId};
+ const opts={now,authAdmin:auth,notificationsEnabled:true,
+   friendInvitationsEnabled:true,notificationOnly:true};
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},args,opts),/unavailable/);
+ const first=await issueAccountBoundFriendInvitation(db,auth,'alice',
+   issueInput('Poppa_J#52816','notification-request-000002'),{
+     signingKey:key,now,tokenFactory:token,notificationsEnabled:true
+   });
+ const notify={campaignId:'campaign01',inviteId:first.inviteId};
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},notify,{
+   ...opts,notificationsEnabled:false
+ }),/unavailable/);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},{
+   ...notify,token:first.token
+ },opts),/unavailable/);
+ const blocked=transitionFriendRelationship(pair,{actorUid:'alice',
+   action:'block',expectedVersion:2,now});
+ db.store.set('friendRelationships/'+pair.pairId,blocked);
+ await assert.rejects(acceptSecureCampaignInvitation(db,{uid:'bob'},notify,opts),/unavailable/);
+ assert.equal(db.store.has('campaigns/campaign01/members/bob'),false);
+});

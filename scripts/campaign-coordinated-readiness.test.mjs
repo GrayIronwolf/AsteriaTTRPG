@@ -10,7 +10,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const copied=o=>JSON.parse(JSON.stringify(o));
 const expected=inspectCoordinatedSource().manifest.backend.deployedFunctions;
 function snapshot(){
- const names=[...expected,'asteriaCampaignNotifications','asteriaCampaignEmailInvitations'];
+ const names=[...expected,'asteriaCampaignNotifications'];
  const functions=names.map(name=>({name:'projects/asteria-ttrpg/locations/us-central1/functions/'+name,state:'ACTIVE'}));
  const descriptions=Object.fromEntries(names.map(name=>[
    name,{
@@ -36,7 +36,7 @@ test('canonical source and all backend authorization gates are present',()=>{
  assert.equal(manifest.status,'installed-not-activated');
  assert.equal(manifest.backend.deployedFunctions.length,7);
  assert.equal(phase83.staticChecksPassed,true);
- assert.ok(Object.keys(FLAG_OWNERS).length>=8);
+ assert.ok(Object.keys(FLAG_OWNERS).length>=7);
 });
 test('a complete synthetic inventory still cannot claim release authorization',()=>{
  const report=evaluateProductionSnapshot(snapshot());
@@ -131,7 +131,7 @@ test('trusted live inventory describes every canonical required function includi
  const targets=descriptionTargets(inspectCoordinatedSource().manifest);
  assert.ok(targets.includes('asteriaCampaignUCN'));
  assert.ok(targets.includes('asteriaCampaignFriendRecipients'));
- assert.ok(targets.includes('asteriaCampaignEmailInvitations'));
+ assert.equal(targets.includes('asteriaCampaignEmailInvitations'),false);
  assert.equal(targets.length,new Set(targets).size);
  assert.throws(()=>descriptionTargets({backend:{deployedFunctions:[]}}),/missing/);
  const collector=read('scripts/campaign-coordinated-live-audit.mjs');

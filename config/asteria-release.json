@@ -66,5 +66,10 @@
     "realAccountCanaryVerified": false,
     "finalProductionAuthorization": false
   },
-  "existingFriendsNotificationsPreserved": true
+  "existingFriendsNotificationsPreserved": true,
+  "invitationDelivery": {
+    "active": "in-app-notifications-only",
+    "emailInvitations": "deferred",
+    "resendRequired": false
+  }
 }

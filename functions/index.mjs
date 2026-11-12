@@ -3,7 +3,6 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
-import { asteriaResendApiKeySecret } from './campaignEmailSecrets.mjs';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
@@ -59,20 +58,32 @@ export const asteriaSecureInvitation=onCall({
   try{
     const data=request.data||{};
     if(data.action==='issue-friend'){
-      if(process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1'||
+      if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'||
+         process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1'||
          process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED!=='1'||
          process.env.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED!=='1')
         throw new Error('Account-bound campaign invitations are not enabled yet.');
       const {issueAccountBoundFriendInvitation}=
         await import('./campaignFriendInvitations.mjs');
-      return await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
+      const issued=await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
         request.auth.uid,data,{
-          signingKey:secureInvitationSigningKey.value()
+          signingKey:secureInvitationSigningKey.value(),
+          notificationsEnabled:true
         });
+      // Notification delivery is tied to the account. Never hand a usable
+      // bearer token to the GM browser or put it in the notification inbox.
+      const safe={...issued};
+      delete safe.token;
+      return safe;
     }
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
-    if(data.action==='preview'||data.action==='accept'){
+    if(['preview','accept','preview-notification','accept-notification'].includes(data.action)){
+      const noticeOnly=data.action.endsWith('-notification');
+      if(noticeOnly&&(
+        process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'||
+        process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED!=='1'))
+        throw new Error('In-app campaign invitations are not available.');
       if(process.env.ASTERIA_INVITATION_ACCEPTANCE_ENABLED!=='1')
         throw new Error('Secure invitation acceptance is not enabled yet.');
       const {previewSecureCampaignInvitation,acceptSecureCampaignInvitation}=
@@ -82,14 +93,20 @@ export const asteriaSecureInvitation=onCall({
         email:request.auth.token?.email||null,
         emailVerified:request.auth.token?.email_verified===true
       };
-      const input={campaignId:data.campaignId,inviteId:data.inviteId,token:data.token};
+      if(noticeOnly&&(data.token!==undefined||
+         Object.keys(data).sort().join(',')!==
+           'action,campaignId,inviteId'))
+        throw new Error('Invalid notification invitation request.');
+      const input={campaignId:data.campaignId,inviteId:data.inviteId,
+        ...(noticeOnly?{}:{token:data.token})};
       const options={
         signingKey:secureInvitationSigningKey.value(),
         authAdmin:getAuth(),
         notificationsEnabled:process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1',
-        friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1'
+        friendInvitationsEnabled:process.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1',
+        notificationOnly:noticeOnly
       };
-      return data.action==='preview'?
+      return data.action.startsWith('preview')?
         await previewSecureCampaignInvitation(getFirestore(),claimant,input,options):
         await acceptSecureCampaignInvitation(getFirestore(),claimant,input,options);
     }
@@ -146,62 +163,6 @@ export const asteriaCampaignNotifications=onCall({
   }catch(error){
     throw new HttpsError('failed-precondition',
       error.message||'Campaign notification operation failed.');
-  }
-});
-
-// Phase 7.2: GM email sends and token-rotating replacements.
-// Both provider and invitation signing secrets are bound only to this callable.
-// No service can send without a separate server enablement flag.
-export const asteriaCampaignEmailInvitations=onCall({
-  region:'us-central1',maxInstances:3,timeoutSeconds:55,
-  secrets:[secureInvitationSigningKey,asteriaResendApiKeySecret]
-},async request=>{
-  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
-  if(process.env.ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED!=='1'||
-     process.env.ASTERIA_EMAIL_DELIVERY_ENABLED!=='1'||
-     process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
-    throw new HttpsError('failed-precondition','Email invitations are not enabled.');
-  try{
-    const {sendCampaignEmailInvitations,resendCampaignEmailInvitation}=
-      await import('./campaignEmailInvitations.mjs');
-    const db=getFirestore(),uid=request.auth.uid,data=request.data||{};
-    const options={
-      signingKey:secureInvitationSigningKey.value(),
-      apiKey:asteriaResendApiKeySecret.value()
-    };
-    if(process.env.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1'){
-      options.notifyAcceptedEmail=async({
-        db:store,campaignId,campaignName,inviteId,recipientEmail,now
-      })=>{
-        let user;
-        try{user=await getAuth().getUserByEmail(recipientEmail);}
-        catch{return;}
-        if(!user?.emailVerified||
-          user.email?.trim().toLowerCase()!==recipientEmail)return;
-        const {notifyVerifiedEmailRecipient}=
-          await import('./campaignNotifications.mjs');
-        await notifyVerifiedEmailRecipient(store,user.uid,{
-          campaignId,campaignName,inviteId
-        },now);
-      };
-    }
-    if(data.action==='send')
-      return await sendCampaignEmailInvitations(db,uid,{
-        campaignId:data.campaignId,requestId:data.requestId,
-        recipients:data.recipients,roleOffered:data.roleOffered,
-        expiresInHours:data.expiresInHours
-      },options);
-    if(data.action==='resend')
-      return await resendCampaignEmailInvitation(db,uid,{
-        campaignId:data.campaignId,requestId:data.requestId,
-        sourceInviteId:data.sourceInviteId,
-        expectedRevision:data.expectedRevision
-      },options);
-    throw new Error('Unknown email invitation operation.');
-  }catch(error){
-    // Never send back provider response bodies or bearer tokens.
-    throw new HttpsError('failed-precondition',
-      error.message||'Email invitation operation failed.');
   }
 });
 
