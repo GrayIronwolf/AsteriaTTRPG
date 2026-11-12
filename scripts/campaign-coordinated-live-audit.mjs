@@ -49,6 +49,9 @@ function describeFunction(name){
   const allowed=FLAG_OWNERS[name]||[];
   const safeEnv={};
   for(const flag of allowed){
+    // Preserve the distinction between an absent, default-off flag and an
+    // explicitly set but unrecognised value. Never expose raw values.
+    if(!Object.hasOwn(environment,flag))continue;
     const value=environment[flag];
     safeEnv[flag]=value==='0'||value==='1'?value:'UNKNOWN';
   }
