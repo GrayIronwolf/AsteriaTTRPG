@@ -152,7 +152,10 @@
               setBusy(true);status.textContent='Marking as read...';
               try{
                 await api.markCampaignNotificationRead(notice.notificationId);
-                if(current())status.textContent='Notification marked as read.';
+                if(current()){
+                  status.textContent='Notification marked as read.';
+                  root.AsteriaAccountHeader?.refreshNotifications?.();
+                }
               }catch(error){
                 if(current())status.textContent=error?.message||
                   'Could not update notification.';

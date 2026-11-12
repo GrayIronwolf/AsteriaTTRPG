@@ -97,7 +97,8 @@
     }
     function openFriends(section){
       if(!current())return;
-      if(root.AsteriaFriends?.open?.()===true)
+      if((root.AsteriaAccountPages?.open?.('friends')||
+          root.AsteriaFriends?.open?.())===true)
         root.AsteriaFriendsWorkspace?.select?.(section);
       else status.textContent='Friends are unavailable. Try again from Account.';
     }

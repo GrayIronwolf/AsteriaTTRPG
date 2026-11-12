@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
   <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=hero-sharp-20261111">
   <link rel="stylesheet" href="css/asteria-mobile-header-stability.css?v=mobile-first-paint-20261112">
+  <link rel="stylesheet" href="css/asteria-account-pages.css?v=account-pages-v1">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -96,7 +97,7 @@
             <div class="asteria-account-menu-group" role="group" aria-label="Security">
               <p class="asteria-account-menu-heading" aria-hidden="true">Security</p>
               <button id="accountMenuSecurity" type="button" role="menuitem">Password &amp; Security</button>
-              <button id="accountMenuLogout" type="button" role="menuitem">Log Out</button>
+              <button id="accountMenuLogout" class="asteria-account-logout" type="button" role="menuitem">Log Out</button>
             </div>
           </div>
         </div>
@@ -111,7 +112,7 @@
           <span id="asteriaHeaderName"></span>
           <span id="asteriaHeaderAccountId"></span>
         </div>
-        <span id="asteriaHeaderMail" class="asteria-header-mail" hidden aria-label="Unread notifications" title="Unread notifications">✉</span>
+        <button id="asteriaHeaderMail" class="asteria-header-mail" type="button" hidden aria-label="Open Notifications" title="Open Notifications"><span aria-hidden="true">✉</span><span id="asteriaHeaderUnreadCount" class="asteria-unread-count" hidden></span></button>
       </div>
     </div>
   </header>
@@ -366,6 +367,52 @@
       </div>
       <div id="v17SystemAudit" class="v17-audit"></div>
     </div></section>
+
+    <!-- Independent signed-in destinations; reuse the existing private account
+         callables and Friends components rather than duplicating their data. -->
+    <section id="asteriaFriendsPage" class="view asteria-standalone-page" aria-labelledby="asteriaFriendsPageHeading">
+      <div class="asteria-page-heading">
+        <div><p class="eyebrow">Asteria Social</p><h1 id="asteriaFriendsPageHeading">My Friends</h1>
+          <p>Find players by exact Account ID, manage friendships and requests.</p></div>
+        <button type="button" data-asteria-account-page="account">Account Menu</button>
+      </div>
+      <div id="asteriaFriendsPageMount"></div>
+    </section>
+    <section id="asteriaNotificationsPage" class="view asteria-standalone-page" aria-labelledby="asteriaNotificationsPageHeading">
+      <div class="asteria-page-heading">
+        <div><p class="eyebrow">Asteria Updates</p><h1 id="asteriaNotificationsPageHeading">Notifications</h1>
+          <p>Private friend and campaign updates for the signed-in account.</p></div>
+        <button type="button" data-asteria-account-page="account">Account Menu</button>
+      </div>
+      <div class="asteria-notifications-toolbar" role="group" aria-label="Filter loaded notifications">
+        <span>Show</span>
+        <button id="asteriaNoticeFilterAll" type="button" data-asteria-notice-filter="all" aria-pressed="true">All</button>
+        <button id="asteriaNoticeFilterUnread" type="button" data-asteria-notice-filter="unread" aria-pressed="false">Unread</button>
+        <button id="asteriaNoticeFilterRead" type="button" data-asteria-notice-filter="read" aria-pressed="false">Read</button>
+      </div>
+      <p class="asteria-notifications-filter-info">Filters apply to the messages on the loaded pages. Use Next in each section to browse older messages.</p>
+      <p id="asteriaNotificationsFilteredStatus" role="status" aria-live="polite"></p>
+      <div id="asteriaNotificationsFeeds" class="asteria-notifications-feeds">
+        <div id="asteriaNotificationsFriendFeed"></div>
+        <div id="asteriaNotificationsCampaignFeed"></div>
+      </div>
+      <p id="asteriaNotificationsServiceStatus" role="status" aria-live="polite"></p>
+    </section>
+    <section id="asteriaAccountPage" class="view asteria-standalone-page" aria-labelledby="asteriaAccountPageHeading">
+      <div class="asteria-page-heading">
+        <div><p class="eyebrow">Asteria Account</p><h1 id="asteriaAccountPageHeading">Account Settings</h1>
+          <p>Manage your profile, appearance, security, friends and notifications.</p></div>
+      </div>
+      <p id="asteriaAccountPageStatus" role="status" aria-live="polite"></p>
+      <div class="asteria-account-hub-actions">
+        <button type="button" data-asteria-account-action="profile"><strong>My Profile &amp; Account ID</strong><span>View or edit your profile and account photo</span></button>
+        <button type="button" data-asteria-account-action="appearance"><strong>Appearance</strong><span>Website background, interface colours and typography</span></button>
+        <button type="button" data-asteria-account-action="security"><strong>Password &amp; Security</strong><span>Account verification and password recovery</span></button>
+        <button type="button" data-asteria-account-page="friends"><strong>My Friends</strong><span>Friends list, requests, blocked players and search</span></button>
+        <button type="button" data-asteria-account-page="notifications"><strong>Notifications</strong><span>Read and manage account updates</span></button>
+        <button type="button" data-asteria-account-action="logout" class="asteria-account-logout"><strong>Log Out</strong><span>Sign out of Asteria</span></button>
+      </div>
+    </section>
   </main>
   <div id="accountSecurityOverlay" class="asteria-security-overlay" hidden>
     <section class="asteria-security-dialog" role="dialog" aria-modal="true" aria-labelledby="accountSecurityTitle" aria-describedby="accountSecurityStatus" tabindex="-1">
@@ -577,6 +624,7 @@
 <script src="js/campaign-notifications-ui.js?v=phase7-3"></script>
 <script src="js/asteria-friend-notifications.js?v=friends-notifications-website-20261111"></script>
 <script src="js/asteria-campaign-friend-recipients.js?v=friends-phase5-2"></script>
+<script src="js/asteria-account-pages.js?v=account-pages-v1"></script>
 <script src="js/clean-compendium.js?v=friends-notifications-website-20261111"></script>
 
 <script src="js/universal-compendium-engine.js?v=compendium-demand-v1"></script>

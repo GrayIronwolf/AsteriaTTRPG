@@ -46,6 +46,11 @@
     returnFocus=null;
   }
   function open(){
+    // Existing notification and campaign actions still call AsteriaFriends.open().
+    // Route those calls to the new page rather than opening hidden content.
+    if(window.AsteriaAccountPages?.open &&
+       !get('asteriaFriendsPage')?.classList.contains('show'))
+      return window.AsteriaAccountPages.open('friends');
     const account=user();
     if(!account?.uid||!window.AsteriaAuthBridge?.isLoggedIn?.())return false;
     const overlay=get('accountFriendsOverlay');
@@ -137,7 +142,10 @@
   function bind(){
     const overlay=get('accountFriendsOverlay');
     if(!overlay)return;
-    get('accountFriendsClose')?.addEventListener('click',()=>close());
+    get('accountFriendsClose')?.addEventListener('click',()=>{
+      close();
+      window.AsteriaAccountPages?.open?.('account');
+    });
     get('accountFriendsSearchForm')?.addEventListener('submit',event=>{void search(event);});
     get('accountFriendsAccountId')?.addEventListener('input',()=>{
       ++requestVersion;clearResult();
@@ -145,11 +153,17 @@
         'Enter the complete Account ID to find a player.':'Player search is not active yet.');
     });
     overlay.addEventListener('click',event=>{
-      if(event.target===overlay)close();
+      // A full page has no modal backdrop: clicking its blank area never closes it.
+      if(event.target===overlay&&!overlay.closest?.('#asteriaFriendsPage'))close();
     });
     overlay.addEventListener('keydown',event=>{
-      if(event.key==='Escape'){event.preventDefault();close();return;}
-      if(event.key!=='Tab')return;
+      if(event.key==='Escape'){
+        event.preventDefault();close();
+        window.AsteriaAccountPages?.open?.('account');
+        return;
+      }
+      // Dedicated pages are not modal dialogs; keep normal document tab order.
+      if(event.key!=='Tab'||overlay.closest?.('#asteriaFriendsPage'))return;
       const items=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')]
         .filter(item=>item.getClientRects().length);
       if(!items.length)return;
