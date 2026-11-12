@@ -38,6 +38,25 @@ export function itemRequestRecords(ecosystem = {}) {
   return records.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
 }
 
+function requestStatusLabel(request) {
+  if(request.status==='awaiting-sender') return 'Awaiting final confirmation';
+  if(request.status==='pending') return 'Awaiting recipient';
+  if(request.status==='accepted') return 'Completed';
+  if(request.status==='cancelled') return 'Withdrawn — items returned';
+  if(request.status==='declined') return 'Declined — items returned';
+  return String(request.status||'Unknown');
+}
+
+function TradeReview({ request, senderLabel='Offered', recipientLabel='Requested' }) {
+  return <div className="react-final-trade-grid" aria-label="Trade review">
+    <section><small>{senderLabel}</small><ExchangeItem item={request.item} quantity={request.quantity}/></section>
+    {request.mode==='trade'&&request.exchangeItem?<section><small>{recipientLabel}</small><ExchangeItem item={request.exchangeItem} quantity={request.exchangeItem.qty}/></section>:null}
+    {request.mode==='sell'?<section><small>Purchase price</small><strong>{Number(request.priceCopper||0).toLocaleString()} Copper</strong></section>:null}
+    {request.mode==='trade'&&!request.exchangeItem&&request.requestedItem?<p>Requested terms: {request.requestedItem}</p>:null}
+    {request.note?<p className="react-trade-review-note">{request.note}</p>:null}
+  </div>;
+}
+
 function CharacterIdentity({ character, direction }) {
   const [failed, setFailed] = useState(false);
   const source = characterImage(character);
@@ -122,16 +141,16 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
   };
   if(revealed) return <Modal title={revealed.name || 'Item Identified'} eyebrow="Identification Complete" onClose={onDismiss} footer={<button className="primary" onClick={onDismiss}>Done</button>}><ExchangeItem item={{...revealed, identified:true}} quantity={1} /><p>{revealed.raw?.description || revealed.description || 'The item has been identified and updated in the owner\'s inventory.'}</p></Modal>;
   const acceptDisabled = !editable || busy || (needsStorage && !storages.length) || (request.mode === 'trade' && !exchangeItemId) || (request.mode === 'identify' && !canIdentify) || insufficientFunds;
-  return <Modal title={`${action.label} Request`} eyebrow="New Player Item Request" busy={busy} onClose={onDismiss} footer={<div className="react-modal-actions"><button disabled={!editable || busy} onClick={() => respond(false)}>Decline</button><button className="primary" disabled={acceptDisabled} onClick={() => respond(true)}>{request.mode === 'sell' ? 'Buy Item' : request.mode === 'identify' ? 'Identify Item' : request.mode === 'trade' ? 'Confirm Exchange' : 'Accept Item'}</button></div>}>
+  return <Modal title={`${action.label} Request`} eyebrow="New Player Item Request" busy={busy} onClose={onDismiss} footer={<div className="react-modal-actions"><button disabled={busy} onClick={() => respond(false)}>Decline &amp; Return Item</button><button className="primary" disabled={acceptDisabled} onClick={() => respond(true)}>{request.mode === 'sell' ? 'Buy Item' : request.mode === 'identify' ? 'Identify Item' : request.mode === 'trade' ? 'Confirm Exchange' : 'Accept Item'}</button></div>}>
     <div className="react-exchange-route"><CharacterIdentity character={sender || {name:request.fromCharacterName}} direction="From" /><span aria-hidden="true">&gt;</span><CharacterIdentity character={character} direction="To" /></div>
-    <ExchangeItem item={request.item} quantity={request.quantity} caption={`${action.label} offer`} />
+    <TradeReview request={request} senderLabel="Incoming item" recipientLabel="Their requested item" />
     {request.note ? <blockquote>{request.note}</blockquote> : null}
     {request.mode === 'sell' ? <div className="react-exchange-price"><span>Sale price</span><strong>{Number(request.priceCopper || 0).toLocaleString()} Copper</strong><small>Your available currency: {currencyTotal(character).toLocaleString()} Copper equivalent</small></div> : null}
     {request.mode === 'trade' ? <div className="react-trade-response"><p><b>Requested terms:</b> {request.requestedItem || 'Choose an item you consider a fair exchange.'}</p><label>Your Item<select value={exchangeItemId} onChange={event => { setExchangeItemId(event.target.value); setExchangeQuantity(''); }}><option value="">Choose an item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}</select></label>{selectedExchange ? <><label>Quantity<ManualNumberInput min="1" max={Math.max(1, Number(selectedExchange.qty || 1))} value={exchangeQuantity} onChange={event => setExchangeQuantity(event.target.value)} /></label><ExchangeItem item={selectedExchange} quantity={exchangeQuantity} caption="Your exchange" /></> : null}</div> : null}
     {needsStorage ? <label>Receive Into<select value={storageId} disabled={!storages.length} onChange={event => setStorageId(event.target.value)}>{!storages.length ? <option value="">Create a storage container first</option> : null}{storages.map(storage => <option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label> : null}
     {request.mode === 'identify' && !canIdentify ? <p className="react-warning">This character does not know the Identify spell.</p> : null}
     {insufficientFunds ? <p className="react-warning">You do not have enough currency for this purchase.</p> : null}
-    {!editable ? <p className="react-warning">The GM must start the live session before this request can be resolved.</p> : null}
+    {!editable ? <p className="react-warning">The GM must start a live session before you can accept. Declining safely returns escrow at any time.</p> : null}
     <p className="react-action-message" role="status">{message}</p>
   </Modal>;
 }
@@ -156,13 +175,14 @@ function RequestResultModal({ campaignId, character, recipient, request, onDone 
     setBusy(false);
     if(result?.ok) onDone();
   };
-  if(awaitingSender) return <Modal title="Final Trade Confirmation" eyebrow="Both Players Must Confirm" busy={busy} onClose={onDone} footer={<div className="react-modal-actions"><button className="danger" disabled={busy} onClick={()=>finalize(false)}>Decline &amp; Return Items</button><button className="primary" disabled={busy} onClick={()=>finalize(true)}>Confirm Final Trade</button></div>}>
+  if(awaitingSender) return <Modal title="Final Trade Confirmation" eyebrow="Both Players Must Confirm" busy={busy} onClose={onDone} footer={<div className="react-modal-actions"><button className="danger" disabled={busy} onClick={()=>finalize(false)}>Decline &amp; Return Items</button><button className="primary" disabled={busy || !editable} onClick={()=>finalize(true)}>Confirm Final Trade</button></div>}>
     <p><b>{recipient?.name || request.toCharacterName || 'The other player'}</b> has selected their exchange item. Review both offers before committing the atomic transfer.</p>
-    <div className="react-final-trade-grid"><section><small>Your Offer</small><ExchangeItem item={request.item} quantity={request.quantity}/></section><section><small>Their Offer</small><ExchangeItem item={request.exchangeItem} quantity={request.exchangeItem?.qty}/></section></div>
+    <TradeReview request={request} senderLabel="Your escrowed item" recipientLabel="Their escrowed item" />
+    {!editable?<p className="react-warning">Final acceptance is available during a live session. You can decline and return both items at any time.</p>:null}
     <p className="react-action-message" role="status">{message}</p>
   </Modal>;
-  return <Modal title={`${action.label} ${accepted ? 'Completed' : request.status === 'cancelled' ? 'Cancelled' : 'Declined'}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}>
-    <div className="react-exchange-result"><StatusPill tone={accepted ? 'success' : 'warning'}>{String(request.status || 'updated').toUpperCase()}</StatusPill><h3>{request.item?.name || 'Item Request'}</h3><p>{recipient?.name || request.toCharacterName || 'The other player'} {accepted ? `accepted your ${action.label.toLowerCase()} request.` : `did not accept your ${action.label.toLowerCase()} request.`}</p>
+  return <Modal title={`${action.label} ${requestStatusLabel(request)}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}>
+    <div className="react-exchange-result"><StatusPill tone={accepted ? 'success' : 'warning'}>{String(request.status || 'updated').toUpperCase()}</StatusPill><h3>{request.item?.name || 'Item Request'}</h3><p>{recipient?.name || request.toCharacterName || 'The other player'} {accepted ? `accepted your ${action.label.toLowerCase()} request.` : request.status==='cancelled' ? 'withdrew from this exchange; escrow has been returned.' : `did not accept your ${action.label.toLowerCase()} request.`}</p>
       {request.resolution?.exchangeItem ? <p>You received <b>{request.resolution.exchangeItem.name} x{request.resolution.exchangeItem.qty}</b>.</p> : null}
       {request.resolution?.revealedItem ? <p>The item was identified as <b>{request.resolution.revealedItem.name}</b>.</p> : null}
       {request.mode === 'sell' && accepted ? <p>Payment received: <b>{Number(request.resolution?.priceCopper || request.priceCopper || 0).toLocaleString()} Copper</b>.</p> : null}
@@ -175,7 +195,28 @@ function RecipientResultModal({ campaignId, character, sender, request, onDone }
   const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
   const acknowledge=async()=>{setBusy(true);const result=await firebaseService.acknowledgeRecipientItemUpdate(campaignId,character.id,request.id);setMessage(resultMessage(result,'Update acknowledged.'));setBusy(false);if(result?.ok)onDone();};
   const accepted=request.status==='accepted';
-  return <Modal title={`Trade ${accepted?'Completed':'Declined'}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}><StatusPill tone={accepted?'success':'warning'}>{String(request.status).toUpperCase()}</StatusPill><p>{sender?.name||request.fromCharacterName||'The other player'} {accepted?'confirmed the final exchange. Your item has been placed in the first available storage slot.':'declined the final exchange. Your offered item has been returned to your inventory.'}</p>{accepted?<ExchangeItem item={request.item} quantity={request.quantity} caption="Item received"/>:null}<p className="react-action-message">{message}</p></Modal>;
+  return <Modal title={`Trade ${accepted?'Completed':'Declined'}`} eyebrow="Player Item Update" busy={busy} onClose={acknowledge} footer={<button className="primary" disabled={busy} onClick={acknowledge}>Continue</button>}><StatusPill tone={accepted?'success':'warning'}>{String(request.status).toUpperCase()}</StatusPill><p>{sender?.name||request.fromCharacterName||'The other player'} {accepted?'confirmed the final exchange. Your item has been placed in the first available storage slot.':'declined or withdrew from the exchange. Escrowed items have been returned to their owners.'}</p>{accepted?<ExchangeItem item={request.item} quantity={request.quantity} caption="Item received"/>:null}<p className="react-action-message">{message}</p></Modal>;
+}
+
+function CounterofferStatusModal({ campaignId, character, request, onDismiss }) {
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState('');
+  const withdraw=async()=>{
+    setBusy(true);
+    const result=await firebaseService.cancelItemRequest(campaignId,character.id,request.id);
+    setMessage(resultMessage(result,'Counteroffer withdrawn; both escrowed items returned.'));
+    setBusy(false);
+    if(result?.ok)onDismiss();
+  };
+  return <Modal title="Counteroffer Awaiting Approval" eyebrow="Trade In Progress" busy={busy}
+    onClose={onDismiss} footer={<div className="react-modal-actions">
+      <button disabled={busy} onClick={onDismiss}>Keep Waiting</button>
+      <button className="danger" disabled={busy} onClick={withdraw}>Withdraw &amp; Return Items</button>
+    </div>}>
+    <p>The other player must confirm the final exchange. Both items remain held until the trade completes or a participant withdraws.</p>
+    <TradeReview request={request} senderLabel="Their item" recipientLabel="Your escrowed item" />
+    <p className="react-action-message" role="status">{message}</p>
+  </Modal>;
 }
 
 function SentRequestsModal({ campaignId, character, characters, requests, editable, onClose, onOpen }) {
@@ -188,7 +229,10 @@ function SentRequestsModal({ campaignId, character, characters, requests, editab
     setBusyId('');
   };
   return <Modal title="Sent Item Requests" eyebrow="Player Exchange History" onClose={onClose} footer={<button onClick={onClose}>Close</button>}>
-    <div className="react-request-history">{requests.map(request => <article key={request.id}><ExchangeItem item={request.item} quantity={request.quantity} caption={(ACTIONS[request.mode] || ACTIONS.give).label} /><div><small>To {characters[request.toCharacterId]?.name || request.toCharacterName || 'Party Member'}</small><StatusPill tone={request.status === 'accepted' ? 'success' : request.status === 'pending' ? 'info' : 'warning'}>{request.status || 'pending'}</StatusPill></div><div>{request.status === 'pending' ? <button disabled={!editable || Boolean(busyId)} onClick={() => cancel(request)}>Cancel Request</button> : request.senderNotice !== 'acknowledged' ? <button className="primary" onClick={() => onOpen(request.id)}>View Result</button> : null}</div></article>)}{!requests.length ? <EmptyState title="No sent item requests" /> : null}</div>
+    <div className="react-request-history">{requests.map(request => <article key={request.id}><ExchangeItem item={request.item} quantity={request.quantity} caption={(ACTIONS[request.mode] || ACTIONS.give).label} /><div><small>To {characters[request.toCharacterId]?.name || request.toCharacterName || 'Party Member'}</small><StatusPill tone={request.status === 'accepted' ? 'success' : ['pending','awaiting-sender'].includes(request.status) ? 'info' : 'warning'}>{requestStatusLabel(request)}</StatusPill></div><div>{['pending','awaiting-sender'].includes(request.status) ? <>
+      <button disabled={Boolean(busyId)} onClick={() => cancel(request)}>Withdraw &amp; Return Escrow</button>
+      {request.status==='awaiting-sender'?<button className="primary" onClick={()=>onOpen(request.id)}>Review Counteroffer</button>:null}
+    </> : request.senderNotice !== 'acknowledged' ? <button className="primary" onClick={() => onOpen(request.id)}>View Result</button> : null}</div></article>)}{!requests.length ? <EmptyState title="No sent item requests" /> : null}</div>
     <p className="react-action-message" role="status">{message}</p>
   </Modal>;
 }
@@ -196,6 +240,7 @@ function SentRequestsModal({ campaignId, character, characters, requests, editab
 export function PlayerItemRequestCenter({ campaignId, character, characters, ecosystem, editable }) {
   const requests = useMemo(() => itemRequestRecords(ecosystem), [ecosystem]);
   const incoming = requests.filter(request => String(request.toCharacterId) === String(character.id) && request.status === 'pending');
+  const awaitingRecipient=requests.filter(request=>String(request.toCharacterId)===String(character.id)&&request.status==='awaiting-sender');
   const sent = requests.filter(request => String(request.fromCharacterId) === String(character.id));
   const updates = sent.filter(request => request.status !== 'pending' && request.senderNotice !== 'acknowledged');
   const recipientUpdates = requests.filter(request => String(request.toCharacterId) === String(character.id) && ['accepted','declined','cancelled'].includes(request.status) && request.recipientNotice === 'unread');
@@ -219,15 +264,17 @@ export function PlayerItemRequestCenter({ campaignId, character, characters, eco
   };
   // Keep the center mounted while a recipient is viewing a completed Identify
   // result; otherwise the live request update would discard the reveal state.
-  if(!incoming.length && !sent.length && !active) return null;
+  if(!incoming.length && !sent.length && !awaitingRecipient.length && !recipientUpdates.length && !active) return null;
   return <>
     <div className="react-item-request-dock" aria-live="polite">
       {incoming.length ? <button className="primary" onClick={() => { setHistoryOpen(false); setActiveId(incoming[0].id); }}><span>{incoming.length}</span> Incoming Item Request{incoming.length === 1 ? '' : 's'}</button> : null}
       {updates.length ? <button onClick={() => { setHistoryOpen(false); setActiveId(updates[0].id); }}><span>{updates.length}</span> Item Update{updates.length === 1 ? '' : 's'}</button> : null}
       {recipientUpdates.length ? <button onClick={() => { setHistoryOpen(false); setActiveId(recipientUpdates[0].id); }}><span>{recipientUpdates.length}</span> Received Update{recipientUpdates.length === 1 ? '' : 's'}</button> : null}
+      {awaitingRecipient.length ? <button onClick={()=>{setHistoryOpen(false);setActiveId(awaitingRecipient[0].id);}}>Counteroffer Awaiting Approval ({awaitingRecipient.length})</button> : null}
       {sent.length ? <button onClick={() => setHistoryOpen(true)}>Sent Requests</button> : null}
     </div>
     {active && active.status === 'pending' && String(active.toCharacterId) === String(character.id) ? <IncomingRequestModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} editable={editable} onDismiss={dismiss} /> : null}
+    {active && awaitingRecipient.some(request=>request.id===active.id) ? <CounterofferStatusModal campaignId={campaignId} character={character} request={active} onDismiss={dismiss}/> : null}
     {active && recipientUpdates.some(request=>request.id===active.id) ? <RecipientResultModal campaignId={campaignId} character={character} sender={characters[active.fromCharacterId]} request={active} onDone={dismiss}/> : null}
     {active && active.status !== 'pending' && String(active.fromCharacterId) === String(character.id) ? <RequestResultModal campaignId={campaignId} character={character} recipient={characters[active.toCharacterId]} request={active} onDone={dismiss} /> : null}
     {historyOpen ? <SentRequestsModal campaignId={campaignId} character={character} characters={characters} requests={sent} editable={editable} onClose={() => setHistoryOpen(false)} onOpen={requestId => { setHistoryOpen(false); setActiveId(requestId); }} /> : null}
