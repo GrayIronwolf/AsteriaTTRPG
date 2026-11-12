@@ -19,11 +19,11 @@ jobs:
             exit 1
           fi
       - name: Check out public website source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Check out private vault using read-only credential
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: GrayIronwolf/Asteria-Obsidian-Vault
           ref: main
