@@ -355,9 +355,7 @@ function LootRewards({ campaignId, characters, events, customItems }) {
       const source=custom.isSpellbook
         ? buildSpellbookItem(selectedSpell,pricedCustom)
         : {...pricedCustom,basicName:custom.type||'Item'};
-      const created=await firebaseService.createCustomItem(campaignId,source);
-      if(!created?.ok){setMessage(created?.error||'Custom item could not be created.');return;}
-      const result=await firebaseService.createLootReward(campaignId,target,{...created.item,qty:manualNumber(quantity)},{message:custom.isSpellbook?'The GM awarded an unidentified spellbook.':'The GM awarded an unidentified custom item.'});
+      const result=await firebaseService.createCustomLootReward(campaignId,target,{...source,qty:manualNumber(quantity)},{message:custom.isSpellbook?'The GM awarded an unidentified spellbook.':'The GM awarded an unidentified custom item.'});
       setMessage(result?.ok?'Custom reward added to the shared catalog and sent.':result?.error||'Reward could not be sent.');
       if(result?.ok) resetCustomReward();
     }catch(error){
