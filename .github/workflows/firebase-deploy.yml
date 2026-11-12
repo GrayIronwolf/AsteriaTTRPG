@@ -172,7 +172,7 @@ jobs:
           const cli=createRequire(join(process.argv[2],'node_modules/firebase-tools/package.json'));
           const minimatch=cli('minimatch');
           const version=cli('minimatch/package.json').version;
-          if(typeof minimatch!=='function' || !/^3\\./.test(version) ||
+          if(typeof minimatch!=='function' || !/^3\./.test(version) ||
              !minimatch('functions/index.mjs','**/*.mjs')) {
             throw Error('Isolated Firebase CLI minimatch API mismatch.');
           }
