@@ -68,7 +68,11 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
         ...(v2Test?{
           membershipSchemaVersion:2,membershipRevision:1,
           partySize:options.partySize,
-          joinPolicy:{joinRequestsOpen:true,autoApprove:false}
+          joinPolicy:{joinRequestsOpen:true,autoApprove:false},
+          // The browser may save a descriptive campaign document afterward,
+          // but v2 rules forbid adding these legacy invitation keys later.
+          // Set their safe initial values inside this trusted transaction.
+          inviteCode:ucn,uniqueCampaignCode:ucn,invites:[]
         }:{})
       });
       transaction.create(ownerMemberRef,ownerMembership(campaignId,uid,new Date(now)));
