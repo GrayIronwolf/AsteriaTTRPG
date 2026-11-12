@@ -19,6 +19,7 @@ import {
   buildCampaignChannelsRelease
 } from './campaign-channels-scoped-release.mjs';
 import {buildPhase53Release} from './friends-phase5-3-scoped-release.mjs';
+import {reviewFunctionEnvironment} from './firebase-runtime-env-review.mjs';
 
 const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const read=p=>readFileSync(join(ROOT,p),'utf8');
@@ -31,12 +32,6 @@ export const TARGETS=Object.freeze([NOTIFICATION_TARGET,INVITATION_TARGET]);
 export const NOTIFICATION_SELECTOR='functions:asteria:asteriaCampaignNotifications';
 export const INVITATION_SELECTOR='functions:asteria:asteriaSecureInvitation';
 
-const platformMetadataKeys=new Set([
-  'FIREBASE_CONFIG','GCLOUD_PROJECT','GCP_PROJECT',
-  // Google Cloud Functions Gen2 injects Eventarc metadata even for HTTP callables.
-  // These are runtime-owned fields, not Asteria feature flags or deploy inputs.
-  'EVENTARC_CLOUD_EVENT_SOURCE','EVENTARC_CLOUD_EVENT_TYPE'
-]);
 const safeRuntimeFields=Object.freeze([
   'ASTERIA_SECURE_INVITATIONS_ENABLED',
   'ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
@@ -54,21 +49,8 @@ export function checkLiveInvitation(live){
     refuse('Existing secure invitation must be ACTIVE.');
   if(live.signingSecretAttached!==true)
     refuse('Existing secure invitation signing secret binding is not verified.');
-  // Only explicitly reviewed Asteria gates can be copied into a staged .env.
-  // Google-managed metadata is validated, then intentionally discarded.
-  const reviewedEnv={};
-  for(const [key,value] of Object.entries(live.env)){
-    if(safeRuntimeFields.includes(key)){
-      if(value!=='0'&&value!=='1')
-        refuse('Unreviewed binary feature gate: '+key);
-      reviewedEnv[key]=value;
-    }else if(platformMetadataKeys.has(key)){
-      if(typeof value!=='string')
-        refuse('Invalid Google-managed runtime metadata: '+key);
-    }else{
-      refuse('Unexpected existing secure invitation environment key: '+key);
-    }
-  }
+  // Google-managed runtime values are never copied to a staged .env.
+  const reviewedEnv=reviewFunctionEnvironment(live.env,safeRuntimeFields);
   if(reviewedEnv.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED==='1')
     refuse('Cannot overwrite an actively enabled invitation function.');
   if(reviewedEnv.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='1')
