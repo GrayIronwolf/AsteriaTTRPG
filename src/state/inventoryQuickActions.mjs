@@ -12,6 +12,7 @@ export const INVENTORY_CATEGORIES=Object.freeze([
 ]);
 
 export function inventoryCategory(item={}){
+  if(item.identified===false)return 'other';
   const type=String(item.type||item.raw?.type||item.raw?.category||'').toLowerCase();
   const name=String(item.name||'').toLowerCase();
   if(/weapon|sword|axe|dagger|bow|arrow|bolt|staff|wand|spear|ammunition|quiver/.test(type+' '+name))return 'weapons';
@@ -25,7 +26,7 @@ export function matchesInventoryFilter(item={},query='',category='all'){
   if(category!=='all'&&inventoryCategory(item)!==category)return false;
   const search=String(query||'').trim().toLowerCase();
   if(!search)return true;
-  const source=item.identified===false?[item.name,item.type,'unidentified']:
+  const source=item.identified===false?[item.name,'unidentified']:
     [item.name,item.trueName,item.type,item.rarity,item.raw?.material,item.raw?.quality];
   return source.some(text=>String(text||'').toLowerCase().includes(search));
 }
