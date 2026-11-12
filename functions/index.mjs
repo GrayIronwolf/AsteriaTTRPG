@@ -72,7 +72,8 @@ export const asteriaSecureInvitation=onCall({
         });
       // Notification delivery is tied to the account. Never hand a usable
       // bearer token to the GM browser or put it in the notification inbox.
-      const {token:discardedToken,...safe}=issued;
+      const safe={...issued};
+      delete safe.token;
       return safe;
     }
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
