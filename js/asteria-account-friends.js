@@ -153,10 +153,15 @@
         'Enter the complete Account ID to find a player.':'Player search is not active yet.');
     });
     overlay.addEventListener('click',event=>{
-      if(event.target===overlay)close();
+      // A full page has no modal backdrop: clicking its blank area never closes it.
+      if(event.target===overlay&&!overlay.closest?.('#asteriaFriendsPage'))close();
     });
     overlay.addEventListener('keydown',event=>{
-      if(event.key==='Escape'){event.preventDefault();close();return;}
+      if(event.key==='Escape'){
+        event.preventDefault();close();
+        window.AsteriaAccountPages?.open?.('account');
+        return;
+      }
       // Dedicated pages are not modal dialogs; keep normal document tab order.
       if(event.key!=='Tab'||overlay.closest?.('#asteriaFriendsPage'))return;
       const items=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')]
