@@ -23,7 +23,10 @@ export const FLAG_OWNERS = Object.freeze({
   asteriaCampaignFriendRecipients:['ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED'],
   asteriaSecureInvitation:[
     'ASTERIA_SECURE_INVITATIONS_ENABLED','ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
-    'ASTERIA_INVITATION_MANAGER_ENABLED','ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'
+    'ASTERIA_INVITATION_MANAGER_ENABLED','ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED',
+    // Secure issuance and notification inbox have separate runtime gates.
+    'ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED',
+    'ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED'
   ],
   asteriaCampaignNotifications:['ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED']
 });
@@ -32,7 +35,8 @@ const essential = Object.freeze([
   'ASTERIA_SECURE_INVITATIONS_ENABLED','ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
   'ASTERIA_INVITATION_MANAGER_ENABLED',
   'ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED',
-  'ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'
+  'ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED',
+  'ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED'
 ]);
 const optionals = Object.freeze(['asteriaCampaignNotifications']);
 const local = path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -89,16 +93,38 @@ export function evaluateProductionSnapshot(snapshot,{manifest=readManifest(),fir
       blockers.push('Required Cloud Function not verifiably ACTIVE: '+target);
   }
   const flags=Object.create(null);
+  const flagsByFunction=Object.create(null);
+  const statesByFlag=Object.create(null);
   for(const [owner,names] of Object.entries(FLAG_OWNERS)){
     const env=records[owner]?.state==='ACTIVE'&&
       descriptions[owner]?.serviceConfig?.environmentVariables;
+    flagsByFunction[owner]=Object.create(null);
     for(const key of names){
       const state=runtimeFlagState(env,key);
-      flags[key]=state;
-      if(essential.includes(key)&&state!=='on')
-        blockers.push('Required invitation/GM backend gate not enabled: '+key);
+      flagsByFunction[owner][key]=state;
+      (statesByFlag[key]??=[]).push(state);
     }
   }
+  // A shared gate is safe to report as ON only when every callable that
+  // enforces it is verifiably enabled. This avoids hiding half-on rollouts.
+  for(const [key,states] of Object.entries(statesByFlag)){
+    const state=states.every(value=>value==='on')?'on':
+      states.includes('unknown')?'unknown':
+      states.includes('off')?'off':'off (default)';
+    flags[key]=state;
+    if(essential.includes(key)&&state!=='on')
+      blockers.push('Required invitation/GM backend gate not enabled on every enforcing function: '+key);
+  }
+  const invitationDelivery=Object.freeze({
+    recipientLookup:flagsByFunction.asteriaCampaignFriendRecipients
+      ?.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED??'unknown',
+    recipientGateOnSecureInvitation:flagsByFunction.asteriaSecureInvitation
+      ?.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED??'unknown',
+    notificationInbox:flagsByFunction.asteriaCampaignNotifications
+      ?.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED??'unknown',
+    notificationGateOnSecureInvitation:flagsByFunction.asteriaSecureInvitation
+      ?.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED??'unknown'
+  });
   const secretEnabled=snapshot.signingSecret?.enabled===true;
   if(!secretEnabled)blockers.push('Enabled signing-secret version not verifiable.');
   const ruleSource={firestore:firestoreSource,storage:storageSource};
@@ -130,7 +156,7 @@ export function evaluateProductionSnapshot(snapshot,{manifest=readManifest(),fir
     project:manifest.project,region:manifest.region,release:manifest.releaseId,
     installedFunctions:expected.filter(t=>records[t].state==='ACTIVE').length,
     expectedFunctions:expected.length,
-    functionStates:records,runtimeFlags:flags,rules,
+    functionStates:records,runtimeFlags:flags,flagsByFunction,invitationDelivery,rules,
     signingSecretEnabledVersionVisible:secretEnabled,
     backupMetadataReadable:snapshot.backup?.metadataReadable===true,
     websiteStatus:manifest.status,releaseDecision:'NO-GO',blockers,notices,
@@ -155,6 +181,12 @@ export function renderReleaseReport(report){
     '',
     '### Live function inventory (names only)',
     ...Object.entries(report.functionStates).map(([name,state])=>'- '+name+': '+state.state),
+    '',
+    '### Required invitation delivery gates (verified individually)',
+    '- Account recipient lookup callable: '+report.invitationDelivery.recipientLookup,
+    '- Secure invitation recipient gate: '+report.invitationDelivery.recipientGateOnSecureInvitation,
+    '- Campaign notifications inbox callable: '+report.invitationDelivery.notificationInbox,
+    '- Secure invitation notification gate: '+report.invitationDelivery.notificationGateOnSecureInvitation,
     '',
     '### Server feature gates (boolean only, never secret values)',
     ...Object.entries(report.runtimeFlags).sort(([a],[b])=>a.localeCompare(b))
