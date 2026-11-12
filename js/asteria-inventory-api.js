@@ -686,7 +686,7 @@
     return function(...args){
       if(isServerOwnedCharacter(operation==='adjustCurrency'?args[0]:
         ['moveToStorage','moveFromStorage','splitStack','combineStacks','setFlag','add','remove'].includes(operation)?
-          (operation==='add'||operation==='remove'?args[1]:operation==='splitStack'||operation==='combineStacks'?args[2]:operation==='setFlag'?args[3]:args[2]):
+          (operation==='add'||operation==='remove'?args[1]:operation==='moveFromStorage'?args[1]:operation==='splitStack'||operation==='combineStacks'?args[2]:operation==='setFlag'?args[3]:args[2]):
           currentId())){
         window.toast?.('Use the live Asteria character dashboard for inventory changes.');
         return false;
