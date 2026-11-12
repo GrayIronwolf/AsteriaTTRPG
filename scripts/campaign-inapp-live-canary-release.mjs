@@ -94,8 +94,9 @@ export function buildCanaryRelease(live,{enable=true}={}){
     if(spec.kind==='core')files={...core.files};
     else if(spec.kind==='notifications')files={...notifications.files};
     else files={...buildPhase53Release(
-      spec.kind==='recipients'?'campaign-friends-recipients-deploy-off':
-        'campaign-friends-invites-deploy-off',
+      spec.kind==='recipients'?(enable?'campaign-friends-recipients-deploy-off':
+        'campaign-friends-recipients-disable'):
+        (enable?'campaign-friends-invites-deploy-off':'campaign-friends-invites-disable'),
       {live:{exists:true,env:reviewed},recipientReady:false,acceptanceReady:false}
     ).files};
     files[spec.envPath]=envText;
