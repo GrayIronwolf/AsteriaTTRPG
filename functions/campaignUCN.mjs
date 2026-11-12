@@ -33,6 +33,10 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
   if(typeof uid !== 'string' || !uid) throw new Error('Sign in to continue.');
   const name = typeof rawName === 'string' ? rawName.trim() : '';
   if(!name || name.length > 120) throw new Error('Enter a campaign name (1–120 characters).');
+  const v2Test=options.v2Test===true;
+  if(v2Test&&(!Number.isSafeInteger(options.partySize)||
+      options.partySize<1||options.partySize>12))
+    throw new Error('Choose a party size from 1 to 12.');
   const nextCode = options.nextCode || randomUCN;
   const nextId = options.nextId || (()=>`camp-${randomUUID()}`);
   for(let attempt=0;attempt<MAX_ALLOCATION_ATTEMPTS;attempt++) {
@@ -60,7 +64,12 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
         id:campaignId, name, ownerUid:uid, gmId:uid,
         gmUids:[uid], playerUids:[], roles:{[uid]:'gm'},
         players:{[uid]:{uid,role:'gm',status:'active',characterIds:[],joinedAt:now}},
-        ucn, createdAt:now
+        ucn, createdAt:now,
+        ...(v2Test?{
+          membershipSchemaVersion:2,membershipRevision:1,
+          partySize:options.partySize,
+          joinPolicy:{joinRequestsOpen:true,autoApprove:false}
+        }:{})
       });
       transaction.create(ownerMemberRef,ownerMembership(campaignId,uid,new Date(now)));
       transaction.create(directoryRef, {
@@ -72,7 +81,7 @@ export async function createCampaignIdentity(db, uid, rawName, options = {}) {
       transaction.set(creationLimitRef,{
         windowStartedAtMs:withinWindow?windowStart:nowMs,created:created+1,updatedAtMs:nowMs
       });
-      return { id:campaignId, ucn, name };
+      return { id:campaignId, ucn, name, ...(v2Test?{membershipSchemaVersion:2}:{}) };
     });
     if(result) return result;
   }
