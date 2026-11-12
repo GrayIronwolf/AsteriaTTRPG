@@ -527,11 +527,10 @@ export function GMDashboard({ campaignId }) {
     const scope=campaignId+':'+accountUid;
     if(itemPrivacyScope.current===scope) return;
     itemPrivacyScope.current=scope;
-    let cancelled=false;
     const migrate=async()=>{
       for(let attempt=0;attempt<6;attempt++){
         const result=await firebaseService.syncCampaignItemPrivacy(campaignId,firstCharacterId);
-        if(cancelled)return;
+        if(itemPrivacyScope.current!==scope)return;
         if(!result?.ok){
           setActionError(result?.error||'Private trade migration could not finish.');
           return;
@@ -543,8 +542,7 @@ export function GMDashboard({ campaignId }) {
         }
       }
     };
-    migrate().catch(error=>{if(!cancelled)setActionError(error.message||String(error));});
-    return ()=>{cancelled=true;};
+    migrate().catch(error=>{if(itemPrivacyScope.current===scope)setActionError(error.message||String(error));});
   },[campaignId,accountUid,live.campaign,rawLive.characters]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
