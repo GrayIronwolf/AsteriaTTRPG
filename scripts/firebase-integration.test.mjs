@@ -79,6 +79,19 @@ test('GM custom reward catalog and recipient reward appear atomically',async()=>
   assert.equal((await db.doc(`campaigns/c/events/${result.eventId}`).get()).data().type,'loot-reward');
 });
 
+test('GM custom spellbooks retain their compendium spell metadata',async()=>{
+  const result=await action('gm','createCustomLootReward',['c','a',{
+    name:'Spark Spellbook',type:'Spellbook',isSpellbook:true,
+    marketValue:5,marketPrice:10,compendiumSpellId:'spell:spark',
+    compendiumSpellRoute:'#spell-spark',spell:{id:'spell:spark',name:'Spark',rank:'Weak',element:'Fire',manaCost:'3 MP'}
+  },{}]);
+  assert.equal(result.ok,true,result.error);
+  const reward=(await db.doc('campaigns/c/characters/a').get()).data().pendingItemRewards[0].item;
+  assert.equal(reward.spell.id,'spell:spark');
+  assert.equal(reward.spell.manaCost,'3 MP');
+  assert.equal(reward.compendiumSpellId,'spell:spark');
+});
+
 test('non GM cannot create a custom reward for another character',async()=>{
   const result=await action('alice','createCustomLootReward',['c','b',{name:'Unapproved Item',marketValue:1,marketPrice:5}]);
   assert.equal(result.ok,false);
