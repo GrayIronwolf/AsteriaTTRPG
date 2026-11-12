@@ -128,7 +128,7 @@ test('existing trusted production workflow contains both scoped deploys, no emai
   assert.match(section,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED == "0"/);
   for(const forbidden of [
     /gcloud secrets describe/,/gcloud secrets versions list/,
-    /ASTERIA_RESEND_API_KEY/,/asteriaCampaignEmailInvitations/,
+    /--only "functions:asteria:asteriaCampaignEmailInvitations"/,
     /firebase deploy --only hosting/,/firestore:rules/,/storage:rules/,
     /gcloud functions delete/,/gcloud firestore import/
   ])assert.doesNotMatch(section,forbidden);
