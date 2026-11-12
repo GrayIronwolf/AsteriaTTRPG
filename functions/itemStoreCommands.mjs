@@ -127,6 +127,45 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
         return {ok:true,bundle:saved};
       }catch(error){return {ok:false,error:error.message||String(error)};}
     },
+    // Copy a bounded batch into individual shop documents before clearing their
+    // source entries. Legacy data stays available if the transaction fails.
+    syncCampaignShopStores:async(campaignId,_scope)=>{
+      try{
+        const result=await runTransaction(db,async tx=>{
+          await gm(tx,campaignId);
+          const legacyRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+          const publicRef=doc(db,'campaigns',campaignId,'systems','itemPublic');
+          const [snapshot,publicSnapshot]=await Promise.all([tx.get(legacyRef),tx.get(publicRef)]);
+          const ecosystem=exists(snapshot)?snapshot.data():{};
+          const original=Array.isArray(ecosystem.shops)?ecosystem.shops:[];
+          const candidates=original.slice(0,8);
+          const refs=candidates.map(value=>doc(db,'campaigns',campaignId,'shops',value.id));
+          const existing=await Promise.all(refs.map(ref=>tx.get(ref)));
+          for(let i=0;i<candidates.length;i++){
+            const shop=candidates[i];
+            if(!id(shop.id))throw Error('An existing shop has an invalid identifier. No shops were migrated.');
+            if(!exists(existing[i])){
+              tx.set(refs[i],{...cleanGMShop({},shop,shop.id),updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+            }
+          }
+          if(candidates.length){
+            const remaining=original.slice(candidates.length);
+            // Clear source only in the same transaction as the canonical copy.
+            tx.update(legacyRef,{shops:remaining,updatedAt:serverTimestamp()});
+            const previous=exists(publicSnapshot)?publicSnapshot.data():{};
+            tx.set(publicRef,{
+              version:'asteria-item-public-v1',
+              shops:remaining,
+              partyLoot:Array.isArray(previous.partyLoot)?previous.partyLoot:Array.isArray(ecosystem.partyLoot)?ecosystem.partyLoot:[],
+              sharedStorages:Array.isArray(previous.sharedStorages)?previous.sharedStorages:Array.isArray(ecosystem.sharedStorages)?ecosystem.sharedStorages:[],
+              updatedAt:serverTimestamp()
+            },{merge:true});
+          }
+          return {migrated:candidates.length,remaining:Math.max(0,original.length-candidates.length)};
+        });
+        return {ok:true,...result};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
     // Idempotent, capped migration of the old GM reward template array.
     // Never delete source data until every copied record is committed.
     syncGMRewardBundles:async(campaignId,_scope)=>{
