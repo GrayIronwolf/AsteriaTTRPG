@@ -61,11 +61,43 @@ async function verifyOwnedLiveCharacter(transaction,campaignId,characterId,chara
   refs.original=structuredCloneSafe(character);
   const privateSnapshot=await transaction.get(refs.private);
   refs.privateExists=privateSnapshot.exists();
-  if(refs.privateExists && privateSnapshot.data().ownerUid!==character.ownerUid) throw new Error('Character ownership does not match.');
+  refs.privateData=refs.privateExists?privateSnapshot.data():null;
+  if(refs.privateExists && refs.privateData.ownerUid!==character.ownerUid) throw new Error('Character ownership does not match.');
   const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
   refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
   Object.assign(character,reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
   return {privateRef:refs.private,privateSnapshot:null};
+}
+
+// The requester may not own the other side of a trade. Resolve that
+// character's private sheet from the trusted campaign owner, not from the
+// caller's UID, and use the same transaction to update both mirrors.
+async function verifyLiveTradeCounterparty(transaction,campaignId,characterId,character,refs){
+  if(!character.ownerUid) throw new Error('The other character has no verified owner.');
+  refs.campaign=doc(db,'campaigns',campaignId,'characters',characterId);
+  refs.private=doc(db,'users',character.ownerUid,'characters',ownedCharacterSourceId(characterId,character));
+  refs.original=structuredCloneSafe(character);
+  refs.verifiedOwner=true;
+  const privateSnapshot=await transaction.get(refs.private);
+  refs.privateExists=privateSnapshot.exists();
+  refs.privateData=refs.privateExists?privateSnapshot.data():null;
+  if(!refs.privateExists) throw new Error('The other character owner record is unavailable. No items or currency were moved.');
+  if(refs.privateData.ownerUid!==character.ownerUid) throw new Error('The other character owner record does not match.');
+  const encounterSnapshot=await transaction.get(doc(db,'campaigns',campaignId,'systems','encounter'));
+  refs.encounter=encounterSnapshot.exists()?encounterSnapshot.data():{status:'ready'};
+  Object.assign(character,reconcileCharacterSystems(character,buildTalentCatalog(character,context.catalog),{grantIncrease:true,encounter:refs.encounter}));
+}
+
+// Older, already-resolved item requests might predate atomic owner mirroring.
+// An acknowledgement may repair only gameplay fields; it must never copy
+// unrelated private profile, journal or account metadata over the owner.
+function repairLegacyTradeMirror(transaction,refs,character){
+  if(!refs.privateExists || !refs.privateData ||
+     Number(refs.privateData.coreRevision||0)>Number(character.coreRevision||0)) return;
+  const fields=['inventory','equipment','coins','coinPouch','quickSlots','actionLog','coreRevision'];
+  const patch={};
+  for(const key of fields) if(Object.hasOwn(character,key) && !isDeepStrictEqual(refs.privateData[key],character[key])) patch[key]=character[key];
+  if(Object.keys(patch).length) transaction.update(refs.private,{...patch,updatedAt:serverTimestamp()});
 }
 
 function writeLiveCharacter(transaction,refs,character){
@@ -748,6 +780,8 @@ const commands = {
         const sender=Object.assign({id:request.fromCharacterId},senderSnapshot.data());
         const recipientRefs={campaign:recipientRef,private:doc(db,'users',currentUser.uid,'characters',characterId)};
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,recipient,recipientRefs);
+        const senderRefs={campaign:senderRef};
+        await verifyLiveTradeCounterparty(transaction,campaignId,request.fromCharacterId,sender,senderRefs);
         let revealedItem=null;
         let receivedItem=null;
         let exchangeItem=null;
@@ -791,7 +825,7 @@ const commands = {
         }
         request.status=accepted?'accepted':'declined';request.recipientNotice='acknowledged';request.senderNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
-        transaction.set(senderRef,Object.assign({},structuredCloneSafe(sender),{updatedAt:serverTimestamp()}),{merge:true});
+        writeLiveCharacter(transaction,senderRefs,sender);
         writeLiveCharacter(transaction,recipientRefs,recipient);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
         return {revealedItem};
@@ -817,6 +851,8 @@ const commands = {
         const sender=Object.assign({id:characterId},senderSnapshot.data());
         const recipient=Object.assign({id:request.toCharacterId},recipientSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,sender,senderRefs);
+        const recipientRefs={campaign:recipientRef};
+        await verifyLiveTradeCounterparty(transaction,campaignId,request.toCharacterId,recipient,recipientRefs);
         let senderReceived=null;let recipientReceived=null;
         if(accepted){
           senderReceived=placeCharacterItem(sender,request.exchangeItem,{});
@@ -832,7 +868,7 @@ const commands = {
         request.status=accepted?'accepted':'declined';request.senderNotice='acknowledged';request.recipientNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:recipientReceived?{name:recipientReceived.name,qty:recipientReceived.qty}:null,exchangeItem:senderReceived?{name:senderReceived.name,qty:senderReceived.qty}:null};
         writeLiveCharacter(transaction,senderRefs,sender);
-        transaction.set(recipientRef,Object.assign({},structuredCloneSafe(recipient),{updatedAt:serverTimestamp()}),{merge:true});
+        writeLiveCharacter(transaction,recipientRefs,recipient);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
       return {ok:true};
@@ -879,7 +915,10 @@ const commands = {
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.senderNotice='acknowledged';request.senderAcknowledgedAt=new Date().toISOString();request.senderAcknowledgedBy=currentUser.uid;
-        transaction.set(refs.private,Object.assign({},structuredCloneSafe(character),{id:ownedCharacterSourceId(characterId,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        // New item transactions already mirror both owners immediately.
+        // For historic requests, repair only gameplay fields when the owner's
+        // stored revision is not newer than the campaign revision.
+        repairLegacyTradeMirror(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
       return {ok:true};
@@ -899,7 +938,10 @@ const commands = {
         const character=Object.assign({id:characterId},characterSnapshot.data());
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
         request.recipientNotice='acknowledged';request.recipientAcknowledgedAt=new Date().toISOString();request.recipientAcknowledgedBy=currentUser.uid;
-        transaction.set(refs.private,Object.assign({},structuredCloneSafe(character),{id:ownedCharacterSourceId(characterId,character),ownerUid:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
+        // New item transactions already mirror both owners immediately.
+        // For historic requests, repair only gameplay fields when the owner's
+        // stored revision is not newer than the campaign revision.
+        repairLegacyTradeMirror(transaction,refs,character);
         transaction.set(ecosystemRef,Object.assign({},ecosystem,{updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
       });
       return {ok:true};

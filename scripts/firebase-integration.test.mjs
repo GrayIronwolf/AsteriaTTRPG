@@ -193,6 +193,107 @@ test('give requests escrow once, require intended recipient and resolve once',as
   const a=(await db.doc('campaigns/c/characters/a').get()).data();const b=(await db.doc('campaigns/c/characters/b').get()).data();
   assert.equal(a.inventory.reduce((n,i)=>n+i.qty,0),1);assert.equal(b.inventory.reduce((n,i)=>n+i.qty,0),3);
 });
+test('Phase 1.2: accepting an item gift updates both owner mirrors before acknowledgement',async()=>{
+  await db.doc('users/alice/characters/a').update({journal:['Private sender journal']});
+  await db.doc('users/bob/characters/b').update({journal:['Private recipient journal']});
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  const done=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(done.ok,true,done.error);
+  for(const [id,uid] of [['a','alice'],['b','bob']]){
+    const campaign=(await db.doc(`campaigns/c/characters/${id}`).get()).data();
+    const owner=(await db.doc(`users/${uid}/characters/${id}`).get()).data();
+    assert.deepEqual(owner.inventory,campaign.inventory,`${id}: inventory mirrored`);
+    assert.equal(owner.coreRevision,campaign.coreRevision,`${id}: revision mirrored`);
+    assert.deepEqual(owner.journal,[`Private ${id==='a'?'sender':'recipient'} journal`]);
+  }
+  const second=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(second.ok,false);
+});
+
+test('Phase 1.2: trade finalize synchronizes both players and rejects replay',async()=>{
+  const bob=(await db.doc('campaigns/c/characters/b').get()).data();
+  bob.inventory.push({id:'token',instanceId:'token',name:'Moon Token',qty:1,marketValue:2,marketPrice:5,storageId:'bag',storageSlot:1});
+  await db.doc('campaigns/c/characters/b').set(bob);
+  await db.doc('users/bob/characters/b').set(bob);
+  const offer=await action('alice','createLiveItemRequest',['c','a','b','sword','trade',{quantity:1}]);
+  assert.equal(offer.ok,true,offer.error);
+  const ready=await action('bob','respondLiveItemRequest',['c','b',offer.request.id,true,{exchangeItemId:'token',exchangeQuantity:1}]);
+  assert.equal(ready.ok,true,ready.error);assert.equal(ready.awaitingSender,true);
+  const afterReady=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.deepEqual((await db.doc('users/bob/characters/b').get()).data().inventory,afterReady.inventory);
+  const final=await action('alice','finalizeLiveItemTrade',['c','a',offer.request.id,true]);
+  assert.equal(final.ok,true,final.error);
+  for(const [id,uid] of [['a','alice'],['b','bob']]){
+    const shared=(await db.doc(`campaigns/c/characters/${id}`).get()).data();
+    const privateCopy=(await db.doc(`users/${uid}/characters/${id}`).get()).data();
+    assert.deepEqual(privateCopy.inventory,shared.inventory);
+    assert.equal(privateCopy.coreRevision,shared.coreRevision);
+  }
+  const sender=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sender.inventory.some(item=>item.name==='Moon Token'),true);
+  assert.equal((await action('alice','finalizeLiveItemTrade',['c','a',offer.request.id,true])).ok,false);
+});
+
+test('Phase 1.2: selling to another player moves currency and items in one transaction',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','sell',{quantity:1,priceCopper:50}]);
+  assert.equal(created.ok,true,created.error);
+  const result=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(result.ok,true,result.error);
+  const total=coins=>Object.entries({royal_platinum:10000000000,royal_crown:100000000,platinum_crown:1000000,gold:10000,silver:100,copper:1}).reduce((sum,[unit,value])=>sum+Number(coins?.[unit]||0)*value,0);
+  for(const [id,uid,wallet] of [['a','alice',150],['b','bob',50]]){
+    const shared=(await db.doc(`campaigns/c/characters/${id}`).get()).data();
+    const owner=(await db.doc(`users/${uid}/characters/${id}`).get()).data();
+    assert.deepEqual(owner.inventory,shared.inventory);
+    assert.deepEqual(owner.coins,shared.coins);
+    assert.equal(total(shared.coins),wallet);
+  }
+});
+
+test('Phase 1.2: full recipient storage rejects a gift without partial item or currency changes',async()=>{
+  for(const id of ['campaigns/c/characters/b','users/bob/characters/b']){
+    const stored=(await db.doc(id).get()).data();
+    await db.doc(id).update({
+      storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}],
+      inventory:stored.inventory.map(item=>({...item,stackable:false}))
+    });
+  }
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  const before=[];
+  for(const id of ['campaigns/c/characters/a','users/alice/characters/a','campaigns/c/characters/b','users/bob/characters/b'])
+    before.push((await db.doc(id).get()).data());
+  const response=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(response.ok,false);
+  for(const [i,id] of ['campaigns/c/characters/a','users/alice/characters/a','campaigns/c/characters/b','users/bob/characters/b'].entries())
+    assert.deepEqual((await db.doc(id).get()).data(),before[i],`untouched ${id}`);
+  const request=(await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0];
+  assert.equal(request.status,'pending');
+});
+
+test('Phase 1.2: missing or mismatched counterparty owner prevents cross-account transfer',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  await db.doc('users/alice/characters/a').delete();
+  const result=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(result.ok,false);
+  assert.equal((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().playerItemRequests[0].status,'pending');
+  assert.equal((await db.doc('campaigns/c/characters/b').get()).data().inventory.reduce((n,i)=>n+i.qty,0),2);
+});
+
+test('Phase 1.2: trade result acknowledgement never overwrites private character profile',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  const received=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}]);
+  assert.equal(received.ok,true,received.error);
+  await db.doc('users/alice/characters/a').update({name:'Private Forge Name',journal:['Owner notes']});
+  const acknowledgment=await action('alice','acknowledgeLiveItemRequest',['c','a',created.request.id]);
+  assert.equal(acknowledgment.ok,true,acknowledgment.error);
+  const owner=(await db.doc('users/alice/characters/a').get()).data();
+  assert.equal(owner.name,'Private Forge Name');
+  assert.deepEqual(owner.journal,['Owner notes']);
+});
+
 test('invitation preview discloses a summary; valid join grants membership',async()=>{
   const preview=await accessInvite(db,'eve','123456789012',false);assert.deepEqual(Object.keys(preview).sort(),['id','name','ucn']);
   assert.equal((await db.doc('campaigns/c').get()).data().playerUids.includes('eve'),false);
