@@ -72,5 +72,12 @@
     "active": "in-app-notifications-only",
     "emailInvitations": "deferred",
     "resendRequired": false
+  },
+  "inAppCanary": {
+    "enabled": true,
+    "mode": "test-only",
+    "queryParameter": "campaign-inapp-canary",
+    "migrationAllowed": false,
+    "emailAllowed": false
   }
 }
