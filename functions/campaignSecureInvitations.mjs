@@ -1,4 +1,5 @@
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
+import {enqueueCampaignNotification} from './campaignNotifications.mjs';
 
 // Phase 6.1: issuance and pure validation only. No join, approval,
 // member/character changes, delivery, or browser-manageable invitation data.
@@ -181,6 +182,14 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
       lastSentAt:null,deliveryStatus:null,revision:1
     };
     tx.create(invitationRef,recordValue);
+    // The token is never persisted or delivered through the inbox.
+    // A recipient-bound notification is sufficient to use the separate
+    // authenticated in-app claim action after server-side revalidation.
+    if(bindingKind==='friend-account'&&options.notificationsEnabled===true)
+      enqueueCampaignNotification(tx,db,boundUid,{
+        campaignId,campaignName:campaign.name,kind:'friend-invitation',
+        eventKey:'friend-invitation:'+campaignId+':'+inviteId,inviteId
+      },now);
     tx.create(indexRef,{inviteId,campaignId,createdAt:now});
     tx.set(throttleRef,throttle);
     tx.create(auditRef,{
@@ -190,6 +199,34 @@ export async function issueSecureCampaignInvitation(db,actorUid,{
     });
     return {...safeSummary(recordValue,false),token};
   });
+}
+
+
+/**
+ * In-app invitation validation for the *exact* account to which the GM
+ * issued a friend-account invitation. No token appears in notifications.
+ * Caller must also prove the signed-in UID owns its server-authored inbox
+ * notice and pass the live friend/block/identity check in the SAME request.
+ * Never accepts general share-links or email invites without a bearer token.
+ */
+export function assertNotifiedFriendInvitationEligible(invite,{
+  campaignId,inviteId,claimantUid,now=new Date()
+}={}){
+  if(!record(invite)||!validId(campaignId)||!DIGEST.test(inviteId)||
+     !validId(claimantUid)||invite.campaignId!==campaignId||
+     invite.inviteId!==inviteId||invite.bindingKind!=='friend-account'||
+     invite.friendAccountBound!==true||invite.recipientUid!==claimantUid||
+     invite.type!=='share-link'||invite.recipientEmailNormalized!==null||
+     invite.roleOffered!=='player'||invite.requiresGMApproval!==true||
+     invite.maxUses!==1||!DIGEST.test(invite.tokenDigest)||
+     !Number.isSafeInteger(invite.usedCount)||invite.usedCount<0||
+     invite.usedCount>=invite.maxUses||invite.status!=='active')
+    throw invalid();
+  const instant=dateValue(now),expiration=dateValue(invite.expiresAt);
+  if(!Number.isFinite(instant.getTime())||!Number.isFinite(expiration.getTime())||
+     instant>=expiration)throw invalid();
+  return {campaignId,inviteId,roleOffered:'player',requiresGMApproval:true,
+    maxUses:1,usedCount:invite.usedCount};
 }
 
 /**
