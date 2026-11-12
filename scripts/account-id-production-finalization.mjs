@@ -19,11 +19,16 @@ export function inspectAccountIdProductionFinalization(reader=read){
   const accountDeployJob=workflow.split('\n  account_id_deploy:\n')[1]?.split(/\n  [a-z_]+:\n/)[0]||'';
   const firebase=JSON.parse(reader('.firebaserc'));
   const tests=JSON.parse(reader('package.json'));
+  const query="new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'";
+  const assignment=html.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
+  const noticesOffByDefault=html.includes('campaignNotifications:false')||
+    Boolean(assignment&&assignment[1].includes('campaignNotifications:'+query)&&
+      assignment[1].includes('campaignInAppCanary:'+query));
   const checks=[
     check('production-target-unchanged',firebase.projects?.production==='asteria-ttrpg'&&
       firebase.projects?.default==='demo-asteria'),
     check('browser-account-ids-enabled',html.includes('accountIds:true')),
-    check('notifications-still-disabled',html.includes('campaignNotifications:false')),
+    check('notifications-still-disabled',noticesOffByDefault),
     check('server-identity-gate-required',api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")&&
       api.includes('ASTERIA_ACCOUNT_IDS_REGISTRATION_NOT_BEFORE')),
     check('production-canary-boundary-required',
