@@ -18,7 +18,7 @@ test('production callable entrypoint uses no email provider or Resend secret',()
  assert.doesNotMatch(src,/ASTERIA_RESEND_API_KEY|asteriaResendApiKeySecret|export const asteriaCampaignEmailInvitations=/);
  assert.match(src,/export const asteriaCampaignNotifications=onCall/);
  assert.match(src,/action==='issue-friend'/);
- assert.match(src,/AST.ERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'/);
+ assert.match(src,/ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'/);
  assert.match(src,/action\.endsWith\('-notification'\)/);
  assert.match(src,/notificationOnly:noticeOnly/);
  assert.match(src,/token:discardedToken/);
