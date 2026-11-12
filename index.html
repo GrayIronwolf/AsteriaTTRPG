@@ -37,6 +37,7 @@
 <script src="js/asteria-home-guard.js?v=home-startup-v2"></script>
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
   <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=hero-sharp-20261111">
+  <link rel="stylesheet" href="css/asteria-mobile-header-stability.css?v=mobile-first-paint-20261112">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -66,17 +67,17 @@
     </a>
     <nav id="globalNavigation" class="asteria-main-navigation" aria-label="Main navigation">
       <div class="compendium-split">
-        <a id="compendiumIndexButton" class="crystal-button" href="#/compendium">Asteria Compendium</a>
-        <button id="compendiumQuickToggle" class="crystal-button crystal-arrow" type="button" aria-label="Open Compendium quick navigation" aria-expanded="false" aria-controls="compendiumQuickMenu">▾</button>
+        <a id="compendiumIndexButton" class="crystal-button asteria-menu-button" data-asteria-button-size="long" href="#/compendium">Asteria Compendium</a>
+        <button id="compendiumQuickToggle" class="crystal-button crystal-arrow asteria-menu-button" data-asteria-button-size="icon" type="button" aria-label="Open Compendium quick navigation" aria-expanded="false" aria-controls="compendiumQuickMenu">▾</button>
         <div id="compendiumQuickMenu" class="compendium-quick-menu" hidden aria-label="Compendium quick navigation"></div>
       </div>
-      <button id="characterForgeTop" class="crystal-button" type="button">Character Forge</button>
-      <button id="campaignsTop" class="crystal-button" type="button">Campaign Forge</button>
+      <button id="characterForgeTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" type="button">Character Forge</button>
+      <button id="campaignsTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" type="button">Campaign Forge</button>
     </nav>
     <div class="top-actions">
       <div id="accountControls" class="asteria-account-controls">
         <div class="asteria-account-menu-wrap" id="accountMenuWrap">
-          <button id="loginToggle" class="crystal-button" type="button" onclick="setView('loginPage')">Login</button>
+          <button id="loginToggle" class="crystal-button asteria-menu-button" data-asteria-button-size="small" type="button" onclick="setView('loginPage')">Login</button>
           <div id="accountQuickMenu" class="asteria-account-menu" role="menu" aria-label="Account navigation" hidden>
             <div class="asteria-account-menu-group" role="group" aria-label="Profile and preferences">
               <p class="asteria-account-menu-heading" aria-hidden="true">Account</p>
@@ -100,7 +101,7 @@
           </div>
         </div>
       </div>
-      <button id="settingsToggle" class="hamburger crystal-button crystal-icon" type="button" title="Navigation" aria-label="Open main navigation" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
+      <button id="settingsToggle" class="hamburger crystal-button crystal-icon asteria-menu-button" data-asteria-button-size="icon" type="button" title="Navigation" aria-label="Open main navigation" aria-controls="settingsPanel" aria-expanded="false"><span></span><span></span><span></span></button>
       <div id="asteriaHeaderProfile" class="asteria-header-profile" hidden aria-label="Signed-in account">
         <button id="asteriaHeaderAvatarButton" type="button" aria-label="Open My Profile">
           <span id="asteriaHeaderAvatarFallback" aria-hidden="true">A</span>
@@ -179,8 +180,8 @@
         <h2>Asteria</h2>
         <p>Discover a dark fantasy world of realms, races, classes, magic and adventure.</p>
         <div class="hero-actions">
-          <button class="primary" data-view="workspace" data-workspace-section="World, Realms &amp; Planes">Explore the World</button>
-          <button class="outline" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button>
+          <button class="primary asteria-menu-button" data-asteria-button-size="long" data-view="workspace" data-workspace-section="World, Realms &amp; Planes">Explore the World</button>
+          <button class="outline asteria-menu-button" data-asteria-button-size="long" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button>
         </div>
       </div>
     </section>
