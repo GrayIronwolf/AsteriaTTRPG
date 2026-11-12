@@ -158,7 +158,7 @@
     overlay.addEventListener('keydown',event=>{
       if(event.key==='Escape'){event.preventDefault();close();return;}
       // Dedicated pages are not modal dialogs; keep normal document tab order.
-      if(event.key!=='Tab'||overlay.closest('#asteriaFriendsPage'))return;
+      if(event.key!=='Tab'||overlay.closest?.('#asteriaFriendsPage'))return;
       const items=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')]
         .filter(item=>item.getClientRects().length);
       if(!items.length)return;
