@@ -50,7 +50,7 @@
     "test:compendium": "node --test scripts/compendium.test.mjs scripts/compendium-loading.test.mjs scripts/approved-vault-bridge.test.mjs",
     "test:startup:browser": "node scripts/test-startup-browser.cjs",
     "test:ui": "node --test scripts/ui-foundations.test.mjs scripts/theme-materials.test.mjs scripts/menu-press.test.mjs scripts/button-size-families.test.mjs scripts/button-slice.test.mjs scripts/loading-speed.test.mjs scripts/dashboard-panel-interactions.test.mjs scripts/dashboard-frame-stacking.test.mjs scripts/dashboard-responsive-content.test.mjs scripts/dashboard-spacing-responsive.test.mjs scripts/dashboard-editor-usability.test.mjs scripts/phase7-mobile-acceptance.test.mjs scripts/phase7-update3.test.mjs scripts/phase7-update4.test.mjs scripts/phase7-tablet-desktop.test.mjs scripts/dashboard-performance.test.mjs scripts/phase5-performance.test.mjs scripts/phase4-website-polish.test.mjs scripts/phase5-website-audit.test.mjs scripts/phase5-typography-refinements.test.mjs scripts/phase6-live-usability.test.mjs scripts/phase6-appearance-sync.test.mjs scripts/royal-relic-materials.test.mjs scripts/royal-crystal-theme.test.mjs && node --test scripts/player-hud-artwork.test.mjs && node --test scripts/campaign-artwork.test.mjs && node --test scripts/header-home-snowstorm.test.mjs",
-    "test:navigation": "node --test scripts/navigation-library.test.mjs scripts/home-startup.test.mjs",
+    "test:navigation": "node --test scripts/navigation-library.test.mjs scripts/home-startup.test.mjs && npm run test:mobile-header",
     "audit:production": "npm audit --omit=dev --audit-level=moderate",
     "test:campaign-interface": "node --test scripts/campaign-connection-phase8-1.test.mjs && node --check js/campaign-notifications-ui.js && node --check js/campaign-roster-view.js && node --check js/clean-compendium.js",
     "test:campaign-migration": "node --test scripts/campaign-migration-phase8-2.test.mjs",
@@ -92,7 +92,8 @@
     "test:campaign-notification-only": "node --test scripts/campaign-notification-only.test.mjs",
     "test:campaign-inapp": "node --test scripts/campaign-inapp-coordinated-release.test.mjs && node scripts/campaign-inapp-coordinated-release.mjs --check",
     "test:campaign-inapp-canary": "node --test scripts/campaign-inapp-live-canary-release.test.mjs && node scripts/campaign-inapp-live-canary-release.mjs --check",
-    "test:friends-complete-live": "node --test scripts/friends-live-activation.test.mjs && node scripts/friends-live-activation.mjs --check"
+    "test:friends-complete-live": "node --test scripts/friends-live-activation.test.mjs && node scripts/friends-live-activation.mjs --check",
+    "test:mobile-header": "node --test scripts/mobile-header-first-paint.test.mjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
