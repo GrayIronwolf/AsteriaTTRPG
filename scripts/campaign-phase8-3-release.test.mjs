@@ -30,7 +30,7 @@ test('source guard fails when a website feature flag becomes active',()=>{
   const state=inspectPhase83Source(path=>{
     const value=readFileSync(new URL('../'+path,import.meta.url),'utf8');
     return path==='index.html'?
-      value.replace('campaignNotifications:false','campaignNotifications:true'):value;
+      value.replace("campaignNotifications:new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'",'campaignNotifications:true'):value;
   });
   assert.equal(state.staticChecksPassed,false);
   assert.ok(state.checks.some(x=>x.id==='website-flags-remain-off'&&!x.pass));
