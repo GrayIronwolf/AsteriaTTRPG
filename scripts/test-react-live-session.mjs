@@ -285,10 +285,12 @@ test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage he
   assert.match(inventory, /react-inventory-item-grid.*view/);
 });
 
-test('30. Player item requests use one canonical live record collection', () => {
+test('30. Player item requests use participant-restricted Firestore documents', () => {
   const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const fixture = read('src/devFixtures.js');
-  assert.match(firebase, /ecosystem\.playerItemRequests/);
+  assert.match(firebase, /itemRequestRef\(campaignId/);
+  assert.match(firebase, /where\('fromOwnerUid'/);
+  assert.match(firebase, /where\('toOwnerUid'/);
   assert.match(fixture, /playerItemRequests:\[\]/);
   assert.match(firebase, /player-request-escrow/);
   assert.match(firebase, /senderNotice\s*=\s*'unread'/);
