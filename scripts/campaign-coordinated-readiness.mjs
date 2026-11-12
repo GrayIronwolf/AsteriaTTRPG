@@ -8,6 +8,7 @@ import {readFileSync,appendFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readManifest,checkWebsite} from './asteria-release-source.mjs';
+import {firebaseRulesParity} from './firebase-rules-parity.mjs';
 import {inspectPhase83Source} from './campaign-phase8-3-release.mjs';
 
 export const FLAG_OWNERS = Object.freeze({
@@ -133,9 +134,10 @@ export function evaluateProductionSnapshot(snapshot,{manifest=readManifest(),fir
     const rule=snapshot.rules?.[name];
     const files=rule?.source?.files;
     const known=Array.isArray(files)&&files.length>0;
-    const matches=known&&files.some(f=>f?.content===localSource);
-    rules[name]=matches?'matches-checked-in-source':known?'DIFFERENT FROM SOURCE':'NOT VERIFIED';
-    if(!matches)blockers.push('Live '+name+' Rules do not have verified source parity.');
+    const matches=known?files.map(f=>firebaseRulesParity(f?.content,localSource)):[];
+    const matched=matches.find(status=>status.startsWith('matches-'));
+    rules[name]=matched||(known?'DIFFERENT FROM SOURCE':'NOT VERIFIED');
+    if(!matched)blockers.push('Live '+name+' Rules do not have verified source parity.');
   }
   // Metadata-only audits can NEVER establish safe rollback or an owner-approved migration.
   blockers.push('Production backup + isolated restore not independently verified.');

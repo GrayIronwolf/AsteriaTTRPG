@@ -111,6 +111,30 @@ test('unknown flags and disabled critical flags block release independently',()=
  assert.ok(report.blockers.some(s=>s.includes('AST.ERIA_')===false&&s.includes('ASTERIA_JOIN_REVIEW_ENABLED')));
  assert.ok(report.blockers.some(s=>s.includes('ASTERIA_SECURE_INVITATIONS_ENABLED')));
 });
+test('formatting-only changes in production rules are distinguished from permission drift',()=>{
+  const data=snapshot();
+  const source=read('storage.rules');
+  data.rules.storage.source.files[0].content='\n\n'+source
+    .replace('service firebase.storage {','service  firebase.storage\n{')
+    .replace('    // Private account profile photo; only the authenticated owner can read,\n    // create, replace or remove this fixed-path 512px cropped WEBP.\n','');
+  const result=evaluateProductionSnapshot(data);
+  assert.equal(result.rules.storage,'matches-source-ignoring-formatting-and-comments');
+  assert.equal(result.rules.firestore,'matches-checked-in-source');
+  assert.equal(result.blockers.some(x=>x.includes('storage Rules do not have')),false);
+  assert.equal(result.releaseDecision,'NO-GO');
+  for(const change of [
+    source.replace('request.auth.uid == uid','request.auth.uid != uid'),
+    source.replace("member.get('status', '') == 'active'","member.get('status', '') == 'banned'"),
+    source.replace('request.resource.size <= 2 * 1024 * 1024','request.resource.size <= 20 * 1024 * 1024'),
+    source.replace('allow read, delete: if request.auth != null','allow read, delete: if true')
+  ]){
+    const changed=snapshot();
+    changed.rules.storage.source.files[0].content=change;
+    assert.equal(evaluateProductionSnapshot(changed).rules.storage,'DIFFERENT FROM SOURCE');
+    assert.ok(evaluateProductionSnapshot(changed).blockers.some(x=>x.includes('storage Rules do not have')));
+  }
+});
+
 test('rules mismatch, unreadable backups and unknown signing secret remain NO-GO',()=>{
  const data=snapshot();
  data.rules.storage.source.files[0].content='rules_version = "2";';
