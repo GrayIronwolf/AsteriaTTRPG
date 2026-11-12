@@ -71,8 +71,8 @@ test('request manager exists in the Friends dialog and is disabled by default fo
     'accountFriendsOutgoingTab','accountFriendsRequestsRefresh',
     'accountFriendsRequestList','accountFriendsRequestsMore'])
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
-  assert.match(html,/friendRequestsEnabled:new URLSearchParams\(window\.location\.search\)\.get\('friends-requests-canary'\)==='1'/);
-  assert.doesNotMatch(html,/friendRequestsEnabled:true/);
+  assert.match(html,/friendRequestsEnabled:true/);
+  assert.doesNotMatch(html,/friendRequestsEnabled:new URLSearchParams/);
   assert.match(html,/role="tablist"/);
   assert.match(html,/role="tabpanel"/);
   assert.match(html,/asteria-friend-requests\.js\?v=friends-phase2-3/);
