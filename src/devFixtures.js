@@ -228,6 +228,7 @@ export function installDevFixtures() {
     subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
+    syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
     saveGMWorkspace: async (_campaignId,patch) => { gmWorkspace={...(gmWorkspace||{}),...clone(patch),version:'asteria-react-gm-workspace-v1'};notify('gmWorkspace');return {ok:true}; },
