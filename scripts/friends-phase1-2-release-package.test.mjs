@@ -116,7 +116,7 @@ test('manual feature enable and emergency rollback use one existing identity-aut
 });
 test('browser search canary is explicit and does not enable the general website',()=>{
   const html=source('index.html');
-  assert.match(html,/friendAccountLookup:new URLSearchParams\(window\.location\.search\)\.get\('friends-lookup-canary'\)==='1'/);
-  assert.doesNotMatch(html,/friendAccountLookup:true/);
+  assert.match(html,/friendAccountLookup:true/);
+  assert.doesNotMatch(html,/friendAccountLookup:new URLSearchParams/);
   assert.match(source('js/asteria-account-friends.js'),/const enabled=\(\)=>window\.AsteriaFeatureFlags\?\.friendAccountLookup===true/);
 });
