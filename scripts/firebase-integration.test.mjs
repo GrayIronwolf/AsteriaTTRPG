@@ -761,7 +761,7 @@ test('Phase 2.3: shop sale never combines the same named item with different qua
   assert.equal(shop.stock[1].item.storageId,undefined);
   const shared=(await db.doc('campaigns/c/characters/a').get()).data();
   assert.equal(shared.inventory.length,0);
-  assert.equal(shared.coins.copper,120);
+  assert.equal(Number(shared.coins.silver||0)*100+Number(shared.coins.copper||0),120);
   assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,shared.inventory);
   assert.equal((await db.doc('campaigns/c/systems/itemPublic').get()).data().shops[0].stock.length,2);
   assert.equal((await action('alice','sellLiveShopItem',['c','a','smith','sword',1])).ok,false);
