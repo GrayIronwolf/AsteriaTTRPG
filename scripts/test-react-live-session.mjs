@@ -25,6 +25,7 @@ import {
   normalizeDashboardPreferences,
   normalizeLiveItem,
   stackableStorageItem,
+  storageSlotLayout,
   talentRankCost
 } from '../src/state/liveWorkspaceModel.mjs';
 import { buildReactRoute, parseReactRoute } from '../src/app/asteriaRoutes.mjs';
@@ -285,6 +286,38 @@ test('29. Bag inventory follows fixed slots, auto-stacking, and blank storage he
   assert.match(inventory, /react-inventory-item-grid.*view/);
 });
 
+test('65. Storage layouts show overflow without losing or modifying item stacks', () => {
+  const items=[
+    {id:'a',name:'Sword',storageSlot:0,qty:1},
+    {id:'b',name:'Gem',storageSlot:0,qty:3},
+    {id:'c',name:'Apple',storageSlot:21,qty:4},
+    {id:'d',name:'Bread',storageSlot:null,qty:5}
+  ];
+  const before=JSON.stringify(items);
+  const layout=storageSlotLayout(items,{id:'bag',rows:1,cols:2,maxSlots:2});
+  assert.equal(layout.capacity,2);
+  assert.equal(layout.slots.length,2);
+  assert.equal(layout.slots[0].id,'a');
+  assert.equal(layout.slots[1].id,'c');
+  assert.deepEqual(layout.overflow.map(item=>item.id),['d','b']);
+  assert.deepEqual(new Set([...layout.slots.filter(Boolean),...layout.overflow].map(item=>item.id)),new Set(['a','b','c','d']));
+  assert.equal(JSON.stringify(items),before);
+  const full=storageSlotLayout(items,{id:'bag',rows:1,cols:1,maxSlots:1});
+  assert.equal(full.used,1);
+  assert.equal(full.overflow.length,3);
+});
+
+test('66. Storage controls expose rename, split, tap placement, full and overflow UI', () => {
+  const inventory=read('src/dashboards/InventoryWorkspace.jsx');
+  const css=read('src/styles/asteria-react.css');
+  const server=read('functions/commands.mjs');
+  for(const value of ['rename-storage','split-stack','move-storage','storageSlotLayout','react-storage-overflow-items','react-storage-swap-target','react-storage-place-target'])
+    assert.match(inventory+css+server,new RegExp(value));
+  assert.match(inventory,/Select an item and move it to another container/);
+  assert.match(server,/expectedQuantity/);
+  assert.match(server,/expectedStorageSlot/);
+});
+
 test('30. Player item requests use participant-restricted Firestore documents', () => {
   const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const fixture = read('src/devFixtures.js');
@@ -529,7 +562,7 @@ test('53. Optional HUD fields persist without allowing essential information to 
   const information = read('src/components/DashboardInformation.jsx');
   assert.match(read('src/dashboards/PlayerDashboardOverview.jsx'), /hiddenInformationFields\.includes\('currency'\)/);
   assert.match(information, /hiddenInformationFields\.includes\('campaignDetails'\)/);
-  assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS[\s\S]*'name'/);
+  assert.doesNotMatch(read('src/state/liveWorkspaceModel.mjs'), /OPTIONAL_INFORMATION_FIELDS\s*=\s*\[[^\]]*'name'/);
 });
 
 test('54. React snapshots are isolated from mutable legacy dashboard helpers', () => {

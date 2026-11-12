@@ -1185,6 +1185,87 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   font-size: .72rem;
 }
 
+/* Phase 2.1: compact container controls and lossless overflow visibility. */
+.react-storage-rename {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  margin: 5px 0 10px;
+}
+.react-storage-rename label,
+.react-storage-item-actions label {
+  display: grid;
+  gap: 3px;
+  font-size: .68rem;
+}
+.react-storage-rename input,
+.react-storage-item-actions select,
+.react-storage-item-actions input {
+  min-height: 36px;
+  width: 100%;
+}
+.react-storage-rename button,
+.react-storage-item-actions button { min-height: 36px; }
+.react-storage-item-actions {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(125px, 1fr) auto minmax(80px, .55fr) auto;
+  align-items: end;
+  gap: 8px;
+  margin: 10px 0 5px;
+  padding: 10px;
+  border: 1px solid rgba(75,147,195,.28);
+  background: rgba(0,0,0,.22);
+}
+.react-storage-item-actions > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  align-self: center;
+  font-size: .78rem;
+}
+.react-storage-item-actions > small {
+  grid-column: 1 / -1;
+  opacity: .72;
+  font-size: .66rem;
+}
+.react-storage-place-target {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(75,147,195,.42);
+  background: transparent;
+  color: var(--asteria-text,#f7ead1);
+  cursor: pointer;
+}
+.react-storage-place-target span { display: block; font-size: .6rem; }
+.react-storage-swap-target {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  right: 3px;
+  z-index: 2;
+  min-height: 23px;
+  padding: 2px 4px;
+  font-size: .6rem;
+  cursor: pointer;
+}
+.react-storage-overflow { margin-top: 8px; }
+.react-storage-overflow-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 6px;
+  margin: 8px 0;
+}
+.react-storage-overflow-items .react-inventory-item-card {
+  width: 64px;
+  height: 92px;
+}
+@media (max-width: 720px) {
+  .react-storage-item-actions { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .react-storage-item-actions > b { grid-column: 1 / -1; }
+}
+
 .react-storage-cell {
   position: relative;
   display: grid;
