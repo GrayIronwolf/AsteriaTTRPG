@@ -74,7 +74,19 @@
   function campaignsForCharacter(id){
     return array(window.campaigns).filter(campaign => campaignCharacterIds(campaign).includes(id));
   }
+  function isServerOwnedCharacter(id=currentId()){
+    const record=character(id);
+    return Boolean(window.AsteriaFirebase?.getUser?.()?.uid &&
+      (record?.sharedCampaignId||record?.campaignId||
+       (Array.isArray(record?.linkedCampaignIds)&&record.linkedCampaignIds.length)));
+  }
+  function rejectLegacyMutation(id=currentId()){
+    if(!isServerOwnedCharacter(id))return false;
+    window.toast?.('Use the live character dashboard for inventory and reward actions.');
+    return true;
+  }
   function persistCharacter(id, reason = 'inventory-workflow'){
+    if(rejectLegacyMutation(id))return Promise.resolve(false);
     const item = character(id);
     if(!item) return Promise.resolve(false);
     const writes = [];
@@ -92,6 +104,7 @@
     return Promise.all(writes).then(results => results.every(result => result !== false));
   }
   function persistCampaign(campaign, reason = 'campaign-inventory-workflow'){
+    if(window.AsteriaFirebase?.getUser?.()?.uid&&campaign?.id)return false;
     if(!campaign?.id) return;
     window.saveAsteriaState?.();
     window.AsteriaFirebase?.saveCampaign?.(campaign.id, campaign);
@@ -194,6 +207,7 @@
     return null;
   }
   function placeInBag(itemId, bagId, slotNumber, id = currentId(), quantity){
+    if(rejectLegacyMutation(id))return false;
     const record = ensureInventory(id);
     const item = findItem(itemId, id);
     const bag = record?.bags?.find(candidate => candidate.id === bagId);
@@ -222,6 +236,7 @@
     return true;
   }
   function equipItem(itemId, slot, id = currentId(), options = {}){
+    if(rejectLegacyMutation(id))return false;
     const record = ensureInventory(id);
     const item = findItem(itemId, id);
     if(!record || !item || !slot) return false;
@@ -254,6 +269,7 @@
     return true;
   }
   function unequipItem(itemId, id = currentId()){
+    if(rejectLegacyMutation(id))return false;
     const record = ensureInventory(id);
     const item = findItem(itemId, id);
     if(!record || !item) return false;
@@ -274,6 +290,7 @@
     return true;
   }
   function addSnapshot(snapshot, id = currentId(), bagId, slotNumber, options = {}){
+    if(rejectLegacyMutation(id))return false;
     const record = ensureInventory(id);
     if(!record || !snapshot) return null;
     let item = record.inventory.find(existing => existing.id === snapshot.id && (!existing.definitionId || !snapshot.definitionId || existing.definitionId === snapshot.definitionId) && !existing.equipped);
@@ -462,6 +479,7 @@
     }));
   }
   async function sendGMReward(){
+    if(window.AsteriaFirebase?.getUser?.()?.uid)return window.toast?.('Issue campaign rewards from the live GM dashboard.');
     const campaign = activeCampaign();
     const ids = Array.from(document.querySelectorAll('[data-reward-character]:checked')).map(input => input.value);
     const quantity = Number(document.getElementById('gmRewardQuantity')?.value);
@@ -548,6 +566,7 @@
     modal?.setAttribute('aria-busy', disabled ? 'true' : 'false');
   }
   async function resolveReward(id, reward, action, slot){
+    if(rejectLegacyMutation(id))return false;
     const record = character(id);
     const rewardId = String(reward?.id || '');
     if(!record || !rewardId || resolvingRewardIds.has(rewardId)) return false;

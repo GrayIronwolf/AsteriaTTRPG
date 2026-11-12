@@ -344,6 +344,18 @@ service cloud.firestore {
       // Trade terms and escrowed item details are not campaign-wide information.
       // Legacy trade arrays remain GM-readable for server migration, but players
       // only receive the sanitized public shop projection and their own requests.
+      // Individual shop documents replace the oversized public shop array.
+      // Gameplay and GM edits go through trusted Firebase transactions only.
+      match /shops/{shopId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
+      // Saved reward templates are private campaign GM data.
+      match /rewardBundles/{bundleId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+
       match /itemRequests/{requestId} {
         allow get, list: if isCampaignGM(campaignId) || (
           canUseCampaignSystems(campaignId) &&

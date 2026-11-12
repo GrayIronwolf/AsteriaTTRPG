@@ -137,7 +137,7 @@ test('new shop modifiers are blank, decimal typing survives, and saved modifiers
   for(const label of ['Buy Modifier','Sell Modifier'])assert.equal(field(view,label).props.value,'');
   input(view,'Name','Shop');await button(view,'Create Shop').props.onClick();assert.equal(writes.length,0);
   input(view,'Buy Modifier','0.');assert.equal(field(view,'Buy Modifier').props.value,'0.');input(view,'Buy Modifier','0.25');input(view,'Sell Modifier','1.5');
-  await button(view,'Create Shop').props.onClick();assert.equal(writes[0][1].shop.buyModifier,0.25);assert.equal(writes[0][1].shop.sellModifier,1.5);
+  await button(view,'Create Shop').props.onClick();assert.equal(writes[0][1],'gm-scope');assert.equal(writes[0][2].shop.buyModifier,0.25);assert.equal(writes[0][2].shop.sellModifier,1.5);
 });
 test('campaign player limit keeps saved value and rejects blank before any write',async()=>{
   const writes=[];window.AsteriaFirebase.updateCampaignDetails=async(...args)=>{writes.push(args);return {ok:true};};

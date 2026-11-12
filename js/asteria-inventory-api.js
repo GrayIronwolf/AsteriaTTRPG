@@ -290,6 +290,7 @@
       && JSON.stringify(left.enchantments || []) === JSON.stringify(right.enchantments || []);
   }
   function persistCharacter(id = currentId(), reason = 'inventory-change'){
+    if(isServerOwnedCharacter(id))return false;
     const record = character(id);
     if(!record) return false;
     window.saveAccountState?.();
@@ -303,6 +304,7 @@
     return true;
   }
   function persistCampaign(campaign = activeCampaign(), reason = 'item-ecosystem-change'){
+    if(window.AsteriaFirebase?.getUser?.()?.uid&&campaign?.id)return false;
     if(!campaign) return false;
     window.saveAsteriaState?.();
     window.AsteriaDataSync?.scheduleSave?.(reason);
@@ -672,6 +674,26 @@
     return true;
   }
 
+  // Live campaign inventory is authoritative in Firestore. These static
+  // helpers remain for standalone character editing and catalog lookups only.
+  function isServerOwnedCharacter(id=currentId()){
+    const record=character(id);
+    return Boolean(window.AsteriaFirebase?.getUser?.()?.uid &&
+      (record?.sharedCampaignId||record?.campaignId||
+       (Array.isArray(record?.linkedCampaignIds)&&record.linkedCampaignIds.length)));
+  }
+  function legacyWrite(operation,method){
+    return function(...args){
+      if(isServerOwnedCharacter(operation==='adjustCurrency'?args[0]:
+        ['moveToStorage','moveFromStorage','splitStack','combineStacks','setFlag','add','remove'].includes(operation)?
+          (operation==='add'||operation==='remove'?args[1]:operation==='moveFromStorage'?args[1]:operation==='splitStack'||operation==='combineStacks'?args[2]:operation==='setFlag'?args[3]:args[2]):
+          currentId())){
+        window.toast?.('Use the live Asteria character dashboard for inventory changes.');
+        return false;
+      }
+      return method(...args);
+    };
+  }
   Object.assign(api, {
     version:VERSION,
     CURRENCY,
@@ -687,16 +709,16 @@
     ensureCampaign,
     items,
     find,
-    add,
-    remove,
+    add:legacyWrite('add',add),
+    remove:legacyWrite('remove',remove),
     normalizeItem,
     normalizeBag,
     inferSlots,
-    splitStack,
-    combineStacks,
-    setFlag,
-    moveToStorage,
-    moveFromStorage,
+    splitStack:legacyWrite('splitStack',splitStack),
+    combineStacks:legacyWrite('combineStacks',combineStacks),
+    setFlag:legacyWrite('setFlag',setFlag),
+    moveToStorage:legacyWrite('moveToStorage',moveToStorage),
+    moveFromStorage:legacyWrite('moveFromStorage',moveFromStorage),
     carriedItems,
     carriedWeight,
     equippedWeight,
@@ -707,9 +729,9 @@
     filterItems,
     currencyTotal,
     setCurrencyTotal,
-    adjustCurrency,
-    persistCharacter,
-    persistCampaign,
+    adjustCurrency:legacyWrite('adjustCurrency',adjustCurrency),
+    persistCharacter:id=>isServerOwnedCharacter(id)?false:persistCharacter(id),
+    persistCampaign:(campaign,reason)=>window.AsteriaFirebase?.getUser?.()?.uid&&campaign?.id?false:persistCampaign(campaign,reason),
     audit,
     notify,
     uid,

@@ -19,7 +19,6 @@ import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} fro
 import { SESSION_LIMIT_MS, normalizeDashboardPreferences, slug as liveSlug, structuredCloneSafe, timestampMs, unidentifiedItemName } from '../src/state/liveWorkspaceModel.mjs';
 import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageModel.mjs';
 import { createAsteriaItem, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
-import { shopStockCompatible, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
 import { encounterResourcePair, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
@@ -1473,64 +1472,7 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
-  manageCampaignShop: async function(campaignId,action={}){
-    if(!db || !currentUser || !campaignId) return {ok:false};
-    try{
-      const campaignRef=doc(db,'campaigns',campaignId);
-      const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
-      const saved=await runTransaction(db,async transaction=>{
-        const campaignSnapshot=await transaction.get(campaignRef);
-        const ecosystemSnapshot=await transaction.get(ecosystemRef);
-        if(!campaignSnapshot.exists() || !currentUserIsCampaignGM(campaignSnapshot.data())) throw new Error('Only a campaign GM can manage shops.');
-        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
-        const shops=Array.isArray(ecosystem.shops)?ecosystem.shops.slice():[];
-        const shopId=String(action.shopId||action.shop?.id||'');
-        const index=shops.findIndex(value=>String(value.id)===shopId);
-        if(action.type==='delete'){
-          if(index>=0) shops.splice(index,1);
-        }else if(action.type==='stock'){
-          if(index<0) throw new Error('Shop not found.');
-          const item=normalizeMarketPricing(structuredCloneSafe(action.item||{}),{legacy:true,removeLegacy:true,migratedRecord:true});
-          item.name=item.name||item.title||'Item';
-          shops[index].stock=Array.isArray(shops[index].stock)?shops[index].stock:[];
-          const quantity=Number(action.quantity);
-          if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1000000) throw new Error('Choose a stock quantity between 1 and 1,000,000.');
-          const row=shops[index].stock.find(value=>shopStockCompatible(value.item,item));
-          if(row) {
-            if(!Number.isSafeInteger(Number(row.qty)+quantity)||Number(row.qty)+quantity>1000000)
-              throw new Error('This shop stack is too large.');
-            row.qty=Number(row.qty)+quantity;
-            row.priceCopper=merchantPriceCopper(shops[index],row.item,'buy');
-          } else {
-            shops[index].stock.push({item,qty:quantity,priceCopper:merchantPriceCopper(shops[index],item,'buy')});
-          }
-        }else if(action.type==='remove-stock'){
-          if(index<0) throw new Error('Shop not found.');
-          shops[index].stock=(shops[index].stock||[]).filter((_value,stockIndex)=>stockIndex!==Number(action.stockIndex));
-        }else{
-          const source=Object.assign({},index>=0?shops[index]:{},structuredCloneSafe(action.shop||{}));
-          const shop=Object.assign({
-            id:source.id||`shop-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-            name:'Campaign Shop',type:'General Goods',status:'closed',buyModifier:1,sellModifier:1,
-            currencyCopper:100000,visitorCharacterIds:[],stock:[]
-          },source);
-          shop.name=String(shop.name||'Campaign Shop').trim().slice(0,160);
-          shop.visitorCharacterIds=Array.from(new Set((shop.visitorCharacterIds||[]).map(String)));
-          if(index>=0) shops[index]=shop; else shops.push(shop);
-        }
-        transaction.set(ecosystemRef,Object.assign({},ecosystem,{shops,version:ecosystem.version||'asteria-item-ecosystem-v1',updatedBy:currentUser.uid,updatedAt:serverTimestamp()}),{merge:true});
-        // Shop changes are visible to players without exposing private trades.
-        transaction.set(doc(db,'campaigns',campaignId,'systems','itemPublic'),{
-          version:'asteria-item-public-v1',shops,
-          partyLoot:Array.isArray(ecosystem.partyLoot)?ecosystem.partyLoot:[],
-          sharedStorages:Array.isArray(ecosystem.sharedStorages)?ecosystem.sharedStorages:[],
-          updatedAt:serverTimestamp()
-        },{merge:true});
-        return shops;
-      });
-      return {ok:true,shops:saved};
-    }catch(error){return {ok:false,error:error.message||String(error)};}
-  },
+  manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
   subscribePartyWorkspace: function(campaignId,onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(doc(db,'campaigns',campaignId,'systems','party-workspace'),snapshot=>onChange(snapshot.exists() ? snapshot.data() : {sharedNotes:'',questLog:[]}),error=>reportSyncError('party-workspace-listener',error,{campaignId}));
@@ -1836,6 +1778,9 @@ const firebasePublicApi = {
     return firebasePublicApi.respondLiveItemRequest(campaignId,characterId,requestId,accepted,{});
   },
   syncCampaignItemPrivacy: (...args) => callTrustedAction('syncCampaignItemPrivacy', args),
+  syncCampaignShopStores: (...args) => callTrustedAction('syncCampaignShopStores',args),
+  syncGMRewardBundles: (...args) => callTrustedAction('syncGMRewardBundles',args),
+  manageGMRewardBundle: (...args) => callTrustedAction('manageGMRewardBundle',args),
   createLiveItemRequest: (...args) => callTrustedAction('createLiveItemRequest', args),
   createLiveItemOffer: async function(campaignId,characterId,recipientId,itemId,mode='give',details={}){
     return firebasePublicApi.createLiveItemRequest(campaignId,characterId,recipientId,itemId,mode,details);
@@ -2975,6 +2920,9 @@ const firebasePublicApi = {
     );
   },
   saveCampaignItemEcosystem: async function(campaignId, ecosystem){
+    // Live campaign economy, shops, trades and rewards are server-owned.
+    // Keep a fail-closed legacy API so old scripts cannot overwrite canonical state.
+    if(window.AsteriaReactMigration?.available || window.AsteriaReactMigration?.liveStateAuthority==='react')return false;
     if(!db || !currentUser || !campaignId || !ecosystem) return false;
     try{
       const clean = cleanData(ecosystem);
@@ -3006,7 +2954,7 @@ const firebasePublicApi = {
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     const uid=currentUser.uid;
     const gmMode=mode==='gm';
-    const state={public:null,legacy:null,from:[],to:[],all:[]};
+    const state={public:null,legacy:null,shops:null,from:[],to:[],all:[]};
     const notify=()=>{
       const legacy=gmMode?state.legacy||{}:{};
       const shared=state.public || (gmMode?legacy:{});
@@ -3016,9 +2964,17 @@ const firebasePublicApi = {
         ...(gmMode?Array.isArray(legacy.playerItemRequests)?legacy.playerItemRequests:[]:[]),
         ...(gmMode?Array.isArray(legacy.directTrades)?legacy.directTrades:[]:[])
       ]) if(row?.id&&!seen.has(String(row.id))) seen.set(String(row.id),row);
-      const items=[...seen.values()];
-      onChange({...shared,shops:shared.shops||[],partyLoot:shared.partyLoot||[],
-        sharedStorages:shared.sharedStorages||[],playerItemRequests:items,directTrades:[]});
+      // During migration retain legacy shop rows unless superseded by a
+      // canonical document. Tombstones hide deleted shops even on old clients.
+      const shops=new Map();
+      for(const row of Array.isArray(shared.shops)?shared.shops:[])
+        if(row?.id)shops.set(String(row.id),row);
+      for(const row of Array.isArray(state.shops)?state.shops:[])
+        if(row?.id)shops.set(String(row.id),row);
+      onChange({...shared,
+        shops:[...shops.values()].filter(row=>!row.deleted&&row.status!=='deleted'),
+        partyLoot:shared.partyLoot||[],sharedStorages:shared.sharedStorages||[],
+        playerItemRequests:[...seen.values()],directTrades:[]});
     };
     const watch=(key,source)=>{
       return onSnapshot(source,snapshot=>{
@@ -3030,6 +2986,7 @@ const firebasePublicApi = {
     const requests=collection(db,'campaigns',campaignId,'itemRequests');
     const subscriptions=[
       watch('public',doc(db,'campaigns',campaignId,'systems','itemPublic')),
+      watch('shops',collection(db,'campaigns',campaignId,'shops')),
       ...(gmMode?[
         watch('legacy',doc(db,'campaigns',campaignId,'systems','itemEcosystem')),
         watch('all',requests)
@@ -3039,6 +2996,12 @@ const firebasePublicApi = {
       ])
     ];
     return ()=>subscriptions.forEach(unsubscribe=>unsubscribe?.());
+  },
+  subscribeGMRewardBundles: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'rewardBundles'),snapshot=>{
+      onChange(snapshot.docs.map(row=>({id:row.id,...row.data()})).filter(row=>!row.deleted));
+    },error=>reportSyncError('gm-reward-bundle-listener',error,{campaignId}));
   },
   subscribeCustomItems: function(onChange){
     if(!db || !currentUser || typeof onChange!=='function') return ()=>{};

@@ -129,7 +129,8 @@ test('database and transaction boundaries enforce shared market pricing', () => 
   assert.match(rules, /function hasValidMarketPricing/);
   assert.match(rules, /hasValidMarketPricing\(request\.resource\.data\)/);
   assert.match(firebase, /createAsteriaItem/);
-  assert.match(firebase, /merchantPriceCopper/);
+  // GM shop pricing moved from direct browser mutations to trusted per-shop commands.
+  assert.match(fs.readFileSync('functions/itemStoreCommands.mjs','utf8'), /merchantPriceCopper/);
   assert.match(fs.readFileSync('functions/commands.mjs','utf8'), /merchantPriceCopper/);
   const quotes=fs.readFileSync(path.join(root,'src/state/shopTransactionModel.mjs'),'utf8');
   assert.match(quotes,/getPlayerPurchasePriceCopper/);

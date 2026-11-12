@@ -2337,3 +2337,89 @@ test('Phase 3.2: GM reward refuses unlinked character and missing private owner 
   assert.equal(second.ok,false);
   assert.equal((await db.collection('campaigns/c/events').get()).size,0);
 });
+
+test('Phase 3.3: GM consolidates legacy shops into isolated docs without losing stock',async()=>{
+  const old={id:'market',name:'Market',status:'open',buyModifier:1,sellModifier:1,currencyCopper:1000,
+    stock:[{qty:3,item:{name:'Gem',marketValue:0.05,marketPrice:0.1}}]};
+  await db.doc('campaigns/c/systems/itemEcosystem').set({shops:[old],playerItemRequests:[]});
+  await db.doc('campaigns/c/systems/itemPublic').set({
+    version:'asteria-item-public-v1',shops:[old],partyLoot:[],sharedStorages:[]
+  });
+  const denied=await action('alice','syncCampaignShopStores',['c','a']);
+  assert.equal(denied.ok,false);
+  const first=await action('gm','syncCampaignShopStores',['c','a']);
+  assert.equal(first.ok,true,first.error);
+  assert.equal(first.migrated,1);
+  assert.equal(first.remaining,0);
+  const canonical=(await db.doc('campaigns/c/shops/market').get()).data();
+  assert.equal(canonical.stock[0].qty,3);
+  assert.deepEqual((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops,[]);
+  assert.deepEqual((await db.doc('campaigns/c/systems/itemPublic').get()).data().shops,[]);
+  assert.equal((await action('gm','syncCampaignShopStores',['c','a'])).migrated,0);
+  assert.equal((await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/shops/market')))).data().stock[0].qty,3);
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/shops/market'),{currencyCopper:999999}));
+  await assertFails(updateDoc(doc(user('gm'),'campaigns/c/shops/market'),{currencyCopper:999999}));
+});
+
+test('Phase 3.3: concurrent canonical shop checkout has one authoritative stock record',async()=>{
+  await db.doc('campaigns/c/shops/village').set({
+    id:'village',name:'Village Shop',status:'open',buyModifier:1,sellModifier:1,currencyCopper:1000,
+    stock:[{qty:1,item:{name:'Gem',marketValue:0.05,marketPrice:0.1}}]
+  });
+  const results=await Promise.all([
+    action('alice','buyLiveShopItem',['c','a','village',0,1]),
+    action('alice','buyLiveShopItem',['c','a','village',0,1])
+  ]);
+  assert.equal(results.filter(row=>row.ok).length,1);
+  assert.equal((await db.doc('campaigns/c/shops/village').get()).data().stock[0].qty,0);
+  const live=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(live.coins.copper,90);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,live.inventory);
+});
+
+test('Phase 3.3: GM shop controls do not alter unrelated campaign economy data',async()=>{
+  const denied=await action('alice','manageCampaignShop',['c','a',{type:'save',shop:{id:'forge',name:'Forged'}}]);
+  assert.equal(denied.ok,false);
+  const created=await action('gm','manageCampaignShop',['c','a',{type:'save',shop:{
+    id:'forge',name:'Village Forge',type:'Blacksmith',status:'closed',
+    buyModifier:1,sellModifier:1,visitorCharacterIds:[],stock:[],currencyCopper:1000
+  }}]);
+  assert.equal(created.ok,true,created.error);
+  assert.equal((await db.doc('campaigns/c/shops/forge').get()).data().name,'Village Forge');
+  const stocked=await action('gm','manageCampaignShop',['c','a',{type:'stock',shopId:'forge',
+    item:{name:'Steel Dagger',material:'Steel',marketValue:0.1,marketPrice:0.2},quantity:2}]);
+  assert.equal(stocked.ok,true,stocked.error);
+  assert.equal((await db.doc('campaigns/c/shops/forge').get()).data().stock[0].qty,2);
+  assert.deepEqual((await db.doc('campaigns/c/systems/itemEcosystem').get()).data().shops,[]);
+  const removed=await action('gm','manageCampaignShop',['c','a',{type:'delete',shopId:'forge'}]);
+  assert.equal(removed.ok,true,removed.error);
+  assert.equal((await db.doc('campaigns/c/shops/forge').get()).data().status,'deleted');
+});
+
+test('Phase 3.3: GM migrates private saved bundles without losing their item details',async()=>{
+  const old={id:'gm-bundle-cache',name:'Cache',createdAt:'2026-01-01',
+    currency:{key:'gold',amount:3},
+    items:[{name:'Iron Sword',qty:2,material:'Iron',quality:'Average'}],message:'Found in a chest'};
+  await db.doc('campaigns/c/systems/gmWorkspace').set({gameplay:{rewardBundles:[old],lootTables:[{id:'old-loot'}]},privateNotes:'Private GM'});
+  assert.equal((await action('alice','syncGMRewardBundles',['c','a'])).ok,false);
+  const done=await action('gm','syncGMRewardBundles',['c','a']);
+  assert.equal(done.ok,true,done.error);
+  assert.equal(done.migrated,1);
+  const canonical=(await db.doc('campaigns/c/rewardBundles/gm-bundle-cache').get()).data();
+  assert.equal(canonical.items[0].material,'Iron');
+  const workspace=(await db.doc('campaigns/c/systems/gmWorkspace').get()).data();
+  assert.deepEqual(workspace.gameplay.rewardBundles,[]);
+  assert.deepEqual(workspace.gameplay.lootTables,[{id:'old-loot'}]);
+  assert.equal(workspace.privateNotes,'Private GM');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/rewardBundles/gm-bundle-cache')));
+  await assertFails(setDoc(doc(user('alice'),'campaigns/c/rewardBundles/fake'),old));
+  const read=await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/rewardBundles/gm-bundle-cache')));
+  assert.equal(read.data().name,'Cache');
+  const updated=await action('gm','manageGMRewardBundle',['c','a',{type:'save',id:'gm-bundle-cache',
+    bundle:{...canonical,name:'Updated Cache'}}]);
+  assert.equal(updated.ok,true,updated.error);
+  assert.equal((await db.doc('campaigns/c/rewardBundles/gm-bundle-cache').get()).data().name,'Updated Cache');
+  const deleted=await action('gm','manageGMRewardBundle',['c','a',{type:'delete',id:'gm-bundle-cache'}]);
+  assert.equal(deleted.ok,true,deleted.error);
+  assert.equal((await db.doc('campaigns/c/rewardBundles/gm-bundle-cache').get()).data().deleted,true);
+});
