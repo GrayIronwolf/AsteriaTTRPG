@@ -84,7 +84,8 @@ test('backend emission, inbox auth, and private Firestore rules are still separa
 
 test('website release remains a separate PR; preserve a reversible flag-only path',()=>{
   assert.equal((source.match(/friendNotificationsEnabled:true/g)||[]).length,1);
-  assert.equal((source.match(/campaignNotifications:false/g)||[]).length,1);
+  assert.equal((source.match(/campaignNotifications:new URLSearchParams/g)||[]).length,1);
+  assert.equal((source.match(/campaignInAppCanary:new URLSearchParams/g)||[]).length,1);
   const helper=read('scripts/friends-notifications-activation-release.mjs');
   assert.match(helper,/clientFlag\.length!==1/);
   assert.doesNotMatch(helper,/isOn\(operation\)&&clientFlag\[0\]/);
