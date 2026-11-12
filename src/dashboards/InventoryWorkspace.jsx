@@ -10,6 +10,7 @@ import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 import { ShopWorkspace } from './ShopWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
+import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -281,14 +282,55 @@ function InventoryItemCard({ item, editable, selected, onSelect, onDragStart, on
     style={item.isSpellbook ? { '--item-magic': magicColor(item) } : undefined}
   >
     <span className="react-inventory-quantity" title="Quantity">x{item.qty}</span>
+    {item.locked||item.bound||item.questItem?<span className="react-inventory-item-state" title={item.locked?'Locked item':item.bound?'Bound item':'Quest item'}>{item.locked?'Locked':item.bound?'Bound':'Quest'}</span>:null}
     <ItemImage item={item} className="react-inventory-item-image" />
     <b title={item.name}>{item.name}</b>
   </article>;
 }
 
+function InventoryQuickActions({campaignId,item,character,characters,storages,ecosystem,editable,busy,onRun,onInspect,onOffer,onSell,onUse,onClear}){
+  const party=Object.values(characters||{}).filter(row=>row.id!==character.id);
+  const merchants=(ecosystem?.shops||[]).filter(shop=>shop.status==='open'&&
+    (!Array.isArray(shop.visitorCharacterIds)||!shop.visitorCharacterIds.length||shop.visitorCharacterIds.includes(character.id)));
+  const [recipientId,setRecipientId]=useState(party[0]?.id||'');
+  const [storageId,setStorageId]=useState(item?.storageId||storages[0]?.id||'');
+  const [equipmentSlot,setEquipmentSlot]=useState('');
+  const recipient=party.find(row=>row.id===recipientId)||party[0];
+  const storage=storages.find(row=>row.id===storageId)||storages[0];
+  const slots=availableInventoryEquipmentSlots(item);
+  const selectedSlot=slots.includes(equipmentSlot)?equipmentSlot:slots[0]||'';
+  const actions=inventoryQuickActionAvailability(item,{editable,busy,hasStorage:Boolean(storage),hasParty:Boolean(recipient),hasMerchant:merchants.length>0});
+  const execute=(type,description,slot='')=>onRun(()=>firebaseService.updateInventory(campaignId,character.id,{
+    type,itemId:item.id,...(slot?{slot}:{}),
+    ...(type==='move-storage'?{storageId:storage?.id,expectedStorageId:item.storageId,expectedStorageSlot:item.storageSlot}:{}),
+    expectedCoreRevision:Number(character.coreRevision||0)
+  }),description);
+  return <section className="react-inventory-quick-actions" aria-label={'Quick actions for '+item.name}>
+    <header><div><small>Selected Item</small><strong>{item.name} ×{item.qty}</strong><span>{item.equipped?'Equipped':item.type} · {item.identified===false?'Unidentified':item.rarity||'Common'}</span></div>
+      <button type="button" aria-label="Clear item selection" onClick={onClear}>Close</button></header>
+    <div className="react-inventory-action-buttons">
+      <button type="button" onClick={()=>onInspect(item)} disabled={!actions.inspect}>Inspect</button>
+      <button type="button" onClick={()=>onUse(item)} disabled={!actions.use}>Use</button>
+      {item.equipped?<button type="button" onClick={()=>execute('unequip','Unequipped '+item.name+'.')} disabled={!actions.unequip}>Unequip</button>:
+        <button type="button" onClick={()=>execute('equip','Equipped '+item.name+'.',selectedSlot)} disabled={!actions.equip}>Equip</button>}
+      <button type="button" onClick={()=>execute('move-storage','Moved '+item.name+' into '+storage?.name+'.')} disabled={!actions.store}>Store</button>
+      <button type="button" onClick={()=>recipient&&onOffer(recipient,item,'give')} disabled={!actions.give}>Give</button>
+      <button type="button" onClick={()=>recipient&&onOffer(recipient,item,'trade')} disabled={!actions.trade}>Trade</button>
+      <button type="button" onClick={()=>merchants.length?onSell(item):recipient&&onOffer(recipient,item,'sell')} disabled={!actions.sell}>Sell</button>
+    </div>
+    <div className="react-inventory-quick-destinations">
+      {actions.equip?<label>Equip slot<select aria-label="Quick equip slot" value={selectedSlot} onChange={event=>setEquipmentSlot(event.target.value)}>{slots.map(slot=><option key={slot} value={slot}>{slot}</option>)}</select></label>:null}
+      {storages.length?<label>Storage<select aria-label="Quick storage destination" value={storage?.id||''} onChange={event=>setStorageId(event.target.value)}>{storages.map(row=><option value={row.id} key={row.id}>{row.name}</option>)}</select></label>:null}
+      {party.length?<label>Player recipient<select aria-label="Quick action recipient" value={recipient?.id||''} onChange={event=>setRecipientId(event.target.value)}>{party.map(row=><option value={row.id} key={row.id}>{row.name||'Party Member'}</option>)}</select></label>:null}
+    </div>
+    <small className="react-inventory-quick-hint">{!editable?'Start an editable campaign session to change items.':item.equipped?'Unequip before storing or transferring this item.':merchants.length?'Sell opens the current merchant with this item selected.':'Give, trade and player sales require another linked character.'}</small>
+  </section>;
+}
+
 function StoragePanel({ campaignId, character, storages, activeStorage, setActiveStorage, items, editable, busy, run, onCustom, onDragStart, onDragEnd, onDetails, selectedItemId, onSelectItem }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [view, setView] = useState('grid');
   const [newStorage, setNewStorage] = useState('');
   const [newRows, setNewRows] = useState('');
@@ -337,7 +379,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   const unassignedItems = items.filter(item => !item.equipped && !storageIds.has(item.storageId));
   const totalWeight = items.reduce((total,item)=>total+Number(item.weight||0)*Number(item.qty||1),0);
   const carryCapacity = Number(character.carryCapacity ?? character.maxCarryWeight ?? character.encumbrance?.maximum ?? 0);
-  const matches = item => !query.trim() || `${item.name} ${item.type} ${item.rarity}`.toLowerCase().includes(query.trim().toLowerCase());
+  const matches = item => matchesInventoryFilter(item,query,categoryFilter);
   const createStorage = async () => {
     if(!isManualNumber(newRows,{min:1,max:20})||!isManualNumber(newCols,{min:1,max:20}))return;
     const result = await run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'create-storage', name: newStorage, rows:manualNumber(newRows), cols:manualNumber(newCols) }), 'Storage created.');
@@ -376,6 +418,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
     {storage ? <>
       <div className="react-inventory-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search items..." label="Search inventory" />
+        <FilterControl label="Category" value={categoryFilter} onChange={setCategoryFilter}>{INVENTORY_CATEGORIES.map(category=><option key={category.id} value={category.id}>{category.label}</option>)}</FilterControl>
         <FilterControl label="Sort" value={sort} onChange={setSort}><option value="name">Sort: Name</option><option value="rarity">Sort: Rarity</option><option value="quantity">Sort: Quantity</option></FilterControl>
         <div className="react-inventory-view-controls" role="group" aria-label="Inventory view"><Tooltip label="Grid view"><IconButton label="Grid view" className={view==='grid'?'active':''} onClick={()=>setView('grid')}><AsteriaIcon name="grid"/></IconButton></Tooltip><Tooltip label="List view"><IconButton label="List view" className={view==='list'?'active':''} onClick={()=>setView('list')}><AsteriaIcon name="list"/></IconButton></Tooltip></div>
         <button type="button" disabled={!editable} onClick={onCustom}>Add Item</button>
