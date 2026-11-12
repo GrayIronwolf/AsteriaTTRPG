@@ -21,7 +21,7 @@ test('production callable entrypoint uses no email provider or Resend secret',()
  assert.match(src,/ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED!=='1'/);
  assert.match(src,/action\.endsWith\('-notification'\)/);
  assert.match(src,/notificationOnly:noticeOnly/);
- assert.match(src,/token:discardedToken/);
+ assert.match(src,/delete safe\.token/);
  assert.match(src,/return safe;/);
 });
 test('campaign frontend has no email invitation sending or provider dependencies',()=>{
