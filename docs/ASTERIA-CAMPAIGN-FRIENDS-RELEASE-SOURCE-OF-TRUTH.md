@@ -36,6 +36,16 @@ Audit #66 also found Storage Rules source mismatch, a confirmed inactive Friends
 
 This correction does not authorize activation. Production v2 per-campaign migration, backup restore, website approval, real-user acceptance and rollback checks remain mandatory.
 
+## Scoped install for the two optional Campaign communication functions
+
+The existing GitHub Actions `Deploy Firebase backend (manual)` workflow supports `campaign-channels-deploy-disabled`, with exact confirmation `DEPLOY-ASTERIA-CAMPAIGN-CHANNELS-DISABLED`. This is a **separate, manually authorised, install-only operation**, not a public activation.
+
+The operation verifies `asteriaCampaignNotifications` and `asteriaCampaignEmailInvitations` are both absent, checks the **enabled-version metadata only** of `ASTERIA_SECURE_INVITE_SIGNING_KEY` and `ASTERIA_RESEND_API_KEY`, runs isolated production packaging and security tests, and deploys **only those two** reviewed handlers via Firebase CLI 15.35.0. It verifies both ACTIVE with `ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED=0`, `ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED=0`, `ASTERIA_EMAIL_DELIVERY_ENABLED=0`, and `ASTERIA_SECURE_INVITATIONS_ENABLED=0` on the email handler. No email can be sent through this disabled callable.
+
+The operation refuses to overwrite an existing target or deploy when either secret's enabled version is not visible. The deployment account must have secret metadata visibility; Firebase also requires the actual function runtime identity to be authorised for the two secrets. Never print secret values, grant broad permissions, enable sending domains or mutate IAM merely to pass a check.
+
+**This package does not resolve the outstanding Storage Rules mismatch, production backup restore, owner-approved per-campaign v2 cutover, frontend activation or real account/device acceptance.** Keep these as distinct blockers. Only install communication functions if the full email channel is an approved release requirement; the existing Friends secure-invitation path does not depend on unrestricted email sending.
+
 ## Verified historical backend deployment — not an activation attestation
 
 Production project `asteria-ttrpg`, region `us-central1`:
