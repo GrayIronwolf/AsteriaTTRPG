@@ -44,6 +44,40 @@ test('allocating a campaign creates the permanent directory and legacy join mapp
   assert.equal(db.records.get('campaigns/campaign-test').membershipSchemaVersion,undefined);
 });
 
+test('explicit new v2 test campaign is created atomically without converting legacy campaigns',async()=>{
+  const db=memoryFirestore();
+  const original=await createCampaignIdentity(db,'gm','Existing campaign',{
+    nextCode:()=>code(10),nextId:()=> 'old-campaign'
+  });
+  assert.equal(db.records.get('campaigns/'+original.id).membershipSchemaVersion,undefined);
+  const canary=await createCampaignIdentity(db,'gm','Invitation test',{
+    v2Test:true,partySize:4,nextCode:()=>code(11),nextId:()=> 'canary-campaign'
+  });
+  assert.equal(canary.membershipSchemaVersion,2);
+  const campaign=db.records.get('campaigns/canary-campaign');
+  assert.equal(campaign.membershipSchemaVersion,2);
+  assert.equal(campaign.membershipRevision,1);
+  assert.equal(campaign.partySize,4);
+  assert.deepEqual(campaign.joinPolicy,{joinRequestsOpen:true,autoApprove:false});
+  assert.deepEqual(db.records.get('campaigns/canary-campaign/members/gm'),{
+    uid:'gm',campaignId:'canary-campaign',role:'owner',status:'active',
+    revision:1,joinedAt:db.records.get('campaigns/canary-campaign/members/gm').joinedAt,
+    origin:'owner-creation'
+  });
+  assert.equal(db.records.get('campaigns/old-campaign').membershipSchemaVersion,undefined);
+  assert.deepEqual(await previewCampaignUCN(db,'player',code(11)),{
+    id:'canary-campaign',name:'Invitation test',ucn:code(11),joinMode:'request'
+  });
+});
+test('new v2 test campaigns reject invalid party sizes before writing',async()=>{
+  const db=memoryFirestore();
+  for(const bad of [undefined,0,13,4.5,'4',null]){
+    await assert.rejects(createCampaignIdentity(db,'gm','Canary',{v2Test:true,partySize:bad}),
+      /party size/);
+  }
+  assert.equal(db.records.size,0);
+});
+
 test('old invitation codes are never reissued to a new campaign', async () => {
   const db = memoryFirestore({['campaignInvites/'+code(1)]:{campaignId:'old',ownerUid:'other',status:'active'}});
   let index=0;
