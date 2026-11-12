@@ -22,7 +22,17 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [bundleId,setBundleId]=useState('');
   const [filter,setFilter]=useState({search:'',status:'',characterId:'',type:''});
-  const bundles=Array.isArray(workspace?.gameplay?.rewardBundles)?workspace.gameplay.rewardBundles:[];
+  const [canonicalBundles,setCanonicalBundles]=useState([]);
+  const [bundlesLoaded,setBundlesLoaded]=useState(false);
+  useEffect(()=>{
+    setBundlesLoaded(false);setCanonicalBundles([]);
+    if(!campaignId)return;
+    return firebaseService.subscribeGMRewardBundles(campaignId,records=>{
+      setCanonicalBundles(records);setBundlesLoaded(true);
+    });
+  },[campaignId]);
+  const bundles=bundlesLoaded?canonicalBundles:
+    (Array.isArray(workspace?.gameplay?.rewardBundles)?workspace.gameplay.rewardBundles:[]);
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const matchingItems=useMemo(()=>itemQuery?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(itemQuery.toLowerCase())).slice(0,8):[],[catalog,itemQuery]);
   const history=useMemo(()=>filterGMRewardEvents(events,filter,characters),[events,filter,characters]);
@@ -44,9 +54,12 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
       items:draftBundle.items||[],message:draftBundle.message||''});
     setAmount(String(draftBundle.currency?.amount||''));
   };
-  const saveBundles=async next=>{
-    const result=await saveSection('gameplay',{...workspace.gameplay,rewardBundles:next});
-    if(!result?.ok)throw Error(result?.error||'Could not save the reward bundles.');
+  const scopeId=Object.keys(characters)[0]||'';
+  const saveBundleAction=async(action)=>{
+    if(!scopeId)throw Error('A linked campaign character is needed to manage reward templates.');
+    const result=await firebaseService.manageGMRewardBundle(campaignId,scopeId,action);
+    if(!result?.ok)throw Error(result?.error||'Could not update the reward template.');
+    return result;
   };
   const saveBundle=async()=>{
     try{
@@ -55,7 +68,7 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
       const current=bundles.find(value=>value.id===id);
       const next=prepareGMRewardBundle({...draft,name:draft.bundleName,currency:{...draft.currency,amount:Number(amount||0)},id},current||{});
       setBusy(true);
-      await saveBundles([...bundles.filter(row=>row.id!==id),next]);
+      await saveBundleAction({type:'save',id,bundle:next});
       setBundleId(id);
       setMessage('Reusable GM reward bundle saved.');
     }catch(error){setMessage(error?.message||String(error));}finally{setBusy(false);}
@@ -64,7 +77,7 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
     if(!bundleId)return;
     setBusy(true);
     try{
-      await saveBundles(bundles.filter(row=>row.id!==bundleId));
+      await saveBundleAction({type:'delete',id:bundleId});
       setBundleId('');setDraft(empty());setAmount('');
       setMessage('Saved bundle removed. Previously awarded items were not affected.');
     }catch(error){setMessage(error?.message||String(error));}finally{setBusy(false);}
