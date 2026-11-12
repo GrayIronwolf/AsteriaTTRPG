@@ -94,7 +94,7 @@ test('activation fails closed without existing v2 invitation prerequisites',()=>
   {live:{exists:true,env:{...secure,ASTERIA_INVITATION_ACCEPTANCE_ENABLED:'0'}}},
   {live:{exists:true,env:{...secure,ASTERIA_INVITATION_MANAGER_ENABLED:'0'}}},
   {live:{exists:false,env:{}}},
-  {live:{exists:true,env:{...secure,UNREVIEWED_FLAG:'1'}}}
+  {live:{exists:true,env:{...secure,ASTERIA_UNREVIEWED_FLAG:'1'}}}
  ]){
   assert.throws(()=>buildPhase53Release('campaign-friends-invites-enable',{
     live,...ready,...changes
