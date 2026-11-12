@@ -260,7 +260,19 @@ export function stackableStorageItem(items = [], incoming = {}, storageId = '') 
     if(item.equipped || String(item.storageId || item.bagId || '') !== String(storageId)) return false;
     if(item.stackable === false || item.unique === true || item.bound === true ||
       item.questItem === true || Number(item.maxStack || 0) === 1) return false;
-    if(itemDefinitionKey(item) !== identity || itemStackFingerprint(item) !== fingerprint) return false;
+    const existingDefinition = String(item.definitionId || item.asteriaIdIndexCode || item['Asteria ID Index Code'] || '').trim().toLowerCase();
+    const incomingDefinition = String(incoming.definitionId || incoming.asteriaIdIndexCode || incoming['Asteria ID Index Code'] || '').trim().toLowerCase();
+    // Legacy records may lack the newer base definition ID. Allow fallback only
+    // for matching catalog IDs, never for custom definitions or conflicting IDs.
+    if(existingDefinition && incomingDefinition && existingDefinition !== incomingDefinition) return false;
+    if((existingDefinition.startsWith('custom-item:') || incomingDefinition.startsWith('custom-item:')) &&
+      existingDefinition !== incomingDefinition) return false;
+    const existingCatalog = String(item.catalogId || '').trim().toLowerCase();
+    const incomingCatalog = String(incoming.catalogId || '').trim().toLowerCase();
+    if(existingDefinition !== incomingDefinition &&
+      (!existingCatalog || existingCatalog !== incomingCatalog)) return false;
+    if(!existingDefinition && !incomingDefinition && itemDefinitionKey(item) !== identity) return false;
+    if(itemStackFingerprint(item) !== fingerprint) return false;
     const stackLimit = Number(item.maxStack || incoming.maxStack || 0);
     return !Number.isFinite(stackLimit) || stackLimit <= 0 ||
       Number(item.qty || 1) + Number(incoming.qty || 1) <= stackLimit;
