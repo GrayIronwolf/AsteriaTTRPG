@@ -1,4 +1,4 @@
-import { itemDefinitionKey, itemStackFingerprint } from './liveWorkspaceModel.mjs';
+import { itemDefinitionKey, itemStackFingerprint, normalizeLiveItem } from './liveWorkspaceModel.mjs';
 import { getPlayerPurchasePriceCopper, getPlayerSaleValueCopper } from '../systems/items/marketPricing.mjs';
 
 // Asteria ID Index Codes identify item definitions, not individual instances.
@@ -7,7 +7,9 @@ import { getPlayerPurchasePriceCopper, getPlayerSaleValueCopper } from '../syste
 export function shopVariantKey(item = {}) {
   const definition=itemDefinitionKey(item);
   if(!definition) return '';
-  return JSON.stringify([definition,itemStackFingerprint(item)]);
+  // Legacy GM stock does not always carry the defaults assigned when an item
+  // enters a character's inventory. Normalize both sides before comparing.
+  return JSON.stringify([definition,itemStackFingerprint(normalizeLiveItem(item,0,{}))]);
 }
 
 export function shopStockCompatible(left = {},right = {}) {
