@@ -2072,6 +2072,7 @@ const firebasePublicApi = {
       return { ok:false, applied:false, error:error.message || String(error) };
     }
   },
+  grantGMRewardBundle: (...args) => callTrustedAction('grantGMRewardBundle', args),
   respondMagicElementReward: (...args) => callTrustedAction('respondMagicElementReward', args),
   identifyLootReward: (...args) => callTrustedAction('identifyLootReward', args),
   resolveLootReward: (...args) => callTrustedAction('resolveLootReward', args),
