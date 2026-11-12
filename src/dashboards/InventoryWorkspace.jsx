@@ -218,7 +218,7 @@ function EquipmentSlot({ label, item, dragged, editable, onDrop, onDetails, onUn
   const inspect=()=>item&&onDetails(item);
   const canDrop=itemFitsSlot(dragged,label);
   const canTapEquip=editable&&!item&&Boolean(selectedItem?.id)&&!selectedItem?.equipped&&
-    availableInventoryEquipmentSlots(selectedItem).length>0&&itemFitsSlot(selectedItem,label);
+    availableInventoryEquipmentSlots(selectedItem).length>0&&itemFitsSlot({...selectedItem,allowedSlots:availableInventoryEquipmentSlots(selectedItem)},label);
   return <div
     className={`react-inventory-slot ${item ? 'filled' : ''} ${dropState}`}
     role="button"
