@@ -330,6 +330,7 @@ export function installDevFixtures() {
       updateCharacter(characterId,next=>{for(const [resource,amount] of Object.entries(costs||parseResourceCost(spell.cost))){if(Number(next[resource]?.[0]||0)<amount)throw new Error(`Not enough ${resource.toUpperCase()}.`);next[resource]=[next[resource][0]-amount,next[resource][1]];}return next;});return {ok:true};
     },
     updateCharacterInventory: async (_campaignId,characterId,operation) => {
+      let result={};
       updateCharacter(characterId,next=>{
         const items=next.inventory||[];
         next.storageLimit=Math.max(3,Number(next.storageLimit||3));
@@ -343,6 +344,15 @@ export function installDevFixtures() {
           const knownStorageIds=new Set(next.storages.map(value=>value.id));
           let nextSlot=0;
           items.filter(item=>!item.equipped&&!knownStorageIds.has(item.storageId)).forEach(item=>{if(nextSlot<storage.maxSlots){item.storageId=storage.id;item.storageSlot=nextSlot;nextSlot+=1;}});
+          return next;
+        }
+        if(operation.type==='rename-storage'){
+          const storage=next.storages.find(value=>value.id===operation.storageId);
+          const name=String(operation.name||'').trim();
+          if(!storage||!name||name.length>80)throw new Error('Choose a container and enter a valid name.');
+          if(next.storages.some(value=>value.id!==storage.id&&value.name.toLowerCase()===name.toLowerCase()))throw new Error('Another container already has that name.');
+          storage.name=name;
+          result={storageId:storage.id,name};
           return next;
         }
         if(operation.type==='reorder-storages'){
@@ -360,6 +370,28 @@ export function installDevFixtures() {
         const index=items.findIndex(item=>String(item.id)===String(operation.itemId));
         const item=items[index];
         if(!item)throw new Error('Item not found.');
+        if(operation.type==='split-stack'){
+          const available=Number(item.qty);
+          const quantity=Number(operation.quantity);
+          if(item.equipped||item.stackable===false||item.unique===true||item.bound===true||item.questItem===true||Number(item.maxStack||0)===1)
+            throw new Error('This item cannot be split.');
+          if(!Number.isSafeInteger(available)||available<2||!Number.isSafeInteger(quantity)||quantity<1||quantity>=available)
+            throw new Error('Choose a quantity smaller than the current stack.');
+          if(operation.expectedQuantity!==undefined&&Number(operation.expectedQuantity)!==available)
+            throw new Error('The stack has changed.');
+          const storage=next.storages.find(value=>value.id===String(operation.storageId||item.storageId||''));
+          if(!storage)throw new Error('Storage not found.');
+          const explicit=operation.storageSlot!==null&&operation.storageSlot!==undefined&&operation.storageSlot!=='';
+          const slot=explicit?Number(operation.storageSlot):firstFreeStorageSlot(items,storage);
+          if(!Number.isInteger(slot)||slot<0||slot>=storage.maxSlots)throw new Error('No available slot.');
+          if(items.some(value=>!value.equipped&&value.storageId===storage.id&&Number(value.storageSlot)===slot))
+            throw new Error('That slot is occupied.');
+          const id=eventId('split');
+          item.qty=available-quantity;
+          items.push({...clone(item),id,instanceId:id,qty:quantity,storageId:storage.id,storageSlot:slot,equipped:false,equippedSlot:''});
+          result={itemId:id,quantity,remaining:item.qty,storageId:storage.id,storageSlot:slot};
+          return next;
+        }
         if(operation.type==='equip'){
           const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
           const armourValidation=window.AsteriaArmour?.validateEquipmentChange?.(next,item,slot);
@@ -373,18 +405,31 @@ export function installDevFixtures() {
         if(operation.type==='unequip'){item.equipped=false;item.equippedSlot='';}
         if(operation.type==='quick'){next.quickSlots=[...(next.quickSlots||[])];next.quickSlots[operation.index]=clone(item);}
         if(operation.type==='move-storage'){
+          if(item.equipped)throw new Error('Unequip this item first.');
           const storage=next.storages.find(value=>value.id===operation.storageId);
-          const requested=Number(operation.storageSlot);
-          const storageSlot=Number.isInteger(requested)?requested:firstFreeStorageSlot(items,storage||{},item.id);
-          if(storageSlot<0)throw new Error(`${storage?.name||'Storage'} is full.`);
-          if(items.some(value=>value.id!==item.id&&!value.equipped&&value.storageId===storage.id&&Number(value.storageSlot)===storageSlot))throw new Error('That grid slot is occupied.');
-          item.storageId=operation.storageId;item.storageSlot=storageSlot;
+          if(!storage)throw new Error('Storage not found.');
+          if(operation.expectedStorageId!==undefined&&String(operation.expectedStorageId)!==String(item.storageId||''))throw new Error('This item has moved.');
+          if(operation.expectedStorageSlot!==undefined&&Number(operation.expectedStorageSlot)!==Number(item.storageSlot))throw new Error('This item has moved.');
+          const explicit=operation.storageSlot!==null&&operation.storageSlot!==undefined&&operation.storageSlot!=='';
+          const slot=explicit?Number(operation.storageSlot):firstFreeStorageSlot(items,storage,item.id);
+          if(!Number.isInteger(slot)||slot<0||slot>=storage.maxSlots)throw new Error('The destination is full or invalid.');
+          const occupied=items.filter(value=>value.id!==item.id&&!value.equipped&&value.storageId===storage.id&&Number(value.storageSlot)===slot);
+          if(occupied.length>1)throw new Error('The destination contains overlapping items.');
+          if(occupied.length){
+            const source=next.storages.find(value=>value.id===item.storageId);
+            const src=item.storageSlot===undefined||item.storageSlot===null?NaN:Number(item.storageSlot);
+            if(!source||!Number.isInteger(src)||src<0||src>=source.maxSlots||
+              items.some(value=>value.id!==item.id&&!value.equipped&&value.storageId===source.id&&Number(value.storageSlot)===src))
+              throw new Error('The selected item has no valid swap position.');
+            occupied[0].storageId=source.id;occupied[0].storageSlot=src;
+          }
+          item.storageId=storage.id;item.storageSlot=slot;
         }
         if(operation.type==='identify'){if(!characterKnowsIdentify(next))throw new Error('Identify spell required.');item.identified=true;item.name=item.trueName||item.name;}
         if(operation.type==='read-spellbook'){if(item.identified===false)throw new Error('Identify this book first.');next.spells=[...(next.spells||[]),clone(item.spell||{name:item.trueName||item.name})];item.qty-=1;}
         if(operation.type==='use'){item.qty=Math.max(0,Number(item.qty||1)-1);for(const [resource,amount] of Object.entries(item.effect||{})){if(Array.isArray(next[resource])){const requested=next[resource][0]+Number(amount||0);next[resource][0]=resource==='hp'?clampHpForSoulDamage(next,requested):Math.min(next[resource][1],requested);}}}
         next.inventory=items.filter(value=>Number(value.qty||1)>0);return next;
-      });return {ok:true};
+      });return {ok:true,...result};
     },
     updateCharacterQuest: async (_campaignId,characterId,questId,status) => {updateCharacter(characterId,next=>{next.quests=(next.quests||[]).map(quest=>quest.id===questId?{...quest,status}:quest);return next;});return {ok:true};},
     addJournalEntry: async (_campaignId,characterId,entry) => {updateCharacter(characterId,next=>{next.journal=[{id:eventId('journal'),...entry,createdAt:new Date().toISOString()},...(next.journal||[])];return next;});return {ok:true};},
