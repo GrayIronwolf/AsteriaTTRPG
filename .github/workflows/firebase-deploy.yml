@@ -31,6 +31,7 @@ on:
           - friend-notifications-events-activate
           - friend-notifications-events-deactivate
           - campaign-coordinated-readiness-audit
+          - campaign-channels-deploy-disabled
           - campaign-friends-release-audit
           - campaign-friends-recipients-deploy-off
           - campaign-friends-recipients-enable
@@ -1325,6 +1326,110 @@ jobs:
             echo 'Secure invitation signing secret: NOT VERIFIED. Do not activate.' >> "$GITHUB_STEP_SUMMARY"
           fi
           echo 'Read-only: no deployment, changes to flags, Storage, rules, email or Hosting.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_channels_deploy_disabled:
+    name: Install two disabled campaign communication callables (manual)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-channels-deploy-disabled' &&
+      inputs.production_confirmation == 'DEPLOY-ASTERIA-CAMPAIGN-CHANNELS-DISABLED'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Test exact bounded release and complete Campaign v2 security contracts
+        run: |
+          set -euo pipefail
+          npm run audit:production
+          npm run audit:campaign-coordinated
+          npm run test:campaign-channels
+          npm run test:notifications
+          npm run test:email-invitations
+          npm run test:secure-invitations
+          npm run test:invitation-acceptance
+          npm run test:firebase
+      - name: Authenticate with existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Fail closed if either optional function exists or signing/email secrets are not ready
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project asteria-ttrpg --regions us-central1 --v2 --format=json > "$RUNNER_TEMP/channels-existing-functions.json"
+          for target in asteriaCampaignNotifications asteriaCampaignEmailInvitations; do
+            count="$(jq --arg target "$target" '[.[] | select(.name | endswith("/"+$target))] | length' "$RUNNER_TEMP/channels-existing-functions.json")"
+            test "$count" = 0 || { echo "Refusing to overwrite an existing campaign communication function: $target" >&2; exit 1; }
+          done
+          for secret in ASTERIA_SECURE_INVITE_SIGNING_KEY ASTERIA_RESEND_API_KEY; do
+            gcloud secrets describe "$secret" --project asteria-ttrpg --format='value(name)' >/dev/null
+            gcloud secrets versions list "$secret" --project asteria-ttrpg --filter='state=ENABLED' --format='value(name)' > "$RUNNER_TEMP/channels-secret-metadata.txt"
+            test -s "$RUNNER_TEMP/channels-secret-metadata.txt" || {
+              echo "Required campaign secret lacks a visible enabled version: $secret" >&2
+              exit 1
+            }
+          done
+          # Runtime secret-value permissions are granted only to Firebase's
+          # selected callable service account, never to the browser or logs.
+          echo "Verified two absent targets and two enabled secret versions (no value read)." >> "$GITHUB_STEP_SUMMARY"
+      - name: Stage exactly two disabled callables in an isolated temp directory
+        env:
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+          ASTERIA_CHANNELS_OPERATION: ${{ inputs.operation }}
+          ASTERIA_CHANNELS_CONFIRMATION: ${{ inputs.production_confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/campaign-channels-scoped-release.mjs --stage
+          npm install --prefix "$RUNNER_TEMP/asteria-campaign-channels-disabled/functions" --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --prefix "$RUNNER_TEMP/asteria-campaign-channels-disabled/functions" --omit=dev --no-audit --no-fund
+          node --check "$RUNNER_TEMP/asteria-campaign-channels-disabled/functions/index.mjs"
+      - name: Install isolated pinned Firebase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-channels-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-channels-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only the two isolated disabled Campaign communication functions
+        working-directory: ${{ runner.temp }}/asteria-campaign-channels-disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/asteria-channels-cli/node_modules/.bin/firebase" deploy \
+            --project asteria-ttrpg \
+            --only "functions:asteria:asteriaCampaignNotifications,functions:asteria:asteriaCampaignEmailInvitations" \
+            --non-interactive
+      - name: Verify exactly the two new targets exist with delivery and notification flags OFF
+        shell: bash
+        run: |
+          set -euo pipefail
+          for target in asteriaCampaignNotifications asteriaCampaignEmailInvitations; do
+            gcloud functions describe "$target" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/$target-verify.json"
+            test "$(jq -r '.state // "missing"' "$RUNNER_TEMP/$target-verify.json")" = ACTIVE
+          done
+          jq -e '(.serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED // "missing") == "0"' "$RUNNER_TEMP/asteriaCampaignNotifications-verify.json" >/dev/null
+          for flag in ASTERIA_EMAIL_DELIVERY_ENABLED ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED ASTERIA_SECURE_INVITATIONS_ENABLED; do
+            jq -e --arg flag "$flag" '(.serviceConfig.environmentVariables[$flag] // "missing") == "0"' "$RUNNER_TEMP/asteriaCampaignEmailInvitations-verify.json" >/dev/null
+          done
+          echo "Two Campaign communication functions deployed with every required server feature flag disabled; email sending remains OFF." >> "$GITHUB_STEP_SUMMARY"
+          echo "No rules, Hosting, legacy functions, memberships, invitation activation or production data modified by this operation." >> "$GITHUB_STEP_SUMMARY"
 
   campaign_friends_release:
     name: Phase 5.3 confirmed single-function campaign release (manual)
