@@ -845,6 +845,102 @@ test('canonical restoration respects Soul Damage and never trusts injected spell
   const result=await action('alice','castCharacterSpell',['c','a',{name:'Spark',restoreResources:{mp:999}},{}]);assert.equal(result.ok,true,result.error);assert.deepEqual((await liveSheet()).hp,[6,10]);assert.deepEqual((await liveSheet()).mp,[7,10]);
 });
 
+test('Phase 2.1: container renames are owner-only, mirror instantly, and reject duplicates',async()=>{
+  const created=await action('alice','updateCharacterInventory',['c','a',{type:'create-storage',name:'Pouch',rows:2,cols:2}]);
+  assert.equal(created.ok,true,created.error);
+  const storages=(await db.doc('campaigns/c/characters/a').get()).data().storages;
+  const pouch=storages.find(value=>value.name==='Pouch');
+  assert.ok(pouch);
+  const args=['c','a',{type:'rename-storage',storageId:'bag',name:'Equipment Bag'}];
+  const updated=await action('alice','updateCharacterInventory',args);
+  assert.equal(updated.ok,true,updated.error);
+  assert.equal(updated.name,'Equipment Bag');
+  const shared=(await db.doc('campaigns/c/characters/a').get()).data();
+  const owned=(await db.doc('users/alice/characters/a').get()).data();
+  assert.equal(shared.storages.find(value=>value.id==='bag').name,'Equipment Bag');
+  assert.deepEqual(owned.storages,shared.storages);
+  assert.equal((await action('alice','updateCharacterInventory',['c','a',{type:'rename-storage',storageId:pouch.id,name:'equipment bag'}])).ok,false);
+  assert.equal((await action('bob','updateCharacterInventory',args)).ok,false);
+  assert.equal((await action('gm','updateCharacterInventory',args)).ok,false);
+  assert.equal((await action('alice','updateCharacterInventory',['c','a',{type:'rename-storage',storageId:'bag',name:' '}])).ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().storages[0].name,'Equipment Bag');
+});
+
+test('Phase 2.1: splitting stacks preserves every item property and replay cannot duplicate them',async()=>{
+  const source=(await db.doc('campaigns/c/characters/a').get()).data();
+  source.inventory[0].material='Mithril';
+  source.inventory[0].quality='Superior';
+  source.inventory[0].enchantments=[{name:'Winterbite',rank:2}];
+  source.inventory[0].stackable=true;
+  await Promise.all([
+    db.doc('campaigns/c/characters/a').update({inventory:source.inventory}),
+    db.doc('users/alice/characters/a').update({inventory:source.inventory})
+  ]);
+  const args=['c','a',{type:'split-stack',itemId:'sword',quantity:1,expectedQuantity:2,storageId:'bag'}];
+  const first=await action('alice','updateCharacterInventory',args,'split-once');
+  assert.equal(first.ok,true,first.error);
+  const again=await action('alice','updateCharacterInventory',args,'split-once');
+  assert.deepEqual(again,first);
+  const shared=(await db.doc('campaigns/c/characters/a').get()).data();
+  const privateCopy=(await db.doc('users/alice/characters/a').get()).data();
+  assert.deepEqual(privateCopy.inventory,shared.inventory);
+  assert.equal(shared.inventory.length,2);
+  assert.equal(shared.inventory.reduce((sum,item)=>sum+item.qty,0),2);
+  const split=shared.inventory.find(value=>value.instanceId===first.itemId);
+  assert.ok(split);
+  assert.notEqual(split.instanceId,'sword');
+  assert.equal(split.material,'Mithril');
+  assert.equal(split.quality,'Superior');
+  assert.deepEqual(split.enchantments,[{name:'Winterbite',rank:2}]);
+  assert.notEqual(split.storageSlot,shared.inventory.find(value=>value.instanceId==='sword').storageSlot);
+  assert.equal((await action('alice','updateCharacterInventory',args,'stale-split')).ok,false);
+  assert.equal((await action('bob','updateCharacterInventory',['c','a',{type:'split-stack',itemId:'sword',quantity:1,storageId:'bag'}])).ok,false);
+});
+
+test('Phase 2.1: full storage rejects splits and auto-moves without losing items',async()=>{
+  await Promise.all(['campaigns/c/characters/a','users/alice/characters/a'].map(path=>
+    db.doc(path).update({storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}]})));
+  const rejected=await action('alice','updateCharacterInventory',['c','a',{type:'split-stack',itemId:'sword',quantity:1,storageId:'bag'}]);
+  assert.equal(rejected.ok,false);
+  assert.match(rejected.error,/full/i);
+  const legacy=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(legacy.inventory.length,1);
+  assert.equal(legacy.inventory[0].qty,2);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,legacy.inventory);
+});
+
+test('Phase 2.1: occupied slots atomically swap items within and across containers',async()=>{
+  for(const path of ['campaigns/c/characters/a','users/alice/characters/a']){
+    const before=(await db.doc(path).get()).data();
+    before.inventory.push({id:'gem',instanceId:'gem',name:'Moon Gem',qty:1,storageId:'bag',storageSlot:1});
+    await db.doc(path).update({inventory:before.inventory});
+  }
+  const swap=await action('alice','updateCharacterInventory',['c','a',{type:'move-storage',itemId:'sword',storageId:'bag',storageSlot:1}]);
+  assert.equal(swap.ok,true,swap.error);
+  let sheet=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sheet.inventory.find(value=>value.id==='sword').storageSlot,1);
+  assert.equal(sheet.inventory.find(value=>value.id==='gem').storageSlot,0);
+  const created=await action('alice','updateCharacterInventory',['c','a',{type:'create-storage',name:'Small Pouch',rows:1,cols:1}]);
+  assert.equal(created.ok,true,created.error);
+  sheet=(await db.doc('campaigns/c/characters/a').get()).data();
+  const small=sheet.storages.find(value=>value.name==='Small Pouch');
+  assert.ok(small);
+  assert.equal((await action('alice','updateCharacterInventory',['c','a',{type:'move-storage',itemId:'gem',storageId:small.id}])).ok,true);
+  const blocked=await action('alice','updateCharacterInventory',['c','a',{type:'move-storage',itemId:'sword',storageId:small.id}]);
+  assert.equal(blocked.ok,false);
+  assert.match(blocked.error,/full/i);
+  const across=await action('alice','updateCharacterInventory',['c','a',{type:'move-storage',itemId:'sword',storageId:small.id,storageSlot:0}]);
+  assert.equal(across.ok,true,across.error);
+  sheet=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sheet.inventory.find(value=>value.id==='sword').storageId,small.id);
+  assert.equal(sheet.inventory.find(value=>value.id==='gem').storageId,'bag');
+  assert.equal(sheet.inventory.find(value=>value.id==='gem').storageSlot,1);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,sheet.inventory);
+  const invalid=await action('alice','updateCharacterInventory',['c','a',{type:'move-storage',itemId:'sword',storageId:small.id,storageSlot:99}]);
+  assert.equal(invalid.ok,false);
+  assert.deepEqual((await db.doc('campaigns/c/characters/a').get()).data().inventory,sheet.inventory);
+});
+
 test('GM inventory management updates the owner mirror and never grants ownership',async()=>{
   const result=await action('gm','updateCharacterInventory',['c','a',{type:'set-quantity',itemId:'sword',quantity:5,expectedQuantity:2}]);assert.equal(result.ok,true,result.error);
   const shared=(await db.doc('campaigns/c/characters/a').get()).data(),owned=(await db.doc('users/alice/characters/a').get()).data();
