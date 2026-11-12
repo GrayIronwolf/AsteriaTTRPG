@@ -11,6 +11,7 @@ import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkfl
 import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
+import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 
@@ -724,15 +725,10 @@ const commands = {
           appendActivity(character,{type:'inventory-adjusted',message:`GM changed ${item.name} quantity to ${quantity}.`});
         }else if(operation.type==='equip'){
           const slot=String(operation.slot||item.slot||item.allowedSlots?.[0]||'').trim();
-          if(!slot) throw new Error('Choose an equipment slot.');
-          const armourValidation=window.AsteriaArmour?.validateEquipmentChange?.(character,item,slot);
-          if(armourValidation && !armourValidation.ok) throw new Error(armourValidation.error||'This armour cannot be equipped in that location.');
-          inventory.forEach(value=>{if(value.equippedSlot===slot){value.equipped=false;value.equippedSlot='';value.location='inventory';}});
-          item.equipped=true;item.equippedSlot=slot;item.slot=slot;item.location='equipment';
-          character.equipment=Object.assign({},character.equipment||{});
-          Object.keys(character.equipment).forEach(key=>{if(key===slot||String(character.equipment[key]?.id||'')===String(item.id||'')) delete character.equipment[key];});
-          character.equipment[slot]=item;
+          equipCharacterInventoryItem(character,liveItemId(item),slot);
           appendActivity(character,{type:'item-equipped',message:`Equipped ${item.name} in ${slot}.`});
+          writeLiveCharacter(transaction,refs,character);
+          return;
         }else if(operation.type==='unequip'){
           const slot=item.equippedSlot||item.slot;
           item.equipped=false;item.equippedSlot='';item.location='inventory';
@@ -1181,6 +1177,7 @@ const commands = {
     const refs=liveCharacterRefs(campaignId,characterId);
     const eventRef=doc(db,'campaigns',campaignId,'events',eventId);
     try{
+      if(!['inventory','equip','declined'].includes(action)) throw new Error('Choose a valid reward action.');
       const result=await runTransaction(db,async transaction=>{
         await requireLiveSession(transaction,campaignId);
         const eventSnapshot=await transaction.get(eventRef);
@@ -1188,40 +1185,42 @@ const commands = {
         if(!eventSnapshot.exists() || !characterSnapshot.exists()) throw new Error('This loot reward is no longer available.');
         const event=eventSnapshot.data();
         const character=Object.assign({id:characterId},characterSnapshot.data());
-        if(event.type!=='loot-reward'||event.targetCharacterId!==characterId||event.targetOwnerUid!==currentUser.uid) throw new Error('This reward is not assigned to this character.');
+        if(event.type!=='loot-reward'||event.targetCharacterId!==characterId||event.targetOwnerUid!==currentUser.uid)
+          throw new Error('This reward is not assigned to this character.');
         await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
-        if(event.resolvedAt||['accepted','equipped','declined','resolved'].includes(String(event.status||'').toLowerCase())) return {applied:false};
+        if(event.resolvedAt||['accepted','equipped','declined','resolved'].includes(String(event.status||'').toLowerCase()))
+          return {applied:false};
         const pending=Array.isArray(character.pendingItemRewards)?character.pendingItemRewards:[];
-        character.pendingItemRewards=pending.filter(value=>String(value?.id||'')!==String(eventId));
-        character.resolvedItemRewardIds=uniqueValues(character.resolvedItemRewardIds,[eventId]);
         if(action!=='declined'){
-          const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(event.payload?.item||{})),{legacy:true,removeLegacy:true,migratedRecord:true});
-          item.id=item.id||item.instanceId||`${liveSlug(item.name||item.title)||'item'}-${Date.now()}`;
-          item.instanceId=item.instanceId||item.id;
-          item.name=item.name||item.title||'Reward Item';
-          item.qty=Math.max(1,Number(item.qty||item.quantity||1));
-          item.location='inventory';
-          item.equipped=false;
+          const source=structuredCloneSafe(event.payload?.item||{});
+          if(!source.name&&!source.title) throw new Error('The reward item is missing its name.');
+          const quantity=Number(source.qty??source.quantity??1);
+          if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1000000)
+            throw new Error('The reward has an invalid quantity.');
+          const item=normalizeMarketPricing({...source,qty:quantity},{legacy:true,removeLegacy:true,migratedRecord:true});
+          item.name=item.name||item.title;
+          item.equipped=false;item.equippedSlot='';item.location='inventory';
           character.storageLimit=Math.max(3,Number(character.storageLimit||3));
           character.storages=normalizeCharacterStorages(character);
-          item.storageId=String(action==='equip' ? item.storageId||character.storages[0]?.id||'' : destination||item.storageId||character.storages[0]?.id||'');
-          const received=placeCharacterItem(character,item,{storageId:item.storageId,noStack:action==='equip'});
           if(action==='equip'){
-            received.equippedSlot=destination||item.slot||item.allowedSlots?.[0]||'';
-            if(!received.equippedSlot) throw new Error('Choose an equipment slot for this reward.');
-            character.inventory.forEach(value=>{
-              if(value!==received&&value.equippedSlot===received.equippedSlot){value.equipped=false;value.equippedSlot='';value.location='inventory';}
-            });
-            received.equipped=true;
-            received.slot=received.equippedSlot;
-            received.location='equipment';
-            character.equipment=Object.assign({},character.equipment||{});
-            character.equipment[received.equippedSlot]=received;
+            if(quantity!==1) throw new Error('Store multiple reward items before equipping one.');
+            const received=stageDirectEquipReward(character,item,eventId);
+            equipCharacterInventoryItem(character,received.id,destination,{reward:true});
+          }else{
+            const storage=character.storages.find(value=>String(value.id)===String(destination||''));
+            if(!storage) throw new Error('Choose an existing inventory storage container.');
+            placeCharacterItem(character,item,{storageId:storage.id});
           }
-          appendActivity(character,{type:'loot-received',message:`Received ${received.name}${action==='equip'?' and equipped it':''}.`});
+          appendActivity(character,{type:'loot-received',message:`Received ${item.name}${action==='equip'?' and equipped it':''}.`});
         }
+        character.pendingItemRewards=pending.filter(value=>String(value?.id||'')!==String(eventId));
+        character.resolvedItemRewardIds=uniqueValues(character.resolvedItemRewardIds,[eventId]);
         writeLiveCharacter(transaction,refs,character);
-        transaction.set(eventRef,{status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',deliveryStatus:'acknowledged',acknowledged:true,acknowledgedBy:currentUser.uid,acknowledgedAt:serverTimestamp(),resolvedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});
+        transaction.set(eventRef,{
+          status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',
+          deliveryStatus:'acknowledged',acknowledged:true,acknowledgedBy:currentUser.uid,
+          acknowledgedAt:serverTimestamp(),resolvedAt:serverTimestamp(),updatedAt:serverTimestamp()
+        },{merge:true});
         return {applied:true};
       });
       return {ok:true,applied:result.applied};

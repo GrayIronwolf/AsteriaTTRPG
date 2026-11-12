@@ -2220,3 +2220,49 @@ test('Phase 7.3: verified-account invitation notice is opaque and cannot grant a
   await assertFails(getDoc(doc(user('eve'),privatePath)));
   await assertFails(setDoc(doc(user('eve'),privatePath),{readAt:new Date()}));
 });
+
+test('Phase 3.1: a reward equips directly, syncs both mirrors and cannot be claimed twice',async()=>{
+  const item={id:'gm-sword',name:'Steel Sword',type:'Weapon',qty:1,marketPrice:50};
+  await db.doc('campaigns/c/events/gm-reward-31').set({
+    id:'gm-reward-31',type:'loot-reward',status:'delivered',targetCharacterId:'a',
+    targetOwnerUid:'alice',payload:{item}
+  });
+  const claimed=await action('alice','resolveLootReward',['c','a','gm-reward-31','equip','Main Hand']);
+  assert.equal(claimed.ok,true,claimed.error);
+  const live=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(live.equipment['Main Hand'].name,'Steel Sword');
+  assert.equal(live.inventory.filter(row=>row.equipped&&row.equippedSlot==='Main Hand').length,1);
+  assert.equal((await db.doc('users/alice/characters/a').get()).data().equipment['Main Hand'].id,live.equipment['Main Hand'].id);
+  const again=await action('alice','resolveLootReward',['c','a','gm-reward-31','equip','Main Hand']);
+  assert.equal(again.applied,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.length,live.inventory.length);
+});
+
+test('Phase 3.1: failed reward equipment validation keeps item and event pending',async()=>{
+  const item={id:'gm-shield',name:'High Steel Kite Shield',type:'Armour',armourPieceType:'kiteShield',materialBaseAC:3,quality:'Average',qty:1};
+  await db.doc('campaigns/c/events/gm-shield-31').set({
+    id:'gm-shield-31',type:'loot-reward',status:'delivered',targetCharacterId:'a',
+    targetOwnerUid:'alice',payload:{item}
+  });
+  const invalid=await action('alice','resolveLootReward',['c','a','gm-shield-31','equip','Head']);
+  assert.equal(invalid.ok,false);
+  assert.equal((await db.doc('campaigns/c/events/gm-shield-31').get()).data().resolvedAt,undefined);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().equipment?.Head,undefined);
+  const accepted=await action('alice','resolveLootReward',['c','a','gm-shield-31','inventory','bag']);
+  assert.equal(accepted.ok,true,accepted.error);
+  assert.equal((await db.doc('campaigns/c/events/gm-shield-31').get()).data().status,'accepted');
+});
+
+test('Phase 3.1: rewards reject invalid quantities, actions and destinations without losing entitlement',async()=>{
+  await db.doc('campaigns/c/events/gm-bad-31').set({
+    id:'gm-bad-31',type:'loot-reward',status:'delivered',targetCharacterId:'a',
+    targetOwnerUid:'alice',payload:{item:{name:'Potions',type:'Potion',qty:0}}
+  });
+  for(const [mode,destination] of [['inventory','bag'],['equip','Main Hand'],['unknown','bag']]){
+    const result=await action('alice','resolveLootReward',['c','a','gm-bad-31',mode,destination]);
+    assert.equal(result.ok,false);
+  }
+  assert.equal((await db.doc('campaigns/c/events/gm-bad-31').get()).data().resolvedAt,undefined);
+  assert.equal((await action('bob','resolveLootReward',['c','a','gm-bad-31','declined',''])).ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.length,1);
+});
