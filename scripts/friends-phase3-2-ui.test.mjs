@@ -66,7 +66,7 @@ test('all management UI controls exist with explicit confirmation and disabled d
  assert.match(html,/aria-modal="true"/);
  assert.match(html,/asteria-friend-management\.js\?v=friends-phase3-3/);
  assert.match(css,/asteria-friend-manage-actions/);
- assert.doesNotMatch(html,/friendRequestsEnabled:true/);
+ assert.match(html,/friendRequestsEnabled:true/);
 });
 test('disabled functionality cannot display live controls or submit mutations',async()=>{
  const h=harness({enabled:false});h.api.onOpen();await h.tick();

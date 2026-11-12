@@ -19,8 +19,8 @@ test('social inbox enabled only, campaign controls and independent canaries unaf
   assert.equal(f.campaignNotifications,false);
   assert.equal(f.serverCampaignUCN,false);
   assert.equal(f.campaignJoinRequests,false);
-  assert.equal(f.friendAccountLookup,false);
-  assert.equal(f.friendRequestsEnabled,false);
+  assert.equal(f.friendAccountLookup,true);
+  assert.equal(f.friendRequestsEnabled,true);
   const canary={location:{search:'?friends-lookup-canary=1&friends-requests-canary=1'}};
   vm.runInNewContext('window.flags='+flagsMatch[1],{
     window:canary,URLSearchParams

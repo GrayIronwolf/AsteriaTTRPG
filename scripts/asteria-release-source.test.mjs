@@ -23,6 +23,8 @@ test('canonical manifest covers published website flags and preserves older Frie
  assert.match(expectedAssignment(release),/campaignInAppCanary:new URLSearchParams/);
  assert.match(expectedAssignment(release),/accountIdAutoCanary:new URLSearchParams/);
  assert.equal(release.backend.deployedFunctions.length,7);
+ assert.equal(release.friendsAvailability.mode,'general');
+ assert.match(expectedAssignment(release),/friendAccountLookup:true,friendRequestsEnabled:true/);
 });
 test('canary website controls remain URL-limited, while general release and email are OFF',()=>{
  const release=readManifest();
@@ -30,6 +32,8 @@ test('canary website controls remain URL-limited, while general release and emai
  assert.equal(release.inAppCanary.mode,'test-only');
  assert.equal(release.inAppCanary.migrationAllowed,false);
  assert.equal(release.inAppCanary.emailAllowed,false);
+ assert.equal(release.friendsAvailability.existingCampaignMigration,false);
+ assert.equal(release.friendsAvailability.emailInvitations,false);
  assert.ok(Object.values(release.websiteFlags).filter(Boolean).length===2);
  const source=expectedAssignment(release);
  for(const key of ['campaignJoinPreview','campaignJoinRequests','campaignJoinReview',
@@ -44,6 +48,8 @@ test('canary website controls remain URL-limited, while general release and emai
  const invalid=clone(release);
  invalid.inAppCanary.migrationAllowed=true;
  assert.throws(()=>validateManifest(invalid),/canary/);
+ const badFriends=clone(release);badFriends.friendsAvailability.emailInvitations=true;
+ assert.throws(()=>validateManifest(badFriends),/Friends/);
 });
 
 test('website is checked without Firebase access and any drift fails',()=>{
@@ -51,6 +57,7 @@ test('website is checked without Firebase access and any drift fails',()=>{
  assert.equal(renderWebsite(source),source);
  assert.throws(()=>checkWebsite(source.replace('campaignFriendRecipients:new URLSearchParams','campaignFriendRecipients:true && new URLSearchParams')),/drifted/);
  assert.throws(()=>checkWebsite(source.replace('accountIds:true','accountIds:false')),/drifted/);
+ assert.throws(()=>checkWebsite(source.replace('friendRequestsEnabled:true','friendRequestsEnabled:false')),/drifted/);
  assert.throws(()=>checkWebsite(source.replace('window.AsteriaFeatureFlags = Object.freeze','window.OtherFlags = Object.freeze')),/exactly one/);
 });
 test('unapproved activation, changed project, or removed protection fails closed',()=>{

@@ -79,5 +79,13 @@
     "queryParameter": "campaign-inapp-canary",
     "migrationAllowed": false,
     "emailAllowed": false
+  },
+  "friendsAvailability": {
+    "mode": "general",
+    "accountIdLookup": true,
+    "requestsAndList": true,
+    "notificationReads": true,
+    "emailInvitations": false,
+    "existingCampaignMigration": false
   }
 }

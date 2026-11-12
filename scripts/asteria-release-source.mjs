@@ -56,6 +56,14 @@ export function validateManifest(data){
      data.invitationDelivery?.resendRequired!==false||
      data.websiteFlags?.emailInvitationControls!==false)
     fail('Current Campaign invitation delivery must be in-app only; external email is deferred');
+  if(data.friendsAvailability!==undefined&&(
+    data.friendsAvailability.mode!=='general'||
+    data.friendsAvailability.accountIdLookup!==true||
+    data.friendsAvailability.requestsAndList!==true||
+    data.friendsAvailability.notificationReads!==true||
+    data.friendsAvailability.emailInvitations!==false||
+    data.friendsAvailability.existingCampaignMigration!==false))
+    fail('Unreviewed public Friends controls.');
   const canary=data.inAppCanary;
   if(canary!==undefined&&(
     canary.enabled!==true||canary.mode!=='test-only'||
@@ -86,8 +94,8 @@ export function expectedAssignment(data=readManifest()){
   const websiteValue=key=>data.inAppCanary?.enabled===true&&INVITATION_CANARY_KEYS.has(key)?
     CANARY_QUERY:flags[key];
   const items=[
-    'friendAccountLookup:'+canaries.friendAccountLookup,
-    'friendRequestsEnabled:'+canaries.friendRequestsEnabled,
+    'friendAccountLookup:'+(data.friendsAvailability?.mode==='general'?'true':canaries.friendAccountLookup),
+    'friendRequestsEnabled:'+(data.friendsAvailability?.mode==='general'?'true':canaries.friendRequestsEnabled),
     ...keys.slice(0,17).map(key=>key+':'+websiteValue(key)),
     'accountIdAutoCanary:'+canaries.accountIdAutoCanary,
     'accountIdCanary:'+canaries.accountIdCanary,

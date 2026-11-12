@@ -64,8 +64,8 @@ test('Friends Account menu and dialog are present exactly once, accessible and o
     'accountFriendsStatus','accountFriendsResult','accountFriendsResultInitial',
     'accountFriendsResultName','accountFriendsResultId'])
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
-  assert.match(html,/friendAccountLookup:new URLSearchParams\(window\.location\.search\)\.get\('friends-lookup-canary'\)==='1'/);
-  assert.doesNotMatch(html,/friendAccountLookup:true/);
+  assert.match(html,/friendAccountLookup:true/);
+  assert.doesNotMatch(html,/friendAccountLookup:new URLSearchParams/);
   assert.match(html,/aria-modal="true" aria-labelledby="accountFriendsTitle"/);
   assert.match(html,/aria-live="polite"/);
   assert.match(menu,/window\.AsteriaFriends\?\.open\?\.\(\)/);
@@ -152,7 +152,7 @@ test('search client bridge uses callable only and revalidates authenticated iden
   assert.match(block,/action:'find',accountId/);
   assert.doesNotMatch(block,/accountIdRegistry|accountIdAssignments|collection\(|getDocs\(|getDoc\(|localStorage|sessionStorage/);
   assert.match(block,/Object\.keys\(result\)\.sort\(\)\.join/);
-  assert.doesNotMatch(read('index.html'),/friendAccountLookup:true/);
+  assert.match(read('index.html'),/friendAccountLookup:true/);
 });
 test('friends UI never includes friend write, invitation, storage or private profile read actions',()=>{
   const ui=read('js/asteria-account-friends.js');

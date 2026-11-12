@@ -60,7 +60,7 @@ test('accepted list is present once, accessible and not enabled globally',()=>{
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  assert.match(html,/id="accountFriendsAccepted"[^>]*aria-labelledby="accountFriendsWorkspaceFriends"/);
  assert.match(html,/asteria-accepted-friends\.js\?v=friends-phase3-3/);
- assert.doesNotMatch(html,/friendRequestsEnabled:true/);
+ assert.match(html,/friendRequestsEnabled:true/);
  assert.match(read('css/asteria-account-friends.css'),/asteria-accepted-friend-card/);
  assert.match(read('js/asteria-account-friends.js'),/AsteriaAcceptedFriends\?\.onOpen/);
  assert.match(read('js/asteria-account-friends.js'),/AsteriaAcceptedFriends\?\.onClose/);
@@ -100,5 +100,5 @@ test('only approved public attributes render via textContent, not HTML',()=>{
  assert.match(bridge,/ownershipReadyUid!==uid/);
  assert.match(backend,/record\.status!=='accepted'/);
  assert.match(backend,/friendRequestInboxThrottle/);
- assert.doesNotMatch(read('index.html'),/friendRequestsEnabled:true/);
+ assert.match(read('index.html'),/friendRequestsEnabled:true/);
 });
