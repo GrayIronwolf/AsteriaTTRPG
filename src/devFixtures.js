@@ -1,6 +1,7 @@
 import { SESSION_LIMIT_MS, applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeDashboardPreferences, parseResourceCost, slug, stackableStorageItem, talentRankCost, unidentifiedItemName } from './state/liveWorkspaceModel.mjs';
 import { applyRest, applySoulDamage, clampHpForSoulDamage, recoverSoulDamage } from './state/specialDamageModel.mjs';
 import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from './systems/items/marketPricing.mjs';
+import { merchantPriceCopper, shopStockCompatible, shopVariantKey } from './state/shopTransactionModel.mjs';
 
 const DEMO_CAMPAIGN_ID = 'demo-campaign';
 
@@ -540,8 +541,69 @@ export function installDevFixtures() {
     createLiveItemOffer: (...args)=>fixtureApi.createLiveItemRequest(...args),
     respondLiveItemOffer: (...args)=>fixtureApi.respondLiveItemRequest(...args),
     resolveLootReward: async (_campaignId,characterId,id,action,destination) => {requireFixtureSession();const event=events.find(value=>value.id===id);if(!event)return {ok:false,error:'Reward not found.'};if(action!=='declined')updateCharacter(characterId,next=>{const item={...normalizeMarketPricing(event.payload.item,{legacy:true,removeLegacy:true,migratedRecord:true}),id:event.payload.item.id||eventId('item'),equipped:action==='equip',equippedSlot:action==='equip'?destination:'',storageId:action==='equip'?normalizeCharacterStorages(next)[0].id:destination};next.inventory=[...(next.inventory||[]),item];return next;});events=events.map(value=>value.id===id?{...value,status:action==='declined'?'declined':action==='equip'?'equipped':'accepted',resolvedAt:new Date().toISOString()}:value);notify('events');return {ok:true};},
-    buyLiveShopItem: async (_campaignId,characterId,shopId,stockIndex,quantity) => {try{requireFixtureSession();const shop=itemEcosystem.shops.find(value=>value.id===shopId);const stock=shop?.stock?.[stockIndex];if(!stock||stock.qty<quantity)throw new Error('Item unavailable.');const item=normalizeMarketPricing(stock.item,{legacy:true,removeLegacy:true,migratedRecord:true});const unitCost=getPlayerPurchasePriceCopper(item,shop.buyModifier??1);if(unitCost===null)throw new Error(`${item.name} needs a Market Price before it can be sold.`);if(unitCost===0&&marketPricingStatus(item).id==='not-tradeable')throw new Error(`${item.name} is not normally tradeable.`);updateCharacter(characterId,next=>{const cost=unitCost*quantity;if(fixtureCurrencyTotal(next)<cost)throw new Error('Not enough currency.');setFixtureCurrencyTotal(next,fixtureCurrencyTotal(next)-cost);next.inventory=[...(next.inventory||[]),{...item,id:eventId('item'),qty:quantity}];return next;});stock.qty-=quantity;notify('itemEcosystem');return {ok:true,cost:unitCost*quantity};}catch(error){return {ok:false,error:error.message||String(error)};}},
-    sellLiveShopItem: async (_campaignId,characterId,shopId,itemId) => {try{requireFixtureSession();const shop=itemEcosystem.shops.find(value=>value.id===shopId);let paid=0;updateCharacter(characterId,next=>{const item=next.inventory.find(value=>value.id===itemId);if(!item)throw new Error('Item not found.');paid=getPlayerSaleValueCopper(item,shop?.sellModifier??1);if(!paid)throw new Error(`${item.name} has no Market Value and cannot normally be sold.`);item.qty-=1;next.inventory=next.inventory.filter(value=>value.qty>0);setFixtureCurrencyTotal(next,fixtureCurrencyTotal(next)+paid);return next;});return {ok:true,value:paid};}catch(error){return {ok:false,error:error.message||String(error)};}},
+    buyLiveShopItem: async (_campaignId,characterId,shopId,stockIndex,quantity=1,quote={}) => {
+      try {
+        requireFixtureSession();
+        const shop=itemEcosystem.shops.find(value=>value.id===shopId);
+        const stock=shop?.stock?.[Number(stockIndex)];
+        const qty=Number(quantity);
+        if(!shop||shop.status!=='open'||!stock) throw new Error('The shop or item is unavailable.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId))
+          throw new Error('This character is not visiting the shop.');
+        if(!Number.isSafeInteger(qty)||qty<1||qty>Number(stock.qty))throw new Error('Not enough shop stock for the requested quantity.');
+        const item=normalizeMarketPricing(stock.item,{legacy:true,removeLegacy:true,migratedRecord:true});
+        const unitCost=merchantPriceCopper(shop,item,'buy');
+        if(unitCost===null||unitCost===0) throw new Error('This item cannot be purchased without a valid price.');
+        if(quote.variantKey&&quote.variantKey!==shopVariantKey(stock.item)) throw new Error('The shop item changed.');
+        if(quote.unitPriceCopper!==undefined&&quote.unitPriceCopper!==unitCost) throw new Error('The merchant price changed.');
+        const cost=unitCost*qty;
+        if(!Number.isSafeInteger(cost))throw new Error('Purchase total is outside supported range.');
+        if(fixtureCurrencyTotal(characters[characterId])<cost) throw new Error('Not enough currency.');
+        updateCharacter(characterId,next=>{
+          setFixtureCurrencyTotal(next,fixtureCurrencyTotal(next)-cost);
+          next.inventory=[...(next.inventory||[]),{...clone(item),id:eventId('item'),qty}];
+          return next;
+        });
+        stock.qty-=qty;shop.currencyCopper=Number(shop.currencyCopper||0)+cost;
+        notify('itemEcosystem');
+        return {ok:true,cost,quantity:qty,unitPriceCopper:unitCost};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    sellLiveShopItem: async (_campaignId,characterId,shopId,itemId,quantity=1,quote={}) => {
+      try {
+        requireFixtureSession();
+        const shop=itemEcosystem.shops.find(value=>value.id===shopId);
+        const item=characters[characterId]?.inventory?.find(value=>value.id===itemId);
+        const qty=Number(quantity);
+        if(!shop||shop.status!=='open'||!item)throw new Error('Shop or item unavailable.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId))
+          throw new Error('This character is not visiting the shop.');
+        if(item.equipped||item.locked||item.bound||item.questItem) throw new Error('This item cannot be sold.');
+        if(!Number.isSafeInteger(qty)||qty<1||qty>Number(item.qty||0))throw new Error('Choose a valid quantity.');
+        const unitValue=merchantPriceCopper(shop,item,'sell');
+        if(!unitValue)throw new Error('This item has no market value.');
+        if(quote.variantKey&&quote.variantKey!==shopVariantKey(item))throw new Error('The inventory item changed.');
+        if(quote.unitPriceCopper!==undefined&&quote.unitPriceCopper!==unitValue)throw new Error('The merchant offer changed.');
+        const value=unitValue*qty;
+        if(!Number.isSafeInteger(value)||Number(shop.currencyCopper??Infinity)<value)throw new Error('The merchant cannot afford this item.');
+        const stockItem={...clone(item),qty:1,equipped:false,equippedSlot:'',location:'shop'};
+        for(const key of ['ownerUid','storageId','storageSlot','bagId','bagSlot','instanceId'])delete stockItem[key];
+        updateCharacter(characterId,next=>{
+          const sold=next.inventory.find(value=>value.id===itemId);
+          sold.qty-=qty;
+          next.inventory=next.inventory.filter(value=>Number(value.qty||0)>0);
+          setFixtureCurrencyTotal(next,fixtureCurrencyTotal(next)+value);
+          return next;
+        });
+        shop.currencyCopper=Number(shop.currencyCopper||0)-value;
+        shop.stock=shop.stock||[];
+        const current=shop.stock.find(value=>shopStockCompatible(value.item,stockItem));
+        if(current)current.qty+=qty;
+        else shop.stock.push({item:stockItem,qty,priceCopper:merchantPriceCopper(shop,stockItem,'buy')});
+        notify('itemEcosystem');
+        return {ok:true,value,quantity:qty,unitPriceCopper:unitValue};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
     createLiveTrade: (campaignId,characterId,recipientId,itemId,quantity,note)=>fixtureApi.createLiveItemRequest(campaignId,characterId,recipientId,itemId,'trade',{quantity,note}),
     respondLiveTrade: (campaignId,characterId,requestId,accepted)=>fixtureApi.respondLiveItemRequest(campaignId,characterId,requestId,accepted,{})
   };
