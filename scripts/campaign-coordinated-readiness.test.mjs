@@ -52,6 +52,41 @@ test('a complete synthetic inventory still cannot claim release authorization',(
  assert.ok(report.blockers.some(s=>s.includes('GM/player/outsider')));
  assert.ok(report.blockers.some(s=>s.includes('human GO')));
 });
+test('in-app delivery is not reported enabled when only one callable has its gate on',()=>{
+  const data=snapshot();
+  const secure=data.descriptions.asteriaSecureInvitation.serviceConfig.environmentVariables;
+  const inbox=data.descriptions.asteriaCampaignNotifications.serviceConfig.environmentVariables;
+  const recipients=data.descriptions.asteriaCampaignFriendRecipients.serviceConfig.environmentVariables;
+  secure.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED='0';
+  secure.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED='0';
+  assert.equal(inbox.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED,'1');
+  assert.equal(recipients.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED,'1');
+  const report=evaluateProductionSnapshot(data);
+  assert.equal(report.invitationDelivery.notificationInbox,'on');
+  assert.equal(report.invitationDelivery.notificationGateOnSecureInvitation,'off');
+  assert.equal(report.invitationDelivery.recipientLookup,'on');
+  assert.equal(report.invitationDelivery.recipientGateOnSecureInvitation,'off');
+  assert.equal(report.runtimeFlags.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED,'off');
+  assert.equal(report.runtimeFlags.ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED,'off');
+  assert.ok(report.blockers.some(x=>x.includes('ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED')));
+  assert.ok(report.blockers.some(x=>x.includes('ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED')));
+  const summary=renderReleaseReport(report);
+  assert.match(summary,/Secure invitation notification gate: off/);
+  assert.match(summary,/Campaign notifications inbox callable: on/);
+  assert.equal(report.releaseDecision,'NO-GO');
+});
+
+test('an absent notification callable never counts as ready despite secure invitation gate',()=>{
+  const data=snapshot();
+  data.functions=data.functions.filter(x=>!x.name.endsWith('/asteriaCampaignNotifications'));
+  delete data.descriptions.asteriaCampaignNotifications;
+  const report=evaluateProductionSnapshot(data);
+  assert.equal(report.invitationDelivery.notificationInbox,'unknown');
+  assert.equal(report.runtimeFlags.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED,'unknown');
+  assert.ok(report.blockers.some(x=>x.includes('ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED')));
+  assert.equal(report.releaseDecision,'NO-GO');
+});
+
 test('missing, duplicate, inactive or unverified Cloud Functions are never accepted',()=>{
  const baseline=snapshot();
  for(const mutate of [
