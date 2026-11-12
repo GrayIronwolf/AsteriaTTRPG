@@ -3236,3 +3236,39 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media (prefers-reduced-motion: reduce) {
   #asteriaReactRoot .react-characteristics-parchment button.react-characteristic-stepper { transition: none; }
 }
+
+/* Phase 2.3: shop UI follows the existing blackened-metal inventory panels. */
+.react-inventory-layout > .react-inventory-merchants { grid-column: 1 / -1; min-width: 0; }
+.react-merchant-toolbar { display:grid; grid-template-columns: minmax(150px,1fr) auto minmax(140px,1fr); gap:10px; align-items:end; }
+.react-merchant-toolbar label,.react-merchant-quote label { display:grid; gap:5px; font-size:.72rem; }
+.react-merchant-toolbar select,.react-merchant-toolbar input,.react-merchant-quote input { width:100%; min-height:38px; }
+.react-merchant-toolbar > div { display:grid; gap:3px; }
+.react-merchant-toolbar > div small {opacity:.7;}
+.react-merchant-toolbar > div strong {font-size:.86rem;}
+.react-merchant-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:12px 0; }
+.react-merchant-heading h3 {margin:0 0 4px; font-size:1rem;}
+.react-merchant-heading p,.react-merchant-heading small {opacity:.8; font-size:.73rem;}
+.react-merchant-columns {display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px;}
+.react-merchant-columns > section {display:grid; align-content:start; gap:7px; min-width:0;}
+.react-merchant-columns h4 {margin:3px 0; font-size:.86rem;}
+.react-merchant-stock-row {display:grid; grid-template-columns:52px minmax(0,1fr) auto; gap:9px; align-items:center; min-width:0; padding:8px; border:1px solid rgba(111,158,188,.25); background:rgba(0,0,0,.18);}
+.react-merchant-stock-image {display:grid; place-items:center; width:48px; height:54px; background:rgba(5,16,26,.62); border:1px solid rgba(111,158,188,.22);}
+.react-merchant-stock-image img {width:100%; height:100%; object-fit:contain;}
+.react-merchant-stock-info {display:grid; gap:3px; min-width:0;}
+.react-merchant-stock-info b {font-size:.78rem; overflow-wrap:anywhere;}
+.react-merchant-stock-info small {font-size:.69rem; opacity:.76; overflow-wrap:anywhere;}
+.react-merchant-stock-action {display:grid; justify-items:end; gap:7px; text-align:right;}
+.react-merchant-stock-action strong {font-size:.77rem;}
+.react-merchant-stock-action button {min-height:34px;}
+.react-merchant-quote {display:grid; gap:8px;}
+.react-merchant-quote > strong {font-size:1rem;}
+.react-merchant-quote > small {opacity:.74;}
+@container (max-width: 900px) {
+  .react-inventory-layout > .react-inventory-merchants {display:none; grid-column:1;}
+  .react-inventory-layout.mobile-shops > .react-inventory-merchants {display:block;}
+}
+@container (max-width: 720px) {
+  .react-merchant-toolbar {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-merchant-toolbar > label:last-child {grid-column:1/-1;}
+  .react-merchant-columns {grid-template-columns:1fr;}
+}
