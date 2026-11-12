@@ -35,8 +35,6 @@ const SERVER_GATES=Object.freeze([
   'ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
   'ASTERIA_INVITATION_MANAGER_ENABLED',
   'ASTERIA_PLAYER_ROSTER_ENABLED',
-  'ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED',
-  'ASTERIA_EMAIL_DELIVERY_ENABLED',
   'ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED'
 ]);
 export const REQUIRED_EVIDENCE=Object.freeze([
@@ -49,7 +47,6 @@ export const REQUIRED_EVIDENCE=Object.freeze([
   'suspended-removed-banned-access-denied',
   'character-xp-inventory-integrity',
   'invitations-and-notifications-private',
-  'email-domain-and-sending-verified',
   'monitoring-alerts-and-response-owner',
   'non-escalating-rollback-rehearsed'
 ]);
