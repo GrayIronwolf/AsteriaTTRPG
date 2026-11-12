@@ -252,7 +252,11 @@ test('Phase 1.2: selling to another player moves currency and items in one trans
 
 test('Phase 1.2: full recipient storage rejects a gift without partial item or currency changes',async()=>{
   for(const id of ['campaigns/c/characters/b','users/bob/characters/b']){
-    await db.doc(id).update({storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}]});
+    const stored=(await db.doc(id).get()).data();
+    await db.doc(id).update({
+      storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}],
+      inventory:stored.inventory.map(item=>({...item,stackable:false}))
+    });
   }
   const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
   assert.equal(created.ok,true,created.error);
