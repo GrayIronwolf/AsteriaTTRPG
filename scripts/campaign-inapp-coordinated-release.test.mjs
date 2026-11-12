@@ -70,6 +70,9 @@ test('Gen2 Eventarc metadata is never packaged as an Asteria deployment flag',()
   live.env.GOOGLE_CLOUD_PROJECT='asteria-ttrpg';
   live.env.X_GOOGLE_RUNTIME='gen2';
   live.env.EXT_RUNTIME_METADATA='managed';
+  live.env.LOG_EXECUTION_ID='true';
+  live.env.OTHER_GOOGLE_MANAGED_METADATA='ignored';
+  live.env.MY_UNRELATED_KEY='not-an-Asteria-gate';
   live.env.FIREBASE_CONFIG='{"projectId":"asteria-ttrpg"}';
   live.env.GCLOUD_PROJECT='asteria-ttrpg';
   const reviewed=checkLiveInvitation(live);
@@ -77,18 +80,19 @@ test('Gen2 Eventarc metadata is never packaged as an Asteria deployment flag',()
   assert.equal(reviewed.env.FIREBASE_CONFIG,undefined);
   assert.equal(reviewed.env.FUNCTION_REGION,undefined);
   assert.equal(reviewed.env.K_SERVICE,undefined);
+  assert.equal(reviewed.env.LOG_EXECUTION_ID,undefined);
+  assert.equal(reviewed.env.MY_UNRELATED_KEY,undefined);
   const result=buildCoordinatedInAppRelease(live);
   const staged=result.packages[1].files['functions/.env.asteria-ttrpg'];
-  assert.doesNotMatch(staged,/EVENTARC_|FIREBASE_CONFIG|GCLOUD_PROJECT|FUNCTION_|K_SERVICE|X_GOOGLE_|EXT_/);
+  assert.doesNotMatch(staged,/EVENTARC_|FIREBASE_CONFIG|GCLOUD_PROJECT|FUNCTION_|K_SERVICE|X_GOOGLE_|EXT_|LOG_EXECUTION_ID|MY_UNRELATED_KEY/);
   assert.match(staged,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
   assert.equal(result.productionChanged,false);
 });
-test('unexpected or malformed environment metadata still fails closed',()=>{
+test('unknown Asteria gates and non-binary settings still fail closed',()=>{
   const bad=[
-    value=>{value.env.UNEXPECTED_RUNTIME_KEY='unsafe';},
     value=>{value.env.ASTERIA_UNREVIEWED_FEATURE='0';},
-    value=>{value.env.EVENTARC_CLOUD_EVENT_SOURCE=42;},
-    value=>{value.env.ASTERIA_SECURE_INVITATIONS_ENABLED='true';}
+    value=>{value.env.ASTERIA_SECURE_INVITATIONS_ENABLED='true';},
+    value=>{value.env.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=null;}
   ];
   for(const mutate of bad){
     const live=runtime();mutate(live);
@@ -106,7 +110,10 @@ test('coordinated staged packages accept production-shaped Gen2 metadata without
       FUNCTION_SIGNATURE_TYPE:'http',K_SERVICE:'asteriasecureinvitation',
       K_REVISION:'asteriasecureinvitation-00002',PORT:'8080',
       FIREBASE_CONFIG:'{"projectId":"asteria-ttrpg"}',
-      GOOGLE_CLOUD_PROJECT:'asteria-ttrpg'
+      GOOGLE_CLOUD_PROJECT:'asteria-ttrpg',
+      LOG_EXECUTION_ID:'true',
+      UNKNOWN_PLATFORM_OWNED_KEY:'ignored',
+      EVENTARC_CLOUD_EVENT_EXTRA_INFO:'managed'
     });
     const liveFile=join(dir,'live.json');
     writeFileSync(liveFile,JSON.stringify(live));
@@ -121,7 +128,7 @@ test('coordinated staged packages accept production-shaped Gen2 metadata without
     assert.deepEqual(staged.targets,TARGETS);
     for(const pkg of staged.packages){
       const data=readFileSync(join(staged.directory,pkg.name,'functions/.env.asteria-ttrpg'),'utf8');
-      assert.doesNotMatch(data,/EVENTARC_|FUNCTION_|K_SERVICE|PORT=|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT/);
+      assert.doesNotMatch(data,/EVENTARC_|FUNCTION_|K_SERVICE|PORT=|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT|LOG_EXECUTION_ID|UNKNOWN_PLATFORM_OWNED_KEY/);
       assert.match(data,/ASTERIA_/);
     }
   }finally{rmSync(dir,{recursive:true,force:true});}
@@ -200,6 +207,7 @@ test('existing trusted production workflow contains both scoped deploys, no emai
   assert.match(section,/working-directory: \$\{\{ runner\.temp \}\}\/asteria-inapp-coordinated\/notifications/);
   assert.match(section,/working-directory: \$\{\{ runner\.temp \}\}\/asteria-inapp-coordinated\/secure-invitation/);
   assert.match(section,/node scripts\/campaign-inapp-coordinated-release\.mjs --stage/);
+  assert.match(section,/with_entries\(select\(\.key \| startswith\("ASTERIA_"\)\)\)/);
   assert.match(section,/firebase-tools@15\.35\.0/);
   assert.match(section,/--only "functions:asteria:asteriaCampaignNotifications"/);
   assert.match(section,/--only "functions:asteria:asteriaSecureInvitation"/);

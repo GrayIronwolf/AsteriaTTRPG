@@ -1293,7 +1293,8 @@ jobs:
               (.secret // "" | endswith("/ASTERIA_SECURE_INVITE_SIGNING_KEY")))] | length == 1' "$RUNNER_TEMP/inapp-secure-live.json" >/dev/null || {
             echo 'Previously deployed signing-secret binding not verified; do not alter IAM or read secrets.' >&2; exit 1;
           }
-          jq '{exists:true,state:.state,signingSecretAttached:true,env:(.serviceConfig.environmentVariables // {})}' "$RUNNER_TEMP/inapp-secure-live.json" > "$RUNNER_TEMP/inapp-existing-state.json"
+          # The staged package owns only ASTERIA_* flags; Google-injected runtime metadata is never carried over.
+          jq '{exists:true,state:.state,signingSecretAttached:true,env:(.serviceConfig.environmentVariables // {} | with_entries(select(.key | startswith("ASTERIA_"))))}' "$RUNNER_TEMP/inapp-secure-live.json" > "$RUNNER_TEMP/inapp-existing-state.json"
       - name: Stage two exact callables with all new invitation switches OFF
         shell: bash
         env:

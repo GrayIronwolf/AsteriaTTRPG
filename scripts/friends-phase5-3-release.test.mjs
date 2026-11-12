@@ -94,7 +94,7 @@ test('activation fails closed without existing v2 invitation prerequisites',()=>
   {live:{exists:true,env:{...secure,ASTERIA_INVITATION_ACCEPTANCE_ENABLED:'0'}}},
   {live:{exists:true,env:{...secure,ASTERIA_INVITATION_MANAGER_ENABLED:'0'}}},
   {live:{exists:false,env:{}}},
-  {live:{exists:true,env:{...secure,UNREVIEWED_FLAG:'1'}}}
+  {live:{exists:true,env:{...secure,ASTERIA_UNREVIEWED_FLAG:'1'}}}
  ]){
   assert.throws(()=>buildPhase53Release('campaign-friends-invites-enable',{
     live,...ready,...changes
@@ -126,16 +126,18 @@ test('nested Phase 5.3 release rejects unknown config but drops Firebase Gen2 me
   EVENTARC_CLOUD_EVENT_SOURCE:'//cloudfunctions.googleapis.com/projects/asteria-ttrpg/locations/us-central1/functions/asteriaSecureInvitation',
   FUNCTION_REGION:'us-central1',FUNCTION_TARGET:'asteriaSecureInvitation',
   FUNCTION_SIGNATURE_TYPE:'http',K_SERVICE:'asteriasecureinvitation',
-  FIREBASE_CONFIG:'{"projectId":"asteria-ttrpg"}',GOOGLE_CLOUD_PROJECT:'asteria-ttrpg'}};
+  FIREBASE_CONFIG:'{"projectId":"asteria-ttrpg"}',GOOGLE_CLOUD_PROJECT:'asteria-ttrpg',
+  LOG_EXECUTION_ID:'true', UNRELATED_CLOUD_CONFIGURATION:'ignored'}};
  const parsed=parsePhase53LiveState(runtime);
  assert.deepEqual(parsed.env,secure);
  const release=buildPhase53Release('campaign-friends-invites-deploy-off',{
   live:runtime,recipientReady:false,acceptanceReady:false
  });
  const env=release.files['functions/.env.asteria-ttrpg'];
- assert.doesNotMatch(env,/EVENTARC_|FUNCTION_|K_SERVICE|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT/);
+ assert.doesNotMatch(env,/EVENTARC_|FUNCTION_|K_SERVICE|FIREBASE_CONFIG|GOOGLE_CLOUD_PROJECT|LOG_EXECUTION_ID|UNRELATED_CLOUD_CONFIGURATION/);
  assert.match(env,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED=0/);
- assert.throws(()=>parsePhase53LiveState({exists:true,env:{...secure,MY_API_KEY:'not-reviewed'}}),/Unreviewed/);
+ assert.deepEqual(parsePhase53LiveState({exists:true,env:{...secure,MY_UNRELATED_KEY:'not-an-Asteria-gate'}}).env,secure);
+ assert.throws(()=>parsePhase53LiveState({exists:true,env:{...secure,ASTERIA_UNREVIEWED_GATE:'0'}}),/Unreviewed/);
 });
 test('runner staging requires a manual trusted main workflow with exact confirmation',()=>{
  const confirmations=new Map([
