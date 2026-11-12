@@ -63,7 +63,8 @@
     if(root.AsteriaFeatureFlags?.campaignNotifications===true){
       if(!campaigns.querySelector('.workspace-campaign-notifications')){
         campaigns.replaceChildren();
-        if(root.AsteriaCampaignNotificationsUI?.render?.(campaigns)!==undefined)available++;
+        root.AsteriaCampaignNotificationsUI?.render?.(campaigns);
+        if(campaigns.querySelector('.workspace-campaign-notifications'))available++;
       }else{
         available++;
         if(refresh)campaigns.querySelector('button')?.click();
