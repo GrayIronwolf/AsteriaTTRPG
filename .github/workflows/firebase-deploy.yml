@@ -31,6 +31,7 @@ on:
           - friend-notifications-events-activate
           - friend-notifications-events-deactivate
           - campaign-coordinated-readiness-audit
+          - campaign-inapp-prepare-disabled
           - campaign-notifications-deploy-disabled
           - campaign-friends-release-audit
           - campaign-friends-recipients-deploy-off
@@ -1226,6 +1227,122 @@ jobs:
           echo "$NOTIFICATION_RELEASE_TARGET verified notification flag $actual." >> "$GITHUB_STEP_SUMMARY"
           echo 'Exactly one function was deployed. No Firestore rules, Storage, Hosting, email, account ID or campaign changes.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Website Friends notifications remain disabled until separately approved UI activation.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_inapp_prepare_disabled:
+    name: One coordinated notification-only campaign preparation (manual)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'campaign-inapp-prepare-disabled' &&
+      inputs.production_confirmation == 'PREPARE-ASTERIA-INAPP-CAMPAIGN-DISABLED'
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify both isolated callables, production contracts and Firebase rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run release:check
+          npm run audit:campaign-coordinated
+          npm run audit:production
+          npm run test:campaign-inapp
+          npm run test:campaign-channels
+          npm run test:friends-phase5-2
+          npm run test:friends-phase5-3
+          npm run test:secure-invitations
+          npm run test:invitation-acceptance
+          npm run test:notifications
+          npm run test:firebase
+      - name: Authenticate through the existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: \${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: \${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect deployed callables and existing signed-invitation secret binding (no values)
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud functions list --project asteria-ttrpg --regions us-central1 --v2 --format=json > "$RUNNER_TEMP/inapp-functions.json"
+          count_notify="$(jq '[.[] | select(.name | endswith("/asteriaCampaignNotifications"))] | length' "$RUNNER_TEMP/inapp-functions.json")"
+          count_secure="$(jq '[.[] | select(.name | endswith("/asteriaSecureInvitation"))] | length' "$RUNNER_TEMP/inapp-functions.json")"
+          count_recipients="$(jq '[.[] | select(.name | endswith("/asteriaCampaignFriendRecipients"))] | length' "$RUNNER_TEMP/inapp-functions.json")"
+          test "$count_notify" = 0 && test "$count_secure" = 1 && test "$count_recipients" = 1 || {
+            echo 'Cannot prove one previously installed signed invitation, existing recipients and absent notification callable; no writes.' >&2; exit 1;
+          }
+          gcloud functions describe asteriaSecureInvitation --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/inapp-secure-live.json"
+          jq -e '.state == "ACTIVE"' "$RUNNER_TEMP/inapp-secure-live.json" >/dev/null
+          jq -e '[.serviceConfig.secretEnvironmentVariables[]? |
+            select(.key == "ASTERIA_SECURE_INVITE_SIGNING_KEY" or
+              .secret == "ASTERIA_SECURE_INVITE_SIGNING_KEY" or
+              (.secret // "" | endswith("/ASTERIA_SECURE_INVITE_SIGNING_KEY")))] | length == 1' "$RUNNER_TEMP/inapp-secure-live.json" >/dev/null || {
+            echo 'Previously deployed signing-secret binding not verified; do not alter IAM or read secrets.' >&2; exit 1;
+          }
+          jq '{exists:true,state:.state,signingSecretAttached:true,env:(.serviceConfig.environmentVariables // {})}' "$RUNNER_TEMP/inapp-secure-live.json" > "$RUNNER_TEMP/inapp-existing-state.json"
+      - name: Stage two exact callables with all new invitation switches OFF
+        shell: bash
+        env:
+          ASTERIA_INAPP_OPERATION: \${{ inputs.operation }}
+          ASTERIA_INAPP_CONFIRMATION: \${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          export ASTERIA_INAPP_LIVE_FILE="$RUNNER_TEMP/inapp-existing-state.json"
+          node scripts/campaign-inapp-coordinated-release.mjs --stage
+          for name in notifications secure-invitation; do
+            dir="$RUNNER_TEMP/asteria-inapp-coordinated/$name/functions"
+            npm install --prefix "$dir" --package-lock-only --ignore-scripts --no-audit --no-fund
+            npm ci --prefix "$dir" --omit=dev --no-audit --no-fund
+            node --check "$dir/index.mjs"
+          done
+          if grep -R -l -E 'ASTERIA_RESEND_API_KEY|asteriaCampaignEmailInvitations' "$RUNNER_TEMP/asteria-inapp-coordinated" --include='*.mjs' | grep -q .; then
+            echo 'Email provider unexpectedly included in staged source.' >&2; exit 1;
+          fi
+      - name: Install isolated pinned Firebase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-inapp-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-inapp-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Install only private notifications with server gate OFF
+        shell: bash
+        working-directory: \${{ runner.temp }}/asteria-inapp-coordinated/notifications
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/asteria-inapp-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only "functions:asteria:asteriaCampaignNotifications" --non-interactive
+          gcloud functions describe asteriaCampaignNotifications --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/inapp-notify-verify.json"
+          jq -e '.state == "ACTIVE" and .serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED == "0"' "$RUNNER_TEMP/inapp-notify-verify.json" >/dev/null
+      - name: Update only previously installed secure invitations with all friend issuance OFF
+        shell: bash
+        working-directory: \${{ runner.temp }}/asteria-inapp-coordinated/secure-invitation
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/asteria-inapp-cli/node_modules/.bin/firebase" deploy --project asteria-ttrpg --only "functions:asteria:asteriaSecureInvitation" --non-interactive
+          gcloud functions describe asteriaSecureInvitation --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/inapp-secure-verify.json"
+          jq -e '.state == "ACTIVE" and .serviceConfig.environmentVariables.ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED == "0"' "$RUNNER_TEMP/inapp-secure-verify.json" >/dev/null
+          jq -r '.serviceConfig.environmentVariables // {} | to_entries | map(select(.key|startswith("ASTERIA_"))) | sort_by(.key) | .[] | "\(.key)=\(.value)"' "$RUNNER_TEMP/inapp-secure-verify.json" > "$RUNNER_TEMP/inapp-deployed-env.txt"
+          grep '^ASTERIA_' "$RUNNER_TEMP/asteria-inapp-coordinated/secure-invitation/functions/.env.asteria-ttrpg" | LC_ALL=C sort > "$RUNNER_TEMP/inapp-expected-env.txt"
+          diff -u "$RUNNER_TEMP/inapp-expected-env.txt" "$RUNNER_TEMP/inapp-deployed-env.txt"
+          echo '### Coordinated notification-only campaign preparation' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Both callables ACTIVE, but notification delivery and account-bound issuance OFF.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Existing secure invitation gates preserved. No Resend or email API key used.' >> "$GITHUB_STEP_SUMMARY"
+          echo '**Production activation remains NO-GO** pending Storage Rules parity, verified restore, approved v2 cutover, reviewed website release and real-account tests.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No rules, Hosting, memberships, legacy functions, accounts or email sending modified.' >> "$GITHUB_STEP_SUMMARY"
 
   campaign_coordinated_readiness_audit:
     name: Full Campaign v2 and Friends release readiness (one read-only report)
