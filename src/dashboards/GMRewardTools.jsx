@@ -54,9 +54,8 @@ export function GMRewardTools({campaignId,characters={},events=[],workspace={},s
       items:draftBundle.items||[],message:draftBundle.message||''});
     setAmount(String(draftBundle.currency?.amount||''));
   };
-  const scopeId=Object.keys(characters)[0]||'';
+  const scopeId=Object.keys(characters)[0]||'gm-scope';
   const saveBundleAction=async(action)=>{
-    if(!scopeId)throw Error('A linked campaign character is needed to manage reward templates.');
     const result=await firebaseService.manageGMRewardBundle(campaignId,scopeId,action);
     if(!result?.ok)throw Error(result?.error||'Could not update the reward template.');
     return result;
