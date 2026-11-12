@@ -132,9 +132,15 @@ export function buildPhase53Release(operation,{
   if(pkg.engines?.node!=='22'||admin!=='14.5.0'||sdk!=='7.4.0')
     fail('Unreviewed production dependencies.');
   const site=read('index.html');
-  if((site.match(/campaignFriendRecipients:(true|false)/g)||[]).length!==1||
-     (site.match(/campaignFriendInvitations:(true|false)/g)||[]).length!==1||
-     (site.match(/friendNotificationsEnabled:(true|false)/g)||[]).length!==1)
+  const assignment=site.match(/window\.AsteriaFeatureFlags = Object\.freeze\(\{([^}\n]*)\}\);/);
+  const canary="new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'";
+  const siteFlags=assignment?.[1]||'';
+  const safeGate=key=>siteFlags.includes(key+':false')||
+    (siteFlags.includes(key+':'+canary)&&
+      siteFlags.includes('campaignInAppCanary:'+canary));
+  if(!safeGate('campaignFriendRecipients')||
+     !safeGate('campaignFriendInvitations')||
+     !siteFlags.includes('friendNotificationsEnabled:true'))
     fail('Website gates or existing friends notifications changed unexpectedly.');
   const files={
     'firebase.json':JSON.stringify({functions:[{source:'functions',codebase:'asteria',runtime:'nodejs22'}]},null,2)+'\n',
