@@ -294,6 +294,124 @@ test('Phase 1.2: trade result acknowledgement never overwrites private character
   assert.deepEqual(owner.journal,['Owner notes']);
 });
 
+test('Phase 2.2: sender can withdraw a pending escrowed gift after the session ends',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  await db.doc('campaigns/c/liveSession/current').update({status:'ended'});
+  const cancelled=await action('alice','cancelLiveItemRequest',['c','a',created.request.id]);
+  assert.equal(cancelled.ok,true,cancelled.error);
+  assert.equal(cancelled.escrowReturned,true);
+  const request=(await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data();
+  assert.equal(request.status,'cancelled');
+  assert.equal(request.recipientNotice,'unread');
+  assert.equal(request.senderNotice,'acknowledged');
+  const shared=(await db.doc('campaigns/c/characters/a').get()).data();
+  const owner=(await db.doc('users/alice/characters/a').get()).data();
+  assert.deepEqual(owner.inventory,shared.inventory);
+  assert.equal(shared.inventory.reduce((n,item)=>n+item.qty,0),2);
+  const again=await action('alice','cancelLiveItemRequest',['c','a',created.request.id]);
+  assert.equal(again.ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.reduce((n,item)=>n+item.qty,0),2);
+  assert.equal((await action('bob','cancelLiveItemRequest',['c','b',created.request.id])).ok,false);
+});
+
+test('Phase 2.2: recipient can decline a pending request without a live session',async()=>{
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1}]);
+  assert.equal(created.ok,true,created.error);
+  await db.doc('campaigns/c/liveSession/current').update({status:'ended'});
+  const declined=await action('bob','respondLiveItemRequest',['c','b',created.request.id,false,{}]);
+  assert.equal(declined.ok,true,declined.error);
+  assert.equal((await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data().status,'declined');
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.reduce((n,item)=>n+item.qty,0),2);
+  assert.equal((await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{}])).ok,false);
+});
+
+test('Phase 2.2: either trade participant can withdraw counteroffer outside session, restoring both escrow stacks',async()=>{
+  for(const id of ['campaigns/c/characters/b','users/bob/characters/b']){
+    const before=(await db.doc(id).get()).data();
+    before.inventory.push({id:'token',instanceId:'token',name:'Moon Token',qty:1,storageId:'bag',storageSlot:1,stackable:false});
+    await db.doc(id).update({inventory:before.inventory});
+  }
+  const created=await action('alice','createLiveItemRequest',['c','a','b','sword','trade',{quantity:1,requestedItem:'Moon Token'}]);
+  assert.equal(created.ok,true,created.error);
+  const ready=await action('bob','respondLiveItemRequest',['c','b',created.request.id,true,{exchangeItemId:'token',exchangeQuantity:1}]);
+  assert.equal(ready.ok,true,ready.error);
+  assert.equal(ready.awaitingSender,true);
+  await db.doc('campaigns/c/liveSession/current').update({status:'ended'});
+  assert.equal((await action('alice','finalizeLiveItemTrade',['c','a',created.request.id,true])).ok,false);
+  const withdrawn=await action('bob','cancelLiveItemRequest',['c','b',created.request.id]);
+  assert.equal(withdrawn.ok,true,withdrawn.error);
+  for(const [id,uid,expectedName] of [['a','alice','Sword'],['b','bob','Moon Token']]){
+    const shared=(await db.doc('campaigns/c/characters/'+id).get()).data();
+    const owned=(await db.doc('users/'+uid+'/characters/'+id).get()).data();
+    assert.deepEqual(owned.inventory,shared.inventory);
+    assert.equal(shared.inventory.some(item=>item.name===expectedName),true);
+  }
+  const sender=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(sender.inventory.reduce((n,item)=>n+Number(item.qty||0),0),2);
+  const recipient=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.equal(recipient.inventory.some(item=>item.id==='token'||item.name==='Moon Token'),true);
+  const result=(await db.doc('campaigns/c/itemRequests/'+created.request.id).get()).data();
+  assert.equal(result.status,'cancelled');
+  assert.equal(result.resolution.escrowReturned,true);
+  assert.equal(result.senderNotice,'unread');
+  assert.equal((await action('alice','cancelLiveItemRequest',['c','a',created.request.id])).ok,false);
+  assert.equal((await action('bob','finalizeLiveItemTrade',['c','b',created.request.id,true])).ok,false);
+});
+
+test('Phase 2.2: fully occupied bags preserve both returned escrow items as overflow',async()=>{
+  for(const id of ['campaigns/c/characters/a','users/alice/characters/a']){
+    const before=(await db.doc(id).get()).data();
+    await db.doc(id).update({inventory:before.inventory.map(item=>({...item,stackable:false}))});
+  }
+  for(const id of ['campaigns/c/characters/b','users/bob/characters/b']){
+    const before=(await db.doc(id).get()).data();
+    before.inventory.push({id:'token',instanceId:'token',name:'Moon Token',qty:1,storageId:'bag',storageSlot:1,stackable:false});
+    await db.doc(id).update({inventory:before.inventory});
+  }
+  const made=await action('alice','createLiveItemRequest',['c','a','b','sword','trade',{quantity:1}]);
+  assert.equal(made.ok,true,made.error);
+  const ready=await action('bob','respondLiveItemRequest',['c','b',made.request.id,true,{exchangeItemId:'token',exchangeQuantity:1}]);
+  assert.equal(ready.ok,true,ready.error);
+  for(const id of ['campaigns/c/characters/a','users/alice/characters/a','campaigns/c/characters/b','users/bob/characters/b']){
+    await db.doc(id).update({storages:[{id:'bag',name:'Bag',rows:1,cols:1,maxSlots:1}]});
+  }
+  await db.doc('campaigns/c/liveSession/current').update({status:'expired'});
+  const withdrawn=await action('alice','cancelLiveItemRequest',['c','a',made.request.id]);
+  assert.equal(withdrawn.ok,true,withdrawn.error);
+  assert.equal(withdrawn.returnedToOverflow,true);
+  const alice=(await db.doc('campaigns/c/characters/a').get()).data();
+  const bob=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.equal(alice.inventory.reduce((n,i)=>n+Number(i.qty||0),0),2);
+  assert.equal(bob.inventory.some(i=>i.name==='Moon Token'),true);
+  assert.equal(alice.inventory.some(i=>i.storageSlot===null||i.storageSlot===-1),true);
+  assert.equal(bob.inventory.some(i=>i.storageSlot===null||i.storageSlot===-1),true);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,alice.inventory);
+  assert.deepEqual((await db.doc('users/bob/characters/b').get()).data().inventory,bob.inventory);
+  assert.equal((await db.doc('campaigns/c/itemRequests/'+made.request.id).get()).data().returnedToOverflow,true);
+});
+
+test('Phase 2.2: sender may reject a counteroffer after the session ends, acceptance remains blocked',async()=>{
+  for(const id of ['campaigns/c/characters/b','users/bob/characters/b']){
+    const data=(await db.doc(id).get()).data();
+    data.inventory.push({id:'token',instanceId:'token',name:'Rune',qty:1,storageId:'bag',storageSlot:1});
+    await db.doc(id).update({inventory:data.inventory});
+  }
+  const made=await action('alice','createLiveItemRequest',['c','a','b','sword','trade',{quantity:1}]);
+  assert.equal(made.ok,true,made.error);
+  assert.equal((await action('bob','respondLiveItemRequest',['c','b',made.request.id,true,{exchangeItemId:'token',exchangeQuantity:1}])).ok,true);
+  await db.doc('campaigns/c/liveSession/current').update({status:'ended'});
+  const rejected=await action('alice','finalizeLiveItemTrade',['c','a',made.request.id,false]);
+  assert.equal(rejected.ok,true,rejected.error);
+  assert.equal((await db.doc('campaigns/c/itemRequests/'+made.request.id).get()).data().status,'declined');
+  const sender=(await db.doc('campaigns/c/characters/a').get()).data();
+  const recipient=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.equal(sender.inventory.reduce((n,item)=>n+item.qty,0),2);
+  assert.equal(recipient.inventory.some(item=>item.name==='Rune'),true);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,sender.inventory);
+  assert.deepEqual((await db.doc('users/bob/characters/b').get()).data().inventory,recipient.inventory);
+});
+
 test('Phase 1.3: trades are invisible to other campaign members but available to both players and GM',async()=>{
   const created=await action('alice','createLiveItemRequest',['c','a','b','sword','give',{quantity:1,note:'Private party handoff'}]);
   assert.equal(created.ok,true,created.error);

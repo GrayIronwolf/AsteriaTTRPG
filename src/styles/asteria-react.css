@@ -1266,6 +1266,17 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-storage-item-actions > b { grid-column: 1 / -1; }
 }
 
+/* Trade review intentionally reuses existing exchange cards and colour tokens. */
+.react-trade-review-note {
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+  border-left: 2px solid rgba(108,174,215,.5);
+  background: rgba(0,0,0,.2);
+  overflow-wrap: anywhere;
+  font-size: .75rem;
+}
+.react-final-trade-grid section > strong { font-size: .84rem; }
+.react-request-history article button { min-height: 34px; }
 .react-storage-cell {
   position: relative;
   display: grid;

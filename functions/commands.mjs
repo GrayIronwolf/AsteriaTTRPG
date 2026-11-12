@@ -258,6 +258,36 @@ function placeCharacterItem(character,source,options={}){
 }
 
 
+
+// Returning an escrowed item must not depend on having an empty container.
+// Try the original slot (or a compatible stack), then keep the complete item
+// as visible overflow when bags have been filled or removed in the meantime.
+// The action containing this helper commits the return and request status
+// together, so retries cannot return the same escrow more than once.
+function restoreEscrowItem(character,escrow,operationId){
+  if(!escrow||!escrow.name) throw new Error('The escrowed item is unavailable.');
+  const options={storageId:String(escrow.storageId||''),storageSlot:escrow.storageSlot,preserveId:true};
+  try {
+    return {item:placeCharacterItem(character,escrow,options),overflow:false};
+  } catch(error) {
+    if(!/full|needs a storage container/i.test(error.message||'')) throw error;
+  }
+  const inventory=characterInventory(character);
+  const storages=normalizeCharacterStorages(character);
+  const storage=storages.find(row=>String(row.id)===String(escrow.storageId||''))||storages[0];
+  const used=new Set(inventory.map(row=>liveItemId(row)));
+  const desired=String(escrow.instanceId||escrow.id||'');
+  const base=desired&&!used.has(desired)?desired:`escrow-return-${operationId}`;
+  let id=base,index=1;
+  while(used.has(id)) {index+=1;id=`${base}-${index}`;}
+  const item={...structuredCloneSafe(escrow),id,instanceId:id,
+    qty:Math.max(1,Number(escrow.qty||1)),storageId:storage?.id||'',storageSlot:-1,
+    equipped:false,equippedSlot:'',location:'inventory'};
+  character.inventory=[...inventory,item];
+  return {item,overflow:true};
+}
+
+
 function applyQuestRewards(character,quest,questId,characterId) {
   let rewardApplied=false;
   let summary='';
@@ -896,7 +926,8 @@ const commands = {
     const recipientRef=doc(db,'campaigns',campaignId,'characters',characterId);
     try{
       const result=await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
+        // Declining and returning escrow is always permitted, even between sessions.
+        if(accepted) await requireLiveSession(transaction,campaignId);
         const request=requirePrivateItemRequest(await transaction.get(requestRef),requestId);
         if(!request||request.status!=='pending'||String(request.toCharacterId)!==String(characterId)) throw new Error('This item request is no longer pending for this character.');
         const senderRef=doc(db,'campaigns',campaignId,'characters',request.fromCharacterId);
@@ -948,9 +979,8 @@ const commands = {
           receivedItem=placeCharacterItem(recipient,request.item,{storageId:details.storageId||''});
           appendActivity(recipient,{type:`item-${request.mode}-accepted`,message:`Accepted ${receivedItem.name} from ${sender.name||'a party member'}.`});
         }else if(request.mode!=='identify'){
-          const storages=normalizeCharacterStorages(sender);
-          if(storages.length) placeCharacterItem(sender,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
-          else sender.inventory=[...characterInventory(sender),Object.assign({},structuredCloneSafe(request.item),{location:'inventory',storageId:'',storageSlot:-1,equipped:false,equippedSlot:''})];
+          const restored=restoreEscrowItem(sender,request.item,request.id);
+          request.returnedToOverflow=restored.overflow;
         }
         request.status=accepted?'accepted':'declined';request.recipientNotice='acknowledged';request.senderNotice='unread';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
         request.resolution={accepted:Boolean(accepted),receivedItem:receivedItem?{name:receivedItem.name,qty:receivedItem.qty}:null,exchangeItem:exchangeItem?{name:exchangeItem.name,qty:exchangeItem.qty}:null,revealedItem:revealedItem?{name:revealedItem.name,rarity:revealedItem.rarity}:null,priceCopper:request.mode==='sell'?Number(request.priceCopper||0):0};
@@ -968,7 +998,8 @@ const commands = {
     const requestRef=itemRequestRef(campaignId,requestId);
     try{
       await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
+        // Rejecting the counteroffer must remain possible after the GM ends a session.
+        if(accepted) await requireLiveSession(transaction,campaignId);
         const [requestSnapshot,senderSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(senderRefs.campaign)]);
         if(!senderSnapshot.exists()) throw new Error('Character not found.');
         const request=requirePrivateItemRequest(requestSnapshot,requestId);
@@ -991,8 +1022,9 @@ const commands = {
           appendActivity(sender,{type:'item-trade-completed',message:`Completed a trade with ${recipient.name||'a party member'}.`});
           appendActivity(recipient,{type:'item-trade-completed',message:`Completed a trade with ${sender.name||'a party member'}.`});
         }else{
-          placeCharacterItem(sender,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
-          placeCharacterItem(recipient,request.exchangeItem,{storageId:request.exchangeItem?.storageId||'',storageSlot:request.exchangeItem?.storageSlot,preserveId:true});
+          const first=restoreEscrowItem(sender,request.item,request.id+'-sender');
+          const second=restoreEscrowItem(recipient,request.exchangeItem,request.id+'-recipient');
+          request.returnedToOverflow=first.overflow||second.overflow;
           appendActivity(sender,{type:'item-trade-declined',message:`Declined the final trade with ${recipient.name||'a party member'}.`});
           appendActivity(recipient,{type:'item-trade-declined',message:`${sender.name||'The other player'} declined the final trade.`});
         }
@@ -1007,29 +1039,64 @@ const commands = {
   },
   cancelLiveItemRequest: async function(campaignId,characterId,requestId){
     if(!db||!currentUser||!campaignId||!characterId||!requestId) return {ok:false};
-    const refs=liveCharacterRefs(campaignId,characterId);
     const requestRef=itemRequestRef(campaignId,requestId);
     try{
-      await runTransaction(db,async transaction=>{
-        await requireLiveSession(transaction,campaignId);
-        const [requestSnapshot,characterSnapshot]=await Promise.all([transaction.get(requestRef),transaction.get(refs.campaign)]);
-        if(!characterSnapshot.exists()) throw new Error('Character not found.');
-        const request=requirePrivateItemRequest(requestSnapshot,requestId);
-        if(!request||request.status!=='pending'||String(request.fromCharacterId)!==String(characterId)) throw new Error('This request can no longer be cancelled.');
-        const character=Object.assign({id:characterId},characterSnapshot.data());
-        if(String(request.fromOwnerUid||'')!==String(character.ownerUid||'')) throw new Error('The item request owner has changed.');
-        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+      const result=await runTransaction(db,async transaction=>{
+        // Recovery is available even when a campaign session is paused, ended or expired.
+        const request=requirePrivateItemRequest(await transaction.get(requestRef),requestId);
+        const pending=request.status==='pending';
+        const awaiting=request.status==='awaiting-sender'&&request.mode==='trade';
+        if(!pending&&!awaiting) throw new Error('This request is no longer open.');
+        const isSender=String(request.fromCharacterId)===String(characterId);
+        const isRecipient=String(request.toCharacterId)===String(characterId);
+        if((!isSender&&!isRecipient)||(pending&&!isSender))
+          throw new Error('Only the sender can withdraw a pending request. Either participant can withdraw a counteroffer.');
+        const senderRef=doc(db,'campaigns',campaignId,'characters',request.fromCharacterId);
+        const recipientRef=doc(db,'campaigns',campaignId,'characters',request.toCharacterId);
+        const [senderSnapshot,recipientSnapshot]=await Promise.all([
+          transaction.get(senderRef),transaction.get(recipientRef)
+        ]);
+        if(!senderSnapshot.exists()||!recipientSnapshot.exists())
+          throw new Error('Both linked characters must be available to return escrow.');
+        const sender={id:request.fromCharacterId,...senderSnapshot.data()};
+        const recipient={id:request.toCharacterId,...recipientSnapshot.data()};
+        if(String(request.fromOwnerUid||'')!==String(sender.ownerUid||'')||
+           String(request.toOwnerUid||'')!==String(recipient.ownerUid||''))
+          throw new Error('A trade participant has changed ownership. Contact the GM to recover escrow.');
+        const own=isSender?sender:recipient;
+        const ownRefs={campaign:isSender?senderRef:recipientRef};
+        const other=isSender?recipient:sender;
+        const otherRefs={campaign:isSender?recipientRef:senderRef};
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,own,ownRefs);
+        await verifyLiveTradeCounterparty(transaction,campaignId,other.id,other,otherRefs);
+        let returnedToOverflow=false;
         if(request.mode!=='identify'){
-          const storages=normalizeCharacterStorages(character);
-          if(storages.length) placeCharacterItem(character,request.item,{storageId:request.item?.storageId||'',storageSlot:request.item?.storageSlot,preserveId:true});
-          else character.inventory=[...characterInventory(character),Object.assign({},structuredCloneSafe(request.item),{location:'inventory',storageId:'',storageSlot:-1,equipped:false,equippedSlot:''})];
+          const original=restoreEscrowItem(sender,request.item,request.id+'-sender');
+          returnedToOverflow=original.overflow;
         }
-        request.status='cancelled';request.recipientNotice='cancelled';request.senderNotice='acknowledged';request.resolvedAt=new Date().toISOString();request.resolvedBy=currentUser.uid;
-        appendActivity(character,{type:'item-request-cancelled',message:`Cancelled the ${request.mode} request for ${request.item?.name||'an item'}.`});
-        writeLiveCharacter(transaction,refs,character);
+        if(awaiting){
+          if(!request.exchangeItem) throw new Error('The offered exchange item is missing.');
+          const exchange=restoreEscrowItem(recipient,request.exchangeItem,request.id+'-recipient');
+          returnedToOverflow=returnedToOverflow||exchange.overflow;
+        }
+        request.status='cancelled';
+        request.senderNotice=isSender?'acknowledged':'unread';
+        request.recipientNotice=isRecipient?'acknowledged':'unread';
+        request.resolvedAt=new Date().toISOString();
+        request.resolvedBy=currentUser.uid;
+        request.resolution={accepted:false,cancelled:true,escrowReturned:true,
+          receivedItem:null,exchangeItem:null,priceCopper:0};
+        request.returnedToOverflow=returnedToOverflow;
+        appendActivity(own,{type:'item-request-cancelled',
+          message:`Withdrew the ${request.mode} request for ${request.item?.name||'an item'}; escrow returned.`});
+        const senderRefs=isSender?ownRefs:otherRefs;
+        const recipientRefs=isRecipient?ownRefs:otherRefs;
+        writeLiveCharacter(transaction,senderRefs,sender);
+        writeLiveCharacter(transaction,recipientRefs,recipient);
         transaction.set(requestRef,request);
+        return {cancelled:true,escrowReturned:true,returnedToOverflow};
       });
-      return {ok:true};
+      return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   acknowledgeLiveItemRequest: async function(campaignId,characterId,requestId){
