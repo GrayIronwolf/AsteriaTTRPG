@@ -545,6 +545,36 @@ export function GMDashboard({ campaignId }) {
     };
     migrate().catch(error=>{if(itemPrivacyScope.current===scope)setActionError(error.message||String(error));});
   },[campaignId,accountUid,live.campaign,rawLive.characters]);
+  // Migrate bounded batches on the trusted server. Each batch copies records
+  // transactionally before removing legacy source rows; no client-side rewrite.
+  const itemStoresMigrationScope=useRef('');
+  useEffect(()=>{
+    if(!campaignId||!accountUid||!live.campaign||!live.gmWorkspaceLoaded)return;
+    const scopeId=Object.keys(rawLive.characters||{})[0];
+    if(!scopeId)return;
+    const scope=campaignId+':'+accountUid;
+    if(itemStoresMigrationScope.current===scope)return;
+    itemStoresMigrationScope.current=scope;
+    const migrate=async()=>{
+      for(let attempt=0;attempt<40;attempt++){
+        const result=await firebaseService.syncCampaignShopStores(campaignId,scopeId);
+        if(itemStoresMigrationScope.current!==scope)return;
+        if(!result?.ok)throw Error(result?.error||'Shop consolidation could not finish.');
+        if(!result.remaining)break;
+        if(attempt===39)throw Error('Shop consolidation needs a further bounded migration pass.');
+      }
+      for(let attempt=0;attempt<40;attempt++){
+        const result=await firebaseService.syncGMRewardBundles(campaignId,scopeId);
+        if(itemStoresMigrationScope.current!==scope)return;
+        if(!result?.ok)throw Error(result?.error||'GM reward template consolidation could not finish.');
+        if(!result.remaining)break;
+        if(attempt===39)throw Error('Reward template consolidation needs a further bounded migration pass.');
+      }
+    };
+    migrate().catch(error=>{
+      if(itemStoresMigrationScope.current===scope)setActionError(error.message||String(error));
+    });
+  },[campaignId,accountUid,live.campaign,live.gmWorkspaceLoaded,rawLive.characters]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const saveDashboardLayout=async layout=>{
