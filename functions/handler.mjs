@@ -66,7 +66,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     if(!combatAction&&['castCharacterSpell','useCharacterTalent','updateCharacterInventory','updateCampaignCharacterResource','requestCharacterRest','takeCampaignCharacterRest'].includes(action)) {
       const encounterSnapshot=await transaction.get(db.doc(`campaigns/${campaignId}/systems/encounter`));
       const encounter=encounterSnapshot.data()||{};
-      const combatInventory=action!=='updateCharacterInventory'||['use','equip','unequip','move-storage','quick'].includes(args[2]?.type);
+      const combatInventory=action!=='updateCharacterInventory'||['use','equip','unequip','move-storage','quick','create-custom-item'].includes(args[2]?.type);
       if(combatInventory&&encounter.status==='active'&&(encounter.combatants||[]).some(row=>row.characterId===args[1])) throw new Error('Use the Combat Panel while participating in an encounter.');
     }
     for(const detail of args.slice(2)) if(detail && typeof detail==='object' && detail.expectedCoreRevision!==undefined) {
