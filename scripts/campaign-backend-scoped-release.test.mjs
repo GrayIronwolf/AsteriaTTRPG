@@ -132,6 +132,7 @@ test('approved campaign workflow stages isolated functions and never widens depl
   assert.match(read('.github/workflows/firebase-checks.yml'),/Exercise isolated campaign core packaging and Firebase CLI dependency ABI/);
   assert.doesNotMatch(section,/--only functions,firestore,storage/);
   assert.doesNotMatch(section,/gcloud .* (set-iam-policy|add-iam-policy-binding)/);
-  assert.match(read('index.html'),/secureInvitationManager:false/);
-  assert.match(read('index.html'),/campaignFriendInvitations:false/);
+  assert.match(read('index.html'),/secureInvitationManager:new URLSearchParams/);
+  assert.match(read('index.html'),/campaignFriendInvitations:new URLSearchParams/);
+  assert.match(read('index.html'),/campaignInAppCanary:new URLSearchParams/);
 });

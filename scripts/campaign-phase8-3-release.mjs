@@ -73,8 +73,25 @@ export function inspectPhase83Source(read=repoReader){
     [...flags[1].matchAll(/([A-Za-z0-9]+)\s*:\s*(true|false)/g)]
       .map(m=>[m[1],m[2]==='true'])
   ):{};
+  // A URL-limited test flag is OFF by default and never enables general
+  // availability. Treat only the canonical reviewed query expression as
+  // an acceptable opt-in; arbitrary dynamic expressions still fail closed.
+  const canary=JSON.parse(read('config/asteria-release.json')).inAppCanary;
+  const canaryAllowed=new Set([
+    'campaignJoinPreview','campaignJoinRequests','campaignJoinReview',
+    'secureInvitationManager','secureInvitationAcceptance',
+    'campaignNotifications','campaignFriendRecipients',
+    'campaignFriendInvitations'
+  ]);
+  const canaryExpression="new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'";
+  const flagBody=flags?.[1]||'';
+  const safeSite=ALL_FLAGS.every(key=>values[key]===false||
+    (canary?.enabled===true&&canary?.mode==='test-only'&&
+      canary?.migrationAllowed===false&&canary?.emailAllowed===false&&
+      canaryAllowed.has(key)&&
+      flagBody.includes(key+':'+canaryExpression)));
   const checks=[
-    result('website-flags-remain-off',ALL_FLAGS.every(x=>values[x]===false)),
+    result('website-flags-remain-off',safeSite),
     result('backend-permission-gates-present',SERVER_GATES.every(x=>
       new RegExp('process\\.env\\.'+x+'\\s*!==\\s*[\\x27\\x22]1[\\x27\\x22]').test(backend)
     )),

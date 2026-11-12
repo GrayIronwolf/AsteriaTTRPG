@@ -100,7 +100,10 @@ test('notifications menu leads to account-scoped existing service, not placehold
   assert.match(workspace,/Campaign notifications are not active yet/);
   assert.match(workspace,/action:\(\) => openDashboard\('notifications'\)/);
   assert.match(ui,/root\.AsteriaFeatureFlags\?\.campaignNotifications!==true/);
-  assert.match(html,/campaignNotifications:false,campaignFriendRecipients:false,accountIds:true/);
+  assert.match(html,/campaignNotifications:new URLSearchParams/);
+  assert.match(html,/campaignFriendRecipients:new URLSearchParams/);
+  assert.match(html,/campaignInAppCanary:new URLSearchParams/);
+  assert.match(html,/accountIds:true/);
 });
 test('password reset only targets current authenticated Firebase user',()=>{
   const firebase=read('js/firebase-auth.js');

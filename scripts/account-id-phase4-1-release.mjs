@@ -35,6 +35,14 @@ function strictFlagOff(source,name){
   const flags=source.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
   return Boolean(flags&&new RegExp('(?:^|,)\\s*'+name+'\\s*:\\s*false(?:,|$)').test(flags[1]));
 }
+function campaignNotificationsOffForNonCanary(source){
+  if(strictFlagOff(source,'campaignNotifications'))return true;
+  const assignment=source.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
+  if(!assignment)return false;
+  const expression="new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'";
+  return assignment[1].includes('campaignNotifications:'+expression)&&
+    assignment[1].includes('campaignInAppCanary:'+expression);
+}
 function strictFlagOn(source,name){
   const flags=source.match(/AsteriaFeatureFlags\s*=\s*Object\.freeze\(\{([^}]*)\}\)/);
   return Boolean(flags&&new RegExp('(?:^|,)\\s*'+name+'\\s*:\\s*true(?:,|$)').test(flags[1]));
@@ -69,7 +77,7 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
     issuance.includes('expectedEmail:email');
   const checks=[
     check('account-id-browser-rollout-enabled',strictFlagOn(html,'accountIds')),
-    check('notifications-browser-rollout-disabled',strictFlagOff(html,'campaignNotifications')),
+    check('notifications-browser-rollout-disabled',campaignNotificationsOffForNonCanary(html)),
     check('account-id-callable-server-gated',
       api.includes("process.env.ASTERIA_ACCOUNT_IDS_ENABLED!=='1'")),
     check('no-uid-or-number-in-client-ensure-request',

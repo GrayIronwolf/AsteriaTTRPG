@@ -141,7 +141,9 @@ export function inspectSandboxPreparation({
       !productionWorkflow.includes('asteria-recovery-')),
     check('web-feature-flags-still-disabled',
       index.includes('accountIds:true')&&
-      index.includes('campaignNotifications:false'))
+      (index.includes('campaignNotifications:false')||
+       (index.includes("campaignNotifications:new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'")&&
+        index.includes("campaignInAppCanary:new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1'"))))
   ];
   const safe=checks.every(entry=>entry.pass);
   return {
