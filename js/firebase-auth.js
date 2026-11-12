@@ -2726,23 +2726,29 @@ const firebasePublicApi = {
       action:'mark-read',notificationId
     })).data;
   },
-  sendCampaignEmailInvitations: async function(request){
-    if(!functionsClient||!currentUser)
-      throw new Error('Sign in as the campaign owner.');
-    if(window.AsteriaFeatureFlags?.emailInvitationControls!==true)
-      throw new Error('Email invitations are not activated.');
-    return (await httpsCallable(functionsClient,'asteriaCampaignEmailInvitations',{
-      timeout:65000
-    })({action:'send',...request})).data;
+  // Recipient-bound invitations are delivered exclusively through the
+  // private Asteria notification inbox; no email provider is involved.
+  previewCampaignNotificationInvitation: async function(campaignId,inviteId){
+    if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
+      throw new Error('Sign in to view your campaign invitation.');
+    if(window.AsteriaFeatureFlags?.campaignNotifications!==true||
+       window.AsteriaFeatureFlags?.secureInvitationAcceptance!==true||
+       window.AsteriaFeatureFlags?.campaignFriendInvitations!==true)
+      throw new Error('In-app campaign invitations are not available.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'preview-notification',campaignId,inviteId
+    })).data;
   },
-  resendCampaignEmailInvitation: async function(request){
-    if(!functionsClient||!currentUser)
-      throw new Error('Sign in as the campaign owner.');
-    if(window.AsteriaFeatureFlags?.emailInvitationControls!==true)
-      throw new Error('Email invitations are not activated.');
-    return (await httpsCallable(functionsClient,'asteriaCampaignEmailInvitations',{
-      timeout:65000
-    })({action:'resend',...request})).data;
+  acceptCampaignNotificationInvitation: async function(campaignId,inviteId){
+    if(!functionsClient||!currentUser||ownershipReadyUid!==currentUser.uid)
+      throw new Error('Sign in to accept your campaign invitation.');
+    if(window.AsteriaFeatureFlags?.campaignNotifications!==true||
+       window.AsteriaFeatureFlags?.secureInvitationAcceptance!==true||
+       window.AsteriaFeatureFlags?.campaignFriendInvitations!==true)
+      throw new Error('In-app campaign invitations are not available.');
+    return (await httpsCallable(functionsClient,'asteriaSecureInvitation')({
+      action:'accept-notification',campaignId,inviteId
+    })).data;
   },
   issueSecureCampaignInvitation: async function(request){
     if(!functionsClient||!currentUser)
