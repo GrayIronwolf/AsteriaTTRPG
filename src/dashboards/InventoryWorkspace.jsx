@@ -328,7 +328,7 @@ function InventoryQuickActions({campaignId,item,character,characters,storages,ec
   </section>;
 }
 
-function StoragePanel({ campaignId, character, storages, activeStorage, setActiveStorage, items, editable, busy, run, onCustom, onDragStart, onDragEnd, onDetails, selectedItemId, onSelectItem }) {
+function StoragePanel({ campaignId, character, storages, activeStorage, setActiveStorage, items, editable, busy, run, onCustom, onDragStart, onDragEnd, onDetails, selectedItemId, onSelectItem, quickActions }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -416,6 +416,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
       <label>Container name<input aria-label="Container name" value={renameDraft} disabled={!editable||busy} maxLength={80} onChange={event=>setRenameDraft(event.target.value)}/></label>
       <button type="button" disabled={!editable||busy||!renameDraft.trim()||renameDraft.trim()===storage.name} onClick={renameStorage}>Rename</button>
     </div> : null}
+    {quickActions}
     {storage ? <>
       <div className="react-inventory-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search items..." label="Search inventory" />
@@ -580,9 +581,9 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
       <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
-      <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} />
+      <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} quickActions={selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
-      {selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null}
+
       {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
     </div>
     <p className="react-action-message">{message}</p>
