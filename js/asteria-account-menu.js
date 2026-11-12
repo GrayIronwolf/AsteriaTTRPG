@@ -75,13 +75,20 @@
     close();
     window.closeSettings?.();
     if(profile)window.AsteriaAccountProfile?.open?.();
-    else if(settings)window.AsteriaWorkspace?.openDashboard?.('settings');
+    else if(settings){
+      if(!window.AsteriaAccountPages?.open?.('account'))
+        window.AsteriaWorkspace?.openDashboard?.('settings');
+    }
     else if(appearance)openAppearance();
     else if(notifications){
-      if(!window.AsteriaWorkspace?.openNotifications?.())
+      if(!window.AsteriaAccountPages?.open?.('notifications') &&
+         !window.AsteriaWorkspace?.openNotifications?.())
         window.toast?.('Notifications are not ready. Try again shortly.');
     }
-    else if(friends)window.AsteriaFriends?.open?.();
+    else if(friends){
+      if(!window.AsteriaAccountPages?.open?.('friends'))
+        window.AsteriaFriends?.open?.();
+    }
     else if(security)window.AsteriaAccountSecurity?.open?.();
     else window.logout?.();
   }
