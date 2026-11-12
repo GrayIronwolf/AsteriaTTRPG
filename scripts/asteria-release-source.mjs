@@ -44,6 +44,11 @@ export function validateManifest(data){
   if(JSON.stringify(data.backend?.deployedFunctions)!==JSON.stringify(fns)||
      data.backend?.requiresLiveVerification!==true)
     fail('unreviewed backend function inventory');
+  if(data.invitationDelivery?.active!=='in-app-notifications-only'||
+     data.invitationDelivery?.emailInvitations!=='deferred'||
+     data.invitationDelivery?.resendRequired!==false||
+     data.websiteFlags?.emailInvitationControls!==false)
+    fail('Current Campaign invitation delivery must be in-app only; external email is deferred');
   if(data.existingFriendsNotificationsPreserved!==true||
      data.websiteFlags.friendNotificationsEnabled!==true||
      data.websiteFlags.accountIds!==true)
