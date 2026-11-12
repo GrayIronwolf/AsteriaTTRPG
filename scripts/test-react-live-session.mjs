@@ -318,6 +318,18 @@ test('66. Storage controls expose rename, split, tap placement, full and overflo
   assert.match(server,/expectedStorageSlot/);
 });
 
+test('67. Player trade review and escrow recovery remain accessible after session end', () => {
+  const component=read('src/dashboards/PlayerItemExchange.jsx');
+  const backend=read('functions/commands.mjs');
+  for(const label of ['TradeReview','CounterofferStatusModal','Withdraw &amp; Return Items','Awaiting final confirmation',
+    'Decline &amp; Return Item','escrowed items','requestStatusLabel'])
+    assert.match(component,new RegExp(label,'i'));
+  assert.match(backend,/restoreEscrowItem/);
+  assert.match(backend,/request\.returnedToOverflow/);
+  assert.match(backend,/if\(accepted\) await requireLiveSession/);
+  assert.match(backend,/escrowReturned:true/);
+});
+
 test('30. Player item requests use participant-restricted Firestore documents', () => {
   const firebase = (read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
   const fixture = read('src/devFixtures.js');
