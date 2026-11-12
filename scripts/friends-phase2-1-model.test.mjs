@@ -129,5 +129,7 @@ test('Phase 2.1 cannot create server callable, website feature flag, campaign me
  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  assert.doesNotMatch(mod,/firebase-admin|runTransaction|httpsCallable|campaigns/);
  assert.doesNotMatch(entry,/asteriaFriendRequest=onCall|asteriaFriendRelationship=onCall/);
- assert.doesNotMatch(html,/friendRequestsEnabled:true|friendRelationshipsEnabled:true/);
+ assert.match(html,/friendRequestsEnabled:true/);
+ assert.doesNotMatch(html,/friendRelationshipsEnabled:true/);
+ assert.doesNotMatch(mod,/onCall\(/);
 });
