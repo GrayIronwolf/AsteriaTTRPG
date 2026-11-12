@@ -25,10 +25,7 @@ export const FLAG_OWNERS = Object.freeze({
     'ASTERIA_SECURE_INVITATIONS_ENABLED','ASTERIA_INVITATION_ACCEPTANCE_ENABLED',
     'ASTERIA_INVITATION_MANAGER_ENABLED','ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'
   ],
-  asteriaCampaignNotifications:['ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED'],
-  asteriaCampaignEmailInvitations:[
-    'ASTERIA_EMAIL_INVITATION_CONTROLS_ENABLED','ASTERIA_EMAIL_DELIVERY_ENABLED'
-  ]
+  asteriaCampaignNotifications:['ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED']
 });
 const essential = Object.freeze([
   'ASTERIA_JOIN_REQUESTS_ENABLED','ASTERIA_JOIN_REVIEW_ENABLED',
@@ -37,7 +34,7 @@ const essential = Object.freeze([
   'ASTERIA_CAMPAIGN_FRIEND_RECIPIENTS_ENABLED',
   'ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED'
 ]);
-const optionals = Object.freeze(['asteriaCampaignNotifications','asteriaCampaignEmailInvitations']);
+const optionals = Object.freeze(['asteriaCampaignNotifications']);
 const local = path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const fail=message=>{throw Error('Coordinated production release audit: '+message);};
 // All guarded callables require an explicit '1' to activate a feature.
