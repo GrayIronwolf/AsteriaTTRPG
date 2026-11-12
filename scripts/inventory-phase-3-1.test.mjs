@@ -48,7 +48,8 @@ test('Phase 3.1: replacing equipment preserves the displaced item and synchroniz
 test('Phase 3.1: replacing equipment fails safely when no storage is available',()=>{
   const old=sword('old',{equipped:true,equippedSlot:'Main Hand',location:'equipment'});
   const next=sword('incoming',{storageSlot:0});
-  const hero=character([old,next],{'Main Hand':old});
+  const occupied=sword('occupied',{storageSlot:0});
+  const hero=character([old,next,occupied],{'Main Hand':old});
   hero.storages=[{id:'bag',name:'Full Bag',rows:1,cols:1,maxSlots:1}];
   assert.throws(()=>equipCharacterInventoryItem(hero,'incoming','Main Hand',{reward:true}),/Make room/);
   assert.equal(hero.inventory.find(row=>row.id==='old').equipped,true);
