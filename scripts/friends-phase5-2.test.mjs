@@ -204,7 +204,8 @@ test('release remains disabled and cannot grant campaign access directly',()=>{
  const flow=read('functions/campaignFriendInvitations.mjs');
  assert.match(backend,/ASTERIA_CAMPAIGN_FRIEND_INVITES_ENABLED!=='1'/);
  assert.match(backend,/ASTERIA_SECURE_INVITATIONS_ENABLED!=='1'/);
- assert.match(ui,/campaignFriendInvitations:false/);
+ assert.match(ui,/campaignFriendInvitations:new URLSearchParams/);
+ assert.match(ui,/campaignInAppCanary:new URLSearchParams/);
  assert.match(flow,/resolveBoundRecipient:/);
  assert.doesNotMatch(flow,/tx\.create|tx\.update|tx\.delete/);
  assert.doesNotMatch(flow,/recipientUid:uid/);
