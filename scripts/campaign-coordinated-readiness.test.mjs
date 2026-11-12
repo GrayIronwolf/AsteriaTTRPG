@@ -125,3 +125,16 @@ test('existing trusted workflow controls the only live audit; automatic audit re
  assert.doesNotMatch(collector,/gcloud.*(?:deploy|create|update|delete)|firebase deploy/);
  assert.doesNotMatch(collector,/console\.log\((?:token|snapshot|data|environment)\)/);
 });
+
+test('trusted live inventory describes every canonical required function including non-gated UCN',async()=>{
+ const {descriptionTargets}=await import('./campaign-coordinated-live-audit.mjs');
+ const targets=descriptionTargets(inspectCoordinatedSource().manifest);
+ assert.ok(targets.includes('asteriaCampaignUCN'));
+ assert.ok(targets.includes('asteriaCampaignFriendRecipients'));
+ assert.ok(targets.includes('asteriaCampaignEmailInvitations'));
+ assert.equal(targets.length,new Set(targets).size);
+ assert.throws(()=>descriptionTargets({backend:{deployedFunctions:[]}}),/missing/);
+ const collector=read('scripts/campaign-coordinated-live-audit.mjs');
+ assert.match(collector,/new Set\(descriptionTargets\(manifest\)\)/);
+ assert.match(collector,/collectProductionSnapshot\(source\.manifest\)/);
+});
