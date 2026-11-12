@@ -65,11 +65,15 @@ export const asteriaSecureInvitation=onCall({
         throw new Error('Account-bound campaign invitations are not enabled yet.');
       const {issueAccountBoundFriendInvitation}=
         await import('./campaignFriendInvitations.mjs');
-      return await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
+      const issued=await issueAccountBoundFriendInvitation(getFirestore(),getAuth(),
         request.auth.uid,data,{
           signingKey:secureInvitationSigningKey.value(),
           notificationsEnabled:true
         });
+      // Notification delivery is tied to the account. Never hand a usable
+      // bearer token to the GM browser or put it in the notification inbox.
+      const {token:discardedToken,...safe}=issued;
+      return safe;
     }
     if(data.action==='issue'&&process.env.ASTERIA_SECURE_INVITATIONS_ENABLED!=='1')
       throw new Error('Secure invitation issuance is not enabled yet.');
