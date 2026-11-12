@@ -68,20 +68,24 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     setMessage('');
   };
   const perform=async()=>{
-    if(!canConfirm)return;
-    setBusy(true);
-    const result=quote.kind==='buy'
-      ?await firebaseService.buyShopItem(campaignId,character.id,selected.id,quote.index,number,{
-        variantKey:quote.variantKey,unitPriceCopper:quote.unitPriceCopper
-      })
-      :await firebaseService.sellShopItem(campaignId,character.id,selected.id,quote.itemId,number,{
-        variantKey:quote.variantKey,unitPriceCopper:quote.unitPriceCopper
-      });
-    setBusy(false);
-    setMessage(result?.ok
-      ?(quote.kind==='buy'?'Purchase confirmed: ':'Sale confirmed: ')+copper(result.cost??result.value)
-      :result?.error||'The merchant could not complete that transaction.');
-    if(result?.ok){setQuote(null);setQuantity('');}
+    if(!canConfirm||busy)return;
+    setBusy(true);setMessage('Verifying merchant transaction...');
+    try{
+      const result=quote.kind==='buy'
+        ?await firebaseService.buyShopItem(campaignId,character.id,selected.id,quote.index,number,{
+          variantKey:quote.variantKey,unitPriceCopper:quote.unitPriceCopper
+        })
+        :await firebaseService.sellShopItem(campaignId,character.id,selected.id,quote.itemId,number,{
+          variantKey:quote.variantKey,unitPriceCopper:quote.unitPriceCopper
+        });
+      setMessage(result?.ok
+        ?(quote.kind==='buy'?'Purchase confirmed: ':'Sale confirmed: ')+copper(result.cost??result.value)
+        :result?.error||'The merchant could not complete that transaction. Check the inventory before trying again.');
+      if(result?.ok){setQuote(null);setQuantity('');}
+    }catch(error){
+      setMessage((error?.message||'The merchant confirmation was interrupted.')+
+        ' Check inventory and merchant history before retrying this transaction.');
+    }finally{setBusy(false);}
   };
   const noQuote=()=>{if(!busy){setQuote(null);setQuantity('');}};
   const renderRow=(kind,row,index)=>{
@@ -128,7 +132,7 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         {!filteredInventory.length?<EmptyState title="No matching sale items" />:null}
       </section>
     </div></>:<EmptyState title="No campaign merchants">The GM can create shops and assign visiting characters in the Economy panel.</EmptyState>}
-    {message?<p className="react-action-message" role="status">{message}</p>:null}
+    {message?<p className="react-action-message" role="status" aria-live="polite">{message}</p>:null}
     {quote&&selected?<Modal title={quote.kind==='buy'?'Confirm Purchase':'Confirm Sale'} eyebrow={selected.name} busy={busy}
       onClose={noQuote} footer={<div className="react-modal-actions">
         <button type="button" disabled={busy} onClick={noQuote}>Cancel</button>

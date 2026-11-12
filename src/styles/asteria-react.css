@@ -3458,3 +3458,113 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-gm-reward-recipient-grid { grid-template-columns:1fr;max-height:210px; }
   .react-gm-reward-review-list { grid-template-columns:1fr; }
 }
+
+
+/* Phase 4.3 — inventory touch controls and non-blocking activity feedback. */
+.react-inventory-mobile-feedback {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  min-width:0;
+  background:rgba(3,15,25,.78);
+  border:1px solid rgba(92,159,201,.34);
+}
+.react-inventory-mobile-feedback-copy { display:grid;gap:4px;min-width:0; }
+.react-inventory-mobile-feedback-copy strong { font-size:.8rem; }
+.react-inventory-mobile-feedback-copy span {
+  color:var(--asteria-text-muted,#a0adbb);
+  font-size:.73rem;
+  overflow-wrap:anywhere;
+}
+.react-inventory-mobile-feedback > button { flex:none;min-height:44px;padding:8px 12px; }
+.react-inventory-activity {
+  display:grid;
+  gap:6px;
+  padding:12px;
+  border:1px solid rgba(92,159,201,.34);
+  background:rgba(0,0,0,.22);
+}
+.react-inventory-activity h3 { margin:0 0 3px;font-size:.92rem; }
+.react-inventory-activity p {
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  margin:0;
+  padding:8px 0;
+  border-bottom:1px solid rgba(120,157,184,.18);
+  font-size:.76rem;
+}
+.react-inventory-activity p span { overflow-wrap:anywhere; }
+.react-inventory-activity time,.react-inventory-activity small {
+  color:var(--asteria-text-muted,#a0adbb);
+  font-size:.7rem;
+}
+.react-inventory-slot-tap-equip {
+  position:static!important;
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:36px;
+  grid-column:1 / -1;
+  padding:5px 8px!important;
+  border-radius:4px!important;
+  font-size:.71rem!important;
+}
+.react-inventory-quick-slots button {
+  min-height:35px;
+  width:100%;
+  min-width:0;
+  padding:5px 2px;
+  font-size:.65rem;
+}
+@media (hover:none),(pointer:coarse) {
+  .react-inventory-item-card {
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .react-inventory-slot { min-height:58px; }
+  .react-inventory-slot > button:not(.react-inventory-slot-tap-equip) {
+    width:38px;min-width:38px;height:38px;min-height:38px;
+    font-size:1rem;
+  }
+  .react-inventory-quick-actions button,
+  .react-storage-tab-order button,
+  .react-storage-item-actions button,
+  .react-item-request-dock button,
+  .react-inventory-toolbar button,
+  .react-party-speech button,
+  .react-merchant-stock-action button {
+    min-height:44px;
+    touch-action:manipulation;
+  }
+  .react-storage-swap-target { min-height:32px; }
+  .react-inventory-view-controls .react-icon-button {width:44px;height:44px;}
+}
+@media(max-width:640px) {
+  .react-inventory-mobile-feedback { flex-wrap:wrap; }
+  .react-inventory-mobile-feedback > button { width:100%; }
+  .react-inventory-quick-slots { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .react-inventory-quick-slots > div { min-height:110px; }
+  .react-item-request-dock {
+    left:max(8px,env(safe-area-inset-left,0px));
+    right:max(8px,env(safe-area-inset-right,0px));
+    bottom:max(8px,env(safe-area-inset-bottom,0px));
+    max-width:none;
+    max-height:30dvh;
+    overflow-y:auto;
+  }
+  .react-item-request-dock button { flex:1 1 145px;justify-content:center; }
+  .react-modal {
+    max-height:calc(100dvh - 24px);
+    max-width:100%;
+  }
+  .react-modal-body { overscroll-behavior:contain; }
+  .react-modal-actions { width:100%; }
+  .react-modal-actions button { flex:1 1 115px;min-height:44px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .react-inventory-item-card { transition:none; }
+}
