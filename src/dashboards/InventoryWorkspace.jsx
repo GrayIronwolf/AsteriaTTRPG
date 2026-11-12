@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { EmptyState, FilterControl, IconButton, Modal, Panel, SearchField, StatusPill, Tabs, Tooltip } from '../components/WorkspaceUI.jsx';
 import { AsteriaIcon } from '../components/AsteriaIcons.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
-import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
+import { characterKnowsIdentify, normalizeCharacterStorages, storageSlotLayout } from '../state/liveWorkspaceModel.mjs';
 import { calculateArmourPieceAC, previewEquipmentChange, validateEquipmentChange } from '../systems/armour/armourSystem.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
@@ -285,28 +285,6 @@ function InventoryItemCard({ item, editable, selected, onSelect, onDragStart, on
   </article>;
 }
 
-function storageGrid(items, storage, sort) {
-  const capacity = Math.max(1, Number(storage?.maxSlots || Number(storage?.rows || 4) * Number(storage?.cols || 4)));
-  const slots = Array(capacity).fill(null);
-  const unplaced = [];
-  items.forEach(item => {
-    const slot = Number(item.storageSlot);
-    if (Number.isInteger(slot) && slot >= 0 && slot < capacity && !slots[slot]) slots[slot] = item;
-    else unplaced.push(item);
-  });
-  unplaced.sort((left, right) => sort === 'rarity'
-    ? String(left.rarity).localeCompare(String(right.rarity)) || String(left.name).localeCompare(String(right.name))
-    : sort === 'quantity'
-      ? Number(right.qty || 0) - Number(left.qty || 0)
-      : String(left.name).localeCompare(String(right.name)));
-  let cursor = 0;
-  unplaced.forEach(item => {
-    while (cursor < capacity && slots[cursor]) cursor += 1;
-    if (cursor < capacity) slots[cursor] = item;
-  });
-  return slots;
-}
-
 function StoragePanel({ campaignId, character, storages, activeStorage, setActiveStorage, items, editable, busy, run, onCustom, onDragStart, onDragEnd, onDetails, selectedItemId, onSelectItem }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('name');
@@ -315,10 +293,45 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
   const [newRows, setNewRows] = useState('');
   const [newCols, setNewCols] = useState('');
   const [draggedStorageId, setDraggedStorageId] = useState('');
+  const [renameDraft,setRenameDraft]=useState('');
+  const [destinationId,setDestinationId]=useState('');
+  const [splitQuantity,setSplitQuantity]=useState('');
   const storageLimit = Math.max(3, Number(character.storageLimit || 3), storages.length);
   const storage = storages.find(value => value.id === activeStorage) || storages[0] || null;
   const storedItems = useMemo(() => storage ? items.filter(item => !item.equipped && item.storageId === storage.id) : [], [items, storage]);
-  const grid = useMemo(() => storageGrid(storedItems, storage, sort), [sort, storage, storedItems]);
+  const layout=useMemo(()=>storage ? storageSlotLayout(storedItems,storage,sort) : {slots:[],overflow:[],capacity:0,used:0},[sort,storage,storedItems]);
+  const grid=layout.slots;
+  React.useEffect(()=>setRenameDraft(storage?.name||''),[storage?.id,storage?.name]);
+  const selectedItem=items.find(item=>String(item.id)===String(selectedItemId))||null;
+  const destination=storages.find(row=>row.id===destinationId)||storage;
+  const splittable=selectedItem&&!selectedItem.equipped&&selectedItem.stackable!==false&&
+    selectedItem.unique!==true&&selectedItem.bound!==true&&selectedItem.questItem!==true&&
+    Number(selectedItem.maxStack||0)!==1&&Number.isSafeInteger(Number(selectedItem.qty))&&Number(selectedItem.qty)>1;
+  const placeSelected=(storageId,slot)=>{
+    if(!selectedItem||!storageId||!editable||busy)return;
+    run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'move-storage',itemId:selectedItem.id,
+      storageId,storageSlot:slot,expectedStorageId:selectedItem.storageId,expectedStorageSlot:selectedItem.storageSlot}),
+      'Item moved to the selected slot.');
+  };
+  const moveSelected=async()=>{
+    if(!selectedItem||!destination)return;
+    const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'move-storage',
+      itemId:selectedItem.id,storageId:destination.id,expectedStorageId:selectedItem.storageId,
+      expectedStorageSlot:selectedItem.storageSlot}),`Moved ${selectedItem.name} to ${destination.name}.`);
+    if(result?.ok)setActiveStorage(destination.id);
+  };
+  const splitSelected=async()=>{
+    if(!splittable||!destination||!isManualNumber(splitQuantity,{min:1,max:Number(selectedItem.qty)-1}))return;
+    const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'split-stack',
+      itemId:selectedItem.id,quantity:manualNumber(splitQuantity),expectedQuantity:Number(selectedItem.qty),
+      storageId:destination.id}),`Stack split into ${destination.name}.`);
+    if(result?.ok){setSplitQuantity('');setActiveStorage(destination.id);onSelectItem({id:result.itemId});}
+  };
+  const renameStorage=async()=>{
+    if(!storage||!renameDraft.trim())return;
+    await run(()=>firebaseService.updateInventory(campaignId,character.id,{
+      type:'rename-storage',storageId:storage.id,name:renameDraft.trim()}),'Container renamed.');
+  };
   const storageIds = useMemo(() => new Set(storages.map(value => value.id)), [storages]);
   const unassignedItems = items.filter(item => !item.equipped && !storageIds.has(item.storageId));
   const totalWeight = items.reduce((total,item)=>total+Number(item.weight||0)*Number(item.qty||1),0);
