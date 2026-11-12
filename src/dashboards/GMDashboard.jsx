@@ -517,6 +517,35 @@ export function GMDashboard({ campaignId }) {
       if(!result?.ok){migrationStarted.current=false;setActionError(result?.error||'Legacy GM systems could not be initialized.');}
     });
   },[campaignId,live.campaign,live.gmWorkspace,live.gmWorkspaceLoaded,live.itemEcosystem,live.partyWorkspace]);
+  // One-time server-authorized migration of legacy shared trade arrays into
+  // owner-restricted request documents; also seeds the public shop view.
+  const itemPrivacyScope=useRef('');
+  useEffect(()=>{
+    if(!campaignId || !accountUid || !live.campaign) return;
+    const firstCharacterId=Object.keys(rawLive.characters||{})[0];
+    if(!firstCharacterId) return;
+    const scope=campaignId+':'+accountUid;
+    if(itemPrivacyScope.current===scope) return;
+    itemPrivacyScope.current=scope;
+    let cancelled=false;
+    const migrate=async()=>{
+      for(let attempt=0;attempt<6;attempt++){
+        const result=await firebaseService.syncCampaignItemPrivacy(campaignId,firstCharacterId);
+        if(cancelled)return;
+        if(!result?.ok){
+          setActionError(result?.error||'Private trade migration could not finish.');
+          return;
+        }
+        if(!result.remaining)return;
+        if(!result.migrated){
+          setActionError('Some legacy trades require GM review before their private migration can finish.');
+          return;
+        }
+      }
+    };
+    migrate().catch(error=>{if(!cancelled)setActionError(error.message||String(error));});
+    return ()=>{cancelled=true;};
+  },[campaignId,accountUid,live.campaign,rawLive.characters]);
   const workspace=useMemo(()=>normalizeGMWorkspace(live.gmWorkspace||{},live.campaign||{}),[live.gmWorkspace,live.campaign]);
   const saveSection=(section,value)=>firebaseService.saveGMWorkspace(campaignId,{[section]:value});
   const saveDashboardLayout=async layout=>{
