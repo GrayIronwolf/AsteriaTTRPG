@@ -1,39 +1,38 @@
 /**
- * Cloud Functions for Firebase reserves these runtime environment names.
- * They are injected or managed by Google and must never be staged in .env.
- * Ref: https://firebase.google.com/docs/functions/config-env#reserved_environment_variables
- * Keep this list separate from reviewed ASTERIA_* application gates.
+ * Stage only Asteria-owned, explicitly reviewed Cloud Function feature gates.
+ *
+ * Google Cloud Functions Gen2 adds runtime metadata to the deployed function's
+ * serviceConfig.environmentVariables. Its keys can change independently of
+ * this repository (EVENTARC_*, FUNCTION_*, LOG_EXECUTION_ID, etc.).
+ * A list of recognized Google keys is inherently incomplete and caused three
+ * consecutive failed deployment attempts.
+ *
+ * This package does not use non-Asteria custom environment configuration:
+ * the scoped function's application config is in approved ASTERIA_* gates;
+ * its signing secret is separately verified in secretEnvironmentVariables.
+ * Never copy runtime metadata (or other unrelated values) to staged .env.
+ *
+ * Unknown ASTERIA_* names and non-binary gate values MUST fail closed.
  */
-const reservedExact=new Set([
-  'CLOUD_RUNTIME_CONFIG','ENTRY_POINT','GCP_PROJECT','GCLOUD_PROJECT',
-  'GOOGLE_CLOUD_PROJECT','FUNCTION_TRIGGER_TYPE','FUNCTION_NAME',
-  'FUNCTION_MEMORY_MB','FUNCTION_TIMEOUT_SEC','FUNCTION_IDENTITY',
-  'FUNCTION_REGION','FUNCTION_TARGET','FUNCTION_SIGNATURE_TYPE',
-  'K_SERVICE','K_REVISION','PORT','K_CONFIGURATION',
-  // Google-managed Eventarc metadata observed in Gen2 production.
-  'EVENTARC_CLOUD_EVENT_SOURCE','EVENTARC_CLOUD_EVENT_TYPE'
-]);
-const reservedPrefixes=['X_GOOGLE_','EXT_','FIREBASE_'];
-export function isGoogleManagedRuntimeKey(key){
-  return typeof key==='string' &&
-    (reservedExact.has(key)||reservedPrefixes.some(prefix=>key.startsWith(prefix)));
-}
 export function reviewFunctionEnvironment(raw,approvedFlags){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))
     throw Error('Live Cloud Function environment is missing or malformed.');
+  if(!Array.isArray(approvedFlags)||
+     approvedFlags.some(key=>typeof key!=='string'||!key.startsWith('ASTERIA_')))
+    throw Error('Invalid reviewed Asteria feature gate contract.');
   const approved=new Set(approvedFlags);
+  if(approved.size!==approvedFlags.length)
+    throw Error('Duplicate reviewed Asteria feature gate.');
   const result={};
   for(const [key,value] of Object.entries(raw)){
-    if(approved.has(key)){
-      if(value!=='0'&&value!=='1')
-        throw Error('Unreviewed binary feature gate: '+key);
-      result[key]=value;
-    }else if(isGoogleManagedRuntimeKey(key)){
-      if(typeof value!=='string')
-        throw Error('Invalid Google-managed runtime metadata: '+key);
-    }else{
-      throw Error('Unreviewed live application environment variable: '+key);
-    }
+    // All non-Asteria values are platform/unowned configuration and must never
+    // be copied into an Asteria-only staged environment package.
+    if(!key.startsWith('ASTERIA_'))continue;
+    if(!approved.has(key))
+      throw Error('Unreviewed Asteria application environment variable: '+key);
+    if(value!=='0'&&value!=='1')
+      throw Error('Unreviewed binary feature gate: '+key);
+    result[key]=value;
   }
   return result;
 }
