@@ -161,12 +161,14 @@ function CustomItemModal({ campaignId, character, storageId, onClose }) {
     if(!pricing.valid) { setMessage(pricing.errors[0]); return; }
     setBusy(true);
     const item = createAsteriaItem({ ...form, marketValue:manualNumber(form.marketValue),marketPrice:manualNumber(form.marketPrice),spell: form.isSpellbook ? { name: form.spellName || form.name, element: form.element, rank: 'Rank I' } : null, basicName: form.isSpellbook ? 'Book' : form.type || 'Item' });
-    const created = await firebaseService.createCustomItem(campaignId, item);
-    if (created?.ok) {
-      const added = await firebaseService.updateInventory(campaignId, character.id, { type: 'add-item', item: created.item, storageId });
-      setMessage(resultText(added, 'Custom item added to the shared catalog and this inventory.'));
-    } else setMessage(resultText(created));
-    setBusy(false);
+    try {
+      const result = await firebaseService.updateInventory(campaignId, character.id, { type: 'create-custom-item', item, storageId });
+      setMessage(resultText(result, 'Custom item added to the shared catalog and this inventory.'));
+    } catch (error) {
+      setMessage(error.message || String(error));
+    } finally {
+      setBusy(false);
+    }
   };
   return <Modal title="Create Custom Item" eyebrow="Shared Item Catalog" busy={busy} onClose={onClose} footer={<><button onClick={onClose}>Close</button><button className="primary" disabled={busy || !form.name.trim() || !pricing.valid} onClick={save}>Create Item</button></>}>
     <div className="react-form-grid">

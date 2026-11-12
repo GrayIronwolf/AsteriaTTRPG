@@ -213,16 +213,69 @@ export function firstFreeStorageSlot(items = [], storage = {}, excludeItemId = '
   return -1;
 }
 
+// A definition identifies an item TYPE; instanceId identifies the actual inventory stack.
+// Item variants must match before quantities can be combined.
+export function itemDefinitionKey(item = {}) {
+  const definition = String(item.definitionId || item.asteriaIdIndexCode || item['Asteria ID Index Code'] || '').trim().toLowerCase();
+  if(definition) return `definition:${definition}`;
+  const catalog = String(item.catalogId || '').trim().toLowerCase();
+  if(catalog) return `catalog:${catalog}`;
+  const name = String(item.trueName || item.name || item.title || '').trim().toLowerCase();
+  return name ? `name:${name}` : '';
+}
+
+function canonicalStackValue(value) {
+  if(Array.isArray(value)) return value.map(canonicalStackValue);
+  if(value && typeof value === 'object') return Object.fromEntries(
+    Object.keys(value).sort().map(key => [key, canonicalStackValue(value[key])])
+  );
+  return value;
+}
+
+export function itemStackFingerprint(item = {}) {
+  // Exclude instanceId, id, quantity, storage location and timestamps: those
+  // distinguish stacks, not the shared properties of the items within them.
+  const keys = [
+    'trueName', 'basicName', 'type', 'category', 'itemClass', 'rarity',
+    'material', 'materials', 'quality', 'condition', 'durability', 'maxDurability',
+    'enchantment', 'enchantments', 'enchanted', 'effects', 'effect', 'properties',
+    'modifiers', 'bonuses', 'spell', 'spellData', 'isSpellbook', 'identified',
+    'bound', 'locked', 'questItem', 'cursed', 'blessed', 'attuned', 'unique',
+    'charges', 'maxCharges', 'uses', 'maxUses', 'marketValue', 'marketPrice',
+    'weight', 'size', 'description', 'stackable', 'maxStack', 'raw', 'metadata',
+    'serialNumber', 'ownerUid', 'origin', 'createdBy'
+  ];
+  return JSON.stringify(canonicalStackValue(Object.fromEntries(
+    keys.filter(key => item[key] !== undefined).map(key => [key, item[key]])
+  )));
+}
+
 export function stackableStorageItem(items = [], incoming = {}, storageId = '') {
-  if(incoming.stackable === false || Number(incoming.maxStack || 0) === 1 || !storageId) return null;
-  const identity = String(incoming.catalogId || incoming.trueName || incoming.name || incoming.title || '').trim().toLowerCase();
+  if(!storageId || incoming.stackable === false || incoming.unique === true ||
+    incoming.bound === true || incoming.questItem === true || Number(incoming.maxStack || 0) === 1) return null;
+  const identity = itemDefinitionKey(incoming);
   if(!identity) return null;
+  const fingerprint = itemStackFingerprint(incoming);
   return items.find(item => {
     if(item.equipped || String(item.storageId || item.bagId || '') !== String(storageId)) return false;
-    if(item.stackable === false || Number(item.maxStack || 0) === 1 || item.identified !== incoming.identified) return false;
-    if(item.definitionId && incoming.definitionId) return item.definitionId === incoming.definitionId;
-    if(String(item.definitionId || incoming.definitionId || '').startsWith('custom-item:')) return false;
-    return String(item.catalogId || item.trueName || item.name || item.title || '').trim().toLowerCase() === identity;
+    if(item.stackable === false || item.unique === true || item.bound === true ||
+      item.questItem === true || Number(item.maxStack || 0) === 1) return false;
+    const existingDefinition = String(item.definitionId || item.asteriaIdIndexCode || item['Asteria ID Index Code'] || '').trim().toLowerCase();
+    const incomingDefinition = String(incoming.definitionId || incoming.asteriaIdIndexCode || incoming['Asteria ID Index Code'] || '').trim().toLowerCase();
+    // Legacy records may lack the newer base definition ID. Allow fallback only
+    // for matching catalog IDs, never for custom definitions or conflicting IDs.
+    if(existingDefinition && incomingDefinition && existingDefinition !== incomingDefinition) return false;
+    if((existingDefinition.startsWith('custom-item:') || incomingDefinition.startsWith('custom-item:')) &&
+      existingDefinition !== incomingDefinition) return false;
+    const existingCatalog = String(item.catalogId || '').trim().toLowerCase();
+    const incomingCatalog = String(incoming.catalogId || '').trim().toLowerCase();
+    if(existingDefinition !== incomingDefinition &&
+      (!existingCatalog || existingCatalog !== incomingCatalog)) return false;
+    if(!existingDefinition && !incomingDefinition && itemDefinitionKey(item) !== identity) return false;
+    if(itemStackFingerprint(item) !== fingerprint) return false;
+    const stackLimit = Number(item.maxStack || incoming.maxStack || 0);
+    return !Number.isFinite(stackLimit) || stackLimit <= 0 ||
+      Number(item.qty || 1) + Number(incoming.qty || 1) <= stackLimit;
   }) || null;
 }
 
@@ -287,7 +340,8 @@ export function normalizeInventoryItems(items = [], character = {}) {
     }
     seen.add(unique);
     if(unique !== normalized.id || unique !== normalized.instanceId) {
-      normalized.catalogId = normalized.catalogId || normalized.id || base;
+      // A generated inventory instance ID must never become a catalog/base ID.
+      // Preserve the source's catalogId and definitionId without inventing either.
       normalized.id = unique;
       normalized.instanceId = unique;
     }

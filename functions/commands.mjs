@@ -8,8 +8,8 @@ import { applyResourceChanges, parseResourceCosts, resourceId, resourceSnapshot 
 import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
-import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
-import { getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
+import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
+import { createAsteriaItem, getPlayerPurchasePriceCopper, getPlayerSaleValueCopper, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 
@@ -107,6 +107,39 @@ async function talentAction(campaignId,characterId,operation){
     return {ok:true,...result};
   }catch(error){return {ok:false,error:error.message||String(error)};}
 }
+function trustedCustomItem(source = {}) {
+  const name=String(source.name || source.title || '').trim().slice(0,160);
+  if(!name) throw new Error('Enter an item name.');
+  const item=createAsteriaItem({
+    name, title:name,
+    type:String(source.type || 'Item').slice(0,80),
+    itemClass:String(source.itemClass || source.rarity || 'Common').slice(0,80),
+    description:String(source.description || '').slice(0,10000),
+    marketValue:source.marketValue ?? 0,
+    marketPrice:source.marketPrice ?? 0,
+    isSpellbook:source.isSpellbook === true,
+    category:source.isSpellbook === true ? 'Spellbook' : String(source.category || source.type || 'Item').slice(0,80),
+    itemType:source.isSpellbook === true ? 'Spellbook' : String(source.itemType || source.type || 'Item').slice(0,80),
+    image:String(source.image || '').slice(0,1000),
+    compendiumSpellId:source.isSpellbook ? String(source.compendiumSpellId || source.spell?.id || '').slice(0,160) : '',
+    compendiumSpellSlug:source.isSpellbook ? String(source.compendiumSpellSlug || source.spell?.slug || '').slice(0,160) : '',
+    compendiumSpellRoute:source.isSpellbook ? String(source.compendiumSpellRoute || source.spell?.route || '').slice(0,500) : '',
+    sourceSpellPath:source.isSpellbook ? String(source.sourceSpellPath || source.spell?.sourcePath || '').slice(0,500) : '',
+    spell:source.isSpellbook === true ? Object.fromEntries(
+      ['id','slug','name','title','element','magicType','rank','manaCost','cost','image','summary','route','sourcePath']
+        .map(key=>[key,String(source.spell?.[key] ?? (key==='name' ? source.spellName || name : key==='element' ? source.element || '' : key==='rank' ? 'Rank I' : '')).slice(0,key==='summary'?1000:500)])
+    ) : null,
+    basicName:String(source.basicName || (source.isSpellbook ? 'Book' : source.type || 'Item')).slice(0,80)
+  });
+  const id=`custom-${liveSlug(name)||'item'}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
+  return Object.assign({},item,{
+    id, catalogId:id, definitionId:`custom-item:${id}`, slug:id,
+    name, title:name, trueName:name,
+    custom:true, visibility:'public',
+    createdBy:currentUser.uid
+  });
+}
+
 function characterInventory(character){
   return normalizeInventoryItems((Array.isArray(character.inventory) ? character.inventory : []).map((item,index)=>
     typeof item === 'string' ? {id:liveSlug(item)||`item-${index}`,name:item,qty:1} : Object.assign({qty:Number(item.qty ?? item.quantity ?? 1)},item)
@@ -409,6 +442,46 @@ const commands = {
       return {ok:true,paid:result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  createCustomLootReward: async function(campaignId,characterId,source={},metadata={}){
+    if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
+    const targetRef=doc(db,'campaigns',campaignId,'characters',characterId);
+    const eventId=`loot-${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+    const eventRef=doc(db,'campaigns',campaignId,'events',eventId);
+    try {
+      const result=await runTransaction(db,async transaction=>{
+        const session=await requireLiveSession(transaction,campaignId);
+        await requireCampaignGM(transaction,campaignId);
+        const target=await transaction.get(targetRef);
+        if(!target.exists()) throw new Error('The linked campaign character was not found.');
+        const record=trustedCustomItem(source);
+        const qty=Number(source.qty ?? source.quantity ?? 1);
+        if(!Number.isSafeInteger(qty) || qty<1 || qty>1000000) throw new Error('Choose a valid reward quantity.');
+        const full=Object.assign({},record,{qty});
+        const rewardItem=Object.assign({},full,{
+          trueName:full.name,
+          basicName:String(full.basicName||unidentifiedItemName({...full,identified:false})),
+          identified:false,
+          name:String(full.basicName||unidentifiedItemName({...full,identified:false}))
+        });
+        const message=String(metadata.message||'The GM awarded an unidentified custom item.').slice(0,500);
+        const pending=Array.isArray(target.data().pendingItemRewards)?target.data().pendingItemRewards:[];
+        const reward={id:eventId,campaignId,item:rewardItem,message,status:'pending',createdAt:new Date().toISOString()};
+        const event={
+          id:eventId,campaignId,sessionId:session.id||'',
+          targetCharacterId:characterId,targetOwnerUid:target.data().ownerUid||'',
+          type:'loot-reward',payload:{item:rewardItem,message,campaignName:''},
+          status:'pending',deliveryStatus:'delivered',acknowledged:false,
+          createdBy:currentUser.uid,createdAt:serverTimestamp(),resolvedAt:null
+        };
+        // One transaction: no orphan catalog item and no undelivered GM reward.
+        transaction.set(doc(db,'customItems',record.id),{...record,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+        transaction.set(targetRef,{pendingItemRewards:[...pending,reward],updatedAt:serverTimestamp()},{merge:true});
+        transaction.set(eventRef,event);
+        return {itemId:record.id,eventId};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   updateCharacterInventory: async function(campaignId,characterId,operation={}){
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
@@ -449,6 +522,18 @@ const commands = {
           character.inventory=inventory;
           writeLiveCharacter(transaction,refs,character);
           return;
+        }
+        if(operation.type==='create-custom-item'){
+          if(gmManagement) throw new Error('Create custom inventory items for your own character.');
+          const record=trustedCustomItem(operation.item || {});
+          const added=placeCharacterItem(character,record,{storageId:String(operation.storageId||''),noStack:true});
+          appendActivity(character,{type:'custom-item-added',message:`Created custom item ${added.name} in inventory.`});
+          // Publishing and inventory delivery succeed or fail in the same transaction.
+          transaction.set(doc(db,'customItems',record.id),{
+            ...record,createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+          });
+          writeLiveCharacter(transaction,refs,character);
+          return {itemId:record.id};
         }
         if(operation.type==='add-item'){
           const source=structuredCloneSafe(operation.item||{});
