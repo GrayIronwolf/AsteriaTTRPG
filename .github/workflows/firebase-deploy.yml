@@ -32,6 +32,8 @@ on:
           - friend-notifications-events-deactivate
           - campaign-coordinated-readiness-audit
           - campaign-inapp-prepare-disabled
+          - campaign-inapp-canary-enable
+          - campaign-inapp-canary-disable
           - campaign-notifications-deploy-disabled
           - campaign-friends-release-audit
           - campaign-friends-recipients-deploy-off
@@ -1696,3 +1698,144 @@ jobs:
           diff -u "$RUNNER_TEMP/expected-env.txt" "$RUNNER_TEMP/deployed-env.txt"
           echo "Verified $PHASE53_TARGET flag $flag=$actual; exactly one function changed." >> "$GITHUB_STEP_SUMMARY"
           echo 'No Firestore/Storage rules, Hosting, unrelated Cloud Functions or email system was deployed.' >> "$GITHUB_STEP_SUMMARY"
+
+  campaign_inapp_live_canary:
+    name: Enable or roll back notification-only campaign canary (manual)
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      (
+        (inputs.operation == 'campaign-inapp-canary-enable' &&
+         inputs.production_confirmation == 'ENABLE-ASTERIA-CAMPAIGN-INAPP-CANARY') ||
+        (inputs.operation == 'campaign-inapp-canary-disable' &&
+         inputs.production_confirmation == 'DISABLE-ASTERIA-CAMPAIGN-INAPP-CANARY')
+      )
+    environment: firebase-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: asteria-inapp-canary
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Verify exact six-callable canary and notification-only release (no cloud writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/campaign-inapp-live-canary-release.mjs --check
+          node --test scripts/campaign-inapp-live-canary-release.test.mjs
+          npm run test:campaign-inapp
+          npm run test:notifications
+          npm run test:secure-invitations
+          npm run test:invitation-acceptance
+          npm run test:friends-phase5-2
+          npm run test:firebase
+          node scripts/asteria-release-source.mjs --check
+      - name: Authenticate with existing restricted Workload Identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: asteria-ttrpg
+          workload_identity_provider: ${{ vars.FIREBASE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FIREBASE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect only six existing ACTIVE callables and signing-secret binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n '{}' > "$RUNNER_TEMP/asteria-canary-live.json"
+          for name in asteriaCampaignUCN asteriaCampaignJoinRequest asteriaCampaignJoinReview asteriaCampaignFriendRecipients asteriaSecureInvitation asteriaCampaignNotifications; do
+            gcloud functions describe "$name" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/asteria-canary-function.json"
+            jq -e --arg name "$name" '.state=="ACTIVE" and (.name | endswith("/"+$name))' "$RUNNER_TEMP/asteria-canary-function.json" >/dev/null
+            if [ "$name" = asteriaSecureInvitation ]; then
+              jq -e '[.serviceConfig.secretEnvironmentVariables[]? |
+                select(.key=="ASTERIA_SECURE_INVITE_SIGNING_KEY" or
+                  .secret=="ASTERIA_SECURE_INVITE_SIGNING_KEY" or
+                  ((.secret//"")|endswith("/ASTERIA_SECURE_INVITE_SIGNING_KEY")))] |
+                length==1' "$RUNNER_TEMP/asteria-canary-function.json" >/dev/null
+            fi
+            jq --arg name "$name" --slurpfile item "$RUNNER_TEMP/asteria-canary-function.json" \
+              '.[$name]={
+                state:$item[0].state,
+                env:($item[0].serviceConfig.environmentVariables//{} |
+                  with_entries(select(.key|startswith("ASTERIA_")))),
+                signingSecretAttached:($name=="asteriaSecureInvitation")
+              }' "$RUNNER_TEMP/asteria-canary-live.json" > "$RUNNER_TEMP/asteria-canary-next.json"
+            mv "$RUNNER_TEMP/asteria-canary-next.json" "$RUNNER_TEMP/asteria-canary-live.json"
+          done
+          echo 'All six reviewed callables ACTIVE; existing secret binding verified. No secret values read.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Stage six exact-target functions; preserve every unrelated server flag
+        shell: bash
+        env:
+          ASTERIA_CANARY_OPERATION: ${{ inputs.operation }}
+          ASTERIA_CANARY_CONFIRMATION: ${{ inputs.production_confirmation }}
+          ASTERIA_DEPLOY_PROJECT: asteria-ttrpg
+        run: |
+          set -euo pipefail
+          export ASTERIA_CANARY_LIVE_FILE="$RUNNER_TEMP/asteria-canary-live.json"
+          node scripts/campaign-inapp-live-canary-release.mjs --stage
+          for name in asteriaCampaignUCN asteriaCampaignJoinRequest asteriaCampaignJoinReview asteriaCampaignFriendRecipients asteriaSecureInvitation asteriaCampaignNotifications; do
+            package="$RUNNER_TEMP/asteria-inapp-live-canary/$name"
+            if [ "$name" = asteriaCampaignUCN ] || [ "$name" = asteriaCampaignJoinRequest ] || [ "$name" = asteriaCampaignJoinReview ]; then
+              source="$package"
+            else
+              source="$package/functions"
+            fi
+            npm install --prefix "$source" --package-lock-only --ignore-scripts --no-audit --no-fund
+            npm ci --prefix "$source" --omit=dev --no-audit --no-fund
+            node --check "$source/functions/index.mjs" 2>/dev/null || node --check "$source/index.mjs"
+          done
+      - name: Install pinned Firebase CLI (isolated)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/asteria-canary-cli"
+          npm install --prefix "$RUNNER_TEMP/asteria-canary-cli" --no-save --no-audit --no-fund firebase-tools@15.35.0
+      - name: Deploy only six selected callables in safe enable/rollback order
+        shell: bash
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          if [ "$OPERATION" = campaign-inapp-canary-enable ]; then
+            order='asteriaCampaignUCN asteriaCampaignJoinRequest asteriaCampaignJoinReview asteriaCampaignFriendRecipients asteriaCampaignNotifications asteriaSecureInvitation'
+          else
+            order='asteriaSecureInvitation asteriaCampaignNotifications asteriaCampaignFriendRecipients asteriaCampaignJoinReview asteriaCampaignJoinRequest asteriaCampaignUCN'
+          fi
+          for name in $order; do
+            package="$RUNNER_TEMP/asteria-inapp-live-canary/$name"
+            (cd "$package" && "$RUNNER_TEMP/asteria-canary-cli/node_modules/.bin/firebase" deploy \
+              --project asteria-ttrpg --only "functions:asteria:$name" --non-interactive)
+            gcloud functions describe "$name" --gen2 --region us-central1 --project asteria-ttrpg --format=json > "$RUNNER_TEMP/asteria-canary-verify.json"
+            jq -e '.state=="ACTIVE"' "$RUNNER_TEMP/asteria-canary-verify.json" >/dev/null
+            if [ "$name" = asteriaCampaignUCN ] || [ "$name" = asteriaCampaignJoinRequest ] || [ "$name" = asteriaCampaignJoinReview ]; then
+              expected="$package/.env.asteria-ttrpg"
+            else
+              expected="$package/functions/.env.asteria-ttrpg"
+            fi
+            jq -r '.serviceConfig.environmentVariables//{} | to_entries |
+              map(select(.key|startswith("ASTERIA_"))) | sort_by(.key) | .[] |
+              "\(.key)=\(.value)"' "$RUNNER_TEMP/asteria-canary-verify.json" > "$RUNNER_TEMP/asteria-canary-deployed-flags.txt"
+            LC_ALL=C sort "$expected" > "$RUNNER_TEMP/asteria-canary-expected-flags.txt"
+            diff -u "$RUNNER_TEMP/asteria-canary-expected-flags.txt" "$RUNNER_TEMP/asteria-canary-deployed-flags.txt"
+            echo "Verified selected callable ACTIVE with exact reviewed flags: $name" >> "$GITHUB_STEP_SUMMARY"
+          done
+          if [ "$OPERATION" = campaign-inapp-canary-enable ]; then
+            echo '### Asteria in-app canary backend ready' >> "$GITHUB_STEP_SUMMARY"
+            echo 'New v2 invitation test backend enabled. Website still OFF until separate frontend release.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'No legacy campaigns migrated, Firebase rules changed or email sent.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '### Asteria in-app canary backend disabled' >> "$GITHUB_STEP_SUMMARY"
+            echo 'All six new invitation gates set OFF; existing Friends remains unchanged.' >> "$GITHUB_STEP_SUMMARY"
+          fi

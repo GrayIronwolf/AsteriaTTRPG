@@ -2095,10 +2095,21 @@
     const uid = accountKey();
     let id = randomToken('camp-');
     let inviteCode = uniqueCampaignCode();
+    const canaryV2=window.AsteriaFeatureFlags?.campaignInAppCanary===true &&
+      new URLSearchParams(window.location.search).get('campaign-inapp-canary')==='1';
     const serverIdentityEnabled = window.AsteriaFirebase?.serverCampaignUCNEnabled?.() === true;
+    if(canaryV2&&!serverIdentityEnabled){
+      const status=byId('workspaceCampaignArtworkStatus');
+      if(status)status.textContent='The new campaign invitation test is not activated.';
+      if(forgeButton)forgeButton.disabled=false;
+      return;
+    }
     if(serverIdentityEnabled) {
       try {
-        const identity = await window.AsteriaFirebase.createCampaignIdentity(name);
+        const identity = await window.AsteriaFirebase.createCampaignIdentity(name,
+          {v2Test:canaryV2,partySize});
+        if(canaryV2&&identity?.membershipSchemaVersion!==2)
+          throw new Error('The server did not create a v2 campaign.');
         if(!identity || !/^\d{12}$/.test(String(identity.ucn || '')) || !identity.id) {
           throw new Error('Invalid server campaign identity.');
         }
@@ -2122,6 +2133,9 @@
       access:{ dashboard:true, inventory:true, spells:true, journal:true, quests:true, notes:false },
       ownerUid:uid,
       ownerAccount:uid,
+      ...(canaryV2?{membershipSchemaVersion:2,membershipRevision:1,joinPolicy:{
+        joinRequestsOpen:true,autoApprove:false
+      }}:{}),
       createdBy:sessionInfo().user || sessionInfo().email || uid,
       gmUids:[uid],
       playerUids:[],
