@@ -68,8 +68,9 @@ test('all six operations stage a single source export with pinned Node and indep
       read('functions/campaignFriendRecipients.mjs'));
   }
  }
- assert.match(read('index.html'),/campaignFriendRecipients:false/);
- assert.match(read('index.html'),/campaignFriendInvitations:false/);
+ assert.match(read('index.html'),/campaignFriendRecipients:new URLSearchParams/);
+ assert.match(read('index.html'),/campaignFriendInvitations:new URLSearchParams/);
+ assert.match(read('index.html'),/campaignInAppCanary:new URLSearchParams/);
 });
 test('existing campaign email, issuance, review and notification flags survive scoped release',()=>{
  const state={exists:true,env:{...secure,ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED:'1'}};
