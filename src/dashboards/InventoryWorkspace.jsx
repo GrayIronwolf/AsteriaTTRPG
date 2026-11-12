@@ -307,7 +307,7 @@ function InventoryQuickActions({campaignId,item,character,characters,storages,ec
     expectedCoreRevision:Number(character.coreRevision||0)
   }),description);
   return <section className="react-inventory-quick-actions" aria-label={'Quick actions for '+item.name}>
-    <header><div><small>Selected Item</small><strong>{item.name} ×{item.qty}</strong><span>{item.equipped?'Equipped':item.type} · {item.identified===false?'Unidentified':item.rarity||'Common'}</span></div>
+    <header><div><small>Selected Item</small><strong>{item.name} ×{item.qty}</strong><span>{item.identified===false?'Unidentified item':(item.equipped?'Equipped':item.type)+' · '+(item.rarity||'Common')}</span></div>
       <button type="button" aria-label="Clear item selection" onClick={onClear}>Close</button></header>
     <div className="react-inventory-action-buttons">
       <button type="button" onClick={()=>onInspect(item)} disabled={!actions.inspect}>Inspect</button>
