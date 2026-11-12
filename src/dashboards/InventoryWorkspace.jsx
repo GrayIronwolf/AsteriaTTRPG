@@ -368,6 +368,10 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
           : <button key={`empty-storage-${index}`} type="button" className="empty" disabled={!editable || busy} onClick={() => setActiveStorage('')}><span>Empty Storage Slot</span><small>+</small></button>;
       })}
     </nav>
+    {storage ? <div className="react-storage-rename">
+      <label>Container name<input aria-label="Container name" value={renameDraft} disabled={!editable||busy} maxLength={80} onChange={event=>setRenameDraft(event.target.value)}/></label>
+      <button type="button" disabled={!editable||busy||!renameDraft.trim()||renameDraft.trim()===storage.name} onClick={renameStorage}>Rename</button>
+    </div> : null}
     {storage ? <>
       <div className="react-inventory-toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search items..." label="Search inventory" />
@@ -375,7 +379,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
         <div className="react-inventory-view-controls" role="group" aria-label="Inventory view"><Tooltip label="Grid view"><IconButton label="Grid view" className={view==='grid'?'active':''} onClick={()=>setView('grid')}><AsteriaIcon name="grid"/></IconButton></Tooltip><Tooltip label="List view"><IconButton label="List view" className={view==='list'?'active':''} onClick={()=>setView('list')}><AsteriaIcon name="list"/></IconButton></Tooltip></div>
         <button type="button" disabled={!editable} onClick={onCustom}>Add Item</button>
       </div>
-      <div className="react-storage-grid-meta"><span>{storage.rows} rows x {storage.cols} columns</span><span>{storedItems.length} / {storage.maxSlots} slots used</span><span>{carryCapacity?`${totalWeight.toLocaleString()} / ${carryCapacity.toLocaleString()} weight`:`${totalWeight.toLocaleString()} weight recorded`}</span>{carryCapacity&&totalWeight>carryCapacity?<StatusPill tone="warning">Encumbered</StatusPill>:null}</div>
+      <div className="react-storage-grid-meta"><span>{storage.rows} rows x {storage.cols} columns</span><span>{storedItems.length} / {layout.capacity} item stacks</span>{layout.used>=layout.capacity?<StatusPill tone="warning">{layout.overflow.length ? layout.overflow.length+' overflow' : 'Full'}</StatusPill>:null}<span>{carryCapacity?`${totalWeight.toLocaleString()} / ${carryCapacity.toLocaleString()} weight`:`${totalWeight.toLocaleString()} weight recorded`}</span>{carryCapacity&&totalWeight>carryCapacity?<StatusPill tone="warning">Encumbered</StatusPill>:null}</div>
       <div className="react-inventory-grid-scroll"><div className={`react-inventory-item-grid ${view}`} style={{ '--storage-cols':storage.cols }}>
         {grid.map((item, slot) => <div
         key={slot}
@@ -388,10 +392,28 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
           const itemId = event.dataTransfer.getData('application/x-asteria-item');
           if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type:'move-storage', itemId, storageId:storage.id, storageSlot:slot }), `Moved item to ${storage.name}, slot ${slot + 1}.`);
         }}
-        >{item ? <InventoryItemCard item={item} editable={editable} selected={String(item.id) === String(selectedItemId)} onSelect={onSelectItem} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} /> : <small>{slot + 1}</small>}</div>)}
+        >{item ? <>
+          <InventoryItemCard item={item} editable={editable} selected={String(item.id) === String(selectedItemId)} onSelect={onSelectItem} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails} />
+          {selectedItem && selectedItem.id!==item.id && editable?<button type="button" className="react-storage-swap-target" disabled={busy} aria-label={'Swap '+selectedItem.name+' with '+item.name} onClick={()=>placeSelected(storage.id,slot)}>Swap</button>:null}
+        </> : selectedItem && editable ? <button type="button" className="react-storage-place-target" disabled={busy} aria-label={'Move '+selectedItem.name+' to slot '+(slot+1)} onClick={()=>placeSelected(storage.id,slot)}>{slot+1}<span>Place</span></button> : <small>{slot + 1}</small>}</div>)}
       </div></div>
+      {layout.overflow.length ? <section className="react-storage-overflow" aria-label="Overflowed inventory items">
+        <p className="react-storage-warning" role="alert">{layout.overflow.length} item stack{layout.overflow.length===1?' is':'s are'} beyond this container's capacity. No items have been removed. Select an item and move it to another container.</p>
+        <div className="react-storage-overflow-items">{layout.overflow.map(item=><InventoryItemCard key={item.id} item={item} editable={editable} selected={String(item.id)===String(selectedItemId)} onSelect={onSelectItem} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails}/>)}</div>
+      </section>:null}
     </> : <EmptyState title="No storage container equipped">Create a bag, pouch, chest, or other container in one of the available storage slots.</EmptyState>}
-    {unassignedItems.length ? <p className="react-storage-warning">{unassignedItems.length} existing item{unassignedItems.length === 1 ? ' is' : 's are'} waiting for a container. They will fill the first available slots when storage is created.</p> : null}
+    {unassignedItems.length ? <section className="react-storage-overflow" aria-label="Items without a container">
+      <p className="react-storage-warning">{unassignedItems.length} item stack{unassignedItems.length===1?' has':'s have'} no available container. These items remain in the inventory record and can be moved once space is available.</p>
+      <div className="react-storage-overflow-items">{unassignedItems.map(item=><InventoryItemCard key={item.id} item={item} editable={editable} selected={String(item.id)===String(selectedItemId)} onSelect={onSelectItem} onDragStart={onDragStart} onDragEnd={onDragEnd} onDetails={onDetails}/>)}</div>
+    </section> : null}
+    {selectedItem && !selectedItem.equipped ? <div className="react-storage-item-actions" aria-label="Selected item storage actions">
+      <b title={selectedItem.name}>{selectedItem.name} ×{selectedItem.qty}</b>
+      <label>Destination<select value={destination?.id||''} disabled={!editable||busy} onChange={event=>setDestinationId(event.target.value)}>{storages.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+      <button type="button" disabled={!editable||busy||!destination} onClick={moveSelected}>Move</button>
+      {splittable?<><label>Split quantity<ManualNumberInput min="1" max={Number(selectedItem.qty)-1} disabled={!editable||busy} value={splitQuantity} onChange={event=>setSplitQuantity(event.target.value)}/></label>
+      <button type="button" disabled={!editable||busy||!destination||!isManualNumber(splitQuantity,{min:1,max:Number(selectedItem.qty)-1})} onClick={splitSelected}>Split Stack</button></>:null}
+      <small>Tap an empty slot to place this item, or tap Swap on an occupied slot.</small>
+    </div>:null}
     {storages.length < storageLimit ? <div className="react-create-storage"><input disabled={!editable || busy} value={newStorage} onChange={event => setNewStorage(event.target.value)} placeholder="Bag or container name" /><label>Rows<ManualNumberInput min="1" max="20" disabled={!editable || busy} value={newRows} onChange={event => setNewRows(event.target.value)}/></label><label>Columns<ManualNumberInput min="1" max="20" disabled={!editable || busy} value={newCols} onChange={event => setNewCols(event.target.value)}/></label><button disabled={!editable || busy || !newStorage.trim() || !isManualNumber(newRows,{min:1,max:20}) || !isManualNumber(newCols,{min:1,max:20})} onClick={createStorage}>Create Container</button></div> : null}
   </Panel>;
 }
