@@ -4,7 +4,7 @@ import {ManualNumberInput} from '../components/ManualNumberInput.jsx';
 import {Modal,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {
   filterGMRewardEvents,GM_REWARD_CURRENCIES,MAX_GM_REWARD_BUNDLES,
-  prepareGMRewardBundle,rewardEventLabel,rewardEventStatus,validateGMRewardPayload
+  prepareGMRewardBundle,rewardEventLabel,rewardEventStatus
 } from '../state/gmRewardModel.mjs';
 import {deliverGMRewardBatch,linkedGMRewardRecipients,previewGMRewardBatch} from '../state/gmRewardBatchModel.mjs';
 
