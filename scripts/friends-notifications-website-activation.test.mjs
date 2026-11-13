@@ -42,7 +42,8 @@ test('website activation references versioned notification client assets exactly
   for(const asset of assets){
     const version=asset+'?v='+(
       asset==='js/firebase-auth.js'?'friends-phase5-2':
-        'friends-notifications-website-20261111');
+      ['js/asteria-account-menu.js','js/asteria-account-header.js'].includes(asset)?
+        'gm-toolkit-1-2':'friends-notifications-website-20261111');
     assert.equal(source.split(version).length-1,1,asset+' must be cache-busted once');
   }
   assert.match(source,/css\/asteria-friend-notifications\.css/);
