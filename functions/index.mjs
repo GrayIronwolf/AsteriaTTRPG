@@ -6,6 +6,16 @@ import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
+export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
+    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
+  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
+});
+
+
+
 export const asteriaAction=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
   if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
   try {
@@ -433,15 +443,6 @@ export const asteriaFriendAccountLookup=onCall({
     throw new HttpsError('failed-precondition','Account search unavailable.');
   }
 });
-
-export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
-  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
-  try{
-    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
-    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
-  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
-});
-
 
 // Authenticated username edits keep a permanent UID and five-digit number.
 export const asteriaAccountUsername=onCall({
