@@ -24,7 +24,7 @@ test('Phase 10.3: standing thresholds are bounded and tiers deterministic',()=>{
   assert.equal(merchantStandingTier(70),'Trusted');
 });
 test('Phase 10.3: merchant relationship identity and owner selection',()=>{
-  assert.equal(merchantRelationshipId('shop-1','char-1'),'shop-1_char-1');
+  assert.equal(merchantRelationshipId('shop-1','char-1'),'6_shop-1_char-1');
   assert.throws(()=>merchantRelationshipId('shop/1','char-1'));
   const rows=[{shopId:'shop-1',characterId:'char-1',score:65},
     {shopId:'shop-1',characterId:'char-2',score:-90}];
