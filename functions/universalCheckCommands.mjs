@@ -1,6 +1,7 @@
 import {randomInt,randomUUID} from 'node:crypto';
 import {isCampaignGM,isCampaignMember,isLinkedCharacter,readCampaignMember} from './characterPermissions.mjs';
-import {UNIVERSAL_CHECK_TYPES,universalCheckModifierBreakdown,universalCheckOutcome} from '../src/state/universalCheckModel.mjs';
+import {UNIVERSAL_CHECK_TYPES,universalCheckModifierBreakdown,universalCheckOutcome,universalSkillRankModifier} from '../src/state/universalCheckModel.mjs';
+import {baseCharacteristicValue,characterCheck,effectiveCharacteristicValue} from '../src/state/effectsEngine.mjs';
 const identifier=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(v);
 const text=(v,max=400)=>typeof v==='string'?v.slice(0,max):'';
 export async function universalCheckAction(db,uid,input,stamp){
@@ -26,12 +27,27 @@ export async function universalCheckAction(db,uid,input,stamp){
       const character=charSnap.data(),type=input.type;
       if(!UNIVERSAL_CHECK_TYPES.includes(type))throw Error('Invalid check type.');
       if(!Number.isSafeInteger(input.dc)||input.dc<0||input.dc>1000)throw Error('Invalid DC.');
-      const breakdown=universalCheckModifierBreakdown(input.modifiers);
+      const skill=text(input.skill,100);
+      const skillKey=skill.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      const rawSkill=character.skills?.[skill]??character.skills?.[skillKey];
+      const rank=typeof rawSkill==='string'?rawSkill:rawSkill?.rank;
+      const automatic=[];
+      const stat=String(input.characteristic||rawSkill?.characteristic||'').toLowerCase();
+      if(stat){
+        const characteristic=effectiveCharacteristicValue(character,stat);
+        if(!Number.isFinite(characteristic))throw Error('Invalid characteristic.');
+        automatic.push({label:'Characteristic: '+stat,value:characteristic});
+      }
+      if(rank!==undefined)automatic.push({label:'Skill rank: '+rank,value:universalSkillRankModifier(rank)});
+      const effects=characterCheck(character,'skills.'+skillKey,0);
+      if(!Number.isFinite(effects.value)||Math.abs(effects.value)>100)throw Error('Invalid character check effects.');
+      if(effects.value!==0)automatic.push({label:'Active character effects',value:effects.value});
+      const breakdown=universalCheckModifierBreakdown([...automatic,...(input.modifiers||[])]);
       if(breakdown.entries.some(e=>Math.abs(e.value)>100))throw Error('Modifier out of range.');
       const row={id:requestId,campaignId,characterId,ownerUid:character.ownerUid,characterName:text(character.name,100),
-        gmUid:uid,type,skill:text(input.skill,100),description:text(input.description,500),npcName:text(input.npcName,100),
-        dc:input.dc,modifiers:breakdown.entries,modifierTotal:breakdown.total,advantage:input.advantage===true,
-        disadvantage:input.disadvantage===true,status:'pending',attempt:1,createdAt:stamp(),updatedAt:stamp()};
+        gmUid:uid,type,skill,characteristic:stat,description:text(input.description,500),npcName:text(input.npcName,100),
+        dc:input.dc,modifiers:breakdown.entries,modifierTotal:breakdown.total,advantage:effects.advantage||input.advantage===true,
+        disadvantage:effects.disadvantage||input.disadvantage===true,status:'pending',attempt:1,createdAt:stamp(),updatedAt:stamp()};
       tx.create(ref,row);
       return {ok:true,id:requestId};
     }
