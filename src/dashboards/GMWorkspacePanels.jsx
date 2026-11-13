@@ -20,6 +20,7 @@ import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 import {GMEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
 import {GMCraftingServices} from './CraftingServicesWorkspace.jsx';
 import {GMCraftingRecipeManager} from './CraftingRecipeWorkspace.jsx';
+import {GMContextCheckLauncher} from './GMContextCheckLauncher.jsx';
 
 const array = value => Array.isArray(value) ? value : [];
 const uid = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
@@ -349,6 +350,7 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const [deals,setDeals]=useState([]);
   const [relationships,setRelationships]=useState([]);
   const [dealBusy,setDealBusy]=useState('');
+  const [dealCheckId,setDealCheckId]=useState('');
   const [stockBusy,setStockBusy]=useState(false);
   const [travelBusy,setTravelBusy]=useState(false);
   const [confirmRestock,setConfirmRestock]=useState(false);
@@ -559,6 +561,9 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
         maxLength={100} placeholder={selected.name+' Template'}/></label>
       <button type="button" disabled={!selected} onClick={saveTemplate}>Save to My Templates</button>
     </section>
+    <h4>Merchant Interaction Checks</h4>
+    <GMContextCheckLauncher campaignId={campaignId} characters={characters}
+      context={{kind:'merchant',shopId:selected.id,label:selected.name}} title="Merchant conversation or haggling check"/>
     <h4>Merchant Bargaining</h4>
   <div className="react-stock-list">
     {deals.filter(deal=>deal.shopId===selected.id).slice().sort((a,b)=>Number(b.expiresAt||0)-Number(a.expiresAt||0)).slice(0,30).map(deal=>
@@ -568,12 +573,22 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
             {deal.barterItemId?' + '+deal.barterQuantity+' × '+deal.barterItemName:''}</small>
           {deal.note?<small>{deal.note}</small>:null}<small>{deal.status}</small>
         </div>
+        {deal.status==='pending'?<button type="button"
+          onClick={()=>setDealCheckId(current=>current===deal.id?'':deal.id)}>
+          {dealCheckId===deal.id?'Close offer check':'Request haggling check'}
+        </button>:null}
         {deal.status==='pending'?<div className="react-record-actions">
           <button type="button" disabled={Boolean(dealBusy)||Date.now()>Number(deal.expiresAt||0)}
             onClick={()=>decideDeal(deal,'approve')}>Approve</button>
           <button type="button" disabled={Boolean(dealBusy)} onClick={()=>decideDeal(deal,'reject')}>Decline</button>
         </div>:null}
       </article>)}
+    {deals.filter(deal=>deal.id===dealCheckId&&deal.status==='pending'&&deal.shopId===selected.id).map(deal=>
+      <GMContextCheckLauncher key={deal.id} campaignId={campaignId}
+        characters={characters} initialCharacterId={deal.characterId}
+        context={{kind:'merchant-deal',shopId:selected.id,dealId:deal.id,label:selected.name}}
+        title={'Haggling check · '+deal.characterName}/>
+    )}
   </div></>:<EmptyState title="No shop selected">Create a shop to manage visitors and stock.</EmptyState>}</section></div><SectionStatus message={message}/>
   </Panel>;
 }
@@ -627,7 +642,7 @@ export function CampaignManagerWorkspace({ campaignId, campaign, characters, ses
   return <div className="react-gm-workspace-grid campaign"><Panel title="Campaign Manager" eyebrow="Identity, Invite & Session"><div className="react-campaign-code"><span>Unique Campaign Number</span><strong>{campaign?.ucn||campaign?.uniqueCampaignCode||'Not generated'}</strong><small>Share this 12-digit UCN with players joining through Campaign Forge.</small></div><div className="react-form-grid"><label>Campaign Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Current Location<input value={draft.location} onChange={event=>setDraft(value=>({...value,location:event.target.value}))}/></label><label>Player Limit<ManualNumberInput min="1" max="50" value={draft.playerLimit} onChange={event=>setDraft(value=>({...value,playerLimit:event.target.value}))}/></label></div><label>Campaign Synopsis<textarea rows="6" value={draft.description} onChange={event=>setDraft(value=>({...value,description:event.target.value}))}/></label><div className="react-campaign-artwork-editor"><div className="react-campaign-artwork-preview">{artPreview?<img src={artPreview} alt="Campaign artwork preview"/>:<span>No campaign artwork uploaded</span>}</div><div className="react-campaign-artwork-actions"><label className="react-upload-button">Upload / Replace Campaign Image<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" disabled={artBusy} onChange={uploadArtwork}/></label>{artPreview?<button type="button" disabled={artBusy} onClick={removeArtwork}>Remove Campaign Image</button>:null}<small>PNG, JPG, WEBP or GIF, up to 8 MB. Visible in Campaign Forge and the Player Dashboard.</small></div></div><button className="primary" onClick={save}>Save Campaign Settings</button><SectionStatus message={message}/></Panel><Panel title="Linked Accounts & Characters" eyebrow="Campaign Membership" action={<StatusPill tone="success">{Object.keys(characters).length} characters</StatusPill>}><div className="react-membership-summary"><div><small>Session</small><b>{session?.status||'idle'}</b></div><div><small>Players</small><b>{players.filter(player=>player.role!=='gm').length}</b></div><div><small>GMs</small><b>{1+array(campaign?.gmUids).length}</b></div><div><small>Linked Characters</small><b>{Object.keys(characters).length}</b></div></div><div className="react-record-list compact">{players.map(player=><article key={player.uid}><div><b>{player.displayName||player.uid}</b><small>{player.role||'player'} | {array(player.characterIds).length} characters</small></div><StatusPill tone={player.status==='active'?'success':''}>{player.status||'active'}</StatusPill></article>)}{!players.length?<p className="react-help">Accounts will appear after joining with the UCN.</p>:null}</div></Panel></div>;
 }
 
-export function GameplayWorkspace({ campaignId, workspace, partyWorkspace, saveSection }) {
+export function GameplayWorkspace({ campaignId, workspace, partyWorkspace, characters={}, saveSection }) {
   const gameplay=workspace.gameplay||{};const [view,setView]=useState('encounters');const [draft,setDraft]=useState({name:'',detail:'',reward:''});const [notes,setNotes]=useState(gameplay.sharedNotes||partyWorkspace?.sharedNotes||'');const [message,setMessage]=useState('');
   useEffect(()=>setNotes(gameplay.sharedNotes||partyWorkspace?.sharedNotes||''),[gameplay.sharedNotes,partyWorkspace?.sharedNotes]);
   const keys={encounters:'encounterTemplates',loot:'lootTables',guild:'guildContracts',professions:'professionAssignments'};const key=keys[view];const records=key?array(gameplay[key]):[];
@@ -635,7 +650,14 @@ export function GameplayWorkspace({ campaignId, workspace, partyWorkspace, saveS
   const save=async next=>{const result=await saveSection('gameplay',next);setMessage(result?.ok?'Gameplay systems synchronized.':result?.error||'Gameplay system could not be saved.');};
   const add=()=>{if(!draft.name.trim())return setMessage('Enter a name.');save({...gameplay,[key]:[{...draft,id:uid(key),createdAt:new Date().toISOString()},...records]});setDraft({name:'',detail:'',reward:''});};
   const loadEncounter=record=>firebaseService.saveEncounter(campaignId,{status:'ready',round:1,turnIndex:0,combatants:[],enemies:[],name:record.name,notes:record.detail,templateId:record.id});
-  return <Panel title="Gameplay Systems" eyebrow="Encounters, Loot, Professions, Party & Guild" action={<div className="react-segmented-actions">{['encounters','loot','professions','guild','party'].map(id=><button key={id} className={view===id?'active':''} onClick={()=>setView(id)}>{id}</button>)}</div>}>{view==='party'?<div><label>Shared Party Notes<textarea className="react-gm-notebook short" value={notes} onChange={event=>setNotes(event.target.value)}/></label><button className="primary" onClick={()=>save({...gameplay,sharedNotes:notes})}>Save Shared Notes</button></div>:<div className="react-gm-workspace-grid gameplay"><section><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Reward / Value<input value={draft.reward} onChange={event=>setDraft(value=>({...value,reward:event.target.value}))}/></label></div><label>Details<textarea rows="6" value={draft.detail} onChange={event=>setDraft(value=>({...value,detail:event.target.value}))}/></label><button className="primary" onClick={add}>Add {singular[view]}</button></section><section><div className="react-record-list">{records.map(record=><article key={record.id}><div className="react-record-heading"><h3>{record.name}</h3><small>{record.reward}</small></div><p>{record.detail||'No details recorded.'}</p><div className="react-action-row">{view==='encounters'?<button onClick={()=>loadEncounter(record)}>Load into Encounter Tracker</button>:null}<button className="danger" onClick={()=>save({...gameplay,[key]:records.filter(item=>item.id!==record.id)})}>Delete</button></div></article>)}{!records.length?<EmptyState title={`No ${view} records`}/>:null}</div></section></div>}<SectionStatus message={message}/></Panel>;
+  const [scene,setScene]=useState('Exploration');
+  return <><section className="react-panel" aria-label="Universal gameplay check requests">
+    <h3>Gameplay Check Requests</h3>
+    <p>Request a player check in a conversation, exploration scene, profession or quest without opening the GM Tools tab.</p>
+    <label>Scene or activity<input maxLength={120} value={scene} onChange={event=>setScene(event.target.value)}/></label>
+    {scene.trim().length>=3?<GMContextCheckLauncher campaignId={campaignId} characters={characters}
+      context={{kind:'gameplay',label:scene.trim()}} title="Scene check"/>:null}
+  </section><Panel title="Gameplay Systems" eyebrow="Encounters, Loot, Professions, Party & Guild" action={<div className="react-segmented-actions">{['encounters','loot','professions','guild','party'].map(id=><button key={id} className={view===id?'active':''} onClick={()=>setView(id)}>{id}</button>)}</div>}>{view==='party'?<div><label>Shared Party Notes<textarea className="react-gm-notebook short" value={notes} onChange={event=>setNotes(event.target.value)}/></label><button className="primary" onClick={()=>save({...gameplay,sharedNotes:notes})}>Save Shared Notes</button></div>:<div className="react-gm-workspace-grid gameplay"><section><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Reward / Value<input value={draft.reward} onChange={event=>setDraft(value=>({...value,reward:event.target.value}))}/></label></div><label>Details<textarea rows="6" value={draft.detail} onChange={event=>setDraft(value=>({...value,detail:event.target.value}))}/></label><button className="primary" onClick={add}>Add {singular[view]}</button></section><section><div className="react-record-list">{records.map(record=><article key={record.id}><div className="react-record-heading"><h3>{record.name}</h3><small>{record.reward}</small></div><p>{record.detail||'No details recorded.'}</p><div className="react-action-row">{view==='encounters'?<button onClick={()=>loadEncounter(record)}>Load into Encounter Tracker</button>:null}<button className="danger" onClick={()=>save({...gameplay,[key]:records.filter(item=>item.id!==record.id)})}>Delete</button></div></article>)}{!records.length?<EmptyState title={`No ${view} records`}/>:null}</div></section></div>}<SectionStatus message={message}/></Panel></>;
 }
 
 const WORLD_SCHEMAS={
