@@ -5,6 +5,7 @@ import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { characterCurrencyCopper, merchantPriceCopper, shopVariantKey, shopVariantLabel } from '../state/shopTransactionModel.mjs';
+import { merchantTransactionPreview } from '../state/tradeExperienceModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const copper=value=>Number(value||0).toLocaleString()+' Copper';
@@ -67,6 +68,13 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const validQuantity=isManualNumber(quantity,{min:1,max:available});
   const number=validQuantity?manualNumber(quantity):0;
   const total=Number.isSafeInteger(unit*number)?unit*number:null;
+  const selectedBarter=inventory.find(item=>item.id===barterId);
+  const preview=quote&&source?merchantTransactionPreview({
+    kind:quote.kind,item:source,quantity:number,unitCopper:unit,
+    offeredCopper:quote.kind==='buy'?Number(offerCopper||0):null,
+    barterItem:selectedBarter,barterQuantity:barterId?Number(barterQuantity||0):0,
+    shop:selected
+  }):null;
   const stale=Boolean(quote&&source&&quote.variantKey!==shopVariantKey(source));
   const changed=Boolean(quote&&source&&quote.unitPriceCopper!==unit);
   const canConfirm=Boolean(editable&&visiting&&!busy&&source&&validQuantity&&
@@ -199,6 +207,16 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         <label>Quantity<ManualNumberInput min="1" max={available} value={quantity} onChange={setQuantity}/></label>
         <strong>Total {quote.kind==='buy'?'cost':'payout'}: {total===null?'Invalid quantity':copper(total)}</strong>
         <small>{quote.kind==='buy'?'Your funds':'Merchant funds'}: {copper(quote.kind==='buy'?balance:Number(selected.currencyCopper??0))}</small>
+        <section className="react-phase9-trade-summary" aria-label="Merchant transaction preview">
+          <h3>Review {quote.kind==='buy'?'Purchase':'Sale'}</h3>
+          <div className="react-phase9-trade-sides">
+            <div><small>{quote.kind==='buy'?'You receive':'You hand over'}</small>
+              <strong>{preview?.item.name} ×{preview?.item.quantity||'—'}</strong></div>
+            <div><small>{quote.kind==='buy'?'You pay':'You receive'}</small>
+              <strong>{total===null?'Invalid quantity':copper(total)}</strong></div>
+          </div>
+          <small>{preview?.notice}</small>
+        </section>
         {quote.kind==='buy'?<fieldset><legend>Optional GM-approved bargain</legend>
           <p>Offer copper, an inventory item, or both. Your assets remain yours until the GM approves.</p>
           <label>Total copper offered<ManualNumberInput min="0" max="1000000000" value={offerCopper} onChange={setOfferCopper}/></label>
@@ -208,6 +226,22 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
           </select></label>
           {barterId?<label>Barter quantity<ManualNumberInput min="1" max={inventory.find(item=>item.id===barterId)?.qty||1} value={barterQuantity} onChange={setBarterQuantity}/></label>:null}
           <label>Roleplay message<input maxLength={500} value={offerNote} onChange={event=>setOfferNote(event.target.value)} placeholder="What does your character say?"/></label>
+          <section className="react-phase9-trade-summary" aria-label="Review bargain">
+            <h3>Review Bargain Proposal</h3>
+            <div className="react-phase9-trade-sides">
+              <div><small>You receive</small><strong>{preview?.item.name} ×{preview?.item.quantity||'—'}</strong>
+                <span>Listed price: {preview?.listedCopper===null?'Unavailable':copper(preview.listedCopper)}</span>
+              </div>
+              <div><small>You offer</small><strong>{preview?.offeredCopper===null?'Invalid amount':copper(preview.offeredCopper)}</strong>
+                {preview?.barter?<span>Plus {preview.barter.name} ×{preview.barter.quantity}</span>:null}
+              </div>
+            </div>
+            {preview?.changeCopper!==null?<p>Difference from listed copper price: {copper(Math.abs(preview.changeCopper))}
+              {preview.changeCopper>0?' below listed price':preview.changeCopper<0?' above listed price':' — matches listed price'}
+              {preview.barter?' (excluding barter item value)':''}</p>:null}
+            {offerNote.trim()?<p><b>Your character says:</b> “{offerNote.trim()}”</p>:null}
+            <small>{preview?.notice}</small>
+          </section>
         </fieldset>:null}
         {quote.kind==='buy'&&total!==null&&balance<total?<p className="react-storage-warning">You cannot afford this purchase.</p>:null}
         {quote.kind==='sell'&&total!==null&&Number(selected.currencyCopper??Infinity)<total?<p className="react-storage-warning">The merchant cannot afford this sale.</p>:null}
