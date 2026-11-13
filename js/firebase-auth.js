@@ -1769,6 +1769,9 @@ const firebasePublicApi = {
   sendCharacterNotification: (...args) => callTrustedAction('sendCharacterNotification', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
   createCustomLootReward: (...args) => callTrustedAction('createCustomLootReward', args),
+  createMerchantDeal: (...args) => callTrustedAction('createMerchantDeal', args),
+  respondMerchantDeal: (...args) => callTrustedAction('respondMerchantDeal', args),
+  cancelMerchantDeal: (...args) => callTrustedAction('cancelMerchantDeal', args),
   buyLiveShopItem: (...args) => callTrustedAction('buyLiveShopItem', args),
   sellLiveShopItem: (...args) => callTrustedAction('sellLiveShopItem', args),
   createLiveTrade: async function(campaignId,characterId,recipientId,itemId,quantity=1,note=''){
