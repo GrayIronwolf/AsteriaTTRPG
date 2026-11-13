@@ -14,6 +14,7 @@ import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from 
 import {merchantStandingTier,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 import {MERCHANT_TYPES,merchantBuiltInTemplates,merchantTemplateFromShop,merchantWorldNPCOptions,merchantWorldLocationOptions} from '../state/merchantTemplateModel.mjs';
 import {generateMerchantStock,merchantGeneratorCatalogFacets} from '../state/shopGeneratorModel.mjs';
+import {merchantGeneratedStockPreview} from '../state/shopGeneratorIntegrationModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 import {GMEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
@@ -338,6 +339,7 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     maxQuantity:'5',minUnitValue:'0',maxUnitValue:'100000000',restockTarget:'0',
     categories:[],rarities:[],types:[]});
   const [generated,setGenerated]=useState(null);
+  const [generatedMode,setGeneratedMode]=useState('append');
   const [generatorBusy,setGeneratorBusy]=useState(false);
   const builtIns=useMemo(()=>merchantBuiltInTemplates(),[]);
   const npcOptions=useMemo(()=>merchantWorldNPCOptions(world),[world.npcs]);
@@ -430,12 +432,16 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     }));setMessage('Inventory preview generated. No shop changes have been saved.');}
     catch(error){setGenerated(null);setMessage(error.message||'Unable to generate inventory.');}
   };
+  const generatedReview=generated&&selected?
+    (()=>{try{return merchantGeneratedStockPreview(selected.stock||[],generated.stock,generatedMode);}
+      catch(error){return {error:error.message||'Cannot apply generated stock.'};}})():null;
   const applyGenerated=async()=>{
-    if(!selected||!generated?.stock?.length||generatorBusy)return;
+    if(!selected||!generated?.stock?.length||generatorBusy||generatedReview?.error)return;
+    if(generatedMode==='replace'&&!window.confirm('Replace all existing merchant stock with the generated preview? This cannot be undone.'))return;
     setGeneratorBusy(true);
     try{
       const result=await run({type:'apply-generated-stock',shopId:selected.id,
-        stock:generated.stock,mode:'append'});
+        stock:generated.stock,mode:generatedMode});
       if(result?.ok)setGenerated(null);
     }finally{setGeneratorBusy(false);}
   };
@@ -515,7 +521,9 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
         <p>{generated.generated} of {generated.requested} lines generated from {generated.eligible} eligible items.
           {generated.warning?' '+generated.warning:''}</p>
         <ul>{generated.stock.map((row,index)=><li key={index}>{row.item.name||row.item.title} — {row.qty} units</li>)}</ul>
-        <button type="button" className="primary" disabled={generatorBusy||!generated.stock.length}
+        <label>Apply Mode<select value={generatedMode} onChange={e=>setGeneratedMode(e.target.value)}><option value="append">Append / Combine Matching Items</option><option value="replace">Replace All Existing Stock</option></select></label>
+        {generatedReview?.error?<p role="alert">{generatedReview.error}</p>:generatedReview?<p>Existing lines: {generatedReview.linesBefore}; after applying: {generatedReview.linesAfter}; combined: {generatedReview.combined}; new lines: {generatedReview.added}. {generatedMode==='replace'?'Existing stock will be removed.':''}</p>:null}
+        <button type="button" className="primary" disabled={generatorBusy||!generated.stock.length||Boolean(generatedReview?.error)}
           onClick={applyGenerated}>Add Preview to Shop</button>
         <button type="button" disabled={generatorBusy} onClick={()=>setGenerated(null)}>Discard Preview</button>
       </div>:null}
