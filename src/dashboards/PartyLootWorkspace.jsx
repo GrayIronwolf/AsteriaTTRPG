@@ -5,21 +5,27 @@ import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {normalizeCharacterStorages} from '../state/liveWorkspaceModel.mjs';
 import {splitPartyCopper} from '../state/partyLootModel.mjs';
+import {playerStashItems,playerAvailableLoot,gmVisibleStashes,gmLootReviewRows} from '../state/partyLootViewModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const validQty=value=>Number.isSafeInteger(Number(value))&&Number(value)>0&&Number(value)<=1000000;
 const labels={item:'Item',currency:'Currency'};
 const named=row=>row?.identified===false?'Unidentified Item':row?.name||row?.title||'Item';
-function StashInventoryList({stash}){
+function StashInventoryList({stash,query=''}){
   return <div className="react-party-stash-items">
-    {arr(stash.items).map(item=><div key={item.id}><b>{named(item)}</b><small>×{item.qty}</small></div>)}
-    {!arr(stash.items).length?<p>No shared items in this container.</p>:null}
+    {playerStashItems(stash,query).map(item=><div key={item.id}><b>{item.name}</b><small>×{item.qty}</small></div>)}
+    {!arr(stash.items).length?<p>No shared items in this container.</p>:
+      !playerStashItems(stash,query).length?<p>No shared items match this search.</p>:null}
   </div>;
 }
 
 export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable=false}){
   const stashes=arr(partyLoot.stashes).filter(row=>row.status!=='deleted');
-  const drops=arr(partyLoot.loot).filter(row=>row.visibility==='revealed'&&row.status==='available');
+  const [lootSearch,setLootSearch]=useState('');
+  const [lootKind,setLootKind]=useState('all');
+  const [stashSearch,setStashSearch]=useState('');
+  const drops=useMemo(()=>playerAvailableLoot(partyLoot,{search:lootSearch,kind:lootKind}),
+    [partyLoot,lootSearch,lootKind]);
   const stored=useMemo(()=>inventoryItems(character).filter(item=>
     !item.equipped&&!item.bound&&!item.locked&&!item.questItem&&item.identified!==false&&Number(item.qty)>0),[character]);
   const storages=normalizeCharacterStorages(character);
@@ -31,7 +37,9 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const stash=stashes.find(row=>row.id===selectedStash)||stashes[0];
   const item=stored.find(row=>row.id===itemId)||stored[0];
-  const shared=arr(stash?.items).find(row=>row.id===sharedItemId)||stash?.items?.[0];
+  const visibleSharedItems=playerStashItems(stash,stashSearch);
+  const shared=arr(stash?.items).find(row=>
+    row.id===(visibleSharedItems.some(item=>item.id===sharedItemId)?sharedItemId:visibleSharedItems[0]?.id));
   const storage=storages.find(row=>row.id===destination)||storages[0];
   const send=async executor=>{
     if(busy||!editable)return;
@@ -60,10 +68,15 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
         {stash?<div className="react-party-stash-card">
           <header><b>{stash.name}</b><StatusPill tone={stash.status==='open'?'success':'warning'}>{stash.status}</StatusPill></header>
           {stash.description?<p>{stash.description}</p>:null}
-          <StashInventoryList stash={stash}/>
+          <label className="react-party-loot-search">Search shared items
+            <input type="search" aria-label="Search shared items" value={stashSearch}
+              onChange={event=>{setStashSearch(event.target.value);setSharedItemId('');}}
+              placeholder="Find an item in this container"/>
+          </label>
+          <StashInventoryList stash={stash} query={stashSearch}/>
           <div className="react-form-grid">
             <label>Item to deposit<select value={item?.id||''} onChange={event=>setItemId(event.target.value)}>{stored.length?stored.map(row=><option key={row.id} value={row.id}>{row.name} ×{row.qty}</option>):<option value="">No depositable items</option>}</select></label>
-            <label>Item to withdraw<select value={shared?.id||''} onChange={event=>setSharedItemId(event.target.value)}>{arr(stash.items).length?stash.items.map(row=><option key={row.id} value={row.id}>{named(row)} ×{row.qty}</option>):<option value="">Nothing available</option>}</select></label>
+            <label>Item to withdraw<select value={shared?.id||''} onChange={event=>setSharedItemId(event.target.value)}>{visibleSharedItems.length?visibleSharedItems.map(row=><option key={row.id} value={row.id}>{row.name} ×{row.qty}</option>):<option value="">No matching items</option>}</select></label>
             <label>Quantity<ManualNumberInput min="1" max="1000000" value={quantity} onChange={setQuantity}/></label>
           </div>
           <div className="react-action-row">
@@ -72,12 +85,22 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
           </div>
         </div>:null}</>:<EmptyState title="No party containers">The GM can add a shared stash or treasure chest.</EmptyState>}
       <h3>Available Party Loot</h3>
+      <div className="react-party-loot-filters" aria-label="Available treasure filters">
+        <label>Search treasure<input type="search" value={lootSearch}
+          onChange={event=>setLootSearch(event.target.value)} placeholder="Name or source"/></label>
+        <label>Type<select value={lootKind} onChange={event=>setLootKind(event.target.value)}>
+          <option value="all">All treasure</option><option value="item">Items</option>
+          <option value="currency">Currency</option>
+        </select></label>
+      </div>
       <div className="react-party-loot-list">
         {drops.map(drop=><article key={drop.id}><div><b>{drop.title}</b><small>{drop.source} · {labels[drop.kind]||'Loot'}</small>{drop.note?<p>{drop.note}</p>:null}
           <strong>{drop.kind==='currency'?Number(drop.currencyCopper).toLocaleString()+' Copper':named(drop.item)+' ×'+(drop.item?.qty||1)}</strong></div>
           {drop.kind==='item'?<button type="button" disabled={!editable||busy||!storage} onClick={()=>send(()=>firebaseService.claimPartyLoot(campaignId,character.id,{lootId:drop.id,storageId:storage?.id}))}>Claim to {storage?.name||'Storage'}</button>:<small>Awaiting GM currency distribution</small>}
         </article>)}
-        {!drops.length?<EmptyState title="No revealed treasure">New treasure appears here when the GM reveals it.</EmptyState>:null}
+        {!drops.length?<EmptyState title="No matching available treasure">
+          {lootSearch||lootKind!=='all'?'Clear the filters to see other revealed treasure.':'New treasure appears here when the GM reveals it.'}
+        </EmptyState>:null}
       </div>
       <p role="status" className="react-action-message" aria-live="polite">{message}</p>
     </Panel>
@@ -97,6 +120,13 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
   const [recipientIds,setRecipientIds]=useState([]);
   const [previewId,setPreviewId]=useState('');
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
+  const [gmStashSearch,setGMStashSearch]=useState('');
+  const [gmStashStatus,setGMStashStatus]=useState('all');
+  const [gmLootSearch,setGMLootSearch]=useState('');
+  const [gmLootKind,setGMLootKind]=useState('all');
+  const [gmLootStatus,setGMLootStatus]=useState('all');
+  const filteredStashes=gmVisibleStashes(partyLoot,{search:gmStashSearch,status:gmStashStatus});
+  const filteredLoot=gmLootReviewRows(partyLoot,{search:gmLootSearch,kind:gmLootKind,status:gmLootStatus});
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const matches=useMemo(()=>catalogQuery?catalog.filter(row=>String(row.name||row.title||'').toLowerCase().includes(catalogQuery.toLowerCase())).slice(0,12):[],[catalog,catalogQuery]);
   const gmScope=Object.keys(characters)[0]||'gm-scope';
@@ -147,7 +177,15 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
         const success=await run(()=>firebaseService.managePartyStash(campaignId,gmScope,{type:'create',stash:{name:stashName,kind:stashKind}}));
         if(success)setStashName('');
       }}>Create Party Container</button>
-      <div className="react-party-stash-manager">{stashes.map(stash=><article key={stash.id}>
+      <div className="react-party-loot-filters" aria-label="GM shared container filters">
+        <label>Find container<input type="search" value={gmStashSearch}
+          onChange={event=>setGMStashSearch(event.target.value)} placeholder="Container name"/></label>
+        <label>Container status<select value={gmStashStatus} onChange={event=>setGMStashStatus(event.target.value)}>
+          <option value="all">All statuses</option><option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select></label>
+      </div>
+      <div className="react-party-stash-manager">{filteredStashes.map(stash=><article key={stash.id}>
         <div><b>{stash.name}</b><small>{stash.kind} · {stash.status} · {stash.items?.length||0} stacks</small></div>
         <StashInventoryList stash={stash}/>
         <div className="react-action-row">
@@ -158,7 +196,7 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
           {snapshot&&validQty(quantity)?<button disabled={busy||stash.items?.length>=80} onClick={()=>run(()=>firebaseService.managePartyStash(campaignId,gmScope,{type:'add-item',stashId:stash.id,item:snapshot,quantity:Number(quantity)}))}>Stock Selected Item</button>:null}
         </div>
       </article>)}</div>
-      {!stashes.length?<EmptyState title="No shared containers"/>:null}
+      {!filteredStashes.length?<EmptyState title={stashes.length?'No matching containers':'No shared containers'}/>:null}
       <h3>Create Treasure Drop</h3>
       <div className="react-form-grid">
         <label>Treasure title<input value={newTitle} maxLength="160" onChange={event=>setNewTitle(event.target.value)} placeholder="Ancient Ruins Cache"/></label>
@@ -173,16 +211,29 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
       {dropKind==='item'&&selectedItem?<p>Selected item: <b>{selectedItem.name||selectedItem.title}</b> ×{quantity}</p>:null}
       <label className="react-check-row"><input type="checkbox" checked={revealNow} onChange={event=>setRevealNow(event.target.checked)}/>Reveal immediately to players</label>
       <button className="primary" disabled={busy} onClick={createDrop}>{revealNow?'Create & Reveal Drop':'Save Hidden Drop'}</button>
-      {hidden.length?<><h3>Hidden Treasure (GM Only)</h3><div className="react-party-loot-list">{hidden.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source}</small>
+      <div className="react-party-loot-filters" aria-label="GM treasure review filters">
+        <label>Find treasure<input type="search" value={gmLootSearch}
+          onChange={event=>setGMLootSearch(event.target.value)} placeholder="Treasure name or source"/></label>
+        <label>Treasure type<select value={gmLootKind} onChange={event=>setGMLootKind(event.target.value)}>
+          <option value="all">All kinds</option><option value="item">Items</option>
+          <option value="currency">Currency</option>
+        </select></label>
+        <label>Revealed status<select value={gmLootStatus} onChange={event=>setGMLootStatus(event.target.value)}>
+          <option value="all">All statuses</option><option value="available">Available</option>
+          <option value="claimed">Claimed</option><option value="distributed">Distributed</option>
+          <option value="cancelled">Cancelled</option>
+        </select></label>
+      </div>
+      {filteredLoot.hidden.length?<><h3>Hidden Treasure (GM Only)</h3><div className="react-party-loot-list">{filteredLoot.hidden.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source}</small>
         {row.generatedFrom?<small>Loot-table batch · Roll {row.generatedFrom.rollNumber||1}</small>:null}
         <strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':
           named(row.secretItem||row.item)+' ×'+Number((row.secretItem||row.item)?.qty||1)}</strong>
       </div><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'reveal',lootId:row.id}))}>Reveal to Party</button><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel Drop</button></article>)}</div></>:null}
       <h3>Revealed Treasure</h3>
-      <div className="react-party-loot-list">{revealed.filter(row=>row.visibility==='revealed').map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source} · {row.status}</small><strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':named(row.item)+' ×'+row.item?.qty}</strong></div>
+      <div className="react-party-loot-list">{filteredLoot.revealed.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source} · {row.status}</small><strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':named(row.item)+' ×'+row.item?.qty}</strong></div>
         {row.status==='available'&&row.kind==='currency'?<button disabled={busy} onClick={()=>splitDrop(row)}>Review Currency Split</button>:null}
         {row.status==='available'?<button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel</button>:null}
-      </article>)}{!revealed.length?<EmptyState title="No revealed loot yet"/>:null}</div>
+      </article>)}{!filteredLoot.revealed.length?<EmptyState title={revealed.length?'No matching revealed loot':'No revealed loot yet'}/>:null}</div>
       {previewDrop?<section className="react-party-currency-preview">
         <h3>Confirm Currency Split — {previewDrop.title}</h3>
         <p>Choose the characters who share this loot. Copper remainders go to character IDs in alphabetical order.</p>
