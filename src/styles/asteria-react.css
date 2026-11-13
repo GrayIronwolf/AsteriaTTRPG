@@ -3897,3 +3897,28 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-party-loot-awarded-list {display:grid;gap:8px;margin-top:12px;min-width:0;}
 .react-party-loot-awarded-list p {margin:0;padding:9px 12px;overflow-wrap:anywhere;
   border:1px solid rgba(143,176,195,.25);background:rgba(6,19,28,.55);font-size:.82rem;}
+
+/* Phase 9.3 — two-sided player trade and merchant transaction confirmation. */
+.react-phase9-trade-summary {
+  display:grid;gap:10px;min-width:0;
+  padding:12px;border:1px solid rgba(144,178,199,.39);
+  border-radius:8px;background:rgba(6,19,29,.66);
+}
+.react-phase9-trade-summary h3 {margin:0;font-size:.95rem;}
+.react-phase9-trade-summary p {margin:0;line-height:1.45;overflow-wrap:anywhere;}
+.react-phase9-trade-summary small {opacity:.78;line-height:1.4;}
+.react-phase9-trade-sides {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+}
+.react-phase9-trade-sides>div {
+  display:grid;gap:6px;min-width:0;align-content:start;
+  padding:12px;background:rgba(9,26,39,.75);border:1px solid rgba(144,178,199,.25);
+}
+.react-phase9-trade-sides strong,.react-phase9-trade-sides span {
+  overflow-wrap:anywhere;
+}
+.react-phase9-trade-sides strong {font-size:.88rem;}
+.react-phase9-pending,.react-phase9-trade-warning {opacity:.8;}
+@media(max-width:520px){
+  .react-phase9-trade-sides {grid-template-columns:minmax(0,1fr);}
+}
