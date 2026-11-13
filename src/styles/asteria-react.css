@@ -4024,3 +4024,124 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-crafting-recipe-requirements {overflow-wrap:anywhere;}
 .react-crafting-workspace .react-crafting-recipe-list
   .react-storage-warning {margin:0;overflow-wrap:anywhere;}
+
+
+/* Phase 12.2 — mobile inventory, merchant and crafting usability.
+   Scoped to existing workflow components; retained Royal Relic visual assets
+   and desktop panels are intentionally unchanged. */
+.react-merchant-workspace,
+.react-crafting-recipe-layout,
+.react-crafting-recipe-list,
+.react-merchant-columns,
+.react-crafting-recipe-editor,
+.react-merchant-stock-row {
+  min-width: 0;
+}
+.react-merchant-workspace .react-merchant-toolbar {
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) minmax(0,1fr);
+}
+.react-merchant-workspace .react-merchant-toolbar > label {
+  min-width: 0;
+}
+.react-merchant-workspace .react-merchant-toolbar select,
+.react-merchant-workspace .react-merchant-toolbar input {
+  box-sizing: border-box;
+}
+.react-merchant-stock-row {
+  overflow-wrap: anywhere;
+}
+.react-crafting-recipe-list > article,
+.react-crafting-recipe-layout .react-record-list > article {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.react-crafting-recipe-list label,
+.react-crafting-recipe-list select,
+.react-crafting-recipe-list input {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.react-crafting-recipe-list label {
+  display: grid;
+  gap: 6px;
+}
+.react-crafting-recipe-list .react-crafting-recipe-requirements > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.react-crafting-request-history summary {
+  padding: 8px 0;
+}
+.react-merchant-workspace .react-action-message,
+.react-crafting-recipe-layout .react-action-message {
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 860px) {
+  .react-merchant-workspace .react-merchant-toolbar {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .react-merchant-workspace .react-merchant-toolbar > div {
+    align-self: center;
+    min-width: 0;
+  }
+  .react-merchant-workspace .react-merchant-columns {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-crafting-recipe-list {
+    grid-template-columns: minmax(0,1fr);
+  }
+}
+@container (max-width: 520px) {
+  .react-merchant-workspace .react-merchant-toolbar {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-merchant-workspace .react-merchant-toolbar > label:last-child {
+    grid-column: auto;
+  }
+  .react-merchant-workspace .react-merchant-heading {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .react-merchant-stock-row {
+    grid-template-columns: 48px minmax(0,1fr);
+    align-items: start;
+  }
+  .react-merchant-stock-action {
+    grid-column: 2;
+    justify-items: stretch;
+    text-align: left;
+  }
+  .react-merchant-stock-action button {
+    width: 100%;
+  }
+  .react-crafting-recipe-layout,
+  .react-crafting-recipe-list {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-crafting-material-editor {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .react-crafting-recipe-list .react-record-heading {
+    flex-wrap: wrap;
+  }
+  .react-crafting-recipe-layout .react-segmented-actions {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+@media (hover:none), (pointer:coarse) {
+  .react-merchant-workspace .react-merchant-toolbar select,
+  .react-merchant-workspace .react-merchant-toolbar input,
+  .react-merchant-stock-action button,
+  .react-merchant-deals button,
+  .react-crafting-recipe-list button,
+  .react-crafting-recipe-list select,
+  .react-crafting-recipe-editor button,
+  .react-crafting-recipe-editor input,
+  .react-crafting-recipe-editor select,
+  .react-crafting-recipe-layout .react-action-row button,
+  .react-crafting-request-history summary {
+    min-height: 44px;
+  }
+}
