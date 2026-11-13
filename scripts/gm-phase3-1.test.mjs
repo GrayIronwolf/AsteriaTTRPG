@@ -105,7 +105,7 @@ test('Search and filtering combine existing NPCs, custom creatures and read-only
   assert.equal(JSON.stringify({world,entries}),raw);
 });
 
-test('NPC library is GM-only; cards and generators are deferred and official entries have no edit controls',()=>{
+test('NPC library is GM-only; custom cards and generator preserve official read-only records',()=>{
   const dashboard=read('src/dashboards/GMDashboard.jsx');
   const ui=read('src/dashboards/GMNpcCreatureLibrary.jsx');
   const model=read('src/state/gmNpcCreatureLibraryModel.mjs');
@@ -118,14 +118,16 @@ test('NPC library is GM-only; cards and generators are deferred and official ent
   assert.match(dashboard,/campaignCreatures=\{live\.gmWorkspace\?\.world\?\.creatures\|\|\[\]\}/);
   assert.match(dashboard,/campaignCreatures\.filter\(libraryEncounterReady\)/);
   assert.match(ui,/official\?'Official Creature Compendium'/);
-  assert.match(ui,/!row\.official\?<div className="react-gm-library-entry-actions"/);
+  assert.match(ui,/row\.official\?<div className="react-gm-library-entry-actions"/);
+  assert.match(ui,/onSave=\{cardTarget.kind==='official'\?undefined:saveCard\}/);
+  assert.match(ui,/!row\.official\?/);
   assert.match(ui,/saveSection\('world',result\.patch\)/);
   assert.match(ui,/Confirm Delete/);
   assert.match(toolkit,/id:'npc-library',label:'NPC & Creature Library',tab:'bestiary'/);
   assert.match(mount,/import '\.\.\/styles\/gm-npc-library\.css'/);
   assert.match(workspace,/creatures:array\(world\.creatures\)/);
   assert.doesNotMatch(model+ui,/firebaseService|setDoc\(|httpsCallable|localStorage|Math\.random\(\)\s*\*\s*1000/);
-  assert.doesNotMatch(ui,/generatedNPC|NPCGenerator|generateRandomNPC|characterCardBuilder|Obsidian/);
+  assert.doesNotMatch(ui,/generatedNPC|generateRandomNPC|ObsidianVault|firebaseService\.setDoc/);
 });
 
 test('New library UI remains responsive, accessible and scoped to GM Dashboard',()=>{
