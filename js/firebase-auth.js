@@ -2997,6 +2997,25 @@ const firebasePublicApi = {
     ];
     return ()=>subscriptions.forEach(unsubscribe=>unsubscribe?.());
   },
+  managePartyStash: (...args) => callTrustedAction('managePartyStash',args),
+  managePartyLootDrop: (...args) => callTrustedAction('managePartyLootDrop',args),
+  claimPartyLoot: (...args) => callTrustedAction('claimPartyLoot',args),
+  movePartyStashItem: (...args) => callTrustedAction('movePartyStashItem',args),
+  splitPartyLootCurrency: (...args) => callTrustedAction('splitPartyLootCurrency',args),
+  subscribePartyLoot: function(campaignId,onChange,mode='character'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const state={stashes:[],loot:[],drafts:[]},watchers=[];
+    const publish=()=>onChange({...state});
+    const watch=(key,collectionName)=>watchers.push(onSnapshot(
+      collection(db,'campaigns',campaignId,collectionName),
+      snapshot=>{state[key]=snapshot.docs.map(row=>({id:row.id,...row.data()}));publish();},
+      error=>reportSyncError('party-loot-'+key,error,{campaignId})
+    ));
+    watch('stashes','partyStashes');
+    watch('loot','partyLoot');
+    if(mode==='gm')watch('drafts','partyLootDrafts');
+    return ()=>watchers.forEach(stop=>stop?.());
+  },
   subscribeGMRewardBundles: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,'rewardBundles'),snapshot=>{

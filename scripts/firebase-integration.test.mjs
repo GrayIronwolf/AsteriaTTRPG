@@ -2423,3 +2423,119 @@ test('Phase 3.3: GM migrates private saved bundles without losing their item det
   assert.equal(deleted.ok,true,deleted.error);
   assert.equal((await db.doc('campaigns/c/rewardBundles/gm-bundle-cache').get()).data().deleted,true);
 });
+
+
+test('Phase 5.1: shared party stashes enforce permissions and move items with both owner mirrors atomically',async()=>{
+  const created=await action('gm','managePartyStash',['c','a',{type:'create',stashId:'party-chest',stash:{name:'Party Chest',kind:'chest'}}]);
+  assert.equal(created.ok,true,created.error);
+  const stashPath='campaigns/c/partyStashes/party-chest';
+  await assertSucceeds(getDoc(doc(user('alice'),stashPath)));
+  await assertFails(getDoc(doc(user('eve'),stashPath)));
+  await assertFails(setDoc(doc(user('alice'),stashPath),{id:'party-chest',items:[]}));
+  const denied=await action('alice','managePartyStash',['c','a',{type:'create',stashId:'forged',stash:{name:'Free Items'}}]);
+  assert.equal(denied.ok,false);
+  assert.equal((await db.doc('campaigns/c/partyStashes/forged').get()).exists,false);
+  const deposited=await action('alice','movePartyStashItem',['c','a',{
+    type:'deposit',stashId:'party-chest',itemId:'sword',quantity:1
+  }]);
+  assert.equal(deposited.ok,true,deposited.error);
+  const stash=(await db.doc(stashPath).get()).data();
+  assert.equal(stash.items.length,1);
+  assert.equal(stash.items[0].qty,1);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory.find(x=>x.id==='sword').qty,1);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,
+    (await db.doc('campaigns/c/characters/a').get()).data().inventory);
+  const returned=await action('bob','movePartyStashItem',['c','b',{
+    type:'withdraw',stashId:'party-chest',itemId:stash.items[0].id,
+    quantity:1,storageId:'bag'
+  }]);
+  assert.equal(returned.ok,true,returned.error);
+  assert.equal((await db.doc(stashPath).get()).data().items.length,0);
+  const bob=(await db.doc('campaigns/c/characters/b').get()).data();
+  assert.equal(bob.inventory.reduce((n,item)=>n+(item.name==='Sword'?Number(item.qty):0),0),3);
+  assert.deepEqual((await db.doc('users/bob/characters/b').get()).data().inventory,bob.inventory);
+  const repeat=await action('bob','movePartyStashItem',['c','b',{
+    type:'withdraw',stashId:'party-chest',itemId:stash.items[0].id,quantity:1,storageId:'bag'
+  }]);
+  assert.equal(repeat.ok,false);
+  const removed=await action('gm','managePartyStash',['c','a',{type:'delete',stashId:'party-chest'}]);
+  assert.equal(removed.ok,true,removed.error);
+  assert.equal((await db.doc(stashPath).get()).exists,false);
+});
+
+test('Phase 5.1: unrevealed treasure is GM-only and single-claim atomically transfers hidden item metadata',async()=>{
+  const created=await action('gm','managePartyLootDrop',['c','a',{
+    type:'create',lootId:'hidden-sword',drop:{
+      title:'Sealed Coffer',source:'Ruins',kind:'item',
+      item:{id:'secret-sword',name:'Sunblade',trueName:'Sunblade',basicName:'Unidentified Blade',
+        identified:false,rarity:'Legendary',description:'Secret',qty:1}
+    }
+  }]);
+  assert.equal(created.ok,true,created.error);
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/partyLootDrafts/hidden-sword')));
+  await assertSucceeds(getDoc(doc(user('gm'),'campaigns/c/partyLootDrafts/hidden-sword')));
+  assert.equal((await db.doc('campaigns/c/partyLoot/hidden-sword').get()).exists,false);
+  const early=await action('alice','claimPartyLoot',['c','a',{lootId:'hidden-sword',storageId:'bag'}]);
+  assert.equal(early.ok,false);
+  const revealed=await action('gm','managePartyLootDrop',['c','a',{type:'reveal',lootId:'hidden-sword'}]);
+  assert.equal(revealed.ok,true,revealed.error);
+  const publicDrop=(await db.doc('campaigns/c/partyLoot/hidden-sword').get()).data();
+  assert.equal(publicDrop.item.name,'Unidentified Blade');
+  assert.equal(publicDrop.item.trueName,undefined);
+  assert.equal(publicDrop.secretItem,undefined);
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/partyLoot/hidden-sword')));
+  const claim=await action('alice','claimPartyLoot',['c','a',{lootId:'hidden-sword',storageId:'bag'}]);
+  assert.equal(claim.ok,true,claim.error);
+  const owner=(await db.doc('users/alice/characters/a').get()).data();
+  const claimed=owner.inventory.find(row=>row.trueName==='Sunblade');
+  assert.ok(claimed,'owner receives the original item, not the masked public preview');
+  assert.equal((await db.doc('campaigns/c/partyLoot/hidden-sword').get()).data().status,'claimed');
+  const another=await action('bob','claimPartyLoot',['c','b',{lootId:'hidden-sword',storageId:'bag'}]);
+  assert.equal(another.ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/b').get()).data().inventory.some(row=>row.trueName==='Sunblade'),false);
+});
+
+test('Phase 5.1: GM currency distribution pays exact shares with owner mirrors, blocks duplicate splitting',async()=>{
+  const created=await action('gm','managePartyLootDrop',['c','a',{
+    type:'create',lootId:'treasure-copper',revealNow:true,
+    drop:{kind:'currency',title:'Coin Cache',source:'Ruins',currencyCopper:5}
+  }]);
+  assert.equal(created.ok,true,created.error);
+  const ids=['b','a'];
+  const sent=await action('gm','splitPartyLootCurrency',['c','a',{lootId:'treasure-copper',recipientIds:ids}],'split-1');
+  assert.equal(sent.ok,true,sent.error);
+  assert.deepEqual(sent.shares,[{characterId:'a',copper:3},{characterId:'b',copper:2}]);
+  for(const [id,uid,extra] of [['a','alice',3],['b','bob',2]]){
+    const current=(await db.doc('campaigns/c/characters/'+id).get()).data();
+    const privateOwner=(await db.doc('users/'+uid+'/characters/'+id).get()).data();
+    assert.equal((current.coins.copper||0)+(current.coins.silver||0)*100+(current.coins.gold||0)*10000,100+extra);
+    assert.deepEqual(privateOwner.coins,current.coins);
+  }
+  const replay=await action('gm','splitPartyLootCurrency',['c','a',{lootId:'treasure-copper',recipientIds:ids}],'split-1');
+  assert.equal(replay.ok,true);
+  const different=await action('gm','splitPartyLootCurrency',['c','a',{lootId:'treasure-copper',recipientIds:ids}],'split-2');
+  assert.equal(different.ok,false);
+  const denied=await action('alice','splitPartyLootCurrency',['c','a',{lootId:'treasure-copper',recipientIds:ids}]);
+  assert.equal(denied.ok,false);
+  assert.equal((await db.doc('campaigns/c/partyLoot/treasure-copper').get()).data().status,'split');
+});
+
+test('Phase 5.1: chest cannot be deleted with outstanding contents and players cannot bypass a closed stash',async()=>{
+  assert.equal((await action('gm','managePartyStash',['c','a',{
+    type:'create',stashId:'locked-chest',stash:{name:'Locked Chest'}
+  }])).ok,true);
+  assert.equal((await action('gm','managePartyStash',['c','a',{
+    type:'add-item',stashId:'locked-chest',item:{name:'Treasure Key',qty:1,identified:true},quantity:1
+  }])).ok,true);
+  const deleteWithContents=await action('gm','managePartyStash',['c','a',{type:'delete',stashId:'locked-chest'}]);
+  assert.equal(deleteWithContents.ok,false);
+  assert.equal((await action('gm','managePartyStash',['c','a',{
+    type:'update',stashId:'locked-chest',stash:{status:'closed'}
+  }])).ok,true);
+  const withdrawal=await action('alice','movePartyStashItem',['c','a',{
+    type:'withdraw',stashId:'locked-chest',itemId:'stash-item-not-real',
+    quantity:1,storageId:'bag'
+  }]);
+  assert.equal(withdrawal.ok,false);
+  assert.match(withdrawal.error,/closed/);
+});

@@ -13,6 +13,7 @@ import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
 import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
+import { createPartyLootCommands } from './partyLootCommands.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 import { validateGMRewardPayload } from '../src/state/gmRewardModel.mjs';
@@ -1438,5 +1439,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context)};
+return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
 }

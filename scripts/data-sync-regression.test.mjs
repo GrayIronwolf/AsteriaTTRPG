@@ -162,7 +162,7 @@ test('background discovery errors do not break an open dashboard; its actual str
   const target=new EventTarget(),noop=()=>{},emit=value=>(_id,callback)=>{callback(value,{fromCache:false});return noop;};
   globalThis.window=Object.assign(target,{setInterval,clearInterval,AsteriaFirebase:{isReady:()=>true,getUser:()=>({uid:'alice'}),
     subscribeCampaign:emit({id:'current'}),subscribeCampaignCharacters:emit({a:{id:'a',ownerUid:'alice'}}),subscribeLiveSession:emit({status:'idle'}),
-    subscribePartyWorkspace:emit({}),subscribePartyChat:emit([]),subscribeCampaignItemEcosystem:emit({}),subscribeCampaignEvents:emit([]),subscribeCampaignEncounter:emit({}),
+    subscribePartyWorkspace:emit({}),subscribePartyChat:emit([]),subscribeCampaignItemEcosystem:emit({}),subscribePartyLoot:emit({stashes:[],loot:[],drafts:[]}),subscribeCampaignEvents:emit([]),subscribeCampaignEncounter:emit({}),
     subscribeCustomItems:callback=>{callback([]);return noop;}}});
   Object.defineProperty(globalThis,'navigator',{value:{onLine:true},configurable:true});
   const server=await createServer({configFile:false,server:{middlewareMode:true}});let view,latest;

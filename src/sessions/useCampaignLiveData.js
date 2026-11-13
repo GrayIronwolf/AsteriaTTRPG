@@ -25,6 +25,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
   const [partyWorkspace, setPartyWorkspace] = useState({ sharedNotes:'', questLog:[] });
   const [partyChat, setPartyChat] = useState([]);
   const [itemEcosystem, setItemEcosystem] = useState({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
+  const [partyLoot, setPartyLoot] = useState({stashes:[],loot:[],drafts:[]});
   const [customItems, setCustomItems] = useState([]);
   const [clock, setClock] = useState(Date.now());
   const [online, setOnline] = useState(navigator.onLine);
@@ -83,6 +84,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       failed=true;
       setCharacters({});
       setCampaign(null);
+      setPartyLoot({stashes:[],loot:[],drafts:[]});
       setError('You have signed out. Sign in to reconnect.');
       setLoading(false);
       setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
@@ -99,6 +101,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     setPartyWorkspace({ sharedNotes:'', questLog:[] });
     setPartyChat([]);
     setItemEcosystem({ shops:[], directTrades:[], partyLoot:[], sharedStorages:[] });
+    setPartyLoot({stashes:[],loot:[],drafts:[]});
     setCustomItems([]);
     setLoading(true);
     if(mode === 'gm') { setGMWorkspace(null); setGMWorkspaceLoaded(false); }
@@ -116,6 +119,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       unsubscribers.push(firebaseService.subscribePartyWorkspace(campaignId, accept('partyWorkspace',value=>setPartyWorkspace(value||{sharedNotes:'',questLog:[]}))));
       unsubscribers.push(firebaseService.subscribePartyChat(campaignId, accept('partyChat',value=>setPartyChat(value||[]))));
       unsubscribers.push(firebaseService.subscribeItemEcosystem(campaignId, accept('ecosystem',value=>setItemEcosystem(value||{shops:[],directTrades:[]})),mode));
+      unsubscribers.push(firebaseService.subscribePartyLoot(campaignId,accept('partyLoot',value=>setPartyLoot(value||{stashes:[],loot:[],drafts:[]})),mode));
       unsubscribers.push(firebaseService.subscribeCustomItems(accept('customItems',value=>{setCustomItems(value||[]);publishCustomItems(value||[]);})));
       unsubscribers.push(firebaseService.subscribeEvents(campaignId,accept('events',value=>setEvents(mergeEvents([],value||[]))),{mode,targetOwnerUid:mode==='character'?uid:'',characterId}));
       unsubscribers.push(firebaseService.subscribeEncounter(campaignId,accept('encounter',setEncounter)));
@@ -197,5 +201,5 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
     const at=typeof value?.toMillis==='function'?value.toMillis():Number(value?.seconds||0)*1000||new Date(value||0).getTime();
     return at>0 && clock-at<150000;
   })),[presence,clock]);
-  return { clock, campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, customItems, online, connectionState, loading, error, setEvents, setEncounter };
+  return { clock, campaign, characters, character, session:liveSession, events, encounter, gmWorkspace, gmWorkspaceLoaded, presence:currentPresence, partyWorkspace, partyChat, itemEcosystem, partyLoot, customItems, online, connectionState, loading, error, setEvents, setEncounter };
 }
