@@ -107,6 +107,7 @@ export function createPartyLootCommands(context,helpers){
         if(visible)throw Error('A revealed loot drop already exists with this identifier.');
         const publicDrop={...hidden};
         delete publicDrop.secretItem;
+        delete publicDrop.generatedFrom;
         tx.set(publicRef,{...publicDrop,visibility:'revealed',updatedAt:serverTimestamp(),
           revealedAt:serverTimestamp(),revealedBy:currentUser.uid});
         tx.update(privateRef,{visibility:'revealed',updatedAt:serverTimestamp()});
