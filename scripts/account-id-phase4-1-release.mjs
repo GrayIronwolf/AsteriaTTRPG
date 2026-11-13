@@ -111,9 +111,9 @@ export function inspectAccountIdReleaseSource(read=readRepoFile){
       profile.includes('readAccountProfileForDisplay')&&
       !profile.includes('ensureAccountIdentityProfile(')),
     check('account-menu-and-logout-still-present',
-      html.includes('id="accountMenuProfile"')&&
-      html.includes('id="accountMenuLogout"')&&
-      menu.includes('window.logout?.()')),
+      html.includes('id="asteriaAccountPanelProfile"')&&
+      html.includes('data-asteria-account-action="logout"')&&
+      menu.includes("open('account')")),
     check('deployment-remains-manual',
       /^on:\s*\n\s*workflow_dispatch:/m.test(workflow)&&
       !/^\s{2}(push|pull_request|schedule|workflow_run):/m.test(workflow)&&

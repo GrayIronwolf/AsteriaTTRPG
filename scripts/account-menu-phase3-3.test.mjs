@@ -72,23 +72,14 @@ test('account switches cancel security requests and old account email is cleared
   assert.equal(h.api.isOpen(),false);
   assert.equal(h.nodes.accountSecurityEmail.textContent,'—');
 });
-test('new menu groups existing actions with notifications and security',()=>{
-  const html=read('index.html');
-  const menu=read('js/asteria-account-menu.js');
-  const css=read('css/asteria-account-menu.css');
-  for(const id of ['accountMenuProfile','accountMenuSettings','accountMenuNotifications',
-    'accountMenuSecurity','accountMenuLogout','accountSecurityOverlay','accountSecuritySendReset']){
-    assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
-  }
-  assert.equal((html.match(/id="accountSettingsTop"/g)||[]).length,0);
-  assert.match(html,/role="group" aria-label="Profile and preferences"/);
-  assert.match(html,/role="group" aria-label="Updates"/);
-  assert.match(html,/role="group" aria-label="Security"/);
-  assert.match(menu,/window\.AsteriaWorkspace\?\.openDashboard\?\.\('settings'\)/);
-  assert.match(menu,/window\.AsteriaWorkspace\?\.openNotifications\?\.\(\)/);
-  assert.match(menu,/window\.AsteriaAccountSecurity\?\.open\?\.\(\)/);
-  assert.match(menu,/window\.logout\?\.\(\)/);
-  assert.match(css,/\.asteria-account-menu-group/);
+test('Account Settings replaces dropdown and preserves security controls',()=>{
+  const html=read('index.html'),menu=read('js/asteria-account-menu.js');
+  assert.doesNotMatch(html,/id="accountQuickMenu"/);
+  assert.match(html,/id="asteriaAccountPanelSecurity"/);
+  assert.match(html,/id="accountSecurityOverlay"/);
+  assert.match(html,/id="accountSecuritySendReset"/);
+  assert.match(menu,/AsteriaAccountPages\?\.open\?\.\(name\)/);
+  assert.match(html,/id="asteriaFriendsTop"/);
 });
 test('notifications menu leads to account-scoped existing service, not placeholder',()=>{
   const workspace=read('js/clean-compendium.js');

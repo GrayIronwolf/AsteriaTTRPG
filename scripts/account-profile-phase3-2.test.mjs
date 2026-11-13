@@ -81,22 +81,18 @@ test('only a server read can populate Account ID and copy rechecks server',()=>{
   assert.match(ui,/get\('accountProfileCopyId'\)\.disabled=!verifiedId/);
   assert.doesNotMatch(ui,/accountIdRegistry|accountIdAssignments|randomInt|localStorage/);
 });
-test('the Account menu opens My Profile while settings and logout remain intact',()=>{
+test('Account page retains authenticated profile editing and ID display',()=>{
   const markup=readFileSync('index.html','utf8');
-  const menu=readFileSync('js/asteria-account-menu.js','utf8');
+  const pages=readFileSync('js/asteria-account-pages.js','utf8');
   const css=readFileSync('css/asteria-account-profile.css','utf8');
-  for(const id of ['accountMenuProfile','accountMenuSettings','accountMenuLogout',
-    'accountProfileOverlay','accountProfileTitle','accountProfileId',
-    'accountProfileUsername','accountProfileEmail','accountProfileName',
-    'accountProfileCopyId','accountProfileRefresh','accountProfileClose']){
+  for(const id of ['asteriaAccountProfileMount','accountProfileOverlay',
+    'accountProfileTitle','accountProfileId','accountProfileUsername',
+    'accountProfileEmail','accountProfileName','accountProfileCopyId',
+    'accountProfileRefresh','accountProfileClose'])
     assert.equal((markup.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
-  }
-  assert.match(menu,/window\.AsteriaAccountProfile\?\.open\?\.\(\)/);
-  assert.match(menu,/window\.AsteriaWorkspace\?\.openDashboard\?\.\('settings'\)/);
-  assert.match(menu,/window\.logout\?\.\(\)/);
-  assert.match(markup,/role="dialog" aria-modal="true"/);
+  assert.match(pages,/AsteriaAccountProfile\?\.open\?\.\(\)/);
   assert.match(markup,/accountIds:true/);
-  assert.match(markup,/js\/asteria-account-profile\.js\?v=account-username-20261111/);
+  assert.match(markup,/js\/asteria-account-profile\.js\?v=gm-toolkit-1-2/);
   assert.match(css,/@media \(max-width:600px\)/);
 });
 test('profile is read-only, includes no identity allocation or account mutation',()=>{
