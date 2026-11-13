@@ -284,7 +284,7 @@
       if(media.matches)return;
       // The navigation row is now a normal flex item rather than a
       // translation aligned to the Compendium's old split-button position.
-      byId('globalNavigation')?.style.removeProperty('--compendium-trigger-offset');
+      byId('globalNavigation')?.style?.removeProperty?.('--compendium-trigger-offset');
     };
     const reflow=()=>{
       closePanels();
