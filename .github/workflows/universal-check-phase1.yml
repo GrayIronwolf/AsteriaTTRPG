@@ -37,3 +37,34 @@ jobs:
         run: npx firebase emulators:exec --project demo-asteria-universal-check --only firestore "node --test scripts/universal-check-permissions-emulator.test.mjs"
       - name: Production React build
         run: npm run build
+
+  bundle:
+    name: Commit verified frontend bundle to existing PR branch
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/universal-check-requests-phase-1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Preserve existing cached chunks and commit generated site assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add react-dist
+          if git diff --cached --quiet; then
+            echo "Built frontend bundle already matches tracked source."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Build Universal Check Phase 1 frontend bundle"
+          git push origin HEAD:feat/universal-check-requests-phase-1
