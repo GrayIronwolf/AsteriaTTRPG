@@ -34,7 +34,7 @@ export function castLootChoice(distribution={},characterId='',choice=''){
   const previous=validatedLootChoices(distribution);
   if(!Object.hasOwn(previous,characterId)&&Object.keys(previous).length>=PARTY_LOOT_VOTE_LIMIT)
     throw Error('The party loot choice limit has been reached.');
-  return {status:'open',choices:{...previous,[characterId]:choice}};
+  return {...distribution,status:'open',choices:{...previous,[characterId]:choice}};
 }
 
 export function eligibleLootWinners(distribution={}){
