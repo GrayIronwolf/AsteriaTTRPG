@@ -33,7 +33,7 @@ export function playerAvailableLoot(partyLoot={}, {search='',kind='all'}={}){
       source:drop.source||'Campaign',
       note:drop.note||'',
       kind:drop.kind,
-      ...(drop.kind==='item'&&drop.distribution?.status==='open'?{distribution:{status:'open',tally:drop.distribution.tally||{}}}:{}),
+      ...(drop.kind==='item'&&drop.distribution?.status==='open'?{distribution:{status:'open',roundId:String(drop.distribution.roundId||''),tally:drop.distribution.tally||{}}}:{}),
       ...(drop.kind==='currency'?{currencyCopper:drop.currencyCopper}:{
         item:safePlayerLootItem(drop.item)
       })
