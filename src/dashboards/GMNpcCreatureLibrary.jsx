@@ -50,6 +50,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
   const [showGenerator,setShowGenerator]=useState(false);
   const [cardTarget,setCardTarget]=useState(null);
   const [galleryView,setGalleryView]=useState(false);
+  const [checkTarget,setCheckTarget]=useState(null);
   const library=useMemo(()=>gmNPCCreatureLibrary(world,official,{query:search,kind:filter}),
     [world,official,search,filter]);
   const startNew=kind=>{
@@ -128,6 +129,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     finally{setBusy(false);}
   };
   const setField=(key,value)=>setDraft(valueNow=>({...valueNow,[key]:value}));
+  const activeNPC=checkTarget?library.rows.find(row=>row.kind==='npc'&&!row.official&&row.id===checkTarget):null;
   const currentCard=cardTarget?library.rows.find(row=>row.kind===cardTarget.kind&&row.id===cardTarget.id)||
     gmNPCCreatureLibrary(world,official).rows.find(row=>row.kind===cardTarget.kind&&row.id===cardTarget.id):null;
   return <section className="react-gm-npc-library" aria-label="GM NPC and Creature Library">
@@ -228,9 +230,10 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
           {row.kind==='npc'&&row.personality?<p><b>Personality:</b> {row.personality}</p>:null}
           {row.kind==='npc'&&row.goals?<p><b>Goals:</b> {row.goals}</p>:null}
           {!row.official&&row.notes?<p className="react-gm-library-private"><b>GM notes:</b> {row.notes}</p>:null}
-          {row.kind==='npc'&&!row.official&&!row.id.startsWith('legacy-')?<GMContextCheckLauncher
-            campaignId={campaignId} characters={characters} context={{kind:'npc',npcId:row.id,label:row.name}}
-            title={'Interaction check · '+row.name}/>:null}
+          {row.kind==='npc'&&!row.official&&!row.id.startsWith('legacy-')?
+            <button type="button" onClick={()=>setCheckTarget(current=>current===row.id?null:row.id)}>
+              {checkTarget===row.id?'Close interaction check':'Request interaction check'}
+            </button>:null}
           {!row.official?<p className="react-gm-library-encounter">
             {libraryEncounterReady(row)?
               'Encounter ready — searchable on the GM Main encounter board.':
@@ -250,6 +253,10 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
         </div>}
       </article>)}
     </div>
+    {activeNPC?<GMContextCheckLauncher key={activeNPC.id}
+      campaignId={campaignId} characters={characters}
+      context={{kind:'npc',npcId:activeNPC.id,label:activeNPC.name}}
+      title={'Interaction check · '+activeNPC.name}/>:null}
     {!library.rows.length?<p className="react-gm-library-empty">
       No matching entries. Add a campaign NPC or creature, or adjust your search and filters.
     </p>:null}
