@@ -71,6 +71,7 @@ export function publicLootVoteSummary(drop={},character={}){
   ]));
   const ownLog=(Array.isArray(character?.actionLog)?character.actionLog:[])
     .find(entry=>entry?.type==='party-loot-vote'&&
-      entry.lootId===drop.id&&choiceSet.has(entry.choice));
+      entry.lootId===drop.id&&entry.roundId===drop.distribution.roundId&&
+      choiceSet.has(entry.choice));
   return {status:'open',tally:safeTally,ownChoice:ownLog?.choice||''};
 }
