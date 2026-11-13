@@ -1473,6 +1473,7 @@ const firebasePublicApi = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
+  manageMerchantRelationship: (...args) => callTrustedAction('manageMerchantRelationship',args),
   subscribePartyWorkspace: function(campaignId,onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(doc(db,'campaigns',campaignId,'systems','party-workspace'),snapshot=>onChange(snapshot.exists() ? snapshot.data() : {sharedNotes:'',questLog:[]}),error=>reportSyncError('party-workspace-listener',error,{campaignId}));
@@ -1769,6 +1770,13 @@ const firebasePublicApi = {
   sendCharacterNotification: (...args) => callTrustedAction('sendCharacterNotification', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
   createCustomLootReward: (...args) => callTrustedAction('createCustomLootReward', args),
+  subscribeMerchantRelationships: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const collectionRef=collection(db,'campaigns',campaignId,'merchantRelationships');
+    const source=gmMode?collectionRef:query(collectionRef,where('ownerUid','==',currentUser.uid));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('merchant-relationships-listener',error,{campaignId}));
+  },
   subscribeMerchantDeals: function(campaignId,onChange,gmMode=false){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     const q=gmMode?collection(db,'campaigns',campaignId,'merchantDeals'):

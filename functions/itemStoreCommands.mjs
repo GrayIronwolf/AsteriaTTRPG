@@ -4,6 +4,8 @@ import {shopStockCompatible,merchantPriceCopper} from '../src/state/shopTransact
 import {prepareGMRewardBundle} from '../src/state/gmRewardModel.mjs';
 import {merchantStockIdentity,validateRestockPolicy,merchantRestockPlan,MAX_MERCHANT_RESTOCK_AUDIT} from '../src/state/merchantInventoryModel.mjs';
 import {moveMerchantOnRoute,merchantTravelState,normalizeMerchantRoute,MAX_MERCHANT_TRAVEL_HISTORY} from '../src/state/merchantTravelModel.mjs';
+import {merchantRelationshipId,updateMerchantRelationship,validateMerchantOpportunity} from '../src/state/merchantRelationshipModel.mjs';
+import {isLinkedCharacter} from './characterPermissions.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -60,6 +62,17 @@ export function applyGMShopAction(current,action={},shopId=''){
     const changed=moveMerchantOnRoute(shop,action,action.route);
     if(JSON.stringify(changed).length>680000)throw Error('This shop record is too large.');
     return changed;
+  }
+  if(action.type==='configure-opportunity'){
+    const index=Number(action.stockIndex);
+    if(!Number.isSafeInteger(index)||index<0||index>=shop.stock.length)
+      throw Error('Choose an existing stock item.');
+    if(merchantStockIdentity(shop.stock[index].item)!==String(action.stockIdentity||''))
+      throw Error('Shop stock changed. Refresh before configuring special access.');
+    const policy=validateMerchantOpportunity(action.minStanding,action.opportunityLabel);
+    Object.assign(shop.stock[index],policy);
+    if(JSON.stringify(shop).length>680000)throw Error('Shop record too large.');
+    return shop;
   }
   if(action.type==='stock'){
     const qty=Number(action.quantity);
@@ -133,13 +146,41 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
     return campaign;
   };
   return {
+    manageMerchantRelationship:async(campaignId,_scope,action={})=>{
+      try{
+        const shopId=String(action.shopId||''),characterId=String(action.characterId||'');
+        const relationId=merchantRelationshipId(shopId,characterId);
+        const saved=await runTransaction(db,async tx=>{
+          const campaign=await gm(tx,campaignId);
+          const ref=doc(db,'campaigns',campaignId,'merchantRelationships',relationId);
+          const shopRef=doc(db,'campaigns',campaignId,'shops',shopId);
+          const characterRef=doc(db,'campaigns',campaignId,'characters',characterId);
+          const [relation,shop,character]=await Promise.all([
+            tx.get(ref),tx.get(shopRef),tx.get(characterRef)
+          ]);
+          if(!exists(shop)||shop.data()?.deleted||shop.data()?.status==='deleted')
+            throw Error('Merchant is unavailable.');
+          if(!exists(character)||!isLinkedCharacter(campaign,characterId,character.data(),campaignId))
+            throw Error('Choose a currently linked campaign character.');
+          const ownerUid=character.data().ownerUid;
+          if(!ownerUid)throw Error('The character owner is unavailable.');
+          const updated=updateMerchantRelationship(relation.data()||{},action,
+            {shopId,characterId,ownerUid,operationId:requestId});
+          updated.history[0].at=new Date().toISOString();
+          updated.history[0].by=currentUser.uid;
+          tx.set(ref,{...updated,updatedAt:serverTimestamp(),updatedBy:currentUser.uid});
+          return updated;
+        });
+        return {ok:true,relationship:saved};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
     // One trusted write per shop, not the old monolithic itemEcosystem.shops array.
     manageCampaignShop:async(campaignId,_scope,action={})=>{
       try{
         const type=String(action.type||'save');
         if(!['save','stock','remove-stock','set-stock','configure-restock',
           'restock','restock-all','assign-route','depart-route','arrive-route',
-          'unassign-route','delete'].includes(type))
+          'unassign-route','configure-opportunity','delete'].includes(type))
           throw Error('Choose a valid shop action.');
         const shopId=String(action.shopId||action.shop?.id||
           (type==='save'?'shop-'+requestId:''));

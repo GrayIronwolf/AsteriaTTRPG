@@ -3053,3 +3053,95 @@ test('Phase 10.2: closed or blockaded campaign routes cannot depart, but in-flig
   assert.equal(arrival.ok,true,arrival.error);
   assert.equal(arrival.shop.region,'B');
 });
+
+
+test('Phase 10.3: GM controls merchant standing; owners alone can read it; privileged stock access is enforced for purchase and bargaining',async()=>{
+  const shopId='phase10-relations';
+  const created=await action('gm','manageCampaignShop',['c','a',{
+    type:'save',shop:{id:shopId,name:'Guild Merchant',status:'open',region:'Palladium',
+      buyModifier:1,sellModifier:1,currencyCopper:1000,visitorCharacterIds:[],stock:[]}
+  }]);
+  assert.equal(created.ok,true,created.error);
+  const stocked=await action('gm','manageCampaignShop',['c','a',{
+    type:'stock',shopId,item:{id:'guild-blade',name:'Guild Blade',
+      marketPrice:0.1,marketValue:0.05},quantity:3
+  }]);
+  assert.equal(stocked.ok,true,stocked.error);
+  const itemIdentity=merchantStockIdentity(stocked.shop.stock[0].item);
+  const configured=await action('gm','manageCampaignShop',['c','a',{
+    type:'configure-opportunity',shopId,stockIndex:0,stockIdentity:itemIdentity,
+    minStanding:50,opportunityLabel:'Guild Exclusive'
+  }]);
+  assert.equal(configured.ok,true,configured.error);
+  const relationPath='campaigns/c/merchantRelationships/'+String(shopId.length)+'_'+shopId+'_a';
+  assert.equal((await action('alice','manageMerchantRelationship',['c','a',{
+    shopId,characterId:'a',score:100,message:'Self granted'
+  }])).ok,false);
+  assert.equal((await action('gm','manageMerchantRelationship',['c','a',{
+    shopId,characterId:'missing',score:90,message:'Not linked'
+  }])).ok,false);
+  assert.equal((await action('gm','manageMerchantRelationship',['c','a',{
+    shopId,characterId:'a',score:101,message:'Invalid'
+  }])).ok,false);
+  const denied=await action('alice','buyLiveShopItem',['c','a',shopId,0,1]);
+  assert.equal(denied.ok,false,'Default reputation must not unlock exclusive stock');
+  assert.match(denied.error,/higher merchant standing/);
+  const deniedOffer=await action('alice','createMerchantDeal',['c','a',shopId,0,
+    {quantity:1,offeredCopper:5}]);
+  assert.equal(deniedOffer.ok,false);
+  assert.equal((await db.doc('campaigns/c/shops/'+shopId).get()).data().stock[0].qty,3);
+  const raised=await action('gm','manageMerchantRelationship',['c','a',{
+    shopId,characterId:'a',score:75,message:'The guild trusts you.'
+  }]);
+  assert.equal(raised.ok,true,raised.error);
+  assert.equal(raised.relationship.tier,'Trusted');
+  const ownerRow=await assertSucceeds(getDoc(doc(user('alice'),relationPath)));
+  assert.equal(ownerRow.data().score,75);
+  await assertFails(getDoc(doc(user('bob'),relationPath)));
+  const outsider=await assertSucceeds(getDoc(doc(user('gm'),relationPath)));
+  assert.equal(outsider.data().ownerUid,'alice');
+  await assertFails(updateDoc(doc(user('alice'),relationPath),{score:100}));
+  const purchased=await action('alice','buyLiveShopItem',['c','a',shopId,0,1]);
+  assert.equal(purchased.ok,true,purchased.error);
+  const postPurchase=(await db.doc('campaigns/c/shops/'+shopId).get()).data();
+  assert.equal(postPurchase.stock[0].qty,2);
+  assert.equal(postPurchase.stock[0].minStanding,50);
+  const lowered=await action('gm','manageMerchantRelationship',['c','a',{
+    shopId,characterId:'a',score:-30,message:'Trust lost.'
+  }]);
+  assert.equal(lowered.ok,true,lowered.error);
+  assert.equal(lowered.relationship.history.length,2);
+  const revoked=await action('alice','buyLiveShopItem',['c','a',shopId,0,1]);
+  assert.equal(revoked.ok,false);
+  assert.equal((await db.doc('campaigns/c/shops/'+shopId).get()).data().stock[0].qty,2);
+  const bobDenied=await action('bob','buyLiveShopItem',['c','b',shopId,0,1]);
+  assert.equal(bobDenied.ok,false);
+  const unrestrict=await action('gm','manageCampaignShop',['c','a',{
+    type:'configure-opportunity',shopId,stockIndex:0,stockIdentity:itemIdentity,
+    minStanding:0,opportunityLabel:''
+  }]);
+  assert.equal(unrestrict.ok,true,unrestrict.error);
+  const restored=await action('bob','buyLiveShopItem',['c','b',shopId,0,1]);
+  assert.equal(restored.ok,true,restored.error);
+});
+test('Phase 10.3: merchant standing owner-scoped query returns only own records',async()=>{
+  const shopId='phase10-owned-query';
+  const created=await action('gm','manageCampaignShop',['c','a',{
+    type:'save',shop:{id:shopId,name:'Fletcher',status:'open',currencyCopper:500}
+  }]);
+  assert.equal(created.ok,true,created.error);
+  for(const [characterId,score] of [['a',65],['b',-20]]){
+    const result=await action('gm','manageMerchantRelationship',['c','gm-scope',{
+      shopId,characterId,score,message:'Relationship set by GM'
+    }]);
+    assert.equal(result.ok,true,result.error);
+  }
+  const aliceRows=await assertSucceeds(getDocs(query(
+    collection(user('alice'),'campaigns/c/merchantRelationships'),where('ownerUid','==','alice'))));
+  assert.equal(aliceRows.size,1);
+  assert.equal(aliceRows.docs[0].data().characterId,'a');
+  const bobRows=await assertSucceeds(getDocs(query(
+    collection(user('bob'),'campaigns/c/merchantRelationships'),where('ownerUid','==','bob'))));
+  assert.equal(bobRows.size,1);
+  await assertFails(getDocs(collection(user('alice'),'campaigns/c/merchantRelationships')));
+});

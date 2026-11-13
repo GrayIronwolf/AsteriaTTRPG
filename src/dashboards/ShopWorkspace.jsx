@@ -8,6 +8,7 @@ import { characterCurrencyCopper, merchantPriceCopper, shopVariantKey, shopVaria
 import { merchantTransactionPreview } from '../state/tradeExperienceModel.mjs';
 import { merchantStockHealth } from '../state/merchantInventoryModel.mjs';
 import {merchantRegionOptions,merchantsInRegion,merchantTravelState,merchantShopAvailable} from '../state/merchantTravelModel.mjs';
+import {merchantStandingFor,merchantStandingTier,merchantCanAccessStock,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const copper=value=>Number(value||0).toLocaleString()+' Copper';
@@ -23,11 +24,17 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
   const [deals,setDeals]=useState([]);
+  const [relationships,setRelationships]=useState([]);
   const [offerCopper,setOfferCopper]=useState('');
   const [barterId,setBarterId]=useState('');
   const [barterQuantity,setBarterQuantity]=useState('1');
   const [offerNote,setOfferNote]=useState('');
   const handledSaleToken=useRef(null);
+  useEffect(()=>{
+    if(!campaignId)return;
+    const unsubscribe=firebaseService.subscribeMerchantRelationships(campaignId,setRelationships,false);
+    return ()=>unsubscribe();
+  },[campaignId]);
   useEffect(()=>{
     if(!campaignId||!editable)return;
     let unsubscribe=()=>{};
@@ -40,6 +47,10 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const selected=regionalShops.find(shop=>shop.id===selectedId)||regionalShops[0]||null;
   const travelling=merchantTravelState(selected)==='travelling';
   const visiting=merchantShopAvailable(selected,character?.id);
+  const standing=selected&&character?
+    merchantStandingFor(relationships,selected.id,character.id):0;
+  const tier=merchantStandingTier(standing);
+  const specialOffers=selected?merchantOpportunitySummary(selected,standing):[];
   const balance=characterCurrencyCopper(character);
   const inventory=useMemo(()=>inventoryItems(character).filter(tradeable),[character]);
   const stock=arr(selected?.stock);
@@ -82,9 +93,14 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const stale=Boolean(quote&&source&&quote.variantKey!==shopVariantKey(source));
   const changed=Boolean(quote&&source&&quote.unitPriceCopper!==unit);
   const canConfirm=Boolean(editable&&visiting&&!busy&&source&&validQuantity&&
+    (quote?.kind!=='buy'||merchantCanAccessStock(stock[quote.index],standing))&&
     total!==null&&unit!==null&&unit>0&&!stale&&!changed&&
     (quote?.kind==='sell'?Number(selected?.currencyCopper??Infinity)>=total:balance>=total));
   const open=(kind,item,index)=>{
+    if(kind==='buy'&&!merchantCanAccessStock(stock[index],standing)){
+      setMessage('This item requires higher merchant standing. Ask your GM about unlocking it.');
+      return;
+    }
     const previewPrice=merchantPriceCopper(selected,item,kind==='sell'?'sell':'buy');
     const max=kind==='buy'?Number(stock[index]?.qty||0):Number(item.qty||0);
     setQuote({kind,index,itemId:item.id,variantKey:shopVariantKey(item),unitPriceCopper:previewPrice});
@@ -114,7 +130,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     }finally{setBusy(false);}
   };
   const propose=async()=>{
-    if(!quote||quote.kind!=='buy'||!validQuantity||busy||!visiting||!editable||stale||changed)return;
+    if(!quote||quote.kind!=='buy'||!validQuantity||busy||!visiting||!editable||stale||changed||
+      !merchantCanAccessStock(stock[quote.index],standing))return;
     if(!isManualNumber(offerCopper,{min:0,max:1000000000})||
       (barterId&&!isManualNumber(barterQuantity,{min:1,max:1000000}))){
       setMessage('Enter a valid whole copper offer and barter quantity.');return;
@@ -145,17 +162,21 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     const remaining=kind==='buy'?Number(row.qty||0):Number(item.qty||0);
     const notTradeable=price===null||price===0;
     const affordable=kind==='buy'?balance>=price:Number(selected?.currencyCopper??Infinity)>=price;
+    const opportunity=kind==='buy'&&Number(row.minStanding||0)>0;
+    const unlocked=!opportunity||merchantCanAccessStock(row,standing);
     return <article key={kind==='buy'?row.index:item.id} className="react-merchant-stock-row">
       <div className="react-merchant-stock-image">{item?.image?<img src={item.image} alt="" />:<b>{String(item?.name||'?')[0]}</b>}</div>
       <div className="react-merchant-stock-info">
         <b>{item?.identified===false?'Unidentified Item':item?.name||item?.title||'Item'}</b>
         <small>{shopVariantLabel(item)}</small>
+        {opportunity?<small>{row.opportunityLabel||'Special trading opportunity'} ·
+          Requires {row.minStanding} standing · {unlocked?'Unlocked':'Locked'}</small>:null}
         <small>{remaining} available{kind==='buy'&&merchantStockHealth(row).status==='out'?' · Out of stock':
           kind==='buy'&&merchantStockHealth(row).status==='low'?' · Limited stock':''}</small>
       </div>
       <div className="react-merchant-stock-action">
         <strong>{price===null?'Price unavailable':copper(price)}</strong>
-        <button type="button" disabled={!editable||!visiting||notTradeable||!affordable||remaining<1}
+        <button type="button" disabled={!editable||!visiting||notTradeable||!affordable||remaining<1||!unlocked}
           onClick={()=>open(kind,item,kind==='buy'?row.index:index)}>{kind==='buy'?'Buy':'Sell'}</button>
       </div>
     </article>;
@@ -183,6 +204,13 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         {selected.greeting?<p><b>Merchant:</b> “{selected.greeting}”</p>:null}
         {selected.specialOffer?<p><b>Special offer:</b> {selected.specialOffer}</p>:null}</div>
       <StatusPill tone={visiting?'success':'warning'}>{travelling?'Travelling':selected.status!=='open'?'Closed':visiting?'Available':'Not visiting'}</StatusPill>
+      <section className="react-merchant-relationship-status" aria-label="Your merchant relationship">
+        <b>Your Standing: {standing} · {tier}</b>
+        <p>{relationships.find(row=>row.shopId===selected.id&&row.characterId===character?.id)?.message||
+          'This merchant has no recorded relationship with your character.'}</p>
+        {specialOffers.length?<small>{specialOffers.filter(row=>row.unlocked).length} of
+          {' '}{specialOffers.length} special opportunities unlocked</small>:null}
+      </section>
     </div>
     {!visiting?<p className="react-storage-warning" role="status">{
       travelling?'This travelling merchant is between regions. Trading resumes when the GM confirms arrival.':
@@ -220,7 +248,10 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     {quote&&selected?<Modal title={quote.kind==='buy'?'Confirm Purchase':'Confirm Sale'} eyebrow={selected.name} busy={busy}
       onClose={noQuote} footer={<div className="react-modal-actions">
         <button type="button" disabled={busy} onClick={noQuote}>Cancel</button>
-        {quote.kind==='buy'?<button type="button" disabled={busy||!validQuantity||stale||changed||!visiting} onClick={propose}>Offer to Bargain</button>:null}
+        {quote.kind==='buy'?<button type="button"
+          disabled={busy||!validQuantity||stale||changed||!visiting||
+            !merchantCanAccessStock(stock[quote.index],standing)}
+          onClick={propose}>Offer to Bargain</button>:null}
         <button type="button" className="primary" disabled={!canConfirm} onClick={perform}>{quote.kind==='buy'?'Confirm Buy':'Confirm Sell'}</button>
       </div>}>
       {source?<><div className="react-merchant-quote">
