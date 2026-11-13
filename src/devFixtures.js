@@ -103,8 +103,9 @@ export function installDevFixtures() {
     shops:[{ id:'moon-market', name:'Moon Market', type:'General Merchant', status:'open', buyModifier:1, sellModifier:1, currencyCopper:100000, visitorCharacterIds:['kael'], stock:[{ qty:4, priceCopper:25, item:{ id:'mana-vial', name:'Mana Vial', type:'Consumable', rarity:'Common', marketValue:.15, marketPrice:.25, effect:{mp:10} } }] }],
     playerItemRequests:[], directTrades:[], partyLoot:[], sharedStorages:[]
   };
+  let partyLoot={stashes:[],loot:[],drafts:[]};
   let customItems=[];
-  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], customItems:[] };
+  const listeners = { campaign: [], characters: [], session: [], presence: [], events: [], encounter: [], gmWorkspace:[], partyWorkspace:[], partyChat:[], itemEcosystem:[], partyLoot:[], customItems:[] };
   const presence = {
     'gm-demo': { uid: 'gm-demo', state: 'online', mode: 'gm' },
     'player-demo': { uid: 'player-demo', state: 'online', mode: 'character', characterId: 'kael' }
@@ -121,6 +122,7 @@ export function installDevFixtures() {
     if(key === 'partyWorkspace') callback(clone(partyWorkspace));
     if(key === 'partyChat') callback(clone(partyChat));
     if(key === 'itemEcosystem') callback(clone(itemEcosystem));
+    if(key === 'partyLoot') callback(clone(partyLoot));
     if(key === 'customItems') callback(clone(customItems));
   });
   const subscribe = (key, callback) => {
@@ -229,6 +231,7 @@ export function installDevFixtures() {
     subscribePartyWorkspace: (_campaignId, callback) => subscribe('partyWorkspace', callback),
     subscribePartyChat: (_campaignId, callback) => subscribe('partyChat', callback),
     subscribeCampaignItemEcosystem: (_campaignId, callback) => subscribe('itemEcosystem', callback),
+    subscribePartyLoot: (_campaignId,callback) => subscribe('partyLoot',callback),
     syncCampaignItemPrivacy: async () => ({ok:true,migrated:0,remaining:0}),
     subscribeCustomItems: callback => subscribe('customItems', callback),
     saveCampaignEncounter: async (_campaignId, next) => { encounter = { ...encounter, ...clone(next) }; notify('encounter'); return { ok:true }; },
