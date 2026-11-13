@@ -19,7 +19,7 @@ function GMPartyLootDistributionControls({campaignId,gmScope,drop,privateDrop,ch
   const [review,setReview]=useState(false);
   const active=drop.distribution?.status==='open';
   const privateDistribution=privateDrop?.distribution?.status==='open'?privateDrop.distribution:null;
-  const validRound=active&&privateDistribution?.roundId===drop.distribution?.roundId;
+  const validRound=Boolean(active&&privateDistribution?.roundId&&privateDistribution.roundId===drop.distribution?.roundId);
   const eligible=validRound?eligibleLootWinners(privateDistribution):[];
   const winner=eligible.find(row=>row.characterId===winnerId);
   const winnerCharacter=characters[winner?.characterId]||null;
