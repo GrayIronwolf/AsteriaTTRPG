@@ -173,7 +173,11 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
       {dropKind==='item'&&selectedItem?<p>Selected item: <b>{selectedItem.name||selectedItem.title}</b> ×{quantity}</p>:null}
       <label className="react-check-row"><input type="checkbox" checked={revealNow} onChange={event=>setRevealNow(event.target.checked)}/>Reveal immediately to players</label>
       <button className="primary" disabled={busy} onClick={createDrop}>{revealNow?'Create & Reveal Drop':'Save Hidden Drop'}</button>
-      {hidden.length?<><h3>Hidden Treasure (GM Only)</h3><div className="react-party-loot-list">{hidden.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source}</small></div><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'reveal',lootId:row.id}))}>Reveal to Party</button><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel Drop</button></article>)}</div></>:null}
+      {hidden.length?<><h3>Hidden Treasure (GM Only)</h3><div className="react-party-loot-list">{hidden.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source}</small>
+        {row.generatedFrom?<small>Loot-table batch · Roll {row.generatedFrom.rollNumber||1}</small>:null}
+        <strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':
+          named(row.secretItem||row.item)+' ×'+Number((row.secretItem||row.item)?.qty||1)}</strong>
+      </div><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'reveal',lootId:row.id}))}>Reveal to Party</button><button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel Drop</button></article>)}</div></>:null}
       <h3>Revealed Treasure</h3>
       <div className="react-party-loot-list">{revealed.filter(row=>row.visibility==='revealed').map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source} · {row.status}</small><strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':named(row.item)+' ×'+row.item?.qty}</strong></div>
         {row.status==='available'&&row.kind==='currency'?<button disabled={busy} onClick={()=>splitDrop(row)}>Review Currency Split</button>:null}

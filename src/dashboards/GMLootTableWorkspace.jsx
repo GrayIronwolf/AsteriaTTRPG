@@ -13,6 +13,9 @@ export function GMLootTableWorkspace({campaignId}){
   const [selectedId,setSelectedId]=useState('');
   const [draft,setDraft]=useState(draftTable);
   const [preview,setPreview]=useState(null);
+  const [batchCount,setBatchCount]=useState('3');
+  const [batchSource,setBatchSource]=useState('');
+  const [batchResult,setBatchResult]=useState(null);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   const selected=tables.find(row=>row.id===selectedId)||null;
@@ -26,7 +29,7 @@ export function GMLootTableWorkspace({campaignId}){
       location:selected.location||'',threatTier:selected.threatTier||1,
       status:selected.status||'active',entries:(selected.entries||[]).map(row=>({...row}))
     }:draftTable());
-    setPreview(null);
+    setPreview(null);setBatchResult(null);
   },[selectedId,selected?.revision]);
   const updateEntry=(id,field,value)=>{
     setDraft(table=>({...table,entries:table.entries.map(row=>
@@ -43,15 +46,20 @@ export function GMLootTableWorkspace({campaignId}){
           if(key in cast)cast[key]=Number(cast[key]);
         return cast;
       });
+      if(type==='batch'&&(!numeric(batchCount,1,10)||!Number.isSafeInteger(Number(batchCount))))
+        throw Error('Choose 1–10 whole treasure rolls.');
       const response=await firebaseService.manageLootTable(campaignId,'gm-scope',{
         type,tableId:id,expectedRevision:selected?.revision||0,
-        ...(type==='save'?{table:{...draft,threatTier:Number(draft.threatTier),entries}}:{})
+        ...(type==='save'?{table:{...draft,threatTier:Number(draft.threatTier),entries}}:{}),
+        ...(type==='batch'?{batch:{count:Number(batchCount),source:batchSource}}:{})
       });
       if(!response?.ok)throw Error(response?.error||'Loot-table action failed.');
-      setMessage(type==='preview'?'GM roll preview generated.':
+      setMessage(type==='batch'?`${response.generatedCount} hidden drops generated from ${response.totalRolls} rolls. Review or reveal them under Party Stashes & Treasure.`:
+        type==='preview'?'GM roll preview generated.':
         type==='generate'?(response.generated?'Hidden treasure generated. Reveal it in Party Stashes & Treasure when ready.':'The roll found nothing; no treasure drop was created.'):
         type==='archive'?'Loot table archived.':'Loot table saved.');
       if(type==='preview'||type==='generate')setPreview(response.roll);
+      if(type==='batch'){setPreview(null);setBatchResult(response);}
       if(type==='save')setSelectedId(id);
     }catch(error){setMessage(error.message||'Loot-table action failed.');}
     finally{setBusy(false);}
@@ -62,7 +70,7 @@ export function GMLootTableWorkspace({campaignId}){
     <label>{label}<input type="number" min={min} max={max} step="1"
       value={row[key]} onChange={event=>updateEntry(row.id,key,event.target.value)}/></label>;
   return <Panel title="GM Loot Tables" eyebrow="Private weighted tables and non-delivering roll previews">
-    <p>Preview rolls never create treasure. Generate Hidden Treasure creates a GM-only draft in the existing Party Stashes & Treasure manager; only the GM can reveal it, and players must claim or receive it through the existing secure workflow.</p>
+    <p>Single rolls and batches create hidden drafts in Party Stashes & Treasure. The GM reviews each result before revealing it. Players claim items or receive copper through existing secure distribution actions.</p>
     <div className="react-form-grid">
       <label>Saved table<select value={selectedId} onChange={event=>setSelectedId(event.target.value)}>
         <option value="">Create new table</option>
@@ -118,6 +126,26 @@ export function GMLootTableWorkspace({campaignId}){
       <button type="button" className="danger" disabled={busy||!selected||selected.status==='archived'}
         onClick={()=>act('archive')}>Archive</button>
     </div>
+    <h4>Multi-roll treasure batch</h4>
+    <div className="react-form-grid">
+      <label>Number of rolls (1–10)<input type="number" min="1" max="10" step="1"
+        value={batchCount} onChange={event=>setBatchCount(event.target.value)}/></label>
+      <label>Encounter or location source (optional)<input maxLength="160" value={batchSource}
+        placeholder={selected?.location||'Optional encounter name'}
+        onChange={event=>setBatchSource(event.target.value)}/></label>
+    </div>
+    <button type="button" className="primary"
+      disabled={busy||!selected||selected.status!=='active'||!numeric(batchCount,1,10)}
+      onClick={()=>act('batch')}>Generate Hidden Batch</button>
+    {batchResult?<section className="react-party-loot-list" aria-label="Latest treasure batch">
+      <h4>GM batch review — {batchResult.generatedCount} drops / {batchResult.totalRolls} rolls</h4>
+      <p>{batchResult.emptyCount} empty results. Generated treasure is still hidden from players.</p>
+      {(batchResult.results||[]).map(row=><article key={row.rollNumber}>
+        <b>Roll {row.rollNumber}: {row.label}</b>
+        <small>{row.generated?'Hidden draft ready for GM reveal':'No treasure generated'}</small>
+      </article>)}
+      <p>Use the existing Hidden Treasure section in Party Stashes & Treasure to reveal or cancel each draft independently.</p>
+    </section>:null}
     {preview?<section className="react-action-message" role="status">
       <h4>Latest GM roll</h4>
       <p>{preview.kind==='item'?preview.item.quantity+' × '+preview.item.name:
