@@ -18,7 +18,19 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const [quantity,setQuantity]=useState('');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
+  const [deals,setDeals]=useState([]);
+  const [offerCopper,setOfferCopper]=useState('');
+  const [barterId,setBarterId]=useState('');
+  const [barterQuantity,setBarterQuantity]=useState('1');
+  const [offerNote,setOfferNote]=useState('');
   const handledSaleToken=useRef(null);
+  useEffect(()=>{
+    if(!campaignId||!editable)return;
+    let unsubscribe=()=>{};
+    try{unsubscribe=firebaseService.subscribeMerchantDeals(campaignId,setDeals,false);}
+    catch(error){setMessage(error.message||'Merchant offers are unavailable.');}
+    return ()=>unsubscribe();
+  },[campaignId,editable]);
   const selected=shops.find(shop=>shop.id===selectedId)||shops[0]||null;
   const visiting=Boolean(selected&&selected.status==='open'&&
     (!arr(selected.visitorCharacterIds).length||selected.visitorCharacterIds.includes(character?.id)));
@@ -65,6 +77,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     const max=kind==='buy'?Number(stock[index]?.qty||0):Number(item.qty||0);
     setQuote({kind,index,itemId:item.id,variantKey:shopVariantKey(item),unitPriceCopper:previewPrice});
     setQuantity(max>0?'1':'');
+    setOfferCopper(String(Math.max(1,previewPrice||0)));
+    setBarterId('');setBarterQuantity('1');setOfferNote('');
     setMessage('');
   };
   const perform=async()=>{
@@ -86,6 +100,31 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
       setMessage((error?.message||'The merchant confirmation was interrupted.')+
         ' Check inventory and merchant history before retrying this transaction.');
     }finally{setBusy(false);}
+  };
+  const propose=async()=>{
+    if(!quote||quote.kind!=='buy'||!validQuantity||busy||!visiting||!editable||stale||changed)return;
+    if(!isManualNumber(offerCopper,{min:0,max:1000000000})||
+      (barterId&&!isManualNumber(barterQuantity,{min:1,max:1000000}))){
+      setMessage('Enter a valid whole copper offer and barter quantity.');return;
+    }
+    setBusy(true);
+    try{
+      const offer=await firebaseService.createMerchantDeal(campaignId,character.id,selected.id,quote.index,{
+        quantity:number,offeredCopper:manualNumber(offerCopper),barterItemId:barterId,
+        barterQuantity:barterId?manualNumber(barterQuantity):0,note:offerNote
+      });
+      setMessage(offer?.ok?'Your bargain was sent to the GM for approval.':offer?.error||'Bargain could not be submitted.');
+      if(offer?.ok){setQuote(null);setQuantity('');}
+    }catch(error){setMessage(error.message||'Could not submit the bargain.');}
+    finally{setBusy(false);}
+  };
+  const withdraw=async dealId=>{
+    if(busy)return;setBusy(true);
+    try{
+      const result=await firebaseService.cancelMerchantDeal(campaignId,character.id,dealId);
+      setMessage(result?.ok?'Bargain withdrawn.':result?.error||'Could not withdraw this bargain.');
+    }catch(error){setMessage(error.message||'Could not withdraw this bargain.');}
+    finally{setBusy(false);}
   };
   const noQuote=()=>{if(!busy){setQuote(null);setQuantity('');}};
   const renderRow=(kind,row,index)=>{
@@ -118,7 +157,10 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     </div>
     {selected?<><div className="react-merchant-heading">
       <div><h3>{selected.name}</h3><small>{selected.type||'Merchant'} · {selected.region||'Local trader'}</small>
-        {selected.description?<p>{selected.description}</p>:null}</div>
+        {selected.description?<p>{selected.description}</p>:null}
+        {selected.personality?<p><b>Personality:</b> {selected.personality}</p>:null}
+        {selected.greeting?<p><b>Merchant:</b> “{selected.greeting}”</p>:null}
+        {selected.specialOffer?<p><b>Special offer:</b> {selected.specialOffer}</p>:null}</div>
       <StatusPill tone={visiting?'success':'warning'}>{selected.status!=='open'?'Closed':visiting?'Available':'Not visiting'}</StatusPill>
     </div>
     {!visiting?<p className="react-storage-warning" role="status">{selected.status!=='open'?'This merchant is closed.':'The GM must mark this character as visiting before trading.'}</p>:null}
@@ -131,11 +173,23 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         {filteredInventory.map((item,index)=>renderRow('sell',item,index))}
         {!filteredInventory.length?<EmptyState title="No matching sale items" />:null}
       </section>
-    </div></>:<EmptyState title="No campaign merchants">The GM can create shops and assign visiting characters in the Economy panel.</EmptyState>}
+    </div>
+    <section className="react-merchant-deals"><h4>My merchant bargains</h4>
+      {deals.filter(deal=>deal.shopId===selected.id).slice().sort((a,b)=>Number(b.expiresAt||0)-Number(a.expiresAt||0)).slice(0,15).map(deal=>
+        <article key={deal.id} className="react-merchant-stock-row">
+          <div className="react-merchant-stock-info"><b>{deal.quantity} × {deal.stockItemName}</b>
+            <small>{Number(deal.offeredCopper||0).toLocaleString()} copper{deal.barterItemId?' + '+deal.barterQuantity+' × '+deal.barterItemName:''}</small>
+            <small>{deal.status==='pending'&&Date.now()>Number(deal.expiresAt||0)?'Expired':deal.status}</small>
+          </div>
+          {deal.status==='pending'?<button type="button" disabled={busy} onClick={()=>withdraw(deal.id)}>Withdraw</button>:null}
+        </article>)}
+      {!deals.some(deal=>deal.shopId===selected.id)?<small>No bargains requested yet.</small>:null}
+    </section></>:<EmptyState title="No campaign merchants">The GM can create shops and assign visiting characters in the Economy panel.</EmptyState>}
     {message?<p className="react-action-message" role="status" aria-live="polite">{message}</p>:null}
     {quote&&selected?<Modal title={quote.kind==='buy'?'Confirm Purchase':'Confirm Sale'} eyebrow={selected.name} busy={busy}
       onClose={noQuote} footer={<div className="react-modal-actions">
         <button type="button" disabled={busy} onClick={noQuote}>Cancel</button>
+        {quote.kind==='buy'?<button type="button" disabled={busy||!validQuantity||stale||changed||!visiting} onClick={propose}>Offer to Bargain</button>:null}
         <button type="button" className="primary" disabled={!canConfirm} onClick={perform}>{quote.kind==='buy'?'Confirm Buy':'Confirm Sell'}</button>
       </div>}>
       {source?<><div className="react-merchant-quote">
@@ -145,6 +199,16 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         <label>Quantity<ManualNumberInput min="1" max={available} value={quantity} onChange={setQuantity}/></label>
         <strong>Total {quote.kind==='buy'?'cost':'payout'}: {total===null?'Invalid quantity':copper(total)}</strong>
         <small>{quote.kind==='buy'?'Your funds':'Merchant funds'}: {copper(quote.kind==='buy'?balance:Number(selected.currencyCopper??0))}</small>
+        {quote.kind==='buy'?<fieldset><legend>Optional GM-approved bargain</legend>
+          <p>Offer copper, an inventory item, or both. Your assets remain yours until the GM approves.</p>
+          <label>Total copper offered<ManualNumberInput min="0" max="1000000000" value={offerCopper} onChange={setOfferCopper}/></label>
+          <label>Item to barter<select value={barterId} onChange={event=>setBarterId(event.target.value)}>
+            <option value="">None</option>{inventory.filter(item=>item.identified!==false).map(item=>
+              <option key={item.id} value={item.id}>{item.name} ({item.qty} available)</option>)}
+          </select></label>
+          {barterId?<label>Barter quantity<ManualNumberInput min="1" max={inventory.find(item=>item.id===barterId)?.qty||1} value={barterQuantity} onChange={setBarterQuantity}/></label>:null}
+          <label>Roleplay message<input maxLength={500} value={offerNote} onChange={event=>setOfferNote(event.target.value)} placeholder="What does your character say?"/></label>
+        </fieldset>:null}
         {quote.kind==='buy'&&total!==null&&balance<total?<p className="react-storage-warning">You cannot afford this purchase.</p>:null}
         {quote.kind==='sell'&&total!==null&&Number(selected.currencyCopper??Infinity)<total?<p className="react-storage-warning">The merchant cannot afford this sale.</p>:null}
         {stale||changed?<p className="react-storage-warning">The item or price has changed. Close and review it again.</p>:null}
