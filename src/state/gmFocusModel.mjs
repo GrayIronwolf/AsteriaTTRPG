@@ -15,7 +15,8 @@ export const GM_FOCUS_BUILTINS=Object.freeze([
 
 export function gmFocusSnapshot(layout){
   const normalized=normalizeDashboardLayout(layout,'gm');
-  const {focusModes:ignoreModes,focusHome:ignoreHome,activeFocusId:ignoreId,...panels}=normalized;
+  const panels={...normalized};
+  delete panels.focusModes;delete panels.focusHome;delete panels.activeFocusId;
   return panels;
 }
 
@@ -23,7 +24,7 @@ function outcome(layout,error=''){
   return error?{ok:false,error}:{ok:true,layout:normalizeDashboardLayout(layout,'gm')};
 }
 const cleanName=name=>typeof name==='string'?
-  name.replace(/[\x00-\x1f\x7f]/g,' ').trim().replace(/\s+/g,' '):'';
+  [...name].map(ch=>ch.charCodeAt(0)<32||ch.charCodeAt(0)===127?' ':ch).join('').trim().replace(/\s+/g,' '):'';
 
 export function saveNamedGMFocus(layout,name,id){
   const current=normalizeDashboardLayout(layout,'gm');
@@ -94,7 +95,7 @@ export function activateBuiltinGMFocus(layout,preset){
     const next=applyDashboardPreset(before,'gm',preset);
     updated=setDashboardViewportLayout(updated,'gm',viewport,next);
   }
-  const {activeFocusId:ignore,...withoutActive}=updated;
+  const withoutActive={...updated};delete withoutActive.activeFocusId;
   return outcome({...withoutActive,focusHome:home});
 }
 

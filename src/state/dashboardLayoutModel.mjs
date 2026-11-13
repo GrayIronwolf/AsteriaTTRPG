@@ -156,7 +156,8 @@ export function normalizeDashboardLayout(value,role='player') {
     const validSnapshot=value=>{
       if(!value||typeof value!=='object'||Array.isArray(value))return null;
       const snapshot=normalizeDashboardLayout({...value,focusModes:null,focusHome:null,activeFocusId:null},'gm');
-      const {focusModes:ignoredModes,focusHome:ignoredHome,activeFocusId:ignoredId,...clean}=snapshot;
+      const clean={...snapshot};
+      delete clean.focusModes;delete clean.focusHome;delete clean.activeFocusId;
       return clean;
     };
     const seenIds=new Set(),seenNames=new Set();
@@ -164,7 +165,7 @@ export function normalizeDashboardLayout(value,role='player') {
       if(focusModes.length===GM_FOCUS_LIMIT)break;
       if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))continue;
       const id=typeof candidate.id==='string'?candidate.id:'';
-      const name=typeof candidate.name==='string'?candidate.name.replace(/[\x00-\x1f\x7f]/g,' ').trim().replace(/\s+/g,' ').slice(0,48):'';
+      const name=typeof candidate.name==='string'?[...candidate.name].map(ch=>ch.charCodeAt(0)<32||ch.charCodeAt(0)===127?' ':ch).join('').trim().replace(/\s+/g,' ').slice(0,48):'';
       if(!/^[a-zA-Z0-9_-]{1,72}$/.test(id)||!name||seenIds.has(id)||seenNames.has(name.toLocaleLowerCase()))continue;
       const snapshot=validSnapshot(candidate.layout);
       if(!snapshot)continue;
@@ -240,7 +241,7 @@ export function applyDashboardPreset(layout,role='player',preset='default'){
   const selected=new Set(requested);
   const order=[...requested,...defaults.order.filter(id=>!selected.has(id))];
   const hidden=defaults.order.filter(id=>!selected.has(id));
-  const {activeFocusId:discardActive,...base}=previous;
+  const base={...previous};delete base.activeFocusId;
   return {...base,version:DASHBOARD_LAYOUT_VERSION,mode:'custom',preset,
     order,hidden,
     placements:packGridPlacements(scope,order,hidden,previous.placements,previous.lockedPositions)};
