@@ -27,6 +27,8 @@
     compendiumQuickToggle:'icon',
     characterForgeTop:'long',
     campaignsTop:'long',
+    asteriaHandbookTop:'long',
+    worldLoreTop:'long',
     asteriaFriendsTop:'long',
     loginToggle:'small',
     settingsToggle:'icon'
