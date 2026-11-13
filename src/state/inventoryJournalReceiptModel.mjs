@@ -50,7 +50,7 @@ export function inventoryJournalReceipt(row={}){
 // Quote every cell; prefix potential spreadsheet formulas even when preceded
 // by whitespace/control characters. RFC-4180 escaping plus CRLF output.
 function csvCell(value=''){
-  const raw=safeString(value,500).replace(/\u0000/g,'');
+  const raw=safeString(value,500).split(String.fromCharCode(0)).join('');
   const unsafe=/^[\s\u200B-\u200D\uFEFF]*[=+\-@]/u.test(raw)||
     /^[\t\r\n]/u.test(raw);
   const safe=(unsafe?"'":'')+raw;
