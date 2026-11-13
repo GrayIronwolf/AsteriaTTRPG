@@ -37,6 +37,8 @@ export function normalizeEnhancementPlan(source={},id='',previous={}){
     throw Error('Effect description cannot exceed 1,000 characters.');
   if(source.targetType!==undefined&&(typeof source.targetType!=='string'||source.targetType.length>100))
     throw Error('Target item type is invalid.');
+  if(source.stationId!==undefined&&source.stationId!==''&&!validId(source.stationId))
+    throw Error('Choose a valid crafting station.');
   const materials=list(source.materials);
   if(materials.length>12||(mode==='upgrade'&&!materials.length))
     throw Error('Upgrades need materials (maximum 12 requirements).');
@@ -65,7 +67,7 @@ export function normalizeEnhancementPlan(source={},id='',previous={}){
     manaCost=source.manaCost??0;stoneMode=false;
   }
   return {id:planId,name:trim(source.name),description:trim(source.description,1000),
-    mode,status:source.status,effectName:trim(source.effectName),
+    mode,status:source.status,stationId:source.stationId||'',effectName:trim(source.effectName),
     effectDescription:trim(source.effectDescription,1000),targetType:trim(source.targetType,100),
     spellRank:rank,spellName,spellMana,manaCost,allowStoneSubstitution:stoneMode,
     materials:cleanMaterials,createdAt:previous.createdAt||null};
@@ -129,7 +131,7 @@ export function enhancementTargetFingerprint(item={}){
   ]);
 }
 export function enhancementPlanSignature(plan){
-  return JSON.stringify([plan.mode,plan.status,plan.materials,plan.effectName,
+  return JSON.stringify([plan.mode,plan.status,plan.stationId||'',plan.materials,plan.effectName,
     plan.effectDescription,plan.targetType,plan.spellRank,plan.spellName,
     plan.spellMana,plan.manaCost,plan.allowStoneSubstitution]);
 }
