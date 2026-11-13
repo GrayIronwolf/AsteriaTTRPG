@@ -141,5 +141,5 @@ test('Official cards read-only, no duplicate gameplay or Obsidian dependency',()
  assert.match(cards,/readOnly=Boolean\(record.official\)/);
  assert.match(library,/onSave=\{cardTarget.kind==='official'\?undefined:saveCard\}/);
  assert.match(model,/libraryCollectionKey\(kind\)/);
- assert.doesNotMatch(model+cards,/gmReputation|Obsidian|createCharacter|FirebaseStorage/);
+ assert.doesNotMatch(model+cards,/gmReputation|ObsidianVault|obsidianPlugin|createCharacter|FirebaseStorage/);
 });
