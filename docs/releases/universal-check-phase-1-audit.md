@@ -1,35 +1,35 @@
-# Universal Check Requests — Phase 1 repository audit and implementation gates
+# Universal Check Requests — Phase 1 release verification
 
-Status: development branch; **not ready for deployment or merge**.
+## Scope delivered in PR #250
 
-## Existing code to reuse
-- `src/state/combatRules.mjs`: d20 roll, natural 1/20, skill checks and DC resolution.
-- `src/state/effectsEngine.mjs`: effective characteristics and character effects.
-- `src/state/conditionModel.mjs`: active conditions.
-- `functions/handler.mjs`: authenticated campaign membership, character ownership, Firestore transaction and request-id receipts.
-- `functions/characterPermissions.mjs`: campaign GM and linked-character verification.
-- `src/dashboards/GMDashboard.jsx`, `src/dashboards/CharacterDashboard.jsx`: existing GM and player dashboards.
-- `js/firebase-auth.js` and `src/firebase/asteriaFirebaseService.js`: existing callable and real-time subscription bridge.
-- `firestore.rules`: campaign-scoped access and server-owned records.
+- GM Tools composer supports single, group (2–10), and opposed (2) player check requests.
+- Each target character is linked to the campaign, owned by an active member, and revalidated by the Cloud Function.
+- Characteristic scores use Asteria characteristic tier modifiers (not raw characteristic scores).
+- Approved eight-rank names map from Untrained (−2) to Grandmaster (+5); ambiguous legacy numeric ranks require a GM-approved explicit rank selection. The existing combat rank system is unchanged.
+- Automatic active equipment, talents, conditions and other check effects are captured as a frozen modifier breakdown, alongside GM situational modifiers; paired advantage/disadvantage cancels. Exhaustion at 0 SP supplies disadvantage for physical checks.
+- Digital dice are cryptographically generated on the backend. Physical d20 rolls and manually reported outcomes are marked player-reported; physical advantage/disadvantage requires two dice. Opposed checks require numeric dice.
+- Group success threshold defaults to half rounded up (GM configurable); opposed checks compare totals, break differences by criticals, and retain exact ties.
+- The GM sees incoming results and history, can resend pending requests, cancel, acknowledge, override with a reason, and request rerolls. Participant check history retains prior attempts; multiplayer rerolls restart all participants.
+- Player sees own pending popup with DC/roll/modifiers, can submit dice or manually report a result, dismiss and reopen pending requests, and review history.
+- All mutations are server-only and transactional; durable operation UUID receipts prevent duplicated requests and rolls on retries.
+- Firestore rules restrict request reads to the GM and the request owner. Group aggregates are GM-only and command receipts cannot be read by clients.
 
-## Rule discrepancy — do not silently change combat
-- `src/state/liveWorkspaceModel.mjs` has seven ranks: Novice, Initiate, Apprentice, Journeyman, Adept, Master, Grandmaster.
-- `src/state/combatRules.mjs` currently calculates skill modifier as numeric rank minus three.
-- Approved eight-rank check table is Untrained -2, Novice -1, Apprentice 0, Journeyman +1, Adept +2, Expert +3, Master +4, Grandmaster +5.
-- New universal checks must use an explicit approved-rank mapping. Legacy numeric rank values require a deliberate migration or context-specific conversion before they can be trusted; do not reinterpret existing saved ranks globally.
+## Verification
 
-## Security and workflow
-- Only Cloud Functions may create, mutate and adjudicate check records.
-- GM can request checks for linked campaign characters; player can submit only their own pending request.
-- Trusted backend rolls digital dice, validates frozen modifier breakdown and checks ownership.
-- Firestore reads must not reveal GM-only request data or other players' requests.
-- Transactions must enforce pending -> submitted -> acknowledged/cancelled and GM-approved rerolls.
-- Offline/reconnect uses durable Firestore records and real-time subscriptions.
-- Physical dice are player-reported and must be distinguished from server-generated results.
-- Group and opposed checks need multi-participant or linked requests and explicit resolution rules.
+Dedicated verification workflow: `.github/workflows/universal-check-phase1.yml`, running the named-rank/d20 model tests, lifecycle/authorization/idempotency tests, Firestore rules emulator including concurrent opposed submissions, lint, existing dashboard/combat regressions and production React build. The validated frontend output is committed to `react-dist/` on this PR branch.
 
-## Release gate
-Do not merge until GM composer, player modal, results/history, backend actions,
-secure rules, tests, production bundle and existing dashboard regressions pass.
-Then merge one Phase 1 PR, deploy backend through existing manual workflow and
-publish the frontend, and obtain live verification before Phase 2.
+The repository's `Firebase and website checks` workflow is the final integration gate, covering `npm test`, the Firestore/Auth/Storage emulator suite, release/compendium audits, production build and comparison with committed `react-dist/`. **Do not merge until both workflows show success for the final PR head.**
+
+## Deployment after merge
+
+GitHub → Actions → **Deploy Firebase backend (manual)** → **Run workflow** → branch `main` → operation `deploy` → production confirmation `DEPLOY-ASTERIA-PRODUCTION` → **Run workflow**.
+
+This existing workflow deploys Firebase **functions, Firestore rules/indexes and Storage rules** to `asteria-ttrpg`, and does not itself publish the website frontend. Publish the checked-in website frontend through the existing website publishing process separately. Verify that both GM and player accounts receive and resolve a check on the live website after deployment.
+
+## Safeguards and limitations
+
+- There is no automatic production deployment or migration.
+- Conditional effect rules remain GM situational choices rather than being silently interpreted from prose.
+- Old seven-rank numeric skill progression is not migrated or reinterpreted automatically.
+- Manual dice and manual outcomes are explicitly non-authoritative player reports.
+- Old cached React chunks remain in the build output to preserve active clients.
