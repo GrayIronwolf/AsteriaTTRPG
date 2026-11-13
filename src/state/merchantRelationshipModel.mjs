@@ -38,7 +38,7 @@ export function validateMerchantOpportunity(minStanding=0,opportunityLabel=''){
 export function merchantCanAccessStock(stock={},standing=0){
   const required=stock?.minStanding??0;
   const value=Number.isSafeInteger(required)&&required>=0&&required<=100?required:Infinity;
-  return validateMerchantStanding(Number(standing))>=value;
+  return value===0||validateMerchantStanding(Number(standing))>=value;
 }
 export function updateMerchantRelationship(current={},operation={},identity={}){
   const score=validateMerchantStanding(operation.score);
