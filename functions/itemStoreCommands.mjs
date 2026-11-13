@@ -99,7 +99,7 @@ export function applyGMShopAction(current,action={},shopId=''){
   }else if(action.type==='remove-stock'){
     const i=Number(action.stockIndex);
     if(!Number.isSafeInteger(i)||i<0||i>=shop.stock.length)throw Error('Choose an existing stock item.');
-    if(merchantStockIdentity(shop.stock[i].item)!==String(action.stockIdentity||''))
+    if(action.stockIdentity&&merchantStockIdentity(shop.stock[i].item)!==String(action.stockIdentity))
       throw Error('Shop stock changed. Refresh this item before removing.');
     shop.stock.splice(i,1);
   }else throw Error('Choose a valid shop action.');
