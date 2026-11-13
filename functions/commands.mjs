@@ -984,7 +984,6 @@ const commands = {
         const item=normalizeMarketPricing({
           ...structuredCloneSafe(stock.item),qty:deal.quantity,location:'inventory',equipped:false
         },{legacy:true,removeLegacy:true,migratedRecord:true});
-        const received=placeCharacterItem(character,item,{});
         if(deal.barterItemId){
           const sold={...structuredCloneSafe(barterItem),qty:1,equipped:false,equippedSlot:'',location:'shop'};
           for(const key of ['ownerUid','storageId','storageSlot','bagId','bagSlot','instanceId','sourceCharacterId'])
@@ -998,6 +997,7 @@ const commands = {
             shop.stock.push({item:sold,qty:deal.barterQuantity,priceCopper:merchantPriceCopper(shop,sold,'buy')});
           }
         }
+        const received=placeCharacterItem(character,item,{});
         setCurrencyTotal(character,funds-cost);
         shop.currencyCopper=Number(shop.currencyCopper||0)+cost;
         stock.qty=Number(stock.qty)-deal.quantity;
