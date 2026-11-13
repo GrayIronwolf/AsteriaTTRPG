@@ -2629,3 +2629,66 @@ test('Phase 5.3: lore cannot be attached to missing inventory items or forged ch
   assert.equal(unauthorized.ok,false);
   assert.equal((await db.collection('campaigns/c/itemLore').get()).size,0);
 });
+
+
+test('Phase 6.1: only authenticated GMs may save or inspect private loot tables',async()=>{
+  const table={name:'Bandit Cache',description:'GM-only treasure',location:'Bridge',threatTier:3,status:'active',
+    entries:[{id:'empty',kind:'nothing',weight:1,note:''},
+      {id:'coins',kind:'currency',weight:2,minCopper:10,maxCopper:15,note:''},
+      {id:'blade',kind:'item',weight:3,name:'Iron Sword',definitionId:'base:sword',minQuantity:1,maxQuantity:2,note:''}]};
+  const denied=await action('alice','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'bandits',expectedRevision:0,table
+  }]);
+  assert.equal(denied.ok,false);
+  const saved=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'bandits',expectedRevision:0,table
+  }]);
+  assert.equal(saved.ok,true,saved.error);
+  assert.equal(saved.revision,1);
+  const path='campaigns/c/lootTables/bandits';
+  assert.equal((await db.doc(path).get()).data().entries.length,3);
+  await assertSucceeds(getDoc(doc(user('gm'),path)));
+  await assertFails(getDoc(doc(user('alice'),path)));
+  await assertFails(getDocs(collection(user('bob'),'campaigns/c/lootTables')));
+  await assertFails(setDoc(doc(user('gm'),path),{name:'Forged'}));
+  const duplicate=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'bandits',expectedRevision:0,table
+  }]);
+  assert.equal(duplicate.ok,false);
+  const stale=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'bandits',expectedRevision:5,table
+  }]);
+  assert.equal(stale.ok,false);
+});
+
+test('Phase 6.1: preview is receipt-safe and never mints items, currency or public loot',async()=>{
+  const table={name:'Coin Chest',threatTier:1,status:'active',entries:[
+    {id:'coins',kind:'currency',weight:1,minCopper:2,maxCopper:5,note:''}
+  ]};
+  assert.equal((await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'chest',expectedRevision:0,table
+  }])).ok,true);
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  const first=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'preview',tableId:'chest'
+  }],'loot-preview-1');
+  assert.equal(first.ok,true,first.error);
+  assert.equal(first.preview,true);
+  assert.equal(first.roll.kind,'currency');
+  assert.ok(first.roll.currencyCopper>=2&&first.roll.currencyCopper<=5);
+  const replay=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'preview',tableId:'chest'
+  }],'loot-preview-1');
+  assert.deepEqual(replay,first);
+  const after=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.deepEqual(after.inventory,before.inventory);
+  assert.deepEqual(after.coins,before.coins);
+  assert.equal((await db.collection('campaigns/c/partyLoot').get()).size,0);
+  assert.equal((await action('gm','manageLootTable',['c','gm-scope',{
+    type:'archive',tableId:'chest',expectedRevision:1
+  }])).ok,true);
+  const archived=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'preview',tableId:'chest'
+  }]);
+  assert.equal(archived.ok,false);
+});

@@ -3022,6 +3022,13 @@ const firebasePublicApi = {
     return ()=>subscriptions.forEach(unsubscribe=>unsubscribe?.());
   },
   managePartyStash: (...args) => callTrustedAction('managePartyStash',args),
+  manageLootTable: (...args) => callTrustedAction('manageLootTable',args),
+  subscribeLootTables: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'lootTables'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('loot-tables',error,{campaignId}));
+  },
   managePartyLootDrop: (...args) => callTrustedAction('managePartyLootDrop',args),
   claimPartyLoot: (...args) => callTrustedAction('claimPartyLoot',args),
   movePartyStashItem: (...args) => callTrustedAction('movePartyStashItem',args),
