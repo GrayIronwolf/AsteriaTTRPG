@@ -86,19 +86,6 @@ export function ItemDetailModal({ campaignId, character, item, editable, onClose
   const armourValidation = armourPiece.piece ? validateEquipmentChange(character, item, armourPiece.piece.location) : null;
   const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
   const signed = value => `${Number(value) >= 0 ? '+' : ''}${decimal(value)}`;
-  const downloadJournal=()=>{
-    if(!visibleActivity.length)return;
-    const csv=exportInventoryJournalCsv(visibleActivity);
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement('a');
-    link.href=url;
-    link.download=inventoryJournalFilename(character.name||character.id);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  };
   const run = async (operation, success) => {
     setBusy(true);
     const result = await operation();
@@ -611,6 +598,19 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const activeStorage = storages.some(value => value.id === selectedStorage) ? selectedStorage : storages[0]?.id || '';
   const items = inventoryItems(character);
   const selectedItem=items.find(row=>String(row.id)===String(selectedItemId))||null;
+  const downloadJournal=()=>{
+    if(!visibleActivity.length)return;
+    const csv=exportInventoryJournalCsv(visibleActivity);
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=inventoryJournalFilename(character.name||character.id);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
   const run = async (operation, success) => {
     if(busy)return {ok:false,error:'An inventory action is still processing.'};
     setBusy(true);
