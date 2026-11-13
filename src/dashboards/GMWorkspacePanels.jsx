@@ -10,7 +10,7 @@ import { QUEST_CURRENCIES, normalizeQuestReward, questRewardSummary } from '../s
 import { campaignArtworkImage } from '../state/campaignArtwork.mjs';
 import { merchantPriceCopper, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, merchantRestockPlan } from '../state/merchantInventoryModel.mjs';
-import {merchantTravelState,merchantRegionOptions,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
+import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 
