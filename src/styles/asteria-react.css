@@ -3674,3 +3674,34 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media(max-width:640px) {
   .react-inventory-journal-controls {grid-template-columns:minmax(0,1fr);}
 }
+
+
+/* Phase 7.2 — compact, read-only transaction receipts and exports. */
+.react-inventory-journal-actions {
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.react-inventory-journal-actions button,
+.react-inventory-journal-row button,
+.react-inventory-journal-receipt button {min-height:40px;}
+.react-inventory-journal-row {
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;gap:8px;padding:8px 0;
+  border-bottom:1px solid rgba(120,157,184,.18);
+  font-size:.76rem;
+}
+.react-inventory-journal-row > span {overflow-wrap:anywhere;}
+.react-inventory-journal-row b {font-weight:600;}
+.react-inventory-journal-row time {color:var(--asteria-text-muted,#a0adbb);font-size:.7rem;}
+.react-inventory-journal-receipt {
+  display:grid;gap:8px;padding:12px;border:1px solid rgba(120,164,198,.34);
+  background:rgba(7,21,33,.82);
+}
+.react-inventory-journal-receipt h4 {margin:0;}
+.react-inventory-journal-receipt dl {display:grid;grid-template-columns:minmax(90px,130px) minmax(0,1fr);gap:6px 10px;margin:0;font-size:.76rem;}
+.react-inventory-journal-receipt dt {color:var(--asteria-text-muted,#a0adbb);}
+.react-inventory-journal-receipt dd {margin:0;overflow-wrap:anywhere;}
+@media(max-width:750px) {
+  .react-inventory-journal-row {grid-template-columns:minmax(0,1fr) auto;}
+  .react-inventory-journal-row time {grid-column:1;}
+  .react-inventory-journal-row button {grid-column:2;grid-row:1 / span 2;}
+}

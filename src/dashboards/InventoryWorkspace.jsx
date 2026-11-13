@@ -14,6 +14,7 @@ import {PlayerItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta,filterInventoryActivityRecords,INVENTORY_ACTIVITY_CATEGORIES} from '../state/inventoryActivityModel.mjs';
+import {filterInventoryJournalDate,INVENTORY_JOURNAL_DATE_RANGES,inventoryJournalReceipt,exportInventoryJournalCsv,inventoryJournalFilename} from '../state/inventoryJournalReceiptModel.mjs';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -575,14 +576,18 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const [activityOpen,setActivityOpen]=useState(false);
   const [activityCategory,setActivityCategory]=useState('all');
   const [activitySearch,setActivitySearch]=useState('');
+  const [activityDateRange,setActivityDateRange]=useState('all');
+  const [selectedReceipt,setSelectedReceipt]=useState('');
   const [activityNotice,setActivityNotice]=useState('');
   const seenActivityRef=useRef(null);
   const activity=useMemo(()=>inventoryActivityRecords(character,events,100),[character,events]);
-  const visibleActivity=useMemo(()=>filterInventoryActivityRecords(activity,{category:activityCategory,query:activitySearch}),[activity,activityCategory,activitySearch]);
+  const visibleActivity=useMemo(()=>filterInventoryJournalDate(filterInventoryActivityRecords(activity,{category:activityCategory,query:activitySearch}),activityDateRange),[activity,activityCategory,activitySearch,activityDateRange]);
+  const selectedReceiptRow=visibleActivity.find(row=>row.id===selectedReceipt);
+  const receipt=selectedReceiptRow?inventoryJournalReceipt(selectedReceiptRow):null;
   useEffect(()=>{
     seenActivityRef.current=null;
     setActivityNotice('');setActivityOpen(false);
-    setActivityCategory('all');setActivitySearch('');
+    setActivityCategory('all');setActivitySearch('');setActivityDateRange('all');setSelectedReceipt('');
   },[campaignId,character.id]);
   useEffect(()=>{
     const delta=inventoryActivityDelta(seenActivityRef.current,activity);
@@ -593,6 +598,19 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const activeStorage = storages.some(value => value.id === selectedStorage) ? selectedStorage : storages[0]?.id || '';
   const items = inventoryItems(character);
   const selectedItem=items.find(row=>String(row.id)===String(selectedItemId))||null;
+  const downloadJournal=()=>{
+    if(!visibleActivity.length)return;
+    const csv=exportInventoryJournalCsv(visibleActivity);
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=inventoryJournalFilename(character.name||character.id);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
   const run = async (operation, success) => {
     if(busy)return {ok:false,error:'An inventory action is still processing.'};
     setBusy(true);
@@ -625,14 +643,33 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
         </select></label>
         <label>Search history<input type="search" maxLength="120" value={activitySearch}
           onChange={event=>setActivitySearch(event.target.value)} placeholder="Search an item or transaction"/></label>
+        <label>Date range<select value={activityDateRange} onChange={event=>setActivityDateRange(event.target.value)}>
+          {INVENTORY_JOURNAL_DATE_RANGES.map(range=><option key={range.id} value={range.id}>{range.label}</option>)}
+        </select></label>
       </div>
-      <small>Showing {visibleActivity.length} of {activity.length} recent entries.</small>
-      {visibleActivity.map(row=><p key={row.id}>
+      <div className="react-inventory-journal-actions">
+        <small>Showing {visibleActivity.length} of {activity.length} recent entries.</small>
+        <button type="button" disabled={!visibleActivity.length} onClick={downloadJournal}>Export filtered CSV</button>
+      </div>
+      {visibleActivity.map(row=><div className="react-inventory-journal-row" key={row.id}>
         <span><b>{INVENTORY_ACTIVITY_CATEGORIES.find(category=>category.id===row.category)?.label||'Inventory'}</b> · {row.title}</span>
         {row.at?<time dateTime={new Date(row.at).toISOString()}>{new Date(row.at).toLocaleString()}</time>:null}
-      </p>)}
+        <button type="button" aria-expanded={selectedReceipt===row.id} onClick={()=>setSelectedReceipt(current=>current===row.id?'':row.id)}>{selectedReceipt===row.id?'Hide receipt':'View receipt'}</button>
+      </div>)}
+      {receipt?<section className="react-inventory-journal-receipt" aria-label="Selected transaction receipt">
+        <h4>Transaction receipt</h4>
+        <dl>
+          <dt>Reference</dt><dd>{receipt.reference}</dd>
+          <dt>Recorded at (UTC)</dt><dd>{receipt.dateUtc||'Date unavailable'}</dd>
+          <dt>Category</dt><dd>{receipt.category}</dd>
+          <dt>Transaction</dt><dd>{receipt.activity}</dd>
+          <dt>Source</dt><dd>{receipt.origin}</dd>
+        </dl>
+        <small>Receipt reflects the information retained in your character journal. It is not a payment confirmation.</small>
+        <button type="button" onClick={()=>setSelectedReceipt('')}>Close receipt</button>
+      </section>:null}
       {!visibleActivity.length?<p>{activity.length?'No transactions match these filters.':'No recent inventory or currency activity.'}</p>:null}
-      <small>History is read-only and reflects available recent character activity; it is not a complete accounting export. See News / Events / History for other notifications.</small>
+      <small>Exports contain only the currently filtered, available entries—not a complete accounting ledger. See News / Events / History for other notifications.</small>
     </section>:null}
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'},{id:'party-loot',label:'Party Loot',icon:'inventory'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
