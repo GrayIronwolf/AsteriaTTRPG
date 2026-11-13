@@ -15,6 +15,7 @@ export function cleanSecretItemLore(input={},previous={},characterId,itemId){
     gmNotes:bounded(input.gmNotes??previous.gmNotes,3000),
     discoveryClues:bounded(input.discoveryClues??previous.discoveryClues,2000),
     originalOwner:bounded(input.originalOwner??previous.originalOwner,160),
+    ownershipPublic:input.ownershipPublic===undefined?previous.ownershipPublic===true:input.ownershipPublic===true,
     ownershipHistory:Array.isArray(previous.ownershipHistory)?previous.ownershipHistory.slice(-ITEM_LORE_MAX_EVENTS):[],
     discoveryHistory:Array.isArray(previous.discoveryHistory)?previous.discoveryHistory.slice(-ITEM_LORE_MAX_EVENTS):[]
   };
@@ -36,6 +37,6 @@ export function visibleLoreDiscovery(secret={},ownerUid='',discovered=[]){
     id:secret.id,characterId:secret.characterId,itemId:secret.itemId,ownerUid,
     revealedLore:discovered.map(x=>bounded(x.description,1000)).filter(Boolean).slice(-ITEM_LORE_MAX_EVENTS),
     discoveryHistory:discovered.map(({description,at})=>({description:bounded(description,1000),at})).slice(-ITEM_LORE_MAX_EVENTS),
-    ownershipHistory:(secret.ownershipHistory||[]).map(({owner,at})=>({owner,at})).slice(-ITEM_LORE_MAX_EVENTS)
+    ownershipHistory:(secret.ownershipPublic===true?secret.ownershipHistory||[]:[]).map(({owner,at})=>({owner,at})).slice(-ITEM_LORE_MAX_EVENTS)
   };
 }
