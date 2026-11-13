@@ -1473,6 +1473,23 @@ const firebasePublicApi = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
+  manageCampaignCraftingRecipe: (...args) => callTrustedAction('manageCampaignCraftingRecipe',args),
+  requestCraftingRecipe: (...args) => callTrustedAction('requestCraftingRecipe',args),
+  reviewCraftingRequest: (...args) => callTrustedAction('reviewCraftingRequest',args),
+  subscribeCraftingRecipes: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'craftingRecipes');
+    const source=gmMode?root:query(root,where('status','==','published'));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('crafting-recipes-listener',error,{campaignId}));
+  },
+  subscribeCraftingRequests: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'craftingRequests');
+    const source=gmMode?root:query(root,where('ownerUid','==',currentUser.uid));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('crafting-requests-listener',error,{campaignId}));
+  },
   manageMerchantRelationship: (...args) => callTrustedAction('manageMerchantRelationship',args),
   subscribePartyWorkspace: function(campaignId,onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
