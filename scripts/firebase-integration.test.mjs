@@ -2991,3 +2991,65 @@ test('Phase 10.1: only GM may configure and replenish merchant stock in trusted 
   assert.equal((await db.doc('campaigns/c/shops/'+shopId).get()).data().stock[0].qty,10);
   await assertFails(updateDoc(doc(user('alice'),'campaigns/c/shops/'+shopId),{stock:[]}));
 });
+
+
+test('Phase 10.2: only GM moves merchants on saved trade routes; travelling shops block purchases and merchant bargaining',async()=>{
+  const route={id:'coastal-road',name:'Coastal Road',from:'Palladium',to:'Vaelgard',status:'Open'};
+  await db.doc('campaigns/c/systems/gmWorkspace').set({economy:{routes:[route]}},{merge:true});
+  const shopId='phase10-trader';
+  const created=await action('gm','manageCampaignShop',['c','a',{type:'save',shop:{
+    id:shopId,name:'Caravan Trader',region:'Palladium',status:'open',
+    buyModifier:1,sellModifier:1,currencyCopper:1000,visitorCharacterIds:[],stock:[]
+  }}]);
+  assert.equal(created.ok,true,created.error);
+  const stocked=await action('gm','manageCampaignShop',['c','a',{type:'stock',shopId,
+    item:{id:'caravan-gem',name:'Gem',marketValue:0.05,marketPrice:0.1},quantity:3}]);
+  assert.equal(stocked.ok,true,stocked.error);
+  const assignArgs=['c','a',{type:'assign-route',shopId,routeId:route.id,startRegion:'Palladium'}];
+  assert.equal((await action('alice','manageCampaignShop',assignArgs)).ok,false);
+  const assigned=await action('gm','manageCampaignShop',assignArgs);
+  assert.equal(assigned.ok,true,assigned.error);
+  assert.equal(assigned.shop.region,'Palladium');
+  assert.equal(assigned.shop.travel.routeId,route.id);
+  const departed=await action('gm','manageCampaignShop',['c','a',{type:'depart-route',shopId}]);
+  assert.equal(departed.ok,true,departed.error);
+  assert.equal(departed.shop.travel.destinationRegion,'Vaelgard');
+  assert.equal(departed.shop.status,'closed');
+  assert.equal((await action('alice','buyLiveShopItem',['c','a',shopId,0,1])).ok,false);
+  assert.equal((await action('alice','createMerchantDeal',['c','a',shopId,0,
+    {quantity:1,offeredCopper:3}])).ok,false);
+  const reopen=await action('gm','manageCampaignShop',['c','a',{type:'save',
+    shop:{id:shopId,status:'open'}}]);
+  assert.equal(reopen.ok,false);
+  const arrival=await action('gm','manageCampaignShop',['c','a',{type:'arrive-route',shopId}]);
+  assert.equal(arrival.ok,true,arrival.error);
+  assert.equal(arrival.shop.region,'Vaelgard');
+  assert.equal(arrival.shop.status,'open');
+  assert.equal(arrival.shop.currencyCopper,1000);
+  assert.equal(arrival.shop.stock[0].qty,3);
+  assert.equal(arrival.shop.travelHistory[0].event,'arrived');
+  assert.equal((await action('alice','buyLiveShopItem',['c','a',shopId,0,1])).ok,true);
+  const next=(await db.doc('campaigns/c/shops/'+shopId).get()).data();
+  assert.equal(next.stock[0].qty,2);
+  assert.equal(next.travel.status,'at-stop');
+  assert.equal((await action('alice','manageCampaignShop',['c','a',{type:'unassign-route',shopId}])).ok,false);
+});
+test('Phase 10.2: closed or blockaded campaign routes cannot depart, but in-flight merchants may arrive after route deletion',async()=>{
+  const shopId='phase10-closure';
+  const route={id:'blocked-road',name:'Mountain Road',from:'A',to:'B',status:'Blockaded'};
+  await db.doc('campaigns/c/systems/gmWorkspace').set({economy:{routes:[route]}},{merge:true});
+  const created=await action('gm','manageCampaignShop',['c','a',{type:'save',shop:{
+    id:shopId,name:'Caravan',region:'A',status:'open',currencyCopper:100
+  }}]);
+  assert.equal(created.ok,true,created.error);
+  assert.equal((await action('gm','manageCampaignShop',['c','a',{
+    type:'assign-route',shopId,routeId:route.id,startRegion:'A'
+  }])).ok,true);
+  assert.equal((await action('gm','manageCampaignShop',['c','a',{type:'depart-route',shopId}])).ok,false);
+  await db.doc('campaigns/c/systems/gmWorkspace').set({economy:{routes:[{...route,status:'Open'}]}},{merge:true});
+  assert.equal((await action('gm','manageCampaignShop',['c','a',{type:'depart-route',shopId}])).ok,true);
+  await db.doc('campaigns/c/systems/gmWorkspace').set({economy:{routes:[]}},{merge:true});
+  const arrival=await action('gm','manageCampaignShop',['c','a',{type:'arrive-route',shopId}]);
+  assert.equal(arrival.ok,true,arrival.error);
+  assert.equal(arrival.shop.region,'B');
+});
