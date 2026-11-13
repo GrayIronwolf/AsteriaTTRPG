@@ -9,6 +9,7 @@ import { calculateArmourPieceAC, previewEquipmentChange, validateEquipmentChange
 import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 import { ShopWorkspace } from './ShopWorkspace.jsx';
+import { PartyLootPlayerPanel } from './PartyLootWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta} from '../state/inventoryActivityModel.mjs';
@@ -558,7 +559,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
   </aside>;
 }
 
-export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable, events=[] }) {
+export function InventoryWorkspace({ campaignId, character, characters, ecosystem, editable, events=[], partyLoot={} }) {
   const [selectedStorage, setSelectedStorage] = useState('');
   const [details, setDetails] = useState(null);
   const [dragged, setDragged] = useState(null);
@@ -616,7 +617,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       {!activity.length?<p>No recent inventory or currency activity.</p>:null}
       <small>See News / Events / History for your full notification history.</small>
     </section>:null}
-    <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
+    <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'},{id:'party-loot',label:'Party Loot',icon:'inventory'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
       <InventorySupportPanel character={character} items={items} storages={storages}/>
       <InventoryEquipmentPanel campaignId={campaignId} character={character} items={items} dragged={dragged} editable={editable} run={run} selectedItem={selectedItem} onDetails={item=>{if(item?.id)setSelectedItemId(item.id);setDetails(item);}} />
@@ -624,6 +625,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
 
       {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
+      {campaignId?<div className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} partyLoot={partyLoot} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message" role="status" aria-live="polite">{message}</p>
     {pendingUse?<Modal title={'Use '+pendingUse.name+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||!items.some(row=>row.id===pendingUse.id&&Number(row.qty)>0)} onClick={async()=>{const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p></Modal>:null}
