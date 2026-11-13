@@ -64,6 +64,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # An older workflow must never publish a stale frontend bundle over newer source.
+          git fetch origin feat/universal-check-requests-phase-2
+          if [ "$(git rev-parse origin/feat/universal-check-requests-phase-2)" != "$GITHUB_SHA" ]; then
+            echo "Branch source changed during build; newer verification will publish its bundle."
+            exit 0
+          fi
           git add react-dist
           if git diff --cached --quiet; then
             echo "Built frontend bundle already matches tracked source."
