@@ -1,6 +1,7 @@
 // Phase 11.1 — campaign crafting requests use the same trusted transaction,
 // linked-character ownership and inventory mirror as trade and loot actions.
 import {normalizeCraftingRecipe,craftingInventoryPlan,craftingResultItem} from '../src/state/craftingRecipeModel.mjs';
+import {normalizeCraftingStation,stationAccessible} from '../src/state/craftingServicesModel.mjs';
 
 export function createCraftingCommands(context,helpers){
   const {db,currentUser,requestId,doc,runTransaction,serverTimestamp}=context;
@@ -8,6 +9,13 @@ export function createCraftingCommands(context,helpers){
     verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,
     placeCharacterItem,appendActivity}=helpers;
   const exists=s=>Boolean(s?.exists?.());
+  const verifyStation=async(tx,campaignId,stationId,characterId)=>{
+    if(!stationId)return;
+    const ref=doc(db,'campaigns',campaignId,'craftingStations',stationId);
+    const snap=await tx.get(ref);
+    if(!exists(snap)||!stationAccessible(normalizeCraftingStation(snap.data(),stationId,snap.data()),characterId))
+      throw Error('The required crafting station is unavailable to this character.');
+  };
   const validId=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(s);
   return {
     requestCraftingRecipe:async(campaignId,characterId,recipeId)=>{
@@ -30,6 +38,7 @@ export function createCraftingCommands(context,helpers){
           if(character.ownerUid!==currentUser.uid)throw Error('Only the character owner can request crafting.');
           await verifyOwnedLiveCharacter(tx,campaignId,characterId,character,refs);
           const recipe=normalizeCraftingRecipe(recipeSnap.data(),recipeId,recipeSnap.data());
+          await verifyStation(tx,campaignId,recipe.stationId,characterId);
           const plan=craftingInventoryPlan(recipe,characterInventory(character));
           if(!plan.ready)throw Error('You do not currently have all required crafting materials.');
           const request={
@@ -75,9 +84,10 @@ export function createCraftingCommands(context,helpers){
           const current=normalizeCraftingRecipe(recipeSnap.data(),request.recipeId,recipeSnap.data());
           // Material requirements, output and publication must not silently
           // change between proposal and approval.
-          const signature=r=>JSON.stringify([r.materials,r.output,r.status]);
+          const signature=r=>JSON.stringify([r.materials,r.output,r.status,r.stationId||'']);
           if(signature(original)!==signature(current))
             throw Error('The recipe changed. Ask the player to submit a new request.');
+          await verifyStation(tx,campaignId,current.stationId,request.characterId);
           const inventory=characterInventory(character);
           const plan=craftingInventoryPlan(current,inventory);
           if(!plan.ready)throw Error('The character no longer has the required crafting materials.');
