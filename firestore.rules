@@ -350,6 +350,12 @@ service cloud.firestore {
         allow get, list: if canUseCampaignSystems(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 6.1: weighted loot tables are private to campaign GMs.
+      // All changes and previews execute through authenticated server actions.
+      match /lootTables/{tableId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       // Phase 5.3: GM secret notes and curses never appear in player documents.
       match /itemLore/{itemId} {
         allow get, list: if isCampaignGM(campaignId);
