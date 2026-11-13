@@ -18,6 +18,7 @@ import { mirrorCharacterSnapshot, openLegacyView } from '../app/legacyBridge.js'
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
 import {PlayerCraftingRecipes} from './CraftingRecipeWorkspace.jsx';
+import {PlayerEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
 import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import { CombatDashboardLayout, useCombatPanel } from './CombatPanel.jsx';
@@ -210,8 +211,10 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'crafting' && campaignId ? <PlayerCraftingRecipes
-      campaignId={campaignId} character={character} editable={editable}/> : null}
+    {activeTab === 'crafting' && campaignId ? <div className="react-crafting-workspace">
+      <PlayerCraftingRecipes campaignId={campaignId} character={character} editable={editable}/>
+      <PlayerEnhancementWorkshop campaignId={campaignId} character={character} editable={editable}/>
+    </div> : null}
     {activeTab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} events={live.events} partyLoot={live.partyLoot} /> : null}
     {['information','quest'].includes(activeTab) ? <PlayerInformation key={`${character.id}-${activeTab}`} campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} events={live.events} editable={editable} isOwner={isOwner} initialTab={activeTab==='quest'?'quests':'news'}/> : null}
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
