@@ -1,0 +1,35 @@
+name: Build Digital GM Toolkit Phase 2.2 production bundle
+on:
+  push:
+    branches:
+      - feature/digital-gm-phase-2-2-saved-focus-modes
+permissions:
+  contents: write
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/digital-gm-phase-2-2-saved-focus-modes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:gm-focus
+      - run: npm run build
+      - name: Commit updated tracked production assets
+        shell: bash
+        run: |
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Tracked production assets match source"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Build Digital GM Toolkit Phase 2.2 production assets"
+            git push origin HEAD:feature/digital-gm-phase-2-2-saved-focus-modes
+          fi

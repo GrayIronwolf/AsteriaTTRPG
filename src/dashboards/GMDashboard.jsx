@@ -7,6 +7,7 @@ import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
+import { GMFocusModes } from './GMFocusModes.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
@@ -494,6 +495,7 @@ export function GMDashboard({ campaignId }) {
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
   const [gmHubDestination,setGMHubDestination]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
+  const [dashboardLayoutReady,setDashboardLayoutReady] = useState(false);
   const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
   const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
   const [savingDashboardSettings,setSavingDashboardSettings] = useState(false);
@@ -501,6 +503,7 @@ export function GMDashboard({ campaignId }) {
   const dashboardDraftDirty=useRef(false);
   const dashboardDraftRevision=useRef(0);
   const dashboardSaveScope=useRef('');
+  const focusSavePending=useRef(false);
   const accountUid=firebaseService.currentUser()?.uid || '';
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
@@ -523,6 +526,8 @@ export function GMDashboard({ campaignId }) {
     dashboardDraftDirty.current=false;
     dashboardDraftRevision.current++;
     dashboardSaveScope.current=campaignId+':'+accountUid;
+    focusSavePending.current=false;
+    setDashboardLayoutReady(false);
     setDashboardSettingsDraft(defaultDashboardLayout('gm'));
     setSavedDashboardLayout(null);
     setDashboardSettingsMessage('');
@@ -531,7 +536,10 @@ export function GMDashboard({ campaignId }) {
     const subscriptionScope=campaignId+':'+accountUid;
     return firebaseService.subscribeUserDashboardLayout(campaignId,'gm',layout=>{
       if(dashboardSaveScope.current!==subscriptionScope)return;
-      setSavedDashboardLayout(layout);
+      // A pending optimistic Focus switch must not flicker back to a stale
+      // server snapshot while the private layout write is in flight.
+      if(!focusSavePending.current)setSavedDashboardLayout(layout);
+      setDashboardLayoutReady(true);
       // Session clocks and background sync can re-emit the same snapshot.
       // Do not erase unsaved edits while the settings editor is open.
       if(!dashboardDraftDirty.current)
@@ -629,6 +637,40 @@ export function GMDashboard({ campaignId }) {
     else setDashboardLayoutError(result?.error||'Could not save GM dashboard layout.');
     return result;
   };
+  const commitGMFocus=async layout=>{
+    if(!accountUid||!dashboardLayoutReady)return {ok:false,error:'Connect your GM dashboard before changing Focus.'};
+    if(dashboardDraftDirty.current)return {ok:false,error:'Save or discard pending Dashboard Settings before switching Focus.'};
+    if(focusSavePending.current||savingDashboardSettings)return {ok:false,error:'A dashboard save is already in progress.'};
+    const scope=campaignId+':'+accountUid;
+    const previous=normalizeDashboardLayout(savedDashboardLayout,'gm');
+    const next=normalizeDashboardLayout(layout,'gm');
+    focusSavePending.current=true;
+    // Immediately display the selected Focus; roll back on save errors.
+    setSavedDashboardLayout(next);
+    setDashboardLayoutError('');
+    try{
+      const result=await firebaseService.saveUserDashboardLayout(campaignId,'gm',next);
+      if(dashboardSaveScope.current!==scope)return {ok:false,error:'Campaign or account changed during Focus save.'};
+      if(result?.ok){
+        setSavedDashboardLayout(next);
+        setDashboardSettingsDraft(next);
+        setDashboardSettingsMessage('');
+      }else{
+        setSavedDashboardLayout(previous);
+        setDashboardLayoutError(result?.error||'Could not save GM Focus.');
+      }
+      return result||{ok:false,error:'Could not save GM Focus.'};
+    }catch(error){
+      const failure={ok:false,error:error?.message||'Could not save GM Focus.'};
+      if(dashboardSaveScope.current===scope){
+        setSavedDashboardLayout(previous);
+        setDashboardLayoutError(failure.error);
+      }
+      return failure;
+    }finally{
+      if(dashboardSaveScope.current===scope)focusSavePending.current=false;
+    }
+  };
   const updateDashboardSettingsDraft=change=>{
     dashboardDraftDirty.current=true;
     dashboardDraftRevision.current++;
@@ -712,6 +754,8 @@ export function GMDashboard({ campaignId }) {
       onNavigate={openGMHubLink} /> : null}
     {tab === 'main' ? <>
       <GMToolkitQuickAccess onNavigate={openGMHubLink}/>
+      <GMFocusModes key={campaignId+':'+accountUid} layout={savedDashboardLayout}
+        onCommit={commitGMFocus} disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
       <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
       layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
       defaultContent={<div className="react-gm-main-grid">

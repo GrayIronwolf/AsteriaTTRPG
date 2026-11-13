@@ -68,6 +68,8 @@ export const DASHBOARD_SIZE_COLUMNS = Object.freeze({'3x3':4,'6x3':8,'3x6':4,'9x
 export const DASHBOARD_SIZE_ROWS = Object.freeze({'3x3':1,'6x3':1,'3x6':2,'9x3':1});
 export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','arcane']);
 export const DASHBOARD_LAYOUT_VERSION = 4;
+// Saved GM Focus snapshots are bounded inside the existing private dashboard document.
+export const GM_FOCUS_LIMIT = 8;
 export const DASHBOARD_LAYOUT_PRESETS = {
   player:{
     default:[],
@@ -145,6 +147,33 @@ export function normalizeDashboardLayout(value,role='player') {
     if(candidate&&typeof candidate==='object'&&!Array.isArray(candidate))
       viewportLayouts[viewport]=normalizeDashboardLayout({...candidate,viewportLayouts:null},scope);
   }
+  // Focuses are GM-only display snapshots. Strip recursive focus metadata from
+  // snapshots, allowlist all panels via this same normalizer, and cap document
+  // growth. Player layouts and legacy GM layouts keep their original shape.
+  const focusModes=[];
+  let focusHome=null;
+  if(scope==='gm'){
+    const validSnapshot=value=>{
+      if(!value||typeof value!=='object'||Array.isArray(value))return null;
+      const snapshot=normalizeDashboardLayout({...value,focusModes:null,focusHome:null,activeFocusId:null},'gm');
+      const {focusModes:ignoredModes,focusHome:ignoredHome,activeFocusId:ignoredId,...clean}=snapshot;
+      return clean;
+    };
+    const seenIds=new Set(),seenNames=new Set();
+    for(const candidate of safeArray(value.focusModes).slice(0,GM_FOCUS_LIMIT*4)){
+      if(focusModes.length===GM_FOCUS_LIMIT)break;
+      if(!candidate||typeof candidate!=='object'||Array.isArray(candidate))continue;
+      const id=typeof candidate.id==='string'?candidate.id:'';
+      const name=typeof candidate.name==='string'?candidate.name.replace(/[\x00-\x1f\x7f]/g,' ').trim().replace(/\s+/g,' ').slice(0,48):'';
+      if(!/^[a-zA-Z0-9_-]{1,72}$/.test(id)||!name||seenIds.has(id)||seenNames.has(name.toLocaleLowerCase()))continue;
+      const snapshot=validSnapshot(candidate.layout);
+      if(!snapshot)continue;
+      seenIds.add(id);seenNames.add(name.toLocaleLowerCase());
+      focusModes.push({id,name,layout:snapshot});
+    }
+    focusHome=validSnapshot(value.focusHome);
+  }
+  const activeFocusId=typeof value.activeFocusId==='string'&&focusModes.some(row=>row.id===value.activeFocusId)?value.activeFocusId:'';
   return {
     version:DASHBOARD_LAYOUT_VERSION,
     mode:value.mode==='custom'?'custom':'default',
@@ -156,7 +185,10 @@ export function normalizeDashboardLayout(value,role='player') {
     lockedPositions,
     backgroundStyle,
     panelBackgrounds,
-    ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{})
+    ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
+    ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
+    ...(scope==='gm'&&focusHome?{focusHome}:{}),
+    ...(scope==='gm'&&activeFocusId?{activeFocusId}:{})
   };
 }
 /** Backgrounds belong to this user/character dashboard; panel override wins. */
@@ -194,14 +226,22 @@ export function visibleDashboardPanels(layout,role='player'){
 export function applyDashboardPreset(layout,role='player',preset='default'){
   const scope=role==='gm'?'gm':'player';
   if(!validPreset(scope,preset))return normalizeDashboardLayout(layout,scope);
-  if(preset==='default')return defaultDashboardLayout(scope);
-  const defaults=defaultDashboardLayout(scope);
   const previous=normalizeDashboardLayout(layout,scope);
+  // A built-in preset never erases the user's saved named Focus library.
+  if(preset==='default'){
+    const metadata=scope==='gm'?{
+      ...(previous.focusModes?.length?{focusModes:previous.focusModes}:{}),
+      ...(previous.focusHome?{focusHome:previous.focusHome}:{})
+    }:{};
+    return {...defaultDashboardLayout(scope),...metadata};
+  }
+  const defaults=defaultDashboardLayout(scope);
   const requested=DASHBOARD_LAYOUT_PRESETS[scope][preset];
   const selected=new Set(requested);
   const order=[...requested,...defaults.order.filter(id=>!selected.has(id))];
   const hidden=defaults.order.filter(id=>!selected.has(id));
-  return {...previous,version:DASHBOARD_LAYOUT_VERSION,mode:'custom',preset,
+  const {activeFocusId:discardActive,...base}=previous;
+  return {...base,version:DASHBOARD_LAYOUT_VERSION,mode:'custom',preset,
     order,hidden,
     placements:packGridPlacements(scope,order,hidden,previous.placements,previous.lockedPositions)};
 }
@@ -331,7 +371,16 @@ export function setDashboardViewportLayout(source,role='player',viewport='deskto
   const updated=normalizeDashboardLayout(next,role);
   const single={...updated};delete single.viewportLayouts;
   const views={...(root.viewportLayouts||{}),[key]:single};
-  return key==='desktop'?{...root,...single,viewportLayouts:views}:{...root,viewportLayouts:views};
+  const result=key==='desktop'?{...root,...single,viewportLayouts:views}:{...root,viewportLayouts:views};
+  // Viewport editor drafts describe only panels. They must never overwrite
+  // Focus metadata saved at the root of this per-GM dashboard document.
+  if(role==='gm'){
+    delete result.focusModes;delete result.focusHome;delete result.activeFocusId;
+    if(root.focusModes?.length)result.focusModes=root.focusModes;
+    if(root.focusHome)result.focusHome=root.focusHome;
+    if(root.activeFocusId)result.activeFocusId=root.activeFocusId;
+  }
+  return result;
 }
 /** Displayable size choices are derived from actual per-panel grid constraints. */
 export function dashboardPanelSizeChoices(role,id){
