@@ -204,6 +204,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     </div>
     {selected?<><div className="react-merchant-heading">
       <div>{selected.image?<img src={selected.image} alt={selected.name+' portrait'} loading="lazy" style={{maxWidth:100,maxHeight:100,objectFit:'cover',borderRadius:8}}/>:null}<h3>{selected.name}</h3><small>{selected.type||'Merchant'} · {selected.region||'Local trader'}</small>
+        {selected.locationName?<p><b>Location:</b> {selected.locationName}</p>:null}
+        {selected.npcName?<p><b>Proprietor:</b> {selected.npcName}</p>:null}
         {selected.description?<p>{selected.description}</p>:null}
         {selected.personality?<p><b>Personality:</b> {selected.personality}</p>:null}
         {selected.greeting?<p><b>Merchant:</b> “{selected.greeting}”</p>:null}
