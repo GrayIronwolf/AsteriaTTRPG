@@ -2605,6 +2605,8 @@ test('Phase 5.3: GMs alone store secret item notes and players see only revealed
     description:'The maker mark belongs to an ancient forge.'}]);
   assert.equal(found.ok,true,found.error);
   const publicRecord=(await assertSucceeds(getDoc(doc(user('alice'),publicPath)))).data();
+  const ownerList=await assertSucceeds(getDocs(query(collection(user('alice'),'campaigns/c/itemDiscoveries'),where('ownerUid','==','alice'))));
+  assert.equal(ownerList.size,1);
   assert.deepEqual(publicRecord.revealedLore,['The maker mark belongs to an ancient forge.']);
   assert.equal(publicRecord.curse,undefined);
   assert.equal(publicRecord.gmNotes,undefined);
