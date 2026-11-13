@@ -3,6 +3,7 @@ import '../styles/asteria-react.css';
 import '../styles/gm-toolkit.css';
 import '../styles/gm-focus.css';
 import '../styles/gm-phase2-3.css';
+import '../styles/gm-npc-library.css';
 import { createRoot } from 'react-dom/client';
 import { AsteriaReactRoot } from './AsteriaReactRoot.jsx';
 

@@ -64,7 +64,7 @@ export function GMToolkitHub({session={},characters={},workspace={},itemEcosyste
   </section>;
 }
 
-const quickIds=['encounter','quests','notes','shops','world'];
+const quickIds=['encounter','quests','npc-library','notes','shops','world'];
 export function GMToolkitQuickAccess({onNavigate}){
   return <nav className="react-gm-toolkit-quick" aria-label="GM Toolkit quick access">
     <div><strong>GM Toolkit</strong><span>Quickly open an existing campaign tool.</span></div>

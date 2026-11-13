@@ -9,6 +9,7 @@ import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOve
 import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
+import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -23,6 +24,7 @@ import { useCampaignLiveData } from '../sessions/useCampaignLiveData.js';
 import { useArmourClass } from '../systems/armour/useArmourClass.js';
 import { validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { encounterResourcePair, encounterSourceResources, encounterResourceKeys, encounterXP, customEncounterCreature } from '../state/encounterResourceModel.mjs';
+import { libraryEncounterReady } from '../state/gmNpcCreatureLibraryModel.mjs';
 import { GMCombatPanel } from './CombatPanel.jsx';
 import { useAsyncAction } from '../components/useAsyncAction.js';
 import { encounterPlayerRoster } from '../state/campaignCharacterRecords.mjs';
@@ -38,6 +40,7 @@ import { gmTradeLootOverview } from '../state/gmTradeLootHubModel.mjs';
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
   { id: 'toolkit', label: 'GM Toolkit', icon: 'settings' },
+  { id: 'bestiary', label: 'NPC & Creature Library', icon: 'journal' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' },
   { id: 'inventory', label: 'PC Inventory', icon: 'inventory' },
   { id:'information', label:'News & Events', icon:'journal' },
@@ -122,16 +125,17 @@ function spellCompendiumEntries() {
   return normalizeSpellCompendiumEntries(source);
 }
 
-function encounterSources(campaignNPCs=[]) {
+function encounterSources(campaignNPCs=[],campaignCreatures=[]) {
   const codex = window.AsteriaCodexCompendium?.creatureEntries?.() || [];
   const npcStores = [window.npcs, window.NPCS, window.ASTERIA_NPC_DATA, window.ASTERIA_NPCS].filter(Boolean);
   const npcs = [...campaignNPCs,...npcStores.flatMap(store => Array.isArray(store) ? store : Object.entries(store).map(([id, value]) => Object.assign({ id }, value)))];
   const records = [
     ...codex.map(entry => ({ id:entry.id || entry.slug || slug(entry.title), name:entry.title || entry.name, type:entry.creatureType || entry.type || entry.category || 'Creature', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'Creature Compendium', compendiumSlug:entry.slug || entry.id })),
-    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'NPC', compendiumSlug:entry.slug || entry.id }))
+    ...npcs.map(entry => ({ id:`npc-${entry.id || entry.slug || slug(entry.name || entry.title)}`, name:entry.name || entry.title || 'Unnamed NPC', type:entry.type || entry.category || 'NPC', threatTier:entry.threatTier || entry.tier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'NPC', compendiumSlug:entry.slug || entry.id })),
+    ...campaignCreatures.filter(libraryEncounterReady).map(entry => ({ id:'library-'+entry.id, name:entry.name, type:entry.species || 'Creature', threatTier:entry.threatTier || 'Tier 1', initiative:Number(entry.initiative ?? 10), ...(entry.ac!==undefined?{ac:entry.ac}:{}), ...encounterSourceResources(entry), xpReward:encounterXP(entry), source:'Campaign Creature' }))
   ].filter(entry => entry.name);
   const seen = new Set();
-  return records.filter(entry => { const key=slug(entry.name); if(seen.has(key)) return false; seen.add(key); return true; });
+  return records.filter(entry => { const key=slug(entry.name)+':'+entry.source; if(seen.has(key)) return false; seen.add(key); return true; });
 }
 
 function EncounterInitiativeInput({ entry, disabled, onCommit }) {
@@ -167,12 +171,12 @@ function EncounterResourceControl({ campaignId, entry, resource, disabled, onMes
   </div>;
 }
 
-function CampaignEncounter({ campaignId, campaign, campaignNPCs, characters, encounter, combatState }) {
+function CampaignEncounter({ campaignId, campaign, campaignNPCs, campaignCreatures, characters, encounter, combatState }) {
   const [search, setSearch] = useState('');
   const [custom,setCustom]=useState({type:'Creature',name:'',hp:'',sp:'',mp:'',xpReward:'',ac:'',initiative:''});
   const [quantity, setQuantity] = useState('');
   const {message,setMessage,busy,run}=useAsyncAction();
-  const sources = useMemo(()=>encounterSources(campaignNPCs), [campaignNPCs]);
+  const sources = useMemo(()=>encounterSources(campaignNPCs,campaignCreatures), [campaignNPCs,campaignCreatures]);
   const state = Object.assign({ status:'ready', round:1, turnIndex:0, combatants:[], enemies:[] }, encounter || {});
   const results = search ? sources.filter(entry => `${entry.name} ${entry.type} ${entry.source}`.toLowerCase().includes(search.toLowerCase())).slice(0, 8) : [];
   const active=state.status==='active'&&state.combat?.version===1;
@@ -715,7 +719,7 @@ export function GMDashboard({ campaignId }) {
     const shortcut=(title,tab)=> <Panel title={title}><p className="react-help">Open the full {title} workspace.</p><button type="button" onClick={()=>setTab(tab)}>Open {title}</button></Panel>;
     switch(id){
       case 'restRequests':return <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>;
-      case 'encounter':return <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>;
+      case 'encounter':return <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} campaignCreatures={live.gmWorkspace?.world?.creatures||[]} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>;
       case 'xp':return <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>;
       case 'specialDamage':return <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>;
       case 'loot':return <LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/>;
@@ -750,6 +754,9 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
+    {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
+      workspace={workspace} saveSection={saveSection}
+      onOpenEncounter={()=>setTab('main')} onOpenWorld={()=>setTab('world')} /> : null}
     {tab === 'toolkit' ? <>
       <GMToolkitHub key={campaignId+':'+accountUid}
         session={live.session} characters={live.characters} workspace={workspace}
@@ -768,7 +775,7 @@ export function GMDashboard({ campaignId }) {
       layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
       defaultContent={<div className="react-gm-main-grid">
         <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>
-        <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>
+        <CampaignEncounter campaignId={campaignId} campaign={live.campaign} campaignNPCs={live.gmWorkspace?.world?.npcs} campaignCreatures={live.gmWorkspace?.world?.creatures||[]} characters={live.characters} encounter={live.encounter} combatState={live.gmWorkspace?.combatState}/>
         <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>
         <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
       </div>}
