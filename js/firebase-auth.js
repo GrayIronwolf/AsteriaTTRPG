@@ -1473,6 +1473,7 @@ const firebasePublicApi = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
+  manageMerchantRelationship: (...args) => callTrustedAction('manageMerchantRelationship',args),
   subscribePartyWorkspace: function(campaignId,onChange){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     return onSnapshot(doc(db,'campaigns',campaignId,'systems','party-workspace'),snapshot=>onChange(snapshot.exists() ? snapshot.data() : {sharedNotes:'',questLog:[]}),error=>reportSyncError('party-workspace-listener',error,{campaignId}));
