@@ -511,3 +511,11 @@ export const asteriaAccountIdentity=onCall({
       'Account ID could not be assigned. Review your account profile.');
   }
 });
+
+export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
+    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
+  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
+});
