@@ -3893,3 +3893,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-party-loot-vote-actions{gap:5px;}
   .react-party-loot-vote-actions button{padding:6px;}
 }
+
+.react-party-loot-awarded-list {display:grid;gap:8px;margin-top:12px;min-width:0;}
+.react-party-loot-awarded-list p {margin:0;padding:9px 12px;overflow-wrap:anywhere;
+  border:1px solid rgba(143,176,195,.25);background:rgba(6,19,28,.55);font-size:.82rem;}
