@@ -3717,3 +3717,45 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 .react-gm-audit-journal-row time {font-size:.7rem;color:var(--asteria-text-muted,#a0adbb);}
 .react-gm-audit-journal-row button {min-height:40px;}
 @media(max-width:640px){.react-gm-audit-journal-row {grid-template-columns:minmax(0,1fr);} }
+
+
+/* Phase 8.1 — player Trade & Loot quick-access hub. */
+.react-inventory-action-hub {
+  display:grid;gap:12px;
+  padding:14px;
+  border:1px solid rgba(133,170,197,.35);
+  border-radius:10px;
+  background:linear-gradient(140deg,rgba(19,39,54,.83),rgba(7,17,25,.88));
+}
+.react-inventory-action-hub-heading {
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;
+}
+.react-inventory-action-hub-heading h3 {margin:0;font-size:1rem;}
+.react-inventory-action-hub-heading p {
+  margin:4px 0 0;color:var(--asteria-text-muted,#a0adbb);font-size:.78rem;
+}
+.react-inventory-action-hub-heading > span {
+  color:var(--asteria-text-muted,#a0adbb);font-size:.76rem;
+}
+.react-inventory-action-hub-links {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.react-inventory-action-hub-links button {
+  display:grid;align-content:center;gap:5px;text-align:left;
+  min-width:0;min-height:72px;padding:10px;
+  border:1px solid rgba(143,176,195,.34);border-radius:7px;
+  background:rgba(6,19,28,.66);color:inherit;
+}
+.react-inventory-action-hub-links button:hover,
+.react-inventory-action-hub-links button:focus-visible {
+  border-color:rgba(176,208,230,.8);background:rgba(25,51,67,.78);
+}
+.react-inventory-action-hub-links strong {font-size:.84rem;}
+.react-inventory-action-hub-links span {font-size:.72rem;color:var(--asteria-text-muted,#a0adbb);}
+@container (max-width:900px) {
+  .react-inventory-action-hub-links {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@container (max-width:420px) {
+  .react-inventory-action-hub {padding:10px;}
+  .react-inventory-action-hub-links button {min-height:68px;padding:8px;}
+}

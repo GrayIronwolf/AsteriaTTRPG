@@ -14,6 +14,7 @@ import {PlayerItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta,filterInventoryActivityRecords,INVENTORY_ACTIVITY_CATEGORIES} from '../state/inventoryActivityModel.mjs';
+import {playerTradeLootOverview} from '../state/inventoryActionHubModel.mjs';
 import {filterInventoryJournalDate,INVENTORY_JOURNAL_DATE_RANGES,inventoryJournalReceipt,exportInventoryJournalCsv,inventoryJournalFilename} from '../state/inventoryJournalReceiptModel.mjs';
 
 const ARMOR_SLOTS = [
@@ -542,7 +543,7 @@ function PartyInventoryPanel({ character, characters, items, editable, dragged, 
     setActiveMemberId(current => current === member.id ? '' : member.id);
     setSelectedItemId(current => availableItems.some(item => item.id === current) ? current : availableItems[0]?.id || '');
   };
-  return <aside className="react-inventory-party" aria-label="Party item actions">
+  return <aside id="react-inventory-party" className="react-inventory-party" aria-label="Party item actions">
     <h2>Party</h2>
     <div className="react-player-bubbles">{members.map(member => <div className="react-party-bubble-row" key={member.id}>
       <PartyPortrait member={member} active={activeMemberId === member.id} editable={editable} onClick={() => openFor(member)} onDrop={event => {
@@ -581,6 +582,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const [activityNotice,setActivityNotice]=useState('');
   const seenActivityRef=useRef(null);
   const activity=useMemo(()=>inventoryActivityRecords(character,events,100),[character,events]);
+  const actionHub=useMemo(()=>playerTradeLootOverview({character,characters,ecosystem,partyLoot,activity}),[character,characters,ecosystem,partyLoot,activity]);
   const visibleActivity=useMemo(()=>filterInventoryJournalDate(filterInventoryActivityRecords(activity,{category:activityCategory,query:activitySearch}),activityDateRange),[activity,activityCategory,activitySearch,activityDateRange]);
   const selectedReceiptRow=visibleActivity.find(row=>row.id===selectedReceipt);
   const receipt=selectedReceiptRow?inventoryJournalReceipt(selectedReceiptRow):null;
@@ -611,6 +613,21 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     link.remove();
     URL.revokeObjectURL(url);
   };
+  const openActionHub=(id)=>{
+    if(id==='journal'){
+      setActivityOpen(true);
+      setActivityNotice('');
+      window.requestAnimationFrame(()=>document.getElementById('react-inventory-activity')?.scrollIntoView({behavior:'smooth',block:'start'}));
+      return;
+    }
+    const target=id==='party-loot'?'party-loot':id;
+    setMobileView(target);
+    window.requestAnimationFrame(()=>{
+      const section=document.getElementById('react-inventory-'+target);
+      if(section&&window.getComputedStyle(section).display!=='none')
+        section.scrollIntoView({behavior:'smooth',block:'start'});
+    });
+  };
   const run = async (operation, success) => {
     if(busy)return {ok:false,error:'An inventory action is still processing.'};
     setBusy(true);
@@ -634,6 +651,22 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       </div>
       <button type="button" aria-expanded={activityOpen} aria-controls="react-inventory-activity" onClick={()=>{setActivityOpen(v=>!v);setActivityNotice('');}}>{activityOpen?'Hide Activity':'Activity ('+activity.length+')'}</button>
     </div>
+    <section className="react-inventory-action-hub" aria-label="Inventory trade and loot shortcuts">
+      <div className="react-inventory-action-hub-heading">
+        <div><h3>Trade &amp; Loot</h3>
+          <p>Choose an activity without searching through inventory panels.</p>
+        </div>
+        <span>{actionHub.claimableItemDrops} claimable item drops</span>
+      </div>
+      <div className="react-inventory-action-hub-links">
+        {actionHub.links.map(link=><button key={link.id} type="button"
+          onClick={()=>openActionHub(link.id)}
+          aria-label={link.label+' — '+link.detail}>
+          <strong>{link.label}</strong>
+          <span>{link.detail}</span>
+        </button>)}
+      </div>
+    </section>
     {activityOpen?<section id="react-inventory-activity" className="react-inventory-activity" aria-label="Inventory and trade journal">
       <h3>Inventory &amp; Trade Journal</h3>
       <p className="react-inventory-journal-help">Recent transactions for this character, including merchant purchases, player exchanges, shared stash transfers, currency changes and treasure claims.</p>
@@ -678,9 +711,9 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       <StoragePanel campaignId={campaignId} character={character} storages={storages} activeStorage={activeStorage} setActiveStorage={setSelectedStorage} items={items} editable={editable} busy={busy} run={run} onCustom={() => setCustom(true)} onDragStart={(event, item) => { setDragged(item); event.dataTransfer.setData('application/x-asteria-item', item.id); }} onDragEnd={() => setDragged(null)} onDetails={setDetails} selectedItemId={selectedItemId} onSelectItem={item => setSelectedItemId(item.id)} quickActions={selectedItem?<InventoryQuickActions key={selectedItem.id} campaignId={campaignId} item={selectedItem} character={character} characters={characters} storages={storages} ecosystem={ecosystem} editable={editable} busy={busy} onRun={run} onInspect={setDetails} onOffer={(target,item,mode)=>setOffer({target,item,mode})} onSell={item=>{setSaleRequest({itemId:item.id,token:Date.now()});setMobileView('shops');}} onUse={setPendingUse} onClear={()=>setSelectedItemId('')}/>:null} />
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
 
-      {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
+      {campaignId?<div id="react-inventory-shops" className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
       {campaignId?<PlayerItemLoreWorkspace campaignId={campaignId} character={character}/>:null}
-      {campaignId?<div className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} partyLoot={partyLoot} editable={editable}/></div>:null}
+      {campaignId?<div id="react-inventory-party-loot" className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} partyLoot={partyLoot} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message" role="status" aria-live="polite">{message}</p>
     {pendingUse?<Modal title={'Use '+pendingUse.name+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||!items.some(row=>row.id===pendingUse.id&&Number(row.qty)>0)} onClick={async()=>{const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p></Modal>:null}
