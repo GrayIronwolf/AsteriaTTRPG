@@ -7,6 +7,7 @@ import {doc,setDoc,getDoc,updateDoc,getDocs,collection,onSnapshot,writeBatch,Tim
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {executeAction} from '../functions/handler.mjs';
+import {merchantStockIdentity} from '../src/state/merchantInventoryModel.mjs';
 import {accessInvite} from '../functions/invitations.mjs';
 import {createCampaignIdentity,previewCampaignUCN} from '../functions/campaignUCN.mjs';
 import {stageLegacyMemberships} from '../functions/campaignMembership.mjs';
@@ -2946,4 +2947,47 @@ test('Phase 9.2: cancelled distributions restore direct claims; rejected awards 
   const claimed=await action('alice','claimPartyLoot',['c','a',{lootId,storageId:'bag'}]);
   assert.equal(claimed.ok,true,claimed.error);
   assert.equal((await db.doc('campaigns/c/partyLoot/'+lootId).get()).data().status,'claimed');
+});
+
+
+test('Phase 10.1: only GM may configure and replenish merchant stock in trusted transactions',async()=>{
+  const shopId='phase10-smith';
+  const create=await action('gm','manageCampaignShop',['c','a',{
+    type:'save',shop:{id:shopId,name:'Phase 10 Smith',status:'open',
+      buyModifier:1,sellModifier:1,currencyCopper:1000,stock:[],visitorCharacterIds:[]}
+  }]);
+  assert.equal(create.ok,true,create.error);
+  const stock=await action('gm','manageCampaignShop',['c','a',{
+    type:'stock',shopId,item:{id:'phase10-dagger',name:'Iron Dagger',definitionId:'base:dagger',
+      material:'Iron',quality:'Common',marketPrice:0.2,marketValue:0.1},
+    quantity:1
+  }]);
+  assert.equal(stock.ok,true,stock.error);
+  const current=(await db.doc('campaigns/c/shops/'+shopId).get()).data();
+  const identity=merchantStockIdentity(current.stock[0].item);
+  const forged=await action('alice','manageCampaignShop',['c','a',{
+    type:'configure-restock',shopId,stockIndex:0,stockIdentity:identity,restockTarget:10,lowStockAt:2
+  }]);
+  assert.equal(forged.ok,false);
+  const policy=await action('gm','manageCampaignShop',['c','a',{
+    type:'configure-restock',shopId,stockIndex:0,stockIdentity:identity,restockTarget:10,lowStockAt:2
+  }]);
+  assert.equal(policy.ok,true,policy.error);
+  const stale=await action('gm','manageCampaignShop',['c','a',{
+    type:'set-stock',shopId,stockIndex:0,stockIdentity:'wrong-variant',quantity:55
+  }]);
+  assert.equal(stale.ok,false);
+  const restocked=await action('gm','manageCampaignShop',['c','a',{
+    type:'restock-all',shopId
+  }]);
+  assert.equal(restocked.ok,true,restocked.error);
+  assert.equal(restocked.shop.stock[0].qty,10);
+  assert.equal(restocked.shop.currencyCopper,1000);
+  assert.equal(restocked.shop.restockHistory[0].units,9);
+  const repeated=await action('gm','manageCampaignShop',['c','a',{
+    type:'restock-all',shopId
+  }]);
+  assert.equal(repeated.ok,false,'A second restock must not add duplicate stock');
+  assert.equal((await db.doc('campaigns/c/shops/'+shopId).get()).data().stock[0].qty,10);
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/shops/'+shopId),{stock:[]}));
 });
