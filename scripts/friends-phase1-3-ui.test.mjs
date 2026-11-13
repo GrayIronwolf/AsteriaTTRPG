@@ -57,9 +57,9 @@ function harness({enabled=false}={}){
     }
   };
 }
-test('Friends Account menu and dialog are present exactly once, accessible and off by default',()=>{
+test('Friends is a separate accessible page after removal of the Account dropdown',()=>{
   const html=read('index.html'),menu=read('js/asteria-account-menu.js'),css=read('css/asteria-account-friends.css');
-  for(const id of ['accountMenuFriends','accountFriendsOverlay','accountFriendsClose',
+  for(const id of ['asteriaFriendsTop','accountFriendsOverlay','accountFriendsClose',
     'accountFriendsSearchForm','accountFriendsAccountId','accountFriendsFind',
     'accountFriendsStatus','accountFriendsResult','accountFriendsResultInitial',
     'accountFriendsResultName','accountFriendsResultId'])
@@ -68,7 +68,7 @@ test('Friends Account menu and dialog are present exactly once, accessible and o
   assert.doesNotMatch(html,/friendAccountLookup:new URLSearchParams/);
   assert.match(html,/aria-modal="true" aria-labelledby="accountFriendsTitle"/);
   assert.match(html,/aria-live="polite"/);
-  assert.match(menu,/window\.AsteriaFriends\?\.open\?\.\(\)/);
+  assert.match(menu,/openFriends:\(\)=>open\('friends'\)/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(css,/prefers-reduced-motion/);
   assert.match(html,/asteria-account-friends\.js\?v=friends-phase3-3/);
