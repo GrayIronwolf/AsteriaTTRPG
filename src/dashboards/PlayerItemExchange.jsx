@@ -5,6 +5,7 @@ import { EmptyState, Modal, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { characterKnowsIdentify, normalizeCharacterStorages } from '../state/liveWorkspaceModel.mjs';
 import { inventoryItems } from './characterWorkspaceData.js';
+import { playerExchangePreview } from '../state/tradeExperienceModel.mjs';
 
 const ACTIONS = {
   trade: { label:'Trade', eyebrow:'Player Trade', action:'Send Trade Request', description:'Offer this item and let the other player choose an item to exchange.' },
@@ -48,13 +49,23 @@ function requestStatusLabel(request) {
 }
 
 function TradeReview({ request, senderLabel='Offered', recipientLabel='Requested' }) {
-  return <div className="react-final-trade-grid" aria-label="Trade review">
-    <section><small>{senderLabel}</small><ExchangeItem item={request.item} quantity={request.quantity}/></section>
-    {request.mode==='trade'&&request.exchangeItem?<section><small>{recipientLabel}</small><ExchangeItem item={request.exchangeItem} quantity={request.exchangeItem.qty}/></section>:null}
-    {request.mode==='sell'?<section><small>Purchase price</small><strong>{Number(request.priceCopper||0).toLocaleString()} Copper</strong></section>:null}
-    {request.mode==='trade'&&!request.exchangeItem&&request.requestedItem?<p>Requested terms: {request.requestedItem}</p>:null}
-    {request.note?<p className="react-trade-review-note">{request.note}</p>:null}
-  </div>;
+  const preview=playerExchangePreview({mode:request.mode,item:request.item,quantity:request.quantity,
+    exchangeItem:request.exchangeItem,exchangeQuantity:request.exchangeItem?.qty,
+    priceCopper:request.priceCopper,requestedItem:request.requestedItem,note:request.note});
+  return <section className="react-phase9-trade-summary" aria-label="Trade review">
+    <div className="react-final-trade-grid">
+      <section><small>{senderLabel}</small><ExchangeItem item={request.item} quantity={request.quantity}/></section>
+      {request.mode==='trade'?<section><small>{recipientLabel}</small>
+        {request.exchangeItem?<ExchangeItem item={request.exchangeItem} quantity={request.exchangeItem.qty}/>:
+          <p className="react-phase9-pending">Awaiting the other player's offered item</p>}
+      </section>:null}
+      {request.mode==='sell'?<section><small>Purchase price</small>
+        <strong>{preview.copper?.toLocaleString()??'Invalid'} Copper</strong></section>:null}
+    </div>
+    {preview.requestedTerms?<p><b>Requested terms:</b> {preview.requestedTerms}</p>:null}
+    {preview.message?<p className="react-trade-review-note"><b>Roleplay message:</b> {preview.message}</p>:null}
+    <small className="react-phase9-trade-warning">{preview.warning}</small>
+  </section>;
 }
 
 function CharacterIdentity({ character, direction }) {
@@ -90,6 +101,8 @@ export function SendPlayerItemModal({ campaignId, character, target, item, mode 
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const preview=playerExchangePreview({mode,item,quantity:mode==='identify'?1:quantity,
+    priceCopper,requestedItem,note});
   if(!target || !item) return null;
   const invalidIdentify = mode === 'identify' && item.identified !== false;
   const send = async () => {
@@ -109,7 +122,20 @@ export function SendPlayerItemModal({ campaignId, character, target, item, mode 
     {mode !== 'identify' ? <label>Quantity<ManualNumberInput min="1" max={maximum} value={quantity} onChange={event => setQuantity(event.target.value)} /></label> : null}
     {mode === 'sell' ? <label>Price in Copper<ManualNumberInput min="0" value={priceCopper} onChange={event => setPriceCopper(event.target.value)} /></label> : null}
     {mode === 'trade' ? <label>Requested Item or Terms<input value={requestedItem} onChange={event => setRequestedItem(event.target.value)} placeholder="Optional, for example: healing potion or similar value" /></label> : null}
-    <label>Message<textarea rows="3" value={note} onChange={event => setNote(event.target.value)} placeholder="Optional message for the other player" /></label>
+    <label>Message<textarea rows="3" value={note} onChange={event => setNote(event.target.value)} placeholder="Optional roleplay message for the other player" /></label>
+    <section className="react-phase9-trade-summary" aria-label="Preview item request">
+      <h3>Review Your Offer</h3>
+      <div className="react-phase9-trade-sides">
+        <div><small>You are offering</small><strong>{preview.offering.name} ×{preview.offering.quantity||'—'}</strong></div>
+        <div><small>{mode==='sell'?'You are requesting':'Other player'}</small>
+          <strong>{mode==='sell'?preview.copper===null?'Choose a price':preview.copper.toLocaleString()+' Copper':
+            mode==='trade'?preview.requestedTerms||'An exchange item to be proposed':
+            mode==='identify'?'Identification':'Acceptance of this gift'}</strong></div>
+      </div>
+      <p>{preview.warning}</p>
+      {preview.message?<p><b>Your character says:</b> “{preview.message}”</p>:null}
+      <small>Item requests use the current server-side escrow and validation rules.</small>
+    </section>
     {invalidIdentify ? <p className="react-warning">This item is already identified.</p> : null}
     <p className="react-action-message" role="status">{message}</p>
   </Modal>;
@@ -146,7 +172,13 @@ function IncomingRequestModal({ campaignId, character, sender, request, editable
     <TradeReview request={request} senderLabel="Incoming item" recipientLabel="Their requested item" />
     {request.note ? <blockquote>{request.note}</blockquote> : null}
     {request.mode === 'sell' ? <div className="react-exchange-price"><span>Sale price</span><strong>{Number(request.priceCopper || 0).toLocaleString()} Copper</strong><small>Your available currency: {currencyTotal(character).toLocaleString()} Copper equivalent</small></div> : null}
-    {request.mode === 'trade' ? <div className="react-trade-response"><p><b>Requested terms:</b> {request.requestedItem || 'Choose an item you consider a fair exchange.'}</p><label>Your Item<select value={exchangeItemId} onChange={event => { setExchangeItemId(event.target.value); setExchangeQuantity(''); }}><option value="">Choose an item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}</select></label>{selectedExchange ? <><label>Quantity<ManualNumberInput min="1" max={Math.max(1, Number(selectedExchange.qty || 1))} value={exchangeQuantity} onChange={event => setExchangeQuantity(event.target.value)} /></label><ExchangeItem item={selectedExchange} quantity={exchangeQuantity} caption="Your exchange" /></> : null}</div> : null}
+    {request.mode === 'trade' ? <div className="react-trade-response"><p><b>Requested terms:</b> {request.requestedItem || 'Choose an item you consider a fair exchange.'}</p><label>Your Item<select value={exchangeItemId} onChange={event => { setExchangeItemId(event.target.value); setExchangeQuantity(''); }}><option value="">Choose an item</option>{exchangeItems.map(item => <option key={item.id} value={item.id}>{item.name} x{item.qty}</option>)}</select></label>{selectedExchange ? <><label>Quantity<ManualNumberInput min="1" max={Math.max(1, Number(selectedExchange.qty || 1))} value={exchangeQuantity} onChange={event => setExchangeQuantity(event.target.value)} /></label><ExchangeItem item={selectedExchange} quantity={exchangeQuantity} caption="Your exchange" /></> : null}
+      <div className="react-phase9-trade-summary"><h3>Review Both Sides</h3>
+        <div className="react-phase9-trade-sides">
+          <div><small>You receive</small><strong>{request.item?.identified===false?'Unidentified Item':request.item?.name||'Item'} ×{request.quantity}</strong></div>
+          <div><small>You offer</small><strong>{selectedExchange?(selectedExchange.identified===false?'Unidentified Item':selectedExchange.name)+' ×'+(exchangeQuantity||'—'):'Select an exchange item'}</strong></div>
+        </div><small>The sender must approve both items before this trade is final.</small>
+      </div></div> : null}
     {needsStorage ? <label>Receive Into<select value={storageId} disabled={!storages.length} onChange={event => setStorageId(event.target.value)}>{!storages.length ? <option value="">Create a storage container first</option> : null}{storages.map(storage => <option key={storage.id} value={storage.id}>{storage.name}</option>)}</select></label> : null}
     {request.mode === 'identify' && !canIdentify ? <p className="react-warning">This character does not know the Identify spell.</p> : null}
     {insufficientFunds ? <p className="react-warning">You do not have enough currency for this purchase.</p> : null}
