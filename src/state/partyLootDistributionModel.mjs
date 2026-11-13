@@ -54,12 +54,23 @@ export function awardLootDistribution(distribution={},characterId=''){
     winnerCharacterId:characterId,winnerChoice:candidate.choice};
 }
 
-export function publicLootVoteSummary(drop={},characterId=''){
+export function lootVoteTally(distribution={}){
+  const tally={need:0,greed:0,pass:0};
+  for(const value of Object.values(validatedLootChoices(distribution)))tally[value]+=1;
+  return tally;
+}
+
+// The campaign-readable loot record holds only aggregate counts.
+// A player's own vote is reconstructed from their owner-scoped action history.
+export function publicLootVoteSummary(drop={},character={}){
   if(drop?.kind!=='item'||drop?.status!=='available'||
     drop?.visibility!=='revealed'||drop?.distribution?.status!=='open')return null;
-  const votes=validatedLootChoices(drop.distribution);
-  const tally={need:0,greed:0,pass:0};
-  for(const choice of Object.values(votes))tally[choice]+=1;
-  return {status:'open',tally,
-    ownChoice:validId(characterId)&&Object.hasOwn(votes,characterId)?votes[characterId]:''};
+  const tally=drop.distribution?.tally||{};
+  const safeTally=Object.fromEntries(PARTY_LOOT_CHOICES.map(choice=>[
+    choice,Number.isSafeInteger(tally[choice])&&tally[choice]>=0&&tally[choice]<=PARTY_LOOT_VOTE_LIMIT?tally[choice]:0
+  ]));
+  const ownLog=(Array.isArray(character?.actionLog)?character.actionLog:[])
+    .find(entry=>entry?.type==='party-loot-vote'&&
+      entry.lootId===drop.id&&choiceSet.has(entry.choice));
+  return {status:'open',tally:safeTally,ownChoice:ownLog?.choice||''};
 }
