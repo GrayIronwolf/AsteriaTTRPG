@@ -291,6 +291,17 @@ service cloud.firestore {
       );
       allow delete: if isCampaignOwner(resource.data);
 
+      match /checkGroups/{groupId} {
+        // Aggregate group records contain other participants' results and are GM-only.
+        allow get, list: if signedIn() && isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+
+      match /checkCommandReceipts/{receiptId} {
+        // Idempotency receipts contain response payloads including private dice.
+        allow read, write: if false;
+      }
+
       match /checkRequests/{checkId} {
         // Server-owned requests. Player queries must filter ownerUid == auth.uid.
         allow get, list: if signedIn() && canUseCampaignSystems(campaignId) &&
