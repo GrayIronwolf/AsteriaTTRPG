@@ -11,6 +11,7 @@ import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkfl
 import { applyCharacteristicAllocations, applyCharacteristicPoints, characterKnowsIdentify, firstFreeStorageSlot, nextSkillProgress, normalizeCharacterStorages, normalizeInventoryItems, normalizeLiveItem, parseResourceCost, slug as liveSlug, stableInventoryItemId, stackableStorageItem, unidentifiedItemName, structuredCloneSafe, talentRankCost, talentTierUnlocked, timestampMs } from '../src/state/liveWorkspaceModel.mjs';
 import { createAsteriaItem, marketPricingStatus, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src/state/shopTransactionModel.mjs';
+import { validateMerchantProposal, assertMerchantDealMatches } from '../src/state/merchantDealModel.mjs';
 import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
 import { createPartyLootCommands } from './partyLootCommands.mjs';
@@ -886,6 +887,148 @@ const commands = {
         writeLiveCharacter(transaction,refs,character);
       });
       return {ok:true,...(result||{})};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  createMerchantDeal: async function(campaignId,characterId,shopId,stockIndex,proposal={}){
+    const refs=liveCharacterRefs(campaignId,characterId);
+    const dealId='merchant-deal-'+currentUser.uid+'-'+requestId;
+    const dealRef=doc(db,'campaigns',campaignId,'merchantDeals',dealId);
+    const shopRef=doc(db,'campaigns',campaignId,'shops',String(shopId));
+    const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+    try{
+      const deal=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const [characterSnapshot,shopSnapshot,ecosystemSnapshot,dealSnapshot]=await Promise.all([
+          transaction.get(refs.campaign),transaction.get(shopRef),transaction.get(ecosystemRef),transaction.get(dealRef)
+        ]);
+        if(dealSnapshot.exists())throw Error('This merchant request already exists.');
+        if(!characterSnapshot.exists())throw Error('Character not found.');
+        const character={id:characterId,...characterSnapshot.data()};
+        await verifyOwnedLiveCharacter(transaction,campaignId,characterId,character,refs);
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const shop=structuredCloneSafe(shopSnapshot.exists()?shopSnapshot.data():
+          (ecosystem.shops||[]).find(row=>String(row.id)===String(shopId)));
+        if(!shop||shop.deleted||shop.status!=='open')throw Error('The merchant is closed.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId))
+          throw Error('This character is not visiting the merchant.');
+        const index=Number(stockIndex);
+        if(!Number.isSafeInteger(index)||index<0||index>=Number(shop.stock?.length||0))
+          throw Error('Choose a merchant item.');
+        const stock=shop.stock[index];
+        const barterItem=proposal.barterItemId
+          ?characterInventory(character).find((item,i)=>liveItemId(item,i)===String(proposal.barterItemId)):null;
+        const terms=validateMerchantProposal(proposal,stock,barterItem);
+        const base=merchantPriceCopper(shop,stock.item,'buy');
+        if(base===null||base<=0||!Number.isSafeInteger(base)||!Number.isSafeInteger(base*terms.quantity))
+          throw Error('This merchant item has no supported purchase price.');
+        if(terms.offeredCopper>base*terms.quantity*2)
+          throw Error('An offer cannot exceed twice the listed price.');
+        const deal={
+          id:dealId,shopId:String(shopId),shopName:String(shop.name||'Merchant').slice(0,160),
+          characterId,characterName:String(character.name||'Character').slice(0,160),
+          ownerUid:currentUser.uid,stockIndex:index,stockItemName:String(stock.item.name||stock.item.title||'Item').slice(0,160),
+          baseUnitCopper:base,listedTotalCopper:base*terms.quantity,...terms,
+          status:'pending',createdAt:serverTimestamp(),expiresAt:Date.now()+24*60*60*1000
+        };
+        transaction.set(dealRef,deal);
+        return {...deal,createdAt:Date.now()};
+      });
+      return {ok:true,deal};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  respondMerchantDeal: async function(campaignId,_scope,dealId,decision){
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireCampaignGM(transaction,campaignId);
+        const ref=doc(db,'campaigns',campaignId,'merchantDeals',String(dealId));
+        const snapshot=await transaction.get(ref);
+        if(!snapshot.exists())throw Error('This merchant proposal no longer exists.');
+        const deal=structuredCloneSafe(snapshot.data());
+        if(deal.status!=='pending')throw Error('This proposal has already been resolved.');
+        if(!['approve','reject'].includes(decision))throw Error('Choose approve or reject.');
+        if(decision==='reject'){
+          transaction.update(ref,{status:'rejected',resolvedBy:currentUser.uid,resolvedAt:serverTimestamp()});
+          return {status:'rejected'};
+        }
+        if(Date.now()>Number(deal.expiresAt||0))throw Error('This bargaining request expired. Ask for a new offer.');
+        await requireLiveSession(transaction,campaignId);
+        const characterRefs=liveCharacterRefs(campaignId,deal.characterId);
+        const shopRef=doc(db,'campaigns',campaignId,'shops',deal.shopId);
+        const ecosystemRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
+        const [characterSnapshot,shopSnapshot,ecosystemSnapshot]=await Promise.all([
+          transaction.get(characterRefs.campaign),transaction.get(shopRef),transaction.get(ecosystemRef)
+        ]);
+        if(!characterSnapshot.exists())throw Error('The bargaining character is unavailable.');
+        const character={id:deal.characterId,...characterSnapshot.data()};
+        if(character.ownerUid!==deal.ownerUid)throw Error('Character ownership changed. No exchange was made.');
+        await verifyOwnedLiveCharacter(transaction,campaignId,deal.characterId,character,characterRefs,true);
+        const ecosystem=structuredCloneSafe(ecosystemSnapshot.exists()?ecosystemSnapshot.data():{});
+        const legacyIndex=(ecosystem.shops||[]).findIndex(row=>String(row.id)===deal.shopId);
+        const shop=structuredCloneSafe(shopSnapshot.exists()?shopSnapshot.data():
+          legacyIndex>=0?ecosystem.shops[legacyIndex]:null);
+        if(!shop||shop.deleted||shop.status!=='open')throw Error('The merchant is closed.');
+        if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(deal.characterId))
+          throw Error('The character is no longer visiting this merchant.');
+        const stock=shop.stock?.[deal.stockIndex];
+        const inventory=characterInventory(character);
+        const barterItem=deal.barterItemId
+          ?inventory.find((item,i)=>liveItemId(item,i)===deal.barterItemId):null;
+        assertMerchantDealMatches({...deal,approvedTotalCopper:deal.offeredCopper},stock,barterItem);
+        if(merchantPriceCopper(shop,stock.item,'buy')!==deal.baseUnitCopper)
+          throw Error('The merchant prices changed. Request a new bargain.');
+        const cost=Number(deal.offeredCopper);
+        const funds=currencyTotal(character);
+        if(funds<cost)throw Error('This character cannot afford the accepted offer.');
+        if(!Number.isSafeInteger(Number(shop.currencyCopper||0)+cost))
+          throw Error('Merchant currency cannot exceed the supported range.');
+        const item=normalizeMarketPricing({
+          ...structuredCloneSafe(stock.item),qty:deal.quantity,location:'inventory',equipped:false
+        },{legacy:true,removeLegacy:true,migratedRecord:true});
+        const received=placeCharacterItem(character,item,{});
+        if(deal.barterItemId){
+          const sold={...structuredCloneSafe(barterItem),qty:1,equipped:false,equippedSlot:'',location:'shop'};
+          for(const key of ['ownerUid','storageId','storageSlot','bagId','bagSlot','instanceId','sourceCharacterId'])
+            delete sold[key];
+          barterItem.qty=Number(barterItem.qty)-deal.barterQuantity;
+          character.inventory=inventory.filter(record=>Number(record.qty??1)>0);
+          const match=shop.stock.find(row=>shopStockCompatible(row.item,sold));
+          if(match)match.qty+=deal.barterQuantity;
+          else{
+            if(shop.stock.length>=120)throw Error('The merchant has no room for this barter item.');
+            shop.stock.push({item:sold,qty:deal.barterQuantity,priceCopper:merchantPriceCopper(shop,sold,'buy')});
+          }
+        }
+        setCurrencyTotal(character,funds-cost);
+        shop.currencyCopper=Number(shop.currencyCopper||0)+cost;
+        stock.qty=Number(stock.qty)-deal.quantity;
+        appendActivity(character,{type:'merchant-bargain',message:`Traded for ${deal.quantity} x ${deal.stockItemName} at ${shop.name||'merchant'} for ${cost} copper${deal.barterItemId?' plus barter':''}.`});
+        writeLiveCharacter(transaction,characterRefs,character);
+        transaction.set(shopRef,{...shop,updatedBy:currentUser.uid,updatedAt:serverTimestamp()});
+        if(legacyIndex>=0){
+          ecosystem.shops[legacyIndex]=structuredCloneSafe(shop);
+          transaction.set(ecosystemRef,{...ecosystem,updatedBy:currentUser.uid,updatedAt:serverTimestamp()},{merge:true});
+          savePublicItemEcosystem(transaction,campaignId,ecosystem);
+        }
+        transaction.update(ref,{status:'approved',resolvedBy:currentUser.uid,resolvedAt:serverTimestamp(),settledCopper:cost});
+        return {status:'approved',cost,receivedItemId:received?.id||null};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  cancelMerchantDeal: async function(campaignId,characterId,dealId){
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        const ref=doc(db,'campaigns',campaignId,'merchantDeals',String(dealId));
+        const snapshot=await transaction.get(ref);
+        if(!snapshot.exists())throw Error('Bargain not found.');
+        const deal=snapshot.data();
+        if(deal.characterId!==characterId||deal.ownerUid!==currentUser.uid)
+          throw Error('Only the proposing character may withdraw this offer.');
+        if(deal.status!=='pending')throw Error('This offer has already been resolved.');
+        transaction.update(ref,{status:'cancelled',resolvedAt:serverTimestamp(),resolvedBy:currentUser.uid});
+        return {status:'cancelled'};
+      });
+      return {ok:true,...result};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
   buyLiveShopItem: async function(campaignId,characterId,shopId,stockIndex,quantity=1,quote={}){
