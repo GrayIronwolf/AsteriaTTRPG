@@ -4,6 +4,7 @@ import { isManualNumber, manualNumber } from '../state/manualNumber.mjs';
 import { EmptyState, Modal, Panel, StatusPill } from '../components/WorkspaceUI.jsx';
 import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { inventoryItems } from './characterWorkspaceData.js';
+import {filterMerchantStockRows,filterInventoryNames} from '../state/inventoryPresentationModel.mjs';
 import { characterCurrencyCopper, merchantPriceCopper, shopVariantKey, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantTransactionPreview } from '../state/tradeExperienceModel.mjs';
 import { merchantStockHealth } from '../state/merchantInventoryModel.mjs';
@@ -42,8 +43,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     catch(error){setMessage(error.message||'Merchant offers are unavailable.');}
     return ()=>unsubscribe();
   },[campaignId,editable]);
-  const regions=merchantRegionOptions(shops);
-  const regionalShops=merchantsInRegion(shops,regionFilter);
+  const regions=useMemo(()=>merchantRegionOptions(shops),[shops]);
+  const regionalShops=useMemo(()=>merchantsInRegion(shops,regionFilter),[shops,regionFilter]);
   const selected=regionalShops.find(shop=>shop.id===selectedId)||regionalShops[0]||null;
   const travelling=merchantTravelState(selected)==='travelling';
   const visiting=merchantShopAvailable(selected,character?.id);
@@ -54,9 +55,13 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const balance=characterCurrencyCopper(character);
   const inventory=useMemo(()=>inventoryItems(character).filter(tradeable),[character]);
   const stock=arr(selected?.stock);
-  const searchText=search.trim().toLowerCase();
-  const filteredStock=stock.map((row,index)=>({...row,index})).filter(row=>String(row.item?.name||row.item?.title||'').toLowerCase().includes(searchText));
-  const filteredInventory=inventory.filter(item=>String(item.name||'').toLowerCase().includes(searchText));
+  // Search stays responsive without losing authoritative merchant stock indices.
+  const deferredSearch=React.useDeferredValue(search);
+  const filteredStock=useMemo(()=>filterMerchantStockRows(stock,deferredSearch),[stock,deferredSearch]);
+  const availableStock=useMemo(()=>filteredStock.filter(row=>Number(row.qty||0)>0),[filteredStock]);
+  const filteredInventory=useMemo(()=>filterInventoryNames(inventory,deferredSearch),[inventory,deferredSearch]);
+  const merchantDeals=useMemo(()=>deals.filter(deal=>deal.shopId===selected?.id)
+    .sort((a,b)=>Number(b.expiresAt||0)-Number(a.expiresAt||0)).slice(0,15),[deals,selected?.id]);
   useEffect(()=>{
     if(!requestedSale?.itemId||handledSaleToken.current===requestedSale.token)return;
     const merchant=shops.find(shop=>merchantShopAvailable(shop,character.id));
@@ -222,8 +227,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     </p>:null}
     <div className="react-merchant-columns">
       <section><h4>Buy from merchant</h4>
-        {filteredStock.filter(row=>Number(row.qty||0)>0).map(row=>renderRow('buy',row,row.index))}
-        {!filteredStock.some(row=>Number(row.qty||0)>0)?<EmptyState title="No matching shop stock" />:null}
+        {availableStock.map(row=>renderRow('buy',row,row.index))}
+        {!availableStock.length?<EmptyState title="No matching shop stock" />:null}
       </section>
       <section><h4>Sell from inventory</h4>
         {filteredInventory.map((item,index)=>renderRow('sell',item,index))}
@@ -231,7 +236,7 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
       </section>
     </div>
     <section className="react-merchant-deals"><h4>My merchant bargains</h4>
-      {deals.filter(deal=>deal.shopId===selected.id).slice().sort((a,b)=>Number(b.expiresAt||0)-Number(a.expiresAt||0)).slice(0,15).map(deal=>
+      {merchantDeals.map(deal=>
         <article key={deal.id} className="react-merchant-stock-row">
           <div className="react-merchant-stock-info"><b>{deal.quantity} × {deal.stockItemName}</b>
             <small>{Number(deal.offeredCopper||0).toLocaleString()} copper{deal.barterItemId?' + '+deal.barterQuantity+' × '+deal.barterItemName:''}</small>
