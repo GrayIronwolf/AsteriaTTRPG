@@ -110,7 +110,7 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
 export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customItems=[],editable=false}){
   const stashes=arr(partyLoot.stashes);
   const revealed=arr(partyLoot.loot);
-  const hidden=arr(partyLoot.drafts).filter(row=>row.visibility==='hidden'&&row.status==='available');
+
   const [stashName,setStashName]=useState(''),[stashKind,setStashKind]=useState('stash');
   const [newTitle,setNewTitle]=useState(''),[newSource,setNewSource]=useState('');
   const [newNote,setNewNote]=useState(''),[dropKind,setDropKind]=useState('item');
