@@ -4011,3 +4011,16 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media(max-width:490px){
   .react-crafting-material-editor {grid-template-columns:minmax(0,1fr)}
 }
+
+/* Phase 11.2: enchantments reuse the responsive crafting editor layout. */
+.react-crafting-workspace .react-crafting-recipe-editor>p {line-height:1.55;margin:6px 0;}
+.react-crafting-workspace .react-crafting-recipe-editor
+  input[type="checkbox"] {width:auto;min-height:unset;vertical-align:middle;margin-right:8px;}
+.react-crafting-workspace .react-crafting-recipe-list
+  select {width:100%;min-height:44px;box-sizing:border-box;}
+.react-crafting-workspace .react-crafting-recipe-list
+  label {display:grid;gap:6px;min-width:0;}
+.react-crafting-workspace .react-crafting-recipe-list
+  .react-crafting-recipe-requirements {overflow-wrap:anywhere;}
+.react-crafting-workspace .react-crafting-recipe-list
+  .react-storage-warning {margin:0;overflow-wrap:anywhere;}
