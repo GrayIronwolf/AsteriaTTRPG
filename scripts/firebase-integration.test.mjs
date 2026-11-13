@@ -2508,7 +2508,7 @@ test('Phase 5.1: GM currency distribution pays exact shares with owner mirrors, 
   for(const [id,uid,extra] of [['a','alice',3],['b','bob',2]]){
     const current=(await db.doc('campaigns/c/characters/'+id).get()).data();
     const privateOwner=(await db.doc('users/'+uid+'/characters/'+id).get()).data();
-    assert.equal(current.coins.copper,100+extra);
+    assert.equal((current.coins.copper||0)+(current.coins.silver||0)*100+(current.coins.gold||0)*10000,100+extra);
     assert.deepEqual(privateOwner.coins,current.coins);
   }
   const replay=await action('gm','splitPartyLootCurrency',['c','a',{lootId:'treasure-copper',recipientIds:ids}],'split-1');
