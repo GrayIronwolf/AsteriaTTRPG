@@ -3759,3 +3759,47 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-inventory-action-hub {padding:10px;}
   .react-inventory-action-hub-links button {min-height:68px;padding:8px;}
 }
+
+/* Phase 8.2 — quick navigation to existing GM-only inventory and economy panels. */
+.react-gm-trade-hub {
+  display:grid;gap:12px;min-width:0;margin:0 0 14px;padding:14px;
+  border:1px solid rgba(133,170,197,.35);border-radius:10px;
+  background:linear-gradient(140deg,rgba(19,39,54,.83),rgba(7,17,25,.88));
+}
+.react-gm-trade-hub-heading {
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;
+}
+.react-gm-trade-hub-heading h3 {margin:0;font-size:1rem;}
+.react-gm-trade-hub-heading p {
+  margin:4px 0 0;color:var(--asteria-text-muted,#a0adbb);font-size:.78rem;
+}
+.react-gm-trade-hub-heading > span {
+  color:var(--asteria-text-muted,#a0adbb);font-size:.76rem;
+}
+.react-gm-trade-hub-links {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.react-gm-trade-hub-links button {
+  display:grid;align-content:center;gap:5px;text-align:left;
+  min-width:0;min-height:72px;padding:10px;
+  border:1px solid rgba(143,176,195,.34);border-radius:7px;
+  background:rgba(6,19,28,.66);color:inherit;cursor:pointer;
+}
+.react-gm-trade-hub-links button:hover,
+.react-gm-trade-hub-links button:focus-visible {
+  border-color:rgba(176,208,230,.8);background:rgba(25,51,67,.78);
+}
+.react-gm-trade-hub-links strong {font-size:.84rem;}
+.react-gm-trade-hub-links span {font-size:.72rem;color:var(--asteria-text-muted,#a0adbb);}
+#react-gm-party-loot,#react-gm-inventory-audit,#react-gm-shops,#react-gm-loot-tables {
+  scroll-margin-top:96px;min-width:0;
+}
+#react-gm-party-loot:focus,#react-gm-inventory-audit:focus,
+#react-gm-shops:focus,#react-gm-loot-tables:focus {outline:none;}
+@media(max-width:900px) {
+  .react-gm-trade-hub-links {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:420px) {
+  .react-gm-trade-hub {padding:10px;}
+  .react-gm-trade-hub-links button {min-height:68px;padding:8px;}
+}
