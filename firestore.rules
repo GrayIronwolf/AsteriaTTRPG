@@ -359,6 +359,22 @@ service cloud.firestore {
            resource.data.ownerUid == request.auth.uid);
         allow create, update, delete: if false;
       }
+      // Phase 11.1: published GM recipes may be viewed by campaign players;
+      // drafts are GM only and no client may alter recipe definitions.
+      match /craftingRecipes/{recipeId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) &&
+           resource.data.status == 'published');
+        allow create, update, delete: if false;
+      }
+      // Crafting requests expose only the submitter's requirements and status.
+      // GM approval and inventory settlement are trusted server transactions.
+      match /craftingRequests/{requestId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) &&
+           resource.data.ownerUid == request.auth.uid);
+        allow create, update, delete: if false;
+      }
       // Phase 6.1: weighted loot tables are private to campaign GMs.
       // All changes and previews execute through authenticated server actions.
       match /lootTables/{tableId} {

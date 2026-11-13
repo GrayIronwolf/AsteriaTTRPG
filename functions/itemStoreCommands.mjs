@@ -6,6 +6,7 @@ import {merchantStockIdentity,validateRestockPolicy,merchantRestockPlan,MAX_MERC
 import {moveMerchantOnRoute,merchantTravelState,normalizeMerchantRoute,MAX_MERCHANT_TRAVEL_HISTORY} from '../src/state/merchantTravelModel.mjs';
 import {merchantRelationshipId,updateMerchantRelationship,validateMerchantOpportunity} from '../src/state/merchantRelationshipModel.mjs';
 import {isLinkedCharacter} from './characterPermissions.mjs';
+import {normalizeCraftingRecipe} from '../src/state/craftingRecipeModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -172,6 +173,35 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           return updated;
         });
         return {ok:true,relationship:saved};
+      }catch(error){return {ok:false,error:error.message||String(error)};}
+    },
+    // Campaign recipes are public only when deliberately published by a GM.
+    // Legacy free-text GM crafting notes stay untouched in the GM workspace.
+    manageCampaignCraftingRecipe:async(campaignId,_scope,action={})=>{
+      try{
+        if(!['save','delete'].includes(action.type))
+          throw Error('Choose save or delete for a crafting recipe.');
+        const recipeId=String(action.recipeId||action.recipe?.id||
+          (action.type==='save'?'recipe-'+requestId:''));
+        if(!id(recipeId))throw Error('Choose a valid recipe identifier.');
+        const value=await runTransaction(db,async tx=>{
+          await gm(tx,campaignId);
+          const ref=doc(db,'campaigns',campaignId,'craftingRecipes',recipeId);
+          const previousSnap=await tx.get(ref);
+          if(action.type==='delete'){
+            if(!exists(previousSnap))throw Error('The recipe was already removed.');
+            tx.delete(ref);
+            return {id:recipeId,status:'deleted'};
+          }
+          const previous=exists(previousSnap)?previousSnap.data():{};
+          const recipe=normalizeCraftingRecipe(action.recipe||{},recipeId,previous);
+          recipe.createdAt=previous.createdAt||Date.now();
+          if(JSON.stringify(recipe).length>18000)
+            throw Error('This recipe definition is too large.');
+          tx.set(ref,{...recipe,updatedAt:serverTimestamp(),updatedBy:currentUser.uid});
+          return recipe;
+        });
+        return {ok:true,recipe:value};
       }catch(error){return {ok:false,error:error.message||String(error)};}
     },
     // One trusted write per shop, not the old monolithic itemEcosystem.shops array.

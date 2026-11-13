@@ -3145,3 +3145,103 @@ test('Phase 10.3: merchant standing owner-scoped query returns only own records'
   assert.equal(bobRows.size,1);
   await assertFails(getDocs(collection(user('alice'),'campaigns/c/merchantRelationships')));
 });
+
+
+test('Phase 11.1: GM recipe publication and owner-scoped player request are server-only',async()=>{
+  const recipeId='ore-blade';
+  const payload={
+    name:'Iron Blade',description:'Forge one iron blade',status:'draft',
+    materials:[{name:'Iron Ore',itemCode:'07-03-001-001',quantity:2}],
+    output:{name:'Iron Blade',itemCode:'07-09-001-002',type:'Weapon',quantity:1}
+  };
+  const unauthorized=await action('alice','manageCampaignCraftingRecipe',['c','a',{
+    type:'save',recipeId,recipe:{...payload,status:'published'}
+  }]);
+  assert.equal(unauthorized.ok,false);
+  const saved=await action('gm','manageCampaignCraftingRecipe',['c','gm-scope',{
+    type:'save',recipeId,recipe:payload
+  }]);
+  assert.equal(saved.ok,true,saved.error);
+  const recipeRef='campaigns/c/craftingRecipes/'+recipeId;
+  await assertFails(getDoc(doc(user('alice'),recipeRef)));
+  const missing=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(missing.ok,false);
+  const published=await action('gm','manageCampaignCraftingRecipe',['c','gm-scope',{
+    type:'save',recipeId,recipe:{...payload,status:'published'}
+  }]);
+  assert.equal(published.ok,true,published.error);
+  await assertSucceeds(getDoc(doc(user('alice'),recipeRef)));
+  await assertFails(updateDoc(doc(user('alice'),recipeRef),{status:'draft'}));
+  const poor=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(poor.ok,false);
+  const ore={id:'ore',instanceId:'ore',name:'Iron Ore',definitionId:'07-03-001-001',
+    qty:3,storageId:'bag',storageSlot:1,identified:true,equipped:false};
+  for(const uid of ['alice']){
+    await db.doc('campaigns/c/characters/a').update({inventory:[...sheet('a',uid).inventory,ore]});
+    await db.doc('users/alice/characters/a').update({inventory:[...sheet('a',uid).inventory,ore]});
+  }
+  const proposed=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(proposed.ok,true,proposed.error);
+  const requestId=proposed.request.id;
+  const requestRef='campaigns/c/craftingRequests/'+requestId;
+  await assertSucceeds(getDoc(doc(user('alice'),requestRef)));
+  await assertFails(getDoc(doc(user('bob'),requestRef)));
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(before.inventory.find(row=>row.id==='ore').qty,3,
+    'Craft request must not reserve or consume ingredients');
+  assert.equal((await action('alice','reviewCraftingRequest',['c','a',requestId,'approve'])).ok,false);
+  const approve=await action('gm','reviewCraftingRequest',['c','gm-scope',requestId,'approve']);
+  assert.equal(approve.ok,true,approve.error);
+  const after=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(after.inventory.find(row=>row.id==='ore').qty,1);
+  assert.ok(after.inventory.some(row=>row.name==='Iron Blade'));
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,after.inventory);
+  assert.equal((await db.doc(requestRef).get()).data().status,'approved');
+  assert.equal((await action('gm','reviewCraftingRequest',['c','gm-scope',requestId,'approve'])).ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory
+    .find(row=>row.id==='ore').qty,1);
+});
+test('Phase 11.1: GM rejection does not consume materials and changed recipe cannot settle',async()=>{
+  const recipeId='iron-plate',payload={name:'Iron Plate',description:'',
+    status:'published',materials:[{name:'Sword',itemCode:'',quantity:1}],
+    output:{name:'Iron Plate',type:'Item',quantity:1}};
+  assert.equal((await action('gm','manageCampaignCraftingRecipe',['c','gm-scope',{
+    type:'save',recipeId,recipe:payload
+  }])).ok,true);
+  const first=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(first.ok,true,first.error);
+  const reject=await action('gm','reviewCraftingRequest',['c','gm-scope',first.request.id,'reject']);
+  assert.equal(reject.ok,true,reject.error);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory[0].qty,2);
+  const second=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(second.ok,true,second.error);
+  const updated=await action('gm','manageCampaignCraftingRecipe',['c','gm-scope',{
+    type:'save',recipeId,recipe:{...payload,materials:[{name:'Sword',quantity:2}]}
+  }]);
+  assert.equal(updated.ok,true,updated.error);
+  const stale=await action('gm','reviewCraftingRequest',['c','gm-scope',second.request.id,'approve']);
+  assert.equal(stale.ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().inventory[0].qty,2);
+  assert.equal((await db.doc('campaigns/c/craftingRequests/'+second.request.id).get()).data().status,'pending');
+});
+test('Phase 11.1: published recipe and crafting request queries enforce GM and owner visibility',async()=>{
+  const recipeId='wood-plank',recipe={name:'Wood Plank',description:'',
+    status:'published',materials:[{name:'Sword',quantity:1}],
+    output:{name:'Wood Plank',quantity:1}};
+  assert.equal((await action('gm','manageCampaignCraftingRecipe',['c','gm-scope',{
+    type:'save',recipeId,recipe
+  }])).ok,true);
+  const queryRecipes=query(collection(user('alice'),'campaigns/c/craftingRecipes'),
+    where('status','==','published'));
+  const records=await assertSucceeds(getDocs(queryRecipes));
+  assert.equal(records.size,1);
+  await assertFails(getDocs(collection(user('alice'),'campaigns/c/craftingRecipes')));
+  const req=await action('alice','requestCraftingRecipe',['c','a',recipeId]);
+  assert.equal(req.ok,true,req.error);
+  const own=await assertSucceeds(getDocs(query(
+    collection(user('alice'),'campaigns/c/craftingRequests'),where('ownerUid','==','alice'))));
+  assert.equal(own.size,1);
+  await assertFails(getDocs(collection(user('bob'),'campaigns/c/craftingRequests')));
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/craftingRequests/'+req.request.id),
+    {status:'approved'}));
+});

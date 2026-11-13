@@ -17,6 +17,7 @@ import { useOwnedCharacterData } from '../sessions/useOwnedCharacterData.js';
 import { mirrorCharacterSnapshot, openLegacyView } from '../app/legacyBridge.js';
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
+import {PlayerCraftingRecipes} from './CraftingRecipeWorkspace.jsx';
 import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import { CombatDashboardLayout, useCombatPanel } from './CombatPanel.jsx';
@@ -38,6 +39,7 @@ const CHARACTER_TABS = [
   { id: 'skills', label: 'Skills', icon: 'skills' },
   { id: 'spells', label: 'Spells', icon: 'spells' },
   { id: 'inventory', label: 'Inventory', icon: 'inventory' },
+  { id: 'crafting', label: 'Crafting', icon: 'inventory' },
   { id: 'quest', label: 'Quests', icon: 'quest' },
   { id: 'information', label: 'News / Events / History', icon: 'journal' },
   { id: 'journal', label: 'Journal', icon: 'journal' },
@@ -149,7 +151,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     setNoticeError('');
   },[campaignId,characterId]);
   useEffect(()=>{
-    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party'].includes(event.detail?.tab)))setTab(event.detail.tab);};
+    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting'].includes(event.detail?.tab)))setTab(event.detail.tab);};
     window.addEventListener('asteria:open-character-tab',openTab);
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[campaignId]);
@@ -190,7 +192,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!campaignId && !isOwner) return <div className="react-route-state" role="alert">Only the owner can view this unassigned character.</div>;
   if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
-  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party'].includes(item.id));
+  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting'].includes(item.id));
   const activeTab = resolveDashboardTab(tabs, tab);
   const navigate=next=>{if(tabs.some(item=>item.id===next))setTab(next);else window.toast?.('Link this character to a campaign to view campaign information.');};
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
@@ -208,6 +210,8 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'talents' ? <TalentsTab campaignId={campaignId} character={character} editable={editable} characters={live.characters} encounter={live.encounter} /> : null}
     {activeTab === 'skills' ? <SkillsTab clock={{encounter:live.encounter,now:live.clock}} campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'spells' ? <SpellsTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {activeTab === 'crafting' && campaignId ? <PlayerCraftingRecipes
+      campaignId={campaignId} character={character} editable={editable}/> : null}
     {activeTab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} events={live.events} partyLoot={live.partyLoot} /> : null}
     {['information','quest'].includes(activeTab) ? <PlayerInformation key={`${character.id}-${activeTab}`} campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} events={live.events} editable={editable} isOwner={isOwner} initialTab={activeTab==='quest'?'quests':'news'}/> : null}
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
