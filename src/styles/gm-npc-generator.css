@@ -1,0 +1,38 @@
+/* Digital GM Toolkit 3.2: NPC generator inside the existing GM library. */
+.react-gm-dashboard .react-gm-npc-generator{
+  display:grid;gap:16px;padding:clamp(14px,2vw,25px);min-width:0;
+  border:1px solid #ad9a76;background:linear-gradient(145deg,#20394d,#102435);
+  color:#dce8ef;
+}
+.react-gm-generator-header{display:flex;flex-wrap:wrap;align-items:start;justify-content:space-between;gap:12px;}
+.react-gm-generator-header h3{font:500 1.3rem/1.3 var(--asteria-font-display,Georgia,serif);margin:0 0 7px;color:#f0debb;}
+.react-gm-generator-header p,.react-gm-generator-hint{margin:0;max-width:75ch;color:#c0d1dc;font-size:.83rem;line-height:1.5;}
+.react-gm-generator-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.react-gm-generator-options label,.react-gm-generator-fields label{
+  display:grid;gap:6px;min-width:0;font-size:.81rem;color:#dbe8f1;
+}
+.react-gm-generator-options select,.react-gm-generator-fields input:not([type="checkbox"]),.react-gm-generator-fields textarea{
+  box-sizing:border-box;width:100%;min-height:43px;padding:9px 12px;
+  background:#081d2c;border:1px solid #7491a4;border-radius:3px;color:#eff7f9;font:inherit;
+}
+.react-gm-generator-fields textarea{resize:vertical;}
+.react-gm-generator-actions,.react-gm-generator-field-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;}
+.react-gm-generator-preview{display:grid;gap:15px;border-top:1px solid #758c99;padding-top:18px;}
+.react-gm-generator-preview h4{font:500 1.1rem/1.3 var(--asteria-font-display,Georgia,serif);color:#efdfc3;margin:0;}
+.react-gm-generator-context{font-size:.79rem;color:#b8d3e0;margin:0;overflow-wrap:anywhere;}
+.react-gm-generator-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;min-width:0;}
+.react-gm-generator-field{display:grid;gap:8px;min-width:0;}
+.react-gm-generator-field-actions{justify-content:space-between;}
+.react-gm-generator-field-actions label{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;}
+.react-gm-generator-field-actions input{width:16px;height:16px;accent-color:#d5b981;}
+.react-gm-generator-field-actions button{min-height:37px;font-size:.76rem;}
+.react-gm-generator-fields>label:last-child{grid-column:1/-1;}
+.react-gm-generator-feedback{color:#d1e5ef;font-size:.81rem;min-height:1.2em;margin:0;}
+.react-gm-npc-generator :is(button,input,select,textarea):focus-visible{outline:2px solid #bcefff;outline-offset:3px;}
+@media(max-width:1000px){.react-gm-generator-options{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:680px){
+  .react-gm-generator-options,.react-gm-generator-fields{grid-template-columns:minmax(0,1fr);}
+  .react-gm-generator-fields>label:last-child{grid-column:1;}
+  .react-gm-generator-actions button{flex:1 1 140px;}
+}
+@media(prefers-reduced-motion:reduce){.react-gm-npc-generator button{transition:none!important;}}
