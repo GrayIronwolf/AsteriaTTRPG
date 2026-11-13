@@ -1,0 +1,34 @@
+name: Build Digital GM Phase 5.3 shop integration
+on:
+  push:
+    branches: [feat/digital-gm-phase5-3-shop-integration]
+permissions:
+  contents: write
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/digital-gm-phase5-3-shop-integration
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/digital-gm-phase5-3.test.mjs
+      - run: npm run lint
+      - run: npm run build
+      - name: Commit production assets
+        shell: bash
+        run: |
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "No bundle changes"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Build Phase 5.3 website bundle"
+            git push origin HEAD:feat/digital-gm-phase5-3-shop-integration
+          fi
