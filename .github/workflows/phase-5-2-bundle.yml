@@ -1,0 +1,30 @@
+name: Phase 5.2 website bundle synchronization
+on:
+  push:
+    branches:
+      - feat/inventory-phase-5-2-interactive-npc-merchants
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit generated bundle to phase branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add react-dist
+          if ! git diff --cached --quiet; then
+            git commit -m "build(phase 5.2): synchronize generated website bundle"
+            git push origin HEAD:feat/inventory-phase-5-2-interactive-npc-merchants
+          fi
