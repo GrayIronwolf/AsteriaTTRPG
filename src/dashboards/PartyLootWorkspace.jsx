@@ -1,11 +1,12 @@
 import React,{useMemo,useState} from 'react';
-import {EmptyState,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
+import {EmptyState,Modal,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 import {ManualNumberInput} from '../components/ManualNumberInput.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {normalizeCharacterStorages} from '../state/liveWorkspaceModel.mjs';
 import {splitPartyCopper} from '../state/partyLootModel.mjs';
 import {playerStashItems,playerAvailableLoot,gmVisibleStashes,gmLootReviewRows} from '../state/partyLootViewModel.mjs';
+import {lootDestinationOptions,lootEquipmentComparison} from '../state/lootCollectionModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const validQty=value=>Number.isSafeInteger(Number(value))&&Number(value)>0&&Number(value)<=1000000;
@@ -34,6 +35,10 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
   const [sharedItemId,setSharedItemId]=useState('');
   const [quantity,setQuantity]=useState('1');
   const [destination,setDestination]=useState('');
+  const [selectedLootId,setSelectedLootId]=useState('');
+  const [lootDestination,setLootDestination]=useState('');
+  const [lootBusy,setLootBusy]=useState(false);
+  const [lootMessage,setLootMessage]=useState('');
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const stash=stashes.find(row=>row.id===selectedStash)||stashes[0];
   const item=stored.find(row=>row.id===itemId)||stored[0];
@@ -41,6 +46,44 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
   const shared=arr(stash?.items).find(row=>
     row.id===(visibleSharedItems.some(item=>item.id===sharedItemId)?sharedItemId:visibleSharedItems[0]?.id));
   const storage=storages.find(row=>row.id===destination)||storages[0];
+  const playerItems=useMemo(()=>inventoryItems(character),[character]);
+  const lootDestinations=useMemo(()=>lootDestinationOptions(storages,playerItems),[storages,playerItems]);
+  const selectedLoot=drops.find(row=>row.id===selectedLootId)||null;
+  const selectedLootStorage=lootDestinations.find(row=>row.id===lootDestination)||lootDestinations[0];
+  const lootComparison=useMemo(()=>
+    selectedLoot?.kind==='item'
+      ?lootEquipmentComparison(selectedLoot.item,character,playerItems)
+      :null,[selectedLoot,character,playerItems]);
+  const openLoot=drop=>{
+    if(drop?.kind!=='item')return;
+    setLootDestination(storage?.id||lootDestinations[0]?.id||'');
+    setLootMessage('');
+    setSelectedLootId(drop.id);
+  };
+  const closeLoot=()=>{
+    if(lootBusy)return;
+    setSelectedLootId('');
+    setLootMessage('');
+  };
+  const collectLoot=async()=>{
+    if(lootBusy||!editable||!selectedLoot||!selectedLootStorage||!character?.id)return;
+    const lootId=selectedLoot.id,storageId=selectedLootStorage.id;
+    setLootBusy(true);
+    setLootMessage('Checking this treasure and destination with the server...');
+    try{
+      const response=await firebaseService.claimPartyLoot(campaignId,character.id,{lootId,storageId});
+      if(response?.ok){
+        setLootMessage('');
+        setSelectedLootId('');
+        setMessage('Treasure collected. Inventory changes will synchronize shortly.');
+      }else{
+        setLootMessage(response?.error||'Claim could not be confirmed. Refresh party treasure before retrying.');
+      }
+    }catch(error){
+      setLootMessage((error?.message||'Claim could not be confirmed.')+
+        ' Check your inventory and the shared treasure before retrying.');
+    }finally{setLootBusy(false);}
+  };
   const send=async executor=>{
     if(busy||!editable)return;
     setBusy(true);setMessage('Processing shared inventory action...');
@@ -61,6 +104,64 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
     }));
   };
   return <section className="react-party-loot-workspace">
+    {selectedLoot?.kind==='item'?<Modal
+      title={selectedLoot.item.name}
+      eyebrow="Inspect & Collect Revealed Treasure"
+      busy={lootBusy}
+      onClose={closeLoot}
+      footer={<div className="react-modal-actions">
+        <button type="button" disabled={lootBusy} onClick={closeLoot}>Close</button>
+        <button type="button" className="primary"
+          disabled={!editable||lootBusy||!selectedLootStorage}
+          onClick={collectLoot}>Claim to {selectedLootStorage?.name||'Storage'}</button>
+      </div>}
+    >
+      <div className="react-party-loot-inspection">
+        <p className="react-party-loot-inspection-subtitle">{selectedLoot.title} · {selectedLoot.source}</p>
+        <div className="react-party-loot-inspection-item">
+          <div className="react-party-loot-inspection-emblem" aria-hidden="true">
+            {String(selectedLoot.item.name||'?').charAt(0)}
+          </div>
+          <div>
+            <strong>{selectedLoot.item.name} ×{selectedLoot.item.qty}</strong>
+            <span>{selectedLoot.item.identified===false?'Unidentified treasure':[
+              selectedLoot.item.type||'Item',selectedLoot.item.rarity||''
+            ].filter(Boolean).join(' · ')}</span>
+            {selectedLoot.item.identified!==false&&selectedLoot.item.description?
+              <p>{selectedLoot.item.description}</p>:null}
+          </div>
+        </div>
+        {selectedLoot.item.identified===false?
+          <p className="react-help">Its true identity and properties have not been discovered.</p>:null}
+        {lootComparison?.available?<section className="react-party-loot-comparison" aria-label="Equipment comparison">
+          <h3>Equipment Comparison</h3>
+          <p><b>{lootComparison.slot}</b> · Currently: {lootComparison.currentName}</p>
+          {lootComparison.acEstimate?<p>Armour Class: <b>{lootComparison.acEstimate.current}</b>
+            {' → '}<b>{lootComparison.acEstimate.projected}</b>
+            {' ('}{lootComparison.acEstimate.delta>=0?'+':''}{lootComparison.acEstimate.delta}{')'}</p>:null}
+          <small>{lootComparison.notice}</small>
+        </section>:null}
+        <section className="react-party-loot-collection" aria-label="Treasure storage destination">
+          <h3>Collect into Storage</h3>
+          <p>Choose where this item should go. Capacity is a preview; the server verifies the final transaction.</p>
+          {lootDestinations.length?<label>Destination
+            <select value={selectedLootStorage?.id||''} disabled={lootBusy}
+              onChange={event=>setLootDestination(event.target.value)}>
+              {lootDestinations.map(option=><option value={option.id} key={option.id}>
+                {option.name} · {option.used}/{option.capacity} slots
+              </option>)}
+            </select>
+          </label>:<p className="react-storage-warning">No character inventory containers available.</p>}
+          {selectedLootStorage?<p>
+            <b>{selectedLootStorage.free}</b> visible free slots out of {selectedLootStorage.capacity}
+            {selectedLootStorage.overflow?' · '+selectedLootStorage.overflow+' overflow stacks':''}
+            {selectedLootStorage.full?' · Full; matching stack merge may still be possible.':''}
+          </p>:null}
+        </section>
+        {!editable?<p className="react-storage-warning">Collecting treasure requires an active, editable campaign session.</p>:null}
+        {lootMessage?<p role="status" aria-live="polite">{lootMessage}</p>:null}
+      </div>
+    </Modal>:null}
     <Panel title="Party Stash & Treasure" eyebrow="Shared Campaign Inventory" action={<StatusPill>{stashes.length} containers · {drops.length} drops</StatusPill>}>
       <p className="react-help">Shared containers are synchronized across your party. Select items and use buttons to deposit or withdraw; dragging is not required.</p>
       {stashes.length?<><div className="react-form-grid"><label>Party container<select value={stash?.id||''} onChange={event=>{setSelectedStash(event.target.value);setSharedItemId('');}}>{stashes.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
@@ -94,9 +195,21 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
         </select></label>
       </div>
       <div className="react-party-loot-list">
-        {drops.map(drop=><article key={drop.id}><div><b>{drop.title}</b><small>{drop.source} · {labels[drop.kind]||'Loot'}</small>{drop.note?<p>{drop.note}</p>:null}
-          <strong>{drop.kind==='currency'?Number(drop.currencyCopper).toLocaleString()+' Copper':named(drop.item)+' ×'+(drop.item?.qty||1)}</strong></div>
-          {drop.kind==='item'?<button type="button" disabled={!editable||busy||!storage} onClick={()=>send(()=>firebaseService.claimPartyLoot(campaignId,character.id,{lootId:drop.id,storageId:storage?.id}))}>Claim to {storage?.name||'Storage'}</button>:<small>Awaiting GM currency distribution</small>}
+        {drops.map(drop=><article key={drop.id} className="react-party-loot-collect-card">
+          <div className="react-party-loot-collect-heading">
+            <span className="react-party-loot-collect-emblem" aria-hidden="true">
+              {drop.kind==='currency'?'C':String(drop.item?.name||'?').charAt(0)}
+            </span>
+            <div><b>{drop.title}</b><small>{drop.source} · {labels[drop.kind]||'Loot'}</small>
+              {drop.note?<p>{drop.note}</p>:null}
+            </div>
+          </div>
+          <strong>{drop.kind==='currency'?Number(drop.currencyCopper).toLocaleString()+' Copper':named(drop.item)+' ×'+(drop.item?.qty||1)}</strong>
+          {drop.kind==='item'?<div className="react-party-loot-collect-actions">
+            <button type="button" onClick={()=>openLoot(drop)}>Inspect Item</button>
+            <button type="button" className="primary" onClick={()=>openLoot(drop)}
+              disabled={!editable||lootBusy||!lootDestinations.length}>Collect Item</button>
+          </div>:<small>Awaiting GM currency distribution</small>}
         </article>)}
         {!drops.length?<EmptyState title="No matching available treasure">
           {lootSearch||lootKind!=='all'?'Clear the filters to see other revealed treasure.':'New treasure appears here when the GM reveals it.'}

@@ -1,5 +1,6 @@
 // Phase 8.3: read-only search and queue selectors for existing party stash/loot data.
 // Player projections intentionally omit private fields and never inspect GM drafts.
+import {safePlayerLootItem} from './lootCollectionModel.mjs';
 const list=value=>Array.isArray(value)?value:[];
 const searchText=value=>String(value??'').trim().toLocaleLowerCase();
 const contains=(value,query)=>searchText(value).includes(query);
@@ -33,10 +34,7 @@ export function playerAvailableLoot(partyLoot={}, {search='',kind='all'}={}){
       note:drop.note||'',
       kind:drop.kind,
       ...(drop.kind==='currency'?{currencyCopper:drop.currencyCopper}:{
-        item:{
-          name:nameForPlayer(drop.item),
-          qty:drop.item?.qty||1
-        }
+        item:safePlayerLootItem(drop.item)
       })
     }));
 }
