@@ -27,6 +27,7 @@ import { resourcePair, soulDamageValue, soulHealingCap } from '../state/specialD
 import { buildSpellbookItem, normalizeSpellCompendiumEntries } from '../state/spellbookModel.mjs';
 import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, GameplayWorkspace, NotesWorkspace, QuestWorkspace, WorldWorkspace } from './GMWorkspacePanels.jsx';
 import { GMRewardTools } from './GMRewardTools.jsx';
+import { GMPartyLootPanel } from './PartyLootWorkspace.jsx';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
@@ -682,7 +683,7 @@ export function GMDashboard({ campaignId }) {
       </Panel>
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
-    {tab === 'inventory' ? <PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></>}/> : null}
+    {tab === 'inventory' ? <PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></>}/> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
