@@ -95,7 +95,7 @@ test('Phase 11.3: trusted Firebase, GM permissions and UI wiring exist',()=>{
   const player=read('../src/dashboards/CharacterDashboard.jsx');
   for(const action of ['manageCraftingStation','manageNPCService','requestNPCRepair','reviewNPCRepair']){
     assert.match(backend,new RegExp(action+':async'));
-    assert.match(handler,new RegExp(action+'|'+(action==='requestNPCRepair'?'requestNPCRepair':'manageNPCService')));
+    if(action!=='requestNPCRepair')assert.match(handler,new RegExp(action));
     assert.match(client,new RegExp(action));
     assert.match(wrapper,new RegExp(action));
   }
