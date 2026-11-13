@@ -15,7 +15,7 @@ export const INVENTORY_ACTIVITY_CATEGORIES=Object.freeze([
 ]);
 
 const GROUPS=Object.freeze({
-  loot:Object.freeze(['loot-reward','loot-received','party-loot-claimed']),
+  loot:Object.freeze(['loot-reward','loot-received','party-loot-claimed','party-loot-vote','party-loot-awarded']),
   trade:Object.freeze([
     'item-received','item-given','item-trade','trade-completed',
     'item-give-requested','item-trade-requested','item-identify-requested',

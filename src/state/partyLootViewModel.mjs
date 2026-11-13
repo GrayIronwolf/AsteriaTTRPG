@@ -33,6 +33,7 @@ export function playerAvailableLoot(partyLoot={}, {search='',kind='all'}={}){
       source:drop.source||'Campaign',
       note:drop.note||'',
       kind:drop.kind,
+      ...(drop.kind==='item'&&drop.distribution?.status==='open'?{distribution:{status:'open',roundId:String(drop.distribution.roundId||''),tally:drop.distribution.tally||{}}}:{}),
       ...(drop.kind==='currency'?{currencyCopper:drop.currencyCopper}:{
         item:safePlayerLootItem(drop.item)
       })
@@ -69,4 +70,18 @@ export function gmLootReviewRows(partyLoot={}, {search='',kind='all',status='all
       .filter(drop=>status==='all'||drop?.status===status)
       .filter(matches)
   };
+}
+
+
+export function playerAwardedLoot(partyLoot={}){
+  return list(partyLoot?.loot)
+    .filter(drop=>drop?.kind==='item'&&drop.visibility==='revealed'&&
+      drop.status==='claimed'&&drop.distribution?.status==='awarded')
+    .slice(-20).reverse()
+    .map(drop=>({
+      id:drop.id,
+      title:String(drop.title||'Treasure').slice(0,160),
+      itemName:nameForPlayer(drop.item),
+      winnerCharacterId:String(drop.claimedByCharacterId||'')
+    }));
 }

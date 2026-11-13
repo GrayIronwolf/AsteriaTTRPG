@@ -1,4 +1,5 @@
 import {isLinkedCharacter} from './characterPermissions.mjs';
+import {startLootDistribution,castLootChoice,lootVoteTally,awardLootDistribution} from '../src/state/partyLootDistributionModel.mjs';
 import {validateGMRewardPayload} from '../src/state/gmRewardModel.mjs';
 import {
   PARTY_STASH_MAX_ITEMS,PARTY_LOOT_MAX_COPPER,validatePartyStash,validatePartyLootDrop,
@@ -79,12 +80,71 @@ export function createPartyLootCommands(context,helpers){
     managePartyLootDrop:async(campaignId,_scope,action={})=>result(async tx=>{
       await requireCampaignGM(tx,campaignId);
       const type=String(action.type||'');
-      if(!['create','reveal','cancel'].includes(type))throw Error('Choose a valid loot drop action.');
+      if(!['create','reveal','cancel','start-distribution','cancel-distribution','award-distribution'].includes(type))throw Error('Choose a valid loot drop action.');
       const lootId=requireId(String(action.lootId||(type==='create'?'party-loot-'+requestId:'')),'loot drop');
       const publicRef=lootRef(campaignId,lootId),privateRef=draftRef(campaignId,lootId);
       const [publicSnapshot,privateSnapshot]=await Promise.all([tx.get(publicRef),tx.get(privateRef)]);
       const visible=exists(publicSnapshot)?publicSnapshot.data():null;
       const hidden=exists(privateSnapshot)?privateSnapshot.data():null;
+      if(['start-distribution','cancel-distribution','award-distribution'].includes(type)){
+        await requireLiveSession(tx,campaignId);
+        if(!visible||visible.kind!=='item'||visible.status!=='available'||visible.visibility!=='revealed')
+          throw Error('Choose an available revealed item.');
+        // Every revealed item has a private draft, including the canonical item
+        // for unidentified loot. Never create an unsigned or altered secret draft.
+        if(!hidden||hidden.status!=='available'||hidden.visibility!=='revealed')
+          throw Error('Private loot record unavailable. Distribution cannot begin.');
+        if(type==='start-distribution'){
+          const distribution=startLootDistribution(visible);
+          const privateDistribution={...distribution,roundId:requestId,startedBy:currentUser.uid,
+            startedAt:serverTimestamp()};
+          tx.update(privateRef,{distribution:privateDistribution,updatedAt:serverTimestamp()});
+          tx.update(publicRef,{distribution:{status:'open',roundId:requestId,tally:lootVoteTally(distribution)},
+            updatedAt:serverTimestamp()});
+          return {lootId,status:'open'};
+        }
+        if(hidden.distribution?.status!=='open'||visible.distribution?.status!=='open')
+          throw Error('This party distribution is not open.');
+        if(type==='cancel-distribution'){
+          tx.update(privateRef,{distribution:{status:'cancelled',choices:{}},
+            updatedAt:serverTimestamp()});
+          tx.update(publicRef,{distribution:{status:'cancelled'},
+            updatedAt:serverTimestamp()});
+          return {lootId,status:'cancelled'};
+        }
+        const winnerCharacterId=requireId(String(action.winnerCharacterId||''),
+          'winning character');
+        const storageId=requireId(String(action.storageId||''),'inventory storage');
+        const review=awardLootDistribution(hidden.distribution,winnerCharacterId);
+        const refs=liveCharacterRefs(campaignId,winnerCharacterId);
+        const characterSnapshot=await tx.get(refs.campaign);
+        if(!exists(characterSnapshot))throw Error('The chosen character no longer exists.');
+        const character={...characterSnapshot.data(),id:winnerCharacterId};
+        const campaignSnapshot=await tx.get(doc(db,'campaigns',campaignId));
+        if(!exists(campaignSnapshot)||!isLinkedCharacter(campaignSnapshot.data(),
+          winnerCharacterId,character,campaignId))
+          throw Error('The selected character is no longer linked to the campaign.');
+        await verifyLiveTradeCounterparty(tx,campaignId,winnerCharacterId,character,refs);
+        checkCombat(refs,winnerCharacterId);
+        const placed=placeCharacterItem(character,copy(hidden.secretItem||visible.item),
+          {storageId});
+        appendActivity(character,{type:'party-loot-awarded',lootId,
+          message:'The GM awarded '+(visible.item?.name||'an item')+
+            ' from '+visible.source+' after party loot review.'});
+        writeLiveCharacter(tx,refs,character);
+        tx.update(publicRef,{
+          status:'claimed',claimedByCharacterId:winnerCharacterId,
+          claimedByOwnerUid:character.ownerUid,claimedAt:serverTimestamp(),
+          distribution:{status:'awarded',winnerCharacterId,winnerChoice:review.winnerChoice},
+          updatedAt:serverTimestamp()
+        });
+        tx.update(privateRef,{
+          status:'claimed',claimedByCharacterId:winnerCharacterId,
+          distribution:{...review,awardedBy:currentUser.uid,awardedAt:serverTimestamp()},
+          updatedAt:serverTimestamp()
+        });
+        return {lootId,status:'awarded',winnerCharacterId,itemId:placed.id};
+      }
       if(type==='create'){
         if(visible||hidden)throw Error('This loot drop already exists.');
         const drop=validatePartyLootDrop(action.drop||{},lootId);
@@ -116,10 +176,49 @@ export function createPartyLootCommands(context,helpers){
       const target=visible?publicRef:privateRef,existing=visible||hidden;
       if(!existing)throw Error('This loot drop no longer exists.');
       if(existing.status!=='available')throw Error('Claimed or distributed loot cannot be cancelled.');
+      if(existing.distribution?.status==='open')
+        throw Error('Cancel the open party distribution before cancelling the treasure.');
       tx.update(target,{status:'cancelled',updatedAt:serverTimestamp(),
         cancelledBy:currentUser.uid,cancelledAt:serverTimestamp()});
       if(visible&&hidden)tx.update(privateRef,{status:'cancelled',updatedAt:serverTimestamp()});
       return {lootId,cancelled:true};
+    }),
+
+    votePartyLoot:async(campaignId,characterId,operation={})=>result(async tx=>{
+      await requireLiveSession(tx,campaignId);
+      const lootId=requireId(String(operation.lootId||''),'loot drop');
+      const refs=liveCharacterRefs(campaignId,characterId);
+      const [snapshot,publicSnapshot,privateSnapshot]=await Promise.all([
+        tx.get(refs.campaign),tx.get(lootRef(campaignId,lootId)),
+        tx.get(draftRef(campaignId,lootId))
+      ]);
+      if(!exists(snapshot))throw Error('Character not found.');
+      if(!exists(publicSnapshot)||!exists(privateSnapshot))
+        throw Error('The revealed treasure is no longer available.');
+      const publicDrop=publicSnapshot.data(),privateDrop=privateSnapshot.data();
+      if(publicDrop.kind!=='item'||publicDrop.status!=='available'||
+         publicDrop.visibility!=='revealed'||
+         publicDrop.distribution?.status!=='open'||
+         privateDrop.distribution?.status!=='open')
+        throw Error('This treasure is not open for party choices.');
+      const character={...snapshot.data(),id:characterId};
+      await checkLinked(tx,campaignId,characterId,character);
+      await verifyOwnedLiveCharacter(tx,campaignId,characterId,character,refs);
+      if(!refs.privateExists)throw Error('Character owner record unavailable.');
+      const choice=String(operation.choice||'');
+      if(publicDrop.distribution.roundId!==privateDrop.distribution.roundId)
+        throw Error('Party loot voting round changed. Refresh before voting.');
+      const distribution=castLootChoice(privateDrop.distribution,characterId,choice);
+      const tally=lootVoteTally(distribution);
+      appendActivity(character,{type:'party-loot-vote',lootId,roundId:distribution.roundId,choice,
+        message:'Chose '+choice.toUpperCase()+' for '+(publicDrop.item?.name||'treasure')+
+          ' from '+publicDrop.source+'.'});
+      writeLiveCharacter(tx,refs,character);
+      tx.update(draftRef(campaignId,lootId),{distribution,updatedAt:serverTimestamp()});
+      tx.update(lootRef(campaignId,lootId),{
+        distribution:{status:'open',roundId:distribution.roundId,tally},updatedAt:serverTimestamp()
+      });
+      return {lootId,choice,tally};
     }),
 
     claimPartyLoot:async(campaignId,characterId,operation={})=>result(async tx=>{
@@ -135,6 +234,8 @@ export function createPartyLootCommands(context,helpers){
       const drop=lootSnapshot.data();
       if(drop.kind!=='item'||drop.status!=='available'||drop.visibility!=='revealed')
         throw Error('This loot drop cannot be claimed.');
+      if(drop.distribution?.status==='open')
+        throw Error('This item is in GM-reviewed party distribution. Choose Need, Greed or Pass instead.');
       const character={...snapshot.data(),id:characterId};
       await checkLinked(tx,campaignId,characterId,character);
       await verifyOwnedLiveCharacter(tx,campaignId,characterId,character,refs);

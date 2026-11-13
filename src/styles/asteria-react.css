@@ -3867,3 +3867,33 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-party-loot-inspection-item {align-items:flex-start;}
   .react-party-loot-inspection-emblem {width:46px;height:46px;}
 }
+
+/* Phase 9.2: active Need / Greed / Pass voting and GM distribution review. */
+.react-party-loot-vote,.react-party-loot-review{
+  display:grid;gap:10px;padding:12px;
+  background:rgba(8,23,35,.76);border:1px solid rgba(152,184,209,.42);
+  border-radius:8px;min-width:0;
+}
+.react-party-loot-vote p,.react-party-loot-review p {margin:0;overflow-wrap:anywhere;}
+.react-party-loot-vote-actions {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.react-party-loot-vote-actions button {min-height:44px;padding:8px;min-width:0;}
+.react-party-loot-vote-actions button[aria-pressed="true"] {
+  border-color:rgba(204,230,246,.95);
+  background:rgba(43,85,113,.8);font-weight:800;
+  box-shadow:inset 0 0 0 1px rgba(206,231,244,.5);
+}
+.react-party-loot-review h4 {margin:0;font-size:.91rem;}
+.react-party-loot-review-choices {display:grid;gap:5px;max-height:220px;overflow:auto;}
+.react-party-loot-review-form,.react-party-loot-review-confirm {display:grid;gap:8px;min-width:0;}
+.react-party-loot-review-form label {display:grid;gap:6px;min-width:0;font-size:.8rem;}
+.react-party-loot-review-form select {width:100%;min-height:44px;}
+.react-party-loot-review-confirm {border-top:1px solid rgba(152,184,209,.3);padding-top:10px;}
+.react-party-loot-review button {min-height:44px;}
+@media(max-width:420px){
+  .react-party-loot-vote-actions{gap:5px;}
+  .react-party-loot-vote-actions button{padding:6px;}
+}
+
+.react-party-loot-awarded-list {display:grid;gap:8px;margin-top:12px;min-width:0;}
+.react-party-loot-awarded-list p {margin:0;padding:9px 12px;overflow-wrap:anywhere;
+  border:1px solid rgba(143,176,195,.25);background:rgba(6,19,28,.55);font-size:.82rem;}
