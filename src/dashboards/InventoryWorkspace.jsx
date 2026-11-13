@@ -87,21 +87,6 @@ export function ItemDetailModal({ campaignId, character, item, editable, onClose
   const armourValidation = armourPiece.piece ? validateEquipmentChange(character, item, armourPiece.piece.location) : null;
   const decimal = value => Number(value).toFixed(2).replace(/\.00$/,'');
   const signed = value => `${Number(value) >= 0 ? '+' : ''}${decimal(value)}`;
-  const openActionHub=(id)=>{
-    if(id==='journal'){
-      setActivityOpen(true);
-      setActivityNotice('');
-      window.requestAnimationFrame(()=>document.getElementById('react-inventory-activity')?.scrollIntoView({behavior:'smooth',block:'start'}));
-      return;
-    }
-    const target=id==='party-loot'?'party-loot':id;
-    setMobileView(target);
-    window.requestAnimationFrame(()=>{
-      const section=document.getElementById('react-inventory-'+target);
-      if(section&&window.getComputedStyle(section).display!=='none')
-        section.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-  };
   const run = async (operation, success) => {
     setBusy(true);
     const result = await operation();
@@ -627,6 +612,21 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+  const openActionHub=(id)=>{
+    if(id==='journal'){
+      setActivityOpen(true);
+      setActivityNotice('');
+      window.requestAnimationFrame(()=>document.getElementById('react-inventory-activity')?.scrollIntoView({behavior:'smooth',block:'start'}));
+      return;
+    }
+    const target=id==='party-loot'?'party-loot':id;
+    setMobileView(target);
+    window.requestAnimationFrame(()=>{
+      const section=document.getElementById('react-inventory-'+target);
+      if(section&&window.getComputedStyle(section).display!=='none')
+        section.scrollIntoView({behavior:'smooth',block:'start'});
+    });
   };
   const run = async (operation, success) => {
     if(busy)return {ok:false,error:'An inventory action is still processing.'};
