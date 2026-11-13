@@ -72,7 +72,7 @@ test('Phase 5.1: UI actions remain authenticated and player writes remain denied
   assert.match(server,/secretItem/);
   assert.match(rules,/match \/partyLootDrafts\/\{lootId\}/);
   assert.match(rules,/match \/partyStashes\/\{stashId\}/);
-  assert.match(handler,/partyLootCurrency/);
+  assert.match(handler,/splitPartyLootCurrency/);
   assert.match(player,/Deposit Item/);
   assert.match(player,/Withdraw Item/);
   assert.match(player,/Claim to/);
