@@ -11,7 +11,7 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
    ========================= */
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, deleteDoc, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
 import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnabled} from '../src/state/accountEmailVerification.mjs';
@@ -21,6 +21,7 @@ import { applySoulDamage, recoverSoulDamage } from '../src/state/specialDamageMo
 import { createAsteriaItem, normalizeMarketPricing } from '../src/systems/items/marketPricing.mjs';
 import { incomingSnapshotIsStale, knownMagicElements, mergeLinkedCharacter, ownedGameplayMirrorPatch, safeLinkedCharacterPatch, strictResourcePair } from '../src/state/characterIntegrityModel.mjs';
 import { normalizeAssignedQuest } from '../src/state/questRewardModel.mjs';
+import { normalizeMerchantTemplate } from '../src/state/merchantTemplateModel.mjs';
 import { encounterResourcePair, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
 
 const productionFirebaseConfig = {
@@ -1829,6 +1830,38 @@ const firebasePublicApi = {
   sendCharacterNotification: (...args) => callTrustedAction('sendCharacterNotification', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
   createCustomLootReward: (...args) => callTrustedAction('createCustomLootReward', args),
+  subscribeMerchantTemplates: function(onChange){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const ownerUid=currentUser.uid;
+    return onSnapshot(collection(db,'users',ownerUid,'merchantTemplates'),
+      snapshot=>{if(currentUser?.uid===ownerUid)
+        onChange(snapshot.docs.map(row=>({id:row.id,...row.data()})));},
+      error=>reportSyncError('merchant-templates-listener',error));
+  },
+  saveMerchantTemplate: async function(input){
+    if(!db||!currentUser)return {ok:false,error:'Sign in to save a merchant template.'};
+    const ownerUid=currentUser.uid;
+    try{
+      const template=normalizeMerchantTemplate(input);
+      if(!template.id.startsWith('template-'))
+        throw Error('Only custom merchant templates can be saved.');
+      if(currentUser?.uid!==ownerUid)throw Error('Account changed.');
+      await setDoc(doc(db,'users',ownerUid,'merchantTemplates',template.id),
+        {...template,updatedAt:serverTimestamp()});
+      return {ok:true,template};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
+  deleteMerchantTemplate: async function(templateId){
+    if(!db||!currentUser)return {ok:false,error:'Sign in first.'};
+    const ownerUid=currentUser.uid;
+    if(typeof templateId!=='string'||!/^template-[A-Za-z0-9_-]{4,150}$/.test(templateId))
+      return {ok:false,error:'Invalid template identifier.'};
+    try{
+      if(currentUser?.uid!==ownerUid)throw Error('Account changed.');
+      await deleteDoc(doc(db,'users',ownerUid,'merchantTemplates',templateId));
+      return {ok:true};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   subscribeMerchantRelationships: function(campaignId,onChange,gmMode=false){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     const collectionRef=collection(db,'campaigns',campaignId,'merchantRelationships');

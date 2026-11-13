@@ -7,6 +7,7 @@ import {moveMerchantOnRoute,merchantTravelState,normalizeMerchantRoute,MAX_MERCH
 import {merchantRelationshipId,updateMerchantRelationship,validateMerchantOpportunity} from '../src/state/merchantRelationshipModel.mjs';
 import {isLinkedCharacter} from './characterPermissions.mjs';
 import {normalizeCraftingRecipe} from '../src/state/craftingRecipeModel.mjs';
+import {normalizeMerchantTemplate} from '../src/state/merchantTemplateModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -22,6 +23,10 @@ export function cleanGMShop(input={},previous={},shopId=''){
     id:shopId||previous.id,
     name:safeText(input.name??previous.name??'Campaign Shop',160),
     type:safeText(input.type??previous.type??'General Goods',90),
+    npcId:safeText(input.npcId??previous.npcId??'',160),
+    npcName:safeText(input.npcName??previous.npcName??'',160),
+    locationId:safeText(input.locationId??previous.locationId??'',160),
+    locationName:safeText(input.locationName??previous.locationName??'',160),
     region:safeText(input.region??previous.region??'',200),
     description:safeText(input.description??previous.description??'',2000),
     personality:safeText(input.personality??previous.personality??'',500),
@@ -51,6 +56,22 @@ export function cleanGMShop(input={},previous={},shopId=''){
 export function applyGMShopAction(current,action={},shopId=''){
   if(action.type==='delete')return {...cleanGMShop({},current,shopId),status:'deleted',stock:[]};
   if(current?.status==='deleted')throw Error('Deleted shops cannot be modified.');
+  if(action.type==='create-from-template'){
+    const template=normalizeMerchantTemplate(action.template);
+    const next=cleanGMShop({
+      ...template,...(action.shop||{}),id:shopId,status:'closed',
+      visitorCharacterIds:[],currencyCopper:100000
+    },{id:shopId},shopId);
+    next.stock=template.stock.map(row=>{
+      const item=normalizeMarketPricing(copy(row.item),
+        {legacy:true,removeLegacy:true,migratedRecord:true});
+      item.name=item.name||item.title;
+      return {...row,item,priceCopper:merchantPriceCopper(next,item,'buy')};
+    });
+    if(next.stock.length>PHASE33_MAX_SHOP_STOCK||JSON.stringify(next).length>680000)
+      throw Error('This merchant template would create an oversized shop.');
+    return next;
+  }
   if(action.type==='save'){
     const next=cleanGMShop(action.shop||{},current,shopId);
     if(merchantTravelState(current)==='travelling'&&
@@ -214,10 +235,10 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
         const type=String(action.type||'save');
         if(!['save','stock','remove-stock','set-stock','configure-restock',
           'restock','restock-all','assign-route','depart-route','arrive-route',
-          'unassign-route','configure-opportunity','delete'].includes(type))
+          'unassign-route','configure-opportunity','create-from-template','delete'].includes(type))
           throw Error('Choose a valid shop action.');
         const shopId=String(action.shopId||action.shop?.id||
-          (type==='save'?'shop-'+requestId:''));
+          (['save','create-from-template'].includes(type)?'shop-'+requestId:''));
         if(!id(shopId))throw Error('Choose a valid shop identifier.');
         const data=await runTransaction(db,async tx=>{
           await gm(tx,campaignId);
@@ -248,7 +269,9 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           const original=exists(stored)?stored.data():
             (Array.isArray(legacy.data()?.shops)?legacy.data().shops:[])
               .find(row=>String(row.id)===shopId);
-          if(type!=='save'&&!original)throw Error('Shop not found.');
+          if(!['save','create-from-template'].includes(type)&&!original)throw Error('Shop not found.');
+          if(type==='create-from-template'&&original)
+            throw Error('A merchant template cannot overwrite an existing shop.');
           if(type==='save'&&!original&&action.shop?.id&&String(action.shop.id)!==shopId)
             throw Error('Shop identity changed.');
           const shop=applyGMShopAction(original||{id:shopId},

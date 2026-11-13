@@ -12,6 +12,7 @@ import { merchantPriceCopper, shopVariantLabel } from '../state/shopTransactionM
 import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, merchantRestockPlan } from '../state/merchantInventoryModel.mjs';
 import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
 import {merchantStandingTier,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
+import {MERCHANT_TYPES,merchantBuiltInTemplates,merchantTemplateFromShop,merchantWorldNPCOptions,merchantWorldLocationOptions} from '../state/merchantTemplateModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 import {GMEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
@@ -323,11 +324,18 @@ function MerchantRelationshipManager({campaignId,shop,characters,relationships})
   </section>;
 }
 
-function ShopManager({ campaignId, characters, itemEcosystem, customItems, routes=[] }) {
+function ShopManager({ campaignId, characters, itemEcosystem, customItems, routes=[], world={} }) {
   const shops=array(itemEcosystem?.shops);
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const [selectedId,setSelectedId]=useState(shops[0]?.id||'');
   const [draft,setDraft]=useState({name:'',type:'General Goods',buyModifier:'',sellModifier:''});
+  const [templates,setTemplates]=useState([]);
+  const [templateId,setTemplateId]=useState('');
+  const [templateName,setTemplateName]=useState('');
+  const [regionDraft,setRegionDraft]=useState('');
+  const builtIns=useMemo(()=>merchantBuiltInTemplates(),[]);
+  const npcOptions=useMemo(()=>merchantWorldNPCOptions(world),[world.npcs]);
+  const locationOptions=useMemo(()=>merchantWorldLocationOptions(world),[world.settlements,world.regions]);
   const [search,setSearch]=useState('');const [quantity,setQuantity]=useState('');const [message,setMessage]=useState('');
   const [deals,setDeals]=useState([]);
   const [relationships,setRelationships]=useState([]);
@@ -335,6 +343,13 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const [stockBusy,setStockBusy]=useState(false);
   const [travelBusy,setTravelBusy]=useState(false);
   const [confirmRestock,setConfirmRestock]=useState(false);
+  useEffect(()=>{
+    setTemplateId('');setTemplates([]);
+    let unsub=()=>{};
+    try{unsub=firebaseService.subscribeMerchantTemplates(setTemplates);}
+    catch(error){setMessage(error.message||'Merchant templates could not be loaded.');}
+    return ()=>unsub();
+  },[campaignId]);
   useEffect(()=>{let unsub=()=>{};try{unsub=firebaseService.subscribeMerchantDeals(campaignId,setDeals,true);}catch(error){setMessage(error.message);}return ()=>unsub();},[campaignId]);
   useEffect(()=>{
     let unsubscribe=()=>{};
@@ -344,6 +359,8 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   },[campaignId]);
   useEffect(()=>{if(selectedId&&!shops.some(shop=>shop.id===selectedId))setSelectedId(shops[0]?.id||'');},[shops,selectedId]);
   const selected=shops.find(shop=>shop.id===selectedId)||null;
+  const selectedTemplate=[...builtIns,...templates].find(row=>row.id===templateId)||null;
+  useEffect(()=>setRegionDraft(selected?.region||''),[selected?.id,selected?.region]);
   const run=async action=>{const result=await firebaseService.manageShop(campaignId,Object.keys(characters)[0]||'gm-scope',action);setMessage(result?.ok?'Shop system synchronized.':result?.error||'Shop could not be updated.');return result;};
   const travelAction=async action=>{
     if(travelBusy)return;
@@ -363,12 +380,81 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     setConfirmRestock(false);
     await manageStock({type:'restock-all',shopId:selected.id});
   };
-  const create=async()=>{if(!draft.name.trim())return setMessage('Enter a shop name.');if(!isManualNumber(draft.buyModifier,{min:0.1,integer:false})||!isManualNumber(draft.sellModifier,{min:0.1,integer:false}))return setMessage('Enter buy and sell modifiers of at least 0.1.');const result=await run({type:'save',shop:{...draft,buyModifier:manualNumber(draft.buyModifier),sellModifier:manualNumber(draft.sellModifier),id:uid('shop'),status:'closed',visitorCharacterIds:[],stock:[],currencyCopper:100000}});if(result?.ok)setDraft({...draft,name:''});};
+  const create=async()=>{
+    if(!draft.name.trim())return setMessage('Enter a shop name.');
+    if(!isManualNumber(draft.buyModifier,{min:0.1,integer:false})||
+       !isManualNumber(draft.sellModifier,{min:0.1,integer:false})||
+       Number(draft.buyModifier)>10||Number(draft.sellModifier)>10)
+      return setMessage('Buy and sell modifiers must be between 0.1 and 10.');
+    const shop={...draft,buyModifier:manualNumber(draft.buyModifier),
+      sellModifier:manualNumber(draft.sellModifier),id:uid('shop'),
+      status:'closed',visitorCharacterIds:[],stock:[],currencyCopper:100000};
+    const result=await run(selectedTemplate?
+      {type:'create-from-template',shop,template:selectedTemplate}:{type:'save',shop});
+    if(result?.ok){setDraft({...draft,name:''});setSelectedId(result.shop?.id||'');}
+  };
+  const pickTemplate=id=>{
+    setTemplateId(id);
+    const chosen=[...builtIns,...templates].find(row=>row.id===id);
+    if(chosen)setDraft({name:chosen.name,type:chosen.type,
+      buyModifier:String(chosen.buyModifier),sellModifier:String(chosen.sellModifier)});
+  };
+  const saveTemplate=async()=>{
+    if(!selected)return;
+    try{
+      const record=merchantTemplateFromShop(selected,templateName.trim()||selected.name,uid('template'));
+      const result=await firebaseService.saveMerchantTemplate(record);
+      setMessage(result?.ok?'Reusable merchant template saved to your account.':
+        result?.error||'Could not save the merchant template.');
+      if(result?.ok)setTemplateName('');
+    }catch(error){setMessage(error.message||'Could not save this merchant template.');}
+  };
+  const deleteTemplate=async()=>{
+    if(!templateId.startsWith('template-')||!window.confirm('Delete this saved merchant template?'))return;
+    const result=await firebaseService.deleteMerchantTemplate(templateId);
+    setMessage(result?.ok?'Merchant template deleted.':result?.error||'Could not delete template.');
+    if(result?.ok)setTemplateId('');
+  };
   const updateSelected=patch=>selected&&run({type:'save',shop:{id:selected.id,...patch}});
   const decideDeal=async(deal,decision)=>{if(dealBusy)return;setDealBusy(deal.id);try{const result=await firebaseService.respondMerchantDeal(campaignId,'gm-scope',deal.id,decision);setMessage(result?.ok?'Merchant offer resolved.':result?.error||'Could not resolve offer.');}catch(error){setMessage(error.message||'Could not resolve offer.');}finally{setDealBusy('');}};
   const matches=search?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(search.toLowerCase())).slice(0,10):[];
   return <Panel title="Campaign Shops" eyebrow="Merchant & Stock Manager" action={<StatusPill>{shops.length} shops</StatusPill>}>
-    <div className="react-shop-layout"><section><h3>Create Shop</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Type<select value={draft.type} onChange={event=>setDraft(value=>({...value,type:event.target.value}))}>{['General Goods','Blacksmith','Armourer','Alchemist','Enchanter','Magical Goods','Temple Services','Travelling Merchant'].map(value=><option key={value}>{value}</option>)}</select></label><label>Buy Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.buyModifier} onChange={event=>setDraft(value=>({...value,buyModifier:event.target.value}))}/></label><label>Sell Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.sellModifier} onChange={event=>setDraft(value=>({...value,sellModifier:event.target.value}))}/></label></div><button className="primary" onClick={create}>Create Shop</button><div className="react-shop-list">{shops.map(shop=><button className={selectedId===shop.id?'active':''} key={shop.id} onClick={()=>setSelectedId(shop.id)}><b>{shop.name}</b><small>{shop.type} | {shop.status}</small></button>)}</div></section><section>{selected?<><div className="react-record-heading"><div><h3>{selected.name}</h3><small>{array(selected.stock).length} stock lines</small></div><div className="react-record-actions"><button disabled={merchantTravelState(selected)==='travelling'} onClick={()=>updateSelected({status:selected.status==='open'?'closed':'open'})}>{selected.status==='open'?'Close Shop':'Open Shop'}</button><button className="danger" onClick={()=>run({type:'delete',shopId:selected.id})}>Delete</button></div></div><h4>NPC Roleplay Profile</h4><div className="react-form-grid">
+    <div className="react-shop-layout"><section><h3>Create Shop</h3>
+    <p className="react-help">Start manually or load a built-in or saved template. Templates are private to your account and work across campaigns.</p>
+    <label>Merchant Template<select value={templateId} onChange={event=>pickTemplate(event.target.value)}>
+      <option value="">Manual — Empty Shop</option>
+      <optgroup label="Built-in Shop Types">{builtIns.map(row=><option value={row.id} key={row.id}>{row.type}</option>)}</optgroup>
+      <optgroup label="My Saved Templates">{templates.map(row=><option value={row.id} key={row.id}>{row.name} ({row.stock?.length||0} stock lines)</option>)}</optgroup>
+    </select></label>
+    {selectedTemplate?<small>{selectedTemplate.stock?.length||0} stock lines will be copied to a new closed shop; original stock is unchanged.</small>:null}
+    {templateId.startsWith('template-')?<button type="button" onClick={deleteTemplate}>Delete Saved Template</button>:null}
+    <div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Type<select value={draft.type} onChange={event=>setDraft(value=>({...value,type:event.target.value}))}>{MERCHANT_TYPES.map(value=><option key={value}>{value}</option>)}</select></label><label>Buy Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.buyModifier} onChange={event=>setDraft(value=>({...value,buyModifier:event.target.value}))}/></label><label>Sell Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.sellModifier} onChange={event=>setDraft(value=>({...value,sellModifier:event.target.value}))}/></label></div><button className="primary" onClick={create}>Create Shop</button><div className="react-shop-list">{shops.map(shop=><button className={selectedId===shop.id?'active':''} key={shop.id} onClick={()=>setSelectedId(shop.id)}><b>{shop.name}</b><small>{shop.type} | {shop.status}</small></button>)}</div></section><section>{selected?<><div className="react-record-heading"><div><h3>{selected.name}</h3><small>{array(selected.stock).length} stock lines</small></div><div className="react-record-actions"><button disabled={merchantTravelState(selected)==='travelling'} onClick={()=>updateSelected({status:selected.status==='open'?'closed':'open'})}>{selected.status==='open'?'Close Shop':'Open Shop'}</button><button className="danger" onClick={()=>run({type:'delete',shopId:selected.id})}>Delete</button></div></div><h4>Merchant Links</h4>
+    <p className="react-help">Link an existing campaign NPC and a World Systems location. Phase 4 reputation changes remain deferred.</p>
+    <div className="react-form-grid">
+      <label>NPC Proprietor<select value={selected.npcId||''} onChange={event=>{
+        const npc=npcOptions.find(row=>row.id===event.target.value);
+        updateSelected({npcId:npc?.id||'',npcName:npc?.name||''});
+      }}>
+        <option value="">No linked NPC</option>
+        {selected.npcId&&!npcOptions.some(row=>row.id===selected.npcId)?
+          <option value={selected.npcId}>{selected.npcName||'Legacy NPC'}</option>:null}
+        {npcOptions.map(npc=><option value={npc.id} key={npc.id}>{npc.name}</option>)}
+      </select></label>
+      <label>Shop Location<select value={selected.locationId||''} onChange={event=>{
+        const location=locationOptions.find(row=>row.id===event.target.value);
+        updateSelected({locationId:location?.id||'',locationName:location?.name||'',
+          ...(location?.region?{region:location.region}:{})});
+      }}>
+        <option value="">No linked location</option>
+        {selected.locationId&&!locationOptions.some(row=>row.id===selected.locationId)?
+          <option value={selected.locationId}>{selected.locationName||'Legacy location'}</option>:null}
+        {locationOptions.map(loc=><option value={loc.id} key={loc.kind+':'+loc.id}>{loc.name} ({loc.kind})</option>)}
+      </select></label>
+      <label>Market Region<input value={regionDraft} maxLength={200}
+        onChange={event=>setRegionDraft(event.target.value)}
+        onBlur={()=>{if(regionDraft!==(selected.region||''))updateSelected({region:regionDraft});}}/></label>
+    </div>
+    <h4>NPC Roleplay Profile</h4><div className="react-form-grid">
     {['image','description','personality','greeting','specialOffer'].map(field=><label key={field}>{field}
       <input key={selected.id+field} defaultValue={selected[field]||''} maxLength={500}
         onBlur={event=>{if(event.target.value!==(selected[field]||''))updateSelected({[field]:event.target.value});}}/>
@@ -402,7 +488,15 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
         {event.at?dateLabel(event.at):'Restock'} · {event.lines} lines · {event.units} units
       </p>)}
     </details>:null}
-  </section><h4>Merchant Bargaining</h4>
+  </section>
+    <section className="react-merchant-templates" aria-label="Save reusable merchant template">
+      <h4>Save Merchant as Template</h4>
+      <p className="react-help">Save roleplay settings, price modifiers and up to 50 identified stock lines. Funds, visitors, NPC and location links are not copied.</p>
+      <label>Template Name<input value={templateName} onChange={event=>setTemplateName(event.target.value)}
+        maxLength={100} placeholder={selected.name+' Template'}/></label>
+      <button type="button" disabled={!selected} onClick={saveTemplate}>Save to My Templates</button>
+    </section>
+    <h4>Merchant Bargaining</h4>
   <div className="react-stock-list">
     {deals.filter(deal=>deal.shopId===selected.id).slice().sort((a,b)=>Number(b.expiresAt||0)-Number(a.expiresAt||0)).slice(0,30).map(deal=>
       <article key={deal.id}>
@@ -434,7 +528,7 @@ export function EconomyWorkspace({ campaignId, workspace, characters, itemEcosys
     }catch(error){setMessage(error.message);}
   };
   const trades=[...array(itemEcosystem?.playerItemRequests),...array(itemEcosystem?.directTrades)];
-  return <div className="react-gm-workspace-grid economy"><Panel title="World Economy" eyebrow="Campaign Economy Controls"><div className="react-form-grid"><label>Economy Status<select value={controls.status} onChange={event=>setControls(value=>({...value,status:event.target.value}))}>{['Booming','Stable','Strained','Recession','Collapsed'].map(value=><option key={value}>{value}</option>)}</select></label><label>Scarcity<select value={controls.scarcity} onChange={event=>setControls(value=>({...value,scarcity:event.target.value}))}>{['Abundant','Normal','Scarce','Critical'].map(value=><option key={value}>{value}</option>)}</select></label><label>Inflation %<ManualNumberInput step="any" value={controls.inflation} onChange={event=>setControls(value=>({...value,inflation:event.target.value}))}/></label><label>Treasury (copper)<ManualNumberInput min="0" value={controls.treasury} onChange={event=>setControls(value=>({...value,treasury:event.target.value}))}/></label></div><button className="primary" onClick={()=>{if(!isManualNumber(controls.inflation,{integer:false,optional:true})||!isManualNumber(controls.treasury,{min:0,optional:true}))return setMessage('Enter valid economy amounts.');update({...controls,inflation:manualNumber(controls.inflation),treasury:manualNumber(controls.treasury)});}}>Apply Economy Controls</button><h3>Trade Routes</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>From<input value={draft.from} onChange={event=>setDraft(value=>({...value,from:event.target.value}))}/></label><label>To<input value={draft.to} onChange={event=>setDraft(value=>({...value,to:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Open','Unstable','Closed','Blockaded'].map(value=><option key={value}>{value}</option>)}</select></label></div><button className="primary" onClick={addRoute}>Add Trade Route</button><div className="react-record-list compact">{routes.map(route=><article key={route.id}><div><b>{route.name}</b><small>{route.from} to {route.to} | {route.status}</small></div><button className="danger" onClick={()=>update({routes:routes.filter(item=>item.id!==route.id)})}>Remove</button></article>)}</div><SectionStatus message={message}/></Panel><section id="react-gm-shops" tabIndex={-1}><ShopManager campaignId={campaignId} characters={characters} itemEcosystem={itemEcosystem} customItems={customItems} routes={routes}/></section><GMItemLoreWorkspace campaignId={campaignId} characters={characters}/><section id="react-gm-loot-tables" tabIndex={-1}><GMLootTableWorkspace campaignId={campaignId}/></section><Panel title="Trade & Inventory Audit" eyebrow="Shared Item Activity" action={<StatusPill>{trades.length} records</StatusPill>}><div className="react-audit-table"><div className="head"><b>Type</b><b>Participants</b><b>Item</b><b>Status</b></div>{trades.slice().reverse().slice(0,50).map(record=><div key={record.id}><span>{record.mode||'Trade'}</span><span>{record.fromCharacterName||characters[record.fromCharacterId]?.name||'Player'} / {record.toCharacterName||characters[record.toCharacterId]?.name||'Player'}</span><span>{record.item?.name||'Item'}</span><StatusPill tone={record.status==='accepted'?'success':''}>{record.status||'pending'}</StatusPill></div>)}{!trades.length?<EmptyState title="No item activity"/>:null}</div></Panel></div>;
+  return <div className="react-gm-workspace-grid economy"><Panel title="World Economy" eyebrow="Campaign Economy Controls"><div className="react-form-grid"><label>Economy Status<select value={controls.status} onChange={event=>setControls(value=>({...value,status:event.target.value}))}>{['Booming','Stable','Strained','Recession','Collapsed'].map(value=><option key={value}>{value}</option>)}</select></label><label>Scarcity<select value={controls.scarcity} onChange={event=>setControls(value=>({...value,scarcity:event.target.value}))}>{['Abundant','Normal','Scarce','Critical'].map(value=><option key={value}>{value}</option>)}</select></label><label>Inflation %<ManualNumberInput step="any" value={controls.inflation} onChange={event=>setControls(value=>({...value,inflation:event.target.value}))}/></label><label>Treasury (copper)<ManualNumberInput min="0" value={controls.treasury} onChange={event=>setControls(value=>({...value,treasury:event.target.value}))}/></label></div><button className="primary" onClick={()=>{if(!isManualNumber(controls.inflation,{integer:false,optional:true})||!isManualNumber(controls.treasury,{min:0,optional:true}))return setMessage('Enter valid economy amounts.');update({...controls,inflation:manualNumber(controls.inflation),treasury:manualNumber(controls.treasury)});}}>Apply Economy Controls</button><h3>Trade Routes</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>From<input value={draft.from} onChange={event=>setDraft(value=>({...value,from:event.target.value}))}/></label><label>To<input value={draft.to} onChange={event=>setDraft(value=>({...value,to:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Open','Unstable','Closed','Blockaded'].map(value=><option key={value}>{value}</option>)}</select></label></div><button className="primary" onClick={addRoute}>Add Trade Route</button><div className="react-record-list compact">{routes.map(route=><article key={route.id}><div><b>{route.name}</b><small>{route.from} to {route.to} | {route.status}</small></div><button className="danger" onClick={()=>update({routes:routes.filter(item=>item.id!==route.id)})}>Remove</button></article>)}</div><SectionStatus message={message}/></Panel><section id="react-gm-shops" tabIndex={-1}><ShopManager campaignId={campaignId} characters={characters} itemEcosystem={itemEcosystem} customItems={customItems} routes={routes} world={workspace.world||{}}/></section><GMItemLoreWorkspace campaignId={campaignId} characters={characters}/><section id="react-gm-loot-tables" tabIndex={-1}><GMLootTableWorkspace campaignId={campaignId}/></section><Panel title="Trade & Inventory Audit" eyebrow="Shared Item Activity" action={<StatusPill>{trades.length} records</StatusPill>}><div className="react-audit-table"><div className="head"><b>Type</b><b>Participants</b><b>Item</b><b>Status</b></div>{trades.slice().reverse().slice(0,50).map(record=><div key={record.id}><span>{record.mode||'Trade'}</span><span>{record.fromCharacterName||characters[record.fromCharacterId]?.name||'Player'} / {record.toCharacterName||characters[record.toCharacterId]?.name||'Player'}</span><span>{record.item?.name||'Item'}</span><StatusPill tone={record.status==='accepted'?'success':''}>{record.status||'pending'}</StatusPill></div>)}{!trades.length?<EmptyState title="No item activity"/>:null}</div></Panel></div>;
 }
 
 export function CraftingWorkspace({ campaignId, workspace, characters, saveSection }) {
