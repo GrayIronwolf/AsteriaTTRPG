@@ -478,6 +478,15 @@ export const asteriaAccountUsername=onCall({
   }
 });
 
+
+export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
+    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
+  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
+});
+
 // Phase 1.3: authenticated, server-controlled Account ID finalization.
 // Rollout remains disabled unless an explicit backend flag is enabled.
 // No target UID or username is accepted from the browser.
@@ -510,12 +519,4 @@ export const asteriaAccountIdentity=onCall({
     throw new HttpsError('failed-precondition',
       'Account ID could not be assigned. Review your account profile.');
   }
-});
-
-export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
-  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
-  try{
-    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
-    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
-  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
 });
