@@ -3653,3 +3653,24 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-party-loot-workspace .react-action-row button {flex:1 1 110px;min-height:44px;}
   .react-party-loot-list > article button {min-height:44px;}
 }
+
+
+/* Phase 7.1 — inventory and trade journal filters. */
+.react-inventory-journal-help {
+  font-size:.76rem;
+  color:var(--asteria-text-muted,#a0adbb);
+}
+.react-inventory-journal-controls {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:10px;
+}
+.react-inventory-journal-controls label { display:grid;gap:5px;font-size:.76rem; }
+.react-inventory-journal-controls select,
+.react-inventory-journal-controls input {
+  width:100%;min-width:0;min-height:42px;box-sizing:border-box;
+}
+.react-inventory-activity p b { font-weight:600; }
+@media(max-width:640px) {
+  .react-inventory-journal-controls {grid-template-columns:minmax(0,1fr);}
+}
