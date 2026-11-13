@@ -3705,3 +3705,15 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-inventory-journal-row time {grid-column:1;}
   .react-inventory-journal-row button {grid-column:2;grid-row:1 / span 2;}
 }
+
+/* Phase 7.3 — GM campaign journal, compact responsive transaction review. */
+.react-gm-audit-journal {display:grid;gap:0;max-height:390px;overflow-y:auto;}
+.react-gm-audit-journal-row {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;
+  padding:9px 0;align-items:center;border-bottom:1px solid rgba(120,157,184,.18);
+  font-size:.77rem;
+}
+.react-gm-audit-journal-row p {margin:3px 0;overflow-wrap:anywhere;}
+.react-gm-audit-journal-row time {font-size:.7rem;color:var(--asteria-text-muted,#a0adbb);}
+.react-gm-audit-journal-row button {min-height:40px;}
+@media(max-width:640px){.react-gm-audit-journal-row {grid-template-columns:minmax(0,1fr);} }
