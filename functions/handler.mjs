@@ -80,7 +80,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     for(const detail of args.slice(2)) if(detail && typeof detail==='object') for(const key of ['quantity','exchangeQuantity','priceCopper','rows','cols','soulRecovery']) {
       if(detail[key]!==undefined && (!Number.isSafeInteger(detail[key]) || detail[key]<0 || detail[key]>1e9)) throw new Error('Invalid '+key+'.');
     }
-    const adapter={get:async ref=>wrapSnapshot(await transaction.get(ref)),set:(...values)=>transaction.set(...values),update:(...values)=>transaction.update(...values)};
+    const adapter={get:async ref=>wrapSnapshot(await transaction.get(ref)),set:(...values)=>transaction.set(...values),update:(...values)=>transaction.update(...values),delete:ref=>transaction.delete(ref)};
     const result=await callback(adapter);
     transaction.set(receiptRef,{action,input:JSON.stringify(args),result:result===undefined?null:JSON.parse(JSON.stringify(result)),createdAt:serverTimestamp()});
     return result;
