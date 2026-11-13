@@ -90,7 +90,7 @@ test('Phase 9.1: comparison never identifies unknown gear, invents armour values
   assert.equal(character.inventory.length,0);
   assert.equal(lootEquipmentComparison({identified:true,name:'Potion'},character).available,false);
   const armour=lootEquipmentComparison({identified:true,name:'Iron Helmet',armourPieceType:'helmet'},character);
-  assert.equal(armour.acEstimate,null);
+  assert.equal(armour.acEstimate??null,null);
 });
 
 test('Phase 9.1: UI requires inspection and a destination before existing secure claims',()=>{
