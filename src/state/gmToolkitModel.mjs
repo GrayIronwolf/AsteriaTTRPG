@@ -29,7 +29,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
       {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign details, linked accounts and party membership.',keywords:'players invitations management'},
       {id:'rewards',label:'Rewards & Advancement',tab:'tools',description:'Existing GM reward tools, magic rewards and character management.',keywords:'xp loot award titles magic'},
       {id:'gameplay',label:'Gameplay Systems',tab:'gameplay',description:'Manage existing gameplay records and system settings.',keywords:'systems templates encounter'},
-      {id:'npc-library',label:'NPC & Creature Library',tab:'bestiary',description:'Find and generate editable campaign NPCs and browse the Asteria creature bestiary.',keywords:'npc generator generate characters creatures monsters bestiary library'}
+      {id:'npc-library',label:'NPC & Creature Library',tab:'bestiary',description:'Find, generate and create custom character cards for campaign NPCs and creatures.',keywords:'npc generator character card portrait creature bestiary customise custom library'}
     ]
   }),
   defineGroup({

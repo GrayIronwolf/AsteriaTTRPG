@@ -5,6 +5,7 @@ import '../styles/gm-focus.css';
 import '../styles/gm-phase2-3.css';
 import '../styles/gm-npc-library.css';
 import '../styles/gm-npc-generator.css';
+import '../styles/gm-character-cards.css';
 import { createRoot } from 'react-dom/client';
 import { AsteriaReactRoot } from './AsteriaReactRoot.jsx';
 
