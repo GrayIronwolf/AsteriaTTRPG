@@ -24,6 +24,7 @@ export function safePublicPartyItem(source={}){
     delete item.spell;
     delete item.metadata;
     delete item.rarity;
+    for(const key of ['title','definitionId','catalogId','slug','category','subcategory','type','image','icon','art','marketPrice','marketValue','marketValueCopper','marketPriceCopper'])delete item[key];
   }
   delete item.storageId;delete item.storageSlot;
   delete item.equipped;delete item.equippedSlot;delete item.location;
@@ -88,6 +89,7 @@ export function validatePartyContainerSize(container={}){
 
 export function safePartyStashEntry(item,entryId,quantity){
   if(!id(entryId))throw Error('Invalid shared item identifier.');
+  if(item?.identified===false)throw Error('Identify this item before placing it in a publicly visible party stash.');
   const clean=safePublicPartyItem({...clone(item),qty:safeQuantity(quantity)});
   return {...clean,id:entryId,instanceId:entryId};
 }
