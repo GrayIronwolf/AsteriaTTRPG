@@ -44,7 +44,7 @@ test('Phase 11.3: NPC services use explicit GM costs and repair targets',()=>{
   assert.notEqual(serviceSignature(row),serviceSignature({...row,feeCopper:251}));
 });
 test('Phase 11.3: repair selects only eligible damaged unstacked equipment',()=>{
-  const fix=normalizeNPCService(service(),'fix');
+  const fix=normalizeNPCService(service({targetType:'Weapon'}),'fix');
   assert.equal(repairTargetEligible(sword(),fix),true);
   for(const patch of [{qty:2},{equipped:true},{locked:true},{bound:true},
     {questItem:true},{identified:false},{location:'trade-escrow'},
