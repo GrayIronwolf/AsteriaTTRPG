@@ -1,0 +1,41 @@
+/* Digital GM Toolkit Phase 2.2 — Focus modes on GM Main only.
+   No changes to the approved dashboard grid, frames or Player Dashboard. */
+.react-gm-dashboard .react-gm-focus{
+  display:grid;gap:13px;min-width:0;margin-bottom:14px;padding:clamp(13px,2vw,24px);
+  border:1px solid rgba(137,171,190,.46);background:linear-gradient(140deg,rgba(17,38,53,.95),rgba(8,18,29,.97));
+  color:#dce8ef;
+}
+.react-gm-focus-header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 18px;align-items:center;}
+.react-gm-focus-header h2{font:500 1.35rem/1.3 var(--asteria-font-display,Georgia,serif);margin:0 0 5px;color:#eddfc2;}
+.react-gm-focus-header p,.react-gm-focus-help{color:#b6cbd8;line-height:1.5;font-size:.84rem;margin:0;}
+.react-gm-focus-current{font-size:.8rem;font-weight:600;color:#e5d6b8;}
+.react-gm-focus-presets,.react-gm-focus-list{display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
+.react-gm-focus button{
+  cursor:pointer;min-height:42px;padding:8px 13px;border-radius:3px;
+  background:#162d40;color:#e0ebf0;border:1px solid #6a8797;
+  font:600 .82rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+}
+.react-gm-focus button:hover:not(:disabled){background:#294960;border-color:#b6cfe0;}
+.react-gm-focus button[aria-pressed="true"]{border-color:#d9bf89;color:#f2e3c5;background:#374656;}
+.react-gm-focus button:disabled{cursor:default;opacity:.56;}
+.react-gm-focus :is(button,input):focus-visible{outline:2px solid #bcefff;outline-offset:2px;}
+.react-gm-focus-saved{display:grid;gap:9px;padding-top:11px;border-top:1px solid #718e9b5c;}
+.react-gm-focus-saved-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;}
+.react-gm-focus-saved-heading h3{margin:0;font-size:.98rem;font-weight:600;color:#dcd4bd;}
+.react-gm-focus-saved-heading span{font-size:.76rem;color:#b4cbd8;}
+.react-gm-focus-entry{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap;}
+.react-gm-focus-entry .react-gm-focus-choice{max-width:270px;overflow-wrap:anywhere;}
+.react-gm-focus-entry .react-gm-focus-delete{color:#f3bbbe;}
+.react-gm-focus-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:#e8c6c6;font-size:.8rem;}
+.react-gm-focus-create{display:flex;flex-wrap:wrap;gap:8px;align-items:end;min-width:0;}
+.react-gm-focus-create label{display:grid;gap:7px;flex:1 1 200px;max-width:420px;color:#dbe8ef;font-size:.8rem;}
+.react-gm-focus-create input{box-sizing:border-box;width:100%;min-height:43px;border:1px solid #6b8699;background:#0b1d2b;color:#f1f6f9;padding:9px 12px;border-radius:3px;font:inherit;}
+.react-gm-focus-create button{min-height:43px;}
+.react-gm-focus-empty{font-size:.81rem;margin:0;color:#b0c9d8;}
+.react-gm-focus-feedback{min-height:1.1em;font-size:.8rem;color:#cddff0;margin:0;}
+@media(max-width:720px){
+  .react-gm-focus-presets button{flex:1 1 135px;}
+  .react-gm-focus-create label{max-width:none;flex-basis:100%;}
+  .react-gm-focus-create button{width:100%;}
+}
+@media(prefers-reduced-motion:reduce){.react-gm-focus button{transition:none!important;}}
