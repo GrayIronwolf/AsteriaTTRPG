@@ -1769,6 +1769,16 @@ const firebasePublicApi = {
   sendCharacterNotification: (...args) => callTrustedAction('sendCharacterNotification', args),
   updateCharacterInventory: (...args) => callTrustedAction('updateCharacterInventory', args),
   createCustomLootReward: (...args) => callTrustedAction('createCustomLootReward', args),
+  subscribeMerchantDeals: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const q=gmMode?collection(db,'campaigns',campaignId,'merchantDeals'):
+      query(collection(db,'campaigns',campaignId,'merchantDeals'),where('ownerUid','==',currentUser.uid));
+    return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('merchant-deals-listener',error,{campaignId}));
+  },
+  createMerchantDeal: (...args) => callTrustedAction('createMerchantDeal', args),
+  respondMerchantDeal: (...args) => callTrustedAction('respondMerchantDeal', args),
+  cancelMerchantDeal: (...args) => callTrustedAction('cancelMerchantDeal', args),
   buyLiveShopItem: (...args) => callTrustedAction('buyLiveShopItem', args),
   sellLiveShopItem: (...args) => callTrustedAction('sellLiveShopItem', args),
   createLiveTrade: async function(campaignId,characterId,recipientId,itemId,quantity=1,note=''){
