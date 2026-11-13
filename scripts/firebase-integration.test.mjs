@@ -2853,3 +2853,97 @@ test('Phase 6.3: empty and stale batches create no party drops',async()=>{
   assert.equal(stale.ok,false);
   assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
 });
+
+
+test('Phase 9.2: Need/Greed/Pass choices are GM-private, owner-authenticated, and visible only as counts to other players',async()=>{
+  const created=await action('gm','managePartyLootDrop',['c','a',{
+    type:'create',revealNow:true,drop:{title:'Battle Cache',source:'Crypt',kind:'item',
+      item:{name:'Silver Dagger',type:'Weapon',qty:1,marketPrice:70,marketValue:30}}
+  }]);
+  assert.equal(created.ok,true,created.error);
+  const lootId=created.lootId;
+  const started=await action('gm','managePartyLootDrop',['c','a',{type:'start-distribution',lootId}]);
+  assert.equal(started.ok,true,started.error);
+  const publicRef=db.doc('campaigns/c/partyLoot/'+lootId);
+  const privateRef=db.doc('campaigns/c/partyLootDrafts/'+lootId);
+  const publicDrop=(await publicRef.get()).data();
+  assert.equal(publicDrop.distribution.status,'open');
+  assert.deepEqual(publicDrop.distribution.tally,{need:0,greed:0,pass:0});
+  assert.equal(publicDrop.distribution.choices,undefined);
+  assert.equal((await privateRef.get()).data().distribution.status,'open');
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/partyLootDrafts/'+lootId)));
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/partyLoot/'+lootId)));
+  const forged=await action('bob','votePartyLoot',['c','a',{lootId,choice:'need'}]);
+  assert.equal(forged.ok,false,'Cannot vote using another player character');
+  const wrong=await action('alice','votePartyLoot',['c','a',{lootId,choice:'steal'}]);
+  assert.equal(wrong.ok,false);
+  assert.equal((await publicRef.get()).data().distribution.tally.need,0);
+  const alice=await action('alice','votePartyLoot',['c','a',{lootId,choice:'need'}]);
+  const bob=await action('bob','votePartyLoot',['c','b',{lootId,choice:'greed'}]);
+  assert.equal(alice.ok,true,alice.error);
+  assert.equal(bob.ok,true,bob.error);
+  assert.deepEqual((await publicRef.get()).data().distribution.tally,{need:1,greed:1,pass:0});
+  assert.equal((await publicRef.get()).data().distribution.choices,undefined);
+  assert.deepEqual((await privateRef.get()).data().distribution.choices,{a:'need',b:'greed'});
+  const deniedClaim=await action('bob','claimPartyLoot',['c','b',{lootId,storageId:'bag'}]);
+  assert.equal(deniedClaim.ok,false);
+  assert.equal((await publicRef.get()).data().status,'available');
+  const winner=await action('gm','managePartyLootDrop',['c','a',{
+    type:'award-distribution',lootId,winnerCharacterId:'a',storageId:'bag'
+  }]);
+  assert.equal(winner.ok,true,winner.error);
+  assert.equal(winner.winnerCharacterId,'a');
+  const resolved=(await publicRef.get()).data();
+  assert.equal(resolved.status,'claimed');
+  assert.equal(resolved.claimedByCharacterId,'a');
+  assert.equal(resolved.distribution.status,'awarded');
+  assert.equal(resolved.distribution.choices,undefined);
+  const awarded=(await db.doc('campaigns/c/characters/a').get()).data();
+  const owned=(await db.doc('users/alice/characters/a').get()).data();
+  assert.ok(awarded.inventory.some(row=>row.name==='Silver Dagger'));
+  assert.deepEqual(owned.inventory,awarded.inventory);
+  assert.ok(owned.actionLog.some(row=>row.type==='party-loot-vote'&&row.choice==='need'));
+  assert.ok(owned.actionLog.some(row=>row.type==='party-loot-awarded'));
+  assert.ok((await db.collection('campaigns/c/events').get()).docs.some(doc=>
+    doc.data().type==='party-loot-awarded'&&doc.data().targetOwnerUid==='alice'));
+  const repeat=await action('gm','managePartyLootDrop',['c','a',{
+    type:'award-distribution',lootId,winnerCharacterId:'b',storageId:'bag'
+  }]);
+  assert.equal(repeat.ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/b').get()).data().inventory.some(row=>row.name==='Silver Dagger'),false);
+});
+
+test('Phase 9.2: cancelled distributions restore direct claims; rejected awards cannot transfer items',async()=>{
+  const created=await action('gm','managePartyLootDrop',['c','a',{
+    type:'create',revealNow:true,drop:{title:'Lost Necklace',source:'Ruins',kind:'item',
+      item:{name:'Copper Charm',type:'Jewellery',qty:1,marketPrice:15,marketValue:7}}
+  }]);
+  assert.equal(created.ok,true,created.error);
+  const lootId=created.lootId;
+  const playerStart=await action('alice','managePartyLootDrop',['c','a',{
+    type:'start-distribution',lootId
+  }]);
+  assert.equal(playerStart.ok,false,'Player cannot start GM review');
+  assert.equal((await action('gm','managePartyLootDrop',['c','a',{
+    type:'start-distribution',lootId
+  }])).ok,true);
+  const pass=await action('alice','votePartyLoot',['c','a',{lootId,choice:'pass'}]);
+  assert.equal(pass.ok,true,pass.error);
+  const invalid=await action('gm','managePartyLootDrop',['c','a',{
+    type:'award-distribution',lootId,winnerCharacterId:'a',storageId:'bag'
+  }]);
+  assert.equal(invalid.ok,false,'Pass is not an eligible winner');
+  const noVote=await action('gm','managePartyLootDrop',['c','a',{
+    type:'award-distribution',lootId,winnerCharacterId:'b',storageId:'bag'
+  }]);
+  assert.equal(noVote.ok,false,'A non-participant is not eligible');
+  const cancelled=await action('gm','managePartyLootDrop',['c','a',{
+    type:'cancel-distribution',lootId
+  }]);
+  assert.equal(cancelled.ok,true,cancelled.error);
+  const afterwards=await action('alice','votePartyLoot',['c','a',{lootId,choice:'need'}]);
+  assert.equal(afterwards.ok,false);
+  const claimed=await action('alice','claimPartyLoot',['c','a',{lootId,storageId:'bag'}]);
+  assert.equal(claimed.ok,true,claimed.error);
+  assert.equal((await db.doc('campaigns/c/partyLoot/'+lootId).get()).data().status,'claimed');
+});
