@@ -6,6 +6,16 @@ import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
+export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
+  try{
+    const {universalCheckAction}=await import('./universalCheckCommands.mjs');
+    return await universalCheckAction(getFirestore(),request.auth.uid,request.data||{},()=>FieldValue.serverTimestamp());
+  }catch(error){throw new HttpsError('failed-precondition',error.message||'Check request failed.');}
+});
+
+
+
 export const asteriaAction=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
   if(!request.auth) throw new HttpsError('unauthenticated','Sign in to continue.');
   try {
@@ -477,6 +487,7 @@ export const asteriaAccountUsername=onCall({
     throw new HttpsError('failed-precondition','Username change could not be completed. Check My Profile and try again.');
   }
 });
+
 
 // Phase 1.3: authenticated, server-controlled Account ID finalization.
 // Rollout remains disabled unless an explicit backend flag is enabled.

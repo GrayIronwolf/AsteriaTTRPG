@@ -1277,6 +1277,19 @@ const firebasePublicApi = {
       onChange(records);
     }, error=>reportSyncError('session-presence-listener', error, { campaignId, sessionId }));
   },
+  universalCheckAction: async data=>{
+    if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to continue.'};
+    try{return (await httpsCallable(functionsClient,'asteriaUniversalCheck')(data)).data;}
+    catch(error){return {ok:false,error:error.message||'Check action failed.'};}
+  },
+  subscribeUniversalChecks: function(campaignId,onChange,{gm=false}={}){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const ref=collection(db,'campaigns',campaignId,'checkRequests');
+    const q=gm?query(ref,orderBy('createdAt','desc'),limit(100)):
+      query(ref,where('ownerUid','==',currentUser.uid),limit(100));
+    return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(doc=>({id:doc.id,...doc.data()}))),
+      error=>reportSyncError('universal-check-listener',error,{campaignId}));
+  },
   subscribeCampaignEvents: function(campaignId, onChange, options={}){
     if(!db || !currentUser || !campaignId || typeof onChange !== 'function') return ()=>{};
     const eventsRef=collection(db,'campaigns',campaignId,'events');

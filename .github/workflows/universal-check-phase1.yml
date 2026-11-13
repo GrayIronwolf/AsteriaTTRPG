@@ -1,0 +1,70 @@
+name: Universal Check Phase 1 verification
+on:
+  push:
+    branches: [feat/universal-check-requests-phase-1]
+  pull_request:
+    paths:
+      - 'functions/universalCheckCommands.mjs'
+      - 'src/state/universalCheckModel.mjs'
+      - 'src/dashboards/UniversalCheckWorkspace.jsx'
+      - 'firestore.rules'
+      - 'scripts/universal-check-*.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Universal Check model and backend tests
+        run: node --test scripts/universal-check-model.test.mjs scripts/universal-check-phase1.test.mjs
+      - name: Lint
+        run: npm run lint
+      - name: Existing dashboard and combat regression tests
+        run: npm run test:dashboard && npm run test:combat
+      - name: Firestore security rules emulator tests
+        run: npx firebase emulators:exec --project demo-asteria-universal-check --only firestore "node --test scripts/universal-check-permissions-emulator.test.mjs"
+      - name: Production React build
+        run: npm run build
+
+  bundle:
+    name: Commit verified frontend bundle to existing PR branch
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/universal-check-requests-phase-1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Preserve existing cached chunks and commit generated site assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add react-dist
+          if git diff --cached --quiet; then
+            echo "Built frontend bundle already matches tracked source."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Build Universal Check Phase 1 frontend bundle"
+          git push origin HEAD:feat/universal-check-requests-phase-1
