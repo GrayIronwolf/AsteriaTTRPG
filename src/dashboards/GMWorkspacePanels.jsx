@@ -14,6 +14,7 @@ import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from 
 import {merchantStandingTier,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
+import {GMCraftingRecipeManager} from './CraftingRecipeWorkspace.jsx';
 
 const array = value => Array.isArray(value) ? value : [];
 const uid = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
