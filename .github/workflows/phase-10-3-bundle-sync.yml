@@ -1,0 +1,35 @@
+name: Phase 10.3 temporary website bundle synchronization
+on:
+  push:
+    branches:
+      - feat/inventory-phase-10-3-merchant-reputation-opportunities
+permissions:
+  contents: write
+jobs:
+  synchronize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/inventory-phase-10-3-merchant-reputation-opportunities
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:inventory-phase-10-3
+      - run: npm run build
+      - name: Synchronize compiled website assets
+        shell: bash
+        run: |
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Compiled assets already match"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "build(phase 10.3): synchronize generated website bundle"
+            git push origin HEAD:feat/inventory-phase-10-3-merchant-reputation-opportunities
+          fi
