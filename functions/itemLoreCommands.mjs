@@ -26,8 +26,8 @@ export function createItemLoreCommands(context){
           const charRef=doc(db,'campaigns',campaignId,'characters',characterId);
           const loreRef=doc(db,'campaigns',campaignId,'itemLore',loreId);
           const revealRef=doc(db,'campaigns',campaignId,'itemDiscoveries',loreId);
-          const [characterSnapshot,loreSnapshot,revealSnapshot]=await Promise.all([
-            tx.get(charRef),tx.get(loreRef),tx.get(revealRef)
+          const [characterSnapshot,loreSnapshot]=await Promise.all([
+            tx.get(charRef),tx.get(loreRef)
           ]);
           if(!exists(characterSnapshot))throw Error('Campaign character unavailable.');
           const character=characterSnapshot.data();
