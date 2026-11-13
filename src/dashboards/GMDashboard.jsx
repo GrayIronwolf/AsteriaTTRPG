@@ -6,6 +6,7 @@ import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
+import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
@@ -33,6 +34,7 @@ import { gmTradeLootOverview } from '../state/gmTradeLootHubModel.mjs';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
+  { id: 'toolkit', label: 'GM Toolkit', icon: 'settings' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' },
   { id: 'inventory', label: 'PC Inventory', icon: 'inventory' },
   { id:'information', label:'News & Events', icon:'journal' },
@@ -503,8 +505,9 @@ export function GMDashboard({ campaignId }) {
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
   const openGMHubLink=link=>{
-    if(!['inventory','economy'].includes(link.tab))return;
-    setGMHubDestination({tab:link.tab,targetId:link.targetId});
+    // The toolkit is a directory of existing GM views, not an arbitrary route.
+    if(!GM_TABS.some(item=>item.id===link?.tab))return;
+    setGMHubDestination(link.targetId?{tab:link.tab,targetId:link.targetId}:null);
     setTab(link.tab);
   };
   useEffect(()=>{
@@ -703,7 +706,13 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
-    {tab === 'main' ? <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
+    {tab === 'toolkit' ? <GMToolkitHub key={campaignId+':'+accountUid}
+      session={live.session} characters={live.characters} workspace={workspace}
+      itemEcosystem={live.itemEcosystem} partyLoot={live.partyLoot}
+      onNavigate={openGMHubLink} /> : null}
+    {tab === 'main' ? <>
+      <GMToolkitQuickAccess onNavigate={openGMHubLink}/>
+      <DashboardLayoutWorkspace key={campaignId+':'+accountUid} role="gm" title="GM Main Dashboard"
       layout={savedDashboardLayout} canEdit={Boolean(accountUid)} onSave={saveDashboardLayout} renderPanel={gmPanel}
       defaultContent={<div className="react-gm-main-grid">
         <RestRequestsPanel campaignId={campaignId} characters={live.characters} editable={live.session?.editable}/>
@@ -711,7 +720,8 @@ export function GMDashboard({ campaignId }) {
         <XPDistribution campaignId={campaignId} characters={live.characters} events={live.events}/>
         <SpecialDamageControl campaignId={campaignId} characters={live.characters} encounter={live.encounter}/>
       </div>}
-    /> : null}
+    />
+    </> : null}
     {tab === 'settings' ? <div className="react-settings-workspace">
       <Panel title="GM Dashboard Settings" action={<StatusPill>{visibleDashboardPanels(dashboardSettingsDraft,'gm').length} panels</StatusPill>}>
         <p className="react-help">Manage all GM dashboard panels here. The party/resource sidebar and dashboard navigation remain fixed.</p>
