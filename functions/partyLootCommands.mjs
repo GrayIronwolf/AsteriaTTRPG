@@ -1,4 +1,5 @@
 import {isLinkedCharacter} from './characterPermissions.mjs';
+import {validateGMRewardPayload} from '../src/state/gmRewardModel.mjs';
 import {
   PARTY_STASH_MAX_ITEMS,PARTY_LOOT_MAX_COPPER,validatePartyStash,validatePartyLootDrop,
   splitPartyCopper,validatePartyContainerSize,safePartyStashEntry
@@ -88,18 +89,25 @@ export function createPartyLootCommands(context,helpers){
         if(visible||hidden)throw Error('This loot drop already exists.');
         const drop=validatePartyLootDrop(action.drop||{},lootId);
         const revealed=action.revealNow===true;
-        tx.set(revealed?publicRef:privateRef,{
-          ...drop,visibility:revealed?'revealed':'hidden',createdBy:currentUser.uid,
-          createdAt:serverTimestamp(),updatedAt:serverTimestamp()
-        });
+        const secretItem=drop.kind==='item'?validateGMRewardPayload({
+          items:[action.drop.item],currency:{key:'copper',amount:0}
+        }).items[0]:null;
+        const base={...drop,createdBy:currentUser.uid,
+          createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+        if(revealed)tx.set(publicRef,{...base,visibility:'revealed'});
+        // Keep canonical item metadata GM-only, including the true identity of
+        // unappraised finds. Player-facing loot contains a sanitized preview.
+        tx.set(privateRef,{...base,visibility:revealed?'revealed':'hidden',
+          ...(secretItem?{secretItem}:{})});
         return {lootId,revealed};
       }
       if(type==='reveal'){
         if(!hidden)throw Error('No hidden loot drop is available to reveal.');
         if(visible)throw Error('A revealed loot drop already exists with this identifier.');
-        tx.set(publicRef,{...hidden,visibility:'revealed',updatedAt:serverTimestamp(),
+        const {secretItem, ...publicDrop}=hidden;
+        tx.set(publicRef,{...publicDrop,visibility:'revealed',updatedAt:serverTimestamp(),
           revealedAt:serverTimestamp(),revealedBy:currentUser.uid});
-        tx.delete(privateRef);
+        tx.update(privateRef,{visibility:'revealed',updatedAt:serverTimestamp()});
         return {lootId,revealed:true};
       }
       const target=visible?publicRef:privateRef,existing=visible||hidden;
@@ -107,6 +115,7 @@ export function createPartyLootCommands(context,helpers){
       if(existing.status!=='available')throw Error('Claimed or distributed loot cannot be cancelled.');
       tx.update(target,{status:'cancelled',updatedAt:serverTimestamp(),
         cancelledBy:currentUser.uid,cancelledAt:serverTimestamp()});
+      if(visible&&hidden)tx.update(privateRef,{status:'cancelled',updatedAt:serverTimestamp()});
       return {lootId,cancelled:true};
     }),
 
@@ -114,8 +123,9 @@ export function createPartyLootCommands(context,helpers){
       const lootId=requireId(String(operation.lootId||''),'loot drop');
       await requireLiveSession(tx,campaignId);
       const refs=liveCharacterRefs(campaignId,characterId);
-      const [snapshot,lootSnapshot]=await Promise.all([
-        tx.get(refs.campaign),tx.get(lootRef(campaignId,lootId))
+      const [snapshot,lootSnapshot,privateSnapshot]=await Promise.all([
+        tx.get(refs.campaign),tx.get(lootRef(campaignId,lootId)),
+        tx.get(draftRef(campaignId,lootId))
       ]);
       if(!exists(snapshot))throw Error('Character not found.');
       if(!exists(lootSnapshot))throw Error('This loot is not revealed to the party.');
@@ -128,12 +138,17 @@ export function createPartyLootCommands(context,helpers){
       if(!refs.privateExists)throw Error('Owner character record unavailable; loot remains unclaimed.');
       checkCombat(refs,characterId);
       const storageId=requireId(String(operation.storageId||''),'inventory storage');
-      const placed=placeCharacterItem(character,copy(drop.item),{storageId});
+      const original=exists(privateSnapshot)?privateSnapshot.data():null;
+      if(original&&original.status!=='available')throw Error('This loot is no longer claimable.');
+      const placed=placeCharacterItem(character,copy(original?.secretItem||drop.item),{storageId});
       appendActivity(character,{type:'party-loot-claimed',message:'Claimed '+(drop.item?.name||'loot')+' from '+drop.source+'.'});
       writeLiveCharacter(tx,refs,character);
       tx.update(lootRef(campaignId,lootId),{
         status:'claimed',claimedByCharacterId:characterId,claimedByOwnerUid:currentUser.uid,
         claimedAt:serverTimestamp(),updatedAt:serverTimestamp()
+      });
+      if(original)tx.update(draftRef(campaignId,lootId),{
+        status:'claimed',claimedByCharacterId:characterId,updatedAt:serverTimestamp()
       });
       return {lootId,itemId:placed.id,claimed:true};
     }),
