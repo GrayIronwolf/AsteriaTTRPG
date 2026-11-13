@@ -6,6 +6,7 @@ import {
   enchantmentPreview,enchantmentRequirements
 } from '../state/itemEnhancementModel.mjs';
 import {resourcePair} from '../state/resourceValues.mjs';
+import {pendingActionKeys,actionKey} from '../state/inventoryPresentationModel.mjs';
 import {stationAccessible} from '../state/craftingServicesModel.mjs';
 import {EmptyState,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 
@@ -219,6 +220,9 @@ export function PlayerEnhancementWorkshop({campaignId,character={},editable=fals
   const [selections,setSelections]=useState({});
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const inventory=useMemo(()=>inventoryItems(character),[character]);
+  const inventoryRaw=useMemo(()=>inventory.map(row=>row.raw||row),[inventory]);
+  const stationsById=useMemo(()=>new Map(stations.map(station=>[station.id,station])),[stations]);
+  const pendingRequests=useMemo(()=>pendingActionKeys(requests,'planId','itemId'),[requests]);
   const [currentMana,maxMana]=resourcePair(character.mp);
   useEffect(()=>{
     if(!campaignId)return;
@@ -247,7 +251,7 @@ export function PlayerEnhancementWorkshop({campaignId,character={},editable=fals
     <div className="react-crafting-recipe-list">
       {plans.map(plan=>{
         const selection=selections[plan.id]||{};
-        const station=plan.stationId?stations.find(s=>s.id===plan.stationId):null;
+        const station=plan.stationId?stationsById.get(plan.stationId):null;
         const stationReady=!plan.stationId||stationAccessible(station,character.id);
         const targets=inventory.filter(item=>enhancementTargetEligible(item.raw||item,plan));
         const target=targets.find(item=>item.id===selection.itemId)||targets[0];
@@ -260,10 +264,10 @@ export function PlayerEnhancementWorkshop({campaignId,character={},editable=fals
             const affinity=source.enchantmentAffinity||source.materialAffinity||'None';
             preview=enchantmentPreview(plan,affinity,stoneMode);
             requirements=enchantmentRequirements(plan,stoneMode);
-            materials=enhancementInventoryPlan(plan,inventory.map(row=>row.raw||row),index,stoneMode);
+            materials=enhancementInventoryPlan(plan,inventoryRaw,index,stoneMode);
           }catch(e){error=e.message;}
         }
-        const pending=requests.some(r=>r.planId===plan.id&&r.itemId===target?.id&&r.status==='pending');
+        const pending=pendingRequests.has(actionKey(plan.id,target?.id));
         const ready=Boolean(target&&materials?.ready&&currentMana>=plan.manaCost&&!error&&stationReady);
         return <article key={plan.id}>
           <h3>{plan.name}</h3>

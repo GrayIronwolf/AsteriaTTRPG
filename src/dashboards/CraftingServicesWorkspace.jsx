@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {craftingMaterialKey} from '../state/craftingRecipeModel.mjs';
+import {pendingActionKeys,actionKey} from '../state/inventoryPresentationModel.mjs';
 import {
   STATION_TYPES,SERVICE_TYPES,stationAccessible,repairTargetEligible,serviceInventoryPlan
 } from '../state/craftingServicesModel.mjs';
@@ -172,6 +173,9 @@ export function PlayerCraftingServices({campaignId,character={},editable=false})
   const [requests,setRequests]=useState([]),[chosen,setChosen]=useState({});
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const inventory=useMemo(()=>inventoryItems(character),[character]);
+  const inventoryRaw=useMemo(()=>inventory.map(row=>row.raw||row),[inventory]);
+  const stationsById=useMemo(()=>new Map(stations.map(station=>[station.id,station])),[stations]);
+  const pendingRequests=useMemo(()=>pendingActionKeys(requests,'serviceId','itemId'),[requests]);
   useEffect(()=>{
     if(!campaignId)return;
     const a=firebaseService.subscribeCraftingStations(campaignId,setStations,false);
@@ -196,15 +200,15 @@ export function PlayerCraftingServices({campaignId,character={},editable=false})
       <article key={s.id}><h3>{s.name}</h3><p>{s.type} · {s.location||'Location not specified'}</p>
         {s.description?<p>{s.description}</p>:null}</article>)}</div>
     <div className="react-crafting-recipe-list">{services.map(service=>{
-      const station=service.stationId?stations.find(s=>s.id===service.stationId):null;
+      const station=service.stationId?stationsById.get(service.stationId):null;
       const open=!service.stationId||stationAccessible(station,character.id);
       const targets=service.type==='repair'?
         inventory.filter(i=>repairTargetEligible(i.raw||i,service)):[];
       const target=targets.find(i=>i.id===chosen[service.id])||targets[0];
       const index=target?inventory.findIndex(i=>i.id===target.id):-1;
-      const materials=serviceInventoryPlan(service,inventory.map(i=>i.raw||i),index);
-      const pending=requests.some(r=>r.serviceId===service.id&&
-        r.itemId===target?.id&&r.status==='pending');
+      const materials=service.type==='repair'&&target
+        ?serviceInventoryPlan(service,inventoryRaw,index):null;
+      const pending=pendingRequests.has(actionKey(service.id,target?.id));
       return <article key={service.id}>
         <div className="react-record-heading"><h3>{service.name}</h3>
           <StatusPill tone={open?'success':'warning'}>{open?'Available':'Station unavailable'}</StatusPill></div>
@@ -219,7 +223,8 @@ export function PlayerCraftingServices({campaignId,character={},editable=false})
             onChange={e=>setChosen(s=>({...s,[service.id]:e.target.value}))}>
             {targets.length?targets.map(i=><option key={i.id} value={i.id}>{i.name}</option>):
               <option value="">No eligible damaged items</option>}</select></label>
-          <button className="primary" disabled={!editable||busy||!open||!target||!materials.ready||pending}
+          {!target?<small>No damaged, eligible individual items are available.</small>:null}
+          <button className="primary" disabled={!editable||busy||!open||!target||!materials?.ready||pending}
             onClick={()=>request(service,target)}>
             {pending?'Awaiting GM Approval':'Request Repair'}</button>
         </>:<p>Discuss this service with your GM. No automatic item or currency changes.</p>}
