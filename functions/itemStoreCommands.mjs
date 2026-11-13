@@ -8,6 +8,7 @@ import {merchantRelationshipId,updateMerchantRelationship,validateMerchantOpport
 import {isLinkedCharacter} from './characterPermissions.mjs';
 import {normalizeCraftingRecipe} from '../src/state/craftingRecipeModel.mjs';
 import {normalizeMerchantTemplate,merchantTemplateStock} from '../src/state/merchantTemplateModel.mjs';
+import {mergeGeneratedMerchantStock} from '../src/state/shopGeneratorIntegrationModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -59,17 +60,13 @@ export function applyGMShopAction(current,action={},shopId=''){
   if(action.type==='apply-generated-stock'){
     if(!current.id||current.deleted||current.status==='deleted')
       throw Error('Choose an existing active merchant.');
-    if(action.mode!=='append')throw Error('Generated stock may only be appended.');
-    const stock=merchantTemplateStock(action.stock);
-    if(!stock.length)throw Error('Generate at least one stock line.');
     const next=cleanGMShop({},current,shopId);
-    if(next.stock.length+stock.length>PHASE33_MAX_SHOP_STOCK)
-      throw Error('Shop stock limit would be exceeded.');
-    next.stock=[...next.stock,...stock.map(row=>{
+    const normalized=merchantTemplateStock(action.stock).map(row=>{
       const item=normalizeMarketPricing(copy(row.item),
         {legacy:true,removeLegacy:true,migratedRecord:true});
       return {...row,item,priceCopper:merchantPriceCopper(next,item,'buy')};
-    })];
+    });
+    next.stock=mergeGeneratedMerchantStock(next.stock,normalized,action.mode).stock;
     if(JSON.stringify(next).length>680000)throw Error('Generated shop inventory is too large.');
     return next;
   }
