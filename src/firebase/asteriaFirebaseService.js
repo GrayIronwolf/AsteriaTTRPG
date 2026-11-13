@@ -26,6 +26,8 @@ function requireMethod(name) {
 
 export const firebaseService = {
   currentUser: () => api()?.getUser?.() || null,
+  universalCheckAction: data=>requireMethod('universalCheckAction')(data),
+  subscribeUniversalChecks: (campaignId,onChange,options)=>requireMethod('subscribeUniversalChecks')(campaignId,onChange,options),
   currentProfile: () => api()?.getProfile?.() || null,
   mirrorOwnedCharacter: (characterId, character) => requireMethod('saveOwnedCharacterSnapshot')(characterId, character),
   loadCampaigns: () => requireMethod('loadCampaigns')(),
