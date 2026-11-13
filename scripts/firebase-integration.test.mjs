@@ -3073,7 +3073,7 @@ test('Phase 10.3: GM controls merchant standing; owners alone can read it; privi
     minStanding:50,opportunityLabel:'Guild Exclusive'
   }]);
   assert.equal(configured.ok,true,configured.error);
-  const relationPath='campaigns/c/merchantRelationships/'+shopId+'_a';
+  const relationPath='campaigns/c/merchantRelationships/'+String(shopId.length)+'_'+shopId+'_a';
   assert.equal((await action('alice','manageMerchantRelationship',['c','a',{
     shopId,characterId:'a',score:100,message:'Self granted'
   }])).ok,false);
