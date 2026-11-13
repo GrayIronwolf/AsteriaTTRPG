@@ -350,6 +350,13 @@ service cloud.firestore {
         allow get, list: if canUseCampaignSystems(campaignId);
         allow create, update, delete: if false;
       }
+      // Bargain terms are private to the proposing account and active GMs.
+      // All proposals, approvals and item/currency movements are server-only.
+      match /merchantDeals/{dealId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.ownerUid == request.auth.uid);
+        allow create, update, delete: if false;
+      }
       // Phase 5.1: shared party inventory is readable by active campaign members.
       // Every change, including claims and stash transfers, must use the
       // authenticated callable with an idempotent receipt.
