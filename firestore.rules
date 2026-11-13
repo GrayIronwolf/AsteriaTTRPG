@@ -375,6 +375,21 @@ service cloud.firestore {
            resource.data.ownerUid == request.auth.uid);
         allow create, update, delete: if false;
       }
+      // Phase 11.2: players see only GM-published enhancement plans;
+      // all changes use trusted Firebase transactions.
+      match /enhancementPlans/{planId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) &&
+           resource.data.status == 'published');
+        allow create, update, delete: if false;
+      }
+      // A character's enchantment request is private to their owner and GMs.
+      match /enhancementRequests/{enhancementRequestId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) &&
+           resource.data.ownerUid == request.auth.uid);
+        allow create, update, delete: if false;
+      }
       // Phase 6.1: weighted loot tables are private to campaign GMs.
       // All changes and previews execute through authenticated server actions.
       match /lootTables/{tableId} {
