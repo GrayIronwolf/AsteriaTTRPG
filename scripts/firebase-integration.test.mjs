@@ -3245,3 +3245,133 @@ test('Phase 11.1: published recipe and crafting request queries enforce GM and o
   await assertFails(updateDoc(doc(user('alice'),'campaigns/c/craftingRequests/'+req.request.id),
     {status:'approved'}));
 });
+
+
+test('Phase 11.2: private GM enhancement plans and owner-only pending enchantment requests',async()=>{
+  const planId='phase112-flame';
+  const payload={name:'Flame Sword',description:'Applies one spell binding',
+    mode:'enchantment',status:'draft',
+    targetType:'Weapon',effectName:'Flame Edge',
+    effectDescription:'GM determines actual damage effects.',
+    spellRank:'Weak',spellName:'Flame',spellMana:3,
+    allowStoneSubstitution:false,materials:[]};
+  const unauthorised=await action('alice','manageEnhancementPlan',['c','a',{
+    type:'save',planId,plan:{...payload,status:'published'}
+  }]);
+  assert.equal(unauthorised.ok,false);
+  const draft=await action('gm','manageEnhancementPlan',['c','gm-scope',{
+    type:'save',planId,plan:payload
+  }]);
+  assert.equal(draft.ok,true,draft.error);
+  await assertFails(getDoc(doc(user('alice'),'campaigns/c/enhancementPlans/'+planId)));
+  assert.equal((await action('alice','requestEnhancement',['c','a',{
+    planId,itemId:'sword',stoneMode:'standard'
+  }])).ok,false);
+  const published=await action('gm','manageEnhancementPlan',['c','gm-scope',{
+    type:'save',planId,plan:{...payload,status:'published'}
+  }]);
+  assert.equal(published.ok,true,published.error);
+  await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/enhancementPlans/'+planId)));
+  await assertFails(getDocs(collection(user('alice'),'campaigns/c/enhancementPlans')));
+  const onlyPublished=await assertSucceeds(getDocs(query(
+    collection(user('alice'),'campaigns/c/enhancementPlans'),where('status','==','published'))));
+  assert.equal(onlyPublished.size,1);
+  const starter=sheet('a','alice');
+  const enhancedTarget={id:'dagger',instanceId:'dagger',name:'Iron Dagger',type:'Weapon',
+    identified:true,enchantmentAffinity:'Extreme',qty:1,storageId:'bag',storageSlot:1};
+  const crystal={id:'crystal',instanceId:'crystal',name:'Powdered Crystal',
+    qty:1,identified:true,storageId:'bag',storageSlot:2};
+  const stone={id:'stone',instanceId:'stone',name:'Poor Soul Stone',
+    qty:1,identified:true,storageId:'bag',storageSlot:3};
+  const inventory=[...starter.inventory,enhancedTarget,crystal,stone];
+  await db.doc('campaigns/c/characters/a').update({inventory,mp:[15,20]});
+  await db.doc('users/alice/characters/a').update({inventory,mp:[15,20]});
+  const before=await action('alice','requestEnhancement',['c','a',{
+    planId,itemId:'dagger',stoneMode:'standard'
+  }]);
+  assert.equal(before.ok,true,before.error);
+  const id=before.request.id,path='campaigns/c/enhancementRequests/'+id;
+  await assertSucceeds(getDoc(doc(user('alice'),path)));
+  await assertFails(getDoc(doc(user('bob'),path)));
+  await assertFails(updateDoc(doc(user('alice'),path),{status:'approved'}));
+  const pending=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(pending.mp[0],15);
+  assert.equal(pending.inventory.some(x=>x.id==='crystal'),true);
+  assert.equal((await action('alice','reviewEnhancement',['c','a',id,'approve'])).ok,false);
+  const approved=await action('gm','reviewEnhancement',['c','gm-scope',id,'approve']);
+  assert.equal(approved.ok,true,approved.error);
+  const updated=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(updated.mp[0],9,'Enchanting must cost twice the base spell MP');
+  assert.equal(updated.inventory.some(x=>x.id==='crystal'),false);
+  assert.equal(updated.inventory.some(x=>x.id==='stone'),false);
+  const upgraded=updated.inventory.find(x=>x.id==='dagger');
+  assert.equal(upgraded.enchantments.length,1);
+  assert.equal(upgraded.enchantments[0].name,'Flame Edge');
+  assert.equal(upgraded.instanceId,'dagger','Enhancement must preserve original item instance');
+  assert.equal(upgraded.qty,1);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,
+    updated.inventory);
+  assert.equal((await db.doc(path).get()).data().status,'approved');
+  assert.equal((await action('gm','reviewEnhancement',['c','gm-scope',id,'approve'])).ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().mp[0],9);
+  await assertFails(updateDoc(doc(user('alice'),'campaigns/c/enhancementPlans/'+planId),
+    {effectName:'Free damage'}));
+});
+test('Phase 11.2: GM reject, changed target and insufficient Mana never consume ingredients',async()=>{
+  const planId='phase112-forge-upgrade',base={
+    name:'Polish Iron',description:'Upgrade a weapon',mode:'upgrade',status:'published',
+    effectName:'Polished Edge',effectDescription:'GM narrative upgrade',
+    targetType:'',manaCost:2,
+    materials:[{name:'Sword',itemCode:'',quantity:1}]
+  };
+  assert.equal((await action('gm','manageEnhancementPlan',['c','gm-scope',{
+    type:'save',planId,plan:base
+  }])).ok,true);
+  const charRef=db.doc('campaigns/c/characters/a');
+  const ownerRef=db.doc('users/alice/characters/a');
+  const start={...sheet('a','alice'),
+    inventory:[
+      {id:'blade',instanceId:'blade',name:'Blade',qty:1,storageId:'bag',
+        storageSlot:1,identified:true,equipped:false},
+      {id:'iron',instanceId:'iron',name:'Sword',qty:2,storageId:'bag',
+        storageSlot:2,identified:true,equipped:false}
+    ],mp:[10,10]
+  };
+  await charRef.set(start,{merge:true});
+  await ownerRef.set(start,{merge:true});
+  const first=await action('alice','requestEnhancement',['c','a',{
+    planId,itemId:'blade'
+  }]);
+  assert.equal(first.ok,true,first.error);
+  const rejected=await action('gm','reviewEnhancement',['c','gm-scope',
+    first.request.id,'reject']);
+  assert.equal(rejected.ok,true,rejected.error);
+  assert.equal((await charRef.get()).data().inventory.find(x=>x.id==='iron').qty,2);
+  assert.equal((await charRef.get()).data().mp[0],10);
+  const second=await action('alice','requestEnhancement',['c','a',{
+    planId,itemId:'blade'
+  }]);
+  assert.equal(second.ok,true,second.error);
+  await charRef.update({inventory:[
+    {...start.inventory[0],quality:'Superior'},start.inventory[1]
+  ]});
+  await ownerRef.update({inventory:[
+    {...start.inventory[0],quality:'Superior'},start.inventory[1]
+  ]});
+  const stale=await action('gm','reviewEnhancement',['c','gm-scope',
+    second.request.id,'approve']);
+  assert.equal(stale.ok,false,'Changing the target after requesting must be detected');
+  assert.equal((await charRef.get()).data().inventory.find(x=>x.id==='iron').qty,2);
+  const third=await action('alice','requestEnhancement',['c','a',{planId,itemId:'blade'}]);
+  assert.equal(third.ok,true,third.error);
+  await charRef.update({mp:[0,10]});
+  await ownerRef.update({mp:[0,10]});
+  const low=await action('gm','reviewEnhancement',['c','gm-scope',
+    third.request.id,'approve']);
+  assert.equal(low.ok,false);
+  assert.equal((await charRef.get()).data().inventory.find(x=>x.id==='iron').qty,2);
+  const ownerQuery=await assertSucceeds(getDocs(query(
+    collection(user('alice'),'campaigns/c/enhancementRequests'),where('ownerUid','==','alice'))));
+  assert.equal(ownerQuery.size,3);
+  await assertFails(getDocs(collection(user('bob'),'campaigns/c/enhancementRequests')));
+});
