@@ -19,17 +19,18 @@ function useAction(campaignId){
 export function GMUniversalCheckManager({campaignId,characters={}}){
   const rows=useRequests(campaignId,true),{send,busy,error}=useAction(campaignId);
   const [characterId,setCharacterId]=useState(''),[type,setType]=useState('skill'),
-    [skill,setSkill]=useState(''),[dc,setDc]=useState(15),[description,setDescription]=useState(''),
+    [skill,setSkill]=useState(''),[characteristic,setCharacteristic]=useState(''),[dc,setDc]=useState(15),[description,setDescription]=useState(''),
     [npcName,setNpcName]=useState(''),[modifier,setModifier]=useState(0);
   const roster=Object.entries(characters).filter(([,c])=>c?.ownerUid);
   return <section className="react-panel" aria-label="Universal check manager">
     <h3>Request Check</h3>
-    <form onSubmit={async e=>{e.preventDefault();await send({action:'create',characterId,type,skill,dc:Number(dc),description,npcName,
+    <form onSubmit={async e=>{e.preventDefault();await send({action:'create',characterId,type,skill,characteristic,dc:Number(dc),description,npcName,
       modifiers:[{label:'GM situational modifier',value:Number(modifier)}]});}}>
       <label>Character<select value={characterId} onChange={e=>setCharacterId(e.target.value)} required>
         <option value="">Select player</option>{roster.map(([id,c])=><option key={id} value={id}>{c.name||id}</option>)}</select></label>
       <label>Type<select value={type} onChange={e=>setType(e.target.value)}>{UNIVERSAL_CHECK_TYPES.map(x=><option key={x} value={x}>{x}</option>)}</select></label>
       <label>Skill or characteristic<input value={skill} onChange={e=>setSkill(e.target.value)} required/></label>
+      <label>Characteristic<select value={characteristic} onChange={e=>setCharacteristic(e.target.value)}><option value="">None</option>{["strength","dexterity","agility","constitution","endurance","intelligence","wisdom","charisma","luck"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
       <label>DC<input type="number" min="0" max="1000" value={dc} onChange={e=>setDc(e.target.value)}/></label>
       <label>Situational modifier<input type="number" min="-100" max="100" value={modifier} onChange={e=>setModifier(e.target.value)}/></label>
       <label>NPC (optional)<input value={npcName} onChange={e=>setNpcName(e.target.value)}/></label>
