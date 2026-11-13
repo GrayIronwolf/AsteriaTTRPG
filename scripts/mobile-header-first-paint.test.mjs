@@ -50,6 +50,7 @@ test('mobile top bar stays in one bounded row and preserves account/profile/menu
 test('initial header and home buttons have their approved image classes before JS executes',()=>{
   const html=read('index.html');
   const expected=[
+    ['asteriaHandbookTop','long'],['worldLoreTop','long'],
     ['compendiumIndexButton','long'],['compendiumQuickToggle','icon'],
     ['characterForgeTop','long'],['campaignsTop','long'],
     ['loginToggle','small'],['settingsToggle','icon']

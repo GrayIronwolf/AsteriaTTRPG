@@ -235,12 +235,17 @@
     const visible=id=>Boolean(byId(id)?.getClientRects?.().length);
     const workspace=visible('asteria-workspace-shell');
     const mode=byId('auth-workspace-mode-filter')?.value;
+    const libraryVisible=visible('compendiumLibrary') || visible('universal-compendium-shell');
     const states={
       sidebarHomeButton:visible('home') || workspace&&mode==='dashboard',
       asteriaHeaderBrand:visible('home') || workspace&&mode==='dashboard',
-      compendiumIndexButton:visible('compendiumLibrary') || visible('universal-compendium-shell'),
+      asteriaHandbookTop:libraryVisible&&categoryId==='handbook',
+      worldLoreTop:libraryVisible&&groupId==='world',
+      compendiumIndexButton:libraryVisible,
       characterForgeTop:visible('phase3GameplayShell') && byId('phase3GameplayShell')?.classList.contains('phase3-forge-shell'),
-      campaignsTop:workspace&&mode==='campaigns'
+      campaignsTop:workspace&&mode==='campaigns',
+      asteriaFriendsTop:visible('asteriaFriendsPage'),
+      loginToggle:visible('asteriaAccountPage')
     };
     Object.entries(states).forEach(([id,current])=>{const button=byId(id);if(button){button.setAttribute('aria-current',current?'page':'false');button.classList.toggle('active',Boolean(current));}});
   }
@@ -264,10 +269,11 @@
       }
       const favourite=event.target.closest?.('[data-library-favourite]');
       if(favourite){const id=favourite.dataset.libraryFavourite,ids=readSaved('favourites');if(entries().some(e=>e.id===id)){save('favourites',ids.includes(id)?ids.filter(x=>x!==id):[id,...ids]);render();}return;}
-      // Account menu controls must not close the mobile settings drawer before
-      // their click handler opens the nested menu or activates an item.
-      if(event.target.closest?.('#globalNavigation a,#globalNavigation button,#accountControls button') &&
-         !event.target.closest?.('#compendiumQuickToggle,.asteria-account-menu-wrap'))closePanels();
+      // Keep the Compendium disclosure open until a link is selected.
+      // All other navigation destinations, including Friends, close the
+      // compact drawer. Account is an independent header page action.
+      if(event.target.closest?.('#globalNavigation a,#globalNavigation button') &&
+         !event.target.closest?.('#compendiumQuickToggle'))closePanels();
       if(!event.target.closest?.('.compendium-split'))setQuick(false);
     },true);
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!menu?.hidden){setQuick(false);byId('compendiumQuickToggle')?.focus();}});
@@ -276,10 +282,9 @@
     const media=window.matchMedia('(max-width: 1679px)');
     const alignHeader=()=>{
       if(media.matches)return;
-      const nav=byId('globalNavigation'),trigger=byId('compendiumQuickToggle');
-      if(!nav||!trigger)return;
-      const row=nav.getBoundingClientRect(),marker=trigger.getBoundingClientRect();
-      nav.style.setProperty('--compendium-trigger-offset',`${marker.left+marker.width/2-row.left}px`);
+      // The navigation row is now a normal flex item rather than a
+      // translation aligned to the Compendium's old split-button position.
+      byId('globalNavigation')?.style?.removeProperty?.('--compendium-trigger-offset');
     };
     const reflow=()=>{
       closePanels();
