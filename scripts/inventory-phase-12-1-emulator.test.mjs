@@ -115,7 +115,7 @@ test('12.1: GM publishes stations/NPC services; owner requests repair, GM settle
   await saveStation(station({status:'draft'}));
   await assertFails(getDoc(doc(user('alice'),path('craftingStations','forge'))));
   await saveStation();
-  await assertSucceeds(getDoc(doc(user('alice'),path('craftingStations','forge')));
+  await assertSucceeds(getDoc(doc(user('alice'),path('craftingStations','forge'))));
   await assertFails(updateDoc(doc(user('gm'),path('craftingStations','forge')),{status:'closed'}));
   await assertFails(getDocs(collection(user('alice'),path('craftingStations'))));
   const publicStations=await assertSucceeds(getDocs(query(
@@ -124,7 +124,7 @@ test('12.1: GM publishes stations/NPC services; owner requests repair, GM settle
   await saveService(service({status:'draft'}));
   await assertFails(getDoc(doc(user('alice'),path('npcCraftingServices','repair'))));
   await saveService();
-  await assertSucceeds(getDoc(doc(user('alice'),path('npcCraftingServices','repair')));
+  await assertSucceeds(getDoc(doc(user('alice'),path('npcCraftingServices','repair'))));
   await assertFails(updateDoc(doc(user('alice'),path('npcCraftingServices','repair')),
     {feeCopper:0}));
   const published=await assertSucceeds(getDocs(query(
