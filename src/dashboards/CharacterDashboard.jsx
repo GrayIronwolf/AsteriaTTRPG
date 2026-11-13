@@ -17,6 +17,7 @@ import { useOwnedCharacterData } from '../sessions/useOwnedCharacterData.js';
 import { mirrorCharacterSnapshot, openLegacyView } from '../app/legacyBridge.js';
 import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx';
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
+import {PlayerCraftingRecipes} from './CraftingRecipeWorkspace.jsx';
 import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import { CombatDashboardLayout, useCombatPanel } from './CombatPanel.jsx';
