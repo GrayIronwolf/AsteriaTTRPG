@@ -1,0 +1,74 @@
+// Phase 8.3: read-only search and queue selectors for existing party stash/loot data.
+// Player projections intentionally omit private fields and never inspect GM drafts.
+const list=value=>Array.isArray(value)?value:[];
+const searchText=value=>String(value??'').trim().toLocaleLowerCase();
+const contains=(value,query)=>searchText(value).includes(query);
+const nameForPlayer=item=>item?.identified===false?
+  'Unidentified Item':String(item?.name||item?.title||'Item');
+const nameForGM=item=>String(item?.name||item?.title||'Item');
+
+export function playerStashItems(stash={},query=''){
+  const term=searchText(query);
+  return list(stash?.items).filter(item=>contains(nameForPlayer(item),term))
+    .map(item=>({
+      id:item?.id,
+      name:nameForPlayer(item),
+      qty:item?.qty
+    }));
+}
+
+export function playerAvailableLoot(partyLoot={}, {search='',kind='all'}={}){
+  const term=searchText(search);
+  return list(partyLoot?.loot)
+    .filter(drop=>drop?.visibility==='revealed'&&drop?.status==='available')
+    .filter(drop=>kind==='all'||drop?.kind===kind)
+    .filter(drop=>[
+      drop.title,drop.source,drop.note,
+      drop.kind==='item'?nameForPlayer(drop.item):'copper'
+    ].some(value=>contains(value,term)))
+    .map(drop=>({
+      id:drop.id,
+      title:drop.title||'Found Treasure',
+      source:drop.source||'Campaign',
+      note:drop.note||'',
+      kind:drop.kind,
+      ...(drop.kind==='currency'?{currencyCopper:drop.currencyCopper}:{
+        item:{
+          name:nameForPlayer(drop.item),
+          qty:drop.item?.qty||1
+        }
+      })
+    }));
+}
+
+// These selectors must only be used beneath the existing GM dashboard access
+// gate. Unlike player selectors, private GM drafts may include hidden item data.
+export function gmVisibleStashes(partyLoot={}, {search='',status='all'}={}){
+  const term=searchText(search);
+  return list(partyLoot?.stashes)
+    .filter(stash=>status==='all'||stash?.status===status)
+    .filter(stash=>[
+      stash?.name,
+      stash?.kind,
+      stash?.description
+    ].some(value=>contains(value,term)));
+}
+
+export function gmLootReviewRows(partyLoot={}, {search='',kind='all',status='all'}={}){
+  const term=searchText(search);
+  const matches=drop=>
+    (kind==='all'||drop?.kind===kind)&&
+    [
+      drop?.title,drop?.source,drop?.note,
+      drop?.kind==='item'?nameForGM(drop.secretItem||drop.item):'copper'
+    ].some(value=>contains(value,term));
+  return {
+    hidden:list(partyLoot?.drafts)
+      .filter(drop=>drop?.visibility==='hidden'&&drop?.status==='available')
+      .filter(matches),
+    revealed:list(partyLoot?.loot)
+      .filter(drop=>drop?.visibility==='revealed')
+      .filter(drop=>status==='all'||drop?.status===status)
+      .filter(matches)
+  };
+}
