@@ -15,6 +15,7 @@ import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingS
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta,filterInventoryActivityRecords,INVENTORY_ACTIVITY_CATEGORIES} from '../state/inventoryActivityModel.mjs';
 import {playerTradeLootOverview} from '../state/inventoryActionHubModel.mjs';
+import {inventoryStorageSummary} from '../state/inventoryPresentationModel.mjs';
 import {filterInventoryJournalDate,INVENTORY_JOURNAL_DATE_RANGES,inventoryJournalReceipt,exportInventoryJournalCsv,inventoryJournalFilename} from '../state/inventoryJournalReceiptModel.mjs';
 
 const ARMOR_SLOTS = [
@@ -393,9 +394,10 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
     await run(()=>firebaseService.updateInventory(campaignId,character.id,{
       type:'rename-storage',storageId:storage.id,name:renameDraft.trim()}),'Container renamed.');
   };
-  const storageIds = useMemo(() => new Set(storages.map(value => value.id)), [storages]);
-  const unassignedItems = items.filter(item => !item.equipped && !storageIds.has(item.storageId));
-  const totalWeight = items.reduce((total,item)=>total+Number(item.weight||0)*Number(item.qty||1),0);
+  // One summary pass replaces repeated scans for every storage tab and status.
+  const storageSummary = useMemo(() => inventoryStorageSummary(items,storages),[items,storages]);
+  const unassignedItems = storageSummary.unassignedItems;
+  const totalWeight = storageSummary.totalWeight;
   const carryCapacity = Number(character.carryCapacity ?? character.maxCarryWeight ?? character.encumbrance?.maximum ?? 0);
   const matches = item => matchesInventoryFilter(item,query,categoryFilter);
   const createStorage = async () => {
@@ -414,7 +416,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
     const target = storages[index + direction];
     if(target) reorderStorage(storageId, target.id);
   };
-  return <Panel title="Inventory / Storage" action={<StatusPill>{items.filter(item => !item.equipped).length} items</StatusPill>} className="react-inventory-storage">
+  return <Panel title="Inventory / Storage" action={<StatusPill>{storageSummary.nonEquippedCount} items</StatusPill>} className="react-inventory-storage">
     <nav className="react-storage-tabs" aria-label="Character storage">
       {Array.from({ length:storageLimit }, (_, index) => {
         const record = storages[index];
@@ -425,7 +427,7 @@ function StoragePanel({ campaignId, character, storages, activeStorage, setActiv
           if(storageSource){reorderStorage(storageSource,record.id);return;}
           const itemId = event.dataTransfer.getData('application/x-asteria-item');
           if (itemId) run(() => firebaseService.updateInventory(campaignId, character.id, { type: 'move-storage', itemId, storageId: record.id }), `Moved item to ${record.name}.`);
-        }}><span>{record.name || `Storage ${index + 1}`}</span><small>{items.filter(item => !item.equipped && item.storageId === record.id).length}</small></button><span className="react-storage-tab-order"><button type="button" aria-label={`Move ${record.name} left`} disabled={!editable||index===0} onClick={()=>nudgeStorage(record.id,-1)}>&lt;</button><button type="button" aria-label={`Move ${record.name} right`} disabled={!editable||index===storages.length-1} onClick={()=>nudgeStorage(record.id,1)}>&gt;</button></span></div>
+        }}><span>{record.name || `Storage ${index + 1}`}</span><small>{storageSummary.countsByStorage.get(record.id)||0}</small></button><span className="react-storage-tab-order"><button type="button" aria-label={`Move ${record.name} left`} disabled={!editable||index===0} onClick={()=>nudgeStorage(record.id,-1)}>&lt;</button><button type="button" aria-label={`Move ${record.name} right`} disabled={!editable||index===storages.length-1} onClick={()=>nudgeStorage(record.id,1)}>&gt;</button></span></div>
           : <button key={`empty-storage-${index}`} type="button" className="empty" disabled={!editable || busy} onClick={() => setActiveStorage('')}><span>Empty Storage Slot</span><small>+</small></button>;
       })}
     </nav>
@@ -596,9 +598,11 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
     seenActivityRef.current=delta.ids;
     if(delta.added.length)setActivityNotice(delta.added.length===1?delta.added[0].title:delta.added.length+' new inventory updates');
   },[activity]);
-  const storages = normalizeCharacterStorages(character);
+  // Preserve derived array identities across unrelated UI state changes, so
+  // changing a tab or opening a detail card doesn't relayout every storage slot.
+  const storages = useMemo(()=>normalizeCharacterStorages(character),[character]);
   const activeStorage = storages.some(value => value.id === selectedStorage) ? selectedStorage : storages[0]?.id || '';
-  const items = inventoryItems(character);
+  const items = useMemo(()=>inventoryItems(character),[character]);
   const selectedItem=items.find(row=>String(row.id)===String(selectedItemId))||null;
   const downloadJournal=()=>{
     if(!visibleActivity.length)return;
