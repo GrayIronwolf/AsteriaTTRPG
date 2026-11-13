@@ -29,6 +29,7 @@ import { CampaignManagerWorkspace, CraftingWorkspace, EconomyWorkspace, Gameplay
 import { GMRewardTools } from './GMRewardTools.jsx';
 import { GMPartyLootPanel } from './PartyLootWorkspace.jsx';
 import { GMInventoryAuditWorkspace } from './GMInventoryAuditWorkspace.jsx';
+import { gmTradeLootOverview } from '../state/gmTradeLootHubModel.mjs';
 
 const GM_TABS = [
   { id: 'main', label: 'GM Main', icon: '\u25c8' },
@@ -457,6 +458,27 @@ function ACInspectionPanel({ campaignId, characters, selectedId, setSelectedId }
   </Panel>;
 }
 
+
+function GMTradeLootHub({overview,onNavigate}){
+  return <section className="react-gm-trade-hub" aria-label="GM Trade and Loot shortcuts">
+    <div className="react-gm-trade-hub-heading">
+      <div>
+        <h3>Trade &amp; Loot — GM Quick Access</h3>
+        <p>Open the existing campaign management tools without searching through panels.</p>
+      </div>
+      <span>{overview.hiddenDrafts} hidden drafts · {overview.awaitingCopper} currency drops awaiting distribution</span>
+    </div>
+    <div className="react-gm-trade-hub-links">
+      {overview.links.map(link=><button type="button" key={link.id}
+        onClick={()=>onNavigate(link)}
+        aria-label={link.label+' — '+link.detail}>
+        <strong>{link.label}</strong>
+        <span>{link.detail}</span>
+      </button>)}
+    </div>
+  </section>;
+}
+
 export function GMDashboard({ campaignId }) {
   const rawLive = useCampaignLiveData(campaignId, { mode: 'gm' });
   // A one-second session clock may expire effects, but does not alter the
@@ -468,6 +490,7 @@ export function GMDashboard({ campaignId }) {
   const restored = restoredGMView(campaignId, firebaseService.currentUser()?.uid);
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
+  const [gmHubDestination,setGMHubDestination]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
   const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
   const [dashboardSettingsMessage,setDashboardSettingsMessage] = useState('');
@@ -477,6 +500,22 @@ export function GMDashboard({ campaignId }) {
   const dashboardDraftRevision=useRef(0);
   const dashboardSaveScope=useRef('');
   const accountUid=firebaseService.currentUser()?.uid || '';
+  const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
+    [live.itemEcosystem,live.partyLoot]);
+  const openGMHubLink=link=>{
+    if(!['inventory','economy'].includes(link.tab))return;
+    setGMHubDestination({tab:link.tab,targetId:link.targetId});
+    setTab(link.tab);
+  };
+  useEffect(()=>{
+    if(!gmHubDestination||tab!==gmHubDestination.tab)return;
+    const target=document.getElementById(gmHubDestination.targetId);
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+    target.focus({preventScroll:true});
+    setGMHubDestination(null);
+  },[tab,gmHubDestination]);
+  useEffect(()=>setGMHubDestination(null),[campaignId,accountUid]);
   useEffect(()=>{
     dashboardDraftDirty.current=false;
     dashboardDraftRevision.current++;
@@ -684,11 +723,11 @@ export function GMDashboard({ campaignId }) {
       </Panel>
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
-    {tab === 'inventory' ? <PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></>}/> : null}
+    {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
-    {tab === 'economy' ? <EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/> : null}
+    {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'tools' ? <div className="react-gm-tools-grid">{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} saveSection={saveSection}/> : null}
