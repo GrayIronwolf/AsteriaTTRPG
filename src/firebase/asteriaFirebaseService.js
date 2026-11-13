@@ -109,6 +109,7 @@ export const firebaseService = {
   manageTitle: (campaignId, characterId, titleId, details) => requireMethod('manageCharacterTitle')(campaignId, characterId, titleId, details),
   grantStorageSlots: (campaignId, characterIds, amount) => requireMethod('grantCharacterStorageSlots')(campaignId, characterIds, amount),
   createCustomItem: (campaignId, item) => requireMethod('createCustomItem')(campaignId, item),
+  subscribeMerchantDeals: (...args) => requireMethod('subscribeMerchantDeals')(...args),
   createMerchantDeal: (...args) => requireMethod('createMerchantDeal')(...args),
   respondMerchantDeal: (...args) => requireMethod('respondMerchantDeal')(...args),
   cancelMerchantDeal: (...args) => requireMethod('cancelMerchantDeal')(...args),
