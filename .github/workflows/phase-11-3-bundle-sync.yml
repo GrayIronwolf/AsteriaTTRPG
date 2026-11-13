@@ -1,0 +1,35 @@
+# One-shot Phase 11.3 bundle parity recovery; remove after successful sync.
+name: Phase 11.3 temporary compiled bundle sync
+on:
+  push:
+    branches:
+      - feat/inventory-phase-11-3-stations-npc-services-repair
+    paths:
+      - .github/workflows/phase-11-3-bundle-sync.yml
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit generated release assets on this feature branch only
+        shell: bash
+        run: |
+          git add -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Generated release assets already match."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: synchronize Phase 11.3 website assets"
+          git push origin "HEAD:refs/heads/feat/inventory-phase-11-3-stations-npc-services-repair"
