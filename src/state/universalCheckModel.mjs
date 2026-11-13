@@ -69,6 +69,7 @@ export function universalAutomaticModifiers(character,{type='skill',skill='',cha
   entries.push({label:'Characteristic ('+stat+', tier '+tier+')',value:tier});
   if(skillName&&type!=='characteristic'&&type!=='saving'){
     const rank=rankOverride?approvedRank(rankOverride):record.rank;
+    if(rankOverride&&!rank)throw new Error('Invalid approved skill rank override.');
     if(!rank&&record.legacy)throw new Error('This skill has a legacy numeric rank. GM must select its approved rank.');
     const selected=rank||'Untrained';
     entries.push({label:'Skill rank ('+selected+')',value:universalSkillRankModifier(selected)});
@@ -111,7 +112,7 @@ export function universalDiceChoice(first,second,advantage=false,disadvantage=fa
 }
 export function universalCheckOutcome(die,modifier,dc,{opposed=false}={}){
   if(!Number.isInteger(die)||die<1||die>20)throw new Error('A d20 result from 1 to 20 is required.');
-  if(!Number.isFinite(modifier)||!Number.isFinite(dc)||Math.abs(modifier)>500||Math.abs(dc)>1000)
+  if(!Number.isFinite(modifier)||(!opposed&&!Number.isFinite(dc))||Math.abs(modifier)>500||(!opposed&&Math.abs(dc)>1000))
     throw new Error('Invalid check modifier or DC.');
   const total=die+modifier;
   const success=opposed?null:die===1?false:die===20?true:total>=dc;
