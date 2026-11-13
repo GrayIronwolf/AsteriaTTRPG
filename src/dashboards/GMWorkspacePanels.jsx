@@ -350,6 +350,7 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const [deals,setDeals]=useState([]);
   const [relationships,setRelationships]=useState([]);
   const [dealBusy,setDealBusy]=useState('');
+  const [dealCheckId,setDealCheckId]=useState('');
   const [stockBusy,setStockBusy]=useState(false);
   const [travelBusy,setTravelBusy]=useState(false);
   const [confirmRestock,setConfirmRestock]=useState(false);
@@ -572,18 +573,22 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
             {deal.barterItemId?' + '+deal.barterQuantity+' × '+deal.barterItemName:''}</small>
           {deal.note?<small>{deal.note}</small>:null}<small>{deal.status}</small>
         </div>
-        {deal.status==='pending'?<GMContextCheckLauncher
-          key={'check-'+deal.id}
-          campaignId={campaignId} characters={characters}
-          initialCharacterId={deal.characterId}
-          context={{kind:'merchant-deal',shopId:selected.id,dealId:deal.id,label:selected.name}}
-          title="Request haggling check for this offer"/>:null}
+        {deal.status==='pending'?<button type="button"
+          onClick={()=>setDealCheckId(current=>current===deal.id?'':deal.id)}>
+          {dealCheckId===deal.id?'Close offer check':'Request haggling check'}
+        </button>:null}
         {deal.status==='pending'?<div className="react-record-actions">
           <button type="button" disabled={Boolean(dealBusy)||Date.now()>Number(deal.expiresAt||0)}
             onClick={()=>decideDeal(deal,'approve')}>Approve</button>
           <button type="button" disabled={Boolean(dealBusy)} onClick={()=>decideDeal(deal,'reject')}>Decline</button>
         </div>:null}
       </article>)}
+    {deals.filter(deal=>deal.id===dealCheckId&&deal.status==='pending'&&deal.shopId===selected.id).map(deal=>
+      <GMContextCheckLauncher key={deal.id} campaignId={campaignId}
+        characters={characters} initialCharacterId={deal.characterId}
+        context={{kind:'merchant-deal',shopId:selected.id,dealId:deal.id,label:selected.name}}
+        title={'Haggling check · '+deal.characterName}/>
+    )}
   </div></>:<EmptyState title="No shop selected">Create a shop to manage visitors and stock.</EmptyState>}</section></div><SectionStatus message={message}/>
   </Panel>;
 }
