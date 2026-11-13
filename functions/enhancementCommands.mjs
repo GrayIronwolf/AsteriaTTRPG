@@ -2,7 +2,7 @@
 // The existing authenticated handler provides receipt/idempotency and campaign
 // membership. No browser-supplied mana, ingredient counts or target state is trusted.
 import {
-  normalizeEnhancementPlan,enchantmentPreview,enchantmentInventoryPlan,
+  normalizeEnhancementPlan,enchantmentPreview,enhancementInventoryPlan,
   enhancementPlanSignature,enhancementTargetEligible,enhancementTargetFingerprint,
   applyApprovedEnhancement
 } from '../src/state/itemEnhancementModel.mjs';
@@ -74,7 +74,7 @@ export function createEnhancementCommands(context,helpers){
           const item=inventory[targetIndex];
           const affinity=String(item.enchantmentAffinity||item.materialAffinity||'None');
           const preview=enchantmentPreview(plan,affinity,stoneMode);
-          const materials=enchantmentInventoryPlan(plan,inventory,targetIndex,stoneMode);
+          const materials=enhancementInventoryPlan(plan,inventory,targetIndex,stoneMode);
           if(!materials.ready)throw Error('Required materials are missing.');
           if(plan.manaCost){
             const mana=resourceSnapshot(character,'mp');
@@ -136,7 +136,7 @@ export function createEnhancementCommands(context,helpers){
             throw Error('The target item changed. Request another enhancement.');
           const affinity=String(target.enchantmentAffinity||target.materialAffinity||'None');
           enchantmentPreview(plan,affinity,request.stoneMode);
-          const materialPlan=enchantmentInventoryPlan(plan,inventory,index,request.stoneMode);
+          const materialPlan=enhancementInventoryPlan(plan,inventory,index,request.stoneMode);
           if(!materialPlan.ready)throw Error('Required enhancement materials are no longer available.');
           // Compute all changes in memory first. Any failure aborts the entire
           // Firebase transaction including material/MP costs and request status.
