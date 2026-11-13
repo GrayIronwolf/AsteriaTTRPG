@@ -1,5 +1,6 @@
 import {randomInt} from 'node:crypto';
 import {validateLootTable,rollLootTable} from '../src/state/lootTableModel.mjs';
+import {lootTableDropFromRoll} from '../src/state/lootTableDropModel.mjs';
 
 const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
 const exists=s=>typeof s?.exists==='function'?s.exists():Boolean(s?.exists);
@@ -10,8 +11,8 @@ export function createLootTableCommands(context,{requireCampaignGM}){
     manageLootTable:async(campaignId,_scope,action={})=>{
       try{
         const type=String(action.type||'');
-        if(!['save','archive','preview'].includes(type))
-          throw Error('Choose save, archive or preview.');
+        if(!['save','archive','preview','generate'].includes(type))
+          throw Error('Choose save, archive, preview or generate.');
         const tableId=String(action.tableId||'');
         if(!validId(tableId))throw Error('Choose a valid loot table identifier.');
         const output=await runTransaction(db,async tx=>{
@@ -42,9 +43,34 @@ export function createLootTableCommands(context,{requireCampaignGM}){
               updatedAt:serverTimestamp(),updatedBy:currentUser.uid});
             return {tableId,revision:previous.revision+1,status:'archived'};
           }
+          if(type==='generate'&&action.expectedRevision!==previous.revision)
+            throw Error('The loot table changed. Refresh before generating treasure.');
           const roll=rollLootTable(previous,randomInt);
-          // A preview is private to the caller's authenticated GM receipt.
-          // Never publish the result or deliver a reward to a character.
+          if(type==='generate'){
+            const lootId='party-loot-'+requestId;
+            const generated=lootTableDropFromRoll(previous,roll,lootId);
+            if(!generated){
+              // No item is minted for an empty or zero-copper roll.
+              return {tableId,revision:previous.revision,roll,
+                generated:false,lootId:null};
+            }
+            const privateRef=doc(db,'campaigns',campaignId,'partyLootDrafts',lootId);
+            const publicRef=doc(db,'campaigns',campaignId,'partyLoot',lootId);
+            const [privateSnapshot,publicSnapshot]=await Promise.all([
+              tx.get(privateRef),tx.get(publicRef)
+            ]);
+            if(exists(privateSnapshot)||exists(publicSnapshot))
+              throw Error('This treasure roll already has a drop.');
+            const base={...generated.drop,visibility:'hidden',
+              createdBy:currentUser.uid,createdAt:serverTimestamp(),
+              updatedAt:serverTimestamp(),
+              generatedFrom:{tableId,revision:previous.revision,entryId:roll.entryId}};
+            tx.set(privateRef,{...base,
+              ...(generated.secretItem?{secretItem:generated.secretItem}:{})});
+            return {tableId,revision:previous.revision,roll,
+              generated:true,lootId};
+          }
+          // Preview remains GM-only, receipt-backed and non-delivering.
           return {tableId,revision:previous.revision,roll,preview:true,
             requestId};
         });
