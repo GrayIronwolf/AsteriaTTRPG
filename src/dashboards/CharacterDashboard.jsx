@@ -1,4 +1,5 @@
 import { PlayerInformation } from './PlayerInformation.jsx';
+import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
@@ -223,6 +224,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
+    {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
     </CombatDashboardLayout>
     {noticeError?<p className="react-action-message" role="alert">{noticeError}</p>:null}
