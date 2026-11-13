@@ -2777,3 +2777,79 @@ test('Phase 6.2: generation refuses archived and stale table revisions',async()=
   assert.equal(archived.ok,false);
   assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
 });
+
+
+test('Phase 6.3: multi-roll batches stay GM-only until individual treasure reveal',async()=>{
+  const saved=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'batch-coins',expectedRevision:0,table:{
+      name:'Vault Treasury',location:'Buried Vault',threatTier:4,status:'active',
+      entries:[{id:'coins',kind:'currency',weight:1,minCopper:25,maxCopper:25,note:'GM clue'}]
+    }
+  }]);
+  assert.equal(saved.ok,true,saved.error);
+  const player=await action('alice','manageLootTable',['c','a',{
+    type:'batch',tableId:'batch-coins',expectedRevision:1,batch:{count:3}
+  }]);
+  assert.equal(player.ok,false);
+  const result=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'batch',tableId:'batch-coins',expectedRevision:1,
+    batch:{count:3,source:'Locked Vault'}
+  }],'phase63-batch-1');
+  assert.equal(result.ok,true,result.error);
+  assert.equal(result.totalRolls,3);
+  assert.equal(result.generatedCount,3);
+  assert.equal(result.emptyCount,0);
+  const ids=result.results.map(row=>row.lootId);
+  assert.equal(new Set(ids).size,3);
+  for(const [index,id] of ids.entries()){
+    const path='campaigns/c/partyLootDrafts/'+id;
+    const draft=(await db.doc(path).get()).data();
+    assert.equal(draft.visibility,'hidden');
+    assert.equal(draft.currencyCopper,25);
+    assert.equal(draft.source,'Locked Vault');
+    assert.equal(draft.generatedFrom.batchId,result.batchId);
+    assert.equal(draft.generatedFrom.rollNumber,index+1);
+    await assertFails(getDoc(doc(user('alice'),path)));
+    assert.equal((await db.doc('campaigns/c/partyLoot/'+id).get()).exists,false);
+  }
+  const replay=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'batch',tableId:'batch-coins',expectedRevision:1,
+    batch:{count:3,source:'Locked Vault'}
+  }],'phase63-batch-1');
+  assert.deepEqual(replay,result);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,3);
+  const reveal=await action('gm','managePartyLootDrop',['c','gm-scope',
+    {type:'reveal',lootId:ids[1]}]);
+  assert.equal(reveal.ok,true,reveal.error);
+  const shown=(await assertSucceeds(getDoc(doc(user('alice'),'campaigns/c/partyLoot/'+ids[1])))).data();
+  assert.equal(shown.generatedFrom,undefined);
+  assert.equal(shown.currencyCopper,25);
+  assert.equal((await db.collection('campaigns/c/partyLoot').get()).size,1);
+  assert.equal((await db.doc('campaigns/c/partyLootDrafts/'+ids[0]).get()).data().visibility,'hidden');
+});
+test('Phase 6.3: empty and stale batches create no party drops',async()=>{
+  assert.equal((await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'no-loot',expectedRevision:0,table:{
+      name:'Empty Cave',threatTier:1,status:'active',
+      entries:[{id:'none',kind:'nothing',weight:1,note:'Nothing'}]
+    }
+  }])).ok,true);
+  const result=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'batch',tableId:'no-loot',expectedRevision:1,batch:{count:10}
+  }]);
+  assert.equal(result.ok,true,result.error);
+  assert.equal(result.generatedCount,0);
+  assert.equal(result.emptyCount,10);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
+  for(const batch of [{count:11},{count:1.5},{count:'3'}]){
+    const wrong=await action('gm','manageLootTable',['c','gm-scope',{
+      type:'batch',tableId:'no-loot',expectedRevision:1,batch
+    }]);
+    assert.equal(wrong.ok,false);
+  }
+  const stale=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'batch',tableId:'no-loot',expectedRevision:2,batch:{count:2}
+  }]);
+  assert.equal(stale.ok,false);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
+});
