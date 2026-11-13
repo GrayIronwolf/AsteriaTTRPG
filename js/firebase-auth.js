@@ -1474,6 +1474,23 @@ const firebasePublicApi = {
   },
   manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
   manageCampaignCraftingRecipe: (...args) => callTrustedAction('manageCampaignCraftingRecipe',args),
+  manageEnhancementPlan: (...args) => callTrustedAction('manageEnhancementPlan',args),
+  requestEnhancement: (...args) => callTrustedAction('requestEnhancement',args),
+  reviewEnhancement: (...args) => callTrustedAction('reviewEnhancement',args),
+  subscribeEnhancementPlans: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'enhancementPlans');
+    const source=gmMode?root:query(root,where('status','==','published'));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('enhancement-plans-listener',error,{campaignId}));
+  },
+  subscribeEnhancementRequests: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'enhancementRequests');
+    const source=gmMode?root:query(root,where('ownerUid','==',currentUser.uid));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('enhancement-requests-listener',error,{campaignId}));
+  },
   requestCraftingRecipe: (...args) => callTrustedAction('requestCraftingRecipe',args),
   reviewCraftingRequest: (...args) => callTrustedAction('reviewCraftingRequest',args),
   subscribeCraftingRecipes: function(campaignId,onChange,gmMode=false){
