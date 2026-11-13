@@ -62,6 +62,7 @@ test('Phase 9.2: public vote display shows only totals and the current character
   assert.equal(JSON.stringify(projected).includes('Doombringer'),false);
   assert.equal(JSON.stringify(projected).includes('choices'),false);
   assert.equal(projected.distribution.status,'open');
+  assert.equal(projected.distribution.roundId,'round2');
   assert.deepEqual(projected.distribution.tally,{need:1,greed:2,pass:1});
 });
 test('Phase 9.2: server actions are authoritative and maintain owner/GM permissions and journal types',()=>{
