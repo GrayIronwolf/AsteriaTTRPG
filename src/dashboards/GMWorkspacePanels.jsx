@@ -11,7 +11,7 @@ import { campaignArtworkImage } from '../state/campaignArtwork.mjs';
 import { merchantPriceCopper, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, merchantRestockPlan } from '../state/merchantInventoryModel.mjs';
 import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
-import {merchantStandingTier,merchantStandingFor,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
+import {merchantStandingTier,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 
