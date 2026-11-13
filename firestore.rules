@@ -356,10 +356,11 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
       match /itemDiscoveries/{itemId} {
+        // An owner-filtered query can be authorized without dereferencing
+        // an unknown document during Firestore's query preflight.
         allow get, list: if isCampaignGM(campaignId) ||
-          (canUseCampaignSystems(campaignId) && resource.data.ownerUid == request.auth.uid &&
-           exists(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(resource.data.characterId)) &&
-           get(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(resource.data.characterId)).data.ownerUid == request.auth.uid);
+          (canUseCampaignSystems(campaignId) &&
+           resource.data.ownerUid == request.auth.uid);
         allow create, update, delete: if false;
       }
       // Bargain terms are private to the proposing account and active GMs.
