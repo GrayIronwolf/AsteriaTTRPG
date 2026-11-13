@@ -8,6 +8,7 @@ export const GM_LIBRARY_KINDS=Object.freeze(['npc','creature']);
 export const GM_LIBRARY_MAX_RECORDS=150;
 const optionalText=Object.freeze({
   description:800,notes:1200,personality:360,goals:360,
+  fears:360,dialogueStyle:360,race:120,
   faction:120,location:120,role:120,species:120,threatTier:40
 });
 const numericFields=Object.freeze(['hp','sp','mp','ac','initiative','xpReward']);

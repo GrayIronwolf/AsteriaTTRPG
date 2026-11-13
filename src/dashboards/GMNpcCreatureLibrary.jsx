@@ -1,4 +1,5 @@
 import React,{useMemo,useState} from 'react';
+import {GMNpcGenerator} from './GMNpcGenerator.jsx';
 import {
   gmNPCCreatureLibrary,libraryDraft,libraryEncounterReady,
   updateGMLibrary,removeGMLibraryRecord,
@@ -13,6 +14,9 @@ const textFields=[
   ['location','Location / Habitat',120],
   ['personality','Personality',360],
   ['goals','Motivations / Goals',360],
+  ['race','Official Race (optional)',120],
+  ['fears','Fears',360],
+  ['dialogueStyle','Dialogue Style',360],
   ['threatTier','Threat Tier',40],
   ['notes','Private GM Notes',1200]
 ];
@@ -40,14 +44,17 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
   const [deleteTarget,setDeleteTarget]=useState(null);
+  const [showGenerator,setShowGenerator]=useState(false);
   const library=useMemo(()=>gmNPCCreatureLibrary(world,official,{query:search,kind:filter}),
     [world,official,search,filter]);
   const startNew=kind=>{
+    setShowGenerator(false);
     setEditing({kind,id:null});setDraft(libraryDraft(kind));
     setDeleteTarget(null);setMessage('');
   };
   const startEdit=row=>{
     if(row.official)return;
+    setShowGenerator(false);
     if(row.id.startsWith('legacy-')){
       setMessage('This older record has no stable ID. Edit it through World Systems.');
       return;
@@ -57,6 +64,13 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     setDeleteTarget(null);setMessage('');
   };
   const cancel=()=>{setEditing(null);setDeleteTarget(null);setMessage('');};
+  const acceptGeneratedNPC=concept=>{
+    setDraft(libraryDraft('npc',concept));
+    setEditing({kind:'npc',id:null});
+    setShowGenerator(false);
+    setDeleteTarget(null);
+    setMessage('NPC concept copied to the editor. Review and save to keep it in this campaign.');
+  };
   const save=async event=>{
     event.preventDefault();
     if(busy||!editing)return;
@@ -88,7 +102,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
   return <section className="react-gm-npc-library" aria-label="GM NPC and Creature Library">
     <header className="react-gm-library-header">
       <div>
-        <p className="react-eyebrow">Digital GM Toolkit · Phase 3.1</p>
+        <p className="react-eyebrow">Digital GM Toolkit · Phases 3.1–3.2</p>
         <h2>NPC &amp; Creature Library</h2>
         <p>Browse existing campaign NPCs, manage custom creatures, and reference the official Asteria Creature Compendium.</p>
       </div>
@@ -114,10 +128,15 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     <div className="react-gm-library-create">
       <button type="button" className="primary" disabled={busy||world.npcs?.length>=GM_LIBRARY_MAX_RECORDS}
         onClick={()=>startNew('npc')}>Add Campaign NPC</button>
+      <button type="button" disabled={busy||world.npcs?.length>=GM_LIBRARY_MAX_RECORDS}
+        onClick={()=>{setShowGenerator(value=>!value);setEditing(null);setDeleteTarget(null);setMessage('');}}>
+        {showGenerator?'Close NPC Generator':'Generate NPC'}</button>
       <button type="button" className="primary" disabled={busy||world.creatures?.length>=GM_LIBRARY_MAX_RECORDS}
         onClick={()=>startNew('creature')}>Add Custom Creature</button>
       <small>Official compendium entries are read-only; your custom records are private to this campaign.</small>
     </div>
+    {showGenerator?<GMNpcGenerator world={world} onUseDraft={acceptGeneratedNPC}
+      disabled={busy} onCancel={()=>setShowGenerator(false)}/>:null}
     {editing?<form className="react-gm-library-editor" onSubmit={save}>
       <header><h3>{editing.id?'Edit':'Add'} {editing.kind==='npc'?'Campaign NPC':'Custom Creature'}</h3>
         <button type="button" disabled={busy} onClick={cancel}>Cancel</button></header>
@@ -125,7 +144,7 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
         <label>Name <input required maxLength={120} value={draft.name} disabled={busy}
           onChange={event=>setField('name',event.target.value)} /></label>
         {textFields.map(([key,label,maxLength])=><label key={key}>{label}
-          {key==='description'||key==='personality'||key==='goals'||key==='notes'?
+          {key==='description'||key==='personality'||key==='goals'||key==='fears'||key==='dialogueStyle'||key==='notes'?
             <textarea rows={key==='notes'?3:2} maxLength={maxLength} value={draft[key]} disabled={busy}
               onChange={event=>setField(key,event.target.value)}/>:
             <input maxLength={maxLength} value={draft[key]} disabled={busy}
@@ -183,6 +202,6 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     {!library.rows.length?<p className="react-gm-library-empty">
       No matching entries. Add a campaign NPC or creature, or adjust your search and filters.
     </p>:null}
-    <p className="react-gm-library-note">Phase 3.1 manages and indexes records only. NPC generation and custom character cards are separate, later phases.</p>
+    <p className="react-gm-library-note">Phase 3.2 generates editable NPC suggestions. Nothing is saved without your confirmation; custom character cards remain a later feature.</p>
   </section>;
 }
