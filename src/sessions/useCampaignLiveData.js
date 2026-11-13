@@ -84,6 +84,7 @@ export function useCampaignLiveData(campaignId, { mode = 'character', characterI
       failed=true;
       setCharacters({});
       setCampaign(null);
+      setPartyLoot({stashes:[],loot:[],drafts:[]});
       setError('You have signed out. Sign in to reconnect.');
       setLoading(false);
       setConnectionState(LIVE_SYNC_STATES.DISCONNECTED);
