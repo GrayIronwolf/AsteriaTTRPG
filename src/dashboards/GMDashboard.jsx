@@ -8,6 +8,8 @@ import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/D
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
+import { GMPartyControl } from './GMPartyControl.jsx';
+import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
 import { resourceDefinitions, storedResource } from '../state/resourceEngine.mjs';
@@ -748,10 +750,16 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
-    {tab === 'toolkit' ? <GMToolkitHub key={campaignId+':'+accountUid}
-      session={live.session} characters={live.characters} workspace={workspace}
-      itemEcosystem={live.itemEcosystem} partyLoot={live.partyLoot}
-      onNavigate={openGMHubLink} /> : null}
+    {tab === 'toolkit' ? <>
+      <GMToolkitHub key={campaignId+':'+accountUid}
+        session={live.session} characters={live.characters} workspace={workspace}
+        itemEcosystem={live.itemEcosystem} partyLoot={live.partyLoot}
+        onNavigate={openGMHubLink} />
+      <GMPartyControl key={campaignId+':'+accountUid+':party'} campaign={live.campaign}
+        characters={live.characters} selectedId={selectedId} onSelect={setSelectedId}
+        onNavigate={openGMHubLink}
+        onOpenCharacter={character=>openGMCharacter(live.campaign,character,{tab})}/>
+    </> : null}
     {tab === 'main' ? <>
       <GMToolkitQuickAccess onNavigate={openGMHubLink}/>
       <GMFocusModes key={campaignId+':'+accountUid} layout={savedDashboardLayout}
@@ -775,6 +783,10 @@ export function GMDashboard({ campaignId }) {
         </div>
         <p role="status">{dashboardSettingsMessage}</p>
       </Panel>
+      <GMLayoutBackup key={campaignId+':'+accountUid+':backup'} layout={savedDashboardLayout}
+        onRestore={commitGMFocus}
+        disabled={!accountUid||!dashboardLayoutReady||savingDashboardSettings}/>
+
     </div> : null}
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
