@@ -22,7 +22,7 @@ export function mergeGeneratedMerchantStock(existing=[],incoming=[],mode='append
       merged.push(structuredClone(row));added++;
     }
   }
-  if(merged.length>200)throw Error('Shop stock line limit exceeded.');
+  if(merged.length>120)throw Error('Shop stock line limit exceeded.');
   return {stock:merged,added,combined,mode};
 }
 export function merchantGeneratedStockPreview(existing=[],incoming=[],mode='append'){
