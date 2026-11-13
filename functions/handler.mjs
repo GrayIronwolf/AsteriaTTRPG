@@ -50,7 +50,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
     if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
-    const campaignOnlyGMAction=new Set(['manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency']).has(action);
+    const campaignOnlyGMAction=new Set(['manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal']).has(action);
     const combatAction=action==='combatCommand';
     if(!combatAction&&!campaignOnlyGMAction&&!characterSnapshot.exists) throw new Error('Character not found.');
     const campaign=campaignSnapshot.data();
