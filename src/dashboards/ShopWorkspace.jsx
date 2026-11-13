@@ -7,6 +7,7 @@ import { inventoryItems } from './characterWorkspaceData.js';
 import { characterCurrencyCopper, merchantPriceCopper, shopVariantKey, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantTransactionPreview } from '../state/tradeExperienceModel.mjs';
 import { merchantStockHealth } from '../state/merchantInventoryModel.mjs';
+import {merchantRegionOptions,merchantsInRegion,merchantTravelState,merchantShopAvailable} from '../state/merchantTravelModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const copper=value=>Number(value||0).toLocaleString()+' Copper';
@@ -15,6 +16,7 @@ const tradeable=item=>item&&!item.equipped&&!item.locked&&!item.bound&&!item.que
 export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,requestedSale=null}) {
   const shops=arr(ecosystem.shops);
   const [selectedId,setSelectedId]=useState('');
+  const [regionFilter,setRegionFilter]=useState('');
   const [search,setSearch]=useState('');
   const [quote,setQuote]=useState(null);
   const [quantity,setQuantity]=useState('');
@@ -33,9 +35,11 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
     catch(error){setMessage(error.message||'Merchant offers are unavailable.');}
     return ()=>unsubscribe();
   },[campaignId,editable]);
-  const selected=shops.find(shop=>shop.id===selectedId)||shops[0]||null;
-  const visiting=Boolean(selected&&selected.status==='open'&&
-    (!arr(selected.visitorCharacterIds).length||selected.visitorCharacterIds.includes(character?.id)));
+  const regions=merchantRegionOptions(shops);
+  const regionalShops=merchantsInRegion(shops,regionFilter);
+  const selected=regionalShops.find(shop=>shop.id===selectedId)||regionalShops[0]||null;
+  const travelling=merchantTravelState(selected)==='travelling';
+  const visiting=merchantShopAvailable(selected,character?.id);
   const balance=characterCurrencyCopper(character);
   const inventory=useMemo(()=>inventoryItems(character).filter(tradeable),[character]);
   const stock=arr(selected?.stock);
@@ -44,8 +48,7 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   const filteredInventory=inventory.filter(item=>String(item.name||'').toLowerCase().includes(searchText));
   useEffect(()=>{
     if(!requestedSale?.itemId||handledSaleToken.current===requestedSale.token)return;
-    const merchant=shops.find(shop=>shop.status==='open'&&
-      (!arr(shop.visitorCharacterIds).length||shop.visitorCharacterIds.includes(character.id)));
+    const merchant=shops.find(shop=>merchantShopAvailable(shop,character.id));
     const requested=inventory.find(item=>item.id===requestedSale.itemId);
     if(!merchant||!requested||!tradeable(requested)){
       handledSaleToken.current=requestedSale.token;
@@ -160,9 +163,17 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
   return <Panel title="Merchants & Shops" className="react-merchant-workspace">
     <div className="react-merchant-toolbar">
       <label>Merchant<select value={selected?.id||''} onChange={event=>{setSelectedId(event.target.value);setQuote(null);setMessage('');}}>
-        {shops.map(shop=><option key={shop.id} value={shop.id}>{shop.name}</option>)}
+        {regionalShops.map(shop=><option key={shop.id} value={shop.id}>
+          {shop.name}{merchantTravelState(shop)==='travelling'?' (Travelling)':''}
+        </option>)}
       </select></label>
       <div><small>Your funds</small><strong>{copper(balance)}</strong></div>
+      <label>Region<select value={regionFilter} onChange={event=>{
+        setRegionFilter(event.target.value);setSelectedId('');setQuote(null);setMessage('');
+      }}>
+        <option value="">All Regions</option>
+        {regions.map(region=><option key={region} value={region}>{region}</option>)}
+      </select></label>
       <label>Find item<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search shop and inventory"/></label>
     </div>
     {selected?<><div className="react-merchant-heading">
@@ -171,9 +182,16 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
         {selected.personality?<p><b>Personality:</b> {selected.personality}</p>:null}
         {selected.greeting?<p><b>Merchant:</b> “{selected.greeting}”</p>:null}
         {selected.specialOffer?<p><b>Special offer:</b> {selected.specialOffer}</p>:null}</div>
-      <StatusPill tone={visiting?'success':'warning'}>{selected.status!=='open'?'Closed':visiting?'Available':'Not visiting'}</StatusPill>
+      <StatusPill tone={visiting?'success':'warning'}>{travelling?'Travelling':selected.status!=='open'?'Closed':visiting?'Available':'Not visiting'}</StatusPill>
     </div>
-    {!visiting?<p className="react-storage-warning" role="status">{selected.status!=='open'?'This merchant is closed.':'The GM must mark this character as visiting before trading.'}</p>:null}
+    {!visiting?<p className="react-storage-warning" role="status">{
+      travelling?'This travelling merchant is between regions. Trading resumes when the GM confirms arrival.':
+      selected.status!=='open'?'This merchant is closed.':
+      'The GM must mark this character as visiting before trading.'
+    }</p>:null}
+    {selected.travel?.status==='at-stop'?<p className="react-help">
+      Route: {selected.travel.routeName} · Current stop: {selected.region||'Unknown'}
+    </p>:null}
     <div className="react-merchant-columns">
       <section><h4>Buy from merchant</h4>
         {filteredStock.filter(row=>Number(row.qty||0)>0).map(row=>renderRow('buy',row,row.index))}
@@ -194,7 +212,10 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
           {deal.status==='pending'?<button type="button" disabled={busy} onClick={()=>withdraw(deal.id)}>Withdraw</button>:null}
         </article>)}
       {!deals.some(deal=>deal.shopId===selected.id)?<small>No bargains requested yet.</small>:null}
-    </section></>:<EmptyState title="No campaign merchants">The GM can create shops and assign visiting characters in the Economy panel.</EmptyState>}
+    </section></>:<EmptyState title="No matching merchants">
+      {regionFilter?'No merchants operate in this region. Choose another region.':
+       'The GM can create shops and assign visiting characters in the Economy panel.'}
+    </EmptyState>}
     {message?<p className="react-action-message" role="status" aria-live="polite">{message}</p>:null}
     {quote&&selected?<Modal title={quote.kind==='buy'?'Confirm Purchase':'Confirm Sale'} eyebrow={selected.name} busy={busy}
       onClose={noQuote} footer={<div className="react-modal-actions">
