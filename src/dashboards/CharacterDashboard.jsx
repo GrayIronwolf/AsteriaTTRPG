@@ -151,7 +151,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     setNoticeError('');
   },[campaignId,characterId]);
   useEffect(()=>{
-    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party'].includes(event.detail?.tab)))setTab(event.detail.tab);};
+    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting'].includes(event.detail?.tab)))setTab(event.detail.tab);};
     window.addEventListener('asteria:open-character-tab',openTab);
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[campaignId]);
