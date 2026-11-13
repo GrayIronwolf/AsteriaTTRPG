@@ -21,7 +21,7 @@ export function merchantRelationshipId(shopId,characterId){
   const valid=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(s)&&
     !['__proto__','prototype','constructor'].includes(s);
   if(!valid(shopId)||!valid(characterId))throw Error('Invalid merchant or character.');
-  return shopId+'_'+characterId;
+  return String(shopId.length)+'_'+shopId+'_'+characterId;
 }
 export function merchantStandingFor(relationships=[],shopId='',characterId=''){
   const found=(Array.isArray(relationships)?relationships:[])
