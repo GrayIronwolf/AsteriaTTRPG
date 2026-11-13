@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="css/asteria-account-experience.css?v=header-account-20261110">
   <link rel="stylesheet" href="css/asteria-home-header-refresh.css?v=hero-sharp-20261111">
   <link rel="stylesheet" href="css/asteria-mobile-header-stability.css?v=mobile-first-paint-20261112">
-  <link rel="stylesheet" href="css/asteria-account-pages.css?v=account-pages-v1">
+  <link rel="stylesheet" href="css/asteria-account-pages.css?v=gm-toolkit-1-1">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -399,18 +399,43 @@
       <p id="asteriaNotificationsServiceStatus" role="status" aria-live="polite"></p>
     </section>
     <section id="asteriaAccountPage" class="view asteria-standalone-page" aria-labelledby="asteriaAccountPageHeading">
-      <div class="asteria-page-heading">
-        <div><p class="eyebrow">Asteria Account</p><h1 id="asteriaAccountPageHeading">Account Settings</h1>
-          <p>Manage your profile, appearance, security, friends and notifications.</p></div>
-      </div>
-      <p id="asteriaAccountPageStatus" role="status" aria-live="polite"></p>
-      <div class="asteria-account-hub-actions">
-        <button type="button" data-asteria-account-action="profile"><strong>My Profile &amp; Account ID</strong><span>View or edit your profile and account photo</span></button>
-        <button type="button" data-asteria-account-action="appearance"><strong>Appearance</strong><span>Website background, interface colours and typography</span></button>
-        <button type="button" data-asteria-account-action="security"><strong>Password &amp; Security</strong><span>Account verification and password recovery</span></button>
-        <button type="button" data-asteria-account-page="friends"><strong>My Friends</strong><span>Friends list, requests, blocked players and search</span></button>
-        <button type="button" data-asteria-account-page="notifications"><strong>Notifications</strong><span>Read and manage account updates</span></button>
-        <button type="button" data-asteria-account-action="logout" class="asteria-account-logout"><strong>Log Out</strong><span>Sign out of Asteria</span></button>
+      <div class="asteria-account-shell">
+        <nav class="asteria-account-sidebar" aria-label="Account sections">
+          <div class="asteria-account-sidebar-options" role="tablist" aria-label="Account settings options" aria-orientation="vertical">
+            <button type="button" id="asteriaAccountTabProfile" role="tab" aria-controls="asteriaAccountPanelProfile" aria-selected="true" tabindex="0" data-asteria-account-section="profile">Profile</button>
+            <button type="button" id="asteriaAccountTabSettings" role="tab" aria-controls="asteriaAccountPanelSettings" aria-selected="false" tabindex="-1" data-asteria-account-section="settings">Account Settings</button>
+            <button type="button" id="asteriaAccountTabAppearance" role="tab" aria-controls="asteriaAccountPanelAppearance" aria-selected="false" tabindex="-1" data-asteria-account-section="appearance">Appearance</button>
+            <button type="button" id="asteriaAccountTabSecurity" role="tab" aria-controls="asteriaAccountPanelSecurity" aria-selected="false" tabindex="-1" data-asteria-account-section="security">Password &amp; Security</button>
+          </div>
+          <button type="button" data-asteria-account-action="logout" class="asteria-account-signout asteria-account-logout">Log Out</button>
+        </nav>
+        <div class="asteria-account-content">
+          <h1 id="asteriaAccountPageHeading" tabindex="-1">Account Settings</h1>
+          <p id="asteriaAccountPageStatus" class="asteria-account-status" role="status" aria-live="polite"></p>
+          <section id="asteriaAccountPanelProfile" class="asteria-account-panel" role="tabpanel" tabindex="0" aria-labelledby="asteriaAccountTabProfile">
+            <h2>Profile</h2>
+            <p>View your account identity, profile image, username and Asteria Account ID.</p>
+            <button type="button" class="asteria-account-content-action" data-asteria-account-action="profile">Open My Profile</button>
+          </section>
+          <section id="asteriaAccountPanelSettings" class="asteria-account-panel" role="tabpanel" tabindex="0" aria-labelledby="asteriaAccountTabSettings" hidden>
+            <h2>Account Settings</h2>
+            <p>Manage your account connections and updates through the existing Asteria pages.</p>
+            <div class="asteria-account-content-actions">
+              <button type="button" class="asteria-account-content-action" data-asteria-account-page="friends">My Friends</button>
+              <button type="button" class="asteria-account-content-action" data-asteria-account-page="notifications">Notifications</button>
+            </div>
+          </section>
+          <section id="asteriaAccountPanelAppearance" class="asteria-account-panel" role="tabpanel" tabindex="0" aria-labelledby="asteriaAccountTabAppearance" hidden>
+            <h2>Appearance</h2>
+            <p>Manage your existing website background, colours and typography preferences.</p>
+            <button type="button" class="asteria-account-content-action" data-asteria-account-action="appearance">Open Appearance Settings</button>
+          </section>
+          <section id="asteriaAccountPanelSecurity" class="asteria-account-panel" role="tabpanel" tabindex="0" aria-labelledby="asteriaAccountTabSecurity" hidden>
+            <h2>Password &amp; Security</h2>
+            <p>Access the existing password recovery and account verification controls.</p>
+            <button type="button" class="asteria-account-content-action" data-asteria-account-action="security">Open Password &amp; Security</button>
+          </section>
+        </div>
       </div>
     </section>
   </main>
@@ -626,7 +651,7 @@
 <script src="js/campaign-notifications-ui.js?v=phase7-3"></script>
 <script src="js/asteria-friend-notifications.js?v=friends-notifications-website-20261111"></script>
 <script src="js/asteria-campaign-friend-recipients.js?v=friends-phase5-2"></script>
-<script src="js/asteria-account-pages.js?v=account-pages-v1"></script>
+<script src="js/asteria-account-pages.js?v=gm-toolkit-1-1"></script>
 <script src="js/clean-compendium.js?v=friends-notifications-website-20261111"></script>
 
 <script src="js/universal-compendium-engine.js?v=compendium-demand-v1"></script>

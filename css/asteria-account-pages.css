@@ -94,34 +94,83 @@
 .asteria-notifications-feeds .workspace-notice-row.is-unread{
   border-left:4px solid var(--asteria-top-menu-button,#7199b0);
 }
-/* Simple account hub pointing to the existing verified profile/security actions. */
-.asteria-account-hub-actions{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+/* Digital GM Toolkit Phase 1.1: sketched account-sidebar design. */
+#asteriaAccountPage{width:min(1440px,100%);padding:clamp(12px,2.5vw,32px);}
+.asteria-account-shell{
+  display:grid;grid-template-columns:minmax(190px,240px) minmax(0,1fr);
+  min-height:clamp(480px,68vh,800px);border:1px solid #546d804f;
+  background:linear-gradient(150deg,rgba(15,30,44,.86),rgba(6,15,24,.94));
+  box-shadow:0 14px 40px #0005;
 }
-.asteria-account-hub-actions button{
-  min-height:105px;display:flex;flex-direction:column;align-items:flex-start;
-  justify-content:center;gap:9px;text-align:left;
-  border:1px solid #708fa4;border-radius:4px;
-  background:linear-gradient(150deg,#173148,#091927);
-  padding:18px 20px;color:#f0f5fa;
-  box-shadow:inset 0 1px #dcecf120;
+.asteria-account-sidebar{
+  position:relative;display:flex;flex-direction:column;gap:16px;min-width:0;
+  padding:clamp(22px,3vw,40px) clamp(16px,2.6vw,34px);
 }
-.asteria-account-hub-actions button:hover{background:linear-gradient(150deg,#22435d,#0d2232);}
-.asteria-account-hub-actions strong{font-size:1.05rem;color:#e5d2b4;}
-.asteria-account-hub-actions span{color:#bad0dd;line-height:1.4;}
-.asteria-account-logout,
-.asteria-account-menu button.asteria-account-logout,
-.asteria-account-hub-actions button.asteria-account-logout{
-  color:#ffd1d1!important;
+.asteria-account-sidebar::after{
+  content:"";position:absolute;top:22px;bottom:22px;right:0;width:1px;
+  background:linear-gradient(to bottom,transparent,#7e9bad 15%,#7e9bad 85%,transparent);
+  pointer-events:none;
+}
+.asteria-account-sidebar-options{display:flex;flex-direction:column;gap:8px;}
+#asteriaAccountPage .asteria-account-sidebar button{
+  display:block;width:100%;min-height:40px;padding:9px 0!important;margin:0;
+  background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  text-align:left;color:#d4e2eb;text-shadow:none;
+  font:500 clamp(.9rem,1.2vw,1rem)/1.4 var(--asteria-font-body,Arial,sans-serif);
+}
+#asteriaAccountPage .asteria-account-sidebar button:hover{
+  background:none!important;color:#fff6e8;text-decoration:underline;text-underline-offset:5px;
+}
+#asteriaAccountPage .asteria-account-sidebar button[aria-selected="true"]{
+  color:#f1ddba;font-weight:700;text-decoration:underline;
+  text-decoration-thickness:1px;text-underline-offset:6px;
+}
+#asteriaAccountPage .asteria-account-sidebar button:focus-visible{
+  outline:2px solid #bcefff;outline-offset:4px;
+}
+#asteriaAccountPage .asteria-account-sidebar .asteria-account-signout{
+  margin-top:auto!important;color:#f4a0a6!important;font-weight:700!important;
+}
+#asteriaAccountPage .asteria-account-sidebar .asteria-account-signout:hover{color:#ffd1d1!important;}
+.asteria-account-content{min-width:0;padding:clamp(26px,4.2vw,64px);}
+.asteria-account-content h1{
+  margin:0 0 clamp(24px,3vw,40px);color:#d0dfeb;
+  font:500 clamp(1.2rem,2vw,1.65rem)/1.2 var(--asteria-font-display,Georgia,serif);
+}
+.asteria-account-status{color:#b9d0e1;font-size:.85rem;}
+.asteria-account-status:empty{display:none;}
+.asteria-account-panel[hidden]{display:none!important;}
+.asteria-account-panel{max-width:720px;}
+.asteria-account-panel h2{
+  margin:0 0 14px;color:#ead7b8;
+  font:500 clamp(1.55rem,2.7vw,2.25rem)/1.2 var(--asteria-font-display,Georgia,serif);
+}
+.asteria-account-panel p{max-width:62ch;color:#c1d4e1;line-height:1.7;margin:0 0 24px;}
+.asteria-account-content-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;}
+#asteriaAccountPage .asteria-account-content-action{
+  min-height:44px;padding:10px 18px;border:1px solid #6f8da1;border-radius:3px;
+  background:#153044;color:#eef4f8;
+  font:600 .91rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+}
+#asteriaAccountPage .asteria-account-content-action:hover{
+  background:#23455e;border-color:#a6c1d1;
 }
 .asteria-account-menu button.asteria-account-logout{
-  border-top:1px solid #9a4b4b55;
+  color:#ffd1d1!important;border-top:1px solid #9a4b4b55;
 }
-.asteria-account-hub-actions button.asteria-account-logout{
-  border-color:#9c5760;
-  background:linear-gradient(150deg,#371922,#1a1017);
+@media(max-width:720px){
+  .asteria-account-shell{grid-template-columns:minmax(0,1fr);min-height:0;}
+  .asteria-account-sidebar{padding:18px 22px 20px;gap:8px;}
+  .asteria-account-sidebar-options{gap:2px;}
+  #asteriaAccountPage .asteria-account-sidebar button{min-height:40px;}
+  #asteriaAccountPage .asteria-account-sidebar .asteria-account-signout{margin-top:12px!important;}
+  .asteria-account-sidebar::after{
+    top:auto;bottom:0;left:20px;right:20px;width:auto;height:1px;
+    background:linear-gradient(to right,transparent,#7e9bad 15%,#7e9bad 85%,transparent);
+  }
+  .asteria-account-content{padding:26px 22px 36px;}
+  .asteria-account-content h1{margin-bottom:24px;}
 }
-.asteria-account-hub-actions button.asteria-account-logout strong{color:#ffcccc;}
 /* Existing private header notification lookup now exposes a numeric first-page
    count without pretending to know total messages on older pages. */
 body .asteria-header button.asteria-header-mail{
@@ -153,7 +202,6 @@ body .asteria-header button.asteria-header-mail[hidden]{display:none!important;}
 @media(max-width:720px){
   .asteria-page-heading{padding:18px;}
   .asteria-standalone-page{padding:12px;}
-  .asteria-account-hub-actions{grid-template-columns:minmax(0,1fr);}
   .asteria-notifications-toolbar button{flex:1 1 auto;}
   #asteriaFriendsPageMount .asteria-friends-dialog{padding:16px;}
   .asteria-notifications-feeds .workspace-notice-row{padding:12px;}
