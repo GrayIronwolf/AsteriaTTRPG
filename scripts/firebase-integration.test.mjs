@@ -2579,7 +2579,9 @@ test('Phase 5.2: cancelled and stale merchant offers cannot charge or move inven
   assert.equal((await action('gm','respondMerchantDeal',['c','gm-scope',offer.deal.id,'approve'])).ok,false);
   const pending=await action('alice','createMerchantDeal',['c','a','market',0,{quantity:1,offeredCopper:25}]);
   assert.equal(pending.ok,true,pending.error);
-  await db.doc('campaigns/c/shops/market').update({'stock.0.qty':0});
+  const changedShop=(await db.doc('campaigns/c/shops/market').get()).data();
+  changedShop.stock[0].qty=0;
+  await db.doc('campaigns/c/shops/market').set(changedShop);
   const blocked=await action('gm','respondMerchantDeal',['c','gm-scope',pending.deal.id,'approve']);
   assert.equal(blocked.ok,false);
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().coins.copper,100);
