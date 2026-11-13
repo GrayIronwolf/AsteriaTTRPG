@@ -1,0 +1,137 @@
+/* Digital GM Toolkit Phase 3.3 — character cards inside the private GM
+   NPC/Creature Library. No Player Dashboard or Compendium styling changes. */
+.react-gm-dashboard .react-gm-card-gallery-toggle{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+}
+.react-gm-card-gallery-toggle span{color:#b9ccda;font-size:.79rem;margin-right:8px;}
+.react-gm-card-gallery-toggle button[aria-pressed="true"]{
+  background:#354858;color:#f4dfbb;border-color:#d1b988;
+}
+.react-gm-dashboard .react-gm-character-card{
+  --card-bg:#101d2b;--card-panel:#1b3448;--card-stroke:#a7aeb6;
+  --card-ink:#f1e8d7;--card-secondary:#c1d3df;--card-ornament:#dfc89f;
+  min-width:0;overflow:hidden;border:2px solid var(--card-stroke);
+  color:var(--card-ink);background:var(--card-bg);
+  box-shadow:0 8px 22px rgba(0,0,0,.2),inset 0 0 0 3px rgba(255,255,255,.045);
+  border-radius:5px;
+  font-family:var(--asteria-font-body,Arial,sans-serif);
+}
+.react-gm-character-card[data-theme="slate"]{
+  --card-bg:#28313b;--card-panel:#404b56;--card-stroke:#929da9;
+  --card-ink:#f0f0ed;--card-secondary:#d3dbe1;--card-ornament:#e0e2dc;
+}
+.react-gm-character-card[data-theme="parchment"]{
+  --card-bg:#d5c3a0;--card-panel:#e6d8bd;--card-stroke:#705c45;
+  --card-ink:#32271e;--card-secondary:#554538;--card-ornament:#654b31;
+}
+.react-gm-card-banner,.react-gm-card-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--card-panel);color:var(--card-secondary);
+  padding:10px 13px;font-size:.7rem;letter-spacing:.075em;text-transform:uppercase;
+}
+.react-gm-card-banner{border-bottom:1px solid var(--card-stroke);}
+.react-gm-card-footer{border-top:1px solid var(--card-stroke);font-size:.63rem;letter-spacing:.04em;}
+.react-gm-card-body{display:grid;grid-template-columns:minmax(125px,39%) minmax(0,1fr);align-items:stretch;min-width:0;}
+.react-gm-card-portrait{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;min-height:190px;overflow:hidden;
+  background:linear-gradient(150deg,var(--card-panel),var(--card-bg));
+  color:var(--card-ornament);border-right:1px solid var(--card-stroke);
+}
+.react-gm-card-portrait img{width:100%;height:100%;min-height:190px;max-height:500px;object-fit:cover;display:block;}
+.react-gm-card-portrait span{font:500 clamp(4rem,7vw,6rem)/1 var(--asteria-font-display,Georgia,serif);opacity:.78;}
+.react-gm-card-content{padding:clamp(12px,1.5vw,23px);min-width:0;}
+.react-gm-card-identity{border-bottom:1px solid var(--card-stroke);padding-bottom:10px;margin-bottom:12px;}
+.react-gm-card-identity h3{
+  margin:0;color:var(--card-ornament);
+  font:500 clamp(1.18rem,2vw,1.55rem)/1.2 var(--asteria-font-display,Georgia,serif);
+  overflow-wrap:anywhere;
+}
+.react-gm-card-identity p{color:var(--card-secondary);margin:5px 0 0;font-size:.77rem;line-height:1.4;}
+.react-gm-card-details{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;margin:0;min-width:0;}
+.react-gm-card-detail{min-width:0;display:grid;gap:4px;overflow-wrap:anywhere;}
+.react-gm-card-detail dt{color:var(--card-ornament);text-transform:uppercase;letter-spacing:.05em;font-size:.68rem;}
+.react-gm-card-detail dd{margin:0;color:var(--card-ink);font-size:.84rem;line-height:1.5;white-space:pre-wrap;}
+.react-gm-card-detail[data-private="true"]{
+  border-left:2px solid #c29371;padding-left:8px;
+}
+.react-gm-card-empty{font-size:.78rem;line-height:1.5;color:var(--card-secondary);}
+.react-gm-character-card[data-template="dossier"] .react-gm-card-body{
+  grid-template-columns:minmax(90px,27%) minmax(0,1fr);
+}
+.react-gm-character-card[data-template="dossier"] .react-gm-card-details{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.react-gm-character-card[data-template="tactical"] .react-gm-card-body{
+  grid-template-columns:minmax(105px,30%) minmax(0,1fr);
+}
+.react-gm-character-card[data-template="tactical"] .react-gm-card-details{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+.react-gm-character-card[data-compact="true"] .react-gm-card-body{grid-template-columns:125px minmax(0,1fr);}
+.react-gm-character-card[data-compact="true"] .react-gm-card-portrait{min-height:140px;}
+.react-gm-character-card[data-compact="true"] .react-gm-card-portrait img{min-height:140px;max-height:260px;}
+.react-gm-character-card[data-compact="true"] .react-gm-card-content{padding:13px;}
+.react-gm-character-card[data-compact="true"] .react-gm-card-detail{gap:2px;}
+.react-gm-character-card[data-compact="true"] .react-gm-card-detail dd{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;font-size:.79rem;
+}
+.react-gm-dashboard .react-gm-library-entry.is-card-gallery{padding:8px;gap:10px;}
+.react-gm-library-entry.is-card-gallery>.react-gm-character-card{height:100%;flex:1;}
+.react-gm-dashboard .react-gm-card-studio{
+  min-width:0;display:grid;gap:20px;padding:clamp(14px,2.4vw,26px);
+  border:1px solid #b9a781;background:linear-gradient(145deg,#1c3549,#0b1d2c);
+  color:#e2eaf1;
+}
+.react-gm-card-studio-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:start;gap:12px;}
+.react-gm-card-studio-header h2{font:500 1.45rem/1.25 var(--asteria-font-display,Georgia,serif);color:#f2dec1;margin:0 0 7px;}
+.react-gm-card-studio-header p{margin:0;color:#b8d0de;font-size:.83rem;line-height:1.5;max-width:70ch;}
+.react-gm-card-studio-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.9fr);gap:20px;align-items:start;min-width:0;}
+.react-gm-card-studio-controls{display:grid;gap:15px;min-width:0;}
+.react-gm-card-studio-controls fieldset{display:grid;gap:9px;min-width:0;border:1px solid #5c7a8d;padding:12px;}
+.react-gm-card-studio-controls legend{color:#d6c7a7;padding:0 7px;}
+.react-gm-card-option-list{display:flex;flex-wrap:wrap;gap:8px;}
+.react-gm-card-option-list button{display:grid;gap:3px;text-align:left;min-height:43px;}
+.react-gm-card-option-list button small{color:#b3cbd8;font-size:.71rem;font-weight:400;}
+.react-gm-card-studio-controls button[aria-pressed="true"]{
+  border-color:#e1c28d;color:#f8e3bd;background:#304c60;
+}
+.react-gm-card-setting{display:grid;gap:7px;font-size:.8rem;color:#d3e3ed;}
+.react-gm-card-setting input{
+  box-sizing:border-box;width:100%;min-height:43px;border:1px solid #68879b;
+  padding:9px 12px;background:#0b2233;color:#f0f5f8;border-radius:3px;font:inherit;
+}
+.react-gm-card-hint{margin:0;color:#b7cdda;font-size:.78rem;line-height:1.5;}
+.react-gm-card-field-list{display:grid;gap:7px;}
+.react-gm-card-field{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;
+  padding:7px 10px;min-width:0;border:1px solid #57768a;background:#102c3f;
+}
+.react-gm-card-field>span{font-size:.81rem;color:#d3e2ea;}
+.react-gm-card-field>div{display:flex;flex-wrap:wrap;gap:6px;}
+.react-gm-card-field button{min-height:36px;padding:6px 9px;font-size:.73rem;}
+.react-gm-card-hidden-fields{display:grid;gap:8px;border-top:1px solid #5a7889;padding-top:9px;}
+.react-gm-card-hidden-fields p{margin:0;font-size:.81rem;color:#e5d3b1;}
+.react-gm-card-hidden-fields>div{display:flex;flex-wrap:wrap;gap:7px;}
+.react-gm-card-hidden-fields button{font-size:.74rem;min-height:36px;padding:6px 10px;}
+.react-gm-card-studio-actions{display:flex;flex-wrap:wrap;gap:9px;}
+.react-gm-card-studio-actions button{flex:1 1 135px;}
+.react-gm-card-live-preview{min-width:0;display:grid;gap:12px;}
+.react-gm-card-live-preview h3{font:500 1.08rem/1.3 var(--asteria-font-display,Georgia,serif);color:#e9d8ba;margin:0;}
+.react-gm-card-feedback{min-height:1.3em;margin:0;color:#d2e4ef;font-size:.8rem;}
+.react-gm-card-studio :is(button,input):focus-visible,.react-gm-character-card :is(button,input):focus-visible{outline:2px solid #bcefff;outline-offset:3px;}
+@media(max-width:1100px){.react-gm-card-studio-grid{grid-template-columns:minmax(0,1fr);}}
+@media(max-width:640px){
+  .react-gm-card-body,.react-gm-character-card[data-template="dossier"] .react-gm-card-body,
+  .react-gm-character-card[data-template="tactical"] .react-gm-card-body,
+  .react-gm-character-card[data-compact="true"] .react-gm-card-body{grid-template-columns:minmax(0,1fr);}
+  .react-gm-card-portrait{min-height:165px;max-height:240px;border-right:none;border-bottom:1px solid var(--card-stroke);}
+  .react-gm-card-portrait img{min-height:165px;max-height:240px;object-position:center 25%;}
+  .react-gm-card-details,.react-gm-character-card[data-template="dossier"] .react-gm-card-details,
+  .react-gm-character-card[data-template="tactical"] .react-gm-card-details{grid-template-columns:minmax(0,1fr);}
+  .react-gm-card-field{align-items:stretch;}
+  .react-gm-card-field>div{width:100%;}
+  .react-gm-card-field>div button{flex:1 1 65px;}
+}
+@media(prefers-reduced-motion:reduce){.react-gm-card-studio button{transition:none!important;}}

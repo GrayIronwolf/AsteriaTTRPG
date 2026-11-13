@@ -1,5 +1,7 @@
 import React,{useMemo,useState} from 'react';
 import {GMNpcGenerator} from './GMNpcGenerator.jsx';
+import {GMCharacterCardStudio,GMCharacterCardPreview} from './GMCharacterCards.jsx';
+import {updateGMLibraryCard} from '../state/gmCharacterCardModel.mjs';
 import {
   gmNPCCreatureLibrary,libraryDraft,libraryEncounterReady,
   updateGMLibrary,removeGMLibraryRecord,
@@ -45,15 +47,19 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
   const [message,setMessage]=useState('');
   const [deleteTarget,setDeleteTarget]=useState(null);
   const [showGenerator,setShowGenerator]=useState(false);
+  const [cardTarget,setCardTarget]=useState(null);
+  const [galleryView,setGalleryView]=useState(false);
   const library=useMemo(()=>gmNPCCreatureLibrary(world,official,{query:search,kind:filter}),
     [world,official,search,filter]);
   const startNew=kind=>{
+    setCardTarget(null);
     setShowGenerator(false);
     setEditing({kind,id:null});setDraft(libraryDraft(kind));
     setDeleteTarget(null);setMessage('');
   };
   const startEdit=row=>{
     if(row.official)return;
+    setCardTarget(null);
     setShowGenerator(false);
     if(row.id.startsWith('legacy-')){
       setMessage('This older record has no stable ID. Edit it through World Systems.');
@@ -64,6 +70,28 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     setDeleteTarget(null);setMessage('');
   };
   const cancel=()=>{setEditing(null);setDeleteTarget(null);setMessage('');};
+  const openCard=row=>{
+    setCardTarget({kind:row.kind,id:row.id});
+    setShowGenerator(false);setEditing(null);setDeleteTarget(null);setMessage('');
+  };
+  const saveCard=async settings=>{
+    if(busy||!cardTarget||cardTarget.kind==='official')return {ok:false,error:'Official cards cannot be changed.'};
+    const result=updateGMLibraryCard(world,cardTarget.kind,cardTarget.id,settings);
+    if(!result.ok){setMessage(result.error);return result;}
+    setBusy(true);setMessage('Saving character card...');
+    try{
+      const saved=await saveSection('world',result.patch);
+      if(!saved?.ok){
+        setMessage(saved?.error||'Character card could not be saved.');
+        return {ok:false,error:saved?.error||'Character card could not be saved.'};
+      }
+      setMessage('Character card saved to this campaign.');
+      return {ok:true};
+    }catch(error){
+      const errorMessage=error?.message||'Could not save the character card.';
+      setMessage(errorMessage);return {ok:false,error:errorMessage};
+    }finally{setBusy(false);}
+  };
   const acceptGeneratedNPC=concept=>{
     setDraft(libraryDraft('npc',concept));
     setEditing({kind:'npc',id:null});
@@ -99,10 +127,12 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
     finally{setBusy(false);}
   };
   const setField=(key,value)=>setDraft(valueNow=>({...valueNow,[key]:value}));
+  const currentCard=cardTarget?library.rows.find(row=>row.kind===cardTarget.kind&&row.id===cardTarget.id)||
+    gmNPCCreatureLibrary(world,official).rows.find(row=>row.kind===cardTarget.kind&&row.id===cardTarget.id):null;
   return <section className="react-gm-npc-library" aria-label="GM NPC and Creature Library">
     <header className="react-gm-library-header">
       <div>
-        <p className="react-eyebrow">Digital GM Toolkit · Phases 3.1–3.2</p>
+        <p className="react-eyebrow">Digital GM Toolkit · Phases 3.1–3.3</p>
         <h2>NPC &amp; Creature Library</h2>
         <p>Browse existing campaign NPCs, manage custom creatures, and reference the official Asteria Creature Compendium.</p>
       </div>
@@ -135,6 +165,18 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
         onClick={()=>startNew('creature')}>Add Custom Creature</button>
       <small>Official compendium entries are read-only; your custom records are private to this campaign.</small>
     </div>
+    <div className="react-gm-card-gallery-toggle" role="group" aria-label="NPC and creature card view">
+      <span>Library view</span>
+      <button type="button" aria-pressed={!galleryView} disabled={busy}
+        onClick={()=>setGalleryView(false)}>Details</button>
+      <button type="button" aria-pressed={galleryView} disabled={busy}
+        onClick={()=>setGalleryView(true)}>Character Cards</button>
+    </div>
+    {cardTarget&&currentCard?<GMCharacterCardStudio key={cardTarget.kind+':'+cardTarget.id}
+      record={currentCard} disabled={busy}
+      onSave={cardTarget.kind==='official'?undefined:saveCard}
+      onClose={()=>setCardTarget(null)}/>:null}
+    {cardTarget&&!currentCard?<p role="status">Card record no longer exists. Close and select another entry.</p>:null}
     {showGenerator?<GMNpcGenerator world={world} onUseDraft={acceptGeneratedNPC}
       disabled={busy} onCancel={()=>setShowGenerator(false)}/>:null}
     {editing?<form className="react-gm-library-editor" onSubmit={save}>
@@ -171,7 +213,9 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
       {library.rows.length} results · {message}
     </p>
     <div className="react-gm-library-list">
-      {library.rows.map(row=><article key={row.kind+':'+row.id} className="react-gm-library-entry">
+      {library.rows.map(row=><article key={row.kind+':'+row.id}
+        className={'react-gm-library-entry'+(galleryView?' is-card-gallery':'')}>
+        {galleryView?<GMCharacterCardPreview record={row} compact/>:
         <div className="react-gm-library-entry-main">
           <div className="react-gm-library-title">
             <strong>{row.name}</strong>
@@ -188,20 +232,23 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
               'Encounter ready — searchable on the GM Main encounter board.':
               'Encounter stats incomplete — saved for world and story use.'}
           </p>:<p className="react-gm-library-encounter">Read-only official entry; see the Asteria Compendium for full details.</p>}
-        </div>
-        {!row.official?<div className="react-gm-library-entry-actions">
+        </div>}
+        {row.official?<div className="react-gm-library-entry-actions">
+          <button type="button" disabled={busy} onClick={()=>openCard(row)}>View Card</button>
+        </div>:<div className="react-gm-library-entry-actions">
+          <button type="button" disabled={busy} onClick={()=>openCard(row)}>Customise Card</button>
           <button type="button" disabled={busy} onClick={()=>startEdit(row)}>Edit</button>
           {deleteTarget===row.kind+':'+row.id?<div className="react-gm-library-confirm">
             <span>Delete this campaign record?</span>
             <button type="button" disabled={busy} onClick={()=>remove(row)}>Confirm Delete</button>
             <button type="button" disabled={busy} onClick={()=>setDeleteTarget(null)}>Cancel</button>
           </div>:<button type="button" className="danger" disabled={busy} onClick={()=>setDeleteTarget(row.kind+':'+row.id)}>Delete</button>}
-        </div>:null}
+        </div>}
       </article>)}
     </div>
     {!library.rows.length?<p className="react-gm-library-empty">
       No matching entries. Add a campaign NPC or creature, or adjust your search and filters.
     </p>:null}
-    <p className="react-gm-library-note">Phase 3.2 generates editable NPC suggestions. Nothing is saved without your confirmation; custom character cards remain a later feature.</p>
+    <p className="react-gm-library-note">Character cards are private GM previews. Customisation saves card presentation only to the existing campaign NPC or creature record. Official creatures remain read-only.</p>
   </section>;
 }
