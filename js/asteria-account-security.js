@@ -7,6 +7,7 @@
 
   const currentUser=()=>window.AsteriaFirebase?.getUser?.() || null;
   const visible=()=>get('accountSecurityOverlay')?.hidden===false;
+  const isInline=()=>Boolean(get('accountSecurityOverlay')?.closest?.('#asteriaAccountPanelSecurity'));
   const matchingUser=()=>Boolean(activeUid && currentUser()?.uid===activeUid &&
     window.AsteriaAuthBridge?.isLoggedIn?.());
   function close({restoreFocus=true}={}){
@@ -37,7 +38,7 @@
       'Password recovery requires an email address on your Firebase account.';
     updateVerification(user);
     overlay.hidden=false;
-    get('accountSecurityClose')?.focus();
+    if(!isInline())get('accountSecurityClose')?.focus();
     return true;
   }
   async function sendReset(){
@@ -167,8 +168,9 @@
     get('accountSecuritySendVerification')?.addEventListener('click',()=>{void sendVerification();});
     get('accountSecurityCheckVerification')?.addEventListener('click',()=>{void checkVerification();});
     get('accountSecurityFinishId')?.addEventListener('click',()=>{void finishAccountId();});
-    overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
+    overlay.addEventListener('click',event=>{if(!isInline()&&event.target===overlay)close();});
     overlay.addEventListener('keydown',event=>{
+      if(isInline())return;
       if(event.key==='Escape'){event.preventDefault();close();return;}
       if(event.key!=='Tab')return;
       const focusable=[...overlay.querySelectorAll('button:not(:disabled)')]

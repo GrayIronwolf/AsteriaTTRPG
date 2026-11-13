@@ -119,7 +119,7 @@ async function refreshNotifications(){
 
 function bind(){
   byId('asteriaHeaderAvatarButton')?.addEventListener('click',()=>{
-    if(signedInUid())window.AsteriaAccountProfile?.open?.();
+    if(signedInUid())window.AsteriaAccountPages?.openSection?.('profile');
   });
   window.addEventListener('asteria:firebase-ready',()=>{void refresh();});
   window.addEventListener('asteria:account-profile-updated',()=>{void refresh();});

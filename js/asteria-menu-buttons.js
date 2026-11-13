@@ -27,6 +27,7 @@
     compendiumQuickToggle:'icon',
     characterForgeTop:'long',
     campaignsTop:'long',
+    asteriaFriendsTop:'long',
     loginToggle:'small',
     settingsToggle:'icon'
   });
@@ -41,6 +42,13 @@
     return null;
   }
   function mark(element){
+    // Plain Account tabs are exempt from global crystal-button enhancement.
+    if(element?.closest?.('.asteria-account-sidebar')){
+      element.classList?.remove?.('asteria-menu-button');
+      element.removeAttribute?.('data-asteria-button-size');
+      element.removeAttribute?.('data-menu-pressed');
+      return;
+    }
     if(!element?.matches?.(selector))return;
     if(!element.classList.contains('asteria-menu-button'))element.classList.add('asteria-menu-button');
     const family=buttonSize(element);
