@@ -1,7 +1,7 @@
 import React,{useMemo,useState} from 'react';
 import {
   gmNPCCreatureLibrary,libraryDraft,libraryEncounterReady,
-  libraryCollectionKey,updateGMLibrary,removeGMLibraryRecord,
+  updateGMLibrary,removeGMLibraryRecord,
   GM_LIBRARY_MAX_RECORDS
 } from '../state/gmNpcCreatureLibraryModel.mjs';
 
