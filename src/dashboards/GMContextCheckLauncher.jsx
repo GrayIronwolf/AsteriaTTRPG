@@ -32,7 +32,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
   const [type,setType]=useState(context?.kind==='merchant-deal'?'social':'skill');
   const [preset,setPreset]=useState(context?.kind==='merchant-deal'?'haggling':context?.kind==='gameplay'?'perception':'persuasion');
   const [customSkill,setCustomSkill]=useState('');
-  const [stat,setStat]=useState(context?.kind==='merchant-deal'?'charisma':'charisma');
+  const [stat,setStat]=useState(context?.kind==='gameplay'?'wisdom':'charisma');
   const [rankOverride,setRankOverride]=useState('');
   const [dc,setDc]=useState('15');
   const [modifier,setModifier]=useState('0');
@@ -50,7 +50,7 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
     setSelected(initialCharacterId||'');setParticipantIds([]);
     setType(context?.kind==='merchant-deal'?'social':'skill');
     setPreset(context?.kind==='merchant-deal'?'haggling':context?.kind==='gameplay'?'perception':'persuasion');
-    setStat('charisma');setExpanded(false);setNotice('');setError('');
+    setStat(context?.kind==='gameplay'?'wisdom':'charisma');setExpanded(false);setNotice('');setError('');
     operation.current=null;
   },[campaignId,contextKey,initialCharacterId,context?.kind]);
   useEffect(()=>{
