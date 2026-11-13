@@ -113,6 +113,9 @@ export const firebaseService = {
   grantStorageSlots: (campaignId, characterIds, amount) => requireMethod('grantCharacterStorageSlots')(campaignId, characterIds, amount),
   createCustomItem: (campaignId, item) => requireMethod('createCustomItem')(campaignId, item),
   subscribeMerchantDeals: (...args) => requireMethod('subscribeMerchantDeals')(...args),
+  subscribeMerchantRelationships: (...args) => requireMethod('subscribeMerchantRelationships')(...args),
+  manageMerchantRelationship: (campaignId,scope,action) =>
+    requireMethod('manageMerchantRelationship')(campaignId,scope,action),
   manageItemLore: (...args) => requireMethod('manageItemLore')(...args),
   subscribeItemLore: (...args) => requireMethod('subscribeItemLore')(...args),
   subscribeItemDiscoveries: (...args) => requireMethod('subscribeItemDiscoveries')(...args),
