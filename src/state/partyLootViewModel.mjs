@@ -71,3 +71,17 @@ export function gmLootReviewRows(partyLoot={}, {search='',kind='all',status='all
       .filter(matches)
   };
 }
+
+
+export function playerAwardedLoot(partyLoot={}){
+  return list(partyLoot?.loot)
+    .filter(drop=>drop?.kind==='item'&&drop.visibility==='revealed'&&
+      drop.status==='claimed'&&drop.distribution?.status==='awarded')
+    .slice(-20).reverse()
+    .map(drop=>({
+      id:drop.id,
+      title:String(drop.title||'Treasure').slice(0,160),
+      itemName:nameForPlayer(drop.item),
+      winnerCharacterId:String(drop.claimedByCharacterId||'')
+    }));
+}
