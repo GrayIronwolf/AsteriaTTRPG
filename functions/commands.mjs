@@ -16,6 +16,7 @@ import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDel
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
 import { createCraftingCommands } from './craftingCommands.mjs';
 import { createEnhancementCommands } from './enhancementCommands.mjs';
+import { createCraftingServiceCommands } from './craftingServiceCommands.mjs';
 import {merchantRelationshipId,merchantCanAccessStock,merchantStandingFor} from '../src/state/merchantRelationshipModel.mjs';
 import { createPartyLootCommands } from './partyLootCommands.mjs';
 import {createItemLoreCommands} from './itemLoreCommands.mjs';
@@ -1599,5 +1600,5 @@ const commands = {
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
 };
-return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
+return {...commands,...createCoreCommands(context),...createInformationCommands(context),...createCombatCommands(context),...createItemStoreCommands(context),...createCraftingCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,placeCharacterItem,appendActivity}),...createEnhancementCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity}),...createCraftingServiceCommands(context,{requireCampaignGM,requireLiveSession,liveCharacterRefs,verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,liveItemId,appendActivity,currencyTotal,setCurrencyTotal}),...createItemLoreCommands(context),...createLootTableCommands(context,{requireCampaignGM}),...createPartyLootCommands(context,{requireLiveSession,requireCampaignGM,liveCharacterRefs,verifyOwnedLiveCharacter,verifyLiveTradeCounterparty,writeLiveCharacter,characterInventory,liveItemId,placeCharacterItem,appendActivity,currencyTotal,setCurrencyTotal})};
 }

@@ -375,6 +375,23 @@ service cloud.firestore {
            resource.data.ownerUid == request.auth.uid);
         allow create, update, delete: if false;
       }
+      // Phase 11.3: GM-created crafting stations and NPC services; player-visible
+      // entries are only open/published. All mutations require trusted callables.
+      match /craftingStations/{stationId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.status == 'open');
+        allow create, update, delete: if false;
+      }
+      match /npcCraftingServices/{serviceId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.status == 'published');
+        allow create, update, delete: if false;
+      }
+      match /npcRepairRequests/{repairRequestId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.ownerUid == request.auth.uid);
+        allow create, update, delete: if false;
+      }
       // Phase 11.2: players see only GM-published enhancement plans;
       // all changes use trusted Firebase transactions.
       match /enhancementPlans/{planId} {

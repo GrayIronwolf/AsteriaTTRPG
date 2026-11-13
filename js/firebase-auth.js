@@ -1475,6 +1475,31 @@ const firebasePublicApi = {
   manageCampaignShop: (...args) => callTrustedAction('manageCampaignShop',args),
   manageCampaignCraftingRecipe: (...args) => callTrustedAction('manageCampaignCraftingRecipe',args),
   manageEnhancementPlan: (...args) => callTrustedAction('manageEnhancementPlan',args),
+  manageCraftingStation: (...args) => callTrustedAction('manageCraftingStation',args),
+  manageNPCService: (...args) => callTrustedAction('manageNPCService',args),
+  requestNPCRepair: (...args) => callTrustedAction('requestNPCRepair',args),
+  reviewNPCRepair: (...args) => callTrustedAction('reviewNPCRepair',args),
+  subscribeCraftingStations: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'craftingStations');
+    const source=gmMode?root:query(root,where('status','==','open'));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('crafting-stations-listener',error,{campaignId}));
+  },
+  subscribeNPCServices: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'npcCraftingServices');
+    const source=gmMode?root:query(root,where('status','==','published'));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('npc-services-listener',error,{campaignId}));
+  },
+  subscribeNPCRepairRequests: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const root=collection(db,'campaigns',campaignId,'npcRepairRequests');
+    const source=gmMode?root:query(root,where('ownerUid','==',currentUser.uid));
+    return onSnapshot(source,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('npc-repairs-listener',error,{campaignId}));
+  },
   requestEnhancement: (...args) => callTrustedAction('requestEnhancement',args),
   reviewEnhancement: (...args) => callTrustedAction('reviewEnhancement',args),
   subscribeEnhancementPlans: function(campaignId,onChange,gmMode=false){

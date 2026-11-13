@@ -34,6 +34,8 @@ export function normalizeCraftingRecipe(input={},id='',previous={}){
     throw Error('Recipe description must be 1,000 characters or fewer.');
   if(input.status!=='draft'&&input.status!=='published')
     throw Error('Choose draft or published recipe status.');
+  if(input.stationId!==undefined&&input.stationId!==''&&!validId(input.stationId))
+    throw Error('Choose a valid crafting station.');
   const rawMaterials=list(input.materials);
   if(!rawMaterials.length||rawMaterials.length>MAX_RECIPE_MATERIALS)
     throw Error('Recipes require 1–12 material requirements.');
@@ -56,7 +58,7 @@ export function normalizeCraftingRecipe(input={},id='',previous={}){
     throw Error('Crafted output quantity must be a whole number from 1 to 100.');
   return {
     id:recipeId,name:trim(input.name,160),description:trim(input.description,1000),
-    status:input.status,
+    status:input.status,stationId:input.stationId||'',
     materials,output:{name:trim(output.name,160),itemCode:itemCode(output.itemCode),
       type:trim(output.type||'Item',100)||'Item',quantity:output.quantity},
     createdAt:previous.createdAt||null

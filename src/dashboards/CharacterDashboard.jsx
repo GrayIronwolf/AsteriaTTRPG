@@ -19,6 +19,7 @@ import { DashboardSettingsTab, GalleryTab } from './CharacterGallerySettings.jsx
 import { InventoryWorkspace } from './InventoryWorkspace.jsx';
 import {PlayerCraftingRecipes} from './CraftingRecipeWorkspace.jsx';
 import {PlayerEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
+import {PlayerCraftingServices} from './CraftingServicesWorkspace.jsx';
 import { PlayerItemRequestCenter } from './PlayerItemExchange.jsx';
 import { PlayerDashboardOverview } from './PlayerDashboardOverview.jsx';
 import { CombatDashboardLayout, useCombatPanel } from './CombatPanel.jsx';
@@ -214,6 +215,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'crafting' && campaignId ? <div className="react-crafting-workspace">
       <PlayerCraftingRecipes campaignId={campaignId} character={character} editable={editable}/>
       <PlayerEnhancementWorkshop campaignId={campaignId} character={character} editable={editable}/>
+      <PlayerCraftingServices campaignId={campaignId} character={character} editable={editable}/>
     </div> : null}
     {activeTab === 'inventory' ? <InventoryWorkspace campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} events={live.events} partyLoot={live.partyLoot} /> : null}
     {['information','quest'].includes(activeTab) ? <PlayerInformation key={`${character.id}-${activeTab}`} campaignId={campaignId} character={character} partyWorkspace={live.partyWorkspace} events={live.events} editable={editable} isOwner={isOwner} initialTab={activeTab==='quest'?'quests':'news'}/> : null}

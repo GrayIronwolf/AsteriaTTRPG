@@ -2,10 +2,11 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {craftingInventoryPlan} from '../state/craftingRecipeModel.mjs';
+import {stationAccessible} from '../state/craftingServicesModel.mjs';
 import {EmptyState,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 
 const empty=()=>({
-  name:'',description:'',status:'draft',
+  name:'',description:'',status:'draft',stationId:'',
   materials:[{name:'',itemCode:'',quantity:1}],
   output:{name:'',itemCode:'',type:'Item',quantity:1}
 });
@@ -30,6 +31,7 @@ function RecipeMaterials({recipe,plan}){
 }
 export function GMCraftingRecipeManager({campaignId,characters={}}){
   const [recipes,setRecipes]=useState([]);
+  const [stations,setStations]=useState([]);
   const [requests,setRequests]=useState([]);
   const [draft,setDraft]=useState(empty);
   const [editing,setEditing]=useState('');
@@ -38,9 +40,10 @@ export function GMCraftingRecipeManager({campaignId,characters={}}){
   const [tab,setTab]=useState('recipes');
   useEffect(()=>{
     if(!campaignId)return;
+    const off0=firebaseService.subscribeCraftingStations(campaignId,setStations,true);
     const off1=firebaseService.subscribeCraftingRecipes(campaignId,setRecipes,true);
     const off2=firebaseService.subscribeCraftingRequests(campaignId,setRequests,true);
-    return()=>{off1();off2();};
+    return()=>{off0();off1();off2();};
   },[campaignId]);
   const save=async()=>{
     if(busy)return;
@@ -103,6 +106,11 @@ export function GMCraftingRecipeManager({campaignId,characters={}}){
           <option value="draft">GM Draft (private)</option>
           <option value="published">Published (players can request)</option>
         </select></label>
+        <label>Required Station (optional)<select value={draft.stationId||''}
+          onChange={event=>setDraft(prev=>({...prev,stationId:event.target.value}))}>
+          <option value="">No station required</option>
+          {stations.map(s=><option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
+        </select></label>
         <h4>Required Materials</h4>
         {draft.materials.map((row,index)=><div className="react-crafting-material-editor" key={index}>
           <label>Material Name<input maxLength={160} value={row.name}
@@ -138,6 +146,7 @@ export function GMCraftingRecipeManager({campaignId,characters={}}){
           <h3>{recipe.name}</h3>
           <StatusPill tone={recipe.status==='published'?'success':''}>{recipe.status}</StatusPill>
           {recipe.description?<p>{recipe.description}</p>:null}
+          {recipe.stationId?<p><b>Station:</b> {stations.find(s=>s.id===recipe.stationId)?.name||'Unavailable'}</p>:null}
           <RecipeMaterials recipe={recipe}/>
           <p><b>Produces:</b> {recipe.output?.name} ×{recipe.output?.quantity}</p>
           <div className="react-action-row">
@@ -169,15 +178,17 @@ export function GMCraftingRecipeManager({campaignId,characters={}}){
 
 export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
   const [recipes,setRecipes]=useState([]);
+  const [stations,setStations]=useState([]);
   const [requests,setRequests]=useState([]);
   const [search,setSearch]=useState('');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
   useEffect(()=>{
     if(!campaignId)return;
+    const off0=firebaseService.subscribeCraftingStations(campaignId,setStations,false);
     const off1=firebaseService.subscribeCraftingRecipes(campaignId,setRecipes,false);
     const off2=firebaseService.subscribeCraftingRequests(campaignId,setRequests,false);
-    return()=>{off1();off2();};
+    return()=>{off0();off1();off2();};
   },[campaignId]);
   const inventory=useMemo(()=>inventoryItems(character),[character]);
   const visible=recipes.filter(recipe=>String(recipe.name||'').toLowerCase().includes(search.trim().toLowerCase()));
@@ -199,6 +210,8 @@ export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
     <div className="react-crafting-recipe-list">
       {visible.map(recipe=>{
         const plan=craftingInventoryPlan(recipe,inventory);
+        const station=recipe.stationId?stations.find(s=>s.id===recipe.stationId):null;
+        const stationReady=!recipe.stationId||stationAccessible(station,character.id);
         const pending=requests.some(row=>row.recipeId===recipe.id&&
           row.characterId===character.id&&row.status==='pending');
         return <article key={recipe.id}>
@@ -206,10 +219,12 @@ export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
             <StatusPill tone={plan.ready?'success':'warning'}>{plan.ready?'Materials Ready':'Materials Missing'}</StatusPill>
           </div>
           {recipe.description?<p>{recipe.description}</p>:null}
+          {recipe.stationId?<p><b>Required Station:</b> {station?.name||'Unavailable'}
+            {!stationReady?' (unavailable to this character)':''}</p>:null}
           <RecipeMaterials recipe={recipe} plan={plan}/>
           <p><b>Output:</b> {recipe.output?.name} ×{recipe.output?.quantity}</p>
           <button type="button" className="primary"
-            disabled={!editable||busy||!plan.ready||pending} onClick={()=>request(recipe)}>
+            disabled={!editable||busy||!plan.ready||!stationReady||pending} onClick={()=>request(recipe)}>
             {pending?'Awaiting GM Approval':'Request Crafting'}
           </button>
         </article>;
