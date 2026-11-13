@@ -3803,3 +3803,22 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-gm-trade-hub {padding:10px;}
   .react-gm-trade-hub-links button {min-height:68px;padding:8px;}
 }
+
+/* Phase 8.3: responsive, keyboard-accessible party loot filters. */
+.react-party-loot-filters {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));
+  gap:10px;align-items:end;margin:12px 0;
+  padding:12px;border:1px solid rgba(143,176,195,.25);
+  border-radius:8px;background:rgba(6,19,28,.52);
+}
+.react-party-loot-filters label,.react-party-loot-search {
+  display:grid;gap:6px;min-width:0;font-size:.79rem;font-weight:700;
+}
+.react-party-loot-filters input,.react-party-loot-filters select,.react-party-loot-search input {
+  width:100%;min-width:0;min-height:42px;
+}
+.react-party-loot-filters :is(input,select):focus-visible,
+.react-party-loot-search input:focus-visible {
+  outline:2px solid rgba(176,208,230,.9);outline-offset:2px;
+}
+@media(max-width:480px){.react-party-loot-filters{padding:10px;}}
