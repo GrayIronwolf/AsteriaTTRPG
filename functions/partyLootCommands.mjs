@@ -96,10 +96,10 @@ export function createPartyLootCommands(context,helpers){
           throw Error('Private loot record unavailable. Distribution cannot begin.');
         if(type==='start-distribution'){
           const distribution=startLootDistribution(visible);
-          const privateDistribution={...distribution,startedBy:currentUser.uid,
+          const privateDistribution={...distribution,roundId:requestId,startedBy:currentUser.uid,
             startedAt:serverTimestamp()};
           tx.update(privateRef,{distribution:privateDistribution,updatedAt:serverTimestamp()});
-          tx.update(publicRef,{distribution:{status:'open',tally:lootVoteTally(distribution)},
+          tx.update(publicRef,{distribution:{status:'open',roundId:requestId,tally:lootVoteTally(distribution)},
             updatedAt:serverTimestamp()});
           return {lootId,status:'open'};
         }
@@ -206,15 +206,17 @@ export function createPartyLootCommands(context,helpers){
       await verifyOwnedLiveCharacter(tx,campaignId,characterId,character,refs);
       if(!refs.privateExists)throw Error('Character owner record unavailable.');
       const choice=String(operation.choice||'');
+      if(publicDrop.distribution.roundId!==privateDrop.distribution.roundId)
+        throw Error('Party loot voting round changed. Refresh before voting.');
       const distribution=castLootChoice(privateDrop.distribution,characterId,choice);
       const tally=lootVoteTally(distribution);
-      appendActivity(character,{type:'party-loot-vote',lootId,choice,
+      appendActivity(character,{type:'party-loot-vote',lootId,roundId:distribution.roundId,choice,
         message:'Chose '+choice.toUpperCase()+' for '+(publicDrop.item?.name||'treasure')+
           ' from '+publicDrop.source+'.'});
       writeLiveCharacter(tx,refs,character);
       tx.update(draftRef(campaignId,lootId),{distribution,updatedAt:serverTimestamp()});
       tx.update(lootRef(campaignId,lootId),{
-        distribution:{status:'open',tally},updatedAt:serverTimestamp()
+        distribution:{status:'open',roundId:distribution.roundId,tally},updatedAt:serverTimestamp()
       });
       return {lootId,choice,tally};
     }),
