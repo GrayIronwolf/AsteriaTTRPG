@@ -7,7 +7,7 @@ import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
-import { GMUniversalCheckManager } from './UniversalCheckWorkspace.jsx';
+import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
@@ -803,6 +803,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
+    <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>
     {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
