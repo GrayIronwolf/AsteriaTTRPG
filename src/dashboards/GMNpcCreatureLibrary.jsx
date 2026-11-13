@@ -1,5 +1,6 @@
 import React,{useMemo,useState} from 'react';
 import {GMNpcGenerator} from './GMNpcGenerator.jsx';
+import {GMContextCheckLauncher} from './GMContextCheckLauncher.jsx';
 import {GMCharacterCardStudio,GMCharacterCardPreview} from './GMCharacterCards.jsx';
 import {updateGMLibraryCard} from '../state/gmCharacterCardModel.mjs';
 import {
@@ -36,7 +37,7 @@ const uid=kind=>{
 };
 
 /** A single GM-only library, reusing the existing private world patch service. */
-export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,onOpenWorld}){
+export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,onOpenWorld,campaignId='',characters={}}){
   const world=workspace.world||{};
   const [search,setSearch]=useState('');
   const [filter,setFilter]=useState('all');
@@ -227,6 +228,9 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
           {row.kind==='npc'&&row.personality?<p><b>Personality:</b> {row.personality}</p>:null}
           {row.kind==='npc'&&row.goals?<p><b>Goals:</b> {row.goals}</p>:null}
           {!row.official&&row.notes?<p className="react-gm-library-private"><b>GM notes:</b> {row.notes}</p>:null}
+          {row.kind==='npc'&&!row.official&&!row.id.startsWith('legacy-')?<GMContextCheckLauncher
+            campaignId={campaignId} characters={characters} context={{kind:'npc',npcId:row.id,label:row.name}}
+            title={'Interaction check · '+row.name}/>:null}
           {!row.official?<p className="react-gm-library-encounter">
             {libraryEncounterReady(row)?
               'Encounter ready — searchable on the GM Main encounter board.':
