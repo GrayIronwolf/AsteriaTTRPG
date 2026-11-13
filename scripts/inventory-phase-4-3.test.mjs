@@ -56,7 +56,7 @@ test('Phase 4.3: inventory touch actions stay on trusted Firebase commands',()=>
   const css=read('../src/styles/asteria-react.css');
   assert.match(file,/inventoryActivityDelta/);
   assert.match(file,/role="status" aria-live="polite"/);
-  assert.match(file,/Recent Inventory Activity/);
+  assert.match(file,/Inventory &amp; Trade Journal/);
   assert.match(file,/onEquipSelected/);
   assert.match(file,/type:'quick',itemId:selected.id,index/);
   assert.match(file,/type:'equip',itemId:selected.id,slot/);

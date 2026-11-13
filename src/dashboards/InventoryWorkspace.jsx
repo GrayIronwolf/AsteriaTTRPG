@@ -13,7 +13,7 @@ import { PartyLootPlayerPanel } from './PartyLootWorkspace.jsx';
 import {PlayerItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
-import {inventoryActivityRecords,inventoryActivityDelta} from '../state/inventoryActivityModel.mjs';
+import {inventoryActivityRecords,inventoryActivityDelta,filterInventoryActivityRecords,INVENTORY_ACTIVITY_CATEGORIES} from '../state/inventoryActivityModel.mjs';
 
 const ARMOR_SLOTS = [
   ['Head', ['Head', 'Helmet']],
@@ -573,12 +573,16 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
   const [pendingUse,setPendingUse]=useState(null);
   const [saleRequest,setSaleRequest]=useState(null);
   const [activityOpen,setActivityOpen]=useState(false);
+  const [activityCategory,setActivityCategory]=useState('all');
+  const [activitySearch,setActivitySearch]=useState('');
   const [activityNotice,setActivityNotice]=useState('');
   const seenActivityRef=useRef(null);
-  const activity=useMemo(()=>inventoryActivityRecords(character,events),[character,events]);
+  const activity=useMemo(()=>inventoryActivityRecords(character,events,100),[character,events]);
+  const visibleActivity=useMemo(()=>filterInventoryActivityRecords(activity,{category:activityCategory,query:activitySearch}),[activity,activityCategory,activitySearch]);
   useEffect(()=>{
     seenActivityRef.current=null;
     setActivityNotice('');setActivityOpen(false);
+    setActivityCategory('all');setActivitySearch('');
   },[campaignId,character.id]);
   useEffect(()=>{
     const delta=inventoryActivityDelta(seenActivityRef.current,activity);
@@ -612,11 +616,23 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       </div>
       <button type="button" aria-expanded={activityOpen} aria-controls="react-inventory-activity" onClick={()=>{setActivityOpen(v=>!v);setActivityNotice('');}}>{activityOpen?'Hide Activity':'Activity ('+activity.length+')'}</button>
     </div>
-    {activityOpen?<section id="react-inventory-activity" className="react-inventory-activity" aria-label="Recent inventory activity">
-      <h3>Recent Inventory Activity</h3>
-      {activity.map(row=><p key={row.id}><span>{row.title}</span>{row.at?<time dateTime={new Date(row.at).toISOString()}>{new Date(row.at).toLocaleString()}</time>:null}</p>)}
-      {!activity.length?<p>No recent inventory or currency activity.</p>:null}
-      <small>See News / Events / History for your full notification history.</small>
+    {activityOpen?<section id="react-inventory-activity" className="react-inventory-activity" aria-label="Inventory and trade journal">
+      <h3>Inventory &amp; Trade Journal</h3>
+      <p className="react-inventory-journal-help">Recent transactions for this character, including merchant purchases, player exchanges, shared stash transfers, currency changes and treasure claims.</p>
+      <div className="react-inventory-journal-controls">
+        <label>Category<select value={activityCategory} onChange={event=>setActivityCategory(event.target.value)}>
+          {INVENTORY_ACTIVITY_CATEGORIES.map(category=><option key={category.id} value={category.id}>{category.label}</option>)}
+        </select></label>
+        <label>Search history<input type="search" maxLength="120" value={activitySearch}
+          onChange={event=>setActivitySearch(event.target.value)} placeholder="Search an item or transaction"/></label>
+      </div>
+      <small>Showing {visibleActivity.length} of {activity.length} recent entries.</small>
+      {visibleActivity.map(row=><p key={row.id}>
+        <span><b>{INVENTORY_ACTIVITY_CATEGORIES.find(category=>category.id===row.category)?.label||'Inventory'}</b> · {row.title}</span>
+        {row.at?<time dateTime={new Date(row.at).toISOString()}>{new Date(row.at).toLocaleString()}</time>:null}
+      </p>)}
+      {!visibleActivity.length?<p>{activity.length?'No transactions match these filters.':'No recent inventory or currency activity.'}</p>:null}
+      <small>History is read-only and reflects available recent character activity; it is not a complete accounting export. See News / Events / History for other notifications.</small>
     </section>:null}
     <div className="react-inventory-mobile-tabs"><Tabs tabs={[{id:'support',label:'Info',icon:'info'},{id:'equipment',label:'Equipment',icon:'equipment'},{id:'inventory',label:'Inventory',icon:'inventory'},{id:'party',label:'Party',icon:'party'},{id:'shops',label:'Shops',icon:'store'},{id:'party-loot',label:'Party Loot',icon:'inventory'}]} active={mobileView} onChange={setMobileView} ariaLabel="Mobile inventory sections" /></div>
     <div className={`react-inventory-layout mobile-${mobileView}`}>
