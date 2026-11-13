@@ -18,7 +18,8 @@ test('Phase 6.2: empty and zero-copper rolls never create a treasure drop',()=>{
   assert.equal(lootTableDropFromRoll(table,{...none,kind:'currency',currencyCopper:0},'party-loot-zero'),null);
 });
 test('Phase 6.2: currency rolls generate a standard hidden party-copper payload',()=>{
-  const roll=rollLootTable(table,()=>1);
+  const draws=[1,0];
+  const roll=rollLootTable(table,()=>draws.shift());
   const result=lootTableDropFromRoll(table,roll,'party-loot-coin');
   assert.equal(result.drop.kind,'currency');
   assert.equal(result.drop.currencyCopper,50);
@@ -27,7 +28,8 @@ test('Phase 6.2: currency rolls generate a standard hidden party-copper payload'
   assert.equal(result.drop.note,'');
 });
 test('Phase 6.2: generated item drops preserve canonical reward identity and quantity',()=>{
-  const roll=rollLootTable(table,()=>2);
+  const draws=[2,0];
+  const roll=rollLootTable(table,()=>draws.shift());
   const result=lootTableDropFromRoll(table,roll,'party-loot-item');
   assert.equal(result.drop.item.name,'Iron Sword');
   assert.equal(result.drop.item.definitionId,'base:sword');
@@ -36,7 +38,8 @@ test('Phase 6.2: generated item drops preserve canonical reward identity and qua
   assert.equal(result.drop.note,'');
 });
 test('Phase 6.2: forged rolls, invalid quantities and unsupported drop IDs fail closed',()=>{
-  const roll=rollLootTable(table,()=>2);
+  const draws=[2,0];
+  const roll=rollLootTable(table,()=>draws.shift());
   assert.throws(()=>lootTableDropFromRoll(table,{...roll,tableId:'other'},'party-loot-test'),/does not belong/);
   assert.throws(()=>lootTableDropFromRoll(table,{...roll,item:{...roll.item,quantity:0}},'party-loot-test'),/quantity/);
   assert.throws(()=>lootTableDropFromRoll(table,roll,'bad/path'),/identifier/);
