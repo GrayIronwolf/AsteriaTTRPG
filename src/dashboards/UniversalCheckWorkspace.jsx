@@ -4,6 +4,7 @@ import {UNIVERSAL_CHECK_TYPES,UNIVERSAL_CHECK_RANKS,UNIVERSAL_CHARACTERISTICS} f
 
 const timestamp=value=>value?.toDate?.()?.toLocaleString?.()||'';
 const modifierLabel=value=>Number(value)>=0?'+'+value:String(value);
+const sourceLabel=row=>row.context?(row.context.label+(row.context.detail?' · '+row.context.detail:'')):'';
 function useRequests(campaignId,gm){
   const [rows,setRows]=useState([]);
   useEffect(()=>{
@@ -118,6 +119,7 @@ export function GMUniversalCheckManager({campaignId,characters={}}){
       <h5>{row.characterName} — {row.skill||row.characteristic}</h5>
       <p>{row.type} {row.dc!=null?'· DC '+row.dc:''} · {row.status} · Attempt {row.attempt}
         {timestamp(row.createdAt)?' · '+timestamp(row.createdAt):''}</p>
+      {sourceLabel(row)?<p><b>Interaction:</b> {sourceLabel(row)}</p>:null}
       {row.description?<p>{row.description}</p>:null}
       <details><summary>Frozen modifiers</summary><Breakdown row={row}/></details>
       <Result row={row}/>
@@ -181,12 +183,14 @@ export function PlayerUniversalCheckPopup({campaignId,characterId}){
     {showHistory?<div className="react-panel">
       <h4>My Check History</h4>
       {rows.map(entry=><article key={entry.id}><strong>{entry.skill||entry.characteristic}</strong> · {entry.status} · Attempt {entry.attempt}
+        {sourceLabel(entry)?' · '+sourceLabel(entry):''}
         {entry.dc!=null?' · DC '+entry.dc:''}
         <Result row={entry}/>
       </article>)}
     </div>:null}
     {row?<div role="dialog" aria-modal="true" aria-label="GM check request" className="react-panel">
       <h3>GM Check Request</h3>
+      {sourceLabel(row)?<p><strong>Interaction:</strong> {sourceLabel(row)}</p>:null}
       <p>{row.description}</p>
       <p>{row.npcName?row.npcName+' — ':''}{row.type}: {row.skill||row.characteristic}
         {row.dc!=null?', DC '+row.dc:', opposed total'} · Attempt {row.attempt}</p>
