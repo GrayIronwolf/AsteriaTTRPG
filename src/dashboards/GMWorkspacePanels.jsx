@@ -13,6 +13,7 @@ import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, m
 import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
 import {merchantStandingTier,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 import {MERCHANT_TYPES,merchantBuiltInTemplates,merchantTemplateFromShop,merchantWorldNPCOptions,merchantWorldLocationOptions} from '../state/merchantTemplateModel.mjs';
+import {generateMerchantStock,merchantGeneratorCatalogFacets} from '../state/shopGeneratorModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 import {GMEnhancementWorkshop} from './ItemEnhancementWorkspace.jsx';
@@ -333,9 +334,15 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const [templateId,setTemplateId]=useState('');
   const [templateName,setTemplateName]=useState('');
   const [regionDraft,setRegionDraft]=useState('');
+  const [generator,setGenerator]=useState({seed:'asteria',lines:'8',minQuantity:'1',
+    maxQuantity:'5',minUnitValue:'0',maxUnitValue:'100000000',restockTarget:'0',
+    categories:[],rarities:[],types:[]});
+  const [generated,setGenerated]=useState(null);
+  const [generatorBusy,setGeneratorBusy]=useState(false);
   const builtIns=useMemo(()=>merchantBuiltInTemplates(),[]);
   const npcOptions=useMemo(()=>merchantWorldNPCOptions(world),[world.npcs]);
   const locationOptions=useMemo(()=>merchantWorldLocationOptions(world),[world.settlements,world.regions]);
+  const generatorFacets=useMemo(()=>merchantGeneratorCatalogFacets(catalog),[catalog]);
   const [search,setSearch]=useState('');const [quantity,setQuantity]=useState('');const [message,setMessage]=useState('');
   const [deals,setDeals]=useState([]);
   const [relationships,setRelationships]=useState([]);
@@ -415,6 +422,23 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     setMessage(result?.ok?'Merchant template deleted.':result?.error||'Could not delete template.');
     if(result?.ok)setTemplateId('');
   };
+  const previewGenerated=()=>{
+    try{setGenerated(generateMerchantStock(catalog,{
+      ...generator,lines:Number(generator.lines),minQuantity:Number(generator.minQuantity),
+      maxQuantity:Number(generator.maxQuantity),minUnitValue:Number(generator.minUnitValue),
+      maxUnitValue:Number(generator.maxUnitValue),restockTarget:Number(generator.restockTarget)
+    }));setMessage('Inventory preview generated. No shop changes have been saved.');}
+    catch(error){setGenerated(null);setMessage(error.message||'Unable to generate inventory.');}
+  };
+  const applyGenerated=async()=>{
+    if(!selected||!generated?.stock?.length||generatorBusy)return;
+    setGeneratorBusy(true);
+    try{
+      const result=await run({type:'apply-generated-stock',shopId:selected.id,
+        stock:generated.stock,mode:'append'});
+      if(result?.ok)setGenerated(null);
+    }finally{setGeneratorBusy(false);}
+  };
   const updateSelected=patch=>selected&&run({type:'save',shop:{id:selected.id,...patch}});
   const decideDeal=async(deal,decision)=>{if(dealBusy)return;setDealBusy(deal.id);try{const result=await firebaseService.respondMerchantDeal(campaignId,'gm-scope',deal.id,decision);setMessage(result?.ok?'Merchant offer resolved.':result?.error||'Could not resolve offer.');}catch(error){setMessage(error.message||'Could not resolve offer.');}finally{setDealBusy('');}};
   const matches=search?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(search.toLowerCase())).slice(0,10):[];
@@ -465,6 +489,37 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     <MerchantRelationshipManager key={'standing-'+selected.id}
       campaignId={campaignId} shop={selected} characters={characters}
       relationships={relationships}/>
+    <section className="react-shop-generator" aria-label="Shop Inventory Generator">
+      <h4>Shop &amp; Inventory Generator</h4>
+      <p>Generate a preview from existing Compendium items. No stock is added until you confirm.
+        The generator does not create currency, unique items or undiscovered lore.</p>
+      <div className="react-form-grid">
+        <label>Seed<input value={generator.seed} maxLength={120} onChange={e=>setGenerator(v=>({...v,seed:e.target.value}))}/></label>
+        {[
+          ['lines','Stock Lines'],['minQuantity','Minimum Quantity'],
+          ['maxQuantity','Maximum Quantity'],['minUnitValue','Minimum Item Value (Copper)'],
+          ['maxUnitValue','Maximum Item Value (Copper)'],['restockTarget','Restock Target']
+        ].map(([key,label])=><label key={key}>{label}<input type="number" min="0"
+          value={generator[key]} onChange={e=>setGenerator(v=>({...v,[key]:e.target.value}))}/></label>)}
+        {[
+          ['categories','Categories'],['rarities','Rarities'],['types','Item Types']
+        ].map(([key,label])=><label key={key}>{label}
+          <select value={generator[key][0]||''} onChange={e=>setGenerator(v=>({...v,[key]:e.target.value?[e.target.value]:[]}))}>
+            <option value="">All {label}</option>
+            {generatorFacets[key].map(value=><option key={value} value={value}>{value}</option>)}
+          </select>
+        </label>)}
+      </div>
+      <button type="button" onClick={previewGenerated}>Preview Generated Inventory</button>
+      {generated?<div role="region" aria-label="Generated stock preview">
+        <p>{generated.generated} of {generated.requested} lines generated from {generated.eligible} eligible items.
+          {generated.warning?' '+generated.warning:''}</p>
+        <ul>{generated.stock.map((row,index)=><li key={index}>{row.item.name||row.item.title} — {row.qty} units</li>)}</ul>
+        <button type="button" className="primary" disabled={generatorBusy||!generated.stock.length}
+          onClick={applyGenerated}>Add Preview to Shop</button>
+        <button type="button" disabled={generatorBusy} onClick={()=>setGenerated(null)}>Discard Preview</button>
+      </div>:null}
+    </section>
     <h4>Visiting Characters</h4><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={array(selected.visitorCharacterIds).includes(character.id)} onChange={event=>updateSelected({visitorCharacterIds:event.target.checked?[...new Set([...array(selected.visitorCharacterIds),character.id])]:array(selected.visitorCharacterIds).filter(id=>id!==character.id)})}/>{character.name}</label>)}</div><div className="react-form-grid"><label>Search Item Compendium<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Add stock..."/></label><label>Quantity<ManualNumberInput min="1" value={quantity} onChange={event=>setQuantity(event.target.value)}/></label></div>{search?<div className="react-search-results">{matches.map(item=><button key={item.id||item.slug||item.name} onClick={()=>{if(!isManualNumber(quantity,{min:1}))return setMessage('Enter a whole stock quantity of at least 1.');run({type:'stock',shopId:selected.id,item:window.AsteriaInventory?.itemSnapshot?.(item,manualNumber(quantity))||item,quantity:manualNumber(quantity)});setSearch('');setQuantity('');}}>{item.name||item.title}</button>)}</div>:null}<section className="react-merchant-inventory-controls" aria-label="Merchant stock management">
     <header><h4>Merchant Inventory &amp; Restocking</h4>
       <small>{inventorySummary.lines} stock lines · {inventorySummary.low} low · {inventorySummary.out} out</small></header>

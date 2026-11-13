@@ -7,7 +7,7 @@ import {moveMerchantOnRoute,merchantTravelState,normalizeMerchantRoute,MAX_MERCH
 import {merchantRelationshipId,updateMerchantRelationship,validateMerchantOpportunity} from '../src/state/merchantRelationshipModel.mjs';
 import {isLinkedCharacter} from './characterPermissions.mjs';
 import {normalizeCraftingRecipe} from '../src/state/craftingRecipeModel.mjs';
-import {normalizeMerchantTemplate} from '../src/state/merchantTemplateModel.mjs';
+import {normalizeMerchantTemplate,merchantTemplateStock} from '../src/state/merchantTemplateModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -56,6 +56,23 @@ export function cleanGMShop(input={},previous={},shopId=''){
 export function applyGMShopAction(current,action={},shopId=''){
   if(action.type==='delete')return {...cleanGMShop({},current,shopId),status:'deleted',stock:[]};
   if(current?.status==='deleted')throw Error('Deleted shops cannot be modified.');
+  if(action.type==='apply-generated-stock'){
+    if(!current.id||current.deleted||current.status==='deleted')
+      throw Error('Choose an existing active merchant.');
+    if(action.mode!=='append')throw Error('Generated stock may only be appended.');
+    const stock=merchantTemplateStock(action.stock);
+    if(!stock.length)throw Error('Generate at least one stock line.');
+    const next=cleanGMShop({},current,shopId);
+    if(next.stock.length+stock.length>PHASE33_MAX_SHOP_STOCK)
+      throw Error('Shop stock limit would be exceeded.');
+    next.stock=[...next.stock,...stock.map(row=>{
+      const item=normalizeMarketPricing(copy(row.item),
+        {legacy:true,removeLegacy:true,migratedRecord:true});
+      return {...row,item,priceCopper:merchantPriceCopper(next,item,'buy')};
+    })];
+    if(JSON.stringify(next).length>680000)throw Error('Generated shop inventory is too large.');
+    return next;
+  }
   if(action.type==='create-from-template'){
     const template=normalizeMerchantTemplate(action.template);
     const next=cleanGMShop({
@@ -235,7 +252,7 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
         const type=String(action.type||'save');
         if(!['save','stock','remove-stock','set-stock','configure-restock',
           'restock','restock-all','assign-route','depart-route','arrive-route',
-          'unassign-route','configure-opportunity','create-from-template','delete'].includes(type))
+          'unassign-route','configure-opportunity','create-from-template','apply-generated-stock','delete'].includes(type))
           throw Error('Choose a valid shop action.');
         const shopId=String(action.shopId||action.shop?.id||
           (['save','create-from-template'].includes(type)?'shop-'+requestId:''));
