@@ -2,6 +2,7 @@ import {isCampaignGM,readCampaignMember} from './characterPermissions.mjs';
 import {normalizeMarketPricing} from '../src/systems/items/marketPricing.mjs';
 import {shopStockCompatible,merchantPriceCopper} from '../src/state/shopTransactionModel.mjs';
 import {prepareGMRewardBundle} from '../src/state/gmRewardModel.mjs';
+import {merchantStockIdentity,validateRestockPolicy,merchantRestockPlan,MAX_MERCHANT_RESTOCK_AUDIT} from '../src/state/merchantInventoryModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -31,7 +32,8 @@ export function cleanGMShop(input={},previous={},shopId=''){
       (Array.isArray(input.visitorCharacterIds)?input.visitorCharacterIds:previous.visitorCharacterIds||[])
         .filter(id).slice(0,60)
     )),
-    stock:Array.isArray(previous.stock)?copy(previous.stock):[]
+    stock:Array.isArray(previous.stock)?copy(previous.stock):[],
+    restockHistory:Array.isArray(previous.restockHistory)?copy(previous.restockHistory).slice(0,MAX_MERCHANT_RESTOCK_AUDIT):[]
   };
   if(!id(output.id))throw Error('Choose a valid shop.');
   if(!output.name)throw Error('Enter a shop name.');
@@ -42,6 +44,7 @@ export function cleanGMShop(input={},previous={},shopId=''){
 
 export function applyGMShopAction(current,action={},shopId=''){
   if(action.type==='delete')return {...cleanGMShop({},current,shopId),status:'deleted',stock:[]};
+  if(current?.status==='deleted')throw Error('Deleted shops cannot be modified.');
   if(action.type==='save')return cleanGMShop(action.shop||{},current,shopId);
   const shop=cleanGMShop({},current,shopId);
   if(action.type==='stock'){
@@ -59,9 +62,45 @@ export function applyGMShopAction(current,action={},shopId=''){
       if(shop.stock.length>=PHASE33_MAX_SHOP_STOCK)throw Error('This shop has reached its stock limit.');
       shop.stock.push({item,qty,priceCopper:merchantPriceCopper(shop,item,'buy')});
     }
+  }else if(['set-stock','configure-restock','restock','restock-all'].includes(action.type)){
+    // Existing stock indices are never trusted alone: the GM must confirm the
+    // item identity captured from the current view. The transaction protects
+    // concurrent sales and other GM adjustments from being overwritten.
+    const all=action.type==='restock-all';
+    const index=Number(action.stockIndex);
+    if(!all&&(!Number.isSafeInteger(index)||index<0||index>=shop.stock.length))
+      throw Error('Choose an existing stock item.');
+    if(!all&&merchantStockIdentity(shop.stock[index].item)!==String(action.stockIdentity||''))
+      throw Error('Shop stock changed. Refresh this item before editing.');
+    if(action.type==='set-stock'){
+      const quantity=Number(action.quantity);
+      if(!Number.isSafeInteger(quantity)||quantity<0||quantity>1000000)
+        throw Error('Choose a whole stock quantity between 0 and 1,000,000.');
+      shop.stock[index].qty=quantity;
+    }else if(action.type==='configure-restock'){
+      const policy=validateRestockPolicy(Number(action.restockTarget),Number(action.lowStockAt));
+      Object.assign(shop.stock[index],policy);
+    }else{
+      const plan=merchantRestockPlan(shop.stock,all?null:index);
+      if(!plan.lines)throw Error('No configured items need restocking.');
+      for(const row of plan.changes){
+        shop.stock[row.index].qty=row.to;
+      }
+      const historyEntry={
+        id:String(action.operationId||'').slice(0,100),
+        action:all?'restock-all':'restock',
+        lines:plan.lines,units:plan.units,
+        summary:plan.changes.slice(0,15).map(entry=>({
+          name:entry.itemName,from:entry.from,to:entry.to
+        }))
+      };
+      shop.restockHistory=[historyEntry,...shop.restockHistory].slice(0,MAX_MERCHANT_RESTOCK_AUDIT);
+    }
   }else if(action.type==='remove-stock'){
     const i=Number(action.stockIndex);
     if(!Number.isSafeInteger(i)||i<0||i>=shop.stock.length)throw Error('Choose an existing stock item.');
+    if(action.stockIdentity&&merchantStockIdentity(shop.stock[i].item)!==String(action.stockIdentity))
+      throw Error('Shop stock changed. Refresh this item before removing.');
     shop.stock.splice(i,1);
   }else throw Error('Choose a valid shop action.');
   if(JSON.stringify(shop).length>680000)throw Error('This shop record is too large.');
@@ -84,7 +123,9 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
     manageCampaignShop:async(campaignId,_scope,action={})=>{
       try{
         const type=String(action.type||'save');
-        if(!['save','stock','remove-stock','delete'].includes(type))throw Error('Choose a valid shop action.');
+        if(!['save','stock','remove-stock','set-stock','configure-restock',
+          'restock','restock-all','delete'].includes(type))
+          throw Error('Choose a valid shop action.');
         const shopId=String(action.shopId||action.shop?.id||
           (type==='save'?'shop-'+requestId:''));
         if(!id(shopId))throw Error('Choose a valid shop identifier.');
@@ -99,7 +140,14 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           if(type!=='save'&&!original)throw Error('Shop not found.');
           if(type==='save'&&!original&&action.shop?.id&&String(action.shop.id)!==shopId)
             throw Error('Shop identity changed.');
-          const shop=applyGMShopAction(original||{id:shopId},type==='save'?{...action,type}:{...action,type},shopId);
+          const shop=applyGMShopAction(original||{id:shopId},
+            {...action,type,operationId:requestId},shopId);
+          // Record GM restock author and event time only on a successful commit,
+          // without modifying the ordinary merchant currency/stock pricing rules.
+          if(['restock','restock-all'].includes(type)&&shop.restockHistory.length){
+            shop.restockHistory[0].at=new Date().toISOString();
+            shop.restockHistory[0].by=currentUser.uid;
+          }
           tx.set(ref,{...shop,updatedAt:serverTimestamp(),updatedBy:currentUser.uid});
           return shop;
         });

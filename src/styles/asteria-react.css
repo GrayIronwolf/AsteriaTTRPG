@@ -3922,3 +3922,27 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media(max-width:520px){
   .react-phase9-trade-sides {grid-template-columns:minmax(0,1fr);}
 }
+
+/* Phase 10.1 — merchant stock maintenance. */
+.react-merchant-inventory-controls{
+  display:grid;gap:10px;margin-block:14px;padding:12px;
+  border:1px solid rgba(143,176,195,.25);
+  border-radius:8px;background:rgba(6,19,28,.45);
+}
+.react-merchant-inventory-controls header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.react-merchant-inventory-controls header h4{margin:0}
+.react-merchant-inventory-controls p{margin:0;line-height:1.45}
+.react-merchant-stock-manager{display:grid;gap:8px;padding:10px;border:1px solid rgba(143,176,195,.3);min-width:0}
+.react-merchant-stock-header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.react-merchant-stock-header>div:first-child{display:grid;gap:5px;min-width:0}
+.react-merchant-stock-header small{opacity:.77}
+.react-merchant-stock-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px;align-items:end}
+.react-merchant-stock-editor label{display:grid;gap:5px;font-size:.8rem}
+.react-merchant-stock-editor button,.react-merchant-stock-header button{min-height:42px}
+.react-merchant-restock-confirm{display:grid;gap:8px;padding:10px;border:1px solid rgba(143,176,195,.36)}
+.react-merchant-restock-history summary{cursor:pointer;min-height:40px}
+.react-merchant-restock-history p{padding:8px;border-top:1px solid rgba(143,176,195,.2)}
+@media(max-width:560px){
+  .react-merchant-stock-header>.react-record-actions{width:100%;display:flex;flex-wrap:wrap}
+  .react-merchant-stock-header>.react-record-actions>button{flex:1 1 130px}
+}

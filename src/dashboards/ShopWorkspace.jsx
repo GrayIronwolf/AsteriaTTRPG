@@ -6,6 +6,7 @@ import { firebaseService } from '../firebase/asteriaFirebaseService.js';
 import { inventoryItems } from './characterWorkspaceData.js';
 import { characterCurrencyCopper, merchantPriceCopper, shopVariantKey, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantTransactionPreview } from '../state/tradeExperienceModel.mjs';
+import { merchantStockHealth } from '../state/merchantInventoryModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
 const copper=value=>Number(value||0).toLocaleString()+' Copper';
@@ -146,7 +147,8 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
       <div className="react-merchant-stock-info">
         <b>{item?.identified===false?'Unidentified Item':item?.name||item?.title||'Item'}</b>
         <small>{shopVariantLabel(item)}</small>
-        <small>{remaining} available</small>
+        <small>{remaining} available{kind==='buy'&&merchantStockHealth(row).status==='out'?' · Out of stock':
+          kind==='buy'&&merchantStockHealth(row).status==='low'?' · Limited stock':''}</small>
       </div>
       <div className="react-merchant-stock-action">
         <strong>{price===null?'Price unavailable':copper(price)}</strong>
