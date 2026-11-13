@@ -156,7 +156,7 @@ export function ShopWorkspace({campaignId,character,ecosystem={},editable=false,
       <label>Find item<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search shop and inventory"/></label>
     </div>
     {selected?<><div className="react-merchant-heading">
-      <div><h3>{selected.name}</h3><small>{selected.type||'Merchant'} · {selected.region||'Local trader'}</small>
+      <div>{selected.image?<img src={selected.image} alt={selected.name+' portrait'} loading="lazy" style={{maxWidth:100,maxHeight:100,objectFit:'cover',borderRadius:8}}/>:null}<h3>{selected.name}</h3><small>{selected.type||'Merchant'} · {selected.region||'Local trader'}</small>
         {selected.description?<p>{selected.description}</p>:null}
         {selected.personality?<p><b>Personality:</b> {selected.personality}</p>:null}
         {selected.greeting?<p><b>Merchant:</b> “{selected.greeting}”</p>:null}
