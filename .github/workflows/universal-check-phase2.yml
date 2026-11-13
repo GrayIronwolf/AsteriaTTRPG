@@ -71,4 +71,6 @@ jobs:
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "Build Universal Check Phase 2 frontend bundle"
+          git fetch origin feat/universal-check-requests-phase-2
+          git rebase origin/feat/universal-check-requests-phase-2
           git push origin HEAD:feat/universal-check-requests-phase-2
