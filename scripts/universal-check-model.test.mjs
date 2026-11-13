@@ -10,7 +10,7 @@ test('all eight approved Asteria ranks map correctly',()=>{
 test('d20 criticals and opposed ties are resolved',()=>{
   assert.equal(universalCheckOutcome(1,100,10).outcome,'critical-failure');
   assert.equal(universalCheckOutcome(20,-100,30).outcome,'critical-success');
-  assert.equal(universalCheckOutcome(15,0,15,{opposed:true}).success,false);
+  assert.equal(universalCheckOutcome(15,0,null,{opposed:true}).outcome,'awaiting-opponent');
   assert.equal(universalCheckOutcome(15,0,15).success,true);
 });
 test('modifier breakdown is validated',()=>{
