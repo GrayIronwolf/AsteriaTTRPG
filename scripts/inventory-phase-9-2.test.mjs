@@ -26,7 +26,8 @@ test('Phase 9.2: Need Greed Pass remains distinct, bounded and deterministic',()
   assert.deepEqual(eligibleLootWinners(vote),[
     {characterId:'alice',choice:'need'},{characterId:'bob',choice:'greed'}
   ]);
-  vote=castLootChoice(vote,'bob','need');
+  vote=castLootChoice({...vote,roundId:'round-1'},'bob','need');
+  assert.equal(vote.roundId,'round-1');
   assert.deepEqual(lootVoteTally(vote),{need:2,greed:0,pass:1});
   assert.throws(()=>castLootChoice(vote,'bad/id','need'),/valid linked/);
   assert.throws(()=>castLootChoice(vote,'alice','other'),/Need, Greed or Pass/);
