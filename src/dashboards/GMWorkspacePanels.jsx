@@ -11,6 +11,7 @@ import { campaignArtworkImage } from '../state/campaignArtwork.mjs';
 import { merchantPriceCopper, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, merchantRestockPlan } from '../state/merchantInventoryModel.mjs';
 import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
+import {merchantStandingTier,merchantStandingFor,merchantOpportunitySummary} from '../state/merchantRelationshipModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 
@@ -140,8 +141,13 @@ function MerchantStockLine({row,index,shop,busy,onAction}){
   const [target,setTarget]=useState(String(row.restockTarget??0));
   const [low,setLow]=useState(String(row.lowStockAt??0));
   const [edit,setEdit]=useState(false);
+  const [minStanding,setMinStanding]=useState(String(row.minStanding??0));
+  const [opportunityLabel,setOpportunityLabel]=useState(String(row.opportunityLabel??''));
   useEffect(()=>{setQuantity(String(row.qty??0));setTarget(String(row.restockTarget??0));
-    setLow(String(row.lowStockAt??0));},[shop.id,identity,row.qty,row.restockTarget,row.lowStockAt]);
+    setLow(String(row.lowStockAt??0));
+    setMinStanding(String(row.minStanding??0));
+    setOpportunityLabel(String(row.opportunityLabel??''));
+  },[shop.id,identity,row.qty,row.restockTarget,row.lowStockAt,row.minStanding,row.opportunityLabel]);
   const submit=(type,more={})=>onAction({
     type,shopId:shop.id,stockIndex:index,stockIdentity:identity,...more
   });
@@ -156,6 +162,12 @@ function MerchantStockLine({row,index,shop,busy,onAction}){
       return onAction(null,'The low-stock threshold must be at or below the target.');
     submit('configure-restock',{restockTarget:manualNumber(target),lowStockAt:manualNumber(low)});
   };
+  const saveOpportunity=()=>{
+    if(!isManualNumber(minStanding,{min:0,max:100}))
+      return onAction(null,'Enter a whole standing threshold between 0 and 100.');
+    submit('configure-opportunity',{minStanding:manualNumber(minStanding),
+      opportunityLabel:opportunityLabel.trim()});
+  };
   return <article className="react-merchant-stock-manager">
     <div className="react-merchant-stock-header">
       <div><b>{row.item?.identified===false?'Unidentified Item':row.item?.name||row.item?.title||'Item'}</b>
@@ -163,6 +175,7 @@ function MerchantStockLine({row,index,shop,busy,onAction}){
         <span>In stock: <b>{health.qty}</b> {health.status==='out'?' · Out of stock':
           health.status==='low'?' · Low stock':health.status==='invalid'?' · Invalid stock':''}</span>
         {health.target>0?<small>Target {health.target} · Alert at {health.low} · Needed {health.needed}</small>:<small>Restocking not configured</small>}
+        {Number(row.minStanding||0)>0?<small>Special access: standing {row.minStanding}+ {row.opportunityLabel?' · '+row.opportunityLabel:''}</small>:null}
       </div>
       <div className="react-record-actions">
         <button type="button" disabled={busy} onClick={()=>setEdit(value=>!value)}>
@@ -182,6 +195,12 @@ function MerchantStockLine({row,index,shop,busy,onAction}){
       <label>Low-Stock Alert<ManualNumberInput min="0" max={Number(target)||0}
         value={low} onChange={setLow}/></label>
       <button type="button" disabled={busy} onClick={savePolicy}>Save Restock Rules</button>
+      <label>Minimum Standing<ManualNumberInput min="0" max="100"
+        value={minStanding} onChange={setMinStanding}/></label>
+      <label>Special Opportunity Name<input maxLength={160} value={opportunityLabel}
+        onChange={event=>setOpportunityLabel(event.target.value)}
+        placeholder="Optional GM-defined opportunity"/></label>
+      <button type="button" disabled={busy} onClick={saveOpportunity}>Save Special Access</button>
     </div>:null}
   </article>;
 }
@@ -244,6 +263,63 @@ function MerchantTravelManager({shop,routes=[],busy,run}){
   </section>;
 }
 
+function MerchantRelationshipManager({campaignId,shop,characters,relationships}){
+  const [characterId,setCharacterId]=useState('');
+  const [score,setScore]=useState('0');
+  const [message,setMessage]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [result,setResult]=useState('');
+  const selected=relationships.find(row=>row.shopId===shop.id&&row.characterId===characterId);
+  useEffect(()=>{
+    setScore(String(selected?.score??0));setMessage(selected?.message??'');
+  },[shop.id,characterId,selected?.score,selected?.message]);
+  const setStanding=async()=>{
+    if(busy)return;
+    if(!characterId)return setResult('Select a linked character.');
+    if(!isManualNumber(score,{min:-100,max:100}))
+      return setResult('Enter a whole standing score from -100 to 100.');
+    setBusy(true);
+    try{
+      const saved=await firebaseService.manageMerchantRelationship(campaignId,'gm-scope',{
+        shopId:shop.id,characterId,score:manualNumber(score),message
+      });
+      setResult(saved?.ok?'Merchant relationship updated.':saved?.error||'Relationship could not be updated.');
+    }catch(error){setResult(error.message||'Relationship could not be updated.');}
+    finally{setBusy(false);}
+  };
+  const scoreValue=Number(score||0);
+  const tier=Number.isInteger(scoreValue)&&scoreValue>=-100&&scoreValue<=100?
+    merchantStandingTier(scoreValue):'Invalid';
+  const offers=merchantOpportunitySummary(shop,selected?.score||0);
+  return <section className="react-merchant-relationship-manager" aria-label="Merchant reputation and relationships">
+    <h4>Merchant Reputation &amp; Relationships</h4>
+    <p>Standing is specific to the selected character. The GM controls it; ordinary prices are unchanged.</p>
+    <label>Campaign Character<select value={characterId} onChange={event=>setCharacterId(event.target.value)}>
+      <option value="">Choose a character</option>
+      {Object.values(characters).map(character=><option key={character.id} value={character.id}>
+        {character.name||character.id}</option>)}
+    </select></label>
+    {characterId?<div className="react-merchant-relationship-editor">
+      <label>Standing (-100 to 100)<ManualNumberInput min="-100" max="100" value={score}
+        onChange={setScore}/></label>
+      <p>Relationship: <b>{tier}</b></p>
+      <label>Player-visible Relationship Note<textarea rows="2" maxLength={500} value={message}
+        onChange={event=>setMessage(event.target.value)}
+        placeholder="What this merchant thinks of the character"/></label>
+      <button type="button" disabled={busy} onClick={setStanding}>Save Character Standing</button>
+      {offers.length?<div><b>Special Access</b>{offers.map(row=><p key={row.index}>
+        {row.itemName}: {row.unlocked?'Unlocked':'Locked'} (requires {row.required} standing)
+      </p>)}</div>:null}
+      {selected?.history?.length?<details><summary>Relationship History</summary>
+        {selected.history.slice(0,10).map((row,i)=><p key={row.id||i}>
+          {row.score} standing · {row.message||'GM adjustment'}
+        </p>)}
+      </details>:null}
+    </div>:null}
+    <p role="status" aria-live="polite">{result}</p>
+  </section>;
+}
+
 function ShopManager({ campaignId, characters, itemEcosystem, customItems, routes=[] }) {
   const shops=array(itemEcosystem?.shops);
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
@@ -251,11 +327,18 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const [draft,setDraft]=useState({name:'',type:'General Goods',buyModifier:'',sellModifier:''});
   const [search,setSearch]=useState('');const [quantity,setQuantity]=useState('');const [message,setMessage]=useState('');
   const [deals,setDeals]=useState([]);
+  const [relationships,setRelationships]=useState([]);
   const [dealBusy,setDealBusy]=useState('');
   const [stockBusy,setStockBusy]=useState(false);
   const [travelBusy,setTravelBusy]=useState(false);
   const [confirmRestock,setConfirmRestock]=useState(false);
   useEffect(()=>{let unsub=()=>{};try{unsub=firebaseService.subscribeMerchantDeals(campaignId,setDeals,true);}catch(error){setMessage(error.message);}return ()=>unsub();},[campaignId]);
+  useEffect(()=>{
+    let unsubscribe=()=>{};
+    try{unsubscribe=firebaseService.subscribeMerchantRelationships(campaignId,setRelationships,true);}
+    catch(error){setMessage(error.message);}
+    return ()=>unsubscribe();
+  },[campaignId]);
   useEffect(()=>{if(selectedId&&!shops.some(shop=>shop.id===selectedId))setSelectedId(shops[0]?.id||'');},[shops,selectedId]);
   const selected=shops.find(shop=>shop.id===selectedId)||null;
   const run=async action=>{const result=await firebaseService.manageShop(campaignId,Object.keys(characters)[0]||'gm-scope',action);setMessage(result?.ok?'Shop system synchronized.':result?.error||'Shop could not be updated.');return result;};
@@ -290,6 +373,9 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
     </div>
     <MerchantTravelManager key={selected.id} shop={selected} routes={routes}
       busy={travelBusy} run={travelAction}/>
+    <MerchantRelationshipManager key={'standing-'+selected.id}
+      campaignId={campaignId} shop={selected} characters={characters}
+      relationships={relationships}/>
     <h4>Visiting Characters</h4><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={array(selected.visitorCharacterIds).includes(character.id)} onChange={event=>updateSelected({visitorCharacterIds:event.target.checked?[...new Set([...array(selected.visitorCharacterIds),character.id])]:array(selected.visitorCharacterIds).filter(id=>id!==character.id)})}/>{character.name}</label>)}</div><div className="react-form-grid"><label>Search Item Compendium<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Add stock..."/></label><label>Quantity<ManualNumberInput min="1" value={quantity} onChange={event=>setQuantity(event.target.value)}/></label></div>{search?<div className="react-search-results">{matches.map(item=><button key={item.id||item.slug||item.name} onClick={()=>{if(!isManualNumber(quantity,{min:1}))return setMessage('Enter a whole stock quantity of at least 1.');run({type:'stock',shopId:selected.id,item:window.AsteriaInventory?.itemSnapshot?.(item,manualNumber(quantity))||item,quantity:manualNumber(quantity)});setSearch('');setQuantity('');}}>{item.name||item.title}</button>)}</div>:null}<section className="react-merchant-inventory-controls" aria-label="Merchant stock management">
     <header><h4>Merchant Inventory &amp; Restocking</h4>
       <small>{inventorySummary.lines} stock lines · {inventorySummary.low} low · {inventorySummary.out} out</small></header>
