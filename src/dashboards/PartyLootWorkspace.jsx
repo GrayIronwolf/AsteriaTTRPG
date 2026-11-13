@@ -16,10 +16,6 @@ function StashInventoryList({stash}){
     {!arr(stash.items).length?<p>No shared items in this container.</p>:null}
   </div>;
 }
-function PartyLootList({loot}){
-  const visible=arr(loot).filter(row=>row.status==='available'&&row.visibility==='revealed');
-  return visible.length?visible:<></>;
-}
 
 export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable=false}){
   const stashes=arr(partyLoot.stashes).filter(row=>row.status!=='deleted');
@@ -50,7 +46,7 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
     }finally{setBusy(false);}
   };
   const move=type=>{
-    if(!stash||!validQty(quantity)||!item&&type==='deposit'||!shared&&type==='withdraw')return;
+    if(!stash||!validQty(quantity)||(type==='deposit'&&!item)||(type==='withdraw'&&!shared))return;
     send(()=>firebaseService.movePartyStashItem(campaignId,character.id,{
       type,stashId:stash.id,itemId:type==='deposit'?item.id:shared.id,quantity:Number(quantity),
       ...(type==='withdraw'?{storageId:storage?.id}:{})
