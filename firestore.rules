@@ -350,6 +350,18 @@ service cloud.firestore {
         allow get, list: if canUseCampaignSystems(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 5.3: GM secret notes and curses never appear in player documents.
+      match /itemLore/{itemId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /itemDiscoveries/{itemId} {
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.ownerUid == request.auth.uid &&
+           exists(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(resource.data.characterId)) &&
+           get(/databases/$(database)/documents/campaigns/$(campaignId)/characters/$(resource.data.characterId)).data.ownerUid == request.auth.uid);
+        allow create, update, delete: if false;
+      }
       // Bargain terms are private to the proposing account and active GMs.
       // All proposals, approvals and item/currency movements are server-only.
       match /merchantDeals/{dealId} {
