@@ -153,7 +153,7 @@ test('12.1: GM publishes stations/NPC services; owner requests repair, GM settle
     collection(user('alice'),path('npcRepairRequests')),
     where('ownerUid','==','alice'))));
   assert.equal(ownRequests.size,1);
-  await assertFails(getDocs(collection(user('bob'),path('npcRepairRequests')));
+  await assertFails(getDocs(collection(user('bob'),path('npcRepairRequests'))));
 
   const before=await live('a');
   assert.equal(before.inventory.find(row=>row.id==='blade').condition,40);
