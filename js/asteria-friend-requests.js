@@ -5,7 +5,7 @@
   'use strict';
   const el=id=>document.getElementById(id);
   const HANDLE=/^[A-Za-z0-9._-]{3,24}#[0-9]{5}$/;
-  const state={uid:'',sequence:0,busy:false,candidate:null,direction:'incoming',
+  const state={uid:'',sequence:0,busy:false,candidate:null,sentTo:null,direction:'incoming',
     cursor:0,nextCursor:null,rows:[]};
   const api=()=>window.AsteriaFirebase;
   const active=()=>window.AsteriaFeatureFlags?.friendRequestsEnabled===true;
@@ -22,8 +22,11 @@
   function controls(){
     const enabled=ready()&&!state.busy;
     const send=el('accountFriendsSend');
-    if(send){send.hidden=!state.candidate||!active();
-      send.disabled=!enabled||!state.candidate;}
+    if(send){
+      send.hidden=(!state.candidate&&!state.sentTo)||!active();
+      send.disabled=!enabled||!state.candidate||Boolean(state.sentTo);
+      send.textContent=state.sentTo?'Friend Request Sent':'Send Friend Request';
+    }
     for(const id of ['accountFriendsIncomingTab','accountFriendsOutgoingTab',
       'accountFriendsRequestsRefresh'])
       if(el(id))el(id).disabled=!enabled;
@@ -42,7 +45,7 @@
       state.direction==='incoming'?'accountFriendsIncomingTab':'accountFriendsOutgoingTab');
   }
   function reset(){
-    state.sequence++;state.busy=false;state.candidate=null;state.cursor=0;
+    state.sequence++;state.busy=false;state.candidate=null;state.sentTo=null;state.cursor=0;
     state.nextCursor=null;state.rows=[];state.direction='incoming';
     clean();controls();
   }
@@ -64,6 +67,7 @@
     void load(false);
   }
   function setCandidate(accountId){
+    state.sentTo=null;
     state.candidate=typeof accountId==='string'&&HANDLE.test(accountId)?
       accountId:null;
     controls();
@@ -179,7 +183,12 @@
       const result=await api().manageFriendRequest(action,accountId,revision);
       if(!valid())return false;
       if(!result?.ok)throw new Error('Invalid friend request result.');
-      if(action==='send'){state.candidate=null;controls();}
+      if(action==='send'){
+        state.candidate=null;state.sentTo=accountId;
+        const searchStatus=el('accountFriendsStatus');
+        if(searchStatus)searchStatus.textContent=
+          'Friend request sent. View it under Requests → Outgoing.';
+      }
       const confirmation=action==='send'?'Friend request sent.':
         action==='accept'?'Friend request accepted.':
         action==='decline'?'Friend request declined.':
@@ -192,11 +201,14 @@
       return true;
     }catch(error){
       if(valid()){
-        status(error?.code==='functions/resource-exhausted'?
+        const message=error?.code==='functions/resource-exhausted'?
           'Friend request limit reached. Try again later.':
           error?.code==='functions/aborted'?
           'This request changed. Refresh and try again.':
-          'Friend request could not be completed. No confirmation was received.');
+          'Friend request could not be completed. No confirmation was received.';
+        status(message);
+        if(action==='send'&&el('accountFriendsStatus'))
+          el('accountFriendsStatus').textContent=message;
       }
       return false;
     }finally{
