@@ -103,6 +103,7 @@ export function createPartyLootCommands(context,helpers){
       }
       if(type==='reveal'){
         if(!hidden)throw Error('No hidden loot drop is available to reveal.');
+        if(hidden.status!=='available'||hidden.visibility!=='hidden')throw Error('Only available hidden loot can be revealed.');
         if(visible)throw Error('A revealed loot drop already exists with this identifier.');
         const {secretItem, ...publicDrop}=hidden;
         tx.set(publicRef,{...publicDrop,visibility:'revealed',updatedAt:serverTimestamp(),
