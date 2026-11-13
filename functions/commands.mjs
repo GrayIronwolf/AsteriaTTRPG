@@ -14,6 +14,7 @@ import { shopStockCompatible, shopVariantKey, merchantPriceCopper } from '../src
 import { validateMerchantProposal, assertMerchantDealMatches } from '../src/state/merchantDealModel.mjs';
 import { equipCharacterInventoryItem, stageDirectEquipReward } from './rewardDelivery.mjs';
 import { createItemStoreCommands } from './itemStoreCommands.mjs';
+import {merchantRelationshipId,merchantCanAccessStock,merchantStandingFor} from '../src/state/merchantRelationshipModel.mjs';
 import { createPartyLootCommands } from './partyLootCommands.mjs';
 import {createItemLoreCommands} from './itemLoreCommands.mjs';
 import {createLootTableCommands} from './lootTableCommands.mjs';
@@ -49,6 +50,15 @@ async function requireCampaignGM(transaction,campaignId){
   }},db,campaignId,campaign,uid);
   if(!isCampaignGM(campaign,uid,membership)) throw new Error('Only a GM for this campaign can make this change.');
   return campaign;
+}
+async function requireMerchantStanding(transaction,campaignId,shopId,characterId,stock){
+  if(!Number(stock?.minStanding||0))return;
+  const ref=doc(db,'campaigns',campaignId,'merchantRelationships',
+    merchantRelationshipId(String(shopId),String(characterId)));
+  const record=await transaction.get(ref);
+  const standing=merchantStandingFor(record.exists()?[record.data()]:[],String(shopId),String(characterId));
+  if(!merchantCanAccessStock(stock,standing))
+    throw Error('This item requires higher merchant standing. Ask the GM about this special opportunity.');
 }
 function liveCharacterRefs(campaignId,characterId){
   return {
@@ -919,6 +929,7 @@ const commands = {
         const stock=shop.stock[index];
         const barterItem=proposal.barterItemId
           ?characterInventory(character).find((item,i)=>liveItemId(item,i)===String(proposal.barterItemId)):null;
+        await requireMerchantStanding(transaction,campaignId,shopId,characterId,stock);
         const terms=validateMerchantProposal(proposal,stock,barterItem);
         const base=merchantPriceCopper(shop,stock.item,'buy');
         if(base===null||base<=0||!Number.isSafeInteger(base)||!Number.isSafeInteger(base*terms.quantity))
@@ -972,6 +983,7 @@ const commands = {
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(deal.characterId))
           throw Error('The character is no longer visiting this merchant.');
         const stock=shop.stock?.[deal.stockIndex];
+        await requireMerchantStanding(transaction,campaignId,deal.shopId,deal.characterId,stock);
         const inventory=characterInventory(character);
         const barterItem=deal.barterItemId
           ?inventory.find((item,i)=>liveItemId(item,i)===deal.barterItemId):null;
@@ -1054,6 +1066,7 @@ const commands = {
         if(Array.isArray(shop.visitorCharacterIds)&&shop.visitorCharacterIds.length&&!shop.visitorCharacterIds.includes(characterId)) throw new Error('This character is not visiting the shop.');
         if(!Number.isSafeInteger(Number(quantity)) || Number(quantity)<1) throw new Error('Choose a whole item quantity.');
         if(Number(stock.qty||0)<1) throw new Error('This item is out of stock.');
+        await requireMerchantStanding(transaction,campaignId,shopId,characterId,stock);
         if(Number(quantity)>Number(stock.qty)) throw new Error('Not enough shop stock for the requested quantity.');
         const qty=Number(quantity);
         const item=normalizeMarketPricing(Object.assign({},structuredCloneSafe(stock.item||{}),{qty,location:'inventory',equipped:false}),{legacy:true,removeLegacy:true,migratedRecord:true});
