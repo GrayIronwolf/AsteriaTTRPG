@@ -39,6 +39,7 @@ const CHARACTER_TABS = [
   { id: 'skills', label: 'Skills', icon: 'skills' },
   { id: 'spells', label: 'Spells', icon: 'spells' },
   { id: 'inventory', label: 'Inventory', icon: 'inventory' },
+  { id: 'crafting', label: 'Crafting', icon: 'inventory' },
   { id: 'quest', label: 'Quests', icon: 'quest' },
   { id: 'information', label: 'News / Events / History', icon: 'journal' },
   { id: 'journal', label: 'Journal', icon: 'journal' },
