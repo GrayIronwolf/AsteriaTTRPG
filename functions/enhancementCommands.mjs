@@ -15,7 +15,6 @@ export function createEnhancementCommands(context,helpers){
     liveItemId,appendActivity}=helpers;
   const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
   const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
-  const list=value=>Array.isArray(value)?value:[];
   return {
     manageEnhancementPlan:async(campaignId,_scope,action={})=>{
       try{
