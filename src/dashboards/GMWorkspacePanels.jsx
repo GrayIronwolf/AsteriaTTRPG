@@ -10,6 +10,7 @@ import { QUEST_CURRENCIES, normalizeQuestReward, questRewardSummary } from '../s
 import { campaignArtworkImage } from '../state/campaignArtwork.mjs';
 import { merchantPriceCopper, shopVariantLabel } from '../state/shopTransactionModel.mjs';
 import { merchantStockIdentity, merchantStockHealth, merchantInventorySummary, merchantRestockPlan } from '../state/merchantInventoryModel.mjs';
+import {merchantTravelState,normalizeMerchantRoute,merchantRouteCanDepart} from '../state/merchantTravelModel.mjs';
 import {GMItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import {GMLootTableWorkspace} from './GMLootTableWorkspace.jsx';
 
@@ -185,7 +186,65 @@ function MerchantStockLine({row,index,shop,busy,onAction}){
   </article>;
 }
 
-function ShopManager({ campaignId, characters, itemEcosystem, customItems }) {
+function MerchantTravelManager({shop,routes=[],busy,run}){
+  const [routeId,setRouteId]=useState('');
+  const [start,setStart]=useState('');
+  const state=merchantTravelState(shop);
+  const availableRoutes=routes.flatMap(route=>{
+    try{return [normalizeMerchantRoute(route)];}catch{return [];}
+  });
+  const selectedRoute=availableRoutes.find(row=>row.id===routeId);
+  const currentRoute=availableRoutes.find(row=>row.id===shop.travel?.routeId);
+  const issue=action=>run({type:action,shopId:shop.id});
+  return <section className="react-merchant-route-controls" aria-label="Travelling merchant route management">
+    <h4>Travelling Merchant &amp; Regional Market</h4>
+    <p>Current region: <b>{shop.region||'Not assigned'}</b>
+      {' · '}{state==='travelling'?'Travelling to '+shop.travel.destinationRegion:
+        state==='at-stop'?'At route stop':'Stationary merchant'}</p>
+    {state==='travelling'?<>
+      <p>Journey: {shop.travel?.departedFrom||'Unknown'} to {shop.travel?.destinationRegion||'Unknown'}</p>
+      <p>Trading is unavailable until the GM confirms arrival.</p>
+      <button type="button" disabled={busy} onClick={()=>issue('arrive-route')}>Confirm Arrival</button>
+    </>:state==='at-stop'?<>
+      <p>Assigned route: {shop.travel.routeName||currentRoute?.name||'Unknown'}</p>
+      <div className="react-record-actions">
+        <button type="button" disabled={busy||!currentRoute||!merchantRouteCanDepart(currentRoute)}
+          onClick={()=>issue('depart-route')}>Depart for Next Region</button>
+        <button type="button" disabled={busy} onClick={()=>issue('unassign-route')}>Unassign Route</button>
+      </div>
+      {currentRoute&&!merchantRouteCanDepart(currentRoute)?
+        <p className="react-storage-warning">The route is closed or blockaded.</p>:null}
+    </>:<>
+      <div className="react-form-grid">
+        <label>Trade Route<select value={routeId}
+          onChange={event=>{setRouteId(event.target.value);setStart('');}}>
+          <option value="">Select an existing trade route</option>
+          {availableRoutes.map(row=><option key={row.id} value={row.id}>
+            {row.name} ({row.from} – {row.to})
+          </option>)}
+        </select></label>
+        <label>Starting Region<select value={start} onChange={event=>setStart(event.target.value)}
+          disabled={!selectedRoute}>
+          <option value="">Choose route starting region</option>
+          {selectedRoute?[selectedRoute.from,selectedRoute.to].map(region=>
+            <option key={region} value={region}>{region}</option>):null}
+        </select></label>
+      </div>
+      <button type="button" disabled={busy||!selectedRoute||!start}
+        onClick={()=>run({type:'assign-route',shopId:shop.id,routeId,startRegion:start})}>Assign Merchant to Route</button>
+      {!availableRoutes.length?<p>Create a trade route in World Economy first.</p>:null}
+    </>}
+    {Array.isArray(shop.travelHistory)&&shop.travelHistory.length?<details>
+      <summary>Recent route movements ({shop.travelHistory.length})</summary>
+      {shop.travelHistory.slice(0,10).map((event,i)=><p key={event.id||i}>
+        {event.event} · {event.from||'Unknown'} to {event.to||'Unknown'}
+        {event.at?' · '+dateLabel(event.at):''}
+      </p>)}
+    </details>:null}
+  </section>;
+}
+
+function ShopManager({ campaignId, characters, itemEcosystem, customItems, routes=[] }) {
   const shops=array(itemEcosystem?.shops);
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const [selectedId,setSelectedId]=useState(shops[0]?.id||'');
@@ -194,11 +253,17 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems }) {
   const [deals,setDeals]=useState([]);
   const [dealBusy,setDealBusy]=useState('');
   const [stockBusy,setStockBusy]=useState(false);
+  const [travelBusy,setTravelBusy]=useState(false);
   const [confirmRestock,setConfirmRestock]=useState(false);
   useEffect(()=>{let unsub=()=>{};try{unsub=firebaseService.subscribeMerchantDeals(campaignId,setDeals,true);}catch(error){setMessage(error.message);}return ()=>unsub();},[campaignId]);
   useEffect(()=>{if(selectedId&&!shops.some(shop=>shop.id===selectedId))setSelectedId(shops[0]?.id||'');},[shops,selectedId]);
   const selected=shops.find(shop=>shop.id===selectedId)||null;
   const run=async action=>{const result=await firebaseService.manageShop(campaignId,Object.keys(characters)[0]||'gm-scope',action);setMessage(result?.ok?'Shop system synchronized.':result?.error||'Shop could not be updated.');return result;};
+  const travelAction=async action=>{
+    if(travelBusy)return;
+    setTravelBusy(true);
+    try{await run(action);}finally{setTravelBusy(false);}
+  };
   const inventorySummary=merchantInventorySummary(selected?.stock);
   const restockPlan=merchantRestockPlan(selected?.stock);
   const manageStock=async(action,error='')=>{
@@ -217,12 +282,15 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems }) {
   const decideDeal=async(deal,decision)=>{if(dealBusy)return;setDealBusy(deal.id);try{const result=await firebaseService.respondMerchantDeal(campaignId,'gm-scope',deal.id,decision);setMessage(result?.ok?'Merchant offer resolved.':result?.error||'Could not resolve offer.');}catch(error){setMessage(error.message||'Could not resolve offer.');}finally{setDealBusy('');}};
   const matches=search?catalog.filter(item=>String(item.name||item.title||'').toLowerCase().includes(search.toLowerCase())).slice(0,10):[];
   return <Panel title="Campaign Shops" eyebrow="Merchant & Stock Manager" action={<StatusPill>{shops.length} shops</StatusPill>}>
-    <div className="react-shop-layout"><section><h3>Create Shop</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Type<select value={draft.type} onChange={event=>setDraft(value=>({...value,type:event.target.value}))}>{['General Goods','Blacksmith','Armourer','Alchemist','Enchanter','Magical Goods','Temple Services','Travelling Merchant'].map(value=><option key={value}>{value}</option>)}</select></label><label>Buy Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.buyModifier} onChange={event=>setDraft(value=>({...value,buyModifier:event.target.value}))}/></label><label>Sell Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.sellModifier} onChange={event=>setDraft(value=>({...value,sellModifier:event.target.value}))}/></label></div><button className="primary" onClick={create}>Create Shop</button><div className="react-shop-list">{shops.map(shop=><button className={selectedId===shop.id?'active':''} key={shop.id} onClick={()=>setSelectedId(shop.id)}><b>{shop.name}</b><small>{shop.type} | {shop.status}</small></button>)}</div></section><section>{selected?<><div className="react-record-heading"><div><h3>{selected.name}</h3><small>{array(selected.stock).length} stock lines</small></div><div className="react-record-actions"><button onClick={()=>updateSelected({status:selected.status==='open'?'closed':'open'})}>{selected.status==='open'?'Close Shop':'Open Shop'}</button><button className="danger" onClick={()=>run({type:'delete',shopId:selected.id})}>Delete</button></div></div><h4>NPC Roleplay Profile</h4><div className="react-form-grid">
+    <div className="react-shop-layout"><section><h3>Create Shop</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>Type<select value={draft.type} onChange={event=>setDraft(value=>({...value,type:event.target.value}))}>{['General Goods','Blacksmith','Armourer','Alchemist','Enchanter','Magical Goods','Temple Services','Travelling Merchant'].map(value=><option key={value}>{value}</option>)}</select></label><label>Buy Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.buyModifier} onChange={event=>setDraft(value=>({...value,buyModifier:event.target.value}))}/></label><label>Sell Modifier<ManualNumberInput min="0.1" step="0.05" value={draft.sellModifier} onChange={event=>setDraft(value=>({...value,sellModifier:event.target.value}))}/></label></div><button className="primary" onClick={create}>Create Shop</button><div className="react-shop-list">{shops.map(shop=><button className={selectedId===shop.id?'active':''} key={shop.id} onClick={()=>setSelectedId(shop.id)}><b>{shop.name}</b><small>{shop.type} | {shop.status}</small></button>)}</div></section><section>{selected?<><div className="react-record-heading"><div><h3>{selected.name}</h3><small>{array(selected.stock).length} stock lines</small></div><div className="react-record-actions"><button disabled={merchantTravelState(selected)==='travelling'} onClick={()=>updateSelected({status:selected.status==='open'?'closed':'open'})}>{selected.status==='open'?'Close Shop':'Open Shop'}</button><button className="danger" onClick={()=>run({type:'delete',shopId:selected.id})}>Delete</button></div></div><h4>NPC Roleplay Profile</h4><div className="react-form-grid">
     {['image','description','personality','greeting','specialOffer'].map(field=><label key={field}>{field}
       <input key={selected.id+field} defaultValue={selected[field]||''} maxLength={500}
         onBlur={event=>{if(event.target.value!==(selected[field]||''))updateSelected({[field]:event.target.value});}}/>
     </label>)}
-    </div><h4>Visiting Characters</h4><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={array(selected.visitorCharacterIds).includes(character.id)} onChange={event=>updateSelected({visitorCharacterIds:event.target.checked?[...new Set([...array(selected.visitorCharacterIds),character.id])]:array(selected.visitorCharacterIds).filter(id=>id!==character.id)})}/>{character.name}</label>)}</div><div className="react-form-grid"><label>Search Item Compendium<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Add stock..."/></label><label>Quantity<ManualNumberInput min="1" value={quantity} onChange={event=>setQuantity(event.target.value)}/></label></div>{search?<div className="react-search-results">{matches.map(item=><button key={item.id||item.slug||item.name} onClick={()=>{if(!isManualNumber(quantity,{min:1}))return setMessage('Enter a whole stock quantity of at least 1.');run({type:'stock',shopId:selected.id,item:window.AsteriaInventory?.itemSnapshot?.(item,manualNumber(quantity))||item,quantity:manualNumber(quantity)});setSearch('');setQuantity('');}}>{item.name||item.title}</button>)}</div>:null}<section className="react-merchant-inventory-controls" aria-label="Merchant stock management">
+    </div>
+    <MerchantTravelManager key={selected.id} shop={selected} routes={routes}
+      busy={travelBusy} run={travelAction}/>
+    <h4>Visiting Characters</h4><div className="react-recipient-grid">{Object.values(characters).map(character=><label key={character.id}><input type="checkbox" checked={array(selected.visitorCharacterIds).includes(character.id)} onChange={event=>updateSelected({visitorCharacterIds:event.target.checked?[...new Set([...array(selected.visitorCharacterIds),character.id])]:array(selected.visitorCharacterIds).filter(id=>id!==character.id)})}/>{character.name}</label>)}</div><div className="react-form-grid"><label>Search Item Compendium<input type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Add stock..."/></label><label>Quantity<ManualNumberInput min="1" value={quantity} onChange={event=>setQuantity(event.target.value)}/></label></div>{search?<div className="react-search-results">{matches.map(item=><button key={item.id||item.slug||item.name} onClick={()=>{if(!isManualNumber(quantity,{min:1}))return setMessage('Enter a whole stock quantity of at least 1.');run({type:'stock',shopId:selected.id,item:window.AsteriaInventory?.itemSnapshot?.(item,manualNumber(quantity))||item,quantity:manualNumber(quantity)});setSearch('');setQuantity('');}}>{item.name||item.title}</button>)}</div>:null}<section className="react-merchant-inventory-controls" aria-label="Merchant stock management">
     <header><h4>Merchant Inventory &amp; Restocking</h4>
       <small>{inventorySummary.lines} stock lines · {inventorySummary.low} low · {inventorySummary.out} out</small></header>
     <p>Restocking is manual. It replenishes existing items up to the GM's configured targets and does not change merchant funds or prices.</p>
@@ -269,9 +337,15 @@ export function EconomyWorkspace({ campaignId, workspace, characters, itemEcosys
   const [controls,setControls]=useState({status:economy.status||'Stable',scarcity:economy.scarcity||'Normal',inflation:economy.inflation??'',treasury:economy.treasury??''});
   useEffect(()=>setControls({status:economy.status||'Stable',scarcity:economy.scarcity||'Normal',inflation:economy.inflation??'',treasury:economy.treasury??''}),[economy.status,economy.scarcity,economy.inflation,economy.treasury]);
   const update=async patch=>{const result=await saveSection('economy',{...economy,...patch});setMessage(result?.ok?'Economy controls synchronized.':result?.error||'Economy could not be saved.');};
-  const addRoute=()=>{if(!draft.name.trim())return setMessage('Enter a trade route name.');update({routes:[...routes,{...draft,id:uid('route')} ]});setDraft({name:'',from:'',to:'',status:'Open'});};
+  const addRoute=()=>{
+    try{
+      const route=normalizeMerchantRoute({...draft,id:uid('route')});
+      update({routes:[...routes,route]});
+      setDraft({name:'',from:'',to:'',status:'Open'});
+    }catch(error){setMessage(error.message);}
+  };
   const trades=[...array(itemEcosystem?.playerItemRequests),...array(itemEcosystem?.directTrades)];
-  return <div className="react-gm-workspace-grid economy"><Panel title="World Economy" eyebrow="Campaign Economy Controls"><div className="react-form-grid"><label>Economy Status<select value={controls.status} onChange={event=>setControls(value=>({...value,status:event.target.value}))}>{['Booming','Stable','Strained','Recession','Collapsed'].map(value=><option key={value}>{value}</option>)}</select></label><label>Scarcity<select value={controls.scarcity} onChange={event=>setControls(value=>({...value,scarcity:event.target.value}))}>{['Abundant','Normal','Scarce','Critical'].map(value=><option key={value}>{value}</option>)}</select></label><label>Inflation %<ManualNumberInput step="any" value={controls.inflation} onChange={event=>setControls(value=>({...value,inflation:event.target.value}))}/></label><label>Treasury (copper)<ManualNumberInput min="0" value={controls.treasury} onChange={event=>setControls(value=>({...value,treasury:event.target.value}))}/></label></div><button className="primary" onClick={()=>{if(!isManualNumber(controls.inflation,{integer:false,optional:true})||!isManualNumber(controls.treasury,{min:0,optional:true}))return setMessage('Enter valid economy amounts.');update({...controls,inflation:manualNumber(controls.inflation),treasury:manualNumber(controls.treasury)});}}>Apply Economy Controls</button><h3>Trade Routes</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>From<input value={draft.from} onChange={event=>setDraft(value=>({...value,from:event.target.value}))}/></label><label>To<input value={draft.to} onChange={event=>setDraft(value=>({...value,to:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Open','Unstable','Closed','Blockaded'].map(value=><option key={value}>{value}</option>)}</select></label></div><button className="primary" onClick={addRoute}>Add Trade Route</button><div className="react-record-list compact">{routes.map(route=><article key={route.id}><div><b>{route.name}</b><small>{route.from} to {route.to} | {route.status}</small></div><button className="danger" onClick={()=>update({routes:routes.filter(item=>item.id!==route.id)})}>Remove</button></article>)}</div><SectionStatus message={message}/></Panel><section id="react-gm-shops" tabIndex={-1}><ShopManager campaignId={campaignId} characters={characters} itemEcosystem={itemEcosystem} customItems={customItems}/></section><GMItemLoreWorkspace campaignId={campaignId} characters={characters}/><section id="react-gm-loot-tables" tabIndex={-1}><GMLootTableWorkspace campaignId={campaignId}/></section><Panel title="Trade & Inventory Audit" eyebrow="Shared Item Activity" action={<StatusPill>{trades.length} records</StatusPill>}><div className="react-audit-table"><div className="head"><b>Type</b><b>Participants</b><b>Item</b><b>Status</b></div>{trades.slice().reverse().slice(0,50).map(record=><div key={record.id}><span>{record.mode||'Trade'}</span><span>{record.fromCharacterName||characters[record.fromCharacterId]?.name||'Player'} / {record.toCharacterName||characters[record.toCharacterId]?.name||'Player'}</span><span>{record.item?.name||'Item'}</span><StatusPill tone={record.status==='accepted'?'success':''}>{record.status||'pending'}</StatusPill></div>)}{!trades.length?<EmptyState title="No item activity"/>:null}</div></Panel></div>;
+  return <div className="react-gm-workspace-grid economy"><Panel title="World Economy" eyebrow="Campaign Economy Controls"><div className="react-form-grid"><label>Economy Status<select value={controls.status} onChange={event=>setControls(value=>({...value,status:event.target.value}))}>{['Booming','Stable','Strained','Recession','Collapsed'].map(value=><option key={value}>{value}</option>)}</select></label><label>Scarcity<select value={controls.scarcity} onChange={event=>setControls(value=>({...value,scarcity:event.target.value}))}>{['Abundant','Normal','Scarce','Critical'].map(value=><option key={value}>{value}</option>)}</select></label><label>Inflation %<ManualNumberInput step="any" value={controls.inflation} onChange={event=>setControls(value=>({...value,inflation:event.target.value}))}/></label><label>Treasury (copper)<ManualNumberInput min="0" value={controls.treasury} onChange={event=>setControls(value=>({...value,treasury:event.target.value}))}/></label></div><button className="primary" onClick={()=>{if(!isManualNumber(controls.inflation,{integer:false,optional:true})||!isManualNumber(controls.treasury,{min:0,optional:true}))return setMessage('Enter valid economy amounts.');update({...controls,inflation:manualNumber(controls.inflation),treasury:manualNumber(controls.treasury)});}}>Apply Economy Controls</button><h3>Trade Routes</h3><div className="react-form-grid"><label>Name<input value={draft.name} onChange={event=>setDraft(value=>({...value,name:event.target.value}))}/></label><label>From<input value={draft.from} onChange={event=>setDraft(value=>({...value,from:event.target.value}))}/></label><label>To<input value={draft.to} onChange={event=>setDraft(value=>({...value,to:event.target.value}))}/></label><label>Status<select value={draft.status} onChange={event=>setDraft(value=>({...value,status:event.target.value}))}>{['Open','Unstable','Closed','Blockaded'].map(value=><option key={value}>{value}</option>)}</select></label></div><button className="primary" onClick={addRoute}>Add Trade Route</button><div className="react-record-list compact">{routes.map(route=><article key={route.id}><div><b>{route.name}</b><small>{route.from} to {route.to} | {route.status}</small></div><button className="danger" onClick={()=>update({routes:routes.filter(item=>item.id!==route.id)})}>Remove</button></article>)}</div><SectionStatus message={message}/></Panel><section id="react-gm-shops" tabIndex={-1}><ShopManager campaignId={campaignId} characters={characters} itemEcosystem={itemEcosystem} customItems={customItems} routes={routes}/></section><GMItemLoreWorkspace campaignId={campaignId} characters={characters}/><section id="react-gm-loot-tables" tabIndex={-1}><GMLootTableWorkspace campaignId={campaignId}/></section><Panel title="Trade & Inventory Audit" eyebrow="Shared Item Activity" action={<StatusPill>{trades.length} records</StatusPill>}><div className="react-audit-table"><div className="head"><b>Type</b><b>Participants</b><b>Item</b><b>Status</b></div>{trades.slice().reverse().slice(0,50).map(record=><div key={record.id}><span>{record.mode||'Trade'}</span><span>{record.fromCharacterName||characters[record.fromCharacterId]?.name||'Player'} / {record.toCharacterName||characters[record.toCharacterId]?.name||'Player'}</span><span>{record.item?.name||'Item'}</span><StatusPill tone={record.status==='accepted'?'success':''}>{record.status||'pending'}</StatusPill></div>)}{!trades.length?<EmptyState title="No item activity"/>:null}</div></Panel></div>;
 }
 
 export function CraftingWorkspace({ workspace, characters, saveSection }) {

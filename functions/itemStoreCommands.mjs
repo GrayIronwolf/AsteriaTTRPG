@@ -3,6 +3,7 @@ import {normalizeMarketPricing} from '../src/systems/items/marketPricing.mjs';
 import {shopStockCompatible,merchantPriceCopper} from '../src/state/shopTransactionModel.mjs';
 import {prepareGMRewardBundle} from '../src/state/gmRewardModel.mjs';
 import {merchantStockIdentity,validateRestockPolicy,merchantRestockPlan,MAX_MERCHANT_RESTOCK_AUDIT} from '../src/state/merchantInventoryModel.mjs';
+import {moveMerchantOnRoute,merchantTravelState,normalizeMerchantRoute,MAX_MERCHANT_TRAVEL_HISTORY} from '../src/state/merchantTravelModel.mjs';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
@@ -33,7 +34,9 @@ export function cleanGMShop(input={},previous={},shopId=''){
         .filter(id).slice(0,60)
     )),
     stock:Array.isArray(previous.stock)?copy(previous.stock):[],
-    restockHistory:Array.isArray(previous.restockHistory)?copy(previous.restockHistory).slice(0,MAX_MERCHANT_RESTOCK_AUDIT):[]
+    restockHistory:Array.isArray(previous.restockHistory)?copy(previous.restockHistory).slice(0,MAX_MERCHANT_RESTOCK_AUDIT):[],
+    travel:previous.travel&&typeof previous.travel==='object'?copy(previous.travel):null,
+    travelHistory:Array.isArray(previous.travelHistory)?copy(previous.travelHistory).slice(0,MAX_MERCHANT_TRAVEL_HISTORY):[]
   };
   if(!id(output.id))throw Error('Choose a valid shop.');
   if(!output.name)throw Error('Enter a shop name.');
@@ -45,8 +48,19 @@ export function cleanGMShop(input={},previous={},shopId=''){
 export function applyGMShopAction(current,action={},shopId=''){
   if(action.type==='delete')return {...cleanGMShop({},current,shopId),status:'deleted',stock:[]};
   if(current?.status==='deleted')throw Error('Deleted shops cannot be modified.');
-  if(action.type==='save')return cleanGMShop(action.shop||{},current,shopId);
+  if(action.type==='save'){
+    const next=cleanGMShop(action.shop||{},current,shopId);
+    if(merchantTravelState(current)==='travelling'&&
+      (next.status!=='closed'||next.region!==current.region))
+      throw Error('This merchant is travelling. Finish the journey before opening or relocating this shop.');
+    return next;
+  }
   const shop=cleanGMShop({},current,shopId);
+  if(['assign-route','depart-route','arrive-route','unassign-route'].includes(action.type)){
+    const changed=moveMerchantOnRoute(shop,action,action.route);
+    if(JSON.stringify(changed).length>680000)throw Error('This shop record is too large.');
+    return changed;
+  }
   if(action.type==='stock'){
     const qty=Number(action.quantity);
     if(!Number.isSafeInteger(qty)||qty<1||qty>1000000)throw Error('Choose a stock quantity between 1 and 1,000,000.');
@@ -124,7 +138,8 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
       try{
         const type=String(action.type||'save');
         if(!['save','stock','remove-stock','set-stock','configure-restock',
-          'restock','restock-all','delete'].includes(type))
+          'restock','restock-all','assign-route','depart-route','arrive-route',
+          'unassign-route','delete'].includes(type))
           throw Error('Choose a valid shop action.');
         const shopId=String(action.shopId||action.shop?.id||
           (type==='save'?'shop-'+requestId:''));
@@ -133,7 +148,28 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           await gm(tx,campaignId);
           const ref=doc(db,'campaigns',campaignId,'shops',shopId);
           const legacyRef=doc(db,'campaigns',campaignId,'systems','itemEcosystem');
-          const [stored,legacy]=await Promise.all([tx.get(ref),tx.get(legacyRef)]);
+          const routeAction=['assign-route','depart-route','arrive-route','unassign-route'].includes(type);
+          const workspaceRef=doc(db,'campaigns',campaignId,'systems','gmWorkspace');
+          const [stored,legacy,workspaceSnap]=await Promise.all([
+            tx.get(ref),tx.get(legacyRef),...(routeAction?[tx.get(workspaceRef)]:[])
+          ]);
+          let route=null;
+          const priorShop=exists(stored)?stored.data():
+            (Array.isArray(legacy.data()?.shops)?legacy.data().shops:[])
+              .find(row=>String(row.id)===shopId);
+          if(routeAction&&type!=='arrive-route'&&type!=='unassign-route'){
+            const routeId=String(type==='assign-route'?action.routeId:priorShop?.travel?.routeId||'');
+            const routes=Array.isArray(workspaceSnap?.data()?.economy?.routes)?
+              workspaceSnap.data().economy.routes:[];
+            const match=routes.find(row=>String(row?.id)===routeId);
+            if(!match)throw Error('Selected trade route no longer exists.');
+            route=normalizeMerchantRoute(match);
+          }
+          if(routeAction&&type==='arrive-route'&&priorShop?.travel?.routeId){
+            // Arrival is allowed even if the GM removes a route mid-journey,
+            // so an old travelling merchant can never become stranded.
+            route=null;
+          }
           const original=exists(stored)?stored.data():
             (Array.isArray(legacy.data()?.shops)?legacy.data().shops:[])
               .find(row=>String(row.id)===shopId);
@@ -141,7 +177,11 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           if(type==='save'&&!original&&action.shop?.id&&String(action.shop.id)!==shopId)
             throw Error('Shop identity changed.');
           const shop=applyGMShopAction(original||{id:shopId},
-            {...action,type,operationId:requestId},shopId);
+            {...action,type,operationId:requestId,route},shopId);
+          if(routeAction&&shop.travelHistory?.length){
+            shop.travelHistory[0].at=new Date().toISOString();
+            shop.travelHistory[0].by=currentUser.uid;
+          }
           // Record GM restock author and event time only on a successful commit,
           // without modifying the ordinary merchant currency/stock pricing rules.
           if(['restock','restock-all'].includes(type)&&shop.restockHistory.length){

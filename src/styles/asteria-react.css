@@ -3946,3 +3946,21 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
   .react-merchant-stock-header>.react-record-actions{width:100%;display:flex;flex-wrap:wrap}
   .react-merchant-stock-header>.react-record-actions>button{flex:1 1 130px}
 }
+
+/* Phase 10.2: route management and regional merchant selection. */
+.react-merchant-route-controls {
+  display:grid;gap:10px;padding:12px;margin-block:12px;
+  border:1px solid rgba(143,176,195,.32);border-radius:8px;
+  background:rgba(6,19,28,.6);min-width:0;
+}
+.react-merchant-route-controls h4,.react-merchant-route-controls p {margin:0;}
+.react-merchant-route-controls p {line-height:1.5;overflow-wrap:anywhere;}
+.react-merchant-route-controls .react-form-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.react-merchant-route-controls label {display:grid;gap:5px;min-width:0;}
+.react-merchant-route-controls select {width:100%;min-height:44px;}
+.react-merchant-route-controls button {min-height:44px;}
+.react-merchant-route-controls details summary {cursor:pointer;min-height:38px;}
+.react-merchant-route-controls details p {padding:7px;border-top:1px solid rgba(143,176,195,.25);}
+@media(max-width:520px){
+  .react-merchant-route-controls .react-record-actions {display:grid;grid-template-columns:1fr;gap:8px;}
+}
