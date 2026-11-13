@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="css/asteria-account-menu.css?v=account-menu-phase3-3">
 <link rel="stylesheet" href="css/asteria-account-profile.css?v=account-profile-phase3-2">
 <link rel="stylesheet" href="css/asteria-account-security.css?v=account-menu-phase3-3">
-<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-phase3-3">
+<link rel="stylesheet" href="css/asteria-account-friends.css?v=friends-send-20261113">
 <link rel="stylesheet" href="css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1">
 <link rel="stylesheet" href="css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2">
 <link rel="stylesheet" href="css/asteria-panel-headers.css?v=theme-rail-fix-20261109">
@@ -522,7 +522,10 @@
         </div>
         <button id="accountFriendsProfileFromSearch" class="asteria-friend-preview-link" type="button">View Public Profile</button>
         <p>Finding a player does not automatically connect you or join their campaign.</p>
-        <button id="accountFriendsBlock" type="button" hidden disabled>Block Player</button>
+        <div class="asteria-friends-result-actions">
+          <button id="accountFriendsSend" type="button" hidden disabled>Send Friend Request</button>
+          <button id="accountFriendsBlock" type="button" hidden disabled>Block Player</button>
+        </div>
       </section>
       <section id="accountFriendsPublicPreview" class="asteria-friends-public-preview" aria-labelledby="accountFriendsPublicPreviewTitle" hidden>
         <div class="asteria-friends-public-preview-heading">
@@ -575,7 +578,6 @@
           <h3>Friend Requests</h3>
           <p id="accountFriendsRequestsStatus" role="status" aria-live="polite">Requests are not active yet.</p>
         </div>
-        <button id="accountFriendsSend" type="button" hidden disabled>Send Friend Request</button>
         <div class="asteria-friend-request-tabs" role="tablist" aria-label="Friend request direction">
           <button id="accountFriendsIncomingTab" type="button" role="tab" aria-selected="true" aria-controls="accountFriendsRequestList" disabled>Incoming</button>
           <button id="accountFriendsOutgoingTab" type="button" role="tab" aria-selected="false" aria-controls="accountFriendsRequestList" disabled>Outgoing</button>
@@ -607,7 +609,7 @@
   <script src="js/auth-bridge.js?v=account-menu-phase3-1"></script>
 <script src="js/asteria-account-menu.js?v=friends-notifications-website-20261111"></script>
 <script src="js/asteria-account-friends.js?v=friends-phase3-3"></script>
-<script src="js/asteria-friend-requests.js?v=friends-phase2-3"></script>
+<script src="js/asteria-friend-requests.js?v=friends-send-20261113"></script>
 <script src="js/asteria-accepted-friends.js?v=friends-phase3-3"></script>
 <script src="js/asteria-friend-management.js?v=friends-phase3-3"></script>
 <script src="js/asteria-friends-workspace.js?v=friends-phase3-3"></script>

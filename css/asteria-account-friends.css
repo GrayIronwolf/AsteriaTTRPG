@@ -306,3 +306,12 @@
  .asteria-friends-workspace-tabs button{padding:8px 4px;font-size:.83rem}
  .asteria-friends-public-preview{padding:13px}
 }
+
+/* Keep the found player's friend request action next to their public result. */
+.asteria-friends-result-actions{
+ display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px;
+}
+.asteria-friends-result-actions #accountFriendsSend,
+.asteria-friends-result-actions #accountFriendsBlock{
+ box-sizing:border-box;width:100%;min-height:44px;margin:0;
+}

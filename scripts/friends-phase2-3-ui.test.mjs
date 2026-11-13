@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-function harness({enabled=true}={}){
+function harness({enabled=true,requestError=null}={}){
   const nodes={},events={};
   let uid='alice',isOpen=true,deferred=null;
   const calls=[],changes=[];
@@ -24,7 +24,7 @@ function harness({enabled=true}={}){
       }
     };
   }
-  for(const id of ['accountFriendsSend','accountFriendsRequestsStatus',
+  for(const id of ['accountFriendsSend','accountFriendsStatus','accountFriendsRequestsStatus',
     'accountFriendsIncomingTab','accountFriendsOutgoingTab',
     'accountFriendsRequestsRefresh','accountFriendsRequestList',
     'accountFriendsRequestsMore'])nodes[id]=element(id);
@@ -46,6 +46,7 @@ function harness({enabled=true}={}){
       },
       manageFriendRequest:async(action,accountId,version)=>{
         changes.push({uid,action,accountId,version});
+        if(requestError)throw requestError;
         return {ok:true,status:action==='send'?'pending':'accepted',
           version:2,expiresAtMs:null};
       }
@@ -75,7 +76,13 @@ test('request manager exists in the Friends dialog and is disabled by default fo
   assert.doesNotMatch(html,/friendRequestsEnabled:new URLSearchParams/);
   assert.match(html,/role="tablist"/);
   assert.match(html,/role="tabpanel"/);
-  assert.match(html,/asteria-friend-requests\.js\?v=friends-phase2-3/);
+  assert.match(html,/asteria-friend-requests\.js\?v=friends-send-20261113/);
+  const resultAt=html.indexOf('id="accountFriendsResult"');
+  const sendAt=html.indexOf('id="accountFriendsSend"');
+  const tabsAt=html.indexOf('id="accountFriendsWorkspaceTabs"');
+  assert.ok(resultAt>=0&&resultAt<sendAt&&sendAt<tabsAt,
+    'Send Friend Request must remain visible with the found player, outside the Requests tab');
+  assert.match(css,/\.asteria-friends-result-actions/);
   assert.match(css,/@media\(max-width:600px\)/);
 });
 test('disabled feature never calls private lookup or request backend',async()=>{
@@ -98,14 +105,33 @@ test('enabled account fetches one incoming page and changes tab to outgoing',asy
   assert.equal(h.calls[1].direction,'outgoing');
   assert.equal(h.nodes.accountFriendsOutgoingTab.attributes['aria-selected'],'true');
 });
-test('sending a request uses selected exact Account ID and clears candidate',async()=>{
+test('sending a request uses selected exact Account ID and confirms the action beside the player',async()=>{
   const h=harness();h.api.onOpen();await h.tick();
   h.api.setCandidate('Grayson#01448');
   assert.equal(h.nodes.accountFriendsSend.hidden,false);
   h.nodes.accountFriendsSend.handlers.click();await h.tick();await h.tick();
   assert.deepEqual(h.changes.map(c=>({action:c.action,id:c.accountId})),
     [{action:'send',id:'Grayson#01448'}]);
-  assert.equal(h.nodes.accountFriendsSend.hidden,true);
+  assert.equal(h.nodes.accountFriendsSend.hidden,false);
+  assert.equal(h.nodes.accountFriendsSend.disabled,true);
+  assert.equal(h.nodes.accountFriendsSend.textContent,'Friend Request Sent');
+  assert.match(h.nodes.accountFriendsStatus.textContent,/Friend request sent/);
+  h.nodes.accountFriendsSend.handlers.click();await h.tick();
+  assert.equal(h.changes.length,1,'a successful send must not submit twice');
+  h.api.setCandidate('Crow#16702');
+  assert.equal(h.nodes.accountFriendsSend.disabled,false);
+  assert.equal(h.nodes.accountFriendsSend.textContent,'Send Friend Request');
+});
+test('a failed send keeps the button available and shows an error with the search result',async()=>{
+  const h=harness({requestError:{code:'functions/failed-precondition'}});
+  h.api.onOpen();await h.tick();
+  h.api.setCandidate('Crow#16702');
+  h.nodes.accountFriendsSend.handlers.click();await h.tick();await h.tick();
+  assert.equal(h.changes.length,1);
+  assert.equal(h.nodes.accountFriendsSend.hidden,false);
+  assert.equal(h.nodes.accountFriendsSend.disabled,false);
+  assert.match(h.nodes.accountFriendsStatus.textContent,/could not be completed/);
+  assert.doesNotMatch(h.nodes.accountFriendsStatus.textContent,/request sent/i);
 });
 test('session change rejects a delayed inbox response and clears all results',async()=>{
   const h=harness(),pending=h.defer();
