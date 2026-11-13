@@ -3031,6 +3031,7 @@ const firebasePublicApi = {
   },
   managePartyLootDrop: (...args) => callTrustedAction('managePartyLootDrop',args),
   claimPartyLoot: (...args) => callTrustedAction('claimPartyLoot',args),
+  votePartyLoot: (...args) => callTrustedAction('votePartyLoot',args),
   movePartyStashItem: (...args) => callTrustedAction('movePartyStashItem',args),
   splitPartyLootCurrency: (...args) => callTrustedAction('splitPartyLootCurrency',args),
   subscribePartyLoot: function(campaignId,onChange,mode='character'){
