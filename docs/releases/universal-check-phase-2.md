@@ -21,3 +21,6 @@ After merge, deploy backend from Actions → **Deploy Firebase backend (manual)*
 
 ## Live test
 Open a linked NPC's check launcher and send a single skill check to a character. Repeat from a merchant's pending bargain, verify the exact player sees the source and sends a digital roll, then confirm the GM sees its result alongside the offer and that the proposed copper total stays unchanged until the existing **Approve** action is used. Test an opposed or group scene from the Gameplay tab and the check history. Ensure another player cannot view the check.
+
+## Compatibility notes
+The existing Universal Check GM Tools manager, player popup, character modifier calculation and Firestore permissions from Phase 1 remain in place. Phase 2 adds optional contextual launchers and records the trusted source on the same existing check-request documents. If an NPC or offer is removed later, its previously issued request still retains the source snapshot and existing history, but the system will reject a new request against the removed or completed source.
