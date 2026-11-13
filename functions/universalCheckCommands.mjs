@@ -1,109 +1,194 @@
-import {randomInt,randomUUID} from 'node:crypto';
+import {createHash,randomInt,randomUUID} from 'node:crypto';
 import {isCampaignGM,isCampaignMember,isLinkedCharacter,readCampaignMember} from './characterPermissions.mjs';
-import {UNIVERSAL_CHECK_TYPES,universalCheckModifierBreakdown,universalCheckOutcome,universalSkillRankModifier} from '../src/state/universalCheckModel.mjs';
-import {baseCharacteristicValue,characterCheck,effectiveCharacteristicValue} from '../src/state/effectsEngine.mjs';
+import {UNIVERSAL_CHECK_TYPES,universalAutomaticModifiers,universalDiceChoice,universalCheckOutcome,universalGroupAdjudication} from '../src/state/universalCheckModel.mjs';
+
 const identifier=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(v);
-const text=(v,max=400)=>typeof v==='string'?v.slice(0,max):'';
-export async function universalCheckAction(db,uid,input,stamp){
-  if(!uid||!identifier(input?.campaignId))throw Error('Invalid campaign or sign-in.');
+const clientId=v=>typeof v==='string'&&/^[a-f0-9-]{36}$/i.test(v);
+const safeText=(v,max=400)=>typeof v==='string'?v.trim().slice(0,max):'';
+const ensure=(condition,message)=>{if(!condition)throw Error(message);};
+const attemptReceipt=(db,campaignId,uid,operationId)=>db.doc('campaigns/'+campaignId+'/checkCommandReceipts/'+uid+'_'+operationId);
+const checkRef=(db,campaignId,id)=>db.doc('campaigns/'+campaignId+'/checkRequests/'+id);
+const groupRef=(db,campaignId,id)=>db.doc('campaigns/'+campaignId+'/checkGroups/'+id);
+const signature=input=>createHash('sha256').update(JSON.stringify(input)).digest('hex');
+const modeResult=(row,input)=>{
+  const mode=input.mode;
+  ensure(['digital','physical','manual'].includes(mode),'Invalid dice mode.');
+  ensure(!(mode==='manual'&&row.type==='opposed'),'Opposed checks require numeric dice.');
+  let dice=null,result;
+  if(mode==='manual'){
+    ensure(['success','failure'].includes(input.reported),'Select a reported outcome.');
+    result={die:null,modifier:row.modifierTotal,dc:row.dc,total:null,
+      success:input.reported==='success',outcome:input.reported,selfReported:true};
+  }else{
+    if(mode==='digital'){
+      const first=randomInt(1,21),second=row.advantage||row.disadvantage?randomInt(1,21):null;
+      dice=universalDiceChoice(first,second,row.advantage,row.disadvantage);
+    }else{
+      dice=universalDiceChoice(input.die,input.secondDie,row.advantage,row.disadvantage);
+    }
+    result=universalCheckOutcome(dice.die,row.modifierTotal,row.dc,{opposed:row.type==='opposed'});
+  }
+  return {mode,dice,result,selfReported:mode!=='digital'};
+};
+function validateCreate(input){
+  ensure(UNIVERSAL_CHECK_TYPES.includes(input.type),'Invalid check type.');
+  const ids=input.type==='group'||input.type==='opposed'?input.characterIds:[input.characterId];
+  ensure(Array.isArray(ids)&&ids.every(identifier)&&new Set(ids).size===ids.length,
+    'Select unique linked characters.');
+  ensure(ids.length>=(input.type==='group'||input.type==='opposed'?2:1)&&ids.length<=(input.type==='opposed'?2:input.type==='group'?10:1),
+    'Choose the required number of participants.');
+  ensure(Number.isSafeInteger(input.dc)&&input.dc>=0&&input.dc<=1000,'Invalid DC.');
+  ensure(input.type!=='opposed'||input.dc===0,'Opposed checks compare participant totals, not a DC.');
+  ensure(!input.rankOverride||typeof input.rankOverride==='string','Invalid rank override.');
+  ensure(!input.modifiers||Array.isArray(input.modifiers),'Invalid modifiers.');
+  const requiredSuccesses=input.type==='group'?Number(input.requiredSuccesses||Math.ceil(ids.length/2)):0;
+  ensure(!requiredSuccesses||(Number.isInteger(requiredSuccesses)&&requiredSuccesses>=1&&requiredSuccesses<=ids.length),
+    'Invalid group success threshold.');
+  return {ids,requiredSuccesses};
+}
+const resultSummary=row=>({id:row.id,result:row.result||null});
+export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
+  ensure(uid&&identifier(input?.campaignId),'Invalid campaign or sign-in.');
   const campaignId=input.campaignId,action=input.action;
-  if(!['create','submit','cancel','acknowledge','override','reroll','resend'].includes(action))throw Error('Unknown check action.');
-  const requestId=action==='create'?randomUUID():input.requestId;
-  if(!identifier(requestId))throw Error('Invalid check request.');
-  const ref=db.doc(`campaigns/${campaignId}/checkRequests/${requestId}`);
+  ensure(['create','submit','cancel','acknowledge','override','reroll','resend'].includes(action),'Unknown check action.');
+  // Required for safe client retries, and for preventing duplicated digital rolls.
+  ensure(clientId(input.operationId),'A unique operation ID is required.');
+  if(action!=='create')ensure(identifier(input.requestId),'Invalid check request.');
+  const requestId=action==='create'?null:input.requestId;
+  const receiptRef=attemptReceipt(db,campaignId,uid,input.operationId);
+  const digest=signature(input);
   return db.runTransaction(async tx=>{
-    const campaignSnap=await tx.get(db.doc(`campaigns/${campaignId}`));
-    if(!campaignSnap.exists)throw Error('Campaign not found.');
+    const campaignSnap=await tx.get(db.doc('campaigns/'+campaignId));
+    ensure(campaignSnap.exists,'Campaign not found.');
     const campaign=campaignSnap.data();
     const membership=await readCampaignMember(tx,db,campaignId,campaign,uid);
-    if(!isCampaignMember(campaign,uid,membership))throw Error('Campaign membership required.');
+    ensure(isCampaignMember(campaign,uid,membership),'Campaign membership required.');
     const gm=isCampaignGM(campaign,uid,membership);
+    const previous=await tx.get(receiptRef);
+    if(previous.exists){
+      ensure(previous.data().signature===digest,'Operation ID was reused for different input.');
+      return previous.data().response;
+    }
+    let response;
     if(action==='create'){
-      if(!gm)throw Error('GM permission required.');
-      const characterId=input.characterId;
-      if(!identifier(characterId))throw Error('Invalid target character.');
-      const charSnap=await tx.get(db.doc(`campaigns/${campaignId}/characters/${characterId}`));
-      if(!charSnap.exists||!isLinkedCharacter(campaign,characterId,charSnap.data(),campaignId))throw Error('Character is not linked.');
-      const character=charSnap.data(),type=input.type;
-      if(!UNIVERSAL_CHECK_TYPES.includes(type))throw Error('Invalid check type.');
-      if(!Number.isSafeInteger(input.dc)||input.dc<0||input.dc>1000)throw Error('Invalid DC.');
-      const skill=text(input.skill,100);
-      const skillKey=skill.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-      const rawSkill=character.skills?.[skill]??character.skills?.[skillKey];
-      const rank=typeof rawSkill==='string'?rawSkill:rawSkill?.rank;
-      const automatic=[];
-      const stat=String(input.characteristic||rawSkill?.characteristic||'').toLowerCase();
-      if(stat){
-        const characteristic=effectiveCharacteristicValue(character,stat);
-        if(!Number.isFinite(characteristic))throw Error('Invalid characteristic.');
-        automatic.push({label:'Characteristic: '+stat,value:characteristic});
+      ensure(gm,'GM permission required.');
+      const {ids,requiredSuccesses}=validateCreate(input);
+      const characterSnapshots=[];
+      for(const id of ids)characterSnapshots.push(await tx.get(db.doc('campaigns/'+campaignId+'/characters/'+id)));
+      const ownerMemberships=new Map();
+      if(campaign.membershipSchemaVersion===2){
+        for(const snap of characterSnapshots){
+          if(!snap.exists)continue;
+          const owner=snap.data().ownerUid;
+          if(!ownerMemberships.has(owner))ownerMemberships.set(owner,await readCampaignMember(tx,db,campaignId,campaign,owner));
+        }
       }
-      if(rank!==undefined)automatic.push({label:'Skill rank: '+rank,value:universalSkillRankModifier(rank)});
-      const effects=characterCheck(character,'skills.'+skillKey,0);
-      if(!Number.isFinite(effects.value)||Math.abs(effects.value)>100)throw Error('Invalid character check effects.');
-      if(effects.value!==0)automatic.push({label:'Active character effects',value:effects.value});
-      const breakdown=universalCheckModifierBreakdown([...automatic,...(input.modifiers||[])]);
-      if(breakdown.entries.some(e=>Math.abs(e.value)>100))throw Error('Modifier out of range.');
-      const row={id:requestId,campaignId,characterId,ownerUid:character.ownerUid,characterName:text(character.name,100),
-        gmUid:uid,type,skill,characteristic:stat,description:text(input.description,500),npcName:text(input.npcName,100),
-        dc:input.dc,modifiers:breakdown.entries,modifierTotal:breakdown.total,advantage:effects.advantage||input.advantage===true,
-        disadvantage:effects.disadvantage||input.disadvantage===true,status:'pending',attempt:1,createdAt:stamp(),updatedAt:stamp()};
-      tx.create(ref,row);
-      return {ok:true,id:requestId};
-    }
-    const snap=await tx.get(ref);
-    if(!snap.exists)throw Error('Check request not found.');
-    const row=snap.data();
-    if(row.campaignId!==campaignId)throw Error('Invalid request campaign.');
-    if(action==='submit'){
-      if(row.ownerUid!==uid)throw Error('Only the target player can roll.');
-      if(row.status!=='pending')throw Error('This request is no longer pending.');
-      const mode=input.mode;
-      if(!['digital','physical','manual'].includes(mode))throw Error('Invalid dice mode.');
-      let dice=null,result=null;
-      if(mode==='digital'){
-        const first=randomInt(1,21),second=row.advantage||row.disadvantage?randomInt(1,21):null;
-        const die=second===null?first:row.advantage&&!row.disadvantage?Math.max(first,second):
-          row.disadvantage&&!row.advantage?Math.min(first,second):first;
-        dice={first,second,die};
-        result=universalCheckOutcome(die,row.modifierTotal,row.dc,{opposed:row.type==='opposed'});
-      }else if(mode==='physical'){
-        if(!Number.isInteger(input.die)||input.die<1||input.die>20)throw Error('Enter a d20 result.');
-        dice={die:input.die};
-        result=universalCheckOutcome(input.die,row.modifierTotal,row.dc,{opposed:row.type==='opposed'});
-      }else{
-        if(!['success','failure'].includes(input.reported))throw Error('Select a reported outcome.');
-        result={outcome:input.reported,success:input.reported==='success',total:null,
-          modifier:row.modifierTotal,dc:row.dc,selfReported:true};
+      const groupId=ids.length>1?randomUUID():null;
+      const rows=[];
+      for(let index=0;index<ids.length;index++){
+        const snap=characterSnapshots[index],id=ids[index];
+        ensure(snap.exists&&isLinkedCharacter(campaign,id,snap.data(),campaignId),'Character is not linked.');
+        const character=snap.data(),ownerUid=character.ownerUid;
+        ensure(identifier(ownerUid),'Linked character has no owner.');
+        ensure(isCampaignMember(campaign,ownerUid,ownerMemberships.get(ownerUid)||null),'Target owner is not an active campaign member.');
+        const modifier=universalAutomaticModifiers(character,{
+          type:input.type,skill:safeText(input.skill,100),characteristic:input.characteristic,
+          rankOverride:input.rankOverride,modifiers:input.modifiers,
+          advantage:input.advantage===true,disadvantage:input.disadvantage===true
+        });
+        const idForRequest=randomUUID();
+        rows.push({
+          id:idForRequest,campaignId,characterId:id,ownerUid,characterName:safeText(character.name,100)||id,
+          gmUid:uid,type:input.type,skill:modifier.skill,characteristic:modifier.characteristic,
+          description:safeText(input.description,500),npcName:safeText(input.npcName,100),
+          dc:input.type==='opposed'?null:input.dc,modifiers:modifier.entries,modifierTotal:modifier.total,
+          advantage:modifier.advantage,disadvantage:modifier.disadvantage,advantageSources:modifier.advantageSources,
+          groupId,participantIndex:index,participantCount:ids.length,requiredSuccesses,
+          status:'pending',attempt:1,history:[],notificationRevision:0,createdAt:stamp(),updatedAt:stamp()
+        });
       }
-      tx.update(ref,{status:'submitted',mode,dice,result,selfReported:mode!=='digital',
-        submittedAt:stamp(),updatedAt:stamp()});
-      return {ok:true,result,dice};
-    }
-    if(!gm)throw Error('GM permission required.');
-    if(action==='resend'){
-      if(row.status!=='pending')throw Error('Only pending checks can be resent.');
-      tx.update(ref,{notificationRevision:(row.notificationRevision||0)+1,updatedAt:stamp()});
-      return {ok:true};
-    }
-    if(action==='reroll'){
-      if(!['submitted','acknowledged'].includes(row.status))throw Error('Only completed checks can be rerolled.');
-      tx.update(ref,{status:'pending',attempt:(row.attempt||1)+1,dice:null,result:null,
-        mode:null,selfReported:null,updatedAt:stamp()});
-      return {ok:true};
-    }
-    if(action==='cancel'){
-      if(row.status!=='pending')throw Error('Only pending requests can be cancelled.');
-      tx.update(ref,{status:'cancelled',updatedAt:stamp()});
-      return {ok:true};
-    }
-    if(!['submitted','acknowledged'].includes(row.status))throw Error('Check has no result.');
-    if(action==='override'){
-      if(!['success','failure','critical-success','critical-failure'].includes(input.outcome))throw Error('Invalid override.');
-      tx.update(ref,{gmOutcome:input.outcome,gmOverrideReason:text(input.reason,300),status:'acknowledged',updatedAt:stamp()});
+      if(groupId)tx.create(groupRef(db,campaignId,groupId),{
+        id:groupId,campaignId,type:input.type,gmUid:uid,participantIds:rows.map(row=>row.id),
+        results:{},requiredSuccesses,status:'pending',createdAt:stamp(),updatedAt:stamp()
+      });
+      for(const row of rows)tx.create(checkRef(db,campaignId,row.id),row);
+      response={ok:true,id:rows[0].id,ids:rows.map(row=>row.id),groupId};
     }else{
-      tx.update(ref,{status:'acknowledged',updatedAt:stamp()});
+      const ref=checkRef(db,campaignId,requestId),snap=await tx.get(ref);
+      ensure(snap.exists,'Check request not found.');
+      const row=snap.data();
+      ensure(row.campaignId===campaignId,'Invalid request campaign.');
+      let group=null,groupDoc=null;
+      if(row.groupId){
+        groupDoc=groupRef(db,campaignId,row.groupId);
+        const groupSnap=await tx.get(groupDoc);
+        ensure(groupSnap.exists,'Group metadata missing.');
+        group=groupSnap.data();
+        ensure(group.participantIds?.includes(requestId),'Invalid group membership.');
+      }
+      if(action==='submit'){
+        ensure(row.ownerUid===uid,'Only the target player can roll.');
+        ensure(row.status==='pending','This request is no longer pending.');
+        const submitted=modeResult(row,input);
+        const patch={...submitted,status:'submitted',submittedAt:stamp(),updatedAt:stamp()};
+        if(group){
+          const results={...group.results,[row.id]:resultSummary({...row,...patch})};
+          const members=group.participantIds;
+          const complete=members.every(id=>results[id]?.result);
+          const adjudication=complete?universalGroupAdjudication(group.type,members.map(id=>results[id]),group.requiredSuccesses):null;
+          tx.update(groupDoc,{results,status:complete?'resolved':'pending',adjudication:adjudication||null,updatedAt:stamp()});
+          if(adjudication){
+            patch.groupOutcome=adjudication;
+            // Reveal adjudication only, never another participant's hidden dice.
+            for(const id of members)if(id!==row.id)tx.update(checkRef(db,campaignId,id),{groupOutcome:adjudication,updatedAt:stamp()});
+          }
+        }
+        tx.update(ref,patch);
+        response={ok:true,result:submitted.result,dice:submitted.dice};
+      }else{
+        ensure(gm,'GM permission required.');
+        if(action==='resend'){
+          ensure(row.status==='pending','Only pending checks can be resent.');
+          tx.update(ref,{notificationRevision:(row.notificationRevision||0)+1,updatedAt:stamp()});
+        }else if(action==='cancel'){
+          ensure(row.status==='pending','Only pending requests can be cancelled.');
+          if(group){
+            ensure(group.status==='pending','Resolved groups cannot be cancelled.');
+            for(const id of group.participantIds)tx.update(checkRef(db,campaignId,id),{status:'cancelled',updatedAt:stamp()});
+            tx.update(groupDoc,{status:'cancelled',updatedAt:stamp()});
+          }else tx.update(ref,{status:'cancelled',updatedAt:stamp()});
+        }else if(action==='reroll'){
+          ensure(['submitted','acknowledged'].includes(row.status),'Only completed checks can be rerolled.');
+          const restart=entry=>({
+            history:[...(entry.history||[]),{
+              attempt:entry.attempt,mode:entry.mode||null,dice:entry.dice||null,result:entry.result||null,
+              gmOutcome:entry.gmOutcome||null,submittedAt:entry.submittedAt||null
+            }].slice(-30),
+            status:'pending',attempt:(entry.attempt||1)+1,dice:null,result:null,mode:null,selfReported:null,
+            groupOutcome:null,gmOutcome:null,gmOverrideReason:null,submittedAt:null,notificationRevision:(entry.notificationRevision||0)+1,updatedAt:stamp()
+          });
+          if(group){
+            // In a grouped check all submissions must reset together to prevent mixed attempts.
+            const others=[];
+            for(const id of group.participantIds)others.push(id===row.id?{id,data:row}:{
+              id,data:(await tx.get(checkRef(db,campaignId,id))).data()
+            });
+            for(const entry of others)tx.update(checkRef(db,campaignId,entry.id),restart(entry.data));
+            tx.update(groupDoc,{results:{},status:'pending',adjudication:null,updatedAt:stamp()});
+          }else tx.update(ref,restart(row));
+        }else{
+          ensure(['submitted','acknowledged'].includes(row.status),'Check has no result.');
+          if(action==='override'){
+            ensure(['success','failure','critical-success','critical-failure'].includes(input.outcome),'Invalid override.');
+            ensure(safeText(input.reason,300).length>=3,'An override reason is required.');
+            tx.update(ref,{gmOutcome:input.outcome,gmOverrideReason:safeText(input.reason,300),
+              status:'acknowledged',acknowledgedAt:stamp(),updatedAt:stamp()});
+          }else tx.update(ref,{status:'acknowledged',acknowledgedAt:stamp(),updatedAt:stamp()});
+        }
+        response={ok:true};
+      }
     }
-    return {ok:true};
+    tx.create(receiptRef,{uid,campaignId,action,signature:digest,response,createdAt:stamp()});
+    return response;
   });
 }
