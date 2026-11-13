@@ -3964,3 +3964,23 @@ button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: no
 @media(max-width:520px){
   .react-merchant-route-controls .react-record-actions {display:grid;grid-template-columns:1fr;gap:8px;}
 }
+
+/* Phase 10.3 — GM merchant relationship editor and player special access. */
+.react-merchant-relationship-manager,.react-merchant-relationship-status{
+  display:grid;gap:9px;margin-block:12px;padding:12px;min-width:0;
+  border:1px solid rgba(143,176,195,.36);border-radius:8px;
+  background:rgba(7,21,32,.62);
+}
+.react-merchant-relationship-manager h4,.react-merchant-relationship-manager p,
+.react-merchant-relationship-status p {margin:0;overflow-wrap:anywhere;}
+.react-merchant-relationship-manager label,.react-merchant-relationship-editor label{
+  display:grid;gap:6px;min-width:0;
+}
+.react-merchant-relationship-manager select,.react-merchant-relationship-manager textarea{
+  width:100%;min-height:44px;box-sizing:border-box;
+}
+.react-merchant-relationship-editor{display:grid;gap:10px;min-width:0;}
+.react-merchant-relationship-editor button{min-height:44px;}
+.react-merchant-relationship-editor details summary{cursor:pointer;min-height:38px;}
+.react-merchant-relationship-editor details p{padding-block:6px;border-top:1px solid rgba(143,176,195,.2);}
+.react-merchant-relationship-status small{opacity:.8;}
