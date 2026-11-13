@@ -1,4 +1,5 @@
 import {createHash,randomInt,randomUUID} from 'node:crypto';
+import {resolveUniversalCheckContext} from './universalCheckContext.mjs';
 import {isCampaignGM,isCampaignMember,isLinkedCharacter,readCampaignMember} from './characterPermissions.mjs';
 import {UNIVERSAL_CHECK_TYPES,universalAutomaticModifiers,universalDiceChoice,universalCheckOutcome,universalGroupAdjudication} from '../src/state/universalCheckModel.mjs';
 
@@ -83,6 +84,7 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
           if(!ownerMemberships.has(owner))ownerMemberships.set(owner,await readCampaignMember(tx,db,campaignId,campaign,owner));
         }
       }
+      const context=await resolveUniversalCheckContext(tx,db,campaignId,input.context,ids,input.type);
       const groupId=ids.length>1?randomUUID():null;
       const rows=[];
       for(let index=0;index<ids.length;index++){
@@ -100,7 +102,8 @@ export async function universalCheckAction(db,uid,input,stamp=()=>new Date()){
         rows.push({
           id:idForRequest,campaignId,characterId:id,ownerUid,characterName:safeText(character.name,100)||id,
           gmUid:uid,type:input.type,skill:modifier.skill,characteristic:modifier.characteristic,
-          description:safeText(input.description,500),npcName:safeText(input.npcName,100),
+          description:safeText(input.description,500),npcName:context?.npcId?context.label:safeText(input.npcName,100),
+          ...(context?{context}:{}),
           dc:input.type==='opposed'?null:input.dc,modifiers:modifier.entries,modifierTotal:modifier.total,
           advantage:modifier.advantage,disadvantage:modifier.disadvantage,advantageSources:modifier.advantageSources,
           groupId,participantIndex:index,participantCount:ids.length,requiredSuccesses,
