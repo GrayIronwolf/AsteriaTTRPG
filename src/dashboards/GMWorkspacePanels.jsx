@@ -328,7 +328,7 @@ function ShopManager({ campaignId, characters, itemEcosystem, customItems, route
   const shops=array(itemEcosystem?.shops);
   const catalog=useMemo(()=>window.AsteriaInventory?.catalogEntries?.(customItems)||[],[customItems]);
   const [selectedId,setSelectedId]=useState(shops[0]?.id||'');
-  const [draft,setDraft]=useState({name:'',type:'General Goods',buyModifier:'1',sellModifier:'1'});
+  const [draft,setDraft]=useState({name:'',type:'General Goods',buyModifier:'',sellModifier:''});
   const [templates,setTemplates]=useState([]);
   const [templateId,setTemplateId]=useState('');
   const [templateName,setTemplateName]=useState('');
