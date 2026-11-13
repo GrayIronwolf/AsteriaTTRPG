@@ -9,7 +9,13 @@
     notifications:'asteriaNotificationsPage',
     account:'asteriaAccountPage'
   });
-  let active='',ownerUid='',filter='all',observer=null;
+  const accountSections=Object.freeze({
+    profile:['asteriaAccountTabProfile','asteriaAccountPanelProfile'],
+    settings:['asteriaAccountTabSettings','asteriaAccountPanelSettings'],
+    appearance:['asteriaAccountTabAppearance','asteriaAccountPanelAppearance'],
+    security:['asteriaAccountTabSecurity','asteriaAccountPanelSecurity']
+  });
+  let active='',ownerUid='',filter='all',observer=null,accountSection='profile';
   const signedUid=()=>{
     const uid=root.AsteriaFirebase?.getUser?.()?.uid;
     return uid&&root.AsteriaAuthBridge?.isLoggedIn?.()===true?uid:'';
@@ -77,9 +83,24 @@
     updateFilter();
     return available>0;
   }
+  function selectAccountSection(name,focusTab=false){
+    if(!Object.hasOwn(accountSections,name))return false;
+    accountSection=name;
+    for(const [key,[tabId,panelId]] of Object.entries(accountSections)){
+      const tab=get(tabId),panel=get(panelId),selected=key===name;
+      if(tab){
+        tab.setAttribute('aria-selected',String(selected));
+        tab.tabIndex=selected?0:-1;
+        if(selected&&focusTab)tab.focus();
+      }
+      if(panel)panel.hidden=!selected;
+    }
+    return true;
+  }
   function reset(){
     if(active==='friends')root.AsteriaFriends?.close?.({restoreFocus:false});
     active='';ownerUid='';filter='all';
+    selectAccountSection('profile');
     get('asteriaNotificationsFriendFeed')?.replaceChildren();
     get('asteriaNotificationsCampaignFeed')?.replaceChildren();
     if(get('asteriaNotificationsFilteredStatus'))
@@ -101,6 +122,7 @@
     ownerUid=uid;
     if(name==='friends'&&!moveFriends())return false;
     active=name;
+    if(name==='account')selectAccountSection(accountSection);
     root.closeSettings?.();
     root.AsteriaAccountMenu?.close?.();
     root.setView(pages[name]);
@@ -109,7 +131,7 @@
         root.AsteriaFriends?.open?.();
     }else if(name==='notifications')drawNotifications({refresh:true});
     else if(get('asteriaAccountPageStatus'))
-      get('asteriaAccountPageStatus').textContent='Signed in. Choose an account option.';
+      get('asteriaAccountPageStatus').textContent='';
     get(pages[name])?.querySelector('h1')?.focus?.({preventScroll:true});
     root.scrollTo?.({top:0,left:0,behavior:'auto'});
     return true;
@@ -129,6 +151,12 @@
     get('asteriaBackgroundSelect')?.focus?.();
   }
   function action(event){
+    const section=event.target.closest?.('[data-asteria-account-section]');
+    if(section){
+      event.preventDefault();
+      if(active==='account'&&signedUid())selectAccountSection(section.dataset.asteriaAccountSection);
+      return;
+    }
     const to=event.target.closest?.('[data-asteria-account-page]');
     if(to){
       event.preventDefault();
@@ -146,6 +174,21 @@
       case 'logout':root.logout?.();break;
     }
   }
+  function accountKeydown(event){
+    if(active!=='account'||!signedUid())return;
+    const button=event.target.closest?.('[data-asteria-account-section]');
+    const current=button?.dataset.asteriaAccountSection;
+    if(!Object.hasOwn(accountSections,current))return;
+    const keys=Object.keys(accountSections),index=keys.indexOf(current);
+    let next=index;
+    if(event.key==='ArrowDown')next=(index+1)%keys.length;
+    else if(event.key==='ArrowUp')next=(index+keys.length-1)%keys.length;
+    else if(event.key==='Home')next=0;
+    else if(event.key==='End')next=keys.length-1;
+    else return;
+    event.preventDefault();
+    selectAccountSection(keys[next],true);
+  }
   function changeFilter(event){
     const control=event.target.closest?.('[data-asteria-notice-filter]');
     if(!control||!signedUid())return;
@@ -156,6 +199,7 @@
   function bind(){
     moveFriends();
     root.document.addEventListener('click',action);
+    get('asteriaAccountPage')?.addEventListener('keydown',accountKeydown);
     get('asteriaNotificationsPage')?.addEventListener('click',changeFilter);
     get('asteriaHeaderMail')?.addEventListener('click',()=>{open('notifications');});
     const main=get('mainContent');

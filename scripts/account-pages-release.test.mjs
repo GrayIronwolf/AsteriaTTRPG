@@ -26,7 +26,9 @@ function harness(){
     'asteriaFriendsPageMount','accountFriendsOverlay','asteriaNotificationsFeeds',
     'asteriaNotificationsFriendFeed','asteriaNotificationsCampaignFeed',
     'asteriaNotificationsFilteredStatus','asteriaNotificationsServiceStatus',
-    'asteriaAccountPageStatus','asteriaHeaderMail','mainContent','settingsPanel','settingsTitle']){
+    'asteriaAccountPageStatus','asteriaHeaderMail','mainContent','settingsPanel','settingsTitle',
+    'asteriaAccountTabProfile','asteriaAccountTabSettings','asteriaAccountTabAppearance','asteriaAccountTabSecurity',
+    'asteriaAccountPanelProfile','asteriaAccountPanelSettings','asteriaAccountPanelAppearance','asteriaAccountPanelSecurity']){
     elements[id]=make(id);
   }
   for(const name of ['asteriaFriendsPage','asteriaNotificationsPage','asteriaAccountPage'])
@@ -88,8 +90,8 @@ test('three distinct account destinations exist with preserved Friends IDs and p
   for(const id of ['accountFriendsOverlay','accountFriendsSearchForm','accountFriendsAcceptedList',
     'accountFriendsRequestList','accountFriendsBlockedList','accountFriendsPublicPreview'])
     assert.equal(html.split('id="'+id+'"').length-1,1,id);
-  assert.ok(html.includes('css/asteria-account-pages.css?v=account-pages-v1'));
-  assert.ok(html.includes('js/asteria-account-pages.js?v=account-pages-v1'));
+  assert.ok(html.includes('css/asteria-account-pages.css?v=gm-toolkit-1-1'));
+  assert.ok(html.includes('js/asteria-account-pages.js?v=gm-toolkit-1-1'));
   assert.ok(html.indexOf('js/asteria-friend-notifications.js')<
     html.indexOf('js/asteria-account-pages.js'));
   assert.ok(html.indexOf('js/asteria-account-pages.js')<
@@ -164,6 +166,53 @@ test('Existing account actions remain available, logout is red and presence is n
   assert.match(css,/\.asteria-account-menu button\.asteria-account-logout/);
   assert.match(css,/data-filter="unread"/);
   assert.doesNotMatch(src,/lastSeen|presenceHeartbeat|online:true|onlineStatus/);
+});
+
+test('Phase 1.1 uses the sketched text-only account sidebar and accessible content panels',()=>{
+  const html=read('index.html');
+  const css=read('css/asteria-account-pages.css');
+  assert.match(html,/class="asteria-account-shell"/);
+  assert.match(html,/class="asteria-account-sidebar-options" role="tablist"/);
+  for(const id of ['Profile','Settings','Appearance','Security']){
+    assert.equal(html.split('id="asteriaAccountTab'+id+'"').length-1,1);
+    assert.equal(html.split('id="asteriaAccountPanel'+id+'"').length-1,1);
+  }
+  assert.doesNotMatch(html,/asteria-account-hub-actions/);
+  assert.match(css,/background:linear-gradient\(to bottom,transparent,#7e9bad/);
+  assert.match(css,/background:none!important;border:0!important/);
+  assert.match(html,/data-asteria-account-action="logout" class="asteria-account-signout asteria-account-logout"/);
+  for(const action of ['profile','appearance','security'])
+    assert.match(html,new RegExp('data-asteria-account-action="'+action+'"'));
+  for(const page of ['friends','notifications'])
+    assert.match(html,new RegExp('data-asteria-account-page="'+page+'"'));
+});
+
+test('Phase 1.1 sidebar switches content with keyboard support and resets on sign-out',()=>{
+  const h=harness();h.load();
+  assert.equal(h.api.open('account'),true);
+  assert.equal(h.elements.asteriaAccountPanelProfile.hidden,false);
+  assert.equal(h.elements.asteriaAccountPanelSecurity.hidden,true);
+  let prevented=false;
+  h.domEvents.click({
+    target:{closest:selector=>selector==='[data-asteria-account-section]'?
+      {dataset:{asteriaAccountSection:'security'}}:null},
+    preventDefault(){prevented=true;}
+  });
+  assert.equal(prevented,true);
+  assert.equal(h.elements.asteriaAccountTabSecurity.attrs['aria-selected'],'true');
+  assert.equal(h.elements.asteriaAccountPanelProfile.hidden,true);
+  assert.equal(h.elements.asteriaAccountPanelSecurity.hidden,false);
+  h.elements.asteriaAccountPage.events.keydown({
+    target:{closest:selector=>selector==='[data-asteria-account-section]'?
+      {dataset:{asteriaAccountSection:'security'}}:null},
+    key:'Home',preventDefault(){}
+  });
+  assert.equal(h.elements.asteriaAccountPanelProfile.hidden,false);
+  assert.equal(h.elements.asteriaAccountTabProfile.tabIndex,0);
+  assert.ok(h.calls.includes('focus:asteriaAccountTabProfile'));
+  h.signOut();
+  assert.equal(h.api.isOpen('account'),false);
+  assert.equal(h.elements.asteriaAccountPanelSecurity.hidden,true);
 });
 
 test('Unread header badge reports first-page data, clears on account switching and remains navigable',()=>{
