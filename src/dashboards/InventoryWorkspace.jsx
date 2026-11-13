@@ -713,7 +713,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
 
       {campaignId?<div id="react-inventory-shops" className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
       {campaignId?<PlayerItemLoreWorkspace campaignId={campaignId} character={character}/>:null}
-      {campaignId?<div id="react-inventory-party-loot" className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} partyLoot={partyLoot} editable={editable}/></div>:null}
+      {campaignId?<div id="react-inventory-party-loot" className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} characters={characters} partyLoot={partyLoot} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message" role="status" aria-live="polite">{message}</p>
     {pendingUse?<Modal title={'Use '+pendingUse.name+'?'} eyebrow="Inventory Quick Action" busy={busy} onClose={()=>setPendingUse(null)} footer={<div className="react-modal-actions"><button type="button" disabled={busy} onClick={()=>setPendingUse(null)}>Cancel</button><button type="button" className="primary" disabled={!editable||busy||!items.some(row=>row.id===pendingUse.id&&Number(row.qty)>0)} onClick={async()=>{const result=await run(()=>firebaseService.updateInventory(campaignId,character.id,{type:'use',itemId:pendingUse.id,expectedCoreRevision:Number(character.coreRevision||0)}),'Used '+pendingUse.name+'.');if(result?.ok)setPendingUse(null);}}>Confirm Use</button></div>}><p>Use one {pendingUse.name}. This may consume an item and update your character's resources.</p></Modal>:null}
