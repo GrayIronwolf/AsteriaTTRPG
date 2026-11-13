@@ -49,7 +49,7 @@ export function inventoryJournalReceipt(row={}){
 
 // Quote every cell; prefix potential spreadsheet formulas even when preceded
 // by whitespace/control characters. RFC-4180 escaping plus CRLF output.
-function csvCell(value=''){
+export function inventoryJournalCsvCell(value=''){
   const raw=safeString(value,500).split(String.fromCharCode(0)).join('');
   const unsafe=/^[\s\u200B-\u200D\uFEFF]*[=+\-@]/u.test(raw)||
     /^[\t\r\n]/u.test(raw);
@@ -59,13 +59,13 @@ function csvCell(value=''){
 
 export function exportInventoryJournalCsv(rows=[]){
   const header=['Date (UTC)','Category','Activity','Reference','Source'];
-  const lines=[header.map(csvCell).join(',')];
+  const lines=[header.map(inventoryJournalCsvCell).join(',')];
   for(const row of (Array.isArray(rows)?rows:[]).slice(0,100)){
     const receipt=inventoryJournalReceipt(row);
     lines.push([
       receipt.dateUtc,receipt.category,receipt.activity,
       receipt.reference,receipt.origin
-    ].map(csvCell).join(','));
+    ].map(inventoryJournalCsvCell).join(','));
   }
   // UTF-8 BOM keeps non-English item names readable in spreadsheet software.
   return '\uFEFF'+lines.join('\r\n')+'\r\n';
