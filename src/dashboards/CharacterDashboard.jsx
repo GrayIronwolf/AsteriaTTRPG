@@ -192,7 +192,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!campaignId && !isOwner) return <div className="react-route-state" role="alert">Only the owner can view this unassigned character.</div>;
   if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
-  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party'].includes(item.id));
+  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting'].includes(item.id));
   const activeTab = resolveDashboardTab(tabs, tab);
   const navigate=next=>{if(tabs.some(item=>item.id===next))setTab(next);else window.toast?.('Link this character to a campaign to view campaign information.');};
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
