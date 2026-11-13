@@ -11,6 +11,7 @@ let lastProfile=null;
 let editingBusy=false;
 let avatarBusy=false;
 const isOpen=()=>get('accountProfileOverlay')?.hidden===false;
+const isInline=()=>Boolean(get('accountProfileOverlay')?.closest?.('#asteriaAccountPanelProfile'));
 function reset(){
   verifiedId=null;
   lastProfile=null;
@@ -106,7 +107,7 @@ async function open(){
   const overlay=get('accountProfileOverlay');
   if(!overlay)return false;
   overlay.hidden=false;
-  get('accountProfileClose')?.focus();
+  if(!isInline())get('accountProfileClose')?.focus();
   await refresh();
   return true;
 }
@@ -283,8 +284,9 @@ function bind(){
   get('accountProfileAvatarUpload')?.addEventListener('click',()=>{void changeAvatar(false);});
   get('accountProfileAvatarRemove')?.addEventListener('click',()=>{void changeAvatar(true);});
   window.addEventListener('asteria:account-profile-updated',()=>{if(isOpen())void refresh();});
-  overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
+  overlay.addEventListener('click',event=>{if(!isInline()&&event.target===overlay)close();});
   overlay.addEventListener('keydown',event=>{
+    if(isInline())return;
     if(event.key==='Escape'){event.preventDefault();close();return;}
     if(event.key!=='Tab')return;
     const items=[...overlay.querySelectorAll('button:not(:disabled),input:not(:disabled)')].filter(item=>item.getClientRects().length);

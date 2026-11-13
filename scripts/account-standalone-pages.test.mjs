@@ -46,17 +46,17 @@ test('private notification feeds preserve existing callable implementations and 
   assert.doesNotMatch(controller,/localStorage|indexedDB|collection\(|getDocs\(/);
 });
 
-test('account hub uses existing verified profile, security and appearance operations',()=>{
-  for(const action of ['profile','appearance','security','logout'])
-    assert.match(html,new RegExp('data-asteria-account-action="'+action+'"'));
+test('account page reuses authenticated controls without a dropdown',()=>{
+  for(const key of ['profile','appearance','security'])
+    assert.match(html,new RegExp('data-asteria-account-section="'+key+'"'));
+  assert.match(html,/data-asteria-account-action="logout"/);
   assert.match(controller,/AsteriaAccountProfile\?\.open/);
   assert.match(controller,/AsteriaAccountSecurity\?\.open/);
   assert.match(controller,/root\.logout\?\.\(\)/);
-  assert.match(menu,/AsteriaAccountPages\?\.open\?\.\('account'\)/);
-  assert.match(menu,/AsteriaAccountPages\?\.open\?\.\('notifications'\)/);
+  assert.match(menu,/AsteriaAccountPages\?\.open\?\.\(name\)/);
+  assert.match(html,/id="asteriaFriendsTop"/);
   assert.match(style,/asteria-account-logout/);
 });
-
 test('unread badge is private, clears on logout and counts only returned first-page messages',()=>{
   assert.match(html,/id="asteriaHeaderMail"[^>]*type="button"/);
   assert.match(html,/id="asteriaHeaderUnreadCount"/);

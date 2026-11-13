@@ -83,6 +83,30 @@
     updateFilter();
     return available>0;
   }
+  function mountAccountControls(){
+    for(const [sourceId,mountId,dialogSelector] of [
+      ['accountProfileOverlay','asteriaAccountProfileMount','.asteria-profile-dialog'],
+      ['accountSecurityOverlay','asteriaAccountSecurityMount','.asteria-security-dialog']
+    ]){
+      const overlay=get(sourceId),mount=get(mountId);
+      if(!overlay||!mount)continue;
+      if(overlay.parentElement!==mount)mount.appendChild(overlay);
+      const region=overlay.querySelector?.(dialogSelector);
+      region?.setAttribute?.('role','region');
+      region?.removeAttribute?.('aria-modal');
+    }
+    const appearance=get('asteriaAccountAppearanceMount');
+    if(appearance){
+      for(const id of ['asteriaThemeSettings','asteriaTypographyMenu','asteriaAppearanceSync']){
+        const section=get(id);
+        if(section&&section.parentElement!==appearance)appearance.appendChild(section);
+      }
+    }
+  }
+  function closeInlineControls(){
+    root.AsteriaAccountProfile?.close?.({restoreFocus:false});
+    root.AsteriaAccountSecurity?.close?.({restoreFocus:false});
+  }
   function selectAccountSection(name,focusTab=false){
     if(!Object.hasOwn(accountSections,name))return false;
     accountSection=name;
@@ -95,9 +119,19 @@
       }
       if(panel)panel.hidden=!selected;
     }
+    if(active==='account'){
+      if(name==='profile'){
+        root.AsteriaAccountSecurity?.close?.({restoreFocus:false});
+        void root.AsteriaAccountProfile?.open?.();
+      }else if(name==='security'){
+        root.AsteriaAccountProfile?.close?.({restoreFocus:false});
+        root.AsteriaAccountSecurity?.open?.();
+      }else closeInlineControls();
+    }
     return true;
   }
   function reset(){
+    closeInlineControls();
     if(active==='friends')root.AsteriaFriends?.close?.({restoreFocus:false});
     active='';ownerUid='';filter='all';
     selectAccountSection('profile');
@@ -118,14 +152,18 @@
     if(!get(pages[name])||typeof root.setView!=='function')return false;
     if(active==='friends'&&name!=='friends')
       root.AsteriaFriends?.close?.({restoreFocus:false});
+    if(active==='account'&&name!=='account')closeInlineControls();
     if(ownerUid&&ownerUid!==uid)reset();
     ownerUid=uid;
     if(name==='friends'&&!moveFriends())return false;
     active=name;
-    if(name==='account')selectAccountSection(accountSection);
     root.closeSettings?.();
     root.AsteriaAccountMenu?.close?.();
     root.setView(pages[name]);
+    if(name==='account'){
+      mountAccountControls();
+      selectAccountSection(accountSection);
+    }
     if(name==='friends'){
       if(root.AsteriaFriends?.isOpen?.()!==true)
         root.AsteriaFriends?.open?.();
@@ -140,15 +178,9 @@
     if(!active)return;
     if(!get(pages[active])?.classList.contains('show')){
       if(active==='friends')root.AsteriaFriends?.close?.({restoreFocus:false});
+      if(active==='account')closeInlineControls();
       active='';
     }
-  }
-  function openAppearance(){
-    const panel=get('settingsPanel'),title=get('settingsTitle');
-    if(panel)panel.classList.add('appearance-mode');
-    if(title)title.textContent='Appearance';
-    root.openSettings?.();
-    get('asteriaBackgroundSelect')?.focus?.();
   }
   function action(event){
     const section=event.target.closest?.('[data-asteria-account-section]');
@@ -168,11 +200,17 @@
     event.preventDefault();
     if(!signedUid())return;
     switch(btn.dataset.asteriaAccountAction){
-      case 'profile':root.AsteriaAccountProfile?.open?.();break;
-      case 'appearance':openAppearance();break;
-      case 'security':root.AsteriaAccountSecurity?.open?.();break;
+      case 'profile':openSection('profile');break;
+      case 'appearance':openSection('appearance');break;
+      case 'security':openSection('security');break;
       case 'logout':root.logout?.();break;
     }
+  }
+  function openSection(name){
+    if(!Object.hasOwn(accountSections,name))return false;
+    accountSection=name;
+    if(active==='account'&&signedUid())return selectAccountSection(name);
+    return open('account');
   }
   function accountKeydown(event){
     if(active!=='account'||!signedUid())return;
@@ -198,6 +236,7 @@
   }
   function bind(){
     moveFriends();
+    mountAccountControls();
     root.document.addEventListener('click',action);
     get('asteriaAccountPage')?.addEventListener('keydown',accountKeydown);
     get('asteriaNotificationsPage')?.addEventListener('click',changeFilter);
@@ -226,7 +265,7 @@
       }).observe(feed,{subtree:true,childList:true});
     }
   }
-  root.AsteriaAccountPages=Object.freeze({open,reset,isOpen:kind=>active===kind,refreshNotifications:()=>drawNotifications({refresh:true})});
+  root.AsteriaAccountPages=Object.freeze({open,openSection,reset,isOpen:kind=>active===kind,refreshNotifications:()=>drawNotifications({refresh:true})});
   root.document?.readyState==='loading'?
     root.document.addEventListener('DOMContentLoaded',bind):bind();
 })(typeof window!=='undefined'?window:{});

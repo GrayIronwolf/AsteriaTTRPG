@@ -16,7 +16,7 @@ test('Phase 2 loads the four approved button families after previous website sty
   assert.match(css,new RegExp('--asteria-button-'+family+'-height:'+h+'px;'));
   assert.match(css,new RegExp('data-asteria-button-size="'+family+'"'));
  }
- assert.match(index,/asteria-menu-buttons\.js\?v=account-menu-phase3-3/);
+ assert.match(index,/asteria-menu-buttons\.js\?v=gm-toolkit-1-2/);
 });
 test('Classification preserves navigation controls and avoids tiny gameplay controls',()=>{
  const elements=[];

@@ -278,10 +278,11 @@ check('Appearance settings include solid backgrounds and five independent colour
 check('Home reset clears workspace shells', coreShellJs.includes('asteria-workspace-shell') && coreShellJs.includes('workspace-active') && coreShellJs.includes('showPublicHome'));
 check('Navigation shell uses solid blue-gray panels', stylesCss.includes('--asteria-shell:#17242d') && stylesCss.includes('background:var(--asteria-shell)!important') && stylesCss.includes('overflow:hidden!important'));
 check('Settings drawer opens below the top panel', stylesCss.includes('top:var(--core-header-height)!important') && appJs.includes('function toggleSettings()') && appJs.includes("$('shade').onclick=closeSettings"));
-check('Authenticated top action opens Account menu with existing Log Out action',
+check('Authenticated top action opens Account Settings with separate Log Out action',
   authBridgeJs.includes("login.textContent = 'Account'") &&
   authBridgeJs.includes("window.AsteriaAccountMenu?.toggle?.()") &&
-  fs.readFileSync(path.join(root,'js/asteria-account-menu.js'),'utf8').includes("window.logout?.()") &&
+  fs.readFileSync(path.join(root,'js/asteria-account-menu.js'),'utf8').includes("open('account')") &&
+  html.includes('data-asteria-account-action="logout"') &&
   coreShellJs.includes("window.logout?.()"));
 check('Bloodhunter dashboard resource is wired', html.includes('id="pBPResource"') && appJs.includes('function isBloodhunter(c)') && appJs.includes("bp:'pBPAmount'"));
 check('Bloodhunter talent triggers update BP', ['bloodhunterBPGainForTalent','applyBloodhunterTalentBP','talent-bp-trigger'].every(token => appJs.includes(token)) && inventoryWorkflowCss.includes('.talent-bp-trigger'));
@@ -337,7 +338,10 @@ check('Old handbook library viewer removed', !ids.includes('library') && !ids.in
 check('Public top navigation opens the shared Compendium library', html.includes('id="compendiumIndexButton"') && html.includes('href="#/compendium"') && !html.includes('class="sidebar public-sidebar"'));
 check('UI modernisation delivery version is active', html.includes('Asteria UI Modernisation Steps 7-12'));
 check('Login page has one account type only', !html.includes('loginPageRole') && !html.includes('GM Account') && !html.includes('Administrator</option>'));
-check('Top navigation retains account settings in the Account menu and Forge entry points without a permanent sidebar', ['accountMenuSettings','characterForgeTop','campaignsTop','settingsToggle'].every(id => html.includes(`id="${id}"`)) && html.includes('id="accountQuickMenu"') && !html.includes('id="accountSettingsTop"') && !html.includes('class="sidebar public-sidebar"'));
+check('Top navigation opens Account Settings directly and preserves separate Friends and Forge pages',
+  ['asteriaAccountTabSettings','characterForgeTop','campaignsTop','asteriaFriendsTop','settingsToggle'].every(id => html.includes(`id="${id}"`)) &&
+  !html.includes('id="accountQuickMenu"') &&
+  !html.includes('class="sidebar public-sidebar"'));
 check('Top bar owns Character Forge and Campaign Forge navigation', ['id="characterForgeTop"', 'id="campaignsTop"', 'Character Forge', 'Campaign Forge', 'openCharacterForgeHub', 'openCampaignHub'].every(token => html.includes(token) || coreShellJs.includes(token)) && stylesCss.includes('.top-workspace-menu .top-menu-btn'));
 check('Campaign gallery opens GM dashboards', cleanCompendiumJs.includes('openCampaignGMDashboard') && cleanCompendiumJs.includes('Forge New Campaign') && cleanCompendiumJs.includes('openCampaignHub'));
 check('Campaign creation generates and displays 12-digit UCN', html.includes('campaignUCNDisplay') && appJs.includes('appUniqueCampaignCode') && appJs.includes('ensureAppCampaignUCN') && appJs.includes('campaign.ucn=code') && appJs.includes('campaign.inviteCode=code'));

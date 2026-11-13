@@ -13,10 +13,10 @@
     if(!login) return;
     if(isLoggedIn()){
       login.textContent = 'Account';
-      login.setAttribute?.('aria-label','Open account menu');
-      login.setAttribute?.('aria-haspopup','menu');
-      login.setAttribute?.('aria-controls','accountQuickMenu');
-      login.setAttribute?.('aria-expanded',String(window.AsteriaAccountMenu?.isOpen?.()===true));
+      login.setAttribute?.('aria-label','Open Account Settings');
+      login.removeAttribute?.('aria-haspopup');
+      login.removeAttribute?.('aria-controls');
+      login.removeAttribute?.('aria-expanded');
       login.onclick = event => {
         event?.preventDefault?.();
         window.AsteriaAccountMenu?.toggle?.();

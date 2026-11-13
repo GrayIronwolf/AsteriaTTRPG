@@ -32,7 +32,7 @@ test('avatar validates size, content and authenticated owner path',()=>{
 });
 test('header removes duplicate home and keeps account accessible on mobile',()=>{
   const html=read('index.html'),nav=read('js/asteria-navigation.js'),css=read('css/asteria-account-experience.css');
-  for(const id of ['asteriaHeaderProfile','asteriaHeaderAvatar','asteriaHeaderAccountId','accountMenuAppearance']){
+  for(const id of ['asteriaHeaderProfile','asteriaHeaderAvatar','asteriaHeaderAccountId','asteriaAccountTabAppearance']){
     assert.match(html,new RegExp('id="'+id+'"'));
   }
   assert.doesNotMatch(html,/id="sidebarHomeButton"/);
@@ -75,13 +75,16 @@ test('header reads fresh verified identity and disregards switched accounts',()=
   assert.match(src,/Promise\.allSettled\(reads\)/);
   assert.match(src,/version!==noticeVersion\|\|profileVersion!==requestVersion/);
 });
-test('Appearance is separate from explicit Logout',()=>{
-  const source=read('js/asteria-account-menu.js');
-  assert.match(source,/window\.openSettings\?\.\(\)/);
-  assert.match(source,/window\.logout\?\.\(\)/);
-  assert.match(source,/window\.AsteriaAccountProfile\?\.open\?\.\(\)/);
-  assert.match(source,/window\.AsteriaAccountSecurity\?\.open\?\.\(\)/);
-  assert.doesNotMatch(read('index.html'),/onclick="logout\(\)"/);
+test('Appearance and Security are separate from explicit Log Out in the Account page',()=>{
+  const source=read('js/asteria-account-pages.js');
+  const header=read('js/asteria-account-header.js');
+  const html=read('index.html');
+  assert.match(source,/openSection\('appearance'\)/);
+  assert.match(source,/root\.logout\?\.\(\)/);
+  assert.match(header,/AsteriaAccountPages\?\.openSection\?\.\('profile'\)/);
+  assert.match(source,/AsteriaAccountSecurity\?\.open\?\.\(\)/);
+  assert.match(html,/data-asteria-account-action="logout"/);
+  assert.doesNotMatch(html,/onclick="logout\(\)"/);
 });
 
 test('avatar release is independently approved and limited to Storage rules',()=>{

@@ -43,6 +43,6 @@ test('display name is only canonical registered username, Account ID stays uncha
 test('other site navigation and profile avatar actions remain wired',()=>{
   const html=read('index.html');
   for(const s of ['id="compendiumIndexButton"','id="characterForgeTop"','id="campaignsTop"',
-    'id="accountMenuLogout"','id="asteriaHeaderAvatarButton"','id="accountProfileAvatarUpload"'])
+    'data-asteria-account-action="logout"','id="asteriaHeaderAvatarButton"','id="accountProfileAvatarUpload"'])
       assert.ok(html.includes(s),s);
 });

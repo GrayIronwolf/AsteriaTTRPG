@@ -53,7 +53,7 @@ test('the library uses the authoritative visibility filter rather than exposing 
   const source=fs.readFileSync('js/asteria-navigation.js','utf8');
   assert.match(source,/visibleEntries\?\./);assert.doesNotMatch(source,/ASTERIA_UNIVERSAL_COMPENDIUM_INDEX/);
   const html=fs.readFileSync('index.html','utf8');assert.doesNotMatch(html,/class="sidebar public-sidebar"/);
-  for(const id of ['characterForgeTop','campaignsTop','settingsToggle','loginToggle','accountMenuSettings'])assert.equal((html.match(new RegExp(`id="${id}"`,'g'))||[]).length,1);
+  for(const id of ['characterForgeTop','campaignsTop','settingsToggle','loginToggle','asteriaAccountTabSettings'])assert.equal((html.match(new RegExp(`id="${id}"`,'g'))||[]).length,1);
 });
 test('selected navigation follows the visible workspace even when a legacy hash remains',()=>{
   const shown=new Set(['compendiumLibrary']);
