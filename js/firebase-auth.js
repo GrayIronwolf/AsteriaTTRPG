@@ -1776,6 +1776,20 @@ const firebasePublicApi = {
     return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
       error=>reportSyncError('merchant-deals-listener',error,{campaignId}));
   },
+  manageItemLore: (...args) => callTrustedAction('manageItemLore', args),
+  subscribeItemLore: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'itemLore'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('item-lore-listener',error,{campaignId}));
+  },
+  subscribeItemDiscoveries: function(campaignId,onChange,gmMode=false){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const ref=collection(db,'campaigns',campaignId,'itemDiscoveries');
+    const q=gmMode?ref:query(ref,where('ownerUid','==',currentUser.uid));
+    return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('item-discoveries-listener',error,{campaignId}));
+  },
   createMerchantDeal: (...args) => callTrustedAction('createMerchantDeal', args),
   respondMerchantDeal: (...args) => callTrustedAction('respondMerchantDeal', args),
   cancelMerchantDeal: (...args) => callTrustedAction('cancelMerchantDeal', args),
