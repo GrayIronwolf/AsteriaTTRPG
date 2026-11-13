@@ -18,7 +18,6 @@ const newSeed=()=>globalThis.crypto?.getRandomValues?.(new Uint32Array(1))?.[0]?
 export function GMNpcGenerator({world={},onUseDraft,onCancel,disabled=false}){
   const [options,setOptions]=useState(npcGeneratorDefaults);
   const [races,setRaces]=useState(()=>window.AsteriaRaceCompendium?.entries?.()||[]);
-  const [seed,setSeed]=useState(newSeed);
   const [locks,setLocks]=useState([]);
   const [concept,setConcept]=useState(null);
   const [message,setMessage]=useState('');
@@ -30,7 +29,6 @@ export function GMNpcGenerator({world={},onUseDraft,onCancel,disabled=false}){
   const generate=(keep=locks)=>{
     const nextSeed=newSeed();
     const next=generateNPCConcept({seed:nextSeed,options,world,races,previous:concept||{},locked:keep});
-    setSeed(nextSeed);
     setConcept(next);
     setMessage('New NPC concept generated. Review and edit it before saving.');
   };
@@ -42,7 +40,6 @@ export function GMNpcGenerator({world={},onUseDraft,onCancel,disabled=false}){
       seed:nextSeed,options,world,races,previous:concept,
       locked:all.filter(key=>key!==field)
     });
-    setSeed(nextSeed);
     setConcept({...concept,[field]:next[field]});
     setMessage('Re-rolled '+field+'.');
   };
