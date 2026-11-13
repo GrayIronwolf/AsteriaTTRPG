@@ -15,8 +15,6 @@ const empty=()=>({
   manaCost:0,allowStoneSubstitution:false,
   materials:[]
 });
-const normalNumber=(value,min,max)=>String(value).trim()!==''&&
-  Number.isSafeInteger(Number(value))&&Number(value)>=min&&Number(value)<=max;
 const change=(setter,key,value)=>setter(prev=>({...prev,[key]:value}));
 function Materials({materials=[],planInfo}){
   return <div className="react-crafting-recipe-requirements">
