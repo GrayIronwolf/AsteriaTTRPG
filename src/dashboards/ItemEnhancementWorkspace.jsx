@@ -6,11 +6,12 @@ import {
   enchantmentPreview,enchantmentRequirements
 } from '../state/itemEnhancementModel.mjs';
 import {resourcePair} from '../state/resourceValues.mjs';
+import {stationAccessible} from '../state/craftingServicesModel.mjs';
 import {EmptyState,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 
 const list=x=>Array.isArray(x)?x:[];
 const empty=()=>({
-  mode:'enchantment',status:'draft',name:'',description:'',targetType:'',
+  mode:'enchantment',status:'draft',name:'',description:'',targetType:'',stationId:'',
   effectName:'',effectDescription:'',spellRank:'Weak',spellName:'',spellMana:1,
   manaCost:0,allowStoneSubstitution:false,
   materials:[]
@@ -39,6 +40,7 @@ function Preview({plan,affinity='None',stoneMode='standard'}){
 }
 export function GMEnhancementWorkshop({campaignId,characters={}}){
   const [plans,setPlans]=useState([]);
+  const [stations,setStations]=useState([]);
   const [requests,setRequests]=useState([]);
   const [form,setForm]=useState(empty);
   const [editing,setEditing]=useState('');
@@ -47,9 +49,10 @@ export function GMEnhancementWorkshop({campaignId,characters={}}){
   const [message,setMessage]=useState('');
   useEffect(()=>{
     if(!campaignId)return;
+    const st=firebaseService.subscribeCraftingStations(campaignId,setStations,true);
     const a=firebaseService.subscribeEnhancementPlans(campaignId,setPlans,true);
     const b=firebaseService.subscribeEnhancementRequests(campaignId,setRequests,true);
-    return()=>{a();b();};
+    return()=>{st();a();b();};
   },[campaignId]);
   const setMaterial=(i,key,value)=>setForm(prev=>({
     ...prev,materials:prev.materials.map((r,index)=>index===i?{...r,[key]:value}:r)
@@ -116,6 +119,11 @@ export function GMEnhancementWorkshop({campaignId,characters={}}){
           onChange={e=>change(setForm,'name',e.target.value)}/></label>
         <label>Description<textarea maxLength={1000} rows={2} value={form.description}
           onChange={e=>change(setForm,'description',e.target.value)}/></label>
+        <label>Required Station (optional)<select value={form.stationId||''}
+          onChange={e=>change(setForm,'stationId',e.target.value)}>
+          <option value="">No station required</option>
+          {stations.map(s=><option key={s.id} value={s.id}>{s.name} ({s.status})</option>)}
+        </select></label>
         <label>Target Item Type (optional)<input maxLength={100} value={form.targetType}
           placeholder="e.g. Weapon, Armour"
           onChange={e=>change(setForm,'targetType',e.target.value)}/></label>
@@ -172,6 +180,7 @@ export function GMEnhancementWorkshop({campaignId,characters={}}){
         {plans.map(p=><article key={p.id}>
           <h3>{p.name}</h3><StatusPill tone={p.status==='published'?'success':''}>{p.status}</StatusPill>
           <p>{p.mode}: {p.effectName}{p.spellRank?' · '+p.spellRank:''}</p>
+          {p.stationId?<p>Station: {stations.find(s=>s.id===p.stationId)?.name||'Unavailable'}</p>:null}
           <p>{p.description}</p>
           <Preview plan={p} affinity="Extreme"/>
           <Materials materials={enchantmentRequirements(p)}/>
@@ -206,15 +215,17 @@ export function GMEnhancementWorkshop({campaignId,characters={}}){
 
 export function PlayerEnhancementWorkshop({campaignId,character={},editable=false}){
   const [plans,setPlans]=useState([]),[requests,setRequests]=useState([]);
+  const [stations,setStations]=useState([]);
   const [selections,setSelections]=useState({});
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const inventory=useMemo(()=>inventoryItems(character),[character]);
   const [currentMana,maxMana]=resourcePair(character.mp);
   useEffect(()=>{
     if(!campaignId)return;
+    const st=firebaseService.subscribeCraftingStations(campaignId,setStations,false);
     const a=firebaseService.subscribeEnhancementPlans(campaignId,setPlans,false);
     const b=firebaseService.subscribeEnhancementRequests(campaignId,setRequests,false);
-    return()=>{a();b();};
+    return()=>{st();a();b();};
   },[campaignId]);
   const update=(id,patch)=>setSelections(prev=>({...prev,
     [id]:{...prev[id],...patch}}));
@@ -236,6 +247,8 @@ export function PlayerEnhancementWorkshop({campaignId,character={},editable=fals
     <div className="react-crafting-recipe-list">
       {plans.map(plan=>{
         const selection=selections[plan.id]||{};
+        const station=plan.stationId?stations.find(s=>s.id===plan.stationId):null;
+        const stationReady=!plan.stationId||stationAccessible(station,character.id);
         const targets=inventory.filter(item=>enhancementTargetEligible(item.raw||item,plan));
         const target=targets.find(item=>item.id===selection.itemId)||targets[0];
         const index=target?inventory.findIndex(item=>item.id===target.id):-1;
@@ -251,11 +264,13 @@ export function PlayerEnhancementWorkshop({campaignId,character={},editable=fals
           }catch(e){error=e.message;}
         }
         const pending=requests.some(r=>r.planId===plan.id&&r.itemId===target?.id&&r.status==='pending');
-        const ready=Boolean(target&&materials?.ready&&currentMana>=plan.manaCost&&!error);
+        const ready=Boolean(target&&materials?.ready&&currentMana>=plan.manaCost&&!error&&stationReady);
         return <article key={plan.id}>
           <h3>{plan.name}</h3>
           <p>{plan.effectName} · {plan.mode}{plan.spellRank?' · '+plan.spellRank:''}</p>
           {plan.description?<p>{plan.description}</p>:null}
+          {plan.stationId?<p>Required Station: {station?.name||'Unavailable'}
+            {!stationReady?' (not accessible)':''}</p>:null}
           <label>Target Item<select value={target?.id||''}
             onChange={e=>update(plan.id,{itemId:e.target.value})}>
             {targets.length?targets.map(item=><option key={item.id} value={item.id}>
