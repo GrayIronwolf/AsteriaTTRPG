@@ -64,6 +64,10 @@ test('revoked player membership immediately blocks existing check results',async
       {uid:'alice',role:'player',status:'suspended',campaignId:'c'});
   });
   await assertFails(getDoc(doc(client('alice'),path+'a')));
+  await env.withSecurityRulesDisabled(async context=>{
+    await setDoc(doc(context.firestore(),'campaigns/c/members/alice'),
+      {uid:'alice',role:'player',status:'active',campaignId:'c'});
+  });
 });
 
 test('real Firestore transactions resolve simultaneous opposed submissions and duplicate retries once',async()=>{
