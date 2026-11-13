@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
-import {UNIVERSAL_CHECK_RANKS,UNIVERSAL_CHARACTERISTICS} from '../state/universalCheckModel.mjs';
+import {UNIVERSAL_CHECK_RANKS,UNIVERSAL_CHARACTERISTICS,UNIVERSAL_CHECK_TYPES} from '../state/universalCheckModel.mjs';
 
 const presets={
   npc:[
@@ -28,7 +28,9 @@ export function contextualCheckStatus(row={}){
 export function GMContextCheckLauncher({campaignId,characters={},context,title='Request player check',initialCharacterId=''}) {
   const [expanded,setExpanded]=useState(false);
   const [selected,setSelected]=useState(initialCharacterId);
-  const [preset,setPreset]=useState(context?.kind==='merchant-deal'?'haggling':'persuasion');
+  const [participantIds,setParticipantIds]=useState([]);
+  const [type,setType]=useState(context?.kind==='merchant-deal'?'social':'skill');
+  const [preset,setPreset]=useState(context?.kind==='merchant-deal'?'haggling':context?.kind==='gameplay'?'perception':'persuasion');
   const [customSkill,setCustomSkill]=useState('');
   const [stat,setStat]=useState(context?.kind==='merchant-deal'?'charisma':'charisma');
   const [rankOverride,setRankOverride]=useState('');
@@ -45,8 +47,9 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
   const operation=useRef(null);
   const contextKey=JSON.stringify(context||{});
   useEffect(()=>{
-    setSelected(initialCharacterId||'');
-    setPreset(context?.kind==='merchant-deal'?'haggling':'persuasion');
+    setSelected(initialCharacterId||'');setParticipantIds([]);
+    setType(context?.kind==='merchant-deal'?'social':'skill');
+    setPreset(context?.kind==='merchant-deal'?'haggling':context?.kind==='gameplay'?'perception':'persuasion');
     setStat('charisma');setExpanded(false);setNotice('');setError('');
     operation.current=null;
   },[campaignId,contextKey,initialCharacterId,context?.kind]);
@@ -60,20 +63,23 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
       if(context.kind==='merchant')return source.shopId===context.shopId;
       return source.label===context.label;
     })),{gm:true});
-  },[campaignId,contextKey,context]);
+  },[campaignId,contextKey]);
   if(!context||!campaignId)return null;
   const options=presets[context.kind==='npc'?'npc':context.kind==='gameplay'?'gameplay':'merchant'];
   const chosen=options.find(row=>row[0]===preset);
   const skill=preset==='custom'?customSkill:chosen?.[1]||'';
   const chosenStat=stat||chosen?.[2]||'';
+  const multi=type==='group'||type==='opposed';
   const valid=Number.isInteger(Number(dc))&&dc.trim()!==''&&Number(dc)>=0&&Number(dc)<=1000&&
     Number.isInteger(Number(modifier))&&modifier.trim()!==''&&Math.abs(Number(modifier))<=100;
   const roster=Object.values(characters).filter(row=>row?.id&&row?.ownerUid);
   const send=async event=>{
     event.preventDefault();
-    if(busy||!valid||!selected||!chosenStat||!skill.trim())return;
-    const payload={campaignId,action:'create',type:'social',characterId:selected,
-      characteristic:chosenStat,skill:skill.trim(),dc:Number(dc),rankOverride,
+    const ids=multi?participantIds:[selected];
+    if(busy||!valid||(multi?ids.length<2||type==='opposed'&&ids.length!==2:!selected)||!chosenStat||!skill.trim())return;
+    const payload={campaignId,action:'create',type,characterId:ids[0],
+      ...(multi?{characterIds:ids}:{}),
+      characteristic:chosenStat,skill:skill.trim(),dc:type==='opposed'?0:Number(dc),rankOverride,
       context,description:instructions.slice(0,500),
       modifiers:[{label:'Situational modifier',value:Number(modifier)}],
       advantage,disadvantage};
@@ -97,11 +103,18 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
       {expanded?'Close check composer':'Request player check'}
     </button>
     {expanded?<form onSubmit={send}>
-      <label>Player character<select required value={selected}
+      {context.kind!=='merchant-deal'?<label>Check type<select value={type} onChange={event=>{setType(event.target.value);setParticipantIds([]);}}>
+        {UNIVERSAL_CHECK_TYPES.filter(value=>!['characteristic','saving'].includes(value)).map(value=><option key={value} value={value}>{value}</option>)}
+      </select></label>:null}
+      {multi?<fieldset><legend>Choose participants</legend>
+        {roster.map(row=><label key={row.id}><input type="checkbox"
+          checked={participantIds.includes(row.id)} onChange={event=>setParticipantIds(old=>event.target.checked?
+            [...old,row.id]:old.filter(value=>value!==row.id))}/>{row.name||row.id}</label>)}
+      </fieldset>:<label>Player character<select required value={selected}
         disabled={Boolean(initialCharacterId)} onChange={event=>setSelected(event.target.value)}>
         <option value="">Select a linked character</option>
         {roster.map(row=><option key={row.id} value={row.id}>{row.name||row.id}</option>)}
-      </select></label>
+      </select></label>}
       <label>Suggested check<select value={preset} onChange={event=>{
         const value=event.target.value;
         setPreset(value);
@@ -120,13 +133,13 @@ export function GMContextCheckLauncher({campaignId,characters={},context,title='
         <option value="">Use the character's named rank</option>
         {Object.keys(UNIVERSAL_CHECK_RANKS).map(name=><option key={name}>{name}</option>)}
       </select></label>
-      <label>DC<input type="number" min="0" max="1000" required value={dc} onChange={event=>setDc(event.target.value)}/></label>
+      {type!=='opposed'?<label>DC<input type="number" min="0" max="1000" required value={dc} onChange={event=>setDc(event.target.value)}/></label>:<p>Opposed checks compare participant results.</p>}
       <label>Situational modifier<input type="number" min="-100" max="100" required value={modifier}
         onChange={event=>setModifier(event.target.value)}/></label>
       <label><input type="checkbox" checked={advantage} onChange={event=>setAdvantage(event.target.checked)}/> Advantage</label>
       <label><input type="checkbox" checked={disadvantage} onChange={event=>setDisadvantage(event.target.checked)}/> Disadvantage</label>
       <label>GM instructions<textarea maxLength={500} value={instructions} onChange={event=>setInstructions(event.target.value)}/></label>
-      <button type="submit" disabled={busy||!valid||!selected||!chosenStat||!skill.trim()}>{busy?'Sending…':'Send to player'}</button>
+      <button type="submit" disabled={busy||!valid||(multi?participantIds.length<2||type==='opposed'&&participantIds.length!==2:!selected)||!chosenStat||!skill.trim()}>{busy?'Sending…':'Send to player'}</button>
     </form>:null}
     {error?<p role="alert">{error}</p>:null}
     {notice?<p role="status">{notice}</p>:null}
