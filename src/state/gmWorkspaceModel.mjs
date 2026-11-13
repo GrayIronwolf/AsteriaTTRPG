@@ -21,7 +21,7 @@ export function defaultGMWorkspace(campaign = {}) {
       kingdomStatus:'Stable', settlementStatus:'Stable', economyStatus:'Stable', factionStatus:'Neutral',
       creatureActivity:'Moderate', magicalActivity:'Dormant', politicalTension:0, corruptionLevel:0,
       resourceAvailability:'Normal', weather:'Clear', gmNotes:'',
-      regions:[], factions:[], events:[], settlements:[], merchants:[], timeline:[], npcs:[], changes:[], knowledge:[], discoveries:[]
+      regions:[], factions:[], events:[], settlements:[], merchants:[], timeline:[], npcs:[], creatures:[], changes:[], knowledge:[], discoveries:[]
     },
     campaign: {
       synopsis:String(campaign.description || campaign.synopsis || campaign.notes || ''),
@@ -50,7 +50,7 @@ export function normalizeGMWorkspace(value = {}, campaign = {}) {
     economy:{ ...defaults.economy, ...economy, routes:array(economy.routes), modifiers:array(economy.modifiers) },
     crafting:{ ...defaults.crafting, ...crafting, projects:array(crafting.projects), recipes:array(crafting.recipes), enchantments:array(crafting.enchantments) },
     gameplay:{ ...defaults.gameplay, ...gameplay, encounterTemplates:array(gameplay.encounterTemplates), lootTables:array(gameplay.lootTables), rewardBundles:array(gameplay.rewardBundles), guildContracts:array(gameplay.guildContracts), professionAssignments:array(gameplay.professionAssignments) },
-    world:{ ...defaults.world, ...world, regions:array(world.regions), factions:array(world.factions), events:array(world.events), settlements:array(world.settlements), merchants:array(world.merchants), timeline:array(world.timeline), npcs:array(world.npcs), changes:array(world.changes), knowledge:array(world.knowledge), discoveries:array(world.discoveries) },
+    world:{ ...defaults.world, ...world, regions:array(world.regions), factions:array(world.factions), events:array(world.events), settlements:array(world.settlements), merchants:array(world.merchants), timeline:array(world.timeline), npcs:array(world.npcs), creatures:array(world.creatures), changes:array(world.changes), knowledge:array(world.knowledge), discoveries:array(world.discoveries) },
     campaign:{ ...defaults.campaign, ...campaignDetails }
   };
 }
@@ -112,6 +112,7 @@ export function migrateLegacyGMWorkspace({ campaign = {}, gameplay = {}, world =
     merchants:array(sourceWorld.merchants),
     timeline:array(sourceWorld.timeline),
     npcs:array(sourceWorld.npcs),
+    creatures:array(sourceWorld.creatures || sourceWorld.gm?.creatures),
     changes:array(sourceWorld.persistence?.worldChanges),
     knowledge:values(sourceWorld.knowledge),
     discoveries:array(sourceWorld.map?.discoveries)

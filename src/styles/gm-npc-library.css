@@ -1,0 +1,66 @@
+/* Digital GM Toolkit 3.1 — GM-only NPC and creature directory.
+   Does not change existing Player Dashboard, encounter mechanics or compendium. */
+.react-gm-dashboard .react-gm-npc-library{
+  display:grid;gap:17px;min-width:0;padding:clamp(15px,2.3vw,30px);
+  color:#dce9ef;background:linear-gradient(145deg,#142c3c,#081725);
+  border:1px solid rgba(125,167,192,.48);
+}
+.react-gm-library-header{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap;align-items:start;}
+.react-gm-library-header h2{font:500 clamp(1.5rem,2.8vw,2.15rem)/1.2 var(--asteria-font-display,Georgia,serif);color:#edd9b4;margin:5px 0 10px;}
+.react-gm-library-header p{font-size:.85rem;line-height:1.5;color:#bcced9;margin:0;max-width:73ch;}
+.react-gm-library-header .react-eyebrow{text-transform:uppercase;color:#a4c6d9;font-size:.73rem;letter-spacing:.09em;}
+.react-gm-library-counter{display:flex;gap:8px;flex-wrap:wrap;}
+.react-gm-library-counter span{font-size:.76rem;color:#b6cedc;background:#183247;border:1px solid #53788b;padding:9px 12px;display:flex;gap:10px;align-items:center;}
+.react-gm-library-counter strong{font-size:1.05rem;color:#ecdcb9;}
+.react-gm-library-tools,.react-gm-library-filters,.react-gm-library-create{display:flex;gap:8px;align-items:end;flex-wrap:wrap;min-width:0;}
+.react-gm-library-tools label{flex:1 1 240px;max-width:570px;display:grid;gap:6px;font-size:.84rem;color:#e4eaf2;}
+.react-gm-library-tools input,.react-gm-library-fields input,.react-gm-library-fields textarea,.react-gm-library-stats input{
+  box-sizing:border-box;width:100%;min-height:43px;background:#0a1a28;color:#eff6f9;
+  border:1px solid #65879a;padding:9px 12px;border-radius:3px;font:inherit;
+}
+.react-gm-npc-library button{
+  cursor:pointer;min-height:42px;border:1px solid #718fa3;background:#19364b;
+  color:#e4eff5;border-radius:3px;padding:8px 13px;
+  font:600 .8rem/1.3 var(--asteria-font-body,Arial,sans-serif);
+}
+.react-gm-npc-library button:hover:not(:disabled){background:#2c4b63;border-color:#b7d0dd;}
+.react-gm-npc-library button:disabled{opacity:.55;cursor:default;}
+.react-gm-npc-library button.primary{border-color:#beaa83;color:#fff0cd;background:#304151;}
+.react-gm-npc-library button.danger{border-color:#a76e75;color:#ffd7d9;}
+.react-gm-npc-library button[aria-pressed="true"]{border-color:#e3cc99;background:#354859;color:#fff0d4;}
+.react-gm-npc-library :is(button,input,textarea):focus-visible{outline:2px solid #bcefff;outline-offset:2px;}
+.react-gm-library-create small{color:#b7cbd9;font-size:.78rem;line-height:1.4;}
+.react-gm-library-result{font-size:.79rem;color:#c0d5e2;min-height:1.4em;margin:0;}
+.react-gm-library-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.react-gm-library-entry{min-width:0;display:flex;flex-direction:column;gap:11px;padding:17px;border:1px solid #527689;background:linear-gradient(140deg,#1a3449,#0e2234);}
+.react-gm-library-entry-main{display:grid;gap:8px;min-width:0;}
+.react-gm-library-title{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.react-gm-library-title strong{color:#f0dfbd;font-size:1.05rem;overflow-wrap:anywhere;}
+.react-gm-library-title span{font-size:.73rem;color:#c4d8e5;background:#25455b;border:1px solid #61899b;padding:5px 8px;}
+.react-gm-library-entry p{margin:0;font-size:.82rem;line-height:1.47;color:#c1d2dc;overflow-wrap:anywhere;}
+.react-gm-library-entry .react-gm-library-description{color:#e0e5ea;}
+.react-gm-library-entry .react-gm-library-private{color:#e0d3c0;}
+.react-gm-library-entry .react-gm-library-encounter{font-size:.76rem;color:#a3cfe4;}
+.react-gm-library-entry-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;}
+.react-gm-library-confirm{display:flex;align-items:center;flex-wrap:wrap;gap:7px;color:#f2c5c5;font-size:.79rem;}
+.react-gm-library-editor{display:grid;gap:15px;padding:18px;border:1px solid #c4ac79;background:#152c3d;}
+.react-gm-library-editor header{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;}
+.react-gm-library-editor h3{color:#eadaac;font:500 1.18rem/1.3 var(--asteria-font-display,Georgia,serif);margin:0;}
+.react-gm-library-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;}
+.react-gm-library-fields label,.react-gm-library-stats label{min-width:0;display:grid;gap:6px;font-size:.8rem;color:#d8e8f1;}
+.react-gm-library-fields textarea{resize:vertical;min-height:65px;}
+.react-gm-library-stats{border:1px solid #567c90;min-width:0;padding:12px;display:grid;gap:10px;}
+.react-gm-library-stats legend{color:#eadcbb;font-size:.92rem;padding-inline:8px;}
+.react-gm-library-stats p{margin:0;color:#b9d4e4;font-size:.78rem;line-height:1.4;}
+.react-gm-library-stats>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;}
+.react-gm-library-editor-actions{display:flex;flex-wrap:wrap;gap:10px;}
+.react-gm-library-empty{margin:0;padding:16px;border:1px dashed #69889a;color:#bad0dc;}
+.react-gm-library-note{margin:0;font-size:.79rem;line-height:1.5;color:#aabfcb;}
+@media(max-width:980px){.react-gm-library-list{grid-template-columns:1fr;}}
+@media(max-width:680px){
+  .react-gm-library-fields{grid-template-columns:1fr;}
+  .react-gm-library-stats>div{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .react-gm-library-tools button,.react-gm-library-create button{flex:1 1 135px;}
+  .react-gm-library-entry{padding:13px;}
+}
+@media(prefers-reduced-motion:reduce){.react-gm-npc-library button{transition:none!important;}}

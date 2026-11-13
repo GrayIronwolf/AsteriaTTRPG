@@ -28,7 +28,8 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
       {id:'party',label:'Party Inventory',tab:'inventory',description:'Review linked characters and their inventory.',keywords:'pc equipment player items'},
       {id:'campaign-manager',label:'Campaign Manager',tab:'tools',description:'Campaign details, linked accounts and party membership.',keywords:'players invitations management'},
       {id:'rewards',label:'Rewards & Advancement',tab:'tools',description:'Existing GM reward tools, magic rewards and character management.',keywords:'xp loot award titles magic'},
-      {id:'gameplay',label:'Gameplay Systems',tab:'gameplay',description:'Manage existing gameplay records and system settings.',keywords:'systems templates encounter'}
+      {id:'gameplay',label:'Gameplay Systems',tab:'gameplay',description:'Manage existing gameplay records and system settings.',keywords:'systems templates encounter'},
+      {id:'npc-library',label:'NPC & Creature Library',tab:'bestiary',description:'Find campaign NPCs and creatures alongside the official Asteria bestiary.',keywords:'npc creature monsters bestiary characters library'}
     ]
   }),
   defineGroup({
