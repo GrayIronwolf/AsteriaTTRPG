@@ -47,6 +47,7 @@ export const firebaseService = {
   managePartyStash: (campaignId,scope,action) => requireMethod('managePartyStash')(campaignId,scope,action),
   managePartyLootDrop: (campaignId,scope,action) => requireMethod('managePartyLootDrop')(campaignId,scope,action),
   claimPartyLoot: (campaignId,characterId,action) => requireMethod('claimPartyLoot')(campaignId,characterId,action),
+  votePartyLoot: (campaignId,characterId,action) => requireMethod('votePartyLoot')(campaignId,characterId,action),
   movePartyStashItem: (campaignId,characterId,action) => requireMethod('movePartyStashItem')(campaignId,characterId,action),
   splitPartyLootCurrency: (campaignId,scope,action) => requireMethod('splitPartyLootCurrency')(campaignId,scope,action),
   syncCampaignItemPrivacy: (campaignId, characterId) => requireMethod('syncCampaignItemPrivacy')(campaignId, characterId),
