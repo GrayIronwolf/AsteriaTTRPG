@@ -77,7 +77,7 @@ test('Phase 9.2: server actions are authoritative and maintain owner/GM permissi
   assert.match(source,/verifyLiveTradeCounterparty\(tx,campaignId,winnerCharacterId/);
   assert.match(source,/requireLiveSession\(tx,campaignId\)/);
   assert.match(source,/distribution\?\.status==='open'/);
-  assert.match(source,/type==='award-distribution'/);
+  assert.match(source,/awardLootDistribution\(hidden\.distribution,winnerCharacterId\)/);
   assert.match(source,/writeLiveCharacter\(tx,refs,character\)/);
   assert.match(source,/claimedByCharacterId:winnerCharacterId/);
   assert.match(source,/appendActivity\(character,\{type:'party-loot-vote'/);
