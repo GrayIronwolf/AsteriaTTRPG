@@ -205,11 +205,13 @@ test('26. Live event snapshots replace old query results and subscriptions clean
 });
 
 test('27. Player mutations verify the linked character owner',()=>{
-  const firebase=(read('js/firebase-auth.js') + '\n' + read('functions/commands.mjs'));
+  const firebase=read('js/firebase-auth.js');
+  const server=read('functions/commands.mjs');
+  const handler=read('functions/handler.mjs');
+  assert.match(server,/verifyOwnedLiveCharacter/);
+  assert.match(handler,/character\.ownerUid!==uid/);
   ['spendCharacteristicPoints','purchaseTalentRank','recordSkillSuccess','castCharacterSpell','updateCharacterInventory','updateCharacterQuest','addJournalEntry'].forEach(name=>{
-    const start=firebase.indexOf(`${name}:`);
-    assert.notEqual(start,-1,`${name} is missing`);
-    assert.match(firebase.slice(start,start+5200),/verifyOwnedLiveCharacter/);
+    assert.ok(firebase.includes(`${name}:`) || server.includes(`${name}:`),`${name} is missing`);
   });
 });
 

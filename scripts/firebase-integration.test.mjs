@@ -2586,3 +2586,46 @@ test('Phase 5.2: cancelled and stale merchant offers cannot charge or move inven
   assert.equal(blocked.ok,false);
   assert.equal((await db.doc('campaigns/c/characters/a').get()).data().coins.copper,100);
 });
+
+
+test('Phase 5.3: GMs alone store secret item notes and players see only revealed lore',async()=>{
+  const denied=await action('alice','manageItemLore',['c','a',{type:'save',characterId:'a',itemId:'sword',
+    lore:{curse:'Moonlit curse',hiddenProperties:'Forbidden magic'}}]);
+  assert.equal(denied.ok,false);
+  const saved=await action('gm','manageItemLore',['c','gm-scope',{type:'save',characterId:'a',itemId:'sword',
+    lore:{curse:'Moonlit curse',hiddenProperties:'Forbidden magic',gmNotes:'GM secret',originalOwner:'Old king'}}]);
+  assert.equal(saved.ok,true,saved.error);
+  const secretPath='campaigns/c/itemLore/a__sword';
+  const publicPath='campaigns/c/itemDiscoveries/a__sword';
+  await assertFails(getDoc(doc(user('alice'),secretPath)));
+  await assertFails(getDoc(doc(user('bob'),secretPath)));
+  await assertSucceeds(getDoc(doc(user('gm'),secretPath)));
+  await assertFails(setDoc(doc(user('alice'),publicPath),{ownerUid:'alice',revealedLore:['forged']}));
+  const found=await action('gm','manageItemLore',['c','gm-scope',{type:'reveal',characterId:'a',itemId:'sword',
+    description:'The maker mark belongs to an ancient forge.'}]);
+  assert.equal(found.ok,true,found.error);
+  const publicRecord=(await assertSucceeds(getDoc(doc(user('alice'),publicPath)))).data();
+  const ownerList=await assertSucceeds(getDocs(query(collection(user('alice'),'campaigns/c/itemDiscoveries'),where('ownerUid','==','alice'))));
+  assert.equal(ownerList.size,1);
+  assert.deepEqual(publicRecord.revealedLore,['The maker mark belongs to an ancient forge.']);
+  assert.equal(publicRecord.curse,undefined);
+  assert.equal(publicRecord.gmNotes,undefined);
+  assert.deepEqual(publicRecord.ownershipHistory,[]);
+  await assertFails(getDoc(doc(user('bob'),publicPath)));
+  const updated=await action('gm','manageItemLore',['c','gm-scope',{type:'save',characterId:'a',itemId:'sword',
+    lore:{ownershipPublic:true}}]);
+  assert.equal(updated.ok,true,updated.error);
+  const provenance=(await db.doc(publicPath).get()).data();
+  assert.equal(provenance.ownershipHistory[0].owner,'a');
+});
+test('Phase 5.3: lore cannot be attached to missing inventory items or forged characters',async()=>{
+  const missing=await action('gm','manageItemLore',['c','gm-scope',{
+    type:'save',characterId:'a',itemId:'not-owned',lore:{gmNotes:'none'}
+  }]);
+  assert.equal(missing.ok,false);
+  const unauthorized=await action('bob','manageItemLore',['c','b',{
+    type:'reveal',characterId:'a',itemId:'sword',description:'forged lore'
+  }]);
+  assert.equal(unauthorized.ok,false);
+  assert.equal((await db.collection('campaigns/c/itemLore').get()).size,0);
+});

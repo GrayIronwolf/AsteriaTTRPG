@@ -10,6 +10,7 @@ import { inventoryItems } from './characterWorkspaceData.js';
 import { SendPlayerItemModal } from './PlayerItemExchange.jsx';
 import { ShopWorkspace } from './ShopWorkspace.jsx';
 import { PartyLootPlayerPanel } from './PartyLootWorkspace.jsx';
+import {PlayerItemLoreWorkspace} from './ItemLoreWorkspace.jsx';
 import { createAsteriaItem, formatMarks, getInventoryResaleValue, marketPricingStatus, validateMarketPricing } from '../systems/items/marketPricing.mjs';
 import { INVENTORY_CATEGORIES, matchesInventoryFilter, inventoryQuickActionAvailability, availableInventoryEquipmentSlots } from '../state/inventoryQuickActions.mjs';
 import {inventoryActivityRecords,inventoryActivityDelta} from '../state/inventoryActivityModel.mjs';
@@ -625,6 +626,7 @@ export function InventoryWorkspace({ campaignId, character, characters, ecosyste
       <PartyInventoryPanel character={character} characters={characters} items={items} editable={editable} dragged={dragged} onOffer={(target, item, mode) => setOffer({ target, item, mode })} />
 
       {campaignId?<div className="react-inventory-merchants"><ShopWorkspace campaignId={campaignId} character={character} ecosystem={ecosystem} editable={editable} requestedSale={saleRequest}/></div>:null}
+      {campaignId?<PlayerItemLoreWorkspace campaignId={campaignId} character={character}/>:null}
       {campaignId?<div className="react-inventory-party-loot"><PartyLootPlayerPanel campaignId={campaignId} character={character} partyLoot={partyLoot} editable={editable}/></div>:null}
     </div>
     <p className="react-action-message" role="status" aria-live="polite">{message}</p>
