@@ -50,7 +50,9 @@ test('Named Focus snapshots persist across normalisation and restore original GM
   const reopened=activateNamedGMFocus(switched,'focus-council').layout;
   assert.deepEqual(gmFocusSnapshot(reopened),normalized.focusModes[0].layout);
   assert.equal(reopened.activeFocusId,'focus-council');
-  assert.deepEqual(leaveGMFocus(reopened).layout,layout);
+  const restored=leaveGMFocus(reopened).layout;
+  assert.deepEqual(gmFocusSnapshot(restored),layout);
+  assert.equal(restored.focusModes.length,1,'Returning to normal preserves the saved Focus library');
 });
 
 test('Focus mode switching keeps desktop, tablet and mobile choices instead of overwriting one viewport',()=>{
