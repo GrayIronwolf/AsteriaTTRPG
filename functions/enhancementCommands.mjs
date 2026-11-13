@@ -7,6 +7,7 @@ import {
   applyApprovedEnhancement
 } from '../src/state/itemEnhancementModel.mjs';
 import {applyResourceChanges,resourceSnapshot} from '../src/state/resourceEngine.mjs';
+import {normalizeCraftingStation,stationAccessible} from '../src/state/craftingServicesModel.mjs';
 
 export function createEnhancementCommands(context,helpers){
   const {db,currentUser,requestId,doc,runTransaction,serverTimestamp}=context;
@@ -14,6 +15,12 @@ export function createEnhancementCommands(context,helpers){
     verifyOwnedLiveCharacter,writeLiveCharacter,characterInventory,
     liveItemId,appendActivity}=helpers;
   const exists=row=>typeof row?.exists==='function'?row.exists():Boolean(row?.exists);
+  const verifyStation=async(tx,campaignId,stationId,characterId)=>{
+    if(!stationId)return;
+    const snap=await tx.get(doc(db,'campaigns',campaignId,'craftingStations',stationId));
+    if(!exists(snap)||!stationAccessible(normalizeCraftingStation(snap.data(),stationId,snap.data()),characterId))
+      throw Error('The enhancement station is unavailable to this character.');
+  };
   const validId=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(value);
   return {
     manageEnhancementPlan:async(campaignId,_scope,action={})=>{
@@ -32,6 +39,10 @@ export function createEnhancementCommands(context,helpers){
             return {id:planId,status:'deleted'};
           }
           const plan=normalizeEnhancementPlan(action.plan||{},planId,exists(before)?before.data():{});
+          if(plan.stationId){
+            const station=await tx.get(doc(db,'campaigns',campaignId,'craftingStations',plan.stationId));
+            if(!exists(station))throw Error('Choose an existing station.');
+          }
           // Never publish invalid enchanted material costs or mana ranges.
           if(plan.mode==='enchantment')enchantmentPreview(plan,'Extreme');
           if(JSON.stringify(plan).length>16000)throw Error('Enhancement plan too large.');
@@ -66,6 +77,7 @@ export function createEnhancementCommands(context,helpers){
             throw Error('Only the character owner can request enhancements.');
           await verifyOwnedLiveCharacter(tx,campaignId,characterId,character,refs);
           const plan=normalizeEnhancementPlan(planSnap.data(),action.planId,planSnap.data());
+          await verifyStation(tx,campaignId,plan.stationId,characterId);
           const inventory=characterInventory(character);
           const targetIndex=inventory.findIndex((row,index)=>
             liveItemId(row,index)===action.itemId);
@@ -127,6 +139,7 @@ export function createEnhancementCommands(context,helpers){
           const plan=normalizeEnhancementPlan(planSnap.data(),request.planId,planSnap.data());
           if(enhancementPlanSignature(original)!==enhancementPlanSignature(plan))
             throw Error('The enhancement plan changed. Request a fresh review.');
+          await verifyStation(tx,campaignId,plan.stationId,request.characterId);
           const inventory=characterInventory(character);
           const index=inventory.findIndex((row,i)=>liveItemId(row,i)===request.itemId);
           if(index<0)throw Error('The target item no longer exists.');
