@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {craftingInventoryPlan} from '../state/craftingRecipeModel.mjs';
+import {pendingActionKeys,actionKey} from '../state/inventoryPresentationModel.mjs';
 import {stationAccessible} from '../state/craftingServicesModel.mjs';
 import {EmptyState,Panel,StatusPill} from '../components/WorkspaceUI.jsx';
 
@@ -191,7 +192,11 @@ export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
     return()=>{off0();off1();off2();};
   },[campaignId]);
   const inventory=useMemo(()=>inventoryItems(character),[character]);
-  const visible=recipes.filter(recipe=>String(recipe.name||'').toLowerCase().includes(search.trim().toLowerCase()));
+  const deferredSearch=React.useDeferredValue(search);
+  const visible=useMemo(()=>recipes.filter(recipe=>String(recipe.name||'').toLowerCase()
+    .includes(deferredSearch.trim().toLowerCase())),[recipes,deferredSearch]);
+  const stationsById=useMemo(()=>new Map(stations.map(s=>[s.id,s])),[stations]);
+  const pending=useMemo(()=>pendingActionKeys(requests,'recipeId','characterId',character.id),[requests,character.id]);
   const request=async recipe=>{
     if(busy||!editable)return;
     setBusy(true);
@@ -210,10 +215,9 @@ export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
     <div className="react-crafting-recipe-list">
       {visible.map(recipe=>{
         const plan=craftingInventoryPlan(recipe,inventory);
-        const station=recipe.stationId?stations.find(s=>s.id===recipe.stationId):null;
+        const station=recipe.stationId?stationsById.get(recipe.stationId):null;
         const stationReady=!recipe.stationId||stationAccessible(station,character.id);
-        const pending=requests.some(row=>row.recipeId===recipe.id&&
-          row.characterId===character.id&&row.status==='pending');
+        const awaiting=pending.has(actionKey(recipe.id,character.id));
         return <article key={recipe.id}>
           <div className="react-record-heading"><h3>{recipe.name}</h3>
             <StatusPill tone={plan.ready?'success':'warning'}>{plan.ready?'Materials Ready':'Materials Missing'}</StatusPill>
@@ -224,8 +228,8 @@ export function PlayerCraftingRecipes({campaignId,character={},editable=false}){
           <RecipeMaterials recipe={recipe} plan={plan}/>
           <p><b>Output:</b> {recipe.output?.name} ×{recipe.output?.quantity}</p>
           <button type="button" className="primary"
-            disabled={!editable||busy||!plan.ready||!stationReady||pending} onClick={()=>request(recipe)}>
-            {pending?'Awaiting GM Approval':'Request Crafting'}
+            disabled={!editable||busy||!plan.ready||!stationReady||awaiting} onClick={()=>request(recipe)}>
+            {awaiting?'Awaiting GM Approval':'Request Crafting'}
           </button>
         </article>;
       })}
