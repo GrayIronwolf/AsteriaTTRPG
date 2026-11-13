@@ -6,7 +6,7 @@ import {inventoryItems} from './characterWorkspaceData.js';
 import {normalizeCharacterStorages} from '../state/liveWorkspaceModel.mjs';
 import {splitPartyCopper} from '../state/partyLootModel.mjs';
 import {eligibleLootWinners,publicLootVoteSummary,lootVoteTally} from '../state/partyLootDistributionModel.mjs';
-import {playerStashItems,playerAvailableLoot,gmVisibleStashes,gmLootReviewRows} from '../state/partyLootViewModel.mjs';
+import {playerStashItems,playerAvailableLoot,playerAwardedLoot,gmVisibleStashes,gmLootReviewRows} from '../state/partyLootViewModel.mjs';
 import {lootDestinationOptions,lootEquipmentComparison} from '../state/lootCollectionModel.mjs';
 
 const arr=value=>Array.isArray(value)?value:[];
@@ -87,7 +87,7 @@ function StashInventoryList({stash,query=''}){
   </div>;
 }
 
-export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable=false}){
+export function PartyLootPlayerPanel({campaignId,character,characters={},partyLoot={},editable=false}){
   const stashes=arr(partyLoot.stashes).filter(row=>row.status!=='deleted');
   const [lootSearch,setLootSearch]=useState('');
   const [lootKind,setLootKind]=useState('all');
@@ -320,6 +320,13 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
           {lootSearch||lootKind!=='all'?'Clear the filters to see other revealed treasure.':'New treasure appears here when the GM reveals it.'}
         </EmptyState>:null}
       </div>
+      {playerAwardedLoot(partyLoot).length?<section className="react-party-loot-awarded-list" aria-label="Recently distributed treasure">
+        <h3>Recently Distributed Treasure</h3>
+        {playerAwardedLoot(partyLoot).map(row=><p key={row.id}>
+          <b>{row.title}</b> · {row.itemName} · Awarded to{' '}
+          <b>{characters[row.winnerCharacterId]?.name||'Party member'}</b>
+        </p>)}
+      </section>:null}
       <p role="status" className="react-action-message" aria-live="polite">{voteMessage||message}</p>
     </Panel>
   </section>;
