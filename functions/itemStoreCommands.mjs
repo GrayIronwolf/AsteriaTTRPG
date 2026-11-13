@@ -195,6 +195,10 @@ export function createItemStoreCommands({db,currentUser,requestId,doc,runTransac
           }
           const previous=exists(previousSnap)?previousSnap.data():{};
           const recipe=normalizeCraftingRecipe(action.recipe||{},recipeId,previous);
+          if(recipe.stationId){
+            const station=await tx.get(doc(db,'campaigns',campaignId,'craftingStations',recipe.stationId));
+            if(!exists(station))throw Error('Choose an existing crafting station.');
+          }
           recipe.createdAt=previous.createdAt||Date.now();
           if(JSON.stringify(recipe).length>18000)
             throw Error('This recipe definition is too large.');
