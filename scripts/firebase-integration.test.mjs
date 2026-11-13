@@ -2539,3 +2539,48 @@ test('Phase 5.1: chest cannot be deleted with outstanding contents and players c
   assert.equal(withdrawal.ok,false);
   assert.match(withdrawal.error,/closed/);
 });
+
+
+test('Phase 5.2: merchant proposals remain private and require GM-approved atomic settlement',async()=>{
+  await db.doc('campaigns/c/shops/smith').set({
+    id:'smith',name:'Village Smith',status:'open',currencyCopper:1000,buyModifier:1,sellModifier:1,
+    stock:[{qty:2,item:{name:'Iron Sword',definitionId:'base:sword',marketPrice:1,marketValue:.5}}]
+  });
+  const offered=await action('alice','createMerchantDeal',['c','a','smith',0,{quantity:1,offeredCopper:30,note:'A fair price?'}]);
+  assert.equal(offered.ok,true,offered.error);
+  const deal=offered.deal;
+  assert.equal(deal.status,'pending');
+  const ref=db.doc('campaigns/c/merchantDeals/'+deal.id);
+  await assertSucceeds(getDoc(doc(user('alice'),ref.path)));
+  await assertFails(getDoc(doc(user('bob'),ref.path)));
+  await assertFails(updateDoc(doc(user('alice'),ref.path),{status:'approved'}));
+  const before=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(before.coins.copper,100);
+  assert.equal((await action('bob','respondMerchantDeal',['c','gm-scope',deal.id,'approve'])).ok,false);
+  const settled=await action('gm','respondMerchantDeal',['c','gm-scope',deal.id,'approve']);
+  assert.equal(settled.ok,true,settled.error);
+  const character=(await db.doc('campaigns/c/characters/a').get()).data();
+  assert.equal(character.coins.copper,70);
+  assert.deepEqual((await db.doc('users/alice/characters/a').get()).data().inventory,character.inventory);
+  assert.equal((await db.doc('campaigns/c/shops/smith').get()).data().stock[0].qty,1);
+  assert.equal((await ref.get()).data().status,'approved');
+  assert.equal((await action('gm','respondMerchantDeal',['c','gm-scope',deal.id,'approve'])).ok,false);
+});
+
+test('Phase 5.2: cancelled and stale merchant offers cannot charge or move inventory',async()=>{
+  await db.doc('campaigns/c/shops/market').set({
+    id:'market',name:'Market',status:'open',currencyCopper:200,buyModifier:1,sellModifier:1,
+    stock:[{qty:1,item:{name:'Potion',definitionId:'base:potion',marketPrice:1,marketValue:.5}}]
+  });
+  const offer=await action('alice','createMerchantDeal',['c','a','market',0,{quantity:1,offeredCopper:25}]);
+  assert.equal(offer.ok,true,offer.error);
+  const cancelled=await action('alice','cancelMerchantDeal',['c','a',offer.deal.id]);
+  assert.equal(cancelled.ok,true,cancelled.error);
+  assert.equal((await action('gm','respondMerchantDeal',['c','gm-scope',offer.deal.id,'approve'])).ok,false);
+  const pending=await action('alice','createMerchantDeal',['c','a','market',0,{quantity:1,offeredCopper:25}]);
+  assert.equal(pending.ok,true,pending.error);
+  await db.doc('campaigns/c/shops/market').update({'stock.0.qty':0});
+  const blocked=await action('gm','respondMerchantDeal',['c','gm-scope',pending.deal.id,'approve']);
+  assert.equal(blocked.ok,false);
+  assert.equal((await db.doc('campaigns/c/characters/a').get()).data().coins.copper,100);
+});
