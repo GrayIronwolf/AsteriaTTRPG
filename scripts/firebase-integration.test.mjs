@@ -2692,3 +2692,88 @@ test('Phase 6.1: preview is receipt-safe and never mints items, currency or publ
   }]);
   assert.equal(archived.ok,false);
 });
+
+
+test('Phase 6.2: GM generates hidden table treasure and reveals it through existing party loot',async()=>{
+  const table={name:'Forest Chest',location:'Old Forest',threatTier:2,status:'active',
+    entries:[{id:'sword',kind:'item',weight:1,name:'Iron Sword',
+      definitionId:'base:sword',minQuantity:2,maxQuantity:2,note:'Secret relic'}]};
+  const saved=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'forest',expectedRevision:0,table
+  }]);
+  assert.equal(saved.ok,true,saved.error);
+  const forbidden=await action('alice','manageLootTable',['c','a',{
+    type:'generate',tableId:'forest',expectedRevision:1
+  }]);
+  assert.equal(forbidden.ok,false);
+  const generated=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'generate',tableId:'forest',expectedRevision:1
+  }],'phase62-generate-1');
+  assert.equal(generated.ok,true,generated.error);
+  assert.equal(generated.generated,true);
+  assert.equal(generated.roll.item.quantity,2);
+  const lootId=generated.lootId;
+  const draftPath='campaigns/c/partyLootDrafts/'+lootId;
+  const publicPath='campaigns/c/partyLoot/'+lootId;
+  assert.equal((await db.doc(publicPath).get()).exists,false);
+  const draft=(await db.doc(draftPath).get()).data();
+  assert.equal(draft.visibility,'hidden');
+  assert.equal(draft.secretItem.qty,2);
+  assert.equal(draft.generatedFrom.tableId,'forest');
+  await assertFails(getDoc(doc(user('alice'),draftPath)));
+  await assertSucceeds(getDoc(doc(user('gm'),draftPath)));
+  const replay=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'generate',tableId:'forest',expectedRevision:1
+  }],'phase62-generate-1');
+  assert.deepEqual(replay,generated);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,1);
+  const revealed=await action('gm','managePartyLootDrop',['c','gm-scope',{type:'reveal',lootId}]);
+  assert.equal(revealed.ok,true,revealed.error);
+  const publicDrop=(await assertSucceeds(getDoc(doc(user('alice'),publicPath)))).data();
+  assert.equal(publicDrop.generatedFrom,undefined);
+  assert.equal(publicDrop.secretItem,undefined);
+  assert.equal(publicDrop.item.qty,2);
+  assert.equal(publicDrop.status,'available');
+});
+
+test('Phase 6.2: generated zero-copper and empty results create no party loot',async()=>{
+  for(const [id,entry] of [
+    ['empty',{id:'empty',kind:'nothing',weight:1,note:'nothing'}],
+    ['zero',{id:'zero',kind:'currency',weight:1,minCopper:0,maxCopper:0,note:''}]
+  ]){
+    const saved=await action('gm','manageLootTable',['c','gm-scope',{
+      type:'save',tableId:id,expectedRevision:0,table:{
+        name:id,threatTier:1,status:'active',entries:[entry]
+      }
+    }]);
+    assert.equal(saved.ok,true,saved.error);
+    const result=await action('gm','manageLootTable',['c','gm-scope',{
+      type:'generate',tableId:id,expectedRevision:1
+    }]);
+    assert.equal(result.ok,true,result.error);
+    assert.equal(result.generated,false);
+    assert.equal(result.lootId,null);
+  }
+  assert.equal((await db.collection('campaigns/c/partyLoot').get()).size,0);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
+});
+
+test('Phase 6.2: generation refuses archived and stale table revisions',async()=>{
+  const table={name:'Coin Cache',threatTier:1,status:'active',
+    entries:[{id:'coin',kind:'currency',weight:1,minCopper:10,maxCopper:10,note:''}]};
+  assert.equal((await action('gm','manageLootTable',['c','gm-scope',{
+    type:'save',tableId:'coins',expectedRevision:0,table
+  }])).ok,true);
+  const stale=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'generate',tableId:'coins',expectedRevision:0
+  }]);
+  assert.equal(stale.ok,false);
+  assert.equal((await action('gm','manageLootTable',['c','gm-scope',{
+    type:'archive',tableId:'coins',expectedRevision:1
+  }])).ok,true);
+  const archived=await action('gm','manageLootTable',['c','gm-scope',{
+    type:'generate',tableId:'coins',expectedRevision:2
+  }]);
+  assert.equal(archived.ok,false);
+  assert.equal((await db.collection('campaigns/c/partyLootDrafts').get()).size,0);
+});

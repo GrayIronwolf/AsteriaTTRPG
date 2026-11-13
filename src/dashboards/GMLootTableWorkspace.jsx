@@ -49,8 +49,9 @@ export function GMLootTableWorkspace({campaignId}){
       });
       if(!response?.ok)throw Error(response?.error||'Loot-table action failed.');
       setMessage(type==='preview'?'GM roll preview generated.':
+        type==='generate'?(response.generated?'Hidden treasure generated. Reveal it in Party Stashes & Treasure when ready.':'The roll found nothing; no treasure drop was created.'):
         type==='archive'?'Loot table archived.':'Loot table saved.');
-      if(type==='preview')setPreview(response.roll);
+      if(type==='preview'||type==='generate')setPreview(response.roll);
       if(type==='save')setSelectedId(id);
     }catch(error){setMessage(error.message||'Loot-table action failed.');}
     finally{setBusy(false);}
@@ -61,7 +62,7 @@ export function GMLootTableWorkspace({campaignId}){
     <label>{label}<input type="number" min={min} max={max} step="1"
       value={row[key]} onChange={event=>updateEntry(row.id,key,event.target.value)}/></label>;
   return <Panel title="GM Loot Tables" eyebrow="Private weighted tables and non-delivering roll previews">
-    <p>Use tables to prepare random treasure for an encounter or location. Rolling only previews the result; it never transfers loot or modifies a character.</p>
+    <p>Preview rolls never create treasure. Generate Hidden Treasure creates a GM-only draft in the existing Party Stashes & Treasure manager; only the GM can reveal it, and players must claim or receive it through the existing secure workflow.</p>
     <div className="react-form-grid">
       <label>Saved table<select value={selectedId} onChange={event=>setSelectedId(event.target.value)}>
         <option value="">Create new table</option>
@@ -112,14 +113,16 @@ export function GMLootTableWorkspace({campaignId}){
         onClick={()=>act('save')}>Save Loot Table</button>
       <button type="button" disabled={busy||!selected||selected.status!=='active'}
         onClick={()=>act('preview')}>Roll Preview</button>
+      <button type="button" disabled={busy||!selected||selected.status!=='active'}
+        onClick={()=>act('generate')}>Generate Hidden Treasure</button>
       <button type="button" className="danger" disabled={busy||!selected||selected.status==='archived'}
         onClick={()=>act('archive')}>Archive</button>
     </div>
     {preview?<section className="react-action-message" role="status">
-      <h4>Private roll result</h4>
+      <h4>Latest GM roll</h4>
       <p>{preview.kind==='item'?preview.item.quantity+' × '+preview.item.name:
         preview.kind==='currency'?preview.currencyCopper.toLocaleString()+' copper':'Nothing found'}</p>
-      <small>Table weight {preview.weight}/{preview.totalWeight}; no reward delivered.</small>
+      <small>Table weight {preview.weight}/{preview.totalWeight}. Generated drops stay hidden until revealed in Party Stashes & Treasure.</small>
     </section>:null}
     {message?<p className="react-action-message" role="status">{message}</p>:null}
   </Panel>;

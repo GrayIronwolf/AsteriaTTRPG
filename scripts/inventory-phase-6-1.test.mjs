@@ -61,5 +61,6 @@ test('Phase 6.1: table secrets are GM-readable and writes are server-only',()=>{
   assert.match(handler,/manageLootTable/);
   assert.match(server,/requireCampaignGM\(tx,campaignId\)/);
   assert.match(server,/randomInt/);
-  assert.doesNotMatch(server,/placeCharacterItem|setCurrencyTotal|partyLootDrafts|inventory\.push/);
+  // Phase 6.2 can prepare hidden party loot; Phase 6.1 previews still never directly award inventory or currency.
+  assert.doesNotMatch(server,/placeCharacterItem|setCurrencyTotal|inventory\.push/);
 });
