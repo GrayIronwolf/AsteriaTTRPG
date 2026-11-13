@@ -5,7 +5,7 @@ import {
   PARTY_LOOT_VOTE_LIMIT,PARTY_LOOT_CHOICES,validatedLootChoices,startLootDistribution,
   castLootChoice,eligibleLootWinners,awardLootDistribution,lootVoteTally,publicLootVoteSummary
 } from '../src/state/partyLootDistributionModel.mjs';
-import {playerAvailableLoot} from '../src/state/partyLootViewModel.mjs';
+import {playerAvailableLoot,playerAwardedLoot} from '../src/state/partyLootViewModel.mjs';
 import {inventoryActivityCategory} from '../src/state/inventoryActivityModel.mjs';
 const load=file=>readFileSync(new URL(file,import.meta.url),'utf8');
 const item={id:'sword',kind:'item',status:'available',visibility:'revealed',
@@ -93,4 +93,20 @@ test('Phase 9.2: server actions are authoritative and maintain owner/GM permissi
   assert.match(css,/\.react-party-loot-vote/);
   assert.equal(inventoryActivityCategory('party-loot-vote'),'loot');
   assert.equal(inventoryActivityCategory('party-loot-awarded'),'loot');
+});
+
+test('Phase 9.2: awarded item history exposes recipient ID without private loot metadata',()=>{
+  const awarded={loot:[
+    {id:'one',title:'The Vault',kind:'item',visibility:'revealed',status:'claimed',
+      claimedByCharacterId:'alice',distribution:{status:'awarded'},
+      item:{name:'Secret Blade',trueName:'Secret Blade',identified:false,qty:1,gmNotes:'Cursed'}},
+    {id:'two',title:'Unrevealed',kind:'item',visibility:'hidden',status:'claimed',
+      claimedByCharacterId:'bob',distribution:{status:'awarded'},item:{name:'Hidden Item'}},
+    {id:'three',title:'Direct Claim',kind:'item',visibility:'revealed',status:'claimed',
+      claimedByCharacterId:'bob',item:{name:'Iron Sword'}}
+  ]};
+  assert.deepEqual(playerAwardedLoot(awarded),[{
+    id:'one',title:'The Vault',itemName:'Unidentified Item',winnerCharacterId:'alice'
+  }]);
+  assert.equal(JSON.stringify(playerAwardedLoot(awarded)).includes('Cursed'),false);
 });
