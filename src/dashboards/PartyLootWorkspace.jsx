@@ -5,6 +5,7 @@ import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {inventoryItems} from './characterWorkspaceData.js';
 import {normalizeCharacterStorages} from '../state/liveWorkspaceModel.mjs';
 import {splitPartyCopper} from '../state/partyLootModel.mjs';
+import {eligibleLootWinners,publicLootVoteSummary,lootVoteTally} from '../state/partyLootDistributionModel.mjs';
 import {playerStashItems,playerAvailableLoot,gmVisibleStashes,gmLootReviewRows} from '../state/partyLootViewModel.mjs';
 import {lootDestinationOptions,lootEquipmentComparison} from '../state/lootCollectionModel.mjs';
 
@@ -12,6 +13,72 @@ const arr=value=>Array.isArray(value)?value:[];
 const validQty=value=>Number.isSafeInteger(Number(value))&&Number(value)>0&&Number(value)<=1000000;
 const labels={item:'Item',currency:'Currency'};
 const named=row=>row?.identified===false?'Unidentified Item':row?.name||row?.title||'Item';
+function GMPartyLootDistributionControls({campaignId,gmScope,drop,privateDrop,characters,editable,busy,run}){
+  const [winnerId,setWinnerId]=useState('');
+  const [storageId,setStorageId]=useState('');
+  const [review,setReview]=useState(false);
+  const active=drop.distribution?.status==='open';
+  const privateDistribution=privateDrop?.distribution?.status==='open'?privateDrop.distribution:null;
+  const validRound=active&&privateDistribution?.roundId===drop.distribution?.roundId;
+  const eligible=validRound?eligibleLootWinners(privateDistribution):[];
+  const winner=eligible.find(row=>row.characterId===winnerId);
+  const winnerCharacter=characters[winner?.characterId]||null;
+  const storageOptions=winnerCharacter?normalizeCharacterStorages(winnerCharacter):[];
+  const selectedStorage=storageOptions.find(row=>row.id===storageId)||null;
+  const tally=validRound?lootVoteTally(privateDistribution):drop.distribution?.tally||{need:0,greed:0,pass:0};
+  const award=async()=>{
+    if(!winner||!selectedStorage||!editable||busy)return;
+    const success=await run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{
+      type:'award-distribution',lootId:drop.id,
+      winnerCharacterId:winner.characterId,storageId:selectedStorage.id
+    }));
+    if(success)setReview(false);
+  };
+  if(drop.kind!=='item'||drop.status!=='available')return null;
+  if(!active)return <button type="button" disabled={!editable||busy}
+    onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{
+      type:'start-distribution',lootId:drop.id
+    }))}>Start Need / Greed / Pass</button>;
+  return <section className="react-party-loot-review" aria-label={'GM distribution review for '+drop.title}>
+    <h4>Party Loot Distribution</h4>
+    <p>Need {tally.need||0} · Greed {tally.greed||0} · Pass {tally.pass||0}</p>
+    {validRound?<div className="react-party-loot-review-choices">
+      {Object.entries(privateDistribution.choices||{}).map(([characterId,choice])=>
+        <p key={characterId}><b>{characters[characterId]?.name||'Unlinked character'}</b>
+          {' — '}{choice.toUpperCase()}</p>)}
+      {!Object.keys(privateDistribution.choices||{}).length?<p>No player choices yet.</p>:null}
+    </div>:<p className="react-storage-warning">Awaiting current GM-only choice records.</p>}
+    {eligible.length?<div className="react-party-loot-review-form">
+      <label>Choose recipient<select value={winnerId}
+        onChange={event=>{setWinnerId(event.target.value);setStorageId('');setReview(false);}}>
+        <option value="">Select a character</option>
+        {eligible.map(row=><option key={row.characterId} value={row.characterId}>
+          {characters[row.characterId]?.name||row.characterId} ({row.choice.toUpperCase()})
+        </option>)}
+      </select></label>
+      {winner?<label>Recipient storage<select value={storageId}
+        onChange={event=>{setStorageId(event.target.value);setReview(false);}}>
+        <option value="">Choose an inventory container</option>
+        {storageOptions.map(storage=><option key={storage.id} value={storage.id}>{storage.name}</option>)}
+      </select></label>:null}
+      {!review?<button type="button" disabled={!editable||busy||!winner||!selectedStorage}
+        onClick={()=>setReview(true)}>Review Award</button>:
+        <div className="react-party-loot-review-confirm">
+          <p>Confirm award of <b>{drop.item?.identified===false?'Unidentified Item':named(drop.item)}</b>
+            {' to '}<b>{winnerCharacter?.name||winner?.characterId}</b> ({winner?.choice.toUpperCase()})
+            {' in '}<b>{selectedStorage?.name}</b>.</p>
+          <button className="primary" type="button" disabled={busy||!editable}
+            onClick={award}>Confirm &amp; Award</button>
+          <button type="button" disabled={busy} onClick={()=>setReview(false)}>Cancel Review</button>
+        </div>}
+    </div>:<p className="react-help">A player must choose Need or Greed before an award can be made.</p>}
+    <button type="button" disabled={busy||!editable}
+      onClick={()=>{setReview(false);run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{
+        type:'cancel-distribution',lootId:drop.id
+      }));}}>Cancel Distribution</button>
+  </section>;
+}
+
 function StashInventoryList({stash,query=''}){
   return <div className="react-party-stash-items">
     {playerStashItems(stash,query).map(item=><div key={item.id}><b>{item.name}</b><small>×{item.qty}</small></div>)}
@@ -39,6 +106,8 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
   const [lootDestination,setLootDestination]=useState('');
   const [lootBusy,setLootBusy]=useState(false);
   const [lootMessage,setLootMessage]=useState('');
+  const [voteBusyId,setVoteBusyId]=useState('');
+  const [voteMessage,setVoteMessage]=useState('');
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const stash=stashes.find(row=>row.id===selectedStash)||stashes[0];
   const item=stored.find(row=>row.id===itemId)||stored[0];
@@ -65,8 +134,23 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
     setSelectedLootId('');
     setLootMessage('');
   };
+  const voteLoot=async(drop,choice)=>{
+    if(!editable||voteBusyId||!character?.id||drop.distribution?.status!=='open')return;
+    setVoteBusyId(drop.id);
+    setVoteMessage('Saving your party loot choice...');
+    try{
+      const result=await firebaseService.votePartyLoot(campaignId,character.id,
+        {lootId:drop.id,choice});
+      setVoteMessage(result?.ok?
+        'Your choice was recorded. The GM will decide who receives the item.':
+        result?.error||'The server could not confirm this choice.');
+    }catch(error){
+      setVoteMessage((error?.message||'Choice could not be confirmed.')+
+        ' Check your party loot before trying again.');
+    }finally{setVoteBusyId('');}
+  };
   const collectLoot=async()=>{
-    if(lootBusy||!editable||!selectedLoot||!selectedLootStorage||!character?.id)return;
+    if(lootBusy||!editable||!selectedLoot||selectedLoot.distribution?.status==='open'||!selectedLootStorage||!character?.id)return;
     const lootId=selectedLoot.id,storageId=selectedLootStorage.id;
     setLootBusy(true);
     setLootMessage('Checking this treasure and destination with the server...');
@@ -112,7 +196,7 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
       footer={<div className="react-modal-actions">
         <button type="button" disabled={lootBusy} onClick={closeLoot}>Close</button>
         <button type="button" className="primary"
-          disabled={!editable||lootBusy||!selectedLootStorage}
+          disabled={!editable||lootBusy||!selectedLootStorage||selectedLoot.distribution?.status==='open'}
           onClick={collectLoot}>Claim to {selectedLootStorage?.name||'Storage'}</button>
       </div>}
     >
@@ -158,6 +242,8 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
             {selectedLootStorage.full?' · Full; matching stack merge may still be possible.':''}
           </p>:null}
         </section>
+        {selectedLoot.distribution?.status==='open'?
+          <p className="react-storage-warning">This item is awaiting GM-reviewed party distribution. Choose Need, Greed or Pass on the treasure card.</p>:null}
         {!editable?<p className="react-storage-warning">Collecting treasure requires an active, editable campaign session.</p>:null}
         {lootMessage?<p role="status" aria-live="polite">{lootMessage}</p>:null}
       </div>
@@ -205,17 +291,36 @@ export function PartyLootPlayerPanel({campaignId,character,partyLoot={},editable
             </div>
           </div>
           <strong>{drop.kind==='currency'?Number(drop.currencyCopper).toLocaleString()+' Copper':named(drop.item)+' ×'+(drop.item?.qty||1)}</strong>
-          {drop.kind==='item'?<div className="react-party-loot-collect-actions">
-            <button type="button" onClick={()=>openLoot(drop)}>Inspect Item</button>
-            <button type="button" className="primary" onClick={()=>openLoot(drop)}
-              disabled={!editable||lootBusy||!lootDestinations.length}>Collect Item</button>
-          </div>:<small>Awaiting GM currency distribution</small>}
+          {drop.kind==='item'?<>
+            {drop.distribution?.status==='open'?<section className="react-party-loot-vote">
+              <b>Party Loot: Need / Greed / Pass</b>
+              <p>{(()=>{const summary=publicLootVoteSummary(drop,character);return summary?
+                'Need '+summary.tally.need+' · Greed '+summary.tally.greed+
+                  ' · Pass '+summary.tally.pass+
+                  (summary.ownChoice?' · Your choice: '+summary.ownChoice.toUpperCase():''):
+                'Awaiting party choices';})()}</p>
+              <div className="react-party-loot-vote-actions">
+                {['need','greed','pass'].map(choice=><button type="button"
+                  key={choice} aria-pressed={publicLootVoteSummary(drop,character)?.ownChoice===choice}
+                  disabled={!editable||Boolean(voteBusyId)||lootBusy}
+                  onClick={()=>voteLoot(drop,choice)}>
+                  {choice.charAt(0).toUpperCase()+choice.slice(1)}
+                </button>)}
+              </div>
+            </section>:null}
+            <div className="react-party-loot-collect-actions">
+              <button type="button" onClick={()=>openLoot(drop)}>Inspect Item</button>
+              <button type="button" className="primary" onClick={()=>openLoot(drop)}
+                disabled={!editable||lootBusy||Boolean(voteBusyId)||!lootDestinations.length||
+                  drop.distribution?.status==='open'}>Collect Item</button>
+            </div>
+          </>:<small>Awaiting GM currency distribution</small>}
         </article>)}
         {!drops.length?<EmptyState title="No matching available treasure">
           {lootSearch||lootKind!=='all'?'Clear the filters to see other revealed treasure.':'New treasure appears here when the GM reveals it.'}
         </EmptyState>:null}
       </div>
-      <p role="status" className="react-action-message" aria-live="polite">{message}</p>
+      <p role="status" className="react-action-message" aria-live="polite">{voteMessage||message}</p>
     </Panel>
   </section>;
 }
@@ -345,7 +450,12 @@ export function GMPartyLootPanel({campaignId,characters={},partyLoot={},customIt
       <h3>Revealed Treasure</h3>
       <div className="react-party-loot-list">{filteredLoot.revealed.map(row=><article key={row.id}><div><b>{row.title}</b><small>{row.source} · {row.status}</small><strong>{row.kind==='currency'?Number(row.currencyCopper).toLocaleString()+' Copper':named(row.item)+' ×'+row.item?.qty}</strong></div>
         {row.status==='available'&&row.kind==='currency'?<button disabled={busy} onClick={()=>splitDrop(row)}>Review Currency Split</button>:null}
-        {row.status==='available'?<button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel</button>:null}
+        {row.status==='available'&&row.kind==='item'?<GMPartyLootDistributionControls
+          key={row.id} campaignId={campaignId} gmScope={gmScope} drop={row}
+          privateDrop={arr(partyLoot.drafts).find(draft=>draft.id===row.id)}
+          characters={characters} editable={editable} busy={busy} run={run}/>:null}
+        {row.distribution?.status==='awarded'?<p className="react-help">Awarded to {characters[row.claimedByCharacterId]?.name||'a party character'} by GM review.</p>:null}
+        {row.status==='available'&&row.distribution?.status!=='open'?<button disabled={busy} onClick={()=>run(()=>firebaseService.managePartyLootDrop(campaignId,gmScope,{type:'cancel',lootId:row.id}))}>Cancel</button>:null}
       </article>)}{!filteredLoot.revealed.length?<EmptyState title={revealed.length?'No matching revealed loot':'No revealed loot yet'}/>:null}</div>
       {previewDrop?<section className="react-party-currency-preview">
         <h3>Confirm Currency Split — {previewDrop.title}</h3>
