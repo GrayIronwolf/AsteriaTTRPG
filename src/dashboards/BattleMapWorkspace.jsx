@@ -75,7 +75,7 @@ function useMapMedia(campaignId,selected){
   return state;
 }
 function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
-  onFogStroke,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[]}) {
+  onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[]}) {
   const media=useMapMedia(campaignId,map),canvas=useRef(null);
   const [playing,setPlaying]=useState(true),[showGrid,setShowGrid]=useState(true);
   const pointerLast=useRef(null);
@@ -109,6 +109,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     if(isBrush){
       event.preventDefault();
       pointerLast.current=point;
+      onFogBegin?.();
       event.currentTarget.setPointerCapture?.(event.pointerId);
       onFogStroke(point,point,fogTool);
     }else if(isMeasuring)onMeasure(point);
@@ -168,7 +169,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         {fogRectangles.map((rect,index)=><rect key={index}
           x={rect.x} y={rect.y} width={rect.width} height={rect.height}/>)}
       </svg>:null}
-      {gm&&privatePins.map(pin=><span key={pin.id}
+      {gm&&!previewPlayerFog&&privatePins.map(pin=><span key={pin.id}
         className="asteria-battle-secret-pin" style={{left:pin.x+'%',top:pin.y+'%'}}
         title={pin.label+' — '+pin.note} aria-label={'GM-only '+pin.kind+': '+pin.label}>
         {pin.kind==='hazard'?'!':pin.kind==='encounter'?'E':'N'}
@@ -227,7 +228,14 @@ export function GMBattleMapManager({campaignId,characters={}}){
   const {maps,error:listenerError}=useBattleMaps(campaignId,true);
   const [selectedId,setSelectedId]=useState(''),[draft,setDraft]=useState(defaults);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
-  const [selectedTokenId,setSelectedTokenId]=useState(''),[mode,setMode]=useState('manage');
+  const [selectedTokenId,setSelectedTokenId]=useState('');
+  const [fogTool,setFogTool]=useState('token'),[fogBrush,setFogBrush]=useState(1);
+  const [previewPlayerFog,setPreviewPlayerFog]=useState(false);
+  const [measurePoints,setMeasurePoints]=useState([]);
+  const [privatePins,setPrivatePins]=useState([]),[privateNoteName,setPrivateNoteName]=useState('');
+  const [privateNoteText,setPrivateNoteText]=useState(''),[privateNoteKind,setPrivateNoteKind]=useState('note');
+  const [privateDirty,setPrivateDirty]=useState(false);
+  const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
   useEffect(()=>{
     if(selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
@@ -235,10 +243,54 @@ export function GMBattleMapManager({campaignId,characters={}}){
   useEffect(()=>{
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
-    setSelectedTokenId('');
+    setSelectedTokenId('');setFogTool('token');setPreviewPlayerFog(false);
+    setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
   },[selectedId]);
+  useEffect(()=>{
+    setPrivatePins([]);setPrivateDirty(false);
+    if(!campaignId||!selectedId)return undefined;
+    try{return firebaseService.subscribeBattleMapPrivatePins(campaignId,selectedId,pins=>{
+      setPrivatePins(pins);setPrivateDirty(false);
+    });}catch(error){setMessage(error.message);return undefined;}
+  },[campaignId,selectedId]);
   const settings=useMemo(()=>{try{return battleMapEditableSettings(draft);}catch{return null;}},[draft]);
-  const patch=values=>setDraft(previous=>({...previous,...values}));
+  const patch=values=>setDraft(previous=>{
+    if(values.gridColumns===undefined&&values.gridRows===undefined)return {...previous,...values};
+    const nextCols=values.gridColumns??previous.gridColumns;
+    const nextRows=values.gridRows??previous.gridRows;
+    try{
+      return {...previous,...values,fogCells:resizeFogCells(previous.fogCells,
+        previous.gridColumns,previous.gridRows,nextCols,nextRows)};
+    }catch{return {...previous,...values};}
+  });
+  const rememberFog=()=>{undoFog.current=[...undoFog.current.slice(-19),draft.fogCells||
+    createFogCells(draft.gridColumns,draft.gridRows)];};
+  const fogStroke=(start,end,tool)=>setDraft(previous=>({
+    ...previous,fogCells:paintFogStroke(previous.fogCells,previous.gridColumns,
+      previous.gridRows,start,end,tool,fogBrush)
+  }));
+  const setAllFog=revealed=>{
+    rememberFog();
+    patch({fogCells:createFogCells(draft.gridColumns,draft.gridRows,revealed)});
+  };
+  const undoFogStroke=()=>{
+    if(!undoFog.current.length)return;
+    const last=undoFog.current.pop();
+    patch({fogCells:last});
+  };
+  const addPrivatePin=point=>{
+    if(!privateNoteName.trim()){setMessage('Enter a GM-only pin name before placing it.');return;}
+    try{
+      const next=battleMapPrivatePins([...privatePins,{
+        id:crypto.randomUUID(),label:privateNoteName,kind:privateNoteKind,note:privateNoteText,...point
+      }]);
+      setPrivatePins(next);setPrivateDirty(true);setPrivateNoteName('');setPrivateNoteText('');
+      setMessage('Private pin placed. Save GM-only notes to persist.');
+    }catch(error){setMessage(error.message);}
+  };
+  const placeMeasurePoint=point=>setMeasurePoints(previous=>previous.length===2?[point]:[...previous,point]);
+  const measurement=measurePoints.length===2?measureGridDistance(
+    measurePoints[0],measurePoints[1],draft.gridColumns,draft.gridRows,draft.metresPerCell||1):null;
   const act=async callback=>{
     setBusy(true);setMessage('');
     try{
@@ -256,9 +308,14 @@ export function GMBattleMapManager({campaignId,characters={}}){
       const dims=await mediaDimensions(file);
       return firebaseService.uploadBattleMap(campaignId,file,settings,dims);
     });
-    if(result.ok){setFile(null);setSelectedId(result.map.id);setMode('manage');}
+    if(result.ok){setFile(null);setSelectedId(result.map.id);}
   };
-  const save=async()=>{if(settings&&selected)await act(()=>firebaseService.updateBattleMap(campaignId,selected.id,settings));};
+  const save=async()=>{if(settings&&selected){const result=await act(()=>firebaseService.updateBattleMap(campaignId,selected.id,settings));if(result.ok)undoFog.current=[];}};
+  const savePrivate=async()=>{
+    if(!selected)return;
+    const result=await act(()=>firebaseService.saveBattleMapPrivatePins(campaignId,selected.id,privatePins));
+    if(result.ok)setPrivateDirty(false);
+  };
   const remove=async()=>{
     if(!selected||!window.confirm('Permanently remove this battle map and its uploaded media?'))return;
     const result=await act(()=>firebaseService.removeBattleMap(campaignId,selected.id));
@@ -266,15 +323,15 @@ export function GMBattleMapManager({campaignId,characters={}}){
   };
   const moveToken=useCallback((id,point)=>setDraft(previous=>({...previous,tokens:previous.tokens.map(t=>t.id===id?{...t,...point}:t)})),[]);
   const viewMap=selected?{...selected,...draft}:null;
-  return <Panel title="Battle Maps & Animated Scenes" eyebrow="Digital GM Toolkit · Phase 6.1">
-    <p className="react-help">Upload a static image or a looping MP4/WebM video. Maps start GM-only. Publish a map when players should see its scene and markers. Fog of war and combat turn movement follow in phases 6.2 and 6.3.</p>
+  return <Panel title="Battle Maps & Animated Scenes" eyebrow="Digital GM Toolkit · Phase 6.2">
+    <p className="react-help">Upload a static image or a looping MP4/WebM video. Maps start GM-only. Publish a map when players should see its scene and markers. Phase 6.2 adds a visual fog overlay, scene ruler, and separate private GM annotations. Combat turn movement remains Phase 6.3.</p>
     {listenerError?<p role="alert">{listenerError}</p>:null}
     <div className="asteria-battle-form-row">
       <label>Choose a map<select value={selectedId} onChange={event=>setSelectedId(event.target.value)}>
         <option value="">New map</option>
         {maps.map(map=><option key={map.id} value={map.id}>{map.name} · {map.kind==='video'?'Animated':'Image'} · {map.visibility==='players'?'Shared':'GM only'}</option>)}
       </select></label>
-      <button type="button" disabled={busy} onClick={()=>{setSelectedId('');setMode('manage');setDraft(defaults());}}>New map</button>
+      <button type="button" disabled={busy} onClick={()=>{setSelectedId('');setDraft(defaults());}}>New map</button>
     </div>
     {!selected?<div className="asteria-battle-upload">
       <h4>Upload battle map</h4>
@@ -291,13 +348,70 @@ export function GMBattleMapManager({campaignId,characters={}}){
       <label>Grid rows<input type="number" min="1" max="80" value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
       <label>Grid opacity %<input type="number" min="0" max="100" value={draft.gridOpacity} onChange={event=>patch({gridOpacity:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.gridVisible} onChange={event=>patch({gridVisible:event.target.checked})}/> Show grid</label>
+      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" value={draft.metresPerCell}
+        onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
+      <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
+        patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
+      }}/> Enable fog of war</label>
     </div>
     <label>Map description<textarea value={draft.description} maxLength={300}
       onChange={event=>patch({description:event.target.value})}/></label>
+    {selected?<section className="asteria-battle-fog-editor" aria-label="Fog of war and map tools">
+      <h4>Fog of War & Map Tools</h4>
+      <div className="asteria-battle-form-row">
+        <label>Map interaction tool<select value={fogTool} onChange={event=>setFogTool(event.target.value)}>
+          <option value="token">Place selected token</option>
+          <option value="reveal" disabled={!draft.fogEnabled}>Reveal fog brush</option>
+          <option value="hide" disabled={!draft.fogEnabled}>Hide fog brush</option>
+          <option value="measure">Distance ruler</option>
+          <option value="pin">Place GM-only pin</option>
+        </select></label>
+        <label>Fog brush radius (squares)<input type="number" min="0" max="8" value={fogBrush}
+          onChange={event=>setFogBrush(Math.max(0,Math.min(8,Number(event.target.value)||0)))}/></label>
+        <label><input type="checkbox" checked={previewPlayerFog}
+          onChange={event=>setPreviewPlayerFog(event.target.checked)}/> Preview visible player fog</label>
+      </div>
+      {draft.fogEnabled?<div className="react-action-row">
+        <button type="button" onClick={()=>setAllFog(true)}>Reveal all</button>
+        <button type="button" onClick={()=>setAllFog(false)}>Hide all</button>
+        <button type="button" disabled={!undoFog.current.length} onClick={undoFogStroke}>Undo fog change</button>
+        <span>Revealed: {Math.round(fogRevealFraction(draft.fogCells,draft.gridColumns,draft.gridRows)*100)}%</span>
+      </div>:<p className="react-help">Enable fog to reveal or hide areas. Existing maps remain unobscured until fog is enabled.</p>}
+      {measurement?<p role="status">Ruler: {measurement.squares} squares · {measurement.metres} metres
+        <button type="button" onClick={()=>setMeasurePoints([])}>Clear ruler</button></p>:
+        <p className="react-help">Use Distance ruler and click two points to measure. A third click starts a new measurement.</p>}
+      <p className="react-help">Fog hides content visually, but cannot prevent inspection of a map image/video already delivered to a player. Do not embed unrevealed secrets in published media.</p>
+    </section>:null}
     <TokenEditor tokens={draft.tokens||[]} onChange={tokens=>patch({tokens})}
       selectedTokenId={selectedTokenId} onSelect={setSelectedTokenId} characters={characters}/>
+    {selected?<section className="asteria-battle-private-notes" aria-label="Private GM map annotations">
+      <h4>GM-only Map Pins ({privatePins.length}/40)</h4>
+      <p className="react-help">Stored in separate GM-only Firestore documents. Never included in player map data.</p>
+      <div className="asteria-battle-form-row">
+        <label>Pin name<input maxLength={70} value={privateNoteName}
+          onChange={event=>setPrivateNoteName(event.target.value)}/></label>
+        <label>Kind<select value={privateNoteKind} onChange={event=>setPrivateNoteKind(event.target.value)}>
+          <option value="note">Note</option><option value="encounter">Encounter</option>
+          <option value="hazard">Hazard</option>
+        </select></label>
+      </div>
+      <label>Private GM note<textarea maxLength={400} value={privateNoteText}
+        onChange={event=>setPrivateNoteText(event.target.value)}/></label>
+      <p className="react-help">Select Place GM-only pin, enter a name, then click on the map.</p>
+      <div className="asteria-battle-token-list">{privatePins.map(pin=><div key={pin.id}>
+        <span title={pin.note}>{pin.label} ({pin.kind})</span>
+        <button type="button" onClick={()=>{setPrivatePins(items=>items.filter(item=>item.id!==pin.id));setPrivateDirty(true);}}>Remove</button>
+      </div>)}</div>
+      <button type="button" disabled={busy||!privateDirty}
+        onClick={savePrivate}>Save GM-only notes</button>
+      {privateDirty?<p role="status">Private pin edits are not saved yet.</p>:null}
+    </section>:null}
     {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm
-      selectedTokenId={selectedTokenId} onPlaceToken={moveToken}/>:null}
+      selectedTokenId={selectedTokenId} onPlaceToken={moveToken}
+      fogTool={fogTool} onFogBegin={rememberFog} onFogStroke={fogStroke}
+      onPrivatePin={addPrivatePin} privatePins={privatePins}
+      previewPlayerFog={previewPlayerFog} onMeasure={placeMeasurePoint}
+      measurePoints={measurePoints}/>:null}
     <div className="react-action-row">
       {!selected?<button type="button" className="primary" disabled={busy||!file||!settings||maps.length>=40}
         onClick={upload}>{busy?'Uploading…':'Upload map'}</button>:
@@ -308,7 +422,6 @@ export function GMBattleMapManager({campaignId,characters={}}){
         </>}
     </div>
     {selected&&draft.visibility!==selected.visibility?<p role="status">Visibility change is not active until you save the map.</p>:null}
-    {mode==='manage'?null:null}
     {message?<p role={message==='Map saved successfully.'?'status':'alert'}>{message}</p>:null}
   </Panel>;
 }
