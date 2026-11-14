@@ -540,6 +540,12 @@ export function GMDashboard({ campaignId }) {
     [live.itemEcosystem,live.partyLoot]);
   const openGMSearchResult=result=>{
     if(!GM_TABS.some(item=>item.id===result?.tab))return;
+    // Select the requested character before opening its inventory. Reject
+    // stale results from another campaign rather than opening an unrelated PC.
+    if(result.category==='character'){
+      if(!result.id||!rawLive.characters[result.id])return;
+      setSelectedId(result.id);
+    }
     setGMSearchTarget({...result});
     setGMHubDestination(result.targetId?{tab:result.tab,targetId:result.targetId}:null);
     setTab(result.tab);
@@ -547,6 +553,7 @@ export function GMDashboard({ campaignId }) {
   const openGMHubLink=link=>{
     // The toolkit is a directory of existing GM views, not an arbitrary route.
     if(!GM_TABS.some(item=>item.id===link?.tab))return;
+    setGMSearchTarget(null);
     setGMHubDestination(link.targetId?{tab:link.tab,targetId:link.targetId}:null);
     setTab(link.tab);
   };
@@ -558,7 +565,7 @@ export function GMDashboard({ campaignId }) {
     target.focus({preventScroll:true});
     setGMHubDestination(null);
   },[tab,gmHubDestination]);
-  useEffect(()=>setGMHubDestination(null),[campaignId,accountUid]);
+  useEffect(()=>{setGMHubDestination(null);setGMSearchTarget(null);},[campaignId,accountUid]);
   useEffect(()=>{
     dashboardDraftDirty.current=false;
     dashboardDraftRevision.current++;
@@ -785,9 +792,9 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
-    <GMUnifiedSearch campaignId={campaignId} workspace={workspace} characters={live.characters}
-      itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
-    <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
+    <GMUnifiedSearch campaignId={campaignId} workspace={workspace}
+      characters={rawLive.characters} itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
+    <DashboardNavigation tabs={GM_TABS} active={tab} onChange={next=>{setGMSearchTarget(null);setGMHubDestination(null);setTab(next);}} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
       onOpenEncounter={()=>setTab('main')} onOpenWorld={()=>setTab('world')} /> : null}
