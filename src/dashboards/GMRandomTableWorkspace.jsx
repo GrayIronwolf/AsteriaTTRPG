@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {
@@ -27,6 +27,7 @@ export function GMRandomTableWorkspace({campaignId}){
   const [draft,setDraft]=useState(draftTable);
   const [rolls,setRolls]=useState(1),[preview,setPreview]=useState(null);
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
+  const pendingDraft=useRef(null);
   const selected=tables.find(row=>row.id===selectedId)||null;
   const editableSelected=selected?.status!=='archived';
   const totalWeight=draft.entries.reduce((sum,row)=>sum+(Number(row.weight)||0),0);
@@ -43,7 +44,8 @@ export function GMRandomTableWorkspace({campaignId}){
     return()=>stops.forEach(stop=>stop?.());
   },[campaignId]);
   useEffect(()=>{
-    setDraft(selected?editable(selected):draftTable());
+    if(pendingDraft.current){setDraft(pendingDraft.current);pendingDraft.current=null;}
+    else setDraft(selected?editable(selected):draftTable());
     setPreview(null);setMessage('');setError('');
   },[selectedId,selected?.revision]);
   const patch=(key,value)=>setDraft(old=>({...old,[key]:value}));
@@ -54,13 +56,15 @@ export function GMRandomTableWorkspace({campaignId}){
     ...old,entries:old.entries.filter(row=>row.id!==id)
   }));
   const newTable=()=>{
+    pendingDraft.current=null;
     setSelectedId('');setDraft(draftTable());setPreview(null);setMessage('');setError('');
   };
   const duplicate=()=>{
     if(!selected)return;
-    setSelectedId('');
-    setDraft({...editable(selected),name:selected.name+' (Copy)',
-      entries:selected.entries.map(row=>({...row,id:crypto.randomUUID()}))});
+    const copy={...editable(selected),name:selected.name+' (Copy)',
+      entries:selected.entries.map(row=>({...row,id:crypto.randomUUID()}))};
+    pendingDraft.current=copy;
+    setSelectedId('');setDraft(copy);
     setPreview(null);setMessage('Copy is ready to save as a new table.');setError('');
   };
   const addTemplate=()=>{
