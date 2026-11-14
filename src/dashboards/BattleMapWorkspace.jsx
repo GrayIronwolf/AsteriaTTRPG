@@ -383,11 +383,11 @@ export function GMBattleMapManager({campaignId,characters={},encounter={}}){
       <label>Visibility<select value={draft.visibility} onChange={event=>patch({visibility:event.target.value})}>
         <option value="gm">GM only</option><option value="players">Share with players</option>
       </select></label>
-      <label>Grid columns<input type="number" min="1" max="80" value={draft.gridColumns} onChange={event=>patch({gridColumns:Number(event.target.value)})}/></label>
-      <label>Grid rows<input type="number" min="1" max="80" value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
+      <label>Grid columns<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridColumns} onChange={event=>patch({gridColumns:Number(event.target.value)})}/></label>
+      <label>Grid rows<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
       <label>Grid opacity %<input type="number" min="0" max="100" value={draft.gridOpacity} onChange={event=>patch({gridOpacity:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.gridVisible} onChange={event=>patch({gridVisible:event.target.checked})}/> Show grid</label>
-      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" value={draft.metresPerCell}
+      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
         onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
         patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
@@ -496,7 +496,7 @@ export function GMBattleMapManager({campaignId,characters={},encounter={}}){
         <>
           <button type="button" className="primary" disabled={busy||!settings} onClick={save}>{busy?'Saving…':'Save map settings'}</button>
           <button type="button" disabled={busy} onClick={()=>{setDraft(currentSettings(selected));setSelectedTokenId('');}}>Discard edits</button>
-          <button type="button" className="danger" disabled={busy} onClick={remove}>Delete map</button>
+          <button type="button" className="danger" disabled={busy||combatLinked} onClick={remove}>Delete map</button>
         </>}
     </div>
     {selected&&draft.visibility!==selected.visibility?<p role="status">Visibility change is not active until you save the map.</p>:null}
