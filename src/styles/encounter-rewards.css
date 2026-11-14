@@ -1,0 +1,16 @@
+.asteria-encounter-rewards{display:grid;gap:14px;min-width:0}
+.asteria-encounter-rewards h3,.asteria-encounter-rewards h4{margin:0 0 10px}
+.asteria-encounter-rewards-card{border:1px solid #5b697a;border-radius:9px;background:#162130;padding:15px;display:grid;gap:13px}
+.asteria-encounter-rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.asteria-encounter-rewards label{display:grid;gap:5px;min-width:0}
+.asteria-encounter-rewards select,.asteria-encounter-rewards input{width:100%;min-width:0;max-width:100%;border:1px solid #7a8697;background:#192433;color:#f1f3f7;padding:9px;border-radius:6px;font:inherit}
+.asteria-encounter-rewards button{padding:9px 12px}
+.asteria-encounter-rewards :is(input,select,button):focus-visible{outline:2px solid #d7b873;outline-offset:2px}
+.asteria-encounter-rewards-details{display:grid;gap:9px}
+.asteria-encounter-rewards-details aside{padding:12px;border-left:3px solid #a8996c;background:#1d2a39}
+.asteria-encounter-rewards-details ol{display:grid;gap:8px;padding-left:24px}
+.asteria-encounter-rewards-details li{padding:6px 0}
+.asteria-encounter-rewards-details li small{display:block;color:#bfc8d4}
+.asteria-encounter-rewards-actions{display:flex;gap:10px;flex-wrap:wrap}
+.asteria-encounter-rewards-error{border:1px solid #be6d6d;border-radius:7px;padding:10px}
+@media(max-width:680px){.asteria-encounter-rewards-grid{grid-template-columns:1fr}.asteria-encounter-rewards-card{padding:11px}}

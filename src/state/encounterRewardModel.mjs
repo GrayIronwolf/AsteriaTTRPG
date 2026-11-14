@@ -55,7 +55,7 @@ export function encounterCreatureCandidate(record={},kind='campaign'){
   if(!object(record)||!['campaign','official'].includes(kind))return null;
   const meta=object(record.metadata)?record.metadata:{};
   const name=String(record.name||record.title||'').trim().slice(0,120);
-  const sourceId=String(record.id||record.slug||'').trim();
+  const sourceId=String(kind==='official'?(record.slug||record.id):(record.id||record.slug)||'').trim();
   const threatTier=threatTierNumber(record.threatTier??record.tier??meta.threatTier);
   const rawHp=record.hp??meta.hp;
   const hp=safePositiveNumber(Array.isArray(rawHp)?rawHp[1]:rawHp);
