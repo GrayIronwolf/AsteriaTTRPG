@@ -298,19 +298,19 @@ export function GMWorldAtlasWorkspace({campaignId}){
   </div>
  </Panel>;
 }
-export function PlayerWorldAtlas({campaignId}){
+export function PlayerWorldAtlas({campaignId,mapId='',presentation=false}){
  const maps=useAtlas(campaignId,'player'),context=useAtlasContext(campaignId);
  const [id,setId]=useState(''),[zoom,setZoom]=useState(1),[pin,setPin]=useState(null);
- const map=maps.find(x=>x.id===id)||maps[0]||null;
+ const map=mapId?maps.find(x=>x.id===mapId)||null:maps.find(x=>x.id===id)||maps[0]||null;
  useEffect(()=>{setId('');setPin(null);},[campaignId]);
- return <Panel title="World Map" eyebrow="Campaign Atlas & Discoveries">
+ const content=<div className={presentation?"asteria-presentation-map":""}>
   <div className="asteria-atlas">
-   <label>Published world map<select value={map?.id||''} onChange={e=>{setId(e.target.value);setPin(null);}}>
+   {!presentation?<label>Published world map<select value={map?.id||''} onChange={e=>{setId(e.target.value);setPin(null);}}>
     {maps.length?maps.map(m=><option key={m.id} value={m.id}>{m.name}</option>):
-     <option value="">No shared maps</option>}</select></label>
-   {map?<><label>Zoom<select value={zoom} onChange={e=>setZoom(Number(e.target.value))}>
+     <option value="">No shared maps</option>}</select></label>:null}
+   {map?<>{!presentation?<label>Zoom<select value={zoom} onChange={e=>setZoom(Number(e.target.value))}>
     {[.5,.75,1,1.5,2,3,4].map(x=><option key={x} value={x}>{Math.round(x*100)}%</option>)}
-   </select></label>
+   </select></label>:null}
     <AtlasCanvas campaignId={campaignId} map={map} pins={map.pins||[]} routes={map.routes||[]}
      zoom={zoom} onSelectPin={setPin} player/>
     {pin?<section className="asteria-atlas-box"><h3>{pin.name}</h3>
@@ -318,6 +318,6 @@ export function PlayerWorldAtlas({campaignId}){
     <AtlasContext context={context} region={map.region||''}/>
    </>:<p>The GM has not published an atlas for this campaign.</p>}
    <small>Only GM-approved maps, discovered markers and visible travel routes appear here.</small>
-  </div>
- </Panel>;
+  </div></div>;
+ return presentation?content:<Panel title="World Map" eyebrow="Campaign Atlas & Discoveries">{content}</Panel>;
 }

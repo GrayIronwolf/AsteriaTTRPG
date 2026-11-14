@@ -541,6 +541,17 @@ service cloud.firestore {
       // and player-readable transport cues. Only trusted GM actions can write.
       // Phase 9.3: recording consent writes only via the trusted campaign callable.
       // Players read public recording status, plus their own consent only.
+      // Phase 10.1: a restricted screen is controlled only by a GM callable.
+      // Viewers can read the safe projection with active campaign membership;
+      // they cannot read the private controller or write either document.
+      match /presentationControl/{documentId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /presentationShared/{documentId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /recordingControl/{recordingId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;

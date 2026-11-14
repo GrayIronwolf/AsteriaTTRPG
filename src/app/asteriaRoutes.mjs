@@ -9,7 +9,7 @@ function decode(value) {
 export function parseReactRoute(hash = '') {
   const owned = String(hash).match(/^#\/react\/owned-character\/([^/]+)\/?$/);
   if(owned) return {type:REACT_ROUTE_TYPES.OWNED_CHARACTER,campaignId:'',characterId:decode(owned[1])};
-  const match = String(hash).match(/^#\/react\/(gm|character)\/([^/]+)(?:\/([^/]+))?\/?$/);
+  const match = String(hash).match(/^#\/react\/(gm|character|presentation)\/([^/]+)(?:\/([^/]+))?\/?$/);
   if(!match) return null;
   const route = {
     type: match[1],
