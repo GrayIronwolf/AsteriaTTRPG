@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {
- atlasFileError,atlasMapSettings,atlasMapCanPreview,atlasPointFromEvent,
+ atlasFileError,atlasMapSettings,atlasPointFromEvent,
  atlasPins,atlasRoutes,atlasRows,ATLAS_PIN_TYPES
 } from '../state/worldAtlasModel.mjs';
 import {formatAsteriaDate} from '../state/asteriaCalendarModel.mjs';
