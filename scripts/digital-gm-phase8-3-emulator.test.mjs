@@ -1,4 +1,5 @@
 import {before,after,beforeEach,test} from 'node:test';
+import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
 import {doc,collection,setDoc,getDoc,getDocs,updateDoc,deleteDoc} from 'firebase/firestore';
@@ -64,7 +65,9 @@ test('Published projection grants only campaign members read access and withdraw
  await env.withSecurityRulesDisabled(async ctx=>{
   await deleteDoc(doc(ctx.firestore(),paths.public));
  });
- await assertFails(getDoc(doc(firestore('alice'),paths.public)));
+ // A member may query a missing public document; it must no longer exist.
+ const withdrawn=await assertSucceeds(getDoc(doc(firestore('alice'),paths.public)));
+ assert.equal(withdrawn.exists(),false);
  await assertFails(getBytes(ref(storage('alice'),media)));
  await assertSucceeds(deleteObject(ref(storage('gm'),media)));
 });
