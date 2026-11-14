@@ -244,7 +244,7 @@ export function GMBattleMapManager({campaignId,characters={}}){
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
     setPreviewPlayerFog(selected?.fogEnabled===true);
-    setSelectedTokenId('');setFogTool('token');setPreviewPlayerFog(false);
+    setSelectedTokenId('');setFogTool('token');
     setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
   },[selectedId]);
   useEffect(()=>{
