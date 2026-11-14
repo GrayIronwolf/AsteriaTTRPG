@@ -1,4 +1,4 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState} from 'react';
 import {GMNpcGenerator} from './GMNpcGenerator.jsx';
 import {GMContextCheckLauncher} from './GMContextCheckLauncher.jsx';
 import {GMCharacterCardStudio,GMCharacterCardPreview} from './GMCharacterCards.jsx';
