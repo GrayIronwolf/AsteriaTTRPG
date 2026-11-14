@@ -241,8 +241,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /campaignMemberProjections/{uid} {
-      function validBattleMapData(campaignId,mapId,data) {
+    function validBattleMapData(campaignId,mapId,data) {
       return data.id == mapId && data.campaignId == campaignId &&
         data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
         data.get('description','') is string && data.get('description','').size() <= 300 &&
@@ -262,6 +261,8 @@ service cloud.firestore {
         data.createdBy is string && data.createdAt is timestamp &&
         data.updatedAt is timestamp;
     }
+
+    match /campaignMemberProjections/{uid} {
 
     match /campaigns/{campaignId} {
         allow read: if ownsUserData(uid);
