@@ -20,7 +20,7 @@ import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import {GMWorldAtlasWorkspace} from './WorldAtlasWorkspace.jsx';
 import {GMSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
 import {GMCampaignSoundboard} from './CampaignSoundboardWorkspace.jsx';
-import {GMSessionRecordingWorkspace} from './SessionRecordingWorkspace.jsx';
+import {GMSessionRecordingWorkspace,GMRecordingParticipationNotice} from './SessionRecordingWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -774,6 +774,7 @@ export function GMDashboard({ campaignId }) {
     sidebar={<PartySidebar campaign={live.campaign || { id: campaignId }} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId} presence={live.presence} onOpen={character => openGMCharacter(live.campaign, character, { tab })} />}
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
+    <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
       workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters}
