@@ -50,7 +50,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
     if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
-    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable']).has(action);
+    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward']).has(action);
     const combatAction=action==='combatCommand';
     if(!combatAction&&!campaignOnlyGMAction&&!characterSnapshot.exists) throw new Error('Character not found.');
     const campaign=campaignSnapshot.data();

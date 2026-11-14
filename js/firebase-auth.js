@@ -3266,6 +3266,13 @@ const firebasePublicApi = {
   managePartyStash: (...args) => callTrustedAction('managePartyStash',args),
   manageLootTable: (...args) => callTrustedAction('manageLootTable',args),
   manageRandomTable: (...args) => callTrustedAction('manageRandomTable',args),
+  manageEncounterReward: (...args) => callTrustedAction('manageEncounterReward',args),
+  subscribeEncounterPlans: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const q=query(collection(db,'campaigns',campaignId,'encounterPlans'),orderBy('createdAt','desc'),limit(30));
+    return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('encounter-plans',error,{campaignId}));
+  },
   subscribeRandomTables: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,'randomTables'),

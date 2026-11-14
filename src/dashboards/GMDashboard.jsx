@@ -14,6 +14,7 @@ import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
+import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -57,7 +58,8 @@ const GM_TABS = [
   { id: 'world', label: 'World Systems', icon: '\u2318' },
   { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
   { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' },
-  { id: 'random-tables', label: 'Random Tables', icon: 'journal' }
+  { id: 'random-tables', label: 'Random Tables', icon: 'journal' },
+  { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' }
 ];
 
 function progression(character = {}) {
@@ -816,5 +818,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter}/> : null}
     {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
     {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId}/> : null}
+    {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
   </AsteriaAppShell>;
 }
