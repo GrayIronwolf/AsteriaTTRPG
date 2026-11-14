@@ -3,6 +3,7 @@ import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
+import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -3271,6 +3272,66 @@ const firebasePublicApi = {
   manageAsteriaCalendar: (...args) => callTrustedAction('manageAsteriaCalendar',args),
   manageWeatherEnvironment: (...args) => callTrustedAction('manageWeatherEnvironment',args),
   manageWorldAtlas: (...args) => callTrustedAction('manageWorldAtlas',args),
+  manageSessionLibrary: (...args) => callTrustedAction('manageSessionLibrary',args),
+  subscribeSessionNotes: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'sessionNotes'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('session-notes',error,{campaignId});});
+  },
+  subscribeSessionPdfs: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const name=mode==='gm'?'sessionPdfs':'sessionPdfsShared';
+    return onSnapshot(collection(db,'campaigns',campaignId,name),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('session-pdfs',error,{campaignId});});
+  },
+  fetchSessionPdf: async function(campaignId,record){
+    if(!storage||!currentUser||!campaignId||!record)return {ok:false,error:'Sign in to view documents.'};
+    try{
+      const path=sessionPdfPath(campaignId,record.id);
+      if(record.storagePath!==path||record.status!=='ready')throw Error('Invalid PDF reference.');
+      return {ok:true,blob:await getBlob(storageRef(storage,path))};
+    }catch(error){return {ok:false,error:error?.message||'PDF unavailable.'};}
+  },
+  removeSessionPdfBytes: async function(campaignId,record){
+    if(!storage||!currentUser||!campaignId||!record)return {ok:false,error:'Sign in to remove documents.'};
+    try{
+      const path=sessionPdfPath(campaignId,record.id);
+      if(record.storagePath!==path)throw Error('Invalid PDF reference.');
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only a campaign GM can delete PDF files.');
+      await deleteObject(storageRef(storage,path));
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'PDF removal failed.'};}
+  },
+  uploadSessionPdf: async function(campaignId,file,details){
+    if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload PDFs.'};
+    const invalid=sessionPdfFileError(file);if(invalid)return {ok:false,error:invalid};
+    try{
+      const header=new Uint8Array(await file.slice(0,5).arrayBuffer());
+      if(header.length!==5||String.fromCharCode(...header)!=='%PDF-')throw Error('This file is not a valid PDF header.');
+      const clean=sessionPdfInput({...details,fileName:file.name,size:file.size});
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only a campaign GM can upload documents.');
+      const list=await getDocs(query(collection(db,'campaigns',campaignId,'sessionPdfs'),limit(SESSION_PDF_LIMIT+1)));
+      if(list.docs.filter(row=>row.data().status!=='archived').length>=SESSION_PDF_LIMIT)
+        throw Error('Campaign PDF library limit reached.');
+      const id=crypto.randomUUID();
+      const reserved=await callTrustedAction('manageSessionLibrary',[campaignId,'gm-scope',
+        {type:'reserve-pdf',id,details:clean}]);
+      if(!reserved?.ok)return reserved;
+      try{
+        await uploadBytes(storageRef(storage,sessionPdfPath(campaignId,id)),file,
+          {contentType:'application/pdf',cacheControl:'private,max-age=0,no-store'});
+        const finished=await callTrustedAction('manageSessionLibrary',[campaignId,'gm-scope',
+          {type:'finish-pdf',id,expectedRevision:reserved.revision}]);
+        return finished?.ok?{ok:true,id,revision:finished.revision}:finished;
+      }catch(error){return {ok:false,error:error?.message||'Upload failed. Archive the private draft and retry.'};}
+    }catch(error){return {ok:false,error:error?.message||'PDF validation failed.'};}
+  },
   subscribeWorldAtlas: function(campaignId,onChange,mode='player'){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     const name=mode==='gm'?'worldAtlas':'worldAtlasShared';
