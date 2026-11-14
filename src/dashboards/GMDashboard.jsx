@@ -18,6 +18,7 @@ import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
 import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
 import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import {GMWorldAtlasWorkspace} from './WorldAtlasWorkspace.jsx';
+import {GMSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -54,6 +55,7 @@ const GM_TABS = [
   { id:'information', label:'News & Events', icon:'journal' },
   { id: 'quests', label: 'Quests', icon: '\u2691' },
   { id: 'notes', label: 'GM Notes', icon: '\u270e' },
+  { id: 'session-library', label: 'Session Library', icon: 'journal' },
   { id: 'economy', label: 'Economy', icon: '\u25ce' },
   { id: 'crafting', label: 'Crafting', icon: '\u2692' },
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
@@ -814,7 +816,8 @@ export function GMDashboard({ campaignId }) {
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
-    {tab === 'notes' ? <NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/> : null}
+    {tab === 'notes' ? <><NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/><GMSessionLibraryWorkspace campaignId={campaignId}/></> : null}
+    {tab === 'session-library' ? <GMSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>
