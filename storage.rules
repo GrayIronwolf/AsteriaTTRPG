@@ -46,7 +46,9 @@ service firebase.storage {
         (campaignMember(campaignId) &&
           firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)));
       allow list: if false;
-      allow create: if campaignGM(campaignId) &&
+      allow create: if campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlas/$(mapId)) &&
+        fileName in ['atlas.png','atlas.jpg','atlas.webp','atlas.gif'] &&
         request.resource.size > 0 && request.resource.size <= 8 * 1024 * 1024 &&
         request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
       allow update: if false;
