@@ -128,7 +128,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
   if(session?.status!=='active'||!session?.id){setMessage('Start a campaign session first.');return;}
   const id=crypto.randomUUID();
   const result=await command({type:'request-consent',requestId:id,sessionId:session.id,
-   mode,expectedRevision:control.revision||0});
+   mode,expectedRevision:control.revision||0,actorConsent:true});
   if(result)setMessage('Consent request sent. Recording will only start after every active participant agrees.');
  };
  const resultConsents=control.participants||[];
