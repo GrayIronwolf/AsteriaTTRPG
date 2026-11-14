@@ -40,7 +40,7 @@ test('Presentation routing is campaign-bound and separate from GM and character 
  assert.deepEqual(parseReactRoute(buildReactRoute({type:'character',campaignId:'campaign-10',characterId:'hero'})),
   {type:'character',campaignId:'campaign-10',characterId:'hero'});
  assert.match(read('src/app/AsteriaReactRoot.jsx'),/route\.type === 'presentation'/);
- assert.match(read('src/app/AsteriaReactRoot.jsx'),/accountScope\/\$\{route\.type\}/);
+ assert.match(read('src/app/AsteriaReactRoot.jsx'),/\$\{accountScope\}\/\$\{route\.type\}/);
  assert.match(read('src/app/AsteriaAppContext.jsx'),/asteria:firebase-signed-out/);
 });
 test('GM access gate stays ahead of unified search and presentation controller',()=>{
