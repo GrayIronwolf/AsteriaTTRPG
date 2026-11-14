@@ -44,7 +44,8 @@ service firebase.storage {
       // Authenticated blobs, never downloadable token URLs.
       allow get: if campaignGM(campaignId) ||
         (campaignMember(campaignId) &&
-          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)));
+          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)) &&
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)).data.get('visibility','gm') == 'players');
       allow list: if false;
       allow create: if campaignGM(campaignId) && resource == null &&
         firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlas/$(mapId)) &&
