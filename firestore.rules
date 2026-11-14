@@ -515,6 +515,14 @@ service cloud.firestore {
       }
       // Phase 6.1: weighted loot tables are private to campaign GMs.
       // All changes and previews execute through authenticated server actions.
+      match /randomTables/{tableId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /randomTableRolls/{rollId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /lootTables/{tableId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
