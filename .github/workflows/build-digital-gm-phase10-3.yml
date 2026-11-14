@@ -13,6 +13,7 @@ on:
       - 'firestore.rules'
       - 'storage.rules'
       - 'scripts/digital-gm-phase10-3.test.mjs'
+      - 'scripts/digital-gm-phase5-2.test.mjs'
       - '.github/workflows/build-digital-gm-phase10-3.yml'
       - 'docs/releases/digital-gm-phase10-3.md'
       - 'package.json'
