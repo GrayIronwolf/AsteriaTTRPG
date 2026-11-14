@@ -29,3 +29,14 @@
 .asteria-battle-ruler line{stroke:#ffd47b;stroke-width:.45;stroke-dasharray:1.4 .6}
 .asteria-battle-ruler circle{fill:#ffd47b;stroke:#172238;stroke-width:.2}
 .asteria-battle-fog-editor [role=status]{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+.asteria-battle-combat-editor{display:grid;gap:10px;min-width:0;padding:12px;border:1px solid var(--asteria-border,#6c7181);border-radius:8px;margin:12px 0}
+.asteria-battle-combat-editor h4{margin:0}
+.asteria-battle-combat-editor>label{display:grid;gap:5px}
+.asteria-battle-combat-editor input{width:100%;max-width:100%}
+.asteria-battle-combat-roster{display:flex;flex-wrap:wrap;gap:6px 22px;margin:0;padding:8px 10px 8px 24px;max-height:200px;overflow:auto}
+.asteria-battle-combat-roster li{font-size:.9em}
+.asteria-battle-combat-roster li.current{color:#f5c766;font-weight:bold}
+.asteria-battle-token.combat-active{border-color:#ffcf67;background:#534027;box-shadow:0 0 0 3px #f8cb7588,0 0 16px #f3c65b}
+.asteria-battle-token.combat-defeated{filter:grayscale(1);opacity:.6}
+.asteria-battle-combat-status{display:flex;align-items:center;flex-wrap:wrap;gap:12px;border:1px solid #968057;border-radius:6px;padding:8px 12px}

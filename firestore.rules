@@ -263,6 +263,8 @@ service cloud.firestore {
         data.get('metresPerCell',1) is number &&
         data.get('metresPerCell',1) >= 0.1 &&
         data.get('metresPerCell',1) <= 100 &&
+        data.get('combatId','') is string &&
+        (data.get('combatId','') == '' || data.get('combatId','').matches('^[A-Za-z0-9_-]{1,160}$')) &&
         data.width is int && data.width >= 1 && data.width <= 8192 &&
         data.height is int && data.height >= 1 && data.height <= 8192 &&
         data.tokens is list && data.tokens.size() <= 60 &&
@@ -345,7 +347,7 @@ service cloud.firestore {
             'id','campaignId','name','description','visibility','kind','contentType',
             'storagePath','gridColumns','gridRows','gridOpacity','gridVisible',
             'tokens','width','height','createdBy','createdAt','updatedAt',
-            'fogEnabled','fogCells','metresPerCell'
+            'fogEnabled','fogCells','metresPerCell','combatId'
           ]) &&
           request.resource.data.keys().hasAll([
             'id','campaignId','name','visibility','kind','contentType','storagePath',
@@ -355,14 +357,21 @@ service cloud.firestore {
           request.resource.data.id == mapId &&
           request.resource.data.campaignId == campaignId &&
           request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.get('combatId','') == '' &&
           validBattleMapData(campaignId,mapId,request.resource.data);
         allow update: if isCampaignGM(campaignId) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'name','description','visibility','gridColumns','gridRows',
             'gridOpacity','gridVisible','tokens','updatedAt',
             'fogEnabled','fogCells','metresPerCell'
-          ]) && validBattleMapData(campaignId,mapId,request.resource.data);
-        allow delete: if isCampaignGM(campaignId);
+          ]) &&
+          (resource.data.get('combatId','') == '' ||
+            (request.resource.data.tokens == resource.data.tokens &&
+             request.resource.data.gridColumns == resource.data.gridColumns &&
+             request.resource.data.gridRows == resource.data.gridRows &&
+             request.resource.data.get('metresPerCell',1) == resource.data.get('metresPerCell',1))) &&
+          validBattleMapData(campaignId,mapId,request.resource.data);
+        allow delete: if isCampaignGM(campaignId) && resource.data.get('combatId','') == '';
       }
 
       match /checkGroups/{groupId} {

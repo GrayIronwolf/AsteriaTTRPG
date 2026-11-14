@@ -9,6 +9,7 @@ import {
   createFogCells,resizeFogCells,paintFogStroke,hiddenFogRuns,fogRevealFraction,
   measureGridDistance,battleMapPrivatePins
 } from '../state/battleMapFogModel.mjs';
+import {activeMapEncounter,combatMapLinked,combatMapRoster,derivedCombatMapTokens,combatMapMovementAllowance} from '../state/battleMapCombatModel.mjs';
 
 const defaults=()=>({
   name:'',description:'',visibility:'gm',gridColumns:20,gridRows:15,
@@ -75,7 +76,8 @@ function useMapMedia(campaignId,selected){
   return state;
 }
 function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogTool='token',
-  onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[]}) {
+  onFogStroke,onFogBegin,onPrivatePin,privatePins=[],previewPlayerFog=false,onMeasure,measurePoints=[],
+  encounter=null,selectedCombatantId='',onCombatMove,combatBusy=false}) {
   const media=useMapMedia(campaignId,map),canvas=useRef(null);
   const [playing,setPlaying]=useState(true),[showGrid,setShowGrid]=useState(true);
   const pointerLast=useRef(null);
@@ -85,9 +87,13 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   const fogRectangles=playerFog?hiddenFogRuns(map?.fogCells,cols,rows):[];
   const isBrush=gm&&map&&['reveal','hide'].includes(fogTool)&&map.fogEnabled;
   const isPlacing=gm&&fogTool==='token'&&Boolean(selectedTokenId);
+  const isCombatMove=gm&&fogTool==='combat'&&combatMapLinked(map,encounter)&&
+    Boolean(selectedCombatantId)&&Boolean(onCombatMove)&&!combatBusy;
   const isAnnotating=gm&&fogTool==='pin'&&Boolean(onPrivatePin);
   const isMeasuring=gm&&fogTool==='measure'&&Boolean(onMeasure);
-  const tokens=map?.tokens||[];
+  const tokens=derivedCombatMapTokens(map,encounter);
+  const combatants=combatMapRoster(encounter);
+  const activeActor=combatants.find(row=>row.isCurrent)?.id||'';
   const grid=map?.gridVisible&&showGrid;
   const background=grid?{
     backgroundImage:'linear-gradient(to right,rgba(255,255,255,.6) 1px, transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.6) 1px, transparent 1px)',
@@ -125,6 +131,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
   };
   const pointerUp=()=>{pointerLast.current=null;};
   const move=event=>{
+    if(isCombatMove){const point=pointFromEvent(event);if(point)onCombatMove(selectedCombatantId,point);return;}
     if(!isPlacing||!onPlaceToken)return;
     const point=pointFromEvent(event);
     if(!point)return;
@@ -140,7 +147,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
       {map.gridVisible?<button type="button" onClick={()=>setShowGrid(value=>!value)}>
         {showGrid?'Hide grid':'Show grid'}</button>:null}
     </div>
-    <div ref={canvas} className={'asteria-battle-canvas'+((isPlacing||isBrush||isMeasuring||isAnnotating)?' token-placement':'')+(isBrush?' fog-edit':'')}
+    <div ref={canvas} className={'asteria-battle-canvas'+((isPlacing||isBrush||isMeasuring||isAnnotating||isCombatMove)?' token-placement':'')+(isBrush?' fog-edit':'')}
       onClick={move} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
       onPointerCancel={pointerUp} onLostPointerCapture={pointerUp}
       style={{aspectRatio:map.width+' / '+map.height}}>
@@ -159,9 +166,11 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
         const cells=map.fogCells||createFogCells(cols,rows);
         return cells[y*cols+x]==='1';
       }).map(token=><span key={token.id}
-        className={'asteria-battle-token'+(token.id===selectedTokenId?' selected':'')}
+        className={'asteria-battle-token'+(token.id===selectedTokenId?' selected':'')+
+          (token.combatantId===activeActor&&combatMapLinked(map,encounter)?' combat-active':'')+
+          (token.combatantId&&combatants.find(row=>row.id===token.combatantId)?.defeated?' combat-defeated':'')}
         style={{left:token.x+'%',top:token.y+'%'}}
-        title={token.label} aria-label={token.label}>
+        title={token.label+(token.combatantId===activeActor?' · Current turn':'')} aria-label={token.label}>
         {token.kind==='character'?'P':token.kind==='creature'?'C':'•'}
       </span>)}
       {playerFog?<svg className="asteria-battle-fog" viewBox="0 0 100 100" preserveAspectRatio="none"
@@ -183,6 +192,7 @@ function MapCanvas({campaignId,map,gm=false,onPlaceToken,selectedTokenId='',fogT
     </div>
     {map.description?<p className="react-help">{map.description}</p>:null}
     {isPlacing?<p className="react-help">Click the map to place the selected token. Grid snapping applies when the grid is visible.</p>:null}
+    {isCombatMove?<p className="react-help">Click a destination square for the selected combatant. The server validates current turn and remaining approved movement.</p>:null}
     {isBrush?<p className="react-help">Drag on the map to paint fog. Changes are drafts until you save map settings.</p>:null}
     {map.kind==='video'?<small>Video loops silently. Playback begins automatically where the browser permits; use Play animation if autoplay is blocked.</small>:null}
   </section>;
@@ -224,7 +234,7 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
     </div>
   </section>;
 }
-export function GMBattleMapManager({campaignId,characters={}}){
+export function GMBattleMapManager({campaignId,characters={},encounter={}}){
   const {maps,error:listenerError}=useBattleMaps(campaignId,true);
   const [selectedId,setSelectedId]=useState(''),[draft,setDraft]=useState(defaults);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
@@ -235,8 +245,14 @@ export function GMBattleMapManager({campaignId,characters={}}){
   const [privatePins,setPrivatePins]=useState([]),[privateNoteName,setPrivateNoteName]=useState('');
   const [privateNoteText,setPrivateNoteText]=useState(''),[privateNoteKind,setPrivateNoteKind]=useState('note');
   const [privateDirty,setPrivateDirty]=useState(false);
+  const [selectedCombatantId,setSelectedCombatantId]=useState('');
+  const [movementMode,setMovementMode]=useState('movement'),[repositionReason,setRepositionReason]=useState('');
   const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
+  const combatLinked=combatMapLinked(selected,encounter);
+  const combatants=combatMapRoster(encounter);
+  const combatCurrent=combatants.find(row=>row.isCurrent);
+  const combatMoveRemaining=selectedCombatantId?combatMapMovementAllowance(encounter,selectedCombatantId):null;
   useEffect(()=>{
     if(selectedId&&!maps.some(row=>row.id===selectedId))setSelectedId('');
   },[maps,selectedId]);
@@ -244,7 +260,7 @@ export function GMBattleMapManager({campaignId,characters={}}){
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
     setPreviewPlayerFog(selected?.fogEnabled===true);
-    setSelectedTokenId('');setFogTool('token');
+    setSelectedTokenId('');setSelectedCombatantId('');setFogTool('token');
     setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
   },[selectedId]);
   useEffect(()=>{
@@ -316,7 +332,23 @@ export function GMBattleMapManager({campaignId,characters={}}){
     });
     if(result.ok){setFile(null);setSelectedId(result.map.id);}
   };
-  const save=async()=>{if(settings&&selected){const result=await act(()=>firebaseService.updateBattleMap(campaignId,selected.id,settings));if(result.ok)undoFog.current=[];}};
+  const save=async()=>{if(settings&&selected){const safeSettings=combatLinked?{...settings,tokens:selected.tokens}:settings;
+    const result=await act(()=>firebaseService.updateBattleMap(campaignId,selected.id,safeSettings));if(result.ok)undoFog.current=[];}};
+  const linkCombat=async()=>{
+    if(!selected||!activeMapEncounter(encounter))return;
+    const result=await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+      operation:'map-link',mapId:selected.id,revision:Number(encounter.combat?.revision||0)
+    }));
+    if(result.ok){setSelectedCombatantId('');setFogTool('combat');}
+  };
+  const moveCombatToken=async(combatantId,point)=>{
+    if(!combatLinked||busy)return;
+    await act(()=>firebaseService.combatCommand(campaignId,'encounter',{
+      operation:'map-move',mapId:selected.id,combatantId,point,mode:movementMode,
+      reason:movementMode==='reposition'?repositionReason:'',
+      revision:Number(encounter.combat?.revision||0)
+    }));
+  };
   const savePrivate=async()=>{
     if(!selected)return;
     const result=await act(()=>firebaseService.saveBattleMapPrivatePins(campaignId,selected.id,privatePins));
@@ -328,7 +360,8 @@ export function GMBattleMapManager({campaignId,characters={}}){
     if(result.ok)setSelectedId('');
   };
   const moveToken=useCallback((id,point)=>setDraft(previous=>({...previous,tokens:previous.tokens.map(t=>t.id===id?{...t,...point}:t)})),[]);
-  const viewMap=selected?{...selected,...draft}:null;
+  const viewMap=selected?{...selected,...draft,
+    tokens:combatLinked?selected.tokens:draft.tokens}:null;
   return <Panel title="Battle Maps & Animated Scenes" eyebrow="Digital GM Toolkit · Phase 6.2">
     <p className="react-help">Upload a static image or a looping MP4/WebM video. Maps start GM-only. Publish a map when players should see its scene and markers. Phase 6.2 adds a visual fog overlay, scene ruler, and separate private GM annotations. Combat turn movement remains Phase 6.3.</p>
     {listenerError?<p role="alert">{listenerError}</p>:null}
@@ -350,11 +383,11 @@ export function GMBattleMapManager({campaignId,characters={}}){
       <label>Visibility<select value={draft.visibility} onChange={event=>patch({visibility:event.target.value})}>
         <option value="gm">GM only</option><option value="players">Share with players</option>
       </select></label>
-      <label>Grid columns<input type="number" min="1" max="80" value={draft.gridColumns} onChange={event=>patch({gridColumns:Number(event.target.value)})}/></label>
-      <label>Grid rows<input type="number" min="1" max="80" value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
+      <label>Grid columns<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridColumns} onChange={event=>patch({gridColumns:Number(event.target.value)})}/></label>
+      <label>Grid rows<input type="number" min="1" max="80" disabled={combatLinked} value={draft.gridRows} onChange={event=>patch({gridRows:Number(event.target.value)})}/></label>
       <label>Grid opacity %<input type="number" min="0" max="100" value={draft.gridOpacity} onChange={event=>patch({gridOpacity:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.gridVisible} onChange={event=>patch({gridVisible:event.target.checked})}/> Show grid</label>
-      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" value={draft.metresPerCell}
+      <label>Metres per square<input type="number" min="0.1" max="100" step="0.1" disabled={combatLinked} value={draft.metresPerCell}
         onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
         patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
@@ -368,6 +401,7 @@ export function GMBattleMapManager({campaignId,characters={}}){
       <div className="asteria-battle-form-row">
         <label>Map interaction tool<select value={fogTool} onChange={event=>setFogTool(event.target.value)}>
           <option value="token">Place selected token</option>
+          {combatLinked?<option value="combat">Move combatant</option>:null}
           <option value="reveal" disabled={!draft.fogEnabled}>Reveal fog brush</option>
           <option value="hide" disabled={!draft.fogEnabled}>Hide fog brush</option>
           <option value="measure">Distance ruler</option>
@@ -389,8 +423,8 @@ export function GMBattleMapManager({campaignId,characters={}}){
         <p className="react-help">Use Distance ruler and click two points to measure. A third click starts a new measurement.</p>}
       <p className="react-help">Fog hides content visually, but cannot prevent inspection of a map image/video already delivered to a player. Do not embed unrevealed secrets in published media.</p>
     </section>:null}
-    <TokenEditor tokens={draft.tokens||[]} onChange={tokens=>patch({tokens})}
-      selectedTokenId={selectedTokenId} onSelect={setSelectedTokenId} characters={characters}/>
+    {!combatLinked?<TokenEditor tokens={draft.tokens||[]} onChange={tokens=>patch({tokens})}
+      selectedTokenId={selectedTokenId} onSelect={setSelectedTokenId} characters={characters}/>:null}
     {selected?<section className="asteria-battle-private-notes" aria-label="Private GM map annotations">
       <h4>GM-only Map Pins ({privatePins.length}/40)</h4>
       <p className="react-help">Stored in separate GM-only Firestore documents. Never included in player map data.</p>
@@ -413,7 +447,44 @@ export function GMBattleMapManager({campaignId,characters={}}){
         onClick={savePrivate}>Save GM-only notes</button>
       {privateDirty?<p role="status">Private pin edits are not saved yet.</p>:null}
     </section>:null}
-    {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm
+    {selected?<section className="asteria-battle-combat-editor" aria-label="Live Combat Integration">
+      <h4>Live Combat Integration · Phase 6.3</h4>
+      {!activeMapEncounter(encounter)?<p>Start an encounter from GM Main → Campaign Encounters before linking a combat map.</p>:
+        !combatLinked?<div>
+          <p>Round {encounter.round||1}: {combatants.length} participants. Link this map to display current initiative and synchronize player and creature positions.</p>
+          <button type="button" disabled={busy||Boolean(encounter.battleMapId&&encounter.battleMapId!==selected.id)}
+            onClick={linkCombat}>Link active combat to this map</button>
+          {encounter.battleMapId&&encounter.battleMapId!==selected.id?<p>This encounter is already linked to another battle map. End that combat before linking a different map.</p>:null}
+        </div>:<>
+          <p role="status">Combat active · Round {encounter.round||1} · Current turn: {combatCurrent?.name||'—'}</p>
+          <div className="asteria-battle-form-row">
+            <label>Combatant<select value={selectedCombatantId}
+              onChange={event=>{setSelectedCombatantId(event.target.value);setFogTool('combat');}}>
+              <option value="">Choose participant</option>
+              {combatants.map(row=><option key={row.id} value={row.id}>{row.name}{row.isCurrent?' · Current turn':''}{row.defeated?' · Defeated':''}</option>)}
+            </select></label>
+            <label>Movement method<select value={movementMode} onChange={event=>setMovementMode(event.target.value)}>
+              <option value="movement">Approved movement action</option>
+              <option value="reposition">GM correction / reposition</option>
+            </select></label>
+          </div>
+          {movementMode==='reposition'?<label>GM correction reason<input maxLength={160}
+            value={repositionReason} onChange={event=>setRepositionReason(event.target.value)}
+            placeholder="Document the correction or forced movement"/></label>:
+            <p>Remaining approved movement: {combatMoveRemaining===null?'No movement action approved':combatMoveRemaining+' m'}.
+              A player must declare a movement action; the GM approves its distance through the existing combat panel.</p>}
+          <ol className="asteria-battle-combat-roster">
+            {combatants.map(row=><li key={row.id} className={row.isCurrent?'current':''}>
+              <b>{row.name}</b> · Initiative {row.initiative??'—'}
+              {row.isCurrent?' · Current turn':''}{row.turnComplete?' · Turn complete':''}
+              {row.defeated?' · Defeated':''}
+            </li>)}
+          </ol>
+          <p className="react-help">The existing combat engine remains authoritative for turns, AP, actions and movement allowance. Only the GM moves map tokens; movement and corrections are validated and recorded by the backend.</p>
+        </>}
+    </section>:null}
+    {selected?<MapCanvas campaignId={campaignId} map={viewMap} gm encounter={encounter}
+      selectedCombatantId={selectedCombatantId} onCombatMove={moveCombatToken} combatBusy={busy}
       selectedTokenId={selectedTokenId} onPlaceToken={moveToken}
       fogTool={fogTool} onFogBegin={rememberFog} onFogStroke={fogStroke}
       onPrivatePin={addPrivatePin} privatePins={privatePins}
@@ -425,14 +496,14 @@ export function GMBattleMapManager({campaignId,characters={}}){
         <>
           <button type="button" className="primary" disabled={busy||!settings} onClick={save}>{busy?'Saving…':'Save map settings'}</button>
           <button type="button" disabled={busy} onClick={()=>{setDraft(currentSettings(selected));setSelectedTokenId('');}}>Discard edits</button>
-          <button type="button" className="danger" disabled={busy} onClick={remove}>Delete map</button>
+          <button type="button" className="danger" disabled={busy||combatLinked} onClick={remove}>Delete map</button>
         </>}
     </div>
     {selected&&draft.visibility!==selected.visibility?<p role="status">Visibility change is not active until you save the map.</p>:null}
     {message?<p role={message==='Map saved successfully.'?'status':'alert'}>{message}</p>:null}
   </Panel>;
 }
-export function PlayerBattleMapView({campaignId}){
+export function PlayerBattleMapView({campaignId,encounter={}}){
   const {maps,error}=useBattleMaps(campaignId,false);
   const [selectedId,setSelectedId]=useState('');
   const selected=maps.find(row=>row.id===selectedId)||maps[0]||null;
@@ -443,7 +514,11 @@ export function PlayerBattleMapView({campaignId}){
       <label>Shared map<select value={selected?.id||''} onChange={event=>setSelectedId(event.target.value)}>
         {maps.map(row=><option key={row.id} value={row.id}>{row.name}{row.kind==='video'?' · Animated':''}</option>)}
       </select></label>
-      <MapCanvas key={selected.id} campaignId={campaignId} map={selected}/>
+      {combatMapLinked(selected,encounter)?<div className="asteria-battle-combat-status" role="status">
+        <b>Combat active · Round {encounter.round||1}</b>
+        <span>Current turn: {combatMapRoster(encounter).find(row=>row.isCurrent)?.name||'—'}</span>
+      </div>:null}
+      <MapCanvas key={selected.id} campaignId={campaignId} map={selected} encounter={encounter}/>
     </>}
   </Panel>;
 }
