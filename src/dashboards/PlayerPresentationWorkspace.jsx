@@ -257,11 +257,11 @@ export function PlayerPresentationDisplay({campaignId}){
       <span className="asteria-presentation-symbol">✦</span>
       <h1>Asteria</h1><p>Waiting for the GM to present a scene.</p>
     </div>:<>
-      <header className="asteria-presentation-display-header">
+      {!['title','announcement'].includes(scene)?<header className="asteria-presentation-display-header">
         <small>Asteria · Player Display</small>
         {current.title?<h1>{current.title}</h1>:null}
         {current.subtitle?<p>{current.subtitle}</p>:null}
-      </header>
+      </header>:null}
       <main className={'asteria-presentation-display-main scene-'+scene}>
         {['title','announcement'].includes(scene)?
           <div className="asteria-presentation-title-card">

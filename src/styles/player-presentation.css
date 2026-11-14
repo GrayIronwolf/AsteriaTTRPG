@@ -112,3 +112,21 @@
 .asteria-presentation-map .asteria-atlas-canvas{max-height:72vh}
 .asteria-presentation-message{position:fixed;bottom:12px;left:20px;background:#17191e;color:white;padding:8px 15px;border-radius:8px}
 @media(prefers-reduced-motion:reduce){.asteria-presentation-display-actions{transition:none}}
+
+/* On touch-only TV remotes and mobile devices there is no hover state.
+ * Keep presentation controls discoverable and large enough to tap. */
+@media (hover:none), (pointer:coarse){
+ .asteria-presentation-display-actions{opacity:1;position:sticky;top:0;right:auto;
+   align-self:flex-end;justify-content:flex-end;flex-wrap:wrap;padding:4px 0 8px}
+ .asteria-presentation-display-actions button{min-height:42px;min-width:42px;
+   padding:9px 13px}
+}
+@media (max-width:600px){
+ .asteria-presentation-screen{padding:14px;overflow:auto}
+ .asteria-presentation-display-header{padding:10px 0 14px}
+ .asteria-presentation-display-main{min-height:0;align-items:flex-start}
+ .asteria-presentation-title-card{padding:28px 4px}
+ .asteria-presentation-party{grid-template-columns:minmax(0,1fr);gap:10px}
+ .asteria-presentation-map .asteria-battle-canvas,
+ .asteria-presentation-map .asteria-atlas-canvas{max-height:60vh}
+}

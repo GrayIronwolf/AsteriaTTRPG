@@ -305,6 +305,8 @@ export function PlayerWorldAtlas({campaignId,mapId='',presentation=false}){
  const [id,setId]=useState(''),[zoom,setZoom]=useState(1),[pin,setPin]=useState(null);
  const map=mapId?maps.find(x=>x.id===mapId)||null:maps.find(x=>x.id===id)||maps[0]||null;
  useEffect(()=>{setId('');setPin(null);},[campaignId]);
+ // Switching the projected world map must discard the previous map's selected location.
+ useEffect(()=>setPin(null),[map?.id]);
  const content=<div className={presentation?"asteria-presentation-map":""}>
   <div className="asteria-atlas">
    {!presentation?<label>Published world map<select value={map?.id||''} onChange={e=>{setId(e.target.value);setPin(null);}}>

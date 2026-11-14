@@ -30,6 +30,13 @@ test('generated stock is appended only to the selected existing shop',()=>{
     stock:generated.stock,mode:'append'},'shop-1');
   assert.equal(updated.stock.length,2);
   assert.equal(original.stock.length,0);
+  // Phase 5.3 later introduced an explicitly selected replace option. The
+  // earlier append-only assertion was stale; both modes must remain isolated
+  // to the chosen shop and must not mutate the source record.
+  const replaced=applyGMShopAction(original,{type:'apply-generated-stock',
+    stock:generated.stock,mode:'replace'},'shop-1');
+  assert.equal(replaced.stock.length,2);
+  assert.equal(original.stock.length,0);
   assert.throws(()=>applyGMShopAction(original,{type:'apply-generated-stock',
-    stock:generated.stock,mode:'replace'},'shop-1'),/appended/);
+    stock:generated.stock,mode:'unsupported'},'shop-1'),/append or replace/);
 });
