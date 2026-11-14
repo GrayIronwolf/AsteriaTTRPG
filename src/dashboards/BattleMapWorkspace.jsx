@@ -503,22 +503,22 @@ export function GMBattleMapManager({campaignId,characters={},encounter={}}){
     {message?<p role={message==='Map saved successfully.'?'status':'alert'}>{message}</p>:null}
   </Panel>;
 }
-export function PlayerBattleMapView({campaignId,encounter={}}){
+export function PlayerBattleMapView({campaignId,encounter={},mapId='',presentation=false}){
   const {maps,error}=useBattleMaps(campaignId,false);
   const [selectedId,setSelectedId]=useState('');
-  const selected=maps.find(row=>row.id===selectedId)||maps[0]||null;
+  const selected=mapId?maps.find(row=>row.id===mapId)||null:maps.find(row=>row.id===selectedId)||maps[0]||null;
   if(!campaignId)return null;
-  return <Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">
+  const content=<div className={presentation?"asteria-presentation-map":""}>
     {error?<p role="alert">{error}</p>:null}
     {!maps.length?<p>No battle maps have been shared with players.</p>:<>
-      <label>Shared map<select value={selected?.id||''} onChange={event=>setSelectedId(event.target.value)}>
+      {!presentation?<label>Shared map<select value={selected?.id||''} onChange={event=>setSelectedId(event.target.value)}>
         {maps.map(row=><option key={row.id} value={row.id}>{row.name}{row.kind==='video'?' · Animated':''}</option>)}
-      </select></label>
-      {combatMapLinked(selected,encounter)?<div className="asteria-battle-combat-status" role="status">
+      </select></label>:null}
+      {selected&&combatMapLinked(selected,encounter)?<div className="asteria-battle-combat-status" role="status">
         <b>Combat active · Round {encounter.round||1}</b>
         <span>Current turn: {combatMapRoster(encounter).find(row=>row.isCurrent)?.name||'—'}</span>
       </div>:null}
-      <MapCanvas key={selected.id} campaignId={campaignId} map={selected} encounter={encounter}/>
-    </>}
-  </Panel>;
+      {selected?<MapCanvas key={selected.id} campaignId={campaignId} map={selected} encounter={encounter}/>:<p role="status">This published map is no longer available.</p>}
+    </>}</div>;
+  return presentation?content:<Panel title="Battle Maps" eyebrow="Shared Campaign Scenes">{content}</Panel>;
 }
