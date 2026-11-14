@@ -8,10 +8,12 @@ const newEntry=kind=>({id:'entry-'+Date.now()+'-'+Math.random().toString(36).sli
   kind,weight:1,note:'',...(kind==='item'?{name:'',definitionId:'',minQuantity:1,maxQuantity:1}:
     kind==='currency'?{minCopper:0,maxCopper:100}:{})});
 
-export function GMLootTableWorkspace({campaignId}){
+export function GMLootTableWorkspace({campaignId,searchTarget=null}){
   const [tables,setTables]=useState([]);
   const [selectedId,setSelectedId]=useState('');
   const [draft,setDraft]=useState(draftTable);
+  useEffect(()=>{if(searchTarget?.category==='loot-table'&&tables.some(x=>x.id===searchTarget.id))
+    setSelectedId(searchTarget.id);},[searchTarget,tables]);
   const [preview,setPreview]=useState(null);
   const [batchCount,setBatchCount]=useState('3');
   const [batchSource,setBatchSource]=useState('');
