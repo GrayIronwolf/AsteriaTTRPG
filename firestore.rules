@@ -523,6 +523,12 @@ service cloud.firestore {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 7.3: generated encounter proposals and unreleased rewards
+      // are private to the campaign GM. Only server transactions may write.
+      match /encounterPlans/{planId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
       match /lootTables/{tableId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
