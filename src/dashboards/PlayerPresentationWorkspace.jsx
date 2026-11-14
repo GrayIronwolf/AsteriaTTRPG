@@ -215,16 +215,9 @@ function PartyDisplay({campaignId,display}){
   </section>;
 }
 function BattleMapDisplay({campaignId,display}){
-  const [encounter,setEncounter]=useState({});
-  useEffect(()=>{
-    let active=true,stop=()=>{};
-    waitForFirebase().then(()=>{
-      if(active)stop=firebaseService.subscribeEncounter(campaignId,setEncounter);
-    }).catch(()=>{});
-    return()=>{active=false;stop?.();};
-  },[campaignId]);
-  return <PlayerBattleMapView campaignId={campaignId} mapId={display.mapId}
-    encounter={encounter} presentation/>;
+  // The projector must not receive hidden encounter actors or NPC information.
+  // The published map's player-visible scene, grid and fog remain authoritative.
+  return <PlayerBattleMapView campaignId={campaignId} mapId={display.mapId} presentation/>;
 }
 export function PlayerPresentationDisplay({campaignId}){
   const {state:display,status}=usePublishedPresentation(campaignId);
