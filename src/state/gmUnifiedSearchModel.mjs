@@ -27,6 +27,7 @@ const fold=value=>String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g
  .toLocaleLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const token=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,160}$/.test(value);
 const bool=value=>value===true;
+const sections=Object.freeze(['regions','settlements','merchants','factions','events']);
 const destination=Object.freeze({
  tool:'toolkit',npc:'bestiary',creature:'bestiary',merchant:'world',shop:'economy',
  'battle-map':'battle-maps','world-map':'world-atlas',location:'world',
@@ -40,18 +41,19 @@ export const SEARCH_TABS=Object.freeze([
  'tools','settings','crafting','presentation','notes','soundboard',
  'session-recordings','asteria-calendar','weather-environment','advanced-dice'
 ]);
-function make(category,record,index,{id='',title='',detail='',words='',tab='',targetId=''}={}){
+function make(category,record,index,{id='',title='',detail='',words='',tab='',targetId='',section=''}={}){
  const safeId=text(id,160);
  const safeTitle=text(title,140);
  if(!safeTitle)return null;
  const safeTab=SEARCH_TABS.includes(tab)?tab:destination[category];
  if(!safeTab)return null;
- const key=category+':'+(safeId&&token(safeId)?safeId:'index-'+index);
+ const key=category+':'+(safeId&&token(safeId)?safeId:'index-'+index)+':'+index;
  const subtitle=text(detail,190);
  const searchText=fold([safeTitle,subtitle,text(words,320),safeId].join(' '));
  // Never attach source records. The result is an explicit minimum projection.
  return Object.freeze({key,category,id:token(safeId)?safeId:'',title:safeTitle,
-  detail:subtitle,searchText,tab:safeTab,targetId:token(targetId)?targetId:''});
+  detail:subtitle,searchText,tab:safeTab,targetId:token(targetId)?targetId:'',
+  section:sections.includes(section)?section:''});
 }
 export function buildGMSearchIndex(sources={}){
  const workspace=object(sources.workspace),world=object(workspace.world),
@@ -60,7 +62,7 @@ export function buildGMSearchIndex(sources={}){
   for(const [index,record] of array(records).slice(0,320).entries()){
    if(rows.length>=SEARCH_INDEX_LIMIT)break;
    if(!record||typeof record!=='object')continue;
-   const entry=make(category,record,index,mapper(record,index));
+   const entry=make(category,record,rows.length,mapper(record,index));
    if(!entry||seen.has(entry.key))continue;
    seen.add(entry.key);rows.push(entry);
   }
@@ -74,7 +76,7 @@ export function buildGMSearchIndex(sources={}){
    detail:[r.species,r.location,r.threatTier].filter(Boolean).join(' · '),
    words:[r.race,r.type].join(' ')}));
  push('merchant',world.merchants,r=>({id:r.id,title:r.name||r.title,
-   detail:[r.location,r.region,r.type].filter(Boolean).join(' · ')}));
+   detail:[r.location,r.region,r.type].filter(Boolean).join(' · '),section:'merchants'}));
  push('shop',ecosystem.shops,r=>({id:r.id,title:r.name||r.title,
    detail:[r.type,r.region,r.location].filter(Boolean).join(' · '),
    tab:'economy',targetId:'react-gm-shops'}));
@@ -83,11 +85,11 @@ export function buildGMSearchIndex(sources={}){
  push('world-map',sources.worldMaps,r=>({id:r.id,title:r.name,
    detail:[r.region,r.status==='published'?'Published':'Private'].filter(Boolean).join(' · ')}));
  push('location',world.regions,r=>({id:r.id,title:r.name||r.title,
-   detail:[r.type,'Region'].filter(Boolean).join(' · ')}));
+   detail:[r.type,'Region'].filter(Boolean).join(' · '),section:'regions'}));
  push('location',world.settlements,r=>({id:r.id,title:r.name||r.title,
-   detail:[r.region,r.type,'Settlement'].filter(Boolean).join(' · ')}));
- push('faction',world.factions,r=>({id:r.id,title:r.name||r.title,detail:r.region||r.status||''}));
- push('event',world.events,r=>({id:r.id,title:r.name||r.title,detail:r.location||r.status||''}));
+   detail:[r.region,r.type,'Settlement'].filter(Boolean).join(' · '),section:'settlements'}));
+ push('faction',world.factions,r=>({id:r.id,title:r.name||r.title,detail:r.region||r.status||'',section:'factions'}));
+ push('event',world.events,r=>({id:r.id,title:r.name||r.title,detail:r.location||r.status||'',section:'events'}));
  push('quest',workspace.quests,r=>({id:r.id,title:r.title||r.name,
    detail:[r.location,r.questGiver,r.status].filter(Boolean).join(' · '),
    words:r.questType||r.category||''}));
@@ -140,8 +142,9 @@ export function searchResultDestination(record){
  if(record.category==='tool'&&!GM_TOOLKIT_TOOLS.some(t=>t.id===record.id&&t.tab===tab))
   return null;
  return Object.freeze({
-  tab,id:token(record.id)?record.id:'',
-  category:record.category,targetId:token(record.targetId)?record.targetId:''
+  tab,id:token(record.id)?record.id:'',title:text(record.title,140),
+  category:record.category,targetId:token(record.targetId)?record.targetId:'',
+  section:sections.includes(record.section)?record.section:''
  });
 }
 export function categoryCounts(rows=[]){
