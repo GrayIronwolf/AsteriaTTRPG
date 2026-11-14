@@ -60,7 +60,7 @@ export function GMToolkitHub({session={},characters={},workspace={},itemEcosyste
       <p>No existing GM tools match those filters.</p>
       <button type="button" onClick={()=>{setQuery('');setGroup('all');}}>Show all tools</button>
     </div>}
-    <p className="react-gm-toolkit-note">Tools use the campaign you are already managing. New generators, map tools, and additional session features will be added in later phases.</p>
+    <p className="react-gm-toolkit-note">Tools use the campaign you are already managing. Additional generators and session features will be added in later phases.</p>
   </section>;
 }
 
