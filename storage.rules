@@ -40,6 +40,26 @@ service firebase.storage {
           ))
       );
     }
+    match /campaigns/{campaignId}/sessionRecordings/{archiveId}/{fileName} {
+      // Private recording bytes; published recordings are only readable by
+      // active members. No downloadable token or Storage listing is exposed.
+      allow get: if fileName.matches('recording\\.(webm|ogg|m4a)') &&
+        (campaignGM(campaignId) ||
+          (campaignMember(campaignId) &&
+            firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/recordingArchives/$(archiveId)) &&
+            firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/recordingArchives/$(archiveId)).data.get('status','') == 'ready' &&
+            firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/recordingArchives/$(archiveId)).data.get('visibility','gm') == 'players'));
+      allow list: if false;
+      allow create: if campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/recordingArchives/$(archiveId)) &&
+        firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/recordingArchives/$(archiveId)).data.get('status','') == 'uploading' &&
+        request.resource.size > 0 && request.resource.size <= 40 * 1024 * 1024 &&
+        ((fileName == 'recording.webm' && request.resource.contentType == 'audio/webm') ||
+         (fileName == 'recording.ogg' && request.resource.contentType == 'audio/ogg') ||
+         (fileName == 'recording.m4a' && request.resource.contentType == 'audio/mp4'));
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
     match /campaigns/{campaignId}/audioTracks/{trackId}/{fileName} {
       // No public download URLs. A GM can preview private assets; players
       // can read bytes only for explicitly published, ready audio.
