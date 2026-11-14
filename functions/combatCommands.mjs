@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { isCampaignGM, isLinkedCharacter, readCampaignMember, isCampaignMember } from './characterPermissions.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
 import { buildTalentCatalog } from '../src/state/talentModel.mjs';
