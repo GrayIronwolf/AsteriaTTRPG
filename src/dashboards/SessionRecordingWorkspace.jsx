@@ -83,7 +83,9 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
  const [details,setDetails]=useState({title:'',summary:''});
  const recorderRef=useRef(null),streamRef=useRef(null),timerRef=useRef(null);
  const [localAudioUrl,setLocalAudioUrl]=useState('');
- const recordedRequest=useRef(''),[recordInfo,setRecordInfo]=useState(null);
+ const [recordInfo,setRecordInfo]=useState(null);
+ const controlLatest=useRef(control);
+ controlLatest.current=control;
  const localStop=()=>{
   if(timerRef.current){window.clearTimeout(timerRef.current);timerRef.current=null;}
   if(recorderRef.current&&recorderRef.current.state!=='inactive')recorderRef.current.stop();
@@ -149,26 +151,46 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
    const parts=[],recorder=new window.MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:96000});
    recorderRef.current=recorder;streamRef.current=stream;
    const requestId=control.requestId;
-   recordedRequest.current=requestId;
    const startedAt=Date.now();
    setRecording({requestId,startedAt});
    const stop=()=>{if(recorder.state!=='inactive')recorder.stop();};
    for(const track of stream.getTracks())track.addEventListener('ended',stop,{once:true});
    recorder.ondataavailable=e=>{if(e.data?.size)parts.push(e.data);};
    recorder.onerror=()=>{setMessage('Recorder failed. Check your local download before leaving the page.');stop();};
-   recorder.onstop=()=>{
+   recorder.onstop=async()=>{
     stream.getTracks().forEach(track=>track.stop());
     if(timerRef.current){window.clearTimeout(timerRef.current);timerRef.current=null;}
     if(recorderRef.current===recorder)recorderRef.current=null;
+    if(streamRef.current===stream)streamRef.current=null;
+    setRecording(null);
+    const live=controlLatest.current;
+    if(live.requestId!==requestId||live.status==='idle'){
+     setBlob(null);setRecordInfo(null);
+     setMessage('Consent was withdrawn or recording was cancelled. Captured audio was discarded.');
+     return;
+    }
     const actualMime=recordingBaseMime(recorder.mimeType||mime);
     const output=new Blob(parts,{type:actualMime});
     const durationSeconds=Math.max(1,Math.min(RECORDING_MAX_SECONDS,
      Math.ceil((Date.now()-startedAt)/1000)));
-    if(output.size>0)setBlob(output);
-    setRecordInfo({requestId,sessionId:session.id,durationSeconds,contentType:actualMime});
-    setRecording(null);
-    if(output.size>RECORDING_MAX_BYTES)
-     setMessage('Recording exceeds 40 MB and cannot be uploaded. Download or discard the local copy.');
+    try{
+     const ended=await firebaseService.manageSessionRecording(campaignId,'gm-scope',{
+      type:'stop-recording',requestId,expectedRevision:Math.max(result.revision,Number(live.revision||0))
+     });
+     if(!ended?.ok)throw Error(ended?.error||'Could not close the recording session.');
+     if(output.size>0){
+      setBlob(output);
+      setRecordInfo({requestId,sessionId:session.id,durationSeconds,contentType:actualMime});
+     }
+     setMessage(output.size>RECORDING_MAX_BYTES?
+      'Recording exceeds 40 MB: download locally or discard. Cloud upload is disabled.':
+      'Recording stopped. Download locally or optionally save a private archive.');
+    }catch(error){
+     setBlob(output.size?output:null);
+     setRecordInfo(output.size?{requestId,sessionId:session.id,durationSeconds,contentType:actualMime}:null);
+     setMessage('Local clip stopped. Archive not authorized until server recording state closes: '+
+      (error.message||String(error)));
+    }
    };
    recorder.start(1000);
    timerRef.current=window.setTimeout(stop,RECORDING_MAX_SECONDS*1000);
@@ -179,12 +201,15 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
   }
  };
  const stop=async()=>{
-  if(!recording)return;
-  const requestId=recording.requestId;
-  localStop();
-  const result=await command({type:'stop-recording',
-   requestId,expectedRevision:control.revision});
-  if(!result)setMessage('Local recording stopped; server update failed. Use the Stop Recording control again after refreshing.');
+  if(recorderRef.current&&recorderRef.current.state!=='inactive'){
+   recorderRef.current.stop();
+   return;
+  }
+  if(control.status==='recording'){
+   const result=await command({type:'stop-recording',requestId:control.requestId,
+    expectedRevision:control.revision});
+   if(result)setMessage('Recording status closed.');
+  }
  };
  const cancel=async()=>{const result=await command({type:'cancel-consent',
   requestId:control.requestId,expectedRevision:control.revision});
@@ -249,7 +274,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
      </div>
     </>:control.status==='recording'?<>
      <p role="alert">Recording active. All participants should see the live recording notice.</p>
-     <button className="danger" disabled={busy||!recording} onClick={stop}>Stop Recording</button>
+     <button className="danger" disabled={busy} onClick={stop}>Stop Recording</button>
     </>:<button className="primary" disabled={busy||!ack||session?.status!=='active'} onClick={request}>Request Recording Consent</button>}
     <small>Maximum 30 minutes per clip. Recording is processed on this browser; the cloud archive is optional.</small>
    </Panel>
@@ -261,7 +286,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
      <label>Session summary<textarea rows={4} maxLength={2000} value={details.summary} onChange={e=>setDetails({...details,summary:e.target.value})}/></label>
      <div className="asteria-recording-actions">
       <button onClick={download}>Download Local Recording</button>
-      <button className="primary" disabled={busy} onClick={upload}>Save Private Archive</button>
+      <button className="primary" disabled={busy||blob.size>RECORDING_MAX_BYTES} onClick={upload}>Save Private Archive</button>
       <button disabled={busy} onClick={()=>{if(window.confirm('Discard the local recording?')){setBlob(null);setRecordInfo(null);}}}>Discard Local Recording</button>
      </div>
     </div>:<p>Finish a recording to download it locally or store it in your campaign archive. Saving is never automatic.</p>}
@@ -301,7 +326,8 @@ export function PlayerRecordingNotice({campaignId}){
    </div>
   </>:<>
    <strong>Recording in progress</strong>
-   <p>The GM has started a recording of {notice.mode==='microphone'?'their microphone':'browser-tab audio'}.</p>
+   <p>The GM has started a recording of {notice.mode==='microphone'?'their microphone':'browser-tab audio'}. You may withdraw your permission at any time; doing so stops the session recording.</p>
+   <button disabled={busy} onClick={()=>respond('decline')}>Withdraw Consent & Stop Recording</button>
   </>}
   {message?<p role="status">{message}</p>:null}
  </section>;
