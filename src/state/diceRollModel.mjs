@@ -52,9 +52,8 @@ export function diceConfig(data={}){
 }
 export function diceExpression(data){
   const {pool,modifier}=diceConfig(data);
-  const terms=pool.map(group=>String(group.count)+'d'+group.sides);
-  if(modifier!==0)terms.push((modifier>0?'+ ':'- ')+Math.abs(modifier));
-  return terms.join(' + ').replace(/\+ - /g,'- ');
+  const expression=pool.map(group=>String(group.count)+'d'+group.sides).join(' + ');
+  return modifier===0?expression:expression+(modifier>0?' + ':' - ')+Math.abs(modifier);
 }
 export function diceResult(config,die,now=Date.now(),id){
   const value=diceConfig(config);
