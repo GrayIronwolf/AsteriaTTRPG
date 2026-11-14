@@ -27,7 +27,8 @@ async function activeParticipants(tx,context,campaignId,campaign,actorUid){
   const snap=await tx.get(context.collection(context.db,'campaigns',campaignId,'members').where('status','==','active'));
   if(!Array.isArray(snap.docs))throw Error('Member roster could not be verified.');
   const members=snap.docs.map(doc=>doc.data()).filter(m=>
-   m&&m.campaignId===campaignId&&m.uid===m.uid?.trim()&&['player','co-gm'].includes(m.role));
+   m&&m.campaignId===campaignId&&typeof m.uid==='string'&&
+   m.uid.trim()===m.uid&&['player','co-gm'].includes(m.role));
   if(members.length>RECORDING_PARTICIPANT_LIMIT+1)throw Error('Recording participant limit reached.');
   // The campaign owner is a GM without a v2 member document, and must also
   // consent when a co-GM is the recorder.
@@ -60,10 +61,8 @@ export function createSessionRecordingCommands(context,{requireCampaignGM}){
       const row=await tx.get(ref);return {exists:exists(row),data:()=>data(row)};
      }},db,campaignId,campaign,currentUser.uid);
      if(!isCampaignMember(campaign,currentUser.uid,member))throw Error('Active campaign membership is required.');
-     const [controlSnap,consentSnap]=await Promise.all([
-      tx.get(p(campaignId,'recordingControl','current')),
-      tx.get(p(campaignId,'recordingConsents',currentUser.uid))
-     ]);
+     const controlSnap=await tx.get(p(campaignId,'recordingControl','current'));
+
      const control=data(controlSnap);
      if(!['consent','recording'].includes(control.status)||control.requestId!==action.requestId)
       throw Error('There is no active recording consent request.');
