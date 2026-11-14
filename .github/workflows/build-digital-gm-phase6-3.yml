@@ -16,7 +16,7 @@ on:
       - 'js/firebase-auth.js'
       - 'storage.rules'
       - 'firestore.rules'
-      - 'scripts/digital-gm-phase6-2*.test.mjs'
+      - 'scripts/digital-gm-phase6-3*.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
