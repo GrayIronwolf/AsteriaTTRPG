@@ -32,7 +32,7 @@ export function sessionNoteInput(input = {}) {
 export function sessionPdfInput(input = {}) {
   shape(input, ['title','description','fileName','size'], 'PDF details');
   const fileName = text(input.fileName, 150, 'PDF filename', true);
-  if (!/^[^/\\<>:"|?*\x00-\x1f]+\.pdf$/i.test(fileName)) throw Error('Choose a PDF filename.');
+  if (!fileName.toLowerCase().endsWith('.pdf') || fileName.includes('/') || fileName.includes('\\') || /[<>:"|?*]/.test(fileName) || [...fileName].some(char => char.charCodeAt(0) < 32)) throw Error('Choose a PDF filename.');
   if (!Number.isSafeInteger(input.size) || input.size < 1 || input.size > SESSION_PDF_MAX_BYTES)
     throw Error('PDF must be between 1 byte and 20 MB.');
   return {
