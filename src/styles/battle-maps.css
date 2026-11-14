@@ -19,7 +19,7 @@
 .asteria-battle-token-list button.active{outline:2px solid #fed376}
 @media(max-width:640px){.asteria-battle-form-row>label{flex-basis:100%}.asteria-battle-token-list{display:grid;grid-template-columns:1fr}.asteria-battle-canvas{max-height:55dvh}}
 
-.asteria-battle-fog{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;fill:#07101c;fill-opacity:.96}
+.asteria-battle-fog{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;fill:#07101c;fill-opacity:1}
 .asteria-battle-canvas.fog-edit{touch-action:none;cursor:crosshair}
 .asteria-battle-fog-editor,.asteria-battle-private-notes{display:grid;gap:10px;min-width:0;padding:12px;border:1px solid var(--asteria-border,#6c7181);border-radius:8px}
 .asteria-battle-fog-editor h4,.asteria-battle-private-notes h4{margin:0}
