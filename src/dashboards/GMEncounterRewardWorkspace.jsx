@@ -8,12 +8,14 @@ const defaults={threatTier:1,tolerance:0,count:3,source:'all',
  biome:'',lootTableId:'',lootRolls:0,randomTableId:''};
 const displayDate=value=>value?.toDate?.()?.toLocaleString?.()||'';
 const describeXP=value=>Number.isSafeInteger(value)?value.toLocaleString()+' XP':'XP not configured';
-export function GMEncounterRewardWorkspace({campaignId,encounter,onOpenEncounter,onOpenLoot}){
+export function GMEncounterRewardWorkspace({campaignId,encounter,onOpenEncounter,onOpenLoot,searchTarget=null}){
  const [settings,setSettings]=useState(defaults);
  const [plans,setPlans]=useState([]),[lootTables,setLootTables]=useState([]),[randomTables,setRandomTables]=useState([]);
  const [selectedId,setSelectedId]=useState('');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const active=plans.find(row=>row.id===selectedId)||null;
+ useEffect(()=>{if(searchTarget?.category==='encounter'&&plans.some(x=>x.id===searchTarget.id))
+  setSelectedId(searchTarget.id);},[searchTarget,plans]);
  const lootChoices=useMemo(()=>lootTables.filter(row=>row.status==='active'),[lootTables]);
  const randomChoices=useMemo(()=>randomTables.filter(row=>row.status==='active'&&row.category==='encounter'&&
   row.threatTier===Number(settings.threatTier)),[randomTables,settings.threatTier]);
