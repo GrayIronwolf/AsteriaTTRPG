@@ -80,8 +80,13 @@ test('Atlas uploads are create-only GM operations with bounded image formats',as
  await assertFails(uploadBytes(ref(storage('alice'),media),new Uint8Array([1]),{contentType:'image/png'}));
  await assertFails(uploadBytes(ref(storage('gm'),'campaigns/'+campaign+'/worldAtlas/map-one/atlas.mp4'),
   new Uint8Array([1]),{contentType:'video/mp4'}));
- await assertFails(uploadBytes(ref(storage('gm'),'campaigns/'+campaign+'/worldAtlas/unknown/atlas.png'),
-  new Uint8Array([1]),{contentType:'image/png'}));
+ // Authenticated GMs can create a draft's scoped image before Firestore
+ // publication; orphan bytes cannot be read by players without a public
+ // projection, and may be cleaned by the GM.
+ const orphan='campaigns/'+campaign+'/worldAtlas/unknown/atlas.png';
+ await assertSucceeds(uploadBytes(ref(storage('gm'),orphan),new Uint8Array([1]),{contentType:'image/png'}));
+ await assertFails(getBytes(ref(storage('alice'),orphan)));
+ await assertSucceeds(deleteObject(ref(storage('gm'),orphan)));
  await assertSucceeds(uploadBytes(ref(storage('gm'),media),new Uint8Array([1,2,3]),{contentType:'image/png'}));
  await assertFails(uploadBytes(ref(storage('gm'),media),new Uint8Array([2]),{contentType:'image/png'}));
  await assertFails(deleteObject(ref(storage('alice'),media)));
