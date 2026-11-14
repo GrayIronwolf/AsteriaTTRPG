@@ -107,6 +107,12 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
    localStop();setMessage('Recording stopped after campaign recording state changed.');
   }
  },[control.status,control.requestId,recording?.requestId]);
+ useEffect(()=>{
+  if(recording&&session?.status!=='active'&&recorderRef.current?.state==='recording'){
+   recorderRef.current.stop();
+   setMessage('Session is no longer active. Closing the local recording.');
+  }
+ },[session?.status,recording?.requestId]);
  const command=async action=>{
   if(busy)return null;
   setBusy(true);setMessage('');
