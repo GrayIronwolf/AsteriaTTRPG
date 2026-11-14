@@ -66,6 +66,7 @@ test('Explicit sharing enables active member read and unpublish revokes bytes',a
  await assertSucceeds(uploadBytes(ref(storage('gm'),media),content,{contentType:'application/pdf'}));
  await env.withSecurityRulesDisabled(async context=>{
   await setDoc(doc(context.firestore(),publicPdf),{id:'pdf1',status:'ready',visibility:'players',storagePath:media});
+  await updateDoc(doc(context.firestore(),privatePdf),{status:'ready',visibility:'players'});
  });
  await assertSucceeds(getDoc(doc(firestore('alice'),publicPdf)));
  await assertSucceeds(getDocs(collection(firestore('alice'),'campaigns/'+campaign+'/sessionPdfsShared')));
@@ -73,6 +74,7 @@ test('Explicit sharing enables active member read and unpublish revokes bytes',a
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await env.withSecurityRulesDisabled(async context=>{
   await deleteDoc(doc(context.firestore(),publicPdf));
+  await updateDoc(doc(context.firestore(),privatePdf),{visibility:'gm'});
  });
  const result=await assertSucceeds(getDoc(doc(firestore('alice'),publicPdf)));
  assert.equal(result.exists(),false);
