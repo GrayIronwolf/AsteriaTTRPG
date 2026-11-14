@@ -536,6 +536,23 @@ service cloud.firestore {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
       }
+      // Phase 9.1: campaign GM private notes and documents, separate player-safe PDF index.
+      match /sessionLibraryConfig/{configId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /sessionNotes/{noteId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /sessionPdfs/{pdfId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /sessionPdfsShared/{pdfId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /worldAtlas/{mapId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
