@@ -1,0 +1,88 @@
+name: Digital GM Phase 10.2 - Unified Toolkit Search
+on:
+  push:
+    branches: [feat/digital-gm-phase10-2-unified-search]
+    paths:
+      - 'src/state/gmUnifiedSearchModel.mjs'
+      - 'src/dashboards/GMUnifiedSearch.jsx'
+      - 'src/styles/gm-unified-search.css'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/GMWorkspacePanels.jsx'
+      - 'src/dashboards/GMNpcCreatureLibrary.jsx'
+      - 'src/dashboards/BattleMapWorkspace.jsx'
+      - 'src/dashboards/WorldAtlasWorkspace.jsx'
+      - 'src/dashboards/GMLootTableWorkspace.jsx'
+      - 'src/dashboards/GMRandomTableWorkspace.jsx'
+      - 'src/dashboards/GMEncounterRewardWorkspace.jsx'
+      - 'src/dashboards/SessionLibraryWorkspace.jsx'
+      - 'scripts/digital-gm-phase10-2.test.mjs'
+      - 'package.json'
+      - 'docs/releases/digital-gm-phase10-2.md'
+      - '.github/workflows/build-digital-gm-phase10-2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: digital-gm-10-2-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Unified search and previous Digital GM unit tests
+        run: node --test scripts/digital-gm-phase10-2.test.mjs scripts/digital-gm-phase10-1.test.mjs scripts/digital-gm-phase9-3.test.mjs scripts/digital-gm-phase9-2.test.mjs scripts/digital-gm-phase9-1.test.mjs
+      - name: Firebase role and private library regression tests
+        run: npx firebase emulators:exec --project demo-asteria-gm-search --only firestore,storage "node --test scripts/digital-gm-phase10-1-emulator.test.mjs scripts/digital-gm-phase9-1-emulator.test.mjs"
+      - name: Lint
+        run: npm run lint
+      - name: GM and player dashboard regressions
+        run: npm run test:dashboard && npm run test:react
+      - name: Production React build
+        run: npm run build
+  bundle:
+    name: Publish verified Phase 10.2 website assets
+    needs: verify
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit compiled frontend bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/digital-gm-phase10-2-unified-search
+          if [ "$(git rev-parse origin/feat/digital-gm-phase10-2-unified-search)" != "$GITHUB_SHA" ]; then
+            echo "Newer source revision owns website asset generation."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Compiled bundle unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Build Digital GM Phase 10.2 unified search frontend"
+          git fetch origin feat/digital-gm-phase10-2-unified-search
+          git rebase origin/feat/digital-gm-phase10-2-unified-search
+          git push origin HEAD:feat/digital-gm-phase10-2-unified-search
