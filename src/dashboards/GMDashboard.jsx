@@ -16,6 +16,7 @@ import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
 import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
 import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
+import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -61,7 +62,8 @@ const GM_TABS = [
   { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' },
   { id: 'random-tables', label: 'Random Tables', icon: 'journal' },
   { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' },
-  { id: 'asteria-calendar', label: 'Asteria Calendar', icon: 'journal' }
+  { id: 'asteria-calendar', label: 'Asteria Calendar', icon: 'journal' },
+  { id: 'weather-environment', label: 'Weather Generator', icon: 'journal' }
 ];
 
 function progression(character = {}) {
@@ -822,5 +824,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
     {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
+    {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
   </AsteriaAppShell>;
 }

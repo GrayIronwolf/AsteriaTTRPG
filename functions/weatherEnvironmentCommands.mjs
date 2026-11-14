@@ -1,7 +1,7 @@
 import {randomInt} from 'node:crypto';
 import {
  validateWeatherZone,validateWeatherAction,generateWeatherForecast,
- buildWeatherDay,publicWeatherReport,WEATHER_CONDITIONS,WEATHER_SEVERITIES,
+ buildWeatherDay,publicWeatherReport,
  weatherIsValidId,MAX_FORECAST_DAYS
 } from '../src/state/weatherEnvironmentModel.mjs';
 
