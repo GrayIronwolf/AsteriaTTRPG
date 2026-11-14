@@ -1,0 +1,23 @@
+.asteria-calendar{display:grid;gap:15px;min-width:0}
+.asteria-calendar-card{border:1px solid #596779;border-radius:9px;padding:14px;background:#162130;display:grid;gap:12px}
+.asteria-calendar h3,.asteria-calendar h4{margin:0}
+.asteria-calendar summary{cursor:pointer;font-weight:600;padding:8px 0}
+.asteria-calendar-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.asteria-calendar-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.asteria-calendar-month{display:grid;gap:6px;padding:9px;border:1px solid #48576b;border-radius:7px}
+.asteria-calendar label{display:grid;gap:5px;min-width:0}
+.asteria-calendar :is(input,select,textarea){border:1px solid #7a8697;background:#192433;color:#f1f3f7;max-width:100%;min-width:0;width:100%;padding:9px;border-radius:6px;font:inherit}
+.asteria-calendar :is(input,select,textarea,button):focus-visible{outline:2px solid #d7b873;outline-offset:2px}
+.asteria-calendar-current{display:grid;gap:5px;padding:12px;border:1px solid #66758b;border-radius:8px}
+.asteria-calendar-current strong{font-size:1.15rem}
+.asteria-calendar-current small{color:#c1cad7}
+.asteria-calendar-actions{display:flex;align-items:end;flex-wrap:wrap;gap:10px}
+.asteria-calendar-actions label{flex:1 1 145px}
+.asteria-calendar button{padding:9px 12px}
+.asteria-calendar-events{display:grid;gap:10px;padding-left:23px}
+.asteria-calendar-events li{padding:10px 0;border-bottom:1px solid #455469}
+.asteria-calendar-events li small{display:block;color:#c1cad7}
+.asteria-calendar-events li p{margin:5px 0}
+.asteria-calendar-error{padding:9px;border:1px solid #bf6b6b;border-radius:7px}
+@media(max-width:800px){.asteria-calendar-months{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.asteria-calendar-grid,.asteria-calendar-months{grid-template-columns:1fr}.asteria-calendar-card{padding:10px}}

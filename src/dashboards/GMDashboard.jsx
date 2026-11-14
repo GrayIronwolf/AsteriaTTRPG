@@ -819,5 +819,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
     {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId}/> : null}
     {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
+    {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
   </AsteriaAppShell>;
 }
