@@ -51,6 +51,7 @@ const CHARACTER_TABS = [
   { id: 'party', label: 'Party', icon: 'party' },
   { id: 'gallery', label: 'Gallery', icon: 'gallery' },
   { id: 'battle-maps', label: 'Battle Maps', icon: 'gallery' },
+  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'skills' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
