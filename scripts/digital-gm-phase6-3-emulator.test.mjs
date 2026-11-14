@@ -60,6 +60,8 @@ test('backend-linked map prevents browser token edits even from GM',async()=>{
  }));
  await assertFails(updateDoc(doc(db('gm'),path),{combatId:'other'}));
  await assertSucceeds(updateDoc(doc(db('gm'),path),{fogCells:'1'.repeat(144)}));
+ await assertFails(updateDoc(doc(db('gm'),path),{gridColumns:18}));
+ await assertFails(updateDoc(doc(db('gm'),path),{metresPerCell:3}));
  await assertSucceeds(updateDoc(doc(db('gm'),path),{gridOpacity:60}));
  await assertFails(deleteDoc(doc(db('gm'),path)));
 });
