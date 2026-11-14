@@ -525,6 +525,24 @@ service cloud.firestore {
       }
       // Phase 7.3: generated encounter proposals and unreleased rewards
       // are private to the campaign GM. Only server transactions may write.
+      // Phase 8.1: calendar configuration and history, private notes, and
+      // player-safe calendar projections. Clients cannot forge chronology.
+      match /calendarState/{calendarId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /calendarPublic/{calendarId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /calendarEntries/{entryId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /calendarSharedEntries/{entryId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /encounterPlans/{planId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;

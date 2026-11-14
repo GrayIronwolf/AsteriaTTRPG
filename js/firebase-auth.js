@@ -3267,6 +3267,21 @@ const firebasePublicApi = {
   manageLootTable: (...args) => callTrustedAction('manageLootTable',args),
   manageRandomTable: (...args) => callTrustedAction('manageRandomTable',args),
   manageEncounterReward: (...args) => callTrustedAction('manageEncounterReward',args),
+  manageAsteriaCalendar: (...args) => callTrustedAction('manageAsteriaCalendar',args),
+  subscribeAsteriaCalendar: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const name=mode==='gm'?'calendarState':'calendarPublic';
+    return onSnapshot(doc(db,'campaigns',campaignId,name,'current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():null),
+      error=>reportSyncError('asteria-calendar',error,{campaignId}));
+  },
+  subscribeAsteriaCalendarEntries: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const name=mode==='gm'?'calendarEntries':'calendarSharedEntries';
+    return onSnapshot(collection(db,'campaigns',campaignId,name),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('asteria-calendar-entries',error,{campaignId}));
+  },
   subscribeEncounterPlans: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     const q=query(collection(db,'campaigns',campaignId,'encounterPlans'),orderBy('createdAt','desc'),limit(30));
