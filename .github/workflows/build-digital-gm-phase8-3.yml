@@ -63,7 +63,7 @@ jobs:
       - name: Random table model and existing digital GM tests
         run: node --test scripts/digital-gm-phase8-3.test.mjs scripts/digital-gm-phase8-2.test.mjs scripts/digital-gm-phase8-1.test.mjs scripts/digital-gm-phase7-3.test.mjs scripts/digital-gm-phase7-2.test.mjs scripts/digital-gm-phase7-1.test.mjs scripts/digital-gm-phase6-1.test.mjs scripts/digital-gm-phase6-2.test.mjs scripts/digital-gm-phase6-3.test.mjs
       - name: Firestore and Storage access emulator tests
-        run: npx firebase emulators:exec --project demo-asteria-maps --only firestore,storage "node --test scripts/digital-gm-phase8-3-emulator.test.mjs scripts/digital-gm-phase8-2-emulator.test.mjs scripts/digital-gm-phase8-1-emulator.test.mjs scripts/digital-gm-phase7-3-emulator.test.mjs scripts/digital-gm-phase7-2-emulator.test.mjs scripts/digital-gm-phase7-1-emulator.test.mjs scripts/digital-gm-phase6-1-emulator.test.mjs scripts/digital-gm-phase6-2-emulator.test.mjs scripts/digital-gm-phase6-3-emulator.test.mjs"
+        run: npx firebase emulators:exec --project demo-asteria-maps --only firestore,storage "node --test scripts/digital-gm-phase8-3-emulator.test.mjs && node --test scripts/digital-gm-phase8-2-emulator.test.mjs scripts/digital-gm-phase8-1-emulator.test.mjs scripts/digital-gm-phase7-3-emulator.test.mjs scripts/digital-gm-phase7-2-emulator.test.mjs scripts/digital-gm-phase7-1-emulator.test.mjs scripts/digital-gm-phase6-1-emulator.test.mjs scripts/digital-gm-phase6-2-emulator.test.mjs scripts/digital-gm-phase6-3-emulator.test.mjs"
       - name: Lint
         run: npm run lint
       - name: Existing dashboard and combat regressions
