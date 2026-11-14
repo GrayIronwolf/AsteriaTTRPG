@@ -41,11 +41,12 @@ function PdfOpenButton({campaignId,record,onMessage}){
     finally{setBusy(false);}
   }}>{busy?'Opening...':'Open PDF'}</button>;
 }
-export function GMSessionLibraryWorkspace({campaignId}){
+export function GMSessionLibraryWorkspace({campaignId,searchTarget=null}){
   const {notes,pdfs}=useSessionLibrary(campaignId,'gm');
   const [note,setNote]=useState(blankNote);
   const [editing,setEditing]=useState(null);
   const [search,setSearch]=useState('');
+  useEffect(()=>{if(['note','pdf'].includes(searchTarget?.category))setSearch(searchTarget.title||'');},[searchTarget]);
   const [file,setFile]=useState(null),[pdfDetails,setPdfDetails]=useState({title:'',description:''});
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const filteredNotes=useMemo(()=>notes.filter(row=>
