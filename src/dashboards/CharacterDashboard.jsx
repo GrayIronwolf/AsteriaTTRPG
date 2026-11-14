@@ -1,6 +1,7 @@
 import { PlayerInformation } from './PlayerInformation.jsx';
 import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
 import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
+import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
@@ -50,6 +51,7 @@ const CHARACTER_TABS = [
   { id: 'party', label: 'Party', icon: 'party' },
   { id: 'gallery', label: 'Gallery', icon: 'gallery' },
   { id: 'battle-maps', label: 'Battle Maps', icon: 'gallery' },
+  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'skills' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
@@ -226,6 +228,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId} encounter={live.encounter}/> : null}
+    {activeTab === 'advanced-dice' ? <AdvancedDiceWorkspace role="player"/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}

@@ -6,6 +6,14 @@ import { defineSecret } from 'firebase-functions/params';
 import { executeAction } from './handler.mjs';
 
 if(!getApps().length) initializeApp();
+export const asteriaAdvancedDice=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
+  if(!request.auth?.uid)throw new HttpsError('unauthenticated','Sign in to roll dice.');
+  try{
+    const {advancedDiceAction}=await import('./advancedDiceCommands.mjs');
+    return await advancedDiceAction(getFirestore(),request.auth.uid,request.data||{},()=>Date.now(),()=>FieldValue.serverTimestamp());
+  }catch(error){throw new HttpsError('failed-precondition',error.message||'The dice action could not be completed.');}
+});
+
 export const asteriaUniversalCheck=onCall({region:'us-central1',maxInstances:3,timeoutSeconds:30},async request=>{
   if(!request.auth)throw new HttpsError('unauthenticated','Sign in to continue.');
   try{

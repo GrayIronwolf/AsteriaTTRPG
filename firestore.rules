@@ -185,8 +185,13 @@ service cloud.firestore {
           request.resource.data.ownerUid == uid && matchingLinkedOwner(request.resource.data, characterId, uid);
         allow delete: if ownsUserData(uid);
       }
+      match /diceWorkspace/{documentId} {
+        allow get, list: if ownsUserData(uid);
+        // Only the authenticated Cloud Function may author digital dice results.
+        allow create, update, delete: if false;
+      }
       match /{collectionId}/{document=**} {
-        allow read, write: if collectionId != 'characters' && ownsUserData(uid);
+        allow read, write: if collectionId != 'characters' && collectionId != 'diceWorkspace' && ownsUserData(uid);
       }
     }
 

@@ -12,6 +12,7 @@ import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
+import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -53,7 +54,8 @@ const GM_TABS = [
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
   { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
   { id: 'world', label: 'World Systems', icon: '\u2318' },
-  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' }
+  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
+  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' }
 ];
 
 function progression(character = {}) {
@@ -810,5 +812,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
     {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter}/> : null}
+    {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
   </AsteriaAppShell>;
 }
