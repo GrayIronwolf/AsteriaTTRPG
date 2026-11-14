@@ -156,6 +156,22 @@ test('Member responses validate identity and active consent request',async()=>{
  assert.equal(yes.ok,true,yes.error);
  assert.equal(alice.store.get(path+'recordingConsents/alice').decision,'agree');
 });
+
+test('Participant withdrawal stops a recording immediately and forbids archive creation',async()=>{
+ const gm=harness();assert.equal((await gm.run(request)).ok,true);
+ gm.store.set(path+'recordingConsents/alice',{uid:'alice',requestId:'consent-one',decision:'agree'});
+ gm.store.set(path+'recordingConsents/bob',{uid:'bob',requestId:'consent-one',decision:'agree'});
+ assert.equal((await gm.run({type:'start-recording',requestId:'consent-one',expectedRevision:1})).ok,true);
+ const alice=harness({uid:'alice'});
+ alice.store.set(path+'recordingControl/current',gm.store.get(path+'recordingControl/current'));
+ alice.store.set(path+'recordingNotice/current',gm.store.get(path+'recordingNotice/current'));
+ assert.equal((await alice.respond({requestId:'consent-one',decision:'decline'})).ok,true);
+ assert.equal(alice.store.get(path+'recordingNotice/current').status,'idle');
+ assert.equal(alice.store.get(path+'recordingSessions/consent-one').status,'cancelled');
+ gm.store.set(path+'recordingSessions/consent-one',alice.store.get(path+'recordingSessions/consent-one'));
+ assert.equal((await gm.run({type:'reserve-archive',id:'clip-cancelled',details})).ok,false);
+});
+
 test('Non-GM cannot control recording or archive writes',async()=>{
  const h=harness({uid:'alice'});
  const answer=await h.run(request);
