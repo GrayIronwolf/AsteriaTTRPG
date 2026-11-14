@@ -24,7 +24,7 @@ export async function advancedDiceAction(db,uid,input,clock=()=>Date.now(),
       if(!Number.isSafeInteger(now)||now<0)throw Error('Invalid roll timestamp.');
       if(history.length&&now-Number(history[0].at)<250)
         throw Error('Please allow a moment between dice rolls.');
-      result=diceResult(request,randomFace,now,request.requestId);
+      result=diceResult({pool:request.pool,modifier:request.modifier,label:request.label},randomFace,now,request.requestId);
       history=[result,...history].slice(0,MAX_DICE_HISTORY);
     }else if(request.action==='save-preset'){
       const item=request.preset,existing=presets.findIndex(p=>p.id===item.id);
