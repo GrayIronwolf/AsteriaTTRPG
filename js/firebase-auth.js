@@ -3277,6 +3277,20 @@ const firebasePublicApi = {
   manageSessionLibrary: (...args) => callTrustedAction('manageSessionLibrary',args),
   manageCampaignAudio: (...args) => callTrustedAction('manageCampaignAudio',args),
   manageSessionRecording: (...args) => callTrustedAction('manageSessionRecording',args),
+  managePlayerPresentation: (...args) => callTrustedAction('managePlayerPresentation',args),
+  subscribePresentationControl: function(campaignId,onChange,onError){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'presentationControl','current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():null),
+      error=>{onError?.(error);reportSyncError('presentation-control',error,{campaignId});});
+  },
+  subscribePresentationDisplay: function(campaignId,onChange,onError){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    // Authenticated viewer reads ONLY the approved projection; never GM controls.
+    return onSnapshot(doc(db,'campaigns',campaignId,'presentationShared','current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():null),
+      error=>{onError?.(error);reportSyncError('presentation-display',error,{campaignId});});
+  },
   respondRecordingConsent: (...args) => callTrustedAction('respondRecordingConsent',args),
   subscribeRecordingControl: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
