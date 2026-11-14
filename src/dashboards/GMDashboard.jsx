@@ -13,6 +13,7 @@ import { GMPartyControl } from './GMPartyControl.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
 import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
+import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
