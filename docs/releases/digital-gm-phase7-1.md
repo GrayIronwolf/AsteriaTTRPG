@@ -41,3 +41,7 @@ The user runs the existing GitHub **Deploy Firebase backend (manual)** workflow 
 ## Next phases
 
 Phase 7.2 is the Random Table Builder. Phase 7.3 is the Encounter & Reward Generator. Neither is bundled into Phase 7.1.
+
+## Final reviewed frontend bundle gate
+
+The Phase 7.1 GitHub Action has generated and committed the verified `react-dist` website assets. Confirm the full Firebase/website suite, the Phase 7.1 tests, Digital GM Phases 6.1–6.3 regressions, and both Universal Check workflows all succeed **on the final source-and-bundle head commit** before merging PR #255. Production Firebase deployment remains a separate manual user action after merge.
