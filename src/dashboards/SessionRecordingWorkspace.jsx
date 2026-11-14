@@ -207,6 +207,8 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
    setMessage('Recording started. A visible recording notice is shown to all campaign participants.');
   }catch(error){
    stream?.getTracks?.().forEach(track=>track.stop());
+   streamRef.current=null;recorderRef.current=null;
+   setRecording(null);
    if(startedRecording?.ok){
     await firebaseService.manageSessionRecording(campaignId,'gm-scope',{
      type:'stop-recording',requestId:control.requestId,expectedRevision:startedRecording.revision
