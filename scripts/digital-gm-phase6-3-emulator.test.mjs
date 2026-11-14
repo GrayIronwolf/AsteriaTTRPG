@@ -46,6 +46,9 @@ test('GM can author unlocked markers and configure encounter map settings',async
  await assertSucceeds(updateDoc(doc(db('gm'),path),{tokens:[participant]}));
  await assertSucceeds(updateDoc(doc(db('gm'),path),{gridOpacity:70}));
  await assertFails(updateDoc(doc(db('gm'),path),{combatId:'forged'}));
+ await assertFails(setDoc(doc(db('gm'),'campaigns/'+campaignId+'/battleMaps/new'),{
+  ...scene,id:'new',combatId:'forged',storagePath:'campaigns/'+campaignId+'/battleMaps/new/scene.mp4'
+ }));
 });
 test('backend-linked map prevents browser token edits even from GM',async()=>{
  const path='campaigns/'+campaignId+'/battleMaps/'+mapId;
