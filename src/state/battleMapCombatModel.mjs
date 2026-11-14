@@ -85,7 +85,8 @@ export function combatMapMovePlan(map,encounter,actorId,point,{mode='movement',r
   const to=battleMapPoint(point?.x,point?.y,{
     columns:map.gridColumns,rows:map.gridRows,snap:true
   });
-  const distance=measureGridDistance(token,to,map.gridColumns,map.gridRows,map.metresPerCell??1);
+  const fromCentre=battleMapPoint(token.x,token.y,{columns:map.gridColumns,rows:map.gridRows,snap:true});
+  const distance=measureGridDistance(fromCentre,to,map.gridColumns,map.gridRows,map.metresPerCell??1);
   if(distance.metres<=0)throw Error('Choose a different map square to move.');
   if(!['movement','reposition'].includes(mode))throw Error('Unknown map movement mode.');
   let remaining=null;
