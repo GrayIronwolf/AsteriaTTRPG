@@ -20,6 +20,7 @@ function harness(options={}){
  let now=100000;
  store.set(path+'liveSession/current',{id:'session-one',status:'active'});
  store.set(path,{id:campaignId,ownerUid:'gm',membershipSchemaVersion:2});
+ store.set(path.slice(0,-1),{id:campaignId,ownerUid:'gm',membershipSchemaVersion:2});
  const users=options.users||['alice','bob'];
  for(const uid of users)store.set(path+'members/'+uid,{uid,campaignId,role:'player',status:'active'});
  const uid=options.uid||'gm',isGM=uid==='gm';
