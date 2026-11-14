@@ -63,18 +63,34 @@ export function createSessionRecordingCommands(context,{requireCampaignGM}){
       tx.get(p(campaignId,'recordingConsents',currentUser.uid))
      ]);
      const control=data(controlSnap);
-     if(control.status!=='consent'||control.requestId!==action.requestId)
+     if(!['consent','recording'].includes(control.status)||control.requestId!==action.requestId)
       throw Error('There is no active recording consent request.');
      if(!array(control.participants).includes(currentUser.uid))
       throw Error('You are not listed as a participant in this request.');
-     const consent=data(consentSnap);
-     if(consent.requestId===action.requestId&&consent.decision==='decline'&&action.decision==='agree'){
-      // A participant can reconsider consent while recording has not started.
-     }
+     // A participant may withdraw during active recording; withdrawal immediately
+     // cancels the recording and prevents this request from being archived.
+     if(control.status==='recording'&&action.decision!=='decline')
+      throw Error('Recording is already in progress; you may only withdraw consent.');
+     const sessionRef=p(campaignId,'recordingSessions',control.requestId);
+     const existingSession=control.status==='recording'?await tx.get(sessionRef):null;
+     if(control.status==='recording'&&exists(existingSession))
+      throw Error('Recording has already stopped.');
      tx.set(p(campaignId,'recordingConsents',currentUser.uid),{
       uid:currentUser.uid,sessionId:control.sessionId,requestId:action.requestId,
       decision:action.decision,updatedAt:serverTimestamp()
      });
+     if(control.status==='recording'){
+      const next={...control,status:'idle',startedAt:0,expiresAt:0,
+       revision:control.revision+1,updatedAt:serverTimestamp()};
+      tx.set(p(campaignId,'recordingControl','current'),next);
+      tx.set(p(campaignId,'recordingNotice','current'),noticeValue(next));
+      tx.set(sessionRef,{
+       id:control.requestId,status:'cancelled',reason:'participant-withdrew-consent',
+       sessionId:control.sessionId,mode:control.mode,participants:control.participants,
+       startedAt:control.startedAt,stoppedAt:now(),actorUid:control.actorUid,
+       updatedAt:serverTimestamp()
+      });
+     }
      return {decision:action.decision};
     });
     return {ok:true,...result};
