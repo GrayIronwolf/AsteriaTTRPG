@@ -5,6 +5,7 @@ import { activateReactDashboard } from './legacyBridge.js';
 const GMDashboard = lazy(() => import('../dashboards/GMDashboard.jsx').then(module => ({ default:module.GMDashboard })));
 const CharacterDashboard = lazy(() => import('../dashboards/CharacterDashboard.jsx').then(module => ({ default:module.CharacterDashboard })));
 const OwnedCharacterDashboard = lazy(() => import('../dashboards/CharacterDashboard.jsx').then(module => ({ default:module.OwnedCharacterDashboard })));
+const PlayerPresentationDisplay = lazy(() => import('../dashboards/PlayerPresentationWorkspace.jsx').then(module => ({ default:module.PlayerPresentationDisplay })));
 
 export class DashboardErrorBoundary extends React.Component {
   state = { failed: false };
@@ -39,6 +40,7 @@ function AsteriaRouteOutlet() {
   return <DashboardErrorBoundary key={`${accountScope}/${route.type}/${route.campaignId}/${route.characterId || ''}`}><Suspense fallback={<div className="react-route-loading" role="status" aria-live="polite">Loading Asteria workspace...</div>}>
     {route.type === 'gm'
       ? <GMDashboard key={route.campaignId} campaignId={route.campaignId} />
+      : route.type === 'presentation' ? <PlayerPresentationDisplay key={route.campaignId} campaignId={route.campaignId} />
       : route.type === 'owned-character' ? <OwnedCharacterDashboard key={route.characterId} characterId={route.characterId} />
       : <CharacterDashboard key={`${route.campaignId}/${route.characterId}`} campaignId={route.campaignId} characterId={route.characterId} />}
   </Suspense></DashboardErrorBoundary>;
