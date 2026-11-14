@@ -48,7 +48,7 @@ service firebase.storage {
           firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)) &&
           firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data.get('visibility','gm') == 'players');
       allow list: if false;
-      allow create: if campaignGM(campaignId) &&
+      allow create: if campaignGM(campaignId) && resource == null &&
         fileName.matches('scene\\.(png|jpg|webp|gif|mp4|webm)') &&
         request.resource.size > 0 &&
         ((request.resource.contentType.matches('image/(png|jpeg|webp|gif)') &&
