@@ -365,7 +365,10 @@ service cloud.firestore {
             'fogEnabled','fogCells','metresPerCell'
           ]) &&
           (resource.data.get('combatId','') == '' ||
-           request.resource.data.tokens == resource.data.tokens) &&
+            (request.resource.data.tokens == resource.data.tokens &&
+             request.resource.data.gridColumns == resource.data.gridColumns &&
+             request.resource.data.gridRows == resource.data.gridRows &&
+             request.resource.data.get('metresPerCell',1) == resource.data.get('metresPerCell',1))) &&
           validBattleMapData(campaignId,mapId,request.resource.data);
         allow delete: if isCampaignGM(campaignId) && resource.data.get('combatId','') == '';
       }
