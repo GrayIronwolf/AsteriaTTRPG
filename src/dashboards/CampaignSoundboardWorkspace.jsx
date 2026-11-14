@@ -30,6 +30,7 @@ function useAudioTransport(campaignId,tracks,live,{enabled=false,localVolume=70,
  const ambient=useRef(null),effect=useRef(null);
  const blobUrls=useRef(new Map());
  const requestEpoch=useRef(0);
+ const lastEffectCue=useRef('');
  const errorCallback=useRef(onError);
  errorCallback.current=onError;
  const [status,setStatus]=useState('Audio stopped.');
@@ -92,7 +93,8 @@ function useAudioTransport(campaignId,tracks,live,{enabled=false,localVolume=70,
       seek();setStatus('Ambient playback paused by GM.');
      }
     }else setStatus('No shared ambience playing.');
-    if(activeEffect?.cueId){
+    if(activeEffect?.cueId&&lastEffectCue.current!==effectKey){
+     lastEffectCue.current=effectKey;
      const track=trackMap.get(activeEffect.trackId);
      const src=await ensure(track);
      if(!src||disposed)return;
