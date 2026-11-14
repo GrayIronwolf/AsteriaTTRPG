@@ -20,7 +20,7 @@ const editable=table=>({
   entries:(table.entries||[]).map(row=>({...row}))
 });
 const clock=stamp=>stamp?.toDate?.()?.toLocaleString?.()||'';
-export function GMRandomTableWorkspace({campaignId}){
+export function GMRandomTableWorkspace({campaignId,searchTarget=null}){
   const [tables,setTables]=useState([]),[lootTables,setLootTables]=useState([]);
   const [history,setHistory]=useState([]);
   const [selectedId,setSelectedId]=useState('');
@@ -29,6 +29,8 @@ export function GMRandomTableWorkspace({campaignId}){
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('');
   const pendingDraft=useRef(null);
   const selected=tables.find(row=>row.id===selectedId)||null;
+  useEffect(()=>{if(searchTarget?.category==='random-table'&&tables.some(x=>x.id===searchTarget.id))
+    setSelectedId(searchTarget.id);},[searchTarget,tables]);
   const editableSelected=selected?.status!=='archived';
   const totalWeight=draft.entries.reduce((sum,row)=>sum+(Number(row.weight)||0),0);
   const linkedLoot=useMemo(()=>lootTables.filter(row=>row.status==='active'),[lootTables]);
