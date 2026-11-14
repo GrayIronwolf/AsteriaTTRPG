@@ -26,6 +26,8 @@ function requireMethod(name) {
 
 export const firebaseService = {
   currentUser: () => api()?.getUser?.() || null,
+  advancedDiceAction: data=>requireMethod('advancedDiceAction')(data),
+  subscribeDiceWorkspace: onChange=>requireMethod('subscribeDiceWorkspace')(onChange),
   universalCheckAction: data=>requireMethod('universalCheckAction')(data),
   subscribeUniversalChecks: (campaignId,onChange,options)=>requireMethod('subscribeUniversalChecks')(campaignId,onChange,options),
   subscribeBattleMaps: (campaignId,onChange,options)=>requireMethod('subscribeBattleMaps')(campaignId,onChange,options),
