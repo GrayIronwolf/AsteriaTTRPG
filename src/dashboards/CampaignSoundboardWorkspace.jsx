@@ -15,11 +15,11 @@ function useCampaignSound(campaignId,mode){
  useEffect(()=>{
   setTracks([]);setLive(emptyLive());
   if(!campaignId)return;
-  return [
+  const unsubscribes=[
    firebaseService.subscribeCampaignAudio(campaignId,setTracks,mode),
    firebaseService.subscribeCampaignAudioLive(campaignId,setLive)
-  ].reduce((stop,unsubscribe)=>{stop.push(unsubscribe);return stop;},[])
-   .reduce((cleanup,unsubscribe)=>(cleanup.push(unsubscribe),cleanup),[]);
+  ];
+  return()=>unsubscribes.forEach(unsubscribe=>unsubscribe?.());
  },[campaignId,mode]);
  // Dedicated cleanup so listeners remain independent of presentation state.
  return {tracks:audioLibraryRows(tracks),live};
