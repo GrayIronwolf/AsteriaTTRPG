@@ -15,6 +15,7 @@ import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {GMRandomTableWorkspace} from './GMRandomTableWorkspace.jsx';
 import {GMEncounterRewardWorkspace} from './GMEncounterRewardWorkspace.jsx';
+import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -59,7 +60,8 @@ const GM_TABS = [
   { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
   { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' },
   { id: 'random-tables', label: 'Random Tables', icon: 'journal' },
-  { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' }
+  { id: 'encounter-rewards', label: 'Encounter Generator', icon: 'journal' },
+  { id: 'asteria-calendar', label: 'Asteria Calendar', icon: 'journal' }
 ];
 
 function progression(character = {}) {
