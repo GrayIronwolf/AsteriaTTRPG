@@ -126,6 +126,10 @@ export function createSessionRecordingCommands(context,{requireCampaignGM}){
        updatedAt:serverTimestamp()};
       tx.set(controlRef,next);
       tx.set(noticeRef,noticeValue(next));
+      tx.set(p(campaignId,'recordingConsents',currentUser.uid),{
+       uid:currentUser.uid,sessionId:action.sessionId,requestId:action.requestId,
+       decision:'agree',updatedAt:serverTimestamp()
+      });
       return {revision:next.revision,requestId:next.requestId,participantCount:participants.length};
      }
      if(type==='start-recording'){
@@ -139,7 +143,7 @@ export function createSessionRecordingCommands(context,{requireCampaignGM}){
       const currentParticipants=await roster(tx,campaignId,campaign,control.actorUid);
       if(!same(currentParticipants,array(control.participants)))
        throw Error('Campaign participants changed. Request consent again.');
-      const checks=await Promise.all(currentParticipants.map(uid=>
+      const checks=await Promise.all([...currentParticipants,control.actorUid].map(uid=>
        tx.get(p(campaignId,'recordingConsents',uid))));
       if(checks.some(snapshot=>data(snapshot).requestId!==control.requestId||
        data(snapshot).decision!=='agree'))
