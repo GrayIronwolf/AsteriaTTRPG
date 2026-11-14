@@ -76,7 +76,11 @@ export function battleMapTokens(items){
       throw Error('Token position must be within the map.');
     const refId=String(row?.refId||'');
     if(refId&&!validId(refId))throw Error('Invalid linked character identifier.');
-    return {id,label,kind,refId,x:Math.round(x*100)/100,y:Math.round(y*100)/100};
+    const combatantId=String(row?.combatantId||'');
+    if(combatantId&&!/^[A-Za-z0-9_-]{1,160}$/.test(combatantId))
+      throw Error('Invalid combat participant binding.');
+    return {id,label,kind,refId,...(combatantId?{combatantId}:{}),
+      x:Math.round(x*100)/100,y:Math.round(y*100)/100};
   });
 }
 export function battleMapPoint(x,y,{columns=20,rows=15,snap=false}={}){
