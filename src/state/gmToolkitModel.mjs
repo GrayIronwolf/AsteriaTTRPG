@@ -22,6 +22,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
       {id:'gm-controls',label:'GM Character Tools',tab:'tools',description:'Conditions, resource controls, Armour Class and player titles.',keywords:'hp sp mp ac character'},
       {id:'notes',label:'GM Notes & Session Log',tab:'notes',description:'Private preparation notes, session records, structured notes and PDFs.',keywords:'session journal log preparation pdf documents'},
       {id:'session-library',label:'Session Notes & PDF Library',tab:'session-library',description:'Organise private GM notes and publish approved PDF handouts.',keywords:'session pdf document library private handout notes upload share'},
+      {id:'soundboard',label:'Soundboard & Ambient Audio',tab:'soundboard',description:'Upload private audio, publish tracks and broadcast live ambience and effects to opted-in players.',keywords:'music ambient audio soundboard sound effects looping playback atmosphere'},
       {id:'news',label:'News & Events',tab:'information',description:'Campaign information, announcements and events.',keywords:'information announcements'}
     ]
   }),

@@ -19,6 +19,7 @@ import {AsteriaCalendarWorkspace} from './AsteriaCalendarWorkspace.jsx';
 import {GMWeatherEnvironmentWorkspace} from './WeatherEnvironmentWorkspace.jsx';
 import {GMWorldAtlasWorkspace} from './WorldAtlasWorkspace.jsx';
 import {GMSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
+import {GMCampaignSoundboard} from './CampaignSoundboardWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -56,6 +57,7 @@ const GM_TABS = [
   { id: 'quests', label: 'Quests', icon: '\u2691' },
   { id: 'notes', label: 'GM Notes', icon: '\u270e' },
   { id: 'session-library', label: 'Session Library', icon: 'journal' },
+  { id: 'soundboard', label: 'Soundboard & Ambience', icon: 'journal' },
   { id: 'economy', label: 'Economy', icon: '\u25ce' },
   { id: 'crafting', label: 'Crafting', icon: '\u2692' },
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
@@ -818,6 +820,7 @@ export function GMDashboard({ campaignId }) {
     {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'notes' ? <><NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/><GMSessionLibraryWorkspace campaignId={campaignId}/></> : null}
     {tab === 'session-library' ? <GMSessionLibraryWorkspace campaignId={campaignId}/> : null}
+    {tab === 'soundboard' ? <GMCampaignSoundboard campaignId={campaignId}/> : null}
     {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>

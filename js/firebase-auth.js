@@ -4,6 +4,7 @@ import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditabl
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
+import {audioFileError,audioMagicMatches,audioTrackPath,audioUploadDetails,AUDIO_TRACK_LIMIT} from '../src/state/campaignAudioModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -3273,6 +3274,68 @@ const firebasePublicApi = {
   manageWeatherEnvironment: (...args) => callTrustedAction('manageWeatherEnvironment',args),
   manageWorldAtlas: (...args) => callTrustedAction('manageWorldAtlas',args),
   manageSessionLibrary: (...args) => callTrustedAction('manageSessionLibrary',args),
+  manageCampaignAudio: (...args) => callTrustedAction('manageCampaignAudio',args),
+  subscribeCampaignAudio: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,
+      mode==='gm'?'audioTracks':'audioTracksShared'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('audio-tracks',error,{campaignId});});
+  },
+  subscribeCampaignAudioLive: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'audioLive','current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():{version:1,revision:0,ambient:null,effect:null}),
+      error=>{onChange({version:1,revision:0,ambient:null,effect:null});reportSyncError('audio-live',error,{campaignId});});
+  },
+  fetchCampaignAudio: async function(campaignId,track){
+    if(!storage||!currentUser||!campaignId||!track)return {ok:false,error:'Sign in to listen.'};
+    try{
+      const path=audioTrackPath(campaignId,track.id,track.contentType);
+      if(track.storagePath!==path||track.status!=='ready')throw Error('Invalid audio reference.');
+      return {ok:true,blob:await getBlob(storageRef(storage,path))};
+    }catch(error){return {ok:false,error:error?.message||'Audio file unavailable.'};}
+  },
+  removeCampaignAudioBytes: async function(campaignId,track){
+    if(!db||!storage||!currentUser||!campaignId||!track)return {ok:false,error:'Sign in as GM.'};
+    try{
+      const path=audioTrackPath(campaignId,track.id,track.contentType);
+      if(track.storagePath!==path)throw Error('Invalid audio reference.');
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only campaign GMs can remove audio.');
+      await deleteObject(storageRef(storage,path));
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'Audio cleanup failed.'};}
+  },
+  uploadCampaignAudio: async function(campaignId,file,settings){
+    if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in as GM.'};
+    const invalid=audioFileError(file);if(invalid)return {ok:false,error:invalid};
+    try{
+      const head=new Uint8Array(await file.slice(0,16).arrayBuffer());
+      if(!audioMagicMatches(file.type,head))throw Error('Audio header does not match the selected format.');
+      const details=audioUploadDetails({...settings,fileName:file.name,
+        size:file.size,contentType:file.type});
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only campaign GMs can upload audio.');
+      const tracks=await getDocs(query(collection(db,'campaigns',campaignId,'audioTracks'),
+        limit(AUDIO_TRACK_LIMIT+1)));
+      if(tracks.docs.filter(row=>row.data().status!=='archived').length>=AUDIO_TRACK_LIMIT)
+        throw Error('Campaign audio library limit reached.');
+      const id=crypto.randomUUID();
+      const prep=await callTrustedAction('manageCampaignAudio',[campaignId,'gm-scope',
+        {type:'reserve-track',id,details}]);
+      if(!prep?.ok)return prep;
+      try{
+        await uploadBytes(storageRef(storage,audioTrackPath(campaignId,id,file.type)),file,
+          {contentType:file.type,cacheControl:'private,max-age=0,no-store'});
+        const finished=await callTrustedAction('manageCampaignAudio',[campaignId,'gm-scope',
+          {type:'finish-track',id,expectedRevision:prep.revision}]);
+        return finished?.ok?{ok:true,id,revision:finished.revision}:finished;
+      }catch(error){return {ok:false,error:error?.message||'Upload failed. Archive the incomplete GM-only draft.'};}
+    }catch(error){return {ok:false,error:error?.message||'Audio validation failed.'};}
+  },
   subscribeSessionNotes: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,'sessionNotes'),

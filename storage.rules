@@ -40,6 +40,29 @@ service firebase.storage {
           ))
       );
     }
+    match /campaigns/{campaignId}/audioTracks/{trackId}/{fileName} {
+      // No public download URLs. A GM can preview private assets; players
+      // can read bytes only for explicitly published, ready audio.
+      allow get: if fileName.matches('audio\\.(mp3|ogg|wav|webm)') &&
+        (campaignGM(campaignId) ||
+          (campaignMember(campaignId) &&
+            firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/audioTracks/$(trackId)) &&
+            firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/audioTracks/$(trackId)).data.get('visibility','gm') == 'players' &&
+            firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/audioTracks/$(trackId)).data.get('status','') == 'ready'));
+      allow list: if false;
+      allow create: if campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/audioTracks/$(trackId)) &&
+        firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/audioTracks/$(trackId)).data.get('status','') == 'uploading' &&
+        (
+          (fileName == 'audio.mp3' && request.resource.contentType == 'audio/mpeg') ||
+          (fileName == 'audio.ogg' && request.resource.contentType == 'audio/ogg') ||
+          (fileName == 'audio.wav' && request.resource.contentType == 'audio/wav') ||
+          (fileName == 'audio.webm' && request.resource.contentType == 'audio/webm')
+        ) &&
+        request.resource.size > 0 && request.resource.size <= 20 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
     match /campaigns/{campaignId}/sessionPdfs/{pdfId}/{fileName} {
       // Authenticated PDF reads; sharing is controlled by the server-projected index.
       allow get: if fileName == 'document.pdf' && (campaignGM(campaignId) ||
