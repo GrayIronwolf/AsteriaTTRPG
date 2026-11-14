@@ -1394,6 +1394,18 @@ const firebasePublicApi = {
       return {ok:true};
     }catch(error){return {ok:false,error:error?.message||'Unable to delete map.'};}
   },
+  advancedDiceAction: async data=>{
+    if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to roll dice.'};
+    try{return (await httpsCallable(functionsClient,'asteriaAdvancedDice')(data)).data;}
+    catch(error){return {ok:false,error:error?.message||'Dice action failed.'};}
+  },
+  subscribeDiceWorkspace: function(onChange){
+    if(!db||!currentUser||typeof onChange!=='function')return ()=>{};
+    const uid=currentUser.uid;
+    return onSnapshot(doc(db,'users',uid,'diceWorkspace','current'),snapshot=>{
+      if(currentUser?.uid===uid)onChange(snapshot.exists()?snapshot.data():{version:1,presets:[],history:[]});
+    },error=>reportSyncError('dice-workspace-listener',error,{uid}));
+  },
   universalCheckAction: async data=>{
     if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to continue.'};
     try{return (await httpsCallable(functionsClient,'asteriaUniversalCheck')(data)).data;}
