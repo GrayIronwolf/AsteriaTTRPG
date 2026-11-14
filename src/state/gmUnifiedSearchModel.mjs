@@ -26,7 +26,6 @@ const text=(value,max=160)=>typeof value==='string'?value.trim().slice(0,max):''
 const fold=value=>String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
  .toLocaleLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const token=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,160}$/.test(value);
-const bool=value=>value===true;
 const sections=Object.freeze(['regions','settlements','merchants','factions','events']);
 const destination=Object.freeze({
  tool:'toolkit',npc:'bestiary',creature:'bestiary',merchant:'world',shop:'economy',
