@@ -1,3 +1,4 @@
+import {PlayerSessionLibraryWorkspace} from './SessionLibraryWorkspace.jsx';
 import { PlayerInformation } from './PlayerInformation.jsx';
 import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
 import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
@@ -58,6 +59,7 @@ const CHARACTER_TABS = [
   { id: 'asteria-calendar', label: 'Calendar', icon: 'journal' },
   { id: 'weather-environment', label: 'Weather', icon: 'journal' },
   { id: 'world-atlas', label: 'World Map', icon: 'gallery' },
+  { id: 'session-library', label: 'Campaign Library', icon: 'journal' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
@@ -164,7 +166,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     setNoticeError('');
   },[campaignId,characterId]);
   useEffect(()=>{
-    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting','asteria-calendar','weather-environment','world-atlas'].includes(event.detail?.tab)))setTab(event.detail.tab);};
+    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting','asteria-calendar','weather-environment','world-atlas','session-library'].includes(event.detail?.tab)))setTab(event.detail.tab);};
     window.addEventListener('asteria:open-character-tab',openTab);
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[campaignId]);
@@ -238,6 +240,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'asteria-calendar' && campaignId ? <PlayerAsteriaCalendar campaignId={campaignId}/> : null}
     {activeTab === 'weather-environment' && campaignId ? <PlayerWeatherEnvironment campaignId={campaignId}/> : null}
     {activeTab === 'world-atlas' && campaignId ? <PlayerWorldAtlas campaignId={campaignId}/> : null}
+    {activeTab === 'session-library' && campaignId ? <PlayerSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
