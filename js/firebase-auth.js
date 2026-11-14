@@ -3265,6 +3265,19 @@ const firebasePublicApi = {
   },
   managePartyStash: (...args) => callTrustedAction('managePartyStash',args),
   manageLootTable: (...args) => callTrustedAction('manageLootTable',args),
+  manageRandomTable: (...args) => callTrustedAction('manageRandomTable',args),
+  subscribeRandomTables: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'randomTables'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('random-tables',error,{campaignId}));
+  },
+  subscribeRandomTableHistory: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const q=query(collection(db,'campaigns',campaignId,'randomTableRolls'),orderBy('createdAt','desc'),limit(80));
+    return onSnapshot(q,snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('random-table-history',error,{campaignId}));
+  },
   subscribeLootTables: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,'lootTables'),
