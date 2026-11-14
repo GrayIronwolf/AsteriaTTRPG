@@ -812,5 +812,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
     {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter}/> : null}
+    {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
   </AsteriaAppShell>;
 }
