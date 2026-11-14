@@ -14,7 +14,7 @@ const paths={
 const media='campaigns/'+campaign+'/worldAtlas/map-one/atlas.png';
 const firestore=uid=>uid?env.authenticatedContext(uid).firestore():env.unauthenticatedContext().firestore();
 const storage=uid=>uid?env.authenticatedContext(uid).storage():env.unauthenticatedContext().storage();
-before(async()=>{env=await initializeTestEnvironment({projectId:'demo-asteria-maps',
+before(async()=>{env=await initializeTestEnvironment({projectId:process.env.GCLOUD_PROJECT||process.env.FIREBASE_PROJECT_ID||'demo-asteria-maps',
  firestore:{rules:readFileSync('firestore.rules','utf8')},
  storage:{rules:readFileSync('storage.rules','utf8')}});});
 after(async()=>env?.cleanup());
