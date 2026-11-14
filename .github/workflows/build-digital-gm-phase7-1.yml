@@ -1,4 +1,4 @@
-name: Digital GM Phase 7.1 — Battle Maps and Looping Video
+name: Digital GM Phase 7.1 — Advanced Dice Roller
 on:
   push:
     branches: [feat/digital-gm-phase7-1-advanced-dice]
