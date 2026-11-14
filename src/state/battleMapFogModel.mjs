@@ -84,7 +84,7 @@ export function fogRevealFraction(cells,cols,rows){
 }
 export function distanceMetersPerCell(input=1){
   const n=Number(input);
-  if(!Number.isFinite(n)||n<.1||n>100||Math.round(n*100)!==n*100)
+  if(!Number.isFinite(n)||n<.1||n>100||Math.abs(Math.round(n*100)-n*100)>1e-7)
     throw Error('Square distance must be 0.1–100 metres with at most two decimals.');
   return n;
 }
