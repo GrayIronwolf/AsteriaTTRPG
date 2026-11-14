@@ -60,6 +60,7 @@ test('PDF bytes are create-only for GM and cannot be read by players before publ
  await assertFails(getBytes(ref(storage('alice'),media)));
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await assertFails(getBytes(ref(storage(null),media)));
+ await assertSucceeds(deleteObject(ref(storage('gm'),media)));
 });
 test('Explicit sharing enables active member read and unpublish revokes bytes',async()=>{
  const content=new TextEncoder().encode('%PDF-1.7\n');
@@ -69,13 +70,9 @@ test('Explicit sharing enables active member read and unpublish revokes bytes',a
   await updateDoc(doc(context.firestore(),privatePdf),{status:'ready',visibility:'players'});
  });
  await assertSucceeds(getDoc(doc(firestore('alice'),publicPdf)));
- console.log('Shared index readable by player');
  await assertSucceeds(getDocs(collection(firestore('alice'),'campaigns/'+campaign+'/sessionPdfsShared')));
- console.log('Shared index query readable by player');
  await assertSucceeds(getBytes(ref(storage('gm'),media)));
- console.log('Published PDF readable by GM');
  await assertSucceeds(getBytes(ref(storage('alice'),media)));
- console.log('Published PDF readable by player');
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await env.withSecurityRulesDisabled(async context=>{
   await deleteDoc(doc(context.firestore(),publicPdf));
