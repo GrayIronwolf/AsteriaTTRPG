@@ -49,7 +49,7 @@ function harness(options={}){
   respond:action=>cmd.respondRecordingConsent(campaignId,'member-scope',action)};
 }
 const request={type:'request-consent',requestId:'consent-one',sessionId:'session-one',
- mode:'microphone',expectedRevision:0};
+ mode:'microphone',expectedRevision:0,actorConsent:true};
 test('Audio formats, quota, names and duration limits reject dangerous input',()=>{
  assert.deepEqual(recordingMetadata(details),details);
  assert.deepEqual(recordingSummary({title:'Next',summary:'Text'}),{title:'Next',summary:'Text'});
@@ -74,6 +74,7 @@ test('Audio formats, quota, names and duration limits reject dangerous input',()
 test('Unsupported client fields and forged consent are rejected',()=>{
  assert.equal(validateRecordingAction(request),'request-consent');
  assert.throws(()=>validateRecordingAction({...request,participants:['victim']}));
+ assert.throws(()=>validateRecordingAction({...request,actorConsent:false}));
  assert.throws(()=>validateRecordingAction({type:'publish-archive',id:'a',expectedRevision:0}));
  assert.throws(()=>validateRecordingAction({type:'stop-recording',requestId:'x',expectedRevision:-1}));
  assert.throws(()=>validateRecordingConsent({requestId:'x',decision:'maybe'}));
@@ -86,6 +87,7 @@ test('Recording requires active session, new request ID and unexpired live statu
  const control=h.store.get(path+'recordingControl/current');
  assert.deepEqual(control.participants,['alice','bob']);
  assert.equal(h.store.get(path+'recordingNotice/current').status,'consent');
+ assert.equal(h.store.get(path+'recordingConsents/gm').decision,'agree');
  assert.equal((await h.run({...request,expectedRevision:1})).ok,false);
  assert.equal((await h.run({type:'start-recording',requestId:'consent-one',expectedRevision:1})).ok,false);
  h.store.set(path+'liveSession/current',{id:'session-one',status:'idle'});
