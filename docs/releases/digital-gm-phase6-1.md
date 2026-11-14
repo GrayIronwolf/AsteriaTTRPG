@@ -38,3 +38,7 @@
 4. GM publishes the animated map. Player sees the same video, grid and markers in Battle Maps.
 5. GM makes it private again. Player map disappears, and new authenticated downloads are denied.
 6. Confirm a non-GM cannot upload/replace/delete scenes or view private maps.
+
+## Release gate
+
+The tracked website bundle is built and committed on this PR branch. Verify the full Firebase and website workflow against the latest branch head after the bundle commit, then mark the PR ready and merge only if all checks are green.
