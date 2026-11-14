@@ -21,7 +21,7 @@ This phase adds structured, campaign-scoped GM notes and a private PDF library w
 7. With a co-GM, confirm normal note/document operations work. Do not grant players editing rights.
 
 ## Deployment
-Merge after successful tests and build. Run the existing **Firebase Deploy** workflow on `main` with Functions, Firestore rules, Storage rules and hosting as configured. No API keys, SMTP services or migration are required. Use the rollback guidance in the existing deployment workflow if the live check fails.
+Merge after successful tests and build. Run the existing **Deploy Firebase backend (manual)** workflow on `main` using operation `deploy` and confirmation `DEPLOY-ASTERIA-PRODUCTION` to deploy Functions, Firestore and Storage rules. The website frontend is delivered from the verified, committed `react-dist` bundle; follow the website publishing workflow where required. No API keys, SMTP services or migration are required. Use the rollback guidance in the existing deployment workflow if the live check fails.
 
 ## Scope exclusions
 Phase 9.2 adds Soundboard/Ambient Audio; Phase 9.3 addresses Session Recording/Archives. Obsidian bidirectional synchronization is a separate future feature.
