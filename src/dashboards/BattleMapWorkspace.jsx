@@ -259,6 +259,8 @@ export function GMBattleMapManager({campaignId,characters={}}){
     if(values.gridColumns===undefined&&values.gridRows===undefined)return {...previous,...values};
     const nextCols=values.gridColumns??previous.gridColumns;
     const nextRows=values.gridRows??previous.gridRows;
+    if(!Number.isInteger(nextCols)||!Number.isInteger(nextRows)||
+      nextCols<1||nextCols>80||nextRows<1||nextRows>80)return previous;
     try{
       return {...previous,...values,fogCells:resizeFogCells(previous.fogCells,
         previous.gridColumns,previous.gridRows,nextCols,nextRows)};
