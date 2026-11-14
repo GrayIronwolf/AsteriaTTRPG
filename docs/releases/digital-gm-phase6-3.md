@@ -41,3 +41,7 @@
 4. Attempt a move for a noncurrent participant, an unauthorized player, and a move longer than the remaining budget. All must be rejected.
 5. Test a forced move with a recorded GM correction reason and verify it appears in the combat history.
 6. Advance initiative and confirm the highlight follows the live encounter, then end combat and verify token cleanup while private notes and static markers persist.
+
+## Final release gate
+
+The verified production website bundle is now committed on this PR branch. Before merging, require success of the Digital GM Phase 6.3, Phase 6.2, and Phase 6.1 workflows, both Universal Check regression workflows, and the full Firebase and website suite on the final source-plus-bundle commit. The owner's backend deployment remains a separate manual step after merge.
