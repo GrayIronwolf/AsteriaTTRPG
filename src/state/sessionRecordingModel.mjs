@@ -114,7 +114,7 @@ export function recordingStorageEstimate(bytes){
 export function validateRecordingAction(action={}){
  if(!object(action))throw Error('Invalid recording operation.');
  const types={
-  'request-consent':['type','requestId','sessionId','mode','expectedRevision'],
+  'request-consent':['type','requestId','sessionId','mode','expectedRevision','actorConsent'],
   'start-recording':['type','requestId','expectedRevision'],
   'stop-recording':['type','requestId','expectedRevision'],
   'cancel-consent':['type','requestId','expectedRevision'],
@@ -131,6 +131,7 @@ export function validateRecordingAction(action={}){
   if(!recordingId(action.requestId)||!recordingId(action.sessionId))
    throw Error('Choose a valid session and recording request.');
   recordingMode(action.mode);recordingRevision(action.expectedRevision);
+  if(action.actorConsent!==true)throw Error('The recording GM must explicitly consent.');
  }else if(['start-recording','stop-recording','cancel-consent'].includes(action.type)){
   if(!recordingId(action.requestId))throw Error('Invalid consent request.');
   recordingRevision(action.expectedRevision);
