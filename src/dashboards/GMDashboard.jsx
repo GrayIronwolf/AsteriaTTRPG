@@ -54,7 +54,8 @@ const GM_TABS = [
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
   { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
   { id: 'world', label: 'World Systems', icon: '\u2318' },
-  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' }
+  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' },
+  { id: 'advanced-dice', label: 'Advanced Dice', icon: 'settings' }
 ];
 
 function progression(character = {}) {
