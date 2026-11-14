@@ -1,0 +1,20 @@
+.asteria-battle-form-row{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:12px 0}
+.asteria-battle-form-row>label{display:grid;gap:5px;flex:1 1 155px;min-width:0}
+.asteria-battle-form-row input:not([type=checkbox]),.asteria-battle-form-row select,
+.asteria-battle-upload input,.asteria-battle-token-editor input{max-width:100%;width:100%}
+.asteria-battle-upload{padding:12px;border:1px dashed var(--asteria-border,#847f78);border-radius:8px;display:grid;gap:9px}
+.asteria-battle-upload>label{display:grid;gap:8px}
+.asteria-battle-viewer{display:grid;gap:10px;min-width:0;margin:14px 0}
+.asteria-battle-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.asteria-battle-canvas{width:100%;min-height:160px;max-height:75dvh;position:relative;overflow:hidden;background:#111925;border:1px solid var(--asteria-border,#687589);border-radius:8px;touch-action:manipulation;user-select:none}
+.asteria-battle-canvas.token-placement{cursor:crosshair}
+.asteria-battle-media{width:100%;height:100%;position:absolute;inset:0;object-fit:fill;display:block;pointer-events:none}
+.asteria-battle-grid{position:absolute;inset:0;z-index:1;pointer-events:none}
+.asteria-battle-loading{position:absolute;inset:20% 7%;text-align:center;z-index:3;background:#1a2137dd;padding:10px;border-radius:6px}
+.asteria-battle-token{position:absolute;z-index:2;transform:translate(-50%,-50%);min-width:24px;height:24px;border-radius:50%;border:2px solid #d8cbad;background:#253b60;color:#fff;font-size:13px;font-weight:bold;display:grid;place-items:center;pointer-events:none;box-shadow:0 1px 8px #000b}
+.asteria-battle-token.selected{outline:2px solid #fed376;outline-offset:2px}
+.asteria-battle-token-editor{margin:12px 0;padding:10px;border:1px solid var(--asteria-border,#706e70);border-radius:8px}
+.asteria-battle-token-list{display:flex;flex-wrap:wrap;gap:8px;margin:9px 0}
+.asteria-battle-token-list>div{display:flex;gap:4px;align-items:center}
+.asteria-battle-token-list button.active{outline:2px solid #fed376}
+@media(max-width:640px){.asteria-battle-form-row>label{flex-basis:100%}.asteria-battle-token-list{display:grid;grid-template-columns:1fr}.asteria-battle-canvas{max-height:55dvh}}

@@ -1,5 +1,6 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
+import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -12,7 +13,7 @@ import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'https://w
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification, reload, setPersistence, browserLocalPersistence, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator, orderBy, limit, startAfter, doc, setDoc, getDoc, getDocFromServer, collection, getDocs, deleteDoc, onSnapshot, query, where, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
-import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
+import { getStorage, connectStorageEmulator, ref as storageRef, uploadBytes, getDownloadURL, getBlob, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js';
 import {accountIdRegistrationEnabled,finalizeRegisteredAccountId} from '../src/state/accountIdRegistration.mjs';
 import {canSendVerificationEmail,canCompleteNewAccountId,accountIdCompletionEnabled} from '../src/state/accountEmailVerification.mjs';
 import {validateAccountRegistrationFields,recoverPendingRegistrationProfile} from '../src/state/accountRegistrationRecovery.mjs';
@@ -1276,6 +1277,96 @@ const firebasePublicApi = {
       snapshot.forEach(item=>{ records[item.id]=Object.assign({ uid:item.id }, item.data()); });
       onChange(records);
     }, error=>reportSyncError('session-presence-listener', error, { campaignId, sessionId }));
+  },
+  subscribeBattleMaps: function(campaignId,onChange,{gm=false}={}){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const ref=collection(db,'campaigns',campaignId,'battleMaps');
+    const q=gm?query(ref,limit(BATTLE_MAP_MAX_RECORDS)):
+      query(ref,where('visibility','==','players'),limit(BATTLE_MAP_MAX_RECORDS));
+    return onSnapshot(q,snapshot=>{
+      onChange(snapshot.docs.map(entry=>({id:entry.id,...entry.data()}))
+        .sort((a,b)=>String(a.name).localeCompare(String(b.name))));
+    },error=>{
+      onChange([]);reportSyncError('battle-map-listener',error,{campaignId});
+    });
+  },
+  fetchBattleMapMedia: async function(campaignId,map){
+    if(!storage||!currentUser||!map||!campaignId)return {ok:false,error:'Sign in to view this map.'};
+    let path;
+    try{
+      path=battleMapAssetPath(campaignId,map.id,map.contentType);
+      if(map.storagePath!==path||map.kind!==battleMapFileKind(map.contentType))
+        throw Error('Invalid map media reference.');
+      // Authenticated Storage read: no reusable public download token is generated.
+      const blob=await getBlob(storageRef(storage,path));
+      return {ok:true,blob};
+    }catch(error){return {ok:false,error:error?.message||'Map media is unavailable.'};}
+  },
+  uploadBattleMap: async function(campaignId,file,settings={},dimensions={}){
+    if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload battle maps.'};
+    const error=battleMapFileError(file);if(error)return {ok:false,error};
+    let details,size;
+    try{details=battleMapEditableSettings(settings);size=battleMapDimensions(dimensions.width,dimensions.height);}
+    catch(error){return {ok:false,error:error.message};}
+    const campaignRef=doc(db,'campaigns',campaignId);
+    try{
+      const snapshot=await getDoc(campaignRef);
+      if(!snapshot.exists()||!currentUserIsCampaignGM(snapshot.data()))
+        throw Error('Only an active campaign GM may upload battle maps.');
+      const existing=await getDocs(query(collection(db,'campaigns',campaignId,'battleMaps'),limit(BATTLE_MAP_MAX_RECORDS)));
+      if(existing.size>=BATTLE_MAP_MAX_RECORDS)throw Error('Campaign battle-map limit of 40 reached.');
+    }catch(error){return {ok:false,error:error?.message||'Campaign access denied.'};}
+    const mapId=crypto.randomUUID(),path=battleMapAssetPath(campaignId,mapId,file.type);
+    const reference=storageRef(storage,path);
+    let uploaded=false;
+    try{
+      await uploadBytes(reference,file,{contentType:String(file.type).toLowerCase(),cacheControl:'private,max-age=0,no-store'});
+      uploaded=true;
+      const result={id:mapId,campaignId,...details,...size,
+        kind:battleMapFileKind(file.type),contentType:String(file.type).toLowerCase(),
+        storagePath:path,createdBy:currentUser.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+      await setDoc(doc(db,'campaigns',campaignId,'battleMaps',mapId),result);
+      return {ok:true,map:{...result,createdAt:new Date(),updatedAt:new Date()}};
+    }catch(error){
+      if(uploaded)await deleteObject(reference).catch(()=>{});
+      return {ok:false,error:error?.message||'Battle-map upload failed.'};
+    }
+  },
+  updateBattleMap: async function(campaignId,mapId,settings={}){
+    if(!db||!currentUser||!campaignId||!mapId)return {ok:false,error:'Sign in to edit maps.'};
+    try{
+      const details=battleMapEditableSettings(settings);
+      await runTransaction(db,async tx=>{
+        const campaign=await tx.get(doc(db,'campaigns',campaignId));
+        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+          throw Error('Only the campaign GM can edit battle maps.');
+        const ref=doc(db,'campaigns',campaignId,'battleMaps',mapId),snap=await tx.get(ref);
+        if(!snap.exists())throw Error('This battle map no longer exists.');
+        tx.update(ref,{...details,updatedAt:serverTimestamp()});
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'Unable to update battle map.'};}
+  },
+  removeBattleMap: async function(campaignId,mapId){
+    if(!db||!storage||!currentUser||!campaignId||!mapId)return {ok:false,error:'Sign in to delete maps.'};
+    let storagePath='';
+    try{
+      await runTransaction(db,async tx=>{
+        const campaign=await tx.get(doc(db,'campaigns',campaignId));
+        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+          throw Error('Only the campaign GM can delete battle maps.');
+        const ref=doc(db,'campaigns',campaignId,'battleMaps',mapId),snap=await tx.get(ref);
+        if(!snap.exists())throw Error('Battle map already removed.');
+        const entry=snap.data();
+        storagePath=battleMapAssetPath(campaignId,mapId,entry.contentType);
+        if(entry.storagePath!==storagePath)throw Error('Invalid map storage reference.');
+        tx.delete(ref);
+      });
+      // Firestore is the visibility authority; deletion immediately revokes reads.
+      // Storage cleanup is best-effort; the object is inaccessible after document deletion.
+      await deleteObject(storageRef(storage,storagePath)).catch(()=>{});
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'Unable to delete map.'};}
   },
   universalCheckAction: async data=>{
     if(!functionsClient||!currentUser)return {ok:false,error:'Sign in to continue.'};

@@ -241,8 +241,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    function validBattleMapData(campaignId,mapId,data) {
+      return data.id == mapId && data.campaignId == campaignId &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.get('description','') is string && data.get('description','').size() <= 300 &&
+        data.visibility in ['gm','players'] &&
+        data.contentType in ['image/png','image/jpeg','image/webp','image/gif','video/mp4','video/webm'] &&
+        ((data.kind == 'video' && data.contentType in ['video/mp4','video/webm']) ||
+         (data.kind == 'image' && data.contentType in ['image/png','image/jpeg','image/webp','image/gif'])) &&
+        data.storagePath is string &&
+        data.storagePath.matches('campaigns/' + campaignId + '/battleMaps/' + mapId + '/scene\\.(png|jpg|webp|gif|mp4|webm)') &&
+        data.gridColumns is int && data.gridColumns >= 1 && data.gridColumns <= 80 &&
+        data.gridRows is int && data.gridRows >= 1 && data.gridRows <= 80 &&
+        data.gridOpacity is int && data.gridOpacity >= 0 && data.gridOpacity <= 100 &&
+        data.gridVisible is bool &&
+        data.width is int && data.width >= 1 && data.width <= 8192 &&
+        data.height is int && data.height >= 1 && data.height <= 8192 &&
+        data.tokens is list && data.tokens.size() <= 60 &&
+        data.createdBy is string && data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     match /campaignMemberProjections/{uid} {
-      match /campaigns/{campaignId} {
+
+    match /campaigns/{campaignId} {
         allow read: if ownsUserData(uid);
         allow write: if false;
       }
@@ -290,6 +312,34 @@ service cloud.firestore {
         (request.resource.data.get('imagePath','') == '' || request.resource.data.get('imagePath','').matches('campaigns/' + campaignId + '/artwork/.*'))
       );
       allow delete: if isCampaignOwner(resource.data);
+
+      match /battleMaps/{mapId} {
+        // The only player-visible map records are explicitly published scenes.
+        // Players must query with visibility == 'players'; no GM-only details are published.
+        allow get, list: if isCampaignGM(campaignId) ||
+          (canUseCampaignSystems(campaignId) && resource.data.visibility == 'players');
+        allow create: if isCampaignGM(campaignId) &&
+          request.resource.data.keys().hasOnly([
+            'id','campaignId','name','description','visibility','kind','contentType',
+            'storagePath','gridColumns','gridRows','gridOpacity','gridVisible',
+            'tokens','width','height','createdBy','createdAt','updatedAt'
+          ]) &&
+          request.resource.data.keys().hasAll([
+            'id','campaignId','name','visibility','kind','contentType','storagePath',
+            'gridColumns','gridRows','gridOpacity','gridVisible','tokens',
+            'width','height','createdBy','createdAt','updatedAt'
+          ]) &&
+          request.resource.data.id == mapId &&
+          request.resource.data.campaignId == campaignId &&
+          request.resource.data.createdBy == request.auth.uid &&
+          validBattleMapData(campaignId,mapId,request.resource.data);
+        allow update: if isCampaignGM(campaignId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name','description','visibility','gridColumns','gridRows',
+            'gridOpacity','gridVisible','tokens','updatedAt'
+          ]) && validBattleMapData(campaignId,mapId,request.resource.data);
+        allow delete: if isCampaignGM(campaignId);
+      }
 
       match /checkGroups/{groupId} {
         // Aggregate group records contain other participants' results and are GM-only.

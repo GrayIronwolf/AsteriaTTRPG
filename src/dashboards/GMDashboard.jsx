@@ -11,6 +11,7 @@ import { GMUniversalCheckManager, GMUniversalCheckNotification } from './Univers
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
 import { GMNpcCreatureLibrary } from './GMNpcCreatureLibrary.jsx';
+import {GMBattleMapManager} from './BattleMapWorkspace.jsx';
 import { GMLayoutBackup } from './GMLayoutBackup.jsx';
 import { defaultDashboardLayout, normalizeDashboardLayout, visibleDashboardPanels } from '../state/dashboardLayoutModel.mjs';
 import { talentCatalog } from './characterWorkspaceData.js';
@@ -51,7 +52,8 @@ const GM_TABS = [
   { id: 'crafting', label: 'Crafting', icon: '\u2692' },
   { id: 'tools', label: 'GM Tools', icon: '\u2699' },
   { id: 'gameplay', label: 'Gameplay Systems', icon: '\u25a3' },
-  { id: 'world', label: 'World Systems', icon: '\u2318' }
+  { id: 'world', label: 'World Systems', icon: '\u2318' },
+  { id: 'battle-maps', label: 'Battle Maps', icon: 'journal' }
 ];
 
 function progression(character = {}) {
@@ -807,5 +809,6 @@ export function GMDashboard({ campaignId }) {
     {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
     {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
+    {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters}/> : null}
   </AsteriaAppShell>;
 }
