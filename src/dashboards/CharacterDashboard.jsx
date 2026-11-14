@@ -3,6 +3,7 @@ import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
 import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
 import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import {PlayerAsteriaCalendar} from './AsteriaCalendarWorkspace.jsx';
+import {PlayerWeatherEnvironment} from './WeatherEnvironmentWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
@@ -54,6 +55,7 @@ const CHARACTER_TABS = [
   { id: 'battle-maps', label: 'Battle Maps', icon: 'gallery' },
   { id: 'advanced-dice', label: 'Advanced Dice', icon: 'skills' },
   { id: 'asteria-calendar', label: 'Calendar', icon: 'journal' },
+  { id: 'weather-environment', label: 'Weather', icon: 'journal' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
@@ -160,7 +162,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     setNoticeError('');
   },[campaignId,characterId]);
   useEffect(()=>{
-    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting','asteria-calendar'].includes(event.detail?.tab)))setTab(event.detail.tab);};
+    const openTab=event=>{if(CHARACTER_TABS.some(tabRecord=>tabRecord.id===event.detail?.tab) && (campaignId || !['quest','information','party','crafting','asteria-calendar','weather-environment'].includes(event.detail?.tab)))setTab(event.detail.tab);};
     window.addEventListener('asteria:open-character-tab',openTab);
     return()=>window.removeEventListener('asteria:open-character-tab',openTab);
   },[campaignId]);
@@ -201,7 +203,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!campaignId && !isOwner) return <div className="react-route-state" role="alert">Only the owner can view this unassigned character.</div>;
   if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
-  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting','battle-maps','asteria-calendar'].includes(item.id));
+  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting','battle-maps','asteria-calendar','weather-environment'].includes(item.id));
   const activeTab = resolveDashboardTab(tabs, tab);
   const navigate=next=>{if(tabs.some(item=>item.id===next))setTab(next);else window.toast?.('Link this character to a campaign to view campaign information.');};
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
@@ -232,6 +234,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId} encounter={live.encounter}/> : null}
     {activeTab === 'advanced-dice' ? <AdvancedDiceWorkspace role="player"/> : null}
     {activeTab === 'asteria-calendar' && campaignId ? <PlayerAsteriaCalendar campaignId={campaignId}/> : null}
+    {activeTab === 'weather-environment' && campaignId ? <PlayerWeatherEnvironment campaignId={campaignId}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}

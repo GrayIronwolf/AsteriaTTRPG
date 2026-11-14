@@ -527,6 +527,25 @@ service cloud.firestore {
       // are private to the campaign GM. Only server transactions may write.
       // Phase 8.1: calendar configuration and history, private notes, and
       // player-safe calendar projections. Clients cannot forge chronology.
+      // Phase 8.2: only GMs can read raw weather zones and forecasts.
+      // Players can view explicitly published, server-projected reports.
+      // All weather writes require the authenticated GM backend action.
+      match /weatherConfig/{configId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /weatherZones/{zoneId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /weatherReports/{reportId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /weatherSharedReports/{reportId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /calendarState/{calendarId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;

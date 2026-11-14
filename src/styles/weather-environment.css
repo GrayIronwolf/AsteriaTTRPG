@@ -1,0 +1,18 @@
+.asteria-weather{display:grid;gap:15px;min-width:0}
+.asteria-weather-box{display:grid;gap:12px;padding:14px;border:1px solid #596779;border-radius:9px;background:#162130}
+.asteria-weather-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.asteria-weather label{display:grid;gap:5px;min-width:0}
+.asteria-weather :is(input:not([type="checkbox"]),select,textarea){padding:9px;border:1px solid #7a8697;border-radius:6px;background:#192433;color:#f1f3f7;font:inherit;width:100%;max-width:100%;min-width:0}
+.asteria-weather :is(input,button,select,textarea):focus-visible{outline:2px solid #d7b873;outline-offset:2px}
+.asteria-weather-check{display:flex!important;align-items:center;gap:8px}
+.asteria-weather-actions{display:flex;gap:10px;flex-wrap:wrap}
+.asteria-weather button{padding:9px 12px}
+.asteria-weather h3,.asteria-weather h4{margin:0}
+.asteria-weather small{color:#c1cad7;display:block}
+.asteria-weather-clock{padding:12px;border:1px solid #66758b;border-radius:7px}
+.asteria-weather-report{display:grid;gap:13px;padding:12px;border:1px solid #596779;border-radius:7px}
+.asteria-weather-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.asteria-weather-days article{border:1px solid #526075;border-radius:7px;padding:12px;display:grid;align-content:start;gap:7px}
+.asteria-weather-days article p{margin:0}
+.asteria-weather-error{padding:9px;border:1px solid #bf6b6b;border-radius:7px}
+@media(max-width:600px){.asteria-weather-grid,.asteria-weather-days{grid-template-columns:1fr}.asteria-weather-box{padding:10px}}

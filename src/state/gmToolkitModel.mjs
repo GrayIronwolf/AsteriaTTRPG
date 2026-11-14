@@ -52,6 +52,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
     id:'world',label:'World & Workspace',
     description:'Explore campaign records and configure the dashboard.',
     tools:[
+      {id:'weather-environment',label:'Weather & Environmental Generator',tab:'weather-environment',description:'Generate private biome-based forecasts and approve player-safe environmental advisories.',keywords:'weather climate environment forecast storm rain snow terrain travel biome'},
       {id:'asteria-calendar',label:'Asteria Calendar & Time',tab:'asteria-calendar',description:'Manage canonical months, weekdays, eras, dates and shared campaign events.',keywords:'calendar date time month seasons year events festivals chronology'},
       {id:'world',label:'World Systems',tab:'world',description:'Existing settlements, factions, events and world state.',keywords:'locations npcs lore weather'},
       {id:'layout',label:'GM Dashboard Settings',tab:'settings',description:'Edit the existing dashboard layout and visible panels.',keywords:'customize customise panels grid'}

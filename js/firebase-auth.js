@@ -3268,6 +3268,20 @@ const firebasePublicApi = {
   manageRandomTable: (...args) => callTrustedAction('manageRandomTable',args),
   manageEncounterReward: (...args) => callTrustedAction('manageEncounterReward',args),
   manageAsteriaCalendar: (...args) => callTrustedAction('manageAsteriaCalendar',args),
+  manageWeatherEnvironment: (...args) => callTrustedAction('manageWeatherEnvironment',args),
+  subscribeWeatherZones: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'weatherZones'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('weather-zones',error,{campaignId}));
+  },
+  subscribeWeatherReports: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const name=mode==='gm'?'weatherReports':'weatherSharedReports';
+    return onSnapshot(collection(db,'campaigns',campaignId,name),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>reportSyncError('weather-reports',error,{campaignId}));
+  },
   subscribeAsteriaCalendar: function(campaignId,onChange,mode='player'){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     const name=mode==='gm'?'calendarState':'calendarPublic';
