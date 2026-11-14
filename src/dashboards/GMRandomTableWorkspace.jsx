@@ -32,7 +32,7 @@ export function GMRandomTableWorkspace({campaignId}){
   const editableSelected=selected?.status!=='archived';
   const totalWeight=draft.entries.reduce((sum,row)=>sum+(Number(row.weight)||0),0);
   const linkedLoot=useMemo(()=>lootTables.filter(row=>row.status==='active'),[lootTables]);
-  const last=history[0];
+
   useEffect(()=>{
     setTables([]);setLootTables([]);setHistory([]);setSelectedId('');
     if(!campaignId)return undefined;
