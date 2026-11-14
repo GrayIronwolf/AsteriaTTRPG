@@ -50,9 +50,10 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const memberRecord=await readCampaignMember(transaction,db,campaignId,campaignSnapshot.data(),uid);
     if(!member(campaignSnapshot.data(),uid,memberRecord)) throw new Error('Campaign membership is required.');
     const [characterSnapshot,receipt]=await Promise.all([transaction.get(characterRef),transaction.get(receiptRef)]);
-    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward','manageAsteriaCalendar','manageWeatherEnvironment','manageWorldAtlas','manageSessionLibrary','manageCampaignAudio']).has(action);
+    const campaignOnlyGMAction=new Set(['manageMerchantRelationship','manageEnhancementPlan','reviewEnhancement','manageCraftingStation','manageNPCService','reviewNPCRepair','manageCampaignCraftingRecipe','reviewCraftingRequest','manageCampaignShop','manageGMRewardBundle','syncCampaignShopStores','syncGMRewardBundles','managePartyStash','managePartyLootDrop','splitPartyLootCurrency','respondMerchantDeal','manageItemLore','manageLootTable','manageRandomTable','manageEncounterReward','manageAsteriaCalendar','manageWeatherEnvironment','manageWorldAtlas','manageSessionLibrary','manageCampaignAudio','manageSessionRecording']).has(action);
+    const campaignOnlyMemberAction=action==='respondRecordingConsent';
     const combatAction=action==='combatCommand';
-    if(!combatAction&&!campaignOnlyGMAction&&!characterSnapshot.exists) throw new Error('Character not found.');
+    if(!combatAction&&!campaignOnlyGMAction&&!campaignOnlyMemberAction&&!characterSnapshot.exists) throw new Error('Character not found.');
     const campaign=campaignSnapshot.data();
     const character=characterSnapshot.data()||{};
     // Character ownership comes from Firestore, never a caller-supplied private copy.
@@ -60,7 +61,7 @@ export async function executeAction(db,uid,data,serverTimestamp) {
     const gmAccess=(campaignOnlyGMAction && gm(campaign,uid,memberRecord)) ||
       (GM_CHARACTER_ACTIONS.has(action) && gm(campaign,uid,memberRecord) && linked);
     if(GM_ONLY_ACTIONS.has(action) && !gmAccess) throw new Error('Only the GM of this linked character can make this change.');
-    if(!combatAction&&!campaignOnlyGMAction&&character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
+    if(!combatAction&&!campaignOnlyGMAction&&!campaignOnlyMemberAction&&character.ownerUid!==uid && !gmAccess) throw new Error('This character belongs to another account.');
     if(receipt.exists){
       if(receipt.data().action!==action || receipt.data().input!==JSON.stringify(args)) throw new Error('Request ID has already been used.');
       return receipt.data().result;
