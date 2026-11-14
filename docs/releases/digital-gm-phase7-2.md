@@ -39,3 +39,7 @@ These results are GM narrative prompts, not system effects. Phase 7.2 **does not
 6. Confirm a player account cannot view or modify private random tables or rolls.
 
 **Next phase:** 7.3 — Encounter & Reward Generator.
+
+## Final source-and-bundle release gate
+
+The dedicated Phase 7.2 workflow has committed verified production website assets to this PR branch. All required checks must pass on this final source-plus-bundle head before merging: Phase 7.2, Phase 7.1, Digital GM Phases 6.1–6.3, both Universal Check regression workflows, and the full Firebase and website suite including the compiled bundle comparison. Production deployment remains manual after merging to `main`.
