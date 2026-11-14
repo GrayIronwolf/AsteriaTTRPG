@@ -1,0 +1,90 @@
+name: Digital GM Phase 10.1 - Player-Facing Display
+on:
+  push:
+    branches: [feat/digital-gm-phase10-1-player-presentation]
+    paths:
+      - 'src/state/playerPresentationModel.mjs'
+      - 'src/dashboards/PlayerPresentationWorkspace.jsx'
+      - 'src/styles/player-presentation.css'
+      - 'src/app/asteriaRoutes.mjs'
+      - 'src/app/AsteriaReactRoot.jsx'
+      - 'src/types/asteriaContracts.mjs'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/BattleMapWorkspace.jsx'
+      - 'src/dashboards/WorldAtlasWorkspace.jsx'
+      - 'src/state/gmToolkitModel.mjs'
+      - 'js/firebase-auth.js'
+      - 'src/firebase/asteriaFirebaseService.js'
+      - 'functions/playerPresentationCommands.mjs'
+      - 'functions/commands.mjs'
+      - 'functions/handler.mjs'
+      - 'firestore.rules'
+      - 'scripts/digital-gm-phase10-1*.test.mjs'
+      - '.github/workflows/build-digital-gm-phase10-1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: player-presentation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Presentation and earlier Digital GM regression tests
+        run: node --test scripts/digital-gm-phase10-1.test.mjs scripts/digital-gm-phase9-3.test.mjs scripts/digital-gm-phase9-2.test.mjs scripts/digital-gm-phase9-1.test.mjs scripts/digital-gm-phase8-3.test.mjs
+      - name: Firebase Firestore projection security tests
+        run: npx firebase emulators:exec --project demo-asteria-presentation --only firestore "node --test scripts/digital-gm-phase10-1-emulator.test.mjs"
+      - name: Lint
+        run: npm run lint
+      - name: Character and dashboard integration tests
+        run: npm run test:dashboard && npm run test:react
+      - name: Production React build
+        run: npm run build
+  bundle:
+    name: Publish verified Phase 10.1 website assets
+    needs: verify
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit compiled frontend bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/digital-gm-phase10-1-player-presentation
+          if [ "$(git rev-parse origin/feat/digital-gm-phase10-1-player-presentation)" != "$GITHUB_SHA" ]; then
+            echo "Newer source revision owns the production bundle."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Compiled assets already current."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Build Digital GM Phase 10.1 presentation frontend"
+          git fetch origin feat/digital-gm-phase10-1-player-presentation
+          git rebase origin/feat/digital-gm-phase10-1-player-presentation
+          git push origin HEAD:feat/digital-gm-phase10-1-player-presentation
