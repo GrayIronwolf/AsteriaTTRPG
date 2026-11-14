@@ -255,6 +255,14 @@ service cloud.firestore {
         data.gridRows is int && data.gridRows >= 1 && data.gridRows <= 80 &&
         data.gridOpacity is int && data.gridOpacity >= 0 && data.gridOpacity <= 100 &&
         data.gridVisible is bool &&
+        data.get('fogEnabled',false) is bool &&
+        data.get('fogCells','') is string &&
+        (data.get('fogCells','') == '' ||
+          (data.fogCells.size() == data.gridColumns * data.gridRows &&
+           data.fogCells.matches('^[01]+$'))) &&
+        data.get('metresPerCell',1) is number &&
+        data.get('metresPerCell',1) >= 0.1 &&
+        data.get('metresPerCell',1) <= 100 &&
         data.width is int && data.width >= 1 && data.width <= 8192 &&
         data.height is int && data.height >= 1 && data.height <= 8192 &&
         data.tokens is list && data.tokens.size() <= 60 &&
@@ -313,6 +321,20 @@ service cloud.firestore {
       );
       allow delete: if isCampaignOwner(resource.data);
 
+      match /battleMaps/{mapId}/gmNotes/{noteId} {
+        // Never return secret encounter or hazard annotations in the public map document.
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update: if isCampaignGM(campaignId) &&
+          noteId == 'private' &&
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)) &&
+          request.resource.data.keys().hasOnly(['pins','updatedAt','updatedBy']) &&
+          request.resource.data.keys().hasAll(['pins','updatedAt','updatedBy']) &&
+          request.resource.data.pins is list && request.resource.data.pins.size() <= 40 &&
+          request.resource.data.updatedBy == request.auth.uid &&
+          request.resource.data.updatedAt is timestamp;
+        allow delete: if isCampaignGM(campaignId) && noteId == 'private';
+      }
+
       match /battleMaps/{mapId} {
         // The only player-visible map records are explicitly published scenes.
         // Players must query with visibility == 'players'; no GM-only details are published.
@@ -322,7 +344,8 @@ service cloud.firestore {
           request.resource.data.keys().hasOnly([
             'id','campaignId','name','description','visibility','kind','contentType',
             'storagePath','gridColumns','gridRows','gridOpacity','gridVisible',
-            'tokens','width','height','createdBy','createdAt','updatedAt'
+            'tokens','width','height','createdBy','createdAt','updatedAt',
+            'fogEnabled','fogCells','metresPerCell'
           ]) &&
           request.resource.data.keys().hasAll([
             'id','campaignId','name','visibility','kind','contentType','storagePath',
@@ -336,7 +359,8 @@ service cloud.firestore {
         allow update: if isCampaignGM(campaignId) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'name','description','visibility','gridColumns','gridRows',
-            'gridOpacity','gridVisible','tokens','updatedAt'
+            'gridOpacity','gridVisible','tokens','updatedAt',
+            'fogEnabled','fogCells','metresPerCell'
           ]) && validBattleMapData(campaignId,mapId,request.resource.data);
         allow delete: if isCampaignGM(campaignId);
       }

@@ -1,6 +1,7 @@
 import { normalizeInformation, publicInformation } from '../src/state/campaignInformation.mjs';
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
+import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -1290,6 +1291,30 @@ const firebasePublicApi = {
       onChange([]);reportSyncError('battle-map-listener',error,{campaignId});
     });
   },
+  subscribeBattleMapPrivatePins: function(campaignId,mapId,onChange){
+    if(!db||!currentUser||!campaignId||!mapId||typeof onChange!=='function')return ()=>{};
+    const reference=doc(db,'campaigns',campaignId,'battleMaps',mapId,'gmNotes','private');
+    return onSnapshot(reference,snapshot=>{
+      onChange(snapshot.exists()?snapshot.data().pins||[]:[]);
+    },error=>{onChange([]);reportSyncError('battle-map-private-pins',error,{campaignId,mapId});});
+  },
+  saveBattleMapPrivatePins: async function(campaignId,mapId,pins){
+    if(!db||!currentUser||!campaignId||!mapId)return {ok:false,error:'Sign in to edit private map notes.'};
+    try{
+      const safePins=battleMapPrivatePins(pins);
+      await runTransaction(db,async transaction=>{
+        const campaign=await transaction.get(doc(db,'campaigns',campaignId));
+        if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+          throw Error('Only a campaign GM can edit private map notes.');
+        const map=await transaction.get(doc(db,'campaigns',campaignId,'battleMaps',mapId));
+        if(!map.exists())throw Error('The map no longer exists.');
+        transaction.set(doc(db,'campaigns',campaignId,'battleMaps',mapId,'gmNotes','private'),{
+          pins:safePins,updatedBy:currentUser.uid,updatedAt:serverTimestamp()
+        });
+      });
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'Unable to save private map notes.'};}
+  },
   fetchBattleMapMedia: async function(campaignId,map){
     if(!storage||!currentUser||!map||!campaignId)return {ok:false,error:'Sign in to view this map.'};
     let path;
@@ -1361,6 +1386,7 @@ const firebasePublicApi = {
         storagePath=battleMapAssetPath(campaignId,mapId,entry.contentType);
         if(entry.storagePath!==storagePath)throw Error('Invalid map storage reference.');
         tx.delete(ref);
+        tx.delete(doc(db,'campaigns',campaignId,'battleMaps',mapId,'gmNotes','private'));
       });
       // Firestore is the visibility authority; deletion immediately revokes reads.
       // Storage cleanup is best-effort; the object is inaccessible after document deletion.

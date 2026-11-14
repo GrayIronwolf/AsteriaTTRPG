@@ -1,0 +1,82 @@
+name: Digital GM Phase 6.2 — Battle Maps and Looping Video
+on:
+  push:
+    branches: [feat/digital-gm-phase6-2-fog-tools]
+  pull_request:
+    paths:
+      - 'src/dashboards/BattleMapWorkspace.jsx'
+      - 'src/state/battleMapModel.mjs'
+      - 'src/state/battleMapFogModel.mjs'
+      - 'src/firebase/asteriaFirebaseService.js'
+      - 'src/styles/battle-maps.css'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/CharacterDashboard.jsx'
+      - 'js/firebase-auth.js'
+      - 'storage.rules'
+      - 'firestore.rules'
+      - 'scripts/digital-gm-phase6-2*.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Battle map model and dashboard tests
+        run: node --test scripts/digital-gm-phase6-1.test.mjs scripts/digital-gm-phase6-2.test.mjs
+      - name: Firestore and Storage access emulator tests
+        run: npx firebase emulators:exec --project demo-asteria-maps --only firestore,storage "node --test scripts/digital-gm-phase6-1-emulator.test.mjs scripts/digital-gm-phase6-2-emulator.test.mjs"
+      - name: Lint
+        run: npm run lint
+      - name: Existing dashboard and combat regressions
+        run: npm run test:dashboard && npm run test:combat
+      - name: Production React build
+        run: npm run build
+
+  bundle:
+    name: Publish verified frontend bundle to Phase 6.2 branch
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/digital-gm-phase6-2-fog-tools'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit generated website bundle after verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feat/digital-gm-phase6-2-fog-tools
+          if [ "$(git rev-parse origin/feat/digital-gm-phase6-2-fog-tools)" != "$GITHUB_SHA" ]; then
+            echo "Source advanced; a newer workflow owns bundle publication."
+            exit 0
+          fi
+          git add -A react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Compiled frontend matches checked-in assets."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Build Digital GM Phase 6.2 frontend bundle"
+          git fetch origin feat/digital-gm-phase6-2-fog-tools
+          git rebase origin/feat/digital-gm-phase6-2-fog-tools
+          git push origin HEAD:feat/digital-gm-phase6-2-fog-tools
