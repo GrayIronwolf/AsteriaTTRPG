@@ -32,3 +32,7 @@ GM-only private note documents are inaccessible to players, non-members, and sus
 5. GM measures two points, confirms the grid-distance calculation and changes metres per square.
 6. GM creates a private encounter pin and saves private notes. The player cannot read the pin or its text via Firestore.
 7. Verify suspended/non-members cannot read either the map or private notes; no player can change fog.
+
+## Final release gate
+
+The production website bundle is generated and committed to this PR branch. Confirm the full Firebase and website checks, both Universal Check regression workflows, and the dedicated Phase 6.1/6.2 verification all succeed at the final source-and-bundle commit. Deploy only after the verified PR is merged into main.
