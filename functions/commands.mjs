@@ -21,6 +21,7 @@ import {merchantRelationshipId,merchantCanAccessStock,merchantStandingFor} from 
 import { createPartyLootCommands } from './partyLootCommands.mjs';
 import {createItemLoreCommands} from './itemLoreCommands.mjs';
 import {createLootTableCommands} from './lootTableCommands.mjs';
+import {createRandomTableCommands} from './randomTableCommands.mjs';
 import { addGrantedMagicElement } from '../src/state/characterIntegrityModel.mjs';
 import { markQuestRewardClaimed, normalizeQuestReward, questRewardClaimed, questRewardSummary } from '../src/state/questRewardModel.mjs';
 import { validateGMRewardPayload } from '../src/state/gmRewardModel.mjs';
