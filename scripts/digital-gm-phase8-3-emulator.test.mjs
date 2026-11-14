@@ -48,6 +48,7 @@ test('Private maps and draft images cannot be read by players',async()=>{
  await assertFails(getBytes(ref(storage('alice'),media)));
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await assertFails(getBytes(ref(storage(null),media)));
+ await assertSucceeds(deleteObject(ref(storage('gm'),media)));
 });
 test('Published projection grants only campaign members read access and withdrawing revokes it',async()=>{
  await assertSucceeds(uploadBytes(ref(storage('gm'),media),new Uint8Array([1,2,3]),
@@ -58,7 +59,6 @@ test('Published projection grants only campaign members read access and withdraw
  });
  await assertSucceeds(getDoc(doc(firestore('alice'),paths.public)));
  await assertSucceeds(getDocs(collection(firestore('alice'),'campaigns/'+campaign+'/worldAtlasShared')));
- console.log('ATLAS: reached player media read');
  await assertSucceeds(getBytes(ref(storage('alice'),media)));
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await env.withSecurityRulesDisabled(async ctx=>{
@@ -66,6 +66,7 @@ test('Published projection grants only campaign members read access and withdraw
  });
  await assertFails(getDoc(doc(firestore('alice'),paths.public)));
  await assertFails(getBytes(ref(storage('alice'),media)));
+ await assertSucceeds(deleteObject(ref(storage('gm'),media)));
 });
 test('No client can forge, delete or modify Firestore projections or secret atlas records',async()=>{
  for(const uid of ['gm','co','alice']){
@@ -83,11 +84,8 @@ test('Atlas uploads are create-only GM operations with bounded image formats',as
   new Uint8Array([1]),{contentType:'video/mp4'}));
  await assertFails(uploadBytes(ref(storage('gm'),'campaigns/'+campaign+'/worldAtlas/unknown/atlas.png'),
   new Uint8Array([1]),{contentType:'image/png'}));
- console.log('ATLAS: passed preupload checks');
  await assertSucceeds(uploadBytes(ref(storage('gm'),media),new Uint8Array([1,2,3]),{contentType:'image/png'}));
- console.log('ATLAS: upload successful');
  await assertFails(uploadBytes(ref(storage('gm'),media),new Uint8Array([2]),{contentType:'image/png'}));
  await assertFails(deleteObject(ref(storage('alice'),media)));
- console.log('ATLAS: reached GM delete');
  await assertSucceeds(deleteObject(ref(storage('gm'),media)));
 });
