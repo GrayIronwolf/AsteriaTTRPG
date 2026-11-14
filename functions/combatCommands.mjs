@@ -241,7 +241,7 @@ export function createCombatCommands(context) {
         encounter.enemies=encounter.combatants.filter(row=>row.kind!=='player').map(copy);
         if(encounter.status==='ended'&&requested.status==='ready')encounter.status='ready';
         if(boundMap&&encounter.battleMapId===boundMapId&&boundMap.combatId===encounter.combatId&&activeMapEncounter(encounter)){
-          const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>context.newId());
+          const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
           tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
         }
         log('GM updated encounter participants.');
@@ -251,7 +251,7 @@ export function createCombatCommands(context) {
           throw new Error('Unlink the existing combat map before choosing another.');
         if(boundMap.combatId&&boundMap.combatId!==encounter.combatId)
           throw new Error('This map is bound to a different encounter.');
-        const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>context.newId());
+        const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
         tx.update(mapRef,{combatId:encounter.combatId,tokens,updatedAt:serverTimestamp()});
         encounter.battleMapId=boundMapId;
         log('GM linked combat encounter to a battle map.');
