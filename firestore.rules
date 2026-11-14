@@ -191,7 +191,7 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
       match /{collectionId}/{document=**} {
-        allow read, write: if collectionId != 'characters' && ownsUserData(uid);
+        allow read, write: if collectionId != 'characters' && collectionId != 'diceWorkspace' && ownsUserData(uid);
       }
     }
 
