@@ -40,14 +40,14 @@ service firebase.storage {
           ))
       );
     }
-    match /campaigns/{campaignId}/sessionPdfs/{pdfId}/document.pdf {
+    match /campaigns/{campaignId}/sessionPdfs/{pdfId}/{fileName} {
       // Authenticated PDF reads; sharing is controlled by the server-projected index.
-      allow get: if campaignGM(campaignId) ||
+      allow get: if fileName == 'document.pdf' && (campaignGM(campaignId) ||
         (campaignMember(campaignId) &&
           firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfsShared/$(pdfId)) &&
-          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfsShared/$(pdfId)).data.get('visibility','gm') == 'players');
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfsShared/$(pdfId)).data.get('visibility','gm') == 'players'));
       allow list: if false;
-      allow create: if campaignGM(campaignId) && resource == null &&
+      allow create: if fileName == 'document.pdf' && campaignGM(campaignId) && resource == null &&
         firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)) &&
         firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)).data.get('status','') == 'uploading' &&
         request.resource.size > 0 && request.resource.size <= 20 * 1024 * 1024 &&
