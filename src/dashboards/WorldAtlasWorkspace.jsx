@@ -112,7 +112,7 @@ function AtlasContext({context,region}){
   </div>:<p>No published weather for this region.</p>}
  </div>;
 }
-export function GMWorldAtlasWorkspace({campaignId}){
+export function GMWorldAtlasWorkspace({campaignId,searchTarget=null}){
  const maps=useAtlas(campaignId,'gm'),context=useAtlasContext(campaignId);
  const [mapId,setMapId]=useState(''),[file,setFile]=useState(null),[settings,setSettings]=useState(emptySettings);
  const [pins,setPins]=useState([]),[routes,setRoutes]=useState([]);
@@ -120,6 +120,8 @@ export function GMWorldAtlasWorkspace({campaignId}){
  const [placing,setPlacing]=useState(false),[zoom,setZoom]=useState(1),[showRoutes,setShowRoutes]=useState(true);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
  const selected=maps.find(map=>map.id===mapId)||null;
+ useEffect(()=>{if(searchTarget?.category==='world-map'&&maps.some(x=>x.id===searchTarget.id))
+  setMapId(searchTarget.id);},[searchTarget,maps]);
  const pending=useMemo(()=>{try{
   atlasMapSettings({...settings,visibility:'gm'});atlasPins(pins);atlasRoutes(routes,pins);return false;
  }catch{return true;}},[settings,pins,routes]);

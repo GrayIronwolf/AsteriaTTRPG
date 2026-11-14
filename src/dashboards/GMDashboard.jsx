@@ -7,6 +7,7 @@ import { resolveRosterSelection } from '../state/dashboardNavigation.mjs';
 import { DashboardLayoutEditor, DashboardLayoutWorkspace } from '../components/DashboardCustomisation.jsx';
 import { GMCombatOverview, GMExplorationOverview, GMQuestTracker, GMInventoryOverview } from './DashboardFocusPanels.jsx';
 import { GMToolkitHub, GMToolkitQuickAccess } from './GMToolkitHub.jsx';
+import {GMUnifiedSearch} from './GMUnifiedSearch.jsx';
 import { GMUniversalCheckManager, GMUniversalCheckNotification } from './UniversalCheckWorkspace.jsx';
 import { GMFocusModes } from './GMFocusModes.jsx';
 import { GMPartyControl } from './GMPartyControl.jsx';
@@ -523,6 +524,7 @@ export function GMDashboard({ campaignId }) {
   const [tab, setTab] = useState(() => GM_TABS.some(item => item.id === restored.tab) ? restored.tab : 'main');
   const [selectedId, setSelectedId] = useState(restored.selectedId || '');
   const [gmHubDestination,setGMHubDestination]=useState(null);
+  const [gmSearchTarget,setGMSearchTarget]=useState(null);
   const [savedDashboardLayout,setSavedDashboardLayout] = useState(null);
   const [dashboardLayoutReady,setDashboardLayoutReady] = useState(false);
   const [dashboardSettingsDraft,setDashboardSettingsDraft] = useState(()=>defaultDashboardLayout('gm'));
@@ -536,6 +538,12 @@ export function GMDashboard({ campaignId }) {
   const accountUid=firebaseService.currentUser()?.uid || '';
   const gmTradeHub=useMemo(()=>gmTradeLootOverview({itemEcosystem:live.itemEcosystem,partyLoot:live.partyLoot}),
     [live.itemEcosystem,live.partyLoot]);
+  const openGMSearchResult=result=>{
+    if(!GM_TABS.some(item=>item.id===result?.tab))return;
+    setGMSearchTarget({...result});
+    setGMHubDestination(result.targetId?{tab:result.tab,targetId:result.targetId}:null);
+    setTab(result.tab);
+  };
   const openGMHubLink=link=>{
     // The toolkit is a directory of existing GM views, not an arbitrary route.
     if(!GM_TABS.some(item=>item.id===link?.tab))return;
@@ -777,9 +785,11 @@ export function GMDashboard({ campaignId }) {
     actions={<><SessionActions campaignId={campaignId} session={live.session} busy={busy} run={run} /><LiveSyncStatus online={live.online} connectionState={live.connectionState} error={live.error || actionError || coreSyncError} loading={live.loading} session={live.session} /></>}
   >
     <GMRecordingParticipationNotice key={campaignId} campaignId={campaignId}/>
+    <GMUnifiedSearch campaignId={campaignId} workspace={workspace} characters={live.characters}
+      itemEcosystem={live.itemEcosystem} onNavigate={openGMSearchResult}/>
     <DashboardNavigation tabs={GM_TABS} active={tab} onChange={setTab} ariaLabel="GM Dashboard menu" />
     {tab === 'bestiary' ? <GMNpcCreatureLibrary key={campaignId+':'+accountUid+':bestiary'}
-      workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters}
+      workspace={workspace} saveSection={saveSection} campaignId={campaignId} characters={live.characters} searchTarget={gmSearchTarget}
       onOpenEncounter={()=>setTab('main')} onOpenWorld={()=>setTab('world')} /> : null}
     {tab === 'toolkit' ? <>
       <GMToolkitHub key={campaignId+':'+accountUid}
@@ -822,24 +832,24 @@ export function GMDashboard({ campaignId }) {
     {dashboardLayoutError?<p role="alert">{dashboardLayoutError}</p>:null}
     {tab === 'inventory' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><PCInventory campaignId={campaignId} characters={live.characters} selectedId={selectedId} onSelect={setSelectedId} editable={live.session?.editable} rewards={<><section id="react-gm-inventory-audit" tabIndex={-1}><GMInventoryAuditWorkspace characters={live.characters} events={live.events}/></section><LootRewards campaignId={campaignId} characters={live.characters} events={live.events} customItems={live.customItems}/><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/><section id="react-gm-party-loot" tabIndex={-1}><GMPartyLootPanel campaignId={campaignId} characters={live.characters} partyLoot={live.partyLoot} customItems={live.customItems} editable={live.session?.editable}/></section></>}/></> : null}
     {tab === 'information' ? <CampaignInformationWorkspace campaignId={campaignId} campaign={live.campaign} workspace={workspace} characters={live.characters}/> : null}
-    {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
-    {tab === 'notes' ? <><NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/><GMSessionLibraryWorkspace campaignId={campaignId}/></> : null}
+    {tab === 'quests' ? <QuestWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
+    {tab === 'notes' ? <><NotesWorkspace workspace={workspace} session={live.session} saveSection={saveSection}/><GMSessionLibraryWorkspace campaignId={campaignId} searchTarget={gmSearchTarget}/></> : null}
     {tab === 'session-library' ? <GMSessionLibraryWorkspace campaignId={campaignId}/> : null}
     {tab === 'soundboard' ? <GMCampaignSoundboard campaignId={campaignId}/> : null}
     {tab === 'session-recordings' ? <GMSessionRecordingWorkspace campaignId={campaignId} session={live.session}/> : null}
     {tab === 'presentation' ? <GMPlayerPresentationWorkspace campaignId={campaignId} characters={live.characters}/> : null}
-    {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection}/></> : null}
+    {tab === 'economy' ? <><GMTradeLootHub overview={gmTradeHub} onNavigate={openGMHubLink}/><EconomyWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} itemEcosystem={live.itemEcosystem} customItems={live.customItems} saveSection={saveSection} searchTarget={gmSearchTarget}/></> : null}
     {tab === 'crafting' ? <CraftingWorkspace campaignId={campaignId} workspace={workspace} characters={live.characters} saveSection={saveSection}/> : null}
     <GMUniversalCheckNotification campaignId={campaignId} onOpen={()=>setTab('tools')}/>
     {tab === 'tools' ? <div className="react-gm-tools-grid"><GMUniversalCheckManager campaignId={campaignId} characters={live.characters}/>{live.characters[selectedId]?<><ConditionsPanel campaignId={campaignId} character={live.characters[selectedId]} isGM editable={live.session?.editable} clock={{encounter:live.encounter,now:live.clock}}/><ResourceRulesPanel key={selectedId} campaignId={campaignId} character={live.characters[selectedId]} editable={live.session?.editable}/></>:null}<CampaignManagerWorkspace campaignId={campaignId} campaign={live.campaign} characters={live.characters} session={live.session} workspace={workspace} saveSection={saveSection}/><ACInspectionPanel campaignId={campaignId} characters={live.characters} selectedId={selectedId} setSelectedId={setSelectedId}/><PlayerManagementTools campaignId={campaignId} characters={live.characters}/><MagicElementRewards campaignId={campaignId} characters={live.characters} events={live.events} /><GMRewardTools campaignId={campaignId} characters={live.characters} events={live.events} workspace={workspace} saveSection={saveSection} customItems={live.customItems} editable={live.session?.editable}/></div> : null}
     {tab === 'gameplay' ? <GameplayWorkspace campaignId={campaignId} workspace={workspace} partyWorkspace={live.partyWorkspace} characters={live.characters} saveSection={saveSection}/> : null}
-    {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection}/> : null}
-    {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter}/> : null}
+    {tab === 'world' ? <WorldWorkspace workspace={workspace} saveSection={saveSection} searchTarget={gmSearchTarget}/> : null}
+    {tab === 'battle-maps' ? <GMBattleMapManager campaignId={campaignId} characters={live.characters} encounter={live.encounter} searchTarget={gmSearchTarget}/> : null}
     {tab === 'advanced-dice' ? <AdvancedDiceWorkspace role="gm"/> : null}
-    {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId}/> : null}
-    {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
+    {tab === 'random-tables' ? <GMRandomTableWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
+    {tab === 'encounter-rewards' ? <GMEncounterRewardWorkspace key={campaignId} campaignId={campaignId} encounter={live.encounter} searchTarget={gmSearchTarget} onOpenEncounter={()=>setTab('main')} onOpenLoot={()=>setTab('inventory')}/> : null}
     {tab === 'asteria-calendar' ? <AsteriaCalendarWorkspace key={campaignId} campaignId={campaignId} workspace={workspace}/> : null}
     {tab === 'weather-environment' ? <GMWeatherEnvironmentWorkspace key={campaignId} campaignId={campaignId}/> : null}
-    {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId}/> : null}
+    {tab === 'world-atlas' ? <GMWorldAtlasWorkspace key={campaignId} campaignId={campaignId} searchTarget={gmSearchTarget}/> : null}
   </AsteriaAppShell>;
 }

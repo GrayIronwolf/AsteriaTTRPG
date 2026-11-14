@@ -234,7 +234,7 @@ function TokenEditor({tokens,onChange,characters={},selectedTokenId,onSelect}){
     </div>
   </section>;
 }
-export function GMBattleMapManager({campaignId,characters={},encounter={}}){
+export function GMBattleMapManager({campaignId,characters={},encounter={},searchTarget=null}){
   const {maps,error:listenerError}=useBattleMaps(campaignId,true);
   const [selectedId,setSelectedId]=useState(''),[draft,setDraft]=useState(defaults);
   const [file,setFile]=useState(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
@@ -249,6 +249,8 @@ export function GMBattleMapManager({campaignId,characters={},encounter={}}){
   const [movementMode,setMovementMode]=useState('movement'),[repositionReason,setRepositionReason]=useState('');
   const undoFog=useRef([]);
   const selected=maps.find(row=>row.id===selectedId)||null;
+  useEffect(()=>{if(searchTarget?.category==='battle-map'&&maps.some(x=>x.id===searchTarget.id))
+    setSelectedId(searchTarget.id);},[searchTarget,maps]);
   const combatLinked=combatMapLinked(selected,encounter);
   const combatants=combatMapRoster(encounter);
   const combatCurrent=combatants.find(row=>row.isCurrent);

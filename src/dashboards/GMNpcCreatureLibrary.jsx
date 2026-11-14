@@ -1,4 +1,4 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useState} from 'react';
 import {GMNpcGenerator} from './GMNpcGenerator.jsx';
 import {GMContextCheckLauncher} from './GMContextCheckLauncher.jsx';
 import {GMCharacterCardStudio,GMCharacterCardPreview} from './GMCharacterCards.jsx';
@@ -37,7 +37,7 @@ const uid=kind=>{
 };
 
 /** A single GM-only library, reusing the existing private world patch service. */
-export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,onOpenWorld,campaignId='',characters={}}){
+export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,onOpenWorld,campaignId='',characters={},searchTarget=null}){
   const world=workspace.world||{};
   const [search,setSearch]=useState('');
   const [filter,setFilter]=useState('all');
@@ -51,6 +51,10 @@ export function GMNpcCreatureLibrary({workspace={},saveSection,onOpenEncounter,o
   const [cardTarget,setCardTarget]=useState(null);
   const [galleryView,setGalleryView]=useState(false);
   const [checkTarget,setCheckTarget]=useState(null);
+  useEffect(()=>{
+    if(!['npc','creature'].includes(searchTarget?.category))return;
+    setSearch(searchTarget.title||'');setFilter(searchTarget.category);
+  },[searchTarget]);
   const library=useMemo(()=>gmNPCCreatureLibrary(world,official,{query:search,kind:filter}),
     [world,official,search,filter]);
   const startNew=kind=>{
