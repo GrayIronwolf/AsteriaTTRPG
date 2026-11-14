@@ -148,7 +148,9 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
     expectedRevision:control.revision});
    if(!result){stream.getTracks().forEach(track=>track.stop());return;}
    setBlob(null);
-   const parts=[],recorder=new window.MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:96000});
+   // Record audio only. Browser tab screen/video data is never included in output.
+   const audioOnly=new MediaStream(stream.getAudioTracks());
+   const parts=[],recorder=new window.MediaRecorder(audioOnly,{mimeType:mime,audioBitsPerSecond:96000});
    recorderRef.current=recorder;streamRef.current=stream;
    const requestId=control.requestId;
    const startedAt=Date.now();
