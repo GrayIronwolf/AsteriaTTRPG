@@ -332,6 +332,42 @@ export function PlayerRecordingNotice({campaignId}){
   {message?<p role="status">{message}</p>:null}
  </section>;
 }
+
+export function GMRecordingParticipationNotice({campaignId}){
+ const [control,setControl]=useState(idle);
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const uid=firebaseService.currentUser()?.uid||'';
+ useEffect(()=>{
+  setControl(idle());
+  if(!campaignId)return;
+  return firebaseService.subscribeRecordingControl(campaignId,setControl);
+ },[campaignId]);
+ if(!uid||!Array.isArray(control.participants)||!control.participants.includes(uid)||
+  !['consent','recording'].includes(control.status))return null;
+ const respond=async decision=>{
+  setBusy(true);setMessage('');
+  try{
+   const result=await firebaseService.respondRecordingConsent(campaignId,'member-scope',
+    {requestId:control.requestId,decision});
+   if(!result?.ok)throw Error(result?.error||'Recording consent response failed.');
+   setMessage(decision==='agree'?'Recording consent granted.':'Recording consent withdrawn.');
+  }catch(error){setMessage(error.message||String(error));}
+  finally{setBusy(false);}
+ };
+ return <section className="asteria-recording-notice" role="region" aria-label="Co-GM recording consent">
+  <strong>{control.status==='recording'?'Campaign Recording Active':'Another GM Requested Recording Consent'}</strong>
+  <p>{control.status==='recording'?
+   'You may withdraw consent now to stop this recording for everyone.':
+   'All participants, including other GMs, must approve before recording begins.'}</p>
+  <div className="asteria-recording-actions">
+   {control.status==='consent'?<button disabled={busy} onClick={()=>respond('agree')}>I Agree</button>:null}
+   <button disabled={busy} onClick={()=>respond('decline')}>
+    {control.status==='recording'?'Withdraw Consent & Stop Recording':'Decline'}</button>
+  </div>
+  {message?<p role="status">{message}</p>:null}
+ </section>;
+}
+
 export function PlayerSessionRecordingWorkspace({campaignId}){
  const {notice,archives}=useRecordingData(campaignId,false);
  const [message,setMessage]=useState('');
