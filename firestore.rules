@@ -366,7 +366,7 @@ service cloud.firestore {
           (resource.data.get('combatId','') == '' ||
             request.resource.data.tokens == resource.data.tokens) &&
           validBattleMapData(campaignId,mapId,request.resource.data);
-        allow delete: if isCampaignGM(campaignId);
+        allow delete: if isCampaignGM(campaignId) && resource.data.get('combatId','') == '';
       }
 
       match /checkGroups/{groupId} {
