@@ -530,6 +530,20 @@ service cloud.firestore {
       // Phase 8.2: only GMs can read raw weather zones and forecasts.
       // Players can view explicitly published, server-projected reports.
       // All weather writes require the authenticated GM backend action.
+      // Phase 8.3: world map drafts and private pins are GM-only.
+      // Browser writes are forbidden; players read only safe projections.
+      match /atlasConfig/{configId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /worldAtlas/{mapId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /worldAtlasShared/{mapId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /weatherConfig/{configId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;

@@ -2,6 +2,7 @@ import { normalizeInformation, publicInformation } from '../src/state/campaignIn
 import { campaignArtworkFileError } from '../src/state/campaignArtwork.mjs';
 import {battleMapFileError,battleMapFileKind,battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,BATTLE_MAP_MAX_RECORDS} from '../src/state/battleMapModel.mjs';
 import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
+import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -3269,6 +3270,50 @@ const firebasePublicApi = {
   manageEncounterReward: (...args) => callTrustedAction('manageEncounterReward',args),
   manageAsteriaCalendar: (...args) => callTrustedAction('manageAsteriaCalendar',args),
   manageWeatherEnvironment: (...args) => callTrustedAction('manageWeatherEnvironment',args),
+  manageWorldAtlas: (...args) => callTrustedAction('manageWorldAtlas',args),
+  subscribeWorldAtlas: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    const name=mode==='gm'?'worldAtlas':'worldAtlasShared';
+    return onSnapshot(collection(db,'campaigns',campaignId,name),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('world-atlas',error,{campaignId});});
+  },
+  fetchWorldAtlasMedia: async function(campaignId,map){
+    if(!storage||!currentUser||!campaignId||!map)return {ok:false,error:'Sign in to view maps.'};
+    try{
+      const path=atlasImagePath(campaignId,map.id,map.contentType);
+      if(map.storagePath!==path)throw Error('Invalid atlas media reference.');
+      return {ok:true,blob:await getBlob(storageRef(storage,path))};
+    }catch(error){return {ok:false,error:error?.message||'Atlas image unavailable.'};}
+  },
+  uploadWorldAtlas: async function(campaignId,file,settings,dimensions){
+    if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in to upload world maps.'};
+    const invalid=atlasFileError(file);if(invalid)return {ok:false,error:invalid};
+    let clean,dims;
+    try{
+      clean=atlasMapSettings({...settings,visibility:'gm'});
+      dims=atlasImageDimensions(dimensions.width,dimensions.height);
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only a campaign GM can upload world maps.');
+      const maps=await getDocs(query(collection(db,'campaigns',campaignId,'worldAtlas'),limit(ATLAS_MAX_MAPS+1)));
+      if(maps.docs.filter(row=>row.data().status!=='archived').length>=ATLAS_MAX_MAPS)
+        throw Error('Campaign world-map limit reached.');
+    }catch(error){return {ok:false,error:error?.message||'Atlas validation failed.'};}
+    const mapId=crypto.randomUUID();
+    const prep=await callTrustedAction('manageWorldAtlas',[campaignId,'gm-scope',{
+      type:'create',mapId,settings:clean,contentType:file.type,
+      width:dims.width,height:dims.height
+    }]);
+    if(!prep?.ok)return prep;
+    try{
+      await uploadBytes(storageRef(storage,atlasImagePath(campaignId,mapId,file.type)),file,
+        {contentType:file.type,cacheControl:'private,max-age=0,no-store'});
+      return {ok:true,mapId,revision:prep.revision};
+    }catch(error){
+      return {ok:false,error:error?.message||'Atlas upload failed. Archive the unused private draft.'};
+    }
+  },
   subscribeWeatherZones: function(campaignId,onChange){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,'weatherZones'),

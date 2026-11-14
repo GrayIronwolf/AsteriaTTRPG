@@ -40,6 +40,21 @@ service firebase.storage {
           ))
       );
     }
+    match /campaigns/{campaignId}/worldAtlas/{mapId}/{fileName} {
+      // Authenticated blobs, never downloadable token URLs.
+      allow get: if campaignGM(campaignId) ||
+        (campaignMember(campaignId) &&
+          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)) &&
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlasShared/$(mapId)).data.get('visibility','gm') == 'players');
+      allow list: if false;
+      allow create: if campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/worldAtlas/$(mapId)) &&
+        fileName in ['atlas.png','atlas.jpg','atlas.webp','atlas.gif'] &&
+        request.resource.size > 0 && request.resource.size <= 8 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
     match /campaigns/{campaignId}/battleMaps/{mapId}/{fileName} {
       // Do not expose GM-only map bytes or permit players to overwrite media.
       // Browser preview uses authenticated Storage getBlob, not public download URLs.
