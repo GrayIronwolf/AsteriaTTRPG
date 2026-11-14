@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {Panel} from '../components/WorkspaceUI.jsx';
 import {firebaseService} from '../firebase/asteriaFirebaseService.js';
 import {
-  sessionLibraryRows,sessionPdfFileError,sessionPdfPath,SESSION_NOTE_KINDS
+  sessionLibraryRows,sessionPdfFileError,SESSION_NOTE_KINDS
 } from '../state/sessionLibraryModel.mjs';
 import '../styles/session-library.css';
 
