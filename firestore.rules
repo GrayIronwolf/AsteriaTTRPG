@@ -322,6 +322,7 @@ service cloud.firestore {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update: if isCampaignGM(campaignId) &&
           noteId == 'private' &&
+          exists(/databases/$(database)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)) &&
           request.resource.data.keys().hasOnly(['pins','updatedAt','updatedBy']) &&
           request.resource.data.keys().hasAll(['pins','updatedAt','updatedBy']) &&
           request.resource.data.pins is list && request.resource.data.pins.size() <= 40 &&
