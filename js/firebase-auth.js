@@ -1386,6 +1386,7 @@ const firebasePublicApi = {
         storagePath=battleMapAssetPath(campaignId,mapId,entry.contentType);
         if(entry.storagePath!==storagePath)throw Error('Invalid map storage reference.');
         tx.delete(ref);
+        tx.delete(doc(db,'campaigns',campaignId,'battleMaps',mapId,'gmNotes','private'));
       });
       // Firestore is the visibility authority; deletion immediately revokes reads.
       // Storage cleanup is best-effort; the object is inaccessible after document deletion.
