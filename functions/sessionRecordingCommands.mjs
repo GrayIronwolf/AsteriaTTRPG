@@ -29,11 +29,13 @@ async function activeParticipants(tx,context,campaignId,campaign,actorUid){
   const members=snap.docs.map(doc=>doc.data()).filter(m=>
    m&&m.campaignId===campaignId&&m.uid===m.uid?.trim()&&['player','co-gm'].includes(m.role));
   if(members.length>RECORDING_PARTICIPANT_LIMIT+1)throw Error('Recording participant limit reached.');
-  return unique(members.map(m=>m.uid)).filter(uid=>uid!==actorUid);
+  // The campaign owner is a GM without a v2 member document, and must also
+  // consent when a co-GM is the recorder.
+  return unique([...members.map(m=>m.uid),campaign.ownerUid]).filter(uid=>uid!==actorUid);
  }
  if(campaign.membershipSchemaVersion!==undefined&&!([1,null].includes(campaign.membershipSchemaVersion)))
   throw Error('Unsupported campaign membership version.');
- return rosterFromLegacy(campaign,actorUid);
+ return unique([...rosterFromLegacy(campaign,actorUid),campaign.ownerUid]).filter(uid=>uid!==actorUid);
 }
 function requireSession(session,sessionId){
  if(!exists(session)||session.data().status!=='active'||session.data().id!==sessionId)
