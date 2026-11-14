@@ -27,7 +27,7 @@ test('Search and category filters are presentation-only and do not mutate entrie
   const all=filterGMToolkit();
   assert.equal(all.reduce((sum,g)=>sum+g.tools.length,0),GM_TOOLKIT_TOOLS.length);
   assert.deepEqual(filterGMToolkit({query:'merchant'}).flatMap(g=>g.tools.map(t=>t.id)),['shops']);
-  assert.deepEqual(filterGMToolkit({group:'world'}).flatMap(g=>g.tools.map(t=>t.id)),['weather-environment','asteria-calendar','world','layout']);
+  assert.deepEqual(filterGMToolkit({group:'world'}).flatMap(g=>g.tools.map(t=>t.id)),['world-atlas','weather-environment','asteria-calendar','world','layout']);
   assert.deepEqual(filterGMToolkit({query:'aRmOuR'}).flatMap(g=>g.tools.map(t=>t.id)),['gm-controls']);
   assert.equal(filterGMToolkit({query:'not a real feature'}).length,0);
   assert.equal(filterGMToolkit({group:'missing-category'}).length,0);

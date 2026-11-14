@@ -112,6 +112,9 @@ export function atlasPublicProjection(map){
   revision:map.revision,pins:pins.map(({linkedType,linkedId,...pin})=>pin),
   routes:routes.map(route=>({...route}))};
 }
+export function atlasMapCanPreview(map,campaignId){
+ try{return map?.storagePath===atlasImagePath(campaignId,map.id,map.contentType);}catch{return false;}
+}
 export function atlasPointFromEvent(event,element){
  const rect=element.getBoundingClientRect();
  if(!rect.width||!rect.height)throw Error('Map is not ready to place a pin.');
