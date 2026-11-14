@@ -15,6 +15,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
     description:'Run encounters and manage the live session.',
     tools:[
       {id:'encounter',label:'GM Main & Encounter Board',tab:'main',description:'Initiative, encounters, rest requests, XP and special damage.',keywords:'combat initiative creature turn encounter'},
+      {id:'battle-maps',label:'Battle Maps & Animated Scenes',tab:'battle-maps',description:'Upload images or looping video battle maps, configure grids, markers and player sharing.',keywords:'map video loop animated mp4 webm tokens grid tabletop'},
       {id:'gm-controls',label:'GM Character Tools',tab:'tools',description:'Conditions, resource controls, Armour Class and player titles.',keywords:'hp sp mp ac character'},
       {id:'notes',label:'GM Notes & Session Log',tab:'notes',description:'Private preparation notes and existing session records.',keywords:'session journal log preparation'},
       {id:'news',label:'News & Events',tab:'information',description:'Campaign information, announcements and events.',keywords:'information announcements'}
