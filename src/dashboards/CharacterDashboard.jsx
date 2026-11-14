@@ -1,5 +1,6 @@
 import { PlayerInformation } from './PlayerInformation.jsx';
 import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
+import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
@@ -48,6 +49,7 @@ const CHARACTER_TABS = [
   { id: 'journal', label: 'Journal', icon: 'journal' },
   { id: 'party', label: 'Party', icon: 'party' },
   { id: 'gallery', label: 'Gallery', icon: 'gallery' },
+  { id: 'battle-maps', label: 'Battle Maps', icon: 'gallery' },
   { id: 'settings', label: 'Dashboard Settings', icon: 'settings' }
 ];
 
@@ -195,7 +197,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
   if(!character) return <div className="react-route-state" role="alert">This character is unavailable. Return to your campaigns and check its link.</div>;
   if(!campaignId && !isOwner) return <div className="react-route-state" role="alert">Only the owner can view this unassigned character.</div>;
   if(!isOwner && window.AsteriaCharacterAccess.isGM(live.campaign, uid) && !window.AsteriaCharacterAccess.isLinked(live.campaign, character)) return <div className="react-route-state" role="alert">This character is not linked to your campaign.</div>;
-  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting'].includes(item.id));
+  const tabs=CHARACTER_TABS.filter(item=>campaignId || !['quest','information','party','crafting','battle-maps'].includes(item.id));
   const activeTab = resolveDashboardTab(tabs, tab);
   const navigate=next=>{if(tabs.some(item=>item.id===next))setTab(next);else window.toast?.('Link this character to a campaign to view campaign information.');};
   const updateResource = (resource, amount) => firebaseService.updateResource(campaignId, character.id, resource, amount, { source:'Character Dashboard HUD',expectedCoreRevision:Number(character.coreRevision || 0) });
@@ -223,6 +225,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
+    {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
