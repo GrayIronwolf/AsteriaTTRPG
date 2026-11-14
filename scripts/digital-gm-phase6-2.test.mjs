@@ -18,7 +18,7 @@ test('legacy image and looping video maps stay visible until GM enables fog',()=
 });
 test('hide and reveal brushes apply only within the map bounds',()=>{
   const empty=createFogCells(8,8);
-  const revealed=paintFogStroke(empty,8,8,{x:12,y:12},{x:87,y:87},'reveal',0);
+  const revealed=paintFogStroke(empty,8,8,{x:12,y:12},{x:100,y:100},'reveal',0);
   assert.equal(revealed.length,64);
   assert.equal(revealed[0],'1');
   assert.equal(revealed.at(-1),'1');
