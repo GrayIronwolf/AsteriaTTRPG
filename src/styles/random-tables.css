@@ -1,0 +1,24 @@
+.asteria-random-tables{display:grid;gap:14px;min-width:0}
+.asteria-random-tables h3{margin:0}
+.asteria-random-tables-top,.asteria-random-tables-buttons,.asteria-random-tables-section-title{display:flex;gap:9px;align-items:end;flex-wrap:wrap}
+.asteria-random-tables-top label{flex:1 1 260px}
+.asteria-random-tables label{display:grid;gap:5px;min-width:0}
+.asteria-random-tables-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.asteria-random-tables-full{grid-column:1/-1}
+.asteria-random-tables input,.asteria-random-tables textarea,.asteria-random-tables select{width:100%;min-width:0;max-width:100%;border:1px solid #7a8697;background:#192433;color:#f1f3f7;padding:8px;border-radius:6px;font:inherit}
+.asteria-random-tables button{padding:8px 12px}
+.asteria-random-tables button:focus-visible,.asteria-random-tables input:focus-visible,.asteria-random-tables select:focus-visible,.asteria-random-tables textarea:focus-visible{outline:2px solid #d7b873;outline-offset:2px}
+.asteria-random-tables-section-title{justify-content:space-between}
+.asteria-random-tables-entries{display:grid;gap:9px}
+.asteria-random-tables-entry{padding:12px;border:1px solid #596779;border-radius:9px;background:#162130}
+.asteria-random-tables-entry header{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-bottom:12px}
+.asteria-random-tables-entry header>span{font-size:.85rem;color:#ddd1b0}
+.asteria-random-tables-buttons>label{flex:0 1 170px}
+.asteria-random-tables-preview,.asteria-random-tables-history{border:1px solid #5b697a;border-radius:8px;padding:13px;min-width:0}
+.asteria-random-tables-preview ol,.asteria-random-tables-history ol{margin:0;padding:0 0 0 22px;display:grid;gap:10px}
+.asteria-random-tables-preview li,.asteria-random-tables-history>ol>li{padding:7px 4px}
+.asteria-random-tables-preview li small,.asteria-random-tables-history small{display:block;color:#bfc8d4}
+.asteria-random-tables-history>ol{max-height:450px;overflow:auto}
+.asteria-random-tables-history li ul{margin-top:6px;padding-left:20px}
+.asteria-random-tables-error{border:1px solid #be6d6d;padding:9px;border-radius:6px}
+@media(max-width:680px){.asteria-random-tables-fields{grid-template-columns:1fr}.asteria-random-tables-entry{padding:9px}.asteria-random-tables-buttons>label{flex:1 1 130px}}
