@@ -20,7 +20,8 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
       {id:'advanced-dice',label:'Advanced Dice Roller',tab:'advanced-dice',description:'Secure digital dice pools, modifiers, private roll history and saved presets.',keywords:'dice d4 d6 d8 d10 d12 d20 d100 roll random presets modifier'},
       {id:'battle-maps',label:'Battle Maps & Animated Scenes',tab:'battle-maps',description:'Upload images or looping video battle maps, configure grids, markers and player sharing.',keywords:'map video loop animated mp4 webm tokens grid tabletop'},
       {id:'gm-controls',label:'GM Character Tools',tab:'tools',description:'Conditions, resource controls, Armour Class and player titles.',keywords:'hp sp mp ac character'},
-      {id:'notes',label:'GM Notes & Session Log',tab:'notes',description:'Private preparation notes and existing session records.',keywords:'session journal log preparation'},
+      {id:'notes',label:'GM Notes & Session Log',tab:'notes',description:'Private preparation notes, session records, structured notes and PDFs.',keywords:'session journal log preparation pdf documents'},
+      {id:'session-library',label:'Session Notes & PDF Library',tab:'session-library',description:'Organise private GM notes and publish approved PDF handouts.',keywords:'session pdf document library private handout notes upload share'},
       {id:'news',label:'News & Events',tab:'information',description:'Campaign information, announcements and events.',keywords:'information announcements'}
     ]
   }),

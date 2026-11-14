@@ -40,6 +40,22 @@ service firebase.storage {
           ))
       );
     }
+    match /campaigns/{campaignId}/sessionPdfs/{pdfId}/{fileName} {
+      // Authenticated PDF reads; sharing is controlled by the server-projected index.
+      allow get: if fileName == 'document.pdf' && (campaignGM(campaignId) ||
+        (campaignMember(campaignId) &&
+          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)) &&
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)).data.get('visibility','gm') == 'players' &&
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)).data.get('status','') == 'ready'));
+      allow list: if false;
+      allow create: if fileName == 'document.pdf' && campaignGM(campaignId) && resource == null &&
+        firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)) &&
+        firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/sessionPdfs/$(pdfId)).data.get('status','') == 'uploading' &&
+        request.resource.size > 0 && request.resource.size <= 20 * 1024 * 1024 &&
+        request.resource.contentType == 'application/pdf';
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
     match /campaigns/{campaignId}/worldAtlas/{mapId}/{fileName} {
       // Authenticated blobs, never downloadable token URLs.
       allow get: if campaignGM(campaignId) ||
