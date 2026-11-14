@@ -134,7 +134,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
   if(!window.MediaRecorder){setMessage('Recording is not supported by this browser.');return;}
   const mime=recordingSupportedMime(window.MediaRecorder);
   if(!mime){setMessage('No supported audio recording format is available on this device.');return;}
-  let stream=null;
+  let stream=null,startedRecording=null;
   try{
    if(control.mode==='microphone'){
     if(!navigator.mediaDevices?.getUserMedia)throw Error('Microphone recording is unsupported in this browser.');
@@ -144,13 +144,14 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
     stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
     if(!stream.getAudioTracks().length)throw Error('The selected tab did not share audio. Select a tab and enable Share tab audio.');
    }
+   // Construct audio-only recorder before changing the server recording state.
+   const audioOnly=new MediaStream(stream.getAudioTracks());
+   const parts=[],recorder=new window.MediaRecorder(audioOnly,{mimeType:mime,audioBitsPerSecond:96000});
    const result=await command({type:'start-recording',requestId:control.requestId,
     expectedRevision:control.revision});
    if(!result){stream.getTracks().forEach(track=>track.stop());return;}
+   startedRecording=result;
    setBlob(null);
-   // Record audio only. Browser tab screen/video data is never included in output.
-   const audioOnly=new MediaStream(stream.getAudioTracks());
-   const parts=[],recorder=new window.MediaRecorder(audioOnly,{mimeType:mime,audioBitsPerSecond:96000});
    recorderRef.current=recorder;streamRef.current=stream;
    const requestId=control.requestId;
    const startedAt=Date.now();
@@ -195,10 +196,16 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
     }
    };
    recorder.start(1000);
+   setAck(false);
    timerRef.current=window.setTimeout(stop,RECORDING_MAX_SECONDS*1000);
    setMessage('Recording started. A visible recording notice is shown to all campaign participants.');
   }catch(error){
    stream?.getTracks?.().forEach(track=>track.stop());
+   if(startedRecording?.ok){
+    await firebaseService.manageSessionRecording(campaignId,'gm-scope',{
+     type:'stop-recording',requestId:control.requestId,expectedRevision:startedRecording.revision
+    });
+   }
    setMessage(error.message||String(error));
   }
  };
