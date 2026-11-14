@@ -41,8 +41,8 @@ export function createRandomTableCommands(context,{requireCampaignGM}){
           const snapshot=await tx.get(ref);
           const previous=exists(snapshot)?snapshot.data():null;
           if(type==='save'){
-            if(previous?.revision!==action.expectedRevision&&previous||
-              !previous&&action.expectedRevision!==0)
+            if((previous && previous.revision!==action.expectedRevision) ||
+               (!previous && action.expectedRevision!==0))
               throw Error('The random table changed. Refresh it before saving.');
             const clean=validateRandomTable(action.table,tableId,previous);
             // Reference validation is server-side, not a client-side label check.
