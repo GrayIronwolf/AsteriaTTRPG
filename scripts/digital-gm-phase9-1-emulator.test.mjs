@@ -69,8 +69,13 @@ test('Explicit sharing enables active member read and unpublish revokes bytes',a
   await updateDoc(doc(context.firestore(),privatePdf),{status:'ready',visibility:'players'});
  });
  await assertSucceeds(getDoc(doc(firestore('alice'),publicPdf)));
+ console.log('Shared index readable by player');
  await assertSucceeds(getDocs(collection(firestore('alice'),'campaigns/'+campaign+'/sessionPdfsShared')));
+ console.log('Shared index query readable by player');
+ await assertSucceeds(getBytes(ref(storage('gm'),media)));
+ console.log('Published PDF readable by GM');
  await assertSucceeds(getBytes(ref(storage('alice'),media)));
+ console.log('Published PDF readable by player');
  await assertFails(getBytes(ref(storage('visitor'),media)));
  await env.withSecurityRulesDisabled(async context=>{
   await deleteDoc(doc(context.firestore(),publicPdf));
