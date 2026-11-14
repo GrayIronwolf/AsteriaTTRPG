@@ -62,8 +62,8 @@ test('published image and video maps are readable only by active campaign member
   await assertSucceeds(getDoc(doc(firestore('alice'),'campaigns/camp/battleMaps/static-map')));
   await assertSucceeds(getDocs(query(collection(firestore('alice'),'campaigns/camp/battleMaps'),where('visibility','==','players'))));
   await assertFails(getDocs(collection(firestore('alice'),'campaigns/camp/battleMaps')));
-  assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),image)))).length>0);
-  assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),video)))).length>0);
+  assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),image)))).byteLength>0);
+  assert.ok((await assertSucceeds(getBytes(ref(storage('alice'),video)))).byteLength>0);
   await assertFails(getBytes(ref(storage('visitor'),video)));
   await assertFails(getDoc(doc(firestore('suspended'),'campaigns/camp/battleMaps/video-map')));
 });
