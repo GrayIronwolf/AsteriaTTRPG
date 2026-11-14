@@ -243,6 +243,7 @@ export function GMBattleMapManager({campaignId,characters={}}){
   useEffect(()=>{
     if(selected)setDraft(currentSettings(selected));
     else setDraft(defaults());
+    setPreviewPlayerFog(selected?.fogEnabled===true);
     setSelectedTokenId('');setFogTool('token');setPreviewPlayerFog(false);
     setMeasurePoints([]);undoFog.current=[];setPrivateDirty(false);
   },[selectedId]);
@@ -352,6 +353,7 @@ export function GMBattleMapManager({campaignId,characters={}}){
         onChange={event=>patch({metresPerCell:Number(event.target.value)})}/></label>
       <label><input type="checkbox" checked={draft.fogEnabled} onChange={event=>{
         patch({fogEnabled:event.target.checked});setFogTool(event.target.checked?'reveal':'token');
+        setPreviewPlayerFog(event.target.checked);
       }}/> Enable fog of war</label>
     </div>
     <label>Map description<textarea value={draft.description} maxLength={300}
