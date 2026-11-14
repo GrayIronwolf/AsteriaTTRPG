@@ -1,0 +1,49 @@
+name: Digital GM Phase 9.1 — Session Notes and PDF Library
+on:
+  push:
+    branches: [feat/digital-gm-phase9-1-session-library]
+  pull_request:
+    paths:
+      - 'functions/sessionLibraryCommands.mjs'
+      - 'src/state/sessionLibraryModel.mjs'
+      - 'src/dashboards/SessionLibraryWorkspace.jsx'
+      - 'src/styles/session-library.css'
+      - 'scripts/digital-gm-phase9-1*.test.mjs'
+      - 'docs/releases/digital-gm-phase9-1.md'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'functions/commands.mjs'
+      - 'functions/handler.mjs'
+      - 'js/firebase-auth.js'
+      - 'src/firebase/asteriaFirebaseService.js'
+      - 'src/dashboards/GMDashboard.jsx'
+      - 'src/dashboards/CharacterDashboard.jsx'
+      - 'src/state/gmToolkitModel.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Session library unit and earlier Digital GM regression tests
+        run: node --test scripts/digital-gm-phase9-1.test.mjs scripts/digital-gm-phase8-3.test.mjs scripts/digital-gm-phase8-2.test.mjs scripts/digital-gm-phase8-1.test.mjs
+      - name: Firebase Firestore and Storage rules emulators
+        run: npx firebase emulators:exec --project demo-asteria-library --only firestore,storage "node --test scripts/digital-gm-phase9-1-emulator.test.mjs scripts/digital-gm-phase8-3-emulator.test.mjs"
+      - name: Lint
+        run: npm run lint
+      - name: Existing GM dashboard regression tests
+        run: npm run test:dashboard
+      - name: Production React build
+        run: npm run build
