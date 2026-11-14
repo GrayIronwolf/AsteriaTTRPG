@@ -259,7 +259,11 @@ service cloud.firestore {
         data.get('fogCells','') is string &&
         (data.get('fogCells','') == '' ||
           (data.fogCells.size() == data.gridColumns * data.gridRows &&
-           data.fogCells.matches('^[01]+ && data.width >= 1 && data.width <= 8192 &&
+           data.fogCells.matches('^[01]+$'))) &&
+        data.get('metresPerCell',1) is number &&
+        data.get('metresPerCell',1) >= 0.1 &&
+        data.get('metresPerCell',1) <= 100 &&
+        data.width is int && data.width >= 1 && data.width <= 8192 &&
         data.height is int && data.height >= 1 && data.height <= 8192 &&
         data.tokens is list && data.tokens.size() <= 60 &&
         data.createdBy is string && data.createdAt is timestamp &&
