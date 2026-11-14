@@ -1,7 +1,7 @@
 name: Digital GM Phase 6.2 — Battle Maps and Looping Video
 on:
   push:
-    branches: [feat/digital-gm-phase6-2-battle-maps]
+    branches: [feat/digital-gm-phase6-2-fog-tools]
   pull_request:
     paths:
       - 'src/dashboards/BattleMapWorkspace.jsx'
@@ -47,7 +47,7 @@ jobs:
   bundle:
     name: Publish verified frontend bundle to Phase 6.2 branch
     needs: verify
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/digital-gm-phase6-2-battle-maps'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/digital-gm-phase6-2-fog-tools'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -66,8 +66,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin feat/digital-gm-phase6-2-battle-maps
-          if [ "$(git rev-parse origin/feat/digital-gm-phase6-2-battle-maps)" != "$GITHUB_SHA" ]; then
+          git fetch origin feat/digital-gm-phase6-2-fog-tools
+          if [ "$(git rev-parse origin/feat/digital-gm-phase6-2-fog-tools)" != "$GITHUB_SHA" ]; then
             echo "Source advanced; a newer workflow owns bundle publication."
             exit 0
           fi
@@ -77,6 +77,6 @@ jobs:
             exit 0
           fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Build Digital GM Phase 6.2 frontend bundle"
-          git fetch origin feat/digital-gm-phase6-2-battle-maps
-          git rebase origin/feat/digital-gm-phase6-2-battle-maps
-          git push origin HEAD:feat/digital-gm-phase6-2-battle-maps
+          git fetch origin feat/digital-gm-phase6-2-fog-tools
+          git rebase origin/feat/digital-gm-phase6-2-fog-tools
+          git push origin HEAD:feat/digital-gm-phase6-2-fog-tools
