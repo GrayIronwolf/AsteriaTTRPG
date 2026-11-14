@@ -1,0 +1,46 @@
+.asteria-gm-unified-search{margin:0 0 14px;position:relative;z-index:3;min-width:0}
+.asteria-gm-search-launch{display:flex;align-items:center;justify-content:space-between;gap:12px;
+ background:#1b2838;border:1px solid #50627b;border-radius:10px;padding:10px 14px}
+.asteria-gm-search-open{flex:1;text-align:left;font-weight:650;min-height:43px;
+ background:linear-gradient(105deg,#27394e,#192a3a);border:1px solid #62748c;
+ color:#eef2f8;border-radius:8px;padding:9px 15px;cursor:pointer}
+.asteria-gm-search-launch small{color:#cbd3df;white-space:nowrap}
+.asteria-gm-search-panel{margin-top:10px;background:#15202f;color:#edf3fb;
+ border:1px solid #788ba5;border-radius:13px;box-shadow:0 15px 42px #0009;
+ padding:clamp(14px,2vw,24px);display:grid;gap:13px}
+.asteria-gm-search-panel header{display:flex;gap:12px;justify-content:space-between;align-items:start}
+.asteria-gm-search-panel header h2{margin:0 0 4px;font-size:clamp(19px,2vw,25px);color:#edf3fb}
+.asteria-gm-search-panel header p{margin:0;color:#c6d0db}
+.asteria-gm-search-panel label{font-size:13px;color:#d8e0e8}
+.asteria-gm-search-panel input[type="search"]{width:100%;min-height:46px;min-width:0;padding:10px 14px;
+ border:1px solid #90a2b7;border-radius:9px;background:#101b29;color:#f7fbff;font:inherit}
+.asteria-gm-search-panel :is(button,input):focus-visible{outline:3px solid #d7b77c;outline-offset:2px}
+.asteria-gm-search-categories{display:flex;gap:7px;flex-wrap:wrap;max-height:135px;overflow-y:auto}
+.asteria-gm-search-categories button{display:flex;gap:8px;align-items:center;border:1px solid #596d85;
+ background:#1b2b3b;color:#e6edf6;border-radius:20px;padding:6px 12px;font-size:13px;cursor:pointer}
+.asteria-gm-search-categories button[aria-pressed="true"]{background:#34536c;border-color:#d5b77f}
+.asteria-gm-search-categories button span{font-variant-numeric:tabular-nums;opacity:.8}
+.asteria-gm-search-status{margin:0;font-size:13px;color:#c6d1e2}
+.asteria-gm-search-error{margin:0;color:#ffb8aa}
+.asteria-gm-search-results{display:grid;gap:4px;max-height:min(52vh,560px);overflow:auto;
+ border-radius:9px;border:1px solid #34495e;padding:5px}
+.asteria-gm-search-results>button{width:100%;display:grid;grid-template-columns:minmax(90px,130px) 1fr auto;
+ align-items:center;gap:14px;text-align:left;background:#1e2d3d;border:1px solid transparent;
+ border-radius:8px;padding:11px;color:#edf3fb;cursor:pointer}
+.asteria-gm-search-results>button:hover,.asteria-gm-search-results>button.active{
+ background:#29445b;border-color:#6e8ba2}
+.asteria-gm-search-result-type{font:600 12px system-ui,sans-serif;text-transform:uppercase;
+ letter-spacing:.06em;color:#d8c19c}
+.asteria-gm-search-result-content{min-width:0;display:grid;gap:3px}
+.asteria-gm-search-result-content strong{font-size:15px;overflow-wrap:anywhere}
+.asteria-gm-search-result-content small{color:#bac8d7;overflow-wrap:anywhere}
+.asteria-gm-search-results>button>span:last-child{color:#cfdcec;font-size:12px}
+.asteria-gm-search-results>p{padding:15px;margin:0;color:#cbd7e2}
+.asteria-gm-search-panel footer{border-top:1px solid #45586b;padding-top:10px;
+ color:#b8c7d5;font-size:12px;line-height:1.6}
+@media(max-width:700px){
+ .asteria-gm-search-results>button{grid-template-columns:1fr auto;gap:5px}
+ .asteria-gm-search-result-type{grid-column:1/-1}
+ .asteria-gm-search-launch{flex-wrap:wrap}
+ .asteria-gm-search-launch small{font-size:11px}
+}
