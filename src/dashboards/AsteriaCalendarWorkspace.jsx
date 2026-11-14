@@ -15,7 +15,6 @@ const blankDefinition=()=>({
 const blankDate=()=>({era:'EOSR',year:1,month:1,day:1,hour:0,minute:0});
 const blankEvent=()=>({title:'',description:'',kind:'event',visibility:'gm',
  date:blankDate(),related:null});
-const clock=value=>value?.toDate?.()?.toLocaleString?.()||'';
 const numericDate=date=>Object.fromEntries(Object.entries(date).map(([key,value])=>[
  key,key==='era'?value:Number(value)
 ]));
