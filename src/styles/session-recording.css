@@ -1,0 +1,21 @@
+.asteria-recording{display:grid;gap:14px;min-width:0}
+.asteria-recording>header{display:grid;gap:6px}
+.asteria-recording h2,.asteria-recording p{margin:0}
+.asteria-recording-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.asteria-recording-form{display:grid;gap:12px}
+.asteria-recording label{display:grid;gap:5px;min-width:0}
+.asteria-recording :is(input:not([type="checkbox"]),select,textarea){min-width:0;max-width:100%;width:100%;border-radius:6px;padding:9px;border:1px solid #697a90;background:#1b2837;color:#edf1f8;font:inherit}
+.asteria-recording :is(input,select,textarea,button):focus-visible,.asteria-recording-notice button:focus-visible{outline:2px solid #d7b873;outline-offset:2px}
+.asteria-recording .asteria-recording-confirm{display:flex;align-items:flex-start;gap:10px}
+.asteria-recording-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.asteria-recording-actions button,.asteria-recording-audio button{padding:8px 11px}
+.asteria-recording-list{display:grid;gap:10px}
+.asteria-recording-list article{background:#172433;border:1px solid #51657b;border-radius:8px;padding:12px;display:grid;gap:9px;min-width:0}
+.asteria-recording-list article header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+.asteria-recording-list article small{color:#c3ccd8}
+.asteria-recording-audio{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.asteria-recording-audio audio{max-width:100%;width:320px}
+.asteria-recording-notice{padding:12px;border:2px solid #d0a85f;background:#31281d;color:#fff2d6;border-radius:8px;display:grid;gap:7px}
+.asteria-recording-notice p{margin:0}
+.asteria-recording-notice .asteria-recording-actions{margin-top:4px}
+@media(max-width:780px){.asteria-recording-grid{grid-template-columns:1fr}}

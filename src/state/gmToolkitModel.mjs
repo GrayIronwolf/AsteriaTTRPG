@@ -23,6 +23,7 @@ export const GM_TOOLKIT_GROUPS=Object.freeze([
       {id:'notes',label:'GM Notes & Session Log',tab:'notes',description:'Private preparation notes, session records, structured notes and PDFs.',keywords:'session journal log preparation pdf documents'},
       {id:'session-library',label:'Session Notes & PDF Library',tab:'session-library',description:'Organise private GM notes and publish approved PDF handouts.',keywords:'session pdf document library private handout notes upload share'},
       {id:'soundboard',label:'Soundboard & Ambient Audio',tab:'soundboard',description:'Upload private audio, publish tracks and broadcast live ambience and effects to opted-in players.',keywords:'music ambient audio soundboard sound effects looping playback atmosphere'},
+      {id:'session-recordings',label:'Session Recordings & Archives',tab:'session-recordings',description:'Request participant consent, record browser audio and manage secure session archives.',keywords:'record session consent audio archives replay recap playback download'},
       {id:'news',label:'News & Events',tab:'information',description:'Campaign information, announcements and events.',keywords:'information announcements'}
     ]
   }),

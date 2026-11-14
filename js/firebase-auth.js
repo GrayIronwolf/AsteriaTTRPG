@@ -5,6 +5,7 @@ import {battleMapPrivatePins} from '../src/state/battleMapFogModel.mjs';
 import {atlasFileError,atlasImagePath,atlasImageDimensions,atlasMapSettings,ATLAS_MAX_MAPS} from '../src/state/worldAtlasModel.mjs';
 import {sessionPdfInput,sessionPdfFileError,sessionPdfPath,SESSION_PDF_LIMIT} from '../src/state/sessionLibraryModel.mjs';
 import {audioFileError,audioMagicMatches,audioTrackPath,audioUploadDetails,AUDIO_TRACK_LIMIT} from '../src/state/campaignAudioModel.mjs';
+import {recordingFileError,recordingMagicMatches,recordingMetadata,recordingPath,RECORDING_ARCHIVE_LIMIT} from '../src/state/sessionRecordingModel.mjs';
 import {validatedEditableProfile,avatarUploadError,accountAvatarPath} from '../src/state/accountProfileEdit.mjs?v=account-username-20261111';
 import { mergeQuestAssignment } from '../src/state/questWorkflowModel.mjs';
 import { validateOwnedRecord } from '../src/state/ownedCharacterRecords.mjs';
@@ -3275,6 +3276,86 @@ const firebasePublicApi = {
   manageWorldAtlas: (...args) => callTrustedAction('manageWorldAtlas',args),
   manageSessionLibrary: (...args) => callTrustedAction('manageSessionLibrary',args),
   manageCampaignAudio: (...args) => callTrustedAction('manageCampaignAudio',args),
+  manageSessionRecording: (...args) => callTrustedAction('manageSessionRecording',args),
+  respondRecordingConsent: (...args) => callTrustedAction('respondRecordingConsent',args),
+  subscribeRecordingControl: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'recordingControl','current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():{status:'idle',revision:0}),
+      error=>{onChange({status:'idle',revision:0});reportSyncError('recording-control',error,{campaignId});});
+  },
+  subscribeRecordingNotice: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'recordingNotice','current'),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():{status:'idle',revision:0}),
+      error=>{onChange({status:'idle',revision:0});reportSyncError('recording-notice',error,{campaignId});});
+  },
+  subscribeRecordingConsents: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,'recordingConsents'),
+      snapshot=>onChange(snapshot.docs.map(row=>({uid:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('recording-consents',error,{campaignId});});
+  },
+  subscribeOwnRecordingConsent: function(campaignId,onChange){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(doc(db,'campaigns',campaignId,'recordingConsents',currentUser.uid),
+      snapshot=>onChange(snapshot.exists()?snapshot.data():null),
+      error=>{onChange(null);reportSyncError('recording-consent',error,{campaignId});});
+  },
+  subscribeRecordingArchives: function(campaignId,onChange,mode='player'){
+    if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
+    return onSnapshot(collection(db,'campaigns',campaignId,
+      mode==='gm'?'recordingArchives':'recordingArchivesShared'),
+      snapshot=>onChange(snapshot.docs.map(row=>({id:row.id,...row.data()}))),
+      error=>{onChange([]);reportSyncError('recording-archives',error,{campaignId});});
+  },
+  fetchRecordingArchive: async function(campaignId,archive){
+    if(!db||!storage||!currentUser||!campaignId||!archive)return {ok:false,error:'Sign in to play recordings.'};
+    try{
+      const path=recordingPath(campaignId,archive.id,archive.contentType);
+      if(archive.storagePath!==path||archive.status!=='ready')throw Error('Invalid recording reference.');
+      return {ok:true,blob:await getBlob(storageRef(storage,path))};
+    }catch(error){return {ok:false,error:error?.message||'Recording unavailable.'};}
+  },
+  removeRecordingArchiveBytes: async function(campaignId,archive){
+    if(!db||!storage||!currentUser||!campaignId||!archive)return {ok:false,error:'Sign in as GM.'};
+    try{
+      const path=recordingPath(campaignId,archive.id,archive.contentType);
+      if(archive.storagePath!==path)throw Error('Invalid recording reference.');
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only campaign GMs may delete recording files.');
+      await deleteObject(storageRef(storage,path));
+      return {ok:true};
+    }catch(error){return {ok:false,error:error?.message||'Recording file deletion failed.'};}
+  },
+  uploadRecordingArchive: async function(campaignId,file,details){
+    if(!db||!storage||!currentUser||!campaignId)return {ok:false,error:'Sign in as GM.'};
+    const invalid=recordingFileError(file);if(invalid)return {ok:false,error:invalid};
+    try{
+      const head=new Uint8Array(await file.slice(0,16).arrayBuffer());
+      if(!recordingMagicMatches(file.type,head))throw Error('Recording format signature does not match.');
+      const clean=recordingMetadata({...details,size:file.size,contentType:file.type});
+      const campaign=await getDoc(doc(db,'campaigns',campaignId));
+      if(!campaign.exists()||!currentUserIsCampaignGM(campaign.data()))
+        throw Error('Only GMs can save recordings.');
+      const archives=await getDocs(query(collection(db,'campaigns',campaignId,'recordingArchives'),
+        limit(RECORDING_ARCHIVE_LIMIT+1)));
+      if(archives.docs.filter(row=>row.data().status!=='archived').length>=RECORDING_ARCHIVE_LIMIT)
+        throw Error('The campaign archive is full.');
+      const id=crypto.randomUUID();
+      const prep=await callTrustedAction('manageSessionRecording',[campaignId,'gm-scope',
+        {type:'reserve-archive',id,details:clean}]);
+      if(!prep?.ok)return prep;
+      try{
+        await uploadBytes(storageRef(storage,recordingPath(campaignId,id,file.type)),file,
+          {contentType:clean.contentType,cacheControl:'private,max-age=0,no-store'});
+        const finished=await callTrustedAction('manageSessionRecording',[campaignId,'gm-scope',
+          {type:'finish-archive',id,expectedRevision:prep.revision}]);
+        return finished?.ok?{ok:true,id,revision:finished.revision}:finished;
+      }catch(error){return {ok:false,error:error?.message||'Upload interrupted. Archive the unused private draft.'};}
+    }catch(error){return {ok:false,error:error?.message||'Archive validation failed.'};}
+  },
   subscribeCampaignAudio: function(campaignId,onChange,mode='player'){
     if(!db||!currentUser||!campaignId||typeof onChange!=='function')return ()=>{};
     return onSnapshot(collection(db,'campaigns',campaignId,

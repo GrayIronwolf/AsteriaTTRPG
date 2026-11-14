@@ -539,6 +539,38 @@ service cloud.firestore {
       // Phase 9.1: campaign GM private notes and documents, separate player-safe PDF index.
       // Phase 9.2: private GM sound library, approved player projections,
       // and player-readable transport cues. Only trusted GM actions can write.
+      // Phase 9.3: recording consent writes only via the trusted campaign callable.
+      // Players read public recording status, plus their own consent only.
+      match /recordingControl/{recordingId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingNotice/{noticeId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingConsents/{uid} {
+        allow get: if isCampaignGM(campaignId) ||
+          (request.auth != null && request.auth.uid == uid && canUseCampaignSystems(campaignId));
+        allow list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingSessions/{requestId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingQuota/{quotaId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingArchives/{archiveId} {
+        allow get, list: if isCampaignGM(campaignId);
+        allow create, update, delete: if false;
+      }
+      match /recordingArchivesShared/{archiveId} {
+        allow get, list: if canUseCampaignSystems(campaignId);
+        allow create, update, delete: if false;
+      }
       match /audioConfig/{configId} {
         allow get, list: if isCampaignGM(campaignId);
         allow create, update, delete: if false;
