@@ -19,6 +19,8 @@ on:
       - 'functions/commands.mjs'
       - 'functions/handler.mjs'
       - 'firestore.rules'
+      - 'package.json'
+      - 'docs/releases/digital-gm-phase10-1.md'
       - 'scripts/digital-gm-phase10-1*.test.mjs'
       - '.github/workflows/build-digital-gm-phase10-1.yml'
   workflow_dispatch:
