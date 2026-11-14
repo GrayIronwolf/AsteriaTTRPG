@@ -1,6 +1,7 @@
 import { PlayerInformation } from './PlayerInformation.jsx';
 import { PlayerUniversalCheckPopup } from './UniversalCheckWorkspace.jsx';
 import {PlayerBattleMapView} from './BattleMapWorkspace.jsx';
+import {AdvancedDiceWorkspace} from './AdvancedDiceWorkspace.jsx';
 import { reconcileCharacterSystems } from '../state/characterSystems.mjs';
 import { resolveDashboardTab } from '../state/dashboardNavigation.mjs';
 import { useCharacterSystemsSync } from '../sessions/useCharacterSystemsSync.js';
