@@ -225,7 +225,7 @@ function CharacterDashboardContent({campaignId,characterId,live}) {
     {activeTab === 'journal' ? <JournalTab campaignId={campaignId} character={character} editable={editable} /> : null}
     {activeTab === 'party' ? <PartyTab campaignId={campaignId} character={character} characters={live.characters} partyWorkspace={live.partyWorkspace} messages={live.partyChat} presence={live.presence} editable={editable} /> : null}
     {activeTab === 'gallery' ? <GalleryTab campaignId={campaignId} character={character} editable={editable} /> : null}
-    {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId}/> : null}
+    {activeTab === 'battle-maps' && campaignId ? <PlayerBattleMapView campaignId={campaignId} encounter={live.encounter}/> : null}
     {activeTab === 'settings' ? <DashboardSettingsTab campaignId={campaignId} character={character} editable={isOwner} /> : null}
     {campaignId&&isOwner?<PlayerUniversalCheckPopup campaignId={campaignId} characterId={characterId}/>:null}
     {campaignId?<PlayerItemRequestCenter campaignId={campaignId} character={character} characters={live.characters} ecosystem={live.itemEcosystem} editable={editable} />:null}
