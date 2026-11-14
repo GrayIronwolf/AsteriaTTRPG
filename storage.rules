@@ -40,6 +40,25 @@ service firebase.storage {
           ))
       );
     }
+    match /campaigns/{campaignId}/battleMaps/{mapId}/{fileName} {
+      // Do not expose GM-only map bytes or permit players to overwrite media.
+      // Browser preview uses authenticated Storage getBlob, not public download URLs.
+      allow get: if campaignGM(campaignId) ||
+        (campaignMember(campaignId) &&
+          firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)) &&
+          firestore.get(/databases/(default)/documents/campaigns/$(campaignId)/battleMaps/$(mapId)).data.get('visibility','gm') == 'players');
+      allow list: if false;
+      allow create: if campaignGM(campaignId) &&
+        fileName.matches('scene\\.(png|jpg|webp|gif|mp4|webm)') &&
+        request.resource.size > 0 &&
+        ((request.resource.contentType.matches('image/(png|jpeg|webp|gif)') &&
+          request.resource.size <= 8 * 1024 * 1024) ||
+        (request.resource.contentType.matches('video/(mp4|webm)') &&
+          request.resource.size <= 48 * 1024 * 1024));
+      allow update: if false;
+      allow delete: if campaignGM(campaignId);
+    }
+
     match /campaigns/{campaignId}/artwork/{fileName} {
       allow read: if campaignMember(campaignId);
       allow create: if campaignGM(campaignId) &&
