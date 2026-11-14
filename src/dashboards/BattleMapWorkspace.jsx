@@ -290,8 +290,11 @@ export function GMBattleMapManager({campaignId,characters={}}){
     }catch(error){setMessage(error.message);}
   };
   const placeMeasurePoint=point=>setMeasurePoints(previous=>previous.length===2?[point]:[...previous,point]);
-  const measurement=measurePoints.length===2?measureGridDistance(
-    measurePoints[0],measurePoints[1],draft.gridColumns,draft.gridRows,draft.metresPerCell||1):null;
+  let measurement=null;
+  if(measurePoints.length===2){
+    try{measurement=measureGridDistance(measurePoints[0],measurePoints[1],
+      draft.gridColumns,draft.gridRows,draft.metresPerCell);}catch{measurement=null;}
+  }
   const act=async callback=>{
     setBusy(true);setMessage('');
     try{
