@@ -82,7 +82,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
  const [recording,setRecording]=useState(null),[blob,setBlob]=useState(null);
  const [details,setDetails]=useState({title:'',summary:''});
  const recorderRef=useRef(null),streamRef=useRef(null),timerRef=useRef(null);
- const localRef=useRef(null),stopRequested=useRef(false);
+ const [localAudioUrl,setLocalAudioUrl]=useState('');
  const recordedRequest=useRef(''),[recordInfo,setRecordInfo]=useState(null);
  const localStop=()=>{
   if(timerRef.current){window.clearTimeout(timerRef.current);timerRef.current=null;}
@@ -93,9 +93,15 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
   setRecording(null);
  };
  useEffect(()=>()=>localStop(),[]);
+ useEffect(()=>{
+  if(!blob){setLocalAudioUrl('');return undefined;}
+  const url=URL.createObjectURL(blob);
+  setLocalAudioUrl(url);
+  return()=>URL.revokeObjectURL(url);
+ },[blob]);
  // A GM browser must stop capture if the authoritative recording state changes.
  useEffect(()=>{
-  if(recording&&!(control.status==='recording'&&control.requestId===recording.requestId)){
+  if(recording&&(control.requestId!==recording.requestId || (control.status!=='recording'&&control.status!=='consent'))){
    localStop();setMessage('Recording stopped after campaign recording state changed.');
   }
  },[control.status,control.requestId,recording?.requestId]);
@@ -139,7 +145,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
    const result=await command({type:'start-recording',requestId:control.requestId,
     expectedRevision:control.revision});
    if(!result){stream.getTracks().forEach(track=>track.stop());return;}
-   setBlob(null);stopRequested.current=false;
+   setBlob(null);
    const parts=[],recorder=new window.MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:96000});
    recorderRef.current=recorder;streamRef.current=stream;
    const requestId=control.requestId;
@@ -158,7 +164,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
     const output=new Blob(parts,{type:actualMime});
     const durationSeconds=Math.max(1,Math.min(RECORDING_MAX_SECONDS,
      Math.ceil((Date.now()-startedAt)/1000)));
-    setBlob(output);
+    if(output.size>0)setBlob(output);
     setRecordInfo({requestId,sessionId:session.id,durationSeconds,contentType:actualMime});
     setRecording(null);
     if(output.size>RECORDING_MAX_BYTES)
@@ -174,9 +180,10 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
  };
  const stop=async()=>{
   if(!recording)return;
-  stopRequested.current=true;localStop();
+  const requestId=recording.requestId;
+  localStop();
   const result=await command({type:'stop-recording',
-   requestId:recording.requestId,expectedRevision:control.revision});
+   requestId,expectedRevision:control.revision});
   if(!result)setMessage('Local recording stopped; server update failed. Use the Stop Recording control again after refreshing.');
  };
  const cancel=async()=>{const result=await command({type:'cancel-consent',
@@ -249,7 +256,7 @@ export function GMSessionRecordingWorkspace({campaignId,session}){
    <Panel title="Local Recording" eyebrow="Save or export after stopping">
     {blob&&recordInfo?<div className="asteria-recording-form">
      <p>Clip: {(blob.size/1048576).toFixed(1)} MB · {Math.ceil(recordInfo.durationSeconds/60)} min</p>
-     <audio controls src={URL.createObjectURL(blob)}/>
+     {localAudioUrl?<audio controls src={localAudioUrl}/>:null}
      <label>Archive title<input maxLength={140} value={details.title} onChange={e=>setDetails({...details,title:e.target.value})} placeholder="Session recap"/></label>
      <label>Session summary<textarea rows={4} maxLength={2000} value={details.summary} onChange={e=>setDetails({...details,summary:e.target.value})}/></label>
      <div className="asteria-recording-actions">
