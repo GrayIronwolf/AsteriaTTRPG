@@ -308,3 +308,19 @@ body .asteria-header button.asteria-header-mail.has-unread::after {
 #campaigns.aaa-showing-campaign-page .campaign-manager > .card:first-child{
   border-color:var(--aaa-site-divider);background:linear-gradient(135deg,#162a3b,#091622);
 }
+
+/* Campaign Forge reuses the same sidebar treatment, retaining existing forms. */
+#campaigns .campaign-manager{display:grid;grid-template-columns:minmax(185px,235px) minmax(0,1fr);gap:18px 26px;align-items:start;}
+#campaigns .campaign-manager > section{grid-column:2;min-width:0;}
+#campaigns .aaa-campaign-sidebar{position:sticky;top:calc(var(--core-header-height) + 18px);grid-column:1;grid-row:1 / span 4;
+  display:flex;flex-direction:column;gap:5px;padding:4px 18px 14px 2px;border-right:1px solid var(--aaa-site-divider);}
+#campaigns .aaa-campaign-nav-option{position:relative;text-align:left;min-height:44px;padding:10px 3px 12px;border:0;background:transparent;
+  color:#c3d8e6;font:500 .95rem/1.35 var(--asteria-font-body,Arial,sans-serif);cursor:pointer;}
+#campaigns .aaa-campaign-nav-option:hover,#campaigns .aaa-campaign-nav-option:focus-visible{color:#fff;text-shadow:0 0 10px var(--aaa-site-active);}
+#campaigns .aaa-campaign-nav-option.is-current::after{content:"";position:absolute;bottom:6px;left:3px;right:3px;height:2px;background:var(--aaa-site-active);}
+@media(max-width:850px){
+  #campaigns .campaign-manager{grid-template-columns:1fr;gap:12px;}
+  #campaigns .aaa-campaign-sidebar{grid-row:auto;grid-column:1;position:static;flex-direction:row;overflow-x:auto;gap:18px;padding:0 0 8px;border-right:0;border-bottom:1px solid var(--aaa-site-divider);}
+  #campaigns .aaa-campaign-nav-option{flex:0 0 auto;white-space:nowrap;}
+  #campaigns .campaign-manager > section{grid-column:1;}
+}
