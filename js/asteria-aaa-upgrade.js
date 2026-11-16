@@ -339,6 +339,34 @@
       const hero=document.createElement('header');hero.className='aaa-page-hero aaa-simple-page-hero';
       const h1=document.createElement('h1');h1.textContent=title;hero.append(h1);page.prepend(hero);
     }
+    const campaigns=$('campaigns');
+    const manager=campaigns?.querySelector('.campaign-manager');
+    if(manager && !$('aaaCampaignSidebar')){
+      const sidebar=document.createElement('nav');
+      sidebar.id='aaaCampaignSidebar';sidebar.className='aaa-campaign-sidebar';
+      sidebar.setAttribute('aria-label','Campaign Forge sections');
+      const options=[
+        ['Current Campaigns',()=>{const target=$('campaignList');target?.scrollIntoView?.({behavior:'smooth',block:'start'});} ],
+        ['Forge a Campaign',()=>requireAccount(()=>{
+          if(typeof window.AsteriaWorkspace?.openDashboard==='function')
+            window.AsteriaWorkspace.openDashboard('createCampaign');
+          else window.AsteriaRouter?.openCampaignHub?.();
+        })],
+        ['Join a Campaign',()=>requireAccount(()=>{
+          if(typeof window.AsteriaWorkspace?.openDashboard==='function')
+            window.AsteriaWorkspace.openDashboard('campaigns');
+          else window.AsteriaRouter?.openCampaignHub?.();
+        })]
+      ];
+      options.forEach(([name,action],i)=>{
+        const button=document.createElement('button');button.type='button';
+        button.className='aaa-campaign-nav-option';button.textContent=name;
+        if(i===0){button.classList.add('is-current');button.setAttribute('aria-current','page');}
+        button.addEventListener('click',()=>{action();sidebar.querySelectorAll('button').forEach(x=>{x.classList.remove('is-current');x.removeAttribute('aria-current');});button.classList.add('is-current');button.setAttribute('aria-current','page');});
+        sidebar.append(button);
+      });
+      manager.prepend(sidebar);
+    }
   }
   function hideLoadingToasts() {
     // Only suppress transient *loading* corner toasts, not failures or success.
