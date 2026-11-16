@@ -92,8 +92,9 @@
     if (kind === 'campaigns' || kind === 'campaign-new' || kind === 'campaign-join') {
       requireAccount(() => {
         if (kind === 'campaigns') window.AsteriaRouter?.openCampaignHub?.();
-        else if (kind === 'campaign-new') window.AsteriaWorkspace?.openDashboard?.('createCampaign') || window.AsteriaRouter?.openCampaignHub?.();
-        else window.AsteriaWorkspace?.openDashboard?.('campaigns') || window.AsteriaRouter?.openCampaignHub?.();
+        else if (typeof window.AsteriaWorkspace?.openDashboard === 'function')
+          window.AsteriaWorkspace.openDashboard(kind === 'campaign-new' ? 'createCampaign' : 'campaigns');
+        else window.AsteriaRouter?.openCampaignHub?.();
       });
     }
   }
