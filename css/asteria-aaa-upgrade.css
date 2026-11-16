@@ -1,0 +1,326 @@
+/* Asteria AAA Website Polish, November 2026.
+   Presentation only; keep gameplay panels, account ownership, privacy and
+   existing appearance presets unchanged. Colours inherit user crystal choice. */
+:root {
+  --aaa-site-ink:#101b2a;
+  --aaa-site-bluegrey:#162839;
+  --aaa-site-divider:rgba(144,180,201,.35);
+  --aaa-site-light:#eaf2f8;
+  --aaa-site-secondary:#b9cbd8;
+  --aaa-site-active:var(--asteria-top-menu-button,var(--asteria-menu-button,#92c8ed));
+  --core-header-height:clamp(70px,5vw,94px)!important;
+}
+body .topbar.asteria-header {
+  box-sizing:border-box!important;
+  height:var(--core-header-height)!important;
+  min-height:var(--core-header-height)!important;
+  padding:0 clamp(6px,1.05vw,20px)!important;
+  gap:clamp(6px,.6vw,14px)!important;
+  background:#142536!important;
+  background-image:linear-gradient(102deg,#0e1b29,#182c40 44%,#0c1826)!important;
+  box-shadow:0 2px 0 #06121b,0 9px 28px #0008!important;
+}
+body .asteria-header .asteria-header-brand {
+  flex:0 0 clamp(250px,21vw,418px)!important;
+  width:clamp(250px,21vw,418px)!important;
+  min-width:0!important;
+  max-height:calc(var(--core-header-height) - 2px)!important;
+}
+body .asteria-header .asteria-header-wordmark {width:100%!important;height:100%!important;object-fit:contain;max-height:calc(var(--core-header-height) - 2px)!important;}
+body .asteria-header #globalNavigation {gap:5px!important;justify-content:center!important;min-width:0!important;}
+body .asteria-header #globalNavigation>.crystal-button,
+body .asteria-header #accountControls #loginToggle {
+  box-sizing:border-box!important;
+  flex:1 1 0!important;
+  width:clamp(122px,8.2vw,176px)!important;
+  min-width:0!important;
+  max-width:176px!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:8px 10px!important;
+  white-space:normal!important;
+  font-size:clamp(.69rem,.77vw,.84rem)!important;
+  line-height:1.15!important;
+}
+body .asteria-header #globalNavigation>.crystal-button[aria-expanded="true"]::after,
+body .asteria-header #accountControls #loginToggle[aria-expanded="true"]::after {filter:brightness(1.35);}
+body .asteria-header #accountControls{flex:0 1 auto!important;}
+body .asteria-header .asteria-header-profile:not([hidden]) {
+  box-sizing:border-box!important;
+  flex:0 0 calc(var(--core-header-height) * 1.65)!important;
+  width:calc(var(--core-header-height) * 1.65)!important;
+  max-width:calc(var(--core-header-height) * 1.65)!important;
+  height:var(--core-header-height)!important;
+  min-height:var(--core-header-height)!important;
+  border-radius:0!important;
+  background:linear-gradient(90deg,#19364d,#102237)!important;
+  -webkit-mask-image:none!important; mask-image:none!important;
+  overflow:hidden!important;
+}
+body .asteria-header .asteria-header-profile #asteriaHeaderAvatarButton {inset:0;}
+body .asteria-header .asteria-header-profile #asteriaHeaderAvatarButton img {
+  object-fit:cover!important;
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 19%,black 38%,black 100%)!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.5) 19%,black 38%,black 100%)!important;
+}
+body .asteria-header .asteria-header-profile #asteriaHeaderAvatarButton::after {
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,#162b3f 0%,rgba(22,43,63,.45) 18%,transparent 43%);
+}
+body .asteria-header .asteria-header-profile .asteria-header-identity {align-items:flex-end!important;text-align:right!important;padding:22px 9px 5px!important;}
+body .asteria-header .asteria-header-profile button.asteria-header-mail {
+  position:absolute!important;top:auto!important;right:auto!important;bottom:3px!important;left:5px!important;
+  display:grid!important;place-items:center!important;width:52px!important;height:43px!important;
+  min-width:52px!important;min-height:43px!important;padding:0!important;
+  font-size:2.45rem!important;line-height:1!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+  color:#e7f2fa!important;text-shadow:0 2px 5px #000!important;
+  filter:drop-shadow(0 2px 3px #000);
+}
+body .asteria-header .asteria-header-profile button.asteria-header-mail[hidden]{display:none!important;}
+body .asteria-header button.asteria-header-mail .asteria-unread-count {display:none!important;}
+body .asteria-header button.asteria-header-mail.has-unread::after {
+  content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;
+  border:2px solid #112336;border-radius:50%;background:#eb3744;
+  box-shadow:0 0 8px #d72b3d;
+}
+
+/* Accessible, image-ready navigation cards. Until approved imagery exists,
+   use abstract in-theme treatment rather than a broken image or a fake portrait. */
+.aaa-mega-backdrop {position:fixed;inset:var(--core-header-height) 0 0;z-index:2280;display:block;border:0!important;background:#03081091!important;cursor:default;}
+.aaa-mega-menu {box-sizing:border-box;position:fixed;top:var(--core-header-height);left:50%;transform:translateX(-50%);z-index:2300;
+  width:min(1460px,calc(100vw - 24px));max-height:calc(100dvh - var(--core-header-height) - 12px);overflow:auto;
+  padding:clamp(16px,2vw,30px);background:linear-gradient(155deg,#132a3f,#081625 66%,#050e1a);
+  border:1px solid #738ca1;box-shadow:0 18px 65px #000c,inset 0 1px #b9d5e625;
+}
+.aaa-mega-backdrop[hidden],.aaa-mega-menu[hidden]{display:none!important;}
+.aaa-mega-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 18px;}
+.aaa-mega-heading h2{font:500 clamp(1.4rem,2.2vw,2rem)/1.1 var(--asteria-font-display,Georgia,serif);color:#edf3f7;margin:0;}
+.aaa-mega-heading button{font-size:2rem;background:transparent;border:0;color:#e6f3fa;cursor:pointer;min-width:44px;min-height:44px;}
+.aaa-mega-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:clamp(10px,1vw,16px);}
+.aaa-nav-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;isolation:isolate;
+  box-sizing:border-box;width:100%;min-width:0;min-height:clamp(170px,17vw,250px);aspect-ratio:5/6;
+  padding:22px 14px 18px;overflow:hidden;color:white;cursor:pointer;
+  background:linear-gradient(160deg,#253f54,#101c2e 52%,#09131f);border:1px solid #58758b;border-radius:4px;
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.aaa-nav-card-art{position:absolute;inset:0;z-index:-2;background-image:var(--aaa-card-image,none),radial-gradient(ellipse at 50% 22%,#557e984f,transparent 59%),linear-gradient(148deg,#1b3c50,#080f1b);background-size:cover;background-position:center;transition:transform .3s ease;}
+.aaa-nav-card-art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 18%,#06111b33 47%,#020910ed 100%);}
+.aaa-nav-card-label{font:600 clamp(.9rem,1.1vw,1.08rem)/1.3 var(--asteria-font-display,Georgia,serif);text-align:center;text-shadow:0 2px 7px #000,0 0 8px #000;}
+.aaa-nav-card-summary{max-height:0;opacity:0;overflow:hidden;color:#d5e7f3;text-align:center;font-size:.77rem;transition:max-height .2s ease,opacity .2s ease;}
+.aaa-nav-card:hover,.aaa-nav-card:focus-visible{transform:translateY(-3px);border-color:var(--aaa-site-active);box-shadow:0 0 20px #52addb3f,0 8px 18px #0009;}
+.aaa-nav-card:hover .aaa-nav-card-art,.aaa-nav-card:focus-visible .aaa-nav-card-art{transform:scale(1.045);}
+.aaa-nav-card:hover .aaa-nav-card-summary,.aaa-nav-card:focus-visible .aaa-nav-card-summary{max-height:45px;opacity:1;margin-top:7px;}
+.aaa-nav-card:focus-visible,.aaa-mega-heading button:focus-visible{outline:2px solid #bfefff;outline-offset:2px;}
+
+/* Four-image Home: premium cinematic crops; old art is no longer referenced. */
+#home .asteria-home-cinematic.aaa-home-carousel{height:clamp(430px,61vh,810px);position:relative;}
+#home .aaa-home-slide{position:absolute!important;inset:0!important;margin:0!important;width:100%!important;height:100%!important;max-width:none!important;
+  object-fit:cover!important;object-position:center center!important;opacity:0;visibility:hidden;pointer-events:none;
+  filter:none!important;transform:scale(1.015);transition:opacity 1000ms ease,transform 6s ease,visibility 1000ms linear;
+  -webkit-mask-image:none!important;mask-image:none!important;
+}
+#home .aaa-home-slide.is-active{opacity:1;visibility:visible;transform:scale(1);transition:opacity 1000ms ease,transform 14s linear;}
+#home #aaaHomeCarousel::before{z-index:2!important;}
+#home .aaa-carousel-controls{position:absolute;left:50%;bottom:clamp(15px,3vh,35px);transform:translateX(-50%);z-index:4;
+  width:min(520px,calc(100% - 36px));display:flex;justify-content:center;align-items:center;gap:12px;
+  padding:8px 14px;border:1px solid #8db1c065;border-radius:999px;background:#071522bb;
+  box-shadow:0 3px 20px #0009;}
+#home .aaa-carousel-arrow{display:grid;place-items:center;min-width:42px;min-height:42px;padding:0;border:0;background:transparent;
+  color:#e8f5ff;font-size:1.9rem;line-height:1;cursor:pointer;border-radius:50%;}
+#home .aaa-carousel-arrow:hover{background:#6c9aba40;}
+#home .aaa-carousel-dots{display:flex;align-items:center;justify-content:center;gap:10px;flex:1;}
+#home .aaa-carousel-dot{width:38px;height:32px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;padding:0;}
+#home .aaa-carousel-dot::before{content:"";width:9px;height:9px;border-radius:50%;background:#c4dbe5a0;border:1px solid #c4dbe5;transition:background .2s ease,transform .2s ease;}
+#home .aaa-carousel-dot[aria-selected="true"]::before{background:#dcf7ff;transform:scale(1.4);box-shadow:0 0 10px #a9e9ff;}
+#home .aaa-carousel-progress{position:absolute;bottom:0;left:25px;right:25px;height:2px;overflow:hidden;border-radius:4px;background:#d3ecfa32;}
+#home .aaa-carousel-progress span{display:block;background:#9bd5ee;width:0;height:100%;animation:aaa-progress 15s linear forwards;}
+#home .aaa-home-carousel.aaa-carousel-paused .aaa-carousel-progress span{animation-play-state:paused;}
+@keyframes aaa-progress{to{width:100%;}}
+#home .aaa-home-carousel :is(button):focus-visible{outline:2px solid #c9f2ff;outline-offset:3px;}
+#home .asteria-home-introduction{margin:0 auto!important;gap:12px;max-width:840px;}
+#home .asteria-home-introduction .eyebrow{font:500 clamp(1rem,1.5vw,1.35rem)/1.2 var(--asteria-font-display,Georgia,serif);letter-spacing:.19em;}
+#home .asteria-home-introduction h2{font-size:clamp(2.7rem,5.3vw,5.6rem)!important;color:#e7eef5;letter-spacing:.055em;}
+#home .asteria-home-introduction>p:not(.eyebrow){font-size:clamp(1rem,1.35vw,1.2rem);line-height:1.7;color:#cee0e9;}
+#home #aaaContinueAdventure[hidden]{display:none!important;}
+
+/* One reusable page language, not new data stores. */
+.aaa-page-hero,#compendiumLibrary .library-hero.aaa-page-hero{
+  box-sizing:border-box;position:relative;width:100%;min-height:125px;padding:clamp(19px,3vw,38px);
+  border:1px solid var(--aaa-site-divider);border-radius:3px;
+  background:linear-gradient(125deg,#182e42 0%,#0b1929 70%,#0a1624);
+  box-shadow:0 10px 26px #0006,inset 0 1px #aac5d71a;
+  margin-bottom:22px;
+}
+.aaa-page-hero::after{display:none!important;}
+.aaa-page-hero h1,.aaa-simple-page-hero h1{font:500 clamp(1.8rem,3.6vw,3.2rem)/1.2 var(--asteria-font-display,Georgia,serif);color:#e9f1f7;margin:0!important;}
+.aaa-page-search-tools{display:grid;gap:8px;margin-top:18px;}
+#compendiumLibrary .library-search{max-width:none!important;margin:0!important;}
+#compendiumLibrary .library-search input{box-sizing:border-box;min-height:48px!important;border-color:#6b8699!important;}
+#compendiumLibrary .library-filter-bar{margin:0!important;background:transparent!important;border:0!important;padding:6px 0!important;}
+#compendiumLibrary .library-breadcrumbs{padding:10px 0 18px;}
+.aaa-library-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(0,1fr);align-items:start;gap:clamp(18px,2vw,34px);}
+.aaa-category-sidebar{position:sticky;top:calc(var(--core-header-height) + 16px);min-width:0;padding:12px 18px 14px 2px;border-right:1px solid #86aac13a;}
+.aaa-category-sidebar h2{margin:0 0 12px;color:#a9c7db;font:600 .74rem/1.3 var(--asteria-font-body,Arial,sans-serif);letter-spacing:.16em;text-transform:uppercase;}
+.aaa-category-links{display:flex;flex-direction:column;align-items:stretch;gap:4px;}
+.aaa-category-link{position:relative;display:inline-block!important;padding:11px 4px 12px!important;text-decoration:none!important;
+  background:transparent!important;border:0!important;color:#c4d7e2!important;font:500 .96rem/1.35 var(--asteria-font-body,Arial,sans-serif)!important;
+  transition:color .15s ease,text-shadow .15s ease;}
+.aaa-category-link:hover,.aaa-category-link:focus-visible{color:#fff!important;text-shadow:0 0 11px var(--aaa-site-active),0 0 24px #6bb3e2;}
+.aaa-category-link.is-current{color:#f1f6f9!important;}
+.aaa-category-link.is-current::after{content:"";position:absolute;left:4px;bottom:6px;width:calc(100% - 8px);height:2px;background:var(--aaa-site-active);box-shadow:0 0 8px var(--aaa-site-active);}
+.aaa-library-content{min-width:0;}
+#compendiumLibrary .library-groups{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+#compendiumLibrary .library-group,#compendiumLibrary .library-result{
+  border:1px solid #4d6d82;border-radius:4px;overflow:hidden;
+  background:linear-gradient(155deg,#152b3b,#091521);transition:border-color .18s ease,transform .18s ease;}
+#compendiumLibrary .library-group:hover,#compendiumLibrary .library-result:hover{border-color:var(--aaa-site-active);transform:translateY(-2px);}
+#compendiumLibrary .library-results{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}
+.aaa-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;white-space:nowrap!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;}
+
+/* Account and social pages share the page header and text-only left nav. */
+#asteriaAccountPage,#asteriaFriendsPage,#asteriaNotificationsPage{box-sizing:border-box;width:min(1680px,100%)!important;padding:clamp(12px,2.4vw,34px)!important;}
+#asteriaAccountPage .asteria-account-shell{border:0!important;box-shadow:none!important;background:transparent!important;grid-template-columns:minmax(190px,240px) minmax(0,1fr);}
+#asteriaAccountPage .asteria-account-sidebar{padding:4px 22px 22px 0!important;}
+#asteriaAccountPage .asteria-account-sidebar::after{top:0;bottom:0;}
+#asteriaAccountPage .asteria-account-content{padding:0 clamp(8px,3vw,44px)!important;}
+#asteriaAccountPage .asteria-account-content>h1{display:none;}
+#asteriaAccountPage .asteria-account-sidebar button:hover .asteria-account-link-label{color:#f2f9ff;text-shadow:0 0 13px var(--aaa-site-active);}
+#asteriaAccountPage .asteria-account-sidebar button[aria-selected="true"] .asteria-account-link-label::after{height:2px;background:var(--aaa-site-active);box-shadow:0 0 8px var(--aaa-site-active);}
+#asteriaFriendsPage .asteria-page-heading{display:flex;align-items:center;gap:14px;}
+#asteriaFriendsPage .asteria-page-heading>div{flex:1 1 auto;}
+#asteriaFriendsPage .asteria-page-heading button[data-asteria-account-page]{display:none;}
+#asteriaFriendsPage .aaa-friend-filter{display:grid;gap:6px;min-width:min(300px,100%);color:#bed2df;font-size:.81rem;}
+#asteriaFriendsPage .aaa-friend-filter input{box-sizing:border-box;width:100%;min-height:45px;padding:10px 13px;border:1px solid #6c8ca1;background:#071623;color:#eef7ff;border-radius:3px;}
+#asteriaFriendsPageMount .asteria-friends-dialog{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;}
+#asteriaFriendsPageMount .aaa-friends-tabs{display:flex!important;gap:16px!important;padding:12px 0!important;border:0!important;background:transparent!important;}
+#asteriaFriendsPageMount .aaa-friends-tabs button{position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:12px 0!important;color:#c7dce8;}
+#asteriaFriendsPageMount .aaa-friends-tabs button:hover{color:#fff!important;text-shadow:0 0 10px var(--aaa-site-active);}
+#asteriaFriendsPageMount .aaa-friends-tabs button[aria-selected="true"]::after{content:"";position:absolute;bottom:4px;left:0;right:0;height:2px;background:var(--aaa-site-active);}
+#accountFriendsAcceptedList{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;align-items:start;}
+#accountFriendsAcceptedList .asteria-accepted-friend-card{
+  display:flex!important;position:relative;flex-direction:column;align-items:center;justify-content:flex-end;
+  box-sizing:border-box;aspect-ratio:3/4;min-width:0;min-height:260px;overflow:hidden;padding:14px!important;
+  border:1px solid #61829a!important;border-radius:4px!important;
+  background:radial-gradient(ellipse at 40% 30%,#31516b99,transparent 60%),linear-gradient(145deg,#1b3548,#09121e)!important;
+  box-shadow:0 12px 24px #0007;
+}
+#accountFriendsAcceptedList .asteria-accepted-friend-card::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 40%,#01070dda 83%);}
+#accountFriendsAcceptedList .asteria-accepted-friend-card[hidden]{display:none!important;}
+#accountFriendsAcceptedList .asteria-accepted-friend-card>.asteria-friends-initial{position:absolute;top:25%;left:50%;transform:translateX(-50%);font-size:5rem!important;line-height:1!important;
+  width:110px!important;height:110px!important;background:#45698533!important;border:1px solid #acc5d055!important;border-radius:50%!important;display:grid!important;place-items:center!important;}
+#accountFriendsAcceptedList .asteria-accepted-friend-details{position:relative!important;z-index:1;width:100%;text-align:center;display:flex;align-items:center;flex-direction:column;gap:5px;margin-top:auto;}
+#accountFriendsAcceptedList .asteria-accepted-friend-details :is(strong,span){color:#fff!important;text-shadow:0 2px 6px #000;}
+#accountFriendsAcceptedList .asteria-accepted-friend-details small{font-size:.72rem;color:#b9d0df;}
+#accountFriendsAcceptedList .asteria-friend-preview-link{position:relative;z-index:2;min-height:39px;margin-top:10px;}
+#asteriaFriendsPageMount .asteria-friends-result-person{position:relative;min-height:150px;}
+#asteriaFriendsPageMount :is(.asteria-friends-result,.asteria-friends-public-preview){border:1px solid #58758b;background:linear-gradient(155deg,#173144,#091622);}
+
+/* Less intrusive loading states, never hide an actual error or success notice. */
+#toast.aaa-loading-toast-hidden{visibility:hidden!important;pointer-events:none!important;}
+:where(.aaa-page-hero,.aaa-mega-menu,.aaa-nav-card) :focus-visible{outline:2px solid #bcefff;outline-offset:3px;}
+@media(max-width:1679px){
+  :root{--core-header-height:70px!important;}
+  body .asteria-header .asteria-header-brand{flex:0 1 clamp(175px,27vw,360px)!important;width:clamp(175px,27vw,360px)!important;}
+  body .asteria-header .asteria-header-profile:not([hidden]){flex:0 0 calc(var(--core-header-height) * 1.48)!important;width:calc(var(--core-header-height) * 1.48)!important;max-width:calc(var(--core-header-height) * 1.48)!important;}
+  #settingsPanel #globalNavigation>.crystal-button{width:100%!important;max-width:none!important;flex:0 0 auto!important;}
+}
+@media(max-width:850px){
+  .aaa-library-layout{grid-template-columns:1fr;gap:12px;}
+  .aaa-category-sidebar{position:static;padding:0 0 10px;border-right:0;border-bottom:1px solid #6d91a63d;}
+  .aaa-category-links{flex-direction:row;overflow-x:auto;scrollbar-width:thin;gap:14px;}
+  .aaa-category-link{white-space:nowrap;flex:0 0 auto;}
+  .aaa-mega-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .aaa-nav-card{min-height:165px;aspect-ratio:4/5;}
+}
+@media(max-width:720px){
+  :root{--core-header-height:58px!important;}
+  body .asteria-header .asteria-header-brand{flex:1 1 auto!important;width:auto!important;max-width:158px!important;}
+  body .asteria-header .asteria-header-profile:not([hidden]){flex:0 0 74px!important;width:74px!important;max-width:74px!important;min-width:74px!important;}
+  body .asteria-header .asteria-header-profile #asteriaHeaderName{font-size:.53rem!important;}
+  body .asteria-header .asteria-header-profile #asteriaHeaderAccountId{font-size:.47rem!important;}
+  body .asteria-header #accountControls #loginToggle{max-width:77px!important;width:77px!important;min-width:65px!important;flex:0 0 77px!important;font-size:.72rem!important;}
+  body .asteria-header .asteria-header-profile button.asteria-header-mail{font-size:1.75rem!important;width:38px!important;min-width:38px!important;height:34px!important;min-height:34px!important;bottom:0!important;}
+  body .asteria-header button.asteria-header-mail.has-unread::after{width:8px;height:8px;}
+  .aaa-mega-menu{width:100vw;top:var(--core-header-height);max-height:calc(100dvh - var(--core-header-height));padding:14px;border-left:0;border-right:0;}
+  .aaa-mega-grid{gap:10px;}
+  .aaa-nav-card{min-height:145px;padding:14px 8px 12px;}
+  .aaa-nav-card-label{font-size:.83rem;}
+  #home .asteria-home-cinematic.aaa-home-carousel{height:clamp(320px,52vh,560px);}
+  #home .aaa-carousel-controls{bottom:12px;gap:2px;padding:5px 8px;}
+  #home .aaa-carousel-arrow{min-width:38px;min-height:38px;}
+  #home .asteria-home-introduction{width:min(720px,calc(100% - 30px));}
+  #asteriaAccountPage .asteria-account-shell{grid-template-columns:1fr;}
+  #asteriaAccountPage .asteria-account-sidebar{padding:0 0 12px!important;}
+  #asteriaAccountPage .asteria-account-sidebar-options{flex-direction:row;overflow-x:auto;gap:16px;}
+  #asteriaAccountPage .asteria-account-sidebar button{white-space:nowrap;}
+  #asteriaAccountPage .asteria-account-content{padding:22px 0!important;}
+  #asteriaFriendsPage .asteria-page-heading{align-items:stretch;}
+  #asteriaFriendsPage .aaa-friend-filter{min-width:100%;}
+}
+@media(max-width:380px){
+  :root{--core-header-height:54px!important;}
+  body .asteria-header .asteria-header-brand{max-width:120px!important;}
+  body .asteria-header .asteria-header-profile:not([hidden]){flex-basis:60px!important;width:60px!important;max-width:60px!important;min-width:60px!important;}
+  body .asteria-header #accountControls #loginToggle{width:66px!important;flex-basis:66px!important;}
+  .aaa-nav-card{min-height:133px;}
+}
+@media(prefers-reduced-motion:reduce){
+  #home .aaa-home-slide,#home .aaa-home-slide.is-active,.aaa-nav-card,.aaa-nav-card-art,.aaa-nav-card-summary,.aaa-category-link{transition:none!important;animation:none!important;transform:none!important;}
+  #home .aaa-carousel-progress span{animation:none!important;width:100%;}
+}
+
+/* The social workspace uses the same left-side text navigation as the library.
+   Existing Friends controllers still own the content and tab state. */
+@media(min-width:851px){
+  #asteriaFriendsPageMount .asteria-friends-dialog{
+    display:grid!important;
+    grid-template-columns:minmax(175px,225px) minmax(0,1fr);
+    align-items:start;
+    gap:18px 24px;
+  }
+  #asteriaFriendsPageMount .asteria-friends-dialog > :not(#accountFriendsWorkspaceTabs):not(#accountFriendsAccepted):not(#accountFriendsBlocked):not(#accountFriendsRequests){
+    grid-column:1/-1;
+  }
+  #asteriaFriendsPageMount #accountFriendsWorkspaceTabs{
+    grid-column:1!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    border-right:1px solid var(--aaa-site-divider)!important;
+    padding:0 18px 0 0!important;gap:3px!important;
+  }
+  #asteriaFriendsPageMount #accountFriendsWorkspaceTabs button{text-align:left!important;width:100%!important;}
+  #asteriaFriendsPageMount :is(#accountFriendsAccepted,#accountFriendsBlocked,#accountFriendsRequests){
+    grid-column:2;min-width:0;
+  }
+}
+/* Character creation already has a native left navigation and card system;
+   align those existing panels rather than replacing the rules-driven wizard. */
+#phase3GameplayShell .phase3-header{
+  box-sizing:border-box;padding:clamp(18px,3vw,35px)!important;border:1px solid var(--aaa-site-divider)!important;
+  background:linear-gradient(125deg,#172d40,#0a1828)!important;border-radius:3px!important;
+}
+#phase3GameplayShell .phase3-nav :is(button,a){
+  border-color:transparent!important;background:transparent!important;box-shadow:none!important;
+  transition:color .15s ease,text-shadow .15s ease;
+}
+#phase3GameplayShell .phase3-nav :is(button,a):hover{
+  color:#fff!important;text-shadow:0 0 12px var(--aaa-site-active);
+}
+#campaigns.aaa-showing-campaign-page .campaign-manager > .card:first-child{
+  border-color:var(--aaa-site-divider);background:linear-gradient(135deg,#162a3b,#091622);
+}
+
+/* Campaign Forge reuses the same sidebar treatment, retaining existing forms. */
+#campaigns .campaign-manager{display:grid;grid-template-columns:minmax(185px,235px) minmax(0,1fr);gap:18px 26px;align-items:start;}
+#campaigns .campaign-manager > section{grid-column:2;min-width:0;}
+#campaigns .aaa-campaign-sidebar{position:sticky;top:calc(var(--core-header-height) + 18px);grid-column:1;grid-row:1 / span 4;
+  display:flex;flex-direction:column;gap:5px;padding:4px 18px 14px 2px;border-right:1px solid var(--aaa-site-divider);}
+#campaigns .aaa-campaign-nav-option{position:relative;text-align:left;min-height:44px;padding:10px 3px 12px;border:0;background:transparent;
+  color:#c3d8e6;font:500 .95rem/1.35 var(--asteria-font-body,Arial,sans-serif);cursor:pointer;}
+#campaigns .aaa-campaign-nav-option:hover,#campaigns .aaa-campaign-nav-option:focus-visible{color:#fff;text-shadow:0 0 10px var(--aaa-site-active);}
+#campaigns .aaa-campaign-nav-option.is-current::after{content:"";position:absolute;bottom:6px;left:3px;right:3px;height:2px;background:var(--aaa-site-active);}
+@media(max-width:850px){
+  #campaigns .campaign-manager{grid-template-columns:1fr;gap:12px;}
+  #campaigns .aaa-campaign-sidebar{grid-row:auto;grid-column:1;position:static;flex-direction:row;overflow-x:auto;gap:18px;padding:0 0 8px;border-right:0;border-bottom:1px solid var(--aaa-site-divider);}
+  #campaigns .aaa-campaign-nav-option{flex:0 0 auto;white-space:nowrap;}
+  #campaigns .campaign-manager > section{grid-column:1;}
+}

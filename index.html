@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="css/asteria-mobile-header-stability.css?v=mobile-first-paint-20261112">
   <link rel="stylesheet" href="css/asteria-account-pages.css?v=gm-toolkit-1-2">
   <link rel="stylesheet" href="css/asteria-digital-gm-navigation.css?v=gm-toolkit-1-3">
+  <link rel="stylesheet" href="css/asteria-aaa-upgrade.css?v=20261116-1">
 </head>
 <body data-role="guest">
   <a class="skip-link" href="#mainContent">Skip to main content</a>
@@ -70,11 +71,7 @@
     <nav id="globalNavigation" class="asteria-main-navigation" aria-label="Main navigation">
       <a id="asteriaHandbookTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" href="#/compendium?group=rules&amp;category=handbook">Asteria Handbook</a>
       <a id="worldLoreTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" href="#/compendium?group=world">World &amp; Lore</a>
-      <div class="compendium-split">
-        <a id="compendiumIndexButton" class="crystal-button asteria-menu-button" data-asteria-button-size="long" href="#/compendium">Asteria Compendium</a>
-        <button id="compendiumQuickToggle" class="crystal-button crystal-arrow asteria-menu-button" data-asteria-button-size="icon" type="button" aria-label="Open Compendium quick navigation" aria-expanded="false" aria-controls="compendiumQuickMenu">▾</button>
-        <div id="compendiumQuickMenu" class="compendium-quick-menu" hidden aria-label="Compendium quick navigation"></div>
-      </div>
+      <a id="compendiumIndexButton" class="crystal-button asteria-menu-button" data-asteria-button-size="long" href="#/compendium">Asteria Compendium</a>
       <button id="characterForgeTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" type="button">Character Forge</button>
       <button id="campaignsTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" type="button">Campaign Forge</button>
       <button id="asteriaFriendsTop" class="crystal-button asteria-menu-button" data-asteria-button-size="long" data-asteria-account-page="friends" type="button">My Friends</button>
@@ -157,16 +154,32 @@
 
   <main id="mainContent" class="main" tabindex="-1">
     <section id="home" class="view show asteria-home-refreshed" aria-label="Welcome to Asteria">
-      <div class="asteria-home-cinematic" aria-hidden="true">
-        <img class="asteria-home-cinematic-art" src="assets/home/varkhyn-snowstorm.avif?v=original-hq-20261111" alt="" decoding="async" fetchpriority="high">
+      <div id="aaaHomeCarousel" class="asteria-home-cinematic aaa-home-carousel" role="region" aria-roledescription="carousel" aria-label="Asteria featured artwork">
+        <img class="asteria-home-cinematic-art aaa-home-slide is-active" src="assets/home/asteria-home-spider.webp" alt="A giant winged spider surrounded by a swarm over a mountain city" loading="eager" decoding="async" fetchpriority="high" aria-hidden="false">
+        <img class="asteria-home-cinematic-art aaa-home-slide" src="assets/home/asteria-home-logo.webp" alt="Asteria TTRPG silver logo against a storm-lit blue fantasy sky" loading="lazy" decoding="async" aria-hidden="true">
+        <img class="asteria-home-cinematic-art aaa-home-slide" src="assets/home/asteria-home-dragon.webp" alt="A blue dragon flying above a moonlit fantasy kingdom" loading="lazy" decoding="async" aria-hidden="true">
+        <img class="asteria-home-cinematic-art aaa-home-slide" src="assets/home/asteria-home-varkhyn.webp" alt="A snow-covered Varkhyn with glowing red eyes in a blizzard" loading="lazy" decoding="async" aria-hidden="true">
+        <div class="aaa-carousel-controls" role="group" aria-label="Featured artwork controls">
+          <button id="aaaCarouselPrevious" class="aaa-carousel-arrow" type="button" aria-label="Previous image">&#8249;</button>
+          <div class="aaa-carousel-dots" role="group" aria-label="Choose artwork">
+            <button type="button" class="aaa-carousel-dot" aria-label="Show image 1 of 4" aria-selected="true" aria-current="true" data-aaa-slide="0"></button>
+            <button type="button" class="aaa-carousel-dot" aria-label="Show image 2 of 4" aria-selected="false" aria-current="false" data-aaa-slide="1"></button>
+            <button type="button" class="aaa-carousel-dot" aria-label="Show image 3 of 4" aria-selected="false" aria-current="false" data-aaa-slide="2"></button>
+            <button type="button" class="aaa-carousel-dot" aria-label="Show image 4 of 4" aria-selected="false" aria-current="false" data-aaa-slide="3"></button>
+          </div>
+          <button id="aaaCarouselNext" class="aaa-carousel-arrow" type="button" aria-label="Next image">&#8250;</button>
+          <div id="aaaCarouselProgress" class="aaa-carousel-progress" aria-hidden="true"><span></span></div>
+        </div>
+        <span id="aaaCarouselAnnouncement" class="visually-hidden" aria-live="polite" aria-atomic="true"></span>
       </div>
       <div class="asteria-home-introduction">
         <p class="eyebrow">Welcome to</p>
         <h2>Asteria</h2>
-        <p>Discover a dark fantasy world of realms, races, classes, magic and adventure.</p>
+        <p>A living tabletop role-playing world. Forge your character, shape your campaign and explore realms of myth, magic and adventure.</p>
         <div class="hero-actions">
           <button class="primary asteria-menu-button" data-asteria-button-size="long" data-view="workspace" data-workspace-section="World, Realms &amp; Planes">Explore the World</button>
           <button class="outline asteria-menu-button" data-asteria-button-size="long" data-view="workspace" data-workspace-section="Asteria Handbook">Open Handbook</button>
+          <button id="aaaContinueAdventure" class="outline asteria-menu-button" data-asteria-button-size="long" type="button" hidden>My Characters</button>
         </div>
       </div>
     </section>
@@ -643,6 +656,7 @@
 <script src="js/asteria-navigation.js?v=gm-toolkit-1-3"></script>
 <script src="js/asteria-menu-buttons.js?v=gm-toolkit-1-3"></script>
 
+<script src="js/asteria-aaa-upgrade.js?v=20261116-1"></script>
 <script type="module" src="src/dev-entry.js?v=royal-relic-panels-v2"></script>
 <div id="asteriaLiveRegion" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>

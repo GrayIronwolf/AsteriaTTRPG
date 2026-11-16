@@ -51,10 +51,11 @@ test('initial header and home buttons have their approved image classes before J
   const html=read('index.html');
   const expected=[
     ['asteriaHandbookTop','long'],['worldLoreTop','long'],
-    ['compendiumIndexButton','long'],['compendiumQuickToggle','icon'],
+    ['compendiumIndexButton','long'],
     ['characterForgeTop','long'],['campaignsTop','long'],
     ['loginToggle','small'],['settingsToggle','icon']
   ];
+  assert.ok(!html.includes('id="compendiumQuickToggle"'), 'Separate Compendium arrow removed');
   for(const [id,size] of expected){
     const tag=html.match(new RegExp('<(?:button|a)[^>]*id="'+id+'"[^>]*>'))?.[0]||'';
     assert.ok(tag.includes('asteria-menu-button'),id);

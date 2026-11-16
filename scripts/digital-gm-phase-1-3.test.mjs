@@ -21,7 +21,9 @@ test('Phase 1.3 follows approved seven-destination header order without duplicat
   }
   assert.match(header,/href="#\/compendium\?group=rules&amp;category=handbook"/);
   assert.match(header,/href="#\/compendium\?group=world"/);
-  assert.match(header,/id="compendiumQuickToggle"/);
+  assert.doesNotMatch(header,/id="compendiumQuickToggle"/);
+  assert.ok(header.includes('id="compendiumIndexButton"') && header.includes('href="#/compendium"'));
+  assert.ok(html.includes('js/asteria-aaa-upgrade.js'));
   assert.equal((html.match(/id="loginToggle"/g)||[]).length,1);
   assert.equal((html.match(/id="asteriaHeaderProfile"/g)||[]).length,1);
   assert.doesNotMatch(html,/id="accountQuickMenu"/);

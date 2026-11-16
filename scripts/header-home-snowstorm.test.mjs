@@ -2,23 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,statSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-test('homepage replaces old Welcome and World Map cards with one hero',()=>{
+test('homepage replaces old Welcome and World Map cards with one four-image hero',()=>{
   const html=read('index.html');
   const home=html.slice(html.indexOf('<section id="home"'),html.indexOf('<section id="workspace"'));
   assert.match(home,/asteria-home-cinematic/);
-  assert.match(home,/assets\/home\/varkhyn-snowstorm\.avif/);
+  for(const slide of ['spider','logo','dragon','varkhyn'])
+    assert.ok(home.includes('assets/home/asteria-home-'+slide+'.webp'),slide);
+  assert.equal((home.match(/aaa-home-slide/g)||[]).length,4);
+  assert.ok(home.includes('id="aaaCarouselNext"'));
+  assert.ok(home.includes('id="aaaCarouselPrevious"'));
+  assert.ok(!home.includes('src="assets/home/varkhyn-snowstorm.avif'));
   assert.doesNotMatch(home,/public-home-grid|world-map-preview|home-hero card|map-placeholder/);
   assert.match(home,/data-workspace-section="Asteria Handbook"/);
 });
-test('hero uses the uploaded image in repository and fades on all sides',()=>{
-  const file=new URL('../assets/home/varkhyn-snowstorm.avif',import.meta.url);
-  const stat=statSync(file);
-  assert.ok(stat.size>1000&&stat.size<500000);
-  const css=read('css/asteria-home-header-refresh.css');
-  assert.match(css,/mask-image:linear-gradient\(to bottom/);
-  assert.match(css,/linear-gradient\(to right/);
-  assert.match(css,/linear-gradient\(to bottom/);
-  assert.match(css,/object-fit:cover/);
+test('Home carousel uses the four approved optimized images and retains edge fades',()=>{
+  for(const name of ['spider','logo','dragon','varkhyn']){
+    const file=new URL('../assets/home/asteria-home-'+name+'.webp',import.meta.url);
+    const stat=statSync(file);
+    assert.ok(stat.size>1000&&stat.size<500000,name);
+  }
+  const css=read('css/asteria-aaa-upgrade.css');
+  assert.ok(css.includes('.aaa-home-slide'));
+  assert.match(css,/mask-image/);
+  const oldCss=read('css/asteria-home-header-refresh.css');
+  assert.ok(oldCss.includes('mask-image:linear-gradient(to bottom'));
 });
 test('profile image comes after account button and fills shorter header',()=>{
   const html=read('index.html');
