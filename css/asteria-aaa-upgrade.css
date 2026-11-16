@@ -269,3 +269,42 @@ body .asteria-header button.asteria-header-mail.has-unread::after {
   #home .aaa-home-slide,#home .aaa-home-slide.is-active,.aaa-nav-card,.aaa-nav-card-art,.aaa-nav-card-summary,.aaa-category-link{transition:none!important;animation:none!important;transform:none!important;}
   #home .aaa-carousel-progress span{animation:none!important;width:100%;}
 }
+
+/* The social workspace uses the same left-side text navigation as the library.
+   Existing Friends controllers still own the content and tab state. */
+@media(min-width:851px){
+  #asteriaFriendsPageMount .asteria-friends-dialog{
+    display:grid!important;
+    grid-template-columns:minmax(175px,225px) minmax(0,1fr);
+    align-items:start;
+    gap:18px 24px;
+  }
+  #asteriaFriendsPageMount .asteria-friends-dialog > :not(#accountFriendsWorkspaceTabs):not(#accountFriendsAccepted):not(#accountFriendsBlocked):not(#accountFriendsRequests){
+    grid-column:1/-1;
+  }
+  #asteriaFriendsPageMount #accountFriendsWorkspaceTabs{
+    grid-column:1!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    border-right:1px solid var(--aaa-site-divider)!important;
+    padding:0 18px 0 0!important;gap:3px!important;
+  }
+  #asteriaFriendsPageMount #accountFriendsWorkspaceTabs button{text-align:left!important;width:100%!important;}
+  #asteriaFriendsPageMount :is(#accountFriendsAccepted,#accountFriendsBlocked,#accountFriendsRequests){
+    grid-column:2;min-width:0;
+  }
+}
+/* Character creation already has a native left navigation and card system;
+   align those existing panels rather than replacing the rules-driven wizard. */
+#phase3GameplayShell .phase3-header{
+  box-sizing:border-box;padding:clamp(18px,3vw,35px)!important;border:1px solid var(--aaa-site-divider)!important;
+  background:linear-gradient(125deg,#172d40,#0a1828)!important;border-radius:3px!important;
+}
+#phase3GameplayShell .phase3-nav :is(button,a){
+  border-color:transparent!important;background:transparent!important;box-shadow:none!important;
+  transition:color .15s ease,text-shadow .15s ease;
+}
+#phase3GameplayShell .phase3-nav :is(button,a):hover{
+  color:#fff!important;text-shadow:0 0 12px var(--aaa-site-active);
+}
+#campaigns.aaa-showing-campaign-page .campaign-manager > .card:first-child{
+  border-color:var(--aaa-site-divider);background:linear-gradient(135deg,#162a3b,#091622);
+}
