@@ -1,17 +1,13 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import {readFileSync,statSync} from 'node:fs';
-const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-test('homepage replaces old Welcome and World Map cards with one hero',()=>{
+test('homepage replaces old Welcome and World Map cards with one four-image hero',()=>{
   const html=read('index.html');
   const home=html.slice(html.indexOf('<section id="home"'),html.indexOf('<section id="workspace"'));
   assert.match(home,/asteria-home-cinematic/);
-  const slides=['spider','logo','dragon','varkhyn'];
-  for(const slide of slides) assert.match(home,new RegExp('assets/home/asteria-home-'+slide+'\\\\.webp'));
-  assert.equal((home.match(/class=\"asteria-home-cinematic-art aaa-home-slide/g)||[]).length,4);
-  assert.match(home,/id=\"aaaCarouselNext\"/);
-  assert.match(home,/id=\"aaaCarouselPrevious\"/);
-  assert.doesNotMatch(home,/src=\"assets\\/home\\/varkhyn-snowstorm\\.avif/);
+  for(const slide of ['spider','logo','dragon','varkhyn'])
+    assert.ok(home.includes('assets/home/asteria-home-'+slide+'.webp'),slide);
+  assert.equal((home.match(/aaa-home-slide/g)||[]).length,4);
+  assert.ok(home.includes('id="aaaCarouselNext"'));
+  assert.ok(home.includes('id="aaaCarouselPrevious"'));
+  assert.ok(!home.includes('src="assets/home/varkhyn-snowstorm.avif'));
   assert.doesNotMatch(home,/public-home-grid|world-map-preview|home-hero card|map-placeholder/);
   assert.match(home,/data-workspace-section="Asteria Handbook"/);
 });
@@ -22,10 +18,10 @@ test('Home carousel uses the four approved optimized images and retains edge fad
     assert.ok(stat.size>1000&&stat.size<500000,name);
   }
   const css=read('css/asteria-aaa-upgrade.css');
-  assert.match(css,/\\.aaa-home-slide/);
+  assert.ok(css.includes('.aaa-home-slide'));
   assert.match(css,/mask-image/);
   const oldCss=read('css/asteria-home-header-refresh.css');
-  assert.match(oldCss,/mask-image:linear-gradient\\(to bottom/);
+  assert.ok(oldCss.includes('mask-image:linear-gradient(to bottom'));
 });
 test('profile image comes after account button and fills shorter header',()=>{
   const html=read('index.html');
