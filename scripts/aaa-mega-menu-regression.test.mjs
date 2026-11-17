@@ -26,7 +26,7 @@ function createMenuHarness(){
       querySelectorAll(){return [];}
     };
     Object.defineProperty(element,'innerHTML',{set(value){
-      if(id==='aaaMegaMenu'){
+      if(this.id==='aaaMegaMenu'){
         for(const childId of ['aaaMegaTitle','aaaMegaSearch','aaaMegaClose','aaaMegaCards']){
           elements.set(childId,makeElement(childId,childId==='aaaMegaSearch'?'input':childId==='aaaMegaClose'?'button':'div'));
         }
