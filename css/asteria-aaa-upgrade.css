@@ -341,8 +341,8 @@ body .topbar.asteria-header::before {background:none!important;content:none!impo
     padding:0 clamp(6px,.8vw,18px)!important;
   }
   body .asteria-header .asteria-header-brand{
-    flex:0 1 clamp(438px,36.75vw,731.5px)!important;
-    width:clamp(438px,36.75vw,731.5px)!important;
+    flex:0 1 min(452px,calc(var(--core-header-height) * 3))!important;
+    width:min(452px,calc(var(--core-header-height) * 3))!important;
     min-width:0!important;
     max-height:var(--core-header-height)!important;
   }
@@ -505,6 +505,17 @@ body .asteria-header .asteria-header-profile button.asteria-header-mail[hidden]{
    These reset only the 2026-11 AAA overrides, not the approved button family. */
 body .topbar.asteria-header {
   padding-left:0!important;
+}
+/* Keep every desktop menu button in one horizontal row, without scaling its artwork. */
+@media(min-width:1680px){
+  body .asteria-header #globalNavigation{
+    flex-wrap:nowrap!important;
+    white-space:nowrap!important;
+    justify-content:flex-start!important;
+  }
+  body .asteria-header .asteria-header-brand{
+    flex-shrink:0!important;
+  }
 }
 body .asteria-header .asteria-header-brand {
   margin-left:0!important;
