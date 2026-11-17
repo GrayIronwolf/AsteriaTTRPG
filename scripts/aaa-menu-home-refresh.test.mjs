@@ -41,7 +41,8 @@ test('exact palette, full-width menu, responsive cards, logo scale, portrait and
  assert.ok(css.includes('background:#1E2838!important'));
  assert.ok(css.includes('background:#32373D!important'));
  assert.ok(css.includes('width:calc(100vw - 16px)!important'));
- assert.ok(css.includes('min(452px,calc(var(--core-header-height) * 3))'));
+ assert.ok(css.includes('clamp(330px,20.5vw,420px)'));
+ assert.ok(css.includes('clamp(180px,10.2vw,220px)'));
  assert.ok(css.includes('flex-wrap:nowrap!important'));
  assert.ok(css.includes('transform:scale(1.065)'));
  assert.ok(css.includes('left:-26px!important'));
