@@ -341,8 +341,8 @@ body .topbar.asteria-header::before {background:none!important;content:none!impo
     padding:0 clamp(6px,.8vw,18px)!important;
   }
   body .asteria-header .asteria-header-brand{
-    flex:0 1 clamp(438px,36.75vw,731.5px)!important;
-    width:clamp(438px,36.75vw,731.5px)!important;
+    flex:0 1 min(452px,calc(var(--core-header-height) * 3))!important;
+    width:min(452px,calc(var(--core-header-height) * 3))!important;
     min-width:0!important;
     max-height:var(--core-header-height)!important;
   }
@@ -498,4 +498,193 @@ body .asteria-header .asteria-header-profile button.asteria-header-mail[hidden]{
 @media(max-width:520px){
   #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu{gap:8px;}
   #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu .aaa-menu-side-button{min-width:0;flex:1 1 auto;}
+}
+
+
+/* Header correction: keep the approved crystal button dimensions untouched.
+   These reset only the 2026-11 AAA overrides, not the approved button family. */
+body .topbar.asteria-header {
+  padding-left:0!important;
+}
+/* Keep every desktop menu button in one horizontal row, without scaling its artwork. */
+@media(min-width:1680px){
+  body .asteria-header #globalNavigation{
+    flex-wrap:nowrap!important;
+    white-space:nowrap!important;
+    justify-content:flex-start!important;
+  }
+  body .asteria-header .asteria-header-brand{
+    flex-shrink:0!important;
+  }
+}
+body .asteria-header .asteria-header-brand {
+  margin-left:0!important;
+  padding-left:0!important;
+  align-self:center;
+}
+@media(min-width:1680px){
+  body .asteria-header #globalNavigation>.crystal-button[data-asteria-button-size="long"] {
+    flex:0 0 auto!important;
+    width:clamp(195px,11vw,360px)!important;
+    inline-size:clamp(195px,11vw,360px)!important;
+    min-width:0!important;
+    max-width:360px!important;
+    height:53px!important;
+    min-height:53px!important;
+    padding-inline:20px!important;
+    font-size:.94rem!important;
+  }
+  body .asteria-header #accountControls #loginToggle[data-asteria-button-size="small"]{
+    flex:0 0 auto!important;
+    width:clamp(106px,8vw,160px)!important;
+    inline-size:clamp(106px,8vw,160px)!important;
+    min-width:0!important;
+    max-width:160px!important;
+    height:40px!important;
+    min-height:40px!important;
+    padding-inline:16px!important;
+    font-size:.84rem!important;
+  }
+}
+@media(min-width:721px) and (max-width:1679px){
+  /* Buttons in the existing drawer keep their approved full-width presentation. */
+  body #settingsPanel #globalNavigation>.crystal-button[data-asteria-button-size="long"]{
+    width:100%!important;inline-size:100%!important;
+    max-width:100%!important;flex:0 0 auto!important;
+    height:53px!important;min-height:53px!important;
+    padding-inline:20px!important;font-size:.94rem!important;
+  }
+}
+@media(max-width:720px){
+  body #settingsPanel #globalNavigation>.crystal-button[data-asteria-button-size="long"]{
+    width:100%!important;inline-size:100%!important;
+    max-width:100%!important;flex:0 0 auto!important;
+    height:53px!important;min-height:53px!important;
+    padding-inline:20px!important;font-size:.94rem!important;
+  }
+}
+
+/* One identical menu panel width AND height across all seven header menus.
+   The content grid scrolls inside the fixed-height panel on smaller screens. */
+.aaa-mega-menu{
+  display:flex!important;
+  flex-direction:column!important;
+  height:min(570px, calc(100dvh - var(--core-header-height) - 16px))!important;
+  min-height:0!important;
+  width:calc(100vw - 16px)!important;
+  max-width:none!important;
+  max-height:calc(100dvh - var(--core-header-height) - 16px)!important;
+  overflow:hidden!important;
+  background:#32373D!important;
+}
+.aaa-mega-menu[hidden]{display:none!important;}
+.aaa-mega-heading{flex:0 0 auto!important;}
+.aaa-mega-grid{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  align-content:start!important;
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  grid-auto-rows:max-content!important;
+  gap:clamp(8px,.8vw,15px)!important;
+  padding:8px 10px 16px!important;
+}
+.aaa-nav-card{
+  height:clamp(145px,20vh,205px)!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+}
+@media(max-width:1180px){
+  .aaa-mega-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;}
+}
+@media(max-width:850px){
+  .aaa-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+}
+@media(max-width:600px){
+  .aaa-mega-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .aaa-nav-card{height:145px!important;}
+}
+
+/* Envelope is an unframed symbol. Its centre still straddles the portrait edge.
+   Keep the existing small red unread dot and the 44px minimum tap target. */
+body .asteria-header .asteria-header-profile button.asteria-header-mail{
+  background:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  border-radius:0!important;
+  outline-offset:2px;
+  box-shadow:none!important;
+  filter:drop-shadow(0 2px 3px #000)!important;
+}
+
+
+/* Approved 2026-11-17 Option C: compact LOGO and PORTRAIT, not crystal controls.
+   Desktop keeps all six navigation buttons plus Account on one unwrapped row.
+   The 1679px-and-below drawer/navigation arrangement is intentionally unchanged. */
+@media (min-width:1680px) {
+  :root {
+    --asteria-logo-compact-width:clamp(180px,calc(31.25vw - 345px),255px);
+    --asteria-profile-compact-width:clamp(82px,4.95vw,95px);
+  }
+  body .topbar.asteria-header {
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    padding:0!important;
+    gap:2px!important;
+  }
+  body .asteria-header .asteria-header-brand {
+    flex:0 0 var(--asteria-logo-compact-width)!important;
+    width:var(--asteria-logo-compact-width)!important;
+    min-width:0!important;
+    max-width:var(--asteria-logo-compact-width)!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  body .asteria-header .asteria-header-wordmark {
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    object-fit:contain!important;
+    object-position:left center!important;
+  }
+  body .asteria-header #globalNavigation {
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    gap:2px!important;
+    justify-content:flex-start!important;
+    white-space:nowrap!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  body .asteria-header .top-actions {
+    display:flex!important;
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    gap:2px!important;
+    margin-left:auto!important;
+    margin-right:0!important;
+    padding:0!important;
+    min-width:0!important;
+  }
+  body .asteria-header .asteria-header-profile:not([hidden]) {
+    flex:0 0 var(--asteria-profile-compact-width)!important;
+    width:var(--asteria-profile-compact-width)!important;
+    min-width:var(--asteria-profile-compact-width)!important;
+    max-width:var(--asteria-profile-compact-width)!important;
+    height:var(--core-header-height)!important;
+    margin-left:26px!important; /* reserve half the 52px mail hit target */
+    margin-right:0!important;
+  }
+}
+/* Desktop portrait is a compact Account shortcut. Its full identity text
+   remains accessible via Account > Profile. Mobile behavior stays unchanged. */
+@media (min-width:1680px) {
+  body .asteria-header .asteria-header-profile .asteria-header-identity {
+    display:none!important;
+  }
 }

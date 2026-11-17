@@ -264,9 +264,11 @@
       trigger.setAttribute('aria-controls','aaaMegaMenu');
       trigger.setAttribute('aria-expanded','false');
     }
-    // Capture before the legacy Forge and Compendium click handlers, but only
-    // for known primary header buttons. Existing destinations remain intact.
-    document.addEventListener('click', event => {
+    // The legacy Compendium navigation registers a DOCUMENT capture handler
+    // before this module. Capture on WINDOW (the ancestor capture phase) so
+    // all seven header triggers open the same mega menu before legacy routing.
+    // This does not change their hrefs, their button dimensions or other links.
+    window.addEventListener('click', event => {
       const target = event.target?.closest?.('#asteriaHandbookTop,#worldLoreTop,#compendiumIndexButton,#characterForgeTop,#campaignsTop,#asteriaFriendsTop,#loginToggle');
       if (!target) return;
       if (target.id === 'loginToggle' && !isLoggedIn()) return;
