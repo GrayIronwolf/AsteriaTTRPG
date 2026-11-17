@@ -515,7 +515,7 @@
     if(workspace&&window.MutationObserver){
       new MutationObserver(records=>{
         if(records.some(record=>record.type==='childList'))
-          (window.requestAnimationFrame || (fn=>fn()))(polishCharacterForge);
+          window.requestAnimationFrame?window.requestAnimationFrame(polishCharacterForge):polishCharacterForge();
       }).observe(workspace,{subtree:true,childList:true});
     }
     polishCharacterForge();
