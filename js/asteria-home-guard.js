@@ -2,6 +2,19 @@
    Loads before the app so the sidebar Home button cannot be swallowed by
    workspace or compendium click handlers. */
 (function(){
+  // Make a fresh site entry start on Home, even when the browser restores a
+  // previous Character Forge/React hash from a closed tab or saved session.
+  // Actual inbound invitations remain actionable rather than being discarded.
+  const entryHash = String(window.location?.hash || '');
+  const explicitInvitation = /^#(?:secure-campaign-invite=|campaign-invite=|\\/join\\/)/i.test(entryHash)
+    || /[?&](?:campaign-invite|invite)=/i.test(String(window.location?.search || ''));
+  const ordinaryStartup = !explicitInvitation;
+  let startupHomePending = ordinaryStartup;
+  let userNavigated = false;
+  if (ordinaryStartup && entryHash && entryHash !== '#home') {
+    window.history?.replaceState?.(window.history.state || null,document.title,
+      (window.location.pathname || '/') + (window.location.search || ''));
+  }
   let routingHome = false;
 
   function qsa(selector, root=document){ return Array.from(root.querySelectorAll(selector)); }
@@ -96,7 +109,31 @@
     bindKnownHomeControls();
     // Capture delegation above also handles Home controls inserted later.
     // Re-scanning every button after every DOM update is unnecessary.
+    if(startupHomePending) hardHome();
   }
+  function markUserNavigation(event){
+    if(!event.isTrusted)return;
+    if(event.target?.closest?.('button,a,[role="button"],[role="tab"],input,select,textarea')){
+      userNavigated=true;
+      startupHomePending=false;
+    }
+  }
+  document.addEventListener('click',markUserNavigation,true);
+  // A restored Firebase session can cause another component to open a stale
+  // character route *after* DOMContentLoaded. Correct that single startup
+  // transition, never navigation performed deliberately by the user.
+  window.addEventListener('asteria:firebase-ready',()=>{
+    if(!startupHomePending || userNavigated || !ordinaryStartup)return;
+    window.setTimeout?.(()=>{
+      if(startupHomePending && !userNavigated){hardHome();startupHomePending=false;}
+    },0);
+  });
+  window.addEventListener('asteria:owned-characters-loaded',()=>{
+    if(!startupHomePending || userNavigated || !ordinaryStartup)return;
+    window.setTimeout?.(()=>{
+      if(startupHomePending && !userNavigated){hardHome();startupHomePending=false;}
+    },0);
+  });
 
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();
 })();
