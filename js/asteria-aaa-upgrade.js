@@ -342,7 +342,7 @@
   function currentLibraryRoute() {
     const raw=window.location.hash || '';
     const parts=raw.split('?');const params=new URLSearchParams(parts[1]||'');
-    return {group:params.get('group')||'',category:params.get('category')||''};
+    return {group:params.get('group')||'',category:params.get('category')||'',search:params.get('q')||''};
   }
   function polishLibrary() {
     libraryScheduled = false;
@@ -356,7 +356,9 @@
     const route=currentLibraryRoute();
     const groups=window.AsteriaLibrary?.groups || [];
     const selected=groups.find(group=>group.id===route.group);
-    const title=route.group==='rules'?'Asteria Handbook':route.group==='world'?'Worlds, Realms & Lore':'Asteria Compendium';
+    const menuContext=MENUS.find(menu=>menu.id===libraryMenuContext) ||
+      MENUS.find(menu=>menu.id===(['rules','adventures'].includes(route.group)?'handbook':route.group==='world'?'world':'compendium'));
+    const title=menuContext?.title || 'Asteria Compendium';
     hero.classList.add('aaa-page-hero');
     const h1=hero.querySelector('h1');if(h1)h1.textContent=title;
     hero.querySelector('.eyebrow')?.remove();
@@ -370,17 +372,33 @@
     const sidebar=document.createElement('aside');sidebar.className='aaa-category-sidebar';sidebar.setAttribute('aria-label','Browse Asteria categories');
     const label=document.createElement('h2');label.textContent='Browse';sidebar.appendChild(label);
     const links=document.createElement('nav');links.className='aaa-category-links';
-    const available=selected?selected.categories.map(([,id,title])=>({id,title,group:selected.id})):
-      groups.map(group=>({id:'',title:group.title,group:group.id}));
-    for(const item of available){
-      const a=document.createElement('a');
-      a.href='#/compendium?group='+encodeURIComponent(item.group)+(item.id?'&category='+encodeURIComponent(item.id):'');
-      a.textContent=item.title;a.className='aaa-category-link';
-      const selectedItem=item.id?route.category===item.id:route.group===item.group;
-      if(selectedItem){a.classList.add('is-current');a.setAttribute('aria-current','page');}
-      links.appendChild(a);
+    // The left-side choices mirror the same entries as the opened header menu.
+    // Reuse the underlying library controller rather than copying records.
+    const entries=menuContext?.entries || [];
+    if(entries.length){
+      entries.forEach(entry=>{
+        const button=document.createElement('button');button.type='button';
+        button.className='aaa-category-link aaa-menu-side-button';
+        button.textContent=entry[0];
+        const active=libraryMenuSelection?
+          libraryMenuSelection===entry[0]:
+          entry[2]==='library' && entry[3]===route.group &&
+          entry[4]===route.category && (entry[5]||'')===route.search;
+        if(active){button.classList.add('is-current');button.setAttribute('aria-current','page');}
+        button.addEventListener('click',()=>navigate(entry,menuContext.id));
+        links.append(button);
+      });
+    } else {
+      const available=selected?selected.categories.map(([,id,label])=>({id,title:label,group:selected.id})):
+        groups.map(group=>({id:'',title:group.title,group:group.id}));
+      for(const item of available){
+        const a=document.createElement('a');
+        a.href='#/compendium?group='+encodeURIComponent(item.group)+(item.id?'&category='+encodeURIComponent(item.id):'');
+        a.textContent=item.title;a.className='aaa-category-link';
+        if(item.id===route.category){a.classList.add('is-current');a.setAttribute('aria-current','page');}
+        links.appendChild(a);
+      }
     }
-    if(selected){const all=document.createElement('a');all.href='#/compendium?group='+encodeURIComponent(route.group);all.textContent='All '+selected.title;all.className='aaa-category-link';if(!route.category){all.classList.add('is-current');all.setAttribute('aria-current','page');}links.prepend(all);}
     sidebar.appendChild(links);
     const body=document.createElement('div');body.className='aaa-library-content';
     for(const el of Array.from(root.children)){
