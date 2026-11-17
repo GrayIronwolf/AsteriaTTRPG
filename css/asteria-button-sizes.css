@@ -88,12 +88,16 @@ body .asteria-header #settingsToggle[data-asteria-button-size="icon"] {
   min-inline-size:53px!important;min-width:53px!important;
   padding-inline:7px!important;
 }
-/* Long text cannot force overlap with account buttons or the logo on
-   smaller wide-screen displays. Preserved maximum is the approved 360px. */
+/* The 360px master defines the LONG artwork family, not header occupancy.
+   Desktop header controls use compact fixed upper bounds to preserve the
+   original small on-screen appearance; other long buttons stay unchanged. */
 @media (min-width:1680px) {
   body .asteria-header #globalNavigation .crystal-button[data-asteria-button-size="long"] {
-    inline-size:clamp(195px,11vw,360px)!important;
-    width:clamp(195px,11vw,360px)!important;
+    inline-size:clamp(140px,8.2vw,166px)!important;
+    width:clamp(140px,8.2vw,166px)!important;
+    min-inline-size:0!important;
+    min-width:0!important;
+    flex:0 0 auto!important;
   }
   body .asteria-header #globalNavigation #sidebarHomeButton[data-asteria-button-size="small"] {
     inline-size:clamp(106px,8vw,160px)!important;
