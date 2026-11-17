@@ -55,6 +55,11 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  await restored.locator('#home.show').waitFor();
  await restored.reload({waitUntil:'networkidle'});
  await restored.locator('#home.show').waitFor();
+ // Emulate the real automatic Firebase character-load event after startup.
+ // Its listener must not render Character Forge or remove the Home view.
+ await restored.evaluate(()=>window.dispatchEvent(new CustomEvent('asteria:owned-characters-loaded',{detail:{uid:'player-demo'}})));
+ await restored.locator('#home.show').waitFor();
+ assert.equal(await restored.locator('#workspace.show').count(),0);
  await restored.evaluate(()=>window.AsteriaWorkspace.openDashboard('characters'));
  await restored.locator('#workspace.show .character-forge-hub').waitFor();
  await restored.evaluate(()=>window.AsteriaAuthBridge.setSession({username:'Updated'},{uid:'player-demo'}));
@@ -62,6 +67,9 @@ const base=`http://127.0.0.1:${process.argv[2]||8123}/`;
  await restored.locator('.asteria-header-brand').evaluate(el=>el.click());
  await restored.locator('#home.show').waitFor();
  assert.equal(await restored.evaluate(()=>window.location.hash),'');
+ await restored.evaluate(()=>window.dispatchEvent(new CustomEvent('asteria:owned-characters-loaded',{detail:{uid:'player-demo'}})));
+ await restored.locator('#home.show').waitFor();
+ assert.equal(await restored.locator('#workspace.show').count(),0);
  // The core shell also supports Home if the early guard is unavailable.
  await restored.evaluate(()=>{window.AsteriaWorkspace.openDashboard('characters');window.asteriaHardHome=null;window.goHome();});
  await restored.locator('#home.show').waitFor();

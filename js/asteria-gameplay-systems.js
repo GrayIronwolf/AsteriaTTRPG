@@ -1080,7 +1080,15 @@
     const forgeDomains={Race:[],Class:['talent'],Patron:['religion'],Appearance:[],Origin:['origin'],Characteristics:[],Magic:['spell'],Skills:['skill'],'Affinity Rolls':['spell','skill'],Equipment:['item'],Review:['talent','religion','origin','spell','skill','item']};
     const systemDomains={characterSheet:['race','class','talent','skill','spell','item'],appearanceBuilder:['race'],talentTree:['class','talent'],encounterBuilder:['creature'],lootGenerator:['item'],craftingSystem:['item','profession'],professionSystem:['profession','item']};
     const dependencies=activeSystem==='characterCreator' ? (forgeMode==='hub'?[]:['race','class',...(forgeDomains[activeTab] || [])]) : (systemDomains[activeSystem] || []);
-    if(window.AsteriaContent?.readyForView && !window.AsteriaContent.readyForView(root,dependencies,render))return;
+    // A delayed content callback must not reactivate a workspace after
+    // the user has returned to Home.
+    const refreshIfStillVisible = () => {
+      const view = byId('workspace');
+      if(!root.isConnected || !view?.classList.contains('show') ||
+         view.classList.contains('clean-hidden') || !view.contains(root)) return;
+      render();
+    };
+    if(window.AsteriaContent?.readyForView && !window.AsteriaContent.readyForView(root,dependencies,refreshIfStillVisible))return;
     if(activeSystem === 'characterCreator'){
       const d = draft();
       const visibleTabs = forgeTabsForDraft(d);
@@ -1323,7 +1331,20 @@
     return true;
   }
 
-  window.addEventListener('asteria:owned-characters-loaded', () => { if(forgeMode === 'hub' && activeSystem === 'characterCreator') render(); });
+  // An automatic character load must never open Character Forge from Home.
+  // render() activates #workspace, so refresh only a currently visible Forge hub.
+  function refreshVisibleForgeHubAfterCharacterLoad(){
+    if(forgeMode !== 'hub' || activeSystem !== 'characterCreator') return;
+    const view = byId('workspace');
+    const root = byId('phase3GameplayShell');
+    if(!view?.classList.contains('show') ||
+      view.classList.contains('clean-hidden') ||
+      !root?.isConnected ||
+      !view.contains(root) ||
+      !root.classList.contains('phase3-forge-hub-shell')) return;
+    render();
+  }
+  window.addEventListener('asteria:owned-characters-loaded', refreshVisibleForgeHubAfterCharacterLoad);
 
   function renderCharacterForgeHub(){
     const ids = accountCharacterIds();
