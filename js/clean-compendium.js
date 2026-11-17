@@ -349,14 +349,31 @@
     back.textContent = 'Dashboard';
     back.onclick = () => openDashboard('dashboard');
     buttons.innerHTML = '';
-    authWorkspaceModes.forEach(mode => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `cat ${mode.id === currentDashboardMode ? 'active' : ''}`;
-      button.innerHTML = `<span class="clean-left"><span>${escapeHtml(mode.label)}</span></span>`;
-      button.onclick = () => openDashboard(mode.id);
-      buttons.appendChild(button);
-    });
+    if(currentDashboardMode === 'campaigns'){
+      const sections=[
+        {label:'Forge A Campaign',action:openCampaignCreateForm},
+        {label:'My Campaigns',action:()=>openDashboard('campaigns')},
+        {label:'Join A Campaign',action:openCampaignJoinForm}
+      ];
+      sections.forEach(section=>{
+        const button=document.createElement('button');button.type='button';
+        button.className='cat';
+        const span=document.createElement('span');span.className='clean-left';
+        const name=document.createElement('span');name.textContent=section.label;
+        span.append(name);button.append(span);
+        button.onclick=()=>section.action();
+        buttons.append(button);
+      });
+    }else{
+      authWorkspaceModes.forEach(mode => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `cat ${mode.id === currentDashboardMode ? 'active' : ''}`;
+        button.innerHTML = `<span class="clean-left"><span>${escapeHtml(mode.label)}</span></span>`;
+        button.onclick = () => openDashboard(mode.id);
+        buttons.appendChild(button);
+      });
+    }
   }
 
   function syncAuthNavState() {
@@ -654,6 +671,22 @@
     if (!grid) return;
     grid.innerHTML = '';
     renderCreateCampaignForm(grid);
+  }
+
+  // Direct navigation used by the global Campaign Forge cards.
+  // Keep existing account, GM and UCN permissions enforced by their owners.
+  function openCampaignCreateForm() {
+    if (!openDashboard('campaigns')) return false;
+    openCreateCampaignForm();
+    byId('clean-grid')?.scrollIntoView?.({block:'start'});
+    return true;
+  }
+  function openCampaignJoinForm() {
+    if (!openDashboard('campaigns')) return false;
+    const input = byId('workspaceJoinCampaignCode');
+    input?.scrollIntoView?.({block:'center'});
+    input?.focus?.({preventScroll:true});
+    return Boolean(input);
   }
 
   function campaignIndex(campaign) {
@@ -2635,6 +2668,8 @@
       openDashboard,
       openNotifications:() => openDashboard('notifications'),
       openCampaignHub:() => openDashboard('campaigns'),
+      openCampaignCreateForm,
+      openCampaignJoinForm,
       openDashboardMode: openDashboard,
       createCampaign: createWorkspaceCampaign,
       createCharacter: createWorkspaceCharacter,

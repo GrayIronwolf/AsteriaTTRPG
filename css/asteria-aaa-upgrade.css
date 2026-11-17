@@ -324,3 +324,178 @@ body .asteria-header button.asteria-header-mail.has-unread::after {
   #campaigns .aaa-campaign-nav-option{flex:0 0 auto;white-space:nowrap;}
   #campaigns .campaign-manager > section{grid-column:1;}
 }
+
+
+/* 2026-11-17: approved header, menu and profile revisions.
+   The exact supplied colours intentionally override previous gradients. */
+body .topbar.asteria-header {
+  background:#1E2838!important;
+  background-color:#1E2838!important;
+  background-image:none!important;
+}
+body .topbar.asteria-header::before {background:none!important;content:none!important;}
+@media(min-width:1680px) {
+  :root {--core-header-height:clamp(115px,8.75vw,164px)!important;}
+  body .topbar.asteria-header {
+    gap:clamp(4px,.45vw,12px)!important;
+    padding:0 clamp(6px,.8vw,18px)!important;
+  }
+  body .asteria-header .asteria-header-brand{
+    flex:0 1 clamp(438px,36.75vw,731.5px)!important;
+    width:clamp(438px,36.75vw,731.5px)!important;
+    min-width:0!important;
+    max-height:var(--core-header-height)!important;
+  }
+  body .asteria-header .asteria-header-wordmark{
+    width:100%!important;
+    height:100%!important;
+    max-height:var(--core-header-height)!important;
+    object-fit:contain!important;
+  }
+  body .asteria-header #globalNavigation>.crystal-button,
+  body .asteria-header #accountControls #loginToggle{
+    min-width:0!important;
+    max-width:none!important;
+    width:auto!important;
+    flex:1 1 0!important;
+    padding:7px 5px!important;
+    font-size:clamp(.63rem,.65vw,.87rem)!important;
+  }
+}
+@media(min-width:721px) and (max-width:1679px){
+  body .asteria-header .asteria-header-brand{
+    flex:0 1 clamp(225px,34vw,435px)!important;
+    width:clamp(225px,34vw,435px)!important;
+  }
+}
+@media(max-width:720px){
+  body .asteria-header .asteria-header-brand{
+    width:min(210px,calc(100vw - 192px))!important;
+    max-width:min(210px,calc(100vw - 192px))!important;
+    flex:1 1 auto!important;
+  }
+}
+body .asteria-header .asteria-header-profile:not([hidden]){
+  position:relative!important;
+  height:var(--core-header-height)!important;
+  min-height:var(--core-header-height)!important;
+  overflow:visible!important;
+  margin-left:26px!important;
+}
+body .asteria-header #asteriaHeaderAvatarButton{
+  overflow:hidden!important;
+  border-radius:0!important;
+}
+body .asteria-header #asteriaHeaderAvatar{
+  width:100%!important;height:100%!important;
+  object-fit:cover!important;object-position:center!important;
+}
+body .asteria-header .asteria-header-profile button.asteria-header-mail {
+  position:absolute!important;
+  top:auto!important;
+  right:auto!important;
+  left:-26px!important;
+  bottom:0!important;
+  width:52px!important;
+  height:52px!important;
+  min-width:52px!important;
+  min-height:52px!important;
+  z-index:20!important;
+  transform:none!important;
+  background:#1E2838!important;
+  border:1px solid #879aaa!important;
+  border-radius:50%!important;
+  color:#f0f6ff!important;
+  cursor:pointer!important;
+}
+body .asteria-header .asteria-header-profile button.asteria-header-mail[hidden]{display:none!important;}
+@media(max-width:720px){
+  body .asteria-header .asteria-header-profile:not([hidden]){margin-left:18px!important;}
+  body .asteria-header .asteria-header-profile button.asteria-header-mail{
+    left:-20px!important;width:40px!important;height:40px!important;
+    min-width:40px!important;min-height:40px!important;font-size:1.9rem!important;
+  }
+}
+/* One consistent dropdown width no matter which top-level button opened it.
+   It is 1.75x the original typical header-menu content region, up to viewport width. */
+.aaa-mega-menu {
+  box-sizing:border-box!important;
+  left:50%!important;
+  width:calc(100vw - 16px)!important;
+  max-width:none!important;
+  background:#32373D!important;
+  background-image:none!important;
+  padding:clamp(12px,1.6vw,26px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+.aaa-mega-heading{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,320px) 44px;gap:16px;align-items:center;}
+.aaa-mega-search input {
+  width:100%;box-sizing:border-box;min-height:42px;padding:9px 12px;
+  border:1px solid #81909e;border-radius:3px;background:#1E2838;color:#fff;
+  font:500 .9rem/1.25 var(--asteria-font-body,Arial,sans-serif);
+}
+.aaa-mega-grid {
+  grid-template-columns:repeat(auto-fit,minmax(min(145px,100%),1fr))!important;
+  gap:clamp(8px,.8vw,15px)!important;
+  align-items:stretch;
+}
+.aaa-nav-card{
+  min-height:clamp(150px,13vw,222px)!important;
+  aspect-ratio:4/5!important;
+  padding:20px 10px 14px!important;
+  transform-origin:center center;
+  transition:transform .17s ease,box-shadow .17s ease,border-color .17s ease!important;
+}
+.aaa-nav-card[hidden]{display:none!important;}
+.aaa-nav-card:hover,.aaa-nav-card:focus-visible{
+  transform:scale(1.065)!important;
+  border-color:var(--aaa-site-active)!important;
+  box-shadow:0 0 0 2px var(--aaa-site-active),0 0 22px var(--aaa-site-active),0 10px 24px #000c!important;
+  z-index:3;
+}
+.aaa-nav-card-label{overflow-wrap:anywhere;}
+.aaa-nav-card-summary{line-height:1.3;}
+.aaa-category-link.aaa-menu-side-button{
+  display:block!important;width:100%;min-height:44px;
+  cursor:pointer;text-align:left;
+  padding:11px 4px 12px!important;
+}
+.aaa-category-link.aaa-menu-side-button.is-current::after{right:auto;width:calc(100% - 8px);}
+#aaaFriendsBody #aaaFriendsTopTabs{
+  display:flex;gap:20px;padding:12px 3px;border-bottom:1px solid var(--aaa-site-divider);margin-bottom:15px;
+}
+#aaaFriendsTopTabs button{background:none!important;border:0!important;flex:0 1 auto;cursor:pointer;white-space:nowrap;}
+#aaaFriendsChatPanel{
+  border:1px solid var(--aaa-site-divider);padding:clamp(16px,2vw,32px);background:#172534;
+  color:#d7e5ef;min-height:240px;
+}
+#aaaFriendsChatPanel[hidden],#aaaFriendsBody #asteriaFriendsPageMount[hidden]{display:none!important;}
+#aaaFriendsChatPanel h2{font:500 1.8rem/1.2 var(--asteria-font-display,Georgia,serif);margin:0 0 16px;}
+#aaaFriendsChatPanel p{max-width:65ch;line-height:1.6;}
+#aaaFriendsChatPanel button{display:inline-block;cursor:pointer;border:1px solid #81909e;background:#243c50;color:#fff;padding:10px 16px;margin:8px 12px 0 0;min-height:44px;}
+@media(max-width:800px){
+  .aaa-mega-heading{grid-template-columns:1fr 44px;gap:9px;}
+  .aaa-mega-heading h2{grid-column:1;}
+  .aaa-mega-heading #aaaMegaClose{grid-column:2;grid-row:1;}
+  .aaa-mega-search{grid-column:1/-1;grid-row:2;}
+  .aaa-mega-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .aaa-nav-card{min-height:145px!important;aspect-ratio:4/5!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .aaa-nav-card,.aaa-nav-card:hover,.aaa-nav-card:focus-visible{transition:none!important;transform:none!important;}
+}
+
+/* Character Forge side choices stay visible when the rules-driven creator re-renders. */
+#phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu{
+  display:flex;flex-wrap:wrap;gap:16px;margin:0 0 14px;padding:8px 12px 12px;
+  background:#1E2838;border:1px solid var(--aaa-site-divider);border-radius:3px;
+}
+#phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu .aaa-menu-side-button{
+  width:auto!important;min-width:145px;flex:0 1 auto;padding:9px 6px 12px!important;
+  background:none!important;border:0!important;
+}
+@media(max-width:520px){
+  #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu{gap:8px;}
+  #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu .aaa-menu-side-button{min-width:0;flex:1 1 auto;}
+}
