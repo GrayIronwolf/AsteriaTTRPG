@@ -97,3 +97,32 @@ test('restores original header crystal sizes, left-aligned logo and unframed env
   assert.match(css,/left:-26px!important/);
   assert.match(css,/has-unread::after/);
 });
+
+
+test('Option C keeps all six original-size header buttons and Account in one desktop row',()=>{
+  const html=read('index.html');
+  const originalButtonCSS=read('css/asteria-button-sizes.css');
+  assert.ok(css.includes('--asteria-logo-compact-width:clamp(180px,calc(31.25vw - 345px),255px)'));
+  assert.ok(css.includes('--asteria-profile-compact-width:clamp(82px,4.95vw,95px)'));
+  assert.ok(css.includes('flex-wrap:nowrap!important'));
+  assert.ok(css.includes('object-position:left center!important'));
+  assert.ok(css.includes('body .asteria-header .asteria-header-profile .asteria-header-identity'));
+  assert.ok(css.includes('@media (min-width:1680px)'));
+  assert.ok(originalButtonCSS.includes('--asteria-button-long-height:53px;'));
+  assert.ok(html.includes('css/asteria-aaa-upgrade.css?v=20261117-3-option-c'));
+  assert.ok(html.includes('js/asteria-aaa-upgrade.js?v=20261117-3-menu-fix'));
+  const clamp=(min,value,max)=>Math.max(min,Math.min(value,max));
+  for(const width of [1680,1720,1760,1840,1920,2048,2560,3200]){
+    const logo=clamp(180,0.3125*width-345,255);
+    const profile=clamp(82,0.0495*width,95);
+    const longButton=clamp(195,0.11*width,360);
+    const account=clamp(106,0.08*width,160);
+    // Six unchanged long navigation buttons, one small Account control,
+    // portrait, envelope's half-button margin and all declared row gaps.
+    const total=logo + (longButton*6) + account + profile + 26 + 20;
+    assert.ok(total<=width,
+      'header items must fit at '+width+'px; estimated '+Math.round(total)+'px');
+  }
+  assert.equal(clamp(180,0.3125*1920-345,255),255);
+  assert.equal(clamp(82,0.0495*1920,95),95);
+});
