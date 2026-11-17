@@ -9,42 +9,53 @@
   const INTERVAL = 15000;
   const MENUS = [
     { id:'handbook', trigger:'asteriaHandbookTop', title:'Asteria Handbook', entries:[
-      ['Asteria Players Guild','Guidance for players','library','rules','handbook','Players Guild'],
-      ['Asteria Game Master Guild','Run your adventures','library','adventures','gm',''],
-      ['Rules','Core rules and reference','library','rules','core',''],
-      ['Systems','Mechanics and gameplay','library','rules','',''],
-      ['Quests','Stories and adventures','library','adventures','quests',''],
-      ['Campaigns','Campaign tools','campaigns','','','']
+      ['Asteria Players Guide','Player guides and advice','library','rules','handbook',''],
+      ['Asteria GM Guide','Game Master resources','library','adventures','gm',''],
+      ['Rules','Foundational game rules','library','rules','core',''],
+      ['Systems','Game systems and mechanics','library','rules','',''],
+      ['Quests','Quest and adventure reference','library','adventures','quests',''],
+      ['Campaigns','Campaign guidance','library','adventures','','']
     ]},
-    { id:'world', trigger:'worldLoreTop', title:'Worlds, Realms & Lore', entries:[
-      ['Worlds','Explore Asteria','library','world','worlds',''],
-      ['Realms','Beyond the material realm','library','world','worlds','Realm'],
-      ['Planes','Dimensions and planes','library','world','worlds','Plane'],
-      ['Theology','Faiths and pantheons','library','world','theology','']
+    { id:'world', trigger:'worldLoreTop', title:'Worlds & Lore', entries:[
+      ['Worlds','Explore the world','library','world','worlds','World'],
+      ['Realms','The realms of Asteria','library','world','worlds','Realm'],
+      ['Planes','The planes of existence','library','world','worlds','Plane'],
+      ['Theology','Gods and pantheons','library','world','theology',''],
+      ['NPC','People of Asteria','library','world','npcs',''],
+      ['Lore','History and stories','library','world','lore',''],
+      ['Languages','Spoken and written languages','library','world','languages',''],
+      ['Factions','Guilds and factions','library','world','factions','']
     ]},
     { id:'compendium', trigger:'compendiumIndexButton', title:'Asteria Compendium', entries:[
-      ['Magics & Elements','Spells and elements','library','characters','magic',''],
       ['Races','Playable peoples','library','characters','races',''],
       ['Classes','Character classes','library','characters','classes',''],
-      ['Resources','Materials and crafting resources','library','equipment','resources','']
+      ['Magical & Element','Magic and elemental reference','library','characters','magic',''],
+      ['Resources','Materials and resources','library','equipment','resources',''],
+      ['Blueprints','Construction blueprints','library','crafting','blueprints',''],
+      ['Recipes','Recipes and crafting','library','crafting','recipes',''],
+      ['Schematics','Schematics and plans','library','crafting','schematics',''],
+      ['Patterns','Crafting patterns','library','crafting','patterns',''],
+      ['Formulas','Formulas and procedures','library','crafting','formulas',''],
+      ['Design','Designs and drawings','library','crafting','designs','']
     ]},
     { id:'characters', trigger:'characterForgeTop', title:'Character Forge', entries:[
-      ['Forge a Character','Create your hero','forge','','',''],
-      ['My Characters','Return to your characters','characters','','','']
+      ['Forge a Character','Create a new hero','forge','','',''],
+      ['My Characters','Your saved characters','characters','','','']
     ]},
     { id:'campaigns', trigger:'campaignsTop', title:'Campaign Forge', entries:[
-      ['Forge a Campaign','Start a new story','campaign-new','','',''],
-      ['Current Campaigns','Manage your adventures','campaigns','','',''],
-      ['Join a Campaign','Join an existing game','campaign-join','','','']
+      ['Forge A Campaign','Create a new campaign','campaign-new','','',''],
+      ['My Campaigns','Your campaigns','campaigns','','',''],
+      ['Join A Campaign','Enter your 12-digit UCN','campaign-join','','','']
     ]},
-    { id:'friends', trigger:'asteriaFriendsTop', title:'My Friends', entries:[
-      ['My Friend List','Friends, requests and profiles','friends','','','']
+    { id:'friends', trigger:'asteriaFriendsTop', title:'Friends', entries:[
+      ['My Friends','Friends, requests and profiles','friends','','',''],
+      ['Chats','Your campaign conversations','chats','','','']
     ]},
     { id:'account', trigger:'loginToggle', title:'Account', entries:[
-      ['Profile','Your public identity','account','profile','',''],
-      ['Account Settings','Your account controls','account','settings','',''],
-      ['Appearance','Website preferences','account','appearance','',''],
-      ['Password & Security','Protect your account','account','security','','']
+      ['Profile','Your profile','account','profile','',''],
+      ['Account Settings','Account preferences','account','settings','',''],
+      ['Appearance','Website appearance','account','appearance','',''],
+      ['Password & Security','Account protection','account','security','','']
     ]}
   ];
   let activeMenu = null;
@@ -56,6 +67,9 @@
   let carouselFocus = false;
   let carouselInteracted = false;
   let libraryScheduled = false;
+  let libraryMenuContext = '';
+  let libraryMenuSelection = '';
+  let friendSection = 'friends';
 
   function isLoggedIn() {
     return Boolean(window.AsteriaAuthBridge?.isLoggedIn?.() || window.session?.uid);
@@ -65,15 +79,44 @@
     if (!isLoggedIn()) { showLogin(); return; }
     fn();
   }
-  function navigate(entry) {
+  function openCampaignMode(kind) {
+    const api=window.AsteriaWorkspace;
+    if(kind==='campaign-new' && typeof api?.openCampaignCreateForm==='function')
+      return api.openCampaignCreateForm();
+    if(kind==='campaign-join' && typeof api?.openCampaignJoinForm==='function')
+      return api.openCampaignJoinForm();
+    if(typeof api?.openDashboard==='function'){
+      api.openDashboard('campaigns');
+      if(kind==='campaign-join'){
+        const input=$('workspaceJoinCampaignCode');
+        input?.scrollIntoView?.({block:'center'});
+        input?.focus?.({preventScroll:true});
+      }
+      return true;
+    }
+    return window.AsteriaRouter?.openCampaignHub?.();
+  }
+  function navigate(entry, sourceMenu = '') {
     const [title, description, kind, a, b, c] = entry;
-    void title; void description;
+    void description;
     if (kind === 'library') {
-      if (window.AsteriaLibrary?.open) window.AsteriaLibrary.open({ group:a, category:b, search:c });
-      else window.location.hash = '#/compendium' + (a ? '?group=' + encodeURIComponent(a) : '');
+      libraryMenuContext = sourceMenu || (a==='world'?'world':a==='rules'||a==='adventures'?'handbook':'compendium');
+      libraryMenuSelection = title;
+      if (window.AsteriaLibrary?.open) window.AsteriaLibrary.open({group:a,category:b,search:c});
+      else {
+        const params=new URLSearchParams();
+        if(a)params.set('group',a);
+        if(b)params.set('category',b);
+        if(c)params.set('q',c);
+        window.location.hash='#/compendium'+(params.size?'?'+params.toString():'');
+      }
+      scheduleLibrary();
       return;
     }
-    if (kind === 'friends') { requireAccount(() => window.AsteriaAccountPages?.open?.('friends')); return; }
+    if (kind === 'friends' || kind === 'chats') {
+      requireAccount(()=>showFriendSection(kind==='chats'?'chats':'friends'));
+      return;
+    }
     if (kind === 'account') { requireAccount(() => window.AsteriaAccountPages?.openSection?.(a)); return; }
     if (kind === 'forge') {
       requireAccount(() => {
@@ -89,14 +132,57 @@
       });
       return;
     }
-    if (kind === 'campaigns' || kind === 'campaign-new' || kind === 'campaign-join') {
-      requireAccount(() => {
-        if (kind === 'campaigns') window.AsteriaRouter?.openCampaignHub?.();
-        else if (typeof window.AsteriaWorkspace?.openDashboard === 'function')
-          window.AsteriaWorkspace.openDashboard(kind === 'campaign-new' ? 'createCampaign' : 'campaigns');
-        else window.AsteriaRouter?.openCampaignHub?.();
-      });
+    if (['campaigns','campaign-new','campaign-join'].includes(kind))
+      requireAccount(() => openCampaignMode(kind));
+  }
+  function showFriendSection(section) {
+    prepareFriendSections();
+    friendSection=section==='chats'?'chats':'friends';
+    window.AsteriaAccountPages?.open?.('friends');
+    const host=$('aaaFriendsBody');
+    if(!host)return;
+    const friends=$('asteriaFriendsPageMount'),chats=$('aaaFriendsChatPanel');
+    if(friends)friends.hidden=friendSection!=='friends';
+    if(chats)chats.hidden=friendSection!=='chats';
+    $all('[data-aaa-friend-section]',host).forEach(button=>{
+      const active=button.dataset.aaaFriendSection===friendSection;
+      button.classList.toggle('is-current',active);
+      button.setAttribute('aria-current',active?'page':'false');
+    });
+  }
+  function prepareFriendSections(){
+    const friends=$('asteriaFriendsPage'), mount=$('asteriaFriendsPageMount');
+    if(!friends||!mount||$('aaaFriendsBody'))return;
+    const holder=document.createElement('div');holder.id='aaaFriendsBody';
+    const nav=document.createElement('nav');nav.id='aaaFriendsTopTabs';
+    nav.setAttribute('aria-label','Friends sections');
+    for(const [label,section] of [['My Friends','friends'],['Chats','chats']]){
+      const button=document.createElement('button');
+      button.type='button';button.dataset.aaaFriendSection=section;
+      button.textContent=label;button.className='aaa-category-link';
+      button.addEventListener('click',()=>showFriendSection(section));
+      nav.appendChild(button);
     }
+    const chats=document.createElement('section');
+    chats.id='aaaFriendsChatPanel';chats.setAttribute('aria-label','Chats');chats.hidden=true;
+    chats.className='aaa-friends-chat-panel';
+    const title=document.createElement('h2');title.textContent='Chats';
+    const info=document.createElement('p');
+    info.textContent='Live party chat is available inside a linked character’s Party dashboard during an active session. Private friend-to-friend messaging has not been enabled.';
+    const action=document.createElement('button');action.type='button';
+    action.className='aaa-chat-open';action.textContent='Open my Party Dashboard';
+    action.addEventListener('click',()=>requireAccount(()=>{
+      if(typeof window.AsteriaRouter?.openPlayerDashboard==='function')
+        window.AsteriaRouter.openPlayerDashboard();
+      else window.AsteriaWorkspace?.openDashboard?.('campaigns');
+    }));
+    const other=document.createElement('button');other.type='button';
+    other.className='aaa-chat-open';other.textContent='Browse My Campaigns';
+    other.addEventListener('click',()=>requireAccount(()=>openCampaignMode('campaigns')));
+    chats.append(title,info,action,other);
+    mount.before(holder);
+    holder.append(nav,mount,chats);
+    showFriendSection('friends');
   }
 
   function prepareMenu() {
@@ -110,9 +196,13 @@
     panel.id = 'aaaMegaMenu'; panel.className = 'aaa-mega-menu';
     panel.setAttribute('aria-label','Website navigation choices');
     panel.setAttribute('role','region'); panel.hidden = true;
-    panel.innerHTML = '<div class="aaa-mega-heading"><h2 id="aaaMegaTitle"></h2><button type="button" id="aaaMegaClose" aria-label="Close navigation">\u00d7</button></div><div class="aaa-mega-grid" id="aaaMegaCards"></div>';
+    panel.innerHTML = '<div class="aaa-mega-heading"><h2 id="aaaMegaTitle"></h2><label class="aaa-mega-search"><span class="aaa-visually-hidden">Search menu choices</span><input id="aaaMegaSearch" type="search" placeholder="Find a section..." autocomplete="off" aria-label="Search menu choices"></label><button type="button" id="aaaMegaClose" aria-label="Close navigation">\u00d7</button></div><div class="aaa-mega-grid" id="aaaMegaCards"></div>';
     document.body.append(mask, panel);
     $('aaaMegaClose')?.addEventListener('click', () => closeMenu(true));
+    $('aaaMegaSearch')?.addEventListener('input',event=>{
+      const q=String(event.target.value||'').trim().toLowerCase();
+      $all('.aaa-nav-card',$('aaaMegaCards')).forEach(card=>{card.hidden=Boolean(q)&&!card.textContent.toLowerCase().includes(q);});
+    });
     panel.addEventListener('keydown', event => {
       if (event.key === 'Escape') {event.preventDefault();closeMenu(true);}
       if (event.key === 'Tab') {
@@ -140,7 +230,8 @@
     const panel = $('aaaMegaMenu'), mask = $('aaaMegaBackdrop'), holder = $('aaaMegaCards');
     $('aaaMegaTitle').textContent = menu.title;
     holder.replaceChildren();
-    menu.entries.forEach((entry, index) => {
+    const visibleEntries=menu.entries.filter(entry=>entry[2]!=='characters'||isLoggedIn());
+    visibleEntries.forEach((entry, index) => {
       const card = document.createElement('button');
       card.type = 'button'; card.className = 'aaa-nav-card';
       card.dataset.category = menu.id; card.dataset.index = String(index);
@@ -152,9 +243,11 @@
       summary.className = 'aaa-nav-card-summary'; summary.textContent = entry[1];
       card.append(artwork, label, summary);
       card.setAttribute('aria-label', entry[0] + ': ' + entry[1]);
-      card.addEventListener('click', () => {closeMenu();navigate(entry);});
+      card.addEventListener('click', () => {closeMenu();navigate(entry,menu.id);});
       holder.append(card);
     });
+    if($('aaaMegaSearch'))$('aaaMegaSearch').value='';
+    panel.dataset.menu=menu.id;
     panel.hidden = false; mask.hidden = false;
     for (const {trigger:id} of MENUS) $(id)?.setAttribute('aria-expanded', String(id === menu.trigger));
     holder.querySelector('button')?.focus({preventScroll:true});
@@ -300,6 +393,7 @@
     window.requestAnimationFrame?requestAnimationFrame(polishLibrary):polishLibrary();
   }
   function polishStaticPages() {
+    prepareFriendSections();
     const friends=$('asteriaFriendsPage');
     if(friends){
       const heading=friends.querySelector('.asteria-page-heading');
