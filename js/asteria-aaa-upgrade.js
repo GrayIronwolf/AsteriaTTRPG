@@ -120,7 +120,8 @@
     if (kind === 'account') { requireAccount(() => window.AsteriaAccountPages?.openSection?.(a)); return; }
     if (kind === 'forge') {
       requireAccount(() => {
-        if (typeof window.AsteriaGameplay?.openCharacterForgeHub === 'function') window.AsteriaGameplay.openCharacterForgeHub();
+        if (typeof window.AsteriaGameplay?.openCharacterCreator === 'function') window.AsteriaGameplay.openCharacterCreator();
+        else if (typeof window.AsteriaGameplay?.openCharacterForgeHub === 'function') window.AsteriaGameplay.openCharacterForgeHub();
         else window.AsteriaWorkspace?.openCharacterForge?.();
       });
       return;
@@ -474,6 +475,28 @@
       manager.prepend(sidebar);
     }
   }
+  function polishCharacterForge(){
+    const root=$('phase3GameplayShell');
+    if(!root?.classList.contains('phase3-forge-shell')||$('aaaForgeSideMenu'))return;
+    const nav=document.createElement('nav');
+    nav.id='aaaForgeSideMenu';nav.className='aaa-forge-side-menu';
+    nav.setAttribute('aria-label','Character Forge sections');
+    const creating=Boolean(root.querySelector('.phase3-creator'));
+    const choices=[
+      ['Forge a Character','forge',()=>window.AsteriaGameplay?.openCharacterCreator?.()],
+      ['My Characters','characters',()=>window.AsteriaGameplay?.openCharacterForgeHub?.()]
+    ];
+    choices.forEach(([label,id,action])=>{
+      const button=document.createElement('button');button.type='button';
+      button.className='aaa-category-link aaa-menu-side-button';
+      button.textContent=label;button.dataset.aaaForgeSection=id;
+      if((creating&&id==='forge')||(!creating&&id==='characters')){
+        button.classList.add('is-current');button.setAttribute('aria-current','page');
+      }
+      button.addEventListener('click',action);nav.append(button);
+    });
+    root.prepend(nav);
+  }
   function hideLoadingToasts() {
     // Only suppress transient *loading* corner toasts, not failures or success.
     // Semantic status regions inside workspaces remain visible and accessible.
@@ -488,6 +511,14 @@
   }
   function startup() {
     bindMenu();setupCarousel();polishStaticPages();hideLoadingToasts();
+    const workspace=$('workspace');
+    if(workspace&&window.MutationObserver){
+      new MutationObserver(records=>{
+        if(records.some(record=>record.type==='childList'))
+          (window.requestAnimationFrame || (fn=>fn()))(polishCharacterForge);
+      }).observe(workspace,{subtree:true,childList:true});
+    }
+    polishCharacterForge();
     const library=$('compendiumLibrary');
     if(library&&window.MutationObserver)new MutationObserver(records=>{
       if(records.some(record=>record.type==='childList'))scheduleLibrary();
