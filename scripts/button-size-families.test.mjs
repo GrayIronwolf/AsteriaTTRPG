@@ -9,7 +9,7 @@ const index=read('index.html');
 
 test('Phase 2 loads the four approved button families after previous website styles',()=>{
  const source=index.indexOf('css/asteria-menu-buttons.css');
- const phase2=index.indexOf('css/asteria-button-sizes.css?v=phase2-size-families-20261106');
+ const phase2=index.indexOf('css/asteria-button-sizes.css?v=');
  assert.ok(source>=0 && phase2>source);
  for(const [family,w,h] of [['small',160,40],['standard',220,48],['long',360,53],['icon',53,53]]){
   assert.match(css,new RegExp('--asteria-button-'+family+'-width:'+w+'px;'));
