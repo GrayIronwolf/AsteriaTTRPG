@@ -656,6 +656,22 @@
     renderCreateCampaignForm(grid);
   }
 
+  // Direct navigation used by the global Campaign Forge cards.
+  // Keep existing account, GM and UCN permissions enforced by their owners.
+  function openCampaignCreateForm() {
+    if (!openDashboard('campaigns')) return false;
+    openCreateCampaignForm();
+    byId('clean-grid')?.scrollIntoView?.({block:'start'});
+    return true;
+  }
+  function openCampaignJoinForm() {
+    if (!openDashboard('campaigns')) return false;
+    const input = byId('workspaceJoinCampaignCode');
+    input?.scrollIntoView?.({block:'center'});
+    input?.focus?.({preventScroll:true});
+    return Boolean(input);
+  }
+
   function campaignIndex(campaign) {
     return (window.campaigns || []).findIndex((item, index) => campaignId(item, index) === campaign.id);
   }
@@ -2635,6 +2651,8 @@
       openDashboard,
       openNotifications:() => openDashboard('notifications'),
       openCampaignHub:() => openDashboard('campaigns'),
+      openCampaignCreateForm,
+      openCampaignJoinForm,
       openDashboardMode: openDashboard,
       createCampaign: createWorkspaceCampaign,
       createCharacter: createWorkspaceCharacter,
