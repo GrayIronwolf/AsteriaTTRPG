@@ -182,7 +182,9 @@
     chats.append(title,info,action,other);
     mount.before(holder);
     holder.append(nav,mount,chats);
-    showFriendSection('friends');
+    friendSection='friends';
+    nav.querySelector('[data-aaa-friend-section="friends"]')?.classList.add('is-current');
+    nav.querySelector('[data-aaa-friend-section="friends"]')?.setAttribute('aria-current','page');
   }
 
   function prepareMenu() {
@@ -440,17 +442,9 @@
       sidebar.id='aaaCampaignSidebar';sidebar.className='aaa-campaign-sidebar';
       sidebar.setAttribute('aria-label','Campaign Forge sections');
       const options=[
-        ['Current Campaigns',()=>{const target=$('campaignList');target?.scrollIntoView?.({behavior:'smooth',block:'start'});} ],
-        ['Forge a Campaign',()=>requireAccount(()=>{
-          if(typeof window.AsteriaWorkspace?.openDashboard==='function')
-            window.AsteriaWorkspace.openDashboard('createCampaign');
-          else window.AsteriaRouter?.openCampaignHub?.();
-        })],
-        ['Join a Campaign',()=>requireAccount(()=>{
-          if(typeof window.AsteriaWorkspace?.openDashboard==='function')
-            window.AsteriaWorkspace.openDashboard('campaigns');
-          else window.AsteriaRouter?.openCampaignHub?.();
-        })]
+        ['My Campaigns',()=>requireAccount(()=>openCampaignMode('campaigns'))],
+        ['Forge A Campaign',()=>requireAccount(()=>openCampaignMode('campaign-new'))],
+        ['Join A Campaign',()=>requireAccount(()=>openCampaignMode('campaign-join'))]
       ];
       options.forEach(([name,action],i)=>{
         const button=document.createElement('button');button.type='button';
