@@ -40,7 +40,7 @@ test('The open Character Forge gallery still updates when owned characters finis
 test('Delayed Forge content completion is guarded against Home navigation',()=>{
   const body=source.slice(source.indexOf('  function render(){'),source.indexOf('  function renderCharacterForgeHub()'));
   assert.match(body,/const refreshIfStillVisible = \(\) =>/);
-  assert.match(body,/view\.classList\.contains\('show'\)/);
+  assert.match(body,/view\?\.classList\.contains\('show'\)/);
   assert.match(body,/!root\.isConnected/);
   assert.match(body,/readyForView\(root,dependencies,refreshIfStillVisible\)/);
 });
