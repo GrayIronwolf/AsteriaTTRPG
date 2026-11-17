@@ -6,7 +6,8 @@
   // previous Character Forge/React hash from a closed tab or saved session.
   // Actual inbound invitations remain actionable rather than being discarded.
   const entryHash = String(window.location?.hash || '');
-  const explicitInvitation = /^#(?:secure-campaign-invite=|campaign-invite=|\\/join\\/)/i.test(entryHash)
+  const explicitInvitation = ['#secure-campaign-invite=','#campaign-invite=','#/join/']
+    .some(prefix=>entryHash.toLowerCase().startsWith(prefix))
     || /[?&](?:campaign-invite|invite)=/i.test(String(window.location?.search || ''));
   const ordinaryStartup = !explicitInvitation;
   let startupHomePending = ordinaryStartup;
