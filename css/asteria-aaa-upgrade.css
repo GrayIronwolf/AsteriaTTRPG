@@ -485,3 +485,17 @@ body .asteria-header .asteria-header-profile button.asteria-header-mail[hidden]{
 @media(prefers-reduced-motion:reduce){
   .aaa-nav-card,.aaa-nav-card:hover,.aaa-nav-card:focus-visible{transition:none!important;transform:none!important;}
 }
+
+/* Character Forge side choices stay visible when the rules-driven creator re-renders. */
+#phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu{
+  display:flex;flex-wrap:wrap;gap:16px;margin:0 0 14px;padding:8px 12px 12px;
+  background:#1E2838;border:1px solid var(--aaa-site-divider);border-radius:3px;
+}
+#phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu .aaa-menu-side-button{
+  width:auto!important;min-width:145px;flex:0 1 auto;padding:9px 6px 12px!important;
+  background:none!important;border:0!important;
+}
+@media(max-width:520px){
+  #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu{gap:8px;}
+  #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu .aaa-menu-side-button{min-width:0;flex:1 1 auto;}
+}
