@@ -619,3 +619,70 @@ body .asteria-header .asteria-header-profile button.asteria-header-mail{
   box-shadow:none!important;
   filter:drop-shadow(0 2px 3px #000)!important;
 }
+
+
+/* Approved 2026-11-17 Option C: compact LOGO and PORTRAIT, not crystal controls.
+   Desktop keeps all six navigation buttons plus Account on one unwrapped row.
+   The 1679px-and-below drawer/navigation arrangement is intentionally unchanged. */
+@media (min-width:1680px) {
+  :root {
+    --asteria-logo-compact-width:clamp(180px,calc(31.25vw - 345px),255px);
+    --asteria-profile-compact-width:clamp(82px,4.95vw,95px);
+  }
+  body .topbar.asteria-header {
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    padding:0!important;
+    gap:2px!important;
+  }
+  body .asteria-header .asteria-header-brand {
+    flex:0 0 var(--asteria-logo-compact-width)!important;
+    width:var(--asteria-logo-compact-width)!important;
+    min-width:0!important;
+    max-width:var(--asteria-logo-compact-width)!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  body .asteria-header .asteria-header-wordmark {
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    object-fit:contain!important;
+    object-position:left center!important;
+  }
+  body .asteria-header #globalNavigation {
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    gap:2px!important;
+    justify-content:flex-start!important;
+    white-space:nowrap!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  body .asteria-header .top-actions {
+    display:flex!important;
+    flex:0 0 auto!important;
+    flex-wrap:nowrap!important;
+    gap:2px!important;
+    margin-left:auto!important;
+    margin-right:0!important;
+    padding:0!important;
+    min-width:0!important;
+  }
+  body .asteria-header .asteria-header-profile:not([hidden]) {
+    flex:0 0 var(--asteria-profile-compact-width)!important;
+    width:var(--asteria-profile-compact-width)!important;
+    min-width:var(--asteria-profile-compact-width)!important;
+    max-width:var(--asteria-profile-compact-width)!important;
+    height:var(--core-header-height)!important;
+    margin-left:26px!important; /* reserve half the 52px mail hit target */
+    margin-right:0!important;
+  }
+}
+/* The cropped portrait is for quick account access. Full username and
+   Account ID remain in Account > Profile, where they have readable space. */
+body .asteria-header .asteria-header-profile .asteria-header-identity {
+  display:none!important;
+}
