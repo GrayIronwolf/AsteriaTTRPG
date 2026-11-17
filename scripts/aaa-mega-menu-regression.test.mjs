@@ -81,48 +81,48 @@ test('all seven header clicks open the mega menu before old document-capture nav
   }
 });
 
-test('all dropdowns have one fixed width and height independent of entry counts',()=>{
-  assert.match(css,/\.aaa-mega-menu\s*\{[^}]*height:min\(570px, calc\(100dvh - var\(--core-header-height\) - 16px\)\)!important/s);
+test('all dropdowns have one fixed width and height, with narrower cards at the same height',()=>{
+  assert.match(css,/height:min\(570px,calc\(100dvh - var\(--core-header-height\) - 16px\)\)!important/);
   assert.match(css,/width:calc\(100vw - 16px\)!important/);
-  assert.match(css,/\.aaa-mega-grid\s*\{[^}]*overflow-y:auto!important/s);
-  assert.match(css,/grid-template-columns:repeat\(5,minmax\(0,1fr\)\)!important/);
+  assert.match(css,/overflow-y:auto!important/);
+  assert.match(css,/grid-template-columns:repeat\(auto-fill,minmax\(150px,170px\)\)!important/);
+  assert.match(css,/height:clamp\(145px,20vh,205px\)!important/);
   assert.match(css,/background:#32373D!important/);
 });
 
-test('restores original header crystal sizes, left-aligned logo and unframed envelope',()=>{
-  assert.match(css,/padding-left:0!important/);
-  assert.match(css,/clamp\(195px,11vw,360px\)!important/);
-  assert.match(css,/height:53px!important/);
-  assert.match(css,/\.asteria-header \.asteria-header-profile button\.asteria-header-mail\s*\{[^}]*background:transparent!important;[^}]*border:0!important;[^}]*border-radius:0!important/s);
-  assert.match(css,/left:-26px!important/);
-  assert.match(css,/has-unread::after/);
+test('restores compact header crystal widths, left-aligned logo and unframed envelope',()=>{
+  const sizes=read('css/asteria-button-sizes.css');
+  assert.ok(sizes.includes('clamp(140px,8.2vw,166px)'));
+  assert.ok(sizes.includes('--asteria-button-long-height:53px;'));
+  assert.ok(css.includes('padding:0 4px 0 0!important'));
+  assert.ok(css.includes('flex-wrap:nowrap!important'));
+  assert.match(css,/button\.asteria-header-mail\{[^}]*background:transparent!important;[^}]*border:0!important;[^}]*border-radius:0!important/s);
+  assert.ok(css.includes('left:-26px!important'));
+  assert.ok(css.includes('has-unread::after'));
 });
 
-
-test('Option C keeps all six original-size header buttons and Account in one desktop row',()=>{
+test('all seven desktop buttons fit on one row with restored large logo and profile',()=>{
   const html=read('index.html');
-  const originalButtonCSS=read('css/asteria-button-sizes.css');
-  assert.ok(css.includes('--asteria-logo-compact-width:clamp(180px,calc(31.25vw - 345px),255px)'));
-  assert.ok(css.includes('--asteria-profile-compact-width:clamp(82px,4.95vw,95px)'));
-  assert.ok(css.includes('flex-wrap:nowrap!important'));
+  const sizes=read('css/asteria-button-sizes.css');
+  assert.ok(css.includes('clamp(330px,20.5vw,420px)'));
+  assert.ok(css.includes('clamp(180px,10.2vw,220px)'));
   assert.ok(css.includes('object-position:left center!important'));
   assert.ok(css.includes('body .asteria-header .asteria-header-profile .asteria-header-identity'));
-  assert.ok(css.includes('@media (min-width:1680px)'));
-  assert.ok(originalButtonCSS.includes('--asteria-button-long-height:53px;'));
-  assert.ok(html.includes('css/asteria-aaa-upgrade.css?v=20261117-3-option-c'));
-  assert.ok(html.includes('js/asteria-aaa-upgrade.js?v=20261117-3-menu-fix'));
+  assert.ok(css.includes('@media(min-width:1680px)'));
+  assert.ok(sizes.includes('clamp(140px,8.2vw,166px)'));
+  assert.ok(html.includes('css/asteria-aaa-upgrade.css?v=20261117-4-header-balance'));
   const clamp=(min,value,max)=>Math.max(min,Math.min(value,max));
   for(const width of [1680,1720,1760,1840,1920,2048,2560,3200]){
-    const logo=clamp(180,0.3125*width-345,255);
-    const profile=clamp(82,0.0495*width,95);
-    const longButton=clamp(195,0.11*width,360);
+    const logo=clamp(330,0.205*width,420);
+    const profile=clamp(180,0.102*width,220);
+    const longButton=clamp(140,0.082*width,166);
     const account=clamp(106,0.08*width,160);
-    // Six unchanged long navigation buttons, one small Account control,
-    // portrait, envelope's half-button margin and all declared row gaps.
-    const total=logo + (longButton*6) + account + profile + 26 + 20;
+    // Six compact long navigation buttons, Account, portrait, envelope's
+    // left margin, six row gaps, and small right padding.
+    const total=logo + (longButton*6) + account + profile + 26 + 40;
     assert.ok(total<=width,
-      'header items must fit at '+width+'px; estimated '+Math.round(total)+'px');
+      'header controls must fit at '+width+'px; estimated '+Math.round(total)+'px');
   }
-  assert.equal(clamp(180,0.3125*1920-345,255),255);
-  assert.equal(clamp(82,0.0495*1920,95),95);
+  assert.equal(Math.round(clamp(330,0.205*1920,420)),394);
+  assert.equal(Math.round(clamp(180,0.102*1920,220)),196);
 });
