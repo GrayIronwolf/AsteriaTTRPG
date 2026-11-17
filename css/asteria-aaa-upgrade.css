@@ -681,8 +681,10 @@ body .asteria-header .asteria-header-profile button.asteria-header-mail{
     margin-right:0!important;
   }
 }
-/* The cropped portrait is for quick account access. Full username and
-   Account ID remain in Account > Profile, where they have readable space. */
-body .asteria-header .asteria-header-profile .asteria-header-identity {
-  display:none!important;
+/* Desktop portrait is a compact Account shortcut. Its full identity text
+   remains accessible via Account > Profile. Mobile behavior stays unchanged. */
+@media (min-width:1680px) {
+  body .asteria-header .asteria-header-profile .asteria-header-identity {
+    display:none!important;
+  }
 }
