@@ -79,7 +79,7 @@ export function createFirebaseCharactersService({auth,db,firestoreSdk,readCanoni
   const id=editingId||'forge-'+crypto.randomUUID();
   const existing=editingId?await load(id):null;
   same(uid);
-  const candidate=composeCharacter(draft,rules,uid,id,existing);
+  composeCharacter(draft,rules,uid,id,existing);
   const ref=reference(uid,id);
   // This is a full owner-scoped transaction: another browser saving after
   // this form loaded cannot be overwritten silently.

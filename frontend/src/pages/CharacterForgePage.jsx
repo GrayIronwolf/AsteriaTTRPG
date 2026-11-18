@@ -13,7 +13,6 @@ import {newDraft,draftFromCharacter,visibleTabs,magicRules,patronClasses,
 import styles from './CharacterForgePage.module.css';
 
 const nice=s=>s.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-const names=rows=>rows?.map(row=>row.title)||[];
 const valueOf=(record,key)=>record?.[key]||'';
 const extract=e=>e.target.value;
 const MISSING='Your character data could not be verified. No changes were saved.';
