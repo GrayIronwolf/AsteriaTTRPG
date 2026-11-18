@@ -80,6 +80,20 @@ try{
  await page.getByRole('textbox',{name:'First name'}).fill('Updated');
  await page.getByRole('button',{name:'Save details'}).click();
  await page.getByText('Updated Tester').waitFor();
+ // Use a browser-generated PNG; the existing 512px WEBP crop and owner-only
+ // Storage rules are exercised against the real local Storage emulator.
+ const avatarBase64=await page.evaluate(()=>{
+  const canvas=document.createElement('canvas');canvas.width=16;canvas.height=16;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#476a8b';ctx.fillRect(0,0,16,16);
+  return canvas.toDataURL('image/png').split(',')[1];
+ });
+ await page.locator('#asteria-avatar-file').setInputFiles({
+  name:'preview-avatar.png',mimeType:'image/png',buffer:Buffer.from(avatarBase64,'base64')
+ });
+ await page.getByRole('button',{name:'Upload',exact:true}).click();
+ await page.getByRole('img',{name:'Your profile avatar'}).waitFor({timeout:30000});
+ await page.getByRole('button',{name:'Remove',exact:true}).click();
+ await page.getByLabel('No profile picture').waitFor({timeout:30000});
  await page.getByTestId('site-account-tab-security').click();
  await page.getByTestId('site-account-security').waitFor();
  await page.getByTestId('site-account-tab-settings').click();
@@ -166,7 +180,7 @@ try{
  fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify({
   phase:'4.1',mode:'demo-asteria local Auth/Firestore emulators',
   passwordStored:false,productionTouched:false,protectedFeatures:false,
-  tested:['registration','verified owner profile','session restoration','logout','login','wrong password','password reset','GM route lock'],
+  tested:['registration','verified owner profile','session restoration','logout','login','wrong password','password reset','GM route lock','profile name save','avatar upload/remove'],
   widths:[320,390,760,1280,1440,1920],errors
  },null,2));
  console.log('PASS: Phase 4.1 real Firebase emulators, register, login, logout, reset, reload and protected routes');
