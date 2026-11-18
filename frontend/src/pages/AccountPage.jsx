@@ -155,15 +155,20 @@ export function AccountPage({route}) {
   }
   async function syncToCloud() {
     if(!cloud || cloudLoading || busy)return;
-    const result=await perform(
-      ()=>actions.saveAppearancePreferences(appearance,cloud),
-      'Appearance preferences saved to your account.'
-    );
-    if(result?.ok){
-      setCloud(result.cloud);setCloudConflict(false);
-    }else if(result?.conflict){
-      setCloudConflict(true);setError('Cloud preferences changed in another session. Reload before saving.');
-    }
+    const owner=uid;
+    setError('');setMessage('');
+    try{
+      const result=await actions.saveAppearancePreferences(appearance,cloud);
+      if(owner!==uidRef.current)return;
+      if(!result.ok){setError(result.error||'Cloud preferences could not be saved.');return;}
+      if(result.data?.conflict){
+        setCloudConflict(true);
+        setError('Cloud preferences changed in another session. Reload before saving.');
+        return;
+      }
+      setCloud(result.data?.cloud||null);setCloudConflict(false);
+      setMessage('Appearance preferences saved to your account.');
+    }catch(err){if(owner===uidRef.current)setError(niceError(err));}
   }
   function loadLocalFromCloud(){
     if(!cloud)return;

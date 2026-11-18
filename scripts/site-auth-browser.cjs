@@ -73,9 +73,19 @@ try{
  assert.equal(await page.getByTestId('site-header-login').count(),0);
  assert.equal(await page.getByTestId('site-header-account-menu').count(),1);
  await page.goto(base+'#/account/profile',{waitUntil:'domcontentloaded'});
- await page.getByRole('heading',{name:'My Profile',level:1}).waitFor();
- assert.equal(await page.locator('main form,main input').count(),0,
-  'Account profile editing is deliberately deferred to Phase 4.2');
+ await page.getByRole('heading',{name:'My Profile',level:2}).waitFor();
+ await page.getByTestId('site-account-username').getByText(username).waitFor();
+ assert.equal(await page.getByTestId('site-account-id').innerText(),'Not assigned');
+ await page.getByRole('button',{name:'Edit personal details'}).click();
+ await page.getByRole('textbox',{name:'First name'}).fill('Updated');
+ await page.getByRole('button',{name:'Save details'}).click();
+ await page.getByText('Updated Tester').waitFor();
+ await page.getByTestId('site-account-tab-security').click();
+ await page.getByTestId('site-account-security').waitFor();
+ await page.getByTestId('site-account-tab-settings').click();
+ await page.getByTestId('site-account-settings').waitFor();
+ await page.getByTestId('site-account-tab-appearance').click();
+ await page.getByTestId('site-account-appearance').waitFor();
  await page.goto(base+'#/react/gm/private-campaign',{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'GM Dashboard',level:1}).waitFor();
  assert.equal(await page.locator('main form,main input').count(),0,

@@ -8,7 +8,7 @@ const define = (domain, requiredServices = [], access = 'public', status = 'prev
 
 const HOME = define('shell', [], 'public', 'ready');
 const COMPENDIUM = define('compendium', ['compendium']);
-const ACCOUNT = define('account', ['auth'], 'protected');
+const ACCOUNT = define('account', ['auth'], 'protected', 'ready');
 const LOGIN = define('account', ['auth']);
 const SOCIAL = define('social', ['auth', 'friends'], 'protected');
 const CAMPAIGN = define('campaigns', ['auth', 'campaigns'], 'protected');
@@ -32,7 +32,7 @@ export const ROUTE_FEATURES = Object.freeze({
   settings: ACCOUNT,
   friends: SOCIAL,
   notifications: define('social', ['auth', 'notifications'], 'protected'),
-  dashboard: ACCOUNT,
+  dashboard: define('account', ['auth'], 'protected'),
   'gm-dashboard': GM,
   'character-dashboard': CHARACTER,
   presentation: GM,
