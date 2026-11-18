@@ -59,7 +59,7 @@ export function createFirebaseCampaignMediaService({
   }
   /** Live listeners fail closed on revoked GM/player membership, stale cache,
    * account switch or Firestore permission error. */
-  function watch(id,mode,reference,project,onUpdate,onError){
+  function watch(id,mode,reference,project,onUpdate,onError,targetType='collection'){
     assertGMCampaignId(id);
     let active=true,stops=[];
     const close=()=>{active=false;stops.splice(0).forEach(stop=>{try{stop();}catch{}});};
@@ -99,10 +99,11 @@ export function createFirebaseCampaignMediaService({
         };
         attach(cRef(id),'campaign',snap=>snap.data());
         if(v2)attach(memberRef(id,uid),'member',snap=>snap.exists()?snap.data():null);
-        attach(reference,'target',project===presentationProject
+        attach(reference,'target',targetType==='document'||project===presentationProject
           ?snap=>snap.exists()?snap.data():null:project===notesProject
             ?snap=>snap.exists()?snap.data().pins||[]:[]
             :snap=>snap.docs.map(row=>({id:row.id,...row.data()})));
+
       }catch(error){fail(error);}
     })();
     return close;
@@ -138,7 +139,7 @@ export function createFirebaseCampaignMediaService({
   function watchEncounter(id,onUpdate,onError){
     // Shared encounter data is projected by the calling view with safeCombatPresentation.
     const ref=firestoreSdk.doc(db,'campaigns',id,'systems','encounter');
-    return watch(id,'player',ref,raw=>raw||{},onUpdate,onError);
+    return watch(id,'player',ref,raw=>raw||{},onUpdate,onError,'document');
   }
   async function fetchMapMedia(id,map,mode='player'){
     const {uid}=await check(id,mode);
