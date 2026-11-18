@@ -120,6 +120,8 @@ test('Phase 4.1 reuses Asteria registration, owner-scoped data and server-only A
   assert.match(init,/createFirebaseAuthAdapter/);
   assert.match(rootEntry,/<AuthBootstrap>/);
   assert.match(authPage,/data-testid="site-auth-form"/);
+  assert.match(read('frontend/src/app/App.jsx'),/<AuthPage key=\{route.id\} route=\{route\} \/>/);
+  assert.doesNotMatch(authPage,/useEffect\(\(\) => \{\s*setFields/);
   assert.match(authPage,/type="password"/);
   assert.doesNotMatch(authPage,/dangerouslySetInnerHTML|localStorage|sessionStorage/);
   assert.doesNotMatch(read('index.html'),/frontend\/src\/auth/);

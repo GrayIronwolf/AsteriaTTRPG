@@ -28,7 +28,7 @@ export function App({ identity = null } = {}) {
   const showAuth = ['login','account-create','forgot-password'].includes(route.id) && services.has('auth');
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage route={route} /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }

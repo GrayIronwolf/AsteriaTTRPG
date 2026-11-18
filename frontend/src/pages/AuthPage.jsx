@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { PageLayout } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
 import { Eyebrow, Heading, BodyText } from '../components/ui/Typography.jsx';
@@ -15,11 +15,6 @@ export function AuthPage({route}) {
   const [fields,setFields] = useState({...EMPTY});
   const [message,setMessage] = useState(null);
   const [done,setDone] = useState(false);
-  useEffect(() => {
-    setFields({...EMPTY});
-    setMessage(null);
-    setDone(false);
-  }, [route.id]);
   const isCreate = route.id === 'account-create';
   const isReset = route.id === 'forgot-password';
   const title = isCreate ? 'Create Account' : isReset ? 'Reset Password' : 'Login';
