@@ -128,6 +128,10 @@ try{
  await owner.getByTestId('site-gm-character-refresh').click();
  await owner.getByTestId('site-gm-character-approve').waitFor({timeout:30000});
  await owner.getByTestId('site-gm-character-approve').click();
+ await owner.waitForTimeout(800);
+ const gmError=owner.getByTestId('site-gm-character-links').getByRole('alert');
+ if(await gmError.count())throw Error('GM character approval rejected: '+await gmError.first().innerText());
+ console.log('GM CHARACTER REVIEW:',(await owner.getByTestId('site-gm-character-links').innerText()).slice(0,650));
  await owner.getByText('No pending character requests.').waitFor({timeout:30000});
  await player.getByTestId('site-character-link-status').click();
  await player.getByText(/Character status: approved/).waitFor({timeout:30000});
