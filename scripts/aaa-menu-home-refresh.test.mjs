@@ -75,3 +75,18 @@ test('explicit UCN and secure invitation links survive initial routing',()=>{
   assert.equal(b.window.location.hash,hash);
  }
 });
+
+test('shared menu and panel surfaces use solid #060D15 without recolouring cards',()=>{
+  const skin=read('css/asteria-solid-navy-surfaces.css');
+  const html=read('index.html');
+  assert.ok(html.includes('css/asteria-solid-navy-surfaces.css'));
+  assert.match(skin,/--asteria-menu-panel-surface:\s*#060D15;/);
+  for(const selector of ['.topbar.asteria-header','#settingsPanel','.aaa-mega-menu','.compendium-quick-menu','.asteria-account-menu','.asteria-react-panel:not(.card):not(.asteria-royal-relic)']){
+    assert.ok(skin.includes(selector),selector);
+  }
+  assert.match(skin,/background:\s*var\(--asteria-menu-panel-surface\)\s*!important/);
+  assert.match(skin,/\.react-dashboard-custom-cell > \.asteria-react-panel\.asteria-royal-relic::after/);
+  assert.doesNotMatch(skin,/(?:^|,|\n)\s*(?:body\s+)?\.card\s*\{/m);
+  assert.doesNotMatch(skin,/\.aaa-nav-card\s*\{/);
+  assert.doesNotMatch(skin,/\.crystal-button\s*\{/);
+});
