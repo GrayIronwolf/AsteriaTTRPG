@@ -10,7 +10,7 @@ import {campaignArtworkFileError} from '../../../src/state/campaignArtwork.mjs';
  * No local owner claims, guessed identifiers, or client-assigned UCNs.
  */
 export function createFirebaseCampaignsService({
-  auth,db,firestoreSdk,functions,functionsSdk,storage,storageSdk,readCanonical,enabled=false
+  auth,db,firestoreSdk,functions,functionsSdk,storage,storageSdk,readCanonical,connections=null,enabled=false
 }){
   if(!auth||!db||!firestoreSdk||!functions||!functionsSdk||
     typeof readCanonical!=='function')throw new Error('Asteria Firebase services required.');
@@ -91,7 +91,9 @@ export function createFirebaseCampaignsService({
     // Always request legacy-compatible creation. v2 activation is deliberately
     // out of scope until invitation and membership migration in Phase 5.3.
     const allocate=functionsSdk.httpsCallable(functions,'asteriaCampaignUCN');
-    const response=await allocate({action:'create',name:draft.name.trim()});
+    const v2=connections?.availability().enabled===true;
+    const response=await allocate({action:'create',name:draft.name.trim(),
+      ...(v2?{v2Test:true,partySize:draft.partySize}:{})});
     same(uid);
     const identity=campaignIdentity(response?.data,uid);
     // Identity allocation is committed server-side before the descriptive
@@ -164,6 +166,6 @@ export function createFirebaseCampaignsService({
     same(uid);
     return {removed:true};
   }
-  return Object.freeze({availability:()=>flags,list,load,create,save,
+  return Object.freeze({availability:()=>flags,connections,list,load,create,save,
     uploadArtwork,removeArtwork,editDraft:editCampaignDraft});
 }
