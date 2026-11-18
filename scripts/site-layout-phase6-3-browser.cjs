@@ -43,6 +43,10 @@ try{
    return ['localhost','127.0.0.1'].includes(hostname)?r.continue():r.abort();
   });
  }
+ for(const page of [owner,player]){
+   page.on('pageerror',error=>console.error('PHASE63 PAGEERROR',error.stack||error.message));
+   page.on('console',message=>{if(message.type()==='error')console.error('PHASE63 CONSOLE ERROR',message.text());});
+ }
  const suffix=Date.now().toString(36);
  await account(owner,'gm-'+suffix+'@example.test','GMFive'+suffix.slice(-5));
  await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
@@ -157,7 +161,7 @@ try{
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
  catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
- console.error('EDITOR HTML', (await player.locator('main').innerHTML()).slice(0,10000));throw error;}
+ console.error('EDITOR DOM', (await player.locator('html').innerHTML()).slice(0,10000));throw error;}
  await player.getByRole('button',{name:'Lock Skills',exact:true}).click();
  await player.getByTestId('site-layout-undo').click();
  await player.getByTestId('site-layout-redo').click();
