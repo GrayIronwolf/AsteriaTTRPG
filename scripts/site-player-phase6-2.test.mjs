@@ -21,7 +21,10 @@ const source={id:sourceId,ownerUid:player,campaignCharacterIds:{[cid]:charId},
   linkedCampaignIds:[cid],name:'Hero'};
 
 test('routes activate only with explicit authenticated characters service',()=>{
-  const inactive={has:()=>false},active={has:key=>['auth','characters'].includes(key)};
+  const inactive={has:()=>false},active={
+    has:key=>['auth','characters'].includes(key),
+    get:key=>key==='characters'?{dashboard:{availability:()=>({enabled:true})}}:null
+  };
   assert.equal(canActivateRoute('character-dashboard',inactive),false);
   assert.equal(canActivateRoute('character-dashboard',active),true);
   assert.equal(parseSiteRoute({hash:'#/react/owned-character/'+sourceId}).params.characterId,sourceId);

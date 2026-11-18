@@ -152,6 +152,8 @@ test('Phase 5.1 does not enable campaigns or dashboards and cannot fall back to 
  assert.equal(canActivateRoute('character-forge',auth),false);
  const connected=createAppServices({auth:{},characters:{list(){}}});
  assert.equal(canActivateRoute('character-forge',connected),true);
+ assert.equal(canActivateRoute('character-dashboard',connected),false,
+  'Forge service alone does not opt into the Player Dashboard');
  for(const route of ['campaign-forge','invitation','character-dashboard','dashboard','gm-dashboard']){
   assert.equal(canActivateRoute(route,connected),false,route);
  }

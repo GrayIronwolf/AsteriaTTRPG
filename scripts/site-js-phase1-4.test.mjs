@@ -134,7 +134,7 @@ test('every future React destination has a fail-closed migration owner', () => {
   assert.equal(getFeatureForRoute('appearance').status, 'ready');
   assert.equal(canActivateRoute('appearance', previewServices), true);
   const injected = createAppServices({
-    auth: {}, campaigns: {}, characters: {}, compendium: {},
+    auth: {}, campaigns: {}, characters: {dashboard:{availability:()=>({enabled:true})}}, compendium: {},
     friends: {}, notifications: {}, gameplay: {}
   });
   for (const id of routes.filter(value => !['home', 'appearance', 'account', 'profile', 'settings', 'friends', 'notifications', 'character-forge', 'campaign-forge', 'invitation', 'dashboard', 'gm-dashboard', 'character-dashboard'].includes(value))) {
