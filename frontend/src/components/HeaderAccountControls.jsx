@@ -3,14 +3,22 @@ import { CrystalButton } from './ui/CrystalButton.jsx';
 import { getVerifiedHeaderIdentity } from './headerIdentity.mjs';
 import styles from './HeaderAccountControls.module.css';
 import { useAuth } from '../auth/AuthProvider.jsx';
+import { useNotifications } from '../notifications/NotificationsProvider.jsx';
 
 /**
  * Phase 2.1 presentational account area. The isolated preview passes null
  * (guest). Never infer sign-in from localStorage or a legacy global API.
  * The trusted authenticated adapter belongs to the later Account migration.
  */
+function verifiedNotificationCount(inbox,session){
+  if(session.status!=='authenticated'||!session.profileAvailable||
+     !inbox.available||!inbox.state.hasData)return 0;
+  return inbox.state.unreadLatest;
+}
 export function HeaderAccountControls({ identity = null }) {
   const { session, busy, actions } = useAuth();
+  const inbox=useNotifications();
+  const unread=verifiedNotificationCount(inbox,session);
   const verified = getVerifiedHeaderIdentity(identity);
   const [ownedAvatar,setOwnedAvatar] = useState(null);
   const avatarUrl = ownedAvatar ?? verified?.avatarUrl ?? null;
@@ -69,16 +77,17 @@ export function HeaderAccountControls({ identity = null }) {
       <details ref={accountMenuRef} className={styles.accountMenu} data-testid="site-header-account-menu">
         <summary aria-label="Account options" title="Account options">
           <span aria-hidden="true">⋮</span>
-          {verified.notificationCount > 0 &&
-            <span className={styles.unreadBadge} aria-label={verified.notificationCount + ' unread notifications'}>
-              {verified.notificationCount === 99 ? '99+' : verified.notificationCount}
+          {unread > 0 &&
+            <span className={styles.unreadBadge} data-testid="site-header-unread"
+              aria-label={unread + ' unread on latest notification pages'}>
+              {unread > 99 ? '99+' : unread}
             </span>}
         </summary>
         <nav className={styles.accountLinks} aria-label="Account shortcuts">
           <a href="#/account/profile" onClick={closeAccountMenu}>My Profile</a>
           <a href="#/account/friends" onClick={closeAccountMenu}>Friends</a>
           <a href="#/account/notifications" onClick={closeAccountMenu}>
-            Notifications{verified.notificationCount > 0 ? ' (' + verified.notificationCount + ')' : ''}
+            Notifications{unread > 0 ? ' (' + unread + ')' : ''}
           </a>
           <a href="#/appearance" onClick={closeAccountMenu}>Appearance</a>
           <a href="#/account/settings" onClick={closeAccountMenu}>Account Settings</a>
