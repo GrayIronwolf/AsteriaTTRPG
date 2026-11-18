@@ -156,6 +156,11 @@ export function composeCharacter(d,rules,uid,id,existing=null){
   const value=Number(d.characteristics[key])+Number(race.rules.rollModifiers?.[key]||0);
   return [key,Math.max(0,Math.min(Number(race.rules.tierCaps?.[key]??100),value))];
  }));
+ const startingTalentNames=[...new Set(classes.flatMap(row=>{
+  const entries=(rules.talent||[]).filter(t=>t.rules.classSlug===row.slug);
+  const tierOne=entries.filter(t=>String(t.rules.tier).toLowerCase().includes('1'));
+  return (tierOne.length?tierOne:entries).slice(0,4).map(t=>t.title);
+ }))];
  const pack=PACKS.find(p=>p.slug===d.equipmentPackSlug);
  const inventory=pack.items.map(title=>{
   const item=find(rules,'item',title);
@@ -185,7 +190,7 @@ export function composeCharacter(d,rules,uid,id,existing=null){
   classSlugs,primaryClassSlug:cls.slug,secondaryClassSlugs:classSlugs.slice(1),classMode:d.classMode,
   classLimit:{max:2,primaryLocked:true},characteristics:stats,appearance,
   origin:{slug:origin?.slug||'',title:origin?.title||'',data:backstory},backstory,family_tree,
-  magic:{types:d.magicTypes.slice(),affinities:affinities.magic,rules:mr,
+  startingTalents:startingTalentNames,magic:{types:d.magicTypes.slice(),affinities:affinities.magic,rules:mr,
    patronLinkedType:d.patronMagicType,classPatrons,mancerAffinity:{advantage:d.mancerAdvantageMagicType}},
   classPatrons,skills:d.skills.slice(),affinityRolls:affinities,
   magicAffinities:affinities.magic,skillAffinities:affinities.skills,
@@ -213,7 +218,9 @@ export function composeCharacter(d,rules,uid,id,existing=null){
    campaign:'Unassigned',session:'No active session',
    resourceMods:{hp:0,sp:0,mp:0},
    inventory,equipment:{},bags:[],coins:{},conditions:[],
-   talents:{},spells:[],professions:[],
+   talents:Object.fromEntries(startingTalentNames.map(title=>[
+    title,{rank:1,source:'Character Forge'}
+   ])),classTalents:startingTalentNames,spells:[],professions:[],
    professionSlots:['No Profession Learned','No Profession Learned','No Profession Learned']});
  }
  return {...existing,...patch};

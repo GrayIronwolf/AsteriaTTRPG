@@ -84,6 +84,8 @@ test('validated new Forge record keeps exact legacy fields and private ownership
  assert.equal(r.character.race.slug,d.raceSlug);
  assert.equal(r.character.class.slug,d.classSlug);
  assert.equal(r.character.equipment.pack.slug,d.equipmentPackSlug);
+ assert.ok(Array.isArray(r.character.startingTalents));
+ assert.deepEqual(Object.keys(r.talents||{}),r.classTalents);
  assert.equal(r.skills[d.skills[0]],1);
  assert.equal(r.character.affinityRolls.magic['Air Magic'].value,60);
  assert.equal(r.hp[1],10+r.characteristics.constitution*10);
@@ -141,7 +143,7 @@ test('Firebase character service defaults closed and rejects unauthenticated pri
   auth,db:{},firestoreSdk:sdk,readCanonical:async()=>({uid:'user1'}),enabled:true});
  await assert.rejects(enabled.list(),/Sign in/);
  auth.currentUser={uid:'other'};
- await assert.rejects(enabled.list(),/not verified/);
+ await assert.rejects(enabled.list(),/could not be verified/);
 });
 
 test('Phase 5.1 does not enable campaigns or dashboards and cannot fall back to legacy globals',()=>{
