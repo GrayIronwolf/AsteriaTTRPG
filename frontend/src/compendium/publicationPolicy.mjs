@@ -28,7 +28,11 @@ function matchesKeys(record,expected) {
 }
 const text = value => typeof value === 'string' && value.length > 0;
 const words = value => Array.isArray(value) && value.every(item => typeof item === 'string');
-const identity = (row,domain) => text(row.id) && row.id.startsWith(domain+':') &&
+// The canonical creature manifest retains an established legacy ID namespace.
+const publishedId = (id,domain) => typeof id === 'string' &&
+  (id.startsWith(domain+':') ||
+   (domain === 'creature' && id.startsWith('creature-manifest:creature:')));
+const identity = (row,domain) => publishedId(row.id,domain) &&
   text(row.title) && text(row.slug) &&
   /^[a-z0-9][a-z0-9-]*$/.test(row.slug) && row.domain === domain;
 
@@ -53,7 +57,7 @@ export function validatePublishedEntry(row,domain) {
 }
 export function validatePublishedSearch(row,domain) {
   if(!matchesKeys(row,SEARCH_KEYS) || typeof row.id !== 'string' ||
-     !row.id.startsWith(domain+':') || typeof row.text !== 'string')
+     !publishedId(row.id,domain) || typeof row.text !== 'string')
     throw new Error('Untrusted public Compendium search index.');
   return Object.freeze({...row});
 }
