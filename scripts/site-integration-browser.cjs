@@ -147,7 +147,7 @@ async function auditListeners(page) {
     assert.equal(report.listenerMetrics.initial.popstate,1,'Duplicated route popstate listeners');
     assert.equal(await page.getByTestId('site-hero-image').locator('img').evaluate(img=>img.decode().then(()=>img.naturalWidth>0)),true);
 
-    await page.getByTestId('site-nav-account').click();
+    await page.getByTestId('site-primary-navigation').getByTestId('site-nav-account').click();
     await page.getByTestId('site-mega-menu').waitFor();
     assert.equal(await page.getByTestId('site-mega-cards').getByRole('link').count(),4);
     const card = page.getByTestId('site-menu-card-appearance');
