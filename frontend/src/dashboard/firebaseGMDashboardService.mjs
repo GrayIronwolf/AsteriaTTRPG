@@ -34,12 +34,19 @@ export function createFirebaseGMDashboardService({
   async function verifyCampaign(id) {
     assertGMCampaignId(id);
     const uid = await verified();
-    const snapshot = await firestoreSdk.getDocFromServer(campaignRef(id));
+    // Firestore intentionally denies campaign reads to unrelated accounts.
+    // Do not expose SDK/rules internals or treat a denied read as public data.
+    let snapshot;
+    try { snapshot = await firestoreSdk.getDocFromServer(campaignRef(id)); }
+    catch { throw new Error('You do not have GM access to this campaign.'); }
     same(uid);
     if (!snapshot.exists()) throw new Error('Campaign unavailable.');
     const campaign = {...snapshot.data(),id:snapshot.id};
-    const member = campaign.membershipSchemaVersion === 2 && campaign.ownerUid !== uid
-      ? await firestoreSdk.getDocFromServer(memberRef(id,uid)) : null;
+    let member = null;
+    if (campaign.membershipSchemaVersion === 2 && campaign.ownerUid !== uid) {
+      try { member = await firestoreSdk.getDocFromServer(memberRef(id,uid)); }
+      catch { throw new Error('You do not have GM access to this campaign.'); }
+    }
     same(uid);
     const access = gmCampaignAccess(campaign,member?.exists()?member.data():null,uid,id);
     if (!access.allowed) throw new Error('You do not have GM access to this campaign.');
