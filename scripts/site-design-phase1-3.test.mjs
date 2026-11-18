@@ -30,8 +30,8 @@ test('Phase 1.3 replaces the old preview stylesheet, without stacking another la
 
 test('global stylesheet files have strictly divided responsibilities', () => {
   const files = collectCss('frontend/src');
-  assert.equal(files.length, 17, 'Expected three global files and fourteen scoped CSS Modules');
-  assert.equal(files.filter(path => path.endsWith('.module.css')).length, 14);
+  assert.equal(files.length, 19, 'Expected three global files and sixteen scoped CSS Modules');
+  assert.equal(files.filter(path => path.endsWith('.module.css')).length, 16);
   assert.deepEqual(
     files.filter(path => !path.endsWith('.module.css')).map(path => path.split('/').pop()).sort(),
     [...globalStyles].sort()
