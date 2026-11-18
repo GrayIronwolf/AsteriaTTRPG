@@ -1,0 +1,174 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {useAuth} from '../auth/AuthProvider.jsx';
+import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
+import {useAppServices} from '../app/AppServices.jsx';
+import {PageLayout} from '../components/ui/PageLayout.jsx';
+import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
+import {CrystalButton} from '../components/ui/CrystalButton.jsx';
+import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
+import {STATS} from '../forge/forgeModel.mjs';
+import styles from './PlayerDashboardPage.module.css';
+
+const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
+function StatPanel({record}){
+  return <div className={styles.stats}>
+    {STATS.map(key=><div className={styles.stat} key={key}>
+      <small>{key.replace(/^\w/,s=>s.toUpperCase())}</small>
+      <strong>{record.characteristics[key]??'—'}</strong>
+    </div>)}
+  </div>;
+}
+function Resources({character}){
+  return <div className={styles.resources} data-testid="site-player-resources">
+    {['hp','sp','mp'].map(key=>{
+      const pair=character[key];
+      return <div className={styles.resource} key={key}>
+        <div><strong>{key.toUpperCase()}</strong><span>{pair?pair[0]+' / '+pair[1]:'Not recorded'}</span></div>
+        <progress aria-label={key.toUpperCase()+' resources'} value={pair?Math.min(pair[0],pair[1]):0}
+          max={pair?.[1]||1}/>
+      </div>;
+    })}
+  </div>;
+}
+function Names({name,entries}){
+  return <SurfacePanel className={styles.panel} as="section">
+    <h3>{name}</h3>
+    {entries.length?<ul className={styles.list}>{entries.map((value,i)=><li key={i}>{value}</li>)}</ul>:
+      <BodyText muted>None recorded.</BodyText>}
+  </SurfacePanel>;
+}
+function Sections({character,tab,owned}){
+  if(tab==='Overview')return <>
+    <Resources character={character}/>
+    <div className={styles.overview}>
+      <SurfacePanel className={styles.panel}><h3>Experience</h3>
+        <p>Level {character.level} · XP {character.xp}{character.xpMax?' / '+character.xpMax:''}</p>
+        <p>Talent Points: {character.tp} · Characteristic Points: {character.cp}</p>
+      </SurfacePanel>
+      <SurfacePanel className={styles.panel}><h3>Character</h3>
+        <p>{character.race} · {character.klass}</p>
+        <p>Natural Armour Class: {character.naturalAC??'Not recorded'}</p>
+        <Names name="Active Conditions" entries={character.conditions}/>
+      </SurfacePanel>
+    </div>
+    <StatPanel record={character}/>
+  </>;
+  if(tab==='Character')return <>
+    <StatPanel record={character}/>
+    <Names name="Racial Traits" entries={character.racialTraits}/>
+    {owned&&character.backstory?<SurfacePanel className={styles.panel}>
+      <h3>Personal History</h3><p className={styles.prose}>{character.backstory}</p>
+    </SurfacePanel>:null}
+  </>;
+  if(tab==='Skills & Talents')return <div className={styles.overview}>
+    <SurfacePanel className={styles.panel}><h3>Skills</h3>
+      {character.skills.length?<ul className={styles.list}>{character.skills.map((s,i)=>
+        <li key={i}>{s.name}{s.rank?' — '+s.rank:''}</li>)}</ul>:<BodyText muted>No skills recorded.</BodyText>}
+    </SurfacePanel>
+    <Names name="Class Talents" entries={character.talents}/>
+  </div>;
+  if(tab==='Magic')return <div className={styles.overview}>
+    <Names name="Known Magic" entries={character.magic}/>
+    <Names name="Known Spells" entries={character.spells}/>
+  </div>;
+  if(tab==='Equipment')return <div className={styles.overview}>
+    {['inventory','equipment'].map(key=><SurfacePanel className={styles.panel} key={key}>
+      <h3>{key==='inventory'?'Inventory':'Equipment'}</h3>
+      {character[key].length?<ul className={styles.list}>{character[key].map((item,i)=>
+        <li key={i}>{item.name}{item.quantity>1?' × '+item.quantity:''}</li>)}</ul>:
+        <BodyText muted>No items recorded.</BodyText>}
+    </SurfacePanel>)}
+  </div>;
+  if(tab==='Quests')return <SurfacePanel className={styles.panel}>
+    <h3>Quest Log</h3>
+    {character.quests.length?<ul className={styles.list}>{character.quests.map((quest,i)=>
+      <li key={i}>{quest.name}</li>)}</ul>:<BodyText muted>No quests recorded on this character sheet.</BodyText>}
+  </SurfacePanel>;
+  if(tab==='Journal')return <SurfacePanel className={styles.panel}>
+    <h3>Personal Journal</h3>
+    {!owned?<BodyText muted>Only the character owner may read personal journal entries.</BodyText>:
+      character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
+        <article key={i}><h4>{entry.title}</h4><p className={styles.prose}>{entry.content}</p></article>)}</div>:
+        <BodyText muted>No journal entries recorded.</BodyText>}
+  </SurfacePanel>;
+  return null;
+}
+function Dashboard({api,uid,campaignId='',characterId}){
+  const [data,setData]=useState(null),[loading,setLoading]=useState(true),
+    [error,setError]=useState(''),[tab,setTab]=useState('Overview');
+  const generation=useRef(0);
+  useEffect(()=>{
+    const token=++generation.current;
+    setData(null);setLoading(true);setError('');setTab('Overview');
+    const ok=value=>{if(generation.current!==token)return;setData(value);setLoading(false);};
+    const fail=e=>{if(generation.current!==token)return;setData(null);
+      setError(e?.message||'The character could not be connected.');setLoading(false);};
+    let unsubscribe=()=>{};
+    try{unsubscribe=campaignId?api.watchCampaign(campaignId,characterId,ok,fail):
+      api.watchOwned(characterId,ok,fail);}
+    catch(e){fail(e);}
+    return ()=>{generation.current++;unsubscribe();};
+  },[api,uid,campaignId,characterId]);
+  if(loading)return <SurfacePanel className={styles.panel}>
+    <BodyText>Verifying character ownership and connecting to Firebase…</BodyText>
+  </SurfacePanel>;
+  if(error||!data)return <SurfacePanel className={styles.panel}>
+    <p role="alert" data-testid="site-player-error">{error||'Character is unavailable.'}</p>
+    <CrystalButton href="#/character-forge">Back to Character Forge</CrystalButton>
+  </SurfacePanel>;
+  const ch=data.character,c=data.campaign;
+  return <>
+    <div className={styles.titleRow}>
+      <div><Eyebrow>{c?'Campaign Character':'Owned Character'} · {data.owner?'Owner':'GM Read-only'}</Eyebrow>
+        <Heading as="h2">{ch.name}</Heading>
+        <BodyText muted>{ch.race} · {ch.klass} · Level {ch.level}</BodyText>
+      </div>
+      <CrystalButton href="#/character-forge">Character Forge</CrystalButton>
+    </div>
+    {c?<SurfacePanel className={styles.panel} data-testid="site-player-campaign">
+      <div className={styles.titleRow}>
+        <div><h3>{c.name}</h3><BodyText muted>Session: {c.session.status}</BodyText></div>
+        {c.isGM?<CrystalButton href={'#/react/gm/'+encodeURIComponent(c.id)}>GM Dashboard</CrystalButton>:null}
+      </div>
+      <p>{c.session.editable?'Live session is active.':'Session is not active. Gameplay actions are unavailable.'}</p>
+      <div className={styles.party}><h4>Party</h4>
+        {c.party.length?<ul className={styles.list}>{c.party.map(x=>
+          <li key={x.id}>{x.name} · Level {x.level}</li>)}</ul>:
+          <BodyText muted>No linked party members.</BodyText>}
+      </div>
+    </SurfacePanel>:<SurfacePanel className={styles.panel} data-testid="site-player-unassigned">
+      <h3>Private Character Sheet</h3>
+      <BodyText muted>This sheet is available without a running campaign. Link the character through Campaign Forge to access a campaign session.</BodyText>
+      <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
+    </SurfacePanel>}
+    <nav className={styles.tabs} aria-label="Character dashboard sections">
+      {TABS.filter(x=>data.owner||x!=='Journal').map(value=><button type="button"
+        key={value} className={tab===value?styles.selected:''}
+        aria-current={tab===value?'page':undefined}
+        onClick={()=>setTab(value)}>{value}</button>)}
+    </nav>
+    <Sections character={ch} owned={data.owner} tab={tab}/>
+    <SurfacePanel className={styles.panel} as="aside">
+      <h3>Dashboard Migration</h3>
+      <BodyText muted>This React dashboard reads existing saved character and campaign data.
+        Resource updates, combat, spells, rewards and dashboard layout editing remain in
+        their existing gameplay systems until Phases 6.3 and 7. No automatic writes are made.</BodyText>
+    </SurfacePanel>
+  </>;
+}
+/** Character and Player dashboards share one authenticated React route owner. */
+export function PlayerDashboardPage({route}){
+  const {session}=useAuth(),services=useAppServices();
+  const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
+  const api=services.get('characters')?.dashboard;
+  const {campaignId='',characterId=''}=route.params||{};
+  return <PageLayout as="section" width="wide" labelledBy="site-player-title"
+    className={styles.page} data-testid="site-player-dashboard">
+    <Heading id="site-player-title">Player &amp; Character Dashboard</Heading>
+    {!uid||!api?<SurfacePanel className={styles.panel}>
+      <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
+      <CrystalButton href="#/account/login">Login</CrystalButton>
+    </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
+      uid={uid} api={api} campaignId={campaignId} characterId={characterId}/>}
+  </PageLayout>;
+}

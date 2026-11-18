@@ -155,6 +155,9 @@ export function CharacterForgePage(){
        <h3>{row.name}</h3><p>{row.race||'Race'} / {row.klass||'Class'}</p>
        <small>Level {row.level}{row.linked?' · Campaign linked':' · Unassigned'}</small>
        <CrystalButton onClick={()=>edit(row.id)} disabled={busy}>Edit Character</CrystalButton>
+       {api?.dashboard?.availability().enabled&&<CrystalButton
+         href={'#/react/owned-character/'+encodeURIComponent(row.id)}
+         data-testid="site-forge-open-dashboard">Open Character Dashboard</CrystalButton>}
       </article>)}
     </div>}
   </SurfacePanel>}
