@@ -44,7 +44,7 @@ export function safePendingCharacterLinks(value,campaignId){
      !FORGE_ID.test(row.sourceCharacterId)||row.status!=='pending'||
      !integer(row.revision))throw Error('GM character request needs reconciliation.');
   return Object.freeze({
-   linkId:row.linkId,ownerUid:row.ownerUid,
+   linkId:row.linkId,ownerUid:row.ownerUid,status:'pending',
    sourceCharacterId:row.sourceCharacterId,revision:row.revision,
    requestedAt:typeof row.requestedAt==='string'?row.requestedAt:''
   });
