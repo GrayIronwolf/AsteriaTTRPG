@@ -87,8 +87,8 @@ async function waitForPreview() {
     assert.equal(await initial.getAttribute('aria-hidden'), 'false', 'Carousel should wrap after the fourth image');
     await page.getByTestId('site-carousel-prev').focus();
     await page.keyboard.press('ArrowRight');
-    assert.equal(await page.getByTestId('site-hero-image').getAttribute('aria-hidden'), 'false',
-      'Arrow key should advance from final to first image');
+    assert.equal(await page.getByTestId('site-home-slide-logo').getAttribute('aria-hidden'), 'false',
+      'Arrow key should advance from the first to the second image');
     console.log('PASS: arrow buttons, dots, keyboard, announcements and wraparound.');
 
     await page.getByTestId('site-home-action-explore-world').click();
