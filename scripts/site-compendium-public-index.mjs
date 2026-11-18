@@ -78,7 +78,10 @@ for (const file of parts) {
         ? entry.tags.filter(value => typeof value === 'string').slice(0, 16)
         : []
     };
-    published.get(part.domain).push(validatePublishedCatalogue(row,part.domain));
+    // Keep the generator's route disambiguation mutable until all records
+    // are processed; browser-side loaders freeze the finished projections.
+    validatePublishedCatalogue(row,part.domain);
+    published.get(part.domain).push(row);
   }
 }
 
