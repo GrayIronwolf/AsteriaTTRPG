@@ -18,7 +18,6 @@ if(import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'){
       window.location.pathname+window.location.search+hash)
   });
   scrub();
-  window.addEventListener('hashchange',scrub);
 }
 
 const host = document.getElementById('asteria-site-root');

@@ -37,8 +37,7 @@ export function App({ identity = null } = {}) {
   const showNotifications=route.id==='notifications'&&canActivateRoute('notifications',services);
   const showForge=route.id==='character-forge'&&canActivateRoute('character-forge',services);
   const showCampaignForge=route.id==='campaign-forge'&&canActivateRoute('campaign-forge',services);
-  const showInvites=route.id==='invitation'&&canActivateRoute('invitation',services)&&
-    services.get('campaigns')?.connections?.availability().enabled===true;
+  const showInvites=route.id==='invitation'&&canActivateRoute('invitation',services);
   return (
     <SiteShell route={route} identity={identity}>
       {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : showInvites ? <CampaignInvitationPage route={route}/> : <RoutePreviewPage route={route} />}

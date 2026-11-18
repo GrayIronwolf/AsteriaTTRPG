@@ -1,4 +1,5 @@
 import { createDisposableScope } from '../runtime/disposableScope.mjs';
+import {captureIncomingSecureInvite} from '../campaigns/campaignConnectionModel.mjs';
 
 /**
  * A single event owner for all React route consumers.
@@ -17,7 +18,7 @@ export function parseLocationKey(key) {
   return { search: key.slice(0, split), hash: key.slice(split + 1) };
 }
 
-export function createLocationStore(source) {
+export function createLocationStore(source,{sanitize=null}={}) {
   if (!source || !source.location ||
       typeof source.addEventListener !== 'function' ||
       typeof source.removeEventListener !== 'function') {
@@ -29,6 +30,7 @@ export function createLocationStore(source) {
   let lastPublished = readLocationKey(source.location);
 
   function changed() {
+    if(sanitize)sanitize();
     const next = readLocationKey(source.location);
     if (next === lastPublished) return;
     lastPublished = next;
@@ -72,6 +74,14 @@ export function createLocationStore(source) {
 let browserStore = null;
 export function getBrowserLocationStore() {
   // No module-time window access or legacy global function replacement.
-  if (browserStore === null) browserStore = createLocationStore(window);
+  if(browserStore===null){
+    const sanitize=import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'?
+      ()=>captureIncomingSecureInvite({
+        hash:window.location.hash,
+        replace:hash=>window.history.replaceState(window.history.state,'',
+          window.location.pathname+window.location.search+hash)
+      }):null;
+    browserStore=createLocationStore(window,{sanitize});
+  }
   return browserStore;
 }

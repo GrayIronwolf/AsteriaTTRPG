@@ -51,5 +51,10 @@ export function getFeatureForRoute(routeId) {
  */
 export function canActivateRoute(routeId, services) {
   const feature = getFeatureForRoute(routeId);
-  return feature.status === 'ready' && feature.requiredServices.every(key => services?.has(key) === true);
+  const ready=feature.status==='ready'&&feature.requiredServices.every(key=>services?.has(key)===true);
+  // Phase 5.3 connection actions are independently opted in. Simply providing
+  // a campaign-settings adapter never unlocks invitations.
+  if(routeId==='invitation')return ready&&
+    services.get('campaigns')?.connections?.availability().enabled===true;
+  return ready;
 }
