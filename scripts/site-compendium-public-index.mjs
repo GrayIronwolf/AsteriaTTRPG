@@ -21,6 +21,7 @@ const seenIds = new Set();
 const seenRoutes = new Set();
 let omitted = 0;
 let inputCount = 0;
+let ambiguousRoutes = 0;
 
 const parts = readdirSync(source).filter(name => /^[a-z]+-[a-f0-9]+\.json$/.test(name)).sort();
 assert.ok(parts.length >= DOMAINS.length, 'Canonical generated content partitions missing');
@@ -43,7 +44,19 @@ for (const file of parts) {
     }
     const route = part.domain + '/' + entry.slug;
     assert.ok(!seenIds.has(entry.id), 'Duplicate public definition ID: ' + entry.id);
-    assert.ok(!seenRoutes.has(route), 'Duplicate public route: ' + route);
+    // Multiple canonical definitions can share a legacy slug (notably talents
+    // from different classes). Preserve all distinct IDs but never publish an
+    // ambiguous direct-entry link that could open the wrong definition.
+    const ambiguous = seenRoutes.has(route);
+    if (ambiguous) ambiguousRoutes++;
+    const catalogueFallback = '#/compendium?domain=' + encodeURIComponent(part.domain) +
+      '&q=' + encodeURIComponent(entry.title);
+    if (ambiguous) {
+      for (const prior of published.get(part.domain)) {
+        if (prior.slug === entry.slug) prior.href = '#/compendium?domain=' +
+          encodeURIComponent(part.domain) + '&q=' + encodeURIComponent(prior.title);
+      }
+    }
     seenIds.add(entry.id);
     seenRoutes.add(route);
 
@@ -54,7 +67,8 @@ for (const file of parts) {
       title: entry.title,
       slug: entry.slug,
       domain: part.domain,
-      href: '#/compendium/' + encodeURIComponent(part.domain) + '/' + encodeURIComponent(entry.slug),
+      href: ambiguous ? catalogueFallback : '#/compendium/' +
+        encodeURIComponent(part.domain) + '/' + encodeURIComponent(entry.slug),
       categoryPath: Array.isArray(entry.categoryPath)
         ? entry.categoryPath.filter(value => typeof value === 'string').slice(0, 6)
         : [],
@@ -82,4 +96,5 @@ assert.equal(count + omitted, inputCount);
 assert.ok(count > 0, 'No public Compendium definitions');
 console.log('PASS: prepared ' + count + ' public catalogue records from ' + parts.length +
   ' canonical shards (' + omitted + ' non-public excluded); ' +
+  'ambiguous legacy routes sent to catalogue search: ' + ambiguousRoutes + '; ' +
   'no raw article bodies or GM sections copied.');
