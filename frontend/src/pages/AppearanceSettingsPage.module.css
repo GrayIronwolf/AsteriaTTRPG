@@ -1,0 +1,90 @@
+/* Phase 2.4 appearance page: scoped controls, no legacy CSS or overrides. */
+.page {
+  min-height: 560px;
+  padding-block: clamp(48px, 8vw, 90px) var(--ast-space-9);
+}
+.section {
+  margin-top: var(--ast-space-6);
+  padding: var(--ast-space-5);
+}
+.sectionTitle {
+  margin: 0 0 var(--ast-space-4);
+  font-family: var(--ast-font-display);
+  font-size: var(--ast-font-xl);
+  color: var(--ast-color-text-bright);
+}
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 142px), 1fr));
+  gap: var(--ast-space-3);
+}
+.modeButton {
+  display: grid;
+  align-content: start;
+  gap: var(--ast-space-2);
+  min-height: 112px;
+  padding: var(--ast-space-3);
+  border: 1px solid var(--ast-color-outline-soft);
+  border-radius: var(--ast-radius-panel);
+  background: var(--ast-color-panel-raised);
+  color: var(--ast-color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.modeButton[aria-pressed="true"] {
+  border: 2px solid var(--ast-color-outline-active);
+  background: var(--ast-color-accent-soft);
+}
+.swatch {
+  display: block;
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-sm);
+}
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: var(--ast-space-4);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ast-space-2);
+  font-weight: 600;
+}
+.field select {
+  width: 100%;
+  min-height: var(--ast-target-min);
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-sm);
+  background: var(--ast-color-panel-raised);
+  color: var(--ast-color-text);
+  padding: var(--ast-space-2);
+}
+.example {
+  margin-top: var(--ast-space-6);
+  padding: var(--ast-space-5);
+  border: 1px solid var(--ast-color-outline-soft);
+  background: var(--ast-color-panel-raised);
+}
+.example h3 {
+  font-family: var(--ast-font-display);
+  font-size: var(--ast-font-lg);
+  margin-top: 0;
+}
+.example p { margin-bottom: 0; }
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ast-space-3);
+  margin-top: var(--ast-space-6);
+}
+@media (max-width: 760px) {
+  .section { padding: var(--ast-space-4); }
+  .modeGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .actions > * { flex: 1 1 160px; }
+}
+@media (max-width: 380px) {
+  .modeGrid { grid-template-columns: minmax(0, 1fr); }
+}

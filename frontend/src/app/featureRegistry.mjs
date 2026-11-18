@@ -17,6 +17,7 @@ const GM = define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected');
 
 export const ROUTE_FEATURES = Object.freeze({
   home: HOME,
+  appearance: define('appearance', [], 'public', 'ready'),
   handbook: COMPENDIUM,
   lore: COMPENDIUM,
   compendium: COMPENDIUM,

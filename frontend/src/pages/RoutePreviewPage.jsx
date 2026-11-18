@@ -44,6 +44,11 @@ export function RoutePreviewPage({ route }) {
           </BodyText>
         </SurfacePanel>
       )}
+      {(route.id === 'account' || route.id === 'settings') && (
+        <CrystalButton variant="secondary" size="wide" href="#/appearance">
+          Customise website appearance
+        </CrystalButton>
+      )}
       <CrystalButton variant="primary" size="wide" href="#home">Return to Home</CrystalButton>
     </PageLayout>
   );

@@ -148,3 +148,42 @@
 @media (max-width: 380px) {
   :root { --ast-header-brand-width: min(44vw, 146px); }
 }
+
+/* Phase 2.4: single-source, allowlisted preview appearance selectors. */
+:root {
+  --ast-root-font-size: 16px;
+  --ast-swatch-black: #000000;
+  --ast-swatch-dark-gray: #1b1e22;
+  --ast-swatch-light-gray: #dadfe3;
+  --ast-swatch-dark-blue: #071522;
+  --ast-swatch-forest: #07180f;
+}
+:root[data-asteria-background="black"] { --ast-color-page: #000000; }
+:root[data-asteria-text-size="compact"] { --ast-root-font-size: 14px; }
+:root[data-asteria-text-size="normal"] { --ast-root-font-size: 16px; }
+:root[data-asteria-text-size="large"] { --ast-root-font-size: 18px; }
+:root[data-asteria-text-size="extra-large"] { --ast-root-font-size: 20px; }
+:root[data-asteria-body-font="system"] { --ast-font-body: "Segoe UI", Aptos, Arial, system-ui, sans-serif; }
+:root[data-asteria-display-font="system"] { --ast-font-display: Georgia, Baskerville, "Times New Roman", serif; }
+:root[data-asteria-body-font="aptos"] { --ast-font-body: Aptos, "Segoe UI", Arial, sans-serif; }
+:root[data-asteria-display-font="aptos"] { --ast-font-display: Aptos, Georgia, serif; }
+:root[data-asteria-body-font="arial"] { --ast-font-body: Arial, Helvetica, sans-serif; }
+:root[data-asteria-display-font="arial"] { --ast-font-display: Arial, Helvetica, sans-serif; }
+:root[data-asteria-body-font="calibri"] { --ast-font-body: Calibri, Carlito, Arial, sans-serif; }
+:root[data-asteria-display-font="calibri"] { --ast-font-display: Calibri, Carlito, Georgia, serif; }
+:root[data-asteria-body-font="times"] { --ast-font-body: "Times New Roman", Times, serif; }
+:root[data-asteria-display-font="times"] { --ast-font-display: "Times New Roman", Times, serif; }
+:root[data-asteria-body-font="georgia"] { --ast-font-body: Georgia, "Times New Roman", serif; }
+:root[data-asteria-display-font="georgia"] { --ast-font-display: Georgia, "Times New Roman", serif; }
+:root[data-asteria-body-font="baskerville"] { --ast-font-body: Baskerville, "Libre Baskerville", Georgia, serif; }
+:root[data-asteria-display-font="baskerville"] { --ast-font-display: Baskerville, "Libre Baskerville", Georgia, serif; }
+:root[data-asteria-body-font="garamond"] { --ast-font-body: Garamond, "EB Garamond", Georgia, serif; }
+:root[data-asteria-display-font="garamond"] { --ast-font-display: Garamond, "EB Garamond", Georgia, serif; }
+:root[data-asteria-body-font="century"] { --ast-font-body: Century, "Century Schoolbook", Georgia, serif; }
+:root[data-asteria-display-font="century"] { --ast-font-display: Century, "Century Schoolbook", Georgia, serif; }
+:root[data-asteria-body-font="lucida"] { --ast-font-body: "Lucida Sans Unicode", "Lucida Grande", Arial, sans-serif; }
+:root[data-asteria-display-font="lucida"] { --ast-font-display: "Lucida Bright", "Lucida Sans Unicode", Georgia, serif; }
+:root[data-asteria-body-font="castellar"] { --ast-font-body: Castellar, Georgia, serif; }
+:root[data-asteria-display-font="castellar"] { --ast-font-display: Castellar, Georgia, serif; }
+:root[data-asteria-body-font="kunstler"] { --ast-font-body: "Kunstler Script", "Apple Chancery", "URW Chancery L", cursive; }
+:root[data-asteria-display-font="kunstler"] { --ast-font-display: "Kunstler Script", "Apple Chancery", "URW Chancery L", cursive; }

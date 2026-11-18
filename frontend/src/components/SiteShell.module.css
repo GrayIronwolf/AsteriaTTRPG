@@ -113,3 +113,8 @@
 @media (max-width: 760px) {
   .headerInner { min-height: 62px; padding-block: var(--ast-space-1); }
 }
+
+/* Mobile-only local appearance entry, inside the existing menu owner. */
+.mobileSettings { display: grid; gap: var(--ast-space-2); border-top: 1px solid var(--ast-color-outline-soft); padding-top: var(--ast-space-3); }
+.mobileSettingsLabel { color: var(--ast-color-header-text); font-size: var(--ast-font-xs); font-weight: 600; }
+.footer a { color: var(--ast-color-accent); text-underline-offset: 3px; }

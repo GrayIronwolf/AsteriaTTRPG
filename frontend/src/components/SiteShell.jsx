@@ -134,6 +134,12 @@ export function SiteShell({ route, identity = null, children }) {
             <nav className={styles.mobileNavigation} aria-label="Mobile navigation">
               <NavigationLinks route={route} activeMenuId={activeMenuId} mode="mobile"
                 onOpenMenu={openMenu} onNavigate={navigate} onCloseMenu={closeMenu} />
+              <div className={styles.mobileSettings} aria-label="Website settings">
+                <span className={styles.mobileSettingsLabel}>Website settings</span>
+                <CrystalButton href="#/appearance" variant="nav" size="compact"
+                  active={route.id === 'appearance'} onClick={navigate}
+                  data-testid="site-mobile-appearance-link">Appearance</CrystalButton>
+              </div>
             </nav>
           </details>
         </div>
@@ -152,7 +158,7 @@ export function SiteShell({ route, identity = null, children }) {
         {children}
       </main>
       <footer className={styles.footer}>
-        <p>Asteria TTRPG · Isolated React navigation preview</p>
+        <p>Asteria TTRPG · Isolated React navigation preview · <a href="#/appearance" data-testid="site-footer-appearance">Appearance</a></p>
       </footer>
     </>
   );
