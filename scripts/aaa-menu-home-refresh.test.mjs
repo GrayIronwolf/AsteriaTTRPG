@@ -126,3 +126,18 @@ test('home carousel uses transparent controls, smaller symbols and the original 
   assert.match(js,/\$\('aaaCarouselNext'\)\?\.addEventListener\('click'/);
   assert.equal((html.match(/class="aaa-carousel-dot"/g)||[]).length,4);
 });
+
+
+test('Forge A Campaign displays transparent user artwork without a visible card frame',()=>{
+  const fs=readFileSync(new URL('../assets/menus/forge-campaign-map-book.avif',import.meta.url));
+  assert.equal(fs.subarray(4,12).toString('ascii'),'ftypavif');
+  assert.match(js,/menu\.id === 'campaigns' && entry\[2\] === 'campaign-new'/);
+  assert.match(js,/card\.dataset\.artwork = 'forge-campaign'/);
+  assert.match(css,/\.aaa-nav-card\[data-artwork="forge-campaign"\]/);
+  assert.match(css,/forge-campaign-map-book\.avif/);
+  assert.match(css,/background:transparent!important/);
+  assert.match(css,/border-color:transparent!important/);
+  assert.match(css,/box-shadow:none!important/);
+  assert.match(css,/\.aaa-nav-card\[data-artwork="forge-campaign"\] \.aaa-nav-card-art::after\{/);
+  assert.match(read('index.html'),/css\/asteria-aaa-upgrade\.css\?v=20261118-campaign-book-v1/);
+});

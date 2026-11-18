@@ -110,7 +110,7 @@ test('all seven desktop buttons fit on one row with restored large logo and prof
   assert.ok(css.includes('body .asteria-header .asteria-header-profile .asteria-header-identity'));
   assert.ok(css.includes('@media(min-width:1680px)'));
   assert.ok(sizes.includes('clamp(140px,8.2vw,166px)'));
-  assert.ok(html.includes('css/asteria-aaa-upgrade.css?v=20261118-carousel-invisible-v1'));
+  assert.ok(html.includes('css/asteria-aaa-upgrade.css?v=20261118-campaign-book-v1'));
   const clamp=(min,value,max)=>Math.max(min,Math.min(value,max));
   for(const width of [1680,1720,1760,1840,1920,2048,2560,3200]){
     const logo=clamp(330,0.205*width,420);
