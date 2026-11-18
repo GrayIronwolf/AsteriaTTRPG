@@ -67,6 +67,9 @@ try{
  // This secret must never be sent to Firestore by the browser. It exists once
  // in the owner's UI and once in the intended recipient's ephemeral memory.
  await account(player,'player-'+suffix+'@example.test','PlayerFive'+suffix.slice(-5));
+ // Open the invitation as a fresh document, matching a real shared link
+ // from outside the app, rather than relying on an in-page hash navigation.
+ await player.goto('about:blank');
  await player.goto(link,{waitUntil:'domcontentloaded'});
  await player.getByTestId('site-invitation-page').waitFor({timeout:30000});
  assert.equal((await player.evaluate(()=>window.location.hash)),'#/campaign-invitation',
