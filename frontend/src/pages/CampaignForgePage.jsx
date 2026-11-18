@@ -9,6 +9,7 @@ import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {campaignArtworkFileError} from '../../../src/state/campaignArtwork.mjs';
 import {newCampaignDraft,editCampaignDraft,ACCESS_FIELDS,PLAYER_SETTINGS} from '../campaigns/campaignForgeModel.mjs';
 import styles from './CampaignForgePage.module.css';
+import {CampaignConnectionManager} from '../campaigns/CampaignConnectionManager.jsx';
 
 const LABELS={dashboard:'Dashboard',inventory:'Inventory',spells:'Spells',
  journal:'Journal',quests:'Quests',notes:'Shared Notes',
@@ -140,8 +141,10 @@ export function CampaignForgePage(){
      <small>Membership: {row.membershipSchemaVersion===2?'Canonical v2':'Legacy v1'}</small>
      <CrystalButton onClick={()=>edit(row.id)} disabled={busy}>Manage Campaign</CrystalButton>
     </article>)}</div>}
-   <BodyText muted>Campaign invitations, membership approvals and joining remain in Phase 5.3.
-    Existing campaign data and player memberships are preserved.</BodyText>
+   <BodyText muted>New secure campaign invitation workflows are available only for
+    server-upgraded v2 campaigns. Existing legacy memberships remain unchanged.</BodyText>
+   {api.connections?.availability().enabled&&<CrystalButton href="#/campaign-invitation">
+    Find or Join Campaign</CrystalButton>}
   </SurfacePanel>}
   {!loading&&mode!=='list'&&<SurfacePanel as="section" className={styles.panel}>
    <div className={styles.heading}>
@@ -198,6 +201,7 @@ export function CampaignForgePage(){
      <CrystalButton onClick={back} disabled={busy}>Cancel</CrystalButton>
     </div>
    </form>
+   {mode==='edit'&&<CampaignConnectionManager campaign={editing} api={api} uid={uid}/>}
   </SurfacePanel>}
  </PageLayout>;
 }

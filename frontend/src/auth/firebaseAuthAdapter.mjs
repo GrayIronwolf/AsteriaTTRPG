@@ -13,6 +13,7 @@ import { createFirebaseFriendsService } from '../friends/firebaseFriendsService.
 import { createFirebaseNotificationsService } from '../notifications/firebaseNotificationsService.mjs';
 import { createFirebaseCharactersService } from '../forge/firebaseCharactersService.mjs';
 import { createFirebaseCampaignsService } from '../campaigns/firebaseCampaignsService.mjs';
+import { createFirebaseCampaignConnectionService } from '../campaigns/firebaseCampaignConnectionService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -307,9 +308,15 @@ async function initializeClient(runtime) {
     })});
   const characters=createFirebaseCharactersService({auth,db,firestoreSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'});
+  const campaignConnections=createFirebaseCampaignConnectionService({
+    auth,functions,functionsSdk,readCanonical,
+    enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'
+  });
   const campaigns=createFirebaseCampaignsService({
     auth,db,firestoreSdk,functions,functionsSdk,storage,storageSdk,readCanonical,
-    enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED==='true'
+    enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED==='true' ||
+      import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true',
+    connections:campaignConnections
   });
   return Object.freeze({
     friends,notifications,characters,campaigns,

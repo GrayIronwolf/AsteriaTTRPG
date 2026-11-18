@@ -17,6 +17,7 @@ export const PRIMARY_LINKS = Object.freeze([
 const STATIC_ROUTES = Object.freeze({
   '/character-forge': ['character-forge', 'Character Forge', 'character-forge'],
   '/campaign-forge': ['campaign-forge', 'Campaign Forge', 'campaign-forge'],
+  '/campaign-invitation': ['invitation', 'Campaign Invitation', 'campaign-forge'],
   '/account': ['account', 'Account', 'account'],
   '/appearance': ['appearance', 'Appearance', 'account'],
   '/account/login': ['login', 'Login', 'account'],

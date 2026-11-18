@@ -26,7 +26,6 @@ export function CampaignInvitationPage({route}){
   setPending(getPendingSecureInvite());
   setUCN(invitationRouteCode(route)||'');
  },[uid,route?.hash]);
- useEffect(()=>()=>{clearPendingSecureInvite();},[]);
  const run=async(task)=>{
   if(busy)return;
   const ticket=ref.current,account=uid;

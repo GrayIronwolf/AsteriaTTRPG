@@ -11,6 +11,7 @@ import { FriendsPage } from '../pages/FriendsPage.jsx';
 import { NotificationsPage } from '../pages/NotificationsPage.jsx';
 import { CharacterForgePage } from '../pages/CharacterForgePage.jsx';
 import { CampaignForgePage } from '../pages/CampaignForgePage.jsx';
+import { CampaignInvitationPage } from '../pages/CampaignInvitationPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
 import { canActivateRoute } from './featureRegistry.mjs';
@@ -36,9 +37,11 @@ export function App({ identity = null } = {}) {
   const showNotifications=route.id==='notifications'&&canActivateRoute('notifications',services);
   const showForge=route.id==='character-forge'&&canActivateRoute('character-forge',services);
   const showCampaignForge=route.id==='campaign-forge'&&canActivateRoute('campaign-forge',services);
+  const showInvites=route.id==='invitation'&&canActivateRoute('invitation',services)&&
+    services.get('campaigns')?.connections?.availability().enabled===true;
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : showInvites ? <CampaignInvitationPage route={route}/> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }
