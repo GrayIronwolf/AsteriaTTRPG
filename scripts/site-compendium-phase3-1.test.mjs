@@ -71,7 +71,7 @@ test('routing and category search preserve original bookmarks and deliberately e
  const page=read('frontend/src/pages/CompendiumCataloguePage.jsx');
  assert.match(page,/loadPublicDomain/);
  assert.match(page,/data-testid="site-compendium-catalogue"/);
- assert.match(page,/Full definition pages and GM-only campaign notes/);
+ assert.match(page,/Private campaign notes and GM-only content/);
  assert.doesNotMatch(page,/dangerouslySetInnerHTML|window\.AsteriaFirebase/);
 });
 test('Phase 3.1 build regenerates catalogue before tests and Vite compilation',()=>{

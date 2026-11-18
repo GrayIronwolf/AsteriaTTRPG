@@ -129,7 +129,7 @@ export function CompendiumCataloguePage({ route }) {
             data-testid="site-compendium-domain"
             onChange={event => navigate({
               domain: event.target.value, group: '', legacyCategory: '',
-              query: draft, path: []
+              query: scope.search, path: []
             })}>
             <option value="">All selected subjects</option>
             {PUBLIC_DOMAINS.map(domain => (
