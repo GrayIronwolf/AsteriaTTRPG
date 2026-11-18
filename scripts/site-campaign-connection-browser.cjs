@@ -95,7 +95,7 @@ try{
  await player.getByTestId('site-invitation-ucn').fill(ucn);
  await player.getByTestId('site-invitation-lookup').click();
  await player.getByText('Membership Test Campaign').waitFor({timeout:30000});
- await player.getByText(/Request status: member/).waitFor({timeout:30000});
+ await player.getByText(/Request status: approved/).waitFor({timeout:30000});
  assert.equal(await player.getByTestId('site-invitation-request').isDisabled(),true);
  await player.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
  await player.getByTestId('site-campaign-forge-page').waitFor();
