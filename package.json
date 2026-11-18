@@ -170,7 +170,8 @@
     "site:connection-browser": "node scripts/site-campaign-connection-browser.cjs",
     "site:forge-integration-browser": "node scripts/site-forge-integration-browser.cjs",
     "site:gm-browser": "node scripts/site-gm-browser.cjs",
-    "site:player-browser": "node scripts/site-player-browser.cjs"
+    "site:player-browser": "node scripts/site-player-browser.cjs",
+    "site:layout-browser": "node scripts/site-layout-phase6-3-browser.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
