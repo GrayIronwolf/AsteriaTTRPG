@@ -159,5 +159,21 @@
     return Object.freeze({page,select});
   }
 
+  // Account is the reference implementation; leave its existing IDs,
+  // tab handlers, profile mounts and sign-out action untouched.
+  function boot(){
+    adopt({
+      page:'asteriaAccountPage',
+      title:'Account',
+      headerId:'aaaAccountHero',
+      layoutSelector:'.asteria-account-shell',
+      sidebarSelector:'.asteria-account-sidebar',
+      navSelector:'.asteria-account-sidebar-options',
+      contentSelector:'.asteria-account-content',
+      panelSelector:'.asteria-account-panel'
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
+  else boot();
   root.AsteriaPageTemplate=Object.freeze({adopt,create,ensureHeader});
 })(typeof window!=='undefined'?window:null,typeof document!=='undefined'?document:null);
