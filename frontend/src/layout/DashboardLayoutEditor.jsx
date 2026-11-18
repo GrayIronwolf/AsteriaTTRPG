@@ -137,9 +137,9 @@ export function DashboardLayoutEditor({
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [confirm,setConfirm]=useState('');
   const current=history.present;
-  const blocked=disabled||busy||remote;
   const baseline=layoutFingerprint(original.current,role);
   const remote=layoutFingerprint(source,role)!==baseline;
+  const blocked=disabled||busy||remote;
   const dirty=layoutFingerprint(current,role)!==baseline;
   const view=useMemo(()=>dashboardLayoutForViewport(current,role,viewport),[current,role,viewport]);
   const visible=visibleDashboardPanels(view,role);
