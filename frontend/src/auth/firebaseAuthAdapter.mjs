@@ -310,7 +310,9 @@ async function initializeClient(runtime) {
     enabled:import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'});
   const campaignConnections=createFirebaseCampaignConnectionService({
     auth,functions,functionsSdk,readCanonical,
-    enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'
+    enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true',
+    forgeEnabled:import.meta.env.VITE_ASTERIA_FORGE_INTEGRATION_ENABLED==='true' &&
+      import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'
   });
   const campaigns=createFirebaseCampaignsService({
     auth,db,firestoreSdk,functions,functionsSdk,storage,storageSdk,readCanonical,
