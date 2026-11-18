@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 2.5 integration acceptance
+name: React/Vite site migration — Phase 3.1 public Compendium catalogue
 
 on:
   pull_request:
@@ -16,6 +16,7 @@ on:
       - "scripts/site-home-*"
       - "scripts/site-appearance-*"
       - "scripts/site-integration-*"
+      - "scripts/site-compendium-*"
       - "scripts/site-retirement-*"
       - "package.json"
       - "eslint.config.mjs"
@@ -60,6 +61,16 @@ jobs:
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 3.1 public Compendium catalogue browser tests
+        run: npm run site:compendium-browser
+      - name: Upload Phase 3.1 Compendium evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-3-1-compendium-evidence
+          path: ${{ runner.temp }}/asteria-phase-3-1-compendium-evidence/
+          retention-days: 30
+          if-no-files-found: error
       - name: Phase 2.5 integrated React regression and safe synthetic identity fixture
         run: npm run site:integration-browser
       - name: Upload Phase 2.5 integration screenshots, metrics and cleanup ledger
