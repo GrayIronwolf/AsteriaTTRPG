@@ -163,6 +163,7 @@ async function screenshot(page, filename) {
     report.snapshots.push('preview-mobile-navigation-390.png');
     await preview.getByRole('navigation', { name: 'Mobile navigation' })
       .getByRole('link', { name: 'Account', exact: true }).click();
+    await preview.getByTestId('site-mega-browse').click();
     await preview.getByRole('heading', { name: 'Account', exact: true, level: 1 }).waitFor();
     assert.equal(await preview.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
 

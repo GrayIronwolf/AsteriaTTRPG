@@ -114,6 +114,7 @@ async function awaitPreview() {
         }
         await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link', { name: 'Character Forge', exact: true }).click();
+        await page.getByTestId('site-mega-browse').click();
         await page.getByRole('heading', { name: 'Character Forge', level: 1 }).waitFor();
       } else {
         assert.equal(metrics.desktopVisible, true, 'Desktop links missing at ' + width);

@@ -1,41 +1,121 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PRIMARY_LINKS } from '../router/siteRoutes.mjs';
+import { getMegaMenu } from '../navigation/megaMenuRegistry.mjs';
+import { createDisposableScope } from '../runtime/disposableScope.mjs';
 import { CrystalButton } from './ui/CrystalButton.jsx';
 import { AsteriaBrand } from './AsteriaBrand.jsx';
 import { HeaderAccountControls } from './HeaderAccountControls.jsx';
+import { NavigationMegaMenu } from './NavigationMegaMenu.jsx';
 import styles from './SiteShell.module.css';
 
-function NavigationLinks({ route, onNavigate }) {
-  return PRIMARY_LINKS.map(link => (
-    <CrystalButton
-      key={link.id}
-      href={link.href}
-      active={route.navId === link.id}
-      variant="nav"
-      size="compact"
-      onClick={onNavigate}
-    >
-      {link.label}
-    </CrystalButton>
-  ));
+function NavigationLinks({ route, activeMenuId, mode, onOpenMenu, onNavigate, onCloseMenu }) {
+  return PRIMARY_LINKS.map(link => {
+    const hasMenu = Boolean(getMegaMenu(link.id));
+    return (
+      <CrystalButton
+        key={link.id}
+        href={link.href}
+        active={route.navId === link.id}
+        variant="nav"
+        size="compact"
+        aria-haspopup={hasMenu ? 'dialog' : undefined}
+        aria-controls={hasMenu ? 'site-mega-menu' : undefined}
+        aria-expanded={hasMenu ? activeMenuId === link.id : undefined}
+        onClick={event => {
+          // Keep modified clicks and open-in-new-tab as ordinary bookmarks.
+          if (hasMenu && event.button === 0 && !event.metaKey && !event.ctrlKey &&
+              !event.shiftKey && !event.altKey) {
+            event.preventDefault();
+            onOpenMenu(link.id, event.currentTarget, mode);
+          } else {
+            onNavigate();
+          }
+        }}
+        onKeyDown={event => {
+          if (hasMenu && event.key === ' ') {
+            event.preventDefault();
+            onOpenMenu(link.id, event.currentTarget, mode);
+          } else if (event.key === 'Escape' && activeMenuId) {
+            event.preventDefault();
+            onCloseMenu(true);
+          }
+        }}
+        data-testid={'site-nav-' + link.id}
+      >
+        {link.label}
+      </CrystalButton>
+    );
+  });
 }
 
-// One React-owned header and CSS owner. There is no legacy listener, DOM
-// move, setView wrapper or image/profile sizing patch.
+/**
+ * One React-owned header, mobile navigation disclosure and seven mega menus.
+ * No legacy setView, cloned DOM buttons or second route event owner.
+ */
 export function SiteShell({ route, identity = null, children }) {
   const mobileMenu = useRef(null);
+  const panelRef = useRef(null);
+  const lastTrigger = useRef(null);
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const [menuSearch, setMenuSearch] = useState('');
+
+  const closeMobileMenu = useCallback(() => {
+    if (mobileMenu.current) mobileMenu.current.open = false;
+  }, []);
+
+  const closeMenu = useCallback((restoreFocus = false) => {
+    setActiveMenuId(null);
+    setMenuSearch('');
+    if (restoreFocus && lastTrigger.current?.isConnected) {
+      lastTrigger.current.focus({ preventScroll: true });
+    }
+  }, []);
 
   useEffect(() => {
-    if (mobileMenu.current) mobileMenu.current.open = false;
-  }, [route.hash]);
+    closeMobileMenu();
+    closeMenu();
+  }, [route.hash, closeMobileMenu, closeMenu]);
+
+  useEffect(() => {
+    if (!activeMenuId) return;
+    panelRef.current?.querySelector('input[type="search"]')?.focus({ preventScroll: true });
+
+    const scope = createDisposableScope();
+    scope.listen(document, 'keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMenu(true);
+      }
+    });
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      scope.dispose();
+    };
+  }, [activeMenuId, closeMenu]);
+
+  function openMenu(id, trigger, mode) {
+    if (activeMenuId === id) {
+      closeMenu(true);
+      return;
+    }
+    lastTrigger.current = mode === 'mobile'
+      ? mobileMenu.current?.querySelector('summary') : trigger;
+    closeMobileMenu();
+    setMenuSearch('');
+    setActiveMenuId(id);
+  }
 
   function focusMain(event) {
     event.preventDefault();
     document.getElementById('site-main')?.focus();
   }
 
-  function closeMobileMenu() {
-    if (mobileMenu.current) mobileMenu.current.open = false;
+  function navigate() {
+    closeMenu();
+    closeMobileMenu();
   }
 
   return (
@@ -45,22 +125,34 @@ export function SiteShell({ route, identity = null, children }) {
         <div className={styles.headerInner}>
           <AsteriaBrand />
           <nav className={styles.primaryNavigation} aria-label="Primary navigation" data-testid="site-primary-navigation">
-            <NavigationLinks route={route} />
+            <NavigationLinks route={route} activeMenuId={activeMenuId} mode="desktop"
+              onOpenMenu={openMenu} onNavigate={navigate} onCloseMenu={closeMenu} />
           </nav>
           <HeaderAccountControls identity={identity} />
           <details ref={mobileMenu} className={styles.mobileMenu} data-testid="site-mobile-menu">
             <summary>Menu</summary>
             <nav className={styles.mobileNavigation} aria-label="Mobile navigation">
-              <NavigationLinks route={route} onNavigate={closeMobileMenu} />
+              <NavigationLinks route={route} activeMenuId={activeMenuId} mode="mobile"
+                onOpenMenu={openMenu} onNavigate={navigate} onCloseMenu={closeMenu} />
             </nav>
           </details>
         </div>
       </header>
+      {activeMenuId && (
+        <NavigationMegaMenu
+          menu={getMegaMenu(activeMenuId)}
+          query={menuSearch}
+          onQueryChange={setMenuSearch}
+          onClose={closeMenu}
+          onNavigate={navigate}
+          panelRef={panelRef}
+        />
+      )}
       <main className={styles.main} id="site-main" tabIndex={-1}>
         {children}
       </main>
       <footer className={styles.footer}>
-        <p>Asteria TTRPG · Isolated React header preview</p>
+        <p>Asteria TTRPG · Isolated React navigation preview</p>
       </footer>
     </>
   );
