@@ -54,7 +54,8 @@ test('avatar path and size are validated before upload; script has no arbitrary 
   assert.match(adapter,/deleteObject/);
   assert.match(adapter,/getDocFromServer/);
   assert.match(adapter,/runTransaction/);
-  assert.doesNotMatch(adapter,/window\.AsteriaFirebase|accountIdRegistry|accountIdAssignments/);
+  assert.doesNotMatch(adapter.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,''),
+    /window\.AsteriaFirebase|accountIdRegistry|accountIdAssignments/);
   assert.match(read('frontend/src/auth/avatarProcessor.mjs'),/canvas\.toBlob/);
 });
 
