@@ -83,6 +83,11 @@ export function PlayerCharacterLink({campaign,joinStatus,api,characters,uid}){
    {['approved','inactive'].includes(status?.status)&&
     <CrystalButton disabled={busy} onClick={()=>withdraw('unlink')}>Unlink My Character</CrystalButton>}
   </div>
+  {status?.status==='approved'&&status.campaignCharacterId&&
+   <CrystalButton href={'#/react/character/'+encodeURIComponent(campaign.id)+'/'+
+     encodeURIComponent(status.campaignCharacterId)} data-testid="site-player-linked-dashboard">
+     Open Player Dashboard
+   </CrystalButton>}
   {status&&<BodyText>Character status: {status.status}. {status.status==='pending'?
    'Awaiting a GM decision.':status.status==='approved'?
    'Approved by the GM.':status.status==='inactive'?

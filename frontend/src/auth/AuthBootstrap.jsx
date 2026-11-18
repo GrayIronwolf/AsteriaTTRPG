@@ -31,7 +31,7 @@ export function AuthBootstrap({ children }) {
   }, []);
   const services = adapter ? createAppServices({auth:adapter,...(adapter.friends?.availability().enabled ? {friends:adapter.friends} : {}),
     ...(adapter.notifications?.availability().enabled ? {notifications:adapter.notifications} : {}),
-    ...(adapter.characters?.availability().enabled ? {characters:adapter.characters} : {}),
+    ...((adapter.characters?.availability().enabled||adapter.characters?.dashboard?.availability().enabled) ? {characters:adapter.characters} : {}),
     ...(adapter.campaigns?.availability().enabled ? {campaigns:adapter.campaigns} : {}),
     ...(adapter.gameplay?.availability().enabled ? {gameplay:adapter.gameplay} : {})}) : previewServices;
   return <AppServicesProvider services={services}>

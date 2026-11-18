@@ -13,6 +13,7 @@ import { CharacterForgePage } from '../pages/CharacterForgePage.jsx';
 import { CampaignForgePage } from '../pages/CampaignForgePage.jsx';
 import { CampaignInvitationPage } from '../pages/CampaignInvitationPage.jsx';
 import { GMDashboardPage } from '../pages/GMDashboardPage.jsx';
+import { PlayerDashboardPage } from '../pages/PlayerDashboardPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
 import { canActivateRoute } from './featureRegistry.mjs';
@@ -40,9 +41,10 @@ export function App({ identity = null } = {}) {
   const showCampaignForge=route.id==='campaign-forge'&&canActivateRoute('campaign-forge',services);
   const showInvites=route.id==='invitation'&&canActivateRoute('invitation',services);
   const showGM=['dashboard','gm-dashboard'].includes(route.id)&&canActivateRoute(route.id,services);
+  const showPlayer=route.id==='character-dashboard'&&canActivateRoute(route.id,services);
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : showInvites ? <CampaignInvitationPage route={route}/> : showGM ? <GMDashboardPage route={route} /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : showFriends ? <FriendsPage /> : showNotifications ? <NotificationsPage /> : showForge ? <CharacterForgePage /> : showCampaignForge ? <CampaignForgePage /> : showInvites ? <CampaignInvitationPage route={route}/> : showGM ? <GMDashboardPage route={route} /> : showPlayer ? <PlayerDashboardPage route={route}/> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }
