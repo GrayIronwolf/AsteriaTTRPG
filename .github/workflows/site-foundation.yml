@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 5.1 Character Forge
+name: React/Vite site migration — Phase 5.2 Campaign Forge
 
 on:
   pull_request:
@@ -22,6 +22,7 @@ on:
       - "scripts/site-notifications-*"
       - "scripts/site-security-*"
       - "scripts/site-forge-*"
+      - "scripts/site-campaign-*"
       - "scripts/site-retirement-*"
       - "package.json"
       - "eslint.config.mjs"
@@ -172,6 +173,15 @@ jobs:
       - name: Phase 5.1 owned character Firestore emulator browser acceptance
         timeout-minutes: 8
         run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,storage "npm run site:forge-browser"
+      - name: Build opt-in isolated Campaign Forge preview
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Phase 5.2 owner campaign creation and settings emulator browser acceptance
+        timeout-minutes: 8
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:campaign-browser"
       - name: Upload Phase 4.1 Firebase Auth acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4

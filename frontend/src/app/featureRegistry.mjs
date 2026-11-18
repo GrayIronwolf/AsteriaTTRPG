@@ -11,7 +11,7 @@ const COMPENDIUM = define('compendium', ['compendium']);
 const ACCOUNT = define('account', ['auth'], 'protected', 'ready');
 const LOGIN = define('account', ['auth']);
 const SOCIAL = define('social', ['auth', 'friends'], 'protected','ready');
-const CAMPAIGN = define('campaigns', ['auth', 'campaigns'], 'protected');
+const CAMPAIGN = define('campaigns', ['auth', 'campaigns'], 'protected','ready');
 const CHARACTER = define('characters', ['auth', 'characters'], 'protected','ready');
 const GM = define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected');
 
@@ -36,7 +36,7 @@ export const ROUTE_FEATURES = Object.freeze({
   'gm-dashboard': GM,
   'character-dashboard': define('characters', ['auth', 'characters'], 'protected'),
   presentation: GM,
-  invitation: CAMPAIGN,
+  invitation: define('campaigns', ['auth', 'campaigns'], 'protected'),
   'not-found': define('system')
 });
 
