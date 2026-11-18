@@ -76,6 +76,11 @@ try{
   'Bearer token must be removed from browser URL before rendering');
  assert.equal((await player.locator('body').innerText()).includes(link.split('=')[1]),false);
  await player.getByTestId('site-invitation-preview').click();
+ await player.waitForTimeout(1200);
+ const previewError=player.getByRole('alert');
+ if(await previewError.count())throw new Error(
+   'Secure invitation preview failed: '+await previewError.first().innerText());
+ console.log('SECURE PREVIEW visible content:',(await player.getByTestId('site-invitation-page').innerText()).slice(0,440));
  await player.getByText('Membership Test Campaign').waitFor({timeout:30000});
  await player.getByTestId('site-invitation-accept').click();
  await player.getByText(/Awaiting GM review|Invitation claimed/).first().waitFor({timeout:30000});
