@@ -7,6 +7,7 @@ import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
+import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
@@ -147,7 +148,26 @@ function Dashboard({api,uid,campaignId='',characterId}){
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
-    <Sections character={ch} owned={data.owner} tab={tab}/>
+    {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
+      <DashboardLayoutManager role="player" uid={uid} api={api}
+        owner={data.owner} campaignId={campaignId} characterId={characterId}
+        initialLayout={ch.dashboardLayout}
+        renderPanel={id=>{
+          if(id==='armour')return <p>Natural Armour Class: {ch.naturalAC??'Not recorded'}</p>;
+          if(id==='skills')return <ul>{ch.skills.map((s,i)=><li key={i}>{s.name} {s.rank}</li>)}</ul>;
+          if(id==='talents')return <ul>{ch.talents.map((s,i)=><li key={i}>{s}</li>)}</ul>;
+          if(id==='spells')return <ul>{ch.spells.map((s,i)=><li key={i}>{s}</li>)}</ul>;
+          if(id==='conditions')return <ul>{ch.conditions.map((s,i)=><li key={i}>{s}</li>)}</ul>;
+          if(id==='quests')return <ul>{ch.quests.map((s,i)=><li key={i}>{s.name}</li>)}</ul>;
+          if(id==='journal')return <ul>{ch.journal.map((s,i)=><li key={i}>{s.title}</li>)}</ul>;
+          if(id==='party')return <ul>{(c?.party||[]).map(s=><li key={s.id}>{s.name}</li>)}</ul>;
+          if(id==='weapons'||id==='quick')return <ul>{ch.equipment.map((s,i)=><li key={i}>{s.name}</li>)}</ul>;
+          if(id==='shortcutCharacter')return <p>Open the Character tab to inspect your sheet.</p>;
+          if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
+          return null;
+        }}/>
+      :<Sections character={ch} owned={data.owner} tab={tab}/>}
+    
     <SurfacePanel className={styles.panel} as="aside">
       <h3>Dashboard Migration</h3>
       <BodyText muted>This React dashboard reads existing saved character and campaign data.

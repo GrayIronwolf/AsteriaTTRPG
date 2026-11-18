@@ -7,6 +7,7 @@ import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
+import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
