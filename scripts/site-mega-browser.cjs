@@ -90,7 +90,7 @@ async function ready() {
     assert.equal(await page.getByTestId('site-mega-search').inputValue(), '');
     await page.getByTestId('site-mega-search').fill('this-is-not-a-section');
     await panel.getByRole('status').waitFor();
-    await page.getByRole('button', { name: 'Close navigation menu' }).click();
+    await page.getByRole('button', { name: 'Close navigation menu' }).click({ position: { x: 5, y: 5 } });
     assert.equal(await panel.count(), 0);
     console.log('PASS: searchable cards, filtered deep-link routing and backdrop dismissal.');
 
