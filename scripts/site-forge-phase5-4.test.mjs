@@ -89,7 +89,7 @@ test('Phase 5.4: callable methods explicitly gated and never write campaign memb
  });
  await assert.rejects(blocked.characterLinkStatus(cid,id),/not activated/);
  auth.currentUser={uid:'bob'};
- await assert.rejects(svc.characterLinkStatus(cid,id),/not verified/);
+ await assert.rejects(svc.characterLinkStatus(cid,id),/could not be verified/);
  const service=read('frontend/src/campaigns/firebaseCampaignConnectionService.mjs');
  for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','localStorage','sessionStorage'])
   assert.equal(service.includes(forbidden),false,forbidden);
