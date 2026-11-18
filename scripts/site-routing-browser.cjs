@@ -41,7 +41,12 @@ async function awaitPreview() {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'error') errors.push(e.text()); });
-    page.on('requestfailed', req => errors.push(req.url() + ': ' + req.failure()?.errorText));
+    page.on('requestfailed', req => {
+      // A page.goto/reload intentionally cancels in-flight assets. Treat only
+      // genuine network failures as regressions; ERR_ABORTED is not a 404.
+      const reason = req.failure()?.errorText || '';
+      if (reason !== 'net::ERR_ABORTED') errors.push(req.url() + ': ' + reason);
+    });
     await page.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1'
       ? r.continue() : r.abort());
 
