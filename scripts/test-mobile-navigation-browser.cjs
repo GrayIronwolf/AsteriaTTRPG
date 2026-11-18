@@ -67,5 +67,5 @@ const base='http://127.0.0.1:8123/';
     assert.notEqual(library.view,'home','Selecting a library card must leave Home');
     console.log('PASS: mobile guest Login, Back Home, hamburger, dropdown, and content navigation');
   }catch(error){await details('FAILED');console.error('MOBILE_NAV_SMOKE_FAILED:',error.stack||String(error));process.exitCode=1;}
-  finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1;});
+  finally{await browser.close();process.exit(process.exitCode||0);}
+})().catch(e=>{console.error(e);process.exit(1);});
