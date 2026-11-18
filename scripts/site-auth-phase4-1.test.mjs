@@ -130,8 +130,8 @@ test('Phase 4.1 CI keeps previous regressions and explicit emulator auth/browser
   const ci=read('.github/workflows/site-foundation.yml');
   assert.match(scripts['site:check'],/site-auth-phase4-1\.test\.mjs/);
   assert.match(scripts['site:auth-browser'],/site-auth-browser\.cjs/);
-  assert.match(ci,/VITE_ASTERIA_AUTH_ENABLED=true/);
-  assert.match(ci,/VITE_FIREBASE_MODE=emulator/);
+  assert.match(ci,/VITE_ASTERIA_AUTH_ENABLED:\s*'true'/);
+  assert.match(ci,/VITE_FIREBASE_MODE:\s*emulator/);
   assert.match(ci,/npm run site:auth-browser/);
   assert.match(ci,/asteria-phase-4-1-auth-evidence/);
   assert.match(ci,/npm run site:appearance-browser/);
