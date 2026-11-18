@@ -12,7 +12,7 @@ export function createFirebaseCharactersService({auth,db,firestoreSdk,readCanoni
   const user=auth.currentUser;
   if(!user?.uid)throw new Error('Sign in to access your characters.');
   const account=await readCanonical(user);
-  if(!account||auth.currentUser?.uid!==user.uid)
+  if(!account||account.uid!==user.uid||auth.currentUser?.uid!==user.uid)
    throw new Error('The private account profile could not be verified.');
   return user.uid;
  };

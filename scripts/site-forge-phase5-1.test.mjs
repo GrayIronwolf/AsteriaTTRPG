@@ -141,7 +141,7 @@ test('Firebase character service defaults closed and rejects unauthenticated pri
   auth,db:{},firestoreSdk:sdk,readCanonical:async()=>({uid:'user1'}),enabled:true});
  await assert.rejects(enabled.list(),/Sign in/);
  auth.currentUser={uid:'other'};
- await assert.rejects(enabled.list(),/getDocsFromServer is not a function|not verified/);
+ await assert.rejects(enabled.list(),/not verified/);
 });
 
 test('Phase 5.1 does not enable campaigns or dashboards and cannot fall back to legacy globals',()=>{

@@ -24,14 +24,24 @@ const clamp=(v,min,max,fallback)=>{
 };
 const STATS=['strength','dexterity','agility','constitution','endurance',
  'intelligence','wisdom','charisma','luck'];
+const tierCap=value=>{
+ if(value&&typeof value==='object')return clamp(value.maxScore??value.max,0,100,100);
+ if(typeof value==='string'){
+  const names={'tier 0':19,'tier 1':39,'tier 2':59,
+   'tier 3':79,'tier 4':99,'tier 5':100,
+   'tier i':39,'tier ii':59,'tier iii':79,'tier iv':99,'tier v':100};
+  const parsed=names[value.trim().toLowerCase()];
+  if(parsed!==undefined)return parsed;
+ }
+ return clamp(value,0,100,100);
+};
 const statMap=(v,kind)=>{
  const out={};
  if(!v||typeof v!=='object'||Array.isArray(v))return out;
  for(const key of STATS){
   if(!Object.hasOwn(v,key))continue;
   out[key]=kind==='modifier'?clamp(v[key],-30,30,0):
-   kind==='cap'?clamp(
-     typeof v[key]==='object'?v[key]?.maxScore??v[key]?.max: v[key],0,100,100):
+   kind==='cap'?tierCap(v[key]):
      asText(v[key],80);
  }
  return out;
