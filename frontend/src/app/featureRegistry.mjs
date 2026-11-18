@@ -35,7 +35,7 @@ export const ROUTE_FEATURES = Object.freeze({
   dashboard: GM,
   'gm-dashboard': GM,
   'character-dashboard': define('characters', ['auth', 'characters'], 'protected','ready'),
-  presentation: define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected'),
+  presentation: define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected','ready'),
   invitation: define('campaigns', ['auth', 'campaigns'], 'protected','ready'),
   'not-found': define('system')
 });
@@ -54,6 +54,8 @@ export function canActivateRoute(routeId, services) {
   const ready=feature.status==='ready'&&feature.requiredServices.every(key=>services?.has(key)===true);
   // Phase 5.3 connection actions are independently opted in. Simply providing
   // a campaign-settings adapter never unlocks invitations.
+  if(routeId==='presentation')return ready&&
+    services.get('gameplay')?.media?.availability().enabled===true;
   if(routeId==='character-dashboard')return ready&&
     services.get('characters')?.dashboard?.availability().enabled===true;
   if(routeId==='invitation')return ready&&
