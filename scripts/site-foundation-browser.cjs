@@ -54,7 +54,7 @@ async function awaitPreview() {
     await page.getByRole('heading', {name:'Asteria',level:1}).waitFor();
     assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).count(),1);
     assert.equal(await page.getByRole('main').count(),1);
-    assert.equal(await page.getByText('Phase 1.1 foundation preview.',{exact:false}).count(),1);
+    assert.equal(await page.getByText('Phase 1.2 navigation preview.',{exact:false}).count(),1);
     assert.equal(await page.locator('.site-hero-image img').evaluate(img => img.complete && img.naturalWidth > 0),true);
     assert.equal(await page.locator('.site-brand img').evaluate(img => img.complete && img.naturalWidth > 0),true);
     assert.equal(await page.evaluate(() => typeof window.setView), 'undefined');

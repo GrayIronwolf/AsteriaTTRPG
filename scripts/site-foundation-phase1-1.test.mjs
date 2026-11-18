@@ -27,7 +27,7 @@ test('Phase 1.1 is a standalone HTML + React entry, not a legacy overlay', () =>
   assert.doesNotMatch(oldHtml, /src="\/src\/main\.jsx"/);
 });
 
-test('React shell has real, accessible Home navigation and no ghost destinations', () => {
+test('React shell has real, accessible Home navigation and only explicitly previewed destinations', () => {
   const shell = read('frontend/src/components/SiteShell.jsx');
   const home = read('frontend/src/pages/HomePage.jsx');
   assert.match(shell, /<header/);
@@ -36,7 +36,7 @@ test('React shell has real, accessible Home navigation and no ghost destinations
   assert.match(shell, /href="#site-main"/);
   assert.match(shell, /<main/);
   assert.match(home, /<h1 id="site-home-title">Asteria<\/h1>/);
-  assert.match(home, /Phase 1\.1 foundation preview/);
+  assert.match(home, /Phase 1\.2 navigation preview/);
   assert.ok(existsSync(resolve(root, 'assets/header/asteria-wordmark.png')));
   assert.ok(existsSync(resolve(root, 'assets/home/asteria-home-spider.webp')));
 });

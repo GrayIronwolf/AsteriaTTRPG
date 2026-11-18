@@ -1,4 +1,4 @@
-name: Phase 1.1 standalone React/Vite foundation
+name: React/Vite site foundation and routing
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - "frontend/**"
       - "vite.site.config.mjs"
       - "scripts/site-foundation-*"
+      - "scripts/site-routing-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -41,3 +42,4 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.57.0
           npx playwright install --with-deps chromium
       - run: npm run site:browser
+      - run: npm run site:routing-browser
