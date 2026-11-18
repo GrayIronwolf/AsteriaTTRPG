@@ -181,6 +181,7 @@ try{
 
  await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Manage Campaign'}).click();
+ await owner.getByTestId('site-gm-character-refresh').click();
  await owner.getByRole('button',{name:'Deactivate'}).click();
  await owner.getByRole('button',{name:'Restore'}).waitFor({timeout:30000});
  await owner.getByRole('button',{name:'Restore'}).click();
