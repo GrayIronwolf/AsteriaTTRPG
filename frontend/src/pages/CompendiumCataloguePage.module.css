@@ -1,0 +1,40 @@
+/* React-only public catalogue styling: token-driven CSS Module, no legacy overrides. */
+.page { padding-block: var(--ast-space-8) var(--ast-space-9); min-height: 65vh; }
+.controls {
+  display: grid;
+  grid-template-columns: minmax(220px,2fr) repeat(2,minmax(160px,1fr));
+  gap: var(--ast-space-4);
+  margin-block: var(--ast-space-6);
+}
+.controls label { display: grid; align-content: start; gap: var(--ast-space-2); color: var(--ast-color-text); font-weight: 600; }
+.controls input, .controls select {
+  min-height: var(--ast-target-min);
+  min-width: 0;
+  width: 100%;
+  padding: var(--ast-space-2) var(--ast-space-3);
+  background: var(--ast-color-panel-raised);
+  color: var(--ast-color-text);
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-sm);
+  font: inherit;
+}
+.results { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,240px),1fr)); gap: var(--ast-space-4); margin-block: var(--ast-space-4); }
+.card {
+  display: grid; align-content: start; gap: var(--ast-space-2);
+  min-height: 176px;
+  background: var(--ast-color-panel);
+  border: 1px solid var(--ast-color-outline-soft);
+  border-radius: var(--ast-radius-panel);
+  padding: var(--ast-space-4);
+  color: var(--ast-color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.card:hover, .card:focus-visible { border-color: var(--ast-color-outline-active); background: var(--ast-color-panel-raised); }
+.type { color: var(--ast-color-accent); font-size: var(--ast-font-xs); text-transform: uppercase; letter-spacing: .04em; }
+.name { color: var(--ast-color-text-bright); font-family: var(--ast-font-display); font-size: var(--ast-font-lg); font-weight: 600; }
+.category { color: var(--ast-color-text-muted); font-size: var(--ast-font-sm); }
+.summary { color: var(--ast-color-text-muted); font-size: var(--ast-font-sm); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.more { min-height: var(--ast-target-min); margin-block: var(--ast-space-5); padding: var(--ast-space-3) var(--ast-space-5); color: var(--ast-color-text); border: 1px solid var(--ast-color-outline); border-radius: var(--ast-radius-sm); background: var(--ast-color-panel-raised); cursor: pointer; }
+.home { display: inline-block; margin-top: var(--ast-space-4); padding: var(--ast-space-3) 0; color: var(--ast-color-accent); }
+@media (max-width:760px) { .controls { grid-template-columns: minmax(0,1fr); } .page { padding-block: var(--ast-space-6); } }

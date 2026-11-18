@@ -2,6 +2,7 @@ import React from 'react';
 import { SiteShell } from '../components/SiteShell.jsx';
 import { HomePage } from '../pages/HomePage.jsx';
 import { AppearanceSettingsPage } from '../pages/AppearanceSettingsPage.jsx';
+import { CompendiumCataloguePage } from '../pages/CompendiumCataloguePage.jsx';
 import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
@@ -19,9 +20,11 @@ export function App({ identity = null } = {}) {
 
   const showMigratedHome = route.id === 'home' && canActivateRoute(route.id, services);
   const showAppearance = route.id === 'appearance' && canActivateRoute(route.id, services);
+  // Only a sanitized PUBLIC catalogue is migrated in Phase 3.1, not full entry pages.
+  const showPublicCatalogue = ['handbook','lore','compendium'].includes(route.id);
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }
