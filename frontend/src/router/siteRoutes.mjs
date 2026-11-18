@@ -18,6 +18,7 @@ const STATIC_ROUTES = Object.freeze({
   '/character-forge': ['character-forge', 'Character Forge', 'character-forge'],
   '/campaign-forge': ['campaign-forge', 'Campaign Forge', 'campaign-forge'],
   '/account': ['account', 'Account', 'account'],
+  '/appearance': ['appearance', 'Appearance', 'account'],
   '/account/login': ['login', 'Login', 'account'],
   '/account/create': ['account-create', 'Create Account', 'account'],
   '/account/forgot-password': ['forgot-password', 'Reset Password', 'account'],

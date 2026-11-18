@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App.jsx';
 import { AppServicesProvider } from './app/AppServices.jsx';
+import { AppearanceProvider } from './appearance/AppearanceProvider.jsx';
 // Tokens/reset/typography are the only global CSS; page UI uses CSS Modules.
 import './styles/tokens.css';
 import './styles/reset.css';
@@ -14,8 +15,10 @@ if (!host) {
 
 createRoot(host).render(
   <React.StrictMode>
-    <AppServicesProvider>
-      <App />
-    </AppServicesProvider>
+    <AppearanceProvider>
+      <AppServicesProvider>
+        <App />
+      </AppServicesProvider>
+    </AppearanceProvider>
   </React.StrictMode>
 );

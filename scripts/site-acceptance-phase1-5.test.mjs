@@ -54,7 +54,7 @@ test('all phase-1 navigation targets resolve without granting unconverted access
     assert.equal(route.navId, link.id, link.href);
   }
   for (const id of previewRoutes) {
-    assert.equal(canActivateRoute(id, previewServices), id === 'home', id);
+    assert.equal(canActivateRoute(id, previewServices), ['home', 'appearance'].includes(id), id);
   }
   const privateLocations = [
     ['#/join/123456789012', 'invitation'],

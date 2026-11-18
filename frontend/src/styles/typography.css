@@ -1,7 +1,7 @@
 /* Global type defaults. Local roles/headings are CSS-module classes. */
 html {
   font-family: var(--ast-font-body);
-  font-size: 16px;
+  font-size: var(--ast-root-font-size, 16px);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

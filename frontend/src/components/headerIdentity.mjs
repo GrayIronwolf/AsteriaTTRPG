@@ -26,6 +26,8 @@ export function getVerifiedHeaderIdentity(identity) {
   return {
     username,
     initial: username.charAt(0).toLocaleUpperCase(),
+    notificationCount: Number.isSafeInteger(identity.notificationCount) && identity.notificationCount >= 0
+      ? Math.min(identity.notificationCount, 99) : 0,
     avatarUrl
   };
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { SiteShell } from '../components/SiteShell.jsx';
 import { HomePage } from '../pages/HomePage.jsx';
+import { AppearanceSettingsPage } from '../pages/AppearanceSettingsPage.jsx';
 import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
@@ -15,9 +16,10 @@ export function App() {
   useRouteEffects(route);
 
   const showMigratedHome = route.id === 'home' && canActivateRoute(route.id, services);
+  const showAppearance = route.id === 'appearance' && canActivateRoute(route.id, services);
   return (
     <SiteShell route={route}>
-      {showMigratedHome ? <HomePage /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }

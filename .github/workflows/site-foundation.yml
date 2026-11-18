@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 2.3 cinematic Home
+name: React/Vite site migration — Phase 2.4 appearance settings
 
 on:
   pull_request:
@@ -14,6 +14,7 @@ on:
       - "scripts/site-navigation-*"
       - "scripts/site-mega-*"
       - "scripts/site-home-*"
+      - "scripts/site-appearance-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -53,6 +54,16 @@ jobs:
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 2.4 appearance settings browser regression
+        run: npm run site:appearance-browser
+      - name: Upload Phase 2.4 appearance screenshots and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-2-4-appearance-evidence
+          path: ${{ runner.temp }}/asteria-phase-2-4-appearance-evidence/
+          retention-days: 30
+          if-no-files-found: error
       - name: Phase 2.3 cinematic Home and Forge cards browser regression
         run: npm run site:home-browser
       - name: Upload Phase 2.3 Home screenshots and measurements

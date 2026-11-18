@@ -49,3 +49,55 @@
   object-position: center;
   mask-image: linear-gradient(to right, transparent, black 26%, black 95%, rgba(0, 0, 0, .85));
 }
+
+/* Authenticated controls are an optional future adapter surface, never guest UI. */
+.signedIn { flex: 0 0 auto; width: auto; gap: var(--ast-space-1); }
+.accountMenu { position: relative; flex: 0 0 auto; color: var(--ast-color-header-text); }
+.accountMenu summary {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: var(--ast-target-min);
+  min-height: var(--ast-target-min);
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-sm);
+  background: var(--ast-color-panel);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--ast-font-lg);
+}
+.accountMenu summary::-webkit-details-marker { display: none; }
+.unreadBadge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 22px;
+  padding: 2px 4px;
+  border-radius: var(--ast-radius-pill);
+  background: var(--ast-color-gold);
+  color: var(--ast-color-page);
+  font-size: var(--ast-font-xs);
+  text-align: center;
+}
+.accountLinks {
+  position: absolute;
+  top: calc(100% + var(--ast-space-2));
+  right: 0;
+  z-index: var(--ast-z-menu);
+  display: grid;
+  min-width: 200px;
+  padding: var(--ast-space-2);
+  border: 1px solid var(--ast-color-outline);
+  border-radius: var(--ast-radius-panel);
+  background: var(--ast-color-overlay);
+  box-shadow: var(--ast-shadow-dropdown);
+}
+.accountLinks a {
+  min-height: var(--ast-target-min);
+  display: flex;
+  align-items: center;
+  padding: var(--ast-space-2) var(--ast-space-3);
+  color: var(--ast-color-text);
+  text-decoration: none;
+}
+.accountLinks a:hover { background: var(--ast-color-accent-soft); }

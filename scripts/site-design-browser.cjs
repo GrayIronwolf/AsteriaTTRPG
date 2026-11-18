@@ -108,7 +108,8 @@ async function awaitPreview() {
         await menu.locator('summary').click();
         const mobileLinks = await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link').all();
-        assert.equal(mobileLinks.length, 8);
+        assert.equal(mobileLinks.length, 9, 'Eight primary links plus Appearance settings');
+        assert.equal(await page.getByTestId('site-mobile-appearance-link').count(), 1);
         for (const link of mobileLinks) {
           assert.ok((await link.boundingBox()).height >= 44, 'Undersized mobile menu target at ' + width);
         }

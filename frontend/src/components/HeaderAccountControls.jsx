@@ -48,6 +48,23 @@ export function HeaderAccountControls({ identity = null }) {
           />
         )}
       </a>
+      <details className={styles.accountMenu} data-testid="site-header-account-menu">
+        <summary aria-label="Account options" title="Account options">
+          <span aria-hidden="true">⋮</span>
+          {verified.notificationCount > 0 &&
+            <span className={styles.unreadBadge} aria-label={verified.notificationCount + ' unread notifications'}>
+              {verified.notificationCount === 99 ? '99+' : verified.notificationCount}
+            </span>}
+        </summary>
+        <nav className={styles.accountLinks} aria-label="Account shortcuts">
+          <a href="#/account/profile">My Profile</a>
+          <a href="#/account/notifications">
+            Notifications{verified.notificationCount > 0 ? ' (' + verified.notificationCount + ')' : ''}
+          </a>
+          <a href="#/appearance">Appearance</a>
+          <a href="#/account/settings">Account Settings</a>
+        </nav>
+      </details>
     </div>
   );
 }
