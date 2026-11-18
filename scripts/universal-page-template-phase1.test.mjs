@@ -66,13 +66,13 @@ function harness(){
   return {window,document,Element,media,mediaHandlers,callbacks};
 }
 
-test('Phase 1 shared shell is loaded after visual skin and before AAA Account enhancement',()=>{
+test('Template files remain available for future work but are not loaded while startup is isolated',()=>{
   const html=read('index.html');
-  assert.ok(html.includes('css/asteria-page-template.css?v=universal-phase1-20261118'));
-  assert.ok(html.includes('js/asteria-page-template.js?v=universal-phase1-20261118'));
-  assert.ok(html.indexOf('css/asteria-page-template.css')>html.indexOf('css/asteria-solid-navy-surfaces.css'));
-  assert.ok(html.indexOf('js/asteria-account-pages.js')<html.indexOf('js/asteria-page-template.js'));
-  assert.ok(html.indexOf('js/asteria-page-template.js')<html.indexOf('js/asteria-aaa-upgrade.js'));
+  assert.ok(!html.includes('<link rel="stylesheet" href="css/asteria-page-template.css'));
+  assert.ok(!html.includes('<script src="js/asteria-page-template.js'));
+  assert.ok(html.includes('css/asteria-account-pages.css'));
+  assert.ok(html.includes('js/asteria-account-pages.js'));
+  assert.ok(html.includes('css/asteria-solid-navy-surfaces.css'));
   assert.match(html,/class="asteria-account-shell"/);
   for(const id of ['asteriaAccountPanelProfile','asteriaAccountPanelSettings','asteriaAccountPanelAppearance','asteriaAccountPanelSecurity']){
     assert.equal(html.split('id="'+id+'"').length-1,1);
