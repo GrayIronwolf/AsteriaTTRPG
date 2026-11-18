@@ -32,7 +32,7 @@ test('React shell has real, accessible Home navigation and only explicitly previ
   const home = read('frontend/src/pages/HomePage.jsx');
   assert.match(shell, /<header/);
   assert.match(shell, /<nav[^>]*aria-label="Primary navigation"/);
-  assert.match(shell, /href="#home"/);
+  assert.match(read('frontend/src/components/AsteriaBrand.jsx'), /href="#home"/);
   assert.match(shell, /href="#site-main"/);
   assert.match(shell, /<main/);
   assert.match(home, /<Heading id="site-home-title" hero>Asteria<\/Heading>/);

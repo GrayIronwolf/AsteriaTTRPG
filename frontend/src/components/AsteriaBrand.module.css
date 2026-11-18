@@ -1,0 +1,34 @@
+/* Asteria's logo and star treatment have one component/style owner. */
+.brand {
+  display: flex;
+  flex: 0 0 var(--ast-header-brand-width);
+  width: var(--ast-header-brand-width);
+  min-width: 0;
+  max-height: var(--ast-header-height);
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+}
+.wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: var(--ast-header-height);
+  overflow: visible;
+}
+.starFlood {
+  flood-color: var(--ast-logo-star-blue);
+  animation: starColourCycle 8s ease-in-out infinite;
+}
+@keyframes starColourCycle {
+  0%, 100% { flood-color: var(--ast-logo-star-blue); }
+  28% { flood-color: var(--ast-logo-star-cyan); }
+  58% { flood-color: var(--ast-logo-star-violet); }
+  82% { flood-color: var(--ast-logo-star-gold); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .starFlood {
+    animation: none;
+    flood-color: var(--ast-logo-star-blue);
+  }
+}

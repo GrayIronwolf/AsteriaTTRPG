@@ -101,7 +101,7 @@ async function awaitPreview() {
         };
       });
       assert.equal(metrics.overflow, false, 'Horizontal overflow at ' + width);
-      if (width <= 1150) {
+      if (width <= 1279) {
         assert.equal(metrics.desktopVisible, false, 'Desktop navigation exposed at ' + width);
         assert.equal(metrics.menuVisible, true, 'Mobile navigation missing at ' + width);
         const menu = page.getByTestId('site-mobile-menu');
