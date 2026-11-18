@@ -56,7 +56,6 @@ try{
  await owner.getByRole('button',{name:'Manage Campaign'}).click();
  await owner.getByTestId('site-campaign-connections').waitFor();
  const ucn=(await owner.locator('main dd').nth(1).innerText()).trim();
- const ownerCampaignId=(await owner.getByTestId('site-campaign-gm-dashboard').getAttribute('href')||'').split('/').at(-1);
  assert.match(ucn,/^\d{12}$/);
  await owner.getByTestId('site-secure-invite-issue').click();
  const linkInput=owner.getByRole('textbox',{name:'One-time invitation link'});
@@ -136,6 +135,11 @@ try{
  await owner.getByText('No pending character requests.').waitFor({timeout:30000});
  await player.getByTestId('site-character-link-status').click();
  await player.getByText(/Character status: approved/).waitFor({timeout:30000});
+ const approvedLink=player.getByTestId('site-player-linked-dashboard');
+ await approvedLink.waitFor({timeout:30000});
+ const linkedRoute=await approvedLink.getAttribute('href');
+ assert.match(linkedRoute,/^#\/react\/character\/[^/]+\/[^/]+$/);
+ const [ownerCampaignId,linkedId]=linkedRoute.split('/').slice(-2);
  // The gameplay record comes from the server-owned original; Forge source
  // remains available for the owner after joining.
  await player.goto(base+'#/character-forge',{waitUntil:'domcontentloaded'});
@@ -163,14 +167,6 @@ try{
  await deniedOwner.waitFor({timeout:30000});
  assert.equal(await owner.getByText('Joined Forge Hero').count(),0,
   'Another account must not see private owner-only character details');
- // Capture the distinct server-assigned gameplay ID in the owner review workspace.
- await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Manage Campaign'}).click();
- const lifecycle=owner.getByTestId('site-gm-character-links');
- await lifecycle.waitFor({timeout:30000});
- const lifecycleText=await lifecycle.innerText();
- const linkedId=(lifecycleText.match(/linkchar-[a-f0-9]{32}/)||[])[0];
- if(!linkedId)throw Error('Approved campaign gameplay record ID is missing: '+lifecycleText.slice(0,900));
  await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
   {waitUntil:'domcontentloaded'});
  await player.getByTestId('site-player-campaign').waitFor({timeout:30000});
