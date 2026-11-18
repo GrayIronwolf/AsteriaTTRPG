@@ -1,4 +1,4 @@
-name: React/Vite site foundation, routing, design and JS ownership
+name: React/Vite site foundation — Phase 1 integrated acceptance
 
 on:
   pull_request:
@@ -9,6 +9,7 @@ on:
       - "scripts/site-routing-*"
       - "scripts/site-design-*"
       - "scripts/site-js-*"
+      - "scripts/site-acceptance-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -47,3 +48,13 @@ jobs:
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 1.5 integrated browser and offline legacy baseline
+        run: npm run site:acceptance
+      - name: Upload Phase 1.5 evidence screenshots and manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-1-5-acceptance-evidence
+          path: ${{ runner.temp }}/asteria-phase-1-5-evidence/
+          retention-days: 30
+          if-no-files-found: error
