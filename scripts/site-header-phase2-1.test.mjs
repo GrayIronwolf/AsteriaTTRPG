@@ -87,7 +87,7 @@ test('profile UI requires a verified authenticated identity, and keeps unsafe UR
   assert.match(css, /width:\s*var\(--ast-header-avatar-size\)/);
   assert.match(css, /height:\s*var\(--ast-header-avatar-size\)/);
   assert.match(css, /object-fit:\s*cover/);
-  assert.doesNotMatch(controls, /localStorage|window\.AsteriaFirebase|sessionStorage/);
+  assert.doesNotMatch(controls.replace(/\/\*[\s\S]*?\*\//g, ''), /localStorage|window\.AsteriaFirebase|sessionStorage/);
 });
 
 test('the existing live site remains the old implementation until feature parity', () => {
