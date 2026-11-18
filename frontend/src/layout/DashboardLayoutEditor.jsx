@@ -9,7 +9,7 @@ import {
 } from '../../../src/state/dashboardLayoutModel.mjs';
 import {dashboardKeyboardProposal} from '../../../src/state/dashboardGridModel.mjs';
 import {
-  createLayoutHistory,pushLayoutHistory,undoLayoutHistory,redoLayoutHistory,
+  createLayoutHistory,undoLayoutHistory,redoLayoutHistory,
   updateViewportHistory,layoutFingerprint
 } from './layoutHistoryModel.mjs';
 import styles from './DashboardLayoutEditor.module.css';
