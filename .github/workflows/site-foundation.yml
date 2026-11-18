@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 4.4 Notifications & Header Integration
+name: React/Vite site migration — Phase 4.5 Account Security & Compendium Permissions
 
 on:
   pull_request:
@@ -20,6 +20,7 @@ on:
       - "scripts/site-auth-*"
       - "scripts/site-friends-*"
       - "scripts/site-notifications-*"
+      - "scripts/site-security-*"
       - "scripts/site-retirement-*"
       - "package.json"
       - "eslint.config.mjs"
@@ -54,6 +55,8 @@ jobs:
         run: npm run site:retirement-audit
       - run: npm run site:build
       - run: npm run site:verify-dist
+      - name: Phase 4.5 publication security audit
+        run: npm run site:security-audit
       - run: npx eslint frontend/src
       - name: Install Chromium for phase-specific browser regression
         timeout-minutes: 6

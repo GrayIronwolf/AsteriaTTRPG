@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {isPublishedDefinition} from '../frontend/src/compendium/publicationPolicy.mjs';
 import {
   extractPublicSections, isRestrictedSectionTitle
 } from '../frontend/src/compendium/publicSections.mjs';
@@ -23,8 +24,7 @@ test('public entry generator preserves canonical identity, separates public sect
   for(const filename of sourceFiles) {
     const partition=JSON.parse(read('data/compendium-parts/'+filename));
     for(const entry of partition.entries) {
-      if(entry.visibility!=='public'||entry.gmOnly===true||
-        (entry.metadata?.visibility!==undefined && entry.metadata.visibility!=='public')) {
+      if(!isPublishedDefinition(entry)) {
         removed++;continue;
       }
       source.get(partition.domain).push(entry);

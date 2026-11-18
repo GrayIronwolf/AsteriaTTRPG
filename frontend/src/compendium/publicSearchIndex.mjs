@@ -2,6 +2,7 @@
  * Lazy source for keyword search within *already-public* filtered sections.
  * This module never imports the canonical (unfiltered) Compendium partitions.
  */
+import {validatePublishedSearch} from './publicationPolicy.mjs';
 const loaders = import.meta.glob('./public-search-index/*.json', {import: 'default'});
 const allowed = new Set(Object.keys(loaders));
 const requests = new Map();
@@ -16,7 +17,10 @@ export async function loadPublicSearchDomain(domain) {
     requests.set(domain, loaders[path]().then(data => {
       if (data?.version !== 1 || data.domain !== domain ||
           !Array.isArray(data.entries)) throw new Error('Invalid public search index');
-      return new Map(data.entries.map(item => [item.id, item.text]));
+      return new Map(data.entries.map(item => {
+        const safe=validatePublishedSearch(item,domain);
+        return [safe.id,safe.text];
+      }));
     }).catch(error => { requests.delete(domain); throw error; }));
   }
   return requests.get(domain);

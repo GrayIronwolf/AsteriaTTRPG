@@ -1,5 +1,6 @@
 import React,{createContext,useContext,useEffect,useMemo,useState} from 'react';
 import {useAuth} from '../auth/AuthProvider.jsx';
+import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
 import {createNotificationPoller,EMPTY_NOTIFICATION_STATE} from './notificationPoller.mjs';
 
@@ -15,8 +16,7 @@ export function NotificationsProvider({children}){
  const {session}=useAuth();
  const services=useAppServices();
  const service=services.get('notifications');
- const uid=session.status==='authenticated'&&session.profileAvailable?
-   session.user?.uid:null;
+ const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
  const [snapshot,setSnapshot]=useState({uid:null,state:EMPTY_NOTIFICATION_STATE});
  const [controller,setController]=useState(null);
  useEffect(()=>{

@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeDiscoveryText } from '../frontend/src/compendium/discoveryModel.mjs';
+import {validatePublishedCatalogue,validatePublishedEntry,validatePublishedSearch} from '../frontend/src/compendium/publicationPolicy.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const catalogueDir = resolve(root, 'frontend/src/compendium/public-index');
@@ -24,8 +25,9 @@ for(const domain of domains) {
   const source=JSON.parse(readFileSync(join(entriesDir,domain+'.json'),'utf8'));
   assert.equal(catalogue.domain,domain);
   assert.equal(source.domain,domain);
-  const publicIds = new Set(catalogue.entries.map(e=>e.id));
-  const entries=source.entries.map(entry=>{
+  const publicIds = new Set(catalogue.entries.map(e=>validatePublishedCatalogue(e,domain).id));
+  const entries=source.entries.map(raw=>{
+    const entry=validatePublishedEntry(raw,domain);
     assert.ok(publicIds.has(entry.id),'Public entry absent from catalogue: '+entry.id);
     const seen=new Set();
     const words = [];
@@ -42,7 +44,7 @@ for(const domain of domains) {
     }
     tokens+=words.length;
     // No raw headings/bodies, source paths, raw metadata, or visibility flags.
-    return {id:entry.id,text:words.join(' ')};
+    return validatePublishedSearch({id:entry.id,text:words.join(' ')},domain);
   });
   assert.equal(entries.length,publicIds.size,'Mismatch in public search/catalogue parity');
   count+=entries.length;

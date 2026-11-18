@@ -4,6 +4,7 @@ import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
 import { Heading, BodyText, Eyebrow } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import { useAuth } from '../auth/AuthProvider.jsx';
+import {classifyPrivateRoute,isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import { useAppearance } from '../appearance/AppearanceProvider.jsx';
 import { copyableAccountId } from '../auth/accountProfileModel.mjs';
 import { proposedAccountUsername, validatedEditableProfile, avatarUploadError } from '../../../src/state/accountProfileEdit.mjs';
@@ -55,7 +56,7 @@ export function AccountPage({route}) {
     setRenameEnabled(false);setRenaming(false);setEditing(false);
     setVerificationSentAt(0);setVerified(session.user?.emailVerified===true);
     setMessage('');setError('');setCloudConflict(false);setAvatarFile(null);
-    if(!uid || session.status!=='authenticated' || !session.profileAvailable || !actions?.readProfile)
+    if(!uid || !isVerifiedOwnedSession(session) || !actions?.readProfile)
       return undefined;
     let active=true;
     setLoading(true);
@@ -176,12 +177,13 @@ export function AccountPage({route}) {
     setMessage('Cloud appearance applied in this browser. Nothing was changed on the server.');
   }
 
-  if(!available || session.status==='checking')return <PageLayout as="section" width="reading"
+  const access=classifyPrivateRoute(session,available);
+  if(access==='checking'||access==='unavailable')return <PageLayout as="section" width="reading"
     className={styles.page} labelledBy="site-account-title" data-testid="site-account-page">
     <Heading id="site-account-title">Account</Heading>
-    <BodyText>{session.status==='checking'?'Checking your account…':'Account features are unavailable in this offline preview.'}</BodyText>
+    <BodyText>{access==='checking'?'Checking your account…':'Account features are unavailable in this offline preview.'}</BodyText>
   </PageLayout>;
-  if(session.status!=='authenticated'||!session.profileAvailable)return <PageLayout as="section"
+  if(access!=='allowed')return <PageLayout as="section"
     width="reading" className={styles.page} labelledBy="site-account-title" data-testid="site-account-page">
     <Heading id="site-account-title">Account</Heading>
     <BodyText>{session.status==='authenticated'?

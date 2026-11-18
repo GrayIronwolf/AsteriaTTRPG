@@ -4,6 +4,7 @@ import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Heading,BodyText,Eyebrow} from '../components/ui/Typography.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
+import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
 import {useNotifications} from '../notifications/NotificationsProvider.jsx';
 import {notificationDestination} from '../notifications/notificationContracts.mjs';
@@ -13,7 +14,7 @@ const EMPTY={notifications:[],unreadShown:0,nextCursor:null};
 export function NotificationsPage(){
  const {session}=useAuth(),services=useAppServices(),inbox=useNotifications();
  const service=services.get('notifications');
- const uid=session.status==='authenticated'&&session.profileAvailable?session.user?.uid:null;
+ const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
  const [channel,setChannel]=useState('social'),[cursorStack,setCursorStack]=useState([null]);
  const [index,setIndex]=useState(0),[page,setPage]=useState(null);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');

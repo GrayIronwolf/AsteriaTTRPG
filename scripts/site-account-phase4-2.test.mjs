@@ -93,7 +93,7 @@ test('account routes require injected auth; protected gameplay remains locked',(
   const app=read('frontend/src/app/App.jsx');
   assert.match(app,/<AccountPage route=\{route\}/);
   const page=read('frontend/src/pages/AccountPage.jsx');
-  assert.match(page,/session\.profileAvailable/);
+  assert.match(page,/isVerifiedOwnedSession/);
   assert.match(page,/verificationResendAvailable/);
   assert.match(page,/data-testid="site-account-settings"/);
   assert.match(page,/data-testid="site-account-profile"/);
