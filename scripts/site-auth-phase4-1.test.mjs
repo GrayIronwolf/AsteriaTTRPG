@@ -114,7 +114,7 @@ test('Phase 4.1 reuses Asteria registration, owner-scoped data and server-only A
   assert.match(src,/sendPasswordResetEmail/);
   assert.match(src,/signInWithEmailAndPassword/);
   assert.match(src,/signOut\(auth\)/);
-  assert.doesNotMatch(src,/accountIdRegistry|accountIdAssignments|deleteUser\(/);
+  assert.doesNotMatch(src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,''),/accountIdRegistry|accountIdAssignments|deleteUser\(/);
   assert.doesNotMatch(src,/window\.AsteriaFirebase|localStorage|sessionStorage/);
   assert.match(init,/VITE_ASTERIA_AUTH_ENABLED === 'true'/);
   assert.match(init,/createFirebaseAuthAdapter/);

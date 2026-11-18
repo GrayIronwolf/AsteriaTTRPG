@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 3.3 Compendium discovery
+name: React/Vite site migration — Phase 4.1 Firebase Authentication
 
 on:
   pull_request:
@@ -17,6 +17,7 @@ on:
       - "scripts/site-appearance-*"
       - "scripts/site-integration-*"
       - "scripts/site-compendium-*"
+      - "scripts/site-auth-*"
       - "scripts/site-retirement-*"
       - "package.json"
       - "eslint.config.mjs"
@@ -139,6 +140,24 @@ jobs:
         with:
           name: asteria-phase-2-1-header-evidence
           path: ${{ runner.temp }}/asteria-phase-2-1-evidence/
+          retention-days: 30
+          if-no-files-found: error
+      # No live Firebase credentials: use Auth/Firestore demo emulators and
+      # rebuild only AFTER all guest/legacy browser checks finish.
+      - name: Build opt-in isolated React Auth preview for demo emulator
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Phase 4.1 real Firebase emulator browser tests
+        timeout-minutes: 7
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore "npm run site:auth-browser"
+      - name: Upload Phase 4.1 Firebase Auth acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-4-1-auth-evidence
+          path: ${{ runner.temp }}/asteria-phase-4-1-auth-evidence/
           retention-days: 30
           if-no-files-found: error
       - name: Phase 1.5 integrated browser and offline legacy baseline
