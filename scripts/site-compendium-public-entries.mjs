@@ -7,6 +7,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractPublicSections, isRestrictedSectionTitle } from '../frontend/src/compendium/publicSections.mjs';
+import {isPublishedDefinition, validatePublishedEntry} from '../frontend/src/compendium/publicationPolicy.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = resolve(root, 'data/compendium-parts');
@@ -22,8 +23,7 @@ for (const filename of readdirSync(source).filter(x=>/^[a-z]+-[a-f0-9]+\.json$/.
   const data = JSON.parse(readFileSync(join(source, filename), 'utf8'));
   assert.ok(published.has(data.domain), 'Unrecognised source domain');
   for (const entry of data.entries) {
-    if (entry.visibility !== 'public' || entry.gmOnly === true ||
-        entry.metadata?.visibility !== 'public' && entry.metadata?.visibility !== undefined) {
+    if (!isPublishedDefinition(entry)) {
       hidden++;
       continue;
     }
@@ -34,7 +34,7 @@ for (const filename of readdirSync(source).filter(x=>/^[a-z]+-[a-f0-9]+\.json$/.
     const sections = extractPublicSections(entry.body);
     assert.ok(sections.every(item => !isRestrictedSectionTitle(item.title)));
     // No raw unrestricted body/metadata, GM notes, personal IDs, or aliases.
-    published.get(data.domain).push({
+    published.get(data.domain).push(validatePublishedEntry({
       id: entry.id,
       title: String(entry.title),
       slug: entry.slug,
@@ -43,7 +43,7 @@ for (const filename of readdirSync(source).filter(x=>/^[a-z]+-[a-f0-9]+\.json$/.
       categoryPath: Array.isArray(entry.categoryPath)
         ? entry.categoryPath.filter(x => typeof x === 'string').slice(0,6) : [],
       sections
-    });
+    },data.domain));
     written++;
     sectionsWritten += sections.length;
   }

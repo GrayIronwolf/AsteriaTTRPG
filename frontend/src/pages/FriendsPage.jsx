@@ -4,6 +4,7 @@ import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Heading,BodyText,Eyebrow} from '../components/ui/Typography.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
+import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
 import {assertHandle,confirmationText} from '../friends/friendContracts.mjs';
 import styles from './FriendsPage.module.css';
@@ -28,7 +29,7 @@ export function FriendsPage() {
   const {session}=useAuth();
   const services=useAppServices();
   const service=services.get('friends');
-  const uid=session.profileAvailable&&session.status==='authenticated'?session.user?.uid:null;
+  const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
   const [tab,setTab]=useState('accepted');
   const [pages,setPages]=useState({});
   const [handle,setHandle]=useState('');

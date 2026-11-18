@@ -1,4 +1,5 @@
 import { isValidPublicEntryRoute, resolvePublicEntry } from './publicEntryModel.mjs';
+import {validatePublishedEntry} from './publicationPolicy.mjs';
 
 // Only prefiltered output is importable, not canonical unfiltered data.
 const entryModules = import.meta.glob('./public-entry-index/*.json', { import: 'default' });
@@ -13,7 +14,7 @@ export async function loadPublicEntry(domain, slug) {
       if (data?.version !== 1 || data?.domain !== domain || !Array.isArray(data.entries)) {
         throw new Error('Invalid published Compendium entry shard');
       }
-      return data.entries;
+      return Object.freeze(data.entries.map(entry=>validatePublishedEntry(entry,domain)));
     }).catch(error => { requests.delete(domain); throw error; });
     requests.set(domain, load);
   }

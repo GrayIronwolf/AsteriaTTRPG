@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {isPublishedDefinition, validatePublishedCatalogue} from '../frontend/src/compendium/publicationPolicy.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = resolve(root, 'data/compendium-parts');
@@ -33,8 +34,7 @@ for (const file of parts) {
   for (const entry of part.entries) {
     inputCount++;
     assert.equal(entry.domain, part.domain, 'Entry/partition domain mismatch: ' + file);
-    if (entry.visibility !== 'public' || entry.gmOnly === true ||
-        entry.metadata?.visibility === 'gm-only') {
+    if (!isPublishedDefinition(entry)) {
       omitted++;
       continue;
     }
@@ -78,7 +78,7 @@ for (const file of parts) {
         ? entry.tags.filter(value => typeof value === 'string').slice(0, 16)
         : []
     };
-    published.get(part.domain).push(row);
+    published.get(part.domain).push(validatePublishedCatalogue(row,part.domain));
   }
 }
 
