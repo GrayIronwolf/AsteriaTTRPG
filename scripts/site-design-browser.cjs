@@ -130,7 +130,8 @@ async function awaitPreview() {
 
     await page.goto(base + '#/compendium', { waitUntil: 'networkidle' });
     await page.getByRole('heading', { name: 'Asteria Compendium', level: 1 }).waitFor();
-    const panel = page.locator('main aside').first();
+    await page.getByTestId('site-compendium-results').waitFor();
+    const panel = page.getByTestId('site-compendium-card').first();
     assert.equal(await panel.count(), 1);
     const panelStyle = await panel.evaluate(el => getComputedStyle(el).backgroundColor);
     assert.equal(panelStyle, 'rgb(6, 13, 21)', 'Obsidian panel surface token not applied');
@@ -139,7 +140,7 @@ async function awaitPreview() {
       document.documentElement.dataset.asteriaBackground = 'light-gray';
       const light = {
         page: getComputedStyle(document.body).backgroundColor,
-        panel: getComputedStyle(document.querySelector('main aside')).backgroundColor,
+        panel: getComputedStyle(document.querySelector('[data-testid="site-compendium-card"]')).backgroundColor,
         scheme: getComputedStyle(document.documentElement).colorScheme
       };
       document.documentElement.dataset.asteriaBackground = 'dark-blue';
