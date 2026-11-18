@@ -97,7 +97,8 @@ async function ready() {
     await trigger('Campaign Forge').click();
     const forge = page.getByTestId('site-menu-card-forge-campaign');
     assert.equal(await forge.locator('img').count(), 1, 'Approved campaign book artwork absent');
-    assert.equal(await forge.locator('img').evaluate(img => img.complete && img.naturalWidth > 0), true);
+    await forge.locator('img').scrollIntoViewIfNeeded();
+    assert.equal(await forge.locator('img').evaluate(img => img.decode().then(() => img.naturalWidth > 0)), true);
     await forge.click();
     await page.getByRole('heading', { name: 'Campaign Forge', level: 1 }).waitFor();
     assert.equal(await page.evaluate(() => location.hash), '#/campaign-forge?mode=create');
