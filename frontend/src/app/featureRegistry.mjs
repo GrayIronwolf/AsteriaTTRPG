@@ -35,7 +35,7 @@ export const ROUTE_FEATURES = Object.freeze({
   dashboard: GM,
   'gm-dashboard': GM,
   'character-dashboard': define('characters', ['auth', 'characters'], 'protected'),
-  presentation: GM,
+  presentation: define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected'),
   invitation: define('campaigns', ['auth', 'campaigns'], 'protected','ready'),
   'not-found': define('system')
 });
