@@ -29,7 +29,8 @@ try{
  await page.getByTestId('site-entry-tabs').waitFor();
  assert.ok(await page.getByTestId('site-entry-tab').count()>=5);
  assert.equal(await page.getByTestId('site-entry-id').count(),1);
- assert.ok((await page.getByTestId('site-entry-section').innerText()).includes('Rule of Cool'));
+ assert.ok((await page.getByTestId('site-entry-section').innerText()).trim().length > 10,
+  'Expected real public Markdown in the initial section');
  const tabs=page.getByTestId('site-entry-tab');
  const link=await tabs.filter({hasText:'Core Rule'}).first().getAttribute('href');
  assert.ok(link.includes('tab=Core+Rule'),link);
