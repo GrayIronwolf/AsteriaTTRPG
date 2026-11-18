@@ -3,6 +3,7 @@ import { SiteShell } from '../components/SiteShell.jsx';
 import { HomePage } from '../pages/HomePage.jsx';
 import { AppearanceSettingsPage } from '../pages/AppearanceSettingsPage.jsx';
 import { CompendiumCataloguePage } from '../pages/CompendiumCataloguePage.jsx';
+import { CompendiumEntryPage } from '../pages/CompendiumEntryPage.jsx';
 import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
@@ -20,11 +21,12 @@ export function App({ identity = null } = {}) {
 
   const showMigratedHome = route.id === 'home' && canActivateRoute(route.id, services);
   const showAppearance = route.id === 'appearance' && canActivateRoute(route.id, services);
-  // Only a sanitized PUBLIC catalogue is migrated in Phase 3.1, not full entry pages.
+  // Only prefiltered public catalogue and public entry assets are migrated.
   const showPublicCatalogue = ['handbook','lore','compendium'].includes(route.id);
+  const showPublicEntry = route.id === 'compendium-entry';
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }

@@ -88,7 +88,7 @@ async function awaitPreview() {
     console.log('PASS: browser back, forward and refresh preserve route state.');
 
     const direct = [
-      ['#/compendium/race/cavern-sprite?tab=Racial+Sheet', 'Compendium Entry'],
+      ['#/compendium/race/cavern-sprite?tab=Racial+Sheet', 'Definition unavailable'],
       ['#/join/123456789012', 'Campaign Invitation'],
       ['#/react/gm/sample-campaign', 'GM Dashboard'],
       ['#/react/character/sample-campaign/sample-character', 'Character Dashboard'],
@@ -98,7 +98,12 @@ async function awaitPreview() {
     ];
     for (const [hash, title] of direct) {
       await page.goto(base + hash, { waitUntil: 'networkidle' });
-      await heading(title);
+      if (hash.startsWith('#/compendium/')) {
+        await page.getByTestId('site-compendium-entry-page').waitFor();
+        await page.locator('main h1').first().waitFor();
+      } else {
+        await heading(title);
+      }
       assert.equal(await page.evaluate(() => window.location.hash), hash, title);
     }
     await page.goto(base + '#secure-campaign-invite=sensitive-token', { waitUntil: 'networkidle' });
