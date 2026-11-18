@@ -1,0 +1,30 @@
+name: Mobile navigation browser smoke
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "js/**"
+      - "css/**"
+      - "scripts/test-mobile-navigation-browser.cjs"
+      - ".github/workflows/mobile-navigation-browser.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install browser for navigation test
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install --with-deps chromium
+      - name: Verify mobile Login and menu navigation in Chromium
+        run: node scripts/test-mobile-navigation-browser.cjs
