@@ -360,10 +360,14 @@
     const route=currentLibraryRoute();
     const groups=window.AsteriaLibrary?.groups || [];
     const selected=groups.find(group=>group.id===route.group);
-    const menuContext=MENUS.find(menu=>menu.id===libraryMenuContext) ||
-      MENUS.find(menu=>menu.id===(['rules','adventures'].includes(route.group)?'handbook':route.group==='world'?'world':'compendium'));
+    // Derive context from the *current route* rather than the last clicked menu:
+    // direct bookmarks and browser Back must display the correct left navigation.
+    const sectionId=['rules','adventures'].includes(route.group)?'handbook':
+      route.group==='world'?'world':'compendium';
+    const menuContext=MENUS.find(menu=>menu.id===sectionId) ||
+      MENUS.find(menu=>menu.id===libraryMenuContext);
     const title=menuContext?.title || 'Asteria Compendium';
-    hero.classList.add('aaa-page-hero');
+    hero.classList.add('aaa-page-hero','asteria-template-header');
     const h1=hero.querySelector('h1');if(h1)h1.textContent=title;
     hero.querySelector('.eyebrow')?.remove();
     hero.querySelector('p')?.remove();
@@ -371,11 +375,10 @@
     if(search)tools.appendChild(search);
     if(filters)tools.appendChild(filters);
     if(help){help.classList.add('aaa-visually-hidden');tools.appendChild(help);}
-    hero.appendChild(tools);
     const structure=document.createElement('div');structure.className='aaa-library-layout';
     const sidebar=document.createElement('aside');sidebar.className='aaa-category-sidebar';sidebar.setAttribute('aria-label','Browse Asteria categories');
-    const label=document.createElement('h2');label.textContent='Browse';sidebar.appendChild(label);
     const links=document.createElement('nav');links.className='aaa-category-links';
+    links.setAttribute('aria-label',menuContext?.title || 'Compendium categories');
     // The left-side choices mirror the same entries as the opened header menu.
     // Reuse the underlying library controller rather than copying records.
     const entries=menuContext?.entries || [];
@@ -383,11 +386,12 @@
       entries.forEach(entry=>{
         const button=document.createElement('button');button.type='button';
         button.className='aaa-category-link aaa-menu-side-button';
-        button.textContent=entry[0];
-        const active=libraryMenuSelection?
-          libraryMenuSelection===entry[0]:
-          entry[2]==='library' && entry[3]===route.group &&
-          entry[4]===route.category && (entry[5]||'')===route.search;
+        const label=document.createElement('span');
+        label.className='asteria-template-nav-label';
+        label.textContent=entry[0];button.appendChild(label);
+        // Match the route, not a stale selection from a previous section.
+        const active=entry[2]==='library' && entry[3]===route.group &&
+          (entry[4]||'')===route.category && (entry[5]||'')===route.search;
         if(active){button.classList.add('is-current');button.setAttribute('aria-current','page');}
         button.addEventListener('click',()=>navigate(entry,menuContext.id));
         links.append(button);
@@ -398,7 +402,10 @@
       for(const item of available){
         const a=document.createElement('a');
         a.href='#/compendium?group='+encodeURIComponent(item.group)+(item.id?'&category='+encodeURIComponent(item.id):'');
-        a.textContent=item.title;a.className='aaa-category-link';
+        a.className='aaa-category-link';
+        const label=document.createElement('span');
+        label.className='asteria-template-nav-label';
+        label.textContent=item.title;a.appendChild(label);
         if(item.id===route.category){a.classList.add('is-current');a.setAttribute('aria-current','page');}
         links.appendChild(a);
       }
@@ -409,7 +416,18 @@
       if(el===hero || el.classList.contains('library-breadcrumbs'))continue;
       body.append(el);
     }
+    // Search and filters belong to the content column, like Account settings;
+    // their existing controls and listeners are moved, never recreated.
+    body.prepend(tools);
     structure.append(sidebar,body);root.append(structure);
+    window.AsteriaPageTemplate?.adopt?.({
+      page:root,title,
+      layoutSelector:'.aaa-library-layout',
+      sidebarSelector:'.aaa-category-sidebar',
+      navSelector:'.aaa-category-links',
+      contentSelector:'.aaa-library-content',
+      panelSelector:'.library-collection'
+    });
   }
   function scheduleLibrary() {
     if(libraryScheduled)return;
