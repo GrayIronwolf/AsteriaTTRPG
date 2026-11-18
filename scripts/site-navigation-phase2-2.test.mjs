@@ -31,8 +31,8 @@ test('Phase 2.2 has one canonical registry matching the seven existing menu grou
       assert.equal(item.href.includes('javascript:'), false, item.label);
       const parsed = parseSiteRoute({ hash: item.href });
       assert.notEqual(parsed.id, 'not-found', item.label + ': ' + item.href);
-      assert.equal(canActivateRoute(parsed.id, previewServices), false,
-        'Menu cards must not reveal unmigrated content: ' + item.label);
+      assert.equal(canActivateRoute(parsed.id, previewServices), item.id === 'appearance',
+        'Only the migrated public Appearance card may activate: ' + item.label);
     }
   }
   assert.equal(PRIMARY_LINKS.length, 8);
@@ -52,7 +52,7 @@ test('menu content and deep-link query parameters preserve legacy section intent
   assert.match(byLabel.get('Realms').href, /group=world&category=worlds&q=Realm/);
   assert.match(byLabel.get('Forge A Campaign').href, /mode=create/);
   assert.match(byLabel.get('Join A Campaign').href, /mode=join/);
-  assert.match(byLabel.get('Appearance').href, /tab=appearance/);
+  assert.equal(byLabel.get('Appearance').href, '#/appearance');
   assert.match(byLabel.get('Chats').href, /section=chats/);
   assert.equal(byLabel.get('Forge A Campaign').artwork, 'campaign-book');
 });

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "scope": "Asteria React/Vite Phase 2.5 integration and cleanup candidates, 2026-11-18",
+  "removalPolicy": "none_before_parity_and_approved_production_cutover",
+  "description": "Legacy files are referenced by the live website and MUST NOT be removed in Phase 2.5. This ledger records ownership candidates, NOT authorisation to delete or disable.",
+  "groups": [
+    {
+      "id": "legacy-startup-routing",
+      "replacement": "frontend/src/router/locationStore.mjs and frontend/src/components/SiteShell.jsx",
+      "legacyFiles": [
+        "js/app.js",
+        "js/asteria-core-shell.js",
+        "js/asteria-home-guard.js"
+      ],
+      "blockers": [
+        "Full feature route migration and bookmark parity",
+        "Authenticated landing and deep-link testing against real Firebase",
+        "Controlled single-entry production cutover and rollback"
+      ]
+    },
+    {
+      "id": "legacy-nav-and-header",
+      "replacement": "frontend/src/components/SiteShell.jsx, AsteriaBrand.jsx and NavigationMegaMenu.jsx",
+      "legacyFiles": [
+        "js/asteria-navigation.js",
+        "js/asteria-menu-buttons.js",
+        "js/asteria-aaa-upgrade.js",
+        "css/asteria-navigation.css",
+        "css/asteria-menu-buttons.css",
+        "css/asteria-aaa-upgrade.css",
+        "css/asteria-mobile-header-stability.css",
+        "css/asteria-header-wordmark.css",
+        "css/asteria-button-sizes.css",
+        "css/asteria-home-header-refresh.css"
+      ],
+      "blockers": [
+        "Compendium, Forges and dashboards still use legacy navigation",
+        "Authenticated account header parity",
+        "Mobile and desktop real-site visual regression"
+      ]
+    },
+    {
+      "id": "legacy-appearance-tokens",
+      "replacement": "frontend/src/styles/tokens.css, frontend/src/appearance/AppearanceProvider.jsx",
+      "legacyFiles": [
+        "js/asteria-ui-theme-system.js",
+        "js/asteria-typography.js",
+        "js/asteria-appearance-sync.js",
+        "css/asteria-ui-theme-system.css",
+        "css/asteria-typography.css",
+        "css/asteria-appearance-sync.css",
+        "css/asteria-smoke-background.css",
+        "css/asteria-solid-navy-surfaces.css"
+      ],
+      "blockers": [
+        "Migrate production account preferences and all dashboard themes",
+        "Validate logged-in preference sync and account permissions",
+        "Verify all active themes under feature parity"
+      ]
+    },
+    {
+      "id": "legacy-account-header",
+      "replacement": "frontend/src/components/HeaderAccountControls.jsx and services/accountHeaderGateway.mjs",
+      "legacyFiles": [
+        "js/asteria-account-header.js",
+        "js/asteria-account-menu.js",
+        "css/asteria-account-experience.css",
+        "css/asteria-account-menu.css"
+      ],
+      "blockers": [
+        "Real Firebase Auth/profile/notification adapters not migrated",
+        "Account and Friends social features still on legacy",
+        "Real player/GM permissions and notifications unverified"
+      ]
+    },
+    {
+      "id": "global-style-monolith",
+      "replacement": "frontend/src/styles/tokens.css, reset.css and CSS Modules",
+      "legacyFiles": [
+        "css/styles.css"
+      ],
+      "blockers": [
+        "Legacy pages and dashboards still consume broad selectors",
+        "Full site-wide CSS parity and elimination of legacy entry",
+        "Final Phase 9/10 retirement verification"
+      ]
+    },
+    {
+      "id": "disabled-universal-page-template",
+      "replacement": "frontend/src/components/ui/PageLayout.jsx and scoped page components",
+      "legacyFiles": [
+        "css/asteria-page-template.css",
+        "js/asteria-page-template.js"
+      ],
+      "expectLoadedInLegacy": false,
+      "blockers": [
+        "Remain disabled pending conversion of remaining pages",
+        "Must not re-enable on top of old styles",
+        "Delete only in controlled final code retirement after page parity"
+      ]
+    }
+  ]
+}
