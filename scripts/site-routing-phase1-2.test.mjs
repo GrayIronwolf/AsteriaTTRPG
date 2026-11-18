@@ -120,10 +120,11 @@ test('single route event owner and no links into legacy controllers', () => {
   const shell = read('frontend/src/components/SiteShell.jsx');
   assert.match(app, /useSiteRoute\(\)/);
   assert.match(app, /<RoutePreviewPage route={route}/);
-  assert.equal((hook.match(/addEventListener\('hashchange'/g) || []).length, 1);
-  assert.equal((hook.match(/removeEventListener\('hashchange'/g) || []).length, 1);
-  assert.equal((hook.match(/addEventListener\('popstate'/g) || []).length, 1);
-  assert.equal((hook.match(/removeEventListener\('popstate'/g) || []).length, 1);
+  const location = read('frontend/src/router/locationStore.mjs');
+  assert.match(hook, /useSyncExternalStore/);
+  assert.match(location, /listenerScope\.listen\(source, 'hashchange', changed\)/);
+  assert.match(location, /listenerScope\.listen\(source, 'popstate', changed\)/);
+  assert.match(location, /listenerScope\.dispose\(\)/);
   assert.doesNotMatch(app + hook + shell, /window\.(?:setView|AsteriaRouter|AsteriaReactMigration)/);
   assert.doesNotMatch(shell, /\bonclick\s*=\s*["']/i);
   assert.match(shell, /active={route.navId === link.id/);
