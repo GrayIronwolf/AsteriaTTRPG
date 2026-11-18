@@ -3,13 +3,14 @@ import {
   CAMPAIGN_ID,UCN
 } from './campaignForgeModel.mjs';
 import {timestampValue} from '../../../src/state/characterIntegrityModel.mjs';
+import {campaignArtworkFileError} from '../../../src/state/campaignArtwork.mjs';
 
 /**
  * Reuses the existing Auth, Firestore and globally unique UCN callable.
  * No local owner claims, guessed identifiers, or client-assigned UCNs.
  */
 export function createFirebaseCampaignsService({
-  auth,db,firestoreSdk,functions,functionsSdk,readCanonical,enabled=false
+  auth,db,firestoreSdk,functions,functionsSdk,storage,storageSdk,readCanonical,enabled=false
 }){
   if(!auth||!db||!firestoreSdk||!functions||!functionsSdk||
     typeof readCanonical!=='function')throw new Error('Asteria Firebase services required.');
@@ -61,7 +62,7 @@ export function createFirebaseCampaignsService({
     const uid=await owner();
     const campaign=await load(id);
     same(uid);
-    const patch=campaignEditablePatch(draft,campaign);
+    campaignEditablePatch(draft,campaign);
     const result=await firestoreSdk.runTransaction(db,async transaction=>{
       const fresh=await transaction.get(ref(id));
       same(uid);
@@ -99,7 +100,7 @@ export function createFirebaseCampaignsService({
     // silently or claim the entire creation was rolled back.
     const current=await load(identity.id);
     same(uid);
-    const patch=campaignEditablePatch(draft,current);
+    campaignEditablePatch(draft,current);
     await firestoreSdk.runTransaction(db,async transaction=>{
       const snap=await transaction.get(ref(identity.id));
       same(uid);
@@ -114,6 +115,55 @@ export function createFirebaseCampaignsService({
     same(uid);
     return load(identity.id);
   }
+  async function uploadArtwork(id,file){
+    const uid=await owner();
+    const problem=campaignArtworkFileError(file);
+    if(problem)throw new Error(problem);
+    const campaign=await load(id);
+    same(uid);
+    if(!storage||!storageSdk)throw new Error('Campaign artwork storage is unavailable.');
+    const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif'}[file.type];
+    const path='campaigns/'+id+'/artwork/'+crypto.randomUUID()+'.'+ext;
+    const art=storageSdk.ref(storage,path);
+    let uploaded=false;
+    try{
+      await storageSdk.uploadBytes(art,file,{contentType:file.type});
+      uploaded=true;same(uid);
+      const image=await storageSdk.getDownloadURL(art);
+      if(!/^https:\/\//.test(image))throw new Error('Firebase returned an invalid artwork URL.');
+      await firestoreSdk.runTransaction(db,async transaction=>{
+        const snap=await transaction.get(ref(id));same(uid);
+        if(!snap.exists()||snap.data().ownerUid!==uid||
+           snap.data().ucn!==campaign.ucn)
+          throw new Error('Only the campaign owner can update artwork.');
+        transaction.update(ref(id),{image,imagePath:path,
+          updatedAt:firestoreSdk.serverTimestamp()});
+      });
+      same(uid);
+      return {image,path};
+    }catch(error){
+      if(uploaded)await storageSdk.deleteObject(art).catch(()=>{});
+      throw error;
+    }
+  }
+  async function removeArtwork(id){
+    const uid=await owner(),campaign=await load(id);same(uid);
+    await firestoreSdk.runTransaction(db,async transaction=>{
+      const snap=await transaction.get(ref(id));same(uid);
+      if(!snap.exists()||snap.data().ownerUid!==uid||
+         snap.data().ucn!==campaign.ucn)
+        throw new Error('Only the campaign owner can remove artwork.');
+      transaction.update(ref(id),{
+        image:'',imagePath:'',art:'',banner:'',coverImage:'',cover:'',
+        updatedAt:firestoreSdk.serverTimestamp()
+      });
+    });
+    const prior=String(campaign.imagePath||'');
+    if(prior.startsWith('campaigns/'+id+'/artwork/')&&storage&&storageSdk)
+      await storageSdk.deleteObject(storageSdk.ref(storage,prior)).catch(()=>{});
+    same(uid);
+    return {removed:true};
+  }
   return Object.freeze({availability:()=>flags,list,load,create,save,
-    editDraft:editCampaignDraft});
+    uploadArtwork,removeArtwork,editDraft:editCampaignDraft});
 }
