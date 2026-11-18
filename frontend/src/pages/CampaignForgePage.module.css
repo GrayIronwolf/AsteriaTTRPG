@@ -1,0 +1,23 @@
+/* Scoped React/Vite Campaign Forge. No global CSS layering. */
+.page{display:grid;gap:var(--ast-space-4);min-height:60vh;padding-block:var(--ast-space-7) var(--ast-space-9)}
+.panel{padding:var(--ast-space-5);min-width:0;display:grid;gap:var(--ast-space-4)}
+.panel h2,.panel h3{margin:0}
+.heading{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-3);flex-wrap:wrap}
+.actions{display:flex;gap:var(--ast-space-3);align-items:center;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:var(--ast-space-4)}
+.card{min-width:0;display:grid;align-content:start;gap:var(--ast-space-3);padding:var(--ast-space-4);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline)}
+.card h3,.card p{margin:0;overflow-wrap:anywhere}.card small{color:var(--ast-color-text-muted)}
+.cover{width:100%;height:160px;object-fit:cover}
+.form{display:grid;gap:var(--ast-space-5)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:var(--ast-space-4)}
+.field{min-width:0;display:grid;gap:var(--ast-space-2)}
+.field input,.field textarea{width:100%;min-width:0;min-height:var(--ast-target-min);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline);color:var(--ast-color-text);background:var(--ast-color-panel-raised);font:inherit;border-radius:var(--ast-radius-sm)}
+.field textarea{resize:vertical}
+.check{display:flex;align-items:start;gap:var(--ast-space-3);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel-raised)}
+.check input{margin-top:5px}
+.section{display:grid;gap:var(--ast-space-3)}.section p{margin:0}
+.identity{display:grid;grid-template-columns:minmax(110px,160px) minmax(0,1fr);gap:var(--ast-space-2);overflow-wrap:anywhere}
+.identity dt{font-weight:600}.identity dd{margin:0}
+.artPreview{width:min(100%,520px);max-height:290px;object-fit:contain}
+.notice{padding:var(--ast-space-3);border-left:3px solid var(--ast-color-outline-active);overflow-wrap:anywhere}
+@media(max-width:640px){.panel{padding:var(--ast-space-4)}.identity{grid-template-columns:minmax(0,1fr)}.identity dd{margin-bottom:var(--ast-space-2)}}
