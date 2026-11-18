@@ -5,7 +5,7 @@ import {
 } from './gmDashboardModel.mjs';
 
 /** Phase 6.1 uses the Auth/Firestore SDK already created by AuthBootstrap.
- * No window.AsteriaFirebase, second Firebase app or browser-side role grants.
+ * No legacy global API bridge, second Firebase app or browser-side role grants.
  */
 export function createFirebaseGMDashboardService({
   auth, db, firestoreSdk, readCanonical, enabled = false
