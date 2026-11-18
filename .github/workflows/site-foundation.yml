@@ -149,6 +149,11 @@ jobs:
           VITE_ASTERIA_AUTH_ENABLED: 'true'
           VITE_FIREBASE_MODE: emulator
         run: npm run site:build
+      - name: Set up Java 21 for Firebase emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - name: Phase 4.1 real Firebase emulator browser tests
         timeout-minutes: 7
         run: npx firebase emulators:exec --project demo-asteria --only auth,firestore "npm run site:auth-browser"
