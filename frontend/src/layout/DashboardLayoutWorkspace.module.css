@@ -1,0 +1,12 @@
+/* Scoped Phase 6.3 workspace; source layout geometry lives in dashboardLayoutModel.mjs. */
+.workspace{min-width:0;max-width:100%}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:minmax(42px,auto);gap:var(--ast-space-2);min-width:0;align-items:stretch}
+.tile{min-width:0;min-height:0;display:flex;flex-direction:column;gap:var(--ast-space-3);padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);border-radius:var(--ast-radius-panel);overflow:hidden;box-shadow:var(--ast-shadow-panel)}
+.tile[data-panel-background="slate"]{background:var(--ast-color-panel-slate)}
+.tile[data-panel-background="arcane"]{background:var(--ast-color-panel-raised)}
+.title{font:600 var(--ast-font-md)/1.3 var(--ast-font-display);margin:0;padding-bottom:var(--ast-space-2);border-bottom:1px solid var(--ast-color-outline-soft)}
+.content{min-width:0;overflow-wrap:anywhere;font-size:var(--ast-font-sm)}
+.content p{margin:0 0 var(--ast-space-2)}
+.content ul{margin:0;padding-left:var(--ast-space-4);display:grid;gap:var(--ast-space-2)}
+.empty{padding:var(--ast-space-4);border:1px dashed var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel)}
+@media(max-width:900px){.grid{display:flex;flex-direction:column}.tile{width:100%;min-height:100px;flex:none}}
