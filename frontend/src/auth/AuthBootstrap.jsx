@@ -12,11 +12,14 @@ export function AuthBootstrap({ children }) {
   const [adapter, setAdapter] = useState(null);
   const [error, setError] = useState(false);
   useEffect(() => {
-    const runtime = resolveAuthRuntime({
-      enabled: import.meta.env.VITE_ASTERIA_AUTH_ENABLED === 'true',
-      mode: import.meta.env.VITE_FIREBASE_MODE || '',
-      hostname: window.location.hostname
-    });
+    let runtime;
+    try {
+      runtime = resolveAuthRuntime({
+        enabled: import.meta.env.VITE_ASTERIA_AUTH_ENABLED === 'true',
+        mode: import.meta.env.VITE_FIREBASE_MODE || '',
+        hostname: window.location.hostname
+      });
+    } catch { setError(true); return undefined; }
     if (!runtime.enabled) return undefined;
     let alive=true;
     import('./firebaseAuthAdapter.mjs')

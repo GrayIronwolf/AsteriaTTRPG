@@ -171,7 +171,8 @@ test('React JavaScript imports neither legacy globals nor a competing event owne
   assert.match(location, /listenerScope.listen\(source, 'popstate', changed\)/);
   assert.match(app, /canActivateRoute\(route.id, services\)/);
   assert.match(app, /useRouteEffects\(route\)/);
-  assert.match(main, /<AppServicesProvider>/);
+  assert.match(main, /<AuthBootstrap>/);
+  assert.match(read('frontend/src/auth/AuthBootstrap.jsx'), /<AppServicesProvider services=\{services\}>/);
   for (const file of paths) {
     const code = stripComments(read(file));
     assert.doesNotMatch(code, /(?:from|import)\s*['"][^'"]*(?:\/js\/|\/src\/app\/legacyBridge|css\/styles\.css|asteria-page-template)/, file);

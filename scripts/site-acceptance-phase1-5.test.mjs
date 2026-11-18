@@ -86,7 +86,7 @@ test('the new app is standalone and has no imports of legacy handlers/styles/Fir
   assert.doesNotMatch(stripped, /@import\b/);
   assert.match(read('frontend/src/router/useSiteRoute.js'), /useSyncExternalStore/);
   assert.match(read('frontend/src/router/locationStore.mjs'), /createDisposableScope/);
-  assert.match(read('frontend/src/main.jsx'), /<AppServicesProvider>/);
+  assert.match(read('frontend/src/auth/AuthBootstrap.jsx'), /<AppServicesProvider services=\{services\}>/);
   const preview = read('frontend/src/pages/RoutePreviewPage.jsx');
   assert.doesNotMatch(preview, /\broute\.(?:params|hash|query)\b/);
   assert.doesNotMatch(preview, /<form\b|<input\b/);

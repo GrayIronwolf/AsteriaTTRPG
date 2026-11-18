@@ -52,7 +52,8 @@ async function initializeClient(runtime) {
     firestoreSdk.connectFirestoreEmulator(db, '127.0.0.1', 8080);
     functionsSdk.connectFunctionsEmulator(functions, '127.0.0.1', 5001);
   }
-  await authSdk.setPersistence(auth, authSdk.browserLocalPersistence);
+  await authSdk.setPersistence(auth, typeof window === 'undefined'
+    ? authSdk.inMemoryPersistence : authSdk.browserLocalPersistence);
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
