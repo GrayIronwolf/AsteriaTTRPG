@@ -144,10 +144,10 @@
     "test:gm-phase3-1": "node --test scripts/gm-phase3-1.test.mjs",
     "test:gm-phase3-2": "node --test scripts/gm-phase3-2.test.mjs",
     "test:gm-phase3-3": "node --test scripts/gm-phase3-3.test.mjs",
-    "site:dev": "vite --config vite.site.config.mjs",
+    "site:dev": "node scripts/site-compendium-public-index.mjs && node scripts/site-compendium-public-entries.mjs && vite --config vite.site.config.mjs",
     "site:build": "node scripts/site-compendium-public-index.mjs && node scripts/site-compendium-public-entries.mjs && vite build --config vite.site.config.mjs",
     "site:preview": "vite preview --config vite.site.config.mjs",
-    "site:check": "node scripts/site-compendium-public-index.mjs && node scripts/site-compendium-public-entries.mjs && node --test scripts/site-foundation-phase1-1.test.mjs scripts/site-routing-phase1-2.test.mjs scripts/site-design-phase1-3.test.mjs scripts/site-js-phase1-4.test.mjs scripts/site-acceptance-phase1-5.test.mjs scripts/site-header-phase2-1.test.mjs scripts/site-navigation-phase2-2.test.mjs scripts/site-home-phase2-3.test.mjs scripts/site-appearance-phase2-4.test.mjs scripts/site-integration-phase2-5.test.mjs scripts/site-compendium-phase3-1.test.mjs",
+    "site:check": "node scripts/site-compendium-public-index.mjs && node scripts/site-compendium-public-entries.mjs && node --test scripts/site-foundation-phase1-1.test.mjs scripts/site-routing-phase1-2.test.mjs scripts/site-design-phase1-3.test.mjs scripts/site-js-phase1-4.test.mjs scripts/site-acceptance-phase1-5.test.mjs scripts/site-header-phase2-1.test.mjs scripts/site-navigation-phase2-2.test.mjs scripts/site-home-phase2-3.test.mjs scripts/site-appearance-phase2-4.test.mjs scripts/site-integration-phase2-5.test.mjs scripts/site-compendium-phase3-1.test.mjs scripts/site-compendium-phase3-2.test.mjs",
     "site:verify-dist": "node scripts/site-foundation-build-check.mjs",
     "site:browser": "node scripts/site-foundation-browser.cjs",
     "site:routing-browser": "node scripts/site-routing-browser.cjs",
@@ -160,7 +160,8 @@
     "site:appearance-browser": "node scripts/site-appearance-browser.cjs",
     "site:retirement-audit": "node scripts/site-retirement-audit.mjs",
     "site:integration-browser": "node scripts/site-integration-browser.cjs",
-    "site:compendium-browser": "node scripts/site-compendium-browser.cjs"
+    "site:compendium-browser": "node scripts/site-compendium-browser.cjs",
+    "site:entry-browser": "node scripts/site-compendium-entry-browser.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

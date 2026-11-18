@@ -40,8 +40,9 @@ try{
  assert.match(await filtered.first().innerText(),/Rule of Cool/);
  assert.equal(await filtered.first().getAttribute('href'),'#/compendium/handbook/rule-of-cool');
  await filtered.first().click();
- await page.getByRole('heading',{name:'Compendium Entry',level:1}).waitFor();
- assert.equal(await page.locator('main input, main form').count(),0,'Entry details not yet migrated');
+ await page.getByRole('heading',{name:'Rule of Cool',level:1}).waitFor();
+ await page.getByTestId('site-entry-tabs').waitFor();
+ assert.equal(await page.getByTestId('site-entry-section').count(),1,'Public detail page should render a section');
  await page.goBack({waitUntil:'networkidle'});
  await page.getByRole('heading',{name:'Asteria Handbook',level:1}).waitFor();
  await page.goto(base+'#/compendium?group=characters&category=races',{waitUntil:'networkidle'});
