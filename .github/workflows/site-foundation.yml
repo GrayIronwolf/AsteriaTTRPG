@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 4.3 Friends and Chat Entry
+name: React/Vite site migration — Phase 4.4 Notifications & Header Integration
 
 on:
   pull_request:
@@ -19,6 +19,7 @@ on:
       - "scripts/site-compendium-*"
       - "scripts/site-auth-*"
       - "scripts/site-friends-*"
+      - "scripts/site-notifications-*"
       - "scripts/site-retirement-*"
       - "package.json"
       - "eslint.config.mjs"

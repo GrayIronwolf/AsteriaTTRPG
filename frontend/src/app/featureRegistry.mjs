@@ -31,7 +31,7 @@ export const ROUTE_FEATURES = Object.freeze({
   profile: ACCOUNT,
   settings: ACCOUNT,
   friends: SOCIAL,
-  notifications: define('social', ['auth', 'notifications'], 'protected'),
+  notifications: define('social', ['auth', 'notifications'], 'protected','ready'),
   dashboard: define('account', ['auth'], 'protected'),
   'gm-dashboard': GM,
   'character-dashboard': CHARACTER,

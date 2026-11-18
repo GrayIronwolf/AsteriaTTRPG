@@ -3,6 +3,7 @@ import { AppServicesProvider } from '../app/AppServices.jsx';
 import { createAppServices, previewServices } from '../services/appServices.mjs';
 import { AuthProvider } from './AuthProvider.jsx';
 import { resolveAuthRuntime } from './authPolicy.mjs';
+import { NotificationsProvider } from '../notifications/NotificationsProvider.jsx';
 
 /**
  * The normal isolated Vite preview is offline/guest-only. An explicit build
@@ -28,13 +29,16 @@ export function AuthBootstrap({ children }) {
       .catch(() => { if (alive) setError(true); });
     return () => { alive=false; };
   }, []);
-  const services = adapter ? createAppServices({auth:adapter,...(adapter.friends?.availability().enabled ? {friends:adapter.friends} : {})}) : previewServices;
+  const services = adapter ? createAppServices({auth:adapter,...(adapter.friends?.availability().enabled ? {friends:adapter.friends} : {}),
+    ...(adapter.notifications?.availability().enabled ? {notifications:adapter.notifications} : {})}) : previewServices;
   return <AppServicesProvider services={services}>
     <AuthProvider adapter={adapter}>
+      <NotificationsProvider>
       {error && <p role="alert" data-testid="site-auth-unavailable">
         Firebase Authentication could not start. Account features remain unavailable.
       </p>}
       {children}
+      </NotificationsProvider>
     </AuthProvider>
   </AppServicesProvider>;
 }

@@ -121,7 +121,7 @@ test('Phase 4.3 preserves offline preview and prior React checks',()=>{
  const pkg=JSON.parse(read('package.json'));
  const ci=read('.github/workflows/site-foundation.yml');
  assert.match(pkg.scripts['site:check'],/site-friends-phase4-3\.test\.mjs/);
- assert.match(ci,/Phase 4\.3 Friends and Chat Entry/);
+ assert.match(ci,/React\/Vite site migration/);
  assert.match(ci,/npm run site:auth-browser/);
  assert.match(ci,/npm run site:acceptance/);
  assert.doesNotMatch(read('index.html'),/frontend\/src\/pages\/FriendsPage/);
