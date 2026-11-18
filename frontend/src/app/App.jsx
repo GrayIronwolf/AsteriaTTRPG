@@ -6,6 +6,7 @@ import { CompendiumCataloguePage } from '../pages/CompendiumCataloguePage.jsx';
 import { CompendiumEntryPage } from '../pages/CompendiumEntryPage.jsx';
 import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { AuthPage } from '../pages/AuthPage.jsx';
+import { AccountPage } from '../pages/AccountPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 import { useRouteEffects } from '../router/useRouteEffects.js';
 import { canActivateRoute } from './featureRegistry.mjs';
@@ -26,9 +27,10 @@ export function App({ identity = null } = {}) {
   const showPublicCatalogue = ['handbook','lore','compendium'].includes(route.id);
   const showPublicEntry = route.id === 'compendium-entry';
   const showAuth = ['login','account-create','forgot-password'].includes(route.id) && services.has('auth');
+  const showAccount = ['account','profile','settings'].includes(route.id) && services.has('auth');
   return (
     <SiteShell route={route} identity={identity}>
-      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : <RoutePreviewPage route={route} />}
+      {showMigratedHome ? <HomePage /> : showAppearance ? <AppearanceSettingsPage /> : showPublicCatalogue ? <CompendiumCataloguePage route={route} /> : showPublicEntry ? <CompendiumEntryPage route={route} /> : showAuth ? <AuthPage key={route.id} route={route} /> : showAccount ? <AccountPage route={route} /> : <RoutePreviewPage route={route} />}
     </SiteShell>
   );
 }

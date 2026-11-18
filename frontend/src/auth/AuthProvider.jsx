@@ -20,7 +20,8 @@ export function AuthProvider({ adapter = null, children }) {
       const data = await callback();
       // Refresh canonical owner-scoped profile after registration and login;
       // stale Firebase auth callbacks never grant private feature access.
-      if (action === 'login' || action === 'create') setSession(await adapter.refresh());
+      if (['login','create','profile-save','username','avatar-upload','avatar-remove','verification-check'].includes(action))
+        setSession(await adapter.refresh());
       else if (action === 'logout') setSession(GUEST);
       return {ok:true,data};
     } catch(error) {
@@ -35,7 +36,19 @@ export function AuthProvider({ adapter = null, children }) {
     createAccount: input => run('create', () => adapter.createAccount(input)),
     resetPassword: input => run('reset', () => adapter.resetPassword(input)),
     signOut: () => run('logout', () => adapter.signOut()),
-    resendVerification: () => run('verification', () => adapter.resendVerification())
+    resendVerification: () => run('verification', () => adapter.resendVerification()),
+    readProfile: () => adapter.readProfile(),
+    saveProfile: data => run('profile-save', () => adapter.saveProfile(data)),
+    usernameAvailable: () => adapter.usernameAvailable(),
+    renameUsername: username => run('username', () => adapter.renameUsername(username)),
+    readAvatar: () => adapter.readAvatar(),
+    uploadAvatar: file => run('avatar-upload', () => adapter.uploadAvatar(file)),
+    removeAvatar: () => run('avatar-remove', () => adapter.removeAvatar()),
+    sendOwnPasswordReset: () => run('password-own', () => adapter.sendOwnPasswordReset()),
+    checkVerification: () => run('verification-check', () => adapter.checkVerification()),
+    readAppearancePreferences: () => adapter.readAppearancePreferences(),
+    saveAppearancePreferences: (value,revisions) =>
+      run('appearance-save', () => adapter.saveAppearancePreferences(value,revisions))
   }), [adapter,run]);
 
   return <AuthContext.Provider value={{ session, busy, available:Boolean(adapter), actions }}>

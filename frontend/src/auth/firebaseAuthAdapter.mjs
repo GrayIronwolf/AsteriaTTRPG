@@ -6,6 +6,12 @@ import { createAuthObserver, ownedProfile } from './authSessionModel.mjs';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
 import { finalizeRegisteredAccountId } from '../../../src/state/accountIdRegistration.mjs';
 import { canSendVerificationEmail } from '../../../src/state/accountEmailVerification.mjs';
+import { validatedEditableProfile, proposedAccountUsername, accountAvatarPath } from '../../../src/state/accountProfileEdit.mjs';
+import { accountProfileProjection } from './accountProfileModel.mjs';
+import { cropAccountAvatar } from './avatarProcessor.mjs';
+import {
+  readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
+} from './accountAppearanceBridge.mjs';
 
 let singleton = null;
 
@@ -34,9 +40,9 @@ export async function createFirebaseAuthAdapter(runtime) {
 }
 
 async function initializeClient(runtime) {
-  const [appSdk, authSdk, firestoreSdk, functionsSdk] = await Promise.all([
+  const [appSdk, authSdk, firestoreSdk, functionsSdk, storageSdk] = await Promise.all([
     import('firebase/app'), import('firebase/auth'),
-    import('firebase/firestore'), import('firebase/functions')
+    import('firebase/firestore'), import('firebase/functions'), import('firebase/storage')
   ]);
   const config = runtime.mode === 'emulator' ? EMULATOR_FIREBASE_CONFIG
     : PRODUCTION_FIREBASE_CONFIG;
@@ -47,10 +53,12 @@ async function initializeClient(runtime) {
   const auth = authSdk.getAuth(app);
   const db = firestoreSdk.getFirestore(app);
   const functions = functionsSdk.getFunctions(app, 'us-central1');
+  const storage = storageSdk.getStorage(app);
   if (runtime.mode === 'emulator') {
     authSdk.connectAuthEmulator(auth, 'http://127.0.0.1:9099', {disableWarnings:true});
     firestoreSdk.connectFirestoreEmulator(db, '127.0.0.1', 8080);
     functionsSdk.connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+    storageSdk.connectStorageEmulator(storage, '127.0.0.1', 9199);
   }
   await authSdk.setPersistence(auth, typeof window === 'undefined'
     ? authSdk.inMemoryPersistence : authSdk.browserLocalPersistence);
@@ -124,8 +132,171 @@ async function initializeClient(runtime) {
     return Object.freeze({created:true,profileStored:stored,accountId,verificationSent,warnings});
   }
 
+  
+  // Phase 4.2: each operation is bound to the currently authenticated owner.
+  // Private data is never read from a local cache or an arbitrary UID.
+  function signedOwner() {
+    const user = auth.currentUser;
+    if (!user?.uid) throw new Error('Sign in before accessing account details.');
+    return user;
+  }
+  function assertOwner(uid) {
+    if (!auth.currentUser || auth.currentUser.uid !== uid)
+      throw new Error('The signed-in account changed. Reload your account page.');
+  }
+  async function verifiedOwner() {
+    const user = signedOwner();
+    const profile = await readCanonical(user);
+    assertOwner(user.uid);
+    const projection = accountProfileProjection(user, profile);
+    if (!projection) throw new Error('Your saved account profile could not be verified.');
+    return {user,profile,projection};
+  }
+  async function readProfile() {
+    return (await verifiedOwner()).projection;
+  }
+  async function saveProfile(input) {
+    const clean = validatedEditableProfile(input);
+    const {user} = await verifiedOwner();
+    const reference = firestoreSdk.doc(db, 'users', user.uid);
+    await firestoreSdk.runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(reference);
+      assertOwner(user.uid);
+      if (!snapshot.exists() || !accountProfileProjection(user,snapshot.data()))
+        throw new Error('Your account profile needs verification.');
+      transaction.update(reference,{...clean,updatedAt:firestoreSdk.serverTimestamp()});
+    });
+    assertOwner(user.uid);
+    return readProfile();
+  }
+  async function usernameAvailable() {
+    const {user,projection} = await verifiedOwner();
+    if (projection.status !== 'assigned') return false;
+    try {
+      const response = await functionsSdk.httpsCallable(functions,'asteriaAccountUsername')({action:'status'});
+      assertOwner(user.uid);
+      return response.data?.available === true;
+    } catch { return false; }
+  }
+  async function renameUsername(value) {
+    const {user,projection} = await verifiedOwner();
+    const candidate = proposedAccountUsername(value,projection.accountNumber);
+    if (candidate.username === projection.username)
+      return {unchanged:true,accountId:projection.accountId};
+    const eligible = await usernameAvailable();
+    assertOwner(user.uid);
+    if (!eligible) throw new Error('Username changes are not currently enabled for this account.');
+    const result = await functionsSdk.httpsCallable(functions,'asteriaAccountUsername')({
+      username:candidate.username,expectedAccountId:projection.accountId
+    });
+    assertOwner(user.uid);
+    const updated = await readProfile();
+    if (updated.status !== 'assigned' || updated.accountId !== candidate.accountId ||
+        updated.username !== candidate.username || updated.accountNumber !== projection.accountNumber ||
+        result.data?.accountId !== candidate.accountId) {
+      throw new Error('Username may have changed, but confirmation failed. Refresh your profile.');
+    }
+    return {username:updated.username,accountId:updated.accountId};
+  }
+  async function readAvatar() {
+    const {user,projection} = await verifiedOwner();
+    if (!projection.avatarVersion) return null;
+    try {
+      const url = await storageSdk.getDownloadURL(storageSdk.ref(storage,accountAvatarPath(user.uid)));
+      assertOwner(user.uid);
+      return typeof url === 'string' && url.startsWith('http') ? url : null;
+    } catch (error) {
+      assertOwner(user.uid);
+      if (error?.code === 'storage/object-not-found') return null;
+      throw error;
+    }
+  }
+  async function uploadAvatar(file) {
+    const {user} = await verifiedOwner();
+    const blob = await cropAccountAvatar(file);
+    assertOwner(user.uid);
+    await storageSdk.uploadBytes(storageSdk.ref(storage,accountAvatarPath(user.uid)),blob,{
+      contentType:'image/webp',cacheControl:'private,max-age=300'
+    });
+    assertOwner(user.uid);
+    const reference = firestoreSdk.doc(db,'users',user.uid);
+    await firestoreSdk.runTransaction(db,async transaction=>{
+      const snapshot=await transaction.get(reference);
+      assertOwner(user.uid);
+      if(!snapshot.exists() || !accountProfileProjection(user,snapshot.data()))
+        throw new Error('Your account profile needs verification.');
+      transaction.update(reference,{
+        avatarUpdatedAt:firestoreSdk.serverTimestamp(),updatedAt:firestoreSdk.serverTimestamp()
+      });
+    });
+    assertOwner(user.uid);
+    return readProfile();
+  }
+  async function removeAvatar() {
+    const {user} = await verifiedOwner();
+    const reference=firestoreSdk.doc(db,'users',user.uid);
+    await firestoreSdk.runTransaction(db,async transaction=>{
+      const snapshot=await transaction.get(reference);
+      assertOwner(user.uid);
+      if(!snapshot.exists() || !accountProfileProjection(user,snapshot.data()))
+        throw new Error('Your account profile needs verification.');
+      transaction.update(reference,{
+        avatarUpdatedAt:null,updatedAt:firestoreSdk.serverTimestamp()
+      });
+    });
+    assertOwner(user.uid);
+    try { await storageSdk.deleteObject(storageSdk.ref(storage,accountAvatarPath(user.uid))); }
+    catch(error) { if(error?.code !== 'storage/object-not-found') throw error; }
+    assertOwner(user.uid);
+    return readProfile();
+  }
+  async function sendOwnPasswordReset() {
+    const user=signedOwner();
+    if (!user.email) throw new Error('An account email is required.');
+    await authSdk.sendPasswordResetEmail(auth,user.email);
+    assertOwner(user.uid);
+    return {requested:true};
+  }
+  async function checkVerification() {
+    const user=signedOwner();
+    await authSdk.reload(user);
+    assertOwner(user.uid);
+    return {verified:user.emailVerified === true};
+  }
+  async function readAppearancePreferences() {
+    const user=signedOwner();
+    const ref=firestoreSdk.doc(db,'users',user.uid,'settings','appearance');
+    const snapshot=await firestoreSdk.getDocFromServer(ref);
+    assertOwner(user.uid);
+    // Revision metadata is owned, read directly from Firestore, never from storage.
+    return decodeCloudAppearance(snapshot.exists()?snapshot.data():null);
+  }
+  async function saveAppearancePreferences(appearance,expected) {
+    const user=signedOwner();
+    const ref=firestoreSdk.doc(db,'users',user.uid,'settings','appearance');
+    const result=await firestoreSdk.runTransaction(db,async transaction=>{
+      const snap=await transaction.get(ref);
+      assertOwner(user.uid);
+      const current=snap.exists()?snap.data():{};
+      if(!appearanceRevisionsMatch(current,expected))
+        return {ok:false,conflict:true};
+      const patch=cloudAppearancePatch(appearance,current),updated=firestoreSdk.serverTimestamp();
+      transaction.set(ref,{
+        theme:{...patch.theme,updatedAt:updated},
+        typography:{...patch.typography,updatedAt:updated}
+      },{merge:true});
+      return {ok:true};
+    });
+    assertOwner(user.uid);
+    if(!result.ok)return result;
+    return {ok:true,cloud:await readAppearancePreferences()};
+  }
+
   return Object.freeze({
     subscribe,
+    readProfile,saveProfile,usernameAvailable,renameUsername,
+    readAvatar,uploadAvatar,removeAvatar,sendOwnPasswordReset,checkVerification,
+    readAppearancePreferences,saveAppearancePreferences,
     async refresh() {
       const user = auth.currentUser;
       if (!user) return safeGuest();

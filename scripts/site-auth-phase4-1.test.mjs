@@ -31,7 +31,10 @@ test('Phase 4.1 never enables Firebase automatically and never targets a second 
   assert.equal(previewServices.has('auth'),false);
   const auth=createAppServices({auth:{subscribe(){}}});
   assert.equal(auth.has('auth'),true);
-  for(const route of ['account','profile','settings','friends','notifications','dashboard','gm-dashboard','character-dashboard','invitation']){
+  for(const route of ['account','profile','settings']){
+    assert.equal(canActivateRoute(route,auth),true,route);
+  }
+  for(const route of ['friends','notifications','dashboard','gm-dashboard','character-dashboard','invitation']){
     assert.equal(canActivateRoute(route,auth),false,route);
   }
 });
