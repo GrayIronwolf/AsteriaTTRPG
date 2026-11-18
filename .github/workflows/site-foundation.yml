@@ -61,6 +61,16 @@ jobs:
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 3.3 public search and category browser regression
+        run: npm run site:discovery-browser
+      - name: Upload Phase 3.3 discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-3-3-discovery-evidence
+          path: ${{ runner.temp }}/asteria-phase-3-3-discovery-evidence/
+          retention-days: 30
+          if-no-files-found: error
       - name: Phase 3.2 public Compendium entries and safe Markdown browser regression
         run: npm run site:entry-browser
       - name: Upload Phase 3.2 entry-page evidence
