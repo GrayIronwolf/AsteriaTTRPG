@@ -28,3 +28,6 @@ frontend/src/compendium/public-index/
 
 # Generated filtered public definition data (recreated before isolated builds)
 frontend/src/compendium/public-entry-index/
+
+# Derived from approved public Compendium sections; never commit generated search data
+frontend/src/compendium/public-search-index/
