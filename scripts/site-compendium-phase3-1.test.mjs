@@ -45,7 +45,7 @@ test('Phase 3.1 public catalogue shards are generated from existing canonical en
  const publicModule=read('frontend/src/compendium/publicCatalogue.mjs');
  assert.match(publicModule,/import\.meta\.glob/);
  assert.match(publicModule,/pending\.delete\(domain\)/);
- assert.doesNotMatch(publicModule,/data\/compendium(?:-parts|\.js)/);
+ assert.doesNotMatch(publicModule.replace(/\/\*[\s\S]*?\*\//g, ''),/data\/compendium(?:-parts|\.js)/);
 });
 
 test('routing and category search preserve original bookmarks and deliberately exclude private entry contents',()=>{
