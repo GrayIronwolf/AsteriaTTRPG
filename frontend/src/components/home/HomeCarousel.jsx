@@ -117,7 +117,7 @@ export function HomeCarousel() {
               alt={slide.alt}
               decoding="async"
               loading={index === 0 ? 'eager' : 'lazy'}
-              fetchPriority={index === 0 ? 'high' : undefined}
+              fetchpriority={index === 0 ? 'high' : undefined}
               draggable={false}
             />
           </div>

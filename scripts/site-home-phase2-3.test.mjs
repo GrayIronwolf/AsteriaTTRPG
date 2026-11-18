@@ -37,7 +37,7 @@ test('Home carousel owns autoplay, visible-slide semantics, pause/resume and cle
   assert.match(code, /aria-roledescription="carousel"/);
   assert.match(code, /aria-live="polite"/);
   assert.match(code, /aria-hidden=\{index !== slideIndex\}/);
-  assert.match(code, /fetchPriority=\{index === 0 \? 'high'/);
+  assert.match(code, /fetchpriority=\{index === 0 \? 'high'/);
   assert.match(code, /window\.setTimeout/);
   assert.match(code, /window\.clearTimeout/);
   assert.match(code, /document\.hidden/);
