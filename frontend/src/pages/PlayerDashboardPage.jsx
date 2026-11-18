@@ -148,6 +148,7 @@ function Dashboard({api,uid,campaignId='',characterId}){
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
+    {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?<Resources character={ch}/>:null}
     {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}

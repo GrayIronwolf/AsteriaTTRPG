@@ -137,6 +137,7 @@ export function DashboardLayoutEditor({
   const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [confirm,setConfirm]=useState('');
   const current=history.present;
+  const blocked=disabled||busy||remote;
   const baseline=layoutFingerprint(original.current,role);
   const remote=layoutFingerprint(source,role)!==baseline;
   const dirty=layoutFingerprint(current,role)!==baseline;
@@ -148,7 +149,7 @@ export function DashboardLayoutEditor({
   const locked=Boolean(chosen&&view.lockedPositions.includes(chosen));
   const change=callback=>setHistory(previous=>updateViewportHistory(previous,role,viewport,callback));
   const save=async()=>{
-    if(disabled||busy||remote||!dirty)return;
+    if(blocked||!dirty)return;
     setBusy(true);setMessage('');
     try{
       const result=await onSave(current,original.current);
@@ -164,7 +165,15 @@ export function DashboardLayoutEditor({
     onClose?.();
   };
   const reset=()=>{
-    change(previous=>defaultDashboardLayout(role));
+    change(previous=>{
+      const defaults=defaultDashboardLayout(role);
+      return {...defaults,
+        ...(role==='gm'?{
+          ...(previous.focusModes?{focusModes:previous.focusModes}:{}),
+          ...(previous.focusHome?{focusHome:previous.focusHome}:{})
+        }:{}),
+        ...(previous.viewportLayouts?{viewportLayouts:previous.viewportLayouts}:{})};
+    });
     setConfirm('');
     setMessage('Default arrangement selected. Save to keep this change.');
   };
@@ -193,16 +202,16 @@ export function DashboardLayoutEditor({
           {key[0].toUpperCase()+key.slice(1)}</button>)}
       </div>
       <div className={styles.history}>
-        <button type="button" data-testid="site-layout-undo" disabled={busy||!history.past.length}
+        <button type="button" data-testid="site-layout-undo" disabled={blocked||!history.past.length}
           onClick={()=>{setHistory(undoLayoutHistory);setMessage('');}}>Undo</button>
-        <button type="button" data-testid="site-layout-redo" disabled={busy||!history.future.length}
+        <button type="button" data-testid="site-layout-redo" disabled={blocked||!history.future.length}
           onClick={()=>{setHistory(redoLayoutHistory);setMessage('');}}>Redo</button>
-        <button type="button" disabled={busy}
+        <button type="button" disabled={blocked}
           onClick={()=>setConfirm('reset')}>Reset {viewport}</button>
       </div>
     </div>
     <GridCanvas key={role+':'+viewport} role={role} layout={view} selected={chosen}
-      onSelect={setSelected} disabled={disabled||busy}
+      onSelect={setSelected} disabled={blocked}
       onChange={callback=>change(callback)} />
     <div className={styles.controls}>
       <section className={styles.controlPanel} aria-label="Selected panel settings">
@@ -225,7 +234,7 @@ export function DashboardLayoutEditor({
           <div className={styles.sizeRow} role="group" aria-label={'Resize '+item.label}>
             {dashboardPanelSizeChoices(role,chosen).map(opt=><button type="button" key={opt.label}
               aria-pressed={position.w===opt.w&&position.h===opt.h}
-              disabled={disabled||busy||locked}
+              disabled={blocked||locked}
               onClick={()=>change(previous=>
                 fitDashboardGridPanel(previous,role,chosen,opt.w,opt.h))}>{opt.label}</button>)}
           </div>
@@ -277,7 +286,7 @@ export function DashboardLayoutEditor({
       <div>
         <button type="button" onClick={cancel} disabled={busy}>Cancel</button>
         <button type="button" className={styles.primary} data-testid="site-layout-save"
-          disabled={disabled||busy||!dirty||remote} onClick={save}>
+          disabled={blocked||!dirty} onClick={save}>
           {busy?'Saving…':'Save Layout'}</button>
       </div>
     </footer>
