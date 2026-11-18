@@ -22,3 +22,6 @@ application_default_credentials.json
 gha-creds-*.json
 frontend-dist/
 phase-1-5-evidence/
+
+# Generated public-only React Compendium catalogue shards.
+frontend/src/compendium/public-index/
