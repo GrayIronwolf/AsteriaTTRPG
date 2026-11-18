@@ -1,7 +1,6 @@
 import {CAMPAIGN_ID} from '../campaigns/campaignForgeModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 
-const own=(row,key)=>Object.prototype.hasOwnProperty.call(row||{},key);
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
 const count=value=>Number.isFinite(Number(value))?Math.max(0,Math.floor(Number(value))):0;
