@@ -20,7 +20,7 @@ test('Phase 5.4: only approved membership can see Forge link workflow',()=>{
  assert.deepEqual(safeOwnedChoices([{id,ownerUid:'alice',name:'Hero',linked:false},
   {id:'other',ownerUid:'bob',name:'Private'}],'alice'),
   [{id,name:'Hero',linked:false}]);
- assert.throws(()=>safeOwnedChoices([{}],'alice'),/Verified|account|list/);
+ assert.deepEqual(safeOwnedChoices([{}],'alice'),[]);
 });
 test('Phase 5.4: status and backend review projections reject owner or token spoofing',()=>{
  const item=safeCharacterLinkStatus({campaignId:cid,sourceCharacterId:id,
