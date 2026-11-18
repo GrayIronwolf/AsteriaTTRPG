@@ -41,7 +41,7 @@ export function FriendsPage() {
   const epoch=useRef(0);
   const owner=useRef(uid);
   owner.current=uid;
-  const active=useCallback((token,account)=>epoch.current===token&&owner.current===account,[ ]);
+  const active=useCallback((token,account)=>epoch.current===token&&owner.current===account,[]);
   const operation=useCallback(async (task,success)=>{
     if(!service||!uid)return null;
     const account=uid,token=epoch.current;
@@ -91,7 +91,7 @@ export function FriendsPage() {
     catch(err){setError(err.message);setFound(null);return;}
     setFound(null);
     const result=await operation(()=>service.find(input));
-    if(result)setFound(result.found?result:null);
+    if(result?.found===true)setFound(result);
     else if(result?.found===false)setMessage('No player found with that Account ID.');
   }
   function switchTab(next){

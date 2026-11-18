@@ -294,9 +294,9 @@ async function initializeClient(runtime) {
   }
 
   const friends = createFirebaseFriendsService({auth,functions,functionsSdk,
-    flags:Object.freeze({enabled:runtime.mode==='production' && import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
-      lookup:runtime.mode==='production' && import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
-      requests:runtime.mode==='production' && import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true'})});
+    flags:Object.freeze({enabled:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
+      lookup:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
+      requests:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true'})});
   return Object.freeze({
     friends,
     subscribe,
