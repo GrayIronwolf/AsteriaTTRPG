@@ -160,7 +160,7 @@ try{
  await player.getByRole('heading',{name:'Skills'}).waitFor();
  await player.getByRole('button',{name:'Overview'}).click();
  await player.getByTestId('site-player-resources').waitFor();
- await player.getByRole('button',{name:'Character Forge'}).first().click();
+ await player.getByRole('link',{name:'Character Forge'}).first().click();
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await owner.goto(base+'#/react/owned-character/'+encodeURIComponent(sourceId),{waitUntil:'domcontentloaded'});
  const deniedOwner=owner.getByTestId('site-player-error');
