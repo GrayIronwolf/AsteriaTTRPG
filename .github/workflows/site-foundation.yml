@@ -1,0 +1,43 @@
+name: Phase 1.1 standalone React/Vite foundation
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "vite.site.config.mjs"
+      - "scripts/site-foundation-*"
+      - "package.json"
+      - "eslint.config.mjs"
+      - ".github/workflows/site-foundation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "vite.site.config.mjs"
+      - "scripts/site-foundation-*"
+      - "package.json"
+      - "eslint.config.mjs"
+      - ".github/workflows/site-foundation.yml"
+  workflow_dispatch:
+
+jobs:
+  preview-foundation:
+    name: Build, lint and browser-verify isolated React app
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run site:check
+      - run: npm run site:build
+      - run: npm run site:verify-dist
+      - run: npx eslint frontend/src
+      - name: Install Chromium for phase-specific browser regression
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install --with-deps chromium
+      - run: npm run site:browser
