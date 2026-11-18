@@ -13,7 +13,7 @@ const LOGIN = define('account', ['auth']);
 const SOCIAL = define('social', ['auth', 'friends'], 'protected','ready');
 const CAMPAIGN = define('campaigns', ['auth', 'campaigns'], 'protected','ready');
 const CHARACTER = define('characters', ['auth', 'characters'], 'protected','ready');
-const GM = define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected');
+const GM = define('gameplay', ['auth', 'campaigns', 'gameplay'], 'protected','ready');
 
 export const ROUTE_FEATURES = Object.freeze({
   home: HOME,
@@ -32,7 +32,7 @@ export const ROUTE_FEATURES = Object.freeze({
   settings: ACCOUNT,
   friends: SOCIAL,
   notifications: define('social', ['auth', 'notifications'], 'protected','ready'),
-  dashboard: define('account', ['auth'], 'protected'),
+  dashboard: GM,
   'gm-dashboard': GM,
   'character-dashboard': define('characters', ['auth', 'characters'], 'protected'),
   presentation: GM,
