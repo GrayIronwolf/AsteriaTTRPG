@@ -37,7 +37,7 @@ test('menu search, category destinations and UCN path are connected to real cont
  assert.ok(js.includes('showFriendSection'));
  assert.ok(js.includes('aaaFriendsChatPanel'));
 });
-test('exact palette, full-width menu, responsive cards, logo scale, portrait and notifications are styled',()=>{
+test('legacy palette and the full-width menu retain responsive cards, logo scale, portrait and notifications',()=>{
  assert.ok(css.includes('background:#1E2838!important'));
  assert.ok(css.includes('background:#32373D!important'));
  assert.ok(css.includes('width:calc(100vw - 16px)!important'));
@@ -48,6 +48,22 @@ test('exact palette, full-width menu, responsive cards, logo scale, portrait and
  assert.ok(css.includes('left:-26px!important'));
  assert.ok(css.includes('var(--aaa-site-active)'));
  assert.ok(read('js/asteria-account-pages.js').includes("open('notifications')"));
+});
+test('solid navy backgrounds cover navigation, dropdowns and panels but never card artwork',()=>{
+  const palette=read('css/asteria-solid-navy-surfaces.css');
+  const html=read('index.html');
+  assert.ok(html.includes('css/asteria-solid-navy-surfaces.css?v=20261118-solid-navy'));
+  assert.ok(html.indexOf('css/asteria-solid-navy-surfaces.css')>html.indexOf('css/asteria-aaa-upgrade.css'));
+  assert.match(palette,/--asteria-menu-panel-surface:\s*#060D15/);
+  for(const selector of ['.topbar.asteria-header','#settingsPanel','.aaa-mega-menu',
+    '.compendium-quick-menu','.asteria-account-menu','.aaa-page-hero',
+    '.asteria-page-heading','.phase3-header','.panel:not(.card)',
+    '.asteria-react-panel:not(.card)']) {
+    assert.ok(palette.includes(selector), 'missing solid navy surface: '+selector);
+  }
+  assert.doesNotMatch(palette,/\.aaa-nav-card\s*[{,]/);
+  assert.doesNotMatch(palette,/\.library-group\s*[{,]/);
+  assert.ok(palette.includes('background-color: var(--asteria-menu-panel-surface) !important;'));
 });
 function browser(hash){
  const handlers={}, classes=()=>{const value=new Set();return {contains:x=>value.has(x),add:(...xs)=>xs.forEach(x=>value.add(x)),remove:(...xs)=>xs.forEach(x=>value.delete(x)),toggle:(x,yes)=>{if(yes)value.add(x);else value.delete(x);}};};
