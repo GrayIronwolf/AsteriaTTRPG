@@ -175,10 +175,12 @@ try{
   {waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-player-campaign').waitFor({timeout:30000});
  await owner.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
- await owner.getByText('GM Read-only').waitFor({timeout:30000});
+ await owner.getByText(/GM Read-only/).waitFor({timeout:30000});
  await owner.getByTestId('site-player-dashboard').getByRole('button',{name:'Journal'}).count().then(n=>
   assert.equal(n,0,'GM must not see private journal tab'));
 
+ await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
+ await owner.getByRole('button',{name:'Manage Campaign'}).click();
  await owner.getByRole('button',{name:'Deactivate'}).click();
  await owner.getByRole('button',{name:'Restore'}).waitFor({timeout:30000});
  await owner.getByRole('button',{name:'Restore'}).click();
