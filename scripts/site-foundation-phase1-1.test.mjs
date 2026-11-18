@@ -36,7 +36,9 @@ test('React shell has real, accessible Home navigation and only explicitly previ
   assert.match(shell, /href="#site-main"/);
   assert.match(shell, /<main/);
   assert.match(home, /<Heading id="site-home-title" hero>Asteria<\/Heading>/);
-  assert.match(home, /Phase 1\.3 design-system preview/);
+  assert.match(home, /React Home preview:/);
+  assert.match(home, /<HomeCarousel \/>/);
+  assert.match(home, /<ForgeCards \/>/);
   assert.ok(existsSync(resolve(root, 'assets/header/asteria-wordmark.png')));
   assert.ok(existsSync(resolve(root, 'assets/home/asteria-home-spider.webp')));
 });

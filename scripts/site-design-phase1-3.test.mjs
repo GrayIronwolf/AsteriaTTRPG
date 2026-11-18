@@ -30,8 +30,8 @@ test('Phase 1.3 replaces the old preview stylesheet, without stacking another la
 
 test('global stylesheet files have strictly divided responsibilities', () => {
   const files = collectCss('frontend/src');
-  assert.equal(files.length, 13, 'Expected three global files and ten scoped CSS Modules');
-  assert.equal(files.filter(path => path.endsWith('.module.css')).length, 10);
+  assert.equal(files.length, 15, 'Expected three global files and twelve scoped CSS Modules');
+  assert.equal(files.filter(path => path.endsWith('.module.css')).length, 12);
   assert.deepEqual(
     files.filter(path => !path.endsWith('.module.css')).map(path => path.split('/').pop()).sort(),
     [...globalStyles].sort()
@@ -82,7 +82,9 @@ test('component boundaries and reusable Asteria UI controls are wired to the pag
   assert.match(shell, /data-testid="site-mobile-menu"/);
   assert.match(home, /from '.\/HomePage\.module\.css'/);
   assert.match(home, /<PageLayout/);
-  assert.match(home, /<SurfacePanel/);
+  assert.match(home, /<HomeCarousel \/>/);
+  assert.match(home, /<ForgeCards \/>/);
+  assert.doesNotMatch(home, /<SurfacePanel/);
   assert.match(home, /<Heading id="site-home-title" hero>/);
   assert.match(route, /<PageLayout/);
   assert.match(route, /<CrystalButton variant="primary" size="wide" href="#home"/);

@@ -1,4 +1,4 @@
-name: React/Vite site migration — Phase 2.2 navigation
+name: React/Vite site migration — Phase 2.3 cinematic Home
 
 on:
   pull_request:
@@ -13,6 +13,7 @@ on:
       - "scripts/site-header-*"
       - "scripts/site-navigation-*"
       - "scripts/site-mega-*"
+      - "scripts/site-home-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -52,6 +53,16 @@ jobs:
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 2.3 cinematic Home and Forge cards browser regression
+        run: npm run site:home-browser
+      - name: Upload Phase 2.3 Home screenshots and measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-2-3-home-evidence
+          path: ${{ runner.temp }}/asteria-phase-2-3-home-evidence/
+          retention-days: 30
+          if-no-files-found: error
       - name: Phase 2.2 mega-menu interaction and layout browser regression
         run: npm run site:mega-browser
       - name: Upload Phase 2.2 navigation evidence
