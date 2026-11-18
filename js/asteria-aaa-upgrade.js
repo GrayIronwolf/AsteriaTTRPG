@@ -238,6 +238,7 @@
       const card = document.createElement('button');
       card.type = 'button'; card.className = 'aaa-nav-card';
       card.dataset.category = menu.id; card.dataset.index = String(index);
+      if (menu.id === 'campaigns' && entry[2] === 'campaign-new') card.dataset.artwork = 'forge-campaign';
       const artwork = document.createElement('span');
       artwork.className = 'aaa-nav-card-art'; artwork.setAttribute('aria-hidden','true');
       const label = document.createElement('span');
