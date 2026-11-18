@@ -71,6 +71,7 @@ async function awaitPreview() {
       ['Account', 'Account', '#/account']
     ]) {
       await nav().getByRole('link', { name: label, exact: true }).click();
+      await page.getByTestId('site-mega-browse').click();
       await heading(title);
       assert.equal(await page.evaluate(() => window.location.hash), hash, label);
       assert.equal(await nav().locator('[aria-current="page"]').count(), 1, label);
@@ -123,6 +124,7 @@ async function awaitPreview() {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         const mobileNav = page.getByRole('navigation', { name: 'Mobile navigation' });
         await mobileNav.getByRole('link', { name: 'Friends', exact: true }).click();
+        await page.getByTestId('site-mega-browse').click();
         await heading('Friends');
         assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
         await page.getByRole('link', { name: 'Return to Home' }).click();

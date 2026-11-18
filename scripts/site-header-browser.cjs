@@ -144,6 +144,7 @@ async function awaitServer() {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link', { name: 'Asteria Compendium' }).click();
+        await page.getByTestId('site-mega-browse').click();
         await page.getByRole('heading', { name: 'Asteria Compendium', level: 1 }).waitFor();
         assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
       }

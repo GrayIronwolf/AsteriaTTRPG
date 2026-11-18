@@ -103,8 +103,10 @@ async function awaitPreview() {
 
     for (let cycle = 0; cycle < 4; cycle++) {
       await nav().getByRole('link', { name: 'Character Forge', exact: true }).click();
+      await page.getByTestId('site-mega-browse').click();
       await heading('Character Forge').waitFor();
       await nav().getByRole('link', { name: 'Friends', exact: true }).click();
+      await page.getByTestId('site-mega-browse').click();
       await heading('Friends').waitFor();
       await nav().getByRole('link', { name: 'Home', exact: true }).click();
       await heading('Asteria').waitFor();
