@@ -30,7 +30,8 @@ export function AuthBootstrap({ children }) {
     return () => { alive=false; };
   }, []);
   const services = adapter ? createAppServices({auth:adapter,...(adapter.friends?.availability().enabled ? {friends:adapter.friends} : {}),
-    ...(adapter.notifications?.availability().enabled ? {notifications:adapter.notifications} : {})}) : previewServices;
+    ...(adapter.notifications?.availability().enabled ? {notifications:adapter.notifications} : {}),
+    ...(adapter.characters?.availability().enabled ? {characters:adapter.characters} : {})}) : previewServices;
   return <AppServicesProvider services={services}>
     <AuthProvider adapter={adapter}>
       <NotificationsProvider>
