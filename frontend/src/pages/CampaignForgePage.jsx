@@ -140,6 +140,8 @@ export function CampaignForgePage(){
      <small>UCN: {row.ucn||'Unavailable'} · Party capacity: {row.partySize}</small>
      <small>Membership: {row.membershipSchemaVersion===2?'Canonical v2':'Legacy v1'}</small>
      <CrystalButton onClick={()=>edit(row.id)} disabled={busy}>Manage Campaign</CrystalButton>
+     {services.has('gameplay')&&<CrystalButton href={'#/react/gm/'+encodeURIComponent(row.id)}
+       data-testid="site-campaign-gm-dashboard">Open GM Dashboard</CrystalButton>}
     </article>)}</div>}
    <BodyText muted>New secure campaign invitation workflows are available only for
     server-upgraded v2 campaigns. Existing legacy memberships remain unchanged.</BodyText>

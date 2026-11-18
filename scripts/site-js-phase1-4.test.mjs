@@ -137,14 +137,14 @@ test('every future React destination has a fail-closed migration owner', () => {
     auth: {}, campaigns: {}, characters: {}, compendium: {},
     friends: {}, notifications: {}, gameplay: {}
   });
-  for (const id of routes.filter(value => !['home', 'appearance', 'account', 'profile', 'settings', 'friends', 'notifications', 'character-forge', 'campaign-forge', 'invitation'].includes(value))) {
+  for (const id of routes.filter(value => !['home', 'appearance', 'account', 'profile', 'settings', 'friends', 'notifications', 'character-forge', 'campaign-forge', 'invitation', 'dashboard', 'gm-dashboard'].includes(value))) {
     const feature = getFeatureForRoute(id);
     assert.equal(feature.status, 'preview', 'Unmigrated route must be preview-only: ' + id);
     assert.equal(canActivateRoute(id, previewServices), false, id);
     assert.equal(canActivateRoute(id, injected), false,
       'Injecting a service must not auto-enable an unmigrated page: ' + id);
   }
-  for (const id of ['account','profile','settings','friends','notifications','character-forge','campaign-forge','invitation']) {
+  for (const id of ['account','profile','settings','friends','notifications','character-forge','campaign-forge','invitation','dashboard','gm-dashboard']) {
     const feature = getFeatureForRoute(id);
     assert.equal(feature.status,'ready',id);
     assert.equal(canActivateRoute(id,previewServices),false,id);

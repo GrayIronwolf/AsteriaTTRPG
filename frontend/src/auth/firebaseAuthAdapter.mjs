@@ -14,6 +14,7 @@ import { createFirebaseNotificationsService } from '../notifications/firebaseNot
 import { createFirebaseCharactersService } from '../forge/firebaseCharactersService.mjs';
 import { createFirebaseCampaignsService } from '../campaigns/firebaseCampaignsService.mjs';
 import { createFirebaseCampaignConnectionService } from '../campaigns/firebaseCampaignConnectionService.mjs';
+import { createFirebaseGMDashboardService } from '../dashboard/firebaseGMDashboardService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -320,8 +321,10 @@ async function initializeClient(runtime) {
       import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true',
     connections:campaignConnections
   });
+  const gameplay=createFirebaseGMDashboardService({auth,db,firestoreSdk,readCanonical,
+    enabled:import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true'});
   return Object.freeze({
-    friends,notifications,characters,campaigns,
+    friends,notifications,characters,campaigns,gameplay,
     subscribe,
     readProfile,saveProfile,usernameAvailable,renameUsername,
     readAvatar,uploadAvatar,removeAvatar,sendOwnPasswordReset,checkVerification,
