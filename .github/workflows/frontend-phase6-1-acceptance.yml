@@ -1,0 +1,45 @@
+name: React/Vite Phase 6.1 - GM Dashboard acceptance
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "scripts/site-gm-*"
+      - "package.json"
+      - ".github/workflows/frontend-phase6-1-acceptance.yml"
+  workflow_dispatch:
+
+jobs:
+  gm-dashboard-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Phase 6.1 role and regression contracts
+        run: npm run site:check
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Build opt-in authenticated GM Dashboard
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Real Auth, Firestore and Functions acceptance
+        timeout-minutes: 8
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:gm-browser"
+      - name: Restore isolated guest preview without GM access
+        run: npm run site:build
+      - run: npm run site:verify-dist

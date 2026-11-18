@@ -6,7 +6,7 @@ import {PageLayout} from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
-import {gmSessionCommands,gmSessionState} from '../dashboard/gmDashboardModel.mjs';
+import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
@@ -121,7 +121,7 @@ function CampaignGM({api,uid,campaignId}) {
     <CrystalButton href="#/dashboard">Back to campaigns</CrystalButton>
   </SurfacePanel>;
   if(!snapshot)return null;
-  const live=gmSessionState(snapshot.session);
+  const live=snapshot.session;
   return <>
     <div className={styles.head}>
       <div><Eyebrow>GM Dashboard · {snapshot.role}</Eyebrow>
