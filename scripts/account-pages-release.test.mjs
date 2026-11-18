@@ -91,7 +91,7 @@ test('three distinct account destinations exist with preserved Friends IDs and p
     'accountFriendsRequestList','accountFriendsBlockedList','accountFriendsPublicPreview'])
     assert.equal(html.split('id="'+id+'"').length-1,1,id);
   assert.ok(html.includes('css/asteria-account-pages.css?v=gm-toolkit-1-2'));
-  assert.ok(html.includes('js/asteria-account-pages.js?v=gm-toolkit-1-2'));
+  assert.ok(html.includes('js/asteria-account-pages.js?v=nav-recovery-20261118'));
   assert.ok(html.indexOf('js/asteria-friend-notifications.js')<
     html.indexOf('js/asteria-account-pages.js'));
   assert.ok(html.indexOf('js/asteria-account-pages.js')<

@@ -60,7 +60,7 @@ test('Desktop navigation fits one row; mobile uses the existing drawer and Accou
 });
 test('Phase 1.3 adds only versioned site navigation assets; leaves Account pages and backend untouched',()=>{
   assert.match(html,/css\/asteria-digital-gm-navigation\.css\?v=gm-toolkit-1-3/);
-  assert.match(html,/js\/asteria-navigation\.js\?v=gm-toolkit-1-3/);
+  assert.match(html,/js\/asteria-navigation\.js\?v=nav-recovery-20261118/);
   assert.match(html,/js\/asteria-menu-buttons\.js\?v=gm-toolkit-1-3/);
   assert.match(html,/css\/asteria-account-pages\.css\?v=gm-toolkit-1-2/);
   assert.match(html,/id="asteriaAccountTabProfile"/);
