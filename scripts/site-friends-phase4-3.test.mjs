@@ -109,7 +109,7 @@ test('Friends requires explicit injected service and keeps gameplay and notifica
  assert.doesNotMatch(noComments,/friendRelationshipPath|accountIdRegistry|accountIdAssignments|localStorage/);
  const page=read('frontend/src/pages/FriendsPage.jsx');
  assert.match(page,/site-friends-page/);
- assert.match(page,/session\.profileAvailable/);
+ assert.match(page,/isVerifiedOwnedSession/);
  assert.match(page,/epoch\.current/);
  assert.match(page,/Private friend-to-friend messaging is not enabled/);
  assert.doesNotMatch(page,/dangerouslySetInnerHTML|localStorage|sessionStorage|getDoc\(|getDocs\(/);

@@ -162,6 +162,6 @@ test('Phase 4.4 routes and header remain opt-in with no separate Firebase client
  assert.doesNotMatch(page,/getDoc\(|getDocs\(|onSnapshot\(|localStorage|sessionStorage|dangerouslySetInnerHTML/);
  const pkg=JSON.parse(read('package.json'));
  assert.match(pkg.scripts['site:check'],/site-notifications-phase4-4\.test\.mjs/);
- assert.match(read('.github/workflows/site-foundation.yml'),/Phase 4\.4 Notifications/);
+ assert.match(read('.github/workflows/site-foundation.yml'),/React\/Vite site migration/);
  assert.doesNotMatch(read('index.html'),/frontend\/src\/notifications/);
 });

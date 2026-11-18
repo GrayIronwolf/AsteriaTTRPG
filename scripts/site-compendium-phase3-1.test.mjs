@@ -7,6 +7,7 @@ import { resolveCompendiumScope, createCompendiumHref, filterPublicCatalogue, gr
 import { parseSiteRoute } from '../frontend/src/router/siteRoutes.mjs';
 import { canActivateRoute } from '../frontend/src/app/featureRegistry.mjs';
 import { previewServices } from '../frontend/src/services/appServices.mjs';
+import {isPublishedDefinition} from '../frontend/src/compendium/publicationPolicy.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(resolve(root,p),'utf8');
@@ -19,7 +20,7 @@ test('Phase 3.1 public catalogue shards are generated from existing canonical en
  for(const file of source){
   const data=JSON.parse(read('data/compendium-parts/'+file));
   for(const item of data.entries){
-   if(item.visibility!=='public' || item.gmOnly===true || item.metadata?.visibility==='gm-only'){omitted++;continue;}
+   if(!isPublishedDefinition(item)){omitted++;continue;}
    expected.get(data.domain).push(item);
   }
  }
