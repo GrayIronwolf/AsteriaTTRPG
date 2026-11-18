@@ -50,7 +50,7 @@ test('website activation references versioned notification client assets exactly
   const flag=source.indexOf('window.AsteriaFeatureFlags = Object.freeze(');
   const firebase=source.indexOf('js/firebase-auth.js?v=friends-phase5-2');
   const social=source.indexOf('js/asteria-friend-notifications.js?v=friends-notifications-website-20261111');
-  const workspace=source.indexOf('js/clean-compendium.js?v=friends-notifications-website-20261111');
+  const workspace=source.indexOf('js/clean-compendium.js?v=nav-recovery-20261118');
   assert.ok(flag>=0&&flag<firebase&&firebase<social&&social<workspace);
 });
 
