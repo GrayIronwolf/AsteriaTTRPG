@@ -21,8 +21,9 @@ export function HomePage() {
           and explore realms of myth, magic and adventure.
         </p>
         <p className="site-preview-note">
-          Phase 1.1 foundation preview. Navigation, user accounts and gameplay will
-          be migrated and verified in later phases; use the existing website for them.
+          Phase 1.2 navigation preview. Page links are now routed by React;
+          account information, compendium content and gameplay remain on
+          the existing website until their migration is complete.
         </p>
       </div>
     </section>

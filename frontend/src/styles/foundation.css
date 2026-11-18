@@ -1,7 +1,7 @@
 /*
- * Phase 1.1: minimal self-contained React app baseline.
- * Do not import css/styles.css, asteria-page-template.css or legacy overrides.
- * Full design-system migration and component variants belong to Phase 1.3.
+ * React site preview: one scoped foundation, no imports from legacy css/.
+ * Keep Phase 1.2 changes here (not override files); shared design tokens,
+ * component styling and visual parity are migrated in Phase 1.3.
  */
 :root {
   color-scheme: dark;
@@ -20,8 +20,8 @@
 html { min-width: 0; scroll-behavior: smooth; }
 body { min-width: 0; margin: 0; background: var(--site-page); color: var(--site-ink); }
 a { color: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
-a:focus-visible, button:focus-visible {
+button, a, summary { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, summary:focus-visible {
   outline: 3px solid #a8d3f1;
   outline-offset: 4px;
 }
@@ -48,37 +48,52 @@ a:focus-visible, button:focus-visible {
   min-height: 92px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   padding: 10px clamp(14px, 2.4vw, 48px);
 }
 .site-brand {
   display: flex;
   flex: 0 0 auto;
-  width: clamp(192px, 23vw, 294px);
+  width: clamp(190px, 17vw, 260px);
   align-items: center;
 }
 .site-brand img { display: block; width: 100%; height: auto; }
 .site-primary-navigation {
   display: flex;
   flex: 0 1 auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: end;
-  gap: clamp(8px, 1.5vw, 22px);
-  font-size: .88rem;
+  gap: clamp(4px, .7vw, 12px);
+  font-size: .78rem;
+  white-space: nowrap;
 }
-.site-primary-navigation a {
+.site-primary-navigation a,
+.site-mobile-navigation a,
+.site-return-home {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border: 1px solid var(--site-line);
   border-radius: 5px;
   background: var(--site-panel);
-  padding: 10px 18px;
+  text-align: center;
   text-decoration: none;
 }
-.site-primary-navigation a:hover { background: #18334b; }
-.site-nav-upcoming { color: var(--site-muted); font-size: .82rem; }
+.site-primary-navigation a {
+  padding: 9px clamp(6px, .85vw, 12px);
+}
+.site-primary-navigation a:hover,
+.site-mobile-navigation a:hover,
+.site-return-home:hover { background: #18334b; }
+.site-primary-navigation a[aria-current="page"],
+.site-mobile-navigation a[aria-current="page"] {
+  border-color: #b5d9ef;
+  color: #fff;
+  background: #1d3b53;
+}
+.site-mobile-menu { display: none; }
 .site-main { min-height: calc(100svh - 164px); }
 .site-home {
   position: relative;
@@ -133,7 +148,7 @@ a:focus-visible, button:focus-visible {
   font-size: clamp(1rem, 1.4vw, 1.2rem);
 }
 .site-preview-note {
-  width: min(100%, 560px);
+  width: min(100%, 600px);
   margin-top: 42px;
   padding: 16px 18px;
   background: rgba(6, 13, 21, .88);
@@ -141,6 +156,31 @@ a:focus-visible, button:focus-visible {
   font-size: .9rem;
   line-height: 1.55;
   color: var(--site-muted);
+}
+.site-route-preview {
+  width: min(100%, 940px);
+  min-height: 520px;
+  padding: clamp(56px, 9vw, 108px) clamp(24px, 6vw, 80px) 92px;
+  margin-inline: auto;
+}
+.site-route-preview h1 {
+  margin: 12px 0 20px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 500;
+  line-height: 1.12;
+}
+.site-route-description {
+  max-width: 68ch;
+  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--site-ink);
+}
+.site-route-preview .site-preview-note { margin: 32px 0; }
+.site-return-home {
+  margin-top: 12px;
+  padding: 10px 20px;
+  font-size: .88rem;
 }
 .site-footer {
   padding: 20px;
@@ -150,16 +190,65 @@ a:focus-visible, button:focus-visible {
   font-size: .78rem;
 }
 .site-footer p { margin: 0; }
-@media (max-width: 760px) {
-  .site-header-inner {
-    align-items: flex-start;
+@media (max-width: 1150px) {
+  .site-header-inner { min-height: 80px; }
+  .site-primary-navigation { display: none; }
+  .site-mobile-menu {
+    display: block;
+    position: relative;
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+  .site-mobile-menu summary {
+    display: flex;
+    min-height: 44px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid var(--site-line);
+    border-radius: 5px;
+    background: var(--site-panel);
+    padding: 10px 16px;
+    font-size: .88rem;
+  }
+  .site-mobile-menu summary::after {
+    content: "▾";
+    font-size: .75rem;
+  }
+  .site-mobile-menu[open] summary::after { content: "▴"; }
+  .site-mobile-navigation {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(320px, calc(100vw - 28px));
+    max-height: min(72svh, 620px);
+    overflow-y: auto;
+    display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-block: 14px;
+    background: var(--site-header);
+    border: 1px solid var(--site-line);
+    border-radius: 7px;
+    padding: 12px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, .56);
   }
-  .site-brand { width: min(260px, 72vw); }
-  .site-primary-navigation { justify-content: start; gap: 8px 14px; }
-  .site-nav-upcoming { display: none; }
+  .site-mobile-navigation a {
+    width: 100%;
+    justify-content: start;
+    padding: 10px 14px;
+    font-size: .9rem;
+  }
+}
+@media (max-width: 760px) {
+  .site-header-inner {
+    min-height: 72px;
+    align-items: center;
+    gap: 10px;
+    padding-block: 10px;
+  }
+  .site-brand { width: min(52vw, 220px); }
   .site-home { min-height: 650px; }
   .site-home-content { padding: 96px 24px 80px; }
   .site-hero-image::after {
