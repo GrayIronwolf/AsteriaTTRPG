@@ -1,5 +1,5 @@
 import {
- CAMPAIGN_ID,SECURE_ID,SECURE_TOKEN,CAMPAIGN_UCN,normalizeUCN,
+ CAMPAIGN_ID,SECURE_ID,SECURE_TOKEN,normalizeUCN,
  safeJoinPreview,safeInvitationPreview,safeRequestState,
  validateMemberAction,validateRoleAction,validateDelegation
 } from './campaignConnectionModel.mjs';
