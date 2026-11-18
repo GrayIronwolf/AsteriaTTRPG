@@ -18,8 +18,8 @@ const sheet={id:charId,ownerUid:player,sourceCharacterId:sourceId,
   sharedCampaignId:cid,status:'linked',hp:[17,30],inventory:['Sword']};
 const source={id:sourceId,ownerUid:player,linkedCampaignIds:[cid],
   campaignCharacterIds:{[cid]:charId},journal:['secret']};
-const fixtures={'campaigns/'+cid:campaign,'campaigns/'+cid+'/members/'+player:membership,
-  'campaigns/'+cid+'/characters/'+charId:sheet,'users/'+player+'/characters/'+sourceId:source};
+const fixtures={['campaigns/'+cid]:campaign,['campaigns/'+cid+'/members/'+player]:membership,
+  ['campaigns/'+cid+'/characters/'+charId]:sheet,['users/'+player+'/characters/'+sourceId]:source};
 function mock(who,records=fixtures){
   const state=new Map(Object.entries(records)),auth={currentUser:{uid:who}};
   const snapshot=(key)=>({exists:()=>state.has(key),data:()=>state.get(key),id:key.split('/').at(-1)});
@@ -69,7 +69,7 @@ test('undo, redo, viewport isolation and GM Focus preservation',()=>{
   assert.ok(history.past.length<=MAX_LAYOUT_UNDO);
 });
 test('private character layout retains all gameplay data and prevents stale overwrites',async()=>{
-  const f=mock(player,{'users/'+player+'/characters/'+sourceId:
+  const f=mock(player,{['users/'+player+'/characters/'+sourceId]:
     {id:sourceId,ownerUid:player,hp:[17,30],inventory:['Sword']}});
   const api=createFirebasePlayerDashboardService({...f,enabled:true,layoutEnabled:true});
   const old=defaultDashboardLayout('player'),next=lockDashboardGridPanel(old,'player','skills',true);
