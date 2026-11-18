@@ -138,7 +138,17 @@ try{
    'Reset feedback did not confirm generic response: '+resetMessage);
  assert.equal(await page.getByTestId('site-header-profile').count(),0);
  for(const width of [320,760,1280,1920])await within(page,width);
- assert.deepEqual(errors,[],errors.join('; '));
+ const expectedEmulatorDiagnostics = new Set([
+  // Account-ID callable is purposely not started in the Auth/Firestore-only
+  // test; registration must show a pending warning without creating a number.
+  'console Failed to load resource: net::ERR_CONNECTION_REFUSED',
+  // The negative-credential test deliberately triggers one 400 from Auth.
+  'console Failed to load resource: the server responded with a status of 400 (Bad Request)'
+ ]);
+ assert.ok(errors.filter(error=>expectedEmulatorDiagnostics.has(error)).length<=2,
+  'Unexpected repeated emulator resource failures: '+errors.join('; '));
+ assert.deepEqual(errors.filter(error=>!expectedEmulatorDiagnostics.has(error)),[],
+  'Unexpected browser or network errors: '+errors.join('; '));
  fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify({
   phase:'4.1',mode:'demo-asteria local Auth/Firestore emulators',
   passwordStored:false,productionTouched:false,protectedFeatures:false,
