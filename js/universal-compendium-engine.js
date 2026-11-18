@@ -347,8 +347,8 @@
           <span>Click filters. Double-click opens category.</span>
         </div>
         <div class="codex-tree-list">
-          ${(node.children || []).map(child => `<button type="button" class="codex-tree-category ${pathId(activePath) === pathId(child.path) ? 'active' : ''}" data-universal-category="${escapeHtml(child.path.join('|'))}"><span>${escapeHtml(child.label)}</span><small>${child.count}</small></button>`).join('')}
-          ${(node.entries || []).map(entry => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(entry.id)}">${escapeHtml(entry.title)}</button>`).join('')}
+          ${(node.children || []).map(child => `<button type="button" class="codex-tree-category ${pathId(activePath) === pathId(child.path) ? 'active' : ''}" data-universal-category="${escapeHtml(child.path.join('|'))}" ${pathId(activePath) === pathId(child.path) ? 'aria-current="page"' : ''}><span class="asteria-template-nav-label">${escapeHtml(child.label)}</span><small>${child.count}</small></button>`).join('')}
+          ${(node.entries || []).map(entry => `<button type="button" class="codex-tree-entry" data-universal-entry="${escapeHtml(entry.id)}" ${selectedEntry?.id === entry.id ? 'aria-current="page"' : ''}><span class="asteria-template-nav-label">${escapeHtml(entry.title)}</span></button>`).join('')}
         </div>
       </aside>
     `;
@@ -463,14 +463,16 @@
 
   function layout(){
     return `
-      <section class="codex-compendium-header universal-compendium-header">
+      <header class="codex-compendium-header universal-compendium-header aaa-page-hero asteria-template-header">
         <h1>${escapeHtml(domainLabels[activeDomain] || 'Asteria Compendium')}</h1>
         <div class="codex-breadcrumbs">${breadcrumb(activePath, selectedEntry)}</div>
-      </section>
-      ${searchBar()}
+      </header>
       <section class="codex-compendium-body">
         ${sidebar()}
-        <main class="codex-main-display">${selectedEntry ? detail(selectedEntry) : grid()}</main>
+        <div class="codex-main-column">
+          ${searchBar()}
+          <main class="codex-main-display">${selectedEntry ? detail(selectedEntry) : grid()}</main>
+        </div>
       </section>
     `;
   }
@@ -482,6 +484,16 @@
     const root = shell();
     if(window.AsteriaContent.readyForView && !window.AsteriaContent.readyForView(root,selectedEntry || [],render))return;
     root.innerHTML = layout();
+    // Reapply the shared Account page shell after each detail/search render.
+    // Keep existing GM filters, input listeners and card callbacks intact.
+    window.AsteriaPageTemplate?.adopt?.({
+      page:root,title:domainLabels[activeDomain] || 'Asteria Compendium',
+      layoutSelector:'.codex-compendium-body',
+      sidebarSelector:'.codex-sidebar',
+      navSelector:'.codex-tree-list',
+      contentSelector:'.codex-main-column',
+      panelSelector:'.codex-main-display'
+    });
     bind();
     const next = focusId ? byId(focusId) : null;
     if(next){ next.focus({preventScroll:true}); if(selection) next.setSelectionRange?.(...selection); }
