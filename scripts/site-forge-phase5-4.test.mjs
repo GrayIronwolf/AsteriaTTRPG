@@ -34,8 +34,9 @@ test('Phase 5.4: status and backend review projections reject owner or token spo
   privateSheet:{name:'Never leak'}
  }]},cid);
  assert.equal(pending.requests.length,1);
+ assert.equal(pending.requests[0].status,'pending');
  assert.equal(JSON.stringify(pending).includes('privateSheet'),false);
- assert.deepEqual(gmCharacterReviewPayload({...pending.requests[0],status:'pending'},'approve'),{
+ assert.deepEqual(gmCharacterReviewPayload(pending.requests[0],'approve'),{
   linkId:link,decision:'approve',expectedRevision:1});
  assert.throws(()=>gmCharacterReviewPayload({...pending.requests[0],revision:0},'approve'));
  const lifecycle=safeCampaignCharacterLifecycle({campaignId:cid,links:[{
