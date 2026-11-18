@@ -1,0 +1,2386 @@
+{
+  "schema": "asteria-frontend-source-inventory/v1",
+  "snapshot": {
+    "date": "2026-11-18",
+    "repo": "GrayIronwolf/AsteriaTTRPG",
+    "branch": "main",
+    "commit": "cc4e78680c7482f9e105d655c50a7cc30a339d62",
+    "scope": "source-file presence and Git tree byte sizes; not proof of runtime usage",
+    "totalTrackedFiles": 2378
+  },
+  "entry": {
+    "html": "index.html",
+    "cssLinks": [
+      {
+        "line": 8,
+        "source": "css/asteria-design-tokens.css?v=design-system-v1"
+      },
+      {
+        "line": 9,
+        "source": "css/styles.css?v=20260730-live-delivery-4"
+      },
+      {
+        "line": 10,
+        "source": "css/clean-compendium.css"
+      },
+      {
+        "line": 11,
+        "source": "css/asteria-ui-theme-system.css?v=smoke-9933-v1"
+      },
+      {
+        "line": 13,
+        "source": "css/asteria-inventory-workflows.css"
+      },
+      {
+        "line": 14,
+        "source": "css/asteria-item-ecosystem.css"
+      },
+      {
+        "line": 15,
+        "source": "css/asteria-modern-ui.css?v=mobile-home-v1"
+      },
+      {
+        "line": 16,
+        "source": "css/asteria-navigation.css?v=phase5-update3-20261106"
+      },
+      {
+        "line": 17,
+        "source": "css/asteria-smoke-background.css?v=solid-palette-20261108"
+      },
+      {
+        "line": 18,
+        "source": "css/asteria-menu-buttons.css?v=encounter-header-v7"
+      },
+      {
+        "line": 19,
+        "source": "css/asteria-account-menu.css?v=account-menu-phase3-3"
+      },
+      {
+        "line": 20,
+        "source": "css/asteria-account-profile.css?v=account-profile-phase3-2"
+      },
+      {
+        "line": 21,
+        "source": "css/asteria-account-security.css?v=account-menu-phase3-3"
+      },
+      {
+        "line": 22,
+        "source": "css/asteria-account-friends.css?v=friends-send-20261113"
+      },
+      {
+        "line": 23,
+        "source": "css/asteria-royal-crystal-dashboard.css?v=royal-crystal-v1"
+      },
+      {
+        "line": 24,
+        "source": "css/asteria-dashboard-panel-images.css?v=panel-outer-frame-v2"
+      },
+      {
+        "line": 25,
+        "source": "css/asteria-panel-headers.css?v=theme-rail-fix-20261109"
+      },
+      {
+        "line": 26,
+        "source": "css/asteria-freeform-dashboard.css?v=freeform-grid-20261105"
+      },
+      {
+        "line": 27,
+        "source": "css/asteria-dashboard-responsive-content.css?v=dashboard-update2-content-fit-20261106"
+      },
+      {
+        "line": 28,
+        "source": "css/asteria-dashboard-spacing-responsive.css?v=dashboard-update3-responsive-20261106"
+      },
+      {
+        "line": 29,
+        "source": "css/asteria-button-sizes.css?v=20261117-4-compact-header"
+      },
+      {
+        "line": 30,
+        "source": "css/asteria-button-images.css?v=phase3-approved-layers-20261106"
+      },
+      {
+        "line": 31,
+        "source": "css/asteria-typography.css?v=phase5-update2-20261106"
+      },
+      {
+        "line": 32,
+        "source": "css/asteria-appearance-sync.css?v=phase6-update2-20261106"
+      },
+      {
+        "line": 33,
+        "source": "css/asteria-header-wordmark.css?v=wordmark-stars-v3-20261108"
+      },
+      {
+        "line": 34,
+        "source": "css/asteria-campaign-connection.css?v=phase8-1-20261109"
+      },
+      {
+        "line": 35,
+        "source": "css/asteria-friend-notifications.css?v=friends-phase4-2"
+      },
+      {
+        "line": 36,
+        "source": "css/asteria-campaign-friend-recipients.css?v=friends-phase5-1"
+      },
+      {
+        "line": 38,
+        "source": "css/asteria-account-experience.css?v=header-account-20261110"
+      },
+      {
+        "line": 39,
+        "source": "css/asteria-home-header-refresh.css?v=hero-sharp-20261111"
+      },
+      {
+        "line": 40,
+        "source": "css/asteria-mobile-header-stability.css?v=mobile-first-paint-20261112"
+      },
+      {
+        "line": 41,
+        "source": "css/asteria-account-pages.css?v=gm-toolkit-1-2"
+      },
+      {
+        "line": 42,
+        "source": "css/asteria-digital-gm-navigation.css?v=gm-toolkit-1-3"
+      },
+      {
+        "line": 43,
+        "source": "css/asteria-aaa-upgrade.css?v=20261118-campaign-book-v1"
+      },
+      {
+        "line": 44,
+        "source": "css/asteria-solid-navy-surfaces.css?v=20261118-solid-navy"
+      }
+    ],
+    "scriptLinks": [
+      {
+        "line": 37,
+        "source": "js/asteria-home-guard.js?v=home-startup-v3-20261117",
+        "module": false
+      },
+      {
+        "line": 614,
+        "source": "js/manual-number-inputs.js",
+        "module": false
+      },
+      {
+        "line": 615,
+        "source": "data/compendium-index.js?v=on-demand-v1",
+        "module": false
+      },
+      {
+        "line": 616,
+        "source": "js/compendium-registry.js?v=phase5-update4-20261106",
+        "module": false
+      },
+      {
+        "line": 617,
+        "source": "js/asteria-state.js",
+        "module": false
+      },
+      {
+        "line": 618,
+        "source": "js/asteria-view-hooks.js",
+        "module": false
+      },
+      {
+        "line": 619,
+        "source": "js/asteria-progression.js",
+        "module": false
+      },
+      {
+        "line": 620,
+        "source": "js/asteria-progression-ui.js",
+        "module": false
+      },
+      {
+        "line": 621,
+        "source": "js/asteria-magic-data.js",
+        "module": false
+      },
+      {
+        "line": 622,
+        "source": "js/asteria-market-pricing.js?v=market-pricing-v1",
+        "module": false
+      },
+      {
+        "line": 623,
+        "source": "js/app.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 624,
+        "source": "js/asteria-inventory-api.js?v=react-m1",
+        "module": false
+      },
+      {
+        "line": 625,
+        "source": "js/character-access.js?v=linked-players-v8",
+        "module": false
+      },
+      {
+        "line": 626,
+        "source": "js/auth-bridge.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 627,
+        "source": "js/asteria-account-menu.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 628,
+        "source": "js/asteria-account-friends.js?v=friends-phase3-3",
+        "module": false
+      },
+      {
+        "line": 629,
+        "source": "js/asteria-friend-requests.js?v=friends-send-20261113",
+        "module": false
+      },
+      {
+        "line": 630,
+        "source": "js/asteria-accepted-friends.js?v=friends-phase3-3",
+        "module": false
+      },
+      {
+        "line": 631,
+        "source": "js/asteria-friend-management.js?v=friends-phase3-3",
+        "module": false
+      },
+      {
+        "line": 632,
+        "source": "js/asteria-friends-workspace.js?v=friends-phase3-3",
+        "module": false
+      },
+      {
+        "line": 633,
+        "source": "js/asteria-account-header.js?v=gm-toolkit-1-2",
+        "module": true
+      },
+      {
+        "line": 634,
+        "source": "js/asteria-account-security.js?v=gm-toolkit-1-2",
+        "module": false
+      },
+      {
+        "line": 635,
+        "source": "js/asteria-account-profile.js?v=gm-toolkit-1-2",
+        "module": true
+      },
+      {
+        "line": 637,
+        "source": "js/firebase-auth.js?v=friends-phase5-2",
+        "module": true
+      },
+      {
+        "line": 638,
+        "source": "js/data-sync.js?v=campaign-access-2",
+        "module": false
+      },
+      {
+        "line": 639,
+        "source": "js/campaign-join-model.js?v=phase3-1",
+        "module": false
+      },
+      {
+        "line": 640,
+        "source": "js/campaign-roster-view.js?v=campaign-phase4-3",
+        "module": false
+      },
+      {
+        "line": 641,
+        "source": "js/vendor/qrcode.js?v=local-private-invite-qr",
+        "module": false
+      },
+      {
+        "line": 642,
+        "source": "js/secure-campaign-invite.js?v=phase6-3",
+        "module": false
+      },
+      {
+        "line": 643,
+        "source": "js/campaign-notifications-ui.js?v=phase7-3",
+        "module": false
+      },
+      {
+        "line": 644,
+        "source": "js/asteria-friend-notifications.js?v=friends-notifications-website-20261111",
+        "module": false
+      },
+      {
+        "line": 645,
+        "source": "js/asteria-campaign-friend-recipients.js?v=friends-phase5-2",
+        "module": false
+      },
+      {
+        "line": 646,
+        "source": "js/asteria-account-pages.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 647,
+        "source": "js/clean-compendium.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 649,
+        "source": "js/universal-compendium-engine.js?v=compendium-demand-v1",
+        "module": false
+      },
+      {
+        "line": 650,
+        "source": "js/asteria-gameplay-systems.js?v=home-restore-20261118",
+        "module": false
+      },
+      {
+        "line": 651,
+        "source": "js/asteria-inventory-workflows.js?v=react-m1",
+        "module": false
+      },
+      {
+        "line": 652,
+        "source": "js/asteria-world-systems.js",
+        "module": false
+      },
+      {
+        "line": 653,
+        "source": "js/asteria-item-ecosystem.js",
+        "module": false
+      },
+      {
+        "line": 654,
+        "source": "js/asteria-core-shell.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 655,
+        "source": "js/asteria-ui-theme-system.js?v=solid-palette-20261108",
+        "module": false
+      },
+      {
+        "line": 656,
+        "source": "js/asteria-typography.js?v=phase6-update2-20261106",
+        "module": false
+      },
+      {
+        "line": 657,
+        "source": "js/asteria-appearance-sync.js?v=phase6-update2-20261106",
+        "module": false
+      },
+      {
+        "line": 658,
+        "source": "js/asteria-navigation.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 659,
+        "source": "js/asteria-menu-buttons.js?v=gm-toolkit-1-3",
+        "module": false
+      },
+      {
+        "line": 661,
+        "source": "js/asteria-aaa-upgrade.js?v=nav-recovery-20261118",
+        "module": false
+      },
+      {
+        "line": 662,
+        "source": "src/dev-entry.js?v=royal-relic-panels-v2",
+        "module": true
+      }
+    ]
+  },
+  "sources": {
+    "legacyCSS": [
+      {
+        "path": "css/asteria-aaa-upgrade.css",
+        "bytes": 32759
+      },
+      {
+        "path": "css/asteria-account-experience.css",
+        "bytes": 6683
+      },
+      {
+        "path": "css/asteria-account-friends.css",
+        "bytes": 14325
+      },
+      {
+        "path": "css/asteria-account-menu.css",
+        "bytes": 2549
+      },
+      {
+        "path": "css/asteria-account-pages.css",
+        "bytes": 12699
+      },
+      {
+        "path": "css/asteria-account-profile.css",
+        "bytes": 2820
+      },
+      {
+        "path": "css/asteria-account-security.css",
+        "bytes": 2670
+      },
+      {
+        "path": "css/asteria-appearance-sync.css",
+        "bytes": 1309
+      },
+      {
+        "path": "css/asteria-button-images.css",
+        "bytes": 7254
+      },
+      {
+        "path": "css/asteria-button-sizes.css",
+        "bytes": 7947
+      },
+      {
+        "path": "css/asteria-campaign-connection.css",
+        "bytes": 9044
+      },
+      {
+        "path": "css/asteria-campaign-friend-recipients.css",
+        "bytes": 1359
+      },
+      {
+        "path": "css/asteria-dashboard-panel-images.css",
+        "bytes": 5960
+      },
+      {
+        "path": "css/asteria-dashboard-responsive-content.css",
+        "bytes": 9303
+      },
+      {
+        "path": "css/asteria-dashboard-spacing-responsive.css",
+        "bytes": 6074
+      },
+      {
+        "path": "css/asteria-design-tokens.css",
+        "bytes": 3329
+      },
+      {
+        "path": "css/asteria-digital-gm-navigation.css",
+        "bytes": 4414
+      },
+      {
+        "path": "css/asteria-freeform-dashboard.css",
+        "bytes": 16810
+      },
+      {
+        "path": "css/asteria-friend-notifications.css",
+        "bytes": 2456
+      },
+      {
+        "path": "css/asteria-header-wordmark.css",
+        "bytes": 1298
+      },
+      {
+        "path": "css/asteria-home-header-refresh.css",
+        "bytes": 7443
+      },
+      {
+        "path": "css/asteria-inventory-workflows.css",
+        "bytes": 6819
+      },
+      {
+        "path": "css/asteria-item-ecosystem.css",
+        "bytes": 19854
+      },
+      {
+        "path": "css/asteria-menu-buttons.css",
+        "bytes": 13359
+      },
+      {
+        "path": "css/asteria-mobile-header-stability.css",
+        "bytes": 4575
+      },
+      {
+        "path": "css/asteria-modern-ui.css",
+        "bytes": 25564
+      },
+      {
+        "path": "css/asteria-navigation.css",
+        "bytes": 15919
+      },
+      {
+        "path": "css/asteria-page-template.css",
+        "bytes": 3632
+      },
+      {
+        "path": "css/asteria-panel-headers.css",
+        "bytes": 6350
+      },
+      {
+        "path": "css/asteria-royal-crystal-dashboard.css",
+        "bytes": 15856
+      },
+      {
+        "path": "css/asteria-smoke-background.css",
+        "bytes": 607
+      },
+      {
+        "path": "css/asteria-solid-navy-surfaces.css",
+        "bytes": 2168
+      },
+      {
+        "path": "css/asteria-typography.css",
+        "bytes": 5192
+      },
+      {
+        "path": "css/asteria-ui-theme-system.css",
+        "bytes": 19505
+      },
+      {
+        "path": "css/clean-compendium.css",
+        "bytes": 33280
+      },
+      {
+        "path": "css/styles.css",
+        "bytes": 293904
+      }
+    ],
+    "legacyJS": [
+      {
+        "path": "js/app.js",
+        "bytes": 563158
+      },
+      {
+        "path": "js/asteria-aaa-upgrade.js",
+        "bytes": 29612
+      },
+      {
+        "path": "js/asteria-accepted-friends.js",
+        "bytes": 5500
+      },
+      {
+        "path": "js/asteria-account-friends.js",
+        "bytes": 8217
+      },
+      {
+        "path": "js/asteria-account-header.js",
+        "bytes": 5983
+      },
+      {
+        "path": "js/asteria-account-menu.js",
+        "bytes": 1303
+      },
+      {
+        "path": "js/asteria-account-pages.js",
+        "bytes": 11561
+      },
+      {
+        "path": "js/asteria-account-profile.js",
+        "bytes": 14637
+      },
+      {
+        "path": "js/asteria-account-security.js",
+        "bytes": 9596
+      },
+      {
+        "path": "js/asteria-appearance-sync.js",
+        "bytes": 9834
+      },
+      {
+        "path": "js/asteria-campaign-friend-recipients.js",
+        "bytes": 10759
+      },
+      {
+        "path": "js/asteria-core-shell.js",
+        "bytes": 17772
+      },
+      {
+        "path": "js/asteria-friend-management.js",
+        "bytes": 10179
+      },
+      {
+        "path": "js/asteria-friend-notifications.js",
+        "bytes": 8845
+      },
+      {
+        "path": "js/asteria-friend-requests.js",
+        "bytes": 10687
+      },
+      {
+        "path": "js/asteria-friends-workspace.js",
+        "bytes": 5029
+      },
+      {
+        "path": "js/asteria-gameplay-systems.js",
+        "bytes": 196003
+      },
+      {
+        "path": "js/asteria-home-guard.js",
+        "bytes": 5926
+      },
+      {
+        "path": "js/asteria-inventory-api.js",
+        "bytes": 32671
+      },
+      {
+        "path": "js/asteria-inventory-workflows.js",
+        "bytes": 46555
+      },
+      {
+        "path": "js/asteria-item-ecosystem.js",
+        "bytes": 92343
+      },
+      {
+        "path": "js/asteria-magic-data.js",
+        "bytes": 5039
+      },
+      {
+        "path": "js/asteria-market-pricing.js",
+        "bytes": 10291
+      },
+      {
+        "path": "js/asteria-menu-buttons.js",
+        "bytes": 4777
+      },
+      {
+        "path": "js/asteria-navigation.js",
+        "bytes": 26205
+      },
+      {
+        "path": "js/asteria-page-template.js",
+        "bytes": 7637
+      },
+      {
+        "path": "js/asteria-progression-ui.js",
+        "bytes": 23743
+      },
+      {
+        "path": "js/asteria-progression.js",
+        "bytes": 5972
+      },
+      {
+        "path": "js/asteria-state.js",
+        "bytes": 5790
+      },
+      {
+        "path": "js/asteria-typography.js",
+        "bytes": 14091
+      },
+      {
+        "path": "js/asteria-ui-theme-system.js",
+        "bytes": 15438
+      },
+      {
+        "path": "js/asteria-view-hooks.js",
+        "bytes": 3632
+      },
+      {
+        "path": "js/asteria-world-systems.js",
+        "bytes": 49034
+      },
+      {
+        "path": "js/auth-bridge.js",
+        "bytes": 11128
+      },
+      {
+        "path": "js/campaign-join-model.js",
+        "bytes": 1890
+      },
+      {
+        "path": "js/campaign-notifications-ui.js",
+        "bytes": 9217
+      },
+      {
+        "path": "js/campaign-roster-view.js",
+        "bytes": 6275
+      },
+      {
+        "path": "js/character-access.js",
+        "bytes": 1723
+      },
+      {
+        "path": "js/clean-compendium.js",
+        "bytes": 136624
+      },
+      {
+        "path": "js/compendium-registry.js",
+        "bytes": 11272
+      },
+      {
+        "path": "js/data-sync.js",
+        "bytes": 30442
+      },
+      {
+        "path": "js/firebase-auth.js",
+        "bytes": 224677
+      },
+      {
+        "path": "js/manual-number-inputs.js",
+        "bytes": 628
+      },
+      {
+        "path": "js/secure-campaign-invite.js",
+        "bytes": 1224
+      },
+      {
+        "path": "js/universal-compendium-engine.js",
+        "bytes": 38981
+      },
+      {
+        "path": "js/vendor/qrcode.js",
+        "bytes": 33168
+      },
+      {
+        "path": "js/vendor/qrcode.LICENSE.txt",
+        "bytes": 1098
+      }
+    ],
+    "reactSource": [
+      {
+        "path": "src/app/AsteriaAppContext.jsx",
+        "bytes": 2000
+      },
+      {
+        "path": "src/app/AsteriaReactRoot.jsx",
+        "bytes": 2634
+      },
+      {
+        "path": "src/app/asteriaRoutes.mjs",
+        "bytes": 1920
+      },
+      {
+        "path": "src/app/gmCharacterNavigation.mjs",
+        "bytes": 1610
+      },
+      {
+        "path": "src/app/legacyBridge.js",
+        "bytes": 1619
+      },
+      {
+        "path": "src/app/mountDashboard.jsx",
+        "bytes": 567
+      },
+      {
+        "path": "src/assets/ui/characteristics/dashboard-parchment.webp",
+        "bytes": 1518034
+      },
+      {
+        "path": "src/assets/ui/characteristics/menu-parchment.webp",
+        "bytes": 1391764
+      },
+      {
+        "path": "src/components/AsteriaIcons.jsx",
+        "bytes": 4200
+      },
+      {
+        "path": "src/components/DashboardCustomisation.jsx",
+        "bytes": 17382
+      },
+      {
+        "path": "src/components/DashboardInformation.jsx",
+        "bytes": 18734
+      },
+      {
+        "path": "src/components/dialogFocus.mjs",
+        "bytes": 974
+      },
+      {
+        "path": "src/components/ManualNumberInput.jsx",
+        "bytes": 984
+      },
+      {
+        "path": "src/components/QuestDetails.jsx",
+        "bytes": 2390
+      },
+      {
+        "path": "src/components/ThemeControls.jsx",
+        "bytes": 879
+      },
+      {
+        "path": "src/components/useAsyncAction.js",
+        "bytes": 1061
+      },
+      {
+        "path": "src/components/WorkspaceUI.jsx",
+        "bytes": 12901
+      },
+      {
+        "path": "src/dashboards/AdvancedDiceWorkspace.jsx",
+        "bytes": 10243
+      },
+      {
+        "path": "src/dashboards/AsteriaCalendarWorkspace.jsx",
+        "bytes": 15369
+      },
+      {
+        "path": "src/dashboards/BattleMapWorkspace.jsx",
+        "bytes": 33505
+      },
+      {
+        "path": "src/dashboards/CampaignInformationWorkspace.jsx",
+        "bytes": 5172
+      },
+      {
+        "path": "src/dashboards/CampaignSoundboardWorkspace.jsx",
+        "bytes": 14694
+      },
+      {
+        "path": "src/dashboards/CharacterDashboard.jsx",
+        "bytes": 21933
+      },
+      {
+        "path": "src/dashboards/CharacterGallerySettings.jsx",
+        "bytes": 12441
+      },
+      {
+        "path": "src/dashboards/CharacterSystemsPanels.jsx",
+        "bytes": 13833
+      },
+      {
+        "path": "src/dashboards/characterWorkspaceData.js",
+        "bytes": 6283
+      },
+      {
+        "path": "src/dashboards/CharacterWorkspaceTabs.jsx",
+        "bytes": 28482
+      },
+      {
+        "path": "src/dashboards/ClassTalentTree.jsx",
+        "bytes": 10588
+      },
+      {
+        "path": "src/dashboards/CombatPanel.jsx",
+        "bytes": 38915
+      },
+      {
+        "path": "src/dashboards/CraftingRecipeWorkspace.jsx",
+        "bytes": 14179
+      },
+      {
+        "path": "src/dashboards/CraftingServicesWorkspace.jsx",
+        "bytes": 16533
+      },
+      {
+        "path": "src/dashboards/DashboardFocusPanels.jsx",
+        "bytes": 6855
+      },
+      {
+        "path": "src/dashboards/GMCharacterCards.jsx",
+        "bytes": 8673
+      },
+      {
+        "path": "src/dashboards/GMContextCheckLauncher.jsx",
+        "bytes": 9853
+      },
+      {
+        "path": "src/dashboards/GMDashboard.jsx",
+        "bytes": 77869
+      },
+      {
+        "path": "src/dashboards/GMEncounterRewardWorkspace.jsx",
+        "bytes": 10748
+      },
+      {
+        "path": "src/dashboards/GMFocusModes.jsx",
+        "bytes": 5403
+      },
+      {
+        "path": "src/dashboards/GMInventoryAuditWorkspace.jsx",
+        "bytes": 4925
+      },
+      {
+        "path": "src/dashboards/GMLayoutBackup.jsx",
+        "bytes": 4454
+      },
+      {
+        "path": "src/dashboards/GMLootTableWorkspace.jsx",
+        "bytes": 9965
+      },
+      {
+        "path": "src/dashboards/GMNpcCreatureLibrary.jsx",
+        "bytes": 15182
+      },
+      {
+        "path": "src/dashboards/GMNpcGenerator.jsx",
+        "bytes": 6927
+      },
+      {
+        "path": "src/dashboards/GMPartyControl.jsx",
+        "bytes": 3142
+      },
+      {
+        "path": "src/dashboards/GMRandomTableWorkspace.jsx",
+        "bytes": 13660
+      },
+      {
+        "path": "src/dashboards/GMRewardTools.jsx",
+        "bytes": 16596
+      },
+      {
+        "path": "src/dashboards/GMToolkitHub.jsx",
+        "bytes": 4406
+      },
+      {
+        "path": "src/dashboards/GMUnifiedSearch.jsx",
+        "bytes": 7514
+      },
+      {
+        "path": "src/dashboards/GMWorkspacePanels.jsx",
+        "bytes": 76023
+      },
+      {
+        "path": "src/dashboards/InventoryWorkspace.jsx",
+        "bytes": 60681
+      },
+      {
+        "path": "src/dashboards/ItemEnhancementWorkspace.jsx",
+        "bytes": 17371
+      },
+      {
+        "path": "src/dashboards/ItemLoreWorkspace.jsx",
+        "bytes": 6400
+      },
+      {
+        "path": "src/dashboards/PartyLootWorkspace.jsx",
+        "bytes": 35289
+      },
+      {
+        "path": "src/dashboards/PCInventory.jsx",
+        "bytes": 2284
+      },
+      {
+        "path": "src/dashboards/PlayerDashboardOverview.jsx",
+        "bytes": 33089
+      },
+      {
+        "path": "src/dashboards/PlayerInformation.jsx",
+        "bytes": 3537
+      },
+      {
+        "path": "src/dashboards/PlayerItemExchange.jsx",
+        "bytes": 27441
+      },
+      {
+        "path": "src/dashboards/PlayerPresentationWorkspace.jsx",
+        "bytes": 15679
+      },
+      {
+        "path": "src/dashboards/QuestAssignments.jsx",
+        "bytes": 2826
+      },
+      {
+        "path": "src/dashboards/SessionLibraryWorkspace.jsx",
+        "bytes": 10171
+      },
+      {
+        "path": "src/dashboards/SessionRecordingWorkspace.jsx",
+        "bytes": 22481
+      },
+      {
+        "path": "src/dashboards/ShopWorkspace.jsx",
+        "bytes": 20962
+      },
+      {
+        "path": "src/dashboards/TalentGraph.jsx",
+        "bytes": 10969
+      },
+      {
+        "path": "src/dashboards/UniversalCheckWorkspace.jsx",
+        "bytes": 14589
+      },
+      {
+        "path": "src/dashboards/WeatherEnvironmentWorkspace.jsx",
+        "bytes": 10728
+      },
+      {
+        "path": "src/dashboards/WorldAtlasWorkspace.jsx",
+        "bytes": 19582
+      },
+      {
+        "path": "src/data/magicElementSymbols.mjs",
+        "bytes": 699
+      },
+      {
+        "path": "src/dev-entry.js",
+        "bytes": 1605
+      },
+      {
+        "path": "src/devFixtures.js",
+        "bytes": 55319
+      },
+      {
+        "path": "src/firebase/asteriaFirebaseService.js",
+        "bytes": 21443
+      },
+      {
+        "path": "src/main.jsx",
+        "bytes": 4090
+      },
+      {
+        "path": "src/sessions/useCampaignLiveData.js",
+        "bytes": 11204
+      },
+      {
+        "path": "src/sessions/useCharacterSystemsSync.js",
+        "bytes": 1982
+      },
+      {
+        "path": "src/sessions/useOwnedCharacterData.js",
+        "bytes": 2051
+      },
+      {
+        "path": "src/state/accountEmailVerification.mjs",
+        "bytes": 1527
+      },
+      {
+        "path": "src/state/accountIdRegistration.mjs",
+        "bytes": 2251
+      },
+      {
+        "path": "src/state/accountProfileDisplay.mjs",
+        "bytes": 2011
+      },
+      {
+        "path": "src/state/accountProfileEdit.mjs",
+        "bytes": 2531
+      },
+      {
+        "path": "src/state/accountRegistrationRecovery.mjs",
+        "bytes": 4095
+      },
+      {
+        "path": "src/state/asteriaCalendarModel.mjs",
+        "bytes": 10322
+      },
+      {
+        "path": "src/state/battleMapCombatModel.mjs",
+        "bytes": 6570
+      },
+      {
+        "path": "src/state/battleMapFogModel.mjs",
+        "bytes": 5293
+      },
+      {
+        "path": "src/state/battleMapModel.mjs",
+        "bytes": 5728
+      },
+      {
+        "path": "src/state/campaignArtwork.mjs",
+        "bytes": 945
+      },
+      {
+        "path": "src/state/campaignAudioModel.mjs",
+        "bytes": 6651
+      },
+      {
+        "path": "src/state/campaignCharacterRecords.mjs",
+        "bytes": 1136
+      },
+      {
+        "path": "src/state/campaignInformation.mjs",
+        "bytes": 2110
+      },
+      {
+        "path": "src/state/characterClasses.mjs",
+        "bytes": 954
+      },
+      {
+        "path": "src/state/characterIntegrityModel.mjs",
+        "bytes": 4706
+      },
+      {
+        "path": "src/state/characterSystems.mjs",
+        "bytes": 1824
+      },
+      {
+        "path": "src/state/combatRules.mjs",
+        "bytes": 19511
+      },
+      {
+        "path": "src/state/conditionModel.mjs",
+        "bytes": 5400
+      },
+      {
+        "path": "src/state/craftingRecipeModel.mjs",
+        "bytes": 6392
+      },
+      {
+        "path": "src/state/craftingServicesModel.mjs",
+        "bytes": 6986
+      },
+      {
+        "path": "src/state/dashboardGridModel.mjs",
+        "bytes": 8324
+      },
+      {
+        "path": "src/state/dashboardLayoutModel.mjs",
+        "bytes": 26777
+      },
+      {
+        "path": "src/state/dashboardNavigation.mjs",
+        "bytes": 1465
+      },
+      {
+        "path": "src/state/diceRollModel.mjs",
+        "bytes": 5018
+      },
+      {
+        "path": "src/state/effectsEngine.mjs",
+        "bytes": 8325
+      },
+      {
+        "path": "src/state/encounterResourceModel.mjs",
+        "bytes": 5751
+      },
+      {
+        "path": "src/state/encounterRewardModel.mjs",
+        "bytes": 7977
+      },
+      {
+        "path": "src/state/gameplayIntegrationView.mjs",
+        "bytes": 2182
+      },
+      {
+        "path": "src/state/gmCharacterCardModel.mjs",
+        "bytes": 7536
+      },
+      {
+        "path": "src/state/gmFocusModel.mjs",
+        "bytes": 5111
+      },
+      {
+        "path": "src/state/gmInventoryAuditModel.mjs",
+        "bytes": 2833
+      },
+      {
+        "path": "src/state/gmLayoutBackupModel.mjs",
+        "bytes": 3315
+      },
+      {
+        "path": "src/state/gmNpcCreatureLibraryModel.mjs",
+        "bytes": 6556
+      },
+      {
+        "path": "src/state/gmNpcGeneratorModel.mjs",
+        "bytes": 7775
+      },
+      {
+        "path": "src/state/gmPartyControlModel.mjs",
+        "bytes": 1390
+      },
+      {
+        "path": "src/state/gmRewardBatchModel.mjs",
+        "bytes": 3421
+      },
+      {
+        "path": "src/state/gmRewardModel.mjs",
+        "bytes": 5602
+      },
+      {
+        "path": "src/state/gmToolkitModel.mjs",
+        "bytes": 8858
+      },
+      {
+        "path": "src/state/gmTradeLootHubModel.mjs",
+        "bytes": 1988
+      },
+      {
+        "path": "src/state/gmUnifiedSearchModel.mjs",
+        "bytes": 8640
+      },
+      {
+        "path": "src/state/gmWorkspaceModel.mjs",
+        "bytes": 6382
+      },
+      {
+        "path": "src/state/inventoryActionHubModel.mjs",
+        "bytes": 2360
+      },
+      {
+        "path": "src/state/inventoryActivityModel.mjs",
+        "bytes": 5715
+      },
+      {
+        "path": "src/state/inventoryJournalReceiptModel.mjs",
+        "bytes": 3260
+      },
+      {
+        "path": "src/state/inventoryPresentationModel.mjs",
+        "bytes": 2251
+      },
+      {
+        "path": "src/state/inventoryQuickActions.mjs",
+        "bytes": 4022
+      },
+      {
+        "path": "src/state/itemEnhancementModel.mjs",
+        "bytes": 8998
+      },
+      {
+        "path": "src/state/itemLoreModel.mjs",
+        "bytes": 2487
+      },
+      {
+        "path": "src/state/liveEventReducer.mjs",
+        "bytes": 3086
+      },
+      {
+        "path": "src/state/liveSyncState.mjs",
+        "bytes": 1690
+      },
+      {
+        "path": "src/state/liveWorkspaceModel.mjs",
+        "bytes": 19001
+      },
+      {
+        "path": "src/state/lootBatchModel.mjs",
+        "bytes": 1996
+      },
+      {
+        "path": "src/state/lootCollectionModel.mjs",
+        "bytes": 5561
+      },
+      {
+        "path": "src/state/lootTableDropModel.mjs",
+        "bytes": 1361
+      },
+      {
+        "path": "src/state/lootTableModel.mjs",
+        "bytes": 4714
+      },
+      {
+        "path": "src/state/manualNumber.mjs",
+        "bytes": 549
+      },
+      {
+        "path": "src/state/merchantDealModel.mjs",
+        "bytes": 2626
+      },
+      {
+        "path": "src/state/merchantInventoryModel.mjs",
+        "bytes": 3027
+      },
+      {
+        "path": "src/state/merchantRelationshipModel.mjs",
+        "bytes": 3325
+      },
+      {
+        "path": "src/state/merchantTemplateModel.mjs",
+        "bytes": 5618
+      },
+      {
+        "path": "src/state/merchantTravelModel.mjs",
+        "bytes": 6157
+      },
+      {
+        "path": "src/state/notificationModel.mjs",
+        "bytes": 1222
+      },
+      {
+        "path": "src/state/ownedCharacterRecords.mjs",
+        "bytes": 1080
+      },
+      {
+        "path": "src/state/partyLootDistributionModel.mjs",
+        "bytes": 4025
+      },
+      {
+        "path": "src/state/partyLootModel.mjs",
+        "bytes": 4782
+      },
+      {
+        "path": "src/state/partyLootViewModel.mjs",
+        "bytes": 3387
+      },
+      {
+        "path": "src/state/playerHudMedia.mjs",
+        "bytes": 914
+      },
+      {
+        "path": "src/state/playerPresentationModel.mjs",
+        "bytes": 5580
+      },
+      {
+        "path": "src/state/questRewardModel.mjs",
+        "bytes": 3215
+      },
+      {
+        "path": "src/state/questWorkflowModel.mjs",
+        "bytes": 5932
+      },
+      {
+        "path": "src/state/randomTableModel.mjs",
+        "bytes": 6562
+      },
+      {
+        "path": "src/state/resourceEngine.mjs",
+        "bytes": 10860
+      },
+      {
+        "path": "src/state/resourceValues.mjs",
+        "bytes": 1917
+      },
+      {
+        "path": "src/state/sessionLibraryModel.mjs",
+        "bytes": 4902
+      },
+      {
+        "path": "src/state/sessionRecordingModel.mjs",
+        "bytes": 7576
+      },
+      {
+        "path": "src/state/shopGeneratorIntegrationModel.mjs",
+        "bytes": 1594
+      },
+      {
+        "path": "src/state/shopGeneratorModel.mjs",
+        "bytes": 4396
+      },
+      {
+        "path": "src/state/shopTransactionModel.mjs",
+        "bytes": 2484
+      },
+      {
+        "path": "src/state/specialDamageModel.mjs",
+        "bytes": 2356
+      },
+      {
+        "path": "src/state/spellbookModel.mjs",
+        "bytes": 3210
+      },
+      {
+        "path": "src/state/talentDisk.mjs",
+        "bytes": 2186
+      },
+      {
+        "path": "src/state/talentGraph.mjs",
+        "bytes": 5608
+      },
+      {
+        "path": "src/state/talentMechanics.mjs",
+        "bytes": 11402
+      },
+      {
+        "path": "src/state/talentModel.mjs",
+        "bytes": 10248
+      },
+      {
+        "path": "src/state/tradeExperienceModel.mjs",
+        "bytes": 2998
+      },
+      {
+        "path": "src/state/universalCheckModel.mjs",
+        "bytes": 9218
+      },
+      {
+        "path": "src/state/weatherEnvironmentModel.mjs",
+        "bytes": 11941
+      },
+      {
+        "path": "src/state/worldAtlasModel.mjs",
+        "bytes": 8136
+      },
+      {
+        "path": "src/styles/advanced-dice.css",
+        "bytes": 4574
+      },
+      {
+        "path": "src/styles/asteria-calendar.css",
+        "bytes": 1876
+      },
+      {
+        "path": "src/styles/asteria-react.css",
+        "bytes": 198986
+      },
+      {
+        "path": "src/styles/battle-maps.css",
+        "bytes": 4265
+      },
+      {
+        "path": "src/styles/campaign-audio.css",
+        "bytes": 1627
+      },
+      {
+        "path": "src/styles/combat.css",
+        "bytes": 11155
+      },
+      {
+        "path": "src/styles/encounter-rewards.css",
+        "bytes": 1465
+      },
+      {
+        "path": "src/styles/gm-character-cards.css",
+        "bytes": 8758
+      },
+      {
+        "path": "src/styles/gm-focus.css",
+        "bytes": 3029
+      },
+      {
+        "path": "src/styles/gm-npc-generator.css",
+        "bytes": 2869
+      },
+      {
+        "path": "src/styles/gm-npc-library.css",
+        "bytes": 5490
+      },
+      {
+        "path": "src/styles/gm-phase2-3.css",
+        "bytes": 3942
+      },
+      {
+        "path": "src/styles/gm-toolkit.css",
+        "bytes": 5523
+      },
+      {
+        "path": "src/styles/gm-unified-search.css",
+        "bytes": 3386
+      },
+      {
+        "path": "src/styles/player-presentation.css",
+        "bytes": 7779
+      },
+      {
+        "path": "src/styles/random-tables.css",
+        "bytes": 2335
+      },
+      {
+        "path": "src/styles/session-library.css",
+        "bytes": 1426
+      },
+      {
+        "path": "src/styles/session-recording.css",
+        "bytes": 1790
+      },
+      {
+        "path": "src/styles/talent-disk.css",
+        "bytes": 14039
+      },
+      {
+        "path": "src/styles/weather-environment.css",
+        "bytes": 1582
+      },
+      {
+        "path": "src/styles/world-atlas.css",
+        "bytes": 2500
+      },
+      {
+        "path": "src/systems/armour/armourConfig.mjs",
+        "bytes": 5177
+      },
+      {
+        "path": "src/systems/armour/armourSystem.mjs",
+        "bytes": 18833
+      },
+      {
+        "path": "src/systems/armour/naturalAC.mjs",
+        "bytes": 3120
+      },
+      {
+        "path": "src/systems/armour/useArmourClass.js",
+        "bytes": 216
+      },
+      {
+        "path": "src/systems/currency/currencyConfig.mjs",
+        "bytes": 1978
+      },
+      {
+        "path": "src/systems/items/marketPricing.mjs",
+        "bytes": 756
+      },
+      {
+        "path": "src/types/asteriaContracts.mjs",
+        "bytes": 1783
+      }
+    ],
+    "data": [
+      {
+        "path": "data/admin-content-schema.json",
+        "bytes": 222
+      },
+      {
+        "path": "data/armour-migration-report.json",
+        "bytes": 3462
+      },
+      {
+        "path": "data/campaigns.json",
+        "bytes": 196
+      },
+      {
+        "path": "data/compendium-handbook.js",
+        "bytes": 37048
+      },
+      {
+        "path": "data/compendium-index.js",
+        "bytes": 1895741
+      },
+      {
+        "path": "data/compendium-parts/class-1184bd64df7d0d23.json",
+        "bytes": 74135
+      },
+      {
+        "path": "data/compendium-parts/creature-9449fc9d98a097d8.json",
+        "bytes": 38777
+      },
+      {
+        "path": "data/compendium-parts/faction-acf842a1c584d7f3.json",
+        "bytes": 2184
+      },
+      {
+        "path": "data/compendium-parts/handbook-83f5dd82fe5f80e8.json",
+        "bytes": 23478
+      },
+      {
+        "path": "data/compendium-parts/item-44ceb1c8391d6d73.json",
+        "bytes": 237996
+      },
+      {
+        "path": "data/compendium-parts/item-fcc631a4a2a78240.json",
+        "bytes": 304084
+      },
+      {
+        "path": "data/compendium-parts/location-0a702d1b41ca4f44.json",
+        "bytes": 5393
+      },
+      {
+        "path": "data/compendium-parts/lore-13e9faf1c0c0d6b2.json",
+        "bytes": 2183
+      },
+      {
+        "path": "data/compendium-parts/origin-06d2ec9d717ea083.json",
+        "bytes": 6391
+      },
+      {
+        "path": "data/compendium-parts/profession-2f615406459562ef.json",
+        "bytes": 2079
+      },
+      {
+        "path": "data/compendium-parts/race-1c9ac5eda2c68309.json",
+        "bytes": 185255
+      },
+      {
+        "path": "data/compendium-parts/race-74933e10c4b6fd76.json",
+        "bytes": 152110
+      },
+      {
+        "path": "data/compendium-parts/race-7f31c99b947c1e79.json",
+        "bytes": 126328
+      },
+      {
+        "path": "data/compendium-parts/race-8b79dabeac9bca78.json",
+        "bytes": 167607
+      },
+      {
+        "path": "data/compendium-parts/race-a73a7e2d77fb8b60.json",
+        "bytes": 136876
+      },
+      {
+        "path": "data/compendium-parts/race-e8e6bda1d8ec5644.json",
+        "bytes": 40772
+      },
+      {
+        "path": "data/compendium-parts/religion-311c0e35d4a06bc1.json",
+        "bytes": 295638
+      },
+      {
+        "path": "data/compendium-parts/religion-c48d414e746b4f8b.json",
+        "bytes": 43237
+      },
+      {
+        "path": "data/compendium-parts/skill-0d20ca27fc2605b8.json",
+        "bytes": 271151
+      },
+      {
+        "path": "data/compendium-parts/skill-23dedc6726be9cfc.json",
+        "bytes": 282490
+      },
+      {
+        "path": "data/compendium-parts/skill-ee6c3cbea9d896d3.json",
+        "bytes": 134688
+      },
+      {
+        "path": "data/compendium-parts/spell-30e9e991bacab838.json",
+        "bytes": 10320
+      },
+      {
+        "path": "data/compendium-parts/talent-068adb1303e9f0c0.json",
+        "bytes": 133434
+      },
+      {
+        "path": "data/compendium-parts/talent-230ca352b9178767.json",
+        "bytes": 100898
+      },
+      {
+        "path": "data/compendium-parts/talent-2416f17eb396883c.json",
+        "bytes": 102674
+      },
+      {
+        "path": "data/compendium-parts/talent-4d538e208a243fa0.json",
+        "bytes": 118582
+      },
+      {
+        "path": "data/compendium-parts/talent-4f5e44582a5778c5.json",
+        "bytes": 102112
+      },
+      {
+        "path": "data/compendium-parts/talent-57af64cc7fa2a26c.json",
+        "bytes": 103481
+      },
+      {
+        "path": "data/compendium-parts/talent-5878d06f79953724.json",
+        "bytes": 126108
+      },
+      {
+        "path": "data/compendium-parts/talent-684f59e44dee7b7c.json",
+        "bytes": 98533
+      },
+      {
+        "path": "data/compendium-parts/talent-68bd359f616ed6fd.json",
+        "bytes": 116326
+      },
+      {
+        "path": "data/compendium-parts/talent-6a30384361e4cb09.json",
+        "bytes": 104905
+      },
+      {
+        "path": "data/compendium-parts/talent-8dc24b9f137de6a2.json",
+        "bytes": 105803
+      },
+      {
+        "path": "data/compendium-parts/talent-8e3460f0e9784300.json",
+        "bytes": 107215
+      },
+      {
+        "path": "data/compendium-parts/talent-a667703d3f6215b8.json",
+        "bytes": 166287
+      },
+      {
+        "path": "data/compendium-parts/talent-bcf8fa2f12eb3c75.json",
+        "bytes": 119519
+      },
+      {
+        "path": "data/compendium-parts/talent-c37850bb683fa999.json",
+        "bytes": 96595
+      },
+      {
+        "path": "data/compendium-parts/talent-cd6e57e5b5df56ae.json",
+        "bytes": 146141
+      },
+      {
+        "path": "data/compendium-parts/talent-d7238774e8df4641.json",
+        "bytes": 109043
+      },
+      {
+        "path": "data/compendium-parts/talent-e97ae3286896999a.json",
+        "bytes": 102534
+      },
+      {
+        "path": "data/compendium-parts/talent-f98657ddcb9b40b5.json",
+        "bytes": 91727
+      },
+      {
+        "path": "data/compendium.js",
+        "bytes": 5147855
+      },
+      {
+        "path": "data/creatures.json",
+        "bytes": 386
+      },
+      {
+        "path": "data/market-pricing-migration-report.json",
+        "bytes": 28415
+      },
+      {
+        "path": "data/players.json",
+        "bytes": 458
+      },
+      {
+        "path": "data/racial-natural-ac-report.json",
+        "bytes": 13912
+      },
+      {
+        "path": "data/racial-natural-ac-sources.json",
+        "bytes": 895
+      },
+      {
+        "path": "data/rules.json",
+        "bytes": 86613
+      },
+      {
+        "path": "data/weapon-crafting.json",
+        "bytes": 12215
+      }
+    ],
+    "publicAssets": [
+      {
+        "path": "assets/currency/crown-gold.png",
+        "bytes": 691562
+      },
+      {
+        "path": "assets/currency/mark-silver.png",
+        "bytes": 549829
+      },
+      {
+        "path": "assets/currency/penny-copper.png",
+        "bytes": 575052
+      },
+      {
+        "path": "assets/currency/platinum-crown.png",
+        "bytes": 586239
+      },
+      {
+        "path": "assets/currency/royal-crown.png",
+        "bytes": 673829
+      },
+      {
+        "path": "assets/currency/royal-platinum.png",
+        "bytes": 661448
+      },
+      {
+        "path": "assets/dice-towers/ancient-tree-tower.png",
+        "bytes": 48248
+      },
+      {
+        "path": "assets/dice-towers/dragon-wrapped-tower.png",
+        "bytes": 59454
+      },
+      {
+        "path": "assets/dice-towers/mimic-dice-tower.png",
+        "bytes": 52402
+      },
+      {
+        "path": "assets/dice-towers/ruined-stone-tower.png",
+        "bytes": 50151
+      },
+      {
+        "path": "assets/header/asteria-energy-header.webp",
+        "bytes": 189770
+      },
+      {
+        "path": "assets/header/asteria-header-compact.webp",
+        "bytes": 30924
+      },
+      {
+        "path": "assets/header/asteria-header-desktop.webp",
+        "bytes": 53580
+      },
+      {
+        "path": "assets/header/asteria-header-v2.webp",
+        "bytes": 72852
+      },
+      {
+        "path": "assets/header/asteria-wordmark.png",
+        "bytes": 1475886
+      },
+      {
+        "path": "assets/home/asteria-home-dragon.webp",
+        "bytes": 241008
+      },
+      {
+        "path": "assets/home/asteria-home-logo.webp",
+        "bytes": 214948
+      },
+      {
+        "path": "assets/home/asteria-home-spider.webp",
+        "bytes": 299234
+      },
+      {
+        "path": "assets/home/asteria-home-varkhyn.webp",
+        "bytes": 350204
+      },
+      {
+        "path": "assets/home/varkhyn-snowstorm.avif",
+        "bytes": 27194
+      },
+      {
+        "path": "assets/magic-elements/air-spells.png",
+        "bytes": 1407976
+      },
+      {
+        "path": "assets/magic-elements/blood-spells.png",
+        "bytes": 1547154
+      },
+      {
+        "path": "assets/magic-elements/celestial-spells.png",
+        "bytes": 1489901
+      },
+      {
+        "path": "assets/magic-elements/chaos-spells.png",
+        "bytes": 1912156
+      },
+      {
+        "path": "assets/magic-elements/dark-spells.png",
+        "bytes": 1557165
+      },
+      {
+        "path": "assets/magic-elements/death-spells.png",
+        "bytes": 1341927
+      },
+      {
+        "path": "assets/magic-elements/earth-spells.png",
+        "bytes": 2295437
+      },
+      {
+        "path": "assets/magic-elements/eldritch-spells.png",
+        "bytes": 1765989
+      },
+      {
+        "path": "assets/magic-elements/fae-spells.png",
+        "bytes": 2117233
+      },
+      {
+        "path": "assets/magic-elements/fate-spells.png",
+        "bytes": 1987828
+      },
+      {
+        "path": "assets/magic-elements/fire-spells.png",
+        "bytes": 1361328
+      },
+      {
+        "path": "assets/magic-elements/infernal-spells.png",
+        "bytes": 1617736
+      },
+      {
+        "path": "assets/magic-elements/life-spells.png",
+        "bytes": 1277373
+      },
+      {
+        "path": "assets/magic-elements/light-spells.png",
+        "bytes": 1301142
+      },
+      {
+        "path": "assets/magic-elements/space-spells.png",
+        "bytes": 1991326
+      },
+      {
+        "path": "assets/magic-elements/spirit-spells.png",
+        "bytes": 1756905
+      },
+      {
+        "path": "assets/magic-elements/time-spells.png",
+        "bytes": 2012540
+      },
+      {
+        "path": "assets/magic-elements/water-spells.png",
+        "bytes": 1430255
+      },
+      {
+        "path": "assets/menus/forge-campaign-map-book.avif",
+        "bytes": 4831
+      },
+      {
+        "path": "assets/races/abyssborn-undien/abyssborn-undien-female-adult.png",
+        "bytes": 1706132
+      },
+      {
+        "path": "assets/races/abyssborn-undien/abyssborn-undien-male-adult.png",
+        "bytes": 1738328
+      },
+      {
+        "path": "assets/races/air-pixie/air-pixie-female-adult.png",
+        "bytes": 1881371
+      },
+      {
+        "path": "assets/races/air-pixie/air-pixie-male-adult.png",
+        "bytes": 1825088
+      },
+      {
+        "path": "assets/races/cavern-sprite/cavern-sprite-female-adult.png",
+        "bytes": 1812901
+      },
+      {
+        "path": "assets/races/cavern-sprite/cavern-sprite-male-adult.png",
+        "bytes": 1828699
+      },
+      {
+        "path": "assets/races/dark-pixie/dark-pixie-female-adult.png",
+        "bytes": 2065623
+      },
+      {
+        "path": "assets/races/dark-pixie/dark-pixie-male-adult.png",
+        "bytes": 2077574
+      },
+      {
+        "path": "assets/races/death-pixie/death-pixie-female-adult.png",
+        "bytes": 2152955
+      },
+      {
+        "path": "assets/races/death-pixie/death-pixie-male-adult.png",
+        "bytes": 1885941
+      },
+      {
+        "path": "assets/races/drownedborn-undien/drownedborn-undien-female-adult.png",
+        "bytes": 1898132
+      },
+      {
+        "path": "assets/races/drownedborn-undien/drownedborn-undien-male-adult.png",
+        "bytes": 1865991
+      },
+      {
+        "path": "assets/races/earth-pixie/earth-pixie-female-adult.png",
+        "bytes": 2003640
+      },
+      {
+        "path": "assets/races/earth-pixie/earth-pixie-male-adult.png",
+        "bytes": 1977713
+      },
+      {
+        "path": "assets/races/fire-pixie/fire-pixie-female-adult.png",
+        "bytes": 2010591
+      },
+      {
+        "path": "assets/races/fire-pixie/fire-pixie-male-adult.png",
+        "bytes": 2040590
+      },
+      {
+        "path": "assets/races/flowborn-undien/flowborn-undien-female-adult.png",
+        "bytes": 1962053
+      },
+      {
+        "path": "assets/races/flowborn-undien/flowborn-undien-male-adult.png",
+        "bytes": 1939818
+      },
+      {
+        "path": "assets/races/frostborn-undien/frostborn-undien-female-adult.png",
+        "bytes": 2013665
+      },
+      {
+        "path": "assets/races/frostborn-undien/frostborn-undien-male-adult.png",
+        "bytes": 1612288
+      },
+      {
+        "path": "assets/races/life-pixie/life-pixie-female-adult.png",
+        "bytes": 1917137
+      },
+      {
+        "path": "assets/races/life-pixie/life-pixie-male-adult.png",
+        "bytes": 1949148
+      },
+      {
+        "path": "assets/races/light-pixie/light-pixie-female-adult.png",
+        "bytes": 2026414
+      },
+      {
+        "path": "assets/races/light-pixie/light-pixie-male-adult.png",
+        "bytes": 1975812
+      },
+      {
+        "path": "assets/races/polaris-ursa/polaris-ursa-female-adult.png",
+        "bytes": 1931706
+      },
+      {
+        "path": "assets/races/polaris-ursa/polaris-ursa-male-adult.png",
+        "bytes": 2049825
+      },
+      {
+        "path": "assets/races/tempestborn-undien/tempestborn-undien-female-adult.png",
+        "bytes": 1945574
+      },
+      {
+        "path": "assets/races/tempestborn-undien/tempestborn-undien-male-adult.png",
+        "bytes": 1859132
+      },
+      {
+        "path": "assets/races/tideborn-undien/tideborn-undien-female-adult.png",
+        "bytes": 1724139
+      },
+      {
+        "path": "assets/races/tideborn-undien/tideborn-undien-male-adult.png",
+        "bytes": 1874102
+      },
+      {
+        "path": "assets/races/water-pixie/water-pixie-female-adult.png",
+        "bytes": 2124208
+      },
+      {
+        "path": "assets/races/water-pixie/water-pixie-male-adult.png",
+        "bytes": 2059454
+      },
+      {
+        "path": "assets/themes/asteria-energy-swirl-mask.svg",
+        "bytes": 2904
+      },
+      {
+        "path": "assets/themes/asteria-iron-d20-background.png",
+        "bytes": 458388
+      },
+      {
+        "path": "assets/themes/asteria-smoke-9933-light-mask-mobile.webp",
+        "bytes": 157918
+      },
+      {
+        "path": "assets/themes/asteria-smoke-9933-light-mask.webp",
+        "bytes": 391408
+      },
+      {
+        "path": "assets/themes/asteria-smoke-9933-mobile.webp",
+        "bytes": 124346
+      },
+      {
+        "path": "assets/themes/asteria-smoke-9933.webp",
+        "bytes": 247424
+      },
+      {
+        "path": "assets/themes/asteria-smoke-neutral-background.svg",
+        "bytes": 5277
+      },
+      {
+        "path": "assets/themes/asteria-smoke-swirl-background.svg",
+        "bytes": 5287
+      },
+      {
+        "path": "assets/themes/asteria-spell-d20-overlay.svg",
+        "bytes": 1490
+      },
+      {
+        "path": "assets/ui/asteria-level-shield.webp",
+        "bytes": 4694
+      },
+      {
+        "path": "assets/ui/asteria-royal-crystal-sidewall.svg",
+        "bytes": 1668
+      },
+      {
+        "path": "assets/ui/buttons/approved-original-button-frame.png",
+        "bytes": 565214
+      },
+      {
+        "path": "assets/ui/buttons/approved-original-crystal-centre.png",
+        "bytes": 791138
+      },
+      {
+        "path": "assets/ui/buttons/button-icon-crystal.webp",
+        "bytes": 12122
+      },
+      {
+        "path": "assets/ui/buttons/button-icon-frame.webp",
+        "bytes": 15598
+      },
+      {
+        "path": "assets/ui/buttons/button-long-crystal.webp",
+        "bytes": 58742
+      },
+      {
+        "path": "assets/ui/buttons/button-long-frame.webp",
+        "bytes": 52860
+      },
+      {
+        "path": "assets/ui/buttons/button-small-crystal.webp",
+        "bytes": 24494
+      },
+      {
+        "path": "assets/ui/buttons/button-small-frame.webp",
+        "bytes": 23882
+      },
+      {
+        "path": "assets/ui/buttons/button-standard-crystal.webp",
+        "bytes": 36736
+      },
+      {
+        "path": "assets/ui/buttons/button-standard-frame.webp",
+        "bytes": 33952
+      },
+      {
+        "path": "assets/ui/buttons/README.md",
+        "bytes": 1292
+      },
+      {
+        "path": "assets/ui/crystal-facets.svg",
+        "bytes": 1548
+      },
+      {
+        "path": "assets/ui/dashboard/10004.png",
+        "bytes": 96626
+      },
+      {
+        "path": "assets/ui/dashboard/10006.png",
+        "bytes": 525929
+      },
+      {
+        "path": "assets/ui/dashboard/panel-backdrop-arcane.webp",
+        "bytes": 104048
+      },
+      {
+        "path": "assets/ui/dashboard/panel-backdrop-obsidian.webp",
+        "bytes": 155616
+      },
+      {
+        "path": "assets/ui/dashboard/panel-backdrop-slate.webp",
+        "bytes": 314044
+      },
+      {
+        "path": "assets/ui/dashboard/panel-frame-3x3.webp",
+        "bytes": 107512
+      },
+      {
+        "path": "assets/ui/dashboard/panel-frame-3x6.webp",
+        "bytes": 102400
+      },
+      {
+        "path": "assets/ui/dashboard/panel-frame-6x3.webp",
+        "bytes": 121222
+      },
+      {
+        "path": "assets/ui/dashboard/panel-frame-9x3.webp",
+        "bytes": 117144
+      },
+      {
+        "path": "assets/ui/dashboard/README.md",
+        "bytes": 1592
+      },
+      {
+        "path": "assets/ui/royal-relic-brushed-steel.svg",
+        "bytes": 1016
+      },
+      {
+        "path": "assets/ui/royal-relic-obsidian.svg",
+        "bytes": 1805
+      },
+      {
+        "path": "assets/ui/steel-sidewall.svg",
+        "bytes": 757
+      }
+    ]
+  },
+  "generated": {
+    "reactDist": {
+      "fileCount": 423,
+      "totalBytes": 72967956,
+      "tracked": true
+    }
+  },
+  "backend": {
+    "firebaseConfig": "firebase.json",
+    "functionsFileCount": 62
+  },
+  "validation": {
+    "tests": [
+      "scripts/aaa-mega-menu-regression.test.mjs",
+      "scripts/aaa-menu-home-refresh.test.mjs",
+      "scripts/account-email-verification.test.mjs",
+      "scripts/account-id-automatic-registration.test.mjs",
+      "scripts/account-id-canary-operator.test.mjs",
+      "scripts/account-id-complete-release.test.mjs",
+      "scripts/account-id-coordinated-release.test.mjs",
+      "scripts/account-id-legacy-operator.test.mjs",
+      "scripts/account-id-phase1-2.test.mjs",
+      "scripts/account-id-phase1-3-emulator.test.mjs",
+      "scripts/account-id-phase1-3.test.mjs",
+      "scripts/account-id-phase2-1.test.mjs",
+      "scripts/account-id-phase2-2-emulator.test.mjs",
+      "scripts/account-id-phase2-2.test.mjs",
+      "scripts/account-id-phase2-3.test.mjs",
+      "scripts/account-id-phase4-1-emulator.test.mjs",
+      "scripts/account-id-phase4-1-release.test.mjs",
+      "scripts/account-id-production-finalization.test.mjs",
+      "scripts/account-id-production-readiness.test.mjs",
+      "scripts/account-id-release-cli-verify.test.mjs",
+      "scripts/account-id-release-package.test.mjs",
+      "scripts/account-id-security-guard-emulator.test.mjs",
+      "scripts/account-id-security-guard.test.mjs",
+      "scripts/account-menu-phase3-1.test.mjs",
+      "scripts/account-menu-phase3-3.test.mjs",
+      "scripts/account-pages-release.test.mjs",
+      "scripts/account-profile-phase3-2.test.mjs",
+      "scripts/account-standalone-pages.test.mjs",
+      "scripts/account-username-release-package.test.mjs",
+      "scripts/account-username-rename.test.mjs",
+      "scripts/approved-vault-bridge.test.mjs",
+      "scripts/asteria-release-source.test.mjs",
+      "scripts/button-size-families.test.mjs",
+      "scripts/button-slice.test.mjs",
+      "scripts/campaign-access-phase2-3.test.mjs",
+      "scripts/campaign-artwork.test.mjs",
+      "scripts/campaign-backend-scoped-release.test.mjs",
+      "scripts/campaign-channels-scoped-release.test.mjs",
+      "scripts/campaign-character-approval-phase5-2.test.mjs",
+      "scripts/campaign-character-lifecycle-phase5-3.test.mjs",
+      "scripts/campaign-character-links-phase5-1.test.mjs",
+      "scripts/campaign-connection-phase1-3.test.mjs",
+      "scripts/campaign-connection-phase8-1.test.mjs",
+      "scripts/campaign-coordinated-readiness.test.mjs",
+      "scripts/campaign-email-infrastructure-phase7-1.test.mjs",
+      "scripts/campaign-email-invitations-phase7-2.test.mjs",
+      "scripts/campaign-inapp-coordinated-release.test.mjs",
+      "scripts/campaign-inapp-live-canary-release.test.mjs",
+      "scripts/campaign-invitation-acceptance-phase6-3.test.mjs",
+      "scripts/campaign-invitation-manager-phase6-2.test.mjs",
+      "scripts/campaign-join-phase3-1.test.mjs",
+      "scripts/campaign-join-phase3-2.test.mjs",
+      "scripts/campaign-join-phase3-3.test.mjs",
+      "scripts/campaign-member-controls-phase4-2.test.mjs",
+      "scripts/campaign-membership.test.mjs",
+      "scripts/campaign-migration-phase8-2-emulator.test.mjs",
+      "scripts/campaign-migration-phase8-2.test.mjs",
+      "scripts/campaign-notification-only.test.mjs",
+      "scripts/campaign-notifications-phase7-3.test.mjs",
+      "scripts/campaign-phase8-3-emulator.test.mjs",
+      "scripts/campaign-phase8-3-release.test.mjs",
+      "scripts/campaign-role-permissions-phase4-3.test.mjs",
+      "scripts/campaign-roster-phase4-1.test.mjs",
+      "scripts/campaign-secure-invitations-phase6-1.test.mjs",
+      "scripts/campaign-ucn.test.mjs",
+      "scripts/character-dashboard-access.test.mjs",
+      "scripts/character-forge-home-restoration.test.mjs",
+      "scripts/character-ownership.test.mjs",
+      "scripts/class-talents.test.mjs",
+      "scripts/combat-panel.test.mjs",
+      "scripts/compendium-loading.test.mjs",
+      "scripts/compendium.test.mjs",
+      "scripts/core-systems.test.mjs",
+      "scripts/dashboard-editor-usability.test.mjs",
+      "scripts/dashboard-frame-stacking.test.mjs",
+      "scripts/dashboard-gameplay.test.mjs",
+      "scripts/dashboard-grid.test.mjs",
+      "scripts/dashboard-layout.test.mjs",
+      "scripts/dashboard-navigation.test.mjs",
+      "scripts/dashboard-panel-interactions.test.mjs",
+      "scripts/dashboard-performance.test.mjs",
+      "scripts/dashboard-responsive-content.test.mjs",
+      "scripts/dashboard-responsive-editor.test.mjs",
+      "scripts/dashboard-spacing-responsive.test.mjs",
+      "scripts/data-sync-regression.test.mjs",
+      "scripts/digital-gm-phase-1-3.test.mjs",
+      "scripts/digital-gm-phase10-1-emulator.test.mjs",
+      "scripts/digital-gm-phase10-1.test.mjs",
+      "scripts/digital-gm-phase10-2.test.mjs",
+      "scripts/digital-gm-phase10-3.test.mjs",
+      "scripts/digital-gm-phase5-1.test.mjs",
+      "scripts/digital-gm-phase5-2.test.mjs",
+      "scripts/digital-gm-phase5-3.test.mjs",
+      "scripts/digital-gm-phase6-1-emulator.test.mjs",
+      "scripts/digital-gm-phase6-1.test.mjs",
+      "scripts/digital-gm-phase6-2-emulator.test.mjs",
+      "scripts/digital-gm-phase6-2.test.mjs",
+      "scripts/digital-gm-phase6-3-emulator.test.mjs",
+      "scripts/digital-gm-phase6-3.test.mjs",
+      "scripts/digital-gm-phase7-1-emulator.test.mjs",
+      "scripts/digital-gm-phase7-1.test.mjs",
+      "scripts/digital-gm-phase7-2-emulator.test.mjs",
+      "scripts/digital-gm-phase7-2.test.mjs",
+      "scripts/digital-gm-phase7-3-emulator.test.mjs",
+      "scripts/digital-gm-phase7-3.test.mjs",
+      "scripts/digital-gm-phase8-1-emulator.test.mjs",
+      "scripts/digital-gm-phase8-1.test.mjs",
+      "scripts/digital-gm-phase8-2-emulator.test.mjs",
+      "scripts/digital-gm-phase8-2.test.mjs",
+      "scripts/digital-gm-phase8-3-emulator.test.mjs",
+      "scripts/digital-gm-phase8-3.test.mjs",
+      "scripts/digital-gm-phase9-1-emulator.test.mjs",
+      "scripts/digital-gm-phase9-1.test.mjs",
+      "scripts/digital-gm-phase9-2-emulator.test.mjs",
+      "scripts/digital-gm-phase9-2.test.mjs",
+      "scripts/digital-gm-phase9-3-emulator.test.mjs",
+      "scripts/digital-gm-phase9-3.test.mjs",
+      "scripts/firebase-campaign-deploy-scope.test.mjs",
+      "scripts/firebase-deployment-auth-check.test.mjs",
+      "scripts/firebase-integration.test.mjs",
+      "scripts/firebase-production-backup-audit.test.mjs",
+      "scripts/firebase-recovery-preflight.test.mjs",
+      "scripts/firebase-recovery-sandbox-plan.test.mjs",
+      "scripts/firestore-index-deploy.test.mjs",
+      "scripts/friends-live-activation.test.mjs",
+      "scripts/friends-notifications-activation.test.mjs",
+      "scripts/friends-notifications-scoped-deploy.test.mjs",
+      "scripts/friends-notifications-website-activation.test.mjs",
+      "scripts/friends-phase1-2-emulator.test.mjs",
+      "scripts/friends-phase1-2-lookup.test.mjs",
+      "scripts/friends-phase1-2-release-package.test.mjs",
+      "scripts/friends-phase1-3-ui.test.mjs",
+      "scripts/friends-phase2-1-emulator.test.mjs",
+      "scripts/friends-phase2-1-model.test.mjs",
+      "scripts/friends-phase2-2-actions.test.mjs",
+      "scripts/friends-phase2-2-emulator.test.mjs",
+      "scripts/friends-phase2-2-release-package.test.mjs",
+      "scripts/friends-phase2-3-emulator.test.mjs",
+      "scripts/friends-phase2-3-ui.test.mjs",
+      "scripts/friends-phase3-1-emulator.test.mjs",
+      "scripts/friends-phase3-1-ui.test.mjs",
+      "scripts/friends-phase3-2-emulator.test.mjs",
+      "scripts/friends-phase3-2-ui.test.mjs",
+      "scripts/friends-phase3-3-ui.test.mjs",
+      "scripts/friends-phase4-1-emulator.test.mjs",
+      "scripts/friends-phase4-1-events.test.mjs",
+      "scripts/friends-phase4-2-ui.test.mjs",
+      "scripts/friends-phase4-3-reliability.test.mjs",
+      "scripts/friends-phase4-3-ui.test.mjs",
+      "scripts/friends-phase5-1-emulator.test.mjs",
+      "scripts/friends-phase5-1.test.mjs",
+      "scripts/friends-phase5-2.test.mjs",
+      "scripts/friends-phase5-3-release.test.mjs",
+      "scripts/gm-focus-phase2-2.test.mjs",
+      "scripts/gm-phase2-3.test.mjs",
+      "scripts/gm-phase3-1.test.mjs",
+      "scripts/gm-phase3-2.test.mjs",
+      "scripts/gm-phase3-3.test.mjs",
+      "scripts/gm-toolkit-phase2-1.test.mjs",
+      "scripts/header-account-experience.test.mjs",
+      "scripts/header-home-snowstorm.test.mjs",
+      "scripts/home-startup.test.mjs",
+      "scripts/inventory-phase-1-1.test.mjs",
+      "scripts/inventory-phase-10-1.test.mjs",
+      "scripts/inventory-phase-10-2.test.mjs",
+      "scripts/inventory-phase-10-3.test.mjs",
+      "scripts/inventory-phase-11-1.test.mjs",
+      "scripts/inventory-phase-11-2.test.mjs",
+      "scripts/inventory-phase-11-3.test.mjs",
+      "scripts/inventory-phase-12-1-emulator.test.mjs",
+      "scripts/inventory-phase-12-2.test.mjs",
+      "scripts/inventory-phase-12-3.test.mjs",
+      "scripts/inventory-phase-3-1.test.mjs",
+      "scripts/inventory-phase-3-2.test.mjs",
+      "scripts/inventory-phase-3-3.test.mjs",
+      "scripts/inventory-phase-4-1.test.mjs",
+      "scripts/inventory-phase-4-2.test.mjs",
+      "scripts/inventory-phase-4-3.test.mjs",
+      "scripts/inventory-phase-5-1.test.mjs",
+      "scripts/inventory-phase-5-2.test.mjs",
+      "scripts/inventory-phase-5-3.test.mjs",
+      "scripts/inventory-phase-6-1.test.mjs",
+      "scripts/inventory-phase-6-2.test.mjs",
+      "scripts/inventory-phase-6-3.test.mjs",
+      "scripts/inventory-phase-7-1.test.mjs",
+      "scripts/inventory-phase-7-2.test.mjs",
+      "scripts/inventory-phase-7-3.test.mjs",
+      "scripts/inventory-phase-8-1.test.mjs",
+      "scripts/inventory-phase-8-2.test.mjs",
+      "scripts/inventory-phase-8-3.test.mjs",
+      "scripts/inventory-phase-9-1.test.mjs",
+      "scripts/inventory-phase-9-2.test.mjs",
+      "scripts/inventory-phase-9-3.test.mjs",
+      "scripts/loading-speed.test.mjs",
+      "scripts/manual-number-inputs.test.mjs",
+      "scripts/menu-press.test.mjs",
+      "scripts/mobile-header-first-paint.test.mjs",
+      "scripts/navigation-library.test.mjs",
+      "scripts/new-character-flow.test.mjs",
+      "scripts/phase4-website-polish.test.mjs",
+      "scripts/phase5-performance.test.mjs",
+      "scripts/phase5-typography-refinements.test.mjs",
+      "scripts/phase5-website-audit.test.mjs",
+      "scripts/phase6-appearance-sync.test.mjs",
+      "scripts/phase6-gameplay-integration.test.mjs",
+      "scripts/phase6-live-usability.test.mjs",
+      "scripts/phase6-optional-panels.test.mjs",
+      "scripts/phase7-mobile-acceptance.test.mjs",
+      "scripts/phase7-tablet-desktop.test.mjs",
+      "scripts/phase7-update3.test.mjs",
+      "scripts/phase7-update4.test.mjs",
+      "scripts/player-hud-artwork.test.mjs",
+      "scripts/quest-workflow.test.mjs",
+      "scripts/racial-natural-ac.test.mjs",
+      "scripts/royal-crystal-theme.test.mjs",
+      "scripts/royal-relic-materials.test.mjs",
+      "scripts/talent-graph.test.mjs",
+      "scripts/theme-materials.test.mjs",
+      "scripts/ui-foundations.test.mjs",
+      "scripts/universal-check-model.test.mjs",
+      "scripts/universal-check-permissions-emulator.test.mjs",
+      "scripts/universal-check-phase1.test.mjs",
+      "scripts/universal-check-phase2.test.mjs",
+      "scripts/universal-page-template-phase1.test.mjs"
+    ],
+    "browserScripts": [
+      "scripts/phase7-tablet-desktop-browser.cjs",
+      "scripts/test-mobile-navigation-browser.cjs",
+      "scripts/test-startup-browser.cjs"
+    ]
+  },
+  "notes": [
+    "File inventory is automatic from the pinned Git tree; text file contents were reviewed selectively for architecture risks.",
+    "Paths may be unused or legacy; link membership in index.html is captured separately.",
+    "Runtime screenshots and authenticated feature acceptance remain separate requirements."
+  ]
+}
