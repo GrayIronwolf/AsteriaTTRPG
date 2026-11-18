@@ -155,7 +155,9 @@ try{
  await player.getByTestId('site-player-resources').waitFor({timeout:30000});
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
  await player.getByTestId('site-layout-open').click();
- await player.getByTestId('site-layout-editor').waitFor();
+ try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
+ catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
+ console.error('EDITOR HTML', (await player.locator('main').innerHTML()).slice(0,10000));throw error;}
  await player.getByRole('button',{name:'Lock Skills',exact:true}).click();
  await player.getByTestId('site-layout-undo').click();
  await player.getByTestId('site-layout-redo').click();
