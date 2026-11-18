@@ -101,3 +101,6 @@
   text-decoration: none;
 }
 .accountLinks a:hover { background: var(--ast-color-accent-soft); }
+
+.logoutButton {min-height:var(--ast-target-min);display:flex;align-items:center;width:100%;padding:var(--ast-space-2) var(--ast-space-3);border:0;background:transparent;color:var(--ast-color-text);text-align:left;cursor:pointer;font:inherit;}
+.logoutButton:hover, .logoutButton:focus-visible {background:var(--ast-color-accent-soft);}

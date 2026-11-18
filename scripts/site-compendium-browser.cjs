@@ -47,12 +47,14 @@ try{
  await page.getByRole('heading',{name:'Asteria Handbook',level:1}).waitFor();
  await page.goto(base+'#/compendium?group=characters&category=races',{waitUntil:'networkidle'});
  await page.getByTestId('site-compendium-results').waitFor();
- assert.ok(await page.getByTestId('site-compendium-card').count()>=1);
+ await page.getByTestId('site-compendium-card').first().waitFor();
+  assert.ok(await page.getByTestId('site-compendium-card').count()>=1);
  assert.ok((await page.getByTestId('site-compendium-card').first().getAttribute('href')).startsWith('#/compendium/race/'));
  await page.getByTestId('site-compendium-domain').selectOption('item');
  await page.getByTestId('site-compendium-results').waitFor();
  assert.equal(await page.evaluate(()=>location.hash),'#/compendium?domain=item');
- assert.ok(await page.getByTestId('site-compendium-card').count()>=1);
+ await page.getByTestId('site-compendium-card').first().waitFor();
+  assert.ok(await page.getByTestId('site-compendium-card').count()>=1);
  for(const width of [320,390,760,1280,1440,1920]){
   await page.setViewportSize({width,height:900});
   await page.getByTestId('site-compendium-results').waitFor();

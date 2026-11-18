@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { CrystalButton } from './ui/CrystalButton.jsx';
 import { getVerifiedHeaderIdentity } from './headerIdentity.mjs';
 import styles from './HeaderAccountControls.module.css';
+import { useAuth } from '../auth/AuthProvider.jsx';
 
 /**
  * Phase 2.1 presentational account area. The isolated preview passes null
@@ -9,6 +10,7 @@ import styles from './HeaderAccountControls.module.css';
  * The trusted authenticated adapter belongs to the later Account migration.
  */
 export function HeaderAccountControls({ identity = null }) {
+  const { session, busy, actions } = useAuth();
   const verified = getVerifiedHeaderIdentity(identity);
   const avatarUrl = verified?.avatarUrl ?? null;
   const [imageFailed, setImageFailed] = useState(false);
@@ -69,6 +71,14 @@ export function HeaderAccountControls({ identity = null }) {
           </a>
           <a href="#/appearance" onClick={closeAccountMenu}>Appearance</a>
           <a href="#/account/settings" onClick={closeAccountMenu}>Account Settings</a>
+          {session.status === 'authenticated' && actions && (
+            <button type="button" className={styles.logoutButton} disabled={busy}
+              data-testid="site-header-logout" onClick={async () => {
+                closeAccountMenu();
+                const response = await actions.signOut();
+                if (response.ok) window.location.hash = '#home';
+              }}>Logout</button>
+          )}
         </nav>
       </details>
     </div>
