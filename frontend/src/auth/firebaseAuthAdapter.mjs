@@ -9,6 +9,7 @@ import { canSendVerificationEmail } from '../../../src/state/accountEmailVerific
 import { validatedEditableProfile, proposedAccountUsername, accountAvatarPath } from '../../../src/state/accountProfileEdit.mjs';
 import { accountProfileProjection } from './accountProfileModel.mjs';
 import { cropAccountAvatar } from './avatarProcessor.mjs';
+import { createFirebaseFriendsService } from '../friends/firebaseFriendsService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -292,7 +293,12 @@ async function initializeClient(runtime) {
     return {ok:true,cloud:await readAppearancePreferences()};
   }
 
+  const friends = createFirebaseFriendsService({auth,functions,functionsSdk,
+    flags:Object.freeze({enabled:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
+      lookup:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
+      requests:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true'})});
   return Object.freeze({
+    friends,
     subscribe,
     readProfile,saveProfile,usernameAvailable,renameUsername,
     readAvatar,uploadAvatar,removeAvatar,sendOwnPasswordReset,checkVerification,

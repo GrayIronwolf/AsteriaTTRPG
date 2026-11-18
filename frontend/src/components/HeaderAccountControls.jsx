@@ -76,6 +76,7 @@ export function HeaderAccountControls({ identity = null }) {
         </summary>
         <nav className={styles.accountLinks} aria-label="Account shortcuts">
           <a href="#/account/profile" onClick={closeAccountMenu}>My Profile</a>
+          <a href="#/account/friends" onClick={closeAccountMenu}>Friends</a>
           <a href="#/account/notifications" onClick={closeAccountMenu}>
             Notifications{verified.notificationCount > 0 ? ' (' + verified.notificationCount + ')' : ''}
           </a>
