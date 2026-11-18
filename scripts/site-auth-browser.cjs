@@ -108,7 +108,10 @@ try{
  await page.getByRole('heading',{name:'Reset Password',level:1}).waitFor();
  await page.locator('#asteria-email').fill(email);
  await page.getByTestId('site-auth-submit').click();
- await page.getByText(/If an account exists for that address/).waitFor();
+ await page.getByTestId('site-auth-message').waitFor({timeout:12000});
+ const resetMessage = await page.getByTestId('site-auth-message').innerText();
+ assert.match(resetMessage,/If an account exists for that address/,
+   'Reset feedback did not confirm generic response: '+resetMessage);
  assert.equal(await page.getByTestId('site-header-profile').count(),0);
  for(const width of [320,760,1280,1920])await within(page,width);
  assert.deepEqual(errors,[],errors.join('; '));
