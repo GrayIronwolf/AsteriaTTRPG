@@ -16,6 +16,9 @@ export function isRestrictedSectionTitle(title) {
 export function extractPublicSections(markdown) {
   let text = String(markdown ?? '').replace(/\r\n?/g, '\n');
   text = text.replace(/<!--[\s\S]*?-->/g, '');
+  // Legacy public-marked templates sometimes include explicit GM-only filler
+  // outside an appropriately labelled section. Never publish those lines.
+  text = text.replace(/^\s*(?:GM-only information coming soon\.|Hidden campaign notes can be added here\.)\s*$/gmi, '');
   const sections = [];
   let current = { title: 'Overview', body: [] };
   let restrictedLevel = 0;
