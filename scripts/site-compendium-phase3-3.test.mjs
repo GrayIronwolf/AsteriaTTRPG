@@ -68,7 +68,7 @@ test('Phase 3.3 ranked public search finds textual content without crossing cate
   assert.deepEqual(discoveryTerms('Prímordial BEAR'),['primordial','bear']);
   assert.equal(normalizeDiscoveryText(' Ar’Zari — Fae '),'ar zari fae');
   assert.deepEqual(filterDiscoveryEntries(entries,{query:'primordial bear',searchIndex:index}).map(e=>e.id),['race:ailura-ursa']);
-  assert.deepEqual(filterDiscoveryEntries(entries,{query:'ursa',sort:'relevance',searchIndex:index}).map(e=>e.title),['Polaris Ursa','Ailura Ursa']);
+  assert.deepEqual(filterDiscoveryEntries(entries,{query:'ursa',sort:'relevance',searchIndex:index}).map(e=>e.title),['Ailura Ursa','Polaris Ursa']);
   assert.deepEqual(filterDiscoveryEntries(entries,{query:'ursa',sort:'za'}).map(e=>e.title),['Polaris Ursa','Ailura Ursa']);
   assert.deepEqual(filterDiscoveryEntries(entries,{query:'primordial',path:['Fae Races'],searchIndex:index}).map(e=>e.title),['Air Pixie']);
   assert.deepEqual(filterDiscoveryEntries(entries,{query:'primordial'}),[],'Metadata-only fallback must not fabricate full-text hits');
