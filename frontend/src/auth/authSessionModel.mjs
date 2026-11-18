@@ -36,7 +36,9 @@ export function safeAuthSession(user, profile) {
       ? Object.freeze({
           status: 'authenticated', verified: true,
           username: owned.username, avatarUrl: owned.avatarUrl,
-          notificationCount: 0
+          notificationCount: 0,
+          avatarVersion: profile?.avatarUpdatedAt && typeof profile.avatarUpdatedAt.seconds === 'number'
+            ? String(profile.avatarUpdatedAt.seconds) + ':' + String(profile.avatarUpdatedAt.nanoseconds || 0) : ''
         })
       : null,
     accountId: owned?.accountId ?? null,

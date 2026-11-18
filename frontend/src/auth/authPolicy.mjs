@@ -86,6 +86,12 @@ export function friendlyAuthError(error, action = 'login') {
   if (action === 'reset') return 'Password reset could not be requested at this time.';
   if (action === 'create') return 'Account setup could not be completed. Check your connection and try signing in.';
   if (action === 'logout') return 'Sign-out could not be completed. Please retry.';
+  if (action === 'username') return 'Username change could not be confirmed. Check availability and refresh My Profile.';
+  if (action === 'profile-save') return 'Personal details could not be saved. Refresh your profile and retry.';
+  if (action === 'avatar-upload' || action === 'avatar-remove') return 'Profile picture could not be updated. Check your connection and try again.';
+  if (action === 'appearance-save') return 'Cloud preferences could not be saved. Refresh your cloud preferences and try again.';
+  if (action === 'password-own' || action === 'verification-check' || action === 'verification')
+    return 'Account security action could not be completed. Try again.';
   return 'Authentication is temporarily unavailable.';
 }
 

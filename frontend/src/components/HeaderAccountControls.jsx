@@ -12,7 +12,17 @@ import { useAuth } from '../auth/AuthProvider.jsx';
 export function HeaderAccountControls({ identity = null }) {
   const { session, busy, actions } = useAuth();
   const verified = getVerifiedHeaderIdentity(identity);
-  const avatarUrl = verified?.avatarUrl ?? null;
+  const [ownedAvatar,setOwnedAvatar] = useState(null);
+  const avatarUrl = ownedAvatar ?? verified?.avatarUrl ?? null;
+  useEffect(() => {
+    let active = true;
+    setOwnedAvatar(null);
+    if (session.status !== 'authenticated' || !session.identity?.avatarVersion ||
+        !session.profileAvailable || typeof actions?.readAvatar !== 'function') return undefined;
+    actions.readAvatar().then(url => { if(active) setOwnedAvatar(url); })
+      .catch(() => { if(active) setOwnedAvatar(null); });
+    return () => { active=false; };
+  },[actions,session.status,session.user?.uid,session.identity?.avatarVersion,session.profileAvailable]);
   const [imageFailed, setImageFailed] = useState(false);
   const accountMenuRef = useRef(null);
 
