@@ -19,7 +19,10 @@ const saneDate = value => typeof value === 'string' &&
   value.length >= 10 && value.length <= 40 &&
   Number.isFinite(Date.parse(value));
 const saneText = (value, max) => typeof value === 'string' &&
-  value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value);
+  value.length <= max && [...value].every(char => {
+    const code=char.charCodeAt(0);
+    return code>=32 && code!==127 || code===9 || code===10 || code===13;
+  });
 
 export function notificationChannel(value) {
   if(value !== 'social' && value !== 'campaign')
