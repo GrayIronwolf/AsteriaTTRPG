@@ -334,6 +334,26 @@
 }
 .aaa-nav-card-label{overflow-wrap:anywhere;}
 .aaa-nav-card-summary{line-height:1.3;}
+
+/* Only Forge A Campaign: transparent clickable card with the supplied map-book.
+   Keep its text, focus accessibility and card dimensions; no frame or panel. */
+.aaa-nav-card[data-artwork="forge-campaign"],
+.aaa-nav-card[data-artwork="forge-campaign"]:hover,
+.aaa-nav-card[data-artwork="forge-campaign"]:focus-visible{
+  background:transparent!important;
+  background-image:none!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+.aaa-nav-card[data-artwork="forge-campaign"] .aaa-nav-card-art{
+  inset:0 4px 34px!important;
+  background:transparent url("../assets/menus/forge-campaign-map-book.avif") center bottom / contain no-repeat!important;
+}
+.aaa-nav-card[data-artwork="forge-campaign"] .aaa-nav-card-art::after{
+  content:none!important;
+  display:none!important;
+}
+
 .aaa-category-link.aaa-menu-side-button{
   display:block!important;width:100%;min-height:44px;cursor:pointer;text-align:left;
   padding:11px 4px 12px!important;
