@@ -54,7 +54,8 @@ async function awaitPreview() {
     await page.getByRole('heading', {name:'Asteria',level:1}).waitFor();
     assert.equal(await page.getByRole('navigation',{name:'Primary navigation'}).count(),1);
     assert.equal(await page.getByRole('main').count(),1);
-    assert.equal(await page.getByText('Phase 1.3 design-system preview.',{exact:false}).count(),1);
+    assert.equal(await page.getByText('React Home preview:',{exact:false}).count(),1);
+    assert.equal(await page.getByTestId('site-home-forge-cards').getByRole('link').count(),2);
     assert.equal(await page.getByTestId('site-hero-image').locator('img').evaluate(img => img.complete && img.naturalWidth > 0),true);
     assert.equal(await page.getByTestId('site-brand').locator('svg').evaluate(svg =>
       svg.getBoundingClientRect().width > 100 && svg.querySelectorAll('image').length === 2), true);

@@ -1,0 +1,137 @@
+/* One React-owned cinematic carousel — no legacy #home/aaa selector overrides. */
+.carousel {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(430px, 61vh, 810px);
+  background: var(--ast-color-page);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.artwork {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 91%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 91%, transparent 100%);
+}
+.artwork::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to right,
+    var(--ast-color-page) 0%, transparent 15%, transparent 95%, var(--ast-color-page) 100%);
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.016);
+  transition: opacity 1000ms ease, transform 6000ms ease, visibility 1000ms linear;
+}
+.slide.active {
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 1000ms ease, transform 14000ms linear, visibility 1000ms linear;
+}
+.slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 13%, black 96%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 13%, black 96%, transparent 100%);
+}
+.controls {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: clamp(12px, 3vh, 34px);
+  transform: translateX(-50%);
+  display: flex;
+  width: min(520px, calc(100% - 24px));
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px 10px;
+  color: var(--ast-color-hero-text);
+}
+.arrow, .dot {
+  display: grid;
+  flex: 0 0 var(--ast-target-min);
+  place-items: center;
+  width: var(--ast-target-min);
+  height: var(--ast-target-min);
+  min-width: var(--ast-target-min);
+  min-height: var(--ast-target-min);
+  border: 0;
+  border-radius: 0;
+  color: var(--ast-color-hero-text);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.arrow { font-family: var(--ast-font-display); font-size: 1.8rem; }
+.arrow:hover, .arrow:focus-visible { text-shadow: 0 0 8px var(--ast-color-accent); }
+.dots { display: flex; flex: 1 1 auto; justify-content: center; align-items: center; gap: 2px; }
+.dot span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--ast-color-hero-muted);
+  border-radius: 50%;
+  background: transparent;
+  transition: background var(--ast-transition-fast), transform var(--ast-transition-fast);
+}
+.dot[aria-pressed="true"] span {
+  background: var(--ast-color-hero-text);
+  transform: scale(1.3);
+}
+.arrow:focus-visible, .dot:focus-visible {
+  outline: 2px solid var(--ast-color-focus);
+  outline-offset: 2px;
+}
+.progress {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  background: var(--ast-color-outline-soft);
+}
+.progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--ast-color-accent);
+}
+.progressRunning { animation: carouselProgress var(--home-carousel-duration) linear forwards; }
+.progressStopped { animation: none; }
+@keyframes carouselProgress { to { width: 100%; } }
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+@media (max-width: 760px) {
+  .carousel { height: clamp(325px, 52vh, 560px); }
+  .controls { bottom: 12px; padding-inline: 4px; }
+  .dots { gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide, .slide.active { transition: none; transform: none; }
+  .dot span { transition: none; }
+  .progressRunning { animation: none; }
+}
