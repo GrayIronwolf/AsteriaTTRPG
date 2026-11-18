@@ -127,7 +127,7 @@ async function waitForPreview() {
       const metrics = await page.evaluate(() => {
         const root = document.getElementById('home');
         const hero = document.querySelector('[data-testid="site-home-carousel"]');
-        const cards = [...document.querySelectorAll('[data-testid^="site-home-forge-"]')];
+        const cards = [...document.querySelectorAll('a[data-testid^="site-home-forge-"]')];
         const dots = [...hero.querySelectorAll('[data-testid^="site-carousel-dot-"]')];
         const controls = [...hero.querySelectorAll('button')];
         const rect = item => item.getBoundingClientRect();
