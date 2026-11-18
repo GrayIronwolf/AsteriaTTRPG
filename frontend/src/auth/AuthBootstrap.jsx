@@ -28,7 +28,7 @@ export function AuthBootstrap({ children }) {
       .catch(() => { if (alive) setError(true); });
     return () => { alive=false; };
   }, []);
-  const services = adapter ? createAppServices({auth:adapter}) : previewServices;
+  const services = adapter ? createAppServices({auth:adapter,...(adapter.friends?.availability().enabled ? {friends:adapter.friends} : {})}) : previewServices;
   return <AppServicesProvider services={services}>
     <AuthProvider adapter={adapter}>
       {error && <p role="alert" data-testid="site-auth-unavailable">
