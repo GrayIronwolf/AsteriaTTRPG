@@ -7,6 +7,7 @@ import { AsteriaBrand } from './AsteriaBrand.jsx';
 import { HeaderAccountControls } from './HeaderAccountControls.jsx';
 import { NavigationMegaMenu } from './NavigationMegaMenu.jsx';
 import styles from './SiteShell.module.css';
+import { useAuth } from '../auth/AuthProvider.jsx';
 
 function NavigationLinks({ route, activeMenuId, mode, onOpenMenu, onNavigate, onCloseMenu }) {
   return PRIMARY_LINKS.map(link => {
@@ -52,7 +53,9 @@ function NavigationLinks({ route, activeMenuId, mode, onOpenMenu, onNavigate, on
  * One React-owned header, mobile navigation disclosure and seven mega menus.
  * No legacy setView, cloned DOM buttons or second route event owner.
  */
-export function SiteShell({ route, identity = null, children }) {
+export function SiteShell({ route, identity: suppliedIdentity = null, children }) {
+  const {session} = useAuth();
+  const identity = suppliedIdentity || session.identity;
   const mobileMenu = useRef(null);
   const panelRef = useRef(null);
   const lastTrigger = useRef(null);
