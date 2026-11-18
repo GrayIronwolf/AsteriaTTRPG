@@ -1,3 +1,4 @@
+import {normalizeDashboardLayout} from '../../../src/state/dashboardLayoutModel.mjs';
 import { SESSION_LIMIT_MS, effectiveSession, timestampMs } from '../../../src/state/liveWorkspaceModel.mjs';
 import {
   assertGMCampaignId, gmCampaignAccess, gmCampaignSummary,
@@ -8,17 +9,18 @@ import {
  * No legacy global API bridge, second Firebase app or browser-side role grants.
  */
 export function createFirebaseGMDashboardService({
-  auth, db, firestoreSdk, readCanonical, enabled = false
+  auth, db, firestoreSdk, readCanonical, enabled = false, layoutEnabled = false
 }) {
   if (!auth || !db || !firestoreSdk || typeof readCanonical !== 'function')
     throw new Error('An authenticated Asteria Firestore adapter is required.');
-  const flags = Object.freeze({enabled:enabled === true});
+  const flags = Object.freeze({enabled:enabled === true,layoutEnabled:layoutEnabled === true});
   const same = uid => {
     if (auth.currentUser?.uid !== uid) throw new Error('Account changed during GM operation.');
   };
   const campaignRef = id => firestoreSdk.doc(db,'campaigns',id);
   const memberRef = (id,uid) => firestoreSdk.doc(db,'campaigns',id,'members',uid);
   const liveRef = id => firestoreSdk.doc(db,'campaigns',id,'liveSession','current');
+  const layoutRef = (uid,id) => firestoreSdk.doc(db,'users',uid,'dashboardLayouts','gm-'+id);
 
   async function verified() {
     if (!flags.enabled) throw new Error('The migrated GM Dashboard is disabled.');
@@ -209,5 +211,83 @@ export function createFirebaseGMDashboardService({
     return {ok:true,...result};
   }
 
-  return Object.freeze({availability:()=>flags,list,watch,sessionCommand});
+
+  /** Private GM layout, using the same path and versioned schema as the
+   * existing dashboard. All snapshots must be server-confirmed and role
+   * revocation closes the listener. */
+  function watchLayout(id,onUpdate,onError) {
+    assertGMCampaignId(id);
+    let active = true;
+    const unsubs = [];
+    const close = () => { active=false;unsubs.splice(0).forEach(stop=>{try{stop();}catch{}}); };
+    const fail = error => {
+      if(!active)return;
+      close();onError(error instanceof Error?error:Error('GM layout could not be loaded.'));
+    };
+    (async()=>{
+      try{
+        if(!flags.layoutEnabled)throw Error('The migrated dashboard editor is disabled.');
+        const {uid,campaign,member}=await verifyCampaign(id);
+        if(!active)return;
+        const data={campaign,member,layout:null};
+        const v2=campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid;
+        const confirmed={campaign:false,member:!v2,layout:false};
+        const publish=()=>{
+          if(!active||!Object.values(confirmed).every(Boolean))return;
+          try{
+            same(uid);
+            if(!gmCampaignAccess(data.campaign,data.member,uid,id).allowed)
+              throw Error('GM layout permission has been revoked.');
+            onUpdate(normalizeDashboardLayout(data.layout,'gm'));
+          }catch(error){fail(error);}
+        };
+        const attach=(ref,key,decode)=>{
+          const stop=firestoreSdk.onSnapshot(ref,{includeMetadataChanges:true},
+            snap=>{
+              if(!active||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;
+              try{
+                same(uid);
+                if(key!=='layout'&&!snap.exists())throw Error('GM campaign membership is unavailable.');
+                data[key]=decode(snap);confirmed[key]=true;publish();
+              }catch(error){fail(error);}
+            },fail);
+          if(active)unsubs.push(stop);else stop();
+        };
+        attach(campaignRef(id),'campaign',snap=>({...snap.data(),id:snap.id}));
+        if(v2)attach(memberRef(id,uid),'member',snap=>({...snap.data()}));
+        attach(layoutRef(uid,id),'layout',snap=>snap.exists()?snap.data().layout||null:null);
+      }catch(error){fail(error);}
+    })();
+    return close;
+  }
+
+  /** Compare-and-swap prevents a stale tab from overwriting another tab's
+   * layout. Only the GM's own dashboardLayouts/gm-{campaignId} changes. */
+  async function saveLayout(id,layout,expected){
+    assertGMCampaignId(id);
+    if(!flags.layoutEnabled)throw Error('The migrated dashboard editor is disabled.');
+    const {uid}=await verifyCampaign(id);
+    const next=normalizeDashboardLayout(layout,'gm');
+    const old=JSON.stringify(normalizeDashboardLayout(expected,'gm'));
+    if(JSON.stringify(next).length>400*1024)throw Error('Dashboard layout is too large.');
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(id));
+      if(!campaignSnap.exists())throw Error('GM campaign no longer exists.');
+      const campaign={...campaignSnap.data(),id:campaignSnap.id};
+      const memberSnap=campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid
+        ?await tx.get(memberRef(id,uid)):null;
+      const stored=await tx.get(layoutRef(uid,id));
+      same(uid);
+      const member=memberSnap?.exists()?memberSnap.data():null;
+      if(!gmCampaignAccess(campaign,member,uid,id).allowed)
+        throw Error('GM permissions changed. Reload this campaign.');
+      const baseline=JSON.stringify(normalizeDashboardLayout(stored.exists()?stored.data().layout:null,'gm'));
+      if(baseline!==old)throw Error('Dashboard layout changed in another session. Reload before saving.');
+      tx.set(layoutRef(uid,id),{layout:next,updatedAt:firestoreSdk.serverTimestamp()},{merge:true});
+    });
+    same(uid);
+    return {ok:true};
+  }
+
+  return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout});
 }

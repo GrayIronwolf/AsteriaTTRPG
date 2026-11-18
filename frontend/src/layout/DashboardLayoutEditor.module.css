@@ -1,0 +1,38 @@
+/* Single scoped React/Vite dashboard editor. No legacy global stylesheet dependency. */
+.editor{min-width:0;display:grid;gap:var(--ast-space-4);padding:var(--ast-space-4);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline);border-radius:var(--ast-radius-panel)}
+.editor button,.editor select{font:inherit;color:var(--ast-color-text);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);padding:var(--ast-space-2) var(--ast-space-3);cursor:pointer;min-height:40px}
+.editor button:focus-visible,.editor select:focus-visible,.editor input:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.editor button:disabled{opacity:.55;cursor:not-allowed}
+.editor button[aria-pressed="true"]{background:var(--ast-color-accent-soft);border-color:var(--ast-color-outline-active)}
+.header,.toolbar,.footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--ast-space-3)}
+.header h2,.header p,.controlPanel h3{margin:0}
+.header p{color:var(--ast-color-text-muted)}
+.toolbar>div,.footer>div{display:flex;gap:var(--ast-space-2);flex-wrap:wrap}
+.viewport button{text-transform:capitalize}
+.canvasRegion{min-width:0;display:grid;gap:var(--ast-space-2)}
+.hint{font-size:var(--ast-font-sm);color:var(--ast-color-text-muted);margin:0}
+.scroller{max-width:100%;max-height:min(67vh,700px);overflow:auto;overscroll-behavior:contain;border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);background:var(--ast-color-panel-raised)}
+.canvas{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:54px;grid-template-rows:repeat(var(--canvas-rows),54px);gap:6px;padding:var(--ast-space-2);min-width:780px;min-height:calc(var(--canvas-rows)*60px);align-items:stretch}
+.tile{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--ast-color-outline);border-radius:var(--ast-radius-panel);background:var(--ast-color-panel);padding:var(--ast-space-2);overflow:hidden}
+.tile.selected{border-color:var(--ast-color-accent);box-shadow:inset 0 0 0 1px var(--ast-color-outline-active)}
+.moveHandle{touch-action:none;user-select:none;display:flex;flex-direction:column;justify-content:space-between;text-align:left;width:100%;min-width:0;flex:1}
+.moveHandle strong,.moveHandle small{overflow-wrap:anywhere;font-size:var(--ast-font-sm)}
+.moveHandle small{color:var(--ast-color-text-muted)}
+.tileActions{display:flex;gap:var(--ast-space-1);flex-wrap:wrap;justify-content:flex-end}
+.tileActions button{font-size:var(--ast-font-sm);padding:var(--ast-space-1);min-height:30px}
+.resizeHandle{touch-action:none;user-select:none;cursor:nwse-resize}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:var(--ast-space-3)}
+.controlPanel{min-width:0;display:grid;gap:var(--ast-space-3);align-content:start;padding:var(--ast-space-4);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.controlPanel>p{margin:0}
+.controlPanel>label{display:grid;gap:var(--ast-space-2)}
+.sizeRow{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.library{max-height:270px;overflow:auto;display:grid;gap:var(--ast-space-2)}
+.library label{display:flex;align-items:start;gap:var(--ast-space-2);overflow-wrap:anywhere;cursor:pointer}
+.library input{margin-top:5px;accent-color:var(--ast-color-accent)}
+.warning,.confirm{padding:var(--ast-space-3);display:grid;gap:var(--ast-space-3);background:var(--ast-color-panel-slate);border:1px solid var(--ast-color-outline);border-radius:var(--ast-radius-sm)}
+.confirm>div{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.footer{padding-top:var(--ast-space-3);border-top:1px solid var(--ast-color-outline-soft)}
+.footer span{font-size:var(--ast-font-sm)}
+.editor .primary{border-color:var(--ast-color-outline-active);background:var(--ast-color-accent-soft)}
+@media(max-width:640px){.editor{padding:var(--ast-space-3)}.controls{grid-template-columns:1fr}.toolbar>div,.footer>div{width:100%}.footer>div button{flex:1}}
+@media(prefers-reduced-motion:reduce){.editor *{scroll-behavior:auto}}

@@ -311,7 +311,8 @@ async function initializeClient(runtime) {
   const characters=createFirebaseCharactersService({auth,db,firestoreSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'});
   const playerDashboard=createFirebasePlayerDashboardService({auth,db,firestoreSdk,readCanonical,
-    enabled:import.meta.env.VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED==='true'});
+    enabled:import.meta.env.VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED==='true',
+    layoutEnabled:import.meta.env.VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED==='true'});
   const characterServices=Object.freeze({...characters,
     ...(playerDashboard.availability().enabled?{dashboard:playerDashboard}: {})});
   const campaignConnections=createFirebaseCampaignConnectionService({
@@ -327,7 +328,8 @@ async function initializeClient(runtime) {
     connections:campaignConnections
   });
   const gameplay=createFirebaseGMDashboardService({auth,db,firestoreSdk,readCanonical,
-    enabled:import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true'});
+    enabled:import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true',
+    layoutEnabled:import.meta.env.VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED==='true'});
   return Object.freeze({
     friends,notifications,characters:characterServices,campaigns,gameplay,
     subscribe,

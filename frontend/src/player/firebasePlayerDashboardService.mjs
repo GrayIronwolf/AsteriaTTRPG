@@ -1,3 +1,4 @@
+import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
 import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
@@ -6,11 +7,11 @@ import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
  * Reads only; gameplay actions and dashboard-layout writes are later phases.
  */
 export function createFirebasePlayerDashboardService({
-  auth,db,firestoreSdk,readCanonical,enabled=false
+  auth,db,firestoreSdk,readCanonical,enabled=false,layoutEnabled=false
 }){
   if(!auth||!db||!firestoreSdk||typeof readCanonical!=='function')
     throw Error('A verified Firebase adapter is required.');
-  const flags=Object.freeze({enabled:enabled===true});
+  const flags=Object.freeze({enabled:enabled===true,layoutEnabled:layoutEnabled===true});
   const same=uid=>{if(auth.currentUser?.uid!==uid)throw Error('Account changed. Reload this character.');};
   const ownedRef=(uid,id)=>firestoreSdk.doc(db,'users',uid,'characters',id);
   const campaignRef=id=>firestoreSdk.doc(db,'campaigns',id);
@@ -138,7 +139,10 @@ export function createFirebasePlayerDashboardService({
             const {access,relationship}=verify();
             onUpdate(Object.freeze({
               mode:'campaign',owner:relationship.owned,
-              character:playerCharacterProjection(data.character,{owned:relationship.owned}),
+              character:playerCharacterProjection(relationship.owned&&
+                !data.character.dashboardPreferences?.dashboardLayout&&data.source?.dashboardPreferences?.dashboardLayout
+                ?{...data.character,dashboardPreferences:data.source.dashboardPreferences}:data.character,
+                {owned:relationship.owned}),
               campaign:playerCampaignProjection(data.campaign,access,data.session)
             }));
           }catch(err){fail(err);}
@@ -169,5 +173,87 @@ export function createFirebasePlayerDashboardService({
     })();
     return close;
   }
-  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign});
+
+  const layoutValue=preferences=>layoutFromPlayerPreferences(preferences||{});
+  const sameLayout=(a,b)=>JSON.stringify(layoutValue(a))===
+    JSON.stringify(normalizeDashboardLayout(b,'player'));
+  const layoutPatch=(record,next)=>({
+    dashboardPreferences:{...(record.dashboardPreferences||{}),dashboardLayout:next},
+    updatedAt:firestoreSdk.serverTimestamp()
+  });
+  const verifyLayoutInput=layout=>{
+    const normalized=normalizeDashboardLayout(layout,'player');
+    if(JSON.stringify(normalized).length>400*1024)
+      throw Error('Dashboard layout is too large.');
+    return normalized;
+  };
+  function mustEditLayout(){
+    if(!flags.layoutEnabled)throw Error('The migrated dashboard editor is disabled.');
+  }
+  /** Only the canonical owner record changes; there is no campaign write for
+   * an unassigned character and no requirement for an active game session. */
+  async function saveOwnedLayout(id,layout,expected){
+    mustEditLayout();requireDashboardId(id);
+    const uid=await verified(),next=verifyLayoutInput(layout);
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const snap=await tx.get(ownedRef(uid,id));
+      same(uid);
+      if(!snap.exists())throw Error('Saved character is unavailable.');
+      const source={...snap.data(),id:snap.id};
+      if(source.ownerUid!==uid)throw Error('Only the character owner may edit this layout.');
+      const trusted=await validateOwnedRecord(source,uid,async(cid,charId)=>{
+        requireDashboardId(cid);requireDashboardId(charId);
+        const linked=await tx.get(sharedRef(cid,charId));
+        same(uid);
+        return linked.exists()?{...linked.data(),id:linked.id}:null;
+      });
+      same(uid);
+      if(!trusted)throw Error('Character ownership or campaign link changed.');
+      if(!sameLayout(source.dashboardPreferences,expected))
+        throw Error('Dashboard layout changed in another session. Reload before saving.');
+      tx.update(ownedRef(uid,id),layoutPatch(source,next));
+    });
+    same(uid);return {ok:true};
+  }
+  /** Existing v1/v2 server-owned character IDs are authoritative. Both live
+   * gameplay sheet and private source receive the same layout in one transaction.
+   * Never write skills, resources, equipment, membership or campaign metadata. */
+  async function saveCampaignLayout(cid,id,layout,expected){
+    mustEditLayout();requireDashboardId(cid);requireDashboardId(id);
+    const uid=await verified(),next=verifyLayoutInput(layout);
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      if(!campaignSnap.exists())throw Error('Campaign is unavailable.');
+      const campaign={...campaignSnap.data(),id:campaignSnap.id};
+      const memberSnap=campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid
+        ?await tx.get(memberRef(cid,uid)):null;
+      const sharedSnap=await tx.get(sharedRef(cid,id));
+      same(uid);
+      const member=memberSnap?.exists()?memberSnap.data():null;
+      const access=playerCampaignAccess(campaign,member,uid,cid);
+      if(!access.allowed||!sharedSnap.exists())
+        throw Error('Campaign membership or character is unavailable.');
+      const shared={...sharedSnap.data(),id:sharedSnap.id};
+      const permission=linkedCharacterAccess(campaign,shared,uid,access);
+      if(!permission.allowed||!permission.owned)
+        throw Error('Only the linked character owner may change its layout.');
+      const sourceId=shared.sourceCharacterId||shared.id;
+      requireDashboardId(sourceId);
+      const sourceSnap=await tx.get(ownedRef(uid,sourceId));
+      same(uid);
+      if(!sourceSnap.exists())throw Error('Saved character source is missing.');
+      const source={...sourceSnap.data(),id:sourceSnap.id};
+      if(!matchesOwnedSource(source,shared,cid,uid,campaign.membershipSchemaVersion??1))
+        throw Error('Character ownership or campaign link changed.');
+      const preferences=shared.dashboardPreferences?.dashboardLayout
+        ?shared.dashboardPreferences:source.dashboardPreferences;
+      if(!sameLayout(preferences,expected))
+        throw Error('Dashboard layout changed in another session. Reload before saving.');
+      tx.update(sharedRef(cid,id),layoutPatch(shared,next));
+      tx.update(ownedRef(uid,sourceId),layoutPatch(source,next));
+    });
+    same(uid);return {ok:true};
+  }
+
+  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,saveOwnedLayout,saveCampaignLayout});
 }

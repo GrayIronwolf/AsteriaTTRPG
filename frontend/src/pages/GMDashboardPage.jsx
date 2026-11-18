@@ -7,6 +7,7 @@ import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
+import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
@@ -147,11 +148,20 @@ function CampaignGM({api,uid,campaignId}) {
       <h2>Party Overview</h2>
       <Party party={snapshot.party}/>
     </SurfacePanel>:null}
+    {api.availability().layoutEnabled?
+      <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
+        renderPanel={id=>{
+          if(id==='partySummary')return <Party party={snapshot.party}/>;
+          if(id==='encounter')return <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
+          if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
+          if(id==='xp')return <p>XP distribution migrates in Phase 7.</p>;
+          return null;
+        }}/>
+      :null}
     <SurfacePanel className={styles.panel} as="aside">
       <h2>GM Workspace</h2>
       <BodyText muted>Campaign settings and character-link approval stay in Campaign Forge.
-        Dashboard editor, combat, full gameplay, presentation and video maps move to this
-        React dashboard in the remaining migration phases. No legacy panels are mounted here.</BodyText>
+        Combat, gameplay, presentation and video maps migrate in later phases. No legacy panels are mounted here.</BodyText>
       {snapshot.role==='owner'?<CrystalButton href="#/campaign-forge">Manage Campaign</CrystalButton>:
         <BodyText muted>Owner-only campaign settings are unavailable to Co-GMs.</BodyText>}
     </SurfacePanel>
