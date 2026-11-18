@@ -10,6 +10,7 @@ import { validatedEditableProfile, proposedAccountUsername, accountAvatarPath } 
 import { accountProfileProjection } from './accountProfileModel.mjs';
 import { cropAccountAvatar } from './avatarProcessor.mjs';
 import { createFirebaseFriendsService } from '../friends/firebaseFriendsService.mjs';
+import { createFirebaseNotificationsService } from '../notifications/firebaseNotificationsService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -297,8 +298,13 @@ async function initializeClient(runtime) {
     flags:Object.freeze({enabled:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
       lookup:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true',
       requests:import.meta.env.VITE_ASTERIA_FRIENDS_ENABLED==='true'})});
+  const notifications=createFirebaseNotificationsService({auth,functions,functionsSdk,
+    flags:Object.freeze({
+      social:import.meta.env.VITE_ASTERIA_SOCIAL_NOTIFICATIONS_ENABLED==='true',
+      campaign:import.meta.env.VITE_ASTERIA_CAMPAIGN_NOTIFICATIONS_ENABLED==='true'
+    })});
   return Object.freeze({
-    friends,
+    friends,notifications,
     subscribe,
     readProfile,saveProfile,usernameAvailable,renameUsername,
     readAvatar,uploadAvatar,removeAvatar,sendOwnPasswordReset,checkVerification,
