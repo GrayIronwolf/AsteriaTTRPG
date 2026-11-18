@@ -1,4 +1,9 @@
 import {
+ FORGE_ID,safeCharacterLinkStatus,safePendingCharacterLinks,
+ safeCampaignCharacterLifecycle,gmCharacterReviewPayload,
+ gmCharacterLifecyclePayload,playerCharacterLifecyclePayload
+} from './forgeIntegrationModel.mjs';
+import {
  CAMPAIGN_ID,SECURE_ID,SECURE_TOKEN,normalizeUCN,
  safeJoinPreview,safeInvitationPreview,safeRequestState,
  validateMemberAction,validateRoleAction,validateDelegation
@@ -9,11 +14,11 @@ import {
  * This adapter never writes /members or /joinRequests directly.
  */
 export function createFirebaseCampaignConnectionService({
- auth,functions,functionsSdk,readCanonical,enabled=false
+ auth,functions,functionsSdk,readCanonical,enabled=false,forgeEnabled=false
 }){
  if(!auth||!functions||!functionsSdk||typeof readCanonical!=='function')
   throw new Error('Existing Auth, Functions and canonical account profile required.');
- const availability=Object.freeze({enabled:enabled===true});
+ const availability=Object.freeze({enabled:enabled===true,forgeEnabled:enabled===true&&forgeEnabled===true});
  const signedIn=async()=>{
   if(!availability.enabled)throw new Error('Campaign connections are not activated.');
   const user=auth.currentUser;
@@ -180,9 +185,75 @@ export function createFirebaseCampaignConnectionService({
    throw new Error('Invalid campaign membership audit trail.');
   return data;
  }
+ const requireForge=()=>{if(!availability.forgeEnabled)
+    throw new Error('Character-campaign linking is not activated.');};
+ const sourceId=value=>{
+  if(typeof value!=='string'||!FORGE_ID.test(value))
+   throw new Error('Choose a verified owned character.');
+  return value;
+ };
+ async function characterLinkStatus(campaignId,characterId){
+  requireForge();id(campaignId);sourceId(characterId);
+  return safeCharacterLinkStatus(await call('asteriaCampaignJoinReview',{
+    action:'character-link-status',campaignId,sourceCharacterId:characterId,
+    sourceKind:'owned'
+  }),campaignId,characterId);
+ }
+ async function requestCharacterLink(campaignId,characterId){
+  requireForge();id(campaignId);sourceId(characterId);
+  return safeCharacterLinkStatus(await call('asteriaCampaignJoinReview',{
+    action:'character-link-request',campaignId,sourceCharacterId:characterId,
+    sourceKind:'owned'
+  }),campaignId,characterId);
+ }
+ async function cancelOwnCharacterLink(campaignId,row,action){
+  requireForge();id(campaignId);
+  const payload=playerCharacterLifecyclePayload(row,action);
+  const result=await call('asteriaCampaignJoinReview',{
+    action:'character-lifecycle-change',campaignId,...payload
+  });
+  if(result.campaignId!==campaignId||typeof result.status!=='string')
+   throw new Error('Invalid character lifecycle confirmation.');
+  return result;
+ }
+ async function pendingCharacterLinks(campaignId){
+  requireForge();id(campaignId);
+  return safePendingCharacterLinks(await call('asteriaCampaignJoinReview',{
+    action:'character-link-list',campaignId
+  }),campaignId);
+ }
+ async function reviewCharacterLink(campaignId,row,decision){
+  requireForge();id(campaignId);
+  const response=await call('asteriaCampaignJoinReview',{
+    action:'character-link-review',campaignId,...gmCharacterReviewPayload(row,decision)
+  });
+  if(response.campaignId!==campaignId||response.status!==(decision==='approve'?'approved':'declined'))
+   throw new Error('Invalid character link review receipt.');
+  return response;
+ }
+ async function campaignCharacterLifecycle(campaignId){
+  requireForge();id(campaignId);
+  return safeCampaignCharacterLifecycle(await call('asteriaCampaignJoinReview',{
+    action:'character-lifecycle-list',campaignId
+  }),campaignId);
+ }
+ async function changeCampaignCharacterLifecycle(campaignId,row,action){
+  requireForge();id(campaignId);
+  const response=await call('asteriaCampaignJoinReview',{
+    action:'character-lifecycle-change',campaignId,
+    ...gmCharacterLifecyclePayload(row,action)
+  });
+  if(response.campaignId!==campaignId||
+     response.status!==({deactivate:'inactive',restore:'approved',unlink:'unlinked'}[action]))
+   throw new Error('Invalid character lifecycle receipt.');
+  return response;
+ }
  return Object.freeze({
   availability:()=>availability,lookupUCN,requestStatus,submitJoin,
   previewSecure,acceptSecure,issueInvite,invitations,changeInvite,
-  roster,joinQueue,review,approvalMode,moderate,role,delegate,activity
+  roster,joinQueue,review,approvalMode,moderate,role,delegate,activity,
+  characterLinkStatus,requestCharacterLink,cancelOwnCharacterLink,
+  pendingCharacterLinks,reviewCharacterLink,campaignCharacterLifecycle,
+  changeCampaignCharacterLifecycle
  });
 }

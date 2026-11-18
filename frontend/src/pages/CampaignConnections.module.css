@@ -8,3 +8,5 @@
 .section{display:grid;gap:var(--ast-space-3)}
 .notice{padding:var(--ast-space-3);border-left:3px solid var(--ast-color-outline-active);overflow-wrap:anywhere}
 @media(max-width:440px){.meta{grid-template-columns:1fr}.panel{padding:var(--ast-space-4)}}
+
+.field select{min-height:var(--ast-target-min);padding:var(--ast-space-3);width:100%;min-width:0;font:inherit;background:var(--ast-color-panel-raised);color:var(--ast-color-text);border:1px solid var(--ast-color-outline)}
