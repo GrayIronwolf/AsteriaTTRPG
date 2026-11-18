@@ -23,7 +23,7 @@ on:
 jobs:
   preview-foundation:
     name: Build, lint and browser-verify isolated React app
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
