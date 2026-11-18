@@ -123,7 +123,7 @@
     "test:campaign-inapp-canary": "node --test scripts/campaign-inapp-live-canary-release.test.mjs && node scripts/campaign-inapp-live-canary-release.mjs --check",
     "test:friends-complete-live": "node --test scripts/friends-live-activation.test.mjs && node scripts/friends-live-activation.mjs --check",
     "test:mobile-header": "node --test scripts/mobile-header-first-paint.test.mjs",
-    "test:account-pages": "node --test scripts/account-pages-release.test.mjs && node --check js/asteria-account-pages.js",
+    "test:account-pages": "node --test scripts/account-pages-release.test.mjs scripts/universal-page-template-phase1.test.mjs && node --check js/asteria-account-pages.js && node --check js/asteria-page-template.js",
     "test:inventory-phase-1-1": "node --test scripts/inventory-phase-1-1.test.mjs",
     "test:inventory-phase-8-2": "node --test scripts/inventory-phase-8-2.test.mjs",
     "test:inventory-phase-8-3": "node --test scripts/inventory-phase-8-3.test.mjs",
