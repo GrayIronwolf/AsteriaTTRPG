@@ -35,8 +35,8 @@ test('React shell has real, accessible Home navigation and only explicitly previ
   assert.match(shell, /href="#home"/);
   assert.match(shell, /href="#site-main"/);
   assert.match(shell, /<main/);
-  assert.match(home, /<h1 id="site-home-title">Asteria<\/h1>/);
-  assert.match(home, /Phase 1\.2 navigation preview/);
+  assert.match(home, /<Heading id="site-home-title" hero>Asteria<\/Heading>/);
+  assert.match(home, /Phase 1\.3 design-system preview/);
   assert.ok(existsSync(resolve(root, 'assets/header/asteria-wordmark.png')));
   assert.ok(existsSync(resolve(root, 'assets/home/asteria-home-spider.webp')));
 });
@@ -47,14 +47,17 @@ test('No legacy DOM event owners or global CSS patches are imported', () => {
     'frontend/src/app/App.jsx',
     'frontend/src/components/SiteShell.jsx',
     'frontend/src/pages/HomePage.jsx',
-    'frontend/src/styles/foundation.css'
+    'frontend/src/styles/tokens.css',
+    'frontend/src/styles/reset.css',
+    'frontend/src/styles/typography.css'
   ];
   for(const name of files) {
     const content = read(name).replace(/\/\*[\s\S]*?\*\//g, '');
     assert.doesNotMatch(content, /window\.(?:setView|AsteriaRouter|AsteriaReactMigration)/, name);
     assert.doesNotMatch(content, /\b(?:js\/app\.js|css\/styles\.css|asteria-page-template\.css)\b(?![^\n]*comment)/, name);
   }
-  const css = read('frontend/src/styles/foundation.css');
+  const css = ['tokens.css', 'reset.css', 'typography.css']
+    .map(name => read('frontend/src/styles/' + name)).join('\n');
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /!important/);
   assert.doesNotMatch(css, /@import\s+url|@import\s+['"]/);
 });

@@ -1,4 +1,9 @@
 import React from 'react';
+import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
+import { Eyebrow, Heading, BodyText } from '../components/ui/Typography.jsx';
+import { CrystalButton } from '../components/ui/CrystalButton.jsx';
+import styles from './RoutePreviewPage.module.css';
 
 const EXPLANATIONS = Object.freeze({
   handbook: 'The Handbook route and its existing filters are recognised. Handbook content will move here with the Compendium migration.',
@@ -23,21 +28,23 @@ const EXPLANATIONS = Object.freeze({
   'not-found': 'This URL does not match an available page. Check the link or return to Home.'
 });
 
-/** Explicit placeholders: never expose unauthenticated forms or private data. */
+/** Restricted destinations remain honest placeholders until data is migrated. */
 export function RoutePreviewPage({ route }) {
   const isMissing = route.id === 'not-found';
   return (
-    <section className="site-route-preview" aria-labelledby="site-route-title">
-      <p className="site-eyebrow">{isMissing ? 'Navigation' : 'Phase 1.2 routing preview'}</p>
-      <h1 id="site-route-title">{route.title}</h1>
-      <p className="site-route-description">{EXPLANATIONS[route.id] || EXPLANATIONS['not-found']}</p>
+    <PageLayout as="section" width="reading" className={styles.page} labelledBy="site-route-title">
+      <Eyebrow>{isMissing ? 'Navigation' : 'Phase 1.3 design-system preview'}</Eyebrow>
+      <Heading id="site-route-title">{route.title}</Heading>
+      <BodyText>{EXPLANATIONS[route.id] || EXPLANATIONS['not-found']}</BodyText>
       {!isMissing && (
-        <p className="site-preview-note">
-          The page destination works in the new React router. Its original
-          features remain on the existing website until their migration is complete.
-        </p>
+        <SurfacePanel as="aside" className={styles.notice}>
+          <BodyText muted>
+            The page destination works in the new React router. Its original
+            features remain on the existing website until their migration is complete.
+          </BodyText>
+        </SurfacePanel>
       )}
-      <a className="site-return-home" href="#home">Return to Home</a>
-    </section>
+      <CrystalButton variant="primary" size="wide" href="#home">Return to Home</CrystalButton>
+    </PageLayout>
   );
 }

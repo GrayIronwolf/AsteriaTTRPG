@@ -1,0 +1,92 @@
+/*
+ * Asteria single-owner gunmetal + inset crystal control.
+ * Elongated hex spear tips, restrained bevel and raised face (no bitmap).
+ */
+.button {
+  --ast-button-height: var(--ast-target-min);
+  display: inline-grid;
+  place-items: stretch;
+  position: relative;
+  isolation: isolate;
+  min-height: var(--ast-button-height);
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid var(--ast-button-bezel-top);
+  color: var(--ast-color-button-text);
+  background: linear-gradient(180deg, var(--ast-button-bezel-top), var(--ast-button-bezel-bottom));
+  clip-path: polygon(
+    var(--ast-button-bevel) 0,
+    calc(100% - var(--ast-button-bevel)) 0,
+    100% 50%,
+    calc(100% - var(--ast-button-bevel)) 100%,
+    var(--ast-button-bevel) 100%,
+    0 50%
+  );
+  font-size: var(--ast-font-sm);
+  font-weight: 600;
+  letter-spacing: .015em;
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter var(--ast-transition-fast), transform var(--ast-transition-fast);
+}
+.crystal {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: calc(var(--ast-button-height) - 6px);
+  background: linear-gradient(
+    175deg,
+    var(--ast-button-inset-top) 0%,
+    var(--ast-button-inset-bottom) 100%
+  );
+  clip-path: polygon(
+    calc(var(--ast-button-bevel) - 2px) 0,
+    calc(100% - var(--ast-button-bevel) + 2px) 0,
+    100% 50%,
+    calc(100% - var(--ast-button-bevel) + 2px) 100%,
+    calc(var(--ast-button-bevel) - 2px) 100%,
+    0 50%
+  );
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, .14), inset 0 -3px 4px rgba(0, 0, 0, .35);
+}
+.label {
+  display: block;
+  padding: 8px 14px;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.button:hover:not(:disabled):not([aria-disabled="true"]) {
+  filter: brightness(1.18);
+}
+.button:hover:not(:disabled):not([aria-disabled="true"]) .crystal {
+  background: linear-gradient(
+    175deg, var(--ast-button-inset-hover-top), var(--ast-button-inset-hover-bottom)
+  );
+}
+.button:active:not(:disabled) { transform: translateY(1px); }
+.button:focus-visible {
+  outline: 3px solid var(--ast-color-focus);
+  outline-offset: 3px;
+}
+.button:disabled, .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.button.active {
+  border-color: var(--ast-color-outline-active);
+}
+.button.active .crystal {
+  background: linear-gradient(175deg, var(--ast-button-inset-active-top), var(--ast-button-inset-active-bottom));
+}
+.nav { font-weight: 500; }
+.primary { border-color: var(--ast-color-outline-active); }
+.secondary { opacity: .95; }
+.compact { --ast-button-height: 44px; font-size: .77rem; }
+.compact .label { padding: 7px clamp(7px, .7vw, 12px); }
+.regular { --ast-button-height: 44px; }
+.wide { --ast-button-height: 48px; min-width: 160px; }
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
+}

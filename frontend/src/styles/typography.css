@@ -1,0 +1,11 @@
+/* Global type defaults. Local roles/headings are CSS-module classes. */
+html {
+  font-family: var(--ast-font-body);
+  font-size: 16px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+body { line-height: var(--ast-line-body); }
+h1, h2, h3, h4, h5, h6 { line-height: var(--ast-line-heading); }
+p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
