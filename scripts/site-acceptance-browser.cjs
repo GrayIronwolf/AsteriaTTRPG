@@ -158,7 +158,8 @@ async function screenshot(page, filename) {
     report.snapshots.push('preview-home-mobile-390.png');
     await preview.getByTestId('site-mobile-menu').locator('summary').click();
     assert.equal(await preview.getByRole('navigation', { name: 'Mobile navigation' })
-      .getByRole('link').count(), 8);
+      .getByRole('link').count(), 9);
+    assert.equal(await preview.getByTestId('site-mobile-appearance-link').count(), 1);
     await screenshot(preview, 'preview-mobile-navigation-390.png');
     report.snapshots.push('preview-mobile-navigation-390.png');
     await preview.getByRole('navigation', { name: 'Mobile navigation' })
