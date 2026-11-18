@@ -5,7 +5,7 @@ import { RoutePreviewPage } from '../pages/RoutePreviewPage.jsx';
 import { useSiteRoute } from '../router/useSiteRoute.js';
 
 // One route subscriber, one page outlet and one shell. The old HTML, hash
-// router and window.setView wrappers are never imported into this preview.
+// router and legacy view wrappers are never imported into this preview.
 export function App() {
   const route = useSiteRoute();
   const lastRoute = useRef(null);
