@@ -46,7 +46,7 @@ try{
  const email='site-phase41-'+Date.now()+'@example.test';
  const username='PreviewPhase41';
  const password='ExamplePassword123!';
- await page.goto(base,{waitUntil:'networkidle'});
+ await page.goto(base,{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
  assert.equal(await page.evaluate(()=>location.hash),'');
  assert.equal(await page.getByTestId('site-header-login').count(),1);
@@ -67,17 +67,17 @@ try{
  await page.getByTestId('site-header-profile').waitFor();
  assert.equal(await page.getByTestId('site-header-login').count(),0);
  assert.equal(await page.getByTestId('site-header-account-menu').count(),1);
- await page.goto(base+'#/account/profile',{waitUntil:'networkidle'});
+ await page.goto(base+'#/account/profile',{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'My Profile',level:1}).waitFor();
  assert.equal(await page.locator('main form,main input').count(),0,
   'Account profile editing is deliberately deferred to Phase 4.2');
- await page.goto(base+'#/react/gm/private-campaign',{waitUntil:'networkidle'});
+ await page.goto(base+'#/react/gm/private-campaign',{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'GM Dashboard',level:1}).waitFor();
  assert.equal(await page.locator('main form,main input').count(),0,
   'Authentication alone must not unlock campaign data');
 
- await page.goto(base+'#home',{waitUntil:'networkidle'});
- await page.reload({waitUntil:'networkidle'});
+ await page.goto(base+'#home',{waitUntil:'domcontentloaded'});
+ await page.reload({waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
  await page.getByTestId('site-header-profile').waitFor();
  assert.equal(await page.evaluate(()=>location.hash),'#home',
@@ -90,7 +90,7 @@ try{
  await page.getByTestId('site-header-logout').click();
  await page.getByTestId('site-header-login').waitFor();
  assert.equal(await page.getByTestId('site-header-profile').count(),0);
- await page.goto(base+'#/account/login',{waitUntil:'networkidle'});
+ await page.goto(base+'#/account/login',{waitUntil:'domcontentloaded'});
  await page.getByTestId('site-auth-form').waitFor();
  await page.locator('#asteria-email').fill(email);
  await page.locator('#asteria-password').fill('incorrect-password');
@@ -101,7 +101,7 @@ try{
  await page.getByTestId('site-auth-submit').click();
  await page.getByText('Signed in to Asteria.').waitFor();
  await page.getByTestId('site-header-profile').waitFor();
- await page.goto(base+'#/account/login',{waitUntil:'networkidle'});
+ await page.goto(base+'#/account/login',{waitUntil:'domcontentloaded'});
  await page.getByRole('button',{name:'Logout'}).click();
  await page.getByTestId('site-header-login').waitFor();
  await page.getByRole('link',{name:'Forgot password?'}).click();
