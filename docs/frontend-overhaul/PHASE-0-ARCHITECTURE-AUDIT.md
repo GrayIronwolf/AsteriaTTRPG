@@ -23,7 +23,7 @@ Phase 0 is an **audit**, not the production cutover. Actual React conversion, CS
 | External script tags in index.html | 47 | 45 js/ scripts, compendium index, React development entry |
 | Inline script blocks | 1 | feature flags |
 | Inline onclick attributes | 85 literal occurrences | index.html |
-| CSS !important text occurrences | 3,962 in css/; 108 in src/styles/; 4,070 total | static lexical count, not a computed cascade |
+| CSS !important text occurrences | 3,962 in css/; 109 in src/styles/; 4,071 total | static lexical count, not a computed cascade |
 | addEventListener call sites | 434 in js/ | static lexical count, not the number of live listeners |
 | React-related source | 166 .js/.jsx/.mjs and 21 CSS files | src/ |
 | React stylesheet sources | 21 files, 288,396 bytes | src/styles/ |
