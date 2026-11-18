@@ -1,0 +1,51 @@
+/* Profile geometry is sized here, never by global button selectors. */
+.guest {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+.signedIn {
+  display: flex;
+  flex: 0 0 var(--ast-header-avatar-size);
+  width: var(--ast-header-avatar-size);
+  height: var(--ast-header-avatar-size);
+  align-items: center;
+}
+.profile {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--ast-header-avatar-size);
+  width: var(--ast-header-avatar-size);
+  height: var(--ast-header-avatar-size);
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ast-color-outline);
+  border-radius: 0;
+  background: linear-gradient(155deg, var(--ast-color-panel-slate), var(--ast-color-panel));
+  overflow: hidden;
+  text-decoration: none;
+}
+.fallback {
+  display: grid;
+  position: absolute;
+  inset: 0;
+  place-items: center;
+  color: var(--ast-color-header-text);
+  font-family: var(--ast-font-display);
+  font-size: clamp(1.5rem, 2.5vw, 3.2rem);
+  font-weight: 600;
+}
+.avatar {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+  mask-image: linear-gradient(to right, transparent, black 26%, black 95%, rgba(0, 0, 0, .85));
+}

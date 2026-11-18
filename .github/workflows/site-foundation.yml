@@ -1,4 +1,4 @@
-name: React/Vite site foundation — Phase 1 integrated acceptance
+name: React/Vite site migration — Phase 2.1 header
 
 on:
   pull_request:
@@ -10,6 +10,7 @@ on:
       - "scripts/site-design-*"
       - "scripts/site-js-*"
       - "scripts/site-acceptance-*"
+      - "scripts/site-header-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -41,13 +42,24 @@ jobs:
       - run: npm run site:verify-dist
       - run: npx eslint frontend/src
       - name: Install Chromium for phase-specific browser regression
+        timeout-minutes: 6
         run: |
           npm install --no-save --package-lock=false playwright@1.57.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - run: npm run site:browser
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
       - run: npm run site:js-browser
+      - name: Phase 2.1 header and logo browser regression
+        run: npm run site:header-browser
+      - name: Upload Phase 2.1 header screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-2-1-header-evidence
+          path: ${{ runner.temp }}/asteria-phase-2-1-evidence/
+          retention-days: 30
+          if-no-files-found: error
       - name: Phase 1.5 integrated browser and offline legacy baseline
         run: npm run site:acceptance
       - name: Upload Phase 1.5 evidence screenshots and manifest

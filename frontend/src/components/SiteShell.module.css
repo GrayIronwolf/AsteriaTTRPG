@@ -1,3 +1,6 @@
+/* The global header's only layout owner; logo and account art are scoped to
+ * their own component modules, not repeated here or in global CSS.
+ */
 .skipLink {
   position: absolute;
   z-index: var(--ast-z-skip-link);
@@ -21,32 +24,30 @@
 }
 .headerInner {
   width: min(100%, var(--ast-page-max));
-  min-height: var(--ast-header-min-height);
+  min-height: var(--ast-header-height);
   margin-inline: auto;
   display: flex;
   flex-wrap: nowrap;
-  gap: clamp(8px, 1.2vw, 18px);
+  gap: clamp(4px, .6vw, 12px);
   align-items: center;
   justify-content: space-between;
-  padding: var(--ast-space-2) var(--ast-gutter);
+  padding: var(--ast-space-1) clamp(8px, 1.2vw, 24px);
 }
-.brand {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  width: clamp(185px, 17vw, 258px);
-  min-width: 0;
-}
-.brand img { display: block; width: 100%; height: auto; }
 .primaryNavigation {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
-  justify-content: flex-end;
-  gap: clamp(4px, .65vw, 10px);
+  justify-content: center;
+  gap: clamp(2px, .35vw, 8px);
   min-width: 0;
   flex-wrap: nowrap;
   white-space: nowrap;
 }
+.primaryNavigation a {
+  flex: 0 0 auto;
+  font-size: clamp(.70rem, .76vw, .77rem);
+}
+.primaryNavigation a > span > span { padding-inline: clamp(4px, .48vw, 9px); }
 .mobileMenu { display: none; }
 .main {
   min-height: calc(100svh - 164px);
@@ -61,13 +62,15 @@
 }
 .footer p { margin: 0; }
 
-@media (max-width: 1150px) {
-  .headerInner { min-height: 80px; }
+/* Move the same React navigation into a disclosure without DOM reparenting.
+ * This triggers before a cramped header could wrap its eight links.
+ */
+@media (max-width: 1279px) {
   .primaryNavigation { display: none; }
   .mobileMenu {
     display: block;
     position: relative;
-    margin-left: auto;
+    margin-left: 0;
     flex: 0 0 auto;
   }
   .mobileMenu summary {
@@ -84,10 +87,7 @@
     font-size: var(--ast-font-sm);
     cursor: pointer;
   }
-  .mobileMenu summary::after {
-    content: "▾";
-    font-size: var(--ast-font-xs);
-  }
+  .mobileMenu summary::after { content: "▾"; font-size: var(--ast-font-xs); }
   .mobileMenu[open] summary::after { content: "▴"; }
   .mobileNavigation {
     position: absolute;
@@ -98,7 +98,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--ast-space-2);
-    width: min(320px, calc(100vw - 28px));
+    width: min(320px, calc(100vw - 20px));
     max-height: min(72svh, 620px);
     overflow-y: auto;
     padding: var(--ast-space-3);
@@ -111,6 +111,5 @@
   .mobileNavigation a span { justify-content: start; }
 }
 @media (max-width: 760px) {
-  .headerInner { min-height: 72px; padding-block: var(--ast-space-2); }
-  .brand { width: min(52vw, 220px); }
+  .headerInner { min-height: 62px; padding-block: var(--ast-space-1); }
 }

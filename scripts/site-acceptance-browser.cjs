@@ -145,8 +145,8 @@ async function screenshot(page, filename) {
     assert.equal(await preview.locator('main h1').count(), 1);
     assert.equal(await preview.getByTestId('site-hero-image').locator('img')
       .evaluate(image => image.complete && image.naturalWidth > 0), true);
-    assert.equal(await preview.getByTestId('site-brand').locator('img')
-      .evaluate(image => image.complete && image.naturalWidth > 0), true);
+    assert.equal(await preview.getByTestId('site-brand').locator('svg')
+      .evaluate(svg => svg.getBoundingClientRect().width > 100 && svg.querySelectorAll('image').length === 2), true);
     report.previewHome = await readMetrics(preview);
     assert.equal(report.previewHome.horizontalOverflow, false);
     assert.equal(report.previewHome.brokenImages, 0);

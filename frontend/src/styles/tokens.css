@@ -78,6 +78,13 @@
   --ast-button-bevel: 11px;
   --ast-target-min: 44px;
   --ast-header-min-height: 92px;
+  --ast-header-height: clamp(84px, 7vw, 118px);
+  --ast-header-brand-width: clamp(210px, 19.5vw, 352px);
+  --ast-header-avatar-size: clamp(72px, 6.2vw, 100px);
+  --ast-logo-star-blue: #5b9df6;
+  --ast-logo-star-cyan: #82e6ff;
+  --ast-logo-star-violet: #c3a5ff;
+  --ast-logo-star-gold: #e0bf75;
   --ast-shadow-panel: 0 16px 36px rgba(0, 0, 0, .38);
   --ast-shadow-dropdown: 0 18px 38px rgba(0, 0, 0, .58);
   --ast-transition-fast: 140ms ease;
@@ -121,4 +128,23 @@
 :root[data-asteria-background="forest"] {
   --ast-color-page: #07180f;
   --ast-color-header: #142a23;
+}
+
+/* Responsive header controls use the same tokens; no unrelated CSS override. */
+@media (max-width: 1279px) {
+  :root {
+    --ast-header-height: 78px;
+    --ast-header-brand-width: clamp(190px, 29vw, 280px);
+    --ast-header-avatar-size: 66px;
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --ast-header-height: 64px;
+    --ast-header-brand-width: min(48vw, 174px);
+    --ast-header-avatar-size: clamp(48px, 14vw, 62px);
+  }
+}
+@media (max-width: 380px) {
+  :root { --ast-header-brand-width: min(44vw, 146px); }
 }

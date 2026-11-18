@@ -119,7 +119,7 @@ async function awaitPreview() {
       await page.goto(base, { waitUntil: 'networkidle' });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow, false, 'Horizontal overflow at ' + width);
-      if (width <= 1150) {
+      if (width <= 1279) {
         await page.getByTestId('site-mobile-menu').locator('summary').click();
         const mobileNav = page.getByRole('navigation', { name: 'Mobile navigation' });
         await mobileNav.getByRole('link', { name: 'Friends', exact: true }).click();

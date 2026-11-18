@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import wordmarkUrl from '../../../assets/header/asteria-wordmark.png';
 import { PRIMARY_LINKS } from '../router/siteRoutes.mjs';
 import { CrystalButton } from './ui/CrystalButton.jsx';
+import { AsteriaBrand } from './AsteriaBrand.jsx';
+import { HeaderAccountControls } from './HeaderAccountControls.jsx';
 import styles from './SiteShell.module.css';
 
 function NavigationLinks({ route, onNavigate }) {
@@ -19,9 +20,9 @@ function NavigationLinks({ route, onNavigate }) {
   ));
 }
 
-// Shell is React-owned; navigation event ownership remains in useSiteRoute.
-// CSS Modules isolate the layout from the previous website's global selectors.
-export function SiteShell({ route, children }) {
+// One React-owned header and CSS owner. There is no legacy listener, DOM
+// move, setView wrapper or image/profile sizing patch.
+export function SiteShell({ route, identity = null, children }) {
   const mobileMenu = useRef(null);
 
   useEffect(() => {
@@ -40,14 +41,13 @@ export function SiteShell({ route, children }) {
   return (
     <>
       <a className={styles.skipLink} href="#site-main" onClick={focusMain}>Skip to main content</a>
-      <header className={styles.header}>
+      <header className={styles.header} data-testid="site-header">
         <div className={styles.headerInner}>
-          <a className={styles.brand} href="#home" data-testid="site-brand" aria-label="Asteria TTRPG — Home">
-            <img src={wordmarkUrl} alt="Asteria TTRPG" width="2048" height="682" />
-          </a>
+          <AsteriaBrand />
           <nav className={styles.primaryNavigation} aria-label="Primary navigation" data-testid="site-primary-navigation">
             <NavigationLinks route={route} />
           </nav>
+          <HeaderAccountControls identity={identity} />
           <details ref={mobileMenu} className={styles.mobileMenu} data-testid="site-mobile-menu">
             <summary>Menu</summary>
             <nav className={styles.mobileNavigation} aria-label="Mobile navigation">
@@ -60,7 +60,7 @@ export function SiteShell({ route, children }) {
         {children}
       </main>
       <footer className={styles.footer}>
-        <p>Asteria TTRPG · Isolated React design-system preview</p>
+        <p>Asteria TTRPG · Isolated React header preview</p>
       </footer>
     </>
   );
