@@ -34,6 +34,11 @@ try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  const errors=[];
+ const authRequests=[];
+ page.on('request',request => {
+  const u=new URL(request.url());
+  if(u.port==='9099')authRequests.push({method:request.method(),path:u.pathname});
+ });
  page.on('pageerror',err=>errors.push('pageerror '+err.message));
  page.on('console',msg=>{
   if(msg.type()==='error'&&!msg.text().includes('127.0.0.1:5001'))errors.push('console '+msg.text());
@@ -108,7 +113,19 @@ try{
  await page.getByRole('heading',{name:'Reset Password',level:1}).waitFor();
  await page.locator('#asteria-email').fill(email);
  await page.getByTestId('site-auth-submit').click();
- await page.getByTestId('site-auth-message').waitFor({timeout:12000});
+ try {
+  await page.getByTestId('site-auth-message').waitFor({timeout:8000});
+ } catch {
+  const diagnostic=await page.evaluate(() => ({
+    title:document.querySelector('#site-auth-title')?.textContent,
+    submit:document.querySelector('[data-testid="site-auth-submit"]')?.textContent,
+    disabled:document.querySelector('[data-testid="site-auth-submit"]')?.disabled,
+    statuses:[...document.querySelectorAll('main [role="status"], main [role="alert"]')]
+      .map(el=>el.textContent?.slice(0,200)),
+    formPresent:!!document.querySelector('[data-testid="site-auth-form"]')
+  }));
+  throw new Error('Password reset diagnostic: '+JSON.stringify({diagnostic,authRequests:authRequests.slice(-12),errors}));
+ }
  const resetMessage = await page.getByTestId('site-auth-message').innerText();
  assert.match(resetMessage,/If an account exists for that address/,
    'Reset feedback did not confirm generic response: '+resetMessage);
