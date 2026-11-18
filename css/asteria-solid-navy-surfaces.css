@@ -1,0 +1,53 @@
+/* Unified dark-navy menu and panel surfaces (18 Nov 2026).
+   Colour-only scope: do not recolour cards, crystal buttons, images, borders,
+   typography, layout, or configurable dashboard panel backdrops. */
+:root {
+  --asteria-menu-panel-surface: #060D15;
+}
+
+/* Navigation bar, mobile drawer, and all existing header dropdown shells. */
+body .topbar.asteria-header,
+body #settingsPanel,
+body .aaa-mega-menu,
+body .compendium-quick-menu,
+body .asteria-account-menu {
+  background: var(--asteria-menu-panel-surface) !important;
+  background-image: none !important;
+}
+
+/* The mobile profile block previously used the old header blue-grey. */
+body .asteria-header .asteria-header-profile:not([hidden]) {
+  background-color: var(--asteria-menu-panel-surface) !important;
+}
+
+/* Page/menu headers and menu-like side panels, without touching their cards. */
+body .aaa-page-hero,
+body #compendiumLibrary .library-hero.aaa-page-hero,
+body .asteria-page-heading,
+body #phase3GameplayShell .phase3-header,
+body #phase3GameplayShell.phase3-forge-shell .aaa-forge-side-menu,
+body #aaaFriendsChatPanel {
+  background: var(--asteria-menu-panel-surface) !important;
+  background-image: none !important;
+}
+
+/* Ordinary content panels use the same solid base; card surfaces are excluded.
+   Royal Relic panels keep the user's original artwork and chosen backdrops. */
+body .panel:not(.card):not(.asteria-royal-relic),
+body .asteria-react-panel:not(.card):not(.asteria-royal-relic),
+body .clean-nav:not(.card),
+body .clean-display:not(.card),
+body .asteria-account-panel:not(.card) {
+  background-color: var(--asteria-menu-panel-surface) !important;
+  background-image: none !important;
+}
+
+/* Darken only the fallback surface behind the Royal Relic texture/frame art. */
+body #asteriaReactRoot :is(.react-character-dashboard, .react-gm-dashboard)
+  .asteria-react-panel.asteria-royal-relic {
+  background-color: var(--asteria-menu-panel-surface) !important;
+}
+body #asteriaReactRoot :is(.react-character-dashboard, .react-gm-dashboard)
+  .react-dashboard-custom-cell > .asteria-react-panel.asteria-royal-relic::after {
+  background-color: var(--asteria-menu-panel-surface) !important;
+}
