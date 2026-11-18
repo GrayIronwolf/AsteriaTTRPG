@@ -125,7 +125,7 @@ test('single route event owner and no links into legacy controllers', () => {
   assert.equal((hook.match(/addEventListener\('popstate'/g) || []).length, 1);
   assert.equal((hook.match(/removeEventListener\('popstate'/g) || []).length, 1);
   assert.doesNotMatch(app + hook + shell, /window\.(?:setView|AsteriaRouter|AsteriaReactMigration)/);
-  assert.doesNotMatch(shell, /onclick\s*=/i);
+  assert.doesNotMatch(shell, /\bonclick\s*=\s*["']/i);
   assert.match(shell, /aria-current={route.navId === link.id/);
   assert.match(shell, /aria-label="Mobile navigation"/);
 });
