@@ -61,7 +61,7 @@ export const MEGA_MENUS = Object.freeze({
   account: group('account', 'Account', [
     entry('profile', 'Profile', 'Your profile', '#/account/profile'),
     entry('settings', 'Account Settings', 'Account preferences', '#/account/settings'),
-    entry('appearance', 'Appearance', 'Website appearance', '#/account/settings?tab=appearance'),
+    entry('appearance', 'Appearance', 'Website appearance', '#/appearance'),
     entry('security', 'Password & Security', 'Account protection', '#/account/settings?tab=security')
   ])
 });

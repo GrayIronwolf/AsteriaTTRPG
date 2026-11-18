@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CrystalButton } from './ui/CrystalButton.jsx';
 import { getVerifiedHeaderIdentity } from './headerIdentity.mjs';
 import styles from './HeaderAccountControls.module.css';
@@ -12,6 +12,11 @@ export function HeaderAccountControls({ identity = null }) {
   const verified = getVerifiedHeaderIdentity(identity);
   const avatarUrl = verified?.avatarUrl ?? null;
   const [imageFailed, setImageFailed] = useState(false);
+  const accountMenuRef = useRef(null);
+
+  function closeAccountMenu() {
+    if (accountMenuRef.current) accountMenuRef.current.open = false;
+  }
 
   useEffect(() => setImageFailed(false), [avatarUrl]);
 
@@ -33,6 +38,7 @@ export function HeaderAccountControls({ identity = null }) {
         aria-label="Open My Profile"
         title={verified.username}
         data-testid="site-header-profile"
+        onClick={closeAccountMenu}
       >
         <span className={styles.fallback} aria-hidden="true">{verified.initial}</span>
         {avatarUrl && !imageFailed && (
@@ -48,7 +54,7 @@ export function HeaderAccountControls({ identity = null }) {
           />
         )}
       </a>
-      <details className={styles.accountMenu} data-testid="site-header-account-menu">
+      <details ref={accountMenuRef} className={styles.accountMenu} data-testid="site-header-account-menu">
         <summary aria-label="Account options" title="Account options">
           <span aria-hidden="true">⋮</span>
           {verified.notificationCount > 0 &&
@@ -57,12 +63,12 @@ export function HeaderAccountControls({ identity = null }) {
             </span>}
         </summary>
         <nav className={styles.accountLinks} aria-label="Account shortcuts">
-          <a href="#/account/profile">My Profile</a>
-          <a href="#/account/notifications">
+          <a href="#/account/profile" onClick={closeAccountMenu}>My Profile</a>
+          <a href="#/account/notifications" onClick={closeAccountMenu}>
             Notifications{verified.notificationCount > 0 ? ' (' + verified.notificationCount + ')' : ''}
           </a>
-          <a href="#/appearance">Appearance</a>
-          <a href="#/account/settings">Account Settings</a>
+          <a href="#/appearance" onClick={closeAccountMenu}>Appearance</a>
+          <a href="#/account/settings" onClick={closeAccountMenu}>Account Settings</a>
         </nav>
       </details>
     </div>
