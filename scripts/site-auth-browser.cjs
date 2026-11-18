@@ -112,6 +112,9 @@ try{
  await page.getByRole('link',{name:'Forgot password?'}).click();
  await page.getByRole('heading',{name:'Reset Password',level:1}).waitFor();
  await page.locator('#asteria-email').fill(email);
+ await page.evaluate(() => { window.__siteResetSubmitCount = 0;
+  document.querySelector('[data-testid="site-auth-form"]')?.addEventListener('submit', () => { window.__siteResetSubmitCount++; }, true);
+ });
  await page.getByTestId('site-auth-submit').click();
  try {
   await page.getByTestId('site-auth-message').waitFor({timeout:8000});
@@ -122,7 +125,11 @@ try{
     disabled:document.querySelector('[data-testid="site-auth-submit"]')?.disabled,
     statuses:[...document.querySelectorAll('main [role="status"], main [role="alert"]')]
       .map(el=>el.textContent?.slice(0,200)),
-    formPresent:!!document.querySelector('[data-testid="site-auth-form"]')
+    formPresent:!!document.querySelector('[data-testid="site-auth-form"]'),
+    formValid:document.querySelector('[data-testid="site-auth-form"]')?.checkValidity(),
+    submitCount:window.__siteResetSubmitCount,
+    emailValue:document.querySelector('#asteria-email')?.value,
+    emailValidation:document.querySelector('#asteria-email')?.validationMessage
   }));
   throw new Error('Password reset diagnostic: '+JSON.stringify({diagnostic,authRequests:authRequests.slice(-12),errors}));
  }
