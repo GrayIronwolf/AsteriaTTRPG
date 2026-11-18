@@ -17,7 +17,7 @@ function harness(){
         contains:name=>this.classes.has(name)
       };
       this.hidden=false;this.tabIndex=-1;this.textContent='';this.listeners={};
-      this.className='';
+      Object.defineProperty(this,'className',{get:()=>[...this.classes].join(' '),set:value=>{this.classes=new Set(String(value).split(/\s+/).filter(Boolean));}});
     }
     set id(value){this._id=value;ids.set(value,this);}
     get id(){return this._id;}
