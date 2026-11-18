@@ -143,7 +143,13 @@
     "test:gm-phase2-3": "node --test scripts/gm-phase2-3.test.mjs",
     "test:gm-phase3-1": "node --test scripts/gm-phase3-1.test.mjs",
     "test:gm-phase3-2": "node --test scripts/gm-phase3-2.test.mjs",
-    "test:gm-phase3-3": "node --test scripts/gm-phase3-3.test.mjs"
+    "test:gm-phase3-3": "node --test scripts/gm-phase3-3.test.mjs",
+    "site:dev": "vite --config vite.site.config.mjs",
+    "site:build": "vite build --config vite.site.config.mjs",
+    "site:preview": "vite preview --config vite.site.config.mjs",
+    "site:check": "node --test scripts/site-foundation-phase1-1.test.mjs",
+    "site:verify-dist": "node scripts/site-foundation-build-check.mjs",
+    "site:browser": "node scripts/site-foundation-browser.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

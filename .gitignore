@@ -20,3 +20,4 @@ functions/lib/
 *service_account*.json
 application_default_credentials.json
 gha-creds-*.json
+frontend-dist/
