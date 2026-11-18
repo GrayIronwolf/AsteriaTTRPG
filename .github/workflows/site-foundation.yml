@@ -165,6 +165,8 @@ jobs:
           path: ${{ runner.temp }}/asteria-phase-4-1-auth-evidence/
           retention-days: 30
           if-no-files-found: error
+      - name: Restore offline guest preview after emulator testing
+        run: npm run site:build
       - name: Phase 1.5 integrated browser and offline legacy baseline
         run: npm run site:acceptance
       - name: Upload Phase 1.5 evidence screenshots and manifest

@@ -143,9 +143,13 @@ try{
   // test; registration must show a pending warning without creating a number.
   'console Failed to load resource: net::ERR_CONNECTION_REFUSED',
   // The negative-credential test deliberately triggers one 400 from Auth.
-  'console Failed to load resource: the server responded with a status of 400 (Bad Request)'
+  'console Failed to load resource: the server responded with a status of 400 (Bad Request)',
+  // Firebase Auth SDK can attempt reCAPTCHA bootstrap after deliberately
+  // rejected credentials; the preview test blocks that real internet origin.
+  'external request https://www.google.com',
+  'console Failed to load resource: net::ERR_FAILED'
  ]);
- assert.ok(errors.filter(error=>expectedEmulatorDiagnostics.has(error)).length<=2,
+ assert.ok(errors.filter(error=>expectedEmulatorDiagnostics.has(error)).length<=5,
   'Unexpected repeated emulator resource failures: '+errors.join('; '));
  assert.deepEqual(errors.filter(error=>!expectedEmulatorDiagnostics.has(error)),[],
   'Unexpected browser or network errors: '+errors.join('; '));
