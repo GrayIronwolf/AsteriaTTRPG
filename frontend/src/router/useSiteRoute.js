@@ -1,28 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
+import { getBrowserLocationStore, parseLocationKey } from './locationStore.mjs';
 import { parseSiteRoute } from './siteRoutes.mjs';
 
-function readCurrentRoute() {
-  return parseSiteRoute({ hash: window.location.hash, search: window.location.search });
-}
-
 /**
- * New app's only location subscriber. Native anchors own history; both
- * browser traversal and direct hash navigation update the React outlet.
- * Listeners are cleaned up when StrictMode remounts this hook.
+ * One stable primitive location snapshot shared across all React consumers.
+ * The store owns browser event subscriptions; this hook only parses the route.
  */
 export function useSiteRoute() {
-  const [route, setRoute] = useState(readCurrentRoute);
-
-  useEffect(() => {
-    const sync = () => setRoute(readCurrentRoute());
-    window.addEventListener('hashchange', sync);
-    window.addEventListener('popstate', sync);
-    sync();
-    return () => {
-      window.removeEventListener('hashchange', sync);
-      window.removeEventListener('popstate', sync);
-    };
-  }, []);
-
-  return route;
+  const store = getBrowserLocationStore();
+  const locationKey = useSyncExternalStore(
+    store.subscribe, store.getSnapshot, store.getServerSnapshot
+  );
+  return useMemo(
+    () => parseSiteRoute(parseLocationKey(locationKey)),
+    [locationKey]
+  );
 }

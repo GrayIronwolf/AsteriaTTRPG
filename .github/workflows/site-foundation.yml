@@ -1,4 +1,4 @@
-name: React/Vite site foundation, routing and design system
+name: React/Vite site foundation, routing, design and JS ownership
 
 on:
   pull_request:
@@ -8,6 +8,7 @@ on:
       - "scripts/site-foundation-*"
       - "scripts/site-routing-*"
       - "scripts/site-design-*"
+      - "scripts/site-js-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -45,3 +46,4 @@ jobs:
       - run: npm run site:browser
       - run: npm run site:routing-browser
       - run: npm run site:design-browser
+      - run: npm run site:js-browser
