@@ -1,0 +1,10 @@
+.panel {
+  min-width: 0;
+  padding: clamp(var(--ast-space-4), 2.5vw, var(--ast-space-6));
+  border: 1px solid var(--ast-color-outline-soft);
+  border-radius: var(--ast-radius-panel);
+  box-shadow: var(--ast-shadow-panel);
+}
+.obsidian { background: var(--ast-color-panel); }
+.slate { background: var(--ast-color-panel-slate); }
+.raised { background: var(--ast-color-panel-raised); }

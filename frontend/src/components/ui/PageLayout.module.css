@@ -1,0 +1,12 @@
+.page {
+  width: min(100%, var(--ast-page-max));
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--ast-page-gutter);
+}
+.reading { max-width: var(--ast-reading-max); }
+.wide { max-width: var(--ast-page-max); }
+.full { max-width: none; }
+@media (max-width: 760px) {
+  .page { padding-inline: var(--ast-space-5); }
+}

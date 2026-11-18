@@ -120,17 +120,17 @@ async function awaitPreview() {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow, false, 'Horizontal overflow at ' + width);
       if (width <= 1150) {
-        await page.locator('.site-mobile-menu summary').click();
+        await page.getByTestId('site-mobile-menu').locator('summary').click();
         const mobileNav = page.getByRole('navigation', { name: 'Mobile navigation' });
         await mobileNav.getByRole('link', { name: 'Friends', exact: true }).click();
         await heading('Friends');
-        assert.equal(await page.locator('.site-mobile-menu').evaluate(el => el.open), false);
+        assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
         await page.getByRole('link', { name: 'Return to Home' }).click();
         await heading('Asteria');
       } else {
         assert.equal(await nav().getByRole('link', { name: 'Home' }).isVisible(), true);
         const row = await page.evaluate(() => {
-          const links = Array.from(document.querySelectorAll('.site-primary-navigation a'));
+          const links = Array.from(document.querySelectorAll('[data-testid="site-primary-navigation"] a'));
           const tops = links.map(link => Math.round(link.getBoundingClientRect().top));
           return { uniqueTops: new Set(tops).size, overflow: links.some(link => link.getBoundingClientRect().right > innerWidth) };
         });

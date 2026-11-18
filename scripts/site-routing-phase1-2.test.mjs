@@ -126,6 +126,7 @@ test('single route event owner and no links into legacy controllers', () => {
   assert.equal((hook.match(/removeEventListener\('popstate'/g) || []).length, 1);
   assert.doesNotMatch(app + hook + shell, /window\.(?:setView|AsteriaRouter|AsteriaReactMigration)/);
   assert.doesNotMatch(shell, /\bonclick\s*=\s*["']/i);
-  assert.match(shell, /aria-current={route.navId === link.id/);
+  assert.match(shell, /active={route.navId === link.id/);
+  assert.match(read('frontend/src/components/ui/CrystalButton.jsx'), /aria-current={active \? 'page'/);
   assert.match(shell, /aria-label="Mobile navigation"/);
 });

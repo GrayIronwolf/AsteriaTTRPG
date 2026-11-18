@@ -1,0 +1,36 @@
+/*
+ * Global foundation ONLY: native layout, accessible focus, keyboard/motion.
+ * Page/component selectors belong to CSS Modules, not this file.
+ */
+*, *::before, *::after { box-sizing: border-box; }
+html {
+  min-width: 0;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-width: 0;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--ast-color-page);
+  color: var(--ast-color-text);
+}
+button, input, textarea, select { font: inherit; }
+button, a, summary { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; }
+img, video, svg { max-width: 100%; }
+img, video { height: auto; }
+:focus-visible {
+  outline: 3px solid var(--ast-color-focus);
+  outline-offset: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    scroll-behavior: auto;
+    animation-duration: .01ms;
+    animation-iteration-count: 1;
+    transition-duration: .01ms;
+  }
+}

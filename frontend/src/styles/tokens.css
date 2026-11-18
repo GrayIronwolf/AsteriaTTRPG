@@ -1,0 +1,124 @@
+/*
+ * Asteria React Design Tokens — Phase 1.3
+ *
+ * ONE token owner for the future React site. Do not import legacy css/*.
+ * Feature files may consume tokens but must not redefine global brand colors.
+ * The live website remains unchanged until final React/Vite cutover.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Solid surfaces reflect the approved Asteria black / blue-gray palette. */
+  --ast-color-page: #000000;
+  --ast-color-header: #162839;
+  --ast-color-panel: #060d15;
+  --ast-color-panel-raised: #102330;
+  --ast-color-panel-slate: #18242f;
+  --ast-color-overlay: #081521;
+  --ast-color-text: #f3ead8;
+  --ast-color-text-bright: #ffffff;
+  --ast-color-header-text: #ffffff;
+  --ast-color-button-text: #ffffff;
+  --ast-color-hero-text: #ffffff;
+  --ast-color-hero-muted: #ccd9e6;
+  --ast-color-text-muted: #bdcad5;
+  --ast-color-text-disabled: #8295a5;
+  --ast-color-outline: #587c96;
+  --ast-color-outline-soft: rgba(144, 176, 199, .33);
+  --ast-color-outline-active: #b5d9ef;
+  --ast-color-focus: #a8d3f1;
+  --ast-color-accent: #6bb7e4;
+  --ast-color-accent-soft: rgba(107, 183, 228, .14);
+  --ast-color-gold: #d2aa56;
+  --ast-color-success: #35d982;
+  --ast-color-warning: #d7a347;
+  --ast-color-danger: #c9475b;
+
+  /* A restrained, inset crystal finish with a gunmetal bevel. */
+  --ast-button-bezel-top: #596c78;
+  --ast-button-bezel-bottom: #202a33;
+  --ast-button-inset-top: #284458;
+  --ast-button-inset-bottom: #101e2d;
+  --ast-button-inset-hover-top: #355a70;
+  --ast-button-inset-hover-bottom: #173044;
+  --ast-button-inset-active-top: #3f647c;
+  --ast-button-inset-active-bottom: #1b374c;
+
+  --ast-font-body: "Segoe UI", Aptos, Arial, system-ui, sans-serif;
+  --ast-font-display: Georgia, Baskerville, "Times New Roman", serif;
+  --ast-font-xs: .75rem;
+  --ast-font-sm: .875rem;
+  --ast-font-md: 1rem;
+  --ast-font-lg: 1.2rem;
+  --ast-font-xl: 1.65rem;
+  --ast-font-page: clamp(2.25rem, 5vw, 4rem);
+  --ast-font-hero: clamp(3.2rem, 7vw, 6rem);
+  --ast-line-body: 1.58;
+  --ast-line-heading: 1.14;
+  --ast-text-reading-width: 70ch;
+
+  --ast-space-1: 4px;
+  --ast-space-2: 8px;
+  --ast-space-3: 12px;
+  --ast-space-4: 16px;
+  --ast-space-5: 24px;
+  --ast-space-6: 32px;
+  --ast-space-7: 40px;
+  --ast-space-8: 48px;
+  --ast-space-9: 64px;
+  --ast-space-10: 80px;
+  --ast-gutter: clamp(16px, 3vw, 48px);
+  --ast-page-gutter: clamp(24px, 6vw, 80px);
+  --ast-page-max: 1920px;
+  --ast-reading-max: 940px;
+
+  --ast-radius-sm: 4px;
+  --ast-radius-panel: 8px;
+  --ast-radius-pill: 999px;
+  --ast-button-bevel: 11px;
+  --ast-target-min: 44px;
+  --ast-header-min-height: 92px;
+  --ast-shadow-panel: 0 16px 36px rgba(0, 0, 0, .38);
+  --ast-shadow-dropdown: 0 18px 38px rgba(0, 0, 0, .58);
+  --ast-transition-fast: 140ms ease;
+  --ast-transition-normal: 220ms ease;
+  --ast-z-header: 100;
+  --ast-z-menu: 110;
+  --ast-z-skip-link: 120;
+}
+
+/*
+ * Named appearance modes are token switches, not global selector overrides.
+ * Settings persistence and theme UI are deliberately NOT in Phase 1.3.
+ */
+:root[data-asteria-background="dark-gray"] {
+  --ast-color-page: #1b1e22;
+}
+:root[data-asteria-background="light-gray"] {
+  color-scheme: light;
+  --ast-color-page: #dadfe3;
+  --ast-color-text: #1c2932;
+  --ast-color-button-text: #172e3c;
+  --ast-color-text-bright: #101922;
+  --ast-color-text-muted: #3f5262;
+  --ast-color-outline: #49687c;
+  --ast-color-accent: #145679;
+  --ast-color-focus: #105a84;
+  --ast-color-panel: #eef1f2;
+  --ast-color-panel-raised: #f6f7f8;
+  --ast-color-panel-slate: #c3ccd3;
+  --ast-color-overlay: #f9fafb;
+  --ast-button-inset-top: #e8eff3;
+  --ast-button-inset-bottom: #c6d7df;
+  --ast-button-inset-hover-top: #ffffff;
+  --ast-button-inset-hover-bottom: #b7d2df;
+  --ast-button-inset-active-top: #d8edf7;
+  --ast-button-inset-active-bottom: #b6d5e4;
+}
+:root[data-asteria-background="dark-blue"] {
+  --ast-color-page: #071522;
+}
+:root[data-asteria-background="forest"] {
+  --ast-color-page: #07180f;
+  --ast-color-header: #142a23;
+}

@@ -1,4 +1,4 @@
-name: React/Vite site foundation and routing
+name: React/Vite site foundation, routing and design system
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - "vite.site.config.mjs"
       - "scripts/site-foundation-*"
       - "scripts/site-routing-*"
+      - "scripts/site-design-*"
       - "package.json"
       - "eslint.config.mjs"
       - ".github/workflows/site-foundation.yml"
@@ -43,3 +44,4 @@ jobs:
           npx playwright install --with-deps chromium
       - run: npm run site:browser
       - run: npm run site:routing-browser
+      - run: npm run site:design-browser
