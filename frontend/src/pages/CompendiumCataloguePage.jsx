@@ -6,7 +6,7 @@ import { loadPublicSearchDomain } from '../compendium/publicSearchIndex.mjs';
 import { PUBLIC_DOMAINS, resolveCompendiumScope } from '../compendium/compendiumModel.mjs';
 import {
   createDiscoveryHref, filterDiscoveryEntries, getDiscoveryFacets,
-  normalizeCategoryPath, parseDiscoveryFilters
+  parseDiscoveryFilters
 } from '../compendium/discoveryModel.mjs';
 import styles from './CompendiumCataloguePage.module.css';
 
