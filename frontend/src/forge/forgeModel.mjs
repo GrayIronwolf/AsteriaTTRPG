@@ -127,7 +127,13 @@ export function draftFromCharacter(record){
   patronMagicType:record.patronMagicType||schema.magic?.patronLinkedType||'',
   mancerAdvantageMagicType:record.mancerAffinity?.advantage||'',
   details:{name:record.name||'',age:record.age||'',pronouns:record.pronouns||''},
-  characteristics:{...draft.characteristics,...(record.characteristics||schema.characteristics||{})},
+  // Stored characteristics already include racial modifiers. Subtract the
+  // saved racial bonus when restoring editable base rolls, otherwise resaving
+  // would stack the racial bonus again.
+  characteristics:Object.fromEntries(STATS.map(key=>[
+   key,Number((record.characteristics||schema.characteristics||{})[key]??10)-
+    Number((record.raceInfo||schema.race?.info||{}).rollModifiers?.[key]||0)
+  ])),
   magicTypes:clone(record.magicTypes||schema.magic?.types||[]),
   skills:skills.slice(0,4),affinityRolls:clone(record.affinityRolls||schema.affinityRolls||draft.affinityRolls),
   appearance:clone(record.appearance||schema.appearance||{}),
