@@ -45,6 +45,9 @@ export function extractPublicSections(markdown) {
       if (restrictedLevel && depth > restrictedLevel) continue;
       if (restrictedLevel && depth <= restrictedLevel) restrictedLevel = 0;
       if (isRestrictedSectionTitle(title)) {
+        if (depth === 2 && !restrictedLevel) {
+          flush(); current = { title: 'Overview', body: [] };
+        }
         restrictedLevel = depth; continue;
       }
       if (restrictedLevel) continue;
@@ -55,7 +58,7 @@ export function extractPublicSections(markdown) {
     }
     if (!restrictedLevel) current.body.push(line);
   }
-  if (!restrictedLevel) flush();
+  flush();
   const unique = new Map();
   for (const section of sections) {
     if (isRestrictedSectionTitle(section.title)) continue;
