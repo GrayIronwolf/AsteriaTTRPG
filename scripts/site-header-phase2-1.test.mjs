@@ -36,7 +36,8 @@ test('the header is owned by SiteShell and uses one responsive menu and one acco
   assert.match(shell, /data-testid="site-primary-navigation"/);
   assert.match(shell, /data-testid="site-mobile-menu"/);
   assert.match(shell, /aria-label="Mobile navigation"/);
-  assert.match(shell, /onNavigate=\{closeMobileMenu\}/);
+  assert.match(shell, /onNavigate=\{navigate\}/);
+  assert.match(shell, /function navigate\(\) \{[\s\S]*?closeMobileMenu\(\)/);
   assert.match(styles, /@media \(max-width: 1279px\)/);
   assert.match(styles, /flex-wrap:\s*nowrap/);
   assert.match(styles, /display:\s*none/);
