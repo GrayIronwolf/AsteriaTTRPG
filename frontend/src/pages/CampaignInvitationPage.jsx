@@ -11,10 +11,12 @@ import {
   normalizeUCN,invitationRouteCode
 } from '../campaigns/campaignConnectionModel.mjs';
 import styles from './CampaignConnections.module.css';
+import {PlayerCharacterLink} from '../campaigns/PlayerCharacterLink.jsx';
 
 export function CampaignInvitationPage({route}){
  const {session}=useAuth(),services=useAppServices();
  const api=services.get('campaigns');
+ const characters=services.get('characters');
  const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
  const [ucn,setUCN]=useState(()=>invitationRouteCode(route)||'');
  const [preview,setPreview]=useState(null),[status,setStatus]=useState(null);
@@ -115,6 +117,10 @@ export function CampaignInvitationPage({route}){
       'This is a legacy campaign. Its original joining workflow remains on the existing website; React cannot silently grant access.':
       'Campaign joining is currently unavailable.'}</BodyText>}
     </div>}
+    {preview?.joinMode==='request'&&
+      <PlayerCharacterLink key={uid+':'+preview.id} uid={uid}
+       campaign={preview} joinStatus={status?.status}
+       api={api.connections} characters={characters}/>}
    </>}
    {status?.status==='pending'&&<BodyText>Awaiting GM review. You will not gain membership until approved.</BodyText>}
    <CrystalButton href="#/campaign-forge">Return to Campaign Forge</CrystalButton>

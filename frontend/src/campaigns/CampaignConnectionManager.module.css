@@ -7,3 +7,5 @@
 .record small{opacity:.8}.check{display:flex;gap:var(--ast-space-2);align-items:center}
 .notice{border-left:3px solid var(--ast-color-outline-active);padding:var(--ast-space-3)}
 @media(max-width:440px){.section{padding:var(--ast-space-3)}}
+
+.root h4,.section h4{margin:0}

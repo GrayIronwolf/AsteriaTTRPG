@@ -143,6 +143,8 @@ export function CharacterForgePage(){
       <div className={styles.actions}>
        <CrystalButton onClick={refresh} disabled={busy}>Refresh</CrystalButton>
        <CrystalButton onClick={begin} variant="primary" data-testid="site-forge-create">Forge New Character</CrystalButton>
+        {services.get('campaigns')?.connections?.availability().forgeEnabled&&
+         <CrystalButton href="#/campaign-invitation" data-testid="site-forge-link-campaign">Link to Campaign</CrystalButton>}
       </div>
     </div>
     {excluded>0&&<BodyText muted>{excluded} unverified or incorrectly owned record(s)

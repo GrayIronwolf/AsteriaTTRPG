@@ -3,6 +3,7 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {BodyText} from '../components/ui/Typography.jsx';
 import {safeSecureLink,DELEGATED_PERMISSIONS} from './campaignConnectionModel.mjs';
 import styles from './CampaignConnectionManager.module.css';
+import {GMCharacterLinks} from './GMCharacterLinks.jsx';
 
 export function CampaignConnectionManager({campaign,api,uid}){
  const [queue,setQueue]=useState(null),[roster,setRoster]=useState(null);
@@ -138,6 +139,8 @@ export function CampaignConnectionManager({campaign,api,uid}){
     </>}
    </article>)}
   </section>
+  <GMCharacterLinks key={uid+':'+campaign.id} campaign={campaign}
+    api={api.connections} uid={uid}/>
   <section className={styles.section}>
    <h3>Membership Activity</h3>
    <CrystalButton disabled={busy} onClick={()=>run(async()=>{

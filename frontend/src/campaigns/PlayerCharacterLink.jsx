@@ -65,7 +65,7 @@ export function PlayerCharacterLink({campaign,joinStatus,api,characters,uid}){
   {message&&<p role="status" className={styles.notice}>{message}</p>}
   <label className={styles.field}>Your saved characters
    <select value={chosen} disabled={busy} data-testid="site-character-link-select"
-    onChange={event=>{setChosen(event.target.value);setStatus(null);setError('');}}>
+    onChange={event=>{++generation.current;setChosen(event.target.value);setStatus(null);setError('');}}>
     <option value="">Select a verified character</option>
     {choices.map(item=><option key={item.id} value={item.id}>
      {item.name}{item.linked?' (linked elsewhere or previously)':''}
