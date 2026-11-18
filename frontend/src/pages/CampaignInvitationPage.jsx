@@ -38,7 +38,7 @@ export function CampaignInvitationPage({route}){
  const checkSecure=()=>run(async(ticket,account)=>{
   const raw=getPendingSecureInvite();
   if(!raw)throw new Error('The secure invitation is no longer available. Open the original link again.');
-  const result=await api.previewSecure(raw);
+  const result=await api.connections.previewSecure(raw);
   if(same(ticket,account))setPreview(result);
  });
  const accept=()=>run(async(ticket,account)=>{
@@ -46,7 +46,7 @@ export function CampaignInvitationPage({route}){
   if(!raw)throw new Error('The secure invitation is no longer available. Open the original link again.');
   // A verified signed-in account is required; server checks token,
   // recipient, expiry, claim count and active campaign.
-  const result=await api.acceptSecure(raw);
+  const result=await api.connections.acceptSecure(raw);
   if(same(ticket,account)){
    clearPendingSecureInvite();setPending(null);
    setStatus(result);setPreview(null);
@@ -56,14 +56,14 @@ export function CampaignInvitationPage({route}){
  const lookup=()=>run(async(ticket,account)=>{
   const code=normalizeUCN(ucn);
   if(!code)throw new Error('Enter a 12-digit Unique Campaign Number.');
-  const found=await api.lookupUCN(code);
+  const found=await api.connections.lookupUCN(code);
   if(!same(ticket,account))return;
   setPreview(found);
-  if(found.joinMode==='request')setStatus(await api.requestStatus(found.id,found.ucn));
+  if(found.joinMode==='request')setStatus(await api.connections.requestStatus(found.id,found.ucn));
  });
  const submit=()=>run(async(ticket,account)=>{
   if(preview?.joinMode!=='request')throw new Error('Only upgraded campaigns accept join requests.');
-  const result=await api.submitJoin(preview.id,preview.ucn);
+  const result=await api.connections.submitJoin(preview.id,preview.ucn);
   if(same(ticket,account)){
    setStatus(result);setMessage(result.status==='pending'?
     'Join request submitted. A GM must approve it.':
