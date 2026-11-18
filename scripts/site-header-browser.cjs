@@ -78,7 +78,7 @@ async function awaitServer() {
     const flood = brandSvg.locator('feFlood');
     assert.equal(await flood.count(), 1);
     const animation = await flood.evaluate(el => getComputedStyle(el).animationName);
-    assert.match(animation, /starColourCycle/, 'The logo's star colouring animation is missing');
+    assert.match(animation, /starColourCycle/, "The logo's star colouring animation is missing");
     assert.equal(await page.getByTestId('site-header-profile').count(), 0,
       'The guest preview must not falsely show an authenticated profile');
     assert.equal(await page.getByTestId('site-header-login').count(), 1);
