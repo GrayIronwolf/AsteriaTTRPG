@@ -106,3 +106,23 @@ test('shared menu and panel surfaces use solid #060D15 without recolouring cards
   assert.doesNotMatch(skin,/\.aaa-nav-card\s*\{/);
   assert.doesNotMatch(skin,/\.crystal-button\s*\{/);
 });
+
+
+test('home carousel uses transparent controls, smaller symbols and the original timer',()=>{
+  const css=read('css/asteria-aaa-upgrade.css');
+  const html=read('index.html');
+  const js=read('js/asteria-aaa-upgrade.js');
+  const controls=css.slice(css.indexOf('#home .aaa-carousel-controls{'),css.indexOf('#home .aaa-carousel-progress{'));
+  assert.match(controls,/border:0!important;border-radius:0;background:transparent!important/);
+  assert.match(controls,/box-shadow:none!important;backdrop-filter:none!important/);
+  assert.match(controls,/#home \.aaa-carousel-arrow,\s*#home \.aaa-carousel-dot\{[\s\S]*?background:transparent!important/);
+  assert.match(controls,/font-size:1\.55rem/);
+  assert.match(controls,/width:7px;height:7px/);
+  assert.match(controls,/min-width:44px;min-height:44px/);
+  assert.match(controls,/\.aaa-carousel-arrow::before,[\s\S]*?content:none!important;display:none!important/);
+  assert.match(css,/#home \.aaa-carousel-progress\{[^}]*height:2px/);
+  assert.match(css,/animation:aaa-progress 15s linear forwards/);
+  assert.match(js,/\$\('aaaCarouselPrevious'\)\?\.addEventListener\('click'/);
+  assert.match(js,/\$\('aaaCarouselNext'\)\?\.addEventListener\('click'/);
+  assert.equal((html.match(/class="aaa-carousel-dot"/g)||[]).length,4);
+});
