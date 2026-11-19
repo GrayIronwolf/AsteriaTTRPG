@@ -1,6 +1,3 @@
-.page {
-  
-  
-}
+.page { min-width: 0; }
 .notice { margin-block: var(--ast-space-7); }
 .page > a { margin-top: var(--ast-space-5); }
