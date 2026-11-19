@@ -2,10 +2,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import {useAppServices} from '../app/AppServices.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {campaignArtworkFileError} from '../../../src/state/campaignArtwork.mjs';
 import {newCampaignDraft,editCampaignDraft,ACCESS_FIELDS,PLAYER_SETTINGS} from '../campaigns/campaignForgeModel.mjs';
 import styles from './CampaignForgePage.module.css';
@@ -118,8 +118,7 @@ export function CampaignForgePage(){
  </PageLayout>;
  return <PageLayout as="section" width="wide" className={styles.page}
   labelledBy="campaign-forge-title" data-testid="site-campaign-forge-page">
-  <Eyebrow>Game Master Workspace</Eyebrow>
-  <Heading id="campaign-forge-title">Campaign Forge</Heading>
+  <PageHeader eyebrow="Game Master Workspace" id="campaign-forge-title" title="Campaign Forge" />
   {error&&<p role="alert" className={styles.notice} data-testid="site-campaign-error">{error}</p>}
   {message&&<p role="status" className={styles.notice} data-testid="site-campaign-message">{message}</p>}
   {loading&&<BodyText>Checking your saved campaigns…</BodyText>}
