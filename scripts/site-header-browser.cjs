@@ -78,11 +78,11 @@ async function awaitServer() {
     const flood = brandSvg.locator('feFlood');
     assert.equal(await flood.count(), 1);
     const animation = await flood.evaluate(el => getComputedStyle(el).animationName);
-    assert.match(animation, /starColourCycle/, "The logo's star colouring animation is missing");
+    assert.equal(animation, 'none', "The logo stars must not flash or cycle colours");
     assert.equal(await page.getByTestId('site-header-profile').count(), 0,
       'The guest preview must not falsely show an authenticated profile');
     assert.equal(await page.getByTestId('site-header-login').count(), 1);
-    console.log('PASS: original wordmark, four star windows, animated colours, solid header and guest account.');
+    console.log('PASS: original wordmark, four crystal-linked stars, solid header and guest account.');
 
     const widths = [320, 360, 390, 430, 768, 1024, 1150, 1279, 1280, 1440, 1920];
     const report = [];
@@ -132,7 +132,7 @@ async function awaitServer() {
       } else {
         assert.equal(metrics.navigationVisible, true, 'Desktop navigation hidden at ' + width);
         assert.equal(metrics.menuVisible, false, 'Mobile menu shown on desktop at ' + width);
-        assert.equal(metrics.activeCount, 1, 'One active desktop route is required');
+        assert.equal(metrics.activeCount, 0, 'Home navigation is owned by the logo alone');
         assert.equal(metrics.linksOnSingleRow, true, 'Header links wrapped at ' + width);
         assert.equal(metrics.logoClear, true, 'Logo overlaps navigation at ' + width);
         assert.equal(metrics.accountClear, true, 'Navigation overlaps the login/profile area at ' + width);
@@ -169,7 +169,7 @@ async function awaitServer() {
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     assert.equal(await flood.evaluate(el => getComputedStyle(el).animationName), 'none',
-      'Logo colour animation must stop when reduced motion is requested');
+      'Logo stars must remain static when reduced motion is requested');
     assert.deepEqual(blocked, [], 'Preview loaded resources outside its own host');
     assert.deepEqual(errors, [], 'Browser console/network errors: ' + errors.join('; '));
 
