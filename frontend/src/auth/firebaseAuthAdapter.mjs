@@ -329,6 +329,7 @@ async function initializeClient(runtime) {
     functions,functionsSdk:safeFunctionsSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED==='true'});
   const gmDashboard=createFirebaseGMDashboardService({auth,db,firestoreSdk,readCanonical,
+    functions,functionsSdk:safeFunctionsSdk,
     enabled:import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true',
     layoutEnabled:import.meta.env.VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED==='true'});
   const combat=createFirebaseCombatService({auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,readCanonical,
