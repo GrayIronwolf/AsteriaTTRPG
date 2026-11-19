@@ -18,3 +18,14 @@
 .list{padding-left:18px;margin:0 0 10px;display:grid;gap:5px}
 .empty{font-size:.85rem;color:var(--ast-color-text-muted)}
 @container (max-width:480px){.armour{grid-template-columns:1fr 1fr}.armourClass{grid-column:1/-1;grid-row:1}.weaponSlots{grid-template-columns:1fr}}
+
+.section{display:grid;gap:8px;align-content:start}
+.section p{margin:0;font-size:.85rem}
+.section label{display:grid;gap:4px;font-size:.85rem}
+.section input{min-height:38px;max-width:120px;background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text-bright)}
+.section button{min-height:34px;padding:5px 9px;cursor:pointer;border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel-raised);color:var(--ast-color-text-bright)}
+.section button:disabled{opacity:.5;cursor:not-allowed}
+.section button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.section li p{margin:4px 0}
+.coin{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.buttons{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
