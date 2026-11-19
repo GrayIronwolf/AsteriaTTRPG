@@ -47,7 +47,6 @@ export function useCampaignStream(api,method,args,enabled=true){
     }catch(error){setState({data:null,error:error?.message||'Unable to connect.',loading:false});}
     return ()=>{alive=false;stop?.();};
   // The parent owns identity/campaign scope and remounts this stream on change.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[api,method,enabled,...args]);
   return state;
 }
