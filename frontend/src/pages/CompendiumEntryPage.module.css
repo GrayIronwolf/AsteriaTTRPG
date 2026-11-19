@@ -1,5 +1,5 @@
 /* Public entry page: one scoped style owner using shared Asteria tokens. */
-.page { padding-block:var(--ast-space-7) var(--ast-space-9); min-height:60vh; }
+.page {   }
 .breadcrumbs { display:flex; flex-wrap:wrap; gap:var(--ast-space-3); margin-bottom:var(--ast-space-7); color:var(--ast-color-text-muted); }
 .breadcrumbs a, .returnLink, .page [role="status"] a, .page [role="alert"] a { color:var(--ast-color-accent); text-underline-offset:3px; }
 .category { margin-top:var(--ast-space-3); color:var(--ast-color-text-muted); }
@@ -11,5 +11,5 @@
 .section { padding:var(--ast-space-6); margin-block:var(--ast-space-5); background:var(--ast-color-panel); border:1px solid var(--ast-color-outline-soft); border-radius:var(--ast-radius-panel); }
 .sectionHeading { font-family:var(--ast-font-display); color:var(--ast-color-text-bright); margin-top:0; font-size:var(--ast-font-xl); }
 .notice { font-size:var(--ast-font-sm); color:var(--ast-color-text-muted); }
-.returnLink { display:inline-block; padding-block:var(--ast-space-4); }
+
 @media(max-width:760px) { .page { padding-block:var(--ast-space-5); } .section { padding:var(--ast-space-4); } }
