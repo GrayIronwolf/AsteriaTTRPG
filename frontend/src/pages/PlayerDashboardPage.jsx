@@ -206,6 +206,18 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
     catch(reason){setResourceError(reason?.message||'Resource update failed.');}
     finally{setResourceBusy('');}
   };
+  const panelAction=async(type,details)=>{
+    if(!resourceEditable||resourceBusy)return;
+    setResourceBusy(type);setResourceError('');
+    try{
+      if(type==='removeCondition')await api.removeCondition(campaignId,characterId,details);
+      else if(type==='takeRest')await api.takeRest(campaignId,characterId,details.type,{
+        soulRecovery:details.soulRecovery,expectedSequence:ch.restSequence});
+      else if(type==='adjustCurrency')await api.adjustCurrency(campaignId,characterId,
+        details.key,details.delta);
+    }catch(e){setResourceError(e?.message||'Character action failed.');}
+    finally{setResourceBusy('');}
+  };
   return <>
     <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}
       editable={resourceEditable} resourceBusy={Boolean(resourceBusy)} onAdjust={adjustResource}/>
@@ -259,7 +271,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         owner={data.owner} campaignId={campaignId} characterId={characterId}
         initialLayout={ch.dashboardLayout}
         renderPanel={id=><PlayerOverviewPanel id={id} character={ch}
-          campaign={c} onNavigate={setTab} available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
+          campaign={c} onNavigate={setTab} editable={resourceEditable}
+          busy={Boolean(resourceBusy)} onAction={panelAction}
+          available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
       :(economyEnabled&&['Inventory','Crafting'].includes(tab))||
         (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
         (tab==='Advanced Dice'&&dice?.availability().enabled)||
