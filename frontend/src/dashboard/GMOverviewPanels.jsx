@@ -1,10 +1,39 @@
-import React from 'react';
+import React,{useState} from 'react';
 import styles from './GMOverviewPanels.module.css';
+
+function GMConditions({party,busy,onCondition}){
+  const [target,setTarget]=useState(''),[name,setName]=useState('');
+  const selected=party.find(row=>row.id===target)||party[0]||null;
+  return <div className={styles.section}>
+    <h4>Special Damage &amp; Conditions</h4>
+    {party.length?<label>Character
+      <select value={selected?.id||''} onChange={e=>setTarget(e.target.value)}>
+        {party.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
+      </select></label>:<p>No linked characters.</p>}
+    {selected?<><p>Soul Damage: <strong>{selected.soulDamage||0}</strong></p>
+      <ul className={styles.party}>{(selected.conditions||[]).map(condition=>
+        <li key={condition.id} className={styles.row}>
+          <span>{condition.name}</span>
+          <button type="button" disabled={busy}
+            onClick={()=>onCondition?.(selected.id,{action:'remove',id:condition.id})}>
+            Remove</button>
+        </li>)}</ul>
+      {!selected.conditions?.length?<p>No active conditions.</p>:null}
+      <label>New condition
+        <input maxLength={100} value={name} onChange={e=>setName(e.target.value)}/>
+      </label>
+      <button type="button" disabled={busy||!name.trim()} onClick={()=>{
+        onCondition?.(selected.id,{action:'add',name:name.trim()});
+        setName('');
+      }}>Apply Condition</button>
+    </>:null}
+  </div>;
+}
 
 /** Original GM panel IDs are preserved in the saved layout model. These
  * controls navigate to the existing authenticated React modules rather than
  * recreating unverified Firestore mutations inside a decorative panel. */
-export function GMOverviewPanel({id,party=[],session={},onNavigate,available={},onReviewRest,busy=false}){
+export function GMOverviewPanel({id,party=[],session={},onNavigate,available={},onReviewRest,onCondition,busy=false}){
   const open=(destination,label)=> <button className={styles.action} type="button"
     onClick={()=>onNavigate(destination)}>{label}</button>;
   if(id==='partySummary')return <div className={styles.party}>
@@ -55,7 +84,7 @@ export function GMOverviewPanel({id,party=[],session={},onNavigate,available={},
     inventoryOverview:['inventory','Open PC Inventory']
   };
   if(destinations[id])return open(...destinations[id]);
-  if(id==='specialDamage')return <p>Soul Damage inspection must be restored from
-    original character-system source data before this panel can issue commands.</p>;
+  if(id==='specialDamage')return <GMConditions party={party}
+    busy={busy} onCondition={onCondition}/>;
   return <p>This panel requires its original secure GM gameplay module.</p>;
 }
