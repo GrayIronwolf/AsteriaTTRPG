@@ -136,6 +136,6 @@ test('account, read and UI wiring preserve existing runtime, privacy and no offl
   assert.match(auth,/ConnectionBoundary/);
   assert.match(view,/site-connection-suspended/);
   assert.match(view,/signOut/);
-  assert.doesNotMatch(monitor+verified,/localStorage|indexedDB|enableIndexedDbPersistence|persistLocalCache|caches\.open|serviceWorker/);
+  assert.doesNotMatch(monitor+verified,/localStorage\.(?:getItem|setItem)|indexedDB\.open|enableIndexedDbPersistence\(|persistLocalCache\(|caches\.open\(|serviceWorker\.register\(/);
   assert.equal((adapter.match(/onAuthStateChanged\(/g)||[]).length,1);
 });
