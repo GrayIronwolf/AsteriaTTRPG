@@ -4,7 +4,7 @@ This phase creates a **non-deployed** release overlay and rollback manifest. The
 
 ## Preparation
 1. Build the separate Vite frontend using production browser Firebase configuration and existing explicit React feature gates. Compilation does not call live Firebase.
-2. Generate pure ESM pricing from the existing canonical UMD source without changing the legacy file. Compare concrete values and legacy inputs against both versions.
+2. Generate pure ESM pricing from the existing canonical UMD source without changing the legacy file. The isolated Vite build uses an explicit pricing adapter alias; legacy builds keep the original adapter and compiled bundle parity. Compare concrete values and legacy inputs against both versions.
 3. Stage compiled frontend/index.html as a candidate root index.html, plus immutable compiled assets, in runner temporary storage. Include the old root index.html in rollback/. The current repository root index and its original styles and controllers remain untouched.
 4. Hash the candidate files, original entry, key legacy dependencies and every retained react-dist asset. Abort staging if existing website assets conflict, files are missing, or entry URLs are absolute.
 5. The release overlay is NOT a full standalone website: the real existing website publisher must support an overlay that retains all old static files, including previously served hashed modules, content, public assets and tools. If the publisher wipes non-uploaded content, the overlay is NOT safe to publish.

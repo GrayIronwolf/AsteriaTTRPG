@@ -53,6 +53,7 @@ jobs:
         run: |
           npm run site:build
           npm run site:verify-dist
+          node --test scripts/site-cutover-phase10-4-bundle.test.mjs
           npm run site:cutover-phase10-4:stage
           npm run site:cutover-phase10-4:verify
       - name: Upload ephemeral non-deployed release evidence
