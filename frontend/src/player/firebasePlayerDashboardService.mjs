@@ -1,4 +1,5 @@
 import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
+import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
 import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
