@@ -1,7 +1,9 @@
 /* Phase 2.4 appearance page: scoped controls, no legacy CSS or overrides. */
 .page { min-width: 0; }
+.content { display: grid; min-width: 0; align-content: start; gap: var(--ast-space-4); }
+.content > p { max-width: 72ch; }
 .section {
-  margin-top: var(--ast-space-6);
+  margin-top: 0;
   padding: var(--ast-space-5);
 }
 .sectionTitle {
