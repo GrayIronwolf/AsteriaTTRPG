@@ -240,6 +240,10 @@ try{
  await owner.getByRole('button',{name:'Blackout'}).click();
  await owner.getByText('Presentation updated.').waitFor({timeout:30000});
  await player.getByText('Display is blacked out.').waitFor({timeout:30000});
+ // Restore the linked-character route before testing account revocation on refresh.
+ await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
+   {waitUntil:'domcontentloaded'});
+ await player.getByTestId('site-player-campaign').waitFor({timeout:30000});
  await owner.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
   {waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-player-campaign').waitFor({timeout:30000});
