@@ -1,8 +1,8 @@
 import React, {useCallback,useEffect,useRef,useState} from 'react';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Heading,BodyText,Eyebrow} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
@@ -133,8 +133,7 @@ export function FriendsPage() {
   </PageLayout>;
   return <PageLayout as="section" width="wide" className={styles.page}
     labelledBy="friends-title" data-testid="site-friends-page">
-    <Eyebrow>Asteria Social</Eyebrow>
-    <Heading id="friends-title">Friends</Heading>
+    <PageHeader eyebrow="Asteria Social" id="friends-title" title="Friends" />
     <BodyText muted>Exact Account ID search, private friend requests, and friendship management.
       Player discovery and relationship records remain protected by Firebase callables.</BodyText>
     <div className={styles.layout}>
