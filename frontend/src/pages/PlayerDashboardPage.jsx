@@ -239,7 +239,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       initialSection={{Calendar:'calendar',Weather:'weather','Campaign Library':'handouts',
         'Campaign Audio':'soundboard','Recording & Archives':'recording'}[tab]||'calendar'}/>:null}
     {economyEnabled&&['Inventory & Trading','Inventory','Crafting'].includes(tab)?<PlayerEconomyWorkspace
-      key={campaignId+':'+characterId} api={economy} campaignId={campaignId} characterId={characterId}/>:null}
+      key={campaignId+':'+characterId+':'+tab} api={economy}
+      initialTab={tab==='Crafting'?'Crafting':'Inventory'}
+      campaignId={campaignId} characterId={characterId}/>:null}
     {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="progression"/>:null}
     {progressionEnabled&&tab==='Skills'?<PlayerProgressionWorkspace
