@@ -54,6 +54,8 @@ export function canActivateRoute(routeId, services) {
   const ready=feature.status==='ready'&&feature.requiredServices.every(key=>services?.has(key)===true);
   // Phase 5.3 connection actions are independently opted in. Simply providing
   // a campaign-settings adapter never unlocks invitations.
+  if(routeId==='presentation')return feature.requiredServices.every(key=>services?.has(key)===true)&&
+    services.get('gameplay')?.media?.availability().enabled===true;
   if(routeId==='character-dashboard')return ready&&
     services.get('characters')?.dashboard?.availability().enabled===true;
   if(routeId==='invitation')return ready&&

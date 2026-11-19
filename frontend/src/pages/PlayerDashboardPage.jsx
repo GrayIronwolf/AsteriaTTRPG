@@ -8,6 +8,7 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
+import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
@@ -94,7 +95,7 @@ function Sections({character,tab,owned}){
   </SurfacePanel>;
   return null;
 }
-function Dashboard({api,uid,campaignId='',characterId}){
+function Dashboard({api,media,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Overview');
   const generation=useRef(0);
@@ -143,11 +144,15 @@ function Dashboard({api,uid,campaignId='',characterId}){
       <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
     </SurfacePanel>}
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {TABS.filter(x=>data.owner||x!=='Journal').map(value=><button type="button"
+      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
         key={value} className={tab===value?styles.selected:''}
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
+    {tab==='Battle Maps'&&media?.availability().enabled?
+      <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
+    {tab==='World Atlas'&&media?.availability().enabled?
+      <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
     {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?<Resources character={ch}/>:null}
     {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
@@ -167,7 +172,8 @@ function Dashboard({api,uid,campaignId='',characterId}){
           if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
           return null;
         }}/>
-      :<Sections character={ch} owned={data.owner} tab={tab}/>}
+      :['Battle Maps','World Atlas'].includes(tab)?null:
+        <Sections character={ch} owned={data.owner} tab={tab}/>}
     
     <SurfacePanel className={styles.panel} as="aside">
       <h3>Dashboard Migration</h3>
@@ -182,6 +188,7 @@ export function PlayerDashboardPage({route}){
   const {session}=useAuth(),services=useAppServices();
   const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
   const api=services.get('characters')?.dashboard;
+  const media=services.get('gameplay')?.media;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -190,6 +197,6 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} campaignId={campaignId} characterId={characterId}/>}
+      uid={uid} api={api} media={media} campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }

@@ -8,6 +8,8 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
+import {CampaignMapWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
+import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
@@ -86,6 +88,7 @@ function CampaignGM({api,uid,campaignId}) {
   const [snapshot,setSnapshot]=useState(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState(''),[message,setMessage]=useState('');
   const [busy,setBusy]=useState(false),[tab,setTab]=useState('overview');
+  const mediaEnabled=api.media?.availability().enabled===true;
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
@@ -137,7 +140,7 @@ function CampaignGM({api,uid,campaignId}) {
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session'].map(item=><button key={item} type="button"
+      {['overview','party','session',...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
         className={tab===item?styles.selected:''} aria-current={tab===item?'page':undefined}
         onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
     </nav>
@@ -158,6 +161,11 @@ function CampaignGM({api,uid,campaignId}) {
           return null;
         }}/>
       :null}
+    {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
+      api={api.media} campaignId={campaignId} role="gm"/>:null}
+    {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
+      key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
+      party={snapshot.party}/>:null}
     <SurfacePanel className={styles.panel} as="aside">
       <h2>GM Workspace</h2>
       <BodyText muted>Campaign settings and character-link approval stay in Campaign Forge.
