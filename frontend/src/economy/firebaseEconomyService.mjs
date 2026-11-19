@@ -132,7 +132,7 @@ export function createFirebaseEconomyService({
         if(role==='player'){
           attach('character',ref('campaigns',cid,'characters',charId),mapDoc,true,true);
           attach('privateSheet',source(uid,init.sourceId),mapDoc,true,true);
-        }else attach('party',collection(cid,'characters'),mapRows);
+        }else attach('party',firestoreSdk.query(collection(cid,'characters'),firestoreSdk.limit(128)),mapRows);
         attach('session',ref('campaigns',cid,'liveSession','current'),mapDoc,true,false);
         for(const [key,kind] of Object.entries(groups)){
           if(key==='drafts'&&role!=='gm'){done[key]=true;continue;}
