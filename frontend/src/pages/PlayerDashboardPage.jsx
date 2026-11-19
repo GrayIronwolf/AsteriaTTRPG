@@ -12,6 +12,7 @@ import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/Campaign
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
 import {PlayerEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
+import {PlayerDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
@@ -98,7 +99,7 @@ function Sections({character,tab,owned}){
   </SurfacePanel>;
   return null;
 }
-function Dashboard({api,media,combat,progression,economy,uid,campaignId='',characterId}){
+function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Overview');
   const generation=useRef(0);
@@ -125,6 +126,7 @@ function Dashboard({api,media,combat,progression,economy,uid,campaignId='',chara
   const combatEnabled=Boolean(c&&data.owner&&combat?.availability().enabled);
   const progressionEnabled=Boolean(c&&data.owner&&progression?.availability().enabled);
   const economyEnabled=Boolean(c&&data.owner&&economy?.availability().enabled);
+  const digitalGMEnabled=Boolean(c&&digitalGM?.availability().enabled);
   return <>
     <div className={styles.titleRow}>
       <div><Eyebrow>{c?'Campaign Character':'Owned Character'} · {data.owner?'Owner':'GM Read-only'}</Eyebrow>
@@ -150,11 +152,13 @@ function Dashboard({api,media,combat,progression,economy,uid,campaignId='',chara
       <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
     </SurfacePanel>}
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
+      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
         key={value} className={tab===value?styles.selected:''}
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
+    {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
+      key={campaignId} api={digitalGM} campaignId={campaignId}/>:null}
     {economyEnabled&&tab==='Inventory & Trading'?<PlayerEconomyWorkspace
       key={campaignId+':'+characterId} api={economy} campaignId={campaignId} characterId={characterId}/>:null}
     {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
@@ -191,7 +195,7 @@ function Dashboard({api,media,combat,progression,economy,uid,campaignId='',chara
           if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
           return null;
         }}/>
-      :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History','Inventory & Trading'].includes(tab)?null:
+      :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
     <SurfacePanel className={styles.panel} as="aside">
@@ -211,6 +215,7 @@ export function PlayerDashboardPage({route}){
   const combat=services.get('gameplay')?.combat;
   const progression=services.get('gameplay')?.progression;
   const economy=services.get('gameplay')?.economy;
+  const digitalGM=services.get('gameplay')?.digitalGM;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -219,7 +224,7 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy}
+      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy} digitalGM={digitalGM}
       campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }

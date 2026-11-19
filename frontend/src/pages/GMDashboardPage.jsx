@@ -13,6 +13,7 @@ import {CampaignPresentationController} from '../dashboard/CampaignPresentationW
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {GMChecksAndProgression} from '../progression/ProgressionWorkspace.jsx';
 import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
+import {GMDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
@@ -95,6 +96,7 @@ function CampaignGM({api,uid,campaignId}) {
   const combatEnabled=api.combat?.availability().enabled===true;
   const progressionEnabled=api.progression?.availability().enabled===true;
   const economyEnabled=api.economy?.availability().enabled===true;
+  const digitalGMEnabled=api.digitalGM?.availability().enabled===true;
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
@@ -146,7 +148,7 @@ function CampaignGM({api,uid,campaignId}) {
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
+      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
         className={tab===item?styles.selected:''} aria-current={tab===item?'page':undefined}
         onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
     </nav>
@@ -174,6 +176,8 @@ function CampaignGM({api,uid,campaignId}) {
       :null}
     {combatEnabled&&tab==='combat'?<GMCombatWorkspace
       key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
+    {digitalGMEnabled&&tab==='digital-gm-toolkit'?<GMDigitalGMWorkspace
+      key={uid+':'+campaignId} api={api.digitalGM} campaignId={campaignId}/>:null}
     {economyEnabled&&tab==='inventory-loot-crafting'?<GMEconomyWorkspace
       key={uid+':'+campaignId} api={api.economy} campaignId={campaignId}/>:null}
     {progressionEnabled&&tab==='checks-progression'?<GMChecksAndProgression

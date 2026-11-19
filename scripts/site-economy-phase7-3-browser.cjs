@@ -366,12 +366,20 @@ try{
  await gmReturn.getByRole('button',{name:'Create Merchant'}).click();
  await gmReturn.getByText('Merchant saved.').waitFor({timeout:30000});
  await gmReturn.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Shops'}).click();
- await playerEconomy.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Crafting'}).click();
- await playerEconomy.getByTestId('site-economy-crafting').waitFor();
- await playerEconomy.getByRole('button',{name:'Trades'}).click();
- await playerEconomy.getByTestId('site-economy-trades').waitFor();
+ // Navigating back to the player route creates a fresh active workspace.
+ // Scope interactions to its visible root instead of a stale transition tree.
+ await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
+   {waitUntil:'domcontentloaded'});
+ await player.getByRole('button',{name:'Inventory & Trading'}).last().click();
+ const activeEconomy=player.locator('[data-testid="site-player-economy"]:visible').last();
+ await activeEconomy.waitFor({timeout:30000});
+ await activeEconomy.getByRole('button',{name:'Shops'}).first().click();
+ try{await activeEconomy.getByText('Emulator Blacksmith').first().waitFor({timeout:15000});}
+ catch(error){console.error('PLAYER MERCHANT DEBUG:',(await activeEconomy.innerText()).slice(0,5500));throw error;}
+ await activeEconomy.getByRole('button',{name:'Crafting'}).first().click();
+ await activeEconomy.getByTestId('site-economy-crafting').waitFor();
+ await activeEconomy.getByRole('button',{name:'Trades'}).first().click();
+ await activeEconomy.getByTestId('site-economy-trades').waitFor();
  await owner.goto(base+'#/campaign-forge',{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Manage Campaign'}).click();
  await owner.getByTestId('site-gm-character-refresh').click();
