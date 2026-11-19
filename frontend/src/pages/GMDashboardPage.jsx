@@ -164,7 +164,7 @@ function CampaignGM({api,uid,campaignId}) {
       <div className={styles.gmWorkspaceMain}>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
       {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><CrystalButton key={item} type="button" size="compact" active={tab===item}
-        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1).replaceAll('-',' ')}</CrystalButton>)}
+        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</CrystalButton>)}
     </nav>
     {error?<p role="alert" className={styles.notice}>{error}</p>:null}
     {message?<p role="status" className={styles.notice}>{message}</p>:null}
