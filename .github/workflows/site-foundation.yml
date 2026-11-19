@@ -57,6 +57,7 @@ jobs:
         run: npm run site:retirement-audit
       - run: npm run site:build
       - run: npm run site:verify-dist
+      - run: node scripts/site-button-theme-dist-check.mjs
       - name: Phase 4.5 publication security audit
         run: npm run site:security-audit
       - run: npx eslint frontend/src
