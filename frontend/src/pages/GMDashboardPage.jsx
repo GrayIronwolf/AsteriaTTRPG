@@ -10,6 +10,7 @@ import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {CampaignMapWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
+import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
 
 function Resource({label,value}) {
@@ -89,6 +90,7 @@ function CampaignGM({api,uid,campaignId}) {
   const [error,setError]=useState(''),[message,setMessage]=useState('');
   const [busy,setBusy]=useState(false),[tab,setTab]=useState('overview');
   const mediaEnabled=api.media?.availability().enabled===true;
+  const combatEnabled=api.combat?.availability().enabled===true;
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
@@ -140,7 +142,7 @@ function CampaignGM({api,uid,campaignId}) {
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session',...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
+      {['overview','party','session',...(combatEnabled?['combat']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
         className={tab===item?styles.selected:''} aria-current={tab===item?'page':undefined}
         onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
     </nav>
@@ -155,12 +157,16 @@ function CampaignGM({api,uid,campaignId}) {
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=>{
           if(id==='partySummary')return <Party party={snapshot.party}/>;
-          if(id==='encounter')return <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
+          if(id==='encounter')return combatEnabled?
+            <GMCombatWorkspace api={api.combat} campaignId={campaignId}/>:
+            <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
           if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
           if(id==='xp')return <p>XP distribution migrates in Phase 7.</p>;
           return null;
         }}/>
       :null}
+    {combatEnabled&&tab==='combat'?<GMCombatWorkspace
+      key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
       api={api.media} campaignId={campaignId} role="gm"/>:null}
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
@@ -169,7 +175,7 @@ function CampaignGM({api,uid,campaignId}) {
     <SurfacePanel className={styles.panel} as="aside">
       <h2>GM Workspace</h2>
       <BodyText muted>Campaign settings and character-link approval stay in Campaign Forge.
-        Combat, gameplay, presentation and video maps migrate in later phases. No legacy panels are mounted here.</BodyText>
+        Gameplay such as skills, checks, inventory and rewards migrates in later phases. No legacy panels are mounted here.</BodyText>
       {snapshot.role==='owner'?<CrystalButton href="#/campaign-forge">Manage Campaign</CrystalButton>:
         <BodyText muted>Owner-only campaign settings are unavailable to Co-GMs.</BodyText>}
     </SurfacePanel>

@@ -17,6 +17,7 @@ import { createFirebaseCampaignConnectionService } from '../campaigns/firebaseCa
 import { createFirebaseGMDashboardService } from '../dashboard/firebaseGMDashboardService.mjs';
 import { createFirebasePlayerDashboardService } from '../player/firebasePlayerDashboardService.mjs';
 import {createFirebaseCampaignMediaService} from '../dashboard/firebaseCampaignMediaService.mjs';
+import {createFirebaseCombatService} from '../combat/firebaseCombatService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -334,7 +335,9 @@ async function initializeClient(runtime) {
   const gmDashboard=createFirebaseGMDashboardService({auth,db,firestoreSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true',
     layoutEnabled:import.meta.env.VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED==='true'});
-  const gameplay=Object.freeze({...gmDashboard,media});
+  const combat=createFirebaseCombatService({auth,db,firestoreSdk,functions,functionsSdk,readCanonical,
+    enabled:import.meta.env.VITE_ASTERIA_COMBAT_ENABLED==='true'});
+  const gameplay=Object.freeze({...gmDashboard,media,combat});
   return Object.freeze({
     friends,notifications,characters:characterServices,campaigns,gameplay,
     subscribe,

@@ -9,6 +9,7 @@ import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
+import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
@@ -95,7 +96,7 @@ function Sections({character,tab,owned}){
   </SurfacePanel>;
   return null;
 }
-function Dashboard({api,media,uid,campaignId='',characterId}){
+function Dashboard({api,media,combat,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Overview');
   const generation=useRef(0);
@@ -119,6 +120,7 @@ function Dashboard({api,media,uid,campaignId='',characterId}){
     <CrystalButton href="#/character-forge">Back to Character Forge</CrystalButton>
   </SurfacePanel>;
   const ch=data.character,c=data.campaign;
+  const combatEnabled=Boolean(c&&data.owner&&combat?.availability().enabled);
   return <>
     <div className={styles.titleRow}>
       <div><Eyebrow>{c?'Campaign Character':'Owned Character'} · {data.owner?'Owner':'GM Read-only'}</Eyebrow>
@@ -144,11 +146,13 @@ function Dashboard({api,media,uid,campaignId='',characterId}){
       <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
     </SurfacePanel>}
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
+      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
         key={value} className={tab===value?styles.selected:''}
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
+    {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={campaignId+':'+characterId}
+      api={combat} campaignId={campaignId} characterId={characterId}/>:null}
     {tab==='Battle Maps'&&media?.availability().enabled?
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
     {tab==='World Atlas'&&media?.availability().enabled?
@@ -172,14 +176,14 @@ function Dashboard({api,media,uid,campaignId='',characterId}){
           if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
           return null;
         }}/>
-      :['Battle Maps','World Atlas'].includes(tab)?null:
+      :['Battle Maps','World Atlas','Combat'].includes(tab)?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
     <SurfacePanel className={styles.panel} as="aside">
       <h3>Dashboard Migration</h3>
       <BodyText muted>This React dashboard reads existing saved character and campaign data.
-        Resource updates, combat, spells, rewards and dashboard layout editing remain in
-        their existing gameplay systems until Phases 6.3 and 7. No automatic writes are made.</BodyText>
+        Existing gameplay commands remain server-authoritative. Skills, spells, checks,
+        rewards and other gameplay tools migrate in later phases.</BodyText>
     </SurfacePanel>
   </>;
 }
@@ -189,6 +193,7 @@ export function PlayerDashboardPage({route}){
   const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
   const api=services.get('characters')?.dashboard;
   const media=services.get('gameplay')?.media;
+  const combat=services.get('gameplay')?.combat;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -197,6 +202,7 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} media={media} campaignId={campaignId} characterId={characterId}/>}
+      uid={uid} api={api} media={media} combat={combat}
+      campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }
