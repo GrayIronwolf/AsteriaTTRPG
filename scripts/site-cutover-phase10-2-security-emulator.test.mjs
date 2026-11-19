@@ -216,7 +216,20 @@ test('membership revocation immediately invalidates existing Firestore and Stora
   await assertSucceeds(uploadBytes(ref(storage('gm'),media),
     new Uint8Array([137,80,78,71,1]),{contentType:'image/png'}));
   await assertSucceeds(read('alice',at()));
-  await assertSucceeds(getBytes(ref(storage('alice'),media)));
+  // The Storage emulator obtains the campaign membership from Firestore.
+  // Fresh beforeEach fixtures can become visible to its cross-service cache
+  // slightly after the Firestore SDK sees them. Retry only the pre-revocation
+  // permitted read; post-revocation denial is asserted without any retry.
+  let beforeRevocation = false;
+  for(let i=0;i<12&&!beforeRevocation;i++){
+    try{
+      await assertSucceeds(getBytes(ref(storage('alice'),media)));
+      beforeRevocation=true;
+    }catch(error){
+      if(i===11)throw new Error('Active player could not read the published map before revocation.',{cause:error});
+      await new Promise(done=>setTimeout(done,150));
+    }
+  }
   await env.withSecurityRulesDisabled(async context=>{
     await updateDoc(doc(context.firestore(),at('members','alice')),{status:'suspended'});
   });
