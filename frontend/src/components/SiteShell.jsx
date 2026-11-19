@@ -10,7 +10,7 @@ import styles from './SiteShell.module.css';
 import { useAuth } from '../auth/AuthProvider.jsx';
 
 function NavigationLinks({ route, activeMenuId, mode, onOpenMenu, onNavigate, onCloseMenu }) {
-  return PRIMARY_LINKS.map(link => {
+  return PRIMARY_LINKS.filter(link => link.id !== 'home' && link.id !== 'account').map(link => {
     const hasMenu = Boolean(getMegaMenu(link.id));
     return (
       <CrystalButton
@@ -18,7 +18,7 @@ function NavigationLinks({ route, activeMenuId, mode, onOpenMenu, onNavigate, on
         href={link.href}
         active={route.navId === link.id}
         variant="nav"
-        size="compact"
+        size={mode === 'desktop' ? 'regular' : 'compact'}
         aria-haspopup={hasMenu ? 'dialog' : undefined}
         aria-controls={hasMenu ? 'site-mega-menu' : undefined}
         aria-expanded={hasMenu ? activeMenuId === link.id : undefined}
