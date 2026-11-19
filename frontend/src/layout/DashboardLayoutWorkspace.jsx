@@ -40,7 +40,7 @@ export function DashboardLayoutWorkspace({
             gridColumn:(pos.x+1)+' / span '+pos.w,
             gridRow:(pos.y+1)+' / span '+pos.h
           }}>
-          <h3 className={styles.title}>{names.get(id)||'Dashboard Panel'}</h3>
+          <h3 className={styles.title}><span>{names.get(id)||'Dashboard Panel'}</span></h3>
           <div className={styles.content}>{renderPanel(id)}</div>
         </article>;
       })}
