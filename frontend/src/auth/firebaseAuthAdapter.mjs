@@ -1,7 +1,7 @@
 import {
-  EMULATOR_FIREBASE_CONFIG, PRODUCTION_FIREBASE_CONFIG,
   validateLoginInput, validateResetEmail, GENERIC_RESET_SUCCESS
 } from './authPolicy.mjs';
+import {connectFirebaseRuntime} from '../firebase/firebaseRuntime.mjs';
 import { createAuthObserver, ownedProfile } from './authSessionModel.mjs';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
 import { finalizeRegisteredAccountId } from '../../../src/state/accountIdRegistration.mjs';
@@ -27,53 +27,28 @@ import {
 
 let singleton = null;
 
-function validateExistingApp(app, projectId) {
-  if (!app || app.options?.projectId !== projectId) {
-    throw new Error('The active Firebase app does not match the selected Asteria project');
-  }
-  return app;
-}
-
 /**
- * Only one app, Auth, Firestore and Functions client in this isolated runtime.
- * SDK dependencies are loaded lazily when explicitly enabled by build config.
+ * Account facade: one observer and service registry per selected runtime.
+ * The shared Firebase runtime exclusively owns SDK initialization, emulator
+ * connections, Auth persistence and the actual app instances.
  */
 export async function createFirebaseAuthAdapter(runtime) {
-  if (runtime?.enabled !== true) throw new Error('React Auth must be explicitly enabled');
-  const projectId = runtime.projectId;
-  if (singleton) {
-    if (singleton.projectId !== projectId) throw new Error('Firebase project switched without reload');
+  if(runtime?.enabled!==true)throw Error('React Auth must be explicitly enabled');
+  const key=runtime.mode+':'+runtime.projectId;
+  if(singleton){
+    if(singleton.key!==key)
+      throw Error('Firebase project or runtime mode switched without reload');
     return singleton.promise;
   }
-  const promise = initializeClient(runtime);
-  singleton = {projectId, promise};
-  try { return await promise; }
-  catch (error) { singleton = null; throw error; }
+  const promise=initializeClient(runtime);
+  singleton={key,promise};
+  try{return await promise;}
+  catch(error){if(singleton?.promise===promise)singleton=null;throw error;}
 }
 
 async function initializeClient(runtime) {
-  const [appSdk, authSdk, firestoreSdk, functionsSdk, storageSdk] = await Promise.all([
-    import('firebase/app'), import('firebase/auth'),
-    import('firebase/firestore'), import('firebase/functions'), import('firebase/storage')
-  ]);
-  const config = runtime.mode === 'emulator' ? EMULATOR_FIREBASE_CONFIG
-    : PRODUCTION_FIREBASE_CONFIG;
-  const app = validateExistingApp(
-    appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(config),
-    runtime.projectId
-  );
-  const auth = authSdk.getAuth(app);
-  const db = firestoreSdk.getFirestore(app);
-  const functions = functionsSdk.getFunctions(app, 'us-central1');
-  const storage = storageSdk.getStorage(app);
-  if (runtime.mode === 'emulator') {
-    authSdk.connectAuthEmulator(auth, 'http://127.0.0.1:9099', {disableWarnings:true});
-    firestoreSdk.connectFirestoreEmulator(db, '127.0.0.1', 8080);
-    functionsSdk.connectFunctionsEmulator(functions, '127.0.0.1', 5001);
-    storageSdk.connectStorageEmulator(storage, '127.0.0.1', 9199);
-  }
-  await authSdk.setPersistence(auth, typeof window === 'undefined'
-    ? authSdk.inMemoryPersistence : authSdk.browserLocalPersistence);
+  const {auth,db,functions,storage,authSdk,firestoreSdk,functionsSdk,storageSdk}=
+    await connectFirebaseRuntime(runtime);
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
