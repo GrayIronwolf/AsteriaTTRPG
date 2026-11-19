@@ -167,7 +167,7 @@
     "site:firebase-phase8-1": "node --test scripts/site-firebase-phase8-1.test.mjs",
     "site:firebase-phase8-2": "node --test scripts/site-firebase-phase8-2.test.mjs",
     "site:firebase-phase8-3": "node --test scripts/site-firebase-phase8-3.test.mjs",
-    "site:connection-browser": "node scripts/site-firebase-phase8-3-browser.cjs",
+    "site:network-browser": "node scripts/site-firebase-phase8-3-browser.cjs",
     "site:security-audit": "node scripts/site-security-publication-audit.mjs",
     "site:forge-browser": "node scripts/site-forge-browser.cjs",
     "site:campaign-browser": "node scripts/site-campaign-browser.cjs",
