@@ -1,6 +1,8 @@
 import { CAMPAIGN_ID } from '../campaigns/campaignForgeModel.mjs';
 import { effectiveSession } from '../../../src/state/liveWorkspaceModel.mjs';
 import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
+import {activeConditions} from '../../../src/state/conditionModel.mjs';
+import {soulDamageValue} from '../../../src/state/specialDamageModel.mjs';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = (value, fallback = '') => typeof value === 'string' ? value : fallback;
@@ -60,6 +62,10 @@ export function gmPartySummary(documents) {
     className:text(item.className,typeof item.class === 'string' ? item.class :
       text(item.class?.name)).slice(0,80),
     hp:resource(item.hp), sp:resource(item.sp), mp:resource(item.mp),
+    soulDamage:soulDamageValue(item),
+    conditions:Object.freeze(activeConditions(item).slice(0,32).map(row=>Object.freeze({
+      id:text(row.id).slice(0,160),name:text(row.name,'Condition').slice(0,100)
+    }))),
     restRequest:item.restState?.request?.status==='pending'&&
       typeof item.restState.request.id==='string'?
       Object.freeze({id:item.restState.request.id,status:'pending',
