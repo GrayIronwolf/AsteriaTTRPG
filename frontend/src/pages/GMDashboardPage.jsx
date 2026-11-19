@@ -166,6 +166,19 @@ function CampaignGM({api,uid,campaignId}) {
       if(scope.current===token)setBusy(false);
     }
   };
+  const reviewRest=async(characterId,requestId,status)=>{
+    if(busy||!snapshot)return;
+    setBusy(true);setError('');setMessage('');
+    const token=scope.current;
+    try{
+      await api.reviewRest(campaignId,characterId,requestId,status);
+      if(scope.current===token)setMessage('Long Rest '+status+'.');
+    }catch(e){
+      if(scope.current===token)setError(e?.message||'Rest review failed.');
+    }finally{
+      if(scope.current===token)setBusy(false);
+    }
+  };
   if(loading)return <SurfacePanel className={styles.panel}>
     <BodyText>Verifying GM membership and connecting to campaign data…</BodyText>
   </SurfacePanel>;
@@ -207,7 +220,8 @@ function CampaignGM({api,uid,campaignId}) {
     {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
-          session={live} onNavigate={setTab} available={{combat:combatEnabled,
+          session={live} onNavigate={setTab} onReviewRest={reviewRest} busy={busy}
+          available={{combat:combatEnabled,
             progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
