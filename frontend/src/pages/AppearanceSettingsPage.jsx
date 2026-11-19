@@ -3,9 +3,9 @@ import { useAppearance } from '../appearance/AppearanceProvider.jsx';
 import {
   BACKGROUND_OPTIONS, BUTTON_THEME_OPTIONS, FONT_OPTIONS, TEXT_SIZE_OPTIONS
 } from '../appearance/appearanceModel.mjs';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Heading, BodyText, Eyebrow } from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import styles from './AppearanceSettingsPage.module.css';
 
@@ -16,8 +16,7 @@ export function AppearanceSettingsPage() {
   return (
     <PageLayout as="section" width="reading" className={styles.page}
       labelledBy="site-appearance-title" data-testid="site-appearance-page">
-      <Eyebrow>Website appearance</Eyebrow>
-      <Heading id="site-appearance-title">Appearance</Heading>
+      <PageHeader eyebrow="Website appearance" id="site-appearance-title" title="Appearance" />
       <BodyText>Choose the backgrounds and typography used by this React website preview.</BodyText>
       <BodyText muted>
         These preferences are saved only in this browser. Your account, notification
