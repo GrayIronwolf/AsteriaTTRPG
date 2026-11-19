@@ -211,7 +211,7 @@ function Tables({data,action}){
   const [kind,setKind]=useState('random'),[selected,setSelected]=useState(''),
     [name,setName]=useState(''),[category,setCategory]=useState('npc'),
     [tier,setTier]=useState('1'),[entry,setEntry]=useState(''),[weight,setWeight]=useState('1'),
-    [index,setIndex]=useState('0'),[count,setCount]=useState('1'),
+    [count,setCount]=useState('1'),
     [result,setResult]=useState(null);
   const available=kind==='random'?rows(data.sections.randomTables):
     kind==='loot'?rows(data.sections.lootTables):rows(data.sections.encounterPlans);
