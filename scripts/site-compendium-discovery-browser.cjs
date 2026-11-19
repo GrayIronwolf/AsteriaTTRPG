@@ -79,6 +79,35 @@ try{
     await page.setViewportSize({width,height:900});
     await page.goto(base+'#/compendium?group=characters&category=races&path=Beastkin+Races',{waitUntil:'networkidle'});
     await page.getByTestId('site-compendium-results').waitFor();
+    const template = await page.evaluate(() => {
+      const root = document.querySelector('[data-testid="site-compendium-catalogue"]');
+      const title = root?.querySelector('[data-page-header]');
+      const rail = root?.querySelector('[data-page-rail]');
+      const content = root?.querySelector('[data-page-content]');
+      const search = root?.querySelector('[data-testid="site-discovery-search-form"]');
+      if(!root || !title || !rail || !content || !search)return null;
+      const r = node => node.getBoundingClientRect();
+      return {
+        headerColor: getComputedStyle(title).backgroundColor,
+        headerHeight: r(title).height,
+        maxWidth: r(root).width,
+        railLeftOfContent: r(content).left >= r(rail).right - 2,
+        railAboveContent: r(content).top >= r(rail).bottom - 2,
+        searchInsideContent: content.contains(search),
+        pageOverflow: document.documentElement.scrollWidth > innerWidth
+      };
+    });
+    assert.ok(template, 'Shared page heading, rail and content must exist at '+width);
+    assert.equal(template.headerColor,'rgb(6, 13, 21)','Heading must be solid Obsidian at '+width);
+    assert.equal(template.searchInsideContent,true,'Search must stay inside content column at '+width);
+    assert.equal(template.pageOverflow,false,'Page must not overflow at '+width);
+    assert.ok(template.maxWidth <= 1681, 'Template exceeds approved max width at '+width);
+    if(width > 760) {
+      assert.equal(template.railLeftOfContent,true,'Desktop text navigation must be left of results at '+width);
+      assert.ok(template.headerHeight >= 125,'Desktop page header must be at least 125px tall');
+    } else {
+      assert.equal(template.railAboveContent,true,'Mobile text navigation must stack above results at '+width);
+    }
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow at '+width);
     if(width===390||width===1440) await page.screenshot({path:path.join(evidence,'hierarchy-'+width+'.png'),fullPage:true,animations:'disabled'});
   }

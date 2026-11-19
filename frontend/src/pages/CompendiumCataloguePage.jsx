@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
-import { Heading, Eyebrow, BodyText } from '../components/ui/Typography.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
+import { BodyText } from '../components/ui/Typography.jsx';
 import { loadPublicDomain } from '../compendium/publicCatalogue.mjs';
 import { loadPublicSearchDomain } from '../compendium/publicSearchIndex.mjs';
 import { PUBLIC_DOMAINS, resolveCompendiumScope } from '../compendium/compendiumModel.mjs';
@@ -108,11 +108,43 @@ export function CompendiumCataloguePage({ route }) {
   return (
     <PageLayout as="section" width="wide" className={styles.page}
       labelledBy="site-compendium-title" data-testid="site-compendium-catalogue">
-      <Eyebrow>Public reference library</Eyebrow>
-      <Heading id="site-compendium-title">{title}</Heading>
-      <BodyText>Search Asteria's published definitions and browse their existing subject hierarchy.</BodyText>
-      <BodyText muted>Public definitions only. Private campaign notes and GM-only content are not published here.</BodyText>
-
+      <PageHeader eyebrow="Public reference library" id="site-compendium-title" title={title} />
+      <div className={styles.discoveryLayout} data-page-shell="true">
+        <aside data-page-rail="true" className={styles.taxonomy} aria-label="Compendium category hierarchy"
+          data-testid="site-discovery-taxonomy">
+          <h2>Categories</h2>
+          <nav aria-label="Category trail" className={styles.trail} data-testid="site-discovery-trail">
+            <a href={destination({query:draft,path:[]})}
+              aria-current={filters.path.length===0?'page':undefined}>All categories</a>
+            {filters.path.map((segment,i) =>
+              <React.Fragment key={i}>
+                <span aria-hidden="true">/</span>
+                <a href={destination({query:draft,path:filters.path.slice(0,i+1)})}
+                  aria-current={i===filters.path.length-1?'page':undefined}>{segment}</a>
+              </React.Fragment>
+            )}
+          </nav>
+          {status === 'ready' && <div className={styles.facetList} data-page-nav="true" data-testid="site-discovery-facets">
+            {facets.children.map(child =>
+              <a data-page-nav-item="true" href={destination({query:draft,path:child.path})} key={child.label}
+                data-testid="site-discovery-facet">
+                <span>{child.label}</span>
+                <span className={styles.count}>{child.count.toLocaleString()}</span>
+              </a>
+            )}
+            {facets.directCount>0 && filters.path.length>0 &&
+              <p>{facets.directCount.toLocaleString()} definitions belong directly to this category.</p>}
+            {!facets.children.length && !filters.path.length &&
+              <p>Categories are not available for the current results.</p>}
+          </div>}
+          {(filters.path.length>0 || draft || scope.selectedDomain) &&
+            <a className={styles.clear} href="#/compendium" data-testid="site-discovery-clear">Clear all filters</a>}
+        </aside>
+        <div className={styles.resultArea} data-page-content="true">
+          <div className={styles.introduction}>
+            <BodyText>Search Asteria's published definitions and browse their existing subject hierarchy.</BodyText>
+            <BodyText muted>Public definitions only. Private campaign notes and GM-only content are not published here.</BodyText>
+          </div>
       <form className={styles.controls} role="search" onSubmit={submitSearch}
         data-testid="site-discovery-search-form">
         <label htmlFor="site-compendium-search">
@@ -152,40 +184,6 @@ export function CompendiumCataloguePage({ route }) {
         <p role="status">Searching published definition text…</p>}
       {hasSubmittedQuery && searchStatus === 'unavailable' &&
         <p role="status">Full-text search is unavailable. Showing published catalogue matches.</p>}
-
-      <div className={styles.discoveryLayout}>
-        <aside className={styles.taxonomy} aria-label="Compendium category hierarchy"
-          data-testid="site-discovery-taxonomy">
-          <h2>Categories</h2>
-          <nav aria-label="Category trail" className={styles.trail} data-testid="site-discovery-trail">
-            <a href={destination({query:draft,path:[]})}
-              aria-current={filters.path.length===0?'page':undefined}>All categories</a>
-            {filters.path.map((segment,i) =>
-              <React.Fragment key={i}>
-                <span aria-hidden="true">/</span>
-                <a href={destination({query:draft,path:filters.path.slice(0,i+1)})}
-                  aria-current={i===filters.path.length-1?'page':undefined}>{segment}</a>
-              </React.Fragment>
-            )}
-          </nav>
-          {status === 'ready' && <div className={styles.facetList} data-testid="site-discovery-facets">
-            {facets.children.map(child =>
-              <a href={destination({query:draft,path:child.path})} key={child.label}
-                data-testid="site-discovery-facet">
-                <span>{child.label}</span>
-                <span className={styles.count}>{child.count.toLocaleString()}</span>
-              </a>
-            )}
-            {facets.directCount>0 && filters.path.length>0 &&
-              <p>{facets.directCount.toLocaleString()} definitions belong directly to this category.</p>}
-            {!facets.children.length && !filters.path.length &&
-              <p>Categories are not available for the current results.</p>}
-          </div>}
-          {(filters.path.length>0 || draft || scope.selectedDomain) &&
-            <a className={styles.clear} href="#/compendium" data-testid="site-discovery-clear">Clear all filters</a>}
-        </aside>
-
-        <div className={styles.resultArea}>
           {status === 'loading' && <p role="status">Loading public catalogue…</p>}
           {status === 'error' && <div role="alert">
             <p>Public catalogue is unavailable. Your existing website data has not been changed.</p>

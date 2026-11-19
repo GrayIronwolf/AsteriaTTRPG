@@ -155,8 +155,46 @@ test('universal React page layout shares Account-style shell and removes all red
   }
   const home = read(location + 'pages/HomePage.jsx');
   assert.match(home, /variant="section"/, 'Home must preserve full-width hero layout');
+  assert.match(shellCss, /var\(--ast-page-rail-width\)/,
+    'The shared shell must be the only owner of sidebar width');
   for (const name of ['AccountPage','FriendsPage','CharacterForgePage','CompendiumCataloguePage']) {
-    const css = read(location + 'pages/' + name + '.module.css');
-    assert.match(css, /var\(--ast-page-rail-width\)/, name + ' rail is not standardised');
+    const jsx = read(location + 'pages/' + name + '.jsx');
+    assert.match(jsx, /data-page-rail="true"/, name + ' must opt into the one shared sidebar');
   }
+});
+
+test('the Account-style template is a structural component, not a page spacing token-only change', () => {
+  const shell = read(location+'components/ui/PageLayout.jsx');
+  const css = read(location+'components/ui/PageLayout.module.css');
+  const catalogue = read(location+'pages/CompendiumCataloguePage.jsx');
+  assert.match(shell, /function PageHeader\(/);
+  assert.match(shell, /data-page-header/);
+  assert.match(css, /min-height:\s*125px/);
+  assert.match(css, /\[data-page-shell\]/);
+  assert.match(css, /\[data-page-rail\]/);
+  assert.match(css, /\[data-page-content\]/);
+  assert.match(css, /\[data-page-nav-item\]/);
+  assert.match(catalogue, /<PageHeader eyebrow="Public reference library"/);
+  assert.match(catalogue, /data-page-shell="true"/);
+  assert.match(catalogue, /data-page-rail="true"/);
+  assert.match(catalogue, /data-page-content="true"/);
+  const resultColumn = catalogue.indexOf('data-page-content="true"');
+  assert.ok(resultColumn > 0 && catalogue.indexOf('data-testid="site-discovery-search-form"', resultColumn) > resultColumn,
+    'Compendium search must remain in right content column, not above the sidebar');
+  for (const name of ['AccountPage','FriendsPage','CharacterForgePage','NotificationsPage']) {
+    const page = read(location+'pages/'+name+'.jsx');
+    assert.match(page, /data-page-shell="true"/, name);
+    assert.match(page, /data-page-rail="true"/, name);
+    assert.match(page, /data-page-content="true"/, name);
+    assert.match(page, /data-page-nav-item="true"/, name);
+  }
+  for (const name of ['AccountPage','FriendsPage','CharacterForgePage','CampaignForgePage',
+    'AuthPage','AppearanceSettingsPage','CampaignInvitationPage','RoutePreviewPage',
+    'NotificationsPage','CompendiumEntryPage']) {
+    assert.match(read(location+'pages/'+name+'.jsx'), /<PageHeader\b/, name);
+  }
+  for (const name of ['GMDashboardPage','PlayerDashboardPage','PresentationPage']) {
+    assert.match(read(location+'pages/'+name+'.jsx'), /variant="workspace"/, name);
+  }
+  assert.match(read(location+'pages/HomePage.jsx'), /variant="section"/);
 });

@@ -223,7 +223,7 @@ export function PlayerDashboardPage({route}){
   const economy=services.get('gameplay')?.economy;
   const digitalGM=services.get('gameplay')?.digitalGM;
   const {campaignId='',characterId=''}=route.params||{};
-  return <PageLayout as="section" width="wide" labelledBy="site-player-title"
+  return <PageLayout as="section" width="wide" variant="workspace" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
     <Heading id="site-player-title" className={styles.visuallyHidden}>Player &amp; Character Dashboard</Heading>
     {!uid||!api?<SurfacePanel className={styles.panel}>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Heading, BodyText, Eyebrow } from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import { useAuth } from '../auth/AuthProvider.jsx';
 import {classifyPrivateRoute,isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
@@ -194,17 +194,16 @@ export function AccountPage({route}) {
 
   return <PageLayout as="section" width="wide" className={styles.page} labelledBy="site-account-title"
     data-testid="site-account-page">
-    <Eyebrow>Asteria Account</Eyebrow>
-    <Heading id="site-account-title">Account</Heading>
-    <div className={styles.layout}>
-      <nav className={styles.sidebar} aria-label="Account sections">
+    <PageHeader eyebrow="Asteria Account" id="site-account-title" title="Account" />
+    <div data-page-shell="true">
+      <nav data-page-rail="true" data-page-nav="true" aria-label="Account sections">
         {SECTIONS.map(item=><button key={item.id} type="button" data-testid={'site-account-tab-'+item.id}
-          className={styles.tab} aria-current={section===item.id?'page':undefined}
+          data-page-nav-item="true" aria-current={section===item.id?'page':undefined}
           onClick={()=>{setSection(item.id);setError('');setMessage('');}}>
           {item.label}
         </button>)}
       </nav>
-      <div className={styles.main}>
+      <div className={styles.main} data-page-content="true">
         {error&&<p role="alert" className={styles.notice} data-testid="site-account-error">{error}</p>}
         {message&&<p role="status" className={styles.notice} data-testid="site-account-message">{message}</p>}
         {section==='profile'&&<SurfacePanel as="section" className={styles.panel}

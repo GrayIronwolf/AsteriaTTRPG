@@ -213,7 +213,7 @@ export function GMDashboardPage({route}) {
     <BodyText>Sign in with a verified account to open your GM workspace.</BodyText>
     <CrystalButton href="#/account/login">Login</CrystalButton>
   </PageLayout>;
-  return <PageLayout as="section" width="wide" className={styles.page}
+  return <PageLayout as="section" width="wide" variant="workspace" className={styles.page}
     labelledBy="site-gm-title" data-testid="site-gm-dashboard">
     <Heading id="site-gm-title" className={styles.visuallyHidden}>GM Dashboard</Heading>
     {campaignId?<CampaignGM key={uid+':'+campaignId} uid={uid} campaignId={campaignId} api={api}/>:

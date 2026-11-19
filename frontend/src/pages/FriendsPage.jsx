@@ -1,8 +1,8 @@
 import React, {useCallback,useEffect,useRef,useState} from 'react';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Heading,BodyText,Eyebrow} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
@@ -133,17 +133,17 @@ export function FriendsPage() {
   </PageLayout>;
   return <PageLayout as="section" width="wide" className={styles.page}
     labelledBy="friends-title" data-testid="site-friends-page">
-    <Eyebrow>Asteria Social</Eyebrow>
-    <Heading id="friends-title">Friends</Heading>
-    <BodyText muted>Exact Account ID search, private friend requests, and friendship management.
-      Player discovery and relationship records remain protected by Firebase callables.</BodyText>
-    <div className={styles.layout}>
-      <nav className={styles.tabs} aria-label="Friends sections">
+    <PageHeader eyebrow="Asteria Social" id="friends-title" title="Friends" />
+    
+    <div data-page-shell="true">
+      <nav data-page-rail="true" data-page-nav="true" aria-label="Friends sections">
         {TABS.map(([id,label])=><button type="button" key={id}
-          className={styles.tab} aria-current={tab===id?'page':undefined}
+          data-page-nav-item="true" aria-current={tab===id?'page':undefined}
           data-testid={'site-friends-tab-'+id} onClick={()=>switchTab(id)}>{label}</button>)}
       </nav>
-      <div className={styles.content}>
+      <div className={styles.content} data-page-content="true">
+        <BodyText muted>Exact Account ID search, private friend requests, and friendship management.
+      Player discovery and relationship records remain protected by Firebase callables.</BodyText>
         {error&&<p role="alert" className={styles.notice} data-testid="site-friends-error">{error}</p>}
         {message&&<p role="status" className={styles.notice} data-testid="site-friends-message">{message}</p>}
         {pending&&<SurfacePanel as="section" className={styles.confirm} data-testid="site-friends-confirm">

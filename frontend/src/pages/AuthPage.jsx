@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Eyebrow, Heading, BodyText } from '../components/ui/Typography.jsx';
+import { BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import { useAuth } from '../auth/AuthProvider.jsx';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
@@ -45,8 +45,7 @@ export function AuthPage({route}) {
 
   return <PageLayout as="section" width="reading" className={styles.page}
     labelledBy="site-auth-title" data-testid="site-auth-page">
-    <Eyebrow>Asteria Account</Eyebrow>
-    <Heading id="site-auth-title">{title}</Heading>
+    <PageHeader eyebrow="Asteria Account" id="site-auth-title" title={title} />
     <BodyText muted>This form uses the existing Asteria Firebase project. Account and campaign settings are migrated in later phases.</BodyText>
     {session.status==='checking' && <p role="status">Checking your session…</p>}
     {!available && <p role="status">Firebase authentication is not connected in this isolated preview.</p>}

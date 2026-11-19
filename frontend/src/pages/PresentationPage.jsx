@@ -11,7 +11,7 @@ export function PresentationPage({route}){
   const api=services.get('gameplay')?.media;
   const uid=isVerifiedOwnedSession(session)?session.user.uid:null;
   const campaignId=route.params?.campaignId||'';
-  return <PageLayout as="section" width="wide" labelledBy="site-projector-title"
+  return <PageLayout as="section" width="wide" variant="workspace" labelledBy="site-projector-title"
     data-testid="site-presentation-route">
     <Heading id="site-projector-title">Player Presentation</Heading>
     {!uid||!api?.availability().enabled?

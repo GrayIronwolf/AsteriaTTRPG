@@ -161,7 +161,7 @@ export function SiteShell({ route, identity: suppliedIdentity = null, children }
         {children}
       </main>
       <footer className={styles.footer}>
-        <p>Asteria TTRPG · Isolated React navigation preview · <a href="#/appearance" data-testid="site-footer-appearance">Appearance</a></p>
+        <p>Asteria TTRPG · <a href="#/appearance" data-testid="site-footer-appearance">Appearance</a></p>
       </footer>
     </>
   );

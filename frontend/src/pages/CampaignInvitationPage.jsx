@@ -2,10 +2,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import {useAppServices} from '../app/AppServices.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {
   getPendingSecureInvite,clearPendingSecureInvite,
   normalizeUCN,invitationRouteCode
@@ -82,8 +82,7 @@ export function CampaignInvitationPage({route}){
  const secure=Boolean(pending);
  return <PageLayout as="section" width="reading" className={styles.page}
   labelledBy="invitation-title" data-testid="site-invitation-page">
-  <Eyebrow>Private Campaign Access</Eyebrow>
-  <Heading id="invitation-title">Campaign Invitation</Heading>
+  <PageHeader eyebrow="Private Campaign Access" id="invitation-title" title="Campaign Invitation" />
   {error&&<p role="alert" className={styles.notice}>{error}</p>}
   {message&&<p role="status" className={styles.notice}>{message}</p>}
   <SurfacePanel className={styles.panel}>

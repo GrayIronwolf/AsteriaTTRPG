@@ -1,3 +1,5 @@
+/* Authoritative React page template; Home hero and gameplay workspaces opt out.
+   Mirrors the approved Account shell without loading legacy CSS/JS. */
 .page {
   width: min(100%, var(--ast-page-max));
   min-width: 0;
@@ -5,10 +7,27 @@
   padding-inline: var(--ast-page-gutter);
 }
 .standard {
+  max-width: var(--ast-page-template-max);
   min-height: var(--ast-page-min-height);
   padding-block: var(--ast-page-top-space) var(--ast-page-bottom-space);
 }
-/* Account-style section heading, shared by every non-Home React page. */
+.standard > [data-page-header] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 125px;
+  min-width: 0;
+  margin: 0 0 var(--ast-space-5);
+  padding: clamp(19px, 3vw, 38px);
+  background: var(--ast-color-panel);
+  color: var(--ast-color-text-bright);
+}
+.standard > [data-page-header] > h1 {
+  margin: var(--ast-space-2) 0 0;
+  line-height: var(--ast-line-heading);
+  font-size: clamp(2rem, 3.4vw, 3.1rem);
+}
+.standard > [data-page-header] > p { margin: 0; }
 .standard > h1 {
   min-width: 0;
   padding: var(--ast-space-3) var(--ast-space-5) var(--ast-space-4);
@@ -16,13 +35,106 @@
   background: var(--ast-color-panel);
   color: var(--ast-color-text-bright);
 }
-.standard > p:first-child + h1 { margin-top: var(--ast-space-3); }
-/* The Home carousel and its content sections do not need an internal page header. */
+.standard > [data-page-shell] {
+  display: grid;
+  grid-template-columns: minmax(0, var(--ast-page-rail-width)) minmax(0, 1fr);
+  gap: 0;
+  align-items: start;
+  min-width: 0;
+}
+.standard [data-page-rail] {
+  min-width: 0;
+  padding: var(--ast-space-1) var(--ast-space-5) var(--ast-space-5) 0;
+  border-right: 1px solid var(--ast-page-rail-rule);
+  background: transparent;
+  box-shadow: none;
+}
+.standard [data-page-content] {
+  min-width: 0;
+  padding-inline: var(--ast-page-content-padding);
+}
+.standard [data-page-nav] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ast-space-2);
+  align-items: stretch;
+  min-width: 0;
+}
+.standard [data-page-nav-item] {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ast-space-2);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--ast-target-min);
+  padding: var(--ast-space-3) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ast-color-text);
+  font: 500 var(--ast-font-md)/1.4 var(--ast-font-body);
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.standard [data-page-nav-item]:hover {
+  color: var(--ast-color-text-bright);
+}
+.standard [data-page-nav-item][aria-current],
+.standard [data-page-nav-item][aria-selected="true"] {
+  color: var(--ast-color-text-bright);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+.standard [data-page-nav-item]:focus-visible {
+  outline: 2px solid var(--ast-color-focus);
+  outline-offset: 2px;
+}
+.workspace {
+  min-height: var(--ast-page-min-height);
+  padding-block: var(--ast-page-top-space) var(--ast-page-bottom-space);
+}
 .section { min-height: 0; padding-block: 0; }
 .reading { max-width: var(--ast-reading-max); }
 .wide { max-width: var(--ast-page-max); }
+/* The main-content template stays at the approved 1680px; game workspaces remain wide. */
+.wide.standard { max-width: var(--ast-page-template-max); }
 .full { max-width: none; }
 @media (max-width: 760px) {
   .page { padding-inline: var(--ast-space-5); }
-  .standard { --ast-page-top-space: var(--ast-space-5); --ast-page-bottom-space: var(--ast-space-6); }
+  .standard, .workspace {
+    --ast-page-top-space: var(--ast-space-5);
+    --ast-page-bottom-space: var(--ast-space-6);
+  }
+  .standard > [data-page-header] {
+    min-height: 88px;
+    margin-bottom: var(--ast-space-4);
+    padding: var(--ast-space-4);
+  }
+  .standard > [data-page-shell] { grid-template-columns: minmax(0, 1fr); }
+  .standard [data-page-rail] {
+    padding: 0 0 var(--ast-space-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--ast-page-rail-rule);
+  }
+  .standard [data-page-content] { padding: var(--ast-space-5) 0 0; }
+  .standard [data-page-nav] {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: var(--ast-space-4);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .standard [data-page-nav-item] { flex: 0 0 auto; width: auto; white-space: nowrap; }
 }
