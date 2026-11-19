@@ -48,7 +48,7 @@ export function renderPricingEsm(src){
     ' * No global side effects, runtime dynamic imports or additional pricing logic.\n'+
     " */\n'use strict';\n"+
     factory.replace('return Object.freeze({','const pricing = Object.freeze({')+
-    '\nexport const VERSION = pricing.VERSION;\nexport {\n  '+names.filter(x=>x!==\'VERSION\').join(',\n  ')+'\n};\nexport default pricing;\n';
+    '\nexport const VERSION = pricing.VERSION;\nexport {\n  '+names.filter(x=>x!=='VERSION').join(',\n  ')+'\n};\nexport default pricing;\n';
 }
 export function verifyPricingEsm({source=sourcePath,output=outputPath}={}){
   const wanted=renderPricingEsm(readFileSync(source,'utf8'));
