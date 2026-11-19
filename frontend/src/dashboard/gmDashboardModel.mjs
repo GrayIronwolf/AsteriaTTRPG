@@ -59,7 +59,11 @@ export function gmPartySummary(documents) {
     level:Number.isFinite(Number(item.level)) ? Math.max(0,Math.floor(Number(item.level))) : 0,
     className:text(item.className,typeof item.class === 'string' ? item.class :
       text(item.class?.name)).slice(0,80),
-    hp:resource(item.hp), sp:resource(item.sp), mp:resource(item.mp)
+    hp:resource(item.hp), sp:resource(item.sp), mp:resource(item.mp),
+    restRequest:item.restState?.request?.status==='pending'&&
+      typeof item.restState.request.id==='string'?
+      Object.freeze({id:item.restState.request.id,status:'pending',
+        soulRecovery:Math.max(0,Number(item.restState.request.soulRecovery)||0)}):null
   })));
 }
 
