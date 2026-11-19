@@ -103,6 +103,28 @@ test('offline prevents private reads and identity changes invalidate in-flight d
   release({metadata:{fromCache:false,hasPendingWrites:false}});
   await assert.rejects(pending,/account changed/);
 });
+test('offline prevents new single writes, transactions and batch commits',async()=>{
+  const x=setup();
+  let writes=0,commits=0;
+  x.sdk.setDoc=async()=>{writes++;};
+  x.sdk.runTransaction=async()=>{writes++;};
+  x.sdk.writeBatch=()=>{
+    const batch={
+      set(){writes++;return this;},
+      commit(){commits++;return Promise.resolve();}
+    };
+    return batch;
+  };
+  const api=createVerifiedServerReads({auth:x.auth,firestoreSdk:x.sdk,connection:x.monitor,delay:async()=>{}});
+  const batch=api.writeBatch({});
+  batch.set(doc('users/gm'),{hello:true});
+  x.window.navigator.onLine=false;x.window.emit('offline');
+  assert.throws(()=>api.setDoc(doc('users/gm'),{}),/could not verify/i);
+  assert.throws(()=>api.runTransaction({},()=>{}),/could not verify/i);
+  assert.throws(()=>batch.commit(),/could not verify/i);
+  assert.equal(writes,1);
+  assert.equal(commits,0);
+});
 test('online/offline invalidates existing realtime scopes and ignores delayed snapshots',()=>{
   const x=setup(),handlers=[],errors=[],seen=[];
   const firestoreSdk={onSnapshot(ref,opts,cb,fail){
