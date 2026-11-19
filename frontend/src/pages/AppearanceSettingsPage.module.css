@@ -1,8 +1,5 @@
 /* Phase 2.4 appearance page: scoped controls, no legacy CSS or overrides. */
-.page {
-  
-  
-}
+.page { min-width: 0; }
 .section {
   margin-top: var(--ast-space-6);
   padding: var(--ast-space-5);
