@@ -175,9 +175,9 @@ try{
  const privateRoute=player.url();
  assert.match(privateRoute,/#\/react\/owned-character\//);
  const sourceId=decodeURIComponent(privateRoute.split('/').at(-1));
- await player.getByRole('button',{name:'Skills'}).click();
+ await player.getByRole('button',{name:'Skills',exact:true}).click();
  await player.getByRole('heading',{name:'Skills'}).waitFor();
- await player.getByRole('button',{name:'Dashboard'}).click();
+ await player.getByRole('button',{name:'Dashboard',exact:true}).click();
  await player.getByTestId('site-player-resources').waitFor();
  await player.getByRole('link',{name:'Character Forge'}).first().click();
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
