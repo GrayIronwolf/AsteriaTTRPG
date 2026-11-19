@@ -27,3 +27,35 @@
 .journal h4{margin:0}
 @media(max-width:780px){.overview{grid-template-columns:1fr}}
 @media(max-width:640px){.resources{grid-template-columns:1fr}.panel{padding:var(--ast-space-4)}}
+
+
+/* Original cinematic identity header, fitted inside the existing React page. */
+.visuallyHidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.classicHeader{display:grid;grid-template-columns:minmax(200px,30%) minmax(275px,40%) minmax(200px,30%);min-height:330px;border:1px solid #74899b;background:linear-gradient(120deg,#08121d,#0b2032 56%,#08111d);box-shadow:inset 0 1px 0 #566e80,0 8px 20px #0007;color:#eff6fa;overflow:hidden}
+.portraitColumn,.campaignColumn{position:relative;isolation:isolate;min-width:0;min-height:330px;overflow:hidden;background:linear-gradient(145deg,#30445a,#091421)}
+.heroImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
+.portraitColumn::after,.campaignColumn::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,#040b13ee 0%,#06111a9e 26%,transparent 65%)}
+.portraitFallback,.campaignFallback{display:grid;place-items:center;height:100%;font-size:clamp(3rem,7vw,7rem);font-family:var(--ast-font-display);opacity:.3}
+.portraitCaption,.campaignCaption{position:absolute;bottom:0;left:0;right:0;z-index:1;display:grid;gap:5px;padding:18px}
+.portraitCaption h2,.campaignCaption h3{margin:0;color:#fff;text-shadow:0 2px 5px #000;font-family:var(--ast-font-display)}
+.portraitCaption p,.campaignCaption p{margin:0;font-size:.85rem;color:#e2e9f0}
+.experience{display:flex;justify-content:space-between;gap:8px;font-size:.75rem;font-weight:700}
+.xpBar{width:100%;height:8px;accent-color:#64c6f5}
+.coreColumn{padding:22px 18px;min-width:0;display:grid;align-content:start;gap:12px}
+.coreColumn>h3{font-size:.82rem;letter-spacing:.055em;text-transform:uppercase;margin:0;color:#dbe7f3}
+.coreColumn .resources{display:grid;grid-template-columns:1fr;gap:11px}
+.coreColumn .resource{background:transparent;border:0;padding:0;gap:4px;border-radius:0}
+.coreColumn .resource progress{height:12px;border:1px solid #77899b;border-radius:2px;overflow:hidden;background:#0b1422}
+.coreColumn .resource:nth-child(1) progress{accent-color:#ec5688}
+.coreColumn .resource:nth-child(2) progress{accent-color:#2dd5a4}
+.coreColumn .resource:nth-child(3) progress{accent-color:#37bcf2}
+.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.coreColumn .stat{padding:7px 4px;border:1px solid #3d5973;background:#0a1c30;text-align:center;gap:0}
+.coreColumn .stat small{font-size:.67rem}
+.coreColumn .stat strong{font-size:.9rem}
+.sessionStrip{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-left:4px solid #2a91c3;padding:8px 16px;background:#0e2434;color:#dceaf4;font-size:.9rem}
+.tabs{padding:0;gap:5px;overflow-x:auto;scrollbar-width:thin}
+.tabs>a,.tabs>button{flex:0 0 auto}
+.page{gap:var(--ast-space-3)}
+@media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32%) minmax(240px,1fr)}.campaignColumn{grid-column:1/-1;min-height:180px}.campaignColumn .heroImage{object-position:center}.coreColumn{min-height:300px}}
+@media(max-width:600px){.classicHeader{grid-template-columns:1fr}.portraitColumn{min-height:310px}.coreColumn{min-height:0}.campaignColumn{min-height:190px}.campaignColumn{grid-column:auto}.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
