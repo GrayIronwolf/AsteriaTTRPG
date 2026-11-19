@@ -80,3 +80,28 @@ test('original player navigation remains enumerated rather than silently removed
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
   assert.doesNotMatch(css,/\.tabs button\{[^}]*background:var\(--ast-color-panel-raised\)/);
 });
+
+test('GM navigation retains the 24 original destinations with scoped tool entry points',()=>{
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  for(const label of ['GM Main','GM Toolkit','NPC & Creature Library','Dashboard Settings',
+    'PC Inventory','News & Events','Quests','GM Notes','Session Library',
+    'Soundboard & Ambience','Session Recordings','Player Display','Economy',
+    'Crafting','GM Tools','Gameplay Systems','World Systems','Battle Maps',
+    'Advanced Dice','Random Tables','Encounter Generator','Asteria Calendar',
+    'Weather Generator','World Atlas'])
+    assert.ok(gm.includes("label:'"+label+"'"),'Missing original GM destination: '+label);
+  assert.match(gm,/GMDigitalGMWorkspace/);
+  assert.match(gm,/GMCombatWorkspace/);
+  assert.match(gm,/GMEconomyWorkspace/);
+  assert.match(gm,/GMChecksAndProgression/);
+  assert.match(gm,/CampaignAtlasWorkspace/);
+});
+test('original campaign calendar and weather destinations use secured existing Digital GM service',()=>{
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const digital=read('frontend/src/digitalGM/DigitalGMWorkspace.jsx');
+  for(const name of ['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'])
+    assert.ok(player.includes("'"+name+"'"),name);
+  assert.match(player,/initialSection=/);
+  assert.match(digital,/initialSection='calendar'/);
+  assert.match(digital,/initialArea='library'/);
+});
