@@ -242,7 +242,8 @@ function CampaignGM({api,uid,campaignId}) {
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
       initialArea={GM_TOOL_AREAS[tab]}/>:null}
     {economyEnabled&&['inventory','economy','crafting'].includes(tab)?<GMEconomyWorkspace
-      key={uid+':'+campaignId+':'+tab} api={api.economy} campaignId={campaignId}/>:null}
+      key={uid+':'+campaignId+':'+tab} api={api.economy} campaignId={campaignId}
+      initialTab={tab==='inventory'?'Inventory':tab==='crafting'?'Crafting':'Party Loot'}/>:null}
     {combatEnabled&&tab==='gameplay'?<GMCombatWorkspace
       key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
     {progressionEnabled&&tab==='gameplay'?<GMChecksAndProgression
