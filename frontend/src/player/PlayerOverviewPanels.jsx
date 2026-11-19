@@ -110,8 +110,18 @@ export function PlayerOverviewPanel({id,character,campaign,onNavigate,available=
     <Navigate go={go} to="Skills">Open Skills</Navigate></>;
   if(id==='talents')return <><ItemSummary rows={character.talents} empty="No talents recorded."/>
     <Navigate go={go} to="Class/Talent Tree">Open Talent Tree</Navigate></>;
-  if(id==='spells')return <><ItemSummary rows={character.spells} empty="No spells recorded."/>
-    <Navigate go={go} to="Spells">Open Spells</Navigate></>;
+  if(id==='spells')return <div className={styles.section}>
+    {first(character.spells,12).length?<ul className={styles.list}>
+      {first(character.spells,12).map((spell,i)=><li key={i}>
+        <span>{spell}</span>
+        <button type="button" disabled={!editable||busy} onClick={()=>{
+          if(window.confirm('Cast '+spell+'? The server will apply the spell MP cost.'))
+            onAction?.('castSpell',spell);
+        }}>Cast</button>
+      </li>)}
+    </ul>:<p>No spells recorded.</p>}
+    <Navigate go={go} to="Spells">Open Spells</Navigate>
+  </div>;
   if(id==='conditions')return <Conditions character={character} editable={editable} busy={busy} onAction={onAction}/>;
   if(id==='effects')return <Effects character={character}/>;
   if(id==='specialDamage')return <Damage character={character}/>;
