@@ -4,7 +4,7 @@ import styles from './GMOverviewPanels.module.css';
 /** Original GM panel IDs are preserved in the saved layout model. These
  * controls navigate to the existing authenticated React modules rather than
  * recreating unverified Firestore mutations inside a decorative panel. */
-export function GMOverviewPanel({id,party=[],session={},onNavigate,available={}}){
+export function GMOverviewPanel({id,party=[],session={},onNavigate,available={},onReviewRest,busy=false}){
   const open=(destination,label)=> <button className={styles.action} type="button"
     onClick={()=>onNavigate(destination)}>{label}</button>;
   if(id==='partySummary')return <div className={styles.party}>
@@ -24,8 +24,18 @@ export function GMOverviewPanel({id,party=[],session={},onNavigate,available={}}
       <p>Progression service unavailable.</p>}
   </div>;
   if(id==='restRequests')return <div className={styles.section}>
-    <p>Rest approval and recovery require authenticated campaign-state commands.</p>
-    {available.combat?open('gameplay','Open Gameplay Systems'):null}
+    {party.filter(member=>member.restRequest?.status==='pending').length?
+      party.filter(member=>member.restRequest?.status==='pending').map(member=>
+        <div className={styles.row} key={member.id}>
+          <strong>{member.name}</strong>
+          <span>Long Rest · Soul Recovery {member.restRequest.soulRecovery}</span>
+          <div className={styles.actions}>
+            <button type="button" disabled={busy} onClick={()=>onReviewRest?.(
+              member.id,member.restRequest.id,'approved')}>Approve</button>
+            <button type="button" disabled={busy} onClick={()=>onReviewRest?.(
+              member.id,member.restRequest.id,'denied')}>Deny</button>
+          </div>
+        </div>):<p>No pending Long Rest requests.</p>}
   </div>;
   const destinations={
     loot:['economy','Open Loot & Rewards'],
