@@ -94,8 +94,17 @@ export function PlayerOverviewPanel({id,character,campaign,onNavigate,available=
       <Slot key={name} name={name} item={slots[name]} go={go}/>)}
   </div>;
   if(id==='quick')return <div className={styles.weaponSlots}>
-    {Array.from({length:4},(_,i)=><Slot key={i} name={'Quick '+(i+1)}
-      item={character.quickSlots?.[i]} go={go}/>)}
+    {Array.from({length:4},(_,i)=>{
+      const item=character.quickSlots?.[i];
+      return <div key={i} className={styles.section}>
+        <Slot name={'Quick '+(i+1)} item={item} go={go}/>
+        {item?.id?<button type="button" disabled={!editable||busy}
+          onClick={()=>{
+            if(window.confirm('Use '+item.name+'? It may consume the item or change resources.'))
+              onAction?.('useQuickItem',{itemId:item.id,revision:character.coreRevision});
+          }}>Use {item.name}</button>:null}
+      </div>;
+    })}
   </div>;
   if(id==='skills')return <><ItemSummary rows={character.skills} empty="No skills recorded."/>
     <Navigate go={go} to="Skills">Open Skills</Navigate></>;
