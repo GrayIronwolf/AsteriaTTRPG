@@ -108,7 +108,7 @@ test('Phase 4.1 reuses Asteria registration, owner-scoped data and server-only A
   assert.match(src,/validateAccountRegistrationFields/);
   assert.match(src,/createUserWithEmailAndPassword/);
   assert.match(src,/sendEmailVerification/);
-  assert.match(src,/setPersistence/);
+  assert.match(read('frontend/src/firebase/firebaseRuntime.mjs'),/setPersistence/);
   assert.match(src,/finalizeRegisteredAccountId/);
   assert.match(src,/asteriaAccountIdentity/);
   assert.match(src,/getDocFromServer/);
