@@ -1,8 +1,8 @@
 import React,{useEffect,useState} from 'react';
 import {PRESENTATION_DEFAULT,PRESENTATION_SCENES,PRESENTATION_THEMES,
-  safeCombatPresentation,safePartyPresentation
+  safeCombatPresentation
 } from '../../../src/state/playerPresentationModel.mjs';
-import {presentationDraft} from './campaignMediaModel.mjs';
+import {presentationDraft,partyForPresentation} from './campaignMediaModel.mjs';
 import {useCampaignStream,CampaignMapWorkspace,CampaignAtlasWorkspace} from './CampaignMapWorkspace.jsx';
 import styles from './CampaignPresentationWorkspace.module.css';
 
@@ -30,8 +30,7 @@ function Scene({api,campaignId,display,party=[],combat={}}){
       <p>{safe.current}</p></div>;
   }
   if(display.scene==='party'){
-    const members=safePartyPresentation(Object.fromEntries(party.map(p=>[p.id,p])),
-      display.characterIds,display.showPartyHP);
+    const members=partyForPresentation(party,display.characterIds,display.showPartyHP);
     return <div className={styles.cards}>{members.map(p=><article key={p.id}>
       <strong>{p.name}</strong><p>{p.className} · Level {p.level}</p>
       {display.showPartyHP&&p.hp!=null?<p>HP {p.hp} / {p.hpMax}</p>:null}

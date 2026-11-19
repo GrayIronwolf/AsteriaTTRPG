@@ -5,7 +5,7 @@ import {
 } from '../../../src/state/battleMapModel.mjs';
 import {validFogCells} from '../../../src/state/battleMapFogModel.mjs';
 import {atlasMapCanPreview,atlasPublicProjection} from '../../../src/state/worldAtlasModel.mjs';
-import {PRESENTATION_DEFAULT,presentationDraft,presentationId} from '../../../src/state/playerPresentationModel.mjs';
+import {PRESENTATION_DEFAULT,presentationDraft,presentationId,safePartyPresentation} from '../../../src/state/playerPresentationModel.mjs';
 
 export {battleMapAssetPath,battleMapEditableSettings,battleMapDimensions,
   battleMapFileError,battleMapFileKind,BATTLE_MAP_MAX_RECORDS,atlasMapCanPreview,presentationDraft};
@@ -43,6 +43,19 @@ export function publishedAtlas(raw,campaignId){
   try{return Object.freeze(atlasPublicProjection(raw));}
   catch{return null;}
 }
+/** Adapt the canonical safe summary to the established projector contract.
+ * It carries className and hp:[current,max], while the projector expects
+ * klass and resources.hp. Never pass through private character fields. */
+export function partyForPresentation(rows,selectedIds=[],showHP=false){
+  const characters=Object.fromEntries((Array.isArray(rows)?rows:[])
+    .filter(row=>row&&mapId(row.id))
+    .map(row=>[row.id,{
+      id:row.id,name:row.name,klass:row.className,level:row.level,
+      resources:{hp:row.hp}
+    }]));
+  return safePartyPresentation(characters,selectedIds,showHP);
+}
+
 export function presentationForViewer(raw){
   if(!raw)return {...PRESENTATION_DEFAULT};
   const draft=presentationDraft({

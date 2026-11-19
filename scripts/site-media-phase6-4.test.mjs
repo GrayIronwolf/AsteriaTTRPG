@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   mapForViewer,publishedAtlas,presentationForViewer, timestampRevision,
-  battleMapFileError,battleMapAssetPath
+  battleMapFileError,battleMapAssetPath,partyForPresentation
 } from '../frontend/src/dashboard/campaignMediaModel.mjs';
 import {createFirebaseCampaignMediaService} from '../frontend/src/dashboard/firebaseCampaignMediaService.mjs';
 import {canActivateRoute} from '../frontend/src/app/featureRegistry.mjs';
@@ -126,6 +126,17 @@ test('GM update keeps the media path and combat record, rejects old revisions',a
   const linked=harness(uid,{['campaigns/'+cid+'/battleMaps/map123']:{...saved,combatId:'combat123'}});
   await assert.rejects(linked.service.removeMap(cid,'map123'),/linked encounter/);
 });
+test('party projector retains class and opt-in HP from the safe campaign summary',()=>{
+  const party=[{id:'hero123',name:'Frostwind Hero',className:'Ranger',level:7,hp:[16,27]}];
+  assert.deepEqual(partyForPresentation(party,['hero123'],true),[{
+    id:'hero123',name:'Frostwind Hero',className:'Ranger',level:7,hp:16,hpMax:27
+  }]);
+  const privateHP=partyForPresentation(party,['hero123'],false);
+  assert.equal(privateHP[0].className,'Ranger');
+  assert.equal(Object.hasOwn(privateHP[0],'hp'),false);
+  assert.deepEqual(partyForPresentation(party,['other'],true),[]);
+});
+
 test('react route and player/GM UI use one service without legacy bridge or global CSS',()=>{
   const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
   const adapter=read('frontend/src/auth/firebaseAuthAdapter.mjs');
