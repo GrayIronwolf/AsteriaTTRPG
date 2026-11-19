@@ -24,6 +24,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Generate filtered public Compendium and Forge JSON assets
+        run: |
+          node scripts/site-compendium-public-index.mjs
+          node scripts/site-compendium-public-entries.mjs
+          node scripts/site-compendium-search-index.mjs
+          node scripts/site-forge-public-rules.mjs
       - name: Final React import, route, CSS and legacy entry checks
         run: |
           npm run site:architecture-phase9-4
