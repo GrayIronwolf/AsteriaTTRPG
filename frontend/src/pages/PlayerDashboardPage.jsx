@@ -44,6 +44,7 @@ function ClassicPlayerHeader({character,campaign,owned}){
         <div className={styles.portraitFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
       <div className={styles.portraitCaption}>
         <Heading as="h2">{character.name}</Heading>
+        <Eyebrow>{owned?'Character Owner':'GM Read-only'}</Eyebrow>
         <p>{character.race} / {character.klass}</p>
         <p>Level {character.level}</p>
         <div className={styles.experience}><span>XP</span><span>{character.xp.toLocaleString()} / {character.xpMax?character.xpMax.toLocaleString():'—'}</span></div>
