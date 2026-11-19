@@ -1,7 +1,7 @@
 /* Phase 2.4 appearance page: scoped controls, no legacy CSS or overrides. */
 .page {
-  min-height: 560px;
-  padding-block: clamp(48px, 8vw, 90px) var(--ast-space-9);
+  
+  
 }
 .section {
   margin-top: var(--ast-space-6);
