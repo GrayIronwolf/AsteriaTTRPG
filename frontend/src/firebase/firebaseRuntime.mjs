@@ -9,6 +9,7 @@
 import {
   PRODUCTION_FIREBASE_CONFIG,EMULATOR_FIREBASE_CONFIG
 } from '../auth/authPolicy.mjs';
+import {createFirebaseClientAdapters} from './firebaseClientAdapters.mjs';
 
 const CONFIG_KEYS=Object.freeze(['apiKey','authDomain','projectId','storageBucket','appId']);
 const expectedConfiguration=mode=>
@@ -67,9 +68,12 @@ async function openRuntime(definition,loadSdk){
     }
     await authSdk.setPersistence(auth,typeof window==='undefined'?
       authSdk.inMemoryPersistence:authSdk.browserLocalPersistence);
+    const clients=createFirebaseClientAdapters({
+      app,auth,db,functions,storage,authSdk,firestoreSdk,functionsSdk,storageSdk
+    });
     return Object.freeze({
-      mode:definition.mode,projectId:definition.projectId,app,auth,db,functions,storage,
-      authSdk,firestoreSdk,functionsSdk,storageSdk
+      mode:definition.mode,projectId:definition.projectId,app,
+      adapters:clients.adapters,...clients.dependencies
     });
   }catch(error){
     // A failed initial connection must not strand an incompatible app for the
