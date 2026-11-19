@@ -26,6 +26,7 @@ import {createFirebaseCombatService} from '../combat/firebaseCombatService.mjs';
 import {createFirebaseProgressionService} from '../progression/firebaseProgressionService.mjs';
 import {createFirebaseEconomyService} from '../economy/firebaseEconomyService.mjs';
 import {createFirebaseDigitalGMService} from '../digitalGM/firebaseDigitalGMService.mjs';
+import {createFirebaseDiceService} from '../dice/firebaseDiceService.mjs';
 import {
   readCloudAppearance as decodeCloudAppearance, cloudAppearancePatch, appearanceRevisionsMatch
 } from './accountAppearanceBridge.mjs';
@@ -338,7 +339,11 @@ async function initializeClient(runtime) {
     enabled:import.meta.env.VITE_ASTERIA_ECONOMY_ENABLED==='true'});
   const digitalGM=createFirebaseDigitalGMService({auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,
     readCanonical,storage,storageSdk:safeStorageSdk,enabled:import.meta.env.VITE_ASTERIA_DIGITAL_GM_ENABLED==='true'});
-  const gameplay=Object.freeze({...gmDashboard,media,combat,progression,economy,digitalGM});
+  const dice=createFirebaseDiceService({auth,db,firestoreSdk,functions,
+    functionsSdk:safeFunctionsSdk,readCanonical,
+    enabled:import.meta.env.VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED==='true' ||
+      import.meta.env.VITE_ASTERIA_GM_DASHBOARD_ENABLED==='true'});
+  const gameplay=Object.freeze({...gmDashboard,media,combat,progression,economy,digitalGM,dice});
   return Object.freeze({
     friends,notifications,characters:characterServices,campaigns,gameplay,
     connection,subscribe,
