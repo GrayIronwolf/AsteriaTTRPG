@@ -7,18 +7,13 @@ import { AppearanceProvider } from './appearance/AppearanceProvider.jsx';
 import './styles/tokens.css';
 import './styles/reset.css';
 import './styles/typography.css';
-import {captureIncomingSecureInvite} from './campaigns/campaignConnectionModel.mjs';
+import {sanitizeIncomingLocation} from './router/locationStore.mjs';
 
-// Enabled secure links are captured and scrubbed before React renders or Auth
-// loads. The secret is never recorded in URL history or browser storage.
-if(import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'){
-  const scrub=()=>captureIncomingSecureInvite({
-    hash:window.location.hash,
-    replace:hash=>window.history.replaceState(window.history.state,'',
-      window.location.pathname+window.location.search+hash)
-  });
-  scrub();
-}
+// The router exclusively owns URL sanitisation; it runs synchronously before
+// React, Auth or any authenticated component is mounted.
+sanitizeIncomingLocation(window,{
+  enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'
+});
 
 const host = document.getElementById('asteria-site-root');
 if (!host) {
