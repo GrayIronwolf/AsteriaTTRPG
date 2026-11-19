@@ -127,6 +127,8 @@
 .logoutButton:hover, .logoutButton:focus-visible { background: var(--ast-color-accent-soft); }
 @media (max-width: 760px) {
   .signedIn { gap: 2px; }
-  .accountMenu summary { min-width: 75px; }
-  .notifications { flex-basis: 40px; width: 40px; }
+  .accountMenu summary { min-width: 64px; }
+  .accountMenu summary span span { padding-inline: 4px; font-size: .72rem; }
+  .notifications { flex-basis: 32px; width: 32px; }
+  .notifications svg { width: 23px; height: 23px; }
 }
