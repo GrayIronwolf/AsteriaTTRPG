@@ -10,6 +10,7 @@ import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
+import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
@@ -96,7 +97,7 @@ function Sections({character,tab,owned}){
   </SurfacePanel>;
   return null;
 }
-function Dashboard({api,media,combat,uid,campaignId='',characterId}){
+function Dashboard({api,media,combat,progression,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Overview');
   const generation=useRef(0);
@@ -121,6 +122,7 @@ function Dashboard({api,media,combat,uid,campaignId='',characterId}){
   </SurfacePanel>;
   const ch=data.character,c=data.campaign;
   const combatEnabled=Boolean(c&&data.owner&&combat?.availability().enabled);
+  const progressionEnabled=Boolean(c&&data.owner&&progression?.availability().enabled);
   return <>
     <div className={styles.titleRow}>
       <div><Eyebrow>{c?'Campaign Character':'Owned Character'} · {data.owner?'Owner':'GM Read-only'}</Eyebrow>
@@ -146,11 +148,20 @@ function Dashboard({api,media,combat,uid,campaignId='',characterId}){
       <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
     </SurfacePanel>}
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
+      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
         key={value} className={tab===value?styles.selected:''}
         aria-current={tab===value?'page':undefined}
         onClick={()=>setTab(value)}>{value}</button>)}
     </nav>
+    {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
+      api={progression} campaignId={campaignId} characterId={characterId} section="progression"/>:null}
+    {progressionEnabled&&tab==='Skills'?<PlayerProgressionWorkspace
+      api={progression} campaignId={campaignId} characterId={characterId} section="skills"/>:null}
+    {progressionEnabled&&tab==='Talents'?<PlayerProgressionWorkspace
+      api={progression} campaignId={campaignId} characterId={characterId} section="talents"/>:null}
+    {progressionEnabled?<PlayerCheckRequests key={campaignId+':'+characterId}
+      api={progression} campaignId={campaignId} characterId={characterId}
+      showHistory={tab==='Check History'}/>:null}
     {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={campaignId+':'+characterId}
       api={combat} campaignId={campaignId} characterId={characterId}/>:null}
     {tab==='Battle Maps'&&media?.availability().enabled?
@@ -176,14 +187,14 @@ function Dashboard({api,media,combat,uid,campaignId='',characterId}){
           if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
           return null;
         }}/>
-      :['Battle Maps','World Atlas','Combat'].includes(tab)?null:
+      :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History'].includes(tab)?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
     <SurfacePanel className={styles.panel} as="aside">
       <h3>Dashboard Migration</h3>
       <BodyText muted>This React dashboard reads existing saved character and campaign data.
-        Existing gameplay commands remain server-authoritative. Skills, spells, checks,
-        rewards and other gameplay tools migrate in later phases.</BodyText>
+        The existing gameplay backend remains authoritative. Inventory, crafting,
+        rewards and remaining Digital GM tools migrate in subsequent phases.</BodyText>
     </SurfacePanel>
   </>;
 }
@@ -194,6 +205,7 @@ export function PlayerDashboardPage({route}){
   const api=services.get('characters')?.dashboard;
   const media=services.get('gameplay')?.media;
   const combat=services.get('gameplay')?.combat;
+  const progression=services.get('gameplay')?.progression;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -202,7 +214,7 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} media={media} combat={combat}
+      uid={uid} api={api} media={media} combat={combat} progression={progression}
       campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }
