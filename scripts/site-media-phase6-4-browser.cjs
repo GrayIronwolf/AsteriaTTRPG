@@ -209,7 +209,7 @@ try{
  await gmMaps.getByRole('textbox',{name:'Map name'}).fill('Looping Frostwind Map');
  await gmMaps.locator('input[type="file"]').setInputFiles({
    name:'frostwind.png',mimeType:'image/png',
-   buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg==','base64')
+   buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGNUcEhgYGBgYmBgYGBgAAAI6gDEJfpPsQAAAABJRU5ErkJggg==','base64')
  });
  await gmMaps.getByRole('button',{name:'Upload GM Map'}).click();
  try{await gmMaps.getByText(/Map uploaded as GM-only/).waitFor({timeout:12000});}
@@ -222,7 +222,8 @@ try{
    {waitUntil:'domcontentloaded'});
  await player.getByRole('button',{name:'Battle Maps'}).click();
  await player.getByTestId('site-player-campaign-maps').waitFor({timeout:30000});
- await player.getByText('Looping Frostwind Map').first().waitFor({timeout:30000});
+ await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).locator('option').first().waitFor({timeout:30000});
+ assert.match(await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).innerText(),/Looping Frostwind Map/);
  assert.equal(await player.locator('[data-testid="site-player-campaign-maps"] input[type="file"]').count(),0);
  await owner.getByRole('button',{name:'Presentation',exact:true}).click();
  await owner.getByTestId('site-gm-presentation').waitFor({timeout:30000});
