@@ -1,0 +1,25 @@
+.workspace{display:grid;gap:16px;padding:20px;border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);color:var(--ast-color-text-bright)}
+.workspace h2,.workspace h3,.workspace p{margin:0}
+.workspace header{display:grid;gap:6px}
+.workspace header p{color:var(--ast-color-text-muted)}
+.columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.editor,.record,.presets{display:grid;gap:12px;align-content:start;min-width:0}
+.record{padding:18px;border:1px solid var(--ast-color-outline-soft)}
+.pool{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:9px;align-items:end}
+.pool label,.presets label{display:grid;gap:5px;min-width:0}
+.pool input,.pool select,.presets input{width:100%;min-width:0;min-height:42px;padding:7px;background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text)}
+.workspace button{min-height:42px;padding:7px 12px;border:1px solid var(--ast-color-outline-active);background:var(--ast-color-panel-raised);color:var(--ast-color-text-bright);font:inherit;cursor:pointer}
+.workspace button:disabled{opacity:.5;cursor:not-allowed}
+.workspace button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.buttons{display:flex;gap:8px;flex-wrap:wrap}
+.expression{display:grid;gap:5px;padding:10px;border:1px solid var(--ast-color-outline-soft)}
+.expression strong{font:600 1.4rem var(--ast-font-display)}
+.expression small{color:var(--ast-color-text-muted)}
+.workspace .primary{background:var(--ast-color-accent-soft)}
+.presets{padding-top:15px;border-top:1px solid var(--ast-color-outline-soft)}
+.preset{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.preset small{flex:1;min-width:100px}
+.result{font:600 clamp(2rem,4vw,3.3rem)/1.1 var(--ast-font-display);color:var(--ast-color-accent)}
+.record ul{display:grid;gap:6px;padding-left:22px;max-height:380px;overflow:auto}
+@media(max-width:780px){.columns{grid-template-columns:1fr}}
+@media(max-width:480px){.pool{grid-template-columns:repeat(2,minmax(0,1fr))}.pool>button{grid-column:1/-1}}
