@@ -13,7 +13,7 @@ export function captureAccountSession({auth,connection}={}){
   const generation=connection.authGeneration();
   const assertCurrent=()=>{
     if(auth.currentUser?.uid!==uid||connection.authGeneration()!==generation){
-      const error=Error('The authenticated session changed. Reopen this workspace and verify the result.');
+      const error=Error('The account changed or its authenticated session ended. Reopen this workspace and verify the result.');
       error.code='asteria/session-changed';
       throw error;
     }
