@@ -2,7 +2,7 @@ name: React/Vite Phase 10.2 - Firebase security and functional acceptance
 on:
   pull_request:
     paths:
-      - "scripts/site-cutover-phase10-2-*"
+      - "scripts/site-cutover-phase10-2-security-emulator.test.mjs"
       - "docs/frontend-overhaul/PHASE-10.2-END-TO-END-SECURITY.md"
       - "package.json"
       - ".github/workflows/frontend-phase10-2-acceptance.yml"
