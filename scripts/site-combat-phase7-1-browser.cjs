@@ -275,8 +275,15 @@ try{
  await playerCombat.getByRole('button',{name:'Record 1 AP action'}).click();
  await playerCombat.getByText('1 AP · Bonus available').waitFor({timeout:30000});
  await playerCombat.getByRole('button',{name:'End Turn'}).click();
+ await playerCombat.getByText('Turn complete').waitFor({timeout:30000});
+ // Ensure GM received the new revision before advancing the server-owned turn.
+ await gmCombat.getByText('Turn complete').waitFor({timeout:30000});
  await gmCombat.getByRole('button',{name:'Next Turn'}).click();
- await gmCombat.getByText(/ACTIVE · Round 2/).waitFor({timeout:30000});
+ try{await gmCombat.getByText(/ACTIVE · Round 2/).waitFor({timeout:30000});}
+ catch(error){
+   console.error('COMBAT NEXT TURN DIAGNOSTICS',await gmCombat.innerText());
+   throw error;
+ }
  owner.once('dialog',dialog=>dialog.accept());
  await owner.getByRole('button',{name:'End Combat'}).click();
  await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
