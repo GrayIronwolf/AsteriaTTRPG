@@ -86,7 +86,10 @@ test('profile UI requires a verified authenticated identity, and keeps unsafe UR
   assert.match(controls, /onError=\{\(\) => setImageFailed\(true\)\}/);
   assert.match(controls, /aria-label="Open My Profile"/);
   assert.match(css, /width:\s*var\(--ast-header-avatar-size\)/);
-  assert.match(css, /height:\s*var\(--ast-header-avatar-size\)/);
+  assert.match(css, /height:\s*var\(--ast-header-height\)/);
+  assert.match(css, /border:\s*0;/);
+  assert.match(controls, /site-header-notifications/);
+  assert.doesNotMatch(controls, /⋮/);
   assert.match(css, /object-fit:\s*cover/);
   assert.doesNotMatch(controls.replace(/\/\*[\s\S]*?\*\//g, ''), /localStorage|window\.AsteriaFirebase|sessionStorage/);
 });
