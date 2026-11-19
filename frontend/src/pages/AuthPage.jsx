@@ -55,7 +55,6 @@ export function AuthPage({route}) {
     {session.status==='authenticated' && !isReset && !isCreate && <SurfacePanel className={styles.signedIn}>
       <BodyText>Signed in{session.identity?.username ? ' as '+session.identity.username : ''}.</BodyText>
       {!session.profileAvailable && <BodyText muted>Your saved account profile is not verified yet; private features remain unavailable.</BodyText>}
-      <CrystalButton href="#home" variant="primary">Return to Home</CrystalButton>
       <CrystalButton variant="secondary" onClick={async()=>{
         const result=await actions.signOut();
         if (!result.ok) setMessage({error:true,text:result.error});
@@ -97,7 +96,6 @@ export function AuthPage({route}) {
       {!isCreate && <a href="#/account/create">Create Account</a>}
       {!isReset && <a href="#/account/forgot-password">Forgot password?</a>}
       {(isCreate||isReset) && <a href="#/account/login">Back to Login</a>}
-      <a href="#home">Return to Home</a>
     </nav>
   </PageLayout>;
 }
