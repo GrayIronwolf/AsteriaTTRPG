@@ -90,15 +90,8 @@ function scanGraph() {
       assert.ok(!forbidden.has(dependency), 'React imports old runtime/controller: ' + file + ' -> ' + dependency);
       assert.ok(!dependency.startsWith('css/'),
         'React imports the legacy global CSS cascade: ' + file + ' -> ' + dependency);
-      if (dependency.startsWith('js/')) {
-        // A single historical canonical pricing rule is shared by the pure
-        // liveWorkspaceModel; its UMD global side-effect is a Phase 10 blocker,
-        // not a second pricing implementation. Forbid every other legacy JS.
-        assert.equal(file, 'src/systems/items/marketPricing.mjs',
-          'Unexpected transitive legacy script import: ' + file);
-        assert.equal(dependency, 'js/asteria-market-pricing.js');
-        globals.add(dependency);
-      }
+      assert.ok(!dependency.startsWith('js/'),
+        'React source graph must not load a legacy browser script: '+file+' -> '+dependency);
       if (/\.(?:js|jsx|mjs)$/.test(dependency)) queue.push(dependency);
     }
   }
@@ -149,7 +142,7 @@ test('the React dependency graph is resolvable, isolated and inventories transit
   assert.ok(graph.scannedReactSourceFiles >= 90, 'Unexpected loss of migrated React source files');
   assert.ok(graph.resolvedDirectFrontendImports >= 85, 'Unexpected loss of React import dependencies');
   assert.ok(graph.reachableCodeFiles > 50, 'React entry no longer reaches the migrated application');
-  assert.deepEqual(graph.sharedCanonicalModules, ['js/asteria-market-pricing.js'],
+  assert.deepEqual(graph.sharedCanonicalModules, [],
     'A change to the shared historical pricing edge requires an explicit review');
   // Non-runtime, opt-in tools and tests may exist. The report lists orphan
   // modules for Phase 10 review rather than deleting them based on a scan.
