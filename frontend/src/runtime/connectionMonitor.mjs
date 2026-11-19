@@ -14,7 +14,7 @@ export function createConnectionMonitor({environment=typeof window==='undefined'
   const listeners=new Set();
   const online=()=>environment?.navigator?.onLine!==false;
   let state=online()?'online':'offline';
-  let epoch=0,disposed=false,lastUid=null;
+  let epoch=0,authEpoch=0,disposed=false,lastUid=null;
   const snapshot=()=>Object.freeze({state,epoch});
   const publish=()=>{
     const next=snapshot();
@@ -50,7 +50,9 @@ export function createConnectionMonitor({environment=typeof window==='undefined'
       if(!isTransientConnectionError(error))return;
       set(online()?'unavailable':'offline');
     },
+    authGeneration(){return authEpoch;},
     identityChanged(uid){
+      authEpoch++;
       if(uid===lastUid)return;
       lastUid=uid||null;
       // The identity boundary is owned by the existing Auth observer.

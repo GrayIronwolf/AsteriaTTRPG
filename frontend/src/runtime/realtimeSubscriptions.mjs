@@ -1,3 +1,5 @@
+import {isConfirmedServerSnapshot} from './sessionIntegrity.mjs';
+
 /**
  * Phase 8.2 — one lifecycle owner for React's verified Firestore streams.
  *
@@ -61,7 +63,7 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk,connection=null
             publishFault(stream,Error('Signed-in account changed. Subscription closed.'));
             return;
           }
-          if(snapshot?.metadata?.fromCache||snapshot?.metadata?.hasPendingWrites||
+          if(!isConfirmedServerSnapshot(snapshot)||
              (connection&&!connection.canAttempt()))return;
           connection?.reportSuccess?.();
           stream.last=snapshot;stream.hasLast=true;
@@ -95,7 +97,8 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk,connection=null
     if(joining&&stream.hasLast&&!stream.closed){
       const snapshot=stream.last;
       queueMicrotask(()=>{
-        if(alive&&!stream.closed&&same(uid)&&stream.epoch===generation){
+        if(alive&&!stream.closed&&same(uid)&&stream.epoch===generation&&
+           (!connection||connection.canAttempt())){
           try{item.value(snapshot);}catch(err){item.error(err);}
         }
       });

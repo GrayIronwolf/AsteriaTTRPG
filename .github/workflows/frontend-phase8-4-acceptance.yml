@@ -1,0 +1,72 @@
+name: React/Vite Phase 8.4 - Cross-feature access and integrity acceptance
+on:
+  pull_request:
+    paths:
+      - "frontend/src/runtime/**"
+      - "frontend/src/auth/**"
+      - "frontend/src/combat/**"
+      - "frontend/src/progression/**"
+      - "frontend/src/economy/**"
+      - "frontend/src/digitalGM/**"
+      - "frontend/src/dashboard/**"
+      - "frontend/src/player/**"
+      - "scripts/site-firebase-phase8-4.test.mjs"
+      - "package.json"
+      - ".github/workflows/frontend-phase8-4-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  cross-feature-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: All Firebase runtime and cross-feature regression suites
+        run: |
+          npm run site:firebase-phase8-1
+          npm run site:firebase-phase8-2
+          npm run site:firebase-phase8-3
+          npm run site:firebase-phase8-4
+          npm run site:check
+      - name: Lint, production-safe guest build and artifact verification
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Build explicitly enabled Firebase emulator frontend
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_FRIENDS_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED: 'true'
+          VITE_ASTERIA_FORGE_INTEGRATION_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED: 'true'
+          VITE_ASTERIA_COMBAT_ENABLED: 'true'
+          VITE_ASTERIA_PROGRESSION_ENABLED: 'true'
+          VITE_ASTERIA_ECONOMY_ENABLED: 'true'
+          VITE_ASTERIA_DIGITAL_GM_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Authenticated emulator offline and session-isolation browser acceptance
+        timeout-minutes: 12
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:network-browser"
+      - name: Restore default guest-only preview and verify output
+        run: |
+          npm run site:build
+          npm run site:verify-dist
