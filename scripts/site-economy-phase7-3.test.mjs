@@ -138,7 +138,7 @@ test('disabled service and unauthorised role cannot execute commands',async()=>{
   const playerService=fixture(player);
   await assert.rejects(playerService.service.gm(cid,'gm-scope','stash',{type:'create'}),/permission/);
   await assert.rejects(playerService.service.player(cid,otherId,'inventory',
-    {type:'use',itemId:'sword123'}),/owner|link/);
+    {type:'use',itemId:'sword123'}),/owner|[Ll]ink/);
 });
 test('players cannot invoke GM actions or direct inventory quantity changes',async()=>{
   const f=fixture(player);
