@@ -61,8 +61,8 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk,connection=null
             publishFault(stream,Error('Signed-in account changed. Subscription closed.'));
             return;
           }
-          if(snapshot?.metadata?.fromCache||snapshot?.metadata?.hasPendingWrites)
-            return;
+          if(snapshot?.metadata?.fromCache||snapshot?.metadata?.hasPendingWrites||
+             (connection&&!connection.canAttempt()))return;
           connection?.reportSuccess?.();
           stream.last=snapshot;stream.hasLast=true;
           for(const listener of [...stream.listeners]){
