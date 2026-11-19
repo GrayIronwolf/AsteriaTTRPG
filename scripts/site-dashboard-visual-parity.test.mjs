@@ -21,7 +21,7 @@ test('player restores original portrait, campaign image, HP SP MP and 9 characte
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
   for(const marker of ['classicHeader','portraitColumn','coreColumn','campaignColumn','Resources','StatPanel','sessionStrip'])
     assert.ok(jsx.includes(marker),marker);
-  assert.match(css,/grid-template-columns:minmax\(200px,30%\)/);
+  assert.match(css,/grid-template-columns:minmax\(180px,30fr\)/);
   assert.doesNotMatch(jsx,/<h3>Dashboard Migration<\/h3>/);
 });
 test('GM has original resource sidebar, framed panels and reusable session backend',()=>{
@@ -44,4 +44,39 @@ test('only safe image URLs cross React projection boundary, never expose private
   assert.equal(playerCampaignProjection(c,{allowed:true,isGM:false},null).image,'/assets/campaign.webp');
   assert.equal(gmCampaignSummary({...c,ownerUid:owner},{allowed:true,role:'owner'}).image,'/assets/campaign.webp');
   assert.equal(gmPartySummary([{id,name:'Hero',image:'https://example.com/hero.webp'}])[0].image,'https://example.com/hero.webp');
+});
+
+test('restored frame uses original square cell ratios, sliced artwork, and four frame families',()=>{
+  const css=read('frontend/src/layout/DashboardLayoutWorkspace.module.css');
+  const jsx=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
+  assert.match(css,/grid-auto-rows: calc\(\(100cqw - 66px\) \/ 12\)/);
+  assert.match(css,/border-image-source: var\(--ast-dashboard-frame\)/);
+  assert.match(css,/border-image-slice: 12%/);
+  assert.doesNotMatch(css,/grid-auto-rows:minmax\(42px/);
+  assert.match(jsx,/data-frame-family=\{frame\}/);
+  for(const kind of ['wide','ultrawide','tall','square'])assert.ok(jsx.includes("'"+kind+"'"));
+});
+test('resource tracks are rendered with original HP SP MP colour roles',()=>{
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  assert.match(page,/role="progressbar"/);
+  assert.match(gm,/role="progressbar"/);
+  assert.doesNotMatch(page,/<progress aria-label=\{key\.toUpperCase\(\)\+' resources'/);
+  for(const selector of ["data-resource='sp'","data-resource='mp'"])
+    assert.ok(css.includes(selector),selector);
+  assert.match(css,/rgb\(237 88 138\)/);
+  assert.match(css,/rgb\(42 216 167\)/);
+  assert.match(css,/rgb\(52 191 242\)/);
+});
+test('original player navigation remains enumerated rather than silently removed',()=>{
+  const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  for(const label of ['Dashboard','Character','Class/Talent Tree','Skills','Spells',
+    'Inventory','Crafting','Quests','News / Events / History','Journal','Party',
+    'Gallery','Battle Maps','Advanced Dice','Calendar','Weather','World Map',
+    'Campaign Library','Campaign Audio','Recording & Archives','Dashboard Settings'])
+    assert.ok(jsx.includes("'"+label+"'"),label);
+  assert.match(jsx,/not yet connected to the new React route/);
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  assert.doesNotMatch(css,/\.tabs button\{[^}]*background:var\(--ast-color-panel-raised\)/);
 });
