@@ -25,7 +25,7 @@ const EXPLANATIONS = Object.freeze({
   'character-dashboard': 'The character deep link is recognised. Ownership and character data remain protected and unavailable in this preview.',
   presentation: 'The presentation deep link is recognised. Campaign access and real-time session data are not connected here.',
   invitation: 'This campaign invitation link is recognised but is not redeemed in the preview. Use the current Asteria website to accept invitations.',
-  'not-found': 'This URL does not match an available page. Check the link or return to Home.'
+  'not-found': 'This URL does not match an available page. Check the address or use the Asteria logo to navigate.'
 });
 
 /** Restricted destinations remain honest placeholders until data is migrated. */
@@ -49,7 +49,6 @@ export function RoutePreviewPage({ route }) {
           Customise website appearance
         </CrystalButton>
       )}
-      <CrystalButton variant="primary" size="wide" href="#home">Return to Home</CrystalButton>
     </PageLayout>
   );
 }
