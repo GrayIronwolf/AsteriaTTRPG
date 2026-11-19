@@ -2,6 +2,7 @@ import {
   validateLoginInput, validateResetEmail, GENERIC_RESET_SUCCESS
 } from './authPolicy.mjs';
 import {connectFirebaseRuntime} from '../firebase/firebaseRuntime.mjs';
+import {createRealtimeSubscriptionHub,createSharedFirestoreSdk} from '../runtime/realtimeSubscriptions.mjs';
 import { createAuthObserver, ownedProfile } from './authSessionModel.mjs';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
 import { finalizeRegisteredAccountId } from '../../../src/state/accountIdRegistration.mjs';
@@ -47,8 +48,10 @@ export async function createFirebaseAuthAdapter(runtime) {
 }
 
 async function initializeClient(runtime) {
-  const {auth,db,functions,storage,authSdk,firestoreSdk,functionsSdk,storageSdk}=
+  const {auth,db,functions,storage,authSdk,firestoreSdk:rawFirestoreSdk,functionsSdk,storageSdk}=
     await connectFirebaseRuntime(runtime);
+  const realtime=createRealtimeSubscriptionHub({auth,firestoreSdk:rawFirestoreSdk});
+  const firestoreSdk=createSharedFirestoreSdk({auth,firestoreSdk:rawFirestoreSdk,hub:realtime});
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
@@ -60,7 +63,11 @@ async function initializeClient(runtime) {
     return ownedProfile(user, profile) ? profile : null;
   };
   const subscribe = publish => createAuthObserver({
-    observe: (next, error) => authSdk.onAuthStateChanged(auth, next, error),
+    observe: (next, error) => authSdk.onAuthStateChanged(auth, user => {
+      // One Auth observer owns the identity boundary for every Firestore view.
+      realtime.identityChanged(user?.uid||null);
+      next(user);
+    }, error),
     readProfile: readCanonical,
     publish
   });
