@@ -166,7 +166,7 @@ async function awaitPreview() {
     assert.ok(motion === '1e-05s' || motion === '0.00001s' || motion === '0s',
       'Reduced-motion transition was not disabled: ' + motion);
 
-    await page.getByRole('link', { name: 'Return to Home' }).click();
+    await page.getByTestId('site-brand').click();
     await page.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
     assert.deepEqual(errors, [], 'Browser errors: ' + errors.join('; '));
     console.log('PASS: scoped page panels, theme tokens, reduced motion and brand-owned Home.');
