@@ -1,5 +1,5 @@
 /* React-only public catalogue styling: token-driven CSS Module, no legacy overrides. */
-.page {   }
+.page { min-width: 0; }
 .controls {
   display: grid;
   grid-template-columns: minmax(220px,2fr) repeat(2,minmax(160px,1fr));
@@ -37,7 +37,7 @@
 .summary { color: var(--ast-color-text-muted); font-size: var(--ast-font-sm); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .more { min-height: var(--ast-target-min); margin-block: var(--ast-space-5); padding: var(--ast-space-3) var(--ast-space-5); color: var(--ast-color-text); border: 1px solid var(--ast-color-outline); border-radius: var(--ast-radius-sm); background: var(--ast-color-panel-raised); cursor: pointer; }
 
-@media (max-width:760px) { .controls { grid-template-columns: minmax(0,1fr); } .page { padding-block: var(--ast-space-6); } }
+@media (max-width:760px) { .controls { grid-template-columns: minmax(0,1fr); }  }
 
 /* Phase 3.3: responsive hierarchy and public search, scoped to this page. */
 .controls { grid-template-columns:minmax(200px,2fr) minmax(140px,auto) repeat(2,minmax(130px,1fr)); align-items:end; }
