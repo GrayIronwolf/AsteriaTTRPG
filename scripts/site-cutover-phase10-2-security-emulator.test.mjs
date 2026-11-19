@@ -59,6 +59,8 @@ beforeEach(async()=>{
         name:'Hidden Map',kind:'image',contentType:'image/png'}],
       [at('battleMaps','published'),{id:'published',campaignId,visibility:'players',
         name:'Shared Map',kind:'image',contentType:'image/png'}],
+      [at('battleMaps','revocation'),{id:'revocation',campaignId,visibility:'players',
+        name:'Revocation Test Map',kind:'image',contentType:'image/png'}],
       [at('battleMaps','secret','gmNotes','private'),{pins:[],updatedBy:'gm'}],
       [at('systems','gmWorkspace'),{gmNotes:'private'}],
       [at('systems','itemPublic'),{shops:[],partyLoot:[]}],
@@ -212,41 +214,20 @@ test('Storage media enforces GM publishing, media visibility and private avatar 
 });
 
 test('membership revocation immediately invalidates existing Firestore and Storage permissions',async()=>{
-  const media='campaigns/'+campaignId+'/battleMaps/published/scene.png';
-  console.log('REVOKE STAGE 1 upload as GM');
+  const media='campaigns/'+campaignId+'/battleMaps/revocation/scene.png';
   await assertSucceeds(uploadBytes(ref(storage('gm'),media),
     new Uint8Array([137,80,78,71,1]),{contentType:'image/png'}));
-  console.log('REVOKE STAGE 2 active player Firestore read');
   await assertSucceeds(read('alice',at()));
-  // The Storage emulator obtains the campaign membership from Firestore.
-  // Fresh beforeEach fixtures can become visible to its cross-service cache
-  // slightly after the Firestore SDK sees them. Retry only the pre-revocation
-  // permitted read; post-revocation denial is asserted without any retry.
-  let beforeRevocation = false;
-  for(let i=0;i<12&&!beforeRevocation;i++){
-    try{
-      await assertSucceeds(getBytes(ref(storage('alice'),media)));
-      beforeRevocation=true;
-    }catch(error){
-      if(i===11)throw new Error('Active player could not read the published map before revocation.',{cause:error});
-      await new Promise(done=>setTimeout(done,150));
-    }
-  }
-  console.log('REVOKE STAGE 3 deactivate membership');
+  // A dedicated published asset avoids treating a protected overwrite as create.
+  await assertSucceeds(getBytes(ref(storage('alice'),media)));
   await env.withSecurityRulesDisabled(async context=>{
     await updateDoc(doc(context.firestore(),at('members','alice')),{status:'suspended'});
   });
-  console.log('REVOKE STAGE 4 deny campaign');
   await assertFails(read('alice',at()));
-  console.log('REVOKE STAGE 5 deny map metadata');
   await assertFails(read('alice',at('battleMaps','published')));
-  console.log('REVOKE STAGE 6 deny checks');
   await assertFails(read('alice',at('checkRequests','own')));
-  console.log('REVOKE STAGE 7 deny stash');
   await assertFails(read('alice',at('partyStashes','stash')));
-  console.log('REVOKE STAGE 8 deny media');
   await assertFails(getBytes(ref(storage('alice'),media)));
   // User profile remains available to its owner; only campaign access is revoked.
-  console.log('REVOKE STAGE 9 own profile remains');
   await assertSucceeds(read('alice',profile('alice')));
 });
