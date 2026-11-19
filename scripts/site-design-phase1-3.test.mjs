@@ -93,8 +93,9 @@ test('component boundaries and reusable Asteria UI controls are wired to the pag
   assert.match(route, /<SurfacePanel/);
   assert.match(buttons, /if \(href != null\)/);
   assert.match(buttons, /aria-current=\{active \? 'page'/);
-  assert.match(buttonCss, /clip-path:\s*polygon\(/);
-  assert.match(buttonCss, /var\(--ast-button-inset-top\)/);
+  assert.match(buttonCss, /border-image-source:\s*var\(--ast-button-frame-art\)/);
+  assert.match(buttonCss, /--ast-button-crystal-art/);
+  assert.match(buttonCss, /-webkit-mask-box-image-slice/);
 });
 
 test('design boundaries keep current production build, dashboard styles and Firebase untouched', () => {
@@ -111,4 +112,24 @@ test('design boundaries keep current production build, dashboard styles and Fire
   assert.match(pkg.scripts['site:check'], /site-design-phase1-3\.test\.mjs/);
   assert.match(pkg.scripts['site:design-browser'], /site-design-browser\.cjs/);
   assert.match(workflow, /npm run site:design-browser/);
+});
+
+test('approved default button material is isolated and theme-safe', () => {
+  const tokens = read(location + 'styles/tokens.css');
+  const button = read(location + 'components/ui/CrystalButton.module.css');
+  for (const family of ['small', 'standard', 'long', 'icon']) {
+    for (const material of ['frame', 'crystal']) {
+      const path = 'assets/ui/buttons/button-' + family + '-' + material + '.webp';
+      assert.ok(existsSync(resolve(root, path)), path);
+      assert.ok(tokens.includes(path), path);
+    }
+  }
+  assert.match(button, /border-image-slice/);
+  assert.match(button, /--ast-button-crystal-glow/);
+  assert.doesNotMatch(button, /!important|:global\\(/);
+  const appearance = read(location + 'appearance/appearanceModel.mjs');
+  const provider = read(location + 'appearance/AppearanceProvider.jsx');
+  assert.match(appearance, /BUTTON_THEME_OPTIONS/);
+  assert.match(appearance, /buttonTheme: 'asteria-crystal'/);
+  assert.match(provider, /root.dataset.asteriaButtonTheme = appearance.buttonTheme/);
 });
