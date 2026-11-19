@@ -239,7 +239,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
         owner={data.owner} campaignId={campaignId} characterId={characterId}
         initialLayout={ch.dashboardLayout}
         renderPanel={id=><PlayerOverviewPanel id={id} character={ch}
-          campaign={c} onNavigate={setTab} available={{combatEnabled,progressionEnabled,economyEnabled}}/>}>
+          campaign={c} onNavigate={setTab} available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
       :(economyEnabled&&['Inventory','Crafting'].includes(tab))||
         (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
         (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
