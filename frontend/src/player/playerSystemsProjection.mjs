@@ -70,6 +70,7 @@ export function projectPlayerSystems(character={},clock={}){
   const request=object(character.restState?.request)?character.restState.request:null;
   const status=text(request?.status,30);
   return Object.freeze({
+    restSequence:Number.isSafeInteger(Number(character.restState?.sequence))?Math.max(0,Number(character.restState.sequence)):0,
     currencies:currencyRows(character),
     conditionDetails:conditions(character,clock),
     activeEffects:effects(character,clock),
@@ -80,7 +81,7 @@ export function projectPlayerSystems(character={},clock={}){
     soulDamage:soulDamageValue(character),
     soulHealingCap:soulHealingCap(character),
     restRequest:request&&['pending','approved','denied','cancelled'].includes(status)
-      ?Object.freeze({status,note:text(request.note,400),
+      ?Object.freeze({id:text(request.id,120),status,note:text(request.note,400),
         soulRecovery:Math.max(0,finite(request.soulRecovery)??0)})
       :null
   });
