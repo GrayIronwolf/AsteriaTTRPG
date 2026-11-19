@@ -1,0 +1,53 @@
+name: React/Vite Phase 9.4 - final architecture and dependency acceptance
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "src/**"
+      - "js/**"
+      - "css/**"
+      - "react-dist/**"
+      - "index.html"
+      - "scripts/site-architecture-phase9-4.test.mjs"
+      - "docs/frontend-overhaul/PHASE-9.4-FINAL-DEPENDENCY-AUDIT.md"
+      - "package.json"
+      - ".github/workflows/frontend-phase9-4-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  architecture-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Final React import, route, CSS and legacy entry checks
+        run: |
+          npm run site:architecture-phase9-4
+          npm run site:legacy-assets-phase9-3
+          npm run site:legacy-js-phase9-2
+          npm run site:legacy-css-phase9-1
+          npm run site:retirement-audit
+      - name: Phase 1 through 9 site regression suites
+        run: npm run site:check
+      - name: Legacy account, dashboard and market pricing regression suites
+        run: |
+          npm run test:account-pages
+          npm run test:dashboard
+          npm run test:market-pricing
+      - name: Static analysis and isolated React/Vite production bundle
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Upload dependency and ownership audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-9-4-dependency-ownership-evidence
+          path: ${{ runner.temp }}/asteria-phase-9-4-architecture-evidence/
+          retention-days: 30
+          if-no-files-found: warn
