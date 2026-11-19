@@ -80,15 +80,17 @@ export function NotificationsPage(){
  return <PageLayout as="section" width="wide" className={styles.page}
    labelledBy="notice-page-title" data-testid="site-notifications-page">
    <PageHeader eyebrow="Asteria Account" id="notice-page-title" title="Notifications" />
-   <BodyText muted>Private account updates from the existing Firebase notification service.
-     Counts represent unread messages on the latest available page, not your entire history.</BodyText>
-   <div className={styles.channels} role="group" aria-label="Notification inboxes">
+   <div data-page-shell="true">
+   <div data-page-rail="true" data-page-nav="true" role="group" aria-label="Notification inboxes">
      {available.map(name=><button type="button" key={name}
-       className={styles.tab} aria-current={selected===name?'page':undefined}
+       data-page-nav-item="true" aria-current={selected===name?'page':undefined}
        data-testid={'site-notifications-tab-'+name} onClick={()=>setChannel(name)}>
        {name==='social'?'Friend Notifications':'Campaign Notifications'}
      </button>)}
    </div>
+     <div className={styles.content} data-page-content="true">
+   <BodyText muted>Private account updates from the existing Firebase notification service.
+     Counts represent unread messages on the latest available page, not your entire history.</BodyText>
    {error&&<p role="alert" className={styles.notice}>{error}</p>}
    {message&&<p role="status" className={styles.notice}>{message}</p>}
    <SurfacePanel as="section" className={styles.panel}>
@@ -127,5 +129,7 @@ export function NotificationsPage(){
        <CrystalButton disabled={busy||!shown.nextCursor} onClick={next}>Next</CrystalButton>
      </div>
    </SurfacePanel>
+     </div>
+   </div>
  </PageLayout>;
 }
