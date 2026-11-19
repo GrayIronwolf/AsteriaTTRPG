@@ -74,3 +74,9 @@
 .tabs :is(button,a)>span{background:transparent;border:0}
 .sessionStrip{font-size:.83rem}
 @media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32fr) minmax(240px,68fr)}}
+
+.galleryPortrait{display:block;max-width:min(100%,400px);max-height:480px;object-fit:contain;border:1px solid var(--ast-color-outline-soft)}
+/* Responsive original-style navigation is one scrollable strip, never a row
+ * of rectangular tab cards. The pointed art is supplied by CrystalButton. */
+.tabs{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scroll-snap-type:x proximity}
+.tabs button{scroll-snap-align:start}
