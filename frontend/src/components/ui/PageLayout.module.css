@@ -4,9 +4,16 @@
   margin-inline: auto;
   padding-inline: var(--ast-page-gutter);
 }
+.standard {
+  min-height: var(--ast-page-min-height);
+  padding-block: var(--ast-page-top-space) var(--ast-page-bottom-space);
+}
+/* The Home carousel and its content sections do not need an internal page header. */
+.section { min-height: 0; padding-block: 0; }
 .reading { max-width: var(--ast-reading-max); }
 .wide { max-width: var(--ast-page-max); }
 .full { max-width: none; }
 @media (max-width: 760px) {
   .page { padding-inline: var(--ast-space-5); }
+  .standard { --ast-page-top-space: var(--ast-space-5); --ast-page-bottom-space: var(--ast-space-6); }
 }
