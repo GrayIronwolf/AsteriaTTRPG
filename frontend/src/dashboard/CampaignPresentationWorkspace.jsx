@@ -96,7 +96,7 @@ export function CampaignPresentationController({api,campaignId,party=[]}){
     <p>Choose a scene for the second-screen display. Only approved shared content can be published.</p>
     {control.error?<p role="alert">{control.error}</p>:null}
     <div className={styles.fields}>
-      <label>Scene<select value={draft.scene} disabled={busy}
+      <label>Scene<select value={draft.scene} disabled={busy||control.loading||Boolean(control.error)}
         onChange={e=>pickScene(e.target.value)}>
         {PRESENTATION_SCENES.map(x=><option key={x} value={x}>{names[x]}</option>)}
       </select></label>
