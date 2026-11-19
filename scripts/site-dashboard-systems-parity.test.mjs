@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {playerCharacterProjection} from '../frontend/src/player/playerDashboardModel.mjs';
 
 const owned='owner-123',id='character-123';
@@ -44,4 +45,30 @@ test('unsafe currency data and malformed requests do not leak to the dashboard',
   assert.equal(projected.currencies.find(c=>c.id==='gold').amount,0);
   assert.equal(projected.currencies.some(c=>c.label==='Custom'),false);
   assert.equal(projected.restRequest,null);
+});
+
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+test('original Player gameplay panels are implemented, not replaced by migration placeholders',()=>{
+  const panels=read('frontend/src/player/PlayerOverviewPanels.jsx');
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const service=read('frontend/src/player/firebasePlayerDashboardService.mjs');
+  const bootstrap=read('frontend/src/auth/firebaseAuthAdapter.mjs');
+  for(const panel of ['Conditions','Effects','Damage','Rest','Currency']){
+    assert.match(panels,new RegExp('function '+panel+'\\\\('));
+  }
+  for(const action of ['removeCondition','takeRest','adjustCurrency']){
+    assert.ok(panels.includes("'"+action+"'"),action+' is missing in interactive panel');
+    assert.ok(service.includes('async function '+action+'('),action+' requires secured Firebase adapter');
+    assert.ok(page.includes('api.'+action+'('),action+' is not connected to dashboard');
+  }
+  assert.match(bootstrap,/functions,functionsSdk:safeFunctionsSdk/);
+  assert.match(service,/resolveCampaign\\\\(cid,id\\\\)/);
+  assert.match(service,/gmSessionState\\\\(snapshot.data\\\\(\\\\)\\\\)/);
+});
+test('rest requests and currency are projected from original character systems',()=>{
+  const ch=playerCharacterProjection(character(),{owned:true});
+  assert.equal(ch.restSequence,0);
+  assert.ok(Array.isArray(ch.currencies));
+  assert.equal(ch.conditionDetails[0].allowPlayerRemoval,false);
+  assert.ok(ch.activeEffects.length>=1);
 });
