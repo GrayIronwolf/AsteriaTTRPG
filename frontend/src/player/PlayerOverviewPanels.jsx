@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import styles from './PlayerOverviewPanels.module.css';
 
 const first=(items=[],limit=12)=>Array.isArray(items)?items.slice(0,limit):[];
@@ -18,9 +18,65 @@ function ItemSummary({rows,empty,limit=10}){
       {item.quantity>1?' × '+item.quantity:''}{item.rank?' · '+item.rank:''}</li>)}</ul>:
     <p className={styles.empty}>{empty}</p>;
 }
+function Conditions({character,editable=false,busy=false,onAction}){
+  return <div className={styles.section}>
+    {(character.conditionDetails||[]).length?
+      <ul className={styles.list}>{character.conditionDetails.map(condition=><li key={condition.id}>
+        <strong>{condition.name}</strong>{condition.duration?<small> · {condition.duration}</small>:null}
+        {condition.description?<p>{condition.description}</p>:null}
+        {editable&&condition.allowPlayerRemoval?
+          <button type="button" disabled={busy} onClick={()=>onAction?.('removeCondition',condition.id)}>
+            Remove condition</button>:null}
+      </li>)}</ul>:<p>No active conditions.</p>}
+  </div>;
+}
+function Effects({character}){
+  return (character.activeEffects||[]).length?
+    <ul className={styles.list}>{character.activeEffects.map(effect=><li key={effect.id}>
+      <strong>{effect.name}</strong> · {effect.target} {effect.operation} {effect.value}
+    </li>)}</ul>:<p>No active effects.</p>;
+}
+function Damage({character}){
+  return <div className={styles.section}>
+    <p><strong>Soul Damage:</strong> {character.soulDamage??0} HP sealed</p>
+    <p><strong>HP healing cap:</strong> {character.soulHealingCap??'—'}</p>
+    <p>Soul Damage cannot be restored through ordinary HP healing.</p>
+  </div>;
+}
+function Rest({character,editable=false,busy=false,onAction}){
+  const [recovery,setRecovery]=useState('0');
+  const pending=character.restRequest?.status==='pending';
+  return <div className={styles.section}>
+    <div className={styles.buttons}>
+      <button type="button" disabled={!editable||busy||pending}
+        onClick={()=>onAction?.('takeRest',{type:'short',soulRecovery:0})}>Short Rest</button>
+      <button type="button" disabled={!editable||busy||pending}
+        onClick={()=>onAction?.('takeRest',{type:'long',soulRecovery:Number(recovery)})}>Request Long Rest</button>
+    </div>
+    <label>Soul Recovery <input type="number" min="0" max={character.soulDamage??0}
+      value={recovery} disabled={!editable||busy||pending}
+      onChange={e=>setRecovery(e.target.value)}/></label>
+    <p>Short Rest: 4 hours. Long Rest: 8 hours and GM approval.</p>
+    {character.restRequest?<p role="status">Long Rest: {character.restRequest.status}</p>:null}
+  </div>;
+}
+function Currency({character,editable=false,busy=false,onAction}){
+  return <div className={styles.section}>
+    {(character.currencies||[]).map(coin=><div className={styles.coin} key={coin.id}>
+      <span>{coin.label}: <strong>{coin.amount.toLocaleString()}</strong></span>
+      {!coin.id.startsWith('extra:')&&editable?<div className={styles.buttons}>
+        <button disabled={busy||coin.amount<1} type="button" aria-label={'Decrease '+coin.label}
+          onClick={()=>onAction?.('adjustCurrency',{key:coin.id,delta:-1})}>−</button>
+        <button disabled={busy} type="button" aria-label={'Increase '+coin.label}
+          onClick={()=>onAction?.('adjustCurrency',{key:coin.id,delta:1})}>+</button>
+      </div>:null}
+    </div>)}
+  </div>;
+}
+
 /** Uses only the server-filtered character projection. Every gameplay link
  * opens a real authorised React workspace; no legacy globals are mounted. */
-export function PlayerOverviewPanel({id,character,campaign,onNavigate,available={}}){
+export function PlayerOverviewPanel({id,character,campaign,onNavigate,available={},editable=false,busy=false,onAction}){
   const slots=character.equipmentSlots||{};
   const go=onNavigate||(()=>{});
   if(id==='armour')return <div className={styles.armour}>
@@ -47,12 +103,11 @@ export function PlayerOverviewPanel({id,character,campaign,onNavigate,available=
     <Navigate go={go} to="Class/Talent Tree">Open Talent Tree</Navigate></>;
   if(id==='spells')return <><ItemSummary rows={character.spells} empty="No spells recorded."/>
     <Navigate go={go} to="Spells">Open Spells</Navigate></>;
-  if(id==='conditions')return <ItemSummary rows={character.conditions} empty="No active conditions."/>;
-  if(id==='effects')return <p className={styles.empty}>No active effect details available in the new character projection.</p>;
-  if(id==='specialDamage')return <p className={styles.empty}>Soul Damage information requires the original character-system projection to be restored.</p>;
-  if(id==='rest')return <><p>Light Rest: 2 hours · Short Rest: 4 hours · Long Rest: 8 hours.</p>
-    <p className={styles.empty}>Rest requests must be connected to the original secure character commands.</p></>;
-  if(id==='currency')return <p className={styles.empty}>Character currency is not yet included in the new read-only projection.</p>;
+  if(id==='conditions')return <Conditions character={character} editable={editable} busy={busy} onAction={onAction}/>;
+  if(id==='effects')return <Effects character={character}/>;
+  if(id==='specialDamage')return <Damage character={character}/>;
+  if(id==='rest')return <Rest character={character} editable={editable} busy={busy} onAction={onAction}/>;
+  if(id==='currency')return <Currency character={character} editable={editable} busy={busy} onAction={onAction}/>;
   if(id==='quests'||id==='questTracker')return <><ItemSummary rows={character.quests} empty="No current quests."/>
     <Navigate go={go} to="Quests">Open Quests</Navigate></>;
   if(id==='journal')return <><ItemSummary rows={character.journal} empty="No journal entries."/>
