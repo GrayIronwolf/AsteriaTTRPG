@@ -17,3 +17,13 @@ export function hudImagePosition(position, fallback = 'center') {
   const token = '(?:left|right|center|top|bottom|(?:100|[1-9]?\\d)%)';
   return new RegExp('^' + token + '(?:\\s+' + token + ')?$').test(value) ? value : fallback;
 }
+
+/** Reuse only browser-displayable artwork from authorised dashboard projections. */
+export function safeDashboardArtwork(...candidates) {
+  for(const candidate of candidates) {
+    const source=hudImageSource(candidate);
+    if(!source || source.length>1200000)continue;
+    if(/^(?:https:\/\/|http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\/|\/(?!\/)|\.?\.\/|assets\/|data:image\/(?:png|jpe?g|webp);base64,)/i.test(source))return source;
+  }
+  return '';
+}
