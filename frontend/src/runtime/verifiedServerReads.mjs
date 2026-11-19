@@ -67,8 +67,41 @@ export function createVerifiedServerReads({auth,firestoreSdk,connection,delay=de
     try{return await promise;}
     finally{if(key&&inFlight.get(key)===promise)inFlight.delete(key);}
   }
+  const mutations={};
+  for(const method of ['addDoc','setDoc','updateDoc','deleteDoc','runTransaction']){
+    if(typeof firestoreSdk[method]==='function')
+      mutations[method]=(...args)=>{
+        owner(auth.currentUser?.uid);
+        if(!connection.canAttempt())throw unavailable();
+        // No custom offline queue, no optimistic replay by this adapter.
+        return firestoreSdk[method](...args);
+      };
+  }
+  if(typeof firestoreSdk.writeBatch==='function'){
+    mutations.writeBatch=(...args)=>{
+      owner(auth.currentUser?.uid);
+      if(!connection.canAttempt())throw unavailable();
+      const batch=firestoreSdk.writeBatch(...args);
+      const proxy=new Proxy(batch,{
+        get(target,key){
+          if(key==='commit')return (...params)=>{
+            owner(auth.currentUser?.uid);
+            if(!connection.canAttempt())throw unavailable();
+            return target.commit(...params);
+          };
+          const value=Reflect.get(target,key,target);
+          if(typeof value!=='function')return value;
+          return (...params)=>{
+            const result=value.apply(target,params);
+            return result===target?proxy:result;
+          };
+        }
+      });
+      return proxy;
+    };
+  }
   return Object.freeze({
-    ...firestoreSdk,
+    ...firestoreSdk,...mutations,
     getDocFromServer:reference=>request('getDocFromServer',reference),
     getDocsFromServer:reference=>request('getDocsFromServer',reference)
   });
