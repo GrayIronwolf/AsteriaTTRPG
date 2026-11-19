@@ -1,0 +1,5 @@
+.wrap{min-height:60vh;display:grid;place-items:center;padding:clamp(1rem,5vw,3rem);background:var(--color-background,#101820);color:var(--color-text,#f5f7fa)}
+.panel{width:min(100%,42rem);padding:clamp(1.25rem,3vw,2.5rem);border:1px solid var(--color-border,#55616d);border-radius:.75rem;background:var(--color-surface,#1b2834)}
+.panel h1{font-size:clamp(1.35rem,3vw,2rem);margin:0 0 1rem}
+.panel p{line-height:1.55}
+.actions{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1.25rem}
