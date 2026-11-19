@@ -256,7 +256,7 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-session-start').click();
  await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
- await owner.getByRole('button',{name:'Combat',exact:true}).click();
+ await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmCombat=owner.getByTestId('site-gm-combat');
  await gmCombat.waitFor({timeout:30000});
  await gmCombat.getByRole('button',{name:'Add Linked Players'}).click();
