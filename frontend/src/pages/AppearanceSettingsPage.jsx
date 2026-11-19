@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppearance } from '../appearance/AppearanceProvider.jsx';
 import {
-  BACKGROUND_OPTIONS, FONT_OPTIONS, TEXT_SIZE_OPTIONS
+  BACKGROUND_OPTIONS, BUTTON_THEME_OPTIONS, FONT_OPTIONS, TEXT_SIZE_OPTIONS
 } from '../appearance/appearanceModel.mjs';
 import { PageLayout } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
@@ -39,6 +39,24 @@ export function AppearanceSettingsPage() {
             </button>
           ))}
         </div>
+      </SurfacePanel>
+      <SurfacePanel as="section" className={styles.section} aria-label="Button theme settings">
+        <h2 className={styles.sectionTitle}>Button theme</h2>
+        <div className={styles.fieldGrid}>
+          <label className={styles.field} htmlFor="asteria-button-theme">
+            <span>Button appearance</span>
+            <select id="asteria-button-theme" data-testid="site-button-theme"
+              value={appearance.buttonTheme}
+              onChange={event => updateAppearance({ buttonTheme: event.target.value })}>
+              {BUTTON_THEME_OPTIONS.map(option =>
+                <option key={option.id} value={option.id}>{option.label}</option>)}
+            </select>
+          </label>
+          <div className={styles.buttonPreview} data-testid="site-button-theme-preview">
+            <CrystalButton size="wide" type="button" disabled>Preview button</CrystalButton>
+          </div>
+        </div>
+        <BodyText muted>Original crystal and metallic bezels are the default. Additional designs can be added here later.</BodyText>
       </SurfacePanel>
       <SurfacePanel as="section" className={styles.section} aria-label="Typography settings">
         <h2 className={styles.sectionTitle}>Typography</h2>
