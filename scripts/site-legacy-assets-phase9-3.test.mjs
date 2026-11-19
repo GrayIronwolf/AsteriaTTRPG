@@ -79,6 +79,6 @@ test('new React bundle and legacy bundles stay isolated before production cutove
   assert.match(oldVite,/outDir:\s*'react-dist'/);
   assert.match(oldVite,/emptyOutDir:\s*false/);
   assert.ok(exists('frontend/src/main.jsx'));
-  assert.match(read('.gitignore'),/^frontend-dist\\/$/m,
+  assert.match(read('.gitignore'),/^frontend-dist\/$/m,
     'Generated preview build output must remain ignored by git');
 });
