@@ -203,7 +203,7 @@ try{
  await owner.getByRole('button',{name:'Close editor'}).click();
  // Phase 6.4: same campaign and accounts, live Firestore/Storage/Functions.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Battle-maps',exact:false}).click();
+ await owner.getByRole('button',{name:'Battle Maps',exact:true}).click();
  await owner.getByTestId('site-gm-campaign-maps').waitFor({timeout:30000});
  const gmMaps=owner.getByTestId('site-gm-campaign-maps');
  await gmMaps.getByRole('textbox',{name:'Map name'}).fill('Looping Frostwind Map');
@@ -291,7 +291,7 @@ try{
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
  // Phase 7.2: authenticated XP, progression, and Universal Check Requests.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Checks-progression'}).click();
+ await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmProgress=owner.getByTestId('site-gm-progression');
  await gmProgress.waitFor({timeout:30000});
  await gmProgress.getByLabel('Linked character').selectOption(linkedId);
@@ -332,7 +332,7 @@ try{
  await gmProgress.getByText(/Earlier attempts \(1\)/).first().waitFor({timeout:30000});
  // Phase 7.3: shared GM party stash and treasure are the existing callable records.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
+ await owner.getByRole('button',{name:'PC Inventory'}).click();
  const gmEconomy=owner.getByTestId('site-gm-economy');
  await gmEconomy.waitFor({timeout:30000});
  await gmEconomy.getByLabel('Name').first().fill('Emulator Party Chest');
@@ -359,7 +359,7 @@ try{
  await gmEconomy.getByText('Currency distributed.').waitFor({timeout:30000});
  await playerEconomy.getByText('Emulator Coins').first().waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
+ await owner.getByRole('button',{name:'PC Inventory'}).click();
  const gmReturn=owner.getByTestId('site-gm-economy');
  await gmReturn.getByRole('button',{name:'Shops'}).click();
  await gmReturn.getByLabel('Shop name').fill('Emulator Blacksmith');
