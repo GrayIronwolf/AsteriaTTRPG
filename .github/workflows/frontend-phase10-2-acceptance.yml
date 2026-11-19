@@ -1,0 +1,39 @@
+name: React/Vite Phase 10.2 - Firebase security and functional acceptance
+on:
+  pull_request:
+    paths:
+      - "scripts/site-cutover-phase10-2-*"
+      - "docs/frontend-overhaul/PHASE-10.2-END-TO-END-SECURITY.md"
+      - "package.json"
+      - ".github/workflows/frontend-phase10-2-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  firebase-security-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Prior-phase site contracts and public content security
+        run: |
+          npm run site:check
+          npm run site:security-audit
+      - name: Test cross-feature Firestore and Storage rules in demo emulators
+        timeout-minutes: 12
+        run: npx firebase emulators:exec --project demo-asteria --only firestore,storage "npm run site:cutover-security-phase10-2"
+      - name: Existing universal check and recording permission tests
+        timeout-minutes: 12
+        run: npx firebase emulators:exec --project demo-asteria --only firestore,storage "node --test scripts/universal-check-permissions-emulator.test.mjs scripts/digital-gm-phase9-3-emulator.test.mjs"
+      - name: Validate isolated Vite and existing legacy entry
+        run: |
+          npm run site:retirement-audit
+          npm run site:build
+          npm run site:verify-dist
