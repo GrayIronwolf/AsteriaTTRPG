@@ -203,7 +203,6 @@ export function AccountPage({route}) {
           onClick={()=>{setSection(item.id);setError('');setMessage('');}}>
           {item.label}
         </button>)}
-        <CrystalButton href="#home" variant="secondary" size="compact">Back to Home</CrystalButton>
       </nav>
       <div className={styles.main}>
         {error&&<p role="alert" className={styles.notice} data-testid="site-account-error">{error}</p>}
