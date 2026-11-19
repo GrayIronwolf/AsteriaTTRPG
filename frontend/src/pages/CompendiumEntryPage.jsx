@@ -64,20 +64,22 @@ export function CompendiumEntryPage({ route }) {
         {entry.categoryPath?.length>0 && <p className={styles.category}>{entry.categoryPath.join(' / ')}</p>}
         {entry.summary && <BodyText muted>{entry.summary}</BodyText>}
         <div className={styles.identity} data-testid="site-entry-id">Definition ID: {entry.id}</div>
-        {sections.length>0 ? <>
-          <nav className={styles.tabs} aria-label="Definition sections" data-testid="site-entry-tabs">
+        {sections.length>0 ? <div data-page-shell="true">
+          <nav data-page-rail="true" data-page-nav="true" aria-label="Definition sections" data-testid="site-entry-tabs">
             {sections.map(section => (
-              <a key={section.title}
+              <a data-page-nav-item="true" key={section.title}
                 href={createPublicSectionHref(domain,slug,section.title)}
                 aria-current={section.title===selected?'page':undefined}
                 data-testid="site-entry-tab">{section.title}</a>
             ))}
           </nav>
-          <section className={styles.section} aria-label={selected} data-testid="site-entry-section">
+          <div data-page-content="true">
+            <section className={styles.section} aria-label={selected} data-testid="site-entry-section">
             <h2 className={styles.sectionHeading}>{selected}</h2>
             {selectedSection && <PublicMarkdown source={selectedSection.body}/>}
-          </section>
-        </> : <BodyText>The public definition does not contain published sections yet.</BodyText>}
+            </section>
+          </div>
+        </div> : <BodyText>The public definition does not contain published sections yet.</BodyText>}
         <p className={styles.notice}>Public reference content only. Private campaign notes and GM-only sections are not published here.</p>
         <a className={styles.returnLink} href={catalogueHref}>Return to catalogue</a>
       </>}
