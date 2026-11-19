@@ -168,6 +168,8 @@ try{
  await gmReputation.getByLabel('Relationship level').selectOption('3');
  await gmReputation.getByLabel('Reason or significant event').fill('Saved the merchant');
  await gmReputation.getByLabel('Milestone / recognition requirement').fill('Completed an escort');
+ assert.equal(await gmReputation.getByLabel('Source record ID').inputValue(),'npc1234',
+   'Switching to a new GM tab must not discard the source form field.');
  await gmReputation.getByRole('button',{name:'Save GM Ledger'}).click();
  try{await gmToolkit.getByText('GM-only ledger updated. No automatic gameplay effect.').waitFor({timeout:12000});}
  catch(error){console.error('LEDGER DEBUG:',(await gmToolkit.innerText()).slice(0,6500));throw error;}
