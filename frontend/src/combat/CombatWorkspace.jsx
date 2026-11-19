@@ -31,7 +31,7 @@ function CombatRoster({combat,onSelect,selected='',gm=false}){
         <strong>{row.name}</strong><span>Initiative {row.initiative??'Not set'}</span></button>:
         <div className={styles.actorLabel}><strong>{row.name}</strong>
           <span>Initiative {row.initiative??'Not set'}</span></div>}
-      <span>{row.current?'Current turn':row.turnComplete?'Turn complete':row.defeated?'Defeated':''}</span>
+      <span>{row.turnComplete?'Turn complete':row.current?'Current turn':row.defeated?'Defeated':''}</span>
       {row.ap!==undefined?<span>{row.ap} AP · Bonus {row.bonus?'available':'used'}</span>:null}
       {row.hp!==undefined?<Resources row={row}/>:null}
     </li>)}
