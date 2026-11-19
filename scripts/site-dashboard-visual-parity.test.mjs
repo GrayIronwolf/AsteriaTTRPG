@@ -105,3 +105,34 @@ test('original campaign calendar and weather destinations use secured existing D
   assert.match(digital,/initialSection='calendar'/);
   assert.match(digital,/initialArea='library'/);
 });
+
+test('original Advanced Dice uses existing server callable and private record',()=>{
+  const service=read('frontend/src/dice/firebaseDiceService.mjs');
+  const ui=read('frontend/src/dice/AdvancedDiceWorkspace.jsx');
+  const adapter=read('frontend/src/auth/firebaseAuthAdapter.mjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  assert.match(service,/asteriaAdvancedDice/);
+  assert.match(service,/diceWorkspace','current'/);
+  assert.match(service,/validateDiceAction/);
+  assert.match(ui,/MAX_DICE_PRESETS/);
+  assert.match(ui,/clear-history/);
+  assert.match(ui,/diceExpression/);
+  assert.match(player,/AdvancedDiceWorkspace/);
+  assert.match(gm,/AdvancedDiceWorkspace/);
+  assert.match(adapter,/createFirebaseDiceService/);
+  assert.doesNotMatch(service,/window\.AsteriaFirebase|firebaseService|legacyBridge/);
+});
+test('Player resource adjustments run only through the original authenticated session callable',()=>{
+  const service=read('frontend/src/player/firebasePlayerDashboardService.mjs');
+  const adapter=read('frontend/src/auth/firebaseAuthAdapter.mjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  assert.match(service,/async function adjustResource/);
+  assert.match(service,/relationship\.owned/);
+  assert.match(service,/gmSessionState\(session\.data\(\)\)\.editable/);
+  assert.match(service,/updateCampaignCharacterResource/);
+  assert.match(service,/functionsSdk\.httpsCallable/);
+  assert.match(adapter,/functionsSdk:safeFunctionsSdk/);
+  assert.match(player,/Decrease /);
+  assert.match(player,/Increase /);
+});
