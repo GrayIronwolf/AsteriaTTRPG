@@ -1,16 +1,19 @@
-/* Profile geometry is sized here, never by global button selectors. */
+/* One right-aligned account group: envelope, crystal Account trigger, portrait. */
 .guest {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;
+  padding-right: var(--ast-space-3);
 }
 .signedIn {
   display: flex;
-  flex: 0 0 var(--ast-header-avatar-size);
-  width: var(--ast-header-avatar-size);
-  height: var(--ast-header-avatar-size);
+  flex: 0 0 auto;
+  width: auto;
+  height: var(--ast-header-height);
   align-items: center;
+  justify-content: flex-end;
+  gap: clamp(4px, .45vw, 10px);
 }
 .profile {
   position: relative;
@@ -19,12 +22,12 @@
   place-items: center;
   flex: 0 0 var(--ast-header-avatar-size);
   width: var(--ast-header-avatar-size);
-  height: var(--ast-header-avatar-size);
+  height: var(--ast-header-height);
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--ast-color-outline);
+  border: 0;
   border-radius: 0;
-  background: linear-gradient(155deg, var(--ast-color-panel-slate), var(--ast-color-panel));
+  background: transparent;
   overflow: hidden;
   text-decoration: none;
 }
@@ -47,26 +50,33 @@
   max-width: none;
   object-fit: cover;
   object-position: center;
-  mask-image: linear-gradient(to right, transparent, black 26%, black 95%, rgba(0, 0, 0, .85));
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 40%, black 100%);
 }
-
-/* Authenticated controls are an optional future adapter surface, never guest UI. */
-.signedIn { flex: 0 0 auto; width: auto; gap: var(--ast-space-1); }
-.accountMenu { position: relative; flex: 0 0 auto; color: var(--ast-color-header-text); }
-.accountMenu summary {
+.notifications {
   position: relative;
+  flex: 0 0 var(--ast-target-min);
   display: grid;
   place-items: center;
-  min-width: var(--ast-target-min);
+  width: var(--ast-target-min);
+  height: var(--ast-target-min);
+  color: var(--ast-color-header-text);
+  text-decoration: none;
+}
+.notifications svg { width: 27px; height: 27px; }
+.notifications:hover { color: var(--ast-color-accent); }
+.accountMenu {
+  position: relative;
+  flex: 0 0 auto;
+  color: var(--ast-color-header-text);
+}
+.accountMenu summary {
+  min-width: clamp(88px, 7vw, 120px);
   min-height: var(--ast-target-min);
-  border: 1px solid var(--ast-color-outline);
-  border-radius: var(--ast-radius-sm);
-  background: var(--ast-color-panel);
-  cursor: pointer;
   list-style: none;
-  font-size: var(--ast-font-lg);
 }
 .accountMenu summary::-webkit-details-marker { display: none; }
+.accountMenu[open] summary { --ast-button-crystal-brightness: 1.15; }
 .unreadBadge {
   position: absolute;
   top: -5px;
@@ -101,6 +111,22 @@
   text-decoration: none;
 }
 .accountLinks a:hover { background: var(--ast-color-accent-soft); }
-
-.logoutButton {min-height:var(--ast-target-min);display:flex;align-items:center;width:100%;padding:var(--ast-space-2) var(--ast-space-3);border:0;background:transparent;color:var(--ast-color-text);text-align:left;cursor:pointer;font:inherit;}
-.logoutButton:hover, .logoutButton:focus-visible {background:var(--ast-color-accent-soft);}
+.logoutButton {
+  min-height: var(--ast-target-min);
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--ast-space-2) var(--ast-space-3);
+  border: 0;
+  background: transparent;
+  color: var(--ast-color-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.logoutButton:hover, .logoutButton:focus-visible { background: var(--ast-color-accent-soft); }
+@media (max-width: 760px) {
+  .signedIn { gap: 2px; }
+  .accountMenu summary { min-width: 75px; }
+  .notifications { flex-basis: 40px; width: 40px; }
+}
