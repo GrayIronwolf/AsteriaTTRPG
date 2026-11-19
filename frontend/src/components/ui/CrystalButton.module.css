@@ -1,27 +1,25 @@
 /*
- * Asteria single-owner gunmetal + inset crystal control.
- * Elongated hex spear tips, restrained bevel and raised face (no bitmap).
+ * Asteria Crystal: the approved two-layer image theme for React buttons.
+ * The metal frame stays fixed; the tinted crystal/label react to input.
+ * Change the central theme tokens to introduce future materials, not this layout.
  */
 .button {
   --ast-button-height: var(--ast-target-min);
-  display: inline-grid;
-  place-items: stretch;
+  --ast-button-frame-art: var(--ast-button-image-standard-frame);
+  --ast-button-crystal-art: var(--ast-button-image-standard-crystal);
+  --ast-button-source-cap: 13%;
+  --ast-button-render-cap: 28px;
+  --ast-button-crystal-brightness: 1;
   position: relative;
   isolation: isolate;
+  display: inline-grid;
+  place-items: stretch;
   min-height: var(--ast-button-height);
   min-width: 0;
   padding: 2px;
-  border: 1px solid var(--ast-button-bezel-top);
-  color: var(--ast-color-button-text);
-  background: linear-gradient(180deg, var(--ast-button-bezel-top), var(--ast-button-bezel-bottom));
-  clip-path: polygon(
-    var(--ast-button-bevel) 0,
-    calc(100% - var(--ast-button-bevel)) 0,
-    100% 50%,
-    calc(100% - var(--ast-button-bevel)) 100%,
-    var(--ast-button-bevel) 100%,
-    0 50%
-  );
+  border: 0;
+  background: transparent;
+  color: var(--ast-button-label-color);
   font-size: var(--ast-font-sm);
   font-weight: 600;
   letter-spacing: .015em;
@@ -30,27 +28,66 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
+  transition: filter var(--ast-transition-fast);
+}
+/* Three-sliced approved silver/gold metal keeps the pointed endcaps intact. */
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 0 solid transparent;
+  border-image-source: var(--ast-button-frame-art);
+  border-image-slice: 0 var(--ast-button-source-cap) 0 var(--ast-button-source-cap) fill;
+  border-image-width: 0 var(--ast-button-render-cap) 0 var(--ast-button-render-cap);
+  border-image-outset: 0;
+  border-image-repeat: stretch;
+}
+/* The crystal is masked to the supplied silhouette; the frame is not tinted. */
+.button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--ast-button-crystal-tone);
+  background-image: var(--ast-button-crystal-art);
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-blend-mode: luminosity;
+  -webkit-mask-image: var(--ast-button-crystal-art);
+  mask-image: var(--ast-button-crystal-art);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  filter: brightness(var(--ast-button-crystal-brightness))
+    drop-shadow(0 0 6px var(--ast-button-crystal-glow));
   transition: filter var(--ast-transition-fast), transform var(--ast-transition-fast);
 }
+@supports (-webkit-mask-box-image-slice: 0 12% 0 12% fill) {
+  .button:not(.icon)::after {
+    -webkit-mask-image: none;
+    mask-image: none;
+    -webkit-mask-box-image-source: var(--ast-button-crystal-art);
+    -webkit-mask-box-image-slice: 0 var(--ast-button-source-cap) 0 var(--ast-button-source-cap) fill;
+    -webkit-mask-box-image-width: 0 var(--ast-button-render-cap) 0 var(--ast-button-render-cap);
+    -webkit-mask-box-image-outset: 0;
+    -webkit-mask-box-image-repeat: stretch;
+  }
+}
 .crystal {
+  position: relative;
+  z-index: 2;
   display: grid;
   place-items: center;
   width: 100%;
   min-height: calc(var(--ast-button-height) - 6px);
-  background: linear-gradient(
-    175deg,
-    var(--ast-button-inset-top) 0%,
-    var(--ast-button-inset-bottom) 100%
-  );
-  clip-path: polygon(
-    calc(var(--ast-button-bevel) - 2px) 0,
-    calc(100% - var(--ast-button-bevel) + 2px) 0,
-    100% 50%,
-    calc(100% - var(--ast-button-bevel) + 2px) 100%,
-    calc(var(--ast-button-bevel) - 2px) 100%,
-    0 50%
-  );
-  box-shadow: inset 0 2px 3px rgba(255, 255, 255, .14), inset 0 -3px 4px rgba(0, 0, 0, .35);
+  background: transparent;
 }
 .label {
   display: block;
@@ -59,34 +96,60 @@
   max-width: 100%;
   text-overflow: ellipsis;
   overflow: hidden;
+  transition: transform var(--ast-transition-fast);
 }
-.button:hover:not(:disabled):not([aria-disabled="true"]) {
-  filter: brightness(1.18);
+.button:hover:not(:disabled):not([aria-disabled='true']) {
+  --ast-button-crystal-brightness: 1.2;
 }
-.button:hover:not(:disabled):not([aria-disabled="true"]) .crystal {
-  background: linear-gradient(
-    175deg, var(--ast-button-inset-hover-top), var(--ast-button-inset-hover-bottom)
-  );
+.button.active, .button[aria-current='page'] {
+  --ast-button-crystal-brightness: 1.15;
 }
-.button:active:not(:disabled) { transform: translateY(1px); }
+.button:active:not(:disabled):not([aria-disabled='true']) {
+  --ast-button-crystal-brightness: 1.3;
+}
+.button:active:not(:disabled):not([aria-disabled='true'])::after,
+.button:active:not(:disabled):not([aria-disabled='true']) .label {
+  transform: translateY(1px);
+}
 .button:focus-visible {
   outline: 3px solid var(--ast-color-focus);
   outline-offset: 3px;
 }
-.button:disabled, .button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
-.button.active {
-  border-color: var(--ast-color-outline-active);
-}
-.button.active .crystal {
-  background: linear-gradient(175deg, var(--ast-button-inset-active-top), var(--ast-button-inset-active-bottom));
-}
+.button:disabled, .button[aria-disabled='true'] { opacity: .55; cursor: not-allowed; }
 .nav { font-weight: 500; }
-.primary { border-color: var(--ast-color-outline-active); }
+.primary { --ast-button-crystal-brightness: 1.08; }
 .secondary { opacity: .95; }
-.compact { --ast-button-height: 44px; font-size: .77rem; }
+/* Keep the existing React dimensions; only the artwork family changes. */
+.compact {
+  --ast-button-height: 44px;
+  --ast-button-frame-art: var(--ast-button-image-small-frame);
+  --ast-button-crystal-art: var(--ast-button-image-small-crystal);
+  --ast-button-source-cap: 14%;
+  --ast-button-render-cap: 24px;
+  font-size: .77rem;
+}
 .compact .label { padding: 7px clamp(7px, .7vw, 12px); }
 .regular { --ast-button-height: 44px; }
-.wide { --ast-button-height: 48px; min-width: 160px; }
+.wide {
+  --ast-button-height: 48px;
+  --ast-button-frame-art: var(--ast-button-image-long-frame);
+  --ast-button-crystal-art: var(--ast-button-image-long-crystal);
+  --ast-button-source-cap: 12%;
+  --ast-button-render-cap: 42px;
+  min-width: 160px;
+}
+.icon {
+  --ast-button-height: 53px;
+  --ast-button-frame-art: var(--ast-button-image-icon-frame);
+  --ast-button-crystal-art: var(--ast-button-image-icon-crystal);
+  width: 53px;
+  min-width: 53px;
+}
+.icon::before {
+  border-image: none;
+  background: var(--ast-button-frame-art) center / 100% 100% no-repeat;
+}
+.icon .label { padding-inline: 5px; }
 @media (prefers-reduced-motion: reduce) {
-  .button { transition: none; }
+  .button, .button::after, .label { transition: none; }
 }
