@@ -28,26 +28,26 @@
   margin-inline: auto;
   display: flex;
   flex-wrap: nowrap;
-  gap: clamp(4px, .6vw, 12px);
+  gap: clamp(6px, .65vw, 14px);
   align-items: center;
   justify-content: space-between;
-  padding: var(--ast-space-1) clamp(8px, 1.2vw, 24px);
+  padding: 0 0 0 clamp(8px, 1.2vw, 24px);
 }
 .primaryNavigation {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
-  gap: clamp(2px, .35vw, 8px);
+  gap: clamp(4px, .45vw, 10px);
   min-width: 0;
   flex-wrap: nowrap;
   white-space: nowrap;
 }
 .primaryNavigation a {
   flex: 0 0 auto;
-  font-size: clamp(.70rem, .76vw, .77rem);
+  font-size: clamp(.78rem, .87vw, .9rem);
 }
-.primaryNavigation a > span > span { padding-inline: clamp(4px, .48vw, 9px); }
+.primaryNavigation a > span > span { padding-inline: clamp(8px, .8vw, 16px); }
 .mobileMenu { display: none; }
 .main {
   min-height: calc(100svh - 164px);
