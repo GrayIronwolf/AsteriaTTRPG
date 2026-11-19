@@ -290,7 +290,7 @@ export function createFirebasePlayerDashboardService({
   async function characterSystemAction(cid,id,action,args=[]){
     requireDashboardId(cid);requireDashboardId(id);
     if(!['manageCharacterCondition','takeCampaignCharacterRest',
-      'updateCampaignCharacterCurrency','updateCharacterInventory'].includes(action))
+      'updateCampaignCharacterCurrency','updateCharacterInventory','castCharacterSpell'].includes(action))
       throw Error('Unsupported character system action.');
     if(!functions||!functionsSdk?.httpsCallable)
       throw Error('Character system actions are unavailable.');
@@ -343,7 +343,16 @@ export function createFirebasePlayerDashboardService({
       [{type:'use',itemId,expectedCoreRevision:expectedRevision}]);
   }
 
+  async function castSpell(cid,id,spellName){
+    if(typeof spellName!=='string'||!spellName.trim()||spellName.length>100)
+      throw Error('Select a known spell.');
+    // The server checks that the character knows the spell and computes
+    // canonical MP cost. Never trust a cost supplied by the browser.
+    return characterSystemAction(cid,id,'castCharacterSpell',
+      [{name:spellName.trim()},{}]);
+  }
+
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
-    takeRest,adjustCurrency,useQuickItem});
+    takeRest,adjustCurrency,useQuickItem,castSpell});
 }
