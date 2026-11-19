@@ -152,7 +152,7 @@ try{
  // Previous phases have independent CI gates; this test isolates Phase 7.4.
  // Phase 7.4: private NPC authoring and a GM-reviewed relationship ledger.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Digital-gm-toolkit'}).click();
+ await owner.getByRole('button',{name:'GM Toolkit'}).click();
  const gmToolkit=owner.getByTestId('site-gm-digital-tools');
  await gmToolkit.getByTestId('site-digital-gm-library').waitFor({timeout:30000});
  await gmToolkit.getByRole('button',{name:'New NPC'}).click();
