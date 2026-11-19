@@ -3,7 +3,7 @@
  * The merchant standing backend remains separate and authoritative.
  * GM world ledgers do not implicitly alter checks, prices, recognition or rolls.
  */
-import {gmNPCCreatureLibrary,buildGMLibraryRecord,updateGMLibrary,removeGMLibraryRecord}
+import {gmNPCCreatureLibrary,updateGMLibrary,removeGMLibraryRecord}
   from '../../../src/state/gmNpcCreatureLibraryModel.mjs';
 import {updateGMLibraryCard} from '../../../src/state/gmCharacterCardModel.mjs';
 import {merchantStandingTier} from '../../../src/state/merchantRelationshipModel.mjs';
