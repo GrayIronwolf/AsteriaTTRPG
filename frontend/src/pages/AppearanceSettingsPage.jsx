@@ -56,6 +56,12 @@ export function AppearanceSettingsPage() {
             <CrystalButton size="wide" type="button" disabled>Preview button</CrystalButton>
           </div>
         </div>
+        <label className={styles.field} htmlFor="asteria-crystal-colour">
+          <span>Crystal colour (buttons and Asteria logo stars)</span>
+          <input id="asteria-crystal-colour" type="color" data-testid="site-crystal-colour"
+            value={appearance.crystalColor}
+            onChange={event => updateAppearance({ crystalColor: event.target.value })} />
+        </label>
         <BodyText muted>Original crystal and metallic bezels are the default. Additional designs can be added here later.</BodyText>
       </SurfacePanel>
       <SurfacePanel as="section" className={styles.section} aria-label="Typography settings">
