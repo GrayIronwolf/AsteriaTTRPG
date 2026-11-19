@@ -62,7 +62,10 @@
 }
 .standard [data-page-nav-item] {
   appearance: none;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ast-space-2);
   width: 100%;
   min-width: 0;
   min-height: var(--ast-target-min);
