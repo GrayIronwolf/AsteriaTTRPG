@@ -8,6 +8,15 @@
   min-height: var(--ast-page-min-height);
   padding-block: var(--ast-page-top-space) var(--ast-page-bottom-space);
 }
+/* Account-style section heading, shared by every non-Home React page. */
+.standard > h1 {
+  min-width: 0;
+  padding: var(--ast-space-3) var(--ast-space-5) var(--ast-space-4);
+  border-bottom: 1px solid var(--ast-page-rail-rule);
+  background: var(--ast-color-panel);
+  color: var(--ast-color-text-bright);
+}
+.standard > p:first-child + h1 { margin-top: var(--ast-space-3); }
 /* The Home carousel and its content sections do not need an internal page header. */
 .section { min-height: 0; padding-block: 0; }
 .reading { max-width: var(--ast-reading-max); }
