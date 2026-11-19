@@ -15,7 +15,14 @@ import {PlayerEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {PlayerDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
-const TABS=Object.freeze(['Overview','Character','Skills & Talents','Magic','Equipment','Quests','Journal']);
+// Preserve the original navigation vocabulary and order. Some legacy modules
+// require feature-by-feature porting; never present a placeholder as a working tool.
+const TABS=Object.freeze([
+  'Dashboard','Character','Class/Talent Tree','Skills','Spells','Inventory',
+  'Crafting','Quests','News / Events / History','Journal','Party','Gallery',
+  'Battle Maps','Advanced Dice','Calendar','Weather','World Map','Campaign Library',
+  'Campaign Audio','Recording & Archives','Dashboard Settings'
+]);
 function StatPanel({record}){
   return <div className={styles.stats}>
     {STATS.map(key=><div className={styles.stat} key={key}>
@@ -85,7 +92,7 @@ function Names({name,entries}){
   </SurfacePanel>;
 }
 function Sections({character,tab,owned}){
-  if(tab==='Overview')return <>
+  if(tab==='Dashboard')return <>
     <div className={styles.overview}>
       <SurfacePanel className={styles.panel}><h3>Experience</h3>
         <p>Level {character.level} · XP {character.xp}{character.xpMax?' / '+character.xpMax:''}</p>
@@ -105,18 +112,18 @@ function Sections({character,tab,owned}){
       <h3>Personal History</h3><p className={styles.prose}>{character.backstory}</p>
     </SurfacePanel>:null}
   </>;
-  if(tab==='Skills & Talents')return <div className={styles.overview}>
+  if(tab==='Class/Talent Tree')return <div className={styles.overview}>
     <SurfacePanel className={styles.panel}><h3>Skills</h3>
       {character.skills.length?<ul className={styles.list}>{character.skills.map((s,i)=>
         <li key={i}>{s.name}{s.rank?' — '+s.rank:''}</li>)}</ul>:<BodyText muted>No skills recorded.</BodyText>}
     </SurfacePanel>
     <Names name="Class Talents" entries={character.talents}/>
   </div>;
-  if(tab==='Magic')return <div className={styles.overview}>
+  if(tab==='Spells')return <div className={styles.overview}>
     <Names name="Known Magic" entries={character.magic}/>
     <Names name="Known Spells" entries={character.spells}/>
   </div>;
-  if(tab==='Equipment')return <div className={styles.overview}>
+  if(tab==='Inventory')return <div className={styles.overview}>
     {['inventory','equipment'].map(key=><SurfacePanel className={styles.panel} key={key}>
       <h3>{key==='inventory'?'Inventory':'Equipment'}</h3>
       {character[key].length?<ul className={styles.list}>{character[key].map((item,i)=>
@@ -129,6 +136,22 @@ function Sections({character,tab,owned}){
     {character.quests.length?<ul className={styles.list}>{character.quests.map((quest,i)=>
       <li key={i}>{quest.name}</li>)}</ul>:<BodyText muted>No quests recorded on this character sheet.</BodyText>}
   </SurfacePanel>;
+  if(tab==='Skills')return <SurfacePanel className={styles.panel}>
+    <h3>Skills</h3>
+    {character.skills.length?<ul className={styles.list}>{character.skills.map((skill,i)=>
+      <li key={i}>{skill.name}{skill.rank?' — '+skill.rank:''}</li>)}</ul>:
+      <BodyText muted>No skills recorded.</BodyText>}
+  </SurfacePanel>;
+  if(tab==='News / Events / History')return <SurfacePanel className={styles.panel}>
+    <h3>News / Events / History</h3>
+    <BodyText muted>The original campaign news and history workspace has not yet been ported to this React route.</BodyText>
+  </SurfacePanel>;
+  if(['Crafting','Advanced Dice','Calendar','Weather','Campaign Library',
+      'Campaign Audio','Recording & Archives'].includes(tab))
+    return <SurfacePanel className={styles.panel}>
+      <h3>{tab}</h3>
+      <BodyText muted>This original dashboard feature is not yet connected to the new React route. Its existing implementation is retained in the repository, but is not active here.</BodyText>
+    </SurfacePanel>;
   if(tab==='Journal')return <SurfacePanel className={styles.panel}>
     <h3>Personal Journal</h3>
     {!owned?<BodyText muted>Only the character owner may read personal journal entries.</BodyText>:
@@ -140,11 +163,11 @@ function Sections({character,tab,owned}){
 }
 function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
-    [error,setError]=useState(''),[tab,setTab]=useState('Overview');
+    [error,setError]=useState(''),[tab,setTab]=useState('Dashboard');
   const generation=useRef(0);
   useEffect(()=>{
     const token=++generation.current;
-    setData(null);setLoading(true);setError('');setTab('Overview');
+    setData(null);setLoading(true);setError('');setTab('Dashboard');
     const ok=value=>{if(generation.current!==token)return;setData(value);setLoading(false);};
     const fail=e=>{if(generation.current!==token)return;setData(null);
       setError(e?.message||'The character could not be connected.');setLoading(false);};
@@ -173,7 +196,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       <CrystalButton href="#/character-forge" size="compact">Character Forge</CrystalButton>
     </div>
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
+      {[...TABS.filter(x=>data.owner||!['Journal','Gallery','Dashboard Settings'].includes(x)),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
         onClick={()=>setTab(value)}>{value}</CrystalButton>)}
     </nav>
     {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
@@ -184,7 +207,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       api={progression} campaignId={campaignId} characterId={characterId} section="progression"/>:null}
     {progressionEnabled&&tab==='Skills'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="skills"/>:null}
-    {progressionEnabled&&tab==='Talents'?<PlayerProgressionWorkspace
+    {progressionEnabled&&tab==='Class/Talent Tree'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="talents"/>:null}
     {progressionEnabled?<PlayerCheckRequests key={campaignId+':'+characterId}
       api={progression} campaignId={campaignId} characterId={characterId}
@@ -193,9 +216,21 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       api={combat} campaignId={campaignId} characterId={characterId}/>:null}
     {tab==='Battle Maps'&&media?.availability().enabled?
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
-    {tab==='World Atlas'&&media?.availability().enabled?
+    {tab==='World Map'&&media?.availability().enabled?
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
-    {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
+    {tab==='Party'?<SurfacePanel className={styles.panel}>
+      <h3>Party</h3>
+      {c?.party?.length?<ul className={styles.list}>{c.party.map(member=>
+        <li key={member.id}>{member.name} · Level {member.level}</li>)}</ul>:
+        <BodyText muted>No campaign party is linked to this character.</BodyText>}
+    </SurfacePanel>:null}
+    {tab==='Gallery'&&data.owner?<SurfacePanel className={styles.panel}>
+      <h3>Gallery</h3>
+      {ch.image?<img className={styles.galleryPortrait} src={ch.image} alt={ch.name+' portrait'}/>:
+        <BodyText muted>No character portrait has been selected.</BodyText>}
+      <BodyText muted>The full original gallery editor has not yet been migrated.</BodyText>
+    </SurfacePanel>:null}
+    {['Dashboard','Dashboard Settings'].includes(tab)&&data.owner&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}
         initialLayout={ch.dashboardLayout}
@@ -213,7 +248,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
           if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
           return null;
         }}/>
-      :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)?null:
+      :['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true)?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
   </>;
