@@ -186,7 +186,9 @@
     "site:economy-browser": "node scripts/site-economy-phase7-3-browser.cjs",
     "site:digital-gm-browser": "node scripts/site-digital-gm-phase7-4-browser.cjs",
     "site:architecture-phase9-4": "node --test scripts/site-architecture-phase9-4.test.mjs",
-    "site:cutover-baseline-phase10-1": "node scripts/site-cutover-phase10-1-browser.cjs"
+    "site:cutover-baseline-phase10-1": "node scripts/site-cutover-phase10-1-browser.cjs",
+    "site:cutover-security-phase10-2": "node --test scripts/site-cutover-phase10-2-security-emulator.test.mjs",
+    "site:cutover-e2e-phase10-2": "npm run site:cutover-baseline-phase10-1"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
