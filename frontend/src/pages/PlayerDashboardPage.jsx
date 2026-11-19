@@ -199,8 +199,11 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       {[...TABS.filter(x=>data.owner||!['Journal','Gallery','Dashboard Settings'].includes(x)),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
         onClick={()=>setTab(value)}>{value}</CrystalButton>)}
     </nav>
-    {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
-      key={campaignId} api={digitalGM} campaignId={campaignId}/>:null}
+    {digitalGMEnabled&&['Campaign World & Session','Calendar','Weather','Campaign Library',
+      'Campaign Audio','Recording & Archives'].includes(tab)?<PlayerDigitalGMWorkspace
+      key={campaignId+':'+tab} api={digitalGM} campaignId={campaignId}
+      initialSection={{Calendar:'calendar',Weather:'weather','Campaign Library':'handouts',
+        'Campaign Audio':'soundboard','Recording & Archives':'recording'}[tab]||'calendar'}/>:null}
     {economyEnabled&&['Inventory & Trading','Inventory','Crafting'].includes(tab)?<PlayerEconomyWorkspace
       key={campaignId+':'+characterId} api={economy} campaignId={campaignId} characterId={characterId}/>:null}
     {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
@@ -248,7 +251,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
           if(id==='shortcutInventory')return <p>Open the Inventory tab to inspect inventory.</p>;
           return null;
         }}/>
-      :(economyEnabled&&['Inventory','Crafting'].includes(tab))||(['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
+      :(economyEnabled&&['Inventory','Crafting'].includes(tab))||
+        (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
+        (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
   </>;
