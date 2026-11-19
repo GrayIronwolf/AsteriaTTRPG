@@ -33,7 +33,8 @@ export function DashboardLayoutWorkspace({
         const pos=view.placements[id];
         if(!pos)return null;
         return <article key={id} className={styles.tile}
-          data-panel-id={id} data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
+          data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`}
+          data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
           style={{
             gridColumn:(pos.x+1)+' / span '+pos.w,
             gridRow:(pos.y+1)+' / span '+pos.h

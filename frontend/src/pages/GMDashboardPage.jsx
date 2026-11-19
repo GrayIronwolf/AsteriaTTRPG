@@ -16,20 +16,26 @@ import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {GMDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
 
-function Resource({label,value}) {
-  return <span className={styles.resource}>{label}: {Array.isArray(value)
-    ? value[0]+' / '+value[1] : '—'}</span>;
+function ResourceMeter({label,value}) {
+  const current=Array.isArray(value)?Number(value[0])||0:0;
+  const maximum=Array.isArray(value)?Math.max(0,Number(value[1])||0):0;
+  return <div className={styles.resourceMeter} data-resource={label.toLowerCase()}>
+    <div><span>{label}</span><strong>{maximum?current+' / '+maximum:'—'}</strong></div>
+    <progress aria-label={label+' resources'} max={maximum||1} value={Math.max(0,Math.min(current,maximum))}/>
+  </div>;
 }
 function Party({party}) {
   return <div className={styles.party} data-testid="site-gm-party">
     {party.length===0?<BodyText muted>No linked characters in this campaign yet.</BodyText>:
     party.map(character=><article className={styles.person} key={character.id}>
-      <h3>{character.name}</h3>
-      <small>Level {character.level} {character.className}</small>
+      <div className={styles.personIdentity}>
+        {character.image?<img src={character.image} alt="" loading="lazy"/>:<div className={styles.personFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
+        <div><h3>{character.name}</h3><small>Level {character.level} {character.className}</small></div>
+      </div>
       <div className={styles.resources}>
-        <Resource label="HP" value={character.hp}/>
-        <Resource label="SP" value={character.sp}/>
-        <Resource label="MP" value={character.mp}/>
+        <ResourceMeter label="HP" value={character.hp}/>
+        <ResourceMeter label="SP" value={character.sp}/>
+        <ResourceMeter label="MP" value={character.mp}/>
       </div>
     </article>)}
   </div>;
@@ -135,30 +141,34 @@ function CampaignGM({api,uid,campaignId}) {
   if(!snapshot)return null;
   const live=snapshot.session;
   return <>
-    <div className={styles.head}>
+    <div className={styles.gmHero}>
+      {snapshot.campaign.image?<img className={styles.gmHeroImage} src={snapshot.campaign.image} alt="" loading="lazy"/>:null}
+      <div className={styles.head}>
       <div><Eyebrow>GM Dashboard · {snapshot.role}</Eyebrow>
         <Heading as="h2">{snapshot.campaign.name}</Heading>
         <BodyText muted>{snapshot.campaign.description||'Manage your campaign session and party.'}</BodyText>
       </div>
       <CrystalButton href="#/dashboard">All Campaigns</CrystalButton>
+      </div>
     </div>
     <div className={styles.summary}>
       <SurfacePanel className={styles.metric}><strong>{snapshot.party.length}</strong><span>Linked Characters</span></SurfacePanel>
       <SurfacePanel className={styles.metric}><strong>{snapshot.campaign.partySize}</strong><span>Party Capacity</span></SurfacePanel>
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
+    <div className={styles.gmWorkspaceColumns}>
+      <aside className={styles.partySidebar} aria-label="Player resources">
+        <h2>Player Resources</h2>
+        <Party party={snapshot.party}/>
+      </aside>
+      <div className={styles.gmWorkspaceMain}>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><button key={item} type="button"
-        className={tab===item?styles.selected:''} aria-current={tab===item?'page':undefined}
-        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</button>)}
+      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><CrystalButton key={item} type="button" size="compact" active={tab===item}
+        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</CrystalButton>)}
     </nav>
     {error?<p role="alert" className={styles.notice}>{error}</p>:null}
     {message?<p role="status" className={styles.notice}>{message}</p>:null}
     {(tab==='overview'||tab==='session')?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
-    {(tab==='overview'||tab==='party')?<SurfacePanel className={styles.panel} as="section">
-      <h2>Party Overview</h2>
-      <Party party={snapshot.party}/>
-    </SurfacePanel>:null}
     {api.availability().layoutEnabled?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=>{
@@ -187,13 +197,8 @@ function CampaignGM({api,uid,campaignId}) {
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
       party={snapshot.party}/>:null}
-    <SurfacePanel className={styles.panel} as="aside">
-      <h2>GM Workspace</h2>
-      <BodyText muted>Campaign settings and character-link approval stay in Campaign Forge.
-        Remaining Digital GM tools migrate in later phases. No legacy panels are mounted here.</BodyText>
-      {snapshot.role==='owner'?<CrystalButton href="#/campaign-forge">Manage Campaign</CrystalButton>:
-        <BodyText muted>Owner-only campaign settings are unavailable to Co-GMs.</BodyText>}
-    </SurfacePanel>
+    </div>
+    </div>
   </>;
 }
 
@@ -210,7 +215,7 @@ export function GMDashboardPage({route}) {
   </PageLayout>;
   return <PageLayout as="section" width="wide" className={styles.page}
     labelledBy="site-gm-title" data-testid="site-gm-dashboard">
-    <Heading id="site-gm-title">GM Dashboard</Heading>
+    <Heading id="site-gm-title" className={styles.visuallyHidden}>GM Dashboard</Heading>
     {campaignId?<CampaignGM key={uid+':'+campaignId} uid={uid} campaignId={campaignId} api={api}/>:
       <CampaignPicker key={uid} api={api} uid={uid}/>}
   </PageLayout>;

@@ -1,6 +1,7 @@
 import {CAMPAIGN_ID} from '../campaigns/campaignForgeModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
+import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -65,6 +66,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
   const talents=labels(value.classTalents||value.talents||value.character?.startingTalents,24);
   const result={
     id:value.id,name:txt(value.name,'Unnamed Character',120),
+    image:safeDashboardArtwork(value.image,value.portrait,value.characterImage,value.appearance?.image,value.appearance?.portrait),
     race:txt(value.race||value.character?.race?.title,'Unknown',100),
     klass:txt(value.klass||classes,'Unknown',120),level:count(value.level),
     xp:count(value.xp),xpMax:count(value.xpMax),tp:count(value.tp),cp:count(value.cp),
@@ -154,6 +156,9 @@ export function publicPartyProjection(campaign){
 export function playerCampaignProjection(campaign,access,session){
   if(!access?.allowed)throw Error('Campaign membership could not be verified.');
   return Object.freeze({id:campaign.id,name:txt(campaign.name,'Campaign',120),
+    image:safeDashboardArtwork(campaign.image,campaign.art,campaign.banner,campaign.coverImage,campaign.cover,campaign.appearance?.image),
+    location:txt(campaign.currentLocation||campaign.location,'',120),
+    inWorldDate:txt(campaign.inWorldDate||campaign.worldDate,'',80),
     isGM:access.isGM,session:gmSessionState(session),
     party:publicPartyProjection(campaign)});
 }
