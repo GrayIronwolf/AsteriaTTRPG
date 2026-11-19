@@ -33,16 +33,24 @@ const groups = ledger.groups.map(group => {
     assert.match(path, /^(?:js|css)\/[a-zA-Z0-9._/-]+$/);
     assert.equal(seen.has(path), false, 'Duplicate retirement candidate: ' + path);
     seen.add(path);
-    assert.ok(existsSync(resolve(root, path)), 'Legacy source missing before feature parity: ' + path);
+    const retired = group.removedFiles?.includes(path)===true;
+    if(retired) {
+      assert.equal(group.removedInPhase,'9.1');
+      assert.equal(existsSync(resolve(root,path)),false,
+        'Previously disabled stylesheet must not be reintroduced: '+path);
+    } else assert.ok(existsSync(resolve(root, path)),
+      'Live legacy source missing before feature parity: ' + path);
     const isLoaded = loaded.has(path);
-    const expectedLoaded = group.expectLoadedInLegacy !== false;
+    const expectedLoaded = group.expectLoadedInLegacy !== false && !retired;
     assert.equal(isLoaded, expectedLoaded,
       'Changed legacy loading state without explicit migration approval: ' + path);
-    return { path, loadedInLegacy: isLoaded, bytes: readFileSync(resolve(root, path)).length,
-      retirementReady: false };
+    return { path, loadedInLegacy: isLoaded,
+      bytes: retired?0:readFileSync(resolve(root, path)).length,
+      retirementReady: retired };
   });
   return { id: group.id, replacement: group.replacement,
-    blockers: group.blockers, files, retirementReady: false };
+    blockers: group.blockers, files,
+    retirementReady: files.every(file=>file.retirementReady) };
 });
 
 function walk(dir) {
