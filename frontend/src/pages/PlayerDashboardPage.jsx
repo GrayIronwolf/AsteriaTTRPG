@@ -28,10 +28,16 @@ function Resources({character}){
   return <div className={styles.resources} data-testid="site-player-resources">
     {['hp','sp','mp'].map(key=>{
       const pair=character[key];
-      return <div className={styles.resource} key={key}>
-        <div><strong>{key.toUpperCase()}</strong><span>{pair?pair[0]+' / '+pair[1]:'Not recorded'}</span></div>
-        <progress aria-label={key.toUpperCase()+' resources'} value={pair?Math.min(pair[0],pair[1]):0}
-          max={pair?.[1]||1}/>
+      const current=pair?Number(pair[0])||0:0;
+      const maximum=pair?Math.max(0,Number(pair[1])||0):0;
+      const percent=maximum?Math.min(100,Math.max(0,current/maximum*100)):0;
+      return <div className={styles.resource} data-resource={key} key={key}>
+        <div><strong>{key.toUpperCase()}</strong><span>{pair?current+' / '+maximum:'Not recorded'}</span></div>
+        <div className={styles.meter} role="progressbar"
+          aria-label={key.toUpperCase()+' resources'} aria-valuemin={0}
+          aria-valuemax={maximum} aria-valuenow={Math.max(0,Math.min(maximum,current))}>
+          <span className={styles.meterFill} style={{width:percent+'%'}}/>
+        </div>
       </div>;
     })}
   </div>;
