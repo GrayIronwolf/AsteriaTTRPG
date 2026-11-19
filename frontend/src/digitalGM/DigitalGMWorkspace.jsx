@@ -412,8 +412,8 @@ function Recordings({data}){
       <strong>{row.title||row.id}</strong><span>{row.status} · {row.visibility||'Private'}</span></article>)}
   </section>;
 }
-export function GMDigitalGMWorkspace({api,campaignId}){
-  const [area,setArea]=useState('library'),[snapshot,setSnapshot]=useState({area:'',data:null}),
+export function GMDigitalGMWorkspace({api,campaignId,initialArea='library'}){
+  const [area,setArea]=useState(()=>GM_AREAS.includes(initialArea)?initialArea:'library'),[snapshot,setSnapshot]=useState({area:'',data:null}),
     [error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),
     [search,setSearch]=useState('');
   // Never render a different tab's stale snapshot. Area-change effects run
@@ -469,9 +469,9 @@ export function GMDigitalGMWorkspace({api,campaignId}){
   </section>;
 }
 /** Public read-only projections: these are separate from GM-private source data. */
-export function PlayerDigitalGMWorkspace({api,campaignId}){
+export function PlayerDigitalGMWorkspace({api,campaignId,initialSection='calendar'}){
   const [data,setData]=useState(null),[error,setError]=useState(''),
-    [selected,setSelected]=useState('calendar');
+    [selected,setSelected]=useState(()=>['calendar','weather','handouts','soundboard','recording'].includes(initialSection)?initialSection:'calendar');
   useEffect(()=>{
     setData(null);setError('');
     return api.watchPlayer(campaignId,setData,e=>{setData(null);
