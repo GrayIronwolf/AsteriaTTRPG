@@ -124,9 +124,9 @@ export function CompendiumCataloguePage({ route }) {
               </React.Fragment>
             )}
           </nav>
-          {status === 'ready' && <div className={styles.facetList} data-testid="site-discovery-facets">
+          {status === 'ready' && <div className={styles.facetList} data-page-nav="true" data-testid="site-discovery-facets">
             {facets.children.map(child =>
-              <a href={destination({query:draft,path:child.path})} key={child.label}
+              <a data-page-nav-item="true" href={destination({query:draft,path:child.path})} key={child.label}
                 data-testid="site-discovery-facet">
                 <span>{child.label}</span>
                 <span className={styles.count}>{child.count.toLocaleString()}</span>
