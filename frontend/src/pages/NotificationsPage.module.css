@@ -1,5 +1,5 @@
 /* Phase 4.4 scoped inbox, no global override or secondary header owner. */
-.page{min-height:65vh;padding-block:var(--ast-space-7) var(--ast-space-9);}
+.page{}
 .channels{display:flex;flex-wrap:wrap;gap:var(--ast-space-2);margin-block:var(--ast-space-5);}
 .tab{font:inherit;text-align:center;border:1px solid var(--ast-color-outline);background:var(--ast-color-panel);
  color:var(--ast-color-text);padding:var(--ast-space-3);min-height:var(--ast-target-min);cursor:pointer;}
