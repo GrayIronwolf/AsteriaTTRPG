@@ -264,7 +264,7 @@ try{
  await gmCombat.locator('button:enabled').filter({hasText:/^Start Combat$/}).click();
  await gmCombat.getByText(/ACTIVE · Round 1/).waitFor({timeout:30000});
  await gmCombat.getByTestId('site-combat-initiative').getByText(/Current turn/).waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Record 1 AP action'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^Record 1 AP action$/}).click();
  await gmCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
  await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
    {waitUntil:'domcontentloaded'});
@@ -278,14 +278,14 @@ try{
  await playerCombat.getByText('Turn complete').waitFor({timeout:30000});
  // Ensure GM received the new revision before advancing the server-owned turn.
  await gmCombat.getByText('Turn complete').waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Next Turn'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^Next Turn$/}).click();
  try{await gmCombat.getByText(/ACTIVE · Round 2/).waitFor({timeout:30000});}
  catch(error){
    console.error('COMBAT NEXT TURN DIAGNOSTICS',await gmCombat.innerText());
    throw error;
  }
  owner.once('dialog',dialog=>dialog.accept());
- await owner.getByRole('button',{name:'End Combat'}).click();
+ await gmCombat.locator('button:enabled').filter({hasText:/^End Combat$/}).click();
  await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
  // A non-GM may never manage the encounter.
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
