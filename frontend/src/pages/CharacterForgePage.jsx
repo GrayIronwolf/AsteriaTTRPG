@@ -2,10 +2,10 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {useAppServices} from '../app/AppServices.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {loadPublicForgeRules} from '../forge/publicForgeRules.mjs';
 import {newDraft,draftFromCharacter,visibleTabs,magicRules,patronClasses,
  affinityItems,validForge,STATS,MAGIC,PACKS,ORIGIN_FIELDS,FAMILY_FIELDS,
@@ -131,8 +131,7 @@ export function CharacterForgePage(){
  </label>;
  return <PageLayout as="section" width="wide" className={styles.page}
   labelledBy="forge-title" data-testid="site-character-forge-page">
-  <Eyebrow>Asteria Character Creation</Eyebrow>
-  <Heading id="forge-title">Character Forge</Heading>
+  <PageHeader eyebrow="Asteria Character Creation" id="forge-title" title="Character Forge" />
   {error&&<p role="alert" className={styles.notice} data-testid="site-forge-error">{error}</p>}
   {message&&<p role="status" className={styles.notice} data-testid="site-forge-message">{message}</p>}
   {loading&&<BodyText>Loading your owned characters and public rules…</BodyText>}
