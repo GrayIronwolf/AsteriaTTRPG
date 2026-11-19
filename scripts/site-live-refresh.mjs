@@ -43,7 +43,7 @@ export function publishReactBuild({siteRoot,dist=join(root,'frontend-dist'),sour
  const all=walk(dist).filter(p=>p!=='index.html'&&!p.startsWith('.vite/'));
  for(const p of [manifest['index.html'].file,...(manifest['index.html'].css||[])])
    assert.ok(all.includes(p),'Missing entry asset '+p);
- for(const match of html.matchAll(/\\b(?:src|href)="([^"]+)"/g)){
+ for(const match of html.matchAll(/\b(?:src|href)="([^"]+)"/g)){
   const ref=match[1];
   if(ref.startsWith('#'))continue;
   assert.ok(ref.startsWith('./'),'Non-local entry reference '+ref);
@@ -63,7 +63,7 @@ export function publishReactBuild({siteRoot,dist=join(root,'frontend-dist'),sour
  writeFileSync(join(siteRoot,'index.html'),html);
  const next={...previous,sourceCommit:sourceSha,compiledEntrySha256:digest(join(siteRoot,'index.html')),
   updatedFromMain:true,refreshedAt:new Date().toISOString()};
- writeFileSync(markerPath,JSON.stringify(next,null,2)+'\\n');
+ writeFileSync(markerPath,JSON.stringify(next,null,2)+'\n');
  return {assetCount:all.length,sourceCommit:sourceSha};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
