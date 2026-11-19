@@ -10,7 +10,12 @@ export default defineConfig({
   root: resolve(repositoryRoot, 'frontend'),
   base: './',
   publicDir: false,
-  resolve: { dedupe: ['react', 'react-dom'] },
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+    // For the isolated modern preview only: replace all imports of the
+    // historical UMD adapter before it executes. Legacy build remains untouched.
+    alias: [{find:/^.*marketPricing\.mjs$/,replacement:resolve(repositoryRoot,'src/systems/items/marketPricingCore.generated.mjs')}]
+  },
   server: {
     host: '127.0.0.1',
     port: 5174,
