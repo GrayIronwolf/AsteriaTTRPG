@@ -105,6 +105,8 @@
 .section { min-height: 0; padding-block: 0; }
 .reading { max-width: var(--ast-reading-max); }
 .wide { max-width: var(--ast-page-max); }
+/* The main-content template stays at the approved 1680px; game workspaces remain wide. */
+.wide.standard { max-width: var(--ast-page-template-max); }
 .full { max-width: none; }
 @media (max-width: 760px) {
   .page { padding-inline: var(--ast-space-5); }
