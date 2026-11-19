@@ -166,15 +166,15 @@ export function CharacterForgePage(){
       'New character — guided creation'}</BodyText>
     <CrystalButton onClick={finish} disabled={busy}>Back to Characters</CrystalButton>
    </div>
-   <div className={styles.layout}>
-    <nav className={styles.steps} aria-label="Character creation steps">
+   <div className={styles.layout} data-page-shell="true">
+    <nav className={styles.steps} data-page-rail="true" data-page-nav="true" aria-label="Character creation steps">
      {tabs.map((tab,index)=><button key={tab} type="button" onClick={()=>{setActive(tab);setQuery('');setError('');}}
-       aria-current={active===tab?'step':undefined} className={styles.tab}
+       aria-current={active===tab?'step':undefined} className={styles.tab} data-page-nav-item="true"
        data-testid={'site-forge-tab-'+tab.toLowerCase().replaceAll(' ','-')}>
        <span>{index+1}.</span> {tab}
       </button>)}
     </nav>
-    <SurfacePanel as="section" className={styles.panel} data-testid="site-forge-editor">
+    <div data-page-content="true"><SurfacePanel as="section" className={styles.panel} data-testid="site-forge-editor">
      <div className={styles.heading}><h2>{active}</h2><small>Step {currentIndex+1} of {tabs.length}</small></div>
      {(active==='Race'||active==='Class'||active==='Origin')&&<>
       <label className={styles.field}>Search {active.toLowerCase()}
@@ -322,7 +322,7 @@ export function CharacterForgePage(){
        setActive(tabs[currentIndex+1]);setQuery('');setError('');
       }}>Next Step</CrystalButton>}
      </div>
-    </SurfacePanel>
+    </SurfacePanel></div>
    </div>
   </>}
  </PageLayout>;
