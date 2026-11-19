@@ -8,7 +8,7 @@ import { canActivateRoute } from '../frontend/src/app/featureRegistry.mjs';
 import { previewServices } from '../frontend/src/services/appServices.mjs';
 import {
   DEFAULT_APPEARANCE, APPEARANCE_STORAGE_KEY, BACKGROUND_OPTIONS,
-  FONT_OPTIONS, TEXT_SIZE_OPTIONS, normalizeAppearance, encodeAppearance,
+  BUTTON_THEME_OPTIONS, FONT_OPTIONS, TEXT_SIZE_OPTIONS, normalizeAppearance, encodeAppearance,
   decodeAppearance
 } from '../frontend/src/appearance/appearanceModel.mjs';
 import { createAccountHeaderGateway } from '../frontend/src/services/accountHeaderGateway.mjs';
@@ -41,12 +41,15 @@ test('appearance model rejects unknown fonts, malformed storage and untrusted CS
   assert.equal(BACKGROUND_OPTIONS.length, 5);
   assert.ok(FONT_OPTIONS.length >= 10);
   assert.equal(TEXT_SIZE_OPTIONS.length, 4);
+  assert.equal(BUTTON_THEME_OPTIONS.length, 1);
+  assert.equal(DEFAULT_APPEARANCE.buttonTheme, 'asteria-crystal');
   assert.deepEqual(decodeAppearance(encodeAppearance(DEFAULT_APPEARANCE)), DEFAULT_APPEARANCE);
   assert.deepEqual(decodeAppearance('{bad'), DEFAULT_APPEARANCE);
   assert.deepEqual(decodeAppearance(JSON.stringify({version: 17, background:'forest'})), DEFAULT_APPEARANCE);
   assert.deepEqual(normalizeAppearance({background:'url(http://attacker)', bodyFont:'<script>', textSize:'9999px'}), DEFAULT_APPEARANCE);
   const selected = normalizeAppearance({ background:'forest', bodyFont:'baskerville', displayFont:'castellar', textSize:'large' });
   assert.deepEqual(decodeAppearance(encodeAppearance(selected)), selected);
+  assert.equal(normalizeAppearance({buttonTheme:'untrusted-skin'}).buttonTheme, 'asteria-crystal');
   const provider = read('frontend/src/appearance/AppearanceProvider.jsx');
   assert.match(provider, /window\.localStorage/);
   assert.match(provider, /window\.addEventListener\('storage'/);
@@ -68,10 +71,12 @@ test('one token owner for appearance and scoped page styling', () => {
     assert.ok(styles.includes('data-asteria-text-size="'+id+'"'), id);
   }
   assert.match(read('frontend/src/styles/typography.css'), /--ast-root-font-size/);
+  assert.match(styles, /--ast-button-image-standard-crystal/);
   const page = read('frontend/src/pages/AppearanceSettingsPage.jsx');
   assert.match(page, /data-testid="site-appearance-page"/);
   assert.match(page, /Restore defaults/);
   assert.match(page, /aria-pressed=/);
+  assert.match(page, /site-button-theme/);
   const css = read('frontend/src/pages/AppearanceSettingsPage.module.css');
   assert.doesNotMatch(css, /!important|:global\(|#[0-9a-f]{3,8}\b/i);
 });

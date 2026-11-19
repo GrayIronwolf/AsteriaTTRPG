@@ -1,0 +1,76 @@
+name: Deploy React/Vite live website (manual, frontend only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asteria-react-live-publication
+  cancel-in-progress: false
+
+jobs:
+  frontend-release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify frontend and non-destructive publisher
+        run: |
+          npm run site:check
+          npm run site:retirement-audit
+          npx eslint frontend/src
+          node --test scripts/site-live-refresh.test.mjs
+      - name: Build the authenticated production React frontend
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED: 'true'
+          VITE_ASTERIA_FORGE_INTEGRATION_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED: 'true'
+          VITE_ASTERIA_COMBAT_ENABLED: 'true'
+          VITE_ASTERIA_PROGRESSION_ENABLED: 'true'
+          VITE_ASTERIA_ECONOMY_ENABLED: 'true'
+          VITE_ASTERIA_DIGITAL_GM_ENABLED: 'true'
+          VITE_FIREBASE_MODE: production
+        run: |
+          npm run site:build
+          npm run site:verify-dist
+          node --test scripts/site-cutover-phase10-4-bundle.test.mjs
+      - name: Verify approved button materials are emitted into production CSS
+        run: |
+          node scripts/site-button-theme-dist-check.mjs
+      - name: Prepare existing live Pages branch without deleting old assets
+        env:
+          ASTERIA_LIVE_WORKTREE: ${{ runner.temp }}/asteria-react-live
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/react-vite-live:refs/remotes/origin/react-vite-live
+          git worktree add --detach "$ASTERIA_LIVE_WORKTREE" refs/remotes/origin/react-vite-live
+          node scripts/site-live-refresh.mjs --apply
+          git -C "$ASTERIA_LIVE_WORKTREE" add -- index.html assets
+          if git -C "$ASTERIA_LIVE_WORKTREE" diff --cached --name-status | grep -E '^D[[:space:]]'; then
+            echo "Refusing to delete an existing published asset" >&2
+            exit 1
+          fi
+          git -C "$ASTERIA_LIVE_WORKTREE" config user.name "github-actions[bot]"
+          git -C "$ASTERIA_LIVE_WORKTREE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$ASTERIA_LIVE_WORKTREE" commit -m "release: publish verified React default crystal button theme"
+          git -C "$ASTERIA_LIVE_WORKTREE" push origin HEAD:refs/heads/react-vite-live
+          echo "React/Vite branch updated. Wait for separate Pages build/deploy completion before live verification." >> "$GITHUB_STEP_SUMMARY"

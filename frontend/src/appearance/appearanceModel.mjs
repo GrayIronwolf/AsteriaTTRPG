@@ -36,11 +36,16 @@ export const TEXT_SIZE_OPTIONS = Object.freeze([
   { id: 'extra-large', label: 'Extra Large' }
 ]);
 
+export const BUTTON_THEME_OPTIONS = Object.freeze([
+  { id: 'asteria-crystal', label: 'Asteria Crystal', description: 'Original crystal and metallic bezel' }
+]);
+
 export const DEFAULT_APPEARANCE = Object.freeze({
   background: 'black',
   bodyFont: 'system',
   displayFont: 'system',
-  textSize: 'normal'
+  textSize: 'normal',
+  buttonTheme: 'asteria-crystal'
 });
 
 function allow(value, options, fallback) {
@@ -54,7 +59,8 @@ export function normalizeAppearance(input) {
     background: allow(source.background, BACKGROUND_OPTIONS, DEFAULT_APPEARANCE.background),
     bodyFont: allow(source.bodyFont, FONT_OPTIONS, DEFAULT_APPEARANCE.bodyFont),
     displayFont: allow(source.displayFont, FONT_OPTIONS, DEFAULT_APPEARANCE.displayFont),
-    textSize: allow(source.textSize, TEXT_SIZE_OPTIONS, DEFAULT_APPEARANCE.textSize)
+    textSize: allow(source.textSize, TEXT_SIZE_OPTIONS, DEFAULT_APPEARANCE.textSize),
+    buttonTheme: allow(source.buttonTheme, BUTTON_THEME_OPTIONS, DEFAULT_APPEARANCE.buttonTheme)
   };
 }
 

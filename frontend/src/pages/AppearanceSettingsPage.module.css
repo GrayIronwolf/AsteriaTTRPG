@@ -88,3 +88,5 @@
 @media (max-width: 380px) {
   .modeGrid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.buttonPreview { display:flex;align-items:center;justify-content:flex-start;min-height:var(--ast-target-min); }

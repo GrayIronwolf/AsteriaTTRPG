@@ -28,6 +28,7 @@ export function AppearanceProvider({ children }) {
     root.dataset.asteriaBodyFont = appearance.bodyFont;
     root.dataset.asteriaDisplayFont = appearance.displayFont;
     root.dataset.asteriaTextSize = appearance.textSize;
+    root.dataset.asteriaButtonTheme = appearance.buttonTheme;
     try { window.localStorage.setItem(APPEARANCE_STORAGE_KEY, encodeAppearance(appearance)); }
     catch { /* Private mode or disabled storage: keep in-memory preferences. */ }
   }, [appearance]);

@@ -34,6 +34,21 @@
   --ast-color-warning: #d7a347;
   --ast-color-danger: #c9475b;
 
+  /* Asteria Crystal (default button theme): original approved artwork.
+   * Vite resolves these source assets into hashed production bundle URLs.
+   * Future themes override only these named material tokens. */
+  --ast-button-image-small-frame: url('../../../assets/ui/buttons/button-small-frame.webp');
+  --ast-button-image-small-crystal: url('../../../assets/ui/buttons/button-small-crystal.webp');
+  --ast-button-image-standard-frame: url('../../../assets/ui/buttons/button-standard-frame.webp');
+  --ast-button-image-standard-crystal: url('../../../assets/ui/buttons/button-standard-crystal.webp');
+  --ast-button-image-long-frame: url('../../../assets/ui/buttons/button-long-frame.webp');
+  --ast-button-image-long-crystal: url('../../../assets/ui/buttons/button-long-crystal.webp');
+  --ast-button-image-icon-frame: url('../../../assets/ui/buttons/button-icon-frame.webp');
+  --ast-button-image-icon-crystal: url('../../../assets/ui/buttons/button-icon-crystal.webp');
+  --ast-button-crystal-tone: #1f7dff;
+  --ast-button-crystal-glow: rgba(40, 118, 245, .56);
+  --ast-button-label-color: #ffffff;
+
   /* A restrained, inset crystal finish with a gunmetal bevel. */
   --ast-button-bezel-top: #596c78;
   --ast-button-bezel-bottom: #202a33;
