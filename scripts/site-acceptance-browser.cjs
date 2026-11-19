@@ -198,7 +198,7 @@ async function screenshot(page, filename) {
     await preview.evaluate(() => { delete document.documentElement.dataset.asteriaBackground; });
 
     // Browser history must remain stable after repeated direct-route changes.
-    await preview.getByRole('link', { name: 'Return to Home' }).click();
+    await preview.getByTestId('site-brand').click();
     await preview.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
     await preview.goBack();
     await preview.getByRole('heading', { name: 'Asteria Compendium', level: 1 }).waitFor();
