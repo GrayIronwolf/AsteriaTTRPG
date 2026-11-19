@@ -44,6 +44,7 @@
   white-space: nowrap;
 }
 .primaryNavigation a {
+  --ast-button-height: 50px;
   flex: 0 0 auto;
   font-size: clamp(.78rem, .87vw, .9rem);
 }
