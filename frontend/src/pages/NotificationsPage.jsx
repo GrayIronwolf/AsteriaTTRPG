@@ -1,8 +1,8 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {PageLayout} from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
-import {Heading,BodyText,Eyebrow} from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import {useAuth} from '../auth/AuthProvider.jsx';
 import {isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
 import {useAppServices} from '../app/AppServices.jsx';
@@ -79,8 +79,7 @@ export function NotificationsPage(){
  </PageLayout>;
  return <PageLayout as="section" width="wide" className={styles.page}
    labelledBy="notice-page-title" data-testid="site-notifications-page">
-   <Eyebrow>Asteria Account</Eyebrow>
-   <Heading id="notice-page-title">Notifications</Heading>
+   <PageHeader eyebrow="Asteria Account" id="notice-page-title" title="Notifications" />
    <BodyText muted>Private account updates from the existing Firebase notification service.
      Counts represent unread messages on the latest available page, not your entire history.</BodyText>
    <div className={styles.channels} role="group" aria-label="Notification inboxes">
