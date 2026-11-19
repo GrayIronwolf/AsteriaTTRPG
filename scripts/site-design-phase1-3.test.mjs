@@ -89,7 +89,7 @@ test('component boundaries and reusable Asteria UI controls are wired to the pag
   assert.doesNotMatch(home, /<SurfacePanel/);
   assert.match(home, /<Heading id="site-home-title" hero>/);
   assert.match(route, /<PageLayout/);
-  assert.match(route, /<CrystalButton variant="primary" size="wide" href="#home"/);
+  assert.doesNotMatch(route, /Return to Home|href="#home"/);
   assert.match(route, /<SurfacePanel/);
   assert.match(buttons, /if \(href != null\)/);
   assert.match(buttons, /aria-current=\{active \? 'page'/);
