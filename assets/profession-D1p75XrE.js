@@ -1,0 +1,1 @@
+const i=1,s="profession",o=[{id:"profession:professions-crafting-blacksmith-blacksmith",text:"overview blacksmiths shape metal into weapons armor fittings tools and structural pieces progression information coming soon forge hammer anvil tongs quenching barrel finishing recipes lore"}],n={version:1,domain:s,entries:o};export{n as default,s as domain,o as entries,i as version};
