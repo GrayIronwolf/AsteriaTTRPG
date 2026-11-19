@@ -161,7 +161,7 @@
   }
 }
 @media (max-width: 380px) {
-  :root { --ast-header-brand-width: min(38vw, 144px); }
+  :root { --ast-header-brand-width: min(32vw, 120px); }
 }
 
 /* Phase 2.4: single-source, allowlisted preview appearance selectors. */
