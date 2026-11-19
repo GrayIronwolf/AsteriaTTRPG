@@ -135,7 +135,7 @@ async function awaitPreview() {
         await page.getByRole('link', { name: 'Return to Home' }).click();
         await heading('Asteria');
       } else {
-        assert.equal(await nav().getByRole('link', { name: 'Home' }).isVisible(), true);
+        assert.equal(await page.getByTestId('site-brand').isVisible(), true);
         const row = await page.evaluate(() => {
           const links = Array.from(document.querySelectorAll('[data-testid="site-primary-navigation"] a'));
           const tops = links.map(link => Math.round(link.getBoundingClientRect().top));
