@@ -195,15 +195,15 @@ export function AccountPage({route}) {
   return <PageLayout as="section" width="wide" className={styles.page} labelledBy="site-account-title"
     data-testid="site-account-page">
     <PageHeader eyebrow="Asteria Account" id="site-account-title" title="Account" />
-    <div className={styles.layout}>
-      <nav className={styles.sidebar} aria-label="Account sections">
+    <div className={styles.layout} data-page-shell="true">
+      <nav className={styles.sidebar} data-page-rail="true" data-page-nav="true" aria-label="Account sections">
         {SECTIONS.map(item=><button key={item.id} type="button" data-testid={'site-account-tab-'+item.id}
-          className={styles.tab} aria-current={section===item.id?'page':undefined}
+          className={styles.tab} data-page-nav-item="true" aria-current={section===item.id?'page':undefined}
           onClick={()=>{setSection(item.id);setError('');setMessage('');}}>
           {item.label}
         </button>)}
       </nav>
-      <div className={styles.main}>
+      <div className={styles.main} data-page-content="true">
         {error&&<p role="alert" className={styles.notice} data-testid="site-account-error">{error}</p>}
         {message&&<p role="status" className={styles.notice} data-testid="site-account-message">{message}</p>}
         {section==='profile'&&<SurfacePanel as="section" className={styles.panel}
