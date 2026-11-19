@@ -216,7 +216,6 @@ export function CompendiumCataloguePage({ route }) {
           </>}
         </div>
       </div>
-      <a className={styles.home} href="#home">Return to Home</a>
     </PageLayout>
   );
 }
