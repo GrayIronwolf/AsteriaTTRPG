@@ -57,7 +57,12 @@ async function waitForPreview() {
     await page.getByTestId('site-body-font').selectOption('arial');
     await page.getByTestId('site-display-font').selectOption('baskerville');
     await page.getByTestId('site-text-size').selectOption('large');
-    await page.getByTestId('site-crystal-colour').fill('#d11a88');
+    await page.getByTestId('site-crystal-colour').evaluate(el => {
+      const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+      setter.call(el,'#d11a88');
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    });
     const selected = await page.evaluate(() => ({
       ...document.documentElement.dataset,
       saved: JSON.parse(localStorage.getItem('asteria.react.appearance.v1'))
