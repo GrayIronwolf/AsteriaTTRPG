@@ -8,13 +8,42 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
-import {CampaignMapWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
+import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {GMChecksAndProgression} from '../progression/ProgressionWorkspace.jsx';
 import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {GMDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
+
+const GM_TABS=Object.freeze([
+  {id:'main',label:'GM Main'},
+  {id:'toolkit',label:'GM Toolkit',area:'library'},
+  {id:'bestiary',label:'NPC & Creature Library',area:'library'},
+  {id:'settings',label:'Dashboard Settings'},
+  {id:'inventory',label:'PC Inventory'},
+  {id:'information',label:'News & Events',area:'stories'},
+  {id:'quests',label:'Quests',area:'stories'},
+  {id:'notes',label:'GM Notes',area:'stories'},
+  {id:'session-library',label:'Session Library',area:'archives'},
+  {id:'soundboard',label:'Soundboard & Ambience',area:'audio'},
+  {id:'session-recordings',label:'Session Recordings',area:'recordings'},
+  {id:'presentation',label:'Player Display'},
+  {id:'economy',label:'Economy'},
+  {id:'crafting',label:'Crafting'},
+  {id:'tools',label:'GM Tools',area:'tables'},
+  {id:'gameplay',label:'Gameplay Systems'},
+  {id:'world',label:'World Systems',area:'calendar'},
+  {id:'battle-maps',label:'Battle Maps'},
+  {id:'advanced-dice',label:'Advanced Dice'},
+  {id:'random-tables',label:'Random Tables',area:'tables'},
+  {id:'encounter-rewards',label:'Encounter Generator',area:'tables'},
+  {id:'asteria-calendar',label:'Asteria Calendar',area:'calendar'},
+  {id:'weather-environment',label:'Weather Generator',area:'weather'},
+  {id:'world-atlas',label:'World Atlas'}
+]);
+const GM_TOOL_AREAS=Object.fromEntries(GM_TABS.filter(tab=>tab.area)
+  .map(tab=>[tab.id,tab.area]));
 
 function ResourceMeter({label,value}) {
   const current=Array.isArray(value)?Number(value[0])||0:0;
@@ -101,7 +130,7 @@ function LiveSession({session,loading,busy,onRun}) {
 function CampaignGM({api,uid,campaignId}) {
   const [snapshot,setSnapshot]=useState(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState(''),[message,setMessage]=useState('');
-  const [busy,setBusy]=useState(false),[tab,setTab]=useState('overview');
+  const [busy,setBusy]=useState(false),[tab,setTab]=useState('main');
   const mediaEnabled=api.media?.availability().enabled===true;
   const combatEnabled=api.combat?.availability().enabled===true;
   const progressionEnabled=api.progression?.availability().enabled===true;
@@ -110,7 +139,7 @@ function CampaignGM({api,uid,campaignId}) {
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
-    setSnapshot(null);setLoading(true);setError('');setMessage('');setBusy(false);setTab('overview');
+    setSnapshot(null);setLoading(true);setError('');setMessage('');setBusy(false);setTab('main');
     const close=api.watch(campaignId,data=>{
       if(scope.current!==token)return;
       setSnapshot(data);setLoading(false);
@@ -167,40 +196,55 @@ function CampaignGM({api,uid,campaignId}) {
       </aside>
       <div className={styles.gmWorkspaceMain}>
     <nav aria-label="GM dashboard sections" className={styles.tabs}>
-      {['overview','party','session',...(combatEnabled?['combat']:[]),...(progressionEnabled?['checks-progression']:[]),...(economyEnabled?['inventory-loot-crafting']:[]),...(digitalGMEnabled?['digital-gm-toolkit']:[]),...(mediaEnabled?['battle-maps','presentation']:[])].map(item=><CrystalButton key={item} type="button" size="compact" active={tab===item}
-        onClick={()=>setTab(item)}>{item[0].toUpperCase()+item.slice(1)}</CrystalButton>)}
+      {GM_TABS.map(item=><CrystalButton key={item.id} type="button" size="compact" active={tab===item.id}
+        onClick={()=>setTab(item.id)}>{item.label}</CrystalButton>)}
     </nav>
     {error?<p role="alert" className={styles.notice}>{error}</p>:null}
     {message?<p role="status" className={styles.notice}>{message}</p>:null}
-    {(tab==='overview'||tab==='session')?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
-    {api.availability().layoutEnabled?
+    {tab==='main'?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
+    {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=>{
           if(id==='partySummary')return <Party party={snapshot.party}/>;
           if(id==='encounter')return combatEnabled?
-            <button type="button" onClick={()=>setTab('combat')}>
+            <button type="button" onClick={()=>setTab('gameplay')}>
               Open Combat · Session {live.status}
             </button>:
             <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
           if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
-          if(id==='xp')return progressionEnabled?<button type="button" onClick={()=>setTab('checks-progression')}>
+          if(id==='xp')return progressionEnabled?<button type="button" onClick={()=>setTab('gameplay')}>
             Open XP &amp; Check Requests</button>:<p>XP distribution migrates in Phase 7.</p>;
           return null;
         }}/>
       :null}
-    {combatEnabled&&tab==='combat'?<GMCombatWorkspace
+    {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
+      key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
+      initialArea={GM_TOOL_AREAS[tab]}/>:null}
+    {economyEnabled&&['inventory','economy','crafting'].includes(tab)?<GMEconomyWorkspace
+      key={uid+':'+campaignId+':'+tab} api={api.economy} campaignId={campaignId}/>:null}
+    {combatEnabled&&tab==='gameplay'?<GMCombatWorkspace
       key={uid+':'+campaignId} api={api.combat} campaignId={campaignId}/>:null}
-    {digitalGMEnabled&&tab==='digital-gm-toolkit'?<GMDigitalGMWorkspace
-      key={uid+':'+campaignId} api={api.digitalGM} campaignId={campaignId}/>:null}
-    {economyEnabled&&tab==='inventory-loot-crafting'?<GMEconomyWorkspace
-      key={uid+':'+campaignId} api={api.economy} campaignId={campaignId}/>:null}
-    {progressionEnabled&&tab==='checks-progression'?<GMChecksAndProgression
+    {progressionEnabled&&tab==='gameplay'?<GMChecksAndProgression
       key={uid+':'+campaignId} api={api.progression} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='battle-maps'?<CampaignMapWorkspace key={uid+':'+campaignId}
       api={api.media} campaignId={campaignId} role="gm"/>:null}
+    {mediaEnabled&&tab==='world-atlas'?<CampaignAtlasWorkspace key={uid+':'+campaignId}
+      api={api.media} campaignId={campaignId}/>:null}
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
       party={snapshot.party}/>:null}
+    {tab==='advanced-dice'?<SurfacePanel className={styles.panel}>
+      <h2>Advanced Dice</h2>
+      <BodyText muted>The original advanced dice roller has not yet been connected to this React route.</BodyText>
+    </SurfacePanel>:null}
+    {((GM_TOOL_AREAS[tab]&&!digitalGMEnabled)||
+      (['inventory','economy','crafting'].includes(tab)&&!economyEnabled)||
+      (tab==='gameplay'&&!combatEnabled&&!progressionEnabled)||
+      (['battle-maps','world-atlas','presentation'].includes(tab)&&!mediaEnabled))?
+      <SurfacePanel className={styles.panel}>
+        <h2>{GM_TABS.find(item=>item.id===tab)?.label}</h2>
+        <BodyText muted>This campaign feature is not enabled for the current account or campaign.</BodyText>
+      </SurfacePanel>:null}
     </div>
     </div>
   </>;
