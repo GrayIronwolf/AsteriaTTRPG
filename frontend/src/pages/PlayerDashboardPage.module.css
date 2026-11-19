@@ -1,6 +1,6 @@
 /* Phase 6.2: one scoped stylesheet, no legacy overrides or global selectors. */
-.page{min-height:65vh;min-width:0;padding-block:var(--ast-space-7) var(--ast-space-9);display:grid;align-content:start;gap:var(--ast-space-4)}
-.panel{padding:var(--ast-space-5);display:grid;gap:var(--ast-space-3);min-width:0}
+.page{min-width:0;display:grid;align-content:start;gap:var(--ast-space-4)}
+.panel{padding:var(--ast-page-panel-padding);display:grid;gap:var(--ast-space-3);min-width:0}
 .panel h3,.panel h4,.titleRow h2,.titleRow h3{margin:0}
 .panel p{margin:0;overflow-wrap:anywhere}
 .titleRow{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--ast-space-4);min-width:0}
