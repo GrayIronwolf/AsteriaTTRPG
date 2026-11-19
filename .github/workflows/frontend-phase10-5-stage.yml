@@ -1,0 +1,93 @@
+name: React/Vite Phase 10.5 - stage reversible Pages branch
+on:
+  pull_request:
+    paths:
+      - "scripts/site-cutover-phase10-5-*"
+      - "frontend/index.html"
+      - ".github/workflows/frontend-phase10-5-stage.yml"
+      - "docs/frontend-overhaul/PHASE-10.5-LIVE-CUTOVER.md"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/site-cutover-phase10-5-*"
+      - "frontend/index.html"
+      - ".github/workflows/frontend-phase10-5-stage.yml"
+permissions:
+  contents: read
+jobs:
+  verify-and-stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Safeguards and negative tests
+        run: node --test scripts/site-cutover-phase10-5-stage.test.mjs
+      - name: Verify pricing, ownership, legacy and accessibility regression gates
+        run: |
+          npm run site:cutover-phase10-4:pricing
+          npm run site:cutover-phase10-4:package-test
+          npm run site:check
+          npm run site:retirement-audit
+          npm run lint
+      - name: Compile production-configured new frontend without live Firebase access
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED: 'true'
+          VITE_ASTERIA_FORGE_INTEGRATION_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED: 'true'
+          VITE_ASTERIA_COMBAT_ENABLED: 'true'
+          VITE_ASTERIA_PROGRESSION_ENABLED: 'true'
+          VITE_ASTERIA_ECONOMY_ENABLED: 'true'
+          VITE_ASTERIA_DIGITAL_GM_ENABLED: 'true'
+          VITE_FIREBASE_MODE: production
+        run: |
+          npm run site:build
+          npm run site:verify-dist
+          node --test scripts/site-cutover-phase10-4-bundle.test.mjs
+          npm run site:cutover-phase10-4:stage
+          npm run site:cutover-phase10-4:verify
+      - name: Upload backup and staged candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-10-5-release-evidence
+          path: ${{ runner.temp }}/asteria-phase-10-4-release/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Stage a separate rollback-safe branch after merging to main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          TARGET_BRANCH: react-vite-live
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "$TARGET_BRANCH" >/dev/null 2>&1; then
+            echo "Refusing to overwrite an existing Pages release branch" >&2
+            exit 1
+          fi
+          git switch -c "$TARGET_BRANCH"
+          node scripts/site-cutover-phase10-5-stage.mjs --apply
+          git add -- index.html assets
+          if git diff --cached --name-status | grep -E '^D[[:space:]]'; then
+            echo "Cutover cannot delete existing assets" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "release: stage React website while retaining legacy and rollback on main"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+          echo "## Staged React website (NOT live yet)" >> "$GITHUB_STEP_SUMMARY"
+          echo "GitHub Pages branch: $TARGET_BRANCH / root; existing main remains the rollback." >> "$GITHUB_STEP_SUMMARY"
+          echo "The owner must select the Pages source in Settings > Pages before the production site changes." >> "$GITHUB_STEP_SUMMARY"
