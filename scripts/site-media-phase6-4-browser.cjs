@@ -225,7 +225,7 @@ try{
  await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).locator('option').filter({hasText:'Looping Frostwind Map'}).waitFor({state:'attached',timeout:30000});
  assert.match(await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).innerText(),/Looping Frostwind Map/);
  assert.equal(await player.locator('[data-testid="site-player-campaign-maps"] input[type="file"]').count(),0);
- await owner.getByRole('button',{name:'Presentation',exact:true}).click();
+ await owner.getByRole('button',{name:'Player Display',exact:true}).click();
  await owner.getByTestId('site-gm-presentation').waitFor({timeout:30000});
  await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Scene'}).selectOption('battle-map');
  try{await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Published map'}).selectOption({label:'Looping Frostwind Map'},{timeout:7000});}
@@ -236,7 +236,7 @@ try{
  await player.getByTestId('site-player-presentation').waitFor({timeout:30000});
  await player.getByTestId('site-media-map-canvas').waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Presentation',exact:true}).click();
+ await owner.getByRole('button',{name:'Player Display',exact:true}).click();
  await owner.getByRole('button',{name:'Blackout'}).click();
  await owner.getByText('Presentation updated.').waitFor({timeout:30000});
  await player.getByText('Display is blacked out.').waitFor({timeout:30000});
