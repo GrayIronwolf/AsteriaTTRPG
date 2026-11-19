@@ -87,6 +87,16 @@
   --ast-page-max: 1920px;
   --ast-reading-max: 940px;
 
+  /* One React page shell and Account-style sidebar geometry. */
+  --ast-page-min-height: 65vh;
+  --ast-page-top-space: var(--ast-space-7);
+  --ast-page-bottom-space: var(--ast-space-9);
+  --ast-page-rail-width: 230px;
+  --ast-page-layout-gap: var(--ast-space-6);
+  --ast-page-rail-rule: var(--ast-color-outline-soft);
+  --ast-page-nav-selection: var(--ast-color-outline-active);
+  --ast-page-panel-padding: var(--ast-space-5);
+
   --ast-radius-sm: 4px;
   --ast-radius-panel: 8px;
   --ast-radius-pill: 999px;
