@@ -28,10 +28,10 @@ jobs:
           npm run site:cutover-phase10-4:pricing
           npm run site:cutover-phase10-4:package-test
           npm run test:market-pricing
-          npm run site:architecture-phase9-4
       - name: Site regressions and no legacy file retirement
         run: |
           npm run site:check
+          npm run site:architecture-phase9-4
           npm run site:retirement-audit
           npm run lint
       - name: Compile full React cutover candidate and stage offline rollback
