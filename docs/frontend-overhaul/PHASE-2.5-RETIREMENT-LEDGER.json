@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": "Asteria React/Vite Phase 2.5 integration and cleanup candidates, 2026-11-18",
   "removalPolicy": "none_before_parity_and_approved_production_cutover",
-  "description": "Legacy files referenced by the live website remain untouched. Phase 9.1 removes only the explicitly disabled stylesheet recorded in removedFiles; all active dependencies stay in place until approved cutover.",
+  "description": "Retire only previously disabled standalone template files in Phases 9.1 and 9.2; all original live legacy controllers remain intact until final approved Phase 10 cutover.",
   "groups": [
     {
       "id": "legacy-startup-routing",
@@ -94,14 +94,18 @@
       ],
       "expectLoadedInLegacy": false,
       "blockers": [
-        "Legacy universal page-template JavaScript remains disabled until Phase 9.2",
-        "The active legacy account page remains on its existing stylesheet",
-        "Final old HTML/JS retirement still requires Phase 10 cutover"
+        "The active legacy account page retains its original controller and styles",
+        "The final HTML/JS cutover still requires explicit Phase 10 approval"
       ],
       "removedFiles": [
-        "css/asteria-page-template.css"
+        "css/asteria-page-template.css",
+        "js/asteria-page-template.js"
       ],
-      "removedInPhase": "9.1"
+      "removedInPhase": "9.1",
+      "removedInPhases": {
+        "css/asteria-page-template.css": "9.1",
+        "js/asteria-page-template.js": "9.2"
+      }
     }
   ]
 }
