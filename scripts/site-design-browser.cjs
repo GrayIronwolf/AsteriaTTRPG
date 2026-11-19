@@ -161,7 +161,7 @@ async function awaitPreview() {
     console.log('PASS: appearance modes change tokens without importing theme override files.');
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    const motion = await page.getByRole('link', { name: 'Return to Home' })
+    const motion = await page.getByTestId('site-brand')
       .evaluate(el => getComputedStyle(el).transitionDuration);
     assert.ok(motion === '1e-05s' || motion === '0.00001s' || motion === '0s',
       'Reduced-motion transition was not disabled: ' + motion);
@@ -169,7 +169,7 @@ async function awaitPreview() {
     await page.getByRole('link', { name: 'Return to Home' }).click();
     await page.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
     assert.deepEqual(errors, [], 'Browser errors: ' + errors.join('; '));
-    console.log('PASS: scoped page panels, theme tokens, reduced motion and returning Home.');
+    console.log('PASS: scoped page panels, theme tokens, reduced motion and brand-owned Home.');
   } finally {
     if (browser) await browser.close();
     server.kill('SIGTERM');
