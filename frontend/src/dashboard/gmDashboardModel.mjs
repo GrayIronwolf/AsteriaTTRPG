@@ -1,5 +1,6 @@
 import { CAMPAIGN_ID } from '../campaigns/campaignForgeModel.mjs';
 import { effectiveSession } from '../../../src/state/liveWorkspaceModel.mjs';
+import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = (value, fallback = '') => typeof value === 'string' ? value : fallback;
@@ -33,6 +34,7 @@ export function gmCampaignSummary(campaign, access) {
   if (!access?.allowed) throw new Error('GM campaign permission is required.');
   return Object.freeze({
     id:campaign.id, name:text(campaign.name,'Campaign').slice(0,120),
+    image:safeDashboardArtwork(campaign.image,campaign.art,campaign.banner,campaign.coverImage,campaign.cover,campaign.appearance?.image),
     description:text(campaign.description).slice(0,400),
     role:access.role,
     membershipSchemaVersion:campaign.membershipSchemaVersion ?? 1,
@@ -53,6 +55,7 @@ export function gmPartySummary(documents) {
   return Object.freeze(documents.slice(0,128).filter(item => record(item) &&
     CAMPAIGN_ID.test(String(item.id || ''))).map(item => Object.freeze({
     id:item.id, name:text(item.name,'Unnamed Character').slice(0,100),
+    image:safeDashboardArtwork(item.image,item.portrait,item.characterImage,item.appearance?.image),
     level:Number.isFinite(Number(item.level)) ? Math.max(0,Math.floor(Number(item.level))) : 0,
     className:text(item.className,typeof item.class === 'string' ? item.class :
       text(item.class?.name)).slice(0,80),
