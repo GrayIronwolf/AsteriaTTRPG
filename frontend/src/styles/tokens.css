@@ -46,7 +46,7 @@
   --ast-button-image-icon-frame: url('../../../assets/ui/buttons/button-icon-frame.webp');
   --ast-button-image-icon-crystal: url('../../../assets/ui/buttons/button-icon-crystal.webp');
   --ast-button-crystal-tone: #1f7dff;
-  --ast-button-crystal-glow: rgba(40, 118, 245, .56);
+  --ast-button-crystal-glow: color-mix(in srgb, var(--ast-button-crystal-tone) 56%, transparent);
   --ast-button-label-color: #ffffff;
 
   /* A restrained, inset crystal finish with a gunmetal bevel. */
