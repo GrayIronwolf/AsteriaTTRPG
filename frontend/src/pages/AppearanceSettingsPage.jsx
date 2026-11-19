@@ -100,7 +100,6 @@ export function AppearanceSettingsPage() {
       <div className={styles.actions}>
         <CrystalButton variant="secondary" size="wide" onClick={resetAppearance}
           data-testid="site-appearance-reset">Restore defaults</CrystalButton>
-        <CrystalButton variant="primary" size="wide" href="#home">Return to Home</CrystalButton>
       </div>
     </PageLayout>
   );
