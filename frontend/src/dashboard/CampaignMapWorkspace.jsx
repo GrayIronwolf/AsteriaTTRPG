@@ -138,7 +138,8 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
   const [error,setError]=useState(''),[notice,setNotice]=useState('');
   const [fogMode,setFogMode]=useState('none'),[showGrid,setShowGrid]=useState(true);
   const [previewFog,setPreviewFog]=useState(false);
-  const map=maps.find(item=>item.id===(selectedMapId||selected))||
+  const map=selected==='__new__'?null:
+    maps.find(item=>item.id===(selectedMapId||selected))||
     (!selectedMapId?maps[0]:null)||null;
   useEffect(()=>{
     setDraft(map?{
@@ -232,7 +233,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
           onClick={upload}>Upload GM Map</button>:<>
           <button type="button" disabled={busy} onClick={save}>Save Map Settings</button>
           <button type="button" disabled={busy||Boolean(map.combatId)} onClick={remove}>Delete Map</button>
-          <button type="button" onClick={()=>{setSelected('');setDraft(empty());}}>
+          <button type="button" onClick={()=>{setSelected('__new__');setDraft(empty());}}>
             Create New Map</button>
         </>}
       </div>
