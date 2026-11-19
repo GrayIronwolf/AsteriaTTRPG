@@ -14,6 +14,7 @@ import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
 import {PlayerEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {PlayerDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
+import {AdvancedDiceWorkspace} from '../dice/AdvancedDiceWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
 // Preserve the original navigation vocabulary and order. Some legacy modules
@@ -168,7 +169,7 @@ function Sections({character,tab,owned}){
   </SurfacePanel>;
   return null;
 }
-function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignId='',characterId}){
+function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),
     [resourceBusy,setResourceBusy]=useState(''),[resourceError,setResourceError]=useState('');
@@ -239,6 +240,8 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
     {tab==='World Map'&&media?.availability().enabled?
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
+    {tab==='Advanced Dice'&&dice?.availability().enabled?
+      <AdvancedDiceWorkspace api={dice} role="player"/>:null}
     {tab==='Party'?<SurfacePanel className={styles.panel}>
       <h3>Party</h3>
       {c?.party?.length?<ul className={styles.list}>{c.party.map(member=>
@@ -259,6 +262,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
           campaign={c} onNavigate={setTab} available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
       :(economyEnabled&&['Inventory','Crafting'].includes(tab))||
         (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
+        (tab==='Advanced Dice'&&dice?.availability().enabled)||
         (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
@@ -274,6 +278,7 @@ export function PlayerDashboardPage({route}){
   const progression=services.get('gameplay')?.progression;
   const economy=services.get('gameplay')?.economy;
   const digitalGM=services.get('gameplay')?.digitalGM;
+  const dice=services.get('gameplay')?.dice;
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
@@ -282,7 +287,7 @@ export function PlayerDashboardPage({route}){
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
     </SurfacePanel>:<Dashboard key={uid+':'+campaignId+':'+characterId}
-      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy} digitalGM={digitalGM}
+      uid={uid} api={api} media={media} combat={combat} progression={progression} economy={economy} digitalGM={digitalGM} dice={dice}
       campaignId={campaignId} characterId={characterId}/>}
   </PageLayout>;
 }
