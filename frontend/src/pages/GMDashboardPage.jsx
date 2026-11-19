@@ -8,6 +8,7 @@ import {CrystalButton} from '../components/ui/CrystalButton.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
+import {GMOverviewPanel} from '../dashboard/GMOverviewPanels.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
@@ -204,18 +205,9 @@ function CampaignGM({api,uid,campaignId}) {
     {tab==='main'?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
     {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
-        renderPanel={id=>{
-          if(id==='partySummary')return <Party party={snapshot.party}/>;
-          if(id==='encounter')return combatEnabled?
-            <button type="button" onClick={()=>setTab('gameplay')}>
-              Open Combat · Session {live.status}
-            </button>:
-            <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
-          if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
-          if(id==='xp')return progressionEnabled?<button type="button" onClick={()=>setTab('gameplay')}>
-            Open XP &amp; Check Requests</button>:<p>XP distribution migrates in Phase 7.</p>;
-          return null;
-        }}/>
+        renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
+          session={live} onNavigate={setTab} available={{combat:combatEnabled,
+            progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}
       :null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
