@@ -502,10 +502,10 @@ function Crafting({data,action,editable,gm=false}){
     </div>:null}
   </section>;
 }
-export function PlayerEconomyWorkspace({api,campaignId,characterId}){
+export function PlayerEconomyWorkspace({api,campaignId,characterId,initialTab='Inventory'}){
   const stream=useEconomy(api,'player',campaignId,characterId);
   const action=useActions(api,campaignId,'player',characterId);
-  const [tab,setTab]=useState('Inventory');
+  const [tab,setTab]=useState(()=>['Inventory','Trades','Party Loot','Shops','Crafting'].includes(initialTab)?initialTab:'Inventory');
   return <section className={styles.workspace} data-testid="site-player-economy">
     <h2>Inventory &amp; Trading</h2>
     {stream.loading?<p>Verifying character ownership and loading inventory…</p>:null}
@@ -528,9 +528,9 @@ export function PlayerEconomyWorkspace({api,campaignId,characterId}){
     </>:null}
   </section>;
 }
-export function GMEconomyWorkspace({api,campaignId}){
+export function GMEconomyWorkspace({api,campaignId,initialTab='Party Loot'}){
   const stream=useEconomy(api,'gm',campaignId,'');
-  const [tab,setTab]=useState('Party Loot'),[target,setTarget]=useState('');
+  const [tab,setTab]=useState(()=>['Party Loot','Shops','Crafting','Inventory','Trades'].includes(initialTab)?initialTab:'Party Loot'),[target,setTarget]=useState('');
   const action=useActions(api,campaignId,'gm',target);
   const selected=stream.data?.party.find(x=>x.id===target)||null;
   return <section className={styles.workspace} data-testid="site-gm-economy">
