@@ -9,7 +9,8 @@ import {
  * No legacy global API bridge, second Firebase app or browser-side role grants.
  */
 export function createFirebaseGMDashboardService({
-  auth, db, firestoreSdk, readCanonical, enabled = false, layoutEnabled = false
+  auth, db, firestoreSdk, readCanonical, functions=null, functionsSdk=null,
+  enabled = false, layoutEnabled = false
 }) {
   if (!auth || !db || !firestoreSdk || typeof readCanonical !== 'function')
     throw new Error('An authenticated Asteria Firestore adapter is required.');
@@ -289,5 +290,29 @@ export function createFirebaseGMDashboardService({
     return {ok:true};
   }
 
-  return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout});
+  async function reviewRest(cid,characterId,requestId,status){
+    assertGMCampaignId(cid);assertGMCampaignId(characterId);
+    if(typeof requestId!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(requestId)||
+      !['approved','denied'].includes(status))
+      throw Error('Invalid Long Rest review.');
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('GM rest review is unavailable.');
+    const {uid}=await verifyCampaign(cid);
+    const character=await firestoreSdk.getDocFromServer(
+      firestoreSdk.doc(db,'campaigns',cid,'characters',characterId));
+    same(uid);
+    if(!character.exists()||character.data()?.restState?.request?.id!==requestId||
+      character.data()?.restState?.request?.status!=='pending')
+      throw Error('The pending Long Rest request has changed.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action:'reviewCharacterRest',
+      args:[cid,characterId,{id:requestId,status}],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)
+      throw Error(result.data?.error||'Long Rest review was rejected.');
+    return result.data;
+  }
+
+  return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout,reviewRest});
 }
