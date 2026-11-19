@@ -217,6 +217,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         details.key,details.delta);
       else if(type==='useQuickItem')await api.useQuickItem(campaignId,characterId,
         details.itemId,details.revision);
+      else if(type==='castSpell')await api.castSpell(campaignId,characterId,details);
     }catch(e){setResourceError(e?.message||'Character action failed.');}
     finally{setResourceBusy('');}
   };
