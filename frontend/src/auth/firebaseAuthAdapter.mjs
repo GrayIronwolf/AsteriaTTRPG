@@ -51,13 +51,13 @@ export async function createFirebaseAuthAdapter(runtime) {
 }
 
 async function initializeClient(runtime) {
-  const {auth,db,functions,storage,authSdk,firestoreSdk:rawFirestoreSdk,functionsSdk:safeFunctionsSdk,storageSdk}=
+  const {auth,db,functions,storage,authSdk,firestoreSdk:rawFirestoreSdk,functionsSdk,storageSdk}=
     await connectFirebaseRuntime(runtime);
   const connection=createConnectionMonitor();
   const realtime=createRealtimeSubscriptionHub({auth,firestoreSdk:rawFirestoreSdk,connection});
   const sharedSdk=createSharedFirestoreSdk({auth,firestoreSdk:rawFirestoreSdk,hub:realtime});
   const firestoreSdk=createVerifiedServerReads({auth,firestoreSdk:sharedSdk,connection});
-  const safeFunctionsSdk=createGuardedFunctionsSdk({auth,functionsSdk:safeFunctionsSdk,connection});
+  const safeFunctionsSdk=createGuardedFunctionsSdk({auth,functionsSdk,connection});
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
