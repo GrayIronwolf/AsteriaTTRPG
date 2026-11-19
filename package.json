@@ -172,8 +172,8 @@
     "site:gm-browser": "node scripts/site-gm-browser.cjs",
     "site:player-browser": "node scripts/site-player-browser.cjs",
     "site:layout-browser": "node scripts/site-layout-phase6-3-browser.cjs",
-    "site:media-browser": "node scripts/site-media-phase6-4-browser.cjs"
-    "site:combat-browser": "node scripts/site-combat-phase7-1-browser.cjs",
+    "site:media-browser": "node scripts/site-media-phase6-4-browser.cjs",
+    "site:combat-browser": "node scripts/site-combat-phase7-1-browser.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
