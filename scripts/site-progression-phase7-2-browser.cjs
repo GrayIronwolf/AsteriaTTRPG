@@ -261,7 +261,7 @@ try{
  await gmCombat.waitFor({timeout:30000});
  await gmCombat.getByRole('button',{name:'Add Linked Players'}).click();
  await gmCombat.getByText('Joined Forge Hero',{exact:true}).first().waitFor({timeout:30000});
- await gmCombat.getByRole('button',{name:'Start Combat'}).click();
+ await gmCombat.getByRole('button',{name:'Start Combat',exact:true}).locator(':enabled').click();
  await gmCombat.getByText(/ACTIVE · Round 1/).waitFor({timeout:30000});
  await gmCombat.getByTestId('site-combat-initiative').getByText(/Current turn/).waitFor({timeout:30000});
  await gmCombat.getByRole('button',{name:'Record 1 AP action'}).click();
