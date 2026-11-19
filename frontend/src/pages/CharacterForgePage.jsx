@@ -166,10 +166,10 @@ export function CharacterForgePage(){
       'New character — guided creation'}</BodyText>
     <CrystalButton onClick={finish} disabled={busy}>Back to Characters</CrystalButton>
    </div>
-   <div className={styles.layout} data-page-shell="true">
-    <nav className={styles.steps} data-page-rail="true" data-page-nav="true" aria-label="Character creation steps">
+   <div data-page-shell="true">
+    <nav data-page-rail="true" data-page-nav="true" aria-label="Character creation steps">
      {tabs.map((tab,index)=><button key={tab} type="button" onClick={()=>{setActive(tab);setQuery('');setError('');}}
-       aria-current={active===tab?'step':undefined} className={styles.tab} data-page-nav-item="true"
+       aria-current={active===tab?'step':undefined} data-page-nav-item="true"
        data-testid={'site-forge-tab-'+tab.toLowerCase().replaceAll(' ','-')}>
        <span>{index+1}.</span> {tab}
       </button>)}
