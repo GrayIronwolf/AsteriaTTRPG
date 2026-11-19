@@ -49,7 +49,7 @@ jobs:
         run: npm run site:build
       - name: Browser offline and reconnection verification
         timeout-minutes: 12
-        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:connection-browser"
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:network-browser"
       - name: Restore guest preview
         run: |
           npm run site:build
