@@ -1,0 +1,47 @@
+name: React/Vite Phase 9.1 - Legacy CSS retirement and parity
+
+on:
+  pull_request:
+    paths:
+      - "css/**"
+      - "frontend/src/styles/**"
+      - "frontend/src/components/**"
+      - "index.html"
+      - "frontend/index.html"
+      - "scripts/site-legacy-css-phase9-1.test.mjs"
+      - "scripts/universal-page-template-phase1.test.mjs"
+      - "scripts/site-retirement-audit.mjs"
+      - "scripts/site-integration-phase2-5.test.mjs"
+      - "docs/frontend-overhaul/**"
+      - "package.json"
+      - ".github/workflows/frontend-phase9-1-acceptance.yml"
+  workflow_dispatch:
+
+jobs:
+  css-retirement-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: CSS retirement and legacy template regression tests
+        run: |
+          npm run site:legacy-css-phase9-1
+          node --test scripts/universal-page-template-phase1.test.mjs scripts/aaa-menu-home-refresh.test.mjs
+          npm run site:retirement-audit
+      - name: Full React migration and CSS ownership regression
+        run: npm run site:check
+      - name: React source lint and isolated release build
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Legacy source entry and stylesheet syntax checks
+        run: |
+          node --check scripts/site-legacy-css-phase9-1.test.mjs
+          node --check scripts/site-retirement-audit.mjs
+          node --check scripts/universal-page-template-phase1.test.mjs

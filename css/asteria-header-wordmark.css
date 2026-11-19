@@ -3,7 +3,7 @@ body .topbar.asteria-header {
   display:flex!important;
   padding:8px clamp(12px,1.6vw,32px)!important;
   gap:clamp(12px,1.4vw,28px)!important;
-  background:#192838!important;
+  /* Header background is owned by the final approved AAA header rules. */
 }
 body .topbar.asteria-header::before,
 body .topbar.asteria-header::after { content:none!important; }

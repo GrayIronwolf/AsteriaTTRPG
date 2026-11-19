@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": "Asteria React/Vite Phase 2.5 integration and cleanup candidates, 2026-11-18",
   "removalPolicy": "none_before_parity_and_approved_production_cutover",
-  "description": "Legacy files are referenced by the live website and MUST NOT be removed in Phase 2.5. This ledger records ownership candidates, NOT authorisation to delete or disable.",
+  "description": "Legacy files referenced by the live website remain untouched. Phase 9.1 removes only the explicitly disabled stylesheet recorded in removedFiles; all active dependencies stay in place until approved cutover.",
   "groups": [
     {
       "id": "legacy-startup-routing",
@@ -94,10 +94,14 @@
       ],
       "expectLoadedInLegacy": false,
       "blockers": [
-        "Remain disabled pending conversion of remaining pages",
-        "Must not re-enable on top of old styles",
-        "Delete only in controlled final code retirement after page parity"
-      ]
+        "Legacy universal page-template JavaScript remains disabled until Phase 9.2",
+        "The active legacy account page remains on its existing stylesheet",
+        "Final old HTML/JS retirement still requires Phase 10 cutover"
+      ],
+      "removedFiles": [
+        "css/asteria-page-template.css"
+      ],
+      "removedInPhase": "9.1"
     }
   ]
 }

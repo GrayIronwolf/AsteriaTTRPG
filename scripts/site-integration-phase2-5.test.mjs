@@ -79,11 +79,15 @@ test('cleanup ledger names existing source owners with explicit no-removal gates
   assert.equal(data.removalPolicy,'none_before_parity_and_approved_production_cutover');
   const candidates=data.groups.flatMap(group => group.legacyFiles);
   assert.equal(new Set(candidates).size,candidates.length);
-  for(const file of candidates) assert.ok(existsSync(resolve(root,file)),file);
+  const retired=new Set(data.groups.flatMap(group=>group.removedFiles||[]));
+  for(const file of candidates)
+    assert.equal(existsSync(resolve(root,file)),!retired.has(file),file);
   const template = data.groups.find(x=>x.id==='disabled-universal-page-template');
   assert.equal(template.expectLoadedInLegacy,false);
   assert.ok(template.legacyFiles.includes('js/asteria-page-template.js'));
   assert.ok(template.legacyFiles.includes('css/asteria-page-template.css'));
+  assert.deepEqual(template.removedFiles,['css/asteria-page-template.css']);
+  assert.equal(template.removedInPhase,'9.1');
 });
 
 test('Phase 2.5 is gated by integrated and prior CI, with screenshot/cleanup artifacts', () => {

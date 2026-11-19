@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import vm from 'node:vm';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -66,7 +66,8 @@ function harness(){
   return {window,document,Element,media,mediaHandlers,callbacks};
 }
 
-test('Template files remain available for future work but are not loaded while startup is isolated',()=>{
+test('Disabled universal template CSS is retired while legacy account styles remain intact',()=>{
+  assert.equal(existsSync(new URL('../css/asteria-page-template.css',import.meta.url)),false);
   const html=read('index.html');
   assert.ok(!html.includes('<link rel="stylesheet" href="css/asteria-page-template.css'));
   assert.ok(!html.includes('<script src="js/asteria-page-template.js'));
@@ -132,18 +133,13 @@ test('Keyboard selection follows desktop orientation and switches to horizontal 
   assert.equal(tabs[0].getAttribute('aria-selected'),'true');
 });
 
-test('Universal shell styles target opted-in pages and preserve #060D15 colour',()=>{
-  const css=read('css/asteria-page-template.css');
-  assert.match(css,/--asteria-page-surface:#060D15/);
-  for(const name of ['asteria-template-page','asteria-template-header','asteria-template-layout',
-    'asteria-template-sidebar','asteria-template-nav','asteria-template-content','asteria-template-panel']){
-    assert.ok(css.includes('.'+name),name);
-  }
-  assert.match(css,/@media\(max-width:720px\)/);
-  assert.match(css,/overflow-x:auto/);
-  assert.doesNotMatch(css,/(?:^|\n)\s*\.card\s*[{,]/);
-  assert.doesNotMatch(css,/\.aaa-nav-card\s*[{,]/);
-  assert.doesNotMatch(css,/\.crystal-button\s*[{,]/);
+test('Replacement PageLayout uses only locally scoped React styles',()=>{
+  const css=read('frontend/src/components/ui/PageLayout.module.css');
+  const jsx=read('frontend/src/components/ui/PageLayout.jsx');
+  assert.match(css,/\.page\s*\{/);
+  assert.match(css,/var\(--ast-page-gutter\)/);
+  assert.match(jsx,/styles\.page/);
+  assert.doesNotMatch(css,/!important|:global\(|@import/);
   const js=read('js/asteria-page-template.js');
   assert.match(js,/page:'asteriaAccountPage'/);
   assert.match(js,/layoutSelector:'\.asteria-account-shell'/);
