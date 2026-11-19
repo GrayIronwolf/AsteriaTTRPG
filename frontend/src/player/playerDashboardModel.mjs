@@ -91,6 +91,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     race:txt(value.race||value.character?.race?.title,'Unknown',100),
     klass:txt(value.klass||classes,'Unknown',120),level:count(value.level),
     xp:count(value.xp),xpMax:count(value.xpMax),tp:count(value.tp),cp:count(value.cp),
+    coreRevision:count(value.coreRevision),
     hp:safePair(value.hp),sp:safePair(value.sp),mp:safePair(value.mp),
     characteristics:Object.freeze(stats),
     naturalAC:Number.isFinite(Number(value.naturalAC))?Number(value.naturalAC):null,
@@ -103,6 +104,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     equipment:items(value.equipment?.items||value.equipment,16),
     equipmentSlots:equipmentSlots(value.equipment),
     quickSlots:Object.freeze(rows(value.quickSlots,4).map(row=>Object.freeze({
+      id:typeof row?.id==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(row.id)?row.id:'',
       name:txt(row?.name||row?.title||row,'',100),
       image:safeDashboardArtwork(row?.image,row?.icon,row?.artwork)
     }))),
