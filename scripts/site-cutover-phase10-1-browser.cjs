@@ -11,7 +11,7 @@ const root=path.resolve(__dirname,'..');
 const evidence=path.resolve(process.env.RUNNER_TEMP||root,'asteria-phase-10-1-baselines');
 const modern='http://127.0.0.1:4174/',legacy='http://127.0.0.1:8123/';
 const ports=new Set(['4174','9099','8080','5001','9199']);
-const screens={desktop:{width:1440,height:900},mobile:{width:390,height:844}};
+const screens={desktop:{width:1440,height:900},mobile:{width:390,height:844},small:{width:320,height:740},tablet:{width:768,height:1024}};
 const servers=[];
 const report={
  schemaVersion:1,phase:'10.1',generatedAt:new Date().toISOString(),
@@ -27,6 +27,9 @@ const report={
   'Phase 10.4 production entry, cache compatibility and rollback approval remains required'
  ]
 };
+const phase103=process.env.ASTERIA_PHASE_10_3_AUDIT==='1'
+ ? require('./site-cutover-phase10-3-audit.cjs') : null;
+const audit103=phase103?phase103.createReport():null;
 function start(args){
  const child=spawn(process.execPath,args,{cwd:root,stdio:['ignore','pipe','pipe']});
  child.stdout.on('data',b=>process.stdout.write(b));
@@ -76,6 +79,12 @@ async function capture(page,role,site,surface,size){
  const result=await metrics(page);
  report.baselines[role][site+'-'+surface+'-'+size]={file:name,...result};
  report.screenshots.push(name);
+ if(site==='react'&&audit103){
+  const context={role,surface,size};
+  audit103.checks.push(await phase103.auditSnapshot(page,context));
+  if(['desktop','mobile'].includes(size)&&['home','dashboard'].includes(surface))
+   audit103.accessibility.push(await phase103.auditAxe(page,context));
+ }
  if(site==='react'){
   assert.equal(result.overflow,false,'React viewport overflow: '+name);
   assert.equal(result.mains,1,'React main landmark duplicated: '+name);
@@ -147,6 +156,11 @@ async function main(){
   assert.equal(await guest.getByTestId('site-header-login').count(),1);
   const newDesktop=await capture(guest,'guest','react','home','desktop');
   const newMobile=await capture(guest,'guest','react','home','mobile');
+  if(audit103){
+   await capture(guest,'guest','react','home','small');
+   await capture(guest,'guest','react','home','tablet');
+   await phase103.auditKeyboard(guest,audit103,evidence);
+  }
   assert.equal(guestErrors.runtimeErrors,0,'Unexpected React guest runtime error');
   report.comparisons.guestHome={
    status:'compared-offline',identity:'guest',
@@ -180,6 +194,10 @@ async function main(){
   assert.match(gmRoute,/#\/react\/gm\//);
   await capture(gm,'gm','react','dashboard','desktop');
   await capture(gm,'gm','react','dashboard','mobile');
+  if(audit103){
+   await capture(gm,'gm','react','dashboard','small');
+   await capture(gm,'gm','react','dashboard','tablet');
+  }
 
   const player=await browser.newPage({viewport:screens.desktop});
   await observe(player,ports);
@@ -196,6 +214,10 @@ async function main(){
   assert.match(playerRoute,/#\/react\/owned-character\//);
   await capture(player,'player','react','dashboard','desktop');
   await capture(player,'player','react','dashboard','mobile');
+  if(audit103){
+   await capture(player,'player','react','dashboard','small');
+   await capture(player,'player','react','dashboard','tablet');
+  }
 
   // Access controls are tested without writing any account or token IDs into evidence.
   await player.goto(gmRoute,{waitUntil:'domcontentloaded'});
@@ -215,11 +237,14 @@ async function main(){
    signoff:false
   };
   assert.equal(report.productionAccessed,false);
+  if(audit103)audit103.result='passed';
   console.log('PASS Phase 10.1: offline guest cross-entry comparison; separate authenticated GM/player emulator screenshots and cross-account denial.');
  } finally {
   try{
    fs.mkdirSync(evidence,{recursive:true});
    fs.writeFileSync(path.join(evidence,'phase-10-1-baselines.json'),JSON.stringify(report,null,2)+'\n');
+   if(audit103)fs.writeFileSync(path.join(evidence,'phase-10-3-audit.json'),
+    JSON.stringify({...audit103,result:audit103.result||'incomplete'},null,2)+'\n');
   }catch(error){console.error('Baseline evidence write failed:',error);process.exitCode=1;}
   if(browser)await browser.close();
   for(const server of servers)server.kill('SIGTERM');
