@@ -155,7 +155,6 @@ test('universal React page layout shares Account-style shell and removes all red
   }
   const home = read(location + 'pages/HomePage.jsx');
   assert.match(home, /variant="section"/, 'Home must preserve full-width hero layout');
-  const shellCss = read(location + 'components/ui/PageLayout.module.css');
   assert.match(shellCss, /var\(--ast-page-rail-width\)/,
     'The shared shell must be the only owner of sidebar width');
   for (const name of ['AccountPage','FriendsPage','CharacterForgePage','CompendiumCataloguePage']) {
