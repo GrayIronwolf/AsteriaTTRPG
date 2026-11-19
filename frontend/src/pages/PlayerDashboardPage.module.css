@@ -1,5 +1,7 @@
-/* Phase 6.2: one scoped stylesheet, no legacy overrides or global selectors. */
-.page{min-width:0;display:grid;align-content:start;gap:var(--ast-space-4)}
+/* Single owner of the Player Dashboard appearance. No legacy stylesheet,
+ * stacked overrides or rectangular crystal button backplates. */
+.page{min-width:0;display:grid;align-content:start;gap:var(--ast-space-3)}
+.visuallyHidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .panel{padding:var(--ast-page-panel-padding);display:grid;gap:var(--ast-space-3);min-width:0}
 .panel h3,.panel h4,.titleRow h2,.titleRow h3{margin:0}
 .panel p{margin:0;overflow-wrap:anywhere}
@@ -10,73 +12,49 @@
 .resource{padding:var(--ast-space-4);display:grid;gap:var(--ast-space-3);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-panel);min-width:0}
 .resource>div{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-2);flex-wrap:wrap}
 .resource span{font-size:var(--ast-font-sm);font-variant-numeric:tabular-nums}
-.resource progress{display:block;appearance:auto;width:100%;height:14px;accent-color:var(--ast-color-accent)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));gap:var(--ast-space-3)}
 .stat{display:grid;gap:var(--ast-space-2);text-align:center;padding:var(--ast-space-4);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);min-width:0}
 .stat small{text-transform:capitalize;color:var(--ast-color-text-muted)}
 .stat strong{font-size:var(--ast-font-xl);font-variant-numeric:tabular-nums}
-.tabs{display:flex;gap:var(--ast-space-2);overflow-x:auto;padding:var(--ast-space-2) 0}
-.tabs button{cursor:pointer;background:transparent;border:0;border-radius:0;color:var(--ast-color-text-bright);white-space:nowrap;padding:2px;min-height:var(--ast-target-min)}
-.tabs button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
-.tabs .selected{background:transparent;border:0}
 .list{padding-left:var(--ast-space-5);margin:0;display:grid;gap:var(--ast-space-2);overflow-wrap:anywhere}
 .prose{white-space:pre-wrap;overflow-wrap:anywhere}
-.party{display:grid;gap:var(--ast-space-2)}
 .journal{display:grid;gap:var(--ast-space-3)}
 .journal article{padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);display:grid;gap:var(--ast-space-2)}
 .journal h4{margin:0}
-@media(max-width:780px){.overview{grid-template-columns:1fr}}
-@media(max-width:640px){.resources{grid-template-columns:1fr}.panel{padding:var(--ast-space-4)}}
-
-
-/* Original cinematic identity header, fitted inside the existing React page. */
-.visuallyHidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.classicHeader{display:grid;grid-template-columns:minmax(200px,30%) minmax(275px,40%) minmax(200px,30%);min-height:330px;border:1px solid rgb(116 137 155);background:linear-gradient(120deg,rgb(8 18 29),rgb(11 32 50) 56%,rgb(8 17 29));box-shadow:inset 0 1px 0 rgb(86 110 128),0 8px 20px rgb(0 0 0 / 0.467);color:rgb(239 246 250);overflow:hidden}
+.party{display:grid;gap:var(--ast-space-2)}
+/* Portrait | resource center | campaign image matches the original HUD. */
+.classicHeader{display:grid;grid-template-columns:minmax(180px,30fr) minmax(280px,40fr) minmax(180px,30fr);min-height:330px;border:1px solid rgb(116 137 155);background:linear-gradient(120deg,rgb(8 18 29),rgb(11 32 50) 56%,rgb(8 17 29));box-shadow:inset 0 1px 0 rgb(86 110 128),0 8px 20px rgb(0 0 0 / .467);color:rgb(239 246 250);overflow:hidden}
 .portraitColumn,.campaignColumn{position:relative;isolation:isolate;min-width:0;min-height:330px;overflow:hidden;background:linear-gradient(145deg,rgb(48 68 90),rgb(9 20 33))}
 .heroImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
-.portraitColumn::after,.campaignColumn::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgb(4 11 19 / 0.933) 0%,rgb(6 17 26 / 0.620) 26%,transparent 65%)}
+.portraitColumn::after,.campaignColumn::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgb(4 11 19 / .933) 0%,rgb(6 17 26 / .62) 26%,transparent 65%)}
 .portraitFallback,.campaignFallback{display:grid;place-items:center;height:100%;font-size:clamp(3rem,7vw,7rem);font-family:var(--ast-font-display);opacity:.3}
 .portraitCaption,.campaignCaption{position:absolute;bottom:0;left:0;right:0;z-index:1;display:grid;gap:5px;padding:18px}
 .portraitCaption h2,.campaignCaption h3{margin:0;color:rgb(255 255 255);text-shadow:0 2px 5px rgb(0 0 0);font-family:var(--ast-font-display)}
+.portraitCaption h2{font-size:clamp(1.35rem,2.2vw,2.25rem);line-height:1.05}
 .portraitCaption p,.campaignCaption p{margin:0;font-size:.85rem;color:rgb(226 233 240)}
 .experience{display:flex;justify-content:space-between;gap:8px;font-size:.75rem;font-weight:700}
 .xpBar{width:100%;height:8px;accent-color:rgb(100 198 245)}
 .coreColumn{padding:22px 18px;min-width:0;display:grid;align-content:start;gap:12px}
 .coreColumn>h3{font-size:.82rem;letter-spacing:.055em;text-transform:uppercase;margin:0;color:rgb(219 231 243)}
-.coreColumn .resources{display:grid;grid-template-columns:1fr;gap:11px}
+.coreColumn .resources{grid-template-columns:1fr;gap:10px}
 .coreColumn .resource{background:transparent;border:0;padding:0;gap:4px;border-radius:0}
-.coreColumn .resource progress{height:12px;border:1px solid rgb(119 137 155);border-radius:2px;overflow:hidden;background:rgb(11 20 34)}
-
-.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
-.coreColumn .stat{padding:7px 4px;border:1px solid rgb(61 89 115);background:rgb(10 28 48);text-align:center;gap:0}
-.coreColumn .stat small{font-size:.67rem}
-.coreColumn .stat strong{font-size:.9rem}
-.sessionStrip{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-left:4px solid rgb(42 145 195);padding:8px 16px;background:rgb(14 36 52);color:rgb(220 234 244);font-size:.9rem}
-.tabs{padding:0;gap:5px;overflow-x:auto;scrollbar-width:thin}
-.tabs>a,.tabs>button{flex:0 0 auto}
-.page{gap:var(--ast-space-3)}
-@media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32%) minmax(240px,1fr)}.campaignColumn{grid-column:1/-1;min-height:180px}.campaignColumn .heroImage{object-position:center}.coreColumn{min-height:300px}}
-@media(max-width:600px){.classicHeader{grid-template-columns:1fr}.portraitColumn{min-height:310px}.coreColumn{min-height:0}.campaignColumn{min-height:190px}.campaignColumn{grid-column:auto}.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
-
-/* Exact three-resource visual meaning from the original HUD.
- * Custom tracks avoid browser-native <progress> rendering all fills green. */
+.coreColumn .resource>div:first-child{margin-bottom:0}
+.coreColumn .resource span{font-variant-numeric:tabular-nums}
 .coreColumn .meter{position:relative;display:block;width:100%;height:12px;background:rgb(10 20 32);border:1px solid rgb(118 141 160);border-radius:3px;overflow:hidden}
 .coreColumn .meterFill{display:block;height:100%;background:rgb(237 88 138)}
 .coreColumn [data-resource='sp'] .meterFill{background:rgb(42 216 167)}
 .coreColumn [data-resource='mp'] .meterFill{background:rgb(52 191 242)}
-.coreColumn .resources{gap:10px}
-.coreColumn .resource>div:first-child{margin-bottom:0}
-.portraitCaption h2{font-size:clamp(1.35rem,2.2vw,2.25rem);line-height:1.05}
-.classicHeader{grid-template-columns:minmax(180px,30fr) minmax(280px,40fr) minmax(180px,30fr)}
-.tabs{display:flex;align-items:center;gap:4px;padding:0;min-height:48px;background:transparent;border:0}
-.tabs button{flex:0 0 auto;min-width:0;background:transparent;border:0;box-shadow:none}
-.tabs button:hover,.tabs button:focus-visible,.tabs button[aria-current='page']{background:transparent;border:0}
-.tabs :is(button,a)>span{background:transparent;border:0}
-.sessionStrip{font-size:.83rem}
-@media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32fr) minmax(240px,68fr)}}
-
+.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.coreColumn .stat{padding:7px 4px;border:1px solid rgb(61 89 115);background:rgb(10 28 48);text-align:center;gap:0}
+.coreColumn .stat small{font-size:.67rem}
+.coreColumn .stat strong{font-size:.9rem}
+.sessionStrip{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-left:4px solid rgb(42 145 195);padding:8px 16px;background:rgb(14 36 52);color:rgb(220 234 244);font-size:.83rem}
+/* The only painted border on tabs is CrystalButton's supplied artwork. */
+.tabs{display:flex;align-items:center;gap:4px;padding:0;min-height:48px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scroll-snap-type:x proximity;background:transparent;border:0}
+.tabs button{flex:0 0 auto;min-width:0;min-height:var(--ast-target-min);padding:2px;white-space:nowrap;scroll-snap-align:start;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--ast-color-text-bright);cursor:pointer}
+.tabs button:hover,.tabs button[aria-current='page']{background:transparent;border:0;box-shadow:none}
+.tabs button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
 .galleryPortrait{display:block;max-width:min(100%,400px);max-height:480px;object-fit:contain;border:1px solid var(--ast-color-outline-soft)}
-/* Responsive original-style navigation is one scrollable strip, never a row
- * of rectangular tab cards. The pointed art is supplied by CrystalButton. */
-.tabs{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scroll-snap-type:x proximity}
-.tabs button{scroll-snap-align:start}
+@media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32fr) minmax(240px,68fr)}.campaignColumn{grid-column:1/-1;min-height:180px}.campaignColumn .heroImage{object-position:center}.coreColumn{min-height:300px}}
+@media(max-width:780px){.overview{grid-template-columns:1fr}}
+@media(max-width:600px){.classicHeader{grid-template-columns:1fr}.portraitColumn{min-height:310px}.coreColumn{min-height:0}.campaignColumn{min-height:190px;grid-column:auto}.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.resources{grid-template-columns:1fr}.panel{padding:var(--ast-space-4)}}
