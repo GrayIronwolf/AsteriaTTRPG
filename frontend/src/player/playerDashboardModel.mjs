@@ -2,6 +2,7 @@ import {CAMPAIGN_ID} from '../campaigns/campaignForgeModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
+import {projectPlayerSystems} from './playerSystemsProjection.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -97,6 +98,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     magic:labels(value.magicTypes||value.character?.magic?.types,24),
     racialTraits:traits(value),
     conditions:labels(value.conditions,16),
+    ...projectPlayerSystems(value),
     inventory:items(value.inventory),
     equipment:items(value.equipment?.items||value.equipment,16),
     equipmentSlots:equipmentSlots(value.equipment),
