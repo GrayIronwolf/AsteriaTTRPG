@@ -91,7 +91,9 @@
   --ast-page-min-height: 65vh;
   --ast-page-top-space: var(--ast-space-7);
   --ast-page-bottom-space: var(--ast-space-9);
-  --ast-page-rail-width: 230px;
+  --ast-page-template-max: 1680px;
+  --ast-page-rail-width: clamp(190px, 20vw, 240px);
+  --ast-page-content-padding: clamp(8px, 3vw, 44px);
   --ast-page-layout-gap: var(--ast-space-6);
   --ast-page-rail-rule: var(--ast-color-outline-soft);
   --ast-page-nav-selection: var(--ast-color-outline-active);
