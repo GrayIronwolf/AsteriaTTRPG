@@ -156,8 +156,8 @@
 @media (max-width: 760px) {
   :root {
     --ast-header-height: 64px;
-    --ast-header-brand-width: min(48vw, 174px);
-    --ast-header-avatar-size: clamp(56px, 16vw, 90px);
+    --ast-header-brand-width: min(33vw, 144px);
+    --ast-header-avatar-size: clamp(44px, 14vw, 80px);
   }
 }
 @media (max-width: 380px) {
