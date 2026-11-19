@@ -1,0 +1,53 @@
+name: React/Vite Phase 8.1 - Centralized Firebase adapters acceptance
+
+on:
+  pull_request:
+    paths:
+      - "frontend/src/firebase/**"
+      - "frontend/src/auth/**"
+      - "scripts/site-firebase-phase8-1.test.mjs"
+      - "scripts/site-auth-phase4-1.test.mjs"
+      - "package.json"
+      - ".github/workflows/frontend-phase8-1-acceptance.yml"
+  workflow_dispatch:
+
+jobs:
+  firebase-runtime-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Validate single-app initialization, SDK adapters and emulator isolation
+        run: |
+          npm run site:firebase-phase8-1
+          npm run site:check
+      - name: Lint, production preview and output integrity
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Install Chromium for end-to-end Auth, Firestore and Storage
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Build explicit emulator-authenticated React preview
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Verify registration, login, logout, profile, account storage and permission boundaries
+        timeout-minutes: 8
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,storage "npm run site:auth-browser"
+      - name: Restore preview with production activation disabled
+        run: |
+          npm run site:build
+          npm run site:verify-dist
