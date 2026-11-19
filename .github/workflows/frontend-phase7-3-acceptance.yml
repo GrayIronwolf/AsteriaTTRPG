@@ -28,7 +28,7 @@ jobs:
       - run: npm ci
       - name: Verify economy projections, ownership, escrow and permission regressions
         run: |
-          node --test scripts/site-economy-phase7-2.test.mjs
+          node --test scripts/site-economy-phase7-3.test.mjs
           npm run site:check
       - name: Lint and production build
         run: |
