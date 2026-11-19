@@ -6,6 +6,7 @@ import {createRealtimeSubscriptionHub,createSharedFirestoreSdk} from '../runtime
 import {createConnectionMonitor} from '../runtime/connectionMonitor.mjs';
 import {createVerifiedServerReads} from '../runtime/verifiedServerReads.mjs';
 import {createGuardedFunctionsSdk} from '../runtime/guardedFunctionsSdk.mjs';
+import {createGuardedStorageSdk} from '../runtime/guardedStorageSdk.mjs';
 import { createAuthObserver, ownedProfile } from './authSessionModel.mjs';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
 import { finalizeRegisteredAccountId } from '../../../src/state/accountIdRegistration.mjs';
@@ -58,6 +59,7 @@ async function initializeClient(runtime) {
   const sharedSdk=createSharedFirestoreSdk({auth,firestoreSdk:rawFirestoreSdk,hub:realtime});
   const firestoreSdk=createVerifiedServerReads({auth,firestoreSdk:sharedSdk,connection});
   const safeFunctionsSdk=createGuardedFunctionsSdk({auth,functionsSdk,connection});
+  const safeStorageSdk=createGuardedStorageSdk({auth,storageSdk,connection});
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
@@ -203,7 +205,7 @@ async function initializeClient(runtime) {
     const {user,projection} = await verifiedOwner();
     if (!projection.avatarVersion) return null;
     try {
-      const url = await storageSdk.getDownloadURL(storageSdk.ref(storage,accountAvatarPath(user.uid)));
+      const url = await safeStorageSdk.getDownloadURL(storageSdk.ref(storage,accountAvatarPath(user.uid)));
       assertOwner(user.uid);
       return typeof url === 'string' && url.startsWith('http') ? url : null;
     } catch (error) {
@@ -216,7 +218,7 @@ async function initializeClient(runtime) {
     const {user} = await verifiedOwner();
     const blob = await cropAccountAvatar(file);
     assertOwner(user.uid);
-    await storageSdk.uploadBytes(storageSdk.ref(storage,accountAvatarPath(user.uid)),blob,{
+    await safeStorageSdk.uploadBytes(storageSdk.ref(storage,accountAvatarPath(user.uid)),blob,{
       contentType:'image/webp',cacheControl:'private,max-age=300'
     });
     assertOwner(user.uid);
@@ -246,7 +248,7 @@ async function initializeClient(runtime) {
       });
     });
     assertOwner(user.uid);
-    try { await storageSdk.deleteObject(storageSdk.ref(storage,accountAvatarPath(user.uid))); }
+    try { await safeStorageSdk.deleteObject(storageSdk.ref(storage,accountAvatarPath(user.uid))); }
     catch(error) { if(error?.code !== 'storage/object-not-found') throw error; }
     assertOwner(user.uid);
     return readProfile();
@@ -316,12 +318,12 @@ async function initializeClient(runtime) {
       import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'
   });
   const campaigns=createFirebaseCampaignsService({
-    auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,storage,storageSdk,readCanonical,
+    auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,storage,storageSdk:safeStorageSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED==='true' ||
       import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true',
     connections:campaignConnections
   });
-  const media=createFirebaseCampaignMediaService({auth,db,firestoreSdk,storage,storageSdk,
+  const media=createFirebaseCampaignMediaService({auth,db,firestoreSdk,storage,storageSdk:safeStorageSdk,
     functions,functionsSdk:safeFunctionsSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED==='true'});
   const gmDashboard=createFirebaseGMDashboardService({auth,db,firestoreSdk,readCanonical,
@@ -334,7 +336,7 @@ async function initializeClient(runtime) {
   const economy=createFirebaseEconomyService({auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_ECONOMY_ENABLED==='true'});
   const digitalGM=createFirebaseDigitalGMService({auth,db,firestoreSdk,functions,functionsSdk:safeFunctionsSdk,
-    readCanonical,storage,storageSdk,enabled:import.meta.env.VITE_ASTERIA_DIGITAL_GM_ENABLED==='true'});
+    readCanonical,storage,storageSdk:safeStorageSdk,enabled:import.meta.env.VITE_ASTERIA_DIGITAL_GM_ENABLED==='true'});
   const gameplay=Object.freeze({...gmDashboard,media,combat,progression,economy,digitalGM});
   return Object.freeze({
     friends,notifications,characters:characterServices,campaigns,gameplay,
