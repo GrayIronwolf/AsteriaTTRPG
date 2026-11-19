@@ -222,7 +222,7 @@ try{
    {waitUntil:'domcontentloaded'});
  await player.getByRole('button',{name:'Battle Maps'}).click();
  await player.getByTestId('site-player-campaign-maps').waitFor({timeout:30000});
- await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).locator('option').first().waitFor({timeout:30000});
+ await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).locator('option').filter({hasText:'Looping Frostwind Map'}).waitFor({state:'attached',timeout:30000});
  assert.match(await player.getByTestId('site-player-campaign-maps').getByRole('combobox',{name:'Battle map'}).innerText(),/Looping Frostwind Map/);
  assert.equal(await player.locator('[data-testid="site-player-campaign-maps"] input[type="file"]').count(),0);
  await owner.getByRole('button',{name:'Presentation',exact:true}).click();
