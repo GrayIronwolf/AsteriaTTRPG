@@ -207,7 +207,7 @@ function CampaignGM({api,uid,campaignId}) {
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
           session={live} onNavigate={setTab} available={{combat:combatEnabled,
-            progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}
+            progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
