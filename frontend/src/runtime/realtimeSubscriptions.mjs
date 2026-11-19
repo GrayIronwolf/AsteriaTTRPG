@@ -174,3 +174,38 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
     })
   });
 }
+
+
+/**
+ * Provide the original Firestore SDK API with exactly one managed onSnapshot
+ * entry point. Domain services continue to verify membership and ownership;
+ * this wrapper merely consolidates transport subscriptions and lifecycle.
+ *
+ * Query references remain separate because different filters can carry
+ * different privacy and authorization requirements.
+ */
+export function createSharedFirestoreSdk({auth,firestoreSdk,hub}={}){
+  if(!auth||!firestoreSdk||!hub||typeof hub.scope!=='function')
+    throw TypeError('The verified Firestore runtime and realtime hub are required.');
+  return Object.freeze({
+    ...firestoreSdk,
+    onSnapshot(reference,options,callback,onError){
+      if(typeof options==='function'){
+        onError=callback;
+        callback=options;
+        options={};
+      }
+      if(typeof callback!=='function')
+        throw TypeError('A realtime snapshot callback is required.');
+      const uid=auth.currentUser?.uid;
+      if(!uid)throw Error('Sign in before opening a Firestore listener.');
+      // Existing callers always request metadata so that cache-only and
+      // optimistic local writes are not treated as server authorization.
+      if(options?.includeMetadataChanges!==true)
+        throw Error('Realtime subscriptions must request metadata changes.');
+      const scope=hub.scope(uid,typeof onError==='function'?onError:()=>{});
+      scope.watch(reference,callback);
+      return ()=>scope.close();
+    }
+  });
+}
