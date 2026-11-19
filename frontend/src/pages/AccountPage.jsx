@@ -195,10 +195,10 @@ export function AccountPage({route}) {
   return <PageLayout as="section" width="wide" className={styles.page} labelledBy="site-account-title"
     data-testid="site-account-page">
     <PageHeader eyebrow="Asteria Account" id="site-account-title" title="Account" />
-    <div className={styles.layout} data-page-shell="true">
-      <nav className={styles.sidebar} data-page-rail="true" data-page-nav="true" aria-label="Account sections">
+    <div data-page-shell="true">
+      <nav data-page-rail="true" data-page-nav="true" aria-label="Account sections">
         {SECTIONS.map(item=><button key={item.id} type="button" data-testid={'site-account-tab-'+item.id}
-          className={styles.tab} data-page-nav-item="true" aria-current={section===item.id?'page':undefined}
+          data-page-nav-item="true" aria-current={section===item.id?'page':undefined}
           onClick={()=>{setSection(item.id);setError('');setMessage('');}}>
           {item.label}
         </button>)}
