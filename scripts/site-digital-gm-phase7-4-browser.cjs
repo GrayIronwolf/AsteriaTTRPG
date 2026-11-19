@@ -366,11 +366,11 @@ try{
  await gmReturn.getByRole('button',{name:'Create Merchant'}).click();
  await gmReturn.getByText('Merchant saved.').waitFor({timeout:30000});
  await gmReturn.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Shops'}).click();
+ await playerEconomy.getByRole('button',{name:'Shops'}).first().click();
  await playerEconomy.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Crafting'}).click();
+ await playerEconomy.getByRole('button',{name:'Crafting'}).first().click();
  await playerEconomy.getByTestId('site-economy-crafting').waitFor();
- await playerEconomy.getByRole('button',{name:'Trades'}).click();
+ await playerEconomy.getByRole('button',{name:'Trades'}).first().click();
  await playerEconomy.getByTestId('site-economy-trades').waitFor();
  // Phase 7.4: private NPC authoring and a GM-reviewed relationship ledger.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
