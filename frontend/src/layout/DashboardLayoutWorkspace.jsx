@@ -32,8 +32,9 @@ export function DashboardLayoutWorkspace({
       {ordered.map(id=>{
         const pos=view.placements[id];
         if(!pos)return null;
+        const frame=pos.h>pos.w*1.4?'tall':pos.w>=pos.h*2.5?'ultrawide':pos.w>=pos.h*1.45?'wide':'square';
         return <article key={id} className={styles.tile}
-          data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`}
+          data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`} data-frame-family={frame}
           data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
           style={{
             gridColumn:(pos.x+1)+' / span '+pos.w,
