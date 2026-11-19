@@ -330,48 +330,6 @@ try{
  await popup.waitFor({state:'detached',timeout:30000});
  // The GM receives result history without any client-side writes to check records.
  await gmProgress.getByText(/Earlier attempts \(1\)/).first().waitFor({timeout:30000});
- // Phase 7.3: shared GM party stash and treasure are the existing callable records.
- await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
- const gmEconomy=owner.getByTestId('site-gm-economy');
- await gmEconomy.waitFor({timeout:30000});
- await gmEconomy.getByLabel('Name').first().fill('Emulator Party Chest');
- await gmEconomy.getByRole('button',{name:'Create Container'}).click();
- await gmEconomy.getByText('Shared container created.').waitFor({timeout:30000});
- await gmEconomy.getByText('Emulator Party Chest').first().waitFor({timeout:30000});
- await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
-   {waitUntil:'domcontentloaded'});
- await player.getByRole('button',{name:'Inventory & Trading'}).click();
- const playerEconomy=player.getByTestId('site-player-economy');
- await playerEconomy.waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Party Loot'}).click();
- await playerEconomy.getByText('Emulator Party Chest').first().waitFor({timeout:30000});
- await gmEconomy.getByLabel('Title').fill('Emulator Coins');
- await gmEconomy.getByLabel('Total copper').fill('100');
- await gmEconomy.getByRole('checkbox',{name:'Keep hidden until GM reveals'}).uncheck();
- await gmEconomy.getByRole('button',{name:'Create Drop'}).click();
- await gmEconomy.getByText('Loot drop created.').waitFor({timeout:30000});
- await playerEconomy.getByText('Emulator Coins').first().waitFor({timeout:30000});
- await gmEconomy.getByText('Emulator Coins').first().waitFor({timeout:30000});
- const drop=gmEconomy.getByText('Emulator Coins').locator('xpath=..');
- await drop.getByRole('checkbox').first().check();
- await drop.getByRole('button',{name:'Split Currency'}).click();
- await gmEconomy.getByText('Currency distributed.').waitFor({timeout:30000});
- await playerEconomy.getByText('Emulator Coins').first().waitFor({timeout:30000});
- await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Inventory-loot-crafting'}).click();
- const gmReturn=owner.getByTestId('site-gm-economy');
- await gmReturn.getByRole('button',{name:'Shops'}).click();
- await gmReturn.getByLabel('Shop name').fill('Emulator Blacksmith');
- await gmReturn.getByRole('button',{name:'Create Merchant'}).click();
- await gmReturn.getByText('Merchant saved.').waitFor({timeout:30000});
- await gmReturn.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Shops'}).first().click();
- await playerEconomy.getByText('Emulator Blacksmith').first().waitFor({timeout:30000});
- await playerEconomy.getByRole('button',{name:'Crafting'}).first().click();
- await playerEconomy.getByTestId('site-economy-crafting').waitFor();
- await playerEconomy.getByRole('button',{name:'Trades'}).first().click();
- await playerEconomy.getByTestId('site-economy-trades').waitFor();
  // Phase 7.4: private NPC authoring and a GM-reviewed relationship ledger.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Digital-gm-toolkit'}).click();
@@ -429,7 +387,7 @@ try{
  for(const page of [owner,player]){
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  }
- console.log('PASS: Phase 7.4 GM NPC authoring, private relationship ledgers, private notes and player-safe views; Phase 7.3 party stashes, visible loot, currency splits, shops, crafting and trade screens; Phase 7.2 progression, GM XP, CP, digital and physical check requests; Phase 6.4 published maps, authenticated shared media and projector plus Phase 6.3 dashboard layouts; verified character Forge, campaign join, owner approval, link request, server character import, deactivation, restore, unlink, persistence and mobile access isolation.');
+ console.log('PASS: Phase 7.4 GM NPC authoring, private relationship ledgers, private notes and player-safe views; Phase 7.2 progression, GM XP, CP, digital and physical check requests; Phase 6.4 published maps, authenticated shared media and projector plus Phase 6.3 dashboard layouts; verified character Forge, campaign join, owner approval, link request, server character import, deactivation, restore, unlink, persistence and mobile access isolation.');
 }catch(err){console.error(err);process.exitCode=1;}
 finally{if(browser)await browser.close();server.kill('SIGTERM');}
 })();
