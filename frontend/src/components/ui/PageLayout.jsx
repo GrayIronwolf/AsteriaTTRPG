@@ -1,7 +1,8 @@
+import { Eyebrow, Heading } from './Typography.jsx';
 import React from 'react';
 import styles from './PageLayout.module.css';
 
-/** A width/gutter owner shared by Home, Compendium and future dashboards. */
+/** One responsive page-width and spacing owner for all React routes. */
 export function PageLayout({
   as: Element = 'section', width = 'reading', variant = 'standard',
   id, labelledBy, className = '', children, ...rest
@@ -17,4 +18,13 @@ export function PageLayout({
       {children}
     </Element>
   );
+}
+
+/** One page heading for Account, libraries, Forges and settings; no duplicate per-page header CSS. */
+export function PageHeader({ eyebrow, id, title, children }) {
+  return <header data-page-header="true">
+    {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+    <Heading id={id}>{title}</Heading>
+    {children}
+  </header>;
 }
