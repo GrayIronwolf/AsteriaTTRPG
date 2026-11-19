@@ -70,7 +70,18 @@ export function createVerifiedServerReads({auth,firestoreSdk,connection,delay=de
         session.assertCurrent();
         if(!connection.canAttempt())throw unavailable();
         // No custom offline queue, no optimistic replay by this adapter.
-        return firestoreSdk[method](...args);
+        const parameters=method==='runTransaction'&&typeof args[1]==='function'
+          ?[args[0],async transaction=>{
+            session.assertCurrent();
+            const result=await args[1](transaction);
+            session.assertCurrent();
+            return result;
+          },...args.slice(2)]:args;
+        const result=firestoreSdk[method](...parameters);
+        return Promise.resolve(result).then(value=>{
+          session.assertCurrent();
+          return value;
+        });
       };
   }
   if(typeof firestoreSdk.writeBatch==='function'){
@@ -83,7 +94,10 @@ export function createVerifiedServerReads({auth,firestoreSdk,connection,delay=de
           if(key==='commit')return (...params)=>{
             session.assertCurrent();
             if(!connection.canAttempt())throw unavailable();
-            return target.commit(...params);
+            return Promise.resolve(target.commit(...params)).then(value=>{
+              session.assertCurrent();
+              return value;
+            });
           };
           const value=Reflect.get(target,key,target);
           if(typeof value!=='function')return value;
