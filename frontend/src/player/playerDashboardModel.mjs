@@ -42,6 +42,26 @@ function items(value,max=24){
     quantity:Math.min(99999,Math.max(0,Number(row?.qty??row?.quantity??1)||0))
   })).filter(row=>row.name));
 }
+const EQUIPMENT_SLOT_KEYS=Object.freeze([
+  'Head','Chest','Hands','Feet','Back','Torso','Waist','Shoulders',
+  'Main Weapon','Secondary Weapon','Off Weapon','Quiver','Shield'
+]);
+function readEquipmentSlot(source,name){
+  if(!obj(source))return null;
+  const token=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const key=Object.keys(source).find(entry=>entry.toLowerCase().replace(/[^a-z0-9]/g,'')===token);
+  const item=key?source[key]:null;
+  if(!item||typeof item!=='string'&&!obj(item))return null;
+  const value=typeof item==='string'?{name:item}:item;
+  const title=txt(value.name||value.title,'',100);
+  return title?Object.freeze({name:title,
+    image:safeDashboardArtwork(value.image,value.icon,value.artwork),
+    rarity:txt(value.itemClass||value.rarity,'',36)}):null;
+}
+function equipmentSlots(source){
+  return Object.freeze(Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(key=>
+    [key,readEquipmentSlot(source,key)])));
+}
 function notes(value){
   return Object.freeze(rows(value,16).map(row=>{
     if(typeof row==='string')return Object.freeze({title:'Journal entry',content:txt(row,'',1000)});
@@ -79,6 +99,11 @@ export function playerCharacterProjection(value,{owned=false}={}){
     conditions:labels(value.conditions,16),
     inventory:items(value.inventory),
     equipment:items(value.equipment?.items||value.equipment,16),
+    equipmentSlots:equipmentSlots(value.equipment),
+    quickSlots:Object.freeze(rows(value.quickSlots,4).map(row=>Object.freeze({
+      name:txt(row?.name||row?.title||row,'',100),
+      image:safeDashboardArtwork(row?.image,row?.icon,row?.artwork)
+    }))),
     quests:items(value.quests||value.questAssignments,12),
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
     journal:owned?notes(value.journal):Object.freeze([]),
