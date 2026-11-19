@@ -8,7 +8,7 @@
  * No cache/offline fallback: only server-confirmed snapshots are replayed.
  * Domain services still enforce role and character ownership independently.
  */
-export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
+export function createRealtimeSubscriptionHub({auth,firestoreSdk,connection=null}={}){
   if(!auth||typeof firestoreSdk?.onSnapshot!=='function')
     throw TypeError('Existing Firebase Auth and Firestore SDK are required.');
   const streams=new Map();
@@ -28,6 +28,7 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
   }
   function publishFault(stream,err){
     if(stream.closed)return;
+    connection?.reportFailure?.(err);
     stream.closed=true;
     if(stream.key)streams.delete(stream.key);
     try{stream.unsubscribe?.();}catch{}
@@ -60,8 +61,9 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
             publishFault(stream,Error('Signed-in account changed. Subscription closed.'));
             return;
           }
-          if(snapshot?.metadata?.fromCache||snapshot?.metadata?.hasPendingWrites)
-            return;
+          if(snapshot?.metadata?.fromCache||snapshot?.metadata?.hasPendingWrites||
+             (connection&&!connection.canAttempt()))return;
+          connection?.reportSuccess?.();
           stream.last=snapshot;stream.hasLast=true;
           for(const listener of [...stream.listeners]){
             if(stream.closed)break;
@@ -76,6 +78,7 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
   }
   function subscribe(uid,reference,value,error){
     if(!same(uid))throw Error('The current Firebase account is not the verified subscriber.');
+    if(connection&&!connection.canAttempt())throw Error('The connection must be restored before opening private listeners.');
     if(typeof value!=='function'||typeof error!=='function')
       throw TypeError('Realtime listeners require update and failure handlers.');
     const stream=makeStream(uid,reference);
@@ -166,8 +169,19 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
     }
     streams.clear();
   }
+  const stopConnection=connection?.subscribe?.(event=>{
+    if(event.state==='offline'||event.state==='unavailable'){
+      // No previously verified private snapshots survive a connectivity loss.
+      for(const active of [...liveScopes])
+        active.fail(Error('Connection lost. Reopen the workspace when online.'));
+      for(const stream of [...streams.values()])
+        publishFault(stream,Error('Connection lost.'));
+      streams.clear();
+    }
+  });
   function dispose(){
     identityChanged(null);
+    stopConnection?.();
   }
   return Object.freeze({
     scope,identityChanged,dispose,

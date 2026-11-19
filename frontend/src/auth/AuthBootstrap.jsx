@@ -4,6 +4,7 @@ import { createAppServices, previewServices } from '../services/appServices.mjs'
 import { AuthProvider } from './AuthProvider.jsx';
 import { resolveAuthRuntime } from './authPolicy.mjs';
 import { NotificationsProvider } from '../notifications/NotificationsProvider.jsx';
+import { ConnectionBoundary } from '../runtime/ConnectionBoundary.jsx';
 
 /**
  * The normal isolated Vite preview is offline/guest-only. An explicit build
@@ -40,7 +41,9 @@ export function AuthBootstrap({ children }) {
       {error && <p role="alert" data-testid="site-auth-unavailable">
         Firebase Authentication could not start. Account features remain unavailable.
       </p>}
-      {children}
+      <ConnectionBoundary monitor={adapter?.connection||null}>
+        {children}
+      </ConnectionBoundary>
       </NotificationsProvider>
     </AuthProvider>
   </AppServicesProvider>;

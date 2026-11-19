@@ -1,0 +1,56 @@
+name: React/Vite Phase 8.3 - Connection resilience acceptance
+on:
+  pull_request:
+    paths:
+      - "frontend/src/runtime/**"
+      - "frontend/src/auth/**"
+      - "scripts/site-firebase-phase8-3*"
+      - "package.json"
+      - ".github/workflows/frontend-phase8-3-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  connection-resilience-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Full frontend regression suite
+        run: |
+          npm run site:firebase-phase8-1
+          npm run site:firebase-phase8-2
+          npm run site:firebase-phase8-3
+          npm run site:check
+      - name: Source lint and production preview parity
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Build local Firebase emulator React preview
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: npm run site:build
+      - name: Browser offline and reconnection verification
+        timeout-minutes: 12
+        run: npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:network-browser"
+      - name: Restore guest preview
+        run: |
+          npm run site:build
+          npm run site:verify-dist
