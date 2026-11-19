@@ -261,7 +261,7 @@ try{
  await owner.getByRole('button',{name:'Deactivate'}).waitFor({timeout:30000});
  await owner.getByRole('button',{name:'Unlink Character'}).click();
  await owner.getByText('No approved or inactive character links.').waitFor({timeout:30000});
- await player.reload({waitUntil:'domcontentloaded'});
+ await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),{waitUntil:'domcontentloaded'});
  await player.getByTestId('site-player-error').waitFor({timeout:30000});
  await player.goto(base+'#/character-forge',{waitUntil:'domcontentloaded'});
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
