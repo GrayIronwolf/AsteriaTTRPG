@@ -2,7 +2,6 @@ import React,{useEffect,useState} from 'react';
 import {TRADE_MODES,LOOT_CHOICES} from './economyModel.mjs';
 import styles from './EconomyWorkspace.module.css';
 
-const list=x=>Array.isArray(x)?x:[];
 const positive=n=>Number.isSafeInteger(Number(n))&&Number(n)>0;
 const menu=(value,change,options,label='Select')=><label>{label}
   <select value={value} onChange={event=>change(event.target.value)}>
