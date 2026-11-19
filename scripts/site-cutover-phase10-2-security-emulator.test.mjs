@@ -213,8 +213,10 @@ test('Storage media enforces GM publishing, media visibility and private avatar 
 
 test('membership revocation immediately invalidates existing Firestore and Storage permissions',async()=>{
   const media='campaigns/'+campaignId+'/battleMaps/published/scene.png';
+  console.log('REVOKE STAGE 1 upload as GM');
   await assertSucceeds(uploadBytes(ref(storage('gm'),media),
     new Uint8Array([137,80,78,71,1]),{contentType:'image/png'}));
+  console.log('REVOKE STAGE 2 active player Firestore read');
   await assertSucceeds(read('alice',at()));
   // The Storage emulator obtains the campaign membership from Firestore.
   // Fresh beforeEach fixtures can become visible to its cross-service cache
@@ -230,14 +232,21 @@ test('membership revocation immediately invalidates existing Firestore and Stora
       await new Promise(done=>setTimeout(done,150));
     }
   }
+  console.log('REVOKE STAGE 3 deactivate membership');
   await env.withSecurityRulesDisabled(async context=>{
     await updateDoc(doc(context.firestore(),at('members','alice')),{status:'suspended'});
   });
+  console.log('REVOKE STAGE 4 deny campaign');
   await assertFails(read('alice',at()));
+  console.log('REVOKE STAGE 5 deny map metadata');
   await assertFails(read('alice',at('battleMaps','published')));
+  console.log('REVOKE STAGE 6 deny checks');
   await assertFails(read('alice',at('checkRequests','own')));
+  console.log('REVOKE STAGE 7 deny stash');
   await assertFails(read('alice',at('partyStashes','stash')));
+  console.log('REVOKE STAGE 8 deny media');
   await assertFails(getBytes(ref(storage('alice'),media)));
   // User profile remains available to its owner; only campaign access is revoked.
+  console.log('REVOKE STAGE 9 own profile remains');
   await assertSucceeds(read('alice',profile('alice')));
 });
