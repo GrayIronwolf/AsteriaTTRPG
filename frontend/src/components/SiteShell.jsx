@@ -131,7 +131,6 @@ export function SiteShell({ route, identity: suppliedIdentity = null, children }
             <NavigationLinks route={route} activeMenuId={activeMenuId} mode="desktop"
               onOpenMenu={openMenu} onNavigate={navigate} onCloseMenu={closeMenu} />
           </nav>
-          <HeaderAccountControls identity={identity} />
           <details ref={mobileMenu} className={styles.mobileMenu} data-testid="site-mobile-menu">
             <summary>Menu</summary>
             <nav className={styles.mobileNavigation} aria-label="Mobile navigation">
@@ -145,6 +144,7 @@ export function SiteShell({ route, identity: suppliedIdentity = null, children }
               </div>
             </nav>
           </details>
+          <HeaderAccountControls identity={identity} />
         </div>
       </header>
       {activeMenuId && (
