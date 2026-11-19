@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Heading, BodyText, Eyebrow } from '../components/ui/Typography.jsx';
+import { Heading, BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import { useAuth } from '../auth/AuthProvider.jsx';
 import {classifyPrivateRoute,isVerifiedOwnedSession} from '../auth/accountSecurityPolicy.mjs';
@@ -194,8 +194,7 @@ export function AccountPage({route}) {
 
   return <PageLayout as="section" width="wide" className={styles.page} labelledBy="site-account-title"
     data-testid="site-account-page">
-    <Eyebrow>Asteria Account</Eyebrow>
-    <Heading id="site-account-title">Account</Heading>
+    <PageHeader eyebrow="Asteria Account" id="site-account-title" title="Account" />
     <div className={styles.layout}>
       <nav className={styles.sidebar} aria-label="Account sections">
         {SECTIONS.map(item=><button key={item.id} type="button" data-testid={'site-account-tab-'+item.id}
