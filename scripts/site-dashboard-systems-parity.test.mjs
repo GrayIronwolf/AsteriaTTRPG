@@ -54,7 +54,7 @@ test('original Player gameplay panels are implemented, not replaced by migration
   const service=read('frontend/src/player/firebasePlayerDashboardService.mjs');
   const bootstrap=read('frontend/src/auth/firebaseAuthAdapter.mjs');
   for(const panel of ['Conditions','Effects','Damage','Rest','Currency']){
-    assert.match(panels,new RegExp('function '+panel+'\\\\('));
+    assert.ok(panels.includes('function '+panel+'('),panel+' component must exist');
   }
   for(const action of ['removeCondition','takeRest','adjustCurrency']){
     assert.ok(panels.includes("'"+action+"'"),action+' is missing in interactive panel');
@@ -62,8 +62,8 @@ test('original Player gameplay panels are implemented, not replaced by migration
     assert.ok(page.includes('api.'+action+'('),action+' is not connected to dashboard');
   }
   assert.match(bootstrap,/functions,functionsSdk:safeFunctionsSdk/);
-  assert.match(service,/resolveCampaign\\\\(cid,id\\\\)/);
-  assert.match(service,/gmSessionState\\\\(snapshot.data\\\\(\\\\)\\\\)/);
+  assert.ok(service.includes('resolveCampaign(cid,id)'));
+  assert.ok(service.includes('gmSessionState(snapshot.data())'));
 });
 test('rest requests and currency are projected from original character systems',()=>{
   const ch=playerCharacterProjection(character(),{owned:true});
