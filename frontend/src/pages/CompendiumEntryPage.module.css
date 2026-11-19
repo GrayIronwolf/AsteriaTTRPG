@@ -1,5 +1,5 @@
 /* Public entry page: one scoped style owner using shared Asteria tokens. */
-.page {   }
+.page { min-width: 0; }
 .breadcrumbs { display:flex; flex-wrap:wrap; gap:var(--ast-space-3); margin-bottom:var(--ast-space-7); color:var(--ast-color-text-muted); }
 .breadcrumbs a, .returnLink, .page [role="status"] a, .page [role="alert"] a { color:var(--ast-color-accent); text-underline-offset:3px; }
 .category { margin-top:var(--ast-space-3); color:var(--ast-color-text-muted); }
@@ -12,4 +12,4 @@
 .sectionHeading { font-family:var(--ast-font-display); color:var(--ast-color-text-bright); margin-top:0; font-size:var(--ast-font-xl); }
 .notice { font-size:var(--ast-font-sm); color:var(--ast-color-text-muted); }
 
-@media(max-width:760px) { .page { padding-block:var(--ast-space-5); } .section { padding:var(--ast-space-4); } }
+@media(max-width:760px) {  .section { padding:var(--ast-space-4); } }
