@@ -115,7 +115,6 @@ export function createFirebaseCampaignMediaService({
   const presentationProject=raw=>presentationForViewer(raw);
   const notesProject=rows=>battleMapPrivatePins(rows);
   const partyProject=rows=>gmPartySummary(rows);
-  const encounterProject=rows=>rows.length?rows[0]:null;
   function watchMaps(id,mode,onUpdate,onError){
     const ref=mode==='gm'?firestoreSdk.query(mapCol(id),firestoreSdk.limit(BATTLE_MAP_MAX_RECORDS)):
       firestoreSdk.query(mapCol(id),firestoreSdk.where('visibility','==','players'),
