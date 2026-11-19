@@ -1,7 +1,7 @@
 import React from 'react';
-import { PageLayout } from '../components/ui/PageLayout.jsx';
+import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Eyebrow, Heading, BodyText } from '../components/ui/Typography.jsx';
+import { BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import styles from './RoutePreviewPage.module.css';
 
@@ -33,8 +33,7 @@ export function RoutePreviewPage({ route }) {
   const isMissing = route.id === 'not-found';
   return (
     <PageLayout as="section" width="reading" className={styles.page} labelledBy="site-route-title">
-      <Eyebrow>{isMissing ? 'Navigation' : 'Phase 1.3 design-system preview'}</Eyebrow>
-      <Heading id="site-route-title">{route.title}</Heading>
+      <PageHeader eyebrow={isMissing ? 'Navigation' : 'Asteria Navigation'} id="site-route-title" title={route.title} />
       <BodyText>{EXPLANATIONS[route.id] || EXPLANATIONS['not-found']}</BodyText>
       {!isMissing && (
         <SurfacePanel as="aside" className={styles.notice}>
