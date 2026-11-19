@@ -15,6 +15,7 @@ import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {GMChecksAndProgression} from '../progression/ProgressionWorkspace.jsx';
 import {GMEconomyWorkspace} from '../economy/EconomyWorkspace.jsx';
 import {GMDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
+import {AdvancedDiceWorkspace} from '../dice/AdvancedDiceWorkspace.jsx';
 import styles from './GMDashboardPage.module.css';
 
 const GM_TABS=Object.freeze([
@@ -225,10 +226,10 @@ function CampaignGM({api,uid,campaignId}) {
     {mediaEnabled&&tab==='presentation'?<CampaignPresentationController
       key={uid+':'+campaignId} api={api.media} campaignId={campaignId}
       party={snapshot.party}/>:null}
-    {tab==='advanced-dice'?<SurfacePanel className={styles.panel}>
-      <h2>Advanced Dice</h2>
-      <BodyText muted>The original advanced dice roller has not yet been connected to this React route.</BodyText>
-    </SurfacePanel>:null}
+    {tab==='advanced-dice'&&api.dice?.availability().enabled?
+      <AdvancedDiceWorkspace api={api.dice} role="gm"/>:null}
+    {tab==='advanced-dice'&&!api.dice?.availability().enabled?
+      <p role="status">Advanced Dice are unavailable for this account.</p>:null}
     {((GM_TOOL_AREAS[tab]&&!digitalGMEnabled)||
       (['inventory','economy','crafting'].includes(tab)&&!economyEnabled)||
       (tab==='gameplay'&&!combatEnabled&&!progressionEnabled)||
