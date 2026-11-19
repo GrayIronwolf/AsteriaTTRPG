@@ -228,7 +228,8 @@ try{
  await owner.getByRole('button',{name:'Presentation',exact:true}).click();
  await owner.getByTestId('site-gm-presentation').waitFor({timeout:30000});
  await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Scene'}).selectOption('battle-map');
- await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Published map'}).selectOption({label:'Looping Frostwind Map'});
+ try{await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Published map'}).selectOption({label:'Looping Frostwind Map'},{timeout:7000});}
+ catch(error){console.error('GM PRESENTATION OPTIONS',await owner.getByTestId('site-gm-presentation').innerText());console.error('GM MAP OPTIONS',await owner.getByTestId('site-gm-presentation').getByRole('combobox',{name:'Published map'}).innerText());throw error;}
  await owner.getByTestId('site-presentation-publish').click();
  await owner.getByText('Presentation updated.').waitFor({timeout:30000});
  await player.goto(base+'#/react/presentation/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
