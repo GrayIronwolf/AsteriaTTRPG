@@ -85,13 +85,16 @@ export function createRealtimeSubscriptionHub({auth,firestoreSdk}={}){
       error:err=>{if(alive)error(err);}
     };
     stream.listeners.add(item);
+    const joining=stream.started;
     ensureStarted(stream);
     // New viewers joining an existing pooled stream need the last
     // server-confirmed state; cache-only data was never recorded.
-    if(stream.started&&stream.hasLast&&!stream.closed){
+    if(joining&&stream.hasLast&&!stream.closed){
+      const snapshot=stream.last;
       queueMicrotask(()=>{
-        if(alive&&!stream.closed&&same(uid)&&stream.epoch===generation)
-          item.value(stream.last);
+        if(alive&&!stream.closed&&same(uid)&&stream.epoch===generation){
+          try{item.value(snapshot);}catch(err){item.error(err);}
+        }
       });
     }
     return ()=>{
