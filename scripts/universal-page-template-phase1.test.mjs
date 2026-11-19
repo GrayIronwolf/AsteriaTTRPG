@@ -1,147 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
-import vm from 'node:vm';
-
+import {existsSync,readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-function harness(){
-  const ids=new Map();
-  const mediaHandlers=[];
-  const media={matches:false,addEventListener(_event,fn){mediaHandlers.push(fn);}};
-  class Element{
-    constructor(tag='div'){
-      this.tagName=tag;this.children=[];this.attrs={};this.classes=new Set();
-      this.classList={
-        add:(...names)=>names.forEach(n=>this.classes.add(n)),
-        contains:name=>this.classes.has(name)
-      };
-      this.hidden=false;this.tabIndex=-1;this.textContent='';this.listeners={};
-      Object.defineProperty(this,'className',{get:()=>[...this.classes].join(' '),set:value=>{this.classes=new Set(String(value).split(/\s+/).filter(Boolean));}});
-    }
-    set id(value){this._id=value;ids.set(value,this);}
-    get id(){return this._id;}
-    setAttribute(name,value){this.attrs[name]=String(value);}
-    getAttribute(name){return this.attrs[name]||null;}
-    append(...nodes){this.children.push(...nodes);}
-    appendChild(node){this.children.push(node);}
-    insertBefore(node){this.children.unshift(node);}
-    addEventListener(name,fn){this.listeners[name]=fn;}
-    querySelector(selector){
-      if(selector==='h1')return this.find(x=>x.tagName==='h1');
-      if(selector.startsWith('.'))return this.find(x=>x.classes.has(selector.slice(1)));
-      return null;
-    }
-    querySelectorAll(selector){
-      const found=[];
-      function collect(parent){
-        for(const child of parent.children){
-          if(selector==='[role="tab"],button,a' &&
-            (child.attrs.role==='tab'||child.tagName==='button'||child.tagName==='a'))found.push(child);
-          else if(selector==='.asteria-template-panel'&&child.classes.has('asteria-template-panel'))found.push(child);
-          collect(child);
-        }
-      }
-      collect(this);return found;
-    }
-    find(check){
-      for(const child of this.children){
-        if(check(child))return child;
-        const nested=child.find(check);if(nested)return nested;
-      }
-      return null;
-    }
-    contains(target){return this===target || this.children.some(node=>node.contains(target));}
-    closest(selector){return selector==='[role="tab"]'&&this.attrs.role==='tab'?this:null;}
-    focus(){this.focused=true;}
-  }
-  const callbacks={};
-  const document={
-    readyState:'loading',getElementById:id=>ids.get(id)||null,
-    createElement:tag=>new Element(tag),
-    addEventListener(name,fn){callbacks[name]=fn;}
-  };
-  const window={matchMedia:()=>media};
-  vm.runInNewContext(read('js/asteria-page-template.js'),{window,document});
-  return {window,document,Element,media,mediaHandlers,callbacks};
-}
-
-test('Disabled universal template CSS is retired while legacy account styles remain intact',()=>{
-  assert.equal(existsSync(new URL('../css/asteria-page-template.css',import.meta.url)),false);
+test('disabled universal template controller and stylesheet have both been retired',()=>{
   const html=read('index.html');
-  assert.ok(!html.includes('<link rel="stylesheet" href="css/asteria-page-template.css'));
-  assert.ok(!html.includes('<script src="js/asteria-page-template.js'));
+  assert.equal(existsSync(new URL('../js/asteria-page-template.js',import.meta.url)),false);
+  assert.equal(existsSync(new URL('../css/asteria-page-template.css',import.meta.url)),false);
+  assert.doesNotMatch(html,/src="js\/asteria-page-template\.js/);
+  assert.doesNotMatch(html,/href="css\/asteria-page-template\.css/);
+  const ledger=JSON.parse(read('docs/frontend-overhaul/PHASE-2.5-RETIREMENT-LEDGER.json'));
+  const retired=ledger.groups.find(group=>group.id==='disabled-universal-page-template');
+  assert.deepEqual(retired.removedFiles,[
+    'css/asteria-page-template.css','js/asteria-page-template.js']);
+  assert.deepEqual(retired.removedInPhases,{
+    'css/asteria-page-template.css':'9.1',
+    'js/asteria-page-template.js':'9.2'
+  });
+});
+
+test('legacy account screen is preserved until React production cutover',()=>{
+  const html=read('index.html');
+  for(const id of ['asteriaAccountPage','asteriaAccountPanelProfile',
+    'asteriaAccountPanelSettings','asteriaAccountPanelAppearance',
+    'asteriaAccountPanelSecurity'])
+    assert.ok(html.includes('id="'+id+'"'),id);
   assert.ok(html.includes('css/asteria-account-pages.css'));
   assert.ok(html.includes('js/asteria-account-pages.js'));
   assert.ok(html.includes('css/asteria-solid-navy-surfaces.css'));
-  assert.match(html,/class="asteria-account-shell"/);
-  for(const id of ['asteriaAccountPanelProfile','asteriaAccountPanelSettings','asteriaAccountPanelAppearance','asteriaAccountPanelSecurity']){
-    assert.equal(html.split('id="'+id+'"').length-1,1);
-  }
   assert.match(html,/data-asteria-account-action="logout"/);
 });
 
-test('Shared template creation uses one accessible tablist and preserves external content nodes',()=>{
-  const h=harness();
-  const child=new h.Element('article');
-  const chosen=[];
-  const result=h.window.AsteriaPageTemplate.create({
-    id:'sampleTemplate',title:'Handbook',
-    sections:[{key:'rules',label:'Rules',node:child},{key:'lore',label:'Lore'}],
-    onSelect:key=>{chosen.push(key);}
-  });
-  assert.ok(result);
-  assert.equal(result.page.id,'sampleTemplate');
-  assert.equal(h.document.getElementById('sampleTemplate'),result.page);
-  assert.ok(result.page.classList.contains('asteria-template-page'));
-  const nav=result.page.querySelector('.asteria-template-nav');
-  assert.equal(nav.getAttribute('role'),'tablist');
-  assert.equal(nav.getAttribute('aria-orientation'),'vertical');
-  const tabs=nav.querySelectorAll('[role="tab"],button,a');
-  assert.equal(tabs.length,2);
-  assert.equal(tabs[0].getAttribute('aria-selected'),'true');
-  assert.equal(tabs[1].getAttribute('aria-selected'),'false');
-  assert.equal(tabs[0].getAttribute('aria-controls'),'sampleTemplate-panel-rules');
-  assert.equal(child.id,'sampleTemplate-panel-rules');
-  assert.equal(child.hidden,false);
-  assert.equal(result.select('lore'),true);
-  assert.equal(child.hidden,true);
-  assert.equal(tabs[1].getAttribute('aria-selected'),'true');
-  assert.equal(result.select('missing'),false);
-  assert.ok(chosen.includes('rules')&&chosen.includes('lore'));
-  assert.equal(h.window.AsteriaPageTemplate.create({id:'sampleTemplate',sections:[{key:'x'}]}),null);
-});
-
-test('Keyboard selection follows desktop orientation and switches to horizontal on mobile',()=>{
-  const h=harness();
-  const result=h.window.AsteriaPageTemplate.create({
-    id:'mobileTest',title:'Account',
-    sections:[{key:'profile'},{key:'settings'},{key:'security'}]
-  });
-  const nav=result.page.querySelector('.asteria-template-nav');
-  const tabs=nav.querySelectorAll('[role="tab"],button,a');
-  let prevented=false;
-  nav.listeners.keydown({target:tabs[0],key:'ArrowDown',preventDefault(){prevented=true;}});
-  assert.equal(prevented,true);
-  assert.equal(tabs[1].getAttribute('aria-selected'),'true');
-  h.media.matches=true;h.mediaHandlers.forEach(fn=>fn());
-  assert.equal(nav.getAttribute('aria-orientation'),'horizontal');
-  nav.listeners.keydown({target:tabs[1],key:'ArrowRight',preventDefault(){}});
-  assert.equal(tabs[2].getAttribute('aria-selected'),'true');
-  assert.equal(tabs[2].focused,true);
-  nav.listeners.keydown({target:tabs[2],key:'Home',preventDefault(){}});
-  assert.equal(tabs[0].getAttribute('aria-selected'),'true');
-});
-
-test('Replacement PageLayout uses only locally scoped React styles',()=>{
+test('React PageLayout replaces the template without global DOM controllers',()=>{
   const css=read('frontend/src/components/ui/PageLayout.module.css');
   const jsx=read('frontend/src/components/ui/PageLayout.jsx');
+  const main=read('frontend/src/main.jsx');
   assert.match(css,/\.page\s*\{/);
   assert.match(css,/var\(--ast-page-gutter\)/);
   assert.match(jsx,/styles\.page/);
   assert.doesNotMatch(css,/!important|:global\(|@import/);
-  const js=read('js/asteria-page-template.js');
-  assert.match(js,/page:'asteriaAccountPage'/);
-  assert.match(js,/layoutSelector:'\.asteria-account-shell'/);
-  assert.doesNotMatch(js,/getDoc\(|getDocs\(|collection\(|localStorage|sessionStorage|indexedDB|fetch\(/);
+  assert.doesNotMatch(main,/asteria-page-template|window\.setView/);
 });

@@ -18,6 +18,21 @@ export function parseLocationKey(key) {
   return { search: key.slice(0, split), hash: key.slice(split + 1) };
 }
 
+/**
+ * The one React route-boundary sanitizer.
+ * Call before the first React render and on subsequent history events.
+ * Never persist, log or expose a bearer invite token in route state.
+ */
+export function sanitizeIncomingLocation(source,{enabled=false}={}){
+  if(!enabled||!source?.location||
+      typeof source.history?.replaceState!=='function')return false;
+  return captureIncomingSecureInvite({
+    hash:source.location.hash,
+    replace:hash=>source.history.replaceState(source.history.state,'',
+      String(source.location.pathname||'/')+String(source.location.search||'')+hash)
+  });
+}
+
 export function createLocationStore(source,{sanitize=null}={}) {
   if (!source || !source.location ||
       typeof source.addEventListener !== 'function' ||
@@ -76,11 +91,7 @@ export function getBrowserLocationStore() {
   // No module-time window access or legacy global function replacement.
   if(browserStore===null){
     const sanitize=import.meta.env.VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED==='true'?
-      ()=>captureIncomingSecureInvite({
-        hash:window.location.hash,
-        replace:hash=>window.history.replaceState(window.history.state,'',
-          window.location.pathname+window.location.search+hash)
-      }):null;
+      ()=>sanitizeIncomingLocation(window,{enabled:true}):null;
     browserStore=createLocationStore(window,{sanitize});
   }
   return browserStore;

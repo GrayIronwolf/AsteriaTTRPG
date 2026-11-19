@@ -1,0 +1,46 @@
+name: React/Vite Phase 9.2 - Legacy JavaScript controller retirement
+
+on:
+  pull_request:
+    paths:
+      - "frontend/src/router/**"
+      - "frontend/src/main.jsx"
+      - "js/asteria-page-template.js"
+      - "index.html"
+      - "scripts/site-legacy-js-phase9-2.test.mjs"
+      - "scripts/universal-page-template-phase1.test.mjs"
+      - "scripts/site-retirement-audit.mjs"
+      - "scripts/site-campaign-phase5-3.test.mjs"
+      - "docs/frontend-overhaul/**"
+      - "package.json"
+      - ".github/workflows/frontend-phase9-2-acceptance.yml"
+  workflow_dispatch:
+
+jobs:
+  legacy-js-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 9.2 controller cleanup and 9.1 CSS regressions
+        run: |
+          npm run site:legacy-js-phase9-2
+          npm run site:legacy-css-phase9-1
+          node --test scripts/universal-page-template-phase1.test.mjs scripts/site-campaign-phase5-3.test.mjs
+          npm run site:retirement-audit
+      - name: All React/Vite migration source regressions
+        run: npm run site:check
+      - name: Lint and build independent React frontend
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Check pure JS source syntax
+        run: |
+          node --check frontend/src/router/locationStore.mjs
+          node --check scripts/site-legacy-js-phase9-2.test.mjs

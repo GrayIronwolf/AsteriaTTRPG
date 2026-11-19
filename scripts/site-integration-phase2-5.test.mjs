@@ -85,8 +85,9 @@ test('cleanup ledger names existing source owners with explicit no-removal gates
   const template = data.groups.find(x=>x.id==='disabled-universal-page-template');
   assert.equal(template.expectLoadedInLegacy,false);
   assert.ok(template.legacyFiles.includes('js/asteria-page-template.js'));
+  assert.ok(template.removedFiles.includes('js/asteria-page-template.js'));
   assert.ok(template.legacyFiles.includes('css/asteria-page-template.css'));
-  assert.deepEqual(template.removedFiles,['css/asteria-page-template.css']);
+  assert.deepEqual(template.removedFiles,['css/asteria-page-template.css','js/asteria-page-template.js']);
   assert.equal(template.removedInPhase,'9.1');
 });
 

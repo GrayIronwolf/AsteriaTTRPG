@@ -114,7 +114,8 @@ test('invitation recognition defaults safe and no GM dashboard privilege leaks',
  assert.equal(canActivateRoute('invitation',connected),true);
  for(const route of ['gm-dashboard','dashboard','presentation','character-dashboard'])
   assert.equal(canActivateRoute(route,connected),false,route);
- assert.match(read('frontend/src/main.jsx'),/captureIncomingSecureInvite/);
+ assert.match(read('frontend/src/main.jsx'),/sanitizeIncomingLocation/);
+ assert.match(read('frontend/src/router/locationStore.mjs'),/captureIncomingSecureInvite/);
  assert.match(read('frontend/src/pages/CampaignInvitationPage.jsx'),/getPendingSecureInvite/);
  assert.match(read('frontend/src/pages/CampaignForgePage.jsx'),/CampaignConnectionManager/);
  assert.match(read('frontend/src/auth/firebaseAuthAdapter.mjs'),/VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED/);

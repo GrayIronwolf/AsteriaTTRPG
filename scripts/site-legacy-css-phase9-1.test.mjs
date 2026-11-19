@@ -19,7 +19,7 @@ test('retired universal page-template stylesheet is absent and is never loaded',
   assert.doesNotMatch(legacy,/src="js\/asteria-page-template\.js/);
   const ledger=JSON.parse(read('docs/frontend-overhaul/PHASE-2.5-RETIREMENT-LEDGER.json'));
   const entry=ledger.groups.find(x=>x.id==='disabled-universal-page-template');
-  assert.deepEqual(entry.removedFiles,['css/asteria-page-template.css']);
+  assert.ok(entry.removedFiles.includes('css/asteria-page-template.css'));
   assert.equal(entry.removedInPhase,'9.1');
   assert.equal(entry.expectLoadedInLegacy,false);
 });

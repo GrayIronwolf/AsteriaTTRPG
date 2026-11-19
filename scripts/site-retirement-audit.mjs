@@ -35,9 +35,10 @@ const groups = ledger.groups.map(group => {
     seen.add(path);
     const retired = group.removedFiles?.includes(path)===true;
     if(retired) {
-      assert.equal(group.removedInPhase,'9.1');
+      assert.equal(group.removedInPhases?.[path],path.endsWith('.css')?'9.1':'9.2');
+      assert.ok(['9.1','9.2'].includes(group.removedInPhases?.[path]));
       assert.equal(existsSync(resolve(root,path)),false,
-        'Previously disabled stylesheet must not be reintroduced: '+path);
+        'Previously disabled controller or stylesheet must not be reintroduced: '+path);
     } else assert.ok(existsSync(resolve(root, path)),
       'Live legacy source missing before feature parity: ' + path);
     const isLoaded = loaded.has(path);
