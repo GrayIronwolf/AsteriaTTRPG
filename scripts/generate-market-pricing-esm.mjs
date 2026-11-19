@@ -41,14 +41,14 @@ export function renderPricingEsm(src){
   const end=src.lastIndexOf('\n});');
   if(end<=start)throw Error('Canonical pricing factory was not found.');
   const factory=src.slice(start,end);
-  if((factory.match(/\\breturn Object\\.freeze\\(\\{/g)||[]).length!==1)
+  if((factory.match(/\breturn Object\.freeze\(\{/g)||[]).length!==1)
     throw Error('Unexpected number of canonical pricing exports.');
-  return '/* Generated from js/asteria-market-pricing.js by scripts/generate-market-pricing-esm.mjs.\\n'+
-    ' * Single canonical pricing implementation: edit the legacy source, then regenerate.\\n'+
-    ' * No global side effects, runtime dynamic imports or additional pricing logic.\\n'+
-    " */\\n'use strict';\\n"+
+  return '/* Generated from js/asteria-market-pricing.js by scripts/generate-market-pricing-esm.mjs.\n'+
+    ' * Single canonical pricing implementation: edit the legacy source, then regenerate.\n'+
+    ' * No global side effects, runtime dynamic imports or additional pricing logic.\n'+
+    " */\n'use strict';\n"+
     factory.replace('return Object.freeze({','const pricing = Object.freeze({')+
-    '\\nexport const {\\n  '+names.join(',\\n  ')+'\\n} = pricing;\\nexport default pricing;\\n';
+    '\nexport const {\n  '+names.join(',\n  ')+'\n} = pricing;\nexport default pricing;\n';
 }
 export function verifyPricingEsm({source=sourcePath,output=outputPath}={}){
   const wanted=renderPricingEsm(readFileSync(source,'utf8'));
