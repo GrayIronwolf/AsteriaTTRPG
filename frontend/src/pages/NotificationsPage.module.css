@@ -1,9 +1,6 @@
 /* Phase 4.4 scoped inbox, no global override or secondary header owner. */
+.content{min-width:0;display:grid;align-content:start;gap:var(--ast-space-4);}
 .page{}
-.channels{display:flex;flex-wrap:wrap;gap:var(--ast-space-2);margin-block:var(--ast-space-5);}
-.tab{font:inherit;text-align:center;border:1px solid var(--ast-color-outline);background:var(--ast-color-panel);
- color:var(--ast-color-text);padding:var(--ast-space-3);min-height:var(--ast-target-min);cursor:pointer;}
-.tab[aria-current="page"],.tab:hover,.tab:focus-visible{background:var(--ast-color-accent-soft);}
 .panel{padding:var(--ast-space-5);display:grid;gap:var(--ast-space-4);}
 .panel h2{margin:0;font:600 var(--ast-font-xl) var(--ast-font-display);}
 .heading{display:flex;align-items:center;justify-content:space-between;gap:var(--ast-space-3);flex-wrap:wrap;}
@@ -14,5 +11,5 @@
 .top{display:flex;justify-content:space-between;gap:var(--ast-space-3);flex-wrap:wrap;}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ast-space-2);}
 .notice{border-left:3px solid var(--ast-color-outline-active);padding:var(--ast-space-3);}
-@media(max-width:760px){.panel{padding:var(--ast-space-4);}.channels .tab{flex:1 1 150px;}}
+@media(max-width:760px){.panel{padding:var(--ast-space-4);}}
 @media(max-width:380px){.actions>*{flex:1 1 100%;}}
