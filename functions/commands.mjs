@@ -439,6 +439,42 @@ const commands = {
       return {ok:true};
     }catch(error){return {ok:false,error:error.message||String(error)};}
   },
+  // Phase 7.2: authenticated and idempotent GM XP using the existing
+  // progression engine, action receipt and canonical character mirrors.
+  grantCharacterXP: async function(campaignId,characterId,amount,reason=''){
+    const xp=Number(amount),why=String(reason||'').trim().slice(0,300);
+    if(!Number.isSafeInteger(xp)||xp<1||xp>1000000)
+      return {ok:false,error:'Choose between 1 and 1,000,000 XP.'};
+    if(why.length<3)return {ok:false,error:'An XP award needs a recorded reason.'};
+    const refs=liveCharacterRefs(campaignId,characterId);
+    try{
+      const result=await runTransaction(db,async transaction=>{
+        await requireLiveSession(transaction,campaignId);
+        const campaign=await requireCampaignGM(transaction,campaignId);
+        const snapshot=await transaction.get(refs.campaign);
+        if(!snapshot.exists())throw Error('The linked character is unavailable.');
+        const character={id:characterId,...snapshot.data()},owner=character.ownerUid;
+        if(!owner || !(campaign.playerCharacterLinks?.[characterId]===owner ||
+          campaign.characters?.[characterId]?.ownerUid===owner ||
+          (campaign.players?.[owner]?.characterIds||[]).includes(characterId)))
+          throw Error('Recipient character is no longer linked.');
+        refs.original=structuredCloneSafe(character);
+        refs.private=doc(db,'users',owner,'characters',ownedCharacterSourceId(characterId,character));
+        const owned=await transaction.get(refs.private);
+        if(!owned.exists()||owned.data().ownerUid!==owner)
+          throw Error('The owner character record is unavailable.');
+        refs.privateExists=true;
+        if(typeof window?.AsteriaProgression?.grantXP!=='function')
+          throw Error('Canonical progression engine is unavailable.');
+        const applied=window.AsteriaProgression.grantXP(character,xp);
+        appendActivity(character,{type:'xp-reward',message:'GM awarded '+xp+' XP: '+why+'.'});
+        writeLiveCharacter(transaction,refs,character);
+        return {amount:xp,level:character.level,xp:character.xp,xpMax:character.xpMax,
+          levels:Number(applied.levels||0),messages:applied.messages||[]};
+      });
+      return {ok:true,...result};
+    }catch(error){return {ok:false,error:error.message||String(error)};}
+  },
   spendCharacteristicPoints: async function(campaignId,characterId,key,amount=1){
     if(!db || !currentUser || !campaignId || !characterId) return {ok:false};
     const refs=liveCharacterRefs(campaignId,characterId);
