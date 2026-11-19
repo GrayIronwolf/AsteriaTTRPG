@@ -95,7 +95,7 @@
   --ast-header-min-height: 92px;
   --ast-header-height: clamp(84px, 7vw, 118px);
   --ast-header-brand-width: clamp(210px, 19.5vw, 352px);
-  --ast-header-avatar-size: clamp(72px, 6.2vw, 100px);
+  --ast-header-avatar-size: clamp(140px, 12vw, 185px);
   --ast-logo-star-blue: #5b9df6;
   --ast-logo-star-cyan: #82e6ff;
   --ast-logo-star-violet: #c3a5ff;
@@ -150,14 +150,14 @@
   :root {
     --ast-header-height: 78px;
     --ast-header-brand-width: clamp(190px, 29vw, 280px);
-    --ast-header-avatar-size: 66px;
+    --ast-header-avatar-size: 100px;
   }
 }
 @media (max-width: 760px) {
   :root {
     --ast-header-height: 64px;
     --ast-header-brand-width: min(48vw, 174px);
-    --ast-header-avatar-size: clamp(48px, 14vw, 62px);
+    --ast-header-avatar-size: clamp(56px, 16vw, 90px);
   }
 }
 @media (max-width: 380px) {
