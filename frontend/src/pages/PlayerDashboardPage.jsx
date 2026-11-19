@@ -36,6 +36,40 @@ function Resources({character}){
     })}
   </div>;
 }
+function ClassicPlayerHeader({character,campaign,owned}){
+  const progress=character.xpMax>0?Math.min(100,Math.max(0,character.xp/character.xpMax*100)):0;
+  return <section className={styles.classicHeader} aria-label="Character and campaign information">
+    <div className={styles.portraitColumn}>
+      {character.image?<img className={styles.heroImage} src={character.image} alt="" loading="eager"/>:
+        <div className={styles.portraitFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
+      <div className={styles.portraitCaption}>
+        <Heading as="h2">{character.name}</Heading>
+        <p>{character.race} / {character.klass}</p>
+        <p>Level {character.level}</p>
+        <div className={styles.experience}><span>XP</span><span>{character.xp.toLocaleString()} / {character.xpMax?character.xpMax.toLocaleString():'—'}</span></div>
+        <progress className={styles.xpBar} aria-label="Character experience" value={progress} max="100"/>
+      </div>
+    </div>
+    <div className={styles.coreColumn}>
+      <h3>Core Resources</h3>
+      <Resources character={character}/>
+      <h3>Characteristics</h3>
+      <StatPanel record={character}/>
+    </div>
+    <div className={styles.campaignColumn} data-testid="site-player-campaign">
+      {campaign?.image?<img className={styles.heroImage} src={campaign.image} alt="" loading="lazy"/>:
+        <div className={styles.campaignFallback} aria-hidden="true">Asteria</div>}
+      <div className={styles.campaignCaption}>
+        <h3>{campaign?.name||'Private Character'}</h3>
+        <p>{campaign?('Session: '+campaign.session.status):'No linked campaign'}</p>
+        {campaign?.location?<p>Location: {campaign.location}</p>:null}
+        {campaign?.inWorldDate?<p>Date: {campaign.inWorldDate}</p>:null}
+        {campaign?.isGM?<CrystalButton size="compact" href={'#/react/gm/'+encodeURIComponent(campaign.id)}>GM Dashboard</CrystalButton>:null}
+        {!campaign&&owned?<CrystalButton size="compact" href="#/campaign-invitation">Link to Campaign</CrystalButton>:null}
+      </div>
+    </div>
+  </section>;
+}
 function Names({name,entries}){
   return <SurfacePanel className={styles.panel} as="section">
     <h3>{name}</h3>
@@ -45,7 +79,6 @@ function Names({name,entries}){
 }
 function Sections({character,tab,owned}){
   if(tab==='Overview')return <>
-    <Resources character={character}/>
     <div className={styles.overview}>
       <SurfacePanel className={styles.panel}><h3>Experience</h3>
         <p>Level {character.level} · XP {character.xp}{character.xpMax?' / '+character.xpMax:''}</p>
@@ -57,7 +90,6 @@ function Sections({character,tab,owned}){
         <Names name="Active Conditions" entries={character.conditions}/>
       </SurfacePanel>
     </div>
-    <StatPanel record={character}/>
   </>;
   if(tab==='Character')return <>
     <StatPanel record={character}/>
@@ -128,34 +160,14 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
   const economyEnabled=Boolean(c&&data.owner&&economy?.availability().enabled);
   const digitalGMEnabled=Boolean(c&&digitalGM?.availability().enabled);
   return <>
-    <div className={styles.titleRow}>
-      <div><Eyebrow>{c?'Campaign Character':'Owned Character'} · {data.owner?'Owner':'GM Read-only'}</Eyebrow>
-        <Heading as="h2">{ch.name}</Heading>
-        <BodyText muted>{ch.race} · {ch.klass} · Level {ch.level}</BodyText>
-      </div>
-      <CrystalButton href="#/character-forge">Character Forge</CrystalButton>
+    <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}/>
+    <div className={styles.sessionStrip} role="status">
+      {c?(c.session.editable?'Live editing enabled':'Session is not active. Gameplay actions are unavailable.'):'Unassigned character — link to a campaign to enable live gameplay.'}
+      <CrystalButton href="#/character-forge" size="compact">Character Forge</CrystalButton>
     </div>
-    {c?<SurfacePanel className={styles.panel} data-testid="site-player-campaign">
-      <div className={styles.titleRow}>
-        <div><h3>{c.name}</h3><BodyText muted>Session: {c.session.status}</BodyText></div>
-        {c.isGM?<CrystalButton href={'#/react/gm/'+encodeURIComponent(c.id)}>GM Dashboard</CrystalButton>:null}
-      </div>
-      <p>{c.session.editable?'Live session is active.':'Session is not active. Gameplay actions are unavailable.'}</p>
-      <div className={styles.party}><h4>Party</h4>
-        {c.party.length?<ul className={styles.list}>{c.party.map(x=>
-          <li key={x.id}>{x.name} · Level {x.level}</li>)}</ul>:
-          <BodyText muted>No linked party members.</BodyText>}
-      </div>
-    </SurfacePanel>:<SurfacePanel className={styles.panel} data-testid="site-player-unassigned">
-      <h3>Private Character Sheet</h3>
-      <BodyText muted>This sheet is available without a running campaign. Link the character through Campaign Forge to access a campaign session.</BodyText>
-      <CrystalButton href="#/campaign-invitation">Link to Campaign</CrystalButton>
-    </SurfacePanel>}
     <nav className={styles.tabs} aria-label="Character dashboard sections">
-      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><button type="button"
-        key={value} className={tab===value?styles.selected:''}
-        aria-current={tab===value?'page':undefined}
-        onClick={()=>setTab(value)}>{value}</button>)}
+      {[...TABS.filter(x=>data.owner||x!=='Journal'),...(combatEnabled?['Combat']:[]),...(progressionEnabled?['Progression','Skills','Talents','Check History']:[]),...(economyEnabled?['Inventory & Trading']:[]),...(digitalGMEnabled?['Campaign World & Session']:[]),...(c&&media?.availability().enabled?['Battle Maps','World Atlas']:[])].map(value=><CrystalButton type="button" size="compact" key={value} active={tab===value}
+        onClick={()=>setTab(value)}>{value}</CrystalButton>)}
     </nav>
     {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
       key={campaignId} api={digitalGM} campaignId={campaignId}/>:null}
@@ -176,7 +188,6 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
     {tab==='World Atlas'&&media?.availability().enabled?
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
-    {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?<Resources character={ch}/>:null}
     {tab==='Overview'&&data.owner&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}
@@ -198,12 +209,6 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
       :['Battle Maps','World Atlas','Combat','Progression','Skills','Talents','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
-    <SurfacePanel className={styles.panel} as="aside">
-      <h3>Dashboard Migration</h3>
-      <BodyText muted>This React dashboard reads existing saved character and campaign data.
-        The existing gameplay backend remains authoritative. Remaining Digital GM
-        tools migrate in subsequent phases.</BodyText>
-    </SurfacePanel>
   </>;
 }
 /** Character and Player dashboards share one authenticated React route owner. */
@@ -219,7 +224,7 @@ export function PlayerDashboardPage({route}){
   const {campaignId='',characterId=''}=route.params||{};
   return <PageLayout as="section" width="wide" labelledBy="site-player-title"
     className={styles.page} data-testid="site-player-dashboard">
-    <Heading id="site-player-title">Player &amp; Character Dashboard</Heading>
+    <Heading id="site-player-title" className={styles.visuallyHidden}>Player &amp; Character Dashboard</Heading>
     {!uid||!api?<SurfacePanel className={styles.panel}>
       <BodyText>Sign in with a verified account to view a character dashboard.</BodyText>
       <CrystalButton href="#/account/login">Login</CrystalButton>
