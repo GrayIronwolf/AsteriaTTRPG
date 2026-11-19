@@ -68,7 +68,7 @@ async function awaitPreview() {
     console.log('PASS: the preview uses one compiled token-based stylesheet, not legacy CSS.');
 
     const navButton = page.getByRole('navigation', { name: 'Primary navigation' })
-      .getByRole('link', { name: 'Home', exact: true });
+      .getByRole('link', { name: 'Asteria Handbook', exact: true });
     const style = await navButton.evaluate(el => {
       const css = getComputedStyle(el);
       const frame = getComputedStyle(el, '::before');
@@ -76,8 +76,8 @@ async function awaitPreview() {
       return { height: el.getBoundingClientRect().height, frame: frame.borderImageSource, crystal: crystal.backgroundImage };
     });
     assert.ok(style.height >= 44, 'Primary nav target is smaller than 44px');
-    assert.ok(style.frame.includes('button-small-frame'), 'Approved metal bezel image was not applied');
-    assert.ok(style.crystal.includes('button-small-crystal'), 'Approved crystal image was not applied');
+    assert.ok(style.frame.includes('button-standard-frame'), 'Approved metal bezel image was not applied');
+    assert.ok(style.crystal.includes('button-standard-crystal'), 'Approved crystal image was not applied');
     const heroLoaded = await page.getByTestId('site-hero-image').locator('img')
       .evaluate(img => img.complete && img.naturalWidth > 0);
     assert.equal(heroLoaded, true);
@@ -110,7 +110,7 @@ async function awaitPreview() {
         await menu.locator('summary').click();
         const mobileLinks = await page.getByRole('navigation', { name: 'Mobile navigation' })
           .getByRole('link').all();
-        assert.equal(mobileLinks.length, 9, 'Eight primary links plus Appearance settings');
+        assert.equal(mobileLinks.length, 7, 'Six primary links plus Appearance settings');
         assert.equal(await page.getByTestId('site-mobile-appearance-link').count(), 1);
         for (const link of mobileLinks) {
           assert.ok((await link.boundingBox()).height >= 44, 'Undersized mobile menu target at ' + width);

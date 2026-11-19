@@ -108,7 +108,7 @@ async function awaitPreview() {
       await nav().getByRole('link', { name: 'Friends', exact: true }).click();
       await page.getByTestId('site-mega-browse').click();
       await heading('Friends').waitFor();
-      await nav().getByRole('link', { name: 'Home', exact: true }).click();
+      await page.getByTestId('site-brand').click();
       await heading('Asteria').waitFor();
       counts = await page.evaluate(() => window.__routingTestListeners());
       assert.equal(counts.hashchange, 1, 'Hash listener duplication after navigation cycle ' + cycle);

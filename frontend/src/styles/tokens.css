@@ -46,7 +46,7 @@
   --ast-button-image-icon-frame: url('../../../assets/ui/buttons/button-icon-frame.webp');
   --ast-button-image-icon-crystal: url('../../../assets/ui/buttons/button-icon-crystal.webp');
   --ast-button-crystal-tone: #1f7dff;
-  --ast-button-crystal-glow: rgba(40, 118, 245, .56);
+  --ast-button-crystal-glow: color-mix(in srgb, var(--ast-button-crystal-tone) 56%, transparent);
   --ast-button-label-color: #ffffff;
 
   /* A restrained, inset crystal finish with a gunmetal bevel. */
@@ -95,7 +95,7 @@
   --ast-header-min-height: 92px;
   --ast-header-height: clamp(84px, 7vw, 118px);
   --ast-header-brand-width: clamp(210px, 19.5vw, 352px);
-  --ast-header-avatar-size: clamp(72px, 6.2vw, 100px);
+  --ast-header-avatar-size: clamp(140px, 12vw, 185px);
   --ast-logo-star-blue: #5b9df6;
   --ast-logo-star-cyan: #82e6ff;
   --ast-logo-star-violet: #c3a5ff;
@@ -150,18 +150,18 @@
   :root {
     --ast-header-height: 78px;
     --ast-header-brand-width: clamp(190px, 29vw, 280px);
-    --ast-header-avatar-size: 66px;
+    --ast-header-avatar-size: 100px;
   }
 }
 @media (max-width: 760px) {
   :root {
     --ast-header-height: 64px;
-    --ast-header-brand-width: min(48vw, 174px);
-    --ast-header-avatar-size: clamp(48px, 14vw, 62px);
+    --ast-header-brand-width: min(33vw, 144px);
+    --ast-header-avatar-size: clamp(44px, 14vw, 80px);
   }
 }
 @media (max-width: 380px) {
-  :root { --ast-header-brand-width: min(38vw, 144px); }
+  :root { --ast-header-brand-width: min(32vw, 120px); }
 }
 
 /* Phase 2.4: single-source, allowlisted preview appearance selectors. */

@@ -58,8 +58,8 @@ async function awaitPreview() {
     await page.goto(base, { waitUntil: 'networkidle' });
     await heading('Asteria');
     assert.equal(await page.locator('main h1').count(), 1);
-    assert.equal(await nav().getByRole('link').count(), 8);
-    assert.equal(await nav().locator('[aria-current="page"]').count(), 1);
+    assert.equal(await nav().getByRole('link').count(), 6);
+    assert.equal(await nav().locator('[aria-current="page"]').count(), 0);
 
     for (const [label, title, hash] of [
       ['Asteria Handbook', 'Asteria Handbook', '#/compendium?group=rules&category=handbook'],
@@ -67,8 +67,7 @@ async function awaitPreview() {
       ['Asteria Compendium', 'Asteria Compendium', '#/compendium'],
       ['Character Forge', 'Character Forge', '#/character-forge'],
       ['Campaign Forge', 'Campaign Forge', '#/campaign-forge'],
-      ['Friends', 'Friends', '#/account/friends'],
-      ['Account', 'Account', '#/account']
+      ['Friends', 'Friends', '#/account/friends']
     ]) {
       await nav().getByRole('link', { name: label, exact: true }).click();
       await page.getByTestId('site-mega-browse').click();
@@ -79,8 +78,10 @@ async function awaitPreview() {
     console.log('PASS: every header destination navigates away from Home with one active route.');
 
     await page.goBack();
-    await heading('Friends');
+    await heading('Campaign Forge');
     await page.goForward();
+    await heading('Friends');
+    await page.goto(base + '#/account', { waitUntil: 'networkidle' });
     await heading('Account');
     await page.reload({ waitUntil: 'networkidle' });
     await heading('Account');
@@ -135,7 +136,7 @@ async function awaitPreview() {
         await page.getByRole('link', { name: 'Return to Home' }).click();
         await heading('Asteria');
       } else {
-        assert.equal(await nav().getByRole('link', { name: 'Home' }).isVisible(), true);
+        assert.equal(await page.getByTestId('site-brand').isVisible(), true);
         const row = await page.evaluate(() => {
           const links = Array.from(document.querySelectorAll('[data-testid="site-primary-navigation"] a'));
           const tops = links.map(link => Math.round(link.getBoundingClientRect().top));

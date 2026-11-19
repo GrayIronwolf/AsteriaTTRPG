@@ -17,18 +17,5 @@
   overflow: visible;
 }
 .starFlood {
-  flood-color: var(--ast-logo-star-blue);
-  animation: starColourCycle 8s ease-in-out infinite;
-}
-@keyframes starColourCycle {
-  0%, 100% { flood-color: var(--ast-logo-star-blue); }
-  28% { flood-color: var(--ast-logo-star-cyan); }
-  58% { flood-color: var(--ast-logo-star-violet); }
-  82% { flood-color: var(--ast-logo-star-gold); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .starFlood {
-    animation: none;
-    flood-color: var(--ast-logo-star-blue);
-  }
+  flood-color: var(--ast-button-crystal-tone);
 }

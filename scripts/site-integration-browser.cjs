@@ -147,16 +147,18 @@ async function auditListeners(page) {
     assert.equal(report.listenerMetrics.initial.popstate,1,'Duplicated route popstate listeners');
     assert.equal(await page.getByTestId('site-hero-image').locator('img').evaluate(img=>img.decode().then(()=>img.naturalWidth>0)),true);
 
-    await page.getByTestId('site-primary-navigation').getByTestId('site-nav-account').click();
+    await page.getByTestId('site-primary-navigation').getByTestId('site-nav-handbook').click();
     await page.getByTestId('site-mega-menu').waitFor();
-    assert.equal(await page.getByTestId('site-mega-cards').getByRole('link').count(),4);
-    const card = page.getByTestId('site-menu-card-appearance');
-    assert.equal(await card.getAttribute('href'),'#/appearance',
-      'Account Appearance card must not point to a protected placeholder');
+    assert.equal(await page.getByTestId('site-mega-cards').getByRole('link').count(),6);
+    const card = page.getByTestId('site-menu-card-players-guide');
+    assert.equal(await card.getAttribute('href'),'#/compendium?group=rules&category=handbook',
+      'The Handbook card must retain its canonical destination');
     assert.equal(await page.evaluate(()=>document.body.style.overflow),'hidden');
     report.listenerMetrics.megaOpen=await page.evaluate(()=>window.__asteriaPhase25Listeners());
     assert.equal(report.listenerMetrics.megaOpen.keydown,1,'More than one Escape listener for modal');
     await card.click();
+    await page.getByRole('heading',{name:'Asteria Handbook',level:1}).waitFor();
+    await page.getByTestId('site-footer-appearance').click();
     await page.getByRole('heading',{name:'Appearance',level:1}).waitFor();
     assert.equal(await page.evaluate(()=>location.hash),'#/appearance');
     assert.equal(await page.getByTestId('site-mega-menu').count(),0);

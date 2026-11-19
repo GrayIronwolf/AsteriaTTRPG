@@ -19,10 +19,10 @@ test('Phase 2.1 reuses the actual wordmark and four star windows, without legacy
   assert.equal((logo.match(/href=\{wordmarkUrl\}/g) || []).length, 2);
   assert.match(logo, /<feFlood className=\{styles\.starFlood\}/);
   assert.match(logo, /clipPath=/);
-  assert.match(css, /@keyframes starColourCycle/);
-  assert.match(css, /animation:\s*starColourCycle 8s/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /animation:\s*none/);
+  assert.match(css, /flood-color:\s*var\(--ast-button-crystal-tone\)/);
+  assert.doesNotMatch(css, /starColourCycle|animation:/);
+
+
   assert.doesNotMatch(logo + css, /setInterval|setTimeout|MutationObserver|!important/);
 });
 
@@ -86,7 +86,10 @@ test('profile UI requires a verified authenticated identity, and keeps unsafe UR
   assert.match(controls, /onError=\{\(\) => setImageFailed\(true\)\}/);
   assert.match(controls, /aria-label="Open My Profile"/);
   assert.match(css, /width:\s*var\(--ast-header-avatar-size\)/);
-  assert.match(css, /height:\s*var\(--ast-header-avatar-size\)/);
+  assert.match(css, /height:\s*var\(--ast-header-height\)/);
+  assert.match(css, /border:\s*0;/);
+  assert.match(controls, /site-header-notifications/);
+  assert.doesNotMatch(controls, /⋮/);
   assert.match(css, /object-fit:\s*cover/);
   assert.doesNotMatch(controls.replace(/\/\*[\s\S]*?\*\//g, ''), /localStorage|window\.AsteriaFirebase|sessionStorage/);
 });

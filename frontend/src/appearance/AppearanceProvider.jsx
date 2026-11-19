@@ -29,6 +29,7 @@ export function AppearanceProvider({ children }) {
     root.dataset.asteriaDisplayFont = appearance.displayFont;
     root.dataset.asteriaTextSize = appearance.textSize;
     root.dataset.asteriaButtonTheme = appearance.buttonTheme;
+    root.style.setProperty('--ast-button-crystal-tone', appearance.crystalColor);
     try { window.localStorage.setItem(APPEARANCE_STORAGE_KEY, encodeAppearance(appearance)); }
     catch { /* Private mode or disabled storage: keep in-memory preferences. */ }
   }, [appearance]);

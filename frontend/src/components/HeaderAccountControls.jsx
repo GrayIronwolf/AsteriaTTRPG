@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CrystalButton } from './ui/CrystalButton.jsx';
+import buttonStyles from './ui/CrystalButton.module.css';
 import { getVerifiedHeaderIdentity } from './headerIdentity.mjs';
 import styles from './HeaderAccountControls.module.css';
 import { useAuth } from '../auth/AuthProvider.jsx';
@@ -52,36 +53,22 @@ export function HeaderAccountControls({ identity = null }) {
 
   return (
     <div className={styles.signedIn} data-testid="site-header-account-controls">
-      <a
-        className={styles.profile}
-        href="#/account/profile"
-        aria-label="Open My Profile"
-        title={verified.username}
-        data-testid="site-header-profile"
-        onClick={closeAccountMenu}
-      >
-        <span className={styles.fallback} aria-hidden="true">{verified.initial}</span>
-        {avatarUrl && !imageFailed && (
-          <img
-            key={avatarUrl}
-            src={avatarUrl}
-            alt=""
-            className={styles.avatar}
-            data-testid="site-header-avatar-image"
-            loading="lazy"
-            decoding="async"
-            onError={() => setImageFailed(true)}
-          />
-        )}
+      <a className={styles.notifications} href="#/account/notifications"
+        aria-label={unread > 0 ? unread + ' unread notifications' : 'Notifications'}
+        title="Notifications" data-testid="site-header-notifications">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none"
+          stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="1.5" />
+          <path d="m3.5 6 8.5 7 8.5-7" />
+        </svg>
+        {unread > 0 && <span className={styles.unreadBadge} data-testid="site-header-unread">
+          {unread > 99 ? '99+' : unread}
+        </span>}
       </a>
       <details ref={accountMenuRef} className={styles.accountMenu} data-testid="site-header-account-menu">
-        <summary aria-label="Account options" title="Account options">
-          <span aria-hidden="true">⋮</span>
-          {unread > 0 &&
-            <span className={styles.unreadBadge} data-testid="site-header-unread"
-              aria-label={unread + ' unread on latest notification pages'}>
-              {unread > 99 ? '99+' : unread}
-            </span>}
+        <summary className={[buttonStyles.button, buttonStyles.regular].join(' ')}
+          aria-label="Account options" title="Account">
+          <span className={buttonStyles.crystal}><span className={buttonStyles.label}>Account</span></span>
         </summary>
         <nav className={styles.accountLinks} aria-label="Account shortcuts">
           <a href="#/account/profile" onClick={closeAccountMenu}>My Profile</a>
@@ -101,6 +88,21 @@ export function HeaderAccountControls({ identity = null }) {
           )}
         </nav>
       </details>
+      <a
+        className={styles.profile}
+        href="#/account/profile"
+        aria-label="Open My Profile"
+        title={verified.username}
+        data-testid="site-header-profile"
+        onClick={closeAccountMenu}
+      >
+        <span className={styles.fallback} aria-hidden="true">{verified.initial}</span>
+        {avatarUrl && !imageFailed && (
+          <img key={avatarUrl} src={avatarUrl} alt="" className={styles.avatar}
+            data-testid="site-header-avatar-image" loading="lazy" decoding="async"
+            onError={() => setImageFailed(true)} />
+        )}
+      </a>
     </div>
   );
 }

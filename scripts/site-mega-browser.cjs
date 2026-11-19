@@ -59,8 +59,10 @@ async function ready() {
     const menuData = [
       ['Asteria Handbook', 6], ['Worlds & Lore', 8],
       ['Asteria Compendium', 10], ['Character Forge', 2],
-      ['Campaign Forge', 3], ['Friends', 2], ['Account', 4]
+      ['Campaign Forge', 3], ['Friends', 2]
     ];
+    assert.equal(await trigger('Account').count(), 0, 'Duplicated Account navigation must stay removed');
+    assert.equal(await trigger('Home').count(), 0, 'Asteria logo owns Home navigation');
     for (const [name, expected] of menuData) {
       await trigger(name).click();
       await panel.waitFor({ state: 'visible' });
@@ -75,7 +77,7 @@ async function ready() {
       assert.equal(await page.evaluate(() => document.body.style.overflow), '');
       assert.equal(await trigger(name).evaluate(el => document.activeElement === el), true);
     }
-    console.log('PASS: seven groups and all 35 cards, Escape, focus restoration and scroll cleanup.');
+    console.log('PASS: six header groups and all 31 cards, Escape, focus restoration and scroll cleanup.');
 
     await trigger('Asteria Compendium').click();
     await page.getByTestId('site-mega-search').fill('  construction  ');

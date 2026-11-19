@@ -53,7 +53,7 @@
   gap: var(--ast-space-2);
   font-weight: 600;
 }
-.field select {
+.field select, .field input[type="color"] {
   width: 100%;
   min-height: var(--ast-target-min);
   border: 1px solid var(--ast-color-outline);
@@ -62,6 +62,7 @@
   color: var(--ast-color-text);
   padding: var(--ast-space-2);
 }
+.field input[type="color"] { max-width: 160px; cursor: pointer; }
 .example {
   margin-top: var(--ast-space-6);
   padding: var(--ast-space-5);

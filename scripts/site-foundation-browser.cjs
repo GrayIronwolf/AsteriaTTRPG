@@ -66,7 +66,7 @@ async function awaitPreview() {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
       assert.equal(overflow,false,`Unexpected horizontal overflow at ${width}px`);
     }
-    await page.getByRole('link',{name:'Home',exact:true}).click();
+    await page.getByTestId('site-brand').click();
     assert.equal(await page.evaluate(() => window.location.hash),'#home');
     assert.deepEqual(errors,[],`Browser errors: ${errors.join('; ')}`);
     console.log('PASS: React app boots, images load, responsive widths are contained, Home works and no legacy globals load.');

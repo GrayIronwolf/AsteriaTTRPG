@@ -57,6 +57,12 @@ async function waitForPreview() {
     await page.getByTestId('site-body-font').selectOption('arial');
     await page.getByTestId('site-display-font').selectOption('baskerville');
     await page.getByTestId('site-text-size').selectOption('large');
+    await page.getByTestId('site-crystal-colour').evaluate(el => {
+      const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+      setter.call(el,'#d11a88');
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    });
     const selected = await page.evaluate(() => ({
       ...document.documentElement.dataset,
       saved: JSON.parse(localStorage.getItem('asteria.react.appearance.v1'))
@@ -65,13 +71,22 @@ async function waitForPreview() {
     assert.equal(selected.asteriaBodyFont,'arial');
     assert.equal(selected.asteriaDisplayFont,'baskerville');
     assert.equal(selected.asteriaTextSize,'large');
+    assert.equal(selected.saved.crystalColor,'#d11a88');
+    const lighting = await page.evaluate(() => ({
+      tone: getComputedStyle(document.documentElement).getPropertyValue('--ast-button-crystal-tone').trim(),
+      logo: getComputedStyle(document.querySelector('[data-testid="site-brand"] feFlood')).floodColor
+    }));
+    assert.equal(lighting.tone,'#d11a88');
+    assert.ok(lighting.logo==='rgb(209, 26, 136)'||lighting.logo==='#d11a88', 'Logo stars not linked to selected crystal');
     assert.equal(selected.saved.version,1);
     await page.reload({waitUntil:'networkidle'});
     assert.equal(await page.getByTestId('site-background-forest').getAttribute('aria-pressed'),'true');
     assert.equal(await page.getByTestId('site-text-size').inputValue(),'large');
+    assert.equal(await page.getByTestId('site-crystal-colour').inputValue(),'#d11a88');
     await page.getByTestId('site-appearance-reset').click();
     assert.equal(await page.getByTestId('site-background-black').getAttribute('aria-pressed'),'true');
     assert.equal(await page.getByTestId('site-text-size').inputValue(),'normal');
+    assert.equal(await page.getByTestId('site-crystal-colour').inputValue(),'#1f7dff');
 
     for (const width of [320,390,760,1024,1280,1440,1920]) {
       await page.setViewportSize({width,height:900});

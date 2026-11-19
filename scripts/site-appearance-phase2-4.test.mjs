@@ -43,6 +43,9 @@ test('appearance model rejects unknown fonts, malformed storage and untrusted CS
   assert.equal(TEXT_SIZE_OPTIONS.length, 4);
   assert.equal(BUTTON_THEME_OPTIONS.length, 1);
   assert.equal(DEFAULT_APPEARANCE.buttonTheme, 'asteria-crystal');
+  assert.equal(DEFAULT_APPEARANCE.crystalColor, '#1f7dff');
+  assert.equal(normalizeAppearance({ crystalColor: 'url(attacker)' }).crystalColor, '#1f7dff');
+  assert.equal(normalizeAppearance({ crystalColor: '#aB12cD' }).crystalColor, '#ab12cd');
   assert.deepEqual(decodeAppearance(encodeAppearance(DEFAULT_APPEARANCE)), DEFAULT_APPEARANCE);
   assert.deepEqual(decodeAppearance('{bad'), DEFAULT_APPEARANCE);
   assert.deepEqual(decodeAppearance(JSON.stringify({version: 17, background:'forest'})), DEFAULT_APPEARANCE);
@@ -77,6 +80,7 @@ test('one token owner for appearance and scoped page styling', () => {
   assert.match(page, /Restore defaults/);
   assert.match(page, /aria-pressed=/);
   assert.match(page, /site-button-theme/);
+  assert.match(page, /site-crystal-colour/);
   const css = read('frontend/src/pages/AppearanceSettingsPage.module.css');
   assert.doesNotMatch(css, /!important|:global\(|#[0-9a-f]{3,8}\b/i);
 });

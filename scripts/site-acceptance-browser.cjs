@@ -141,7 +141,7 @@ async function screenshot(page, filename) {
 
     await preview.goto(previewBase, { waitUntil: 'networkidle' });
     await preview.getByRole('heading', { name: 'Asteria', level: 1 }).waitFor();
-    assert.equal(await preview.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link').count(), 8);
+    assert.equal(await preview.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link').count(), 6);
     assert.equal(await preview.locator('main h1').count(), 1);
     assert.equal(await preview.getByTestId('site-hero-image').locator('img')
       .evaluate(image => image.complete && image.naturalWidth > 0), true);
@@ -158,14 +158,14 @@ async function screenshot(page, filename) {
     report.snapshots.push('preview-home-mobile-390.png');
     await preview.getByTestId('site-mobile-menu').locator('summary').click();
     assert.equal(await preview.getByRole('navigation', { name: 'Mobile navigation' })
-      .getByRole('link').count(), 9);
+      .getByRole('link').count(), 7);
     assert.equal(await preview.getByTestId('site-mobile-appearance-link').count(), 1);
     await screenshot(preview, 'preview-mobile-navigation-390.png');
     report.snapshots.push('preview-mobile-navigation-390.png');
     await preview.getByRole('navigation', { name: 'Mobile navigation' })
-      .getByRole('link', { name: 'Account', exact: true }).click();
+      .getByRole('link', { name: 'Asteria Compendium', exact: true }).click();
     await preview.getByTestId('site-mega-browse').click();
-    await preview.getByRole('heading', { name: 'Account', exact: true, level: 1 }).waitFor();
+    await preview.getByRole('heading', { name: 'Asteria Compendium', exact: true, level: 1 }).waitFor();
     assert.equal(await preview.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
 
     await preview.setViewportSize({ width: 1440, height: 900 });
