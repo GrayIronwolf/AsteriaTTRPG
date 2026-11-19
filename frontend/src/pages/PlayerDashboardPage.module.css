@@ -16,9 +16,9 @@
 .stat small{text-transform:capitalize;color:var(--ast-color-text-muted)}
 .stat strong{font-size:var(--ast-font-xl);font-variant-numeric:tabular-nums}
 .tabs{display:flex;gap:var(--ast-space-2);overflow-x:auto;padding:var(--ast-space-2) 0}
-.tabs button{cursor:pointer;background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);color:var(--ast-color-text);font:inherit;padding:var(--ast-space-3);white-space:nowrap;min-height:var(--ast-target-min)}
+.tabs button{cursor:pointer;background:transparent;border:0;border-radius:0;color:var(--ast-color-text-bright);white-space:nowrap;padding:2px;min-height:var(--ast-target-min)}
 .tabs button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
-.tabs .selected{background:var(--ast-color-accent-soft);border-color:var(--ast-color-outline-active)}
+.tabs .selected{background:transparent;border:0}
 .list{padding-left:var(--ast-space-5);margin:0;display:grid;gap:var(--ast-space-2);overflow-wrap:anywhere}
 .prose{white-space:pre-wrap;overflow-wrap:anywhere}
 .party{display:grid;gap:var(--ast-space-2)}
@@ -46,9 +46,7 @@
 .coreColumn .resources{display:grid;grid-template-columns:1fr;gap:11px}
 .coreColumn .resource{background:transparent;border:0;padding:0;gap:4px;border-radius:0}
 .coreColumn .resource progress{height:12px;border:1px solid rgb(119 137 155);border-radius:2px;overflow:hidden;background:rgb(11 20 34)}
-.coreColumn .resource:nth-child(1) progress{accent-color:rgb(236 86 136)}
-.coreColumn .resource:nth-child(2) progress{accent-color:rgb(45 213 164)}
-.coreColumn .resource:nth-child(3) progress{accent-color:rgb(55 188 242)}
+
 .coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .coreColumn .stat{padding:7px 4px;border:1px solid rgb(61 89 115);background:rgb(10 28 48);text-align:center;gap:0}
 .coreColumn .stat small{font-size:.67rem}
@@ -59,3 +57,20 @@
 .page{gap:var(--ast-space-3)}
 @media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32%) minmax(240px,1fr)}.campaignColumn{grid-column:1/-1;min-height:180px}.campaignColumn .heroImage{object-position:center}.coreColumn{min-height:300px}}
 @media(max-width:600px){.classicHeader{grid-template-columns:1fr}.portraitColumn{min-height:310px}.coreColumn{min-height:0}.campaignColumn{min-height:190px}.campaignColumn{grid-column:auto}.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Exact three-resource visual meaning from the original HUD.
+ * Custom tracks avoid browser-native <progress> rendering all fills green. */
+.coreColumn .meter{position:relative;display:block;width:100%;height:12px;background:rgb(10 20 32);border:1px solid rgb(118 141 160);border-radius:3px;overflow:hidden}
+.coreColumn .meterFill{display:block;height:100%;background:rgb(237 88 138)}
+.coreColumn [data-resource='sp'] .meterFill{background:rgb(42 216 167)}
+.coreColumn [data-resource='mp'] .meterFill{background:rgb(52 191 242)}
+.coreColumn .resources{gap:10px}
+.coreColumn .resource>div:first-child{margin-bottom:0}
+.portraitCaption h2{font-size:clamp(1.35rem,2.2vw,2.25rem);line-height:1.05}
+.classicHeader{grid-template-columns:minmax(180px,30fr) minmax(280px,40fr) minmax(180px,30fr)}
+.tabs{display:flex;align-items:center;gap:4px;padding:0;min-height:48px;background:transparent;border:0}
+.tabs button{flex:0 0 auto;min-width:0;background:transparent;border:0;box-shadow:none}
+.tabs button:hover,.tabs button:focus-visible,.tabs button[aria-current='page']{background:transparent;border:0}
+.tabs :is(button,a)>span{background:transparent;border:0}
+.sessionStrip{font-size:.83rem}
+@media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32fr) minmax(240px,68fr)}}
