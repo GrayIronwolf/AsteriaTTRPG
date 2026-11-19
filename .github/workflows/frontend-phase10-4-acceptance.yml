@@ -1,0 +1,64 @@
+name: React/Vite Phase 10.4 - reversible release packaging only
+on:
+  pull_request:
+    paths:
+      - "scripts/site-cutover-phase10-4-*"
+      - "scripts/generate-market-pricing-esm.mjs"
+      - "src/systems/items/marketPricing*"
+      - "scripts/site-architecture-phase9-4.test.mjs"
+      - "docs/frontend-overhaul/PHASE-10.4-CUTOVER-READINESS.md"
+      - "package.json"
+      - ".github/workflows/frontend-phase10-4-acceptance.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Pricing equivalence and packaging negative tests
+        run: |
+          npm run site:cutover-phase10-4:pricing
+          npm run site:cutover-phase10-4:package-test
+          npm run test:market-pricing
+          npm run site:architecture-phase9-4
+      - name: Site regressions and no legacy file retirement
+        run: |
+          npm run site:check
+          npm run site:retirement-audit
+          npm run lint
+      - name: Compile full React cutover candidate and stage offline rollback
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED: 'true'
+          VITE_ASTERIA_FORGE_INTEGRATION_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED: 'true'
+          VITE_ASTERIA_COMBAT_ENABLED: 'true'
+          VITE_ASTERIA_PROGRESSION_ENABLED: 'true'
+          VITE_ASTERIA_ECONOMY_ENABLED: 'true'
+          VITE_ASTERIA_DIGITAL_GM_ENABLED: 'true'
+          VITE_FIREBASE_MODE: production
+        run: |
+          npm run site:build
+          npm run site:verify-dist
+          npm run site:cutover-phase10-4:stage
+          npm run site:cutover-phase10-4:verify
+      - name: Upload ephemeral non-deployed release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-10-4-candidate-and-rollback
+          path: ${{ runner.temp }}/asteria-phase-10-4-release/
+          retention-days: 30
+          if-no-files-found: error

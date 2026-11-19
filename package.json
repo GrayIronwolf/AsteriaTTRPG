@@ -191,7 +191,11 @@
     "site:cutover-e2e-phase10-2": "npm run site:cutover-baseline-phase10-1",
     "site:cutover-visual-phase10-3": "node scripts/site-cutover-phase10-1-browser.cjs",
     "site:cutover-visual-phase10-3:unit": "node --test scripts/site-cutover-phase10-3-unit.test.cjs",
-    "site:cutover-visual-phase10-3:report": "node --test scripts/site-cutover-phase10-3-report.test.mjs"
+    "site:cutover-visual-phase10-3:report": "node --test scripts/site-cutover-phase10-3-report.test.mjs",
+    "site:cutover-phase10-4:pricing": "node scripts/generate-market-pricing-esm.mjs --check && node --test scripts/site-cutover-phase10-4-pricing.test.mjs",
+    "site:cutover-phase10-4:package-test": "node --test scripts/site-cutover-phase10-4-package.test.mjs",
+    "site:cutover-phase10-4:stage": "node scripts/site-cutover-phase10-4-package.mjs --stage",
+    "site:cutover-phase10-4:verify": "node scripts/site-cutover-phase10-4-package.mjs --verify"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
