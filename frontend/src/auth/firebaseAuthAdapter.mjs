@@ -3,6 +3,8 @@ import {
 } from './authPolicy.mjs';
 import {connectFirebaseRuntime} from '../firebase/firebaseRuntime.mjs';
 import {createRealtimeSubscriptionHub,createSharedFirestoreSdk} from '../runtime/realtimeSubscriptions.mjs';
+import {createConnectionMonitor} from '../runtime/connectionMonitor.mjs';
+import {createVerifiedServerReads} from '../runtime/verifiedServerReads.mjs';
 import { createAuthObserver, ownedProfile } from './authSessionModel.mjs';
 import { validateAccountRegistrationFields } from '../../../src/state/accountRegistrationRecovery.mjs';
 import { finalizeRegisteredAccountId } from '../../../src/state/accountIdRegistration.mjs';
@@ -50,8 +52,10 @@ export async function createFirebaseAuthAdapter(runtime) {
 async function initializeClient(runtime) {
   const {auth,db,functions,storage,authSdk,firestoreSdk:rawFirestoreSdk,functionsSdk,storageSdk}=
     await connectFirebaseRuntime(runtime);
-  const realtime=createRealtimeSubscriptionHub({auth,firestoreSdk:rawFirestoreSdk});
-  const firestoreSdk=createSharedFirestoreSdk({auth,firestoreSdk:rawFirestoreSdk,hub:realtime});
+  const connection=createConnectionMonitor();
+  const realtime=createRealtimeSubscriptionHub({auth,firestoreSdk:rawFirestoreSdk,connection});
+  const sharedSdk=createSharedFirestoreSdk({auth,firestoreSdk:rawFirestoreSdk,hub:realtime});
+  const firestoreSdk=createVerifiedServerReads({auth,firestoreSdk:sharedSdk,connection});
 
   const readCanonical = async user => {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return null;
@@ -66,6 +70,7 @@ async function initializeClient(runtime) {
     observe: (next, error) => authSdk.onAuthStateChanged(auth, user => {
       // One Auth observer owns the identity boundary for every Firestore view.
       realtime.identityChanged(user?.uid||null);
+      connection.identityChanged(user?.uid||null);
       next(user);
     }, error),
     readProfile: readCanonical,
@@ -331,7 +336,7 @@ async function initializeClient(runtime) {
   const gameplay=Object.freeze({...gmDashboard,media,combat,progression,economy,digitalGM});
   return Object.freeze({
     friends,notifications,characters:characterServices,campaigns,gameplay,
-    subscribe,
+    connection,subscribe,
     readProfile,saveProfile,usernameAvailable,renameUsername,
     readAvatar,uploadAvatar,removeAvatar,sendOwnPasswordReset,checkVerification,
     readAppearancePreferences,saveAppearancePreferences,
