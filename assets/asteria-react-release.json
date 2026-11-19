@@ -1,14 +1,14 @@
 {
   "phase": "10.5",
-  "sourceCommit": "4d458cd8f6b9162419d2261158b1ff92944c5af9",
+  "sourceCommit": "1f7271f9ee4ad1bcb388c19428d600817d3b5cb0",
   "releaseBranch": "react-vite-live",
   "productionPublished": false,
   "rollbackBranch": "main",
   "originalIndexSha256": "e36e9f9f281eba7f84fe03d99af5629191597a0ee8a731637f07327f1512b2f8",
   "rollbackIndexSha256": "e36e9f9f281eba7f84fe03d99af5629191597a0ee8a731637f07327f1512b2f8",
-  "compiledEntrySha256": "15231fc912188563ddcfaa06ef46a58266cd7dc333d5e7d58133fba84ae9c497",
+  "compiledEntrySha256": "78b4a24961c3a63eccf7918f3f2253642d5f5bcb7412453ce466cbda262d2140",
   "firebaseProject": "asteria-ttrpg",
   "publicationRequiresPagesSourceSwitch": true,
   "updatedFromMain": true,
-  "refreshedAt": "2026-11-19T11:01:35.413Z"
+  "refreshedAt": "2026-11-19T13:07:23.226Z"
 }
