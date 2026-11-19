@@ -290,7 +290,7 @@ export function createFirebasePlayerDashboardService({
   async function characterSystemAction(cid,id,action,args=[]){
     requireDashboardId(cid);requireDashboardId(id);
     if(!['manageCharacterCondition','takeCampaignCharacterRest',
-      'updateCampaignCharacterCurrency'].includes(action))
+      'updateCampaignCharacterCurrency','updateCharacterInventory'].includes(action))
       throw Error('Unsupported character system action.');
     if(!functions||!functionsSdk?.httpsCallable)
       throw Error('Character system actions are unavailable.');
@@ -334,7 +334,16 @@ export function createFirebasePlayerDashboardService({
       [denomination,amount,{source:'React Player Dashboard Currency'}]);
   }
 
+  async function useQuickItem(cid,id,itemId,expectedRevision){
+    if(typeof itemId!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(itemId))
+      throw Error('Invalid quick-item identifier.');
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)
+      throw Error('Invalid character revision.');
+    return characterSystemAction(cid,id,'updateCharacterInventory',
+      [{type:'use',itemId,expectedCoreRevision:expectedRevision}]);
+  }
+
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
-    takeRest,adjustCurrency});
+    takeRest,adjustCurrency,useQuickItem});
 }
