@@ -290,6 +290,32 @@ export function createFirebaseGMDashboardService({
     return {ok:true};
   }
 
+  async function manageCondition(cid,characterId,input){
+    assertGMCampaignId(cid);assertGMCampaignId(characterId);
+    if(!input||typeof input!=='object'||Array.isArray(input)||
+      !functions||!functionsSdk?.httpsCallable)
+      throw Error('Condition management is unavailable.');
+    const request=input.action==='remove'
+      ?{action:'remove',id:String(input.id||'').slice(0,160)}
+      :{name:String(input.name||'').trim().slice(0,100),
+        description:String(input.description||'').slice(0,1000),
+        duration:{unit:'until-removed'},source:'GM Dashboard'};
+    if(request.action==='remove'&&!/^[a-zA-Z0-9_:.-]{1,160}$/.test(request.id)||
+      !request.action&&!request.name)
+      throw Error('Enter a valid condition name or identifier.');
+    const {uid}=await verifyCampaign(cid);
+    const linked=await firestoreSdk.getDocFromServer(
+      firestoreSdk.doc(db,'campaigns',cid,'characters',characterId));
+    same(uid);
+    if(!linked.exists())throw Error('Linked character was not found.');
+    const fn=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await fn({action:'manageCharacterCondition',
+      args:[cid,characterId,request],requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)throw Error(result.data?.error||'Condition action rejected.');
+    return result.data;
+  }
+
   async function reviewRest(cid,characterId,requestId,status){
     assertGMCampaignId(cid);assertGMCampaignId(characterId);
     if(typeof requestId!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(requestId)||
@@ -314,5 +340,5 @@ export function createFirebaseGMDashboardService({
     return result.data;
   }
 
-  return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout,reviewRest});
+  return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout,reviewRest,manageCondition});
 }
