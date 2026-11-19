@@ -166,6 +166,19 @@ function CampaignGM({api,uid,campaignId}) {
       if(scope.current===token)setBusy(false);
     }
   };
+  const manageCondition=async(characterId,input)=>{
+    if(busy||!snapshot)return;
+    setBusy(true);setError('');setMessage('');
+    const token=scope.current;
+    try{
+      await api.manageCondition(campaignId,characterId,input);
+      if(scope.current===token)setMessage('Condition updated.');
+    }catch(e){
+      if(scope.current===token)setError(e?.message||'Condition update failed.');
+    }finally{
+      if(scope.current===token)setBusy(false);
+    }
+  };
   const reviewRest=async(characterId,requestId,status)=>{
     if(busy||!snapshot)return;
     setBusy(true);setError('');setMessage('');
@@ -220,7 +233,8 @@ function CampaignGM({api,uid,campaignId}) {
     {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
-          session={live} onNavigate={setTab} onReviewRest={reviewRest} busy={busy}
+          session={live} onNavigate={setTab} onReviewRest={reviewRest}
+          onCondition={manageCondition} busy={busy}
           available={{combat:combatEnabled,
             progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
