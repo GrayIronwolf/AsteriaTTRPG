@@ -147,7 +147,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
       gridVisible:map.gridVisible,fogEnabled:map.fogEnabled,
       fogCells:map.fogCells,metresPerCell:map.metresPerCell,tokens:map.tokens
     }:empty());
-    setError('');setNotice('');
+    setError('');
   },[map?.id,map?.updatedAt]);
   const run=async(op,success)=>{
     if(busy)return;
