@@ -104,3 +104,15 @@ test('GM condition controls preserve the original secured source of truth',async
   assert.ok(service.includes("action:'manageCharacterCondition'"));
   assert.ok(service.includes('verifyCampaign(cid)'));
 });
+
+test('Original Inventory and Crafting tabs route directly into active secured economy workspaces',()=>{
+  const economy=read('frontend/src/economy/EconomyWorkspace.jsx');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  assert.ok(economy.includes("initialTab='Inventory'"));
+  assert.ok(economy.includes("initialTab='Party Loot'"));
+  assert.ok(player.includes("initialTab={tab==='Crafting'?'Crafting':'Inventory'}"));
+  assert.ok(gm.includes("tab==='inventory'?'Inventory':tab==='crafting'?'Crafting':'Party Loot'"));
+  assert.ok(player.includes("api.castSpell("));
+  assert.ok(player.includes("api.useQuickItem("));
+});
