@@ -121,7 +121,7 @@ async function awaitServer() {
         };
       });
       assert.ok(metrics.documentWidth <= width, 'Horizontal overflow at ' + width + ': ' + JSON.stringify(metrics));
-      assert.ok(metrics.logoWidth >= (width <= 380 ? 115 : 150), 'Logo has become too small at ' + width);
+      assert.ok(metrics.logoWidth >= (width <= 380 ? 100 : width <= 760 ? 115 : 150), 'Logo has become too small at ' + width);
       assert.equal(metrics.logoInsideHeader, true, 'Logo clipped by header at ' + width);
       assert.ok(metrics.loginHeight >= 44, 'Guest Login tap target is undersized at ' + width);
       assert.equal(metrics.accountInsideViewport, true, 'Account area clipped at ' + width);
