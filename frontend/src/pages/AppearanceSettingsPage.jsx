@@ -14,15 +14,26 @@ export function AppearanceSettingsPage() {
   const { appearance, updateAppearance, resetAppearance } = useAppearance();
 
   return (
-    <PageLayout as="section" width="reading" className={styles.page}
+    <PageLayout as="section" width="wide" className={styles.page}
       labelledBy="site-appearance-title" data-testid="site-appearance-page">
       <PageHeader eyebrow="Website appearance" id="site-appearance-title" title="Appearance" />
+      <div data-page-shell="true">
+        <nav data-page-rail="true" data-page-nav="true" aria-label="Appearance sections">
+          <button type="button" data-page-nav-item="true"
+            onClick={() => document.getElementById('appearance-background')?.scrollIntoView({block:'start'})}>Background colour</button>
+          <button type="button" data-page-nav-item="true"
+            onClick={() => document.getElementById('appearance-buttons')?.scrollIntoView({block:'start'})}>Button theme</button>
+          <button type="button" data-page-nav-item="true"
+            onClick={() => document.getElementById('appearance-typography')?.scrollIntoView({block:'start'})}>Typography</button>
+        </nav>
+        <div data-page-content="true" className={styles.content}>
+
       <BodyText>Choose the backgrounds and typography used by this React website preview.</BodyText>
       <BodyText muted>
         These preferences are saved only in this browser. Your account, notification
         and Firebase settings remain on the existing website until migrated.
       </BodyText>
-      <SurfacePanel as="section" className={styles.section} aria-label="Background settings">
+      <SurfacePanel as="section" className={styles.section} id="appearance-background" aria-label="Background settings">
         <h2 className={styles.sectionTitle}>Background colour</h2>
         <div className={styles.modeGrid} role="group" aria-label="Background colour"
           data-testid="site-appearance-backgrounds">
@@ -39,7 +50,7 @@ export function AppearanceSettingsPage() {
           ))}
         </div>
       </SurfacePanel>
-      <SurfacePanel as="section" className={styles.section} aria-label="Button theme settings">
+      <SurfacePanel as="section" className={styles.section} id="appearance-buttons" aria-label="Button theme settings">
         <h2 className={styles.sectionTitle}>Button theme</h2>
         <div className={styles.fieldGrid}>
           <label className={styles.field} htmlFor="asteria-button-theme">
@@ -63,7 +74,7 @@ export function AppearanceSettingsPage() {
         </label>
         <BodyText muted>Original crystal and metallic bezels are the default. Additional designs can be added here later.</BodyText>
       </SurfacePanel>
-      <SurfacePanel as="section" className={styles.section} aria-label="Typography settings">
+      <SurfacePanel as="section" className={styles.section} id="appearance-typography" aria-label="Typography settings">
         <h2 className={styles.sectionTitle}>Typography</h2>
         <div className={styles.fieldGrid}>
           <label className={styles.field} htmlFor="asteria-body-font">
@@ -99,6 +110,8 @@ export function AppearanceSettingsPage() {
       <div className={styles.actions}>
         <CrystalButton variant="secondary" size="wide" onClick={resetAppearance}
           data-testid="site-appearance-reset">Restore defaults</CrystalButton>
+      </div>
+        </div>
       </div>
     </PageLayout>
   );
