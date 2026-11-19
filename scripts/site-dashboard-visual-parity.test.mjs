@@ -50,8 +50,8 @@ test('restored frame uses original square cell ratios, sliced artwork, and four 
   const css=read('frontend/src/layout/DashboardLayoutWorkspace.module.css');
   const jsx=read('frontend/src/layout/DashboardLayoutWorkspace.jsx');
   assert.match(css,/grid-auto-rows: calc\(\(100cqw - 66px\) \/ 12\)/);
-  assert.match(css,/border-image-source: var\(--ast-dashboard-frame\)/);
-  assert.match(css,/border-image-slice: 12%/);
+  assert.match(css,/border-image-source:\s*var\(--ast-dashboard-frame\)/);
+  assert.match(css,/border-image-slice:\s*12%/);
   assert.doesNotMatch(css,/grid-auto-rows:minmax\(42px/);
   assert.match(jsx,/data-frame-family=\{frame\}/);
   for(const kind of ['wide','ultrawide','tall','square'])assert.ok(jsx.includes("'"+kind+"'"));
