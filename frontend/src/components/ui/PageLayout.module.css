@@ -53,6 +53,13 @@
   min-width: 0;
   padding-inline: var(--ast-page-content-padding);
 }
+.standard [data-page-nav] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ast-space-2);
+  align-items: stretch;
+  min-width: 0;
+}
 .standard [data-page-nav-item] {
   appearance: none;
   display: block;
