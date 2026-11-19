@@ -1,7 +1,7 @@
 import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
-import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
+import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
 /** Phase 6.2: ONE existing Firebase Auth/Firestore runtime and strict user scope.
@@ -285,6 +285,56 @@ export function createFirebasePlayerDashboardService({
     return result.data;
   }
 
+  // All existing character-system mutations remain authoritative server actions.
+  // The player cannot apply GM-only conditions or directly alter Firestore fields.
+  async function characterSystemAction(cid,id,action,args=[]){
+    requireDashboardId(cid);requireDashboardId(id);
+    if(!['manageCharacterCondition','takeCampaignCharacterRest',
+      'updateCampaignCharacterCurrency'].includes(action))
+      throw Error('Unsupported character system action.');
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Character system actions are unavailable.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the linked character owner can perform this action.');
+    const snapshot=await guarded(sessionRef(cid),'Live session is unavailable.');
+    same(uid);
+    if(!snapshot.exists()||gmSessionState(snapshot.data()).editable!==true)
+      throw Error('Start an editable campaign session to use character actions.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action,args:[cid,id,...args],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)
+      throw Error(result.data?.error||'Character system action rejected.');
+    return result.data;
+  }
+  async function removeCondition(cid,id,conditionId){
+    if(typeof conditionId!=='string'||!DASHBOARD_ID.test(conditionId))
+      throw Error('Invalid condition identifier.');
+    return characterSystemAction(cid,id,'manageCharacterCondition',
+      [{action:'remove',id:conditionId}]);
+  }
+  async function takeRest(cid,id,type,options={}){
+    if(!['short','long'].includes(type))throw Error('Invalid rest type.');
+    const soulRecovery=Number(options.soulRecovery??0);
+    const expectedSequence=Number(options.expectedSequence);
+    if(!Number.isSafeInteger(soulRecovery)||soulRecovery<0||soulRecovery>1000000||
+      !Number.isSafeInteger(expectedSequence)||expectedSequence<0)
+      throw Error('Invalid rest request.');
+    return characterSystemAction(cid,id,'takeCampaignCharacterRest',
+      [type,{soulRecovery,expectedSequence}]);
+  }
+  async function adjustCurrency(cid,id,denomination,delta){
+    if(typeof denomination!=='string'||!/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(denomination))
+      throw Error('Invalid currency type.');
+    const amount=Number(delta);
+    if(!Number.isSafeInteger(amount)||amount===0||Math.abs(amount)>1000000)
+      throw Error('Invalid currency amount.');
+    return characterSystemAction(cid,id,'updateCampaignCharacterCurrency',
+      [denomination,amount,{source:'React Player Dashboard Currency'}]);
+  }
+
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
-    saveOwnedLayout,saveCampaignLayout,adjustResource});
+    saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
+    takeRest,adjustCurrency});
 }
