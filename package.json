@@ -195,7 +195,9 @@
     "site:cutover-phase10-4:pricing": "node scripts/generate-market-pricing-esm.mjs --check && node --test scripts/site-cutover-phase10-4-pricing.test.mjs",
     "site:cutover-phase10-4:package-test": "node --test scripts/site-cutover-phase10-4-package.test.mjs",
     "site:cutover-phase10-4:stage": "node scripts/site-cutover-phase10-4-package.mjs --stage",
-    "site:cutover-phase10-4:verify": "node scripts/site-cutover-phase10-4-package.mjs --verify"
+    "site:cutover-phase10-4:verify": "node scripts/site-cutover-phase10-4-package.mjs --verify",
+    "site:dashboard-systems-parity": "node --test scripts/site-dashboard-systems-parity.test.mjs",
+    "site:dashboard-approved-screenshot-parity": "node scripts/site-dashboard-approved-screenshot-parity.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
