@@ -5,7 +5,7 @@ import {
 } from '../appearance/appearanceModel.mjs';
 import { PageLayout, PageHeader } from '../components/ui/PageLayout.jsx';
 import { SurfacePanel } from '../components/ui/SurfacePanel.jsx';
-import { Heading, BodyText } from '../components/ui/Typography.jsx';
+import { BodyText } from '../components/ui/Typography.jsx';
 import { CrystalButton } from '../components/ui/CrystalButton.jsx';
 import styles from './AppearanceSettingsPage.module.css';
 
