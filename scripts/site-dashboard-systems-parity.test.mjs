@@ -87,3 +87,20 @@ test('GM sees pending rest requests and can approve or deny only through server 
   assert.ok(service.includes("action:'reviewCharacterRest'"));
   assert.ok(service.includes('verifyCampaign(cid)'));
 });
+
+test('GM condition controls preserve the original secured source of truth',async()=>{
+  const {gmPartySummary}=await import('../frontend/src/dashboard/gmDashboardModel.mjs');
+  const summary=gmPartySummary([{id:'character-17',name:'Knight',
+    conditions:[{id:'condition-7',name:'Exhausted',active:true}],
+    specialDamage:{soul:{value:4}}}]);
+  assert.equal(summary[0].conditions[0].name,'Exhausted');
+  assert.equal(summary[0].soulDamage,4);
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const panel=read('frontend/src/dashboard/GMOverviewPanels.jsx');
+  const service=read('frontend/src/dashboard/firebaseGMDashboardService.mjs');
+  assert.ok(panel.includes('function GMConditions('));
+  assert.ok(panel.includes('onCondition?.('));
+  assert.ok(gm.includes('api.manageCondition('));
+  assert.ok(service.includes("action:'manageCharacterCondition'"));
+  assert.ok(service.includes('verifyCampaign(cid)'));
+});
