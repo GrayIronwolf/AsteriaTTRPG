@@ -72,3 +72,18 @@ test('rest requests and currency are projected from original character systems',
   assert.equal(ch.conditionDetails[0].allowPlayerRemoval,false);
   assert.ok(ch.activeEffects.length>=1);
 });
+
+test('GM sees pending rest requests and can approve or deny only through server commands',async()=>{
+  const {gmPartySummary}=await import('../frontend/src/dashboard/gmDashboardModel.mjs');
+  const party=gmPartySummary([{id:'character-1',ownerUid:'user-a',name:'Character',
+    restState:{request:{id:'rest-11',status:'pending',soulRecovery:3}}}]);
+  assert.equal(party[0].restRequest.id,'rest-11');
+  assert.equal(party[0].restRequest.soulRecovery,3);
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const panel=read('frontend/src/dashboard/GMOverviewPanels.jsx');
+  const service=read('frontend/src/dashboard/firebaseGMDashboardService.mjs');
+  assert.ok(panel.includes("onReviewRest?.("));
+  assert.ok(gm.includes('api.reviewRest('));
+  assert.ok(service.includes("action:'reviewCharacterRest'"));
+  assert.ok(service.includes('verifyCampaign(cid)'));
+});
