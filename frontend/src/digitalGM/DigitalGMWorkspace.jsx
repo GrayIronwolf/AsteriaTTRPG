@@ -392,10 +392,11 @@ function Audio({data,action}){
       .map(row=>({id:row.id,label:row.title||row.name}))],track,setTrack,'Broadcast track')}
     <div className={styles.actions}>
       <button disabled={action.busy||!track} onClick={()=>action.command('audio',{
-        type:'play-ambient',trackId:track
+        type:'play-ambient',trackId:track,
+        expectedLiveRevision:data.sections.audioLive?.revision||0
       },'GM ambient audio cue sent.')}>Play Ambient Track</button>
       <button disabled={action.busy} onClick={()=>action.command('audio',{
-        type:'stop-ambient'
+        type:'stop-ambient',expectedLiveRevision:data.sections.audioLive?.revision||0
       },'Ambient audio stopped.')}>Stop Ambient Track</button>
     </div>
   </section>;
