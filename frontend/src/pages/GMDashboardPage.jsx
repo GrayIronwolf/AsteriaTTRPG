@@ -19,9 +19,13 @@ import styles from './GMDashboardPage.module.css';
 function ResourceMeter({label,value}) {
   const current=Array.isArray(value)?Number(value[0])||0:0;
   const maximum=Array.isArray(value)?Math.max(0,Number(value[1])||0):0;
+  const percent=maximum?Math.min(100,Math.max(0,current/maximum*100)):0;
   return <div className={styles.resourceMeter} data-resource={label.toLowerCase()}>
     <div><span>{label}</span><strong>{maximum?current+' / '+maximum:'—'}</strong></div>
-    <progress aria-label={label+' resources'} max={maximum||1} value={Math.max(0,Math.min(current,maximum))}/>
+    <div className={styles.meter} role="progressbar" aria-label={label+' resources'}
+      aria-valuemin={0} aria-valuemax={maximum} aria-valuenow={Math.max(0,Math.min(current,maximum))}>
+      <span className={styles.meterFill} style={{width:percent+'%'}}/>
+    </div>
   </div>;
 }
 function Party({party}) {
