@@ -71,11 +71,13 @@ async function awaitPreview() {
       .getByRole('link', { name: 'Home', exact: true });
     const style = await navButton.evaluate(el => {
       const css = getComputedStyle(el);
-      return { height: el.getBoundingClientRect().height, clip: css.clipPath, background: css.backgroundImage };
+      const frame = getComputedStyle(el, '::before');
+      const crystal = getComputedStyle(el, '::after');
+      return { height: el.getBoundingClientRect().height, frame: frame.borderImageSource, crystal: crystal.backgroundImage };
     });
     assert.ok(style.height >= 44, 'Primary nav target is smaller than 44px');
-    assert.ok(style.clip.includes('polygon('), 'Asteria crystal spear ends were not applied');
-    assert.ok(style.background.includes('linear-gradient'), 'Gunmetal bezel gradient was not applied');
+    assert.ok(style.frame.includes('button-small-frame'), 'Approved metal bezel image was not applied');
+    assert.ok(style.crystal.includes('button-small-crystal'), 'Approved crystal image was not applied');
     const heroLoaded = await page.getByTestId('site-hero-image').locator('img')
       .evaluate(img => img.complete && img.naturalWidth > 0);
     assert.equal(heroLoaded, true);
