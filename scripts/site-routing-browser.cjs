@@ -133,7 +133,7 @@ async function awaitPreview() {
         await page.getByTestId('site-mega-browse').click();
         await heading('Friends');
         assert.equal(await page.getByTestId('site-mobile-menu').evaluate(el => el.open), false);
-        await page.getByRole('link', { name: 'Return to Home' }).click();
+        await page.getByTestId('site-brand').click();
         await heading('Asteria');
       } else {
         assert.equal(await page.getByTestId('site-brand').isVisible(), true);

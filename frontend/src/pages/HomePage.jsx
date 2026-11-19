@@ -15,7 +15,7 @@ export function HomePage() {
   return (
     <section id="home" aria-labelledby="site-home-title" className={styles.home}>
       <HomeCarousel />
-      <PageLayout as="div" width="wide" className={styles.introduction}>
+      <PageLayout as="div" width="wide" variant="section" className={styles.introduction}>
         <Eyebrow className={styles.eyebrow}>Welcome to</Eyebrow>
         <Heading id="site-home-title" hero>Asteria</Heading>
         <BodyText className={styles.description}>
@@ -36,7 +36,7 @@ export function HomePage() {
           ))}
         </div>
       </PageLayout>
-      <PageLayout as="div" width="wide" className={styles.forgeSection}>
+      <PageLayout as="div" width="wide" variant="section" className={styles.forgeSection}>
         <div className={styles.sectionHeading}>
           <Eyebrow>Begin your story</Eyebrow>
           <h2>Make Asteria your own</h2>

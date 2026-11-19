@@ -1,6 +1,6 @@
 /* Phase 6.1 GM Dashboard: single React/Vite style owner, no legacy overrides. */
-.page{padding-block:var(--ast-space-7) var(--ast-space-9);display:grid;gap:var(--ast-space-4);min-height:65vh;min-width:0}
-.panel{padding:var(--ast-space-5);display:grid;gap:var(--ast-space-4);min-width:0}
+.page{display:grid;gap:var(--ast-space-4);min-width:0}
+.panel{padding:var(--ast-page-panel-padding);display:grid;gap:var(--ast-space-4);min-width:0}
 .panel h2,.person h3{margin:0}
 .cards,.party{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:var(--ast-space-4)}
 .person{display:grid;align-content:start;gap:var(--ast-space-3);min-width:0;padding:var(--ast-space-4);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}

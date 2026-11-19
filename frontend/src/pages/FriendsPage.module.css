@@ -1,15 +1,15 @@
 /* Only React-owned module styles; no overrides of legacy Friends selectors. */
-.page{min-height:65vh;padding-block:var(--ast-space-7) var(--ast-space-9);}
-.layout{display:grid;grid-template-columns:minmax(180px,225px) minmax(0,1fr);
- gap:var(--ast-space-5);margin-top:var(--ast-space-6);}
+.page { min-width: 0; }
+.layout{display:grid;grid-template-columns: minmax(0, var(--ast-page-rail-width)) minmax(0, 1fr);
+ gap: var(--ast-page-layout-gap); margin-top: var(--ast-space-6);}
 .tabs{display:flex;flex-direction:column;gap:var(--ast-space-2);
- border-right:1px solid var(--ast-color-outline-soft);padding-right:var(--ast-space-3);}
+ border-right:1px solid var(--ast-page-rail-rule);padding-right:var(--ast-space-3);}
 .tab{font:inherit;text-align:left;min-height:var(--ast-target-min);padding:var(--ast-space-3);
- border:0;border-left:3px solid transparent;background:transparent;color:var(--ast-color-text);cursor:pointer;}
+ border:0;border-bottom:3px solid transparent;background:transparent;color:var(--ast-color-text);cursor:pointer;}
 .tab:hover,.tab:focus-visible{background:var(--ast-color-accent-soft);}
-.tab[aria-current="page"]{border-color:var(--ast-color-outline-active);background:var(--ast-color-accent-soft);}
+.tab[aria-current="page"]{border-bottom-color:var(--ast-page-nav-selection);background:var(--ast-color-accent-soft);}
 .content{min-width:0;display:grid;gap:var(--ast-space-4);align-content:start;}
-.panel,.confirm{min-width:0;padding:var(--ast-space-5);display:grid;gap:var(--ast-space-4);}
+.panel,.confirm{min-width:0;padding:var(--ast-page-panel-padding);display:grid;gap:var(--ast-space-4);}
 .panel h2,.confirm h2{margin:0;font:600 var(--ast-font-xl) var(--ast-font-display);}
 .heading{display:flex;gap:var(--ast-space-3);justify-content:space-between;align-items:center;flex-wrap:wrap;}
 .find{display:grid;gap:var(--ast-space-2);}

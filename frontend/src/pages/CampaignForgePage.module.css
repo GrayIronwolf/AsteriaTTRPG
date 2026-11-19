@@ -1,5 +1,5 @@
 /* Scoped React/Vite Campaign Forge. No global CSS layering. */
-.page{display:grid;gap:var(--ast-space-4);min-height:60vh;padding-block:var(--ast-space-7) var(--ast-space-9)}
+.page{display:grid;gap:var(--ast-space-4);}
 .panel{padding:var(--ast-space-5);min-width:0;display:grid;gap:var(--ast-space-4)}
 .panel h2,.panel h3{margin:0}
 .heading{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-3);flex-wrap:wrap}

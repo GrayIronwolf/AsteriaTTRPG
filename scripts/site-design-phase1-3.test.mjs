@@ -89,7 +89,7 @@ test('component boundaries and reusable Asteria UI controls are wired to the pag
   assert.doesNotMatch(home, /<SurfacePanel/);
   assert.match(home, /<Heading id="site-home-title" hero>/);
   assert.match(route, /<PageLayout/);
-  assert.match(route, /<CrystalButton variant="primary" size="wide" href="#home"/);
+  assert.doesNotMatch(route, /Return to Home|href="#home"/);
   assert.match(route, /<SurfacePanel/);
   assert.match(buttons, /if \(href != null\)/);
   assert.match(buttons, /aria-current=\{active \? 'page'/);
@@ -132,4 +132,31 @@ test('approved default button material is isolated and theme-safe', () => {
   assert.match(appearance, /BUTTON_THEME_OPTIONS/);
   assert.match(appearance, /buttonTheme: 'asteria-crystal'/);
   assert.match(provider, /root.dataset.asteriaButtonTheme = appearance.buttonTheme/);
+});
+
+test('universal React page layout shares Account-style shell and removes all redundant Home controls', () => {
+  const layout = read(location + 'components/ui/PageLayout.jsx');
+  const shellCss = read(location + 'components/ui/PageLayout.module.css');
+  const tokens = read(location + 'styles/tokens.css');
+  assert.match(layout, /variant = 'standard'/);
+  assert.match(layout, /styles\[variant\]/);
+  assert.match(shellCss, /\.standard > h1/);
+  assert.match(tokens, /--ast-page-rail-width:/);
+  for (const name of [
+    'AccountPage', 'AppearanceSettingsPage', 'AuthPage', 'CampaignForgePage',
+    'CampaignInvitationPage', 'CharacterForgePage', 'CompendiumCataloguePage',
+    'CompendiumEntryPage', 'FriendsPage', 'GMDashboardPage', 'NotificationsPage',
+    'PlayerDashboardPage', 'PresentationPage', 'RoutePreviewPage'
+  ]) {
+    const page = read(location + 'pages/' + name + '.jsx');
+    assert.match(page, /<PageLayout/, name + ' must use the shared shell');
+    assert.doesNotMatch(page, />\s*(?:Return to Home|Back to Home)\s*</i,
+      name + ' has an unwanted Home shortcut');
+  }
+  const home = read(location + 'pages/HomePage.jsx');
+  assert.match(home, /variant="section"/, 'Home must preserve full-width hero layout');
+  for (const name of ['AccountPage','FriendsPage','CharacterForgePage','CompendiumCataloguePage']) {
+    const css = read(location + 'pages/' + name + '.module.css');
+    assert.match(css, /var\(--ast-page-rail-width\)/, name + ' rail is not standardised');
+  }
 });

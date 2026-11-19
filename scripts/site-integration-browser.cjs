@@ -173,7 +173,7 @@ async function auditListeners(page) {
     await page.getByTestId('site-text-size').selectOption('large');
     await page.waitForFunction(() => document.documentElement.dataset.asteriaTextSize==='large');
     assert.equal(await page.evaluate(()=>document.documentElement.dataset.asteriaBackground),'forest');
-    await page.getByRole('link',{name:'Return to Home'}).click();
+    await page.getByTestId('site-brand').click();
     await page.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
     assert.equal(await page.evaluate(()=>location.hash),'#home');
     assert.equal(await page.evaluate(()=>document.documentElement.dataset.asteriaBackground),'forest');
@@ -257,7 +257,7 @@ async function auditListeners(page) {
     await signed.getByRole('heading',{name:'My Profile',level:1}).waitFor();
     assert.equal(await signed.locator('main form, main input').count(),0,
       'Synthetic identity must not grant access to real account features');
-    await signed.getByRole('link',{name:'Return to Home'}).click();
+    await signed.getByTestId('site-brand').click();
     await signed.getByRole('heading',{name:'Asteria',exact:true,level:1}).waitFor();
     assert.equal(await signed.evaluate(()=>location.hash),'#home');
     assert.equal(await signed.getByTestId('site-header-profile').count(),1);
