@@ -126,7 +126,7 @@ test('approved default button material is isolated and theme-safe', () => {
   }
   assert.match(button, /border-image-slice/);
   assert.match(button, /--ast-button-crystal-glow/);
-  assert.doesNotMatch(button, /!important|:global\\(/);
+  assert.doesNotMatch(button, /!important|:global\(/);
   const appearance = read(location + 'appearance/appearanceModel.mjs');
   const provider = read(location + 'appearance/AppearanceProvider.jsx');
   assert.match(appearance, /BUTTON_THEME_OPTIONS/);
