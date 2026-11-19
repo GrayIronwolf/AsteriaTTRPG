@@ -212,7 +212,8 @@ try{
    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg==','base64')
  });
  await gmMaps.getByRole('button',{name:'Upload GM Map'}).click();
- await gmMaps.getByText(/Map uploaded as GM-only/).waitFor({timeout:30000});
+ try{await gmMaps.getByText(/Map uploaded as GM-only/).waitFor({timeout:12000});}
+ catch(error){console.error('MAP UPLOAD ERROR',await gmMaps.innerText());throw error;}
  assert.equal(await gmMaps.getByRole('combobox',{name:'Battle map'}).locator('option').count(),1);
  await gmMaps.getByRole('combobox',{name:'Visibility'}).selectOption('players');
  await gmMaps.getByRole('button',{name:'Save Map Settings'}).click();
