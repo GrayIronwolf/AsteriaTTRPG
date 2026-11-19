@@ -153,6 +153,29 @@ try{
  await player.getByTestId('site-player-dashboard').waitFor({timeout:30000});
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await player.getByTestId('site-player-resources').waitFor({timeout:30000});
+ // Behavioural visual parity: measure actual rendered styles instead of only
+ // searching for frame filenames in CSS. Mobile and desktop both use these.
+ const parity=await player.evaluate(()=>{
+   const hud=document.querySelector('[data-testid="site-player-resources"]');
+   const bars=[...hud.querySelectorAll('[data-resource]')].map(row=>({
+     key:row.getAttribute('data-resource'),
+     value:getComputedStyle(row.querySelector('[role="progressbar"] > span')).backgroundColor
+   }));
+   const tabs=document.querySelector('nav[aria-label="Character dashboard sections"]');
+   const button=tabs?.querySelector('button');
+   const css=button?getComputedStyle(button):null;
+   return {bars,tabCount:tabs?.querySelectorAll('button').length||0,
+     border:css?.borderTopWidth,background:css?.backgroundColor};
+ });
+ assert.deepEqual(parity.bars,[
+   {key:'hp',value:'rgb(237, 88, 138)'},
+   {key:'sp',value:'rgb(42, 216, 167)'},
+   {key:'mp',value:'rgb(52, 191, 242)'}
+ ],'Player HP/SP/MP bars must have original distinct pink/green/cyan colours');
+ assert.ok(parity.tabCount>=21,'Original Player navigation destinations must be visible');
+ assert.equal(parity.border,'0px','Crystal tab must not gain a rectangular border');
+ assert.ok(['rgba(0, 0, 0, 0)','transparent'].includes(parity.background),
+   'Crystal tab must not gain a rectangular painted background');
  const privateRoute=player.url();
  assert.match(privateRoute,/#\/react\/owned-character\//);
  const sourceId=decodeURIComponent(privateRoute.split('/').at(-1));
