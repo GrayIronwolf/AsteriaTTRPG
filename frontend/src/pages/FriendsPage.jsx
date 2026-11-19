@@ -136,10 +136,10 @@ export function FriendsPage() {
     <PageHeader eyebrow="Asteria Social" id="friends-title" title="Friends" />
     <BodyText muted>Exact Account ID search, private friend requests, and friendship management.
       Player discovery and relationship records remain protected by Firebase callables.</BodyText>
-    <div className={styles.layout} data-page-shell="true">
-      <nav className={styles.tabs} data-page-rail="true" data-page-nav="true" aria-label="Friends sections">
+    <div data-page-shell="true">
+      <nav data-page-rail="true" data-page-nav="true" aria-label="Friends sections">
         {TABS.map(([id,label])=><button type="button" key={id}
-          className={styles.tab} data-page-nav-item="true" aria-current={tab===id?'page':undefined}
+          data-page-nav-item="true" aria-current={tab===id?'page':undefined}
           data-testid={'site-friends-tab-'+id} onClick={()=>switchTab(id)}>{label}</button>)}
       </nav>
       <div className={styles.content} data-page-content="true">
