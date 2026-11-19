@@ -136,13 +136,13 @@ export function FriendsPage() {
     <PageHeader eyebrow="Asteria Social" id="friends-title" title="Friends" />
     <BodyText muted>Exact Account ID search, private friend requests, and friendship management.
       Player discovery and relationship records remain protected by Firebase callables.</BodyText>
-    <div className={styles.layout}>
-      <nav className={styles.tabs} aria-label="Friends sections">
+    <div className={styles.layout} data-page-shell="true">
+      <nav className={styles.tabs} data-page-rail="true" data-page-nav="true" aria-label="Friends sections">
         {TABS.map(([id,label])=><button type="button" key={id}
-          className={styles.tab} aria-current={tab===id?'page':undefined}
+          className={styles.tab} data-page-nav-item="true" aria-current={tab===id?'page':undefined}
           data-testid={'site-friends-tab-'+id} onClick={()=>switchTab(id)}>{label}</button>)}
       </nav>
-      <div className={styles.content}>
+      <div className={styles.content} data-page-content="true">
         {error&&<p role="alert" className={styles.notice} data-testid="site-friends-error">{error}</p>}
         {message&&<p role="status" className={styles.notice} data-testid="site-friends-message">{message}</p>}
         {pending&&<SurfacePanel as="section" className={styles.confirm} data-testid="site-friends-confirm">
