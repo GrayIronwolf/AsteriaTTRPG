@@ -4,10 +4,6 @@
 .breadcrumbs a, .returnLink, .page [role="status"] a, .page [role="alert"] a { color:var(--ast-color-accent); text-underline-offset:3px; }
 .category { margin-top:var(--ast-space-3); color:var(--ast-color-text-muted); }
 .identity { margin-block:var(--ast-space-4); color:var(--ast-color-text-muted); font-size:var(--ast-font-xs); overflow-wrap:anywhere; }
-.tabs { display:flex; gap:var(--ast-space-2); flex-wrap:wrap; padding:var(--ast-space-4) 0; margin-top:var(--ast-space-5); border-bottom:1px solid var(--ast-color-outline-soft); }
-.tabs a { display:inline-flex; align-items:center; min-height:var(--ast-target-min); padding:var(--ast-space-2) var(--ast-space-3); color:var(--ast-color-text); background:var(--ast-color-panel-raised); border:1px solid var(--ast-color-outline-soft); border-radius:var(--ast-radius-sm); text-decoration:none; }
-.tabs a[aria-current="page"] { border-color:var(--ast-color-outline-active); background:var(--ast-color-accent-soft); color:var(--ast-color-text-bright); }
-.tabs a:hover, .tabs a:focus-visible { border-color:var(--ast-color-outline-active); }
 .section { padding:var(--ast-space-6); margin-block:var(--ast-space-5); background:var(--ast-color-panel); border:1px solid var(--ast-color-outline-soft); border-radius:var(--ast-radius-panel); }
 .sectionHeading { font-family:var(--ast-font-display); color:var(--ast-color-text-bright); margin-top:0; font-size:var(--ast-font-xl); }
 .notice { font-size:var(--ast-font-sm); color:var(--ast-color-text-muted); }
