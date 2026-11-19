@@ -179,7 +179,7 @@ export function CampaignMapWorkspace({api,campaignId,role='player',selectedMapId
     {stream.error?<p role="alert">{stream.error}</p>:null}
     <label>Battle map
       <select aria-label="Battle map" value={map?.id||''}
-        disabled={Boolean(selectedMapId)} onChange={e=>setSelected(e.target.value)}>
+        disabled={Boolean(selectedMapId)} onChange={e=>{setSelected(e.target.value);setNotice('');}}>
         {!maps.length?<option value="">No maps available</option>:null}
         {maps.map(row=><option key={row.id} value={row.id}>
           {row.name}{row.kind==='video'?' · Looping video':''}
