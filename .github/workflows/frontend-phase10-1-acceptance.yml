@@ -1,0 +1,84 @@
+name: React/Vite Phase 10.1 - guest, player and GM baseline evidence
+on:
+  pull_request:
+    paths:
+      - "scripts/site-cutover-phase10-1-*"
+      - "docs/frontend-overhaul/PHASE-10.1-BASELINE-COMPARISON.md"
+      - "package.json"
+      - ".github/workflows/frontend-phase10-1-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  capture-three-role-baselines:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Prior-phase site unit and cutover architecture regression
+        run: npm run site:check
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Build isolated, explicitly enabled React emulator preview
+        env:
+          VITE_ASTERIA_AUTH_ENABLED: 'true'
+          VITE_ASTERIA_CHARACTER_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_FORGE_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_CONNECTIONS_ENABLED: 'true'
+          VITE_ASTERIA_FORGE_INTEGRATION_ENABLED: 'true'
+          VITE_ASTERIA_GM_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED: 'true'
+          VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED: 'true'
+          VITE_ASTERIA_CAMPAIGN_MEDIA_ENABLED: 'true'
+          VITE_ASTERIA_COMBAT_ENABLED: 'true'
+          VITE_ASTERIA_PROGRESSION_ENABLED: 'true'
+          VITE_ASTERIA_ECONOMY_ENABLED: 'true'
+          VITE_ASTERIA_DIGITAL_GM_ENABLED: 'true'
+          VITE_FIREBASE_MODE: emulator
+        run: |
+          npm run site:build
+          npm run site:verify-dist
+      - name: Capture legacy guest versus React guest, player and GM baselines
+        timeout-minutes: 16
+        env:
+          ASTERIA_CAMPAIGN_V2_CANARY_ENABLED: '1'
+          ASTERIA_JOIN_REQUESTS_ENABLED: '1'
+          ASTERIA_JOIN_REVIEW_ENABLED: '1'
+          ASTERIA_PLAYER_ROSTER_ENABLED: '1'
+          ASTERIA_ROLE_PERMISSIONS_ENABLED: '1'
+          ASTERIA_MEMBER_CONTROLS_ENABLED: '1'
+          ASTERIA_INVITATION_MANAGER_ENABLED: '1'
+          ASTERIA_SECURE_INVITATIONS_ENABLED: '1'
+          ASTERIA_INVITATION_ACCEPTANCE_ENABLED: '1'
+          ASTERIA_CHARACTER_LINK_REQUESTS_ENABLED: '1'
+          ASTERIA_CHARACTER_LINK_APPROVAL_ENABLED: '1'
+          ASTERIA_CHARACTER_LIFECYCLE_ENABLED: '1'
+          ASTERIA_SECURE_INVITE_SIGNING_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        run: |
+          printf 'ASTERIA_SECURE_INVITE_SIGNING_KEY=%s\n' "$ASTERIA_SECURE_INVITE_SIGNING_KEY" > .secret.local
+          trap 'rm -f .secret.local' EXIT
+          npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:cutover-baseline-phase10-1"
+      - name: Verify baseline evidence schema
+        run: node --test scripts/site-cutover-phase10-1.test.mjs
+      - name: Upload role screenshots and comparison report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-10-1-role-baselines
+          path: ${{ runner.temp }}/asteria-phase-10-1-baselines/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Restore guest-only build before exiting
+        if: always()
+        run: |
+          npm run site:build
+          npm run site:verify-dist

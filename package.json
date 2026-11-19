@@ -185,7 +185,8 @@
     "site:progression-browser": "node scripts/site-progression-phase7-2-browser.cjs",
     "site:economy-browser": "node scripts/site-economy-phase7-3-browser.cjs",
     "site:digital-gm-browser": "node scripts/site-digital-gm-phase7-4-browser.cjs",
-    "site:architecture-phase9-4": "node --test scripts/site-architecture-phase9-4.test.mjs"
+    "site:architecture-phase9-4": "node --test scripts/site-architecture-phase9-4.test.mjs",
+    "site:cutover-baseline-phase10-1": "node scripts/site-cutover-phase10-1-browser.cjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
