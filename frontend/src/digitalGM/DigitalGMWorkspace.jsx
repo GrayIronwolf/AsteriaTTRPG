@@ -413,12 +413,17 @@ function Recordings({data}){
   </section>;
 }
 export function GMDigitalGMWorkspace({api,campaignId}){
-  const [area,setArea]=useState('library'),[data,setData]=useState(null),
+  const [area,setArea]=useState('library'),[snapshot,setSnapshot]=useState({area:'',data:null}),
     [error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),
     [search,setSearch]=useState('');
-  useEffect(()=>{setData(null);setError('');setMessage('');},[area,campaignId,api]);
-  const update=React.useCallback(v=>setData(v),[]);
-  const fail=React.useCallback(e=>{setData(null);setError(e?.message||'GM access denied.');},[]);
+  // Never render a different tab's stale snapshot. Area-change effects run
+  // after paint and would otherwise briefly mount a form with old data, then
+  // destroy the player's in-progress input on first interaction.
+  const data=snapshot.area===area?snapshot.data:null;
+  useEffect(()=>{setError('');setMessage('');},[area,campaignId,api]);
+  const update=React.useCallback(v=>setSnapshot({area,data:v}),[area]);
+  const fail=React.useCallback(e=>{setSnapshot({area,data:null});
+    setError(e?.message||'GM access denied.');},[area]);
   const action={
     busy,
     async world(op,success){if(busy)return false;setBusy(true);setError('');setMessage('');
