@@ -7,7 +7,8 @@ import {requireDashboardId,playerCharacterProjection,playerCampaignAccess,
  * Reads only; gameplay actions and dashboard-layout writes are later phases.
  */
 export function createFirebasePlayerDashboardService({
-  auth,db,firestoreSdk,readCanonical,enabled=false,layoutEnabled=false
+  auth,db,firestoreSdk,readCanonical,functions=null,functionsSdk=null,
+  enabled=false,layoutEnabled=false
 }){
   if(!auth||!db||!firestoreSdk||typeof readCanonical!=='function')
     throw Error('A verified Firebase adapter is required.');
@@ -255,5 +256,34 @@ export function createFirebasePlayerDashboardService({
     same(uid);return {ok:true};
   }
 
-  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,saveOwnedLayout,saveCampaignLayout});
+  /** Original HP/SP/MP +/- actions use the existing receipt-backed callable,
+   * with fresh linked-owner verification and server-enforced live-session rules.
+   * No direct Firestore resource writes or second Firebase app. */
+  async function adjustResource(cid,id,key,delta){
+    requireDashboardId(cid);requireDashboardId(id);
+    const resource=String(key||'').toLowerCase();
+    const amount=Number(delta);
+    if(!['hp','sp','mp'].includes(resource)||!Number.isSafeInteger(amount)||
+      amount===0||Math.abs(amount)>10000)
+      throw Error('Invalid resource adjustment.');
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Live character resource actions are unavailable.');
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)
+      throw Error('Only the linked character owner can adjust resources.');
+    const session=await guarded(sessionRef(cid),'Live session is unavailable.');
+    same(uid);
+    if(!session.exists()||gmSessionState(session.data()).editable!==true)
+      throw Error('Start an editable campaign session to adjust resources.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const result=await callable({action:'updateCampaignCharacterResource',
+      args:[cid,id,resource,amount,{source:'React Player Dashboard HUD'}],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(result.data?.ok!==true)throw Error(result.data?.error||'Resource update rejected.');
+    return result.data;
+  }
+
+  return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
+    saveOwnedLayout,saveCampaignLayout,adjustResource});
 }
