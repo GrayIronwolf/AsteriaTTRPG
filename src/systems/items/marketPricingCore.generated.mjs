@@ -226,8 +226,8 @@
     marketPricingStatus,
     formatMarks
   });
-export const {
-  VERSION,
+export const VERSION = pricing.VERSION;
+export {
   MARKET_VALUE_KEYS,
   MARKET_PRICE_KEYS,
   LEGACY_VALUE_KEYS,
@@ -251,5 +251,5 @@ export const {
   copperToMarks,
   marketPricingStatus,
   formatMarks
-} = pricing;
+};
 export default pricing;
