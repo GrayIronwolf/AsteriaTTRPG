@@ -203,7 +203,7 @@ try{
  await owner.getByRole('button',{name:'Close editor'}).click();
  // Phase 6.4: same campaign and accounts, live Firestore/Storage/Functions.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Battle-maps',exact:false}).click();
+ await owner.getByRole('button',{name:'Battle Maps',exact:true}).click();
  await owner.getByTestId('site-gm-campaign-maps').waitFor({timeout:30000});
  const gmMaps=owner.getByTestId('site-gm-campaign-maps');
  await gmMaps.getByRole('textbox',{name:'Map name'}).fill('Looping Frostwind Map');
@@ -291,7 +291,7 @@ try{
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
  // Phase 7.2: authenticated XP, progression, and Universal Check Requests.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'Checks-progression'}).click();
+ await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmProgress=owner.getByTestId('site-gm-progression');
  await gmProgress.waitFor({timeout:30000});
  await gmProgress.getByLabel('Linked character').selectOption(linkedId);
