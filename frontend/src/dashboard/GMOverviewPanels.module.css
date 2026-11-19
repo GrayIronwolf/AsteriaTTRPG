@@ -6,3 +6,12 @@
 .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;padding:8px;border:1px solid var(--ast-color-outline-soft);background:rgb(10 25 40 / .65)}
 .row strong{overflow-wrap:anywhere}
 .row small{grid-column:1/-1;color:var(--ast-color-text-muted)}
+
+.section h4{margin:0}
+.section label{display:grid;gap:4px;font-size:.85rem}
+.section input,.section select{min-height:38px;min-width:0;max-width:100%;background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text-bright)}
+.section button,.actions button{min-height:36px;padding:5px 10px;border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel-raised);color:var(--ast-color-text-bright);cursor:pointer}
+.section button:disabled,.actions button:disabled{opacity:.5;cursor:not-allowed}
+.section button:focus-visible,.actions button:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row{list-style:none}
