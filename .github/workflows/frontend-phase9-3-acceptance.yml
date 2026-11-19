@@ -1,0 +1,48 @@
+name: React/Vite Phase 9.3 - HTML bridge and compiled artifact acceptance
+on:
+  pull_request:
+    paths:
+      - "react-dist/**"
+      - "index.html"
+      - "frontend/index.html"
+      - "src/dev-entry.js"
+      - "src/app/legacyBridge.js"
+      - "scripts/fixtures/**"
+      - "tools/weapon-crafting.html"
+      - "scripts/site-legacy-assets-phase9-3.test.mjs"
+      - "docs/frontend-overhaul/PHASE-9.3-HTML-BRIDGE-ASSET-RETIREMENT.md"
+      - "package.json"
+      - ".github/workflows/frontend-phase9-3-acceptance.yml"
+  workflow_dispatch:
+jobs:
+  html-bridge-compiled-assets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 9.3 HTML, bridge and cached asset integrity
+        run: |
+          npm run site:legacy-assets-phase9-3
+          npm run site:legacy-js-phase9-2
+          npm run site:legacy-css-phase9-1
+          npm run site:retirement-audit
+      - name: Full original and replacement regression suites
+        run: |
+          npm run site:check
+          npm run test:account-pages
+          npm run test:dashboard
+      - name: Lint and isolated React/Vite production build
+        run: |
+          npx eslint frontend/src
+          npm run site:build
+          npm run site:verify-dist
+      - name: Validate legacy script syntax, without modifying build output
+        run: |
+          node --check src/dev-entry.js
+          node --check src/app/legacyBridge.js
+          node --check scripts/site-legacy-assets-phase9-3.test.mjs
