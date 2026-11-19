@@ -32,7 +32,7 @@ function StatPanel({record}){
     </div>)}
   </div>;
 }
-function Resources({character}){
+function Resources({character,editable=false,busy=false,onAdjust}){
   return <div className={styles.resources} data-testid="site-player-resources">
     {['hp','sp','mp'].map(key=>{
       const pair=character[key];
@@ -46,11 +46,17 @@ function Resources({character}){
           aria-valuemax={maximum} aria-valuenow={Math.max(0,Math.min(maximum,current))}>
           <span className={styles.meterFill} style={{width:percent+'%'}}/>
         </div>
+        <div className={styles.resourceActions}>
+          <button type="button" aria-label={'Decrease '+key.toUpperCase()} disabled={!editable||busy||current<=0}
+            onClick={()=>onAdjust(key,-1)}>−</button>
+          <button type="button" aria-label={'Increase '+key.toUpperCase()} disabled={!editable||busy||current>=maximum}
+            onClick={()=>onAdjust(key,1)}>+</button>
+        </div>
       </div>;
     })}
   </div>;
 }
-function ClassicPlayerHeader({character,campaign,owned}){
+function ClassicPlayerHeader({character,campaign,owned,editable,resourceBusy,onAdjust}){
   const progress=character.xpMax>0?Math.min(100,Math.max(0,character.xp/character.xpMax*100)):0;
   return <section className={styles.classicHeader} aria-label="Character and campaign information">
     <div className={styles.portraitColumn}>
@@ -67,7 +73,7 @@ function ClassicPlayerHeader({character,campaign,owned}){
     </div>
     <div className={styles.coreColumn}>
       <h3>Core Resources</h3>
-      <Resources character={character}/>
+      <Resources character={character} editable={editable} busy={resourceBusy} onAdjust={onAdjust}/>
       <h3>Characteristics</h3>
       <StatPanel record={character}/>
     </div>
@@ -164,7 +170,8 @@ function Sections({character,tab,owned}){
 }
 function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
-    [error,setError]=useState(''),[tab,setTab]=useState('Dashboard');
+    [error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),
+    [resourceBusy,setResourceBusy]=useState(''),[resourceError,setResourceError]=useState('');
   const generation=useRef(0);
   useEffect(()=>{
     const token=++generation.current;
@@ -190,8 +197,18 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
   const progressionEnabled=Boolean(c&&data.owner&&progression?.availability().enabled);
   const economyEnabled=Boolean(c&&data.owner&&economy?.availability().enabled);
   const digitalGMEnabled=Boolean(c&&digitalGM?.availability().enabled);
+  const resourceEditable=Boolean(c&&data.owner&&c.session.editable&&api.adjustResource);
+  const adjustResource=async(key,amount)=>{
+    if(!resourceEditable||resourceBusy)return;
+    setResourceBusy(key);setResourceError('');
+    try{await api.adjustResource(campaignId,characterId,key,amount);}
+    catch(reason){setResourceError(reason?.message||'Resource update failed.');}
+    finally{setResourceBusy('');}
+  };
   return <>
-    <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}/>
+    <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}
+      editable={resourceEditable} resourceBusy={Boolean(resourceBusy)} onAdjust={adjustResource}/>
+    {resourceError?<p role="alert">{resourceError}</p>:null}
     <div className={styles.sessionStrip} role="status">
       {c?(c.session.editable?'Live editing enabled':'Session is not active. Gameplay actions are unavailable.'):'Unassigned character — link to a campaign to enable live gameplay.'}
       <CrystalButton href="#/character-forge" size="compact">Character Forge</CrystalButton>
