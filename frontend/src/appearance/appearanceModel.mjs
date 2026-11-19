@@ -45,8 +45,14 @@ export const DEFAULT_APPEARANCE = Object.freeze({
   bodyFont: 'system',
   displayFont: 'system',
   textSize: 'normal',
-  buttonTheme: 'asteria-crystal'
+  buttonTheme: 'asteria-crystal',
+  crystalColor: '#1f7dff'
 });
+
+function allowCrystalColor(value) {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)
+    ? value.toLowerCase() : DEFAULT_APPEARANCE.crystalColor;
+}
 
 function allow(value, options, fallback) {
   return typeof value === 'string' && options.some(item => item.id === value)
@@ -60,7 +66,8 @@ export function normalizeAppearance(input) {
     bodyFont: allow(source.bodyFont, FONT_OPTIONS, DEFAULT_APPEARANCE.bodyFont),
     displayFont: allow(source.displayFont, FONT_OPTIONS, DEFAULT_APPEARANCE.displayFont),
     textSize: allow(source.textSize, TEXT_SIZE_OPTIONS, DEFAULT_APPEARANCE.textSize),
-    buttonTheme: allow(source.buttonTheme, BUTTON_THEME_OPTIONS, DEFAULT_APPEARANCE.buttonTheme)
+    buttonTheme: allow(source.buttonTheme, BUTTON_THEME_OPTIONS, DEFAULT_APPEARANCE.buttonTheme),
+    crystalColor: allowCrystalColor(source.crystalColor)
   };
 }
 
