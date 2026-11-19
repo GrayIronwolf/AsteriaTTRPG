@@ -24,10 +24,6 @@ function ResourceMeter({label,value}) {
     <progress aria-label={label+' resources'} max={maximum||1} value={Math.max(0,Math.min(current,maximum))}/>
   </div>;
 }
-function Resource({label,value}) {
-  return <span className={styles.resource}>{label}: {Array.isArray(value)
-    ? value[0]+' / '+value[1] : '—'}</span>;
-}
 function Party({party}) {
   return <div className={styles.party} data-testid="site-gm-party">
     {party.length===0?<BodyText muted>No linked characters in this campaign yet.</BodyText>:
