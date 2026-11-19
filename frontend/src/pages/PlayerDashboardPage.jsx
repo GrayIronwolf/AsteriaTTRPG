@@ -201,7 +201,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
     </nav>
     {digitalGMEnabled&&tab==='Campaign World & Session'?<PlayerDigitalGMWorkspace
       key={campaignId} api={digitalGM} campaignId={campaignId}/>:null}
-    {economyEnabled&&tab==='Inventory & Trading'?<PlayerEconomyWorkspace
+    {economyEnabled&&['Inventory & Trading','Inventory','Crafting'].includes(tab)?<PlayerEconomyWorkspace
       key={campaignId+':'+characterId} api={economy} campaignId={campaignId} characterId={characterId}/>:null}
     {progressionEnabled&&tab==='Progression'?<PlayerProgressionWorkspace
       api={progression} campaignId={campaignId} characterId={characterId} section="progression"/>:null}
@@ -245,10 +245,10 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,uid,campaignI
           if(id==='party')return <ul>{(c?.party||[]).map(s=><li key={s.id}>{s.name}</li>)}</ul>;
           if(id==='weapons'||id==='quick')return <ul>{ch.equipment.map((s,i)=><li key={i}>{s.name}</li>)}</ul>;
           if(id==='shortcutCharacter')return <p>Open the Character tab to inspect your sheet.</p>;
-          if(id==='shortcutInventory')return <p>Open the Equipment tab to inspect inventory.</p>;
+          if(id==='shortcutInventory')return <p>Open the Inventory tab to inspect inventory.</p>;
           return null;
         }}/>
-      :['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true)?null:
+      :(economyEnabled&&['Inventory','Crafting'].includes(tab))||(['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
         <Sections character={ch} owned={data.owner} tab={tab}/>}
     
   </>;
