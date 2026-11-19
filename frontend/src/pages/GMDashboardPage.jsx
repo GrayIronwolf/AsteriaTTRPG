@@ -158,7 +158,9 @@ function CampaignGM({api,uid,campaignId}) {
         renderPanel={id=>{
           if(id==='partySummary')return <Party party={snapshot.party}/>;
           if(id==='encounter')return combatEnabled?
-            <GMCombatWorkspace api={api.combat} campaignId={campaignId}/>:
+            <button type="button" onClick={()=>setTab('combat')}>
+              Open Combat · Session {live.status}
+            </button>:
             <p>Session: {live.status}. Combat commands migrate in Phase 7.</p>;
           if(id==='restRequests')return <p>Rest requests migrate in Phase 7.</p>;
           if(id==='xp')return <p>XP distribution migrates in Phase 7.</p>;
