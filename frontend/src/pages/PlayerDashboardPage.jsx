@@ -215,6 +215,8 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         soulRecovery:details.soulRecovery,expectedSequence:ch.restSequence});
       else if(type==='adjustCurrency')await api.adjustCurrency(campaignId,characterId,
         details.key,details.delta);
+      else if(type==='useQuickItem')await api.useQuickItem(campaignId,characterId,
+        details.itemId,details.revision);
     }catch(e){setResourceError(e?.message||'Character action failed.');}
     finally{setResourceBusy('');}
   };
