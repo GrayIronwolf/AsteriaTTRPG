@@ -5,6 +5,7 @@ import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 import {projectPlayerSystems} from './playerSystemsProjection.mjs';
 import {projectJournal} from './playerJournalModel.mjs';
 import {projectGallery} from './playerGalleryModel.mjs';
+import {playerQuestProjection} from './playerQuestModel.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -132,7 +133,7 @@ export function playerCharacterProjection(value,{owned=false,ownerSource=null}={
         usable:remaining>0&&!unidentified&&Boolean(found?.effect||found?.effects),
         image:unidentified?'':safeDashboardArtwork(found?.image,found?.icon,found?.artwork)}):null;
     })),
-    quests:items(value.quests||value.questAssignments,12),
+    quests:playerQuestProjection(value),
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
     journal:owned?projectJournal(value.journal):Object.freeze([]),
     gallery:projectGallery(value,ownerSource||{},owned),
