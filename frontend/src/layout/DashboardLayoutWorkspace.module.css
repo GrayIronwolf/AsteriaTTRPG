@@ -31,3 +31,20 @@
   .freeformGrid{display:flex;flex-direction:column;gap:10px;height:auto}
   .freeformGrid .tile{position:relative;left:auto;top:auto;width:100%;height:auto;min-height:220px}
 }
+
+
+/* Phase 6.1B: edit handles and floating view are scoped to the React workspace. */
+.panelActions{position:absolute;right:clamp(12px,2cqw,24px);top:clamp(12px,2cqw,22px);z-index:9;display:flex;gap:4px;align-items:center}
+.panelActions button,.resizeHandle{font:inherit;color:var(--ast-color-text-bright);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline);border-radius:var(--ast-radius-sm);min-width:29px;min-height:29px;cursor:pointer;padding:2px 5px}
+.panelActions button:focus-visible,.resizeHandle:focus-visible{outline:3px solid var(--ast-color-focus);outline-offset:2px}
+.panelActions .dragHandle{touch-action:none;user-select:none;cursor:grab}
+.resizeHandle{position:absolute;bottom:clamp(10px,1.8cqw,20px);right:clamp(10px,1.8cqw,20px);z-index:9;cursor:nwse-resize;touch-action:none;user-select:none}
+.editing .tile{outline:1px dashed var(--ast-color-outline-active);outline-offset:-4px}
+.minimized .content{visibility:hidden;pointer-events:none;height:0;min-height:0;max-height:0;overflow:hidden}
+.minimized{min-height:85px}
+.freeformGrid .minimized{height:min(var(--freeform-h),85px)}
+.maximized{position:fixed;inset:4vh 3vw;width:94vw;height:92vh;z-index:1000;padding:clamp(18px,2vw,28px)}
+.freeformGrid .maximized{position:fixed;inset:4vh 3vw;width:94vw;height:92vh;z-index:1000}
+.maximized .content{overflow:auto}
+.editNote{margin:var(--ast-space-2) 0;color:var(--ast-color-text-muted);font-size:var(--ast-font-sm)}
+@container (max-width:900px){.panelActions{right:18px;top:14px}.maximized,.freeformGrid .maximized{position:fixed;inset:4vh 3vw;width:94vw;height:92vh;z-index:1000}}
