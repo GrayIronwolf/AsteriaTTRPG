@@ -9,6 +9,7 @@ import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {PlayerOverviewPanel} from '../player/PlayerOverviewPanels.jsx';
+import {PlayerGalleryWorkspace} from '../player/PlayerGalleryWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
@@ -391,12 +392,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         <li key={member.id}>{member.name} · Level {member.level}</li>)}</ul>:
         <BodyText muted>No campaign party is linked to this character.</BodyText>}
     </SurfacePanel>:null}
-    {tab==='Gallery'&&data.owner?<SurfacePanel className={styles.panel}>
-      <h3>Gallery</h3>
-      {ch.image?<img className={styles.galleryPortrait} src={ch.image} alt={ch.name+' portrait'}/>:
-        <BodyText muted>No character portrait has been selected.</BodyText>}
-      <BodyText muted>The full original gallery editor has not yet been migrated.</BodyText>
-    </SurfacePanel>:null}
+    {tab==='Gallery'&&data.owner?<PlayerGalleryWorkspace
+      api={api} character={ch} campaignId={campaignId} characterId={characterId}
+      editable={resourceEditable}/>:null}
     {['Dashboard','Dashboard Settings'].includes(tab)&&data.owner&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}
