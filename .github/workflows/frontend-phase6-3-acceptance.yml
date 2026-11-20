@@ -72,6 +72,14 @@ jobs:
           printf 'ASTERIA_SECURE_INVITE_SIGNING_KEY=%s\n' "$ASTERIA_SECURE_INVITE_SIGNING_KEY" > .secret.local
           trap 'rm -f .secret.local' EXIT
           npx firebase emulators:exec --project demo-asteria --only auth,firestore,functions,storage "npm run site:layout-browser"
+      - name: Upload Phase 4.2 authenticated React dashboard layout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asteria-phase-4-2-layout-evidence
+          path: ${{ runner.temp }}/asteria-phase-4-2-layout-evidence/
+          retention-days: 30
+          if-no-files-found: warn
       - name: Restore disabled guest-only deployment artifact
         run: |
           npm run site:build

@@ -19,7 +19,9 @@ export function DashboardLayoutWorkspace({
   const registry=DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
   const names=new Map(registry.map(item=>[item.id,item.label]));
   const ids=visibleDashboardPanels(view,role);
-  const ordered=viewport==='desktop'?ids:ids.slice().sort((a,b)=>
+  // Physical grid order should match keyboard and reading order even when
+  // desktop-size browsers contain a narrow, stacked dashboard workspace.
+  const ordered=ids.slice().sort((a,b)=>
     (view.placements[a]?.y||0)-(view.placements[b]?.y||0)||
     (view.placements[a]?.x||0)-(view.placements[b]?.x||0));
   if(!ordered.length)return <section className={styles.empty} aria-label={title}>

@@ -402,7 +402,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
     {tab==='Gallery'&&data.owner?<PlayerGalleryWorkspace
       api={api} character={ch} campaignId={campaignId} characterId={characterId}
       editable={resourceEditable}/>:null}
-    {['Dashboard','Dashboard Settings'].includes(tab)&&data.owner&&api.availability().layoutEnabled?
+    {['Dashboard','Dashboard Settings'].includes(tab)&&api.availability().layoutEnabled?
       <DashboardLayoutManager role="player" uid={uid} api={api}
         owner={data.owner} campaignId={campaignId} characterId={characterId}
         initialLayout={ch.dashboardLayout}

@@ -1,6 +1,7 @@
 /* Phase 6.2: real two-account dashboard integration from Forge creation to campaign\n * invitation, membership, character approval, gameplay lifecycle and isolation.\n */
 'use strict';
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
 const {spawn}=require('node:child_process');
 const path=require('node:path');
 const {chromium}=require('playwright');
@@ -61,6 +62,36 @@ async function assertFrameAndPlaque(page,role){
  assert.ok(Number.isFinite(ratio),'Unknown approved frame family: '+state.family);
  assert.ok(state.border>=9&&state.border<=18,'Nine-slice frame border width');
  assert.ok(Math.abs(state.top-state.border*ratio)<1,'Plaque rail parity: '+JSON.stringify(state));
+}
+async function assertSquareEditorCanvas(page){
+ const actual=await page.getByTestId('site-layout-canvas').evaluate(node=>{
+   const style=getComputedStyle(node);
+   return {columns:style.gridTemplateColumns.split(/\s+/).map(Number.parseFloat),
+     row:parseFloat(style.gridAutoRows),width:node.scrollWidth};
+ });
+ assert.equal(actual.columns.length,12,'Editor requires twelve square tracks');
+ for(const width of actual.columns)
+   assert.ok(Math.abs(width-48)<.5,'Track width should match original 48px cells');
+ assert.ok(Math.abs(actual.row-48)<.5,'Original row height is 48px');
+ assert.ok(actual.width>0);
+}
+async function captureLayoutEvidence(page,role,name){
+ if(!process.env.RUNNER_TEMP)return;
+ const root=page.getByTestId('site-'+role+'-layout-workspace');
+ await root.waitFor({timeout:30000});
+ const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-2-layout-evidence');
+ fs.mkdirSync(folder,{recursive:true});
+ const geometry=await root.evaluate(node=>({
+   viewport:{width:window.innerWidth,height:window.innerHeight},
+   layoutViewport:node.querySelector('[data-dashboard-viewport]')?.dataset.dashboardViewport,
+   panels:[...node.querySelectorAll('[data-panel-id]')].map(tile=>({
+     id:tile.dataset.panelId,size:tile.dataset.panelSize,
+     frame:tile.dataset.frameFamily,background:tile.dataset.panelBackground,
+     column:tile.style.gridColumn,row:tile.style.gridRow
+   }))
+ }));
+ fs.writeFileSync(path.join(folder,name+'.json'),JSON.stringify(geometry,null,2));
+ await root.screenshot({path:path.join(folder,name+'.png'),animations:'disabled'});
 }
 async function assertCrystalResources(page){
  const actual=await page.getByTestId('site-player-resources').evaluate(node=>{
@@ -204,10 +235,12 @@ try{
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
  await assertFrameAndPlaque(player,'player');
  await assertCrystalResources(player);
+ await captureLayoutEvidence(player,'player','player-mobile');
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
  catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
  console.error('EDITOR DOM', (await player.locator('html').innerHTML()).slice(0,10000));throw error;}
+ await assertSquareEditorCanvas(player);
  await player.getByRole('button',{name:'Lock Skills',exact:true}).click();
  await player.getByTestId('site-layout-undo').click();
  await player.getByTestId('site-layout-redo').click();
@@ -239,7 +272,9 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-layout-manager').waitFor({timeout:30000});
  await assertFrameAndPlaque(owner,'gm');
+ await captureLayoutEvidence(owner,'gm','gm-desktop');
  await owner.getByTestId('site-layout-open').click();
+ await assertSquareEditorCanvas(owner);
  await owner.getByRole('button',{name:'Lock Campaign Encounter'}).click();
  await owner.getByTestId('site-layout-save').click();
  await owner.getByTestId('site-layout-editor').waitFor({state:'detached',timeout:30000});
@@ -253,6 +288,13 @@ try{
  await owner.getByTestId('site-player-campaign').waitFor({timeout:30000});
  await owner.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await owner.getByText(/GM Read-only/).waitFor({timeout:30000});
+ await owner.getByTestId('site-player-layout-readonly').waitFor({timeout:30000});
+ await assertFrameAndPlaque(owner,'player');
+ await captureLayoutEvidence(owner,'player','gm-readonly-desktop');
+ assert.equal(await owner.getByTestId('site-layout-open').count(),0,
+   'GM cannot edit another character layout');
+ assert.equal(await owner.locator('[data-panel-id="journal"]').count(),0,
+   'GM cannot view private journal panel');
  await owner.getByTestId('site-player-dashboard').getByRole('button',{name:'Journal'}).count().then(n=>
   assert.equal(n,0,'GM must not see private journal tab'));
 

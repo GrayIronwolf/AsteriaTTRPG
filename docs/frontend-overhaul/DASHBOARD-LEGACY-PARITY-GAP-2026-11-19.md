@@ -69,3 +69,11 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
   pre-migration and React/Vite screenshots across Player, GM and read-only
   roles at mobile and desktop widths remains outstanding. PR #334 stays draft,
   unmerged and undeployed until all release phases pass.
+
+## Phase 4.2 — Responsive grid, saved positions and read-only visual parity
+
+- Compared the original dashboard editor's twelve **48px square cells** with the React/Vite editor; the newer stretchable columns and 54px rows drifted from approved placement geometry. Restored 48px tracks directly in the existing React CSS module and aligned drag/resize steps with computed column sizes. No legacy global CSS is imported.
+- Ordered dashboard panel DOM/keyboard navigation by saved y/x placements for all viewports, including narrow desktop-size containers with stacked presentation. Existing x/y/w/h and saved viewport layouts remain unchanged.
+- Added a framed but **non-editable GM read-only view** of the public Player panels. No private owner layout is loaded and the private journal panel and layout editor are hidden. Gameplay data remains filtered by the authenticated player projection.
+- Added round-trip tests for mobile/tablet/desktop placements, locked positions and per-panel background preferences. The existing Firebase/Chromium two-account browser test now checks editor square tracks and read-only isolation, and saves labelled React screenshot/geometry evidence to a CI artifact.
+- This React screenshot evidence **does not replace** approved pre-migration originals. Six authenticated paired comparisons (Player, GM, GM read-only on mobile/desktop) still need authentic original screenshots for final visual release acceptance. Do not merge/deploy PR #334 yet.

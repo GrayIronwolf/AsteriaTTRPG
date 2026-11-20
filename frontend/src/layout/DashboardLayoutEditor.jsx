@@ -34,10 +34,11 @@ function GridCanvas({role,layout,selected,onSelect,onChange,disabled}){
       layout.lockedPositions.includes(id))return;
     const panel=layout.placements[id],node=host.current;
     if(!panel||!node)return;
-    const style=window.getComputedStyle(node),bounds=node.getBoundingClientRect();
+    const style=window.getComputedStyle(node);
     const columnGap=parseFloat(style.columnGap)||0,rowGap=parseFloat(style.rowGap)||0;
-    const width=(bounds.width-11*columnGap)/12;
-    const row=parseFloat(style.gridAutoRows)||54;
+    // Match the approved square grid, excluding the scrolling canvas padding.
+    const width=parseFloat(style.gridTemplateColumns.split(/\s+/)[0])||48;
+    const row=parseFloat(style.gridAutoRows)||48;
     gesture.current={id,kind,pointer:event.pointerId,
       left:event.clientX,top:event.clientY,rect:panel,
       stepX:width+columnGap,stepY:row+rowGap};
