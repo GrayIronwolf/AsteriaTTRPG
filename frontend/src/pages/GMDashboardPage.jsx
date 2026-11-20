@@ -237,7 +237,7 @@ function CampaignGM({api,uid,campaignId}) {
   if(!snapshot)return null;
   const live=snapshot.session;
   return <>
-    <div className={styles.gmHero}>
+    <div className={styles.gmHero} data-testid="site-gm-hero">
       {snapshot.campaign.image?<img className={styles.gmHeroImage} src={snapshot.campaign.image} alt="" loading="lazy"/>:null}
       <div className={styles.head}>
       <div><Eyebrow>GM Dashboard · {snapshot.role}</Eyebrow>
@@ -253,7 +253,7 @@ function CampaignGM({api,uid,campaignId}) {
       <SurfacePanel className={styles.metric}><strong>{live.status}</strong><span>Session Status</span></SurfacePanel>
     </div>
     <div className={styles.gmWorkspaceColumns}>
-      <aside className={styles.partySidebar} aria-label="Player resources">
+      <aside className={styles.partySidebar} data-testid="site-gm-party-sidebar" aria-label="Player resources">
         <h2>Player Resources</h2>
         <Party party={snapshot.party}/>
       </aside>

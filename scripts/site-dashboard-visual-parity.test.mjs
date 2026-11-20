@@ -113,6 +113,21 @@ test('Phase 4.3 CI captures all six authenticated React role/width pairs',()=>{
     'gm-readonly-mobile','gm-readonly-desktop'])assert.ok(script.includes("'"+name+"'"),name);
   assert.ok(script.includes('captureResponsiveLayoutEvidence'));
 });
+test('Phase 4.4 captures the full approved dashboard shell in six authenticated cases',()=>{
+  const browser=read('scripts/site-layout-phase6-3-browser.cjs');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const workflow=read('.github/workflows/frontend-phase6-3-acceptance.yml');
+  assert.ok(player.includes('data-testid="site-player-hero"'));
+  assert.ok(gm.includes('data-testid="site-gm-hero"'));
+  assert.ok(gm.includes('data-testid="site-gm-party-sidebar"'));
+  assert.ok(browser.includes("name+'-full-page.png'"));
+  assert.ok(browser.includes("name+'-shell.json'"));
+  assert.ok(browser.includes('Rectangular navigation background returned'));
+  assert.ok(browser.includes('GM party/resource sidebar missing'));
+  assert.ok(browser.includes('HP/SP/MP colors differ from original'));
+  assert.ok(workflow.includes('asteria-phase-4-4-full-dashboard-evidence'));
+});
 test('resource tracks are rendered with original HP SP MP colour roles',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');

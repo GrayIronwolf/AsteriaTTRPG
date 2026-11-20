@@ -63,7 +63,7 @@ function Resources({character,editable=false,busy=false,onAdjust}){
 }
 function ClassicPlayerHeader({character,campaign,owned,editable,resourceBusy,onAdjust}){
   const progress=character.xpMax>0?Math.min(100,Math.max(0,character.xp/character.xpMax*100)):0;
-  return <section className={styles.classicHeader} aria-label="Character and campaign information">
+  return <section className={styles.classicHeader} data-testid="site-player-hero" aria-label="Character and campaign information">
     <div className={styles.portraitColumn}>
       {character.image?<img className={styles.heroImage} src={character.image} alt="" loading="eager"/>:
         <div className={styles.portraitFallback} aria-hidden="true">{character.name.charAt(0)}</div>}

@@ -79,7 +79,7 @@ async function captureLayoutEvidence(page,role,name){
  if(!process.env.RUNNER_TEMP)return;
  const root=page.getByTestId('site-'+role+'-layout-workspace');
  await root.waitFor({timeout:30000});
- const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-3-responsive-evidence');
+ const folder=path.join(process.env.RUNNER_TEMP,'asteria-phase-4-4-full-dashboard-evidence');
  fs.mkdirSync(folder,{recursive:true});
  const geometry=await root.evaluate(node=>({
    viewport:{width:window.innerWidth,height:window.innerHeight},
@@ -92,6 +92,58 @@ async function captureLayoutEvidence(page,role,name){
  }));
  fs.writeFileSync(path.join(folder,name+'.json'),JSON.stringify(geometry,null,2));
  await root.screenshot({path:path.join(folder,name+'.png'),animations:'disabled'});
+ // Earlier captures only included dashboard tiles, not the original HUD,
+ // crystal menu or GM sidebar. Preserve full-page context for each role.
+ const gm=role==='gm';
+ const dashboard=page.getByTestId(gm?'site-gm-dashboard':'site-player-dashboard');
+ await dashboard.waitFor({timeout:30000});
+ const shell=await dashboard.evaluate((node,isGM)=>{
+   const rect=element=>{
+     if(!element)return null;
+     const r=element.getBoundingClientRect();
+     return {x:r.x,y:r.y,width:r.width,height:r.height};
+   };
+   const hero=node.querySelector('[data-testid="'+(isGM?'site-gm-hero':'site-player-hero')+'"]');
+   const sidebar=isGM?node.querySelector('[data-testid="site-gm-party-sidebar"]'):null;
+   const nav=node.querySelector('nav[aria-label="'+(isGM?'GM dashboard sections':'Character dashboard sections')+'"]');
+   const button=nav?.querySelector('button');
+   const style=button?getComputedStyle(button):null;
+   const frame=button?getComputedStyle(button,'::before'):null;
+   const fills=Object.fromEntries(['hp','sp','mp'].map(key=>{
+     const element=node.querySelector('[data-resource="'+key+'"] [role="progressbar"] > span');
+     return [key,element?getComputedStyle(element).backgroundColor:null];
+   }));
+   return {
+     viewport:{width:innerWidth,height:innerHeight},
+     documentWidth:document.documentElement.scrollWidth,
+     hero:rect(hero),sidebar:rect(sidebar),navigation:rect(nav),
+     menuCount:nav?.querySelectorAll('button').length||0,
+     menuStyle:style?{background:style.backgroundColor,border:style.borderTopWidth,
+       artwork:frame?.borderImageSource}:null,
+     resourceColours:fills
+   };
+ },gm);
+ assert.ok(shell.hero?.height>0,'The dashboard header is missing: '+name);
+ assert.ok(shell.navigation?.width>0,'The dashboard navigation is missing: '+name);
+ assert.ok(shell.menuStyle?.artwork?.includes('url('),'Crystal artwork missing: '+name);
+ assert.equal(shell.menuStyle.background,'rgba(0, 0, 0, 0)',
+   'Rectangular navigation background returned: '+name);
+ assert.equal(shell.menuStyle.border,'0px',
+   'Rectangular navigation border returned: '+name);
+ assert.ok(shell.documentWidth<=shell.viewport.width+1,
+   'Dashboard has full-page horizontal overflow: '+name);
+ if(gm){
+   assert.ok(shell.sidebar?.width>0,'GM party/resource sidebar missing: '+name);
+   assert.equal(shell.menuCount,24,'Original GM navigation destinations missing: '+name);
+ }else{
+   assert.ok(shell.menuCount>=18,'Original Player menu has missing destinations: '+name);
+   assert.deepEqual(shell.resourceColours,{
+     hp:'rgb(237, 88, 138)',sp:'rgb(42, 216, 167)',mp:'rgb(52, 191, 242)'
+   },'HP/SP/MP colors differ from original: '+name);
+ }
+ fs.writeFileSync(path.join(folder,name+'-shell.json'),JSON.stringify(shell,null,2));
+ await page.screenshot({path:path.join(folder,name+'-full-page.png'),
+   fullPage:true,animations:'disabled'});
 }
 // Save actual authenticated React screenshots and geometry, not fabricated
 // pre-migration reference images. Final original-vs-React parity is separate.
