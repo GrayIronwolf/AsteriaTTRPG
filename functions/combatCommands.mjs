@@ -11,6 +11,7 @@ import { effectTimeMs } from '../src/state/effectsEngine.mjs';
 import { calculateCharacterAC, validateEquipmentChange } from '../src/systems/armour/armourSystem.mjs';
 import { normalizeInventoryItems, slug } from '../src/state/liveWorkspaceModel.mjs';
 import { encounterSourceResources, setEncounterResource } from '../src/state/encounterResourceModel.mjs';
+import {normalizePreparedEncounters,preparedEncounterRoster} from '../src/state/preparedEncounterModel.mjs';
 import {combatMapMovePlan,synchronizeCombatMapTokens,activeMapEncounter} from '../src/state/battleMapCombatModel.mjs';
 import { currentCombatant, initiativeResult, initiativeOrder, combatOptions, combatRestriction, optionProblem, skillCheck, rollD20, checkResult, attackResult, counterspellResult, validateReactionEquipment, payCombatCosts, changeCombatHP, deathSave, feedback, mixedDamage, rows, SPELL_RANKS, SPELL_SKILL_ACCESS } from '../src/state/combatRules.mjs';
 
@@ -20,7 +21,7 @@ const bounded=(value,min=0,max=1e9)=>{const n=Number(value);if(!Number.isFinite(
 const roll=()=>randomInt(1,21);
 const numberDie=()=> (roll()-1)/20;
 const combatCharacterFields=new Set(['hp','sp','mp','bp','zp','resources','resourceDefinitions','resourceState','conditions','downed','activeEffects','effects','talentResourceEffects','talentResourceState','talentStateVersion','talentEffects','talentRestBonus','talentSavingThrows','talentUsage','acModifiers','specialDamage','soulDamage','coreStateVersion','inventory','equipment']);
-const management=new Set(['map-link','map-move','save','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
+const management=new Set(['map-link','map-move','save','load-prepared','start','next','end','clear','approve','reject','window','close-window','resolve','roll','resolve-reaction','correct','condition','ambush','trigger-prepared']);
 const publicPending=p=>p?{id:p.id,actorId:p.actorId,actorName:p.actorName,optionId:p.actorKind==='player'?p.optionId:'',name:p.actorKind==='player'?p.name:'Creature action',status:p.status,targetIds:p.targetIds,ap:p.ap,bonus:p.bonus,apPaid:Boolean(p.prepaidAP),costs:p.actorKind==='player'?p.costs:{},reactionWindow:p.status==='reactions',reactorId:p.window?.[p.windowIndex||0]?.actorId||'',reactionChoices:p.window?.[p.windowIndex||0]?.choices||[],reaction:p.reaction?{actorId:p.reaction.actorId,name:p.reaction.name}:null,message:p.publicMessage||''}:null;
 
 // An extension of asteriaAction: one encounter document, existing resource/effect
@@ -45,11 +46,22 @@ export function createCombatCommands(context) {
       encounter.combat={participants:{},log:[],...encounter.combat};
       const privateState=copy(gmSnap.data()?.combatState||{pending:null});
       privateState.preparations=privateState.preparations||{};
-      const incoming=input.operation==='save'?input.encounter?.combatants||[]:[];
+      const loading=input.operation==='load-prepared';
+      const prepared=loading?normalizePreparedEncounters(gmSnap.data()?.preparedEncounters)
+        .find(plan=>plan.id===input.preparedId):null;
+      if(loading){
+        if(!gm)throw new Error('Only the campaign GM may load a prepared encounter.');
+        if(encounter.status==='active')throw new Error('End active combat before loading a prepared encounter.');
+        if(privateState.pending)throw new Error('Resolve the pending action before loading an encounter.');
+        if(input.replace!==true||!prepared)throw new Error('Choose a saved prepared encounter to replace the enemy roster.');
+      }
+      const incoming=loading?preparedEncounterRoster(prepared,encounter.combatants,context.requestId):
+        input.operation==='save'?input.encounter?.combatants||[]:[];
       // A GM save must be able to remove a broken old link. Loading the union of
       // both rosters made even removal/clear impossible after a character left.
-      const entries=input.operation==='save'?[...incoming,...(encounter.status==='active'&&currentCombatant(encounter)?[currentCombatant(encounter)]:[])]:encounter.combatants;
-      const recoverRoster=gm&&['save','end','clear'].includes(input.operation);
+      const entries=['save','load-prepared'].includes(input.operation)
+        ?[...incoming,...(encounter.status==='active'&&currentCombatant(encounter)?[currentCombatant(encounter)]:[])]:encounter.combatants;
+      const recoverRoster=gm&&['save','load-prepared','end','clear'].includes(input.operation);
       const unavailable=new Set();
       const characterIds=[...new Set(entries.map(row=>row.characterId).filter(Boolean))];
       if(characterIds.length>60||entries.length>160)throw new Error('This encounter has too many participants.');
@@ -214,8 +226,14 @@ export function createCombatCommands(context) {
       };
       const makePending=(id,option,input)=>({id:context.requestId,actorId:id,actorName:entry(id).name,actorKind:entry(id).kind,optionId:option.id,name:option.name,ap:option.ap,bonus:Boolean(option.bonus),costs:option.costs,status:'awaiting-approval',targetIds:[...new Set(input.targetIds||[])],choice:text(input.choice,100),itemId:text(input.itemId,160),swapItemId:text(input.swapItemId,160),slot:text(input.slot,80),note:text(input.note),declaredAt:now});
 
-      if(input.operation==='save'){
-        noPending();const requested=input.encounter||{};
+      if(input.operation==='save'||input.operation==='load-prepared'){
+        if(loading){
+          if(input.mapId!==undefined)throw new Error('A prepared encounter map cannot be overridden.');
+          encounter.status='ready';encounter.turnIndex=0;encounter.round=1;
+          encounter.preparedMapId=prepared.mapId||'';
+          encounter.preparedEncounterId=prepared.id;
+        }
+        noPending();const requested=loading?{combatants:incoming}:input.encounter||{};
         const previousRows=encounter.combatants,oldCurrent=currentCombatant(encounter),oldIds=new Set(previousRows.map(row=>row.id));
         const nextRows=(requested.combatants||[]).filter(row=>!unavailable.has(row.characterId)).map(row=>{if(!/^[A-Za-z0-9_-]{1,160}$/.test(row.id))throw new Error('Invalid participant ID.');const old=entry(row.id);if(old&&old.characterId!==row.characterId)throw new Error('Remove a participant before changing its character link.');const next=old?{...old,defeated:Boolean(row.defeated)}:row.characterId?{id:row.id,characterId:row.characterId,name:characters.get(row.characterId)?.name||'Character',kind:'player',initiative:0}: {...copy(row),kind:'enemy',...encounterSourceResources(row)};if(encounter.status!=='active'&&row.initiativeSet===true){next.initiative=bounded(row.initiative,-100,1000);next.initiativeSet=true;}return next;});
         if(new Set(nextRows.map(row=>row.id)).size!==nextRows.length)throw new Error('Duplicate participant.');
@@ -244,7 +262,7 @@ export function createCombatCommands(context) {
           const tokens=synchronizeCombatMapTokens(boundMap,encounter,()=>randomUUID());
           tx.update(mapRef,{tokens,updatedAt:serverTimestamp()});
         }
-        log('GM updated encounter participants.');
+        log(loading?'GM loaded prepared encounter: '+prepared.name+'.':'GM updated encounter participants.');
       }else if(input.operation==='map-link'){
         requireActive();noPending();
         if(encounter.battleMapId&&encounter.battleMapId!==boundMapId)
