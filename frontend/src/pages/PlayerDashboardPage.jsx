@@ -11,6 +11,7 @@ import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {PlayerOverviewPanel} from '../player/PlayerOverviewPanels.jsx';
 import {PlayerGalleryWorkspace} from '../player/PlayerGalleryWorkspace.jsx';
 import {PlayerQuestWorkspace} from '../player/PlayerQuestWorkspace.jsx';
+import {PlayerInformationWorkspace} from '../player/PlayerInformationWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
@@ -268,10 +269,6 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction,campai
       <li key={i}>{skill.name}{skill.rank?' — '+skill.rank:''}</li>)}</ul>:
       <BodyText muted>No skills recorded.</BodyText>}
   </SurfacePanel>;
-  if(tab==='News / Events / History')return <SurfacePanel className={styles.panel}>
-    <h3>News / Events / History</h3>
-    <BodyText muted>The original campaign news and history workspace has not yet been ported to this React route.</BodyText>
-  </SurfacePanel>;
   if(['Crafting','Advanced Dice','Calendar','Weather','Campaign Library',
       'Campaign Audio','Recording & Archives'].includes(tab))
     return <SurfacePanel className={styles.panel}>
@@ -388,6 +385,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         <li key={member.id}>{member.name} · Level {member.level}</li>)}</ul>:
         <BodyText muted>No campaign party is linked to this character.</BodyText>}
     </SurfacePanel>:null}
+    {tab==='News / Events / History'&&c?<PlayerInformationWorkspace
+      api={api} character={ch} campaignId={campaignId} characterId={characterId}
+      ownerUid={uid} owned={data.owner}/>:null}
     {tab==='Quests'?<PlayerQuestWorkspace api={api} character={ch}
       campaignId={campaignId} characterId={characterId} editable={resourceEditable}/>:null}
     {tab==='Gallery'&&data.owner?<PlayerGalleryWorkspace
