@@ -3,6 +3,7 @@ import {
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, legacyGridDimensions,
   normalizeGridPlacements, packGridPlacements, gridPositionIsFree, gridRowCount, validGridPlacement
 } from './dashboardGridModel.mjs';
+import {normalizeFreeformWorkspace} from './workspaceFreeformModel.mjs';
 export {
   DASHBOARD_GRID_RULES, DASHBOARD_GRID_COLUMNS, DASHBOARD_GRID_START_ROWS,
   dashboardGridRule, dashboardPointerProposal, defaultGridDimensions, clampGridDimensions, gridRowCount
@@ -138,6 +139,9 @@ export function normalizeDashboardLayout(value,role='player') {
   const legacySizes=Number(value.version||0)<DASHBOARD_LAYOUT_VERSION&&custom?rawSizes:{};
   const placements=normalizeGridPlacements(scope,order,hiddenIds,value.placements||value.positions,legacySizes);
   const lockedPositions=safeArray(value.lockedPositions).filter(id=>known.has(id));
+  // Freeform is opt-in and separate from the canonical saved grid positions.
+  // Existing dashboards retain their original geometry until explicitly enabled.
+  const freeform=normalizeFreeformWorkspace(value.freeform,placements,ids);
   // A single saved record contains three independent viewport layouts. Older
   // layouts remain valid and act as the fallback until a viewport is edited.
   const viewportLayouts={};
@@ -186,6 +190,7 @@ export function normalizeDashboardLayout(value,role='player') {
     lockedPositions,
     backgroundStyle,
     panelBackgrounds,
+    ...(freeform?{freeform}:{}),
     ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
     ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
     ...(scope==='gm'&&focusHome?{focusHome}:{}),
