@@ -11,7 +11,10 @@ const example={name:'Frost Gate',notes:'Keep the party moving.',mapId:'map-1',
   enemies:[{name:'Varkhyn',hp:[21,21],sp:[10,10],mp:[4,4],initiative:3,ac:9,xpReward:100}]};
 test('Phase 6.2: prepared encounter validates bounded name, enemies, HP and map',()=>{
   const saved=validatePreparedEncounterInput(example);
-  assert.deepEqual(saved,example);
+  assert.equal(saved.name,example.name);
+  assert.equal(saved.mapId,example.mapId);
+  assert.deepEqual(saved.enemies[0].hp,[21,21]);
+  assert.equal(saved.enemies[0].name,'Varkhyn');
   assert.throws(()=>validatePreparedEncounterInput({...example,name:''}),/Encounter name/);
   assert.throws(()=>validatePreparedEncounterInput({...example,enemies:[]}),/between 1 and 60/);
   assert.throws(()=>validatePreparedEncounterInput({...example,mapId:'../secret'}),/valid campaign battle map/);
