@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {editFreeformWorkspace,freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
+import {freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import {
   COMBAT_PANEL_IDS,COMBAT_PANEL_LABELS,COMBAT_WORKSPACE_PRESET_LIMIT,
   applyCombatPreset,arrangeCombatWorkspace,combatWorkspaceStorageKey,
