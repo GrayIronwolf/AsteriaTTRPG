@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
+import {PreparedEncounterLibrary} from './PreparedEncounterLibrary.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -239,6 +240,9 @@ export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
         </section>
       </CombatCommandPanel>
     </CombatCommandCentre>:null}
+    {combat?<PreparedEncounterLibrary api={api} campaignId={campaignId}
+      combat={combat} plans={stream.data.preparedEncounters||[]}
+      maps={stream.data.maps||[]} library={stream.data.library||[]}/>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
   </section>;
