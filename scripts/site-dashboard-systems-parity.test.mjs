@@ -168,3 +168,42 @@ test('original quick-item panel resolves item references from owned inventory wi
   assert.equal(result.quickSlots[2],null);
   assert.equal(JSON.stringify(result.quickSlots).includes('Forbidden Potion'),false);
 });
+
+test('Phase 1.2: rank training preserves server-side progression and projects effective modifiers',async()=>{
+  const {skillProjection}=await import('../frontend/src/progression/progressionModel.mjs');
+  const character={skills:[{id:'acrobatics',name:'Acrobatics',rank:'Apprentice',
+      category:'Agility',summary:'Agile movements',techniques:[{name:'Balance',description:'Stay upright'}]}],
+    skillProgress:{acrobatics:{rank:'Apprentice',successes:2,target:5}}};
+  const rows=skillProjection(character);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].name,'Acrobatics');
+  assert.equal(rows[0].successes,2);
+  assert.equal(rows[0].target,5);
+  assert.equal(rows[0].techniques[0].name,'Balance');
+  assert.equal(rows[0].techniques[0].detail,'Stay upright');
+  assert.ok(Number.isFinite(rows[0].modifier));
+  assert.equal(character.skillProgress.acrobatics.successes,2);
+  const ui=read('frontend/src/progression/ProgressionWorkspace.jsx');
+  assert.match(ui,/site-player-skills/);
+  assert.match(ui,/site-player-skill-details/);
+  assert.match(ui,/Record Skill Success/);
+  assert.match(ui,/loadPublicEntry\('skill'/);
+});
+test('Phase 1.2: active talent effects can be ended through the owner-scoped callable',async()=>{
+  const {activeTalentEffectProjection}=await import('../frontend/src/progression/progressionModel.mjs');
+  const rows=activeTalentEffectProjection({talentEffects:[
+    {id:'cleric:sacred-aegis',name:'Sacred Aegis',ac:2,description:'Shielded'},
+    {id:'cleric:expired',name:'Expired',ended:true},
+    {id:'danger',name:'Expired by time',expiresAt:1}
+  ]});
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].id,'cleric:sacred-aegis');
+  const ui=read('frontend/src/progression/ProgressionWorkspace.jsx');
+  assert.match(ui,/api\.endTalentEffect\(campaignId,characterId,effect\.id\)/);
+  assert.match(ui,/triggerConfirmed:trigger\[row\.id\]===true/);
+  assert.match(ui,/Talent target/);
+  assert.match(ui,/Known spell<select/);
+  const service=read('frontend/src/progression/firebaseProgressionService.mjs');
+  assert.match(service,/endCharacterTalentEffect/);
+  assert.match(service,/authorize\(cid,'player',characterId\)/);
+});

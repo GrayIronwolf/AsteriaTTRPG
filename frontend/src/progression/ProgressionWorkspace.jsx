@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {loadPublicForgeRules} from '../forge/publicForgeRules.mjs';
 import {loadPublicEntry} from '../compendium/publicEntryLoader.mjs';
-import {CHECK_TYPES,CHECK_STATS,CHECK_RANKS,publishedTalentCatalog,talentProjection} from './progressionModel.mjs';
+import {CHECK_TYPES,CHECK_STATS,CHECK_RANKS,publishedTalentCatalog,talentProjection,activeTalentEffectProjection} from './progressionModel.mjs';
 import styles from './ProgressionWorkspace.module.css';
 
 function useProgression(api,kind,args){
@@ -174,9 +174,10 @@ export function GMChecksAndProgression({api,campaignId}){
     </>:null}
   </section>;
 }
-function CharacterTalentPanel({api,campaignId,characterId,character,session}){
+function CharacterTalentPanel({api,campaignId,characterId,character,session,party=[]}){
   const action=useCommand(),[catalog,setCatalog]=useState([]),[loading,setLoading]=useState(true),
-    [error,setError]=useState(''),[choice,setChoice]=useState({}),[spell,setSpell]=useState({});
+    [error,setError]=useState(''),[choice,setChoice]=useState({}),[spell,setSpell]=useState({}),
+    [trigger,setTrigger]=useState({}),[target,setTarget]=useState({});
   useEffect(()=>{
     let alive=true;
     setCatalog([]);setLoading(true);setError('');
@@ -202,6 +203,14 @@ function CharacterTalentPanel({api,campaignId,characterId,character,session}){
     return()=>{alive=false;};
   },[character.klass,character.className,character.class,character.classes]);
   const talents=useMemo(()=>talentProjection(character,catalog),[character,catalog]);
+  const effects=useMemo(()=>activeTalentEffectProjection(character),[character]);
+  const spellRows=Array.isArray(character.spells)?character.spells:
+    Object.entries(character.spells||character.knownSpells||{}).map(([name,row])=>
+      row&&typeof row==='object'?{name,...row}:{name});
+  const knownSpells=[...new Set(spellRows.map(row=>
+    typeof row==='string'?row:row?.name||row?.title||'').filter(Boolean))];
+  const targets=[{id:characterId,name:character.name||'Self'},...party.filter(member=>
+    member.id!==characterId&&member.id).map(member=>({id:member.id,name:member.name}))];
   return <section className={styles.block} data-testid="site-player-talents">
     <h3>Class Talents</h3>
     {loading?<p>Loading published talent ranks…</p>:null}
@@ -215,28 +224,73 @@ function CharacterTalentPanel({api,campaignId,characterId,character,session}){
             id:row.id,expectedRank:row.rank,expectedCoreRevision:character.coreRevision||0}),
             'Talent rank purchased.')}>Buy Rank {row.rank+1}</button>
         {row.canUse?<button disabled={action.pending||!session.editable||
-          row.requiresChoice&&!choice[row.id]||row.needsSpell&&!spell[row.id]}
+          row.requiresChoice&&!choice[row.id]||row.needsSpell&&!spell[row.id]||
+          row.requiresTrigger&&!trigger[row.id]}
           onClick={()=>action.run(()=>api.useTalent(campaignId,characterId,
             {id:row.id,expectedRank:row.rank,expectedCoreRevision:character.coreRevision||0},
-            {choice:choice[row.id]||'',spell:spell[row.id]||''}),'Talent activated.')}>Use Talent</button>:null}
+            {choice:choice[row.id]||'',spell:spell[row.id]||'',
+              targetId:row.targetChoice?(target[row.id]||characterId):characterId,
+              triggerConfirmed:trigger[row.id]===true}),'Talent activated.')}>Use Talent</button>:null}
       </div>
       {row.requiresChoice?<label>Talent choice<select value={choice[row.id]||''}
         onChange={e=>setChoice(x=>({...x,[row.id]:e.target.value}))}>
         <option value="">Choose option</option>{row.choices.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
       </select></label>:null}
-      {row.needsSpell?<label>Known spell<input value={spell[row.id]||''}
-        onChange={e=>setSpell(x=>({...x,[row.id]:e.target.value}))}/></label>:null}
+      {row.needsSpell?<label>Known spell<select value={spell[row.id]||''}
+        onChange={e=>setSpell(x=>({...x,[row.id]:e.target.value}))}>
+        <option value="">Select a known spell</option>
+        {knownSpells.map(name=><option key={name} value={name}>{name}</option>)}
+      </select></label>:null}
+      {row.targetChoice?<label>Talent target<select value={target[row.id]||characterId}
+        onChange={e=>setTarget(x=>({...x,[row.id]:e.target.value}))}>
+        {targets.map(member=><option key={member.id} value={member.id}>{member.name}</option>)}
+      </select></label>:null}
+      {row.requiresTrigger?<label><input type="checkbox" checked={trigger[row.id]===true}
+        onChange={e=>setTrigger(x=>({...x,[row.id]:e.target.checked}))}/>
+        GM confirmed an eligible trigger</label>:null}
       {row.reason?<small>{row.reason}</small>:null}
       {row.activationBlocked?<small>{row.activationBlocked}</small>:null}
     </article>)}</div>:!loading?<p>No authored class talent ranks found in the published catalogue.</p>:null}
+    <section className={styles.block} data-testid="site-player-talent-effects">
+      <h4>Active Talent Effects</h4>
+      {effects.length?effects.map(effect=><article className={styles.record} key={effect.id}>
+        <strong>{effect.name}</strong>
+        {effect.ac?<span>Armour Class bonus: +{effect.ac}</span>:null}
+        {effect.untilRound?<span>Until round {effect.untilRound}</span>:null}
+        {effect.description?<details><summary>Effect details</summary><p>{effect.description}</p></details>:null}
+        <button type="button" disabled={action.pending||!session.editable}
+          onClick={()=>action.run(()=>api.endTalentEffect(campaignId,characterId,effect.id),
+            'Talent effect ended.')}>End effect</button>
+      </article>):<p>No temporary talent effects are active.</p>}
+    </section>
     <Feedback action={action}/>
   </section>;
 }
 export function PlayerProgressionWorkspace({api,campaignId,characterId,section='progression'}){
   const stream=useProgression(api,'watchPlayer',[campaignId,characterId]);
-  const action=useCommand(),[allocations,setAllocations]=useState({});
+  const action=useCommand(),[allocations,setAllocations]=useState({}),
+    [skillQuery,setSkillQuery]=useState(''),[skillCategory,setSkillCategory]=useState('All'),
+    [selectedSkillId,setSelectedSkillId]=useState(''),[skillEntry,setSkillEntry]=useState(null),
+    [skillEntryError,setSkillEntryError]=useState('');
   const data=stream.data,ch=data?.character,progress=data?.progression;
   const total=Object.values(allocations).reduce((a,b)=>a+Number(b||0),0);
+  const skills=data?.skills||[];
+  const categories=['All',...new Set(skills.map(row=>row.category).filter(Boolean))];
+  const shownSkills=skills.filter(row=>
+    (skillCategory==='All'||row.category===skillCategory)&&
+    (row.name+' '+row.rank+' '+row.category+' '+row.summary).toLowerCase()
+      .includes(skillQuery.trim().toLowerCase()));
+  const selectedSkill=skills.find(row=>row.id===selectedSkillId)||null;
+  useEffect(()=>{
+    let active=true;
+    setSkillEntry(null);setSkillEntryError('');
+    if(!selectedSkill?.name)return()=>{active=false;};
+    const slug=selectedSkill.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    loadPublicEntry('skill',slug).then(result=>{
+      if(active&&result.state==='ready')setSkillEntry(result.entry);
+    }).catch(error=>{if(active)setSkillEntryError(error.message||'Published skill details unavailable.');});
+    return()=>{active=false;};
+  },[selectedSkill?.name]);
   return <section className={styles.workspace} data-testid="site-player-progression">
     <h2>{section==='talents'?'Class Talents':section==='skills'?'Skills':'Character Progression'}</h2>
     {stream.loading?<p>Verifying character ownership and progression…</p>:null}
@@ -273,21 +327,53 @@ export function PlayerProgressionWorkspace({api,campaignId,characterId,section='
             }}>Allocate CP</button>
         </section>
       </>:null}
-      {section==='skills'?<section className={styles.block}>
-        <h3>Skill Training</h3>
-        {data.skills.length?<div className={styles.records}>
-          {data.skills.map(row=><article className={styles.record} key={row.id}>
-            <strong>{row.name}</strong><span>{row.rank}</span>
-            <p>Successful checks: {row.successes}{row.target?' / '+row.target:''}</p>
-            <button disabled={action.pending||!data.session.editable||!row.target}
-              onClick={()=>action.run(()=>api.recordSkill(campaignId,characterId,{
-                name:row.name,expectedCoreRevision:ch.coreRevision||0
-              }),'Successful skill check recorded.')}>Record Skill Success</button>
-          </article>)}</div>:<p>No trained skills recorded.</p>}
-          <small>Only the existing server skill-training rules can award rank progression.</small>
+      {section==='skills'?<section className={styles.block} data-testid="site-player-skills">
+        <h3>Skill Training &amp; Techniques</h3>
+        <div className={styles.fields}>
+          <label>Search skills<input type="search" value={skillQuery}
+            onChange={event=>setSkillQuery(event.target.value)} placeholder="Find a skill"/></label>
+          <label>Category<select value={skillCategory} onChange={event=>setSkillCategory(event.target.value)}>
+            {categories.map(name=><option key={name} value={name}>{name}</option>)}
+          </select></label>
+        </div>
+        {shownSkills.length?<div className={styles.records}>
+          {shownSkills.map(row=><article className={styles.record} key={row.id}>
+            <strong>{row.name}</strong><span>{row.rank} · {row.category}</span>
+            <p>Check modifier: {row.modifier>=0?'+':''}{row.modifier}
+              {row.advantage?' · Advantage':''}{row.disadvantage?' · Disadvantage':''}</p>
+            <p>Successful checks: {row.successes}{row.target?' / '+row.target:' · Maximum rank'}</p>
+            {row.target?<progress aria-label={row.name+' training progress'}
+              value={Math.min(row.successes,row.target)} max={row.target}/>:null}
+            <div className={styles.controls}>
+              <button disabled={action.pending||!data.session.editable||!row.target}
+                onClick={()=>action.run(()=>api.recordSkill(campaignId,characterId,{
+                  name:row.name,expectedCoreRevision:ch.coreRevision||0
+                }),'Successful skill check recorded.')}>Record Skill Success</button>
+              <button type="button" onClick={()=>setSelectedSkillId(row.id)}>Techniques</button>
+            </div>
+          </article>)}</div>:<p>{skills.length?'No skills match your filters.':'No trained skills recorded.'}</p>}
+        {selectedSkill?<section className={styles.record} data-testid="site-player-skill-details">
+          <div className={styles.controls}>
+            <h4>{selectedSkill.name} — Techniques</h4>
+            <button type="button" onClick={()=>setSelectedSkillId('')}>Close details</button>
+          </div>
+          {selectedSkill.summary?<p>{selectedSkill.summary}</p>:null}
+          {selectedSkill.techniques.map((technique,index)=>
+            <article key={index}><strong>{technique.name}</strong>
+              {technique.detail?<p>{technique.detail}</p>:null}</article>)}
+          {skillEntry?.sections?.map((section,index)=><details key={index}
+            open={/techniq/i.test(section.title)}>
+            <summary>{section.title||'Published skill details'}</summary><p>{section.body}</p>
+          </details>)}
+          {skillEntryError?<p role="status">{skillEntryError}</p>:null}
+          {!selectedSkill.techniques.length&&!skillEntry?.sections?.length?
+            <p>Additional techniques are not published for this skill.</p>:null}
         </section>:null}
+        <small>Only the existing server skill-training rules can award rank progression.</small>
+      </section>:null}
       {section==='talents'?<CharacterTalentPanel api={api} campaignId={campaignId}
-        characterId={characterId} character={ch} session={data.session}/>:null}
+        characterId={characterId} character={ch} session={data.session}
+        party={data.party||[]}/>:null}
       <Feedback action={action}/>
     </>:null}
   </section>;

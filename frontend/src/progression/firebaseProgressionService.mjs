@@ -1,5 +1,5 @@
 import {gmCampaignAccess,gmSessionState,gmPartySummary} from '../dashboard/gmDashboardModel.mjs';
-import {playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource,requireDashboardId} from '../player/playerDashboardModel.mjs';
+import {playerCampaignAccess,linkedCharacterAccess,matchesOwnedSource,requireDashboardId,publicPartyProjection} from '../player/playerDashboardModel.mjs';
 import {checkProjection,progressionProjection,skillProjection,assertCheckPayload} from './progressionModel.mjs';
 
 export function createFirebaseProgressionService({
@@ -105,6 +105,7 @@ export function createFirebaseProgressionService({
                 party:gmPartySummary(state.party.filter(row=>row.status==='linked'||!row.status))
               }:{
                 character:state.character,
+                party:publicPartyProjection(state.campaign),
                 progression:progressionProjection(state.character),
                 skills:skillProjection(state.character)
               })
@@ -144,7 +145,7 @@ export function createFirebaseProgressionService({
     id(cid);id(characterId);
     const {uid}=await authorize(cid,'player',characterId);
     const supported=['spendCharacteristicAllocations','purchaseTalentRank',
-      'useCharacterTalent','recordSkillSuccess'];
+      'useCharacterTalent','endCharacterTalentEffect','recordSkillSuccess'];
     if(!supported.includes(action))throw Error('Unknown progression command.');
     const cmd=functionsSdk.httpsCallable(functions,'asteriaAction');
     const result=await cmd({action,args:[cid,characterId,...args],requestId:crypto.randomUUID()});
@@ -189,6 +190,11 @@ export function createFirebaseProgressionService({
     spendCP:(cid,id,allocations)=>trustedCommand(cid,id,'spendCharacteristicAllocations',[allocations]),
     purchaseTalent:(cid,id,talent)=>trustedCommand(cid,id,'purchaseTalentRank',[talent]),
     useTalent:(cid,id,talent,selection)=>trustedCommand(cid,id,'useCharacterTalent',[talent,selection]),
+    endTalentEffect:(cid,id,effectId)=>{
+      if(typeof effectId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9:_.-]{0,159}$/.test(effectId))
+        throw Error('Choose a valid active talent effect.');
+      return trustedCommand(cid,id,'endCharacterTalentEffect',[effectId]);
+    },
     recordSkill:(cid,id,skill)=>trustedCommand(cid,id,'recordSkillSuccess',[skill]),
     checkGM:(cid,input)=>checkAction(cid,'gm','',input),
     checkPlayer:(cid,id,input)=>checkAction(cid,'player',id,input)
