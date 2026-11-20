@@ -186,7 +186,7 @@ export function normalizeDashboardLayout(value,role='player') {
     if(savedWorkspaces.length===DASHBOARD_SAVED_WORKSPACES_LIMIT)break;
     if(!entry||typeof entry!=='object'||Array.isArray(entry))continue;
     const id=typeof entry.id==='string'?entry.id:'';
-    const name=typeof entry.name==='string'?entry.name.replace(/[\u0000-\u001f\u007f]/g,' ')
+    const name=typeof entry.name==='string'?[...entry.name].map(ch=>ch.charCodeAt(0)<32||ch.charCodeAt(0)===127?' ':ch).join('')
       .trim().replace(/\s+/g,' ').slice(0,48):'';
     if(!/^[a-zA-Z0-9_-]{1,72}$/.test(id)||!name||
        workspaceIds.has(id)||workspaceNames.has(name.toLocaleLowerCase()))continue;
@@ -501,7 +501,7 @@ export function fitDashboardGridPanel(layout,role,id,width,height){
 /** Save a named layout snapshot without including recursive libraries or game data. */
 export function saveNamedDashboardWorkspace(layout,role='player',name='',id=''){
   const source=normalizeDashboardLayout(layout,role);
-  const cleaned=typeof name==='string'?name.replace(/[\u0000-\u001f\u007f]/g,' ')
+  const cleaned=typeof name==='string'?[...name].map(ch=>ch.charCodeAt(0)<32||ch.charCodeAt(0)===127?' ':ch).join('')
     .trim().replace(/\s+/g,' ').slice(0,48):'';
   if(!cleaned||!/^[a-zA-Z0-9_-]{1,72}$/.test(id))return source;
   const existing=source.savedWorkspaces||[];
