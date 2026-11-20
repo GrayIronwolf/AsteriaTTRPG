@@ -30,9 +30,20 @@
   --asteria-warning: #d7a347;
   --asteria-danger: #c9475b;
   --asteria-info: #56b9e8;
-  --asteria-hp: #a92842;
-  --asteria-sp: #2dbd72;
-  --asteria-mp: #2777d9;
+  /* Legacy resource views share the Midnight Obsidian palette. */
+  --asteria-resource-gloss: linear-gradient(180deg, rgb(255 255 255 / .30) 0%, rgb(255 255 255 / .11) 17%, transparent 44%);
+  --asteria-hp: #94112d;
+  --asteria-hp-highlight: #dc4967;
+  --asteria-hp-shadow: #700b22;
+  --asteria-hp-gradient: var(--asteria-resource-gloss), linear-gradient(180deg, var(--asteria-hp-highlight) 0%, var(--asteria-hp) 48%, var(--asteria-hp-shadow) 100%);
+  --asteria-sp: #007545;
+  --asteria-sp-highlight: #38bd8c;
+  --asteria-sp-shadow: #005332;
+  --asteria-sp-gradient: var(--asteria-resource-gloss), linear-gradient(180deg, var(--asteria-sp-highlight) 0%, var(--asteria-sp) 48%, var(--asteria-sp-shadow) 100%);
+  --asteria-mp: #203f8b;
+  --asteria-mp-highlight: #7896eb;
+  --asteria-mp-shadow: #162e67;
+  --asteria-mp-gradient: var(--asteria-resource-gloss), linear-gradient(180deg, var(--asteria-mp-highlight) 0%, var(--asteria-mp) 48%, var(--asteria-mp-shadow) 100%);
   --asteria-bp: #a82747;
   --asteria-xp: #62cce9;
 

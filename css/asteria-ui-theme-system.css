@@ -38,9 +38,9 @@
   background: rgba(2,8,9,.92);
 }
 
-.hp,.hp-bar,[data-resource="hp"] { --asteria-accent:#8f1f2e; }
-.sp,.sp-bar,[data-resource="sp"] { --asteria-accent:#2ecc71; }
-.mp,.mp-bar,[data-resource="mp"] { --asteria-accent:#1757c2; }
+.hp,.hp-bar,[data-resource="hp"] { --asteria-accent:var(--asteria-hp,#94112d); }
+.sp,.sp-bar,[data-resource="sp"] { --asteria-accent:var(--asteria-sp,#007545); }
+.mp,.mp-bar,[data-resource="mp"] { --asteria-accent:var(--asteria-mp,#203f8b); }
 .xp,.xp-bar,[data-resource="xp"] { --asteria-accent:#67d8ff; }
 
 html { background:#020809; }

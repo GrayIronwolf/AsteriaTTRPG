@@ -34,6 +34,21 @@
   --ast-color-warning: #d7a347;
   --ast-color-danger: #c9475b;
 
+  /* Midnight Obsidian: one glossy HP/SP/MP palette for the React site. */
+  --ast-resource-gloss: linear-gradient(180deg, rgb(255 255 255 / .30) 0%, rgb(255 255 255 / .11) 17%, transparent 44%);
+  --ast-resource-hp: #94112d;
+  --ast-resource-hp-highlight: #dc4967;
+  --ast-resource-hp-shadow: #700b22;
+  --ast-resource-hp-fill: var(--ast-resource-gloss), linear-gradient(180deg, var(--ast-resource-hp-highlight) 0%, var(--ast-resource-hp) 48%, var(--ast-resource-hp-shadow) 100%);
+  --ast-resource-sp: #007545;
+  --ast-resource-sp-highlight: #38bd8c;
+  --ast-resource-sp-shadow: #005332;
+  --ast-resource-sp-fill: var(--ast-resource-gloss), linear-gradient(180deg, var(--ast-resource-sp-highlight) 0%, var(--ast-resource-sp) 48%, var(--ast-resource-sp-shadow) 100%);
+  --ast-resource-mp: #203f8b;
+  --ast-resource-mp-highlight: #7896eb;
+  --ast-resource-mp-shadow: #162e67;
+  --ast-resource-mp-fill: var(--ast-resource-gloss), linear-gradient(180deg, var(--ast-resource-mp-highlight) 0%, var(--ast-resource-mp) 48%, var(--ast-resource-mp-shadow) 100%);
+
   /* Asteria Crystal (default button theme): original approved artwork.
    * Vite resolves these source assets into hashed production bundle URLs.
    * Future themes override only these named material tokens. */

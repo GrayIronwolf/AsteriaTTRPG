@@ -383,9 +383,9 @@ small {
   border-bottom: 2px solid var(--asteria-border-active);
 }
 
-.react-resource.hp .react-resource-track i { background: var(--asteria-hp); }
-.react-resource.sp .react-resource-track i { background: var(--asteria-sp); }
-.react-resource.mp .react-resource-track i { background: var(--asteria-mp); }
+.react-resource.hp .react-resource-track i { background: var(--asteria-hp-gradient, var(--asteria-hp)); }
+.react-resource.sp .react-resource-track i { background: var(--asteria-sp-gradient, var(--asteria-sp)); }
+.react-resource.mp .react-resource-track i { background: var(--asteria-mp-gradient, var(--asteria-mp)); }
 .react-resource.xp .react-resource-track i { background: var(--asteria-xp); }
 
 .settings-panel {

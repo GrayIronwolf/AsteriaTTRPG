@@ -15,10 +15,10 @@
 .resources{display:grid;gap:8px;font-size:var(--ast-font-sm)}
 .resourceMeter{display:grid;gap:3px;width:100%}
 .resourceMeter>div{display:flex;justify-content:space-between;gap:8px;font-size:.75rem}
-.resourceMeter .meter{display:block;width:100%;height:10px;border:1px solid rgb(118 141 160);border-radius:3px;background:rgb(10 20 32);overflow:hidden}
-.resourceMeter .meterFill{display:block;height:100%;background:rgb(237 88 138)}
-.resourceMeter[data-resource='sp'] .meterFill{background:rgb(42 216 167)}
-.resourceMeter[data-resource='mp'] .meterFill{background:rgb(52 191 242)}
+.resourceMeter .meter{display:block;width:100%;height:10px;border:1px solid rgb(118 141 160);border-radius:3px;background:rgb(10 20 32);overflow:hidden;box-shadow:inset 0 1px 2px rgb(0 0 0 / .65)}
+.resourceMeter .meterFill{display:block;height:100%;background:var(--ast-resource-hp-fill);box-shadow:inset 0 1px 0 rgb(255 255 255 / .36),inset 0 -2px 3px rgb(0 0 0 / .32),0 0 8px rgb(255 255 255 / .10)}
+.resourceMeter[data-resource='sp'] .meterFill{background:var(--ast-resource-sp-fill)}
+.resourceMeter[data-resource='mp'] .meterFill{background:var(--ast-resource-mp-fill)}
 .head,.sectionHeader{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-4);flex-wrap:wrap;min-width:0}
 .head h2,.head p{margin:0}
 .head>div{min-width:0;overflow-wrap:anywhere}
