@@ -2,7 +2,9 @@ import React,{useEffect,useRef,useState} from 'react';
 import {DashboardLayoutEditor} from './DashboardLayoutEditor.jsx';
 import {DashboardLayoutWorkspace} from './DashboardLayoutWorkspace.jsx';
 import {GMSessionLayoutControls} from './GMSessionLayoutControls.jsx';
-import {DASHBOARD_PANEL_REGISTRY,normalizeDashboardLayout} from '../../../src/state/dashboardLayoutModel.mjs';
+import {DASHBOARD_PANEL_REGISTRY,DASHBOARD_SAVED_WORKSPACES_LIMIT,normalizeDashboardLayout,
+  saveNamedDashboardWorkspace,restoreNamedDashboardWorkspace,deleteNamedDashboardWorkspace
+} from '../../../src/state/dashboardLayoutModel.mjs';
 import {normalizeFreeformWorkspace} from '../../../src/state/workspaceFreeformModel.mjs';
 import {createLayoutHistory,undoLayoutHistory,redoLayoutHistory,updateViewportHistory,
   layoutFingerprint} from './layoutHistoryModel.mjs';
@@ -21,6 +23,8 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
   const [directHistory,setDirectHistory]=useState(null);
   const [directError,setDirectError]=useState('');
   const [savingDirect,setSavingDirect]=useState(false);
+  const [workspaceName,setWorkspaceName]=useState('');
+  const [workspaceBusy,setWorkspaceBusy]=useState(false);
   const directBaseline=useRef(null);
   const available=Boolean(owner&&api?.availability?.().layoutEnabled);
   useEffect(()=>{
@@ -73,6 +77,28 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
     }catch(e){
       setDirectError(e?.message||'Direct layout changes could not be saved.');
     }finally{setSavingDirect(false);}
+  };
+  const namedWorkspaces=(directHistory?.present||server)?.savedWorkspaces||[];
+  const saveWorkspaceSnapshot=()=>{
+    if(!directHistory||!workspaceName.trim()||namedWorkspaces.length>=DASHBOARD_SAVED_WORKSPACES_LIMIT)return;
+    const id='workspace-'+crypto.randomUUID();
+    const next=saveNamedDashboardWorkspace(directHistory.present,role,workspaceName,id);
+    setDirectHistory(previous=>previous?{
+      ...previous,present:next,future:[],
+      past:[...previous.past,previous.present].slice(-40)
+    }:previous);
+    setWorkspaceName('');
+    setDirectError('');
+  };
+  const loadNamedWorkspace=async(id,remove=false)=>{
+    if(!server||directHistory||editing||workspaceBusy)return;
+    setWorkspaceBusy(true);setDirectError('');
+    try{
+      const next=remove?deleteNamedDashboardWorkspace(server,role,id):
+        restoreNamedDashboardWorkspace(server,role,id);
+      await save(next,server);
+    }catch(e){setDirectError(e?.message||'Unable to change the saved workspace.');}
+    finally{setWorkspaceBusy(false);}
   };
   const cancelDirect=()=>{
     if(savingDirect)return;
@@ -139,12 +165,33 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
         disabled={savingDirect} onChange={event=>editDirect('desktop',previous=>({
           ...previous,freeform:{...previous.freeform,allowOverlap:event.target.checked}
         }))}/> Allow overlapping</label>
+      <label>Save layout preset
+        <input type="text" value={workspaceName} maxLength={48} placeholder="e.g. Exploration"
+          disabled={savingDirect||namedWorkspaces.length>=DASHBOARD_SAVED_WORKSPACES_LIMIT}
+          onChange={event=>setWorkspaceName(event.target.value)}/>
+      </label>
+      <button type="button" disabled={!workspaceName.trim()||savingDirect||
+        namedWorkspaces.length>=DASHBOARD_SAVED_WORKSPACES_LIMIT}
+        onClick={saveWorkspaceSnapshot}>Add Named Layout</button>
       <button type="button" data-testid="site-direct-layout-cancel"
         disabled={savingDirect} onClick={cancelDirect}>Discard</button>
       <button type="button" data-testid="site-direct-layout-save"
         disabled={savingDirect} onClick={finishDirect}>{savingDirect?'Saving…':'Save Layout'}</button>
       {directError?<p role="alert">{directError}</p>:null}
     </div>:null}
+    {namedWorkspaces.length?<section className={styles.savedWorkspaceBar}
+      aria-label="Saved dashboard layouts">
+      <strong>Saved Layouts</strong>
+      {namedWorkspaces.map(entry=><span key={entry.id} className={styles.savedWorkspaceItem}>
+        <span>{entry.name}</span>
+        <button type="button" disabled={Boolean(directHistory)||editing||workspaceBusy}
+          onClick={()=>loadNamedWorkspace(entry.id)}>Apply</button>
+        <button type="button" disabled={Boolean(directHistory)||editing||workspaceBusy}
+          aria-label={'Delete saved layout '+entry.name}
+          onClick={()=>loadNamedWorkspace(entry.id,true)}>Delete</button>
+      </span>)}
+    </section>:null}
+    {!directHistory&&directError?<p role="alert">{directError}</p>:null}
     {editing?<DashboardLayoutEditor key={uid+':'+campaignId+':'+characterId}
       role={role} layout={server} onSave={save} onClose={()=>setEditing(false)}/>:null}
     <DashboardLayoutWorkspace role={role} layout={directHistory?.present||server}
