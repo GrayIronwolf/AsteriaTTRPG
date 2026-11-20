@@ -256,6 +256,37 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-session-start').click();
  await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
+
+ // Phase 2.5: live two-account verification of existing party storage and
+ // receipt-backed organization creation under the migrated Player route.
+ await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
+   {waitUntil:'domcontentloaded'});
+ await player.getByRole('button',{name:'Party',exact:true}).click();
+ const party=player.getByTestId('site-player-party');
+ await party.waitFor({timeout:30000});
+ await party.getByText('Joined Forge Hero',{exact:true}).first().waitFor({timeout:30000});
+ await party.getByRole('textbox',{name:'Party notes'}).fill('Restored party shared notes verification');
+ await party.getByRole('button',{name:'Save Shared Notes'}).click();
+ await party.getByText('Shared notes saved.').waitFor({timeout:30000});
+ await party.getByRole('textbox',{name:'Message the party'}).fill('Phase 2.5 live party chat verification');
+ await party.getByRole('button',{name:'Send',exact:true}).click();
+ await party.getByText('Phase 2.5 live party chat verification').waitFor({timeout:30000});
+ await party.getByRole('button',{name:'Form Organization'}).click();
+ await party.getByRole('combobox',{name:'Organization Type'}).selectOption('Guild');
+ await party.getByRole('textbox',{name:'Organization Name'}).fill('Phase 2.5 Guild');
+ await party.getByRole('button',{name:'Create Organization'}).click();
+ await party.getByText('Organization created.').waitFor({timeout:30000});
+ await party.getByRole('button',{name:'Phase 2.5 Guild'}).waitFor({timeout:30000});
+ await owner.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
+   {waitUntil:'domcontentloaded'});
+ await owner.getByRole('button',{name:'Party',exact:true}).click();
+ const gmParty=owner.getByTestId('site-player-party');
+ await gmParty.waitFor({timeout:30000});
+ await gmParty.getByRole('button',{name:'Party Overview'}).waitFor({timeout:30000});
+ assert.equal(await gmParty.getByRole('button',{name:'Save Shared Notes'}).isDisabled(),true);
+ assert.equal(await gmParty.getByRole('button',{name:'Send',exact:true}).isDisabled(),true);
+ await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
+ await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
  await owner.getByRole('button',{name:'Gameplay Systems'}).click();
  const gmCombat=owner.getByTestId('site-gm-combat');
  await gmCombat.waitFor({timeout:30000});
