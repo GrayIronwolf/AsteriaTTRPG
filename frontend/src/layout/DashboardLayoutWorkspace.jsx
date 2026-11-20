@@ -3,6 +3,7 @@ import {
   DASHBOARD_PANEL_REGISTRY,dashboardLayoutForViewport,dashboardViewportFromWidth,
   gridRowCount,visibleDashboardPanels
 } from '../../../src/state/dashboardLayoutModel.mjs';
+import {freeformCanvasHeight,freeformPercent} from '../../../src/state/workspaceFreeformModel.mjs';
 import styles from './DashboardLayoutWorkspace.module.css';
 
 export function DashboardLayoutWorkspace({
@@ -30,6 +31,7 @@ export function DashboardLayoutWorkspace({
   const registry=DASHBOARD_PANEL_REGISTRY[role==='gm'?'gm':'player'];
   const names=new Map(registry.map(item=>[item.id,item.label]));
   const ids=visibleDashboardPanels(view,role);
+  const freeform=view.freeform?.enabled===true && viewport==='desktop';
   // Physical grid order should match keyboard and reading order even when
   // desktop-size browsers contain a narrow, stacked dashboard workspace.
   const ordered=ids.slice().sort((a,b)=>
@@ -40,18 +42,25 @@ export function DashboardLayoutWorkspace({
   </section>;
   return <section className={styles.workspace} ref={workspaceRef} aria-label={title}
     data-testid={'site-'+role+'-layout-workspace'}>
-    <div className={styles.grid} data-dashboard-viewport={viewport}
-      style={{'--layout-rows':gridRowCount(view.placements,ids)}}>
+    <div className={styles.grid+(freeform?' '+styles.freeformGrid:'')}
+      data-dashboard-viewport={viewport} data-layout-mode={freeform?'freeform':'grid'}
+      style={{'--layout-rows':gridRowCount(view.placements,ids),
+        ...(freeform?{'--freeform-height':freeformCanvasHeight(view.freeform,ids)}:{})}}>
       {ordered.map(id=>{
         const pos=view.placements[id];
         if(!pos)return null;
-        const frame=pos.h>pos.w*1.4?'tall':pos.w>=pos.h*2.5?'ultrawide':pos.w>=pos.h*1.45?'wide':'square';
+        const rect=freeform?view.freeform.positions[id]:null;
+        const geometry=rect||pos;
+        const frame=geometry.h>geometry.w*1.4?'tall':geometry.w>=geometry.h*2.5?'ultrawide':geometry.w>=geometry.h*1.45?'wide':'square';
         return <article key={id} className={styles.tile}
           data-panel-id={id} data-panel-size={`${pos.w}x${pos.h}`} data-frame-family={frame}
           data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
           style={{
-            gridColumn:(pos.x+1)+' / span '+pos.w,
-            gridRow:(pos.y+1)+' / span '+pos.h
+            ...(freeform&&rect?{
+              left:freeformPercent(rect.x),top:rect.y/10+'cqw',
+              width:freeformPercent(rect.w),height:rect.h/10+'cqw'
+            }:{gridColumn:(pos.x+1)+' / span '+pos.w,
+              gridRow:(pos.y+1)+' / span '+pos.h})
           }}>
           <h3 className={styles.title}><span>{names.get(id)||'Dashboard Panel'}</span></h3>
           <div className={styles.content}>{renderPanel(id)}</div>
