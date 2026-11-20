@@ -159,7 +159,7 @@ try{
    const hud=document.querySelector('[data-testid="site-player-resources"]');
    const bars=[...hud.querySelectorAll('[data-resource]')].map(row=>({
      key:row.getAttribute('data-resource'),
-     value:getComputedStyle(row.querySelector('[role="progressbar"] > span')).backgroundColor
+     gradient:getComputedStyle(row.querySelector('[role="progressbar"] > span')).backgroundImage
    }));
    const tabs=document.querySelector('nav[aria-label="Character dashboard sections"]');
    const button=tabs?.querySelector('button');
@@ -167,11 +167,17 @@ try{
    return {bars,tabCount:tabs?.querySelectorAll('button').length||0,
      border:css?.borderTopWidth,background:css?.backgroundColor};
  });
- assert.deepEqual(parity.bars,[
-   {key:'hp',value:'rgb(237, 88, 138)'},
-   {key:'sp',value:'rgb(42, 216, 167)'},
-   {key:'mp',value:'rgb(52, 191, 242)'}
- ],'Player HP/SP/MP bars must have original distinct pink/green/cyan colours');
+ assert.deepEqual(parity.bars.map(row=>row.key),['hp','sp','mp']);
+ const obsidian={
+   hp:['rgb(220, 73, 103)','rgb(148, 17, 45)','rgb(112, 11, 34)'],
+   sp:['rgb(56, 189, 140)','rgb(0, 117, 69)','rgb(0, 83, 50)'],
+   mp:['rgb(120, 150, 235)','rgb(32, 63, 139)','rgb(22, 46, 103)']
+ };
+ for(const bar of parity.bars){
+   assert.match(bar.gradient,/linear-gradient/,'Expected glossy resource fill for '+bar.key);
+   for(const colour of obsidian[bar.key])
+     assert.ok(bar.gradient.includes(colour),'Missing Midnight Obsidian '+colour+' in '+bar.key);
+ }
  assert.ok(parity.tabCount>=21,'Original Player navigation destinations must be visible');
  assert.equal(parity.border,'0px','Crystal tab must not gain a rectangular border');
  assert.ok(['rgba(0, 0, 0, 0)','transparent'].includes(parity.background),
