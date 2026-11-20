@@ -105,3 +105,18 @@
 .questObjective input[type=number]{width:100px}
 .questActions button,.questObjective button{min-height:var(--ast-target-min);padding:var(--ast-space-2);background:var(--ast-color-panel-slate);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft);cursor:pointer}
 .questActions button:disabled,.questObjective button:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* Phase 2.4: published News/Events and owner-only notification history. */
+.informationWorkspace,.informationList{display:grid;gap:var(--ast-space-3);min-width:0}
+.informationWorkspace>label{display:grid;gap:var(--ast-space-2)}
+.informationWorkspace input{min-height:var(--ast-target-min);padding:var(--ast-space-2);background:var(--ast-color-panel);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft)}
+.informationTabs{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.informationTabs button,.informationCard button,.informationWorkspace>button{min-height:var(--ast-target-min);padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel-slate);color:var(--ast-color-text);cursor:pointer}
+.informationTabs button[aria-pressed=true]{border-color:var(--ast-color-outline-active)}
+.informationTabs button:disabled,.informationCard button:disabled{opacity:.5;cursor:not-allowed}
+.informationCard{display:grid;gap:var(--ast-space-2);min-width:0;padding:var(--ast-space-3);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft)}
+.informationCard header{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-2);flex-wrap:wrap}
+.informationCard h4,.informationCard p{margin:0;overflow-wrap:anywhere}
+.informationCard button{justify-self:start}
+.informationCard time{color:var(--ast-color-text-muted)}
