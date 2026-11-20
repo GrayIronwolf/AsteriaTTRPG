@@ -232,6 +232,10 @@ export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
           <h3>Battle Map &amp; Player Display</h3>
           <p>Open the existing campaign map or player display without changing the live encounter.</p>
           <div className={styles.controls}>
+            {combat.isActive&&combat.preparedMapId&&!combat.battleMapId?
+              <button type="button" disabled={busy||!combat.sessionEditable}
+                onClick={()=>submit('encounter',{operation:'map-link',mapId:combat.preparedMapId})}>
+                Link Prepared Map to Live Combat</button>:null}
             <button type="button" disabled={!onNavigate}
               onClick={()=>onNavigate?.('battle-maps')}>Open Battle Maps</button>
             <button type="button" disabled={!onNavigate}
