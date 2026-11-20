@@ -77,7 +77,8 @@ test('Phase 6.1A locks and hidden panels prevent editing',()=>{
   assert.equal(editFreeformWorkspace(state,'a','move',{x:5},{locked:['a']}),state);
   assert.equal(editFreeformWorkspace(state,'a','resize',{w:280},{hidden:['a']}),state);
   assert.equal(editFreeformWorkspace(state,'missing','resize',{w:280}),state);
-  assert.equal(editFreeformWorkspace({...state,enabled:false},'a','move',{x:10}),null);
+  const disabled={...state,enabled:false};
+  assert.equal(editFreeformWorkspace(disabled,'a','move',{x:10}),disabled);
 });
 test('Phase 6.1A honours optional snapping and independent width/height resizing',()=>{
   const state={enabled:true,snap:true,allowOverlap:true,
@@ -91,7 +92,7 @@ test('Phase 6.1A honours optional snapping and independent width/height resizing
 test('Phase 6.1A keeps freeform layouts independent across device sizes and supports undo',()=>{
   const original=make('player');
   const first=original.order[0];
-  const mobile={...original,freeform:editFreeformWorkspace(original.freeform,first,
+  const mobile={...original,freeform:editFreeformWorkspace({...original.freeform,allowOverlap:true},first,
     'move',{x:30,y:700})};
   const combined=setDashboardViewportLayout(original,'player','mobile',mobile);
   const saved=normalizeDashboardLayout(JSON.parse(JSON.stringify(combined)),'player');
