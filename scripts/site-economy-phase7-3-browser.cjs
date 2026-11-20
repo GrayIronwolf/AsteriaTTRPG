@@ -335,6 +335,8 @@ try{
  await owner.getByRole('button',{name:'PC Inventory'}).click();
  const gmEconomy=owner.getByTestId('site-gm-economy');
  await gmEconomy.waitFor({timeout:30000});
+ await gmEconomy.getByRole('button',{name:'Party Loot',exact:true}).click();
+ await gmEconomy.getByTestId('site-economy-loot').waitFor({timeout:30000});
  await gmEconomy.getByLabel('Name').first().fill('Emulator Party Chest');
  await gmEconomy.getByRole('button',{name:'Create Container'}).click();
  await gmEconomy.getByText('Shared container created.').waitFor({timeout:30000});
