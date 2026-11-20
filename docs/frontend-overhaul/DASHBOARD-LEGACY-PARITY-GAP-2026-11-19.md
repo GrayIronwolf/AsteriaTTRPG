@@ -96,3 +96,21 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
 - These are **new React screenshots**, not approved old originals. The
   original-vs-React authenticated pixel gate and full release audit remain
   outstanding. Keep PR #334 draft and unmerged; user controls deployment.
+
+## Phase 4.4 — Full dashboard evidence and authenticated reference gate
+
+- The six authenticated Phase 4.3 screenshots captured only the framed panel
+  workspace. Phase 4.4 now records the **full Player and GM pages** alongside
+  the existing tile images, plus JSON geometry and original theme assertions
+  for the Player character/campaign HUD, resource colours, crystal navigation
+  and the GM party sidebar at mobile and desktop widths. No additional CSS
+  ownership layer or Firebase service is introduced.
+- The separate genuine legacy-vs-React pixel gate now rejects duplicate
+  role/viewport entries, requires **complete-dashboard** selectors and
+  enforces source-provenance metadata (pre-migration commit, approving reviewer
+  and SHA-256 hash of the approved legacy PNG). Each comparison writes pixel
+  difference evidence with its reference provenance.
+- **Full visual release acceptance remains BLOCKED** until actual approved
+  pre-migration screenshots are supplied and comparable authenticated cases
+  pass. The new React captures are not substitutes for originals. Keep PR #334
+  in draft, unmerged and undeployed.

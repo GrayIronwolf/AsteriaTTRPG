@@ -7,6 +7,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const {createHash}=require('node:crypto');
 const path=require('node:path');
 const {chromium}=require('playwright');
 
@@ -17,11 +18,32 @@ async function main(){
   assert.ok(Array.isArray(manifest.cases)&&manifest.cases.length>=6,
     'Include authenticated Player, GM and GM read-only cases at mobile and desktop widths');
   const roles=new Set(manifest.cases.map(row=>row.role));
+  const seen=new Set();
   for(const role of ['player','gm','readonly']){
     assert.ok(roles.has(role),'Missing authenticated '+role+' approved reference cases');
     const cases=manifest.cases.filter(row=>row.role===role);
     assert.ok(cases.some(row=>row.width<=480),'Missing mobile approved reference for '+role);
     assert.ok(cases.some(row=>row.width>=1024),'Missing desktop approved reference for '+role);
+  }
+  for(const entry of manifest.cases){
+    const category=entry.width<=480?'mobile':entry.width>=1024?'desktop':null;
+    assert.ok(category,'Comparisons must use approved mobile or desktop widths');
+    const key=entry.role+':'+category;
+    assert.ok(!seen.has(key),'Duplicate role and viewport reference: '+key);
+    seen.add(key);
+    assert.ok(typeof entry.name==='string'&&/^[a-z0-9_-]+$/i.test(entry.name),
+      'Each comparison needs a safe unique name');
+    assert.ok(typeof entry.approvedBy==='string'&&entry.approvedBy.trim(),
+      'Approved legacy screenshot reviewer must be identified');
+    assert.ok(typeof entry.legacyRevision==='string'&&/^[a-f0-9]{40}$/i.test(entry.legacyRevision),
+      'Authentic original source commit SHA must be documented');
+    assert.ok(typeof entry.referenceSha256==='string'&&/^[a-f0-9]{64}$/i.test(entry.referenceSha256),
+      'Original screenshot SHA-256 is required');
+    const expected=entry.role==='gm'
+      ?'[data-testid="site-gm-dashboard"]'
+      :'[data-testid="site-player-dashboard"]';
+    assert.equal(entry.selector,expected,
+      'Visual comparisons must capture the complete authenticated dashboard');
   }
   const evidence=path.resolve(process.env.ASTERIA_PARITY_OUTPUT||'dashboard-parity-evidence');
   fs.mkdirSync(evidence,{recursive:true});
@@ -37,6 +59,10 @@ async function main(){
       assert.ok(typeof entry.selector==='string'&&entry.selector.length);
       const reference=path.resolve(path.dirname(file),entry.reference);
       assert.ok(fs.existsSync(reference),'Approved reference PNG missing: '+reference);
+      const expected=fs.readFileSync(reference);
+      assert.equal(createHash('sha256').update(expected).digest('hex'),
+        entry.referenceSha256.toLowerCase(),
+        'Approved original reference hash mismatch: '+entry.name);
       const context=await browser.newContext({
         viewport:{width:entry.width,height:entry.height},
         deviceScaleFactor:1,
@@ -67,7 +93,6 @@ async function main(){
         }
         await page.evaluate(()=>document.fonts.ready);
         const actual=await target.screenshot({animations:'disabled'});
-        const expected=fs.readFileSync(reference);
         const pixel=await page.evaluate(async ({a,b})=>{
           const decode=src=>new Promise((resolve,reject)=>{
             const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;
@@ -90,8 +115,12 @@ async function main(){
           return {sameSize:true,changedPixels:changed,totalPixels:one.width*one.height,
             difference:changed/(one.width*one.height)};
         },{a:actual.toString('base64'),b:expected.toString('base64')});
-        const name=String(entry.name||entry.role).replace(/[^a-z0-9_-]/gi,'_');
+        const name=entry.name;
         fs.writeFileSync(path.join(evidence,name+'-react.png'),actual);
+        fs.writeFileSync(path.join(evidence,name+'-comparison.json'),
+          JSON.stringify({name,role:entry.role,width:entry.width,height:entry.height,
+            referenceSha256:entry.referenceSha256,legacyRevision:entry.legacyRevision,
+            approvedBy:entry.approvedBy,threshold:entry.maxDifference??0.025,...pixel},null,2));
         assert.deepEqual(errors,[],'Browser runtime errors: '+entry.name);
         assert.ok(pixel.sameSize,'Screenshot geometry differs: '+JSON.stringify(pixel));
         const max=Number(entry.maxDifference??0.025);

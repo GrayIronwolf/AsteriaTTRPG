@@ -128,6 +128,21 @@ test('Phase 4.4 captures the full approved dashboard shell in six authenticated 
   assert.ok(browser.includes('HP/SP/MP colors differ from original'));
   assert.ok(workflow.includes('asteria-phase-4-4-full-dashboard-evidence'));
 });
+test('Phase 4.4 original-vs-React visual gate rejects substituted references and cropped views',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  for(const text of [
+    "const {createHash}=require('node:crypto')",
+    'Duplicate role and viewport reference',
+    'Approved legacy screenshot reviewer must be identified',
+    'Authentic original source commit SHA must be documented',
+    'Original screenshot SHA-256 is required',
+    'Approved original reference hash mismatch',
+    'Visual comparisons must capture the complete authenticated dashboard',
+    'site-player-dashboard',
+    'site-gm-dashboard',
+    "name+'-comparison.json'"
+  ])assert.ok(gate.includes(text),text);
+});
 test('resource tracks are rendered with original HP SP MP colour roles',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
