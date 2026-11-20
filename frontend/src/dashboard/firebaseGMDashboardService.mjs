@@ -1,3 +1,4 @@
+import {gmNotesProjection,savePrivateGMNotes,appendGMSessionLog,deleteGMSessionLog,saveGMInformation as applyGMInformationChange,validateGMAnnouncement} from './gmStoryManagementModel.mjs';
 import {updateGMQuestList,archiveGMQuestList,assignGMQuest,validateCampaignDetails} from './gmQuestManagementModel.mjs';
 import {campaignArtworkFileError} from '../../../src/state/campaignArtwork.mjs';
 import {normalizeDashboardLayout} from '../../../src/state/dashboardLayoutModel.mjs';
@@ -313,7 +314,10 @@ export function createFirebaseGMDashboardService({
               if(!active)return;
               const source=snapshot.exists()?snapshot.data():{};
               onUpdate({quests:Array.isArray(source.quests)?source.quests:[],
-                campaign:source.campaign&&typeof source.campaign==='object'?source.campaign:{}});
+                campaign:source.campaign&&typeof source.campaign==='object'?source.campaign:{},
+                notes:gmNotesProjection(source),
+                world:{news:Array.isArray(source.world?.news)?source.world.news:[],
+                  events:Array.isArray(source.world?.events)?source.world.events:[]}});
             }catch(error){if(active){close();onError(error);}}
           },error=>{if(active){close();onError(error);}});
       }catch(error){if(active){close();onError(error);}}
@@ -513,6 +517,105 @@ export function createFirebaseGMDashboardService({
     same(uid);return {ok:true};
   }
 
+
+  /** Phase 3.3 retains the canonical private gmWorkspace record. All writes
+   * reread GM membership in the same transaction and preserve other sections.
+   */
+  async function mutateGMNotes(cid,transform){
+    assertGMCampaignId(cid);
+    const {uid}=await verifyCampaign(cid);
+    const result=await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&
+        campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const campaign=campaignSnap.exists()?{...campaignSnap.data(),id:cid}:null;
+      if(!gmCampaignAccess(campaign,memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed)
+        throw Error('GM access changed. Reload the campaign.');
+      const workspaceRef=firestoreSdk.doc(db,'campaigns',cid,'systems','gmWorkspace');
+      const snapshot=await tx.get(workspaceRef);same(uid);
+      const original=snapshot.exists()?snapshot.data():{};
+      const notes=transform(original.notes||{});
+      if(JSON.stringify(notes).length>850000)
+        throw Error('Campaign notes are too large to save safely.');
+      tx.set(workspaceRef,{notes,updatedBy:uid,
+        updatedAt:firestoreSdk.serverTimestamp()},{merge:true});
+      return {ok:true};
+    });
+    same(uid);return result;
+  }
+  async function saveGMNotes(cid,content,expected){
+    return mutateGMNotes(cid,current=>savePrivateGMNotes(current,content,expected));
+  }
+  async function addGMSessionLog(cid,input){
+    const id='session-log-'+crypto.randomUUID();
+    return mutateGMNotes(cid,current=>appendGMSessionLog(current,input,{
+      id,at:new Date().toISOString()}));
+  }
+  async function removeGMSessionLog(cid,id,createdAt){
+    return mutateGMNotes(cid,current=>deleteGMSessionLog(current,id,createdAt));
+  }
+  /** News and events publish an allowlisted projection into the original
+   * player-readable party-workspace. A GM draft never enters this mirror.
+   */
+  async function saveGMInformation(cid,kind,input){
+    assertGMCampaignId(cid);
+    if(!input||typeof input!=='object'||Array.isArray(input))
+      throw Error('Invalid news/event entry.');
+    const {uid}=await verifyCampaign(cid);
+    let saved;
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&
+        campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const campaign=campaignSnap.exists()?{...campaignSnap.data(),id:cid}:null;
+      if(!gmCampaignAccess(campaign,memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed)
+        throw Error('GM access changed. Reload the campaign.');
+      const gmRef=firestoreSdk.doc(db,'campaigns',cid,'systems','gmWorkspace');
+      const sharedRef=firestoreSdk.doc(db,'campaigns',cid,'systems','party-workspace');
+      const gm=await tx.get(gmRef),party=await tx.get(sharedRef);same(uid);
+      const changed=applyGMInformationChange({kind,input,campaign,
+        world:gm.exists()?gm.data().world:{},
+        sharedInformation:party.exists()?party.data().information:{},
+        uid,at:new Date().toISOString()});
+      saved=changed.saved;
+      tx.set(gmRef,{world:changed.world,updatedBy:uid,
+        updatedAt:firestoreSdk.serverTimestamp()},{merge:true});
+      const sharedPatch={information:changed.information,updatedBy:uid,
+        updatedAt:firestoreSdk.serverTimestamp()};
+      // Replace the entire public information map when withdrawing a notice:
+      // set(merge:true) would retain a previously published nested key.
+      if(party.exists())tx.update(sharedRef,sharedPatch);
+      else tx.set(sharedRef,sharedPatch);
+    });
+    same(uid);return {ok:true,entry:saved};
+  }
+  /** Use the existing trusted callable that checks the recipient's linked
+   * character and GM membership. Never write an unscoped event in the browser.
+   */
+  async function sendGMNotification(cid,characterId,input){
+    assertGMCampaignId(cid);assertGMCampaignId(characterId);
+    const payload=validateGMAnnouncement({title:input?.title,message:input?.message,
+      recipients:[characterId]});
+    if(!functions||!functionsSdk?.httpsCallable)
+      throw Error('Campaign notifications are unavailable.');
+    const {uid}=await verifyCampaign(cid);
+    const linked=await firestoreSdk.getDocFromServer(
+      firestoreSdk.doc(db,'campaigns',cid,'characters',characterId));
+    same(uid);
+    if(!linked.exists()||!linked.data()?.ownerUid)
+      throw Error('This character is no longer linked to the campaign.');
+    const callable=functionsSdk.httpsCallable(functions,'asteriaAction');
+    const response=await callable({action:'sendCharacterNotification',
+      args:[cid,characterId,{title:payload.title,message:payload.message}],
+      requestId:crypto.randomUUID()});
+    same(uid);
+    if(response.data?.ok!==true)
+      throw Error(response.data?.error||'The notification was not delivered.');
+    return response.data;
+  }
+
   async function manageCondition(cid,characterId,input){
     assertGMCampaignId(cid);assertGMCampaignId(characterId);
     if(!input||typeof input!=='object'||Array.isArray(input)||
@@ -565,5 +668,6 @@ export function createFirebaseGMDashboardService({
 
   return Object.freeze({availability:()=>flags,list,watch,sessionCommand,watchLayout,saveLayout,reviewRest,manageCondition,
     watchManagement,saveQuest,archiveQuest,assignQuest,reviewQuest,updateCampaignDetails,
-    uploadArtwork,removeArtwork});
+    uploadArtwork,removeArtwork,saveGMNotes,addGMSessionLog,removeGMSessionLog,
+    saveGMInformation,sendGMNotification});
 }

@@ -12,6 +12,8 @@ import {GMOverviewPanel} from '../dashboard/GMOverviewPanels.jsx';
 import {GMPartyManagement} from '../dashboard/GMPartyManagement.jsx';
 import {GMQuestManagement} from '../dashboard/GMQuestManagement.jsx';
 import {GMCampaignManagement} from '../dashboard/GMCampaignManagement.jsx';
+import {GMNotesManagement} from '../dashboard/GMNotesManagement.jsx';
+import {GMInformationManagement} from '../dashboard/GMInformationManagement.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
@@ -27,9 +29,9 @@ const GM_TABS=Object.freeze([
   {id:'bestiary',label:'NPC & Creature Library',area:'library'},
   {id:'settings',label:'Dashboard Settings'},
   {id:'inventory',label:'PC Inventory'},
-  {id:'information',label:'News & Events',area:'stories'},
+  {id:'information',label:'News & Events'},
   {id:'quests',label:'Quests'},
-  {id:'notes',label:'GM Notes',area:'stories'},
+  {id:'notes',label:'GM Notes'},
   {id:'session-library',label:'Session Library',area:'archives'},
   {id:'soundboard',label:'Soundboard & Ambience',area:'audio'},
   {id:'session-recordings',label:'Session Recordings',area:'recordings'},
@@ -261,14 +263,19 @@ function CampaignGM({api,uid,campaignId}) {
           available={{combat:combatEnabled,
             progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
-    {['quests','tools'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
-    {['quests','tools'].includes(tab)&&!management&&!managementError?
+    {['quests','tools','notes','information'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
+    {['quests','tools','notes','information'].includes(tab)&&!management&&!managementError?
       <BodyText>Connecting to the private GM campaign workspace…</BodyText>:null}
     {tab==='quests'&&management?<GMQuestManagement api={api} campaignId={campaignId}
       workspace={management} party={snapshot.party} session={live}/>:null}
     {tab==='tools'&&management?<GMCampaignManagement api={api} campaignId={campaignId}
       campaign={snapshot.campaign} workspace={management}
       party={snapshot.party} session={live}/>:null}
+    {tab==='notes'&&management?<GMNotesManagement api={api} campaignId={campaignId}
+      workspace={management} session={live}/>:null}
+    {tab==='information'&&management?<GMInformationManagement api={api}
+      campaignId={campaignId} campaign={snapshot.campaign}
+      workspace={management} party={snapshot.party}/>:null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
       initialArea={GM_TOOL_AREAS[tab]}/>:null}
