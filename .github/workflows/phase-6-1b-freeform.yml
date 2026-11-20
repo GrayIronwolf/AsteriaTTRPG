@@ -1,0 +1,67 @@
+name: Phase 6.1B Dashboard Direct Workspace Checks
+on:
+  pull_request:
+    paths:
+      - 'src/state/dashboardLayoutModel.mjs'
+      - 'frontend/src/layout/**'
+      - 'scripts/site-freeform-phase6-1b.test.mjs'
+      - '.github/workflows/phase-6-1b-freeform.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dashboard-direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Phase 6.1A and 6.1B regression tests
+        run: node --test scripts/site-freeform-phase6-1a.test.mjs scripts/site-freeform-phase6-1b.test.mjs scripts/site-layout-phase6-3.test.mjs scripts/dashboard-layout.test.mjs scripts/gm-focus-phase2-2.test.mjs
+      - name: React layout and model lint
+        run: npx eslint frontend/src/layout src/state/dashboardLayoutModel.mjs src/state/workspaceFreeformModel.mjs
+      - name: React website checks
+        run: npm run site:check
+      - name: Production React website build
+        run: npm run site:build
+
+  publish-bundle:
+    name: Commit matching React bundle on isolated 6.1B branch
+    needs: dashboard-direct
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feature/phase-6-1b-player-gm-direct-workspace' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/phase-6-1b-player-gm-direct-workspace
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Synchronize tracked bundle without overwriting newer commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=feature/phase-6-1b-player-gm-direct-workspace
+          git fetch origin "$BRANCH"
+          if [ "$(git rev-parse "origin/$BRANCH")" != "${{ github.event.pull_request.head.sha }}" ]; then
+            echo "Branch advanced; skipping stale generated assets."
+            exit 0
+          fi
+          git add -A -- react-dist data/compendium.js data/compendium-handbook.js data/compendium-index.js data/compendium-parts
+          if git diff --cached --quiet; then
+            echo "Tracked output already matches."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "build(phase6.1B): update tracked React bundle"
+          git push origin "HEAD:$BRANCH"
