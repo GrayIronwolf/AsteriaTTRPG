@@ -75,6 +75,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
     turnTimer,pending:safePending,
     ...(gm?{
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
+      preparedMapId:validId(raw.preparedMapId)?raw.preparedMapId:'',
       log:Object.freeze(array(raw.combat?.log).slice(0,15).map(row=>({
         id:title(row.id,160),message:title(row.message,300)
       })))
