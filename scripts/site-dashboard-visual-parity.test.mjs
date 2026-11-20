@@ -217,7 +217,7 @@ test('forged Level shield and four combat silhouettes preserve original paths wi
   const gm=read('frontend/src/pages/GMDashboardPage.jsx');
   const combat=read('frontend/src/combat/CombatWorkspace.jsx');
   for(const kind of ['level','order','initiative','ap','timer']){
-    assert.match(source,new RegExp(kind+':\\\''));
+    assert.ok(source.includes(kind+":'"),kind);
     assert.ok(source.includes('site-forged-badge-'));
   }
   for(const path of [
@@ -234,7 +234,7 @@ test('forged Level shield and four combat silhouettes preserve original paths wi
   assert.ok(gm.includes('<ForgedBadge kind="level"'));
   assert.ok(combat.includes('function CombatStatusBadges'));
   assert.match(combat,/kind="timer"/);
-  assert.doesNotMatch(material,/!important|:global\\(/);
+  assert.doesNotMatch(material,/!important|:global\(/);
 });
 test('original player navigation remains enumerated rather than silently removed',()=>{
   const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');

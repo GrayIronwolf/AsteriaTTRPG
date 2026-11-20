@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   projectCombat,eligiblePlayerCombatants,customEnemy,combatRevision,
-  validateCombatCommand,COMBAT_AP_ACTIONS,gmEncounterCandidates
+  validateCombatCommand,COMBAT_AP_ACTIONS,COMBAT_PLAYER_COMMANDS,gmEncounterCandidates
 } from '../frontend/src/combat/combatModel.mjs';
 import {createFirebaseCombatService} from '../frontend/src/combat/firebaseCombatService.mjs';
 
