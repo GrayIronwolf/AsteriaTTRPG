@@ -120,3 +120,23 @@
 .informationCard h4,.informationCard p{margin:0;overflow-wrap:anywhere}
 .informationCard button{justify-self:start}
 .informationCard time{color:var(--ast-color-text-muted)}
+
+
+/* Phase 2.5: live party, organizations, notes, chat and presence. */
+.partyWorkspace{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--ast-space-3)}
+.partyTabs,.partyActions{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.partySection{display:grid;align-content:start;gap:var(--ast-space-3);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);min-width:0}
+.partySection h4,.partySection p{margin:0}
+.partySection label{display:grid;gap:var(--ast-space-2);min-width:0}
+.partySection textarea,.partySection input,.partySection select{width:100%;max-width:100%;min-height:var(--ast-target-min);background:var(--ast-color-panel);color:var(--ast-color-text);padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft)}
+.partyTabs button,.partyActions button,.partySection>button{min-height:var(--ast-target-min);padding:var(--ast-space-2);color:var(--ast-color-text);background:var(--ast-color-panel-slate);border:1px solid var(--ast-color-outline-soft);cursor:pointer}
+.partyTabs button[aria-pressed=true]{border-color:var(--ast-color-outline-active)}
+.partyTabs button:disabled,.partyActions button:disabled{opacity:.5;cursor:not-allowed}
+.partyMembers{display:grid;gap:var(--ast-space-2)}
+.partyMember{display:flex;align-items:center;gap:var(--ast-space-3);padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft)}
+.partyMember img,.partyMember>span{height:64px;width:64px;object-fit:cover;display:grid;place-items:center}
+.partyMember div{display:grid;gap:var(--ast-space-1)}.partyMember div p{margin:0}
+.partyChat{display:grid;gap:var(--ast-space-2);max-height:320px;overflow-y:auto}
+.partyChat article{padding:var(--ast-space-2);border:1px solid var(--ast-color-outline-soft);overflow-wrap:anywhere}
+.partyChat header{display:flex;gap:var(--ast-space-2);justify-content:space-between;flex-wrap:wrap}
+.partyChat p{margin:0}
