@@ -5,6 +5,9 @@ import {
   projectCombat,eligiblePlayerCombatants,gmEncounterCandidates,validateCombatCommand,
   combatRevision
 } from './combatModel.mjs';
+import {
+  normalizePreparedEncounters,validatePreparedEncounterInput,PREPARED_ENCOUNTER_MAX_PLANS
+} from '../../../src/state/preparedEncounterModel.mjs';
 
 /** React/Vite Phase 7.1. Existing authenticated Firebase app, paths and
  * asteriaAction combatCommand transaction are the only sources of authority. */
@@ -24,6 +27,7 @@ export function createFirebaseCombatService({
   const sessionRef=id=>firestoreSdk.doc(db,'campaigns',id,'liveSession','current');
   const gmRef=id=>firestoreSdk.doc(db,'campaigns',id,'systems','gmWorkspace');
   const partyRef=id=>firestoreSdk.collection(db,'campaigns',id,'characters');
+  const mapsRef=id=>firestoreSdk.collection(db,'campaigns',id,'battleMaps');
   const characterRef=(id,characterId)=>firestoreSdk.doc(db,'campaigns',id,'characters',characterId);
   const sourceRef=(uid,id)=>firestoreSdk.doc(db,'users',uid,'characters',id);
   async function verified(){
@@ -98,9 +102,9 @@ export function createFirebaseCombatService({
         const {uid,v2,sourceId}=first;
         const data={campaign:first.campaign,member:first.member,
           character:first.character,source:first.source,encounter:null,session:null,
-          roster:[],workspace:null};
+          roster:[],workspace:null,maps:[]};
         const required=mode==='gm'
-          ?['campaign','member','encounter','session','roster','workspace']
+          ?['campaign','member','encounter','session','roster','workspace','maps']
           :['campaign','member','character','source','encounter','session'];
         const ready=Object.fromEntries(required.map(key=>[key,key==='member'&&!v2]));
         const valid=()=>{
@@ -132,7 +136,9 @@ export function createFirebaseCombatService({
                   {id:data.workspace.combatState.pending.id||'',
                     status:String(data.workspace.combatState.pending.status).slice(0,80),
                     actorId:data.workspace.combatState.pending.actorId||''}:null,
-                party:gmPartySummary(data.roster)
+                party:gmPartySummary(data.roster),
+                preparedEncounters:normalizePreparedEncounters(data.workspace?.preparedEncounters),
+                maps:data.maps
               }:{})};
             onUpdate?.(Object.freeze(result));
           }catch(error){fail(error);}
@@ -159,6 +165,10 @@ export function createFirebaseCombatService({
         }else{
           attach('roster',partyRef(id),snap=>snap.docs.map(row=>({...row.data(),id:row.id})),false);
           attach('workspace',gmRef(id),snap=>snap.exists()?snap.data():null,false);
+          attach('maps',mapsRef(id),snap=>snap.docs.map(row=>({
+            id:row.id,name:String(row.data()?.name||'Unnamed map').slice(0,100),
+            kind:String(row.data()?.kind||'').slice(0,32)
+          })).filter(row=>/^[A-Za-z0-9_-]{1,160}$/.test(row.id)),false);
         }
         attach('encounter',encounterRef(id),snap=>snap.exists()?snap.data():null,false);
         attach('session',sessionRef(id),snap=>snap.exists()?snap.data():null,false);
@@ -191,9 +201,65 @@ export function createFirebaseCombatService({
       throw Error(response.data?.error||'The combat command was rejected.');
     return response.data;
   }
+  /** GM-only transaction on the existing private workspace; never writes live combat. */
+  async function writePrepared(id,type,entry,expectedRevision=0){
+    const {uid}=await check(id,'gm');
+    const payload=type==='save'?validatePreparedEncounterInput(entry):null;
+    const identifier=String(entry?.id||'');
+    if(!/^prepared-[A-Za-z0-9_-]{1,95}$/.test(identifier))
+      throw Error('Invalid prepared encounter ID.');
+    if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)
+      throw Error('Invalid prepared encounter revision.');
+    const result=await firestoreSdk.runTransaction(db,async tx=>{
+      same(uid);
+      const campaignSnap=await tx.get(campaignRef(id));
+      if(!campaignSnap.exists())throw Error('Campaign no longer exists.');
+      const campaign={...campaignSnap.data(),id};
+      const v2=campaign.membershipSchemaVersion===2&&campaign.ownerUid!==uid;
+      const memberSnap=v2?await tx.get(memberRef(id,uid)):null;
+      if(!permit(campaign,memberSnap?.exists()?memberSnap.data():null,uid,id,'gm'))
+        throw Error('GM permission was revoked before saving.');
+      const workspaceSnap=await tx.get(gmRef(id));
+      const stored=normalizePreparedEncounters(workspaceSnap.exists()?
+        workspaceSnap.data()?.preparedEncounters:[]);
+      const current=stored.find(row=>row.id===identifier);
+      if((current?.revision||0)!==expectedRevision)
+        throw Error('Prepared encounter changed in another session. Refresh and try again.');
+      let next;
+      if(type==='save'){
+        if(!current&&stored.length>=PREPARED_ENCOUNTER_MAX_PLANS)
+          throw Error('Prepared encounter library is full (30).');
+        if(payload.mapId){
+          const map=await tx.get(firestoreSdk.doc(db,'campaigns',id,'battleMaps',payload.mapId));
+          if(!map.exists())throw Error('Selected battle map no longer exists.');
+        }
+        const now=new Date().toISOString();
+        const updated={id:identifier,...payload,revision:expectedRevision+1,
+          createdAt:current?.createdAt||now,createdBy:current?.createdBy||uid,
+          updatedAt:now,updatedBy:uid};
+        next=current?stored.map(row=>row.id===identifier?updated:row):[...stored,updated];
+      }else if(type==='delete'){
+        if(!current)throw Error('Prepared encounter was already deleted.');
+        next=stored.filter(row=>row.id!==identifier);
+      }else throw Error('Unknown prepared encounter action.');
+      if(JSON.stringify(next).length>500000)
+        throw Error('The prepared encounter library exceeds its storage limit.');
+      tx.set(gmRef(id),{
+        preparedEncounters:next,updatedBy:uid,updatedAt:firestoreSdk.serverTimestamp()
+      },{merge:true});
+      return {ok:true,id:identifier,revision:expectedRevision+1};
+    });
+    same(uid);
+    return result;
+  }
   return Object.freeze({
     availability:()=>flags,watchGM,watchPlayer,
     commandGM:(id,actorId,input)=>command(id,'gm','',actorId,input),
-    commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input)
+    commandPlayer:(id,characterId,actorId,input)=>command(id,'player',characterId,actorId,input),
+    savePrepared:(id,entry,expectedRevision=0)=>writePrepared(id,'save',entry,expectedRevision),
+    deletePrepared:(id,entry,expectedRevision)=>writePrepared(id,'delete',entry,expectedRevision),
+    loadPrepared:(id,preparedId,revision)=>command(id,'gm','','encounter',{
+      operation:'load-prepared',preparedId,replace:true,revision
+    })
   });
 }
