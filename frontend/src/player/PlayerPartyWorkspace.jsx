@@ -27,7 +27,7 @@ export function PlayerPartyWorkspace({api,campaignId,characterId,owned=false}){
     if(!data||notesDirty)return;
     const saved=data.sharedNotes||'';
     setNotes(saved);setNotesBaseline(saved);
-  },[data?.sharedNotes,notesDirty]); // eslint-disable-line react-hooks/exhaustive-deps
+  },[data?.sharedNotes,notesDirty]);
   const editable=owned&&data?.owner&&data?.editable===true;
   const run=async(work,success)=>{
     if(busy||!editable)return {ok:false};
