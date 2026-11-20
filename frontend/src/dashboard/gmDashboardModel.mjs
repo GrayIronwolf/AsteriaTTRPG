@@ -39,6 +39,11 @@ export function gmCampaignSummary(campaign, access) {
     image:safeDashboardArtwork(campaign.image,campaign.art,campaign.banner,campaign.coverImage,campaign.cover,campaign.appearance?.image),
     description:text(campaign.description).slice(0,400),
     role:access.role,
+    ucn:text(campaign.ucn).slice(0,20),
+    location:text(campaign.location).slice(0,300),
+    playerLimit:Math.max(1,Math.min(50,Number(campaign.playerLimit||campaign.partySize||6))),
+    playerCount:record(campaign.players)?Object.values(campaign.players).filter(p=>p?.role!=='gm').length:0,
+    gmCount:1+(Array.isArray(campaign.gmUids)?campaign.gmUids.length:0),
     membershipSchemaVersion:campaign.membershipSchemaVersion ?? 1,
     partySize:Number.isInteger(Number(campaign.partySize)) ? Number(campaign.partySize) : 4
   });
@@ -65,6 +70,13 @@ export function gmPartySummary(documents) {
     soulDamage:soulDamageValue(item),
     conditions:Object.freeze(activeConditions(item).slice(0,32).map(row=>Object.freeze({
       id:text(row.id).slice(0,160),name:text(row.name,'Condition').slice(0,100)
+    }))),
+    quests:Object.freeze((Array.isArray(item.quests)?item.quests:[]).slice(0,150).filter(q=>record(q)).map(q=>Object.freeze({
+      id:text(q.id).slice(0,100),title:text(q.title).slice(0,160),
+      status:text(q.status).slice(0,40),progress:record(q.progress)?Object.freeze({...q.progress}):Object.freeze({}),
+      objectives:Array.isArray(q.objectives)?q.objectives.slice(0,20).map(o=>({
+        id:text(o.id).slice(0,100),text:text(o.text).slice(0,500),target:Number(o.target)||1,optional:o.optional===true})):[],
+      rewardClaimedAt:q.rewardClaimedAt||null,resolutionNote:text(q.resolutionNote).slice(0,1000)
     }))),
     restRequest:item.restState?.request?.status==='pending'&&
       typeof item.restState.request.id==='string'?

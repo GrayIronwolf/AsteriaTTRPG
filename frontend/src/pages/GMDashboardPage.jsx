@@ -10,6 +10,8 @@ import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {GMOverviewPanel} from '../dashboard/GMOverviewPanels.jsx';
 import {GMPartyManagement} from '../dashboard/GMPartyManagement.jsx';
+import {GMQuestManagement} from '../dashboard/GMQuestManagement.jsx';
+import {GMCampaignManagement} from '../dashboard/GMCampaignManagement.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
@@ -26,7 +28,7 @@ const GM_TABS=Object.freeze([
   {id:'settings',label:'Dashboard Settings'},
   {id:'inventory',label:'PC Inventory'},
   {id:'information',label:'News & Events',area:'stories'},
-  {id:'quests',label:'Quests',area:'stories'},
+  {id:'quests',label:'Quests'},
   {id:'notes',label:'GM Notes',area:'stories'},
   {id:'session-library',label:'Session Library',area:'archives'},
   {id:'soundboard',label:'Soundboard & Ambience',area:'audio'},
@@ -134,6 +136,7 @@ function CampaignGM({api,uid,campaignId}) {
   const [snapshot,setSnapshot]=useState(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState(''),[message,setMessage]=useState('');
   const [busy,setBusy]=useState(false),[tab,setTab]=useState('main');
+  const [management,setManagement]=useState(null),[managementError,setManagementError]=useState('');
   const mediaEnabled=api.media?.availability().enabled===true;
   const combatEnabled=api.combat?.availability().enabled===true;
   const progressionEnabled=api.progression?.availability().enabled===true;
@@ -152,6 +155,18 @@ function CampaignGM({api,uid,campaignId}) {
       setError(err.message||'GM access could not be verified.');
     });
     return ()=>{++scope.current;close();};
+  },[api,campaignId,uid]);
+  useEffect(()=>{
+    let active=true;
+    setManagement(null);setManagementError('');
+    const close=api.watchManagement(campaignId,data=>{
+      if(!active)return;
+      setManagement(data);setManagementError('');
+    },err=>{
+      if(!active)return;
+      setManagement(null);setManagementError(err?.message||'GM campaign systems could not be loaded.');
+    });
+    return ()=>{active=false;close();};
   },[api,campaignId,uid]);
   const run=async action=>{
     if(busy||!snapshot||loading)return;
@@ -246,6 +261,14 @@ function CampaignGM({api,uid,campaignId}) {
           available={{combat:combatEnabled,
             progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
+    {['quests','tools'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
+    {['quests','tools'].includes(tab)&&!management&&!managementError?
+      <BodyText>Connecting to the private GM campaign workspace…</BodyText>:null}
+    {tab==='quests'&&management?<GMQuestManagement api={api} campaignId={campaignId}
+      workspace={management} party={snapshot.party} session={live}/>:null}
+    {tab==='tools'&&management?<GMCampaignManagement api={api} campaignId={campaignId}
+      campaign={snapshot.campaign} workspace={management}
+      party={snapshot.party} session={live}/>:null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
       initialArea={GM_TOOL_AREAS[tab]}/>:null}
