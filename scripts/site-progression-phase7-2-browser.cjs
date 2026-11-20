@@ -289,6 +289,94 @@ try{
  await gmCombat.getByText(/ENDED/).waitFor({timeout:30000});
  // A non-GM may never manage the encounter.
  assert.equal(await playerCombat.getByRole('button',{name:'Start Combat'}).count(),0);
+
+ // Dashboard restoration Phase 1.3: authenticated Player/GM gameplay verification.
+ // Use normal UI actions and the existing emulated Firestore/Functions; do not
+ // insert character records or alter them directly from this browser test.
+ await owner.getByRole('button',{name:'GM Main',exact:true}).click();
+ const gmSystems=owner.getByTestId('site-gm-layout-manager');
+ await gmSystems.waitFor({timeout:30000});
+ await player.getByRole('button',{name:'Character',exact:true}).click();
+ const systems=player.getByTestId('site-player-character-systems');
+ await systems.waitFor({timeout:30000});
+ await systems.getByRole('button',{name:'Request Long Rest'}).click();
+ await systems.getByText('Long Rest: pending').waitFor({timeout:30000});
+ await gmSystems.getByRole('button',{name:'Approve',exact:true}).click();
+ await owner.getByText('Long Rest approved.').waitFor({timeout:30000});
+ await systems.getByText('Long Rest: approved').waitFor({timeout:30000});
+ // A subsequent request must create a new pending revision; GM denial cannot
+ // be bypassed by the Player.
+ await systems.getByRole('button',{name:'Request Long Rest'}).click();
+ await systems.getByText('Long Rest: pending').waitFor({timeout:30000});
+ await gmSystems.getByRole('button',{name:'Deny',exact:true}).click();
+ await owner.getByText('Long Rest denied.').waitFor({timeout:30000});
+ await systems.getByText('Long Rest: denied').waitFor({timeout:30000});
+ await systems.getByRole('button',{name:'Short Rest'}).click();
+ await player.getByText('Rest request submitted.').waitFor({timeout:30000});
+
+ // GM-applied conditions must reach the Player without granting GM powers.
+ await gmSystems.getByLabel('New condition').fill('Phase 1.3 Verification Condition');
+ await gmSystems.getByRole('button',{name:'Apply Condition'}).click();
+ await systems.getByText('Phase 1.3 Verification Condition').waitFor({timeout:30000});
+ assert.equal(await systems.getByRole('button',{name:'Remove condition'}).count(),0,
+   'Player cannot remove a GM-only condition.');
+ await gmSystems.getByRole('button',{name:'Remove',exact:true}).click();
+ await systems.getByText('No active conditions.').waitFor({timeout:30000});
+
+ // Currency actions must persist a canonical Firebase delta in both
+ // directions; do not depend on the character's starting balance.
+ const copper=systems.getByRole('button',{name:'Increase Copper'})
+   .locator('xpath=../..').locator('strong');
+ const initialCopper=Number((await copper.innerText()).replaceAll(',',''));
+ assert.ok(Number.isSafeInteger(initialCopper));
+ await systems.getByRole('button',{name:'Increase Copper'}).click();
+ await player.waitForFunction(expected=>{
+   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const amount=button?.parentElement?.parentElement?.querySelector('strong');
+   return Number((amount?.textContent||'').replaceAll(',',''))===expected;
+ },initialCopper+1,{timeout:30000});
+ await systems.getByRole('button',{name:'Decrease Copper'}).click();
+ await player.waitForFunction(expected=>{
+   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const amount=button?.parentElement?.parentElement?.querySelector('strong');
+   return Number((amount?.textContent||'').replaceAll(',',''))===expected;
+ },initialCopper,{timeout:30000});
+
+ // The restored Skills and Talents tabs must load the authenticated modules,
+ // expose techniques and submit a real server-owned skill training action.
+ await player.getByRole('button',{name:'Skills',exact:true}).click();
+ const skills=player.getByTestId('site-player-skills');
+ await skills.waitFor({timeout:30000});
+ await skills.getByRole('searchbox',{name:'Search skills'}).fill('');
+ const training=skills.getByRole('button',{name:'Record Skill Success'}).first();
+ await training.waitFor({timeout:30000});
+ assert.equal(await training.isEnabled(),true,'A linked starting skill should be trainable.');
+ await training.click();
+ await skills.getByText('Successful skill check recorded.').waitFor({timeout:30000});
+ await skills.getByRole('button',{name:'Techniques'}).first().click();
+ await skills.getByTestId('site-player-skill-details').waitFor({timeout:30000});
+ await player.getByRole('button',{name:'Class/Talent Tree',exact:true}).click();
+ await player.getByTestId('site-player-talents').waitFor({timeout:30000});
+ await player.getByTestId('site-player-talent-effects').waitFor({timeout:30000});
+
+ // A privately saved journal entry must appear to the Player but never on
+ // the GM's read-only character route.
+ await player.getByRole('button',{name:'Journal',exact:true}).click();
+ const journal=player.getByTestId('site-player-journal');
+ await journal.waitFor({timeout:30000});
+ const privateJournalMarker='Private Phase 1.3 browser verification entry';
+ await journal.getByLabel('Title').fill('Phase 1.3 journal check');
+ await journal.getByLabel('Entry').fill(privateJournalMarker);
+ await journal.getByRole('button',{name:'Save Journal Entry'}).click();
+ await journal.getByText(privateJournalMarker,{exact:true}).waitFor({timeout:30000});
+ await owner.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
+   {waitUntil:'domcontentloaded'});
+ await owner.getByTestId('site-player-dashboard').waitFor({timeout:30000});
+ assert.equal((await owner.getByTestId('site-player-dashboard').innerText()).includes(privateJournalMarker),false,
+   'GM must never receive the Player private journal.');
+ assert.equal(await owner.getByTestId('site-player-dashboard').getByRole('button',{name:'Journal'}).count(),0);
+ await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
+
  // Phase 7.2: authenticated XP, progression, and Universal Check Requests.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByRole('button',{name:'Gameplay Systems'}).click();
