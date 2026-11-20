@@ -71,6 +71,7 @@ export const DASHBOARD_BACKGROUND_STYLES = Object.freeze(['obsidian','slate','ar
 export const DASHBOARD_LAYOUT_VERSION = 4;
 // Saved GM Focus snapshots are bounded inside the existing private dashboard document.
 export const GM_FOCUS_LIMIT = 8;
+export const DASHBOARD_SAVED_WORKSPACES_LIMIT = 6;
 export const DASHBOARD_LAYOUT_PRESETS = {
   player:{
     default:[],
@@ -149,7 +150,7 @@ export function normalizeDashboardLayout(value,role='player') {
   for(const viewport of ['desktop','tablet','mobile']){
     const candidate=rawViews[viewport];
     if(candidate&&typeof candidate==='object'&&!Array.isArray(candidate))
-      viewportLayouts[viewport]=normalizeDashboardLayout({...candidate,viewportLayouts:null},scope);
+      viewportLayouts[viewport]=normalizeDashboardLayout({...candidate,viewportLayouts:null,savedWorkspaces:null},scope);
   }
   // Focuses are GM-only display snapshots. Strip recursive focus metadata from
   // snapshots, allowlist all panels via this same normalizer, and cap document
@@ -159,7 +160,7 @@ export function normalizeDashboardLayout(value,role='player') {
   if(scope==='gm'){
     const validSnapshot=value=>{
       if(!value||typeof value!=='object'||Array.isArray(value))return null;
-      const snapshot=normalizeDashboardLayout({...value,focusModes:null,focusHome:null,activeFocusId:null},'gm');
+      const snapshot=normalizeDashboardLayout({...value,focusModes:null,focusHome:null,activeFocusId:null,savedWorkspaces:null},'gm');
       const clean={...snapshot};
       delete clean.focusModes;delete clean.focusHome;delete clean.activeFocusId;
       return clean;
@@ -178,6 +179,28 @@ export function normalizeDashboardLayout(value,role='player') {
     }
     focusHome=validSnapshot(value.focusHome);
   }
+  const savedWorkspaces=[],workspaceIds=new Set(),workspaceNames=new Set();
+  // Named layouts are private, bounded snapshots of presentation-only fields.
+  // Never allow workspace snapshots to recursively contain their own libraries.
+  for(const entry of safeArray(value.savedWorkspaces).slice(0,DASHBOARD_SAVED_WORKSPACES_LIMIT*3)){
+    if(savedWorkspaces.length===DASHBOARD_SAVED_WORKSPACES_LIMIT)break;
+    if(!entry||typeof entry!=='object'||Array.isArray(entry))continue;
+    const id=typeof entry.id==='string'?entry.id:'';
+    const name=typeof entry.name==='string'?entry.name.replace(/[\u0000-\u001f\u007f]/g,' ')
+      .trim().replace(/\s+/g,' ').slice(0,48):'';
+    if(!/^[a-zA-Z0-9_-]{1,72}$/.test(id)||!name||
+       workspaceIds.has(id)||workspaceNames.has(name.toLocaleLowerCase()))continue;
+    const source=entry.layout;
+    if(!source||typeof source!=='object'||Array.isArray(source))continue;
+    const normalized=normalizeDashboardLayout({
+      ...source,savedWorkspaces:null,focusModes:null,focusHome:null,activeFocusId:null
+    },scope);
+    const snapshot={...normalized};
+    delete snapshot.savedWorkspaces;
+    delete snapshot.focusModes;delete snapshot.focusHome;delete snapshot.activeFocusId;
+    workspaceIds.add(id);workspaceNames.add(name.toLocaleLowerCase());
+    savedWorkspaces.push({id,name,layout:snapshot});
+  }
   const activeFocusId=typeof value.activeFocusId==='string'&&focusModes.some(row=>row.id===value.activeFocusId)?value.activeFocusId:'';
   return {
     version:DASHBOARD_LAYOUT_VERSION,
@@ -192,6 +215,7 @@ export function normalizeDashboardLayout(value,role='player') {
     panelBackgrounds,
     ...(freeform?{freeform}:{}),
     ...(Object.keys(viewportLayouts).length?{viewportLayouts}:{}),
+    ...(savedWorkspaces.length?{savedWorkspaces}:{}),
     ...(scope==='gm'&&focusModes.length?{focusModes}:{}),
     ...(scope==='gm'&&focusHome?{focusHome}:{}),
     ...(scope==='gm'&&activeFocusId?{activeFocusId}:{})
@@ -235,10 +259,11 @@ export function applyDashboardPreset(layout,role='player',preset='default'){
   const previous=normalizeDashboardLayout(layout,scope);
   // A built-in preset never erases the user's saved named Focus library.
   if(preset==='default'){
-    const metadata=scope==='gm'?{
-      ...(previous.focusModes?.length?{focusModes:previous.focusModes}:{}),
-      ...(previous.focusHome?{focusHome:previous.focusHome}:{})
-    }:{};
+    const metadata={
+      ...(previous.savedWorkspaces?.length?{savedWorkspaces:previous.savedWorkspaces}:{}),
+      ...(scope==='gm'&&previous.focusModes?.length?{focusModes:previous.focusModes}:{}),
+      ...(scope==='gm'&&previous.focusHome?{focusHome:previous.focusHome}:{})
+    };
     return {...defaultDashboardLayout(scope),...metadata};
   }
   const defaults=defaultDashboardLayout(scope);
@@ -471,4 +496,38 @@ export function fitDashboardGridPanel(layout,role,id,width,height){
   const placements=reflowDashboardPlacements(previous,role,id,candidate);
   if(!placements)return previous;
   return {...previous,mode:'custom',preset:'custom',order:prioritized,placements};
+}
+
+/** Save a named layout snapshot without including recursive libraries or game data. */
+export function saveNamedDashboardWorkspace(layout,role='player',name='',id=''){
+  const source=normalizeDashboardLayout(layout,role);
+  const cleaned=typeof name==='string'?name.replace(/[\u0000-\u001f\u007f]/g,' ')
+    .trim().replace(/\s+/g,' ').slice(0,48):'';
+  if(!cleaned||!/^[a-zA-Z0-9_-]{1,72}$/.test(id))return source;
+  const existing=source.savedWorkspaces||[];
+  if(existing.some(item=>item.name.toLocaleLowerCase()===cleaned.toLocaleLowerCase()&&item.id!==id))
+    return source;
+  if(existing.length>=DASHBOARD_SAVED_WORKSPACES_LIMIT&&!existing.some(item=>item.id===id))
+    return source;
+  const snapshot={...source};
+  delete snapshot.savedWorkspaces;
+  delete snapshot.focusModes;delete snapshot.focusHome;delete snapshot.activeFocusId;
+  const next=[...existing.filter(item=>item.id!==id),{id,name:cleaned,layout:snapshot}];
+  return normalizeDashboardLayout({...source,savedWorkspaces:next},role);
+}
+export function restoreNamedDashboardWorkspace(layout,role='player',id=''){
+  const source=normalizeDashboardLayout(layout,role);
+  const found=source.savedWorkspaces?.find(item=>item.id===id);
+  if(!found)return source;
+  return normalizeDashboardLayout({...found.layout,
+    ...(source.savedWorkspaces?.length?{savedWorkspaces:source.savedWorkspaces}:{}),
+    ...(role==='gm'&&source.focusModes?.length?{focusModes:source.focusModes}:{}),
+    ...(role==='gm'&&source.focusHome?{focusHome:source.focusHome}:{})
+  },role);
+}
+export function deleteNamedDashboardWorkspace(layout,role='player',id=''){
+  const source=normalizeDashboardLayout(layout,role);
+  if(!source.savedWorkspaces?.some(item=>item.id===id))return source;
+  return normalizeDashboardLayout({...source,savedWorkspaces:
+    source.savedWorkspaces.filter(item=>item.id!==id)},role);
 }
