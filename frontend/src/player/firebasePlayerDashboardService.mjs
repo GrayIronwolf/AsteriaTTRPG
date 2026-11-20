@@ -668,13 +668,12 @@ export function createFirebasePlayerDashboardService({
       const cursor=await guarded(firestoreSdk.doc(db,'campaigns',cid,'events',beforeId),
         'Notification page is unavailable.');
       same(uid);
-      if(!cursor.exists()||cursor.data().targetOwnerUid!==uid||
-        cursor.data().targetCharacterId!==id)
+      if(!cursor.exists()||cursor.data().targetOwnerUid!==uid)
         throw Error('Invalid notification page cursor.');
       constraints.push(firestoreSdk.startAfter(cursor));
     }
     constraints.push(firestoreSdk.limit(100));
-    const snap=await firestoreSdk.getDocs(firestoreSdk.query(
+    const snap=await firestoreSdk.getDocsFromServer(firestoreSdk.query(
       firestoreSdk.collection(db,'campaigns',cid,'events'),...constraints));
     same(uid);
     const raw=snap.docs.map(row=>({...row.data(),id:row.id}));
