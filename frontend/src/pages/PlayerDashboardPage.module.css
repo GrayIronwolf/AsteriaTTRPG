@@ -29,6 +29,7 @@
 .portraitColumn::after,.campaignColumn::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgb(4 11 19 / .933) 0%,rgb(6 17 26 / .62) 26%,transparent 65%)}
 .portraitFallback,.campaignFallback{display:grid;place-items:center;height:100%;font-size:clamp(3rem,7vw,7rem);font-family:var(--ast-font-display);opacity:.3}
 .portraitCaption,.campaignCaption{position:absolute;bottom:0;left:0;right:0;z-index:1;display:grid;gap:5px;padding:18px}
+.levelBadgeAnchor{position:absolute;z-index:2;top:10px;right:10px;pointer-events:none}
 .portraitCaption h2,.campaignCaption h3{margin:0;color:rgb(255 255 255);text-shadow:0 2px 5px rgb(0 0 0);font-family:var(--ast-font-display)}
 .portraitCaption h2{font-size:clamp(1.35rem,2.2vw,2.25rem);line-height:1.05}
 .portraitCaption p,.campaignCaption p{margin:0;font-size:.85rem;color:rgb(226 233 240)}

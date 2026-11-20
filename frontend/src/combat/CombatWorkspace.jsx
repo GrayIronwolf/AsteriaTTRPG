@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
 import styles from './CombatWorkspace.module.css';
+import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
 const emptyEnemy={name:'',type:'Creature',hp:'20',sp:'',mp:'',xpReward:'0',ac:'',initiative:''};
 function useCombatStream(api,method,args){
@@ -36,6 +37,28 @@ function CombatRoster({combat,onSelect,selected='',gm=false}){
       {row.hp!==undefined?<Resources row={row}/>:null}
     </li>)}
   </ol>;
+}
+function CombatStatusBadges({combat,actor}){
+  const [now,setNow]=useState(()=>Date.now());
+  const timer=combat.turnTimer;
+  useEffect(()=>{
+    if(!timer?.enabled||!combat.isActive)return undefined;
+    setNow(Date.now());
+    const tick=window.setInterval(()=>setNow(Date.now()),1000);
+    return ()=>window.clearInterval(tick);
+  },[timer?.enabled,timer?.endsAt,combat.isActive]);
+  const remaining=timer?.enabled&&combat.isActive
+    ?Math.max(0,Math.ceil((timer.endsAt-now)/1000)):null;
+  const order=combat.combatants.findIndex(row=>row.id===actor.id);
+  return <div className={styles.badges} data-testid="site-combat-badges">
+    <ForgedBadge kind="order" label="Turn Order" value={order<0?'—':order+1}/>
+    <ForgedBadge kind="initiative" label="Initiative" value={actor.initiative??'—'}
+      active={Boolean(actor.current&&combat.isActive)}/>
+    <ForgedBadge kind="ap" label={actor.current?'Action Points':'Held AP'}
+      value={actor.ap??'—'} active={Boolean(actor.current&&actor.ap>0&&combat.isActive)}/>
+    <ForgedBadge kind="timer" label="Turn Timer" value={remaining===null?'Off':remaining+'s'}
+      warning={remaining!==null&&remaining<=10}/>
+  </div>;
 }
 function Actions({combat,actor,disabled,onCommand,mode}){
   const own=actor?.current&&combat.isActive&&!actor.turnComplete&&combat.sessionEditable;
@@ -127,6 +150,7 @@ export function GMCombatWorkspace({api,campaignId}){
       <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
       {current?<section className={styles.section}>
         <h3>{current.name} · Turn &amp; Resources</h3>
+        <CombatStatusBadges combat={combat} actor={current}/>
         <Resources row={current}/>
         <Actions combat={combat} actor={current} disabled={busy||Boolean(stream.data.pending)}
           onCommand={submit} mode="gm"/>
@@ -225,6 +249,7 @@ export function PlayerCombatWorkspace({api,campaignId,characterId}){
       <CombatRoster combat={combat}/>
       {actor?<section className={styles.section}>
         <h3>Your Turn: {actor.name}</h3>
+        <CombatStatusBadges combat={combat} actor={actor}/>
         <Resources row={actor}/>
         <p>{actor.current?'You are the active combatant.':'Wait for your turn.'}
           {' '}AP: {actor.ap??0} · Bonus action: {actor.bonus?'available':'used'}</p>

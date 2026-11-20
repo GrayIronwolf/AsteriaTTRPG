@@ -208,6 +208,34 @@ test('Midnight Obsidian HP SP MP resource bars use shared glossy source tokens',
   assert.match(gmCss,/box-shadow:inset 0 1px 0/);
   assert.doesNotMatch(playerCss,/rgb\(237 88 138\)|rgb\(42 216 167\)|rgb\(52 191 242\)/);
 });
+test('forged Level shield and four combat silhouettes preserve original paths with one reversible finish',()=>{
+  const source=read('frontend/src/components/ui/ForgedBadge.jsx');
+  const material=read('frontend/src/components/ui/ForgedBadge.module.css');
+  const tokens=read('frontend/src/styles/tokens.css');
+  const old=read('src/dashboards/CombatPanel.jsx');
+  const player=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const combat=read('frontend/src/combat/CombatWorkspace.jsx');
+  for(const kind of ['level','order','initiative','ap','timer']){
+    assert.ok(source.includes(kind+":'"),kind);
+    assert.ok(source.includes('site-forged-badge-'));
+  }
+  for(const path of [
+    'M12 4H76L88 18V58L76 72H12V54H4V43H12V32H4V21H12Z',
+    'M24 4H66L88 38L66 72H24L2 38Z',
+    'M45 2L56 14L73 10L75 27L88 38L75 49L73 66L56 62L45 74L34 62L17 66L15 49L2 38L15 27L17 10L34 14Z',
+    'M4 9H86V23L69 38L86 53V67H4V53L21 38L4 23Z'
+  ]){assert.ok(source.includes(path));assert.ok(old.includes(path));}
+  for(const key of ['--ast-badge-metal-light','--ast-badge-face-deep',
+    '--ast-badge-accent-level','--ast-badge-accent-ap'])assert.ok(tokens.includes(key+':'));
+  assert.ok(material.includes("[data-warning='true']"));
+  assert.ok(material.includes('prefers-reduced-motion:reduce'));
+  assert.ok(player.includes('<ForgedBadge kind="level"'));
+  assert.ok(gm.includes('<ForgedBadge kind="level"'));
+  assert.ok(combat.includes('function CombatStatusBadges'));
+  assert.match(combat,/kind="timer"/);
+  assert.doesNotMatch(material,/!important|:global\(/);
+});
 test('original player navigation remains enumerated rather than silently removed',()=>{
   const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
   for(const label of ['Dashboard','Character','Class/Talent Tree','Skills','Spells',

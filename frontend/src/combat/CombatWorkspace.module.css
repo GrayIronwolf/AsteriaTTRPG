@@ -12,6 +12,7 @@
 .actorButton,.actorLabel{display:grid;gap:var(--ast-space-1);text-align:start;min-width:120px;flex:1}
 .actorButton{border:0;background:transparent;color:inherit;cursor:pointer;font:inherit}
 .actorButton[aria-pressed="true"]{text-decoration:underline;text-underline-offset:4px}
+.badges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;justify-items:center;gap:var(--ast-space-2);padding:var(--ast-space-3);min-width:0;background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
 .resources{display:flex;gap:var(--ast-space-2);flex-wrap:wrap}
 .resources span{font-variant-numeric:tabular-nums;border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);padding:var(--ast-space-1) var(--ast-space-2)}
 .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),1fr));gap:var(--ast-space-3);min-width:0}
@@ -20,4 +21,4 @@
 .fields button{align-self:end}
 .section details{display:grid;gap:var(--ast-space-3)}
 .section details[open]>*{margin-block:var(--ast-space-3)}
-@media(max-width:600px){.workspace,.section{padding:var(--ast-space-3)}.fields{grid-template-columns:1fr}.roster li{align-items:flex-start}}
+@media(max-width:600px){.workspace,.section{padding:var(--ast-space-3)}.fields{grid-template-columns:1fr}.roster li{align-items:flex-start}.badges{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--ast-space-3)}}

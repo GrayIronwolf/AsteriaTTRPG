@@ -54,6 +54,12 @@ export function projectCombat(encounter={},session=null,{role='player',character
   const index=active?Math.max(0,Math.min(combatants.length-1,whole(raw.turnIndex))):-1;
   const roster=combatants.map((row,i)=>Object.freeze({...row,current:i===index}));
   const owned=roster.find(row=>row.characterId===characterId)||null;
+  const rawTimer=obj(raw.turnTimer)?raw.turnTimer:obj(raw.timer)?raw.timer:null;
+  const timerDeadline=Number(rawTimer?.endsAt);
+  const turnTimer=Object.freeze({
+    enabled:active&&rawTimer?.enabled===true&&Number.isFinite(timerDeadline)&&timerDeadline>0,
+    endsAt:Number.isFinite(timerDeadline)&&timerDeadline>0?Math.trunc(timerDeadline):0
+  });
   const pending=raw.combat?.pending;
   const safePending=obj(pending)?Object.freeze({
     id:title(pending.id,160),status:title(pending.status,60),
@@ -66,7 +72,7 @@ export function projectCombat(encounter={},session=null,{role='player',character
     status,revision:combatRevision(raw),round:Math.max(1,whole(raw.round,1)),
     turnIndex:index,combatants:Object.freeze(roster),current:index>=0?roster[index]||null:null,
     ownActor:owned,isActive:active,sessionEditable:gmSessionState(session).editable,
-    pending:safePending,
+    turnTimer,pending:safePending,
     ...(gm?{
       battleMapId:validId(raw.battleMapId)?raw.battleMapId:'',
       log:Object.freeze(array(raw.combat?.log).slice(0,15).map(row=>({

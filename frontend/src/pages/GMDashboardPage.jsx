@@ -5,6 +5,7 @@ import {useAppServices} from '../app/AppServices.jsx';
 import {PageLayout} from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
+import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
@@ -73,7 +74,8 @@ function Party({party}) {
     party.map(character=><article className={styles.person} key={character.id}>
       <div className={styles.personIdentity}>
         {character.image?<img src={character.image} alt="" loading="lazy"/>:<div className={styles.personFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
-        <div><h3>{character.name}</h3><small>Level {character.level} {character.className}</small></div>
+        <div><h3>{character.name}</h3><small>{character.className}</small></div>
+        <ForgedBadge kind="level" label="Level" value={character.level} compact/>
       </div>
       <div className={styles.resources}>
         <ResourceMeter label="HP" value={character.hp}/>

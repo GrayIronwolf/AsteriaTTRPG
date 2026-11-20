@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {
   projectCombat,eligiblePlayerCombatants,customEnemy,combatRevision,
-  validateCombatCommand,COMBAT_AP_ACTIONS,gmEncounterCandidates
+  validateCombatCommand,COMBAT_AP_ACTIONS,COMBAT_PLAYER_COMMANDS,gmEncounterCandidates
 } from '../frontend/src/combat/combatModel.mjs';
 import {createFirebaseCombatService} from '../frontend/src/combat/firebaseCombatService.mjs';
 
@@ -83,6 +83,19 @@ test('Phase 7.1 uses canonical encounter revision, initiative order, AP and reso
   assert.equal(data.current.bonus,true);
   assert.equal(COMBAT_AP_ACTIONS.length,4);
   assert.equal(combatRevision({combat:{revision:7}}),7);
+});
+test('combat projection exposes the original authoritative turn timer without adding commands',()=>{
+  const endsAt=4102444800000;
+  const liveTimer={...encounter,turnTimer:{enabled:true,endsAt}};
+  const gm=projectCombat(liveTimer,live,{role:'gm',party:[character]});
+  const playerView=projectCombat(liveTimer,live,{role:'player',characterId:charId,party:[character]});
+  assert.deepEqual(gm.turnTimer,{enabled:true,endsAt});
+  assert.deepEqual(playerView.turnTimer,{enabled:true,endsAt});
+  const disabled=projectCombat({...encounter,timer:{enabled:false,endsAt}},live,{role:'player',characterId:charId,party:[character]});
+  assert.deepEqual(disabled.turnTimer,{enabled:false,endsAt});
+  const empty=projectCombat(encounter,live,{role:'player',characterId:charId,party:[character]});
+  assert.deepEqual(empty.turnTimer,{enabled:false,endsAt:0});
+  assert.equal(COMBAT_PLAYER_COMMANDS.length,3);
 });
 test('player projection hides enemy resources, GM-only logs and unowned AP',()=>{
   const data=projectCombat(encounter,live,{role:'player',characterId:charId,party:[character]});
