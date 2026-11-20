@@ -134,7 +134,7 @@ function Spellbook({character,editable=false,busy=false,onAction}){
     <Names name="Known Magic" entries={character.magic}/>
   </SurfacePanel>;
 }
-function Sections({character,tab,owned,editable=false,busy=false,onAction}){
+function Sections({character,tab,owned,editable=false,busy=false,onAction,campaign=null}){
   if(tab==='Dashboard')return <>
     <div className={styles.overview}>
       <SurfacePanel className={styles.panel}><h3>Experience</h3>
@@ -154,6 +154,17 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction}){
     {owned&&character.backstory?<SurfacePanel className={styles.panel}>
       <h3>Personal History</h3><p className={styles.prose}>{character.backstory}</p>
     </SurfacePanel>:null}
+    <div className={styles.overview} data-testid="site-player-character-systems">
+      {[
+        ['conditions','Active Conditions'],['effects','Active Effects'],
+        ['specialDamage','Soul Damage'],['rest','Rest & Recovery'],
+        ['currency','Currency']
+      ].map(([id,title])=><SurfacePanel className={styles.panel} key={id}>
+        <h3>{title}</h3>
+        <PlayerOverviewPanel id={id} character={character} campaign={campaign}
+          editable={editable} busy={busy} onAction={onAction}/>
+      </SurfacePanel>)}
+    </div>
   </>;
   if(tab==='Class/Talent Tree')return <div className={styles.overview}>
     <SurfacePanel className={styles.panel}><h3>Skills</h3>
@@ -322,7 +333,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         (tab==='Advanced Dice'&&dice?.availability().enabled)||
         (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
         <Sections character={ch} owned={data.owner} tab={tab} editable={resourceEditable}
-          busy={Boolean(resourceBusy)} onAction={panelAction}/>}
+          busy={Boolean(resourceBusy)} onAction={panelAction} campaign={c}/>}
     
   </>;
 }

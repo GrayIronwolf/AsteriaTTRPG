@@ -46,16 +46,21 @@ function Damage({character}){
 function Rest({character,editable=false,busy=false,onAction}){
   const [recovery,setRecovery]=useState('0');
   const pending=character.restRequest?.status==='pending';
+  const recoveryNumber=Number(recovery);
+  const maximum=Math.max(0,Number(character.soulDamage)||0);
+  const validRecovery=recovery.trim()!==''&&Number.isSafeInteger(recoveryNumber)&&
+    recoveryNumber>=0&&recoveryNumber<=maximum;
   return <div className={styles.section}>
     <div className={styles.buttons}>
       <button type="button" disabled={!editable||busy||pending}
         onClick={()=>onAction?.('takeRest',{type:'short',soulRecovery:0})}>Short Rest</button>
-      <button type="button" disabled={!editable||busy||pending}
-        onClick={()=>onAction?.('takeRest',{type:'long',soulRecovery:Number(recovery)})}>Request Long Rest</button>
+      <button type="button" disabled={!editable||busy||pending||!validRecovery}
+        onClick={()=>onAction?.('takeRest',{type:'long',soulRecovery:recoveryNumber})}>Request Long Rest</button>
     </div>
-    <label>Soul Recovery <input type="number" min="0" max={character.soulDamage??0}
+    <label>Soul Recovery <input type="number" min="0" step="1" max={maximum}
       value={recovery} disabled={!editable||busy||pending}
       onChange={e=>setRecovery(e.target.value)}/></label>
+    {!validRecovery?<p role="alert">Choose a whole Soul Recovery amount from 0 to {maximum}.</p>:null}
     <p>Short Rest: 4 hours. Long Rest: 8 hours and GM approval.</p>
     {character.restRequest?<p role="status">Long Rest: {character.restRequest.status}</p>:null}
   </div>;

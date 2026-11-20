@@ -207,3 +207,16 @@ test('Phase 1.2: active talent effects can be ended through the owner-scoped cal
   assert.match(service,/endCharacterTalentEffect/);
   assert.match(service,/authorize\(cid,'player',characterId\)/);
 });
+
+test('Phase 1.2: Character tab uses original authorised conditions, rest, damage and currency panels',()=>{
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const panels=read('frontend/src/player/PlayerOverviewPanels.jsx');
+  assert.match(page,/site-player-character-systems/);
+  for(const id of ["'conditions'","'effects'","'specialDamage'","'rest'","'currency'"])
+    assert.ok(page.includes(id),'Missing character systems control '+id);
+  assert.match(page,/onAction=\{onAction\}/);
+  assert.match(panels,/Number\.isSafeInteger\(recoveryNumber\)/);
+  assert.match(panels,/disabled=\{!editable\|\|busy\|\|pending\|\|!validRecovery\}/);
+  assert.match(page,/api\.takeRest\(campaignId,characterId/);
+  assert.match(page,/api\.removeCondition\(campaignId,characterId/);
+});
