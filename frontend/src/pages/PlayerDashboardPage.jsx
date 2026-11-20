@@ -5,6 +5,7 @@ import {useAppServices} from '../app/AppServices.jsx';
 import {PageLayout} from '../components/ui/PageLayout.jsx';
 import {SurfacePanel} from '../components/ui/SurfacePanel.jsx';
 import {CrystalButton} from '../components/ui/CrystalButton.jsx';
+import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
@@ -67,11 +68,13 @@ function ClassicPlayerHeader({character,campaign,owned,editable,resourceBusy,onA
     <div className={styles.portraitColumn}>
       {character.image?<img className={styles.heroImage} src={character.image} alt="" loading="eager"/>:
         <div className={styles.portraitFallback} aria-hidden="true">{character.name.charAt(0)}</div>}
+      <div className={styles.levelBadgeAnchor}>
+        <ForgedBadge kind="level" label="Level" value={character.level}/>
+      </div>
       <div className={styles.portraitCaption}>
         <Heading as="h2">{character.name}</Heading>
         <Eyebrow>{owned?'Character Owner':'GM Read-only'}</Eyebrow>
         <p>{character.race} / {character.klass}</p>
-        <p>Level {character.level}</p>
         <div className={styles.experience}><span>XP</span><span>{character.xp.toLocaleString()} / {character.xpMax?character.xpMax.toLocaleString():'—'}</span></div>
         <progress className={styles.xpBar} aria-label="Character experience" value={progress} max="100"/>
       </div>

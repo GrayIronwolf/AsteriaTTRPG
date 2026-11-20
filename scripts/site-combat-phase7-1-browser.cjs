@@ -157,6 +157,7 @@ try{
  await player.getByTestId('site-player-dashboard').waitFor({timeout:30000});
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await player.getByTestId('site-player-resources').waitFor({timeout:30000});
+ await player.getByTestId('site-forged-badge-level').waitFor({timeout:30000});
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
@@ -264,6 +265,9 @@ try{
  await gmCombat.locator('button:enabled').filter({hasText:/^Start Combat$/}).click();
  await gmCombat.getByText(/ACTIVE · Round 1/).waitFor({timeout:30000});
  await gmCombat.getByTestId('site-combat-initiative').getByText(/Current turn/).waitFor({timeout:30000});
+ await gmCombat.getByTestId('site-combat-badges').waitFor({timeout:30000});
+ for(const kind of ['order','initiative','ap','timer'])
+   await gmCombat.getByTestId('site-forged-badge-'+kind).waitFor({timeout:30000});
  await gmCombat.locator('button:enabled').filter({hasText:/^Record 1 AP action$/}).click();
  await gmCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
  await player.goto(base+'#/react/character/'+encodeURIComponent(ownerCampaignId)+'/'+encodeURIComponent(linkedId),
@@ -272,6 +276,10 @@ try{
  const playerCombat=player.getByTestId('site-player-combat');
  await playerCombat.waitFor({timeout:30000});
  await playerCombat.getByText('2 AP · Bonus available').waitFor({timeout:30000});
+ for(const kind of ['order','initiative','ap','timer'])
+   await playerCombat.getByTestId('site-forged-badge-'+kind).waitFor({timeout:30000});
+ assert.equal(await playerCombat.getByTestId('site-forged-badge-order').getAttribute('aria-label'),'Turn Order: 1');
+ assert.equal(await playerCombat.getByTestId('site-forged-badge-timer').getAttribute('aria-label'),'Turn Timer: Off');
  await playerCombat.getByRole('button',{name:'Record 1 AP action'}).click();
  await playerCombat.getByText('1 AP · Bonus available').waitFor({timeout:30000});
  await playerCombat.getByRole('button',{name:'End Turn'}).click();
