@@ -308,7 +308,7 @@ async function initializeClient(runtime) {
   const characters=createFirebaseCharactersService({auth,db,firestoreSdk,readCanonical,
     enabled:import.meta.env.VITE_ASTERIA_CHARACTER_FORGE_ENABLED==='true'});
   const playerDashboard=createFirebasePlayerDashboardService({auth,db,firestoreSdk,readCanonical,
-    functions,functionsSdk:safeFunctionsSdk,
+    functions,functionsSdk:safeFunctionsSdk,storage,storageSdk:safeStorageSdk,
     enabled:import.meta.env.VITE_ASTERIA_PLAYER_DASHBOARD_ENABLED==='true',
     layoutEnabled:import.meta.env.VITE_ASTERIA_DASHBOARD_EDITOR_ENABLED==='true'});
   const characterServices=Object.freeze({...characters,
