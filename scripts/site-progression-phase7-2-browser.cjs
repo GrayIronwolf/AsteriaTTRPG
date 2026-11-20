@@ -326,22 +326,22 @@ try{
  // Currency actions must persist a canonical Firebase delta in both
  // directions; do not depend on the character's starting balance.
  const readCopper=()=>player.evaluate(()=>{
-   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const button=document.querySelector('button[aria-label="Increase Penny (Copper)"]');
    const value=button?.parentElement?.parentElement?.querySelector('span strong');
    return value?Number(value.textContent.replaceAll(',','')):null;
  });
  const initialCopper=await readCopper();
  assert.ok(Number.isSafeInteger(initialCopper)&&initialCopper>=0,
    'Currency controls must expose the visible canonical copper amount.');
- await systems.getByRole('button',{name:'Increase Copper'}).click();
+ await systems.getByRole('button',{name:'Increase Penny (Copper)'}).click();
  await player.waitForFunction(expected=>{
-   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const button=document.querySelector('button[aria-label="Increase Penny (Copper)"]');
    const amount=button?.parentElement?.parentElement?.querySelector('strong');
    return Number((amount?.textContent||'').replaceAll(',',''))===expected;
  },initialCopper+1,{timeout:30000});
- await systems.getByRole('button',{name:'Decrease Copper'}).click();
+ await systems.getByRole('button',{name:'Decrease Penny (Copper)'}).click();
  await player.waitForFunction(expected=>{
-   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const button=document.querySelector('button[aria-label="Increase Penny (Copper)"]');
    const amount=button?.parentElement?.parentElement?.querySelector('strong');
    return Number((amount?.textContent||'').replaceAll(',',''))===expected;
  },initialCopper,{timeout:30000});
