@@ -203,7 +203,7 @@
     "site:dashboard-journal-parity": "node --test scripts/site-dashboard-journal-parity.test.mjs"
   },
   "dependencies": {
-    "firebase-admin": "^14.5.0",
+    "firebase-admin": "^14.5.1",
     "firebase-functions": "^7.4.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
