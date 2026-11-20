@@ -36,3 +36,9 @@
 .editor .primary{border-color:var(--ast-color-outline-active);background:var(--ast-color-accent-soft)}
 @media(max-width:640px){.editor{padding:var(--ast-space-3)}.controls{grid-template-columns:1fr}.toolbar>div,.footer>div{width:100%}.footer>div button{flex:1}}
 @media(prefers-reduced-motion:reduce){.editor *{scroll-behavior:auto}}
+
+/* Freeform controls share the existing editor and its save/undo history. */
+.workspaceMode{display:grid;gap:var(--ast-space-2);padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm);background:var(--ast-color-panel-raised)}
+.workspaceMode .sizeRow{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ast-space-3)}
+.workspaceMode label{display:inline-flex;gap:var(--ast-space-2);align-items:center;cursor:pointer}
+.workspaceMode input{accent-color:var(--ast-color-accent)}
