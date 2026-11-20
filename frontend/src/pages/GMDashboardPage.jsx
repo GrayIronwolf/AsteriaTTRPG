@@ -14,6 +14,8 @@ import {GMQuestManagement} from '../dashboard/GMQuestManagement.jsx';
 import {GMCampaignManagement} from '../dashboard/GMCampaignManagement.jsx';
 import {GMNotesManagement} from '../dashboard/GMNotesManagement.jsx';
 import {GMInformationManagement} from '../dashboard/GMInformationManagement.jsx';
+import {GMNpcCreatureWorkspace} from '../dashboard/GMNpcCreatureWorkspace.jsx';
+import {GMToolkitWorkspace,GMToolkitQuickAccess} from '../dashboard/GMToolkitWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
@@ -25,8 +27,8 @@ import styles from './GMDashboardPage.module.css';
 
 const GM_TABS=Object.freeze([
   {id:'main',label:'GM Main'},
-  {id:'toolkit',label:'GM Toolkit',area:'library'},
-  {id:'bestiary',label:'NPC & Creature Library',area:'library'},
+  {id:'toolkit',label:'GM Toolkit'},
+  {id:'bestiary',label:'NPC & Creature Library'},
   {id:'settings',label:'Dashboard Settings'},
   {id:'inventory',label:'PC Inventory'},
   {id:'information',label:'News & Events'},
@@ -144,6 +146,16 @@ function CampaignGM({api,uid,campaignId}) {
   const progressionEnabled=api.progression?.availability().enabled===true;
   const economyEnabled=api.economy?.availability().enabled===true;
   const digitalGMEnabled=api.digitalGM?.availability().enabled===true;
+  const toolkitCapabilities={
+    gm:true,
+    digitalGM:digitalGMEnabled,
+    economy:economyEnabled,
+    progression:progressionEnabled,
+    media:mediaEnabled,
+    dice:api.dice?.availability().enabled===true,
+    layout:api.availability().layoutEnabled===true
+  };
+  const gmTabIds=GM_TABS.map(item=>item.id);
   const scope=useRef(0);
   useEffect(()=>{
     const token=++scope.current;
@@ -254,7 +266,8 @@ function CampaignGM({api,uid,campaignId}) {
     {tab==='main'?<><LiveSession session={live} loading={loading} busy={busy} onRun={run}/>
       <GMPartyManagement party={snapshot.party} campaignId={campaignId} session={live}
         busy={busy} onNavigate={setTab} onCondition={manageCondition}
-        onReviewRest={reviewRest}/></>:null}
+        onReviewRest={reviewRest}/>
+      <GMToolkitQuickAccess onNavigate={setTab} enabled={toolkitCapabilities} tabs={gmTabIds}/></>:null}
     {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}
@@ -263,8 +276,8 @@ function CampaignGM({api,uid,campaignId}) {
           available={{combat:combatEnabled,
             progression:progressionEnabled,economy:economyEnabled,digitalGM:digitalGMEnabled}}/>}/>
       :null}
-    {['quests','tools','notes','information'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
-    {['quests','tools','notes','information'].includes(tab)&&!management&&!managementError?
+    {['quests','tools','notes','information','toolkit'].includes(tab)&&managementError?<p role="alert">{managementError}</p>:null}
+    {['quests','tools','notes','information','toolkit'].includes(tab)&&!management&&!managementError?
       <BodyText>Connecting to the private GM campaign workspace…</BodyText>:null}
     {tab==='quests'&&management?<GMQuestManagement api={api} campaignId={campaignId}
       workspace={management} party={snapshot.party} session={live}/>:null}
@@ -276,6 +289,16 @@ function CampaignGM({api,uid,campaignId}) {
     {tab==='information'&&management?<GMInformationManagement api={api}
       campaignId={campaignId} campaign={snapshot.campaign}
       workspace={management} party={snapshot.party}/>:null}
+    {tab==='toolkit'&&management?<GMToolkitWorkspace
+      session={live} party={snapshot.party} quests={management.quests}
+      tabs={gmTabIds} enabled={toolkitCapabilities} onNavigate={setTab}/>:null}
+    {tab==='bestiary'&&digitalGMEnabled?<GMNpcCreatureWorkspace
+      api={api} campaignId={campaignId} party={snapshot.party}
+      onNavigate={setTab}/>:null}
+    {tab==='bestiary'&&!digitalGMEnabled?<SurfacePanel className={styles.panel}>
+      <h2>NPC &amp; Creature Library</h2>
+      <BodyText muted>The authenticated Digital GM service is not enabled for this campaign.</BodyText>
+    </SurfacePanel>:null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}
       initialArea={GM_TOOL_AREAS[tab]}/>:null}

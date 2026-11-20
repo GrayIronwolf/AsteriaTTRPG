@@ -121,6 +121,9 @@ export function checkProjection(rows,mode='player',characterId=''){
     modifiers:Object.freeze(array(row.modifiers).slice(0,30).map(m=>Object.freeze({
       label:text(m.label,120),value:Number(m.value)||0}))),
     description:text(row.description,500),npcName:text(row.npcName,100),
+    // Server-validated NPC origin; only the GM uses this ID to scope related history.
+    contextNpcId:mode==='gm'&&row.context?.kind==='npc'&&validId(row.context?.npcId)?
+      row.context.npcId:'',
     advantage:row.advantage===true,disadvantage:row.disadvantage===true,
     attempt:Number(row.attempt)||1,notificationRevision:Number(row.notificationRevision)||0,
     groupId:validId(row.groupId)?row.groupId:'',groupOutcome:row.groupOutcome||null,
