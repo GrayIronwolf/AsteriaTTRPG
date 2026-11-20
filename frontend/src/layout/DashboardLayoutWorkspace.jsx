@@ -57,8 +57,8 @@ export function DashboardLayoutWorkspace({
           data-panel-background={view.panelBackgrounds[id]||view.backgroundStyle}
           style={{
             ...(freeform&&rect?{
-              left:freeformPercent(rect.x),top:rect.y/10+'cqw',
-              width:freeformPercent(rect.w),height:rect.h/10+'cqw'
+              '--freeform-x':freeformPercent(rect.x),'--freeform-y':rect.y/10+'cqw',
+              '--freeform-w':freeformPercent(rect.w),'--freeform-h':rect.h/10+'cqw'
             }:{gridColumn:(pos.x+1)+' / span '+pos.w,
               gridRow:(pos.y+1)+' / span '+pos.h})
           }}>
