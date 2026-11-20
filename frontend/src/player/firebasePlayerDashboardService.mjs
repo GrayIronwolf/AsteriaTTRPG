@@ -1,7 +1,7 @@
 import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
-import {validateJournalDraft} from './playerJournalModel.mjs';
+import {validateJournalDraft,changeJournalRows} from './playerJournalModel.mjs';
 import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
@@ -354,14 +354,15 @@ export function createFirebasePlayerDashboardService({
   }
 
 
-  /** Append only to the linked owner's own journal in a Firestore transaction.
-   * Reverify membership and active session inside the transaction; never
-   * replace existing journal entries or touch saved layout/gameplay values. */
-  async function addJournalEntry(cid,id,draft){
+  /** All journal writes reuse the same owner, campaign-link and live-session
+   * verification; edits/deletes compare the original entry on BOTH copies. */
+  async function writeJournal(cid,id,operation,payload){
     requireDashboardId(cid);requireDashboardId(id);
-    const entry=validateJournalDraft(draft);
+    if(!['add','update','delete'].includes(operation))
+      throw Error('Unsupported journal operation.');
+    const entry=operation==='add'?validateJournalDraft(payload):null;
     const {uid,relationship}=await resolveCampaign(cid,id);
-    if(!relationship.owned)throw Error('Only the character owner may write their journal.');
+    if(!relationship.owned)throw Error('Only the character owner may edit their journal.');
     await firestoreSdk.runTransaction(db,async tx=>{
       const campaignSnap=await tx.get(campaignRef(cid));
       const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
@@ -383,22 +384,37 @@ export function createFirebasePlayerDashboardService({
           {...characterSnap.data(),id},cid,uid,campaignSnap.data().membershipSchemaVersion??1))
         throw Error('Original saved character link changed.');
       if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
-        throw Error('Start an editable campaign session to write journal entries.');
+        throw Error('Start an editable campaign session to change journal entries.');
       const sharedRows=Array.isArray(characterSnap.data().journal)?characterSnap.data().journal:[];
       const privateRows=Array.isArray(privateSnap.data().journal)?privateSnap.data().journal:[];
-      if(sharedRows.length>=500||privateRows.length>=500)
-        throw Error('Journal is full. Archive older entries before adding more.');
-      const added={id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
-        createdAt:new Date().toISOString()};
-      // Append to both existing canonical records independently; preserve
-      // all historical entries even when their prior contents differ.
-      tx.update(sharedRef(cid,id),{journal:[added,...sharedRows]});
-      tx.update(ownedRef(uid,sourceId),{journal:[added,...privateRows]});
+      let updatedShared,updatedPrivate;
+      if(operation==='add'){
+        if(sharedRows.length>=500||privateRows.length>=500)
+          throw Error('Journal is full. Archive older entries before adding more.');
+        const added={id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
+          createdAt:new Date().toISOString()};
+        updatedShared=[added,...sharedRows];
+        updatedPrivate=[added,...privateRows];
+      }else{
+        const timestamp=new Date().toISOString(),replacementId='journal-'+crypto.randomUUID();
+        const changes={action:operation,entryId:payload?.entryId,
+          expected:payload?.expected,draft:payload?.draft,
+          replacementId,updatedAt:timestamp};
+        // If older copies differ, reject rather than editing the wrong row.
+        updatedShared=changeJournalRows(sharedRows,changes);
+        updatedPrivate=changeJournalRows(privateRows,changes);
+      }
+      tx.update(sharedRef(cid,id),{journal:updatedShared});
+      tx.update(ownedRef(uid,sourceId),{journal:updatedPrivate});
     });
     same(uid);return {ok:true};
   }
+  const addJournalEntry=(cid,id,draft)=>writeJournal(cid,id,'add',draft);
+  const updateJournalEntry=(cid,id,change)=>writeJournal(cid,id,'update',change);
+  const deleteJournalEntry=(cid,id,change)=>writeJournal(cid,id,'delete',change);
 
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
-    takeRest,adjustCurrency,useQuickItem,castSpell,addJournalEntry});
+    takeRest,adjustCurrency,useQuickItem,castSpell,
+    addJournalEntry,updateJournalEntry,deleteJournalEntry});
 }

@@ -138,6 +138,11 @@ function PlayerJournal({character,editable,busy,onAction}){
   const [title,setTitle]=useState('');
   const [body,setBody]=useState('');
   const [confirmation,setConfirmation]=useState(false);
+  const [editing,setEditing]=useState(null);
+  const [editTitle,setEditTitle]=useState('');
+  const [editBody,setEditBody]=useState('');
+  const [editBusy,setEditBusy]=useState(false);
+  const expected=entry=>({title:entry.title,content:entry.content,createdAt:entry.createdAt||''});
   const submit=async event=>{
     event.preventDefault();
     if(!body.trim()||busy||!editable)return;
@@ -147,21 +152,61 @@ function PlayerJournal({character,editable,busy,onAction}){
       if(result?.ok){setTitle('');setBody('');}
     }finally{setConfirmation(false);}
   };
+  const startEdit=entry=>{
+    setEditing({...entry});
+    setEditTitle(entry.title);setEditBody(entry.content);
+  };
+  const saveEdit=async event=>{
+    event.preventDefault();
+    if(!editable||busy||editBusy||!editing||!editBody.trim())return;
+    setEditBusy(true);
+    try{
+      const result=await onAction?.('updateJournalEntry',{
+        entryId:editing.id,expected:expected(editing),draft:{title:editTitle,body:editBody}
+      });
+      if(result?.ok)setEditing(null);
+    }finally{setEditBusy(false);}
+  };
+  const deleteEntry=async entry=>{
+    if(!editable||busy||editBusy||!window.confirm('Delete this journal entry permanently?'))return;
+    setEditBusy(true);
+    try{
+      const result=await onAction?.('deleteJournalEntry',{
+        entryId:entry.id,expected:expected(entry)
+      });
+      if(result?.ok&&editing?.id===entry.id)setEditing(null);
+    }finally{setEditBusy(false);}
+  };
+  const locked=!editable||busy||confirmation||editBusy;
   return <SurfacePanel className={styles.panel} as="section" data-testid="site-player-journal">
     <h3>Personal Journal</h3>
     {character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
       <article key={entry.id||i}><h4>{entry.title}</h4>
         {entry.createdAt?<small>{entry.createdAt}</small>:null}
-        <p className={styles.prose}>{entry.content}</p></article>)}</div>:
+        {entry.updatedAt?<small> · Updated {entry.updatedAt}</small>:null}
+        {editing?.id===entry.id?<form onSubmit={saveEdit}>
+          <label>Edit title<input type="text" value={editTitle} maxLength={120}
+            onChange={event=>setEditTitle(event.target.value)} disabled={locked}/></label>
+          <label>Edit entry<textarea value={editBody} required maxLength={20000} rows={5}
+            onChange={event=>setEditBody(event.target.value)} disabled={locked}/></label>
+          <button type="submit" disabled={locked||!editBody.trim()}>Save Changes</button>
+          <button type="button" disabled={locked} onClick={()=>setEditing(null)}>Cancel Editing</button>
+        </form>:<p className={styles.prose}>{entry.content}</p>}
+        {editable?<div>
+          <button type="button" disabled={locked} aria-label={'Edit journal entry: '+entry.title}
+            onClick={()=>startEdit(entry)}>Edit</button>
+          <button type="button" disabled={locked} aria-label={'Delete journal entry: '+entry.title}
+            onClick={()=>deleteEntry(entry)}>Delete</button>
+        </div>:null}
+      </article>)}</div>:
       <BodyText muted>No journal entries recorded.</BodyText>}
     <form onSubmit={submit} className={styles.journal}>
       <h4>Add Journal Entry</h4>
       <label>Title<input type="text" value={title} maxLength={120}
-        onChange={event=>setTitle(event.target.value)} disabled={!editable||busy||confirmation}/></label>
+        onChange={event=>setTitle(event.target.value)} disabled={locked}/></label>
       <label>Entry<textarea value={body} required maxLength={20000} rows={5}
-        onChange={event=>setBody(event.target.value)} disabled={!editable||busy||confirmation}/></label>
-      <button type="submit" disabled={!editable||busy||confirmation||!body.trim()}>
-        Save Journal Entry</button>
+        onChange={event=>setBody(event.target.value)} disabled={locked}/></label>
+      <button type="submit" disabled={locked||!body.trim()}>Save Journal Entry</button>
       {!editable?<BodyText muted>Writing requires character ownership and an editable campaign session.</BodyText>:null}
     </form>
   </SurfacePanel>;
@@ -236,7 +281,7 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction,campai
       <h3>{tab}</h3>
       <BodyText muted>This original dashboard feature is not yet connected to the new React route. Its existing implementation is retained in the repository, but is not active here.</BodyText>
     </SurfacePanel>;
-  if(tab==='Journal')return owned?<PlayerJournal character={character} editable={editable} busy={busy} onAction={onAction}/>:
+  if(tab==='Journal')return owned?<PlayerJournal key={character.id+':'+(campaign?.id||'')} character={character} editable={editable} busy={busy} onAction={onAction}/>:
     <SurfacePanel className={styles.panel}><BodyText muted>Only the character owner may read personal journal entries.</BodyText></SurfacePanel>;
   return null;
 }
@@ -291,9 +336,12 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         details.itemId,details.revision);
       else if(type==='castSpell')await api.castSpell(campaignId,characterId,details);
       else if(type==='addJournalEntry')await api.addJournalEntry(campaignId,characterId,details);
+      else if(type==='updateJournalEntry')await api.updateJournalEntry(campaignId,characterId,details);
+      else if(type==='deleteJournalEntry')await api.deleteJournalEntry(campaignId,characterId,details);
       setResourceMessage(({castSpell:'Spell cast.',useQuickItem:'Quick item used.',
         removeCondition:'Condition removed.',takeRest:'Rest request submitted.',
-        adjustCurrency:'Currency updated.',addJournalEntry:'Journal entry saved.'})[type]||'Character action completed.');
+        adjustCurrency:'Currency updated.',addJournalEntry:'Journal entry saved.',
+        updateJournalEntry:'Journal entry updated.',deleteJournalEntry:'Journal entry deleted.'})[type]||'Character action completed.');
       return {ok:true};
     }catch(e){setResourceError(e?.message||'Character action failed.');return {ok:false};}
     finally{setResourceBusy('');}
