@@ -138,7 +138,6 @@ export function DashboardLayoutWorkspace({
             }:{gridColumn:(pos.x+1)+' / span '+pos.w,
               gridRow:(pos.y+1)+' / span '+pos.h})
           }}>
-          <h3 className={styles.title}><span>{names.get(id)||'Dashboard Panel'}</span></h3>
           <div className={styles.panelActions}>
             {editable?<button type="button" className={styles.dragHandle}
               disabled={view.lockedPositions.includes(id)}
@@ -152,6 +151,7 @@ export function DashboardLayoutWorkspace({
               aria-label={(maximized?'Restore size of ':'Maximise ')+names.get(id)}>
               {maximized?'Restore':'□'}</button>
           </div>
+          <h3 className={styles.title}><span>{names.get(id)||'Dashboard Panel'}</span></h3>
           <div className={styles.content} aria-hidden={minimized} inert={minimized?true:undefined}>{renderPanel(id)}</div>
           {editable&&!minimized&&!maximized?<button type="button" className={styles.resizeHandle}
             aria-label={'Resize '+names.get(id)} title="Drag to resize this panel"
