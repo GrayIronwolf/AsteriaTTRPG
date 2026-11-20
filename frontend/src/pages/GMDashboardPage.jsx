@@ -9,6 +9,7 @@ import {Eyebrow,Heading,BodyText} from '../components/ui/Typography.jsx';
 import {gmSessionCommands} from '../dashboard/gmDashboardModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {GMOverviewPanel} from '../dashboard/GMOverviewPanels.jsx';
+import {GMPartyManagement} from '../dashboard/GMPartyManagement.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
 import {GMCombatWorkspace} from '../combat/CombatWorkspace.jsx';
@@ -173,8 +174,10 @@ function CampaignGM({api,uid,campaignId}) {
     try{
       await api.manageCondition(campaignId,characterId,input);
       if(scope.current===token)setMessage('Condition updated.');
+      return true;
     }catch(e){
       if(scope.current===token)setError(e?.message||'Condition update failed.');
+      return false;
     }finally{
       if(scope.current===token)setBusy(false);
     }
@@ -186,8 +189,10 @@ function CampaignGM({api,uid,campaignId}) {
     try{
       await api.reviewRest(campaignId,characterId,requestId,status);
       if(scope.current===token)setMessage('Long Rest '+status+'.');
+      return true;
     }catch(e){
       if(scope.current===token)setError(e?.message||'Rest review failed.');
+      return false;
     }finally{
       if(scope.current===token)setBusy(false);
     }
@@ -229,7 +234,10 @@ function CampaignGM({api,uid,campaignId}) {
     </nav>
     {error?<p role="alert" className={styles.notice}>{error}</p>:null}
     {message?<p role="status" className={styles.notice}>{message}</p>:null}
-    {tab==='main'?<LiveSession session={live} loading={loading} busy={busy} onRun={run}/>:null}
+    {tab==='main'?<><LiveSession session={live} loading={loading} busy={busy} onRun={run}/>
+      <GMPartyManagement party={snapshot.party} campaignId={campaignId} session={live}
+        busy={busy} onNavigate={setTab} onCondition={manageCondition}
+        onReviewRest={reviewRest}/></>:null}
     {api.availability().layoutEnabled&&['main','settings'].includes(tab)?
       <DashboardLayoutManager role="gm" api={api} uid={uid} campaignId={campaignId}
         renderPanel={id=><GMOverviewPanel id={id} party={snapshot.party}

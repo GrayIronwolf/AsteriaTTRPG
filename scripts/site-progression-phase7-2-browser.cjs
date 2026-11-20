@@ -256,6 +256,21 @@ try{
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-session-start').click();
  await owner.getByTestId('site-gm-session-status').getByText('ACTIVE').waitFor({timeout:30000});
+ // Phase 3.1: real two-account GM party control and server-authorized conditions.
+ const gmPartyControl=owner.getByTestId('site-gm-party-management');
+ await gmPartyControl.waitFor({timeout:30000});
+ await gmPartyControl.getByRole('searchbox',{name:'Find party member'}).fill('Joined Forge Hero');
+ await gmPartyControl.getByText('Joined Forge Hero',{exact:true}).first().waitFor({timeout:30000});
+ const readOnlyCharacter=gmPartyControl.getByRole('link',{name:'Open Joined Forge Hero read-only character'});
+ assert.match(await readOnlyCharacter.getAttribute('href'),
+   new RegExp('react/character/'+ownerCampaignId+'/'+linkedId));
+ await gmPartyControl.getByRole('textbox',{name:'New condition for selected character'})
+   .fill('Phase 3.1 GM Condition');
+ await gmPartyControl.getByRole('button',{name:'Apply Condition'}).click();
+ await gmPartyControl.getByText('Phase 3.1 GM Condition').waitFor({timeout:30000});
+ await gmPartyControl.getByRole('button',{name:'Remove Phase 3.1 GM Condition'}).click();
+ await gmPartyControl.getByText('Phase 3.1 GM Condition',{exact:true})
+   .waitFor({state:'detached',timeout:30000});
 
  // Phase 2.5: live two-account verification of existing party storage and
  // receipt-backed organization creation under the migrated Player route.

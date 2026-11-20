@@ -48,3 +48,24 @@
 @media(max-width:960px){.gmWorkspaceColumns{grid-template-columns:1fr}.partySidebar{position:static}.partySidebar .party{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}}
 @media(max-width:640px){.panel{padding:var(--ast-space-4)}.summary{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.head{align-items:start}}
 @media(max-width:360px){.summary{grid-template-columns:1fr}.metric:last-child{grid-column:auto}}
+
+/* Phase 3.1: restore searchable, character-focused GM Party Control. */
+.gmPartyHeader{display:flex;align-items:center;justify-content:space-between;gap:var(--ast-space-3);flex-wrap:wrap}
+.gmPartyHeader h2,.gmPartyHeader p{margin:0}
+.gmPartySearch,.gmPartyActions label{display:grid;gap:var(--ast-space-2);min-width:0}
+.gmPartySearch input,.gmPartyActions input{min-height:var(--ast-target-min);min-width:0;width:100%;max-width:100%;padding:var(--ast-space-2);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text-bright)}
+.gmPartyRoster{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:var(--ast-space-3);min-width:0}
+.gmPartyMember{display:flex;gap:var(--ast-space-2);align-items:center;flex-wrap:wrap;padding:var(--ast-space-3);border:1px solid var(--ast-color-outline-soft);background:var(--ast-color-panel);min-width:0}
+.gmPartyMember[data-selected=true]{border-color:var(--ast-color-outline-active)}
+.gmPartyMember>img{width:48px;height:56px;object-fit:cover;flex:none}
+.gmPartyMember>div{display:grid;gap:var(--ast-space-1);min-width:0;flex:1 1 100px}
+.gmPartyMember small{color:var(--ast-color-text-muted)}
+.gmPartyMember button,.gmPartyActions button,.gmPartyActions a,.gmPartyConditions button{min-height:var(--ast-target-min);padding:var(--ast-space-2);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft);color:var(--ast-color-text-bright);cursor:pointer;text-decoration:none}
+.gmPartyDetail{display:grid;gap:var(--ast-space-3);padding:var(--ast-space-3);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft)}
+.gmPartyDetail h3,.gmPartyDetail h4,.gmPartyDetail p{margin:0}
+.gmPartyActions{display:flex;gap:var(--ast-space-2);align-items:end;flex-wrap:wrap}
+.gmPartyActions label{flex:1 1 220px}
+.gmPartyConditions{list-style:none;display:grid;gap:var(--ast-space-2);padding:0;margin:0}
+.gmPartyConditions li{display:flex;align-items:center;justify-content:space-between;gap:var(--ast-space-2)}
+.gmPartyRest{display:grid;gap:var(--ast-space-2)}
+.gmPartyMember button:disabled,.gmPartyActions button:disabled,.gmPartyConditions button:disabled{opacity:.5;cursor:not-allowed}
