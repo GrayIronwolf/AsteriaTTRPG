@@ -197,7 +197,8 @@
     "site:cutover-phase10-4:stage": "node scripts/site-cutover-phase10-4-package.mjs --stage",
     "site:cutover-phase10-4:verify": "node scripts/site-cutover-phase10-4-package.mjs --verify",
     "site:dashboard-systems-parity": "node --test scripts/site-dashboard-systems-parity.test.mjs",
-    "site:dashboard-approved-screenshot-parity": "node scripts/site-dashboard-approved-screenshot-parity.cjs"
+    "site:dashboard-approved-screenshot-parity": "node scripts/site-dashboard-approved-screenshot-parity.cjs",
+    "site:dashboard-journal-parity": "node --test scripts/site-dashboard-journal-parity.test.mjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
