@@ -77,7 +77,7 @@ function Inventory({data,action,editable,role='player',selectedCharacter=null}){
         return <div className={styles.card} key={index}>
           <strong>Quick {index+1}: {assigned?.name||'Empty'}</strong>
           <div className={styles.actions}>
-            <button type="button" disabled={!editable||action.busy||!item?.id}
+            <button type="button" disabled={!editable||action.busy||!item?.id||item.quantity<1||!item.identified}
               onClick={()=>write({type:'quick',itemId:item.id,index,
                 expectedCoreRevision:ch.coreRevision})}>Assign selected item</button>
             <button type="button" disabled={!editable||action.busy||!assigned?.hasEffect||assigned.quantity<1}

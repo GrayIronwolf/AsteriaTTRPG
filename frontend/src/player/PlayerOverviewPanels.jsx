@@ -103,7 +103,7 @@ export function PlayerOverviewPanel({id,character,campaign,onNavigate,available=
       const item=character.quickSlots?.[i];
       return <div key={i} className={styles.section}>
         <Slot name={'Quick '+(i+1)} item={item} go={go}/>
-        {item?.id?<button type="button" disabled={!editable||busy}
+        {item?.id?<button type="button" disabled={!editable||busy||!item.usable}
           onClick={()=>{
             if(window.confirm('Use '+item.name+'? It may consume the item or change resources.'))
               onAction?.('useQuickItem',{itemId:item.id,revision:character.coreRevision});

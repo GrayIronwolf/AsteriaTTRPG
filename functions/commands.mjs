@@ -5,6 +5,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { createCoreCommands } from './coreCommands.mjs';
 import { reconcileCharacterSystems } from '../src/state/characterSystems.mjs';
 import { applyResourceChanges, parseResourceCosts, resourceId, resourceSnapshot } from '../src/state/resourceEngine.mjs';
+import {assertConsumableInventoryItem} from '../src/state/inventoryUseGuard.mjs';
 import { buildTalentCatalog, prerequisiteProblem, rankDefined, reconcileTalentEffects, saveTalentRank, talentRank } from '../src/state/talentModel.mjs';
 import { talentRules, useLearnedTalent } from '../src/state/talentMechanics.mjs';
 import { changeQuestProgress, changeQuestStatus } from '../src/state/questWorkflowModel.mjs';
@@ -879,12 +880,14 @@ const commands = {
           if(slot&&character.equipment) delete character.equipment[slot];
           appendActivity(character,{type:'item-unequipped',message:`Unequipped ${item.name}.`});
         }else if(operation.type==='quick'){
+          assertConsumableInventoryItem(item);
           const index=Math.max(0,Math.min(3,Number(operation.index||0)));
           character.quickSlots=Array.isArray(character.quickSlots)?character.quickSlots.slice(0,4):[];
           while(character.quickSlots.length<4) character.quickSlots.push(null);
           character.quickSlots[index]=item;
           appendActivity(character,{type:'quick-slot',message:`Assigned ${item.name} to Quick Slot ${index+1}.`});
         }else if(operation.type==='use'){
+          assertConsumableInventoryItem(item);
           const effect=item.effect||item.effects||{};
           const parsed=effect.resource ? {[String(effect.resource).toLowerCase()]:Number(effect.amount||0)} : parseResourceCost(effect);
           const changes=Object.entries(parsed).filter(([,amount])=>Number(amount)>0);
@@ -932,6 +935,7 @@ const commands = {
           item.identified=true;item.name=item.trueName||item.name;item.identifiedAt=new Date().toISOString();item.identifiedBy=characterId;
           appendActivity(character,{type:'item-identified',message:`Identified ${item.name}.`});
         }else if(operation.type==='read-spellbook'){
+          assertConsumableInventoryItem(item);
           if(item.identified===false) throw new Error('Identify this spellbook before reading it.');
           if(!item.isSpellbook&&!item.spell) throw new Error('This item is not a spellbook.');
           const spell=structuredCloneSafe(item.spell||item.spellData||{});

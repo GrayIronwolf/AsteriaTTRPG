@@ -80,13 +80,6 @@ function equipmentSlots(source){
   return Object.freeze(Object.fromEntries(EQUIPMENT_SLOT_KEYS.map(key=>
     [key,readEquipmentSlot(source,key)])));
 }
-function notes(value){
-  return Object.freeze(rows(value,16).map(row=>{
-    if(typeof row==='string')return Object.freeze({title:'Journal entry',content:txt(row,'',1000)});
-    return Object.freeze({title:txt(row.title||row.name||'Journal entry','',120),
-      content:txt(row.content||row.text||row.body||row.note,'',1000)});
-  }).filter(row=>row.title||row.content));
-}
 function traits(character){
   return labels(character?.racialTraits||character?.raceInfo?.traits||character?.character?.race?.traits,12);
 }
@@ -132,7 +125,10 @@ export function playerCharacterProjection(value,{owned=false}={}){
       const unidentified=found?.identified===false;
       const name=id?(unidentified?'Unidentified Item':
         txt(found?.name||found?.title||id,'',100)):'';
-      return id?Object.freeze({id,name,
+      const quantity=Number(found?.qty??found?.quantity??0);
+      const remaining=Number.isSafeInteger(quantity)&&quantity>0?quantity:0;
+      return id?Object.freeze({id,name,quantity:remaining,
+        usable:remaining>0&&!unidentified&&Boolean(found?.effect||found?.effects),
         image:unidentified?'':safeDashboardArtwork(found?.image,found?.icon,found?.artwork)}):null;
     })),
     quests:items(value.quests||value.questAssignments,12),
