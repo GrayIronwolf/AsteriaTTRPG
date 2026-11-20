@@ -9,6 +9,11 @@ on:
       - ".github/workflows/frontend-phase6-2-acceptance.yml"
   workflow_dispatch:
 
+# Replace older runs of this workflow when the same PR receives a new commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   player-dashboard-acceptance:
     runs-on: ubuntu-24.04
