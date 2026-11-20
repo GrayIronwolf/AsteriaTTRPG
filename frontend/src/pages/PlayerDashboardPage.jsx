@@ -134,6 +134,38 @@ function Spellbook({character,editable=false,busy=false,onAction}){
     <Names name="Known Magic" entries={character.magic}/>
   </SurfacePanel>;
 }
+function PlayerJournal({character,editable,busy,onAction}){
+  const [title,setTitle]=useState('');
+  const [body,setBody]=useState('');
+  const [confirmation,setConfirmation]=useState(false);
+  const submit=async event=>{
+    event.preventDefault();
+    if(!body.trim()||busy||!editable)return;
+    setConfirmation(true);
+    try{
+      const result=await onAction?.('addJournalEntry',{title,body});
+      if(result?.ok){setTitle('');setBody('');}
+    }finally{setConfirmation(false);}
+  };
+  return <SurfacePanel className={styles.panel} as="section" data-testid="site-player-journal">
+    <h3>Personal Journal</h3>
+    {character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
+      <article key={entry.id||i}><h4>{entry.title}</h4>
+        {entry.createdAt?<small>{entry.createdAt}</small>:null}
+        <p className={styles.prose}>{entry.content}</p></article>)}</div>:
+      <BodyText muted>No journal entries recorded.</BodyText>}
+    <form onSubmit={submit} className={styles.journal}>
+      <h4>Add Journal Entry</h4>
+      <label>Title<input type="text" value={title} maxLength={120}
+        onChange={event=>setTitle(event.target.value)} disabled={!editable||busy||confirmation}/></label>
+      <label>Entry<textarea value={body} required maxLength={20000} rows={5}
+        onChange={event=>setBody(event.target.value)} disabled={!editable||busy||confirmation}/></label>
+      <button type="submit" disabled={!editable||busy||confirmation||!body.trim()}>
+        Save Journal Entry</button>
+      {!editable?<BodyText muted>Writing requires character ownership and an editable campaign session.</BodyText>:null}
+    </form>
+  </SurfacePanel>;
+}
 function Sections({character,tab,owned,editable=false,busy=false,onAction,campaign=null}){
   if(tab==='Dashboard')return <>
     <div className={styles.overview}>
@@ -204,13 +236,8 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction,campai
       <h3>{tab}</h3>
       <BodyText muted>This original dashboard feature is not yet connected to the new React route. Its existing implementation is retained in the repository, but is not active here.</BodyText>
     </SurfacePanel>;
-  if(tab==='Journal')return <SurfacePanel className={styles.panel}>
-    <h3>Personal Journal</h3>
-    {!owned?<BodyText muted>Only the character owner may read personal journal entries.</BodyText>:
-      character.journal.length?<div className={styles.journal}>{character.journal.map((entry,i)=>
-        <article key={i}><h4>{entry.title}</h4><p className={styles.prose}>{entry.content}</p></article>)}</div>:
-        <BodyText muted>No journal entries recorded.</BodyText>}
-  </SurfacePanel>;
+  if(tab==='Journal')return owned?<PlayerJournal character={character} editable={editable} busy={busy} onAction={onAction}/>:
+    <SurfacePanel className={styles.panel}><BodyText muted>Only the character owner may read personal journal entries.</BodyText></SurfacePanel>;
   return null;
 }
 function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,campaignId='',characterId}){
@@ -263,10 +290,12 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       else if(type==='useQuickItem')await api.useQuickItem(campaignId,characterId,
         details.itemId,details.revision);
       else if(type==='castSpell')await api.castSpell(campaignId,characterId,details);
+      else if(type==='addJournalEntry')await api.addJournalEntry(campaignId,characterId,details);
       setResourceMessage(({castSpell:'Spell cast.',useQuickItem:'Quick item used.',
         removeCondition:'Condition removed.',takeRest:'Rest request submitted.',
-        adjustCurrency:'Currency updated.'})[type]||'Character action completed.');
-    }catch(e){setResourceError(e?.message||'Character action failed.');}
+        adjustCurrency:'Currency updated.',addJournalEntry:'Journal entry saved.'})[type]||'Character action completed.');
+      return {ok:true};
+    }catch(e){setResourceError(e?.message||'Character action failed.');return {ok:false};}
     finally{setResourceBusy('');}
   };
   return <>
