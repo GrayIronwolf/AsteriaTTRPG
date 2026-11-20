@@ -116,3 +116,40 @@ test('Original Inventory and Crafting tabs route directly into active secured ec
   assert.ok(player.includes("api.castSpell("));
   assert.ok(player.includes("api.useQuickItem("));
 });
+
+test('restored Player spellbook exposes guarded campaign casting and original details',()=>{
+  const projected=playerCharacterProjection(character({spells:[
+    {name:'Ice Lance',element:'Water',rank:'Minor',manaCost:55,summary:'Frost damage'},
+    'Feather Fall'
+  ]}),{owned:true});
+  assert.equal(projected.spellDetails[0].name,'Ice Lance');
+  assert.equal(projected.spellDetails[0].mpCost,55);
+  assert.equal(projected.spellDetails[1].mpCost,null);
+  const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  assert.match(page,/function Spellbook\(/);
+  assert.match(page,/onAction\?\.\('castSpell',spell\.name\)/);
+  assert.match(page,/disabled=\{!editable\|\|busy\}/);
+  assert.match(page,/setResourceMessage\(/);
+  const service=read('frontend/src/player/firebasePlayerDashboardService.mjs');
+  assert.match(service,/async function castSpell\(/);
+  assert.match(service,/relationship\.owned/);
+});
+test('four quick slots are resolved only from approved inventory items and can be assigned and used',async()=>{
+  const {inventoryProjection}=await import('../frontend/src/economy/economyModel.mjs');
+  const data=inventoryProjection({id:'hero-1',name:'Hero',inventory:[
+    {id:'potion-1',name:'Healing Tonic',qty:2,effect:{resource:'hp',amount:5}},
+    {id:'sealed-1',name:'Sealed Potion',identified:false,qty:1}
+  ],quickSlots:[{id:'potion-1'},'missing-item',{id:'sealed-1'}]},false);
+  assert.equal(data.quickSlots.length,4);
+  assert.equal(data.quickSlots[0].name,'Healing Tonic');
+  assert.equal(data.quickSlots[0].hasEffect,true);
+  assert.equal(data.quickSlots[1],null);
+  assert.equal(data.quickSlots[2].name,'Unidentified Item');
+  assert.equal(data.quickSlots[2].hasEffect,false);
+  assert.equal(data.quickSlots[3],null);
+  const workspace=read('frontend/src/economy/EconomyWorkspace.jsx');
+  assert.match(workspace,/site-player-quick-slots/);
+  assert.match(workspace,/itemId:item\.id,index/);
+  assert.match(workspace,/type:'use',itemId:assigned\.id/);
+  assert.match(workspace,/if\(type==='quick'\)op\.index=Number\(quickSlot\)/);
+});

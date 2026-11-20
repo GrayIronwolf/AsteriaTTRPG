@@ -37,6 +37,22 @@ function skills(value){
       row?.rank??row?.value!=null?String(row?.rank??row?.value):'','',50)
   })).filter(row=>row.name).map(Object.freeze));
 }
+function spellRecords(value){
+  return Object.freeze(rows(value,24).map(row=>{
+    const data=typeof row==='string'?{name:row}:obj(row)?row:{};
+    const name=txt(data.name||data.title,'',100);
+    if(!name)return null;
+    const costSource=data.costs?.mp??data.costs?.MP??data.resourceCosts?.mp??
+      data.manaCost??(typeof data.cost==='number'?data.cost:data.cost?.mp);
+    const cost=costSource==null?null:Number(costSource);
+    return Object.freeze({
+      name,element:txt(data.element||data.magicType,'',80),
+      rank:txt(data.rank,'',48),
+      summary:txt(data.summary||data.description,'',640),
+      mpCost:cost!==null&&Number.isFinite(cost)&&cost>=0?cost:null
+    });
+  }).filter(Boolean));
+}
 function items(value,max=24){
   return Object.freeze(rows(value,max).map(row=>Object.freeze({
     name:txt(row?.name||row?.title||row,'',100),
@@ -83,7 +99,8 @@ export function playerCharacterProjection(value,{owned=false}={}){
       k,Number.isFinite(Number(characteristics[k]))?Number(characteristics[k]):null
     ]));
   const classes=typeof value.class==='string'?value.class:value.class?.title||value.character?.class?.title||'';
-  const spells=labels(value.spells||value.knownSpells,24);
+  const spellSource=value.spells||value.activeSpells||value.knownSpells;
+  const spells=labels(spellSource,24);
   const talents=labels(value.classTalents||value.talents||value.character?.startingTalents,24);
   const result={
     id:value.id,name:txt(value.name,'Unnamed Character',120),
@@ -95,7 +112,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     hp:safePair(value.hp),sp:safePair(value.sp),mp:safePair(value.mp),
     characteristics:Object.freeze(stats),
     naturalAC:Number.isFinite(Number(value.naturalAC))?Number(value.naturalAC):null,
-    skills:skills(value.skills||value.selectedSkills),spells,talents,
+    skills:skills(value.skills||value.selectedSkills),spells,spellDetails:spellRecords(spellSource),talents,
     magic:labels(value.magicTypes||value.character?.magic?.types,24),
     racialTraits:traits(value),
     conditions:labels(value.conditions,16),

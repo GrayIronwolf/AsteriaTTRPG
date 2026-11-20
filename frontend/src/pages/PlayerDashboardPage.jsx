@@ -99,7 +99,42 @@ function Names({name,entries}){
       <BodyText muted>None recorded.</BodyText>}
   </SurfacePanel>;
 }
-function Sections({character,tab,owned}){
+function Spellbook({character,editable=false,busy=false,onAction}){
+  const [query,setQuery]=useState(''),[element,setElement]=useState('All');
+  const spells=character.spellDetails||[];
+  const elements=[...new Set(spells.map(spell=>spell.element).filter(Boolean))];
+  const visible=spells.filter(spell=>(element==='All'||spell.element===element)&&
+    (spell.name+' '+spell.element+' '+spell.rank+' '+spell.summary).toLowerCase()
+      .includes(query.trim().toLowerCase()));
+  return <SurfacePanel as="section" className={styles.panel} data-testid="site-player-spellbook">
+    <h3>Known Spells</h3>
+    <div className={styles.spellFilters}>
+      <label>Search spells<input type="search" value={query}
+        onChange={event=>setQuery(event.target.value)} placeholder="Search your spellbook"/></label>
+      <label>Element<select value={element} onChange={event=>setElement(event.target.value)}>
+        <option value="All">All</option>
+        {elements.map(name=><option key={name} value={name}>{name}</option>)}
+      </select></label>
+    </div>
+    {visible.length?<div className={styles.spellGrid}>{visible.map((spell,index)=>
+      <article className={styles.spellCard} key={spell.name+':'+index}>
+        <h4>{spell.name}</h4>
+        <p>{[spell.element,spell.rank].filter(Boolean).join(' · ')||'Known spell'}</p>
+        {spell.summary?<p>{spell.summary}</p>:null}
+        <p>{spell.mpCost===null?'MP cost verified by the server':
+          'Recorded MP cost: '+spell.mpCost}</p>
+        <button type="button" disabled={!editable||busy}
+          onClick={()=>{
+            if(window.confirm('Cast '+spell.name+'? The campaign server will verify the spell and its cost.'))
+              onAction?.('castSpell',spell.name);
+          }}>Cast Spell</button>
+      </article>)}</div>:
+      <BodyText muted>{spells.length?'No spells match the filters.':'No known spells recorded.'}</BodyText>}
+    {!editable?<BodyText muted>Spell casting requires an active, editable campaign session and character ownership.</BodyText>:null}
+    <Names name="Known Magic" entries={character.magic}/>
+  </SurfacePanel>;
+}
+function Sections({character,tab,owned,editable=false,busy=false,onAction}){
   if(tab==='Dashboard')return <>
     <div className={styles.overview}>
       <SurfacePanel className={styles.panel}><h3>Experience</h3>
@@ -127,10 +162,8 @@ function Sections({character,tab,owned}){
     </SurfacePanel>
     <Names name="Class Talents" entries={character.talents}/>
   </div>;
-  if(tab==='Spells')return <div className={styles.overview}>
-    <Names name="Known Magic" entries={character.magic}/>
-    <Names name="Known Spells" entries={character.spells}/>
-  </div>;
+  if(tab==='Spells')return <Spellbook character={character} editable={editable}
+    busy={busy} onAction={onAction}/>;
   if(tab==='Inventory')return <div className={styles.overview}>
     {['inventory','equipment'].map(key=><SurfacePanel className={styles.panel} key={key}>
       <h3>{key==='inventory'?'Inventory':'Equipment'}</h3>
@@ -172,7 +205,8 @@ function Sections({character,tab,owned}){
 function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,campaignId='',characterId}){
   const [data,setData]=useState(null),[loading,setLoading]=useState(true),
     [error,setError]=useState(''),[tab,setTab]=useState('Dashboard'),
-    [resourceBusy,setResourceBusy]=useState(''),[resourceError,setResourceError]=useState('');
+    [resourceBusy,setResourceBusy]=useState(''),[resourceError,setResourceError]=useState(''),
+    [resourceMessage,setResourceMessage]=useState('');
   const generation=useRef(0);
   useEffect(()=>{
     const token=++generation.current;
@@ -208,7 +242,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
   };
   const panelAction=async(type,details)=>{
     if(!resourceEditable||resourceBusy)return;
-    setResourceBusy(type);setResourceError('');
+    setResourceBusy(type);setResourceError('');setResourceMessage('');
     try{
       if(type==='removeCondition')await api.removeCondition(campaignId,characterId,details);
       else if(type==='takeRest')await api.takeRest(campaignId,characterId,details.type,{
@@ -218,6 +252,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       else if(type==='useQuickItem')await api.useQuickItem(campaignId,characterId,
         details.itemId,details.revision);
       else if(type==='castSpell')await api.castSpell(campaignId,characterId,details);
+      setResourceMessage(({castSpell:'Spell cast.',useQuickItem:'Quick item used.',
+        removeCondition:'Condition removed.',takeRest:'Rest request submitted.',
+        adjustCurrency:'Currency updated.'})[type]||'Character action completed.');
     }catch(e){setResourceError(e?.message||'Character action failed.');}
     finally{setResourceBusy('');}
   };
@@ -225,6 +262,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
     <ClassicPlayerHeader character={ch} campaign={c} owned={data.owner}
       editable={resourceEditable} resourceBusy={Boolean(resourceBusy)} onAdjust={adjustResource}/>
     {resourceError?<p role="alert">{resourceError}</p>:null}
+    {resourceMessage?<p role="status">{resourceMessage}</p>:null}
     <div className={styles.sessionStrip} role="status">
       {c?(c.session.editable?'Live editing enabled':'Session is not active. Gameplay actions are unavailable.'):'Unassigned character — link to a campaign to enable live gameplay.'}
       <CrystalButton href="#/character-forge" size="compact">Character Forge</CrystalButton>
@@ -283,7 +321,8 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
         (tab==='Advanced Dice'&&dice?.availability().enabled)||
         (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
-        <Sections character={ch} owned={data.owner} tab={tab}/>}
+        <Sections character={ch} owned={data.owner} tab={tab} editable={resourceEditable}
+          busy={Boolean(resourceBusy)} onAction={panelAction}/>}
     
   </>;
 }

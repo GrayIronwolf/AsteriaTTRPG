@@ -74,11 +74,18 @@ export function inventoryProjection(character={},gm=false){
     order:whole(row.order,100),
     itemCount:inventory.filter(x=>!x.equipped&&x.storageId===row.id).length
   }));
+  const selectedQuickSlots=list(character.quickSlots);
+  const quickSlots=Array.from({length:4},(_,index)=>{
+    const slot=selectedQuickSlots[index];
+    const id=typeof slot==='string'?slot:record(slot)?slot.itemId||slot.instanceId||slot.id:'';
+    return inventory.find(item=>item.id===String(id||''))||null;
+  });
   return Object.freeze({
     id:string(character.id,160),name:string(character.name,100)||'Character',
     ownerUid:gm?string(character.ownerUid,160):'',
     coreRevision:whole(character.coreRevision,1000000000),
-    items:Object.freeze(inventory),storages:Object.freeze(storages),
+    items:Object.freeze(inventory),quickSlots:Object.freeze(quickSlots),
+    storages:Object.freeze(storages),
     currencyCopper:characterCurrencyCopper(character),
     coins:record(character.coins||character.coinPouch)?
       Object.freeze(Object.fromEntries(Object.entries(character.coins||character.coinPouch)

@@ -64,3 +64,12 @@
 @media(max-width:900px){.classicHeader{grid-template-columns:minmax(160px,32fr) minmax(240px,68fr)}.campaignColumn{grid-column:1/-1;min-height:180px}.campaignColumn .heroImage{object-position:center}.coreColumn{min-height:300px}}
 @media(max-width:780px){.overview{grid-template-columns:1fr}}
 @media(max-width:600px){.classicHeader{grid-template-columns:1fr}.portraitColumn{min-height:310px}.coreColumn{min-height:0}.campaignColumn{min-height:190px;grid-column:auto}.coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.resources{grid-template-columns:1fr}.panel{padding:var(--ast-space-4)}}
+
+/* Restore usable spellbook interactions without legacy global stylesheet overlays. */
+.spellFilters{display:flex;align-items:end;gap:var(--ast-space-3);flex-wrap:wrap}
+.spellFilters label{display:grid;gap:var(--ast-space-1);flex:1 1 180px;min-width:0}
+.spellFilters input,.spellFilters select{min-height:var(--ast-target-min);width:100%;padding:var(--ast-space-2);color:var(--ast-color-text);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);border-radius:var(--ast-radius-sm)}
+.spellGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:var(--ast-space-3)}
+.spellCard{display:grid;align-content:start;gap:var(--ast-space-2);min-width:0;padding:var(--ast-space-3);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft)}
+.spellCard p{margin:0}.spellCard button{justify-self:start;min-height:var(--ast-target-min);padding:var(--ast-space-2) var(--ast-space-4);color:var(--ast-color-text);background:var(--ast-color-panel-slate);border:1px solid var(--ast-color-outline-active);cursor:pointer}
+.spellCard button:disabled{opacity:.5;cursor:not-allowed}
