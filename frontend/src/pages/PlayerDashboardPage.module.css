@@ -46,10 +46,10 @@
 
 .coreColumn .resource>div:first-child{margin-bottom:0}
 .coreColumn .resource span{font-variant-numeric:tabular-nums}
-.coreColumn .meter{position:relative;display:block;width:100%;height:12px;background:rgb(10 20 32);border:1px solid rgb(118 141 160);border-radius:3px;overflow:hidden}
-.coreColumn .meterFill{display:block;height:100%;background:rgb(237 88 138)}
-.coreColumn [data-resource='sp'] .meterFill{background:rgb(42 216 167)}
-.coreColumn [data-resource='mp'] .meterFill{background:rgb(52 191 242)}
+.coreColumn .meter{position:relative;display:block;width:100%;height:12px;background:rgb(10 20 32);border:1px solid rgb(118 141 160);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 2px rgb(0 0 0 / .65)}
+.coreColumn .meterFill{display:block;height:100%;background:var(--ast-resource-hp-fill);box-shadow:inset 0 1px 0 rgb(255 255 255 / .36),inset 0 -2px 3px rgb(0 0 0 / .32),0 0 8px rgb(255 255 255 / .10)}
+.coreColumn [data-resource='sp'] .meterFill{background:var(--ast-resource-sp-fill)}
+.coreColumn [data-resource='mp'] .meterFill{background:var(--ast-resource-mp-fill)}
 .coreColumn .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
 .coreColumn .stat{padding:7px 4px;border:1px solid rgb(61 89 115);background:rgb(10 28 48);text-align:center;gap:0}
 .coreColumn .stat small{font-size:.67rem}

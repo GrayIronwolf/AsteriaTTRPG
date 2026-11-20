@@ -111,7 +111,7 @@ async function captureLayoutEvidence(page,role,name){
    const frame=button?getComputedStyle(button,'::before'):null;
    const fills=Object.fromEntries(['hp','sp','mp'].map(key=>{
      const element=node.querySelector('[data-resource="'+key+'"] [role="progressbar"] > span');
-     return [key,element?getComputedStyle(element).backgroundColor:null];
+     return [key,element?getComputedStyle(element).backgroundImage:null];
    }));
    return {
      viewport:{width:innerWidth,height:innerHeight},
@@ -137,9 +137,21 @@ async function captureLayoutEvidence(page,role,name){
    assert.equal(shell.menuCount,24,'Original GM navigation destinations missing: '+name);
  }else{
    assert.ok(shell.menuCount>=18,'Original Player menu has missing destinations: '+name);
-   assert.deepEqual(shell.resourceColours,{
-     hp:'rgb(237, 88, 138)',sp:'rgb(42, 216, 167)',mp:'rgb(52, 191, 242)'
-   },'HP/SP/MP colors differ from original: '+name);
+ }
+ // Empty GM parties have no bars; populated parties and every player must show glass.
+ if(!gm||Object.values(shell.resourceColours).some(Boolean)){
+   const colours={
+     hp:['rgb(220, 73, 103)','rgb(148, 17, 45)','rgb(112, 11, 34)'],
+     sp:['rgb(56, 189, 140)','rgb(0, 117, 69)','rgb(0, 83, 50)'],
+     mp:['rgb(120, 150, 235)','rgb(32, 63, 139)','rgb(22, 46, 103)']
+   };
+   for(const key of Object.keys(colours)){
+     const gradient=shell.resourceColours[key];
+     assert.ok(gradient?.includes('linear-gradient'),'Missing '+key+' glossy bar: '+name);
+     for(const shade of colours[key])
+       assert.ok(gradient.includes(shade),
+         'HP/SP/MP colors differ from original: '+name+' '+key+' '+shade);
+   }
  }
  fs.writeFileSync(path.join(folder,name+'-shell.json'),JSON.stringify(shell,null,2));
  await page.screenshot({path:path.join(folder,name+'-full-page.png'),

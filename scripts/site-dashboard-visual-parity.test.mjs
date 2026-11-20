@@ -172,18 +172,41 @@ test('Phase 4.5 comparator uses complete pages and strict manual release gating'
   assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('--require-ready'));
   assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('site:dashboard-approved-screenshot-parity'));
 });
-test('resource tracks are rendered with original HP SP MP colour roles',()=>{
+test('Midnight Obsidian HP SP MP resource bars use shared glossy source tokens',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
-  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
   const gm=read('frontend/src/pages/GMDashboardPage.jsx');
+  const tokens=read('frontend/src/styles/tokens.css');
+  const playerCss=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  const gmCss=read('frontend/src/pages/GMDashboardPage.module.css');
+  const oldTokens=read('css/asteria-design-tokens.css');
+  const oldCss=read('src/styles/asteria-react.css');
+  const oldModern=read('css/asteria-modern-ui.css');
+  const oldSheet=read('css/styles.css');
   assert.match(page,/role="progressbar"/);
   assert.match(gm,/role="progressbar"/);
   assert.doesNotMatch(page,/<progress aria-label=\{key\.toUpperCase\(\)\+' resources'/);
-  for(const selector of ["data-resource='sp'","data-resource='mp'"])
-    assert.ok(css.includes(selector),selector);
-  assert.match(css,/rgb\(237 88 138\)/);
-  assert.match(css,/rgb\(42 216 167\)/);
-  assert.match(css,/rgb\(52 191 242\)/);
+  for(const [kind,base,highlight,shadow] of [
+    ['hp','#94112d','#dc4967','#700b22'],
+    ['sp','#007545','#38bd8c','#005332'],
+    ['mp','#203f8b','#7896eb','#162e67']
+  ]){
+    for(const [prefix,source] of [['--ast-resource-',tokens],['--asteria-',oldTokens]]){
+      for(const [suffix,value] of [['',base],['-highlight',highlight],['-shadow',shadow]])
+        assert.ok(source.includes(`${prefix}${kind}${suffix}: ${value};`),kind+suffix);
+    }
+    assert.ok(tokens.includes(`--ast-resource-${kind}-fill:`));
+    assert.ok(oldTokens.includes(`--asteria-${kind}-gradient:`));
+    assert.ok(playerCss.includes(`var(--ast-resource-${kind}-fill)`));
+    assert.ok(gmCss.includes(`var(--ast-resource-${kind}-fill)`));
+    assert.ok(oldCss.includes(`var(--asteria-${kind}-gradient`));
+    assert.ok(oldModern.includes(`var(--asteria-${kind}-gradient`));
+    assert.ok(oldSheet.includes(`var(--asteria-${kind}-gradient`));
+  }
+  assert.match(tokens,/--ast-resource-gloss: linear-gradient/);
+  assert.match(oldTokens,/--asteria-resource-gloss: linear-gradient/);
+  assert.match(playerCss,/box-shadow:inset 0 1px 0/);
+  assert.match(gmCss,/box-shadow:inset 0 1px 0/);
+  assert.doesNotMatch(playerCss,/rgb\(237 88 138\)|rgb\(42 216 167\)|rgb\(52 191 242\)/);
 });
 test('original player navigation remains enumerated rather than silently removed',()=>{
   const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
