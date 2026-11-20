@@ -15,7 +15,7 @@ export const COMBAT_AP_ACTIONS=Object.freeze([
 ]);
 export const COMBAT_PLAYER_COMMANDS=Object.freeze(['spend-ap','end-turn','death-save']);
 export const COMBAT_GM_COMMANDS=Object.freeze([
-  'save','load-prepared','start','next','end','clear','correct','spend-ap','end-turn','death-save'
+  'save','load-prepared','map-link','start','next','end','clear','correct','spend-ap','end-turn','death-save'
 ]);
 
 export function combatRevision(encounter){return revision(encounter?.combat?.revision);}
