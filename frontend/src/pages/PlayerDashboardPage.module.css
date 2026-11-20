@@ -89,3 +89,19 @@
 .galleryActions button:disabled{opacity:.45;cursor:not-allowed}
 .galleryPreview,.galleryConfirm{display:grid;gap:var(--ast-space-3);padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-active);background:var(--ast-color-panel-raised)}
 .galleryPreview img{max-width:100%;max-height:65vh;object-fit:contain;margin:auto}
+
+
+/* Phase 2.3: original quest status, objective and history controls. */
+.questFilters{display:flex;gap:var(--ast-space-3);align-items:end;flex-wrap:wrap}
+.questFilters label{display:grid;gap:var(--ast-space-1);flex:1 1 170px;min-width:0}
+.questFilters input,.questFilters select,.questObjective input{min-height:var(--ast-target-min);padding:var(--ast-space-2);background:var(--ast-color-panel);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft);min-width:0;max-width:100%}
+.questCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--ast-space-3)}
+.questCard{padding:var(--ast-space-4);display:grid;align-content:start;gap:var(--ast-space-3);min-width:0;background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft)}
+.questCard header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:var(--ast-space-2)}
+.questCard header h4{margin:0}.questCard p{margin:0;overflow-wrap:anywhere}
+.questObjectives{list-style:none;padding:0;margin:0;display:grid;gap:var(--ast-space-2)}
+.questObjective{display:flex;justify-content:space-between;align-items:center;gap:var(--ast-space-2);flex-wrap:wrap}
+.questObjective>div,.questActions{display:flex;align-items:center;gap:var(--ast-space-2);flex-wrap:wrap}
+.questObjective input[type=number]{width:100px}
+.questActions button,.questObjective button{min-height:var(--ast-target-min);padding:var(--ast-space-2);background:var(--ast-color-panel-slate);color:var(--ast-color-text);border:1px solid var(--ast-color-outline-soft);cursor:pointer}
+.questActions button:disabled,.questObjective button:disabled{opacity:.45;cursor:not-allowed}
