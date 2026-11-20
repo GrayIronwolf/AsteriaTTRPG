@@ -152,14 +152,23 @@ try{
  // Previous phases have independent CI gates; this test isolates Phase 7.4.
  // Phase 7.4: private NPC authoring and a GM-reviewed relationship ledger.
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
- await owner.getByRole('button',{name:'GM Toolkit'}).click();
+ await owner.getByRole('navigation',{name:'GM dashboard sections'})
+    .getByRole('button',{name:'NPC & Creature Library'}).click();
+ const npcLibrary=owner.getByTestId('site-gm-npc-creature-restored');
+ await npcLibrary.waitFor({timeout:30000});
+ await npcLibrary.getByRole('button',{name:'Add Campaign NPC'}).click();
+ await npcLibrary.getByRole('textbox',{name:'Name',exact:true})
+   .fill('Emulator Tavern Keeper');
+ await npcLibrary.getByRole('button',{name:'Save to Campaign Library'}).click();
+ await npcLibrary.getByText('Campaign npc saved.').waitFor({timeout:30000});
+ await npcLibrary.getByRole('heading',{name:'Emulator Tavern Keeper'})
+   .waitFor({timeout:30000});
+ // The existing reputation and GM-only story ledgers remain under the
+ // authenticated Digital GM workspace, available from World Systems.
+ await owner.getByRole('navigation',{name:'GM dashboard sections'})
+   .getByRole('button',{name:'World Systems'}).click();
  const gmToolkit=owner.getByTestId('site-gm-digital-tools');
- await gmToolkit.getByTestId('site-digital-gm-library').waitFor({timeout:30000});
- await gmToolkit.getByRole('button',{name:'New NPC'}).click();
- await gmToolkit.getByLabel('name',{exact:true}).fill('Emulator Tavern Keeper');
- await gmToolkit.getByRole('button',{name:'Save Record'}).click();
- await gmToolkit.getByText('Library record saved.').waitFor({timeout:30000});
- await gmToolkit.getByText('Emulator Tavern Keeper').first().waitFor({timeout:30000});
+ await gmToolkit.waitFor({timeout:30000});
  await gmToolkit.getByRole('button',{name:'Reputation'}).click();
  const gmReputation=gmToolkit.getByTestId('site-digital-gm-reputation');
  await gmReputation.waitFor({timeout:30000});
