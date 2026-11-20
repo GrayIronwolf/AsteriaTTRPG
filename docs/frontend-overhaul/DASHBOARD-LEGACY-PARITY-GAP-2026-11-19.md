@@ -47,3 +47,25 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
 - The screenshot gate `scripts/site-dashboard-approved-screenshot-parity.cjs` now requires **Player, GM and GM read-only** genuine approved reference images at both desktop and mobile widths. It checks authenticated routes and compares actual screenshot pixels; synthetic references made from the new React UI are not permitted.
 - **Remaining release blocker:** no approved legacy screenshot manifest and matched pre-migration PNGs have been verified in this PR, and no successful approved original-versus-React pixel comparison on this final branch exists yet. Existing source, emulator and current-rendered-style checks do not replace this evidence.
 - **Release decision: BLOCKED.** PR #334 remains draft, unmerged and undeployed until authenticated cross-role old-vs-new screenshot parity and final feature audit pass on the final head. The user alone triggers deployment after merge.
+
+## Phase 4.1 — Original frame and controls, code restoration
+
+- Diffed the final original CSS for nine-slice frames, title plaques and panel
+  responsive behavior against the React/Vite layout. The React border used a
+  21px cap and plaque offsets based on the tile height; the originals use
+  a 9–18px border and header rail ratios of .333333 (square), .833333
+  (wide/ultrawide) and .233333 (tall). Fixed these directly in the existing
+  React CSS module, with no legacy CSS layer and no changes to saved layouts.
+- Named the original panel-body container `asteria-panel` to restore
+  **per-panel** responsive armour and equipment layouts instead of querying
+  the full page width.
+- Replaced the rectangular Player HP/SP/MP plus/minus buttons with existing
+  approved `CrystalButton` icon frames, retaining labels, disabled states
+  and permission-checked Firebase actions.
+- Added regression tests against the original source CSS, plus real Chromium
+  computed-frame, plaque, container and icon checks across an authenticated
+  mobile Player and desktop GM.
+- **Phase 4.1 is not the visual acceptance gate:** matching authentic
+  pre-migration and React/Vite screenshots across Player, GM and read-only
+  roles at mobile and desktop widths remains outstanding. PR #334 stays draft,
+  unmerged and undeployed until all release phases pass.

@@ -52,10 +52,10 @@ function Resources({character,editable=false,busy=false,onAdjust}){
           <span className={styles.meterFill} style={{width:percent+'%'}}/>
         </div>
         <div className={styles.resourceActions}>
-          <button type="button" aria-label={'Decrease '+key.toUpperCase()} disabled={!editable||busy||current<=0}
-            onClick={()=>onAdjust(key,-1)}>−</button>
-          <button type="button" aria-label={'Increase '+key.toUpperCase()} disabled={!editable||busy||current>=maximum}
-            onClick={()=>onAdjust(key,1)}>+</button>
+          <CrystalButton size="icon" aria-label={'Decrease '+key.toUpperCase()}
+            disabled={!editable||busy||current<=0} onClick={()=>onAdjust(key,-1)}>−</CrystalButton>
+          <CrystalButton size="icon" aria-label={'Increase '+key.toUpperCase()}
+            disabled={!editable||busy||current>=maximum} onClick={()=>onAdjust(key,1)}>+</CrystalButton>
         </div>
       </div>;
     })}

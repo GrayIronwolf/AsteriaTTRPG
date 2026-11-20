@@ -31,6 +31,50 @@ async function account(page,email,username){
  await page.getByTestId('site-auth-submit').click();
  await page.getByTestId('site-header-profile').waitFor({timeout:30000});
 }
+// Phase 4.1: Chromium-computed geometry of the approved frame art (not a
+// replacement for genuine approved pre-migration pixel screenshots).
+async function assertFrameAndPlaque(page,role){
+ const root=page.getByTestId('site-'+role+'-layout-workspace');
+ await root.waitFor({timeout:30000});
+ const state=await root.evaluate(node=>{
+   const tile=node.querySelector('[data-panel-id]');
+   const title=tile?.querySelector('h3');
+   const content=title?.nextElementSibling;
+   if(!tile||!title||!content)return null;
+   const frame=getComputedStyle(tile,'::before');
+   return {
+     family:tile.getAttribute('data-frame-family'),
+     border:parseFloat(frame.borderTopWidth),
+     art:frame.borderImageSource,
+     plaque:getComputedStyle(title,'::after').backgroundImage,
+     top:parseFloat(getComputedStyle(title).top),
+     containerType:getComputedStyle(content).containerType,
+     containerName:getComputedStyle(content).containerName
+   };
+ });
+ assert.ok(state,'Expected visible '+role+' dashboard panel');
+ assert.match(state.art,/panel-frame-(3x3|3x6|6x3|9x3)\.webp/);
+ assert.match(state.plaque,/10006\.png/);
+ assert.equal(state.containerType,'inline-size');
+ assert.equal(state.containerName,'asteria-panel');
+ const ratio={square:.333333,tall:.233333,wide:.833333,ultrawide:.833333}[state.family];
+ assert.ok(Number.isFinite(ratio),'Unknown approved frame family: '+state.family);
+ assert.ok(state.border>=9&&state.border<=18,'Nine-slice frame border width');
+ assert.ok(Math.abs(state.top-state.border*ratio)<1,'Plaque rail parity: '+JSON.stringify(state));
+}
+async function assertCrystalResources(page){
+ const actual=await page.getByTestId('site-player-resources').evaluate(node=>{
+   const button=node.querySelector('button[aria-label="Increase HP"]');
+   if(!button)return null;
+   const style=getComputedStyle(button);
+   return {background:style.backgroundColor,border:style.borderTopWidth,
+     art:getComputedStyle(button,'::before').backgroundImage};
+ });
+ assert.ok(actual,'HP increase button must exist');
+ assert.ok(['rgba(0, 0, 0, 0)','transparent'].includes(actual.background));
+ assert.equal(actual.border,'0px','Resource buttons must not have rectangular borders');
+ assert.match(actual.art,/url\(/,'Icon frame artwork must render');
+}
 (async()=>{let browser;
 try{
  await ready();
@@ -158,6 +202,8 @@ try{
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await player.getByTestId('site-player-resources').waitFor({timeout:30000});
  await player.getByTestId('site-player-layout-manager').waitFor({timeout:30000});
+ await assertFrameAndPlaque(player,'player');
+ await assertCrystalResources(player);
  await player.getByTestId('site-layout-open').click();
  try{await player.getByTestId('site-layout-editor').waitFor({timeout:6000});}
  catch(error){console.error('EDITOR PAGE DEBUG',await player.locator('body').innerText());
@@ -192,6 +238,7 @@ try{
  await player.getByRole('heading',{name:'Joined Forge Hero'}).waitFor({timeout:30000});
  await owner.goto(base+'#/react/gm/'+encodeURIComponent(ownerCampaignId),{waitUntil:'domcontentloaded'});
  await owner.getByTestId('site-gm-layout-manager').waitFor({timeout:30000});
+ await assertFrameAndPlaque(owner,'gm');
  await owner.getByTestId('site-layout-open').click();
  await owner.getByRole('button',{name:'Lock Campaign Encounter'}).click();
  await owner.getByTestId('site-layout-save').click();

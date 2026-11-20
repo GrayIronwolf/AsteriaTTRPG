@@ -40,7 +40,7 @@
 .coreColumn .resource{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;background:transparent;border:0;padding:0;border-radius:0}
 .coreColumn .resource>div:first-child{grid-column:1/-1}
 .coreColumn .resourceActions{display:flex;gap:4px;align-items:stretch}
-.coreColumn .resourceActions button{display:grid;place-items:center;width:28px;min-height:18px;padding:0;background:rgb(10 24 40);border:1px solid rgb(87 124 150);color:rgb(237 244 251);font:700 .9rem/1 Arial,sans-serif;cursor:pointer}
+.coreColumn .resourceActions button{flex:0 0 53px;display:grid;place-items:center;width:53px;min-width:53px;min-height:53px;padding:2px;background:transparent;border:0;box-shadow:none;color:var(--ast-button-label-color);font:700 1.05rem/1 var(--ast-font-body);cursor:pointer}
 .coreColumn .resourceActions button:disabled{opacity:.45;cursor:not-allowed}
 .coreColumn .resourceActions button:focus-visible{outline:3px solid var(--ast-color-focus)}
 

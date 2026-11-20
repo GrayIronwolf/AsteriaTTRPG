@@ -57,6 +57,30 @@ test('restored frame uses original square cell ratios, sliced artwork, and four 
   assert.match(jsx,/data-frame-family=\{frame\}/);
   for(const kind of ['wide','ultrawide','tall','square'])assert.ok(jsx.includes("'"+kind+"'"));
 });
+test('Phase 4.1 matches final legacy border sizes, plaque rails and content containers',()=>{
+  const original=read('css/asteria-dashboard-responsive-content.css');
+  const plaque=read('css/asteria-panel-headers.css');
+  const css=read('frontend/src/layout/DashboardLayoutWorkspace.module.css');
+  assert.ok(original.includes('--asteria-frame-border:clamp(9px,2cqi,18px)'));
+  assert.ok(css.includes('--ast-dashboard-frame-border:clamp(9px,2cqi,18px)'));
+  assert.ok(css.includes('border:var(--ast-dashboard-frame-border) solid transparent'));
+  assert.ok(css.includes('border-image-width:1'));
+  assert.ok(css.includes('top:calc(var(--ast-dashboard-frame-border) * var(--ast-dashboard-header-rail-ratio))'));
+  for(const ratio of ['.333333','.833333','.233333']){
+    assert.ok(plaque.includes('--asteria-header-rail-ratio:'+ratio));
+    assert.ok(css.includes('--ast-dashboard-header-rail-ratio:'+ratio));
+  }
+  assert.ok(css.includes('container-name:asteria-panel;container-type:inline-size'));
+  assert.doesNotMatch(css,/--ast-dashboard-header-rail-y/);
+});
+test('Phase 4.1 HP SP MP controls reuse approved icon crystal rather than rectangles',()=>{
+  const jsx=read('frontend/src/pages/PlayerDashboardPage.jsx');
+  const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
+  assert.ok(jsx.includes('<CrystalButton size="icon" aria-label={\'Decrease \''));
+  assert.ok(jsx.includes('<CrystalButton size="icon" aria-label={\'Increase \''));
+  assert.match(css,/\.coreColumn \.resourceActions button\{[^}]*background:transparent;border:0;box-shadow:none/);
+  assert.doesNotMatch(css,/\.coreColumn \.resourceActions button\{[^}]*background:rgb/);
+});
 test('resource tracks are rendered with original HP SP MP colour roles',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
