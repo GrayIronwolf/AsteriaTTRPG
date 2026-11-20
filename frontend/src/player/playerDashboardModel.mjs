@@ -6,6 +6,7 @@ import {projectPlayerSystems} from './playerSystemsProjection.mjs';
 import {projectJournal} from './playerJournalModel.mjs';
 import {projectGallery} from './playerGalleryModel.mjs';
 import {playerQuestProjection} from './playerQuestModel.mjs';
+import {ownedActivityProjection} from './playerInformationModel.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -134,6 +135,8 @@ export function playerCharacterProjection(value,{owned=false,ownerSource=null}={
         image:unidentified?'':safeDashboardArtwork(found?.image,found?.icon,found?.artwork)}):null;
     })),
     quests:playerQuestProjection(value),
+    noticeActivity:ownedActivityProjection(value,owned).activity,
+    notificationRead:ownedActivityProjection(value,owned).read,
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
     journal:owned?projectJournal(value.journal):Object.freeze([]),
     gallery:projectGallery(value,ownerSource||{},owned),
