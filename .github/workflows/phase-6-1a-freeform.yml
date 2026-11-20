@@ -1,0 +1,33 @@
+name: Phase 6.1A Freeform Workspace Checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/state/workspaceFreeformModel.mjs'
+      - 'src/state/dashboardLayoutModel.mjs'
+      - 'frontend/src/layout/**'
+      - 'scripts/site-freeform-phase6-1a.test.mjs'
+      - '.github/workflows/phase-6-1a-freeform.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  freeform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Freeform and existing dashboard layout tests
+        run: node --test scripts/site-freeform-phase6-1a.test.mjs scripts/site-layout-phase6-3.test.mjs scripts/dashboard-layout.test.mjs
+      - name: React and model lint
+        run: npx eslint frontend/src/layout src/state/workspaceFreeformModel.mjs src/state/dashboardLayoutModel.mjs
+      - name: React website checks
+        run: npm run site:check
+      - name: Production React website build
+        run: npm run site:build
