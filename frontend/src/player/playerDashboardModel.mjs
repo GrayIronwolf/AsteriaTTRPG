@@ -4,6 +4,7 @@ import {layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutMod
 import {safeDashboardArtwork} from '../../../src/state/playerHudMedia.mjs';
 import {projectPlayerSystems} from './playerSystemsProjection.mjs';
 import {projectJournal} from './playerJournalModel.mjs';
+import {projectGallery} from './playerGalleryModel.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const txt=(value,fallback='',size=150)=>typeof value==='string'?value.slice(0,size):fallback;
@@ -84,7 +85,7 @@ function traits(character){
   return labels(character?.racialTraits||character?.raceInfo?.traits||character?.character?.race?.traits,12);
 }
 /** UI is intentionally a strict projection; owner-only journals never enter GM snapshots. */
-export function playerCharacterProjection(value,{owned=false}={}){
+export function playerCharacterProjection(value,{owned=false,ownerSource=null}={}){
   if(!obj(value)||!DASHBOARD_ID.test(String(value.id||''))||!DASHBOARD_ID.test(String(value.ownerUid||'')))
     throw Error('A verified character record is required.');
   const characteristics=obj(value.characteristics)?value.characteristics:{};
@@ -134,6 +135,7 @@ export function playerCharacterProjection(value,{owned=false}={}){
     quests:items(value.quests||value.questAssignments,12),
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
     journal:owned?projectJournal(value.journal):Object.freeze([]),
+    gallery:projectGallery(value,ownerSource||{},owned),
     backstory:owned?txt(value.backstory?.history||value.backstory?.backstory||
       (typeof value.backstory==='string'?value.backstory:''),'',2400):'',
     links:owned?Object.freeze([...new Set([
