@@ -114,3 +114,11 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
   pre-migration screenshots are supplied and comparable authenticated cases
   pass. The new React captures are not substitutes for originals. Keep PR #334
   in draft, unmerged and undeployed.
+
+## Phase 4.5 — Original reference readiness and complete-page visual release gate
+
+- Confirmed that original authenticated Player and GM screenshots were not captured by the migration's Phase 10.1 baseline; the current six role/width screenshots are React-only evidence.
+- Corrected a measurable mismatch: the approved reference gate captured a cropped dashboard element while Phase 4.4 captures full pages. Both now capture full browser pages before pixel comparison.
+- Added a strict original PNG preflight, requiring six Player/GM/read-only mobile/desktop references, actual source revision metadata, image provenance, PNG geometry and SHA-256 integrity. A preflight success only means ready for real browser comparison, not release approval.
+- Normal GitHub CI now uploads an explicit blocked readiness report until genuine references exist; a separate strict manual visual-release command fails closed when originals or matching comparisons are missing. Source-level regression tests cover both behaviors.
+- Final authenticated legacy-versus-React pixels remain unverified, so PR #334 stays draft, unmerged and undeployed until genuine references and remaining feature acceptance pass.

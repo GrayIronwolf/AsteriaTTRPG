@@ -198,6 +198,8 @@
     "site:cutover-phase10-4:verify": "node scripts/site-cutover-phase10-4-package.mjs --verify",
     "site:dashboard-systems-parity": "node --test scripts/site-dashboard-systems-parity.test.mjs",
     "site:dashboard-approved-screenshot-parity": "node scripts/site-dashboard-approved-screenshot-parity.cjs",
+    "site:dashboard-reference-audit": "node scripts/site-dashboard-reference-preflight.cjs",
+    "site:dashboard-release-visual-gate": "node scripts/site-dashboard-reference-preflight.cjs --require-ready && npm run site:dashboard-approved-screenshot-parity",
     "site:dashboard-journal-parity": "node --test scripts/site-dashboard-journal-parity.test.mjs"
   },
   "dependencies": {

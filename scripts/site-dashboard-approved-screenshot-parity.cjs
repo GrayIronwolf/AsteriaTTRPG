@@ -10,10 +10,14 @@ const fs=require('node:fs');
 const {createHash}=require('node:crypto');
 const path=require('node:path');
 const {chromium}=require('playwright');
+const {auditReferences}=require('./site-dashboard-reference-preflight.cjs');
 
 async function main(){
   const file=process.env.ASTERIA_PARITY_CASES;
   assert.ok(file,'ASTERIA_PARITY_CASES must point to an approved screenshot manifest');
+  const readiness=auditReferences(file);
+  assert.equal(readiness.status,'ready-for-browser-comparison',
+    'Genuine original reference preflight is blocked: '+readiness.blockers.join('; '));
   const manifest=JSON.parse(fs.readFileSync(path.resolve(file),'utf8'));
   assert.ok(Array.isArray(manifest.cases)&&manifest.cases.length>=6,
     'Include authenticated Player, GM and GM read-only cases at mobile and desktop widths');
@@ -92,7 +96,8 @@ async function main(){
           if(action.selector)await page.locator(action.selector).waitFor({state:'visible'});
         }
         await page.evaluate(()=>document.fonts.ready);
-        const actual=await target.screenshot({animations:'disabled'});
+        // Compare full-page pixels, matching Phase 4.4 dashboard captures.
+        const actual=await page.screenshot({fullPage:true,animations:'disabled'});
         const pixel=await page.evaluate(async ({a,b})=>{
           const decode=src=>new Promise((resolve,reject)=>{
             const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;

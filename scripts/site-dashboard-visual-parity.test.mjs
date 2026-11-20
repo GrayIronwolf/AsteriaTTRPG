@@ -2,6 +2,7 @@ import './site-dashboard-journal-parity.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import {playerCharacterProjection,playerCampaignProjection} from '../frontend/src/player/playerDashboardModel.mjs';
 import {gmCampaignSummary,gmPartySummary} from '../frontend/src/dashboard/gmDashboardModel.mjs';
 import {safeDashboardArtwork} from '../src/state/playerHudMedia.mjs';
@@ -142,6 +143,34 @@ test('Phase 4.4 original-vs-React visual gate rejects substituted references and
     'site-gm-dashboard',
     "name+'-comparison.json'"
   ])assert.ok(gate.includes(text),text);
+});
+test('Phase 4.5 never certifies original screenshot parity when references are missing',()=>{
+  const require=createRequire(import.meta.url);
+  const {auditReferences,REQUIRED_PAIRS}=require('./site-dashboard-reference-preflight.cjs');
+  const result=auditReferences(null);
+  assert.equal(result.status,'blocked');
+  assert.equal(REQUIRED_PAIRS.length,6);
+  assert.equal(result.verifiedReferences,0);
+  for(const pair of REQUIRED_PAIRS)
+    assert.ok(result.blockers.some(text=>text.includes(pair)),pair);
+  const missing=auditReferences('/not/a/real/dashboard-approved-original-manifest.json');
+  assert.equal(missing.status,'blocked');
+  assert.equal(missing.verifiedReferences,0);
+});
+test('Phase 4.5 comparator uses complete pages and strict manual release gating',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  const browser=read('scripts/site-layout-phase6-3-browser.cjs');
+  const check=read('scripts/site-dashboard-reference-preflight.cjs');
+  const pkg=JSON.parse(read('package.json'));
+  assert.ok(gate.includes("const {auditReferences}=require('./site-dashboard-reference-preflight.cjs')"));
+  assert.ok(gate.includes('readiness.status'));
+  assert.ok(gate.includes("page.screenshot({fullPage:true,animations:'disabled'})"));
+  assert.ok(!gate.includes('target.screenshot({animations:'));
+  assert.ok(browser.includes("name+'-full-page.png'"));
+  assert.ok(check.includes('PNG_MAGIC'));
+  assert.ok(check.includes("createHash('sha256')"));
+  assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('--require-ready'));
+  assert.ok(pkg.scripts['site:dashboard-release-visual-gate'].includes('site:dashboard-approved-screenshot-parity'));
 });
 test('resource tracks are rendered with original HP SP MP colour roles',()=>{
   const page=read('frontend/src/pages/PlayerDashboardPage.jsx');
