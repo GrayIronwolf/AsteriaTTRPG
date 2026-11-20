@@ -416,8 +416,155 @@ export function createFirebasePlayerDashboardService({
   const updateJournalEntry=(cid,id,change)=>writeJournal(cid,id,'update',change);
   const deleteJournalEntry=(cid,id,change)=>writeJournal(cid,id,'delete',change);
 
+
+  function galleryStorage(){
+    if(!storage||!storageSdk?.ref||!storageSdk?.uploadBytes||
+      !storageSdk?.getDownloadURL||!storageSdk?.deleteObject)
+      throw Error('Character Gallery storage is unavailable.');
+    return storageSdk;
+  }
+  async function verifiedGallery(cid,id,{editable=false}={}){
+    requireDashboardId(cid);requireDashboardId(id);
+    const context=await resolveCampaign(cid,id);
+    if(!context.relationship.owned)
+      throw Error('Only the linked character owner may manage gallery images.');
+    const sourceId=context.character.sourceCharacterId||id;
+    requireDashboardId(sourceId);
+    if(editable){
+      const session=await guarded(sessionRef(cid),'Live session is unavailable.');
+      same(context.uid);
+      if(!session.exists()||gmSessionState(session.data()).editable!==true)
+        throw Error('Start an editable campaign session to manage the gallery.');
+    }
+    return {...context,sourceId};
+  }
+  async function galleryTransaction(cid,id,operation){
+    const {uid}=await verifiedGallery(cid,id,{editable:true});
+    let removed=null;
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sourceId=characterSnap.exists()?(characterSnap.data().sourceCharacterId||id):id;
+      requireDashboardId(sourceId);
+      const privateSnap=await tx.get(ownedRef(uid,sourceId));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned)
+        throw Error('Character ownership or campaign access changed.');
+      if(!privateSnap.exists()||privateSnap.data().ownerUid!==uid||
+        !matchesOwnedSource({...privateSnap.data(),id:sourceId},
+          {...characterSnap.data(),id},cid,uid,campaignSnap.data().membershipSchemaVersion??1))
+        throw Error('Original saved character link changed.');
+      if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Start an editable campaign session to manage the gallery.');
+      const shared=characterSnap.data(),owner=privateSnap.data();
+      const combined=mergedGalleryRows(shared.gallery,owner.gallery);
+      const find=imageId=>combined.find(row=>
+        row&&typeof row==='object'&&row.id===imageId);
+      let next,portrait=null;
+      if(operation.type==='add'){
+        if(combined.length>=MAX_GALLERY_IMAGES)
+          throw Error('Gallery image limit reached.');
+        if(find(operation.image.id))throw Error('Gallery image already exists.');
+        next=[...combined,operation.image];
+        if(!shared.image&&!shared.portrait&&!owner.image&&!owner.portrait)
+          portrait=operation.image.url;
+      }else if(operation.type==='portrait'){
+        const image=find(operation.imageId);
+        if(!image?.url)throw Error('The selected gallery image is unavailable.');
+        next=combined;portrait=image.url;
+      }else if(operation.type==='delete'){
+        const image=find(operation.imageId);
+        if(!image)throw Error('Gallery image no longer exists.');
+        removed=image;
+        next=combined.filter(row=>!(row&&typeof row==='object'&&row.id===operation.imageId));
+        if([shared.image,shared.portrait,shared.characterImage,
+          owner.image,owner.portrait,owner.characterImage].includes(image.url))
+          portrait=next.find(row=>row&&typeof row==='object'&&row.url)?.url||'';
+      }else throw Error('Unsupported gallery action.');
+      const patch={gallery:next,updatedAt:firestoreSdk.serverTimestamp()};
+      if(portrait!==null)Object.assign(patch,{
+        image:portrait,portrait,characterImage:portrait
+      });
+      tx.update(sharedRef(cid,id),patch);
+      tx.update(ownedRef(uid,sourceId),patch);
+    });
+    same(uid);return {ok:true,removed};
+  }
+  async function uploadGalleryImage(cid,id,file){
+    const details=validateGalleryUpload(file);
+    const sdk=galleryStorage();
+    const {uid,sourceId}=await verifiedGallery(cid,id,{editable:true});
+    const imageId='gallery-'+crypto.randomUUID();
+    const path=galleryStoragePath(uid,sourceId,imageId,details.extension);
+    const reference=sdk.ref(storage,path);
+    let uploaded=false,committed=false;
+    try{
+      await sdk.uploadBytes(reference,file,{contentType:details.type,
+        cacheControl:'private,max-age=0,no-store',
+        customMetadata:{campaignId:cid,campaignCharacterId:id,sourceCharacterId:sourceId}});
+      uploaded=true;same(uid);
+      const url=await sdk.getDownloadURL(reference);
+      same(uid);
+      if(typeof url!=='string'||!(/^(?:https:\/\/|http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/)/.test(url))||
+        url.length>2048)throw Error('Firebase returned an invalid gallery image URL.');
+      const image={id:imageId,url,path,name:details.name,createdAt:new Date().toISOString()};
+      await galleryTransaction(cid,id,{type:'add',image});
+      committed=true;
+      same(uid);return {ok:true,image};
+    }catch(error){
+      if(uploaded&&!committed)await sdk.deleteObject(reference).catch(()=>{});
+      throw error;
+    }
+  }
+  async function setGalleryPortrait(cid,id,imageId){
+    requireDashboardId(imageId);
+    return galleryTransaction(cid,id,{type:'portrait',imageId});
+  }
+  async function deleteGalleryImage(cid,id,imageId){
+    requireDashboardId(imageId);
+    const sdk=galleryStorage(),context=await verifiedGallery(cid,id,{editable:true});
+    const result=await galleryTransaction(cid,id,{type:'delete',imageId});
+    const path=result.removed?.path;
+    if(path){
+      // An old gallery may contain external or migrated paths. Never delete
+      // unrelated Storage objects based on untrusted saved metadata.
+      try{
+        assertOwnedGalleryPath(path,context.uid,context.sourceId);
+        await sdk.deleteObject(sdk.ref(storage,path));
+      }catch(error){
+        if(error?.code!=='storage/object-not-found')return {ok:true,storageCleanupPending:true};
+      }
+    }
+    return {ok:true};
+  }
+  async function refreshGalleryImage(cid,id,imageId){
+    requireDashboardId(imageId);
+    const sdk=galleryStorage(),context=await verifiedGallery(cid,id);
+    const rows=mergedGalleryRows(context.character.gallery,context.source?.gallery);
+    const image=rows.find(row=>row&&typeof row==='object'&&row.id===imageId);
+    if(!image)throw Error('Gallery image is no longer available.');
+    if(!image.path){
+      if(typeof image.url==='string'&&image.url.startsWith('https://'))
+        return {ok:true,url:image.url};
+      throw Error('The original image must be uploaded again.');
+    }
+    const path=assertOwnedGalleryPath(image.path,context.uid,context.sourceId);
+    const url=await sdk.getDownloadURL(sdk.ref(storage,path));
+    same(context.uid);
+    if(typeof url!=='string'||url.length>2048)throw Error('Gallery image URL is invalid.');
+    return {ok:true,url};
+  }
+
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
     takeRest,adjustCurrency,useQuickItem,castSpell,
-    addJournalEntry,updateJournalEntry,deleteJournalEntry});
+    addJournalEntry,updateJournalEntry,deleteJournalEntry,
+    uploadGalleryImage,setGalleryPortrait,deleteGalleryImage,refreshGalleryImage});
 }
