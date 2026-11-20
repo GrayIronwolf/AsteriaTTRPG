@@ -8,6 +8,8 @@ import {
   dashboardGridRule,setDashboardBackground,defaultDashboardLayout
 } from '../../../src/state/dashboardLayoutModel.mjs';
 import {dashboardKeyboardProposal} from '../../../src/state/dashboardGridModel.mjs';
+import {normalizeFreeformWorkspace} from '../../../src/state/workspaceFreeformModel.mjs';
+import {FreeformLayoutCanvas} from './FreeformLayoutCanvas.jsx';
 import {
   createLayoutHistory,undoLayoutHistory,redoLayoutHistory,
   updateViewportHistory,layoutFingerprint
@@ -148,6 +150,7 @@ export function DashboardLayoutEditor({
   const item=DASHBOARD_PANEL_REGISTRY[role].find(x=>x.id===chosen);
   const position=view.placements[chosen];
   const locked=Boolean(chosen&&view.lockedPositions.includes(chosen));
+  const isFreeform=view.freeform?.enabled===true;
   const change=callback=>setHistory(previous=>updateViewportHistory(previous,role,viewport,callback));
   const save=async()=>{
     if(blocked||!dirty)return;
@@ -211,15 +214,44 @@ export function DashboardLayoutEditor({
           onClick={()=>setConfirm('reset')}>Reset {viewport}</button>
       </div>
     </div>
-    <GridCanvas key={role+':'+viewport} role={role} layout={view} selected={chosen}
-      onSelect={setSelected} disabled={blocked}
-      onChange={callback=>change(callback)} />
+    <section className={styles.workspaceMode} aria-label="Workspace positioning mode">
+      <strong>Panel positioning</strong>
+      <div className={styles.sizeRow}>
+        <button type="button" aria-pressed={!isFreeform} disabled={blocked}
+          onClick={()=>change(previous=>({...previous,
+            freeform:previous.freeform?{...previous.freeform,enabled:false}:undefined
+          }))}>Original grid</button>
+        <button type="button" aria-pressed={isFreeform} disabled={blocked}
+          onClick={()=>change(previous=>({...previous,
+            freeform:normalizeFreeformWorkspace({
+              ...(previous.freeform||{}),enabled:true
+            },previous.placements,DASHBOARD_PANEL_REGISTRY[role].map(item=>item.id))
+          }))}>Freeform (opt-in)</button>
+      </div>
+      {isFreeform?<div className={styles.sizeRow}>
+        <label><input type="checkbox" checked={view.freeform.snap} disabled={blocked}
+          onChange={event=>change(previous=>({...previous,freeform:{
+            ...previous.freeform,snap:event.target.checked
+          }}))}/> Snap to alignment</label>
+        <label><input type="checkbox" checked={view.freeform.allowOverlap} disabled={blocked}
+          onChange={event=>change(previous=>({...previous,freeform:{
+            ...previous.freeform,allowOverlap:event.target.checked
+          }}))}/> Allow overlapping panels</label>
+      </div>:null}
+    </section>
+    {isFreeform?<FreeformLayoutCanvas key={role+':'+viewport+':freeform'}
+      role={role} layout={view} selected={chosen} onSelect={setSelected}
+      disabled={blocked} onChange={callback=>change(callback)}/>:
+      <GridCanvas key={role+':'+viewport} role={role} layout={view} selected={chosen}
+        onSelect={setSelected} disabled={blocked}
+        onChange={callback=>change(callback)}/>}
+
     <div className={styles.controls}>
       <section className={styles.controlPanel} aria-label="Selected panel settings">
         <h3>Selected Panel</h3>
         {!item||!position?<p>Choose a visible panel on the grid.</p>:<>
           <strong>{item.label}</strong>
-          <p>{item.category} · {position.w}×{position.h} grid cells</p>
+          <p>{item.category} · {isFreeform?'Freeform positioning':position.w+'×'+position.h+' grid cells'}</p>
           <label>Panel background
             <select value={view.panelBackgrounds?.[chosen]||'default'} disabled={disabled||busy}
               onChange={e=>change(previous=>
@@ -232,13 +264,14 @@ export function DashboardLayoutEditor({
             aria-pressed={locked} onClick={()=>change(previous=>
               lockDashboardGridPanel(previous,role,chosen,!locked))}>
             {locked?'Unlock position':'Lock position'}</button>
-          <div className={styles.sizeRow} role="group" aria-label={'Resize '+item.label}>
+          {!isFreeform?<div className={styles.sizeRow} role="group" aria-label={'Resize '+item.label}>
             {dashboardPanelSizeChoices(role,chosen).map(opt=><button type="button" key={opt.label}
               aria-pressed={position.w===opt.w&&position.h===opt.h}
               disabled={blocked||locked}
               onClick={()=>change(previous=>
                 fitDashboardGridPanel(previous,role,chosen,opt.w,opt.h))}>{opt.label}</button>)}
-          </div>
+          </div>:null}
+          {isFreeform?<p className={styles.hint}>Drag the title or corner handle to change panel size and position. Toggle back to Original grid to use the preserved grid layout.</p>:null}
           <p className={styles.hint}>Position locks prevent movement and resizing until unlocked.</p>
         </>}
       </section>
