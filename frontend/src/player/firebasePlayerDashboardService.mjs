@@ -2,6 +2,8 @@ import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
 import {validateJournalDraft,changeJournalRows} from './playerJournalModel.mjs';
+import {validateGalleryUpload,mergedGalleryRows,galleryStoragePath,
+  assertOwnedGalleryPath,MAX_GALLERY_IMAGES} from './playerGalleryModel.mjs';
 import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
@@ -10,6 +12,7 @@ import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaign
  */
 export function createFirebasePlayerDashboardService({
   auth,db,firestoreSdk,readCanonical,functions=null,functionsSdk=null,
+  storage=null,storageSdk=null,
   enabled=false,layoutEnabled=false
 }){
   if(!auth||!db||!firestoreSdk||typeof readCanonical!=='function')
@@ -145,7 +148,7 @@ export function createFirebasePlayerDashboardService({
               character:playerCharacterProjection(relationship.owned&&
                 !data.character.dashboardPreferences?.dashboardLayout&&data.source?.dashboardPreferences?.dashboardLayout
                 ?{...data.character,dashboardPreferences:data.source.dashboardPreferences}:data.character,
-                {owned:relationship.owned}),
+                {owned:relationship.owned,ownerSource:relationship.owned?data.source:null}),
               campaign:playerCampaignProjection(data.campaign,access,data.session)
             }));
           }catch(err){fail(err);}
