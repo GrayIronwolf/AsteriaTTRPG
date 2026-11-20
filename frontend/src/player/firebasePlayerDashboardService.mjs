@@ -4,6 +4,7 @@ import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs'
 import {validateJournalDraft,changeJournalRows} from './playerJournalModel.mjs';
 import {validateGalleryUpload,mergedGalleryRows,galleryStoragePath,
   assertOwnedGalleryPath,MAX_GALLERY_IMAGES} from './playerGalleryModel.mjs';
+import {validatePlayerQuestAction} from './playerQuestModel.mjs';
 import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
@@ -294,7 +295,8 @@ export function createFirebasePlayerDashboardService({
   async function characterSystemAction(cid,id,action,args=[]){
     requireDashboardId(cid);requireDashboardId(id);
     if(!['manageCharacterCondition','takeCampaignCharacterRest',
-      'updateCampaignCharacterCurrency','updateCharacterInventory','castCharacterSpell'].includes(action))
+      'updateCampaignCharacterCurrency','updateCharacterInventory','castCharacterSpell',
+      'updateCharacterQuest','updateQuestProgress'].includes(action))
       throw Error('Unsupported character system action.');
     if(!functions||!functionsSdk?.httpsCallable)
       throw Error('Character system actions are unavailable.');
@@ -312,6 +314,16 @@ export function createFirebasePlayerDashboardService({
       throw Error(result.data?.error||'Character system action rejected.');
     return result.data;
   }
+  async function questCommand(cid,id,kind,questId,value){
+    const valid=validatePlayerQuestAction(questId,kind,value);
+    const command=kind==='status'?'updateCharacterQuest':'updateQuestProgress';
+    const args=kind==='status'?[valid.questId,valid.status]:[valid.questId,valid.patch];
+    return characterSystemAction(cid,id,command,args);
+  }
+  const updateQuestStatus=(cid,id,questId,status)=>
+    questCommand(cid,id,'status',questId,status);
+  const updateQuestProgress=(cid,id,questId,patch)=>
+    questCommand(cid,id,'progress',questId,patch);
   async function removeCondition(cid,id,conditionId){
     if(typeof conditionId!=='string'||!DASHBOARD_ID.test(conditionId))
       throw Error('Invalid condition identifier.');
@@ -566,5 +578,6 @@ export function createFirebasePlayerDashboardService({
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
     takeRest,adjustCurrency,useQuickItem,castSpell,
     addJournalEntry,updateJournalEntry,deleteJournalEntry,
-    uploadGalleryImage,setGalleryPortrait,deleteGalleryImage,refreshGalleryImage});
+    uploadGalleryImage,setGalleryPortrait,deleteGalleryImage,refreshGalleryImage,
+    updateQuestStatus,updateQuestProgress});
 }
