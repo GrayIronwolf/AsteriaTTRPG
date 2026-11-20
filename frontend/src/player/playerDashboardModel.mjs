@@ -120,11 +120,20 @@ export function playerCharacterProjection(value,{owned=false}={}){
     inventory:items(value.inventory),
     equipment:items(value.equipment?.items||value.equipment,16),
     equipmentSlots:equipmentSlots(value.equipment),
-    quickSlots:Object.freeze(rows(value.quickSlots,4).map(row=>Object.freeze({
-      id:typeof row?.id==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(row.id)?row.id:'',
-      name:txt(row?.name||row?.title||row,'',100),
-      image:safeDashboardArtwork(row?.image,row?.icon,row?.artwork)
-    }))),
+    quickSlots:Object.freeze(Array.from({length:4},(_,index)=>{
+      const slot=Array.isArray(value.quickSlots)?value.quickSlots[index]:null;
+      const rawId=typeof slot==='string'?slot:obj(slot)?
+        slot.itemId||slot.instanceId||slot.id:'';
+      const id=typeof rawId==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,159}$/.test(rawId)?rawId:'';
+      const saved=rows(value.inventory,500).find(item=>obj(item)&&
+        (item.instanceId===id||item.id===id));
+      const found=obj(saved)?saved:obj(slot)?slot:null;
+      const unidentified=found?.identified===false;
+      const name=id?(unidentified?'Unidentified Item':
+        txt(found?.name||found?.title||id,'',100)):'';
+      return id?Object.freeze({id,name,
+        image:unidentified?'':safeDashboardArtwork(found?.image,found?.icon,found?.artwork)}):null;
+    })),
     quests:items(value.quests||value.questAssignments,12),
     dashboardLayout:owned?layoutFromPlayerPreferences(value.dashboardPreferences||{}):null,
     journal:owned?notes(value.journal):Object.freeze([]),

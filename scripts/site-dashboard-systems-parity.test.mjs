@@ -153,3 +153,18 @@ test('four quick slots are resolved only from approved inventory items and can b
   assert.match(workspace,/type:'use',itemId:assigned\.id/);
   assert.match(workspace,/if\(type==='quick'\)op\.index=Number\(quickSlot\)/);
 });
+
+test('original quick-item panel resolves item references from owned inventory without leaking unidentified names',()=>{
+  const result=playerCharacterProjection(character({
+    inventory:[{instanceId:'potion-1',name:'Restorative Vial',qty:2},
+      {id:'hidden-1',name:'Forbidden Potion',identified:false}],
+    quickSlots:['potion-1',{itemId:'hidden-1'}]
+  }),{owned:true});
+  assert.equal(result.quickSlots.length,4);
+  assert.equal(result.quickSlots[0].id,'potion-1');
+  assert.equal(result.quickSlots[0].name,'Restorative Vial');
+  assert.equal(result.quickSlots[1].id,'hidden-1');
+  assert.equal(result.quickSlots[1].name,'Unidentified Item');
+  assert.equal(result.quickSlots[2],null);
+  assert.equal(JSON.stringify(result.quickSlots).includes('Forbidden Potion'),false);
+});
