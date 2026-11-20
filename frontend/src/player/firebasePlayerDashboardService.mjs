@@ -367,6 +367,9 @@ export function createFirebasePlayerDashboardService({
       const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
         campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
       const characterSnap=await tx.get(sharedRef(cid,id));
+      const sourceId=characterSnap.exists()?(characterSnap.data().sourceCharacterId||id):id;
+      requireDashboardId(sourceId);
+      const privateSnap=await tx.get(ownedRef(uid,sourceId));
       const sessionSnap=await tx.get(sessionRef(cid));
       same(uid);
       if(!campaignSnap.exists()||!characterSnap.exists()||
@@ -375,14 +378,22 @@ export function createFirebasePlayerDashboardService({
         !linkedCharacterAccess({...campaignSnap.data(),id:cid},
           {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned)
         throw Error('Character ownership or campaign access changed.');
+      if(!privateSnap.exists()||privateSnap.data().ownerUid!==uid||
+        !matchesOwnedSource({...privateSnap.data(),id:sourceId},
+          {...characterSnap.data(),id},cid,uid,campaignSnap.data().membershipSchemaVersion??1))
+        throw Error('Original saved character link changed.');
       if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
         throw Error('Start an editable campaign session to write journal entries.');
-      const rows=Array.isArray(characterSnap.data().journal)?characterSnap.data().journal:[];
-      if(rows.length>=500)throw Error('Journal is full. Archive older entries before adding more.');
-      tx.update(sharedRef(cid,id),{journal:[{
-        id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
-        createdAt:new Date().toISOString()
-      },...rows]});
+      const sharedRows=Array.isArray(characterSnap.data().journal)?characterSnap.data().journal:[];
+      const privateRows=Array.isArray(privateSnap.data().journal)?privateSnap.data().journal:[];
+      if(sharedRows.length>=500||privateRows.length>=500)
+        throw Error('Journal is full. Archive older entries before adding more.');
+      const added={id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
+        createdAt:new Date().toISOString()};
+      // Append to both existing canonical records independently; preserve
+      // all historical entries even when their prior contents differ.
+      tx.update(sharedRef(cid,id),{journal:[added,...sharedRows]});
+      tx.update(ownedRef(uid,sourceId),{journal:[added,...privateRows]});
     });
     same(uid);return {ok:true};
   }
