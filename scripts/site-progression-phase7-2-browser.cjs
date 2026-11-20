@@ -325,10 +325,14 @@ try{
 
  // Currency actions must persist a canonical Firebase delta in both
  // directions; do not depend on the character's starting balance.
- const copper=systems.getByRole('button',{name:'Increase Copper'})
-   .locator('xpath=../..').locator('strong');
- const initialCopper=Number((await copper.innerText()).replaceAll(',',''));
- assert.ok(Number.isSafeInteger(initialCopper));
+ const readCopper=()=>player.evaluate(()=>{
+   const button=document.querySelector('button[aria-label="Increase Copper"]');
+   const value=button?.parentElement?.parentElement?.querySelector('span strong');
+   return value?Number(value.textContent.replaceAll(',','')):null;
+ });
+ const initialCopper=await readCopper();
+ assert.ok(Number.isSafeInteger(initialCopper)&&initialCopper>=0,
+   'Currency controls must expose the visible canonical copper amount.');
  await systems.getByRole('button',{name:'Increase Copper'}).click();
  await player.waitForFunction(expected=>{
    const button=document.querySelector('button[aria-label="Increase Copper"]');
