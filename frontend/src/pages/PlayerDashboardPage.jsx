@@ -21,8 +21,8 @@ import {PlayerDigitalGMWorkspace} from '../digitalGM/DigitalGMWorkspace.jsx';
 import {AdvancedDiceWorkspace} from '../dice/AdvancedDiceWorkspace.jsx';
 import styles from './PlayerDashboardPage.module.css';
 
-// Preserve the original navigation vocabulary and order. Some legacy modules
-// require feature-by-feature porting; never present a placeholder as a working tool.
+// Preserve original tab order. Route to authenticated workspaces or report when
+// an unavailable campaign service prevents access. Never leave a blank page.
 const TABS=Object.freeze([
   'Dashboard','Character','Class/Talent Tree','Skills','Spells','Inventory',
   'Crafting','Quests','News / Events / History','Journal','Party','Gallery',
@@ -270,11 +270,19 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction,campai
       <li key={i}>{skill.name}{skill.rank?' — '+skill.rank:''}</li>)}</ul>:
       <BodyText muted>No skills recorded.</BodyText>}
   </SurfacePanel>;
+  if(tab==='News / Events / History'&&!campaign)return <SurfacePanel className={styles.panel}>
+    <h3>News / Events / History</h3>
+    <BodyText muted>Link this character to a campaign to view published information and personal notifications.</BodyText>
+  </SurfacePanel>;
   if(['Crafting','Advanced Dice','Calendar','Weather','Campaign Library',
-      'Campaign Audio','Recording & Archives'].includes(tab))
-    return <SurfacePanel className={styles.panel}>
+      'Campaign Audio','Recording & Archives','Battle Maps','World Map',
+      'Combat','Progression','Check History','Inventory & Trading',
+      'Campaign World & Session','Dashboard Settings'].includes(tab))
+    return <SurfacePanel className={styles.panel} role="status">
       <h3>{tab}</h3>
-      <BodyText muted>This original dashboard feature is not yet connected to the new React route. Its existing implementation is retained in the repository, but is not active here.</BodyText>
+      <BodyText muted>{!campaign
+        ?'Link this character to a campaign to use this workspace.'
+        :'This workspace is unavailable for the current account or campaign. No action has been taken.'}</BodyText>
     </SurfacePanel>;
   if(tab==='Journal')return owned?<PlayerJournal key={character.id+':'+(campaign?.id||'')} character={character} editable={editable} busy={busy} onAction={onAction}/>:
     <SurfacePanel className={styles.panel}><BodyText muted>Only the character owner may read personal journal entries.</BodyText></SurfacePanel>;
@@ -306,6 +314,7 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
     <CrystalButton href="#/character-forge">Back to Character Forge</CrystalButton>
   </SurfacePanel>;
   const ch=data.character,c=data.campaign;
+  const mediaEnabled=Boolean(c&&media?.availability().enabled);
   const combatEnabled=Boolean(c&&data.owner&&combat?.availability().enabled);
   const progressionEnabled=Boolean(c&&data.owner&&progression?.availability().enabled);
   const economyEnabled=Boolean(c&&data.owner&&economy?.availability().enabled);
@@ -374,9 +383,9 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       showHistory={tab==='Check History'}/>:null}
     {tab==='Combat'&&combatEnabled?<PlayerCombatWorkspace key={campaignId+':'+characterId}
       api={combat} campaignId={campaignId} characterId={characterId}/>:null}
-    {tab==='Battle Maps'&&media?.availability().enabled?
+    {tab==='Battle Maps'&&mediaEnabled?
       <CampaignMapWorkspace api={media} campaignId={campaignId} role="player"/>:null}
-    {tab==='World Map'&&media?.availability().enabled?
+    {tab==='World Map'&&mediaEnabled?
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
     {tab==='Advanced Dice'&&dice?.availability().enabled?
       <AdvancedDiceWorkspace api={dice} role="player"/>:null}
@@ -401,10 +410,16 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
           campaign={c} onNavigate={setTab} editable={resourceEditable}
           busy={Boolean(resourceBusy)} onAction={panelAction}
           available={{combatEnabled,progressionEnabled,economyEnabled}}/>}/>
-      :(economyEnabled&&['Inventory','Crafting'].includes(tab))||
-        (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives'].includes(tab))||
+      :(economyEnabled&&['Inventory','Crafting','Inventory & Trading'].includes(tab))||
+        (digitalGMEnabled&&['Calendar','Weather','Campaign Library','Campaign Audio','Recording & Archives','Campaign World & Session'].includes(tab))||
         (tab==='Advanced Dice'&&dice?.availability().enabled)||
-        (['Dashboard Settings','Battle Maps','World Map','Combat','Progression','Skills','Class/Talent Tree','Check History','Inventory & Trading','Campaign World & Session'].includes(tab)&&((tab==='Skills'||tab==='Class/Talent Tree')?progressionEnabled:true))?null:
+        (mediaEnabled&&['Battle Maps','World Map'].includes(tab))||
+        (combatEnabled&&tab==='Combat')||
+        (progressionEnabled&&['Progression','Skills','Class/Talent Tree','Check History'].includes(tab))||
+        (tab==='Party')||
+        (tab==='Quests')||
+        (tab==='Gallery'&&data.owner)||
+        (tab==='News / Events / History'&&Boolean(c))?null:
         <Sections character={ch} owned={data.owner} tab={tab} editable={resourceEditable}
           busy={Boolean(resourceBusy)} onAction={panelAction} campaign={c}/>}
     

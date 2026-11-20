@@ -14,17 +14,22 @@ async function main(){
   const file=process.env.ASTERIA_PARITY_CASES;
   assert.ok(file,'ASTERIA_PARITY_CASES must point to an approved screenshot manifest');
   const manifest=JSON.parse(fs.readFileSync(path.resolve(file),'utf8'));
-  assert.ok(Array.isArray(manifest.cases)&&manifest.cases.length>=2,
-    'Include authenticated Player and GM reference cases');
+  assert.ok(Array.isArray(manifest.cases)&&manifest.cases.length>=6,
+    'Include authenticated Player, GM and GM read-only cases at mobile and desktop widths');
   const roles=new Set(manifest.cases.map(row=>row.role));
-  assert.ok(roles.has('player')&&roles.has('gm'),'Both roles require approved screenshot comparisons');
+  for(const role of ['player','gm','readonly']){
+    assert.ok(roles.has(role),'Missing authenticated '+role+' approved reference cases');
+    const cases=manifest.cases.filter(row=>row.role===role);
+    assert.ok(cases.some(row=>row.width<=480),'Missing mobile approved reference for '+role);
+    assert.ok(cases.some(row=>row.width>=1024),'Missing desktop approved reference for '+role);
+  }
   const evidence=path.resolve(process.env.ASTERIA_PARITY_OUTPUT||'dashboard-parity-evidence');
   fs.mkdirSync(evidence,{recursive:true});
   const browser=await chromium.launch({headless:true});
   try{
     const results=[];
     for(const entry of manifest.cases){
-      assert.ok(['player','gm'].includes(entry.role));
+      assert.ok(['player','gm','readonly'].includes(entry.role));
       assert.ok(Number.isInteger(entry.width)&&entry.width>=320);
       assert.ok(Number.isInteger(entry.height)&&entry.height>=600);
       assert.ok(typeof entry.url==='string'&&/^https?:\/\/127\.0\.0\.1:\d+\//.test(entry.url),
@@ -43,6 +48,16 @@ async function main(){
         const errors=[];
         page.on('pageerror',error=>errors.push(error.message));
         await page.goto(entry.url,{waitUntil:'networkidle'});
+        // Refuse unauthenticated login screens and public/synthetic previews.
+        const authenticatedNav=page.locator(entry.role==='gm'
+          ?'nav[aria-label="GM dashboard sections"]'
+          :'nav[aria-label="Character dashboard sections"]');
+        await authenticatedNav.waitFor({state:'visible',timeout:15000});
+        if(entry.role==='readonly'){
+          await page.getByText(/GM Read-only/).waitFor({timeout:15000});
+          assert.equal(await authenticatedNav.getByRole('button',{name:'Journal',exact:true}).count(),0,
+            'Read-only GM must not access private Player journals');
+        }
         const target=page.locator(entry.selector);
         await target.waitFor({state:'visible'});
         for(const action of entry.actions||[]){

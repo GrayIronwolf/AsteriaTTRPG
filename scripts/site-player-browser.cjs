@@ -176,6 +176,20 @@ try{
  assert.equal(parity.border,'0px','Crystal tab must not gain a rectangular border');
  assert.ok(['rgba(0, 0, 0, 0)','transparent'].includes(parity.background),
    'Crystal tab must not gain a rectangular painted background');
+ // Phase 3.6: an unassigned owner must never see an empty workspace or
+ // a legacy migration placeholder for features that require a campaign.
+ const unavailableTabs=[
+   'Battle Maps','World Map','Calendar','Weather','Campaign Library',
+   'Campaign Audio','Recording & Archives','Crafting','News / Events / History'
+ ];
+ for(const label of unavailableTabs){
+   await player.locator('nav[aria-label="Character dashboard sections"]')
+     .getByRole('button',{name:label,exact:true}).click();
+   const expected=label==='News / Events / History'
+     ?'Link this character to a campaign to view published information and personal notifications.'
+     :'Link this character to a campaign to use this workspace.';
+   await player.getByText(expected,{exact:true}).waitFor({timeout:15000});
+ }
  const privateRoute=player.url();
  assert.match(privateRoute,/#\/react\/owned-character\//);
  const sourceId=decodeURIComponent(privateRoute.split('/').at(-1));

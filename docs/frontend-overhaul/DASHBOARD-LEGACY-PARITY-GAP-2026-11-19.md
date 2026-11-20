@@ -40,6 +40,10 @@ GM Main; GM Toolkit; NPC & Creature Library; Dashboard Settings; PC Inventory; N
 5. Test genuine health/stamina/mana colours and server-backed resource adjustment, active session, physical/digital dice, notifications, access controls, campaign events, GM control panels and mobile layout.
 6. Require successful build, lint, browser tests, security tests and visual comparison; do not merge or deploy while missing parity remains.
 
-## Current branch status
+## Phase 3.6 — release verification (20 November 2026)
 
-This visual remediation branch fixes geometry, frame rendering, coloured resource tracks and button wrapper styling, and restores the original **Player** navigation labels, but does **not** yet implement every original Player or GM feature. The current React route still contains limited-mode placeholders. These must be replaced with real authorised implementations before claiming completion. 
+- PR #334 implements Player and GM React/Vite dashboard restoration waves 1.1–3.5. On previous head `76bb4a43e5e17dc58840eb2ed11a42c9888df6df`, **31/31 GitHub Actions workflows passed**. That is not verification on later commits or evidence of full old-vs-new parity.
+- Phase 3.6 audit found a legacy migration placeholder and empty Player views when authenticated campaign services were unavailable. The React route now renders explicit no-campaign/unavailable states, prevents unassigned characters from entering campaign map/atlas APIs, and keeps original tab order. A two-account browser regression covers these states.
+- The screenshot gate `scripts/site-dashboard-approved-screenshot-parity.cjs` now requires **Player, GM and GM read-only** genuine approved reference images at both desktop and mobile widths. It checks authenticated routes and compares actual screenshot pixels; synthetic references made from the new React UI are not permitted.
+- **Remaining release blocker:** no approved legacy screenshot manifest and matched pre-migration PNGs have been verified in this PR, and no successful approved original-versus-React pixel comparison on this final branch exists yet. Existing source, emulator and current-rendered-style checks do not replace this evidence.
+- **Release decision: BLOCKED.** PR #334 remains draft, unmerged and undeployed until authenticated cross-role old-vs-new screenshot parity and final feature audit pass on the final head. The user alone triggers deployment after merge.

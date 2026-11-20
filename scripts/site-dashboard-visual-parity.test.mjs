@@ -77,7 +77,12 @@ test('original player navigation remains enumerated rather than silently removed
     'Gallery','Battle Maps','Advanced Dice','Calendar','Weather','World Map',
     'Campaign Library','Campaign Audio','Recording & Archives','Dashboard Settings'])
     assert.ok(jsx.includes("'"+label+"'"),label);
-  assert.match(jsx,/not yet connected to the new React route/);
+  assert.doesNotMatch(jsx,/not yet connected to the new React route/);
+  assert.ok(jsx.includes('This workspace is unavailable for the current account or campaign'));
+  assert.ok(jsx.includes('mediaEnabled=Boolean(c&&media?.availability().enabled)'));
+  assert.ok(jsx.includes("tab==='News / Events / History'&&!campaign"));
+  assert.ok(jsx.includes("mediaEnabled&&['Battle Maps','World Map']"));
+  assert.ok(jsx.includes("progressionEnabled&&['Progression','Skills','Class/Talent Tree','Check History']"));
   const css=read('frontend/src/pages/PlayerDashboardPage.module.css');
   assert.doesNotMatch(css,/\.tabs button\{[^}]*background:var\(--ast-color-panel-raised\)/);
 });
@@ -107,6 +112,15 @@ test('original campaign calendar and weather destinations use secured existing D
   assert.match(digital,/initialArea='library'/);
 });
 
+test('Phase 3.6 approved visual parity requires authenticated role and device evidence',()=>{
+  const gate=read('scripts/site-dashboard-approved-screenshot-parity.cjs');
+  assert.ok(gate.includes("for(const role of ['player','gm','readonly'])"));
+  assert.ok(gate.includes('width<=480'));
+  assert.ok(gate.includes('width>=1024'));
+  assert.ok(gate.includes('GM Read-only'));
+  assert.ok(gate.includes('Approved reference PNG missing'));
+  assert.ok(gate.includes('pixel.difference<=max'));
+});
 test('original Advanced Dice uses existing server callable and private record',()=>{
   const service=read('frontend/src/dice/firebaseDiceService.mjs');
   const ui=read('frontend/src/dice/AdvancedDiceWorkspace.jsx');
