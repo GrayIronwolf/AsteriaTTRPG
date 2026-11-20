@@ -1,6 +1,7 @@
 import {normalizeDashboardLayout,layoutFromPlayerPreferences} from '../../../src/state/dashboardLayoutModel.mjs';
 import {gmSessionState} from '../dashboard/gmDashboardModel.mjs';
 import {validateOwnedRecord} from '../../../src/state/ownedCharacterRecords.mjs';
+import {validateJournalDraft} from './playerJournalModel.mjs';
 import {DASHBOARD_ID,requireDashboardId,playerCharacterProjection,playerCampaignAccess,
   linkedCharacterAccess,matchesOwnedSource,playerCampaignProjection} from './playerDashboardModel.mjs';
 
@@ -352,7 +353,41 @@ export function createFirebasePlayerDashboardService({
       [{name:spellName.trim()},{}]);
   }
 
+
+  /** Append only to the linked owner's own journal in a Firestore transaction.
+   * Reverify membership and active session inside the transaction; never
+   * replace existing journal entries or touch saved layout/gameplay values. */
+  async function addJournalEntry(cid,id,draft){
+    requireDashboardId(cid);requireDashboardId(id);
+    const entry=validateJournalDraft(draft);
+    const {uid,relationship}=await resolveCampaign(cid,id);
+    if(!relationship.owned)throw Error('Only the character owner may write their journal.');
+    await firestoreSdk.runTransaction(db,async tx=>{
+      const campaignSnap=await tx.get(campaignRef(cid));
+      const memberSnap=campaignSnap.exists()&&campaignSnap.data().membershipSchemaVersion===2&&
+        campaignSnap.data().ownerUid!==uid?await tx.get(memberRef(cid,uid)):null;
+      const characterSnap=await tx.get(sharedRef(cid,id));
+      const sessionSnap=await tx.get(sessionRef(cid));
+      same(uid);
+      if(!campaignSnap.exists()||!characterSnap.exists()||
+        !playerCampaignAccess({...campaignSnap.data(),id:cid},
+          memberSnap?.exists()?memberSnap.data():null,uid,cid).allowed||
+        !linkedCharacterAccess({...campaignSnap.data(),id:cid},
+          {...characterSnap.data(),id},uid,{allowed:true,isGM:false}).owned)
+        throw Error('Character ownership or campaign access changed.');
+      if(!sessionSnap.exists()||gmSessionState(sessionSnap.data()).editable!==true)
+        throw Error('Start an editable campaign session to write journal entries.');
+      const rows=Array.isArray(characterSnap.data().journal)?characterSnap.data().journal:[];
+      if(rows.length>=500)throw Error('Journal is full. Archive older entries before adding more.');
+      tx.update(sharedRef(cid,id),{journal:[{
+        id:'journal-'+crypto.randomUUID(),title:entry.title,body:entry.body,
+        createdAt:new Date().toISOString()
+      },...rows]});
+    });
+    same(uid);return {ok:true};
+  }
+
   return Object.freeze({availability:()=>flags,watchOwned,watchCampaign,
     saveOwnedLayout,saveCampaignLayout,adjustResource,removeCondition,
-    takeRest,adjustCurrency,useQuickItem,castSpell});
+    takeRest,adjustCurrency,useQuickItem,castSpell,addJournalEntry});
 }
