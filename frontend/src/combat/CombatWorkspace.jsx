@@ -1,5 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import {COMBAT_AP_ACTIONS,customEnemy,libraryEnemy} from './combatModel.mjs';
+import {CombatCommandCentre,CombatCommandPanel} from './CombatCommandCentre.jsx';
 import styles from './CombatWorkspace.module.css';
 import {ForgedBadge} from '../components/ui/ForgedBadge.jsx';
 
@@ -77,7 +78,7 @@ function Actions({combat,actor,disabled,onCommand,mode}){
       onClick={()=>onCommand(actor.id,{operation:'spend-ap',ap:cost})}>Spend selected AP</button></label>:null}
   </div>;
 }
-export function GMCombatWorkspace({api,campaignId}){
+export function GMCombatWorkspace({api,campaignId,uid='',onNavigate=null}){
   const stream=useCombatStream(api,'watchGM',[campaignId]);
   const [selected,setSelected]=useState(''),[busy,setBusy]=useState(false),
     [notice,setNotice]=useState(''),[error,setError]=useState('');
@@ -129,7 +130,8 @@ export function GMCombatWorkspace({api,campaignId}){
     <h2>Combat, Initiative &amp; Encounters</h2>
     {stream.loading?<p role="status">Verifying live combat access…</p>:null}
     {stream.error?<p role="alert">{stream.error}</p>:null}
-    {combat?<>
+    {combat?<CombatCommandCentre key={uid+':'+campaignId} uid={uid} campaignId={campaignId}>
+      <CombatCommandPanel id="controls">
       <p role="status">{combat.status.toUpperCase()} · Round {combat.round} · Revision {combat.revision}
         {' · '}Session {stream.data.session.status}</p>
       <div className={styles.controls}>
@@ -147,7 +149,11 @@ export function GMCombatWorkspace({api,campaignId}){
       </div>
       {stream.data.pending?<p role="status">GM action pending: {stream.data.pending.status}.
         Resolve advanced action decisions in the original combat panel until their migration.</p>:null}
-      <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="initiative">
+        <CombatRoster combat={combat} gm selected={current?.id} onSelect={setSelected}/>
+      </CombatCommandPanel>
+      <CombatCommandPanel id="actor">
       {current?<section className={styles.section}>
         <h3>{current.name} · Turn &amp; Resources</h3>
         <CombatStatusBadges combat={combat} actor={current}/>
@@ -190,7 +196,9 @@ export function GMCombatWorkspace({api,campaignId}){
           <button type="button" disabled={busy} onClick={()=>remove(current.id)}>
             Remove Participant</button>
         </div>:null}
-      </section>:null}
+      </section>:<p>Select an encounter participant to view combatant controls.</p>}
+      </CombatCommandPanel>
+      <CombatCommandPanel id="setup">
       {canSetup?<section className={styles.section}>
         <h3>Encounter Setup</h3>
         <div className={styles.controls}>
@@ -216,8 +224,21 @@ export function GMCombatWorkspace({api,campaignId}){
           <button disabled={busy||!combat.sessionEditable||!enemy.name.trim()||!enemy.hp}
             type="button" onClick={addEnemy}>Add Custom Creature</button>
         </fieldset>
-      </section>:null}
-    </>:null}
+      </section>:<p>Encounter setup is locked during active combat. End combat before changing the roster.</p>}
+      </CombatCommandPanel>
+      <CombatCommandPanel id="map">
+        <section className={styles.section}>
+          <h3>Battle Map &amp; Player Display</h3>
+          <p>Open the existing campaign map or player display without changing the live encounter.</p>
+          <div className={styles.controls}>
+            <button type="button" disabled={!onNavigate}
+              onClick={()=>onNavigate?.('battle-maps')}>Open Battle Maps</button>
+            <button type="button" disabled={!onNavigate}
+              onClick={()=>onNavigate?.('presentation')}>Open Player Display</button>
+          </div>
+        </section>
+      </CombatCommandPanel>
+    </CombatCommandCentre>:null}
     {notice?<p role="status">{notice}</p>:null}
     {error?<p role="alert">{error}</p>:null}
   </section>;
