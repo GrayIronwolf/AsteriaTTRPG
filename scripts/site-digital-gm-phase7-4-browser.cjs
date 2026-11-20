@@ -163,10 +163,11 @@ try{
  await npcLibrary.getByText('Campaign npc saved.').waitFor({timeout:30000});
  await npcLibrary.getByRole('heading',{name:'Emulator Tavern Keeper'})
    .waitFor({timeout:30000});
- // The existing reputation and GM-only story ledgers remain under the
- // authenticated Digital GM workspace, available from World Systems.
+ // Phase 3.5 makes World Systems a dedicated editor. The existing
+ // Reputation and GM-only Stories ledgers remain on Digital GM tools,
+ // reachable from the Random Tables workspace.
  await owner.getByRole('navigation',{name:'GM dashboard sections'})
-   .getByRole('button',{name:'World Systems'}).click();
+   .getByRole('button',{name:'Random Tables'}).click();
  const gmToolkit=owner.getByTestId('site-gm-digital-tools');
  await gmToolkit.waitFor({timeout:30000});
  await gmToolkit.getByRole('button',{name:'Reputation'}).click();
