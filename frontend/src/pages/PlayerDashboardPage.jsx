@@ -12,6 +12,7 @@ import {PlayerOverviewPanel} from '../player/PlayerOverviewPanels.jsx';
 import {PlayerGalleryWorkspace} from '../player/PlayerGalleryWorkspace.jsx';
 import {PlayerQuestWorkspace} from '../player/PlayerQuestWorkspace.jsx';
 import {PlayerInformationWorkspace} from '../player/PlayerInformationWorkspace.jsx';
+import {PlayerPartyWorkspace} from '../player/PlayerPartyWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
@@ -379,11 +380,10 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
       <CampaignAtlasWorkspace api={media} campaignId={campaignId}/>:null}
     {tab==='Advanced Dice'&&dice?.availability().enabled?
       <AdvancedDiceWorkspace api={dice} role="player"/>:null}
-    {tab==='Party'?<SurfacePanel className={styles.panel}>
-      <h3>Party</h3>
-      {c?.party?.length?<ul className={styles.list}>{c.party.map(member=>
-        <li key={member.id}>{member.name} · Level {member.level}</li>)}</ul>:
-        <BodyText muted>No campaign party is linked to this character.</BodyText>}
+    {tab==='Party'&&c?<PlayerPartyWorkspace api={api}
+      campaignId={campaignId} characterId={characterId} owned={data.owner}/>:null}
+    {tab==='Party'&&!c?<SurfacePanel className={styles.panel}>
+      <h3>Party</h3><BodyText muted>Link this character to a campaign to access party features.</BodyText>
     </SurfacePanel>:null}
     {tab==='News / Events / History'&&c?<PlayerInformationWorkspace
       api={api} character={ch} campaignId={campaignId} characterId={characterId}
