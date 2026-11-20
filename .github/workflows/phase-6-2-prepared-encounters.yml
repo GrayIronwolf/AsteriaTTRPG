@@ -1,0 +1,33 @@
+name: Phase 6.2 Prepared Encounter Builder and Library
+on:
+  pull_request:
+    paths:
+      - 'src/state/preparedEncounterModel.mjs'
+      - 'frontend/src/combat/**'
+      - 'functions/combatCommands.mjs'
+      - 'scripts/site-prepared-encounters-phase6-2.test.mjs'
+      - '.github/workflows/phase-6-2-prepared-encounters.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepared-encounters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Prepared encounter and combat regression
+        run: node --test scripts/site-prepared-encounters-phase6-2.test.mjs scripts/site-freeform-phase6-1c.test.mjs scripts/site-combat-phase7-1.test.mjs
+      - name: Scoped static and formatting checks
+        run: npx eslint frontend/src/combat src/state/preparedEncounterModel.mjs functions/combatCommands.mjs
+      - name: React website validation
+        run: npm run site:check
+      - name: Production build
+        run: npm run site:build
+      - name: Build output verification
+        run: npm run site:verify-dist
