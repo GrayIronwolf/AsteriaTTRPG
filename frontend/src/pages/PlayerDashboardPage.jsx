@@ -10,6 +10,7 @@ import {STATS} from '../forge/forgeModel.mjs';
 import {DashboardLayoutManager} from '../layout/DashboardLayoutManager.jsx';
 import {PlayerOverviewPanel} from '../player/PlayerOverviewPanels.jsx';
 import {PlayerGalleryWorkspace} from '../player/PlayerGalleryWorkspace.jsx';
+import {PlayerQuestWorkspace} from '../player/PlayerQuestWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {PlayerCombatWorkspace} from '../combat/CombatWorkspace.jsx';
 import {PlayerProgressionWorkspace,PlayerCheckRequests} from '../progression/ProgressionWorkspace.jsx';
@@ -261,11 +262,6 @@ function Sections({character,tab,owned,editable=false,busy=false,onAction,campai
         <BodyText muted>No items recorded.</BodyText>}
     </SurfacePanel>)}
   </div>;
-  if(tab==='Quests')return <SurfacePanel className={styles.panel}>
-    <h3>Quest Log</h3>
-    {character.quests.length?<ul className={styles.list}>{character.quests.map((quest,i)=>
-      <li key={i}>{quest.name}</li>)}</ul>:<BodyText muted>No quests recorded on this character sheet.</BodyText>}
-  </SurfacePanel>;
   if(tab==='Skills')return <SurfacePanel className={styles.panel}>
     <h3>Skills</h3>
     {character.skills.length?<ul className={styles.list}>{character.skills.map((skill,i)=>
@@ -392,6 +388,8 @@ function Dashboard({api,media,combat,progression,economy,digitalGM,dice,uid,camp
         <li key={member.id}>{member.name} · Level {member.level}</li>)}</ul>:
         <BodyText muted>No campaign party is linked to this character.</BodyText>}
     </SurfacePanel>:null}
+    {tab==='Quests'?<PlayerQuestWorkspace api={api} character={ch}
+      campaignId={campaignId} characterId={characterId} editable={resourceEditable}/>:null}
     {tab==='Gallery'&&data.owner?<PlayerGalleryWorkspace
       api={api} character={ch} campaignId={campaignId} characterId={characterId}
       editable={resourceEditable}/>:null}
