@@ -73,3 +73,19 @@
 .spellCard{display:grid;align-content:start;gap:var(--ast-space-2);min-width:0;padding:var(--ast-space-3);background:var(--ast-color-panel-raised);border:1px solid var(--ast-color-outline-soft)}
 .spellCard p{margin:0}.spellCard button{justify-self:start;min-height:var(--ast-target-min);padding:var(--ast-space-2) var(--ast-space-4);color:var(--ast-color-text);background:var(--ast-color-panel-slate);border:1px solid var(--ast-color-outline-active);cursor:pointer}
 .spellCard button:disabled{opacity:.5;cursor:not-allowed}
+
+
+/* Phase 2.2: restored Character Gallery, scoped to the Player route. */
+.galleryToolbar{display:flex;gap:var(--ast-space-3);align-items:center;flex-wrap:wrap}
+.galleryToolbar label{display:grid;gap:var(--ast-space-2)}
+.galleryToolbar input{max-width:100%}
+.galleryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,215px),1fr));gap:var(--ast-space-3)}
+.galleryCard{display:grid;align-content:start;gap:var(--ast-space-2);padding:var(--ast-space-3);background:var(--ast-color-panel);border:1px solid var(--ast-color-outline-soft);min-width:0}
+.galleryImageButton{padding:0;border:0;background:transparent;cursor:pointer;width:100%;min-height:170px}
+.galleryImageButton img{width:100%;height:210px;object-fit:contain;display:block}
+.galleryUnavailable{display:grid;place-content:center;gap:var(--ast-space-2);min-height:170px}
+.galleryActions{display:flex;flex-wrap:wrap;gap:var(--ast-space-2)}
+.galleryActions button,.galleryUnavailable button,.galleryPreview button{min-height:var(--ast-target-min);padding:var(--ast-space-2);color:var(--ast-color-text);background:var(--ast-color-panel-slate);border:1px solid var(--ast-color-outline-soft);cursor:pointer}
+.galleryActions button:disabled{opacity:.45;cursor:not-allowed}
+.galleryPreview,.galleryConfirm{display:grid;gap:var(--ast-space-3);padding:var(--ast-space-4);border:1px solid var(--ast-color-outline-active);background:var(--ast-color-panel-raised)}
+.galleryPreview img{max-width:100%;max-height:65vh;object-fit:contain;margin:auto}
