@@ -3,6 +3,8 @@
  * The merchant standing backend remains separate and authoritative.
  * GM world ledgers do not implicitly alter checks, prices, recognition or rolls.
  */
+import {updateGMWorldState,upsertGMWorldEntry,removeGMWorldEntry}
+  from './gmWorldSystemsModel.mjs';
 import {gmNPCCreatureLibrary,updateGMLibrary,removeGMLibraryRecord}
   from '../../../src/state/gmNpcCreatureLibraryModel.mjs';
 import {updateGMLibraryCard} from '../../../src/state/gmCharacterCardModel.mjs';
@@ -15,7 +17,7 @@ export const RELATIONSHIP_LEVELS=Object.freeze(Array.from({length:17},(_,index)=
 export const REPUTATION_RANKS=Object.freeze(Array.from({length:15},(_,index)=>index));
 export const RELATIONSHIP_SCOPES=Object.freeze(['npc','player','faction','guild','settlement','kingdom']);
 export const REPUTATION_SCOPES=Object.freeze(['npc','player','faction','guild','settlement','kingdom']);
-export const GM_AREAS=Object.freeze(['library','relationships','stories','tables','calendar','weather','archives','audio','recordings']);
+export const GM_AREAS=Object.freeze(['library','relationships','stories','tables','calendar','weather','archives','audio','recordings','world']);
 const array=v=>Array.isArray(v)?v:[];
 const record=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const bounded=(value,max=160)=>typeof value==='string'?value.trim().slice(0,max):'';
@@ -93,9 +95,18 @@ export function canonicalReputation(input={},old=null,id=''){
  */
 export function worldMutation(current={},operation={}){
   if(!record(operation)||!['library-save','library-delete','card-save',
-    'relationship-save','relationship-delete','reputation-save','reputation-delete'].includes(operation.type))
+    'relationship-save','relationship-delete','reputation-save','reputation-delete',
+    'world-state-save','world-entry-save','world-entry-delete'].includes(operation.type))
     throw Error('Unsupported GM world operation.');
   const world=gmWorld({world:current});
+  if(operation.type==='world-state-save')
+    return updateGMWorldState(world,operation.entry,operation.expectedState);
+  if(operation.type==='world-entry-save')
+    return upsertGMWorldEntry(world,operation.category,assertGMId(operation.id),
+      operation.entry,operation.expectedUpdatedAt);
+  if(operation.type==='world-entry-delete')
+    return removeGMWorldEntry(world,operation.category,assertGMId(operation.id),
+      operation.expectedUpdatedAt);
   let key,rows,old=null,patch=null;
   const id=assertGMId(operation.id);
   if(operation.type.startsWith('library')||operation.type==='card-save'){

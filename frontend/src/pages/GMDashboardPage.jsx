@@ -15,6 +15,7 @@ import {GMCampaignManagement} from '../dashboard/GMCampaignManagement.jsx';
 import {GMNotesManagement} from '../dashboard/GMNotesManagement.jsx';
 import {GMInformationManagement} from '../dashboard/GMInformationManagement.jsx';
 import {GMNpcCreatureWorkspace} from '../dashboard/GMNpcCreatureWorkspace.jsx';
+import {GMWorldSystemsWorkspace} from '../dashboard/GMWorldSystemsWorkspace.jsx';
 import {GMToolkitWorkspace,GMToolkitQuickAccess} from '../dashboard/GMToolkitWorkspace.jsx';
 import {CampaignMapWorkspace,CampaignAtlasWorkspace} from '../dashboard/CampaignMapWorkspace.jsx';
 import {CampaignPresentationController} from '../dashboard/CampaignPresentationWorkspace.jsx';
@@ -42,7 +43,7 @@ const GM_TABS=Object.freeze([
   {id:'crafting',label:'Crafting'},
   {id:'tools',label:'GM Tools',area:'tables'},
   {id:'gameplay',label:'Gameplay Systems'},
-  {id:'world',label:'World Systems',area:'calendar'},
+  {id:'world',label:'World Systems'},
   {id:'battle-maps',label:'Battle Maps'},
   {id:'advanced-dice',label:'Advanced Dice'},
   {id:'random-tables',label:'Random Tables',area:'tables'},
@@ -298,6 +299,12 @@ function CampaignGM({api,uid,campaignId}) {
     {tab==='bestiary'&&!digitalGMEnabled?<SurfacePanel className={styles.panel}>
       <h2>NPC &amp; Creature Library</h2>
       <BodyText muted>The authenticated Digital GM service is not enabled for this campaign.</BodyText>
+    </SurfacePanel>:null}
+    {tab==='world'&&digitalGMEnabled?<GMWorldSystemsWorkspace
+      api={api.digitalGM} campaignId={campaignId} onNavigate={setTab}/>:null}
+    {tab==='world'&&!digitalGMEnabled?<SurfacePanel className={styles.panel}>
+      <h2>World Systems</h2>
+      <BodyText muted>The authenticated World Systems service is not enabled for this campaign.</BodyText>
     </SurfacePanel>:null}
     {digitalGMEnabled&&GM_TOOL_AREAS[tab]?<GMDigitalGMWorkspace
       key={uid+':'+campaignId+':'+tab} api={api.digitalGM} campaignId={campaignId}

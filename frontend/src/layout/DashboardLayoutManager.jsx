@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {DashboardLayoutEditor} from './DashboardLayoutEditor.jsx';
 import {DashboardLayoutWorkspace} from './DashboardLayoutWorkspace.jsx';
+import {GMSessionLayoutControls} from './GMSessionLayoutControls.jsx';
 import {normalizeDashboardLayout} from '../../../src/state/dashboardLayoutModel.mjs';
 import styles from './DashboardLayoutManager.module.css';
 
@@ -60,6 +61,8 @@ export function DashboardLayoutManager({role,api,uid,campaignId='',characterId='
         {editing?'Close layout editor':'Customise Dashboard Layout'}
       </button>
     </div>
+    {isGM?<GMSessionLayoutControls layout={server} disabled={!available||loading}
+      onCommit={next=>save(next,server)}/>:null}
     {editing?<DashboardLayoutEditor key={uid+':'+campaignId+':'+characterId}
       role={role} layout={server} onSave={save} onClose={()=>setEditing(false)}/>:null}
     <DashboardLayoutWorkspace role={role} layout={server}
